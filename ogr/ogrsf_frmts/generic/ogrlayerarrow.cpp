@@ -2946,7 +2946,7 @@ YES.</li>
  * @since GDAL 3.6
  */
 bool OGR_L_GetArrowStream(OGRLayerH hLayer, struct ArrowArrayStream *out_stream,
-                          char **papszOptions)
+                          CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hLayer, "OGR_L_GetArrowStream", false);
     VALIDATE_POINTER1(out_stream, "OGR_L_GetArrowStream", false);
@@ -6230,7 +6230,8 @@ bool OGRLayer::IsArrowSchemaSupported(const struct ArrowSchema *schema,
  */
 bool OGR_L_IsArrowSchemaSupported(OGRLayerH hLayer,
                                   const struct ArrowSchema *schema,
-                                  char **papszOptions, char **ppszErrorMsg)
+                                  CSLConstList papszOptions,
+                                  char **ppszErrorMsg)
 {
     VALIDATE_POINTER1(hLayer, __func__, false);
     VALIDATE_POINTER1(schema, __func__, false);
@@ -6667,7 +6668,7 @@ bool OGRLayer::CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
  */
 bool OGR_L_CreateFieldFromArrowSchema(OGRLayerH hLayer,
                                       const struct ArrowSchema *schema,
-                                      char **papszOptions)
+                                      CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hLayer, __func__, false);
     VALIDATE_POINTER1(schema, __func__, false);
@@ -8478,7 +8479,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
 // clang-format on
 
 bool OGR_L_WriteArrowBatch(OGRLayerH hLayer, const struct ArrowSchema *schema,
-                           struct ArrowArray *array, char **papszOptions)
+                           struct ArrowArray *array, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hLayer, __func__, false);
     VALIDATE_POINTER1(schema, __func__, false);

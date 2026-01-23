@@ -216,7 +216,7 @@ static bool OGRAPISpyEnabled()
     return true;
 }
 
-static CPLString OGRAPISpyGetOptions(char **papszOptions)
+static CPLString OGRAPISpyGetOptions(CSLConstList papszOptions)
 {
     if (papszOptions == nullptr)
     {
@@ -224,7 +224,8 @@ static CPLString OGRAPISpyGetOptions(char **papszOptions)
     }
 
     CPLString options = "[";
-    for (char **papszIter = papszOptions; *papszIter != nullptr; papszIter++)
+    for (CSLConstList papszIter = papszOptions; *papszIter != nullptr;
+         papszIter++)
     {
         if (papszIter != papszOptions)
             options += ", ";
@@ -600,7 +601,7 @@ void OGRAPISpyPostClose()
 }
 
 void OGRAPISpyCreateDataSource(GDALDriverH hDriver, const char *pszName,
-                               char **papszOptions, GDALDatasetH hDS)
+                               CSLConstList papszOptions, GDALDatasetH hDS)
 {
     if (!OGRAPISpyEnabled())
         return;
@@ -701,8 +702,8 @@ void OGRAPISpy_DS_ReleaseResultSet(GDALDatasetH hDS, OGRLayerH hLayer)
 
 void OGRAPISpy_DS_CreateLayer(GDALDatasetH hDS, const char *pszName,
                               OGRSpatialReferenceH hSpatialRef,
-                              OGRwkbGeometryType eType, char **papszOptions,
-                              OGRLayerH hLayer)
+                              OGRwkbGeometryType eType,
+                              CSLConstList papszOptions, OGRLayerH hLayer)
 {
     CPLMutexHolderD(&hOGRAPISpyMutex);
     OGRAPISpyFlushDefered();

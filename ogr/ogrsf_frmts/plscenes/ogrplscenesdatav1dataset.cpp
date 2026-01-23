@@ -370,9 +370,8 @@ CPLString OGRPLScenesDataV1Dataset::InsertAPIKeyInURL(CPLString osURL)
 /*                            OpenRasterScene()                         */
 /************************************************************************/
 
-GDALDataset *OGRPLScenesDataV1Dataset::OpenRasterScene(GDALOpenInfo *poOpenInfo,
-                                                       CPLString osScene,
-                                                       char **papszOptions)
+GDALDataset *OGRPLScenesDataV1Dataset::OpenRasterScene(
+    GDALOpenInfo *poOpenInfo, CPLString osScene, CSLConstList papszOptions)
 {
     if (!(poOpenInfo->nOpenFlags & GDAL_OF_RASTER))
     {
@@ -384,24 +383,17 @@ GDALDataset *OGRPLScenesDataV1Dataset::OpenRasterScene(GDALOpenInfo *poOpenInfo,
     int nActivationTimeout = atoi(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "ACTIVATION_TIMEOUT", "3600"));
 
-    for (char **papszIter = papszOptions; papszIter && *papszIter; papszIter++)
+    for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(papszOptions))
     {
-        char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue(*papszIter, &pszKey);
-        if (pszValue != nullptr)
+        if (!EQUAL(pszKey, "api_key") && !EQUAL(pszKey, "scene") &&
+            !EQUAL(pszKey, "product_type") && !EQUAL(pszKey, "asset") &&
+            !EQUAL(pszKey, "catalog") && !EQUAL(pszKey, "itemtypes") &&
+            !EQUAL(pszKey, "version") && !EQUAL(pszKey, "follow_links") &&
+            !EQUAL(pszKey, "metadata"))
         {
-            if (!EQUAL(pszKey, "api_key") && !EQUAL(pszKey, "scene") &&
-                !EQUAL(pszKey, "product_type") && !EQUAL(pszKey, "asset") &&
-                !EQUAL(pszKey, "catalog") && !EQUAL(pszKey, "itemtypes") &&
-                !EQUAL(pszKey, "version") && !EQUAL(pszKey, "follow_links") &&
-                !EQUAL(pszKey, "metadata"))
-            {
-                CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s",
-                         pszKey);
-                CPLFree(pszKey);
-                return nullptr;
-            }
-            CPLFree(pszKey);
+            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s",
+                     pszKey);
+            return nullptr;
         }
     }
 

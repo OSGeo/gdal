@@ -3147,7 +3147,7 @@ bool VICARDataset::GetSpacings(const VICARKeywordHandler &keywords,
 
 GDALDataset *VICARDataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eType,
-                                  char **papszOptions)
+                                  CSLConstList papszOptions)
 {
     return CreateInternal(pszFilename, nXSize, nYSize, nBandsIn, eType,
                           papszOptions);
@@ -3156,7 +3156,7 @@ GDALDataset *VICARDataset::Create(const char *pszFilename, int nXSize,
 VICARDataset *VICARDataset::CreateInternal(const char *pszFilename, int nXSize,
                                            int nYSize, int nBandsIn,
                                            GDALDataType eType,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     if (eType != GDT_UInt8 && eType != GDT_Int16 && eType != GDT_Int32 &&
         eType != GDT_Float32 && eType != GDT_Float64 && eType != GDT_CFloat32)
@@ -3332,7 +3332,7 @@ VICARDataset *VICARDataset::CreateInternal(const char *pszFilename, int nXSize,
 
 GDALDataset *VICARDataset::CreateCopy(const char *pszFilename,
                                       GDALDataset *poSrcDS, int /*bStrict*/,
-                                      char **papszOptions,
+                                      CSLConstList papszOptions,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 {

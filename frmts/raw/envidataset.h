@@ -122,7 +122,7 @@ class ENVIDataset final : public RawDataset
     static ENVIDataset *Open(GDALOpenInfo *, bool bFileSizeCheck);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/

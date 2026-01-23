@@ -1815,7 +1815,7 @@ char *OGR_G_ExportToJson(OGRGeometryH hGeometry)
  *
  */
 
-char *OGR_G_ExportToJsonEx(OGRGeometryH hGeometry, char **papszOptions)
+char *OGR_G_ExportToJsonEx(OGRGeometryH hGeometry, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hGeometry, "OGR_G_ExportToJson", nullptr);
 

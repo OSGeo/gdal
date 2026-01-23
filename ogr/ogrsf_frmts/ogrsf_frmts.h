@@ -326,30 +326,30 @@ class CPL_DLL OGRLayer : public GDALMajorObject
                      GDALProgressFunc pfnProgress, void *pProgressData);
 
     OGRErr Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                        char **papszOptions = nullptr,
+                        CSLConstList papszOptions = nullptr,
                         GDALProgressFunc pfnProgress = nullptr,
                         void *pProgressArg = nullptr);
     OGRErr Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                 char **papszOptions = nullptr,
+                 CSLConstList papszOptions = nullptr,
                  GDALProgressFunc pfnProgress = nullptr,
                  void *pProgressArg = nullptr);
     OGRErr SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                         char **papszOptions, GDALProgressFunc pfnProgress,
-                         void *pProgressArg);
+                         CSLConstList papszOptions,
+                         GDALProgressFunc pfnProgress, void *pProgressArg);
     OGRErr Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                    char **papszOptions = nullptr,
+                    CSLConstList papszOptions = nullptr,
                     GDALProgressFunc pfnProgress = nullptr,
                     void *pProgressArg = nullptr);
     OGRErr Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                  char **papszOptions = nullptr,
+                  CSLConstList papszOptions = nullptr,
                   GDALProgressFunc pfnProgress = nullptr,
                   void *pProgressArg = nullptr);
     OGRErr Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                char **papszOptions = nullptr,
+                CSLConstList papszOptions = nullptr,
                 GDALProgressFunc pfnProgress = nullptr,
                 void *pProgressArg = nullptr);
     OGRErr Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                 char **papszOptions = nullptr,
+                 CSLConstList papszOptions = nullptr,
                  GDALProgressFunc pfnProgress = nullptr,
                  void *pProgressArg = nullptr);
 
@@ -657,7 +657,7 @@ class CPL_DLL OGRSFDriverRegistrar
                                           GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateVectorOnly(GDALDriver *poDriver,
                                          const char *pszName,
-                                         char **papszOptions);
+                                         CSLConstList papszOptions);
     static CPLErr DeleteDataSource(GDALDriver *poDriver, const char *pszName);
 
   public:

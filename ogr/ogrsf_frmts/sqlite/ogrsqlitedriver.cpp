@@ -214,7 +214,7 @@ static GDALDataset *OGRSQLiteDriverCreate(const char *pszName, int nBands,
                                           CPL_UNUSED int nXSize,
                                           CPL_UNUSED int nYSize,
                                           CPL_UNUSED GDALDataType eDT,
-                                          char **papszOptions)
+                                          CSLConstList papszOptions)
 {
     if (nBands != 0)
     {

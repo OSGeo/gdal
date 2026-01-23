@@ -58,8 +58,8 @@ static bool NITFWriteExtraSegments(const char *pszFilename,
                                    CSLConstList papszOptions);
 
 #ifdef JPEG_SUPPORTED
-static bool NITFWriteJPEGImage(GDALDataset *, VSILFILE *, vsi_l_offset, char **,
-                               GDALProgressFunc pfnProgress,
+static bool NITFWriteJPEGImage(GDALDataset *, VSILFILE *, vsi_l_offset,
+                               CSLConstList, GDALProgressFunc pfnProgress,
                                void *pProgressData);
 #endif
 
@@ -2222,7 +2222,7 @@ void NITFDataset::CheckGeoSDEInfo()
 CPLErr NITFDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize, GDALDataType eDT,
                                int nBandCount, int *panBandList,
-                               char **papszOptions)
+                               CSLConstList papszOptions)
 
 {
     //go through GDALDataset::AdviseRead for the complex SAR
@@ -4126,7 +4126,7 @@ static const char *GDALToNITFDataType(GDALDataType eType)
 /*      NITF creation options.                                          */
 /************************************************************************/
 
-static char **NITFJP2ECWOptions(char **papszOptions)
+static char **NITFJP2ECWOptions(CSLConstList papszOptions)
 
 {
     char **papszJP2Options = CSLAddString(nullptr, "PROFILE=NPJE");
@@ -4153,7 +4153,7 @@ static char **NITFJP2ECWOptions(char **papszOptions)
 /*      NITF creation options.                                          */
 /************************************************************************/
 
-static char **NITFJP2KAKOptions(char **papszOptions, int nABPP)
+static char **NITFJP2KAKOptions(CSLConstList papszOptions, int nABPP)
 
 {
     char **papszJP2Options = CSLAddString(nullptr, "CODEC=J2K");
@@ -4324,7 +4324,7 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
 /************************************************************************/
 
 static char **NITFExtractTEXTAndCGMCreationOption(GDALDataset *poSrcDS,
-                                                  char **papszOptions,
+                                                  CSLConstList papszOptions,
                                                   char ***ppapszTextMD,
                                                   char ***ppapszCgmMD)
 {
@@ -4406,7 +4406,7 @@ static char **NITFExtractTEXTAndCGMCreationOption(GDALDataset *poSrcDS,
 GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
                                             int nYSize, int nBandsIn,
                                             GDALDataType eType,
-                                            char **papszOptions)
+                                            CSLConstList papszOptions)
 
 {
     const char *pszPVType = GDALToNITFDataType(eType);
@@ -4568,7 +4568,7 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
 
 GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                                          GDALDataset *poSrcDS, int bStrict,
-                                         char **papszOptions,
+                                         CSLConstList papszOptions,
                                          GDALProgressFunc pfnProgress,
                                          void *pProgressData)
 
@@ -6819,7 +6819,8 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
                        void *pProgressData);
 
 static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
-                               vsi_l_offset nStartOffset, char **papszOptions,
+                               vsi_l_offset nStartOffset,
+                               CSLConstList papszOptions,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData)
 {

@@ -4308,7 +4308,7 @@ class CPL_DLL OGRGeometryFactory
 
     static OGRGeometry *transformWithOptions(
         const OGRGeometry *poSrcGeom, OGRCoordinateTransformation *poCT,
-        char **papszOptions,
+        CSLConstList papszOptions,
         const TransformWithOptionsCache &cache = TransformWithOptionsCache());
 
     static double GetDefaultArcStepSize();

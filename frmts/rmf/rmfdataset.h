@@ -299,9 +299,9 @@ class RMFDataset final : public GDALDataset
     static RMFDataset *Open(GDALOpenInfo *, RMFDataset *poParentDS,
                             vsi_l_offset nNextHeaderOffset);
     static GDALDataset *Create(const char *, int, int, int, GDALDataType,
-                               char **);
+                               CSLConstList);
     static GDALDataset *Create(const char *, int, int, int, GDALDataType,
-                               char **, RMFDataset *poParentDS,
+                               CSLConstList, RMFDataset *poParentDS,
                                double dfOvFactor);
     CPLErr FlushCache(bool bAtClosing) override;
 
@@ -335,7 +335,7 @@ class RMFDataset final : public GDALDataset
     static GByte GetCompressionType(const char *pszCompressName);
     int SetupCompression(GDALDataType eType, const char *pszFilename);
     static void WriteTileJobFunc(void *pData);
-    CPLErr InitCompressorData(char **papszParamList);
+    CPLErr InitCompressorData(CSLConstList papszParamList);
     CPLErr WriteTile(int nBlockXOff, int nBlockYOff, GByte *pabyData,
                      size_t nBytes, GUInt32 nRawXSize, GUInt32 nRawYSize);
     CPLErr WriteRawTile(int nBlockXOff, int nBlockYOff, GByte *pabyData,

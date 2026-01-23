@@ -5016,7 +5016,7 @@ char **HFADataset::GetFileList()
 
 GDALDataset *HFADataset::Create(const char *pszFilenameIn, int nXSize,
                                 int nYSize, int nBandsIn, GDALDataType eType,
-                                char **papszParamList)
+                                CSLConstList papszParamList)
 
 {
     const int nBits = CSLFetchNameValue(papszParamList, "NBITS") != nullptr
@@ -5223,7 +5223,7 @@ CPLErr HFADataset::CopyFiles(const char *pszNewName, const char *pszOldName)
 
 GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int /* bStrict */,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 {

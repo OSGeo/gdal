@@ -594,7 +594,7 @@ int OGRGPXDataSource::Open(GDALOpenInfo *poOpenInfo)
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
+int OGRGPXDataSource::Create(const char *pszFilename, CSLConstList papszOptions)
 {
     if (strcmp(pszFilename, "/dev/stdout") == 0)
         pszFilename = "/vsistdout/";

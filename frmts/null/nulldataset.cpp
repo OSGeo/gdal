@@ -50,7 +50,7 @@ class GDALNullDataset final : public GDALDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -365,7 +365,8 @@ GDALDataset *GDALNullDataset::Open(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 GDALDataset *GDALNullDataset::Create(const char *, int nXSize, int nYSize,
-                                     int nBandsIn, GDALDataType eType, char **)
+                                     int nBandsIn, GDALDataType eType,
+                                     CSLConstList)
 {
     GDALNullDataset *poDS = new GDALNullDataset();
     poDS->nRasterXSize = nXSize;

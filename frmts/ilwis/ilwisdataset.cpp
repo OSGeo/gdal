@@ -886,7 +886,7 @@ CPLErr ILWISDataset::FlushCache(bool bAtClosing)
 
 GDALDataset *ILWISDataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eType,
-                                  CPL_UNUSED char **papszParamList)
+                                  CSLConstList)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify input options.                                           */
@@ -1057,7 +1057,7 @@ GDALDataset *ILWISDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
                                       GDALDataset *poSrcDS, int /* bStrict */,
-                                      char **papszOptions,
+                                      CSLConstList papszOptions,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 

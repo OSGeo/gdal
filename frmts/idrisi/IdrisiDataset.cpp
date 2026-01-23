@@ -400,10 +400,10 @@ class IdrisiDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     char **GetFileList(void) override;
@@ -848,7 +848,7 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *IdrisiDataset::Create(const char *pszFilename, int nXSize,
                                    int nYSize, int nBandsIn, GDALDataType eType,
-                                   char ** /* papszOptions */)
+                                   CSLConstList /* papszOptions */)
 {
     // --------------------------------------------------------------------
     //      Check input options
@@ -1001,7 +1001,7 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
                                        GDALDataset *poSrcDS, int bStrict,
-                                       char **papszOptions,
+                                       CSLConstList papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {

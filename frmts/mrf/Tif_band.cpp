@@ -72,7 +72,7 @@ static CPLString uniq_memfname(const char *prefix)
 // copies the content to the destination buffer then erases the temp TIF
 //
 static CPLErr CompressTIF(buf_mgr &dst, const buf_mgr &src, const ILImage &img,
-                          char **papszOptions)
+                          CSLConstList papszOptions)
 {
     CPLErr ret;
     GDALDriver *poTiffDriver = GetGDALDriverManager()->GetDriverByName("GTiff");

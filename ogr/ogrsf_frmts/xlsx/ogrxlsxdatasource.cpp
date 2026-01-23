@@ -458,7 +458,7 @@ int OGRXLSXDataSource::Open(const char *pszFilename,
 /************************************************************************/
 
 int OGRXLSXDataSource::Create(const char *pszFilename,
-                              CPL_UNUSED char **papszOptions)
+                              CPL_UNUSED CSLConstList papszOptions)
 {
     bUpdated = true;
     bUpdatable = true;

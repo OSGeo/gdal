@@ -181,7 +181,7 @@ class OGRGeoRSSDataSource final : public GDALDataset
 
     int Open(const char *pszFilename, int bUpdate);
 
-    int Create(const char *pszFilename, char **papszOptions);
+    int Create(const char *pszFilename, CSLConstList papszOptions);
 
     int GetLayerCount() const override
     {

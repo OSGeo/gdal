@@ -50,7 +50,7 @@ static GDALDataset *OGRCartoDriverCreate(const char *pszName,
                                          CPL_UNUSED int nXSize,
                                          CPL_UNUSED int nYSize,
                                          CPL_UNUSED GDALDataType eDT,
-                                         CPL_UNUSED char **papszOptions)
+                                         CPL_UNUSED CSLConstList papszOptions)
 
 {
     OGRCARTODataSource *poDS = new OGRCARTODataSource();

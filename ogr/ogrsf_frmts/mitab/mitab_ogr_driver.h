@@ -53,7 +53,7 @@ class OGRTABDataSource final : public GDALDataset
     ~OGRTABDataSource() override;
 
     int Open(GDALOpenInfo *poOpenInfo, int bTestOpen);
-    int Create(const char *pszName, char **papszOptions);
+    int Create(const char *pszName, CSLConstList papszOptions);
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;

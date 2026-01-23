@@ -206,7 +206,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
                     double dfMinX, double dfMinY, double dfMaxX, double dfMaxY,
                     const char *pszContentsMinX, const char *pszContentsMinY,
                     const char *pszContentsMaxX, const char *pszContentsMaxY,
-                    char **papszOpenOptions, const SQLResult &oResult,
+                    CSLConstList papszOpenOptions, const SQLResult &oResult,
                     int nIdxInResult);
     bool InitRaster(GDALGeoPackageDataset *poParentDS, const char *pszTableName,
                     int nZoomLevel, int nBandCount, double dfTMSMinX,
@@ -220,12 +220,12 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
                     double dfMinY, double dfMaxX, double dfMaxY,
                     const char *pszContentsMinX, const char *pszContentsMinY,
                     const char *pszContentsMaxX, const char *pszContentsMaxY,
-                    bool bIsTiles, char **papszOptions);
+                    bool bIsTiles, CSLConstList papszOptions);
     CPLErr FinalizeRasterRegistration();
 
     bool RegisterWebPExtension();
     bool RegisterZoomOtherExtension();
-    void ParseCompressionOptions(char **papszOptions);
+    void ParseCompressionOptions(CSLConstList papszOptions);
 
     bool HasMetadataTables() const;
     bool CreateMetadataTables();
@@ -238,7 +238,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     int FindLayerIndex(const char *pszLayerName);
 
     bool HasGriddedCoverageAncillaryTable();
-    bool CreateTileGriddedTable(char **papszOptions);
+    bool CreateTileGriddedTable(CSLConstList papszOptions);
 
     void RemoveOGREmptyTable();
 
@@ -325,7 +325,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     int Open(GDALOpenInfo *poOpenInfo, const std::string &osFilenameInZip);
     int Create(const char *pszFilename, int nXSize, int nYSize, int nBands,
-               GDALDataType eDT, char **papszOptions);
+               GDALDataType eDT, CSLConstList papszOptions);
     const OGRLayer *GetLayer(int iLayer) const override;
     OGRErr DeleteLayer(int iLayer) override;
     OGRLayer *ICreateLayer(const char *pszName,
@@ -409,7 +409,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 

@@ -1542,7 +1542,7 @@ class CPL_DLL OGRFeature
     //! @endcond
 
     int Validate(int nValidateFlags, int bEmitError) const;
-    void FillUnsetWithDefault(int bNotNullableOnly, char **papszOptions);
+    void FillUnsetWithDefault(int bNotNullableOnly, CSLConstList papszOptions);
 
     bool SerializeToBinary(std::vector<GByte> &abyBuffer) const;
     bool DeserializeFromBinary(const GByte *pabyBuffer, size_t nSize);

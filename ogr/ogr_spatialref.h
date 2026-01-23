@@ -440,7 +440,7 @@ class CPL_DLL OGRSpatialReference
                         int nCode);
 
     OGRErr AutoIdentifyEPSG();
-    OGRSpatialReferenceH *FindMatches(char **papszOptions, int *pnEntries,
+    OGRSpatialReferenceH *FindMatches(CSLConstList papszOptions, int *pnEntries,
                                       int **ppanMatchConfidence) const;
     OGRSpatialReference *
     FindBestMatch(int nMinimumMatchConfidence = 90,

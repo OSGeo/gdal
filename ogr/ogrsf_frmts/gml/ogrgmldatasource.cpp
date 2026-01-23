@@ -1857,7 +1857,8 @@ const char *OGRGMLDataSource::GetGlobalSRSName()
 /*                               Create()                               */
 /************************************************************************/
 
-bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
+bool OGRGMLDataSource::Create(const char *pszFilename,
+                              CSLConstList papszOptions)
 
 {
     if (fpOutput != nullptr || poReader != nullptr)

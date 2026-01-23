@@ -159,7 +159,7 @@ static GDALDataset *OGRFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *
 OGRFileGDBDriverCreate(const char *pszName, CPL_UNUSED int nBands,
                        CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                       CPL_UNUSED GDALDataType eDT, char **papszOptions)
+                       CPL_UNUSED GDALDataType eDT, CSLConstList papszOptions)
 {
     auto poOpenFileGDBDriver =
         GetGDALDriverManager()->GetDriverByName("OpenFileGDB");

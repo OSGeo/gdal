@@ -4342,11 +4342,12 @@ CPLErr JPGAppendMask(const char *pszJPGFilename, GDALRasterBand *poMask,
 /*                             JPGAddEXIF()                             */
 /************************************************************************/
 
-void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
-                void *cinfo, my_jpeg_write_m_header p_jpeg_write_m_header,
+void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS,
+                CSLConstList papszOptions, void *cinfo,
+                my_jpeg_write_m_header p_jpeg_write_m_header,
                 my_jpeg_write_m_byte p_jpeg_write_m_byte,
                 GDALDataset *(pCreateCopy)(const char *, GDALDataset *, int,
-                                           char **,
+                                           CSLConstList,
                                            GDALProgressFunc pfnProgress,
                                            void *pProgressData))
 {
@@ -4487,7 +4488,7 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
 
 GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 
@@ -4922,7 +4923,7 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 }
 
 GDALDataset *JPGDataset::CreateCopyStage2(
-    const char *pszFilename, GDALDataset *poSrcDS, char **papszOptions,
+    const char *pszFilename, GDALDataset *poSrcDS, CSLConstList papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData,
     VSIVirtualHandleUniquePtr fpImage, GDALDataType eDT, int nQuality,
     bool bAppendMask, GDALJPEGUserData &sUserData,

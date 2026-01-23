@@ -335,7 +335,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                          (int nXOff, int nYOff, int nXSize, int nYSize,
                           int nBufXSize, int nBufYSize, GDALDataType eDT,
-                          char **papszOptions),
+                          CSLConstList papszOptions),
                          (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                           eDT, papszOptions))
 

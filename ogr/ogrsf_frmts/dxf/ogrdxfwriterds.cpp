@@ -175,7 +175,7 @@ int OGRDXFWriterDS::GetLayerCount() const
 /*                                Open()                                */
 /************************************************************************/
 
-int OGRDXFWriterDS::Open(const char *pszFilename, char **papszOptions)
+int OGRDXFWriterDS::Open(const char *pszFilename, CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */

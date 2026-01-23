@@ -443,7 +443,7 @@ class OGRHanaDataSource final : public GDALDataset
     OGRHanaDataSource();
     ~OGRHanaDataSource() override;
 
-    int Open(const char *newName, char **options, int update);
+    int Open(const char *newName, CSLConstList options, int update);
 
     OGRHANA::HanaVersion GetHanaVersion() const
     {

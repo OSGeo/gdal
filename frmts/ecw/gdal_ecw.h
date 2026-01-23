@@ -38,20 +38,21 @@ GDALColorInterp ECWGetColorInterpretationByName(const char *pszName);
 const char *ECWGetColorSpaceName(NCSFileColorSpace colorSpace);
 #ifdef HAVE_COMPRESS
 GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
-                              int bStrict, char **papszOptions,
+                              int bStrict, CSLConstList papszOptions,
                               GDALProgressFunc pfnProgress,
                               void *pProgressData);
 GDALDataset *ECWCreateCopyJPEG2000(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
 GDALDataset *ECWCreateECW(const char *pszFilename, int nXSize, int nYSize,
-                          int nBands, GDALDataType eType, char **papszOptions);
+                          int nBands, GDALDataType eType,
+                          CSLConstList papszOptions);
 GDALDataset *ECWCreateJPEG2000(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 #endif
 
 void ECWReportError(CNCSError &oErr, const char *pszMsg = "");
@@ -611,7 +612,7 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,
                       int nBandCount, int *panBandList,
-                      char **papszOptions) override;
+                      CSLConstList papszOptions) override;
 
     // progressive methods
 #if ECWSDK_VERSION >= 40
@@ -620,7 +621,7 @@ class CPL_DLL ECWDataset final : public GDALJP2AbstractDataset
                      int nBufXSize, int nBufYSize, GDALDataType eBufType,
                      int nBandCount, int *panBandMap, int nPixelSpace,
                      int nLineSpace, int nBandSpace,
-                     char **papszOptions) override;
+                     CSLConstList papszOptions) override;
 
     void EndAsyncReader(GDALAsyncReader *) override;
 #endif /* ECWSDK_VERSION > 40 */
@@ -693,7 +694,7 @@ class ECWRasterBand final : public GDALPamRasterBand
 
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,
-                      char **papszOptions) override;
+                      CSLConstList papszOptions) override;
 #if ECWSDK_VERSION >= 50
     void GetBandIndexAndCountForStatistics(int &bandIndex,
                                            int &bandCount) const;

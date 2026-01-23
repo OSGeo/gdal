@@ -255,7 +255,7 @@ static PGTableEntry *OGRPGAddTableEntry(CPLHashSet *hSetTables,
 /************************************************************************/
 
 int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
-                          char **papszOpenOptionsIn)
+                          CSLConstList papszOpenOptionsIn)
 
 {
     CPLAssert(nLayers == 0);

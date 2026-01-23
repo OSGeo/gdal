@@ -71,7 +71,7 @@ class ISCEDataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -750,7 +750,7 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
 GDALDataset *ISCEDataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 {
     const char *sType = GDALGetDataTypeName(eType);
     const char *pszScheme = CSLFetchNameValueDef(papszOptions, "SCHEME", "BIP");

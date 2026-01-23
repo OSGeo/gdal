@@ -162,7 +162,7 @@ static GDALDataset *OGRGPSBabelDriverCreate(const char *pszName,
                                             int /* nBands */, int /* nXSize */,
                                             int /* nYSize */,
                                             GDALDataType /* eDT */,
-                                            char **papszOptions)
+                                            CSLConstList papszOptions)
 {
     OGRGPSBabelWriteDataSource *poDS = new OGRGPSBabelWriteDataSource();
 

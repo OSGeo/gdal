@@ -46,7 +46,7 @@ class CALSDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -427,7 +427,7 @@ GDALDataset *CALSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *CALSDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     char ** /* papszOptionsUnused */,
+                                     CSLConstList /* papszOptionsUnused */,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

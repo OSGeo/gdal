@@ -963,7 +963,7 @@ bool OGRElasticDataSource::UploadFile(const CPLString &url,
 /************************************************************************/
 
 int OGRElasticDataSource::Create(const char *pszFilename,
-                                 CPL_UNUSED char **papszOptions)
+                                 CPL_UNUSED CSLConstList papszOptions)
 {
     eAccess = GA_Update;
     m_pszName = CPLStrdup(pszFilename);

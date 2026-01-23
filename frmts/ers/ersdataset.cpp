@@ -96,7 +96,7 @@ class ERSDataset final : public RawDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -1319,7 +1319,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */

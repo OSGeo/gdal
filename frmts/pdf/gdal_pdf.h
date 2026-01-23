@@ -561,7 +561,7 @@ class PDFWritableVectorDataset final : public GDALDataset
 
     static GDALDataset *Create(const char *pszName, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     void SetModified()
     {

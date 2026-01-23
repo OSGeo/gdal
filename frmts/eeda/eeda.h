@@ -25,7 +25,7 @@
 #include <vector>
 #include <map>
 
-CPLHTTPResult *EEDAHTTPFetch(const char *pszURL, char **papszOptions);
+CPLHTTPResult *EEDAHTTPFetch(const char *pszURL, CSLConstList papszOptions);
 
 /************************************************************************/
 /*                             EEDAIBandDesc                            */

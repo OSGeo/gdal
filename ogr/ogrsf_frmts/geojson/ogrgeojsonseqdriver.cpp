@@ -57,7 +57,7 @@ class OGRGeoJSONSeqDataSource final : public GDALDataset
     int TestCapability(const char *pszCap) const override;
 
     bool Open(GDALOpenInfo *poOpenInfo, GeoJSONSourceType nSrcType);
-    bool Create(const char *pszName, char **papszOptions);
+    bool Create(const char *pszName, CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -893,7 +893,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
 /************************************************************************/
 
 bool OGRGeoJSONSeqDataSource::Create(const char *pszName,
-                                     char ** /* papszOptions */)
+                                     CSLConstList /* papszOptions */)
 {
     CPLAssert(nullptr == m_fp);
 
@@ -985,7 +985,7 @@ static GDALDataset *OGRGeoJSONSeqDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *
 OGRGeoJSONSeqDriverCreate(const char *pszName, int /* nBands */,
                           int /* nXSize */, int /* nYSize */,
-                          GDALDataType /* eDT */, char **papszOptions)
+                          GDALDataType /* eDT */, CSLConstList papszOptions)
 {
     OGRGeoJSONSeqDataSource *poDS = new OGRGeoJSONSeqDataSource();
 

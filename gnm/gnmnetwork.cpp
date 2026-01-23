@@ -89,7 +89,7 @@ OGRFeatureH CPL_STDCALL GNMGetFeatureByGlobalFID(GNMNetworkH hNet,
 OGRLayerH CPL_STDCALL GNMGetPath(GNMNetworkH hNet, GNMGFID nStartFID,
                                  GNMGFID nEndFID,
                                  GNMGraphAlgorithmType eAlgorithm,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hNet, "GNMGetPath", nullptr);
 

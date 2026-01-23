@@ -656,7 +656,8 @@ class OGRPGDataSource final : public GDALDataset
     const OGRSpatialReference *FetchSRS(int nSRSId);
     static OGRErr InitializeMetadataTables();
 
-    int Open(const char *, int bUpdate, int bTestOpen, char **papszOpenOptions);
+    int Open(const char *, int bUpdate, int bTestOpen,
+             CSLConstList papszOpenOptions);
     OGRPGTableLayer *
     OpenTable(CPLString &osCurrentSchema, const char *pszTableName,
               const char *pszSchemaName, const char *pszDescription,

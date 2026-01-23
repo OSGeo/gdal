@@ -192,12 +192,12 @@ class BAGDataset final : public GDALPamDataset
                                       CSLConstList papszCreationOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     OGRErr ParseWKTFromXML(const char *pszISOXML);
 };
@@ -211,12 +211,15 @@ class BAGCreator
     hid_t m_hdf5 = -1;
     hid_t m_bagRoot = -1;
 
-    bool CreateBase(const char *pszFilename, char **papszOptions);
+    bool CreateBase(const char *pszFilename, CSLConstList papszOptions);
     bool CreateTrackingListDataset();
-    bool CreateElevationOrUncertainty(
-        GDALDataset *poSrcDS, int nBand, const char *pszDSName,
-        const char *pszMaxAttrName, const char *pszMinAttrName,
-        char **papszOptions, GDALProgressFunc pfnProgress, void *pProgressData);
+    bool CreateElevationOrUncertainty(GDALDataset *poSrcDS, int nBand,
+                                      const char *pszDSName,
+                                      const char *pszMaxAttrName,
+                                      const char *pszMinAttrName,
+                                      CSLConstList papszOptions,
+                                      GDALProgressFunc pfnProgress,
+                                      void *pProgressData);
     bool Close();
 
   public:
@@ -227,16 +230,16 @@ class BAGCreator
     static CPLString GenerateMetadata(int nXSize, int nYSize,
                                       const GDALGeoTransform &gt,
                                       const OGRSpatialReference *poSRS,
-                                      char **papszOptions);
+                                      CSLConstList papszOptions);
     static bool CreateAndWriteMetadata(hid_t hdf5,
                                        const CPLString &osXMLMetadata);
 
     bool Create(const char *pszFilename, GDALDataset *poSrcDS,
-                char **papszOptions, GDALProgressFunc pfnProgress,
+                CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                 void *pProgressData);
 
     bool Create(const char *pszFilename, int nBands, GDALDataType eType,
-                char **papszOptions);
+                CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -5164,7 +5167,7 @@ bool BAGCreator::SubstituteVariables(CPLXMLNode *psNode, char **papszDict)
 CPLString BAGCreator::GenerateMetadata(int nXSize, int nYSize,
                                        const GDALGeoTransform &gt,
                                        const OGRSpatialReference *poSRS,
-                                       char **papszOptions)
+                                       CSLConstList papszOptions)
 {
     CPLXMLNode *psRoot;
     CPLString osTemplateFilename =
@@ -5224,7 +5227,7 @@ CPLString BAGCreator::GenerateMetadata(int nXSize, int nYSize,
         return CPLString();
     }
 
-    CPLStringList osOptions(papszOptions, FALSE);
+    CPLStringList osOptions(papszOptions);
     if (osOptions.FetchNameValue("VAR_PROCESS_STEP_DESCRIPTION") == nullptr)
     {
         osOptions.SetNameValue("VAR_PROCESS_STEP_DESCRIPTION",
@@ -5535,10 +5538,13 @@ bool BAGCreator::CreateTrackingListDataset()
 /*                     CreateElevationOrUncertainty()                   */
 /************************************************************************/
 
-bool BAGCreator::CreateElevationOrUncertainty(
-    GDALDataset *poSrcDS, int nBand, const char *pszDSName,
-    const char *pszMaxAttrName, const char *pszMinAttrName, char **papszOptions,
-    GDALProgressFunc pfnProgress, void *pProgressData)
+bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS, int nBand,
+                                              const char *pszDSName,
+                                              const char *pszMaxAttrName,
+                                              const char *pszMinAttrName,
+                                              CSLConstList papszOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData)
 {
     const int nYSize = poSrcDS->GetRasterYSize();
     const int nXSize = poSrcDS->GetRasterXSize();
@@ -5747,7 +5753,7 @@ bool BAGCreator::CreateElevationOrUncertainty(
 /*                           CreateBase()                               */
 /************************************************************************/
 
-bool BAGCreator::CreateBase(const char *pszFilename, char **papszOptions)
+bool BAGCreator::CreateBase(const char *pszFilename, CSLConstList papszOptions)
 {
     hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
@@ -5789,7 +5795,7 @@ bool BAGCreator::CreateBase(const char *pszFilename, char **papszOptions)
 /************************************************************************/
 
 bool BAGCreator::Create(const char *pszFilename, GDALDataset *poSrcDS,
-                        char **papszOptions, GDALProgressFunc pfnProgress,
+                        CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                         void *pProgressData)
 {
     const int nBands = poSrcDS->GetRasterCount();
@@ -5864,7 +5870,7 @@ bool BAGCreator::Create(const char *pszFilename, GDALDataset *poSrcDS,
 /************************************************************************/
 
 bool BAGCreator::Create(const char *pszFilename, int nBands, GDALDataType eType,
-                        char **papszOptions)
+                        CSLConstList papszOptions)
 {
     if (nBands != 1 && nBands != 2)
     {
@@ -5894,7 +5900,7 @@ bool BAGCreator::Create(const char *pszFilename, int nBands, GDALDataType eType,
 
 GDALDataset *BAGDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int /* bStrict */,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 
@@ -5916,7 +5922,7 @@ GDALDataset *BAGDataset::CreateCopy(const char *pszFilename,
 
 GDALDataset *BAGDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 {
     if (!BAGCreator().Create(pszFilename, nBandsIn, eType, papszOptions))
     {

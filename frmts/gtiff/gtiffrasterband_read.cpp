@@ -351,7 +351,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLVirtualMem *GTiffRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                   int *pnPixelSpace,
                                                   GIntBig *pnLineSpace,
-                                                  char **papszOptions)
+                                                  CSLConstList papszOptions)
 {
     const char *pszImpl = CSLFetchNameValueDef(
         papszOptions, "USE_DEFAULT_IMPLEMENTATION", "AUTO");
@@ -410,10 +410,9 @@ void GTiffRasterBand::DropReferenceVirtualMem(void *pUserData)
 /*                     GetVirtualMemAutoInternal()                      */
 /************************************************************************/
 
-CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
-                                                          int *pnPixelSpace,
-                                                          GIntBig *pnLineSpace,
-                                                          char **papszOptions)
+CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(
+    GDALRWFlag eRWFlag, int *pnPixelSpace, GIntBig *pnLineSpace,
+    CSLConstList papszOptions)
 {
     int nLineSize = nBlockXSize * GDALGetDataTypeSizeBytes(eDataType);
     if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG)

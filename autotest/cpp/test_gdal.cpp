@@ -587,14 +587,14 @@ class DatasetWithErrorInFlushCache final : public GDALDataset
         return CE_None;
     }
 
-    static GDALDataset *CreateCopy(const char *, GDALDataset *, int, char **,
-                                   GDALProgressFunc, void *)
+    static GDALDataset *CreateCopy(const char *, GDALDataset *, int,
+                                   CSLConstList, GDALProgressFunc, void *)
     {
         return new DatasetWithErrorInFlushCache();
     }
 
     static GDALDataset *Create(const char *, int nXSize, int nYSize, int,
-                               GDALDataType, char **)
+                               GDALDataType, CSLConstList)
     {
         DatasetWithErrorInFlushCache *poDS = new DatasetWithErrorInFlushCache();
         poDS->eAccess = GA_Update;

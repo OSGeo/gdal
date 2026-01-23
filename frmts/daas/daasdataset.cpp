@@ -149,7 +149,8 @@ class GDALDAASDataset final : public GDALDataset
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int /* nBufXSize */, int /* nBufYSize */,
                       GDALDataType /* eBufType */, int /*nBands*/,
-                      int * /*panBands*/, char ** /* papszOptions */) override;
+                      int * /*panBands*/,
+                      CSLConstList /* papszOptions */) override;
     CPLErr FlushCache(bool bAtClosing) override;
 };
 
@@ -183,7 +184,7 @@ class GDALDAASRasterBand final : public GDALRasterBand
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int /* nBufXSize */, int /* nBufYSize */,
                       GDALDataType /* eBufType */,
-                      char ** /* papszOptions */) override;
+                      CSLConstList /* papszOptions */) override;
     double GetNoDataValue(int *pbHasNoData) override;
     GDALColorInterp GetColorInterpretation() override;
     GDALRasterBand *GetMaskBand() override;
@@ -396,7 +397,8 @@ static double DAASBackoffFactor(double base)
 /*                          DAAS_CPLHTTPFetch()                         */
 /************************************************************************/
 
-static CPLHTTPResult *DAAS_CPLHTTPFetch(const char *pszURL, char **papszOptions)
+static CPLHTTPResult *DAAS_CPLHTTPFetch(const char *pszURL,
+                                        CSLConstList papszOptions)
 {
     CPLHTTPResult *psResult;
     const int RETRY_COUNT = 4;
@@ -1597,7 +1599,7 @@ CPLErr GDALDAASDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                                    int nBufXSize, int nBufYSize,
                                    GDALDataType /* eBufType */, int /*nBands*/,
                                    int * /*panBands*/,
-                                   char ** /* papszOptions */)
+                                   CSLConstList /* papszOptions */)
 {
     if (nXSize == nBufXSize && nYSize == nBufYSize)
     {
@@ -1752,7 +1754,7 @@ CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr GDALDAASRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize,
                                       int nYSize, int nBufXSize, int nBufYSize,
                                       GDALDataType /* eBufType */,
-                                      char ** /* papszOptions */)
+                                      CSLConstList /* papszOptions */)
 {
     GDALDAASDataset *poGDS = cpl::down_cast<GDALDAASDataset *>(poDS);
     if (nXSize == nBufXSize && nYSize == nBufYSize)

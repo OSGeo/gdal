@@ -10257,7 +10257,7 @@ OSRConvertToOtherProjection(OGRSpatialReferenceH hSRS,
  *
  */
 OGRSpatialReferenceH *OSRFindMatches(OGRSpatialReferenceH hSRS,
-                                     char **papszOptions, int *pnEntries,
+                                     CSLConstList papszOptions, int *pnEntries,
                                      int **ppanMatchConfidence)
 {
     if (pnEntries)
@@ -11888,7 +11888,7 @@ OGRErr OSRMorphFromESRI(OGRSpatialReferenceH hSRS)
  * @see OGRSpatialReference::FindBestMatch()
  */
 OGRSpatialReferenceH *
-OGRSpatialReference::FindMatches(char **papszOptions, int *pnEntries,
+OGRSpatialReference::FindMatches(CSLConstList papszOptions, int *pnEntries,
                                  int **ppanMatchConfidence) const
 {
     TAKE_OPTIONAL_LOCK();

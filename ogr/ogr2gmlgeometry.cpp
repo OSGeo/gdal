@@ -1264,7 +1264,7 @@ char *OGR_G_ExportToGML(OGRGeometryH hGeometry)
  *
  */
 
-char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, char **papszOptions)
+char *OGR_G_ExportToGMLEx(OGRGeometryH hGeometry, CSLConstList papszOptions)
 
 {
     if (hGeometry == nullptr)

@@ -437,8 +437,9 @@ struct OPJCodecWrapper
         return true;
     }
 
-    bool initCompress(char **papszOptions, const std::vector<double> &adfRates,
-                      int nBlockXSize, int nBlockYSize, bool bIsIrreversible,
+    bool initCompress(CSLConstList papszOptions,
+                      const std::vector<double> &adfRates, int nBlockXSize,
+                      int nBlockYSize, bool bIsIrreversible,
                       int nNumResolutions, JP2_PROG_ORDER eProgOrder, int bYCC,
                       int nCblockW, int nCblockH, int bYCBCR420, int bProfile1,
                       int nBands, int nXSize, int nYSize,

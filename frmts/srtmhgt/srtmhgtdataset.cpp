@@ -58,7 +58,7 @@ class SRTMHGTDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -514,7 +514,7 @@ GDALPamDataset *SRTMHGTDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
                                         GDALDataset *poSrcDS, int bStrict,
-                                        char ** /* papszOptions*/,
+                                        CSLConstList /* papszOptions*/,
                                         GDALProgressFunc pfnProgress,
                                         void *pProgressData)
 {

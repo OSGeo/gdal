@@ -1406,7 +1406,7 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
 /************************************************************************/
 
 static GDALDataset *COGCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                  int /*bStrict*/, char **papszOptions,
+                                  int /*bStrict*/, CSLConstList papszOptions,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData)
 {
@@ -1516,7 +1516,7 @@ CPLErr COGProxyDataset::Close(GDALProgressFunc pfnProgress, void *pProgressData)
 
 static GDALDataset *COGCreate(const char *pszFilename, int nXSize, int nYSize,
                               int nBands, GDALDataType eType,
-                              char **papszOptions)
+                              CSLConstList papszOptions)
 {
     const std::string osTmpFile(GetTmpFilename(pszFilename, "create.tif"));
     CPLStringList aosOptions;

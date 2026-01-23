@@ -766,7 +766,7 @@ CPLErr MEMDataset::SetGCPs(int nNewCount, const GDAL_GCP *pasNewGCPList,
 /*      memory.                                                         */
 /************************************************************************/
 
-CPLErr MEMDataset::AddBand(GDALDataType eType, char **papszOptions)
+CPLErr MEMDataset::AddBand(GDALDataType eType, CSLConstList papszOptions)
 
 {
     const int nBandId = GetRasterCount() + 1;
@@ -782,7 +782,8 @@ CPLErr MEMDataset::AddBand(GDALDataType eType, char **papszOptions)
     /*      Do we need to allocate the memory ourselves?  This is the       */
     /*      simple case.                                                    */
     /* -------------------------------------------------------------------- */
-    if (CSLFetchNameValue(papszOptions, "DATAPOINTER") == nullptr)
+    const CPLStringList aosOptions(papszOptions);
+    if (aosOptions.FetchNameValue("DATAPOINTER") == nullptr)
     {
         const GSpacing nTmp = nPixelSize * GetRasterXSize();
         GByte *pData =
@@ -807,18 +808,18 @@ CPLErr MEMDataset::AddBand(GDALDataType eType, char **papszOptions)
     /* -------------------------------------------------------------------- */
     /*      Get layout of memory and other flags.                           */
     /* -------------------------------------------------------------------- */
-    const char *pszDataPointer = CSLFetchNameValue(papszOptions, "DATAPOINTER");
+    const char *pszDataPointer = aosOptions.FetchNameValue("DATAPOINTER");
     GByte *pData = static_cast<GByte *>(CPLScanPointer(
         pszDataPointer, static_cast<int>(strlen(pszDataPointer))));
 
-    const char *pszOption = CSLFetchNameValue(papszOptions, "PIXELOFFSET");
+    const char *pszOption = aosOptions.FetchNameValue("PIXELOFFSET");
     GSpacing nPixelOffset;
     if (pszOption == nullptr)
         nPixelOffset = nPixelSize;
     else
         nPixelOffset = CPLAtoGIntBig(pszOption);
 
-    pszOption = CSLFetchNameValue(papszOptions, "LINEOFFSET");
+    pszOption = aosOptions.FetchNameValue("LINEOFFSET");
     GSpacing nLineOffset;
     if (pszOption == nullptr)
         nLineOffset = GetRasterXSize() * static_cast<size_t>(nPixelOffset);
@@ -1230,38 +1231,37 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 #endif
 
-    char **papszOptions =
-        CSLTokenizeStringComplex(poOpenInfo->pszFilename + 6, ",", TRUE, FALSE);
+    const CPLStringList aosOptions(CSLTokenizeStringComplex(
+        poOpenInfo->pszFilename + 6, ",", TRUE, FALSE));
 
     /* -------------------------------------------------------------------- */
     /*      Verify we have all required fields                              */
     /* -------------------------------------------------------------------- */
-    if (CSLFetchNameValue(papszOptions, "PIXELS") == nullptr ||
-        CSLFetchNameValue(papszOptions, "LINES") == nullptr ||
-        CSLFetchNameValue(papszOptions, "DATAPOINTER") == nullptr)
+    if (aosOptions.FetchNameValue("PIXELS") == nullptr ||
+        aosOptions.FetchNameValue("LINES") == nullptr ||
+        aosOptions.FetchNameValue("DATAPOINTER") == nullptr)
     {
         CPLError(
             CE_Failure, CPLE_AppDefined,
             "Missing required field (one of PIXELS, LINES or DATAPOINTER).  "
             "Unable to access in-memory array.");
 
-        CSLDestroy(papszOptions);
         return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Create the new MEMDataset object.                               */
     /* -------------------------------------------------------------------- */
-    MEMDataset *poDS = new MEMDataset();
+    auto poDS = std::make_unique<MEMDataset>();
 
-    poDS->nRasterXSize = atoi(CSLFetchNameValue(papszOptions, "PIXELS"));
-    poDS->nRasterYSize = atoi(CSLFetchNameValue(papszOptions, "LINES"));
+    poDS->nRasterXSize = atoi(aosOptions.FetchNameValue("PIXELS"));
+    poDS->nRasterYSize = atoi(aosOptions.FetchNameValue("LINES"));
     poDS->eAccess = poOpenInfo->eAccess;
 
     /* -------------------------------------------------------------------- */
     /*      Extract other information.                                      */
     /* -------------------------------------------------------------------- */
-    const char *pszOption = CSLFetchNameValue(papszOptions, "BANDS");
+    const char *pszOption = aosOptions.FetchNameValue("BANDS");
     int nBands = 1;
     if (pszOption != nullptr)
     {
@@ -1271,12 +1271,10 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBands, TRUE))
     {
-        CSLDestroy(papszOptions);
-        delete poDS;
         return nullptr;
     }
 
-    pszOption = CSLFetchNameValue(papszOptions, "DATATYPE");
+    pszOption = aosOptions.FetchNameValue("DATATYPE");
     GDALDataType eType = GDT_UInt8;
     if (pszOption != nullptr)
     {
@@ -1289,14 +1287,12 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "DATATYPE=%s not recognised.", pszOption);
-                CSLDestroy(papszOptions);
-                delete poDS;
                 return nullptr;
             }
         }
     }
 
-    pszOption = CSLFetchNameValue(papszOptions, "PIXELOFFSET");
+    pszOption = aosOptions.FetchNameValue("PIXELOFFSET");
     GSpacing nPixelOffset;
     if (pszOption == nullptr)
         nPixelOffset = GDALGetDataTypeSizeBytes(eType);
@@ -1304,7 +1300,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
         nPixelOffset =
             CPLScanUIntBig(pszOption, static_cast<int>(strlen(pszOption)));
 
-    pszOption = CSLFetchNameValue(papszOptions, "LINEOFFSET");
+    pszOption = aosOptions.FetchNameValue("LINEOFFSET");
     GSpacing nLineOffset = 0;
     if (pszOption == nullptr)
         nLineOffset = poDS->nRasterXSize * static_cast<size_t>(nPixelOffset);
@@ -1312,7 +1308,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
         nLineOffset =
             CPLScanUIntBig(pszOption, static_cast<int>(strlen(pszOption)));
 
-    pszOption = CSLFetchNameValue(papszOptions, "BANDOFFSET");
+    pszOption = aosOptions.FetchNameValue("BANDOFFSET");
     GSpacing nBandOffset = 0;
     if (pszOption == nullptr)
         nBandOffset = nLineOffset * static_cast<size_t>(poDS->nRasterYSize);
@@ -1320,7 +1316,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
         nBandOffset =
             CPLScanUIntBig(pszOption, static_cast<int>(strlen(pszOption)));
 
-    const char *pszDataPointer = CSLFetchNameValue(papszOptions, "DATAPOINTER");
+    const char *pszDataPointer = aosOptions.FetchNameValue("DATAPOINTER");
     GByte *pabyData = static_cast<GByte *>(CPLScanPointer(
         pszDataPointer, static_cast<int>(strlen(pszDataPointer))));
 
@@ -1330,20 +1326,21 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     for (int iBand = 0; iBand < nBands; iBand++)
     {
         poDS->SetBand(iBand + 1,
-                      new MEMRasterBand(poDS, iBand + 1,
-                                        pabyData + iBand * nBandOffset, eType,
-                                        nPixelOffset, nLineOffset, FALSE));
+                      std::make_unique<MEMRasterBand>(
+                          poDS.get(), iBand + 1, pabyData + iBand * nBandOffset,
+                          eType, nPixelOffset, nLineOffset, FALSE));
     }
 
     /* -------------------------------------------------------------------- */
     /*      Set GeoTransform information.                                   */
     /* -------------------------------------------------------------------- */
 
-    pszOption = CSLFetchNameValue(papszOptions, "GEOTRANSFORM");
+    pszOption = aosOptions.FetchNameValue("GEOTRANSFORM");
     if (pszOption != nullptr)
     {
-        char **values = CSLTokenizeStringComplex(pszOption, "/", TRUE, FALSE);
-        if (CSLCount(values) == 6)
+        const CPLStringList values(
+            CSLTokenizeStringComplex(pszOption, "/", TRUE, FALSE));
+        if (values.size() == 6)
         {
             GDALGeoTransform gt;
             for (size_t i = 0; i < 6; ++i)
@@ -1353,14 +1350,13 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
             }
             poDS->SetGeoTransform(gt);
         }
-        CSLDestroy(values);
     }
 
     /* -------------------------------------------------------------------- */
     /*      Set Projection Information                                      */
     /* -------------------------------------------------------------------- */
 
-    pszOption = CSLFetchNameValue(papszOptions, "SPATIALREFERENCE");
+    pszOption = aosOptions.FetchNameValue("SPATIALREFERENCE");
     if (pszOption != nullptr)
     {
         poDS->m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -1373,8 +1369,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Try to return a regular handle on the file.                     */
     /* -------------------------------------------------------------------- */
-    CSLDestroy(papszOptions);
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
@@ -1383,7 +1378,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
 
 MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
                                int nYSize, int nBandsIn, GDALDataType eType,
-                               char **papszOptions)
+                               CSLConstList papszOptions)
 {
 
     /* -------------------------------------------------------------------- */
@@ -1499,7 +1494,8 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
 
 GDALDataset *MEMDataset::CreateBase(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn,
-                                    GDALDataType eType, char **papszOptions)
+                                    GDALDataType eType,
+                                    CSLConstList papszOptions)
 {
     return Create(pszFilename, nXSize, nYSize, nBandsIn, eType, papszOptions);
 }

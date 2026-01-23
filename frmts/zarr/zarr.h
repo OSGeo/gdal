@@ -84,10 +84,10 @@ class ZarrDataset final : public GDALDataset
 
     static GDALDataset *Create(const char *pszName, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     static GDALDataset *CreateCopy(const char *, GDALDataset *, int,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 

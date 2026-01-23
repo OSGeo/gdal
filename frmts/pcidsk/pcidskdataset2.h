@@ -63,7 +63,7 @@ class PCIDSK2Dataset final : public GDALPamDataset
                                char **papszSiblingFiles = nullptr);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
 
     char **GetFileList() override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;

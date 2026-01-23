@@ -51,7 +51,7 @@ class KTX2Dataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -402,7 +402,7 @@ GDALDataset *KTX2Dataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *KTX2Dataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /*bStrict*/,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

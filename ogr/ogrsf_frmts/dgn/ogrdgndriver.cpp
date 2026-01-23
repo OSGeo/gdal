@@ -76,7 +76,7 @@ static GDALDataset *OGRDGNDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRDGNDriverCreate(const char *, int /* nBands */,
                                        int /* nXSize */, int /* nYSize */,
                                        GDALDataType /* eDT */,
-                                       char **papszOptions)
+                                       CSLConstList papszOptions)
 {
     OGRDGNDataSource *poDS = new OGRDGNDataSource();
     poDS->PreCreate(papszOptions);

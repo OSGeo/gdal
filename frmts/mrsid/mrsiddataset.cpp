@@ -263,7 +263,7 @@ class MrSIDDataset final : public GDALJP2AbstractDataset
 #ifdef MRSID_ESDK
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
 #endif
 };
 
@@ -3168,7 +3168,7 @@ LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer &stripData,
 
 static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 
@@ -3421,7 +3421,7 @@ static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
 /************************************************************************/
 
 static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                  int bStrict, char **papszOptions,
+                                  int bStrict, CSLConstList papszOptions,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData)
 

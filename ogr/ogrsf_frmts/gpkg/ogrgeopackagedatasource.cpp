@@ -2285,7 +2285,7 @@ bool GDALGeoPackageDataset::InitRaster(
     GDALGeoPackageDataset *poParentDS, const char *pszTableName, double dfMinX,
     double dfMinY, double dfMaxX, double dfMaxY, const char *pszContentsMinX,
     const char *pszContentsMinY, const char *pszContentsMaxX,
-    const char *pszContentsMaxY, char **papszOpenOptionsIn,
+    const char *pszContentsMaxY, CSLConstList papszOpenOptionsIn,
     const SQLResult &oResult, int nIdxInResult)
 {
     m_osRasterTable = pszTableName;
@@ -2632,7 +2632,7 @@ bool GDALGeoPackageDataset::OpenRaster(
     const char *pszDescription, int nSRSId, double dfMinX, double dfMinY,
     double dfMaxX, double dfMaxY, const char *pszContentsMinX,
     const char *pszContentsMinY, const char *pszContentsMaxX,
-    const char *pszContentsMaxY, bool bIsTiles, char **papszOpenOptionsIn)
+    const char *pszContentsMaxY, bool bIsTiles, CSLConstList papszOpenOptionsIn)
 {
     if (dfMinX >= dfMaxX || dfMinY >= dfMaxY)
         return false;
@@ -4945,7 +4945,7 @@ CPLErr GDALGeoPackageDataset::SetMetadataItem(const char *pszName,
 
 int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eDT,
-                                  char **papszOptions)
+                                  CSLConstList papszOptions)
 {
     CPLString osCommand;
 
@@ -5702,7 +5702,7 @@ void GDALGeoPackageDataset::RemoveOGREmptyTable()
 /*                        CreateTileGriddedTable()                      */
 /************************************************************************/
 
-bool GDALGeoPackageDataset::CreateTileGriddedTable(char **papszOptions)
+bool GDALGeoPackageDataset::CreateTileGriddedTable(CSLConstList papszOptions)
 {
     CPLString osSQL;
     if (!HasGriddedCoverageAncillaryTable())
@@ -5897,7 +5897,8 @@ static const WarpResamplingAlg asResamplingAlg[] = {
 
 GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
                                                GDALDataset *poSrcDS,
-                                               int bStrict, char **papszOptions,
+                                               int bStrict,
+                                               CSLConstList papszOptions,
                                                GDALProgressFunc pfnProgress,
                                                void *pProgressData)
 {
@@ -6382,7 +6383,7 @@ GDALDataset *GDALGeoPackageDataset::CreateCopy(const char *pszFilename,
 /*                        ParseCompressionOptions()                     */
 /************************************************************************/
 
-void GDALGeoPackageDataset::ParseCompressionOptions(char **papszOptions)
+void GDALGeoPackageDataset::ParseCompressionOptions(CSLConstList papszOptions)
 {
     const char *pszZLevel = CSLFetchNameValue(papszOptions, "ZLEVEL");
     if (pszZLevel)

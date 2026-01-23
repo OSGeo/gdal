@@ -88,7 +88,7 @@ class FITSDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     static CPLErr Delete(const char *pszFilename);
 
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -2673,7 +2673,7 @@ GDALDataset *FITSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *FITSDataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 CPL_UNUSED char **papszParamList)
+                                 CPL_UNUSED CSLConstList papszParamList)
 {
     int status = 0;
 

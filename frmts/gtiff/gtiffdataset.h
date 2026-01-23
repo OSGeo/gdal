@@ -389,7 +389,7 @@ class GTiffDataset final : public GDALPamDataset
     std::tuple<CPLErr, bool> Finalize();
 
     void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand) const;
-    void GetDiscardLsbOption(char **papszOptions);
+    void GetDiscardLsbOption(CSLConstList papszOptions);
     void InitCompressionThreads(bool bUpdateMode, CSLConstList papszOptions);
     void InitCreationOrOpenOptions(bool bUpdateMode, CSLConstList papszOptions);
     static void ThreadCompressionFunc(void *pData);
@@ -547,10 +547,10 @@ class GTiffDataset final : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     CPLErr FlushCache(bool bAtClosing) override;
@@ -583,15 +583,17 @@ class GTiffDataset final : public GDALPamDataset
     static TIFF *CreateLL(const char *pszFilename, int nXSize, int nYSize,
                           int nBands, GDALDataType eType,
                           double dfExtraSpaceForOverviews,
-                          int nColorTableMultiplier, char **papszParamList,
-                          VSILFILE **pfpL, CPLString &osTmpFilename,
-                          bool bCreateCopy, bool &bTileInterleavingOut);
+                          int nColorTableMultiplier,
+                          CSLConstList papszParamList, VSILFILE **pfpL,
+                          CPLString &osTmpFilename, bool bCreateCopy,
+                          bool &bTileInterleavingOut);
 
     CPLErr WriteEncodedTileOrStrip(uint32_t tile_or_strip, void *data,
                                    int bPreserveDataBuffer);
 
     static void SaveICCProfile(GTiffDataset *pDS, TIFF *hTIFF,
-                               char **papszParamList, uint32_t nBitsPerSample);
+                               CSLConstList papszParamList,
+                               uint32_t nBitsPerSample);
 
     static const GTIFFTag *GetTIFFTags();
 

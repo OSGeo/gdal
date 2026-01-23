@@ -468,7 +468,7 @@ int OGRODSDataSource::Open(const char *pszFilename, VSILFILE *fpContentIn,
 /************************************************************************/
 
 int OGRODSDataSource::Create(const char *pszFilename,
-                             char ** /* papszOptions */)
+                             CSLConstList /* papszOptions */)
 {
     bUpdated = true;
     bUpdatable = true;

@@ -55,7 +55,7 @@ static GDALDataset *OGRDGNV8DriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRDGNV8DriverCreate(const char *pszName, int /* nBands */,
                                          int /* nXSize */, int /* nYSize */,
                                          GDALDataType /* eDT */,
-                                         char **papszOptions)
+                                         CSLConstList papszOptions)
 {
     if (!OGRTEIGHAInitialize())
         return nullptr;

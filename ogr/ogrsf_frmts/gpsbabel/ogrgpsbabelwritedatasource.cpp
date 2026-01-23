@@ -118,7 +118,7 @@ bool OGRGPSBabelWriteDataSource::Convert()
 /************************************************************************/
 
 int OGRGPSBabelWriteDataSource::Create(const char *pszNameIn,
-                                       char **papszOptions)
+                                       CSLConstList papszOptions)
 {
     GDALDriver *poGPXDriver =
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("GPX");

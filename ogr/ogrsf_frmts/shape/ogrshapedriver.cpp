@@ -158,7 +158,7 @@ static GDALDataset *OGRShapeDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
                                          int /* nXSize */, int /* nYSize */,
                                          GDALDataType /* eDT */,
-                                         char ** /* papszOptions */)
+                                         CSLConstList /* papszOptions */)
 {
     bool bSingleNewFile = false;
     const CPLString osExt(CPLGetExtensionSafe(pszName));

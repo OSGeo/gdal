@@ -2035,7 +2035,7 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 /************************************************************************/
 GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszParamList)
+                                CSLConstList papszParamList)
 {
     return Create(pszFilename, nXSize, nYSize, nBandsIn, eType, papszParamList,
                   nullptr, 1.0);
@@ -2043,8 +2043,8 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 
 GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszParamList, RMFDataset *poParentDS,
-                                double dfOvFactor)
+                                CSLConstList papszParamList,
+                                RMFDataset *poParentDS, double dfOvFactor)
 
 {
     if (nBandsIn != 1 && nBandsIn != 3)
@@ -2889,7 +2889,7 @@ void RMFDataset::WriteTileJobFunc(void *pData)
     }
 }
 
-CPLErr RMFDataset::InitCompressorData(char **papszParamList)
+CPLErr RMFDataset::InitCompressorData(CSLConstList papszParamList)
 {
     const char *pszNumThreads =
         CSLFetchNameValue(papszParamList, "NUM_THREADS");

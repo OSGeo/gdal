@@ -231,7 +231,7 @@ class GDALThreadSafeDataset final : public GDALProxyDataset
 
     GDALAsyncReader *BeginAsyncReader(int, int, int, int, void *, int, int,
                                       GDALDataType, int, int *, int, int, int,
-                                      char **) override
+                                      CSLConstList) override
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GDALThreadSafeDataset::BeginAsyncReader() not supported");
@@ -377,7 +377,7 @@ class GDALThreadSafeRasterBand final : public GDALProxyRasterBand
     /* End of methods that forward on the prototype band */
 
     CPLVirtualMem *GetVirtualMemAuto(GDALRWFlag, int *, GIntBig *,
-                                     char **) override
+                                     CSLConstList) override
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "GDALThreadSafeRasterBand::GetVirtualMemAuto() not supported");

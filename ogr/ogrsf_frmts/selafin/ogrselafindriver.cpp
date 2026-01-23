@@ -76,7 +76,7 @@ static GDALDataset *OGRSelafinDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *
 OGRSelafinDriverCreate(const char *pszName, CPL_UNUSED int nXSize,
                        CPL_UNUSED int nYSize, CPL_UNUSED int nBands,
-                       CPL_UNUSED GDALDataType eDT, char **papszOptions)
+                       CPL_UNUSED GDALDataType eDT, CSLConstList papszOptions)
 {
     // First, ensure there isn't any such file yet.
     VSIStatBufL sStatBuf;

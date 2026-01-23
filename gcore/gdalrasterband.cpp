@@ -5153,7 +5153,7 @@ GDALGetDefaultHistogramEx(GDALRasterBandH hBand, double *pdfMin, double *pdfMax,
 CPLErr GDALRasterBand::AdviseRead(int /*nXOff*/, int /*nYOff*/, int /*nXSize*/,
                                   int /*nYSize*/, int /*nBufXSize*/,
                                   int /*nBufYSize*/, GDALDataType /*eBufType*/,
-                                  char ** /*papszOptions*/)
+                                  CSLConstList /*papszOptions*/)
 {
     return CE_None;
 }
@@ -10259,7 +10259,7 @@ void GDALRasterBand::ReportError(CPLErr eErrClass, CPLErrorNum err_no,
 CPLVirtualMem *GDALRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                  int *pnPixelSpace,
                                                  GIntBig *pnLineSpace,
-                                                 char **papszOptions)
+                                                 CSLConstList papszOptions)
 {
     const char *pszImpl = CSLFetchNameValueDef(
         papszOptions, "USE_DEFAULT_IMPLEMENTATION", "AUTO");

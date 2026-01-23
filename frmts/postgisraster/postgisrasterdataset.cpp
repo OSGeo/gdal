@@ -3474,7 +3474,7 @@ char **PostGISRasterDataset::GetFileList()
  ********************************************************/
 GDALDataset *PostGISRasterDataset::CreateCopy(
     CPL_UNUSED const char *pszFilename, GDALDataset *poGSrcDS,
-    CPL_UNUSED int bStrict, CPL_UNUSED char **papszOptions,
+    CPL_UNUSED int bStrict, CSLConstList,
     CPL_UNUSED GDALProgressFunc pfnProgress, CPL_UNUSED void *pProgressData)
 {
     char *pszSchema = nullptr;

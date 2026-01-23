@@ -81,7 +81,7 @@ class SIGDEMDataset final : public GDALPamDataset
 
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     static int Identify(GDALOpenInfo *);

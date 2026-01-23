@@ -11,6 +11,11 @@ From GDAL 3.12 to GDAL 3.13
 
   * :cpp:func:`GDALDataset::Close` takes now 2 input parameters ``(GDALProgressFunc pfnProgress, void *pProgressData)``,
     which may be nullptr.
+  * :cpp:func:`GDALDataset::AddBand`, :cpp:func:`GDALDataset::AdviseRead`,
+    :cpp:func:`GDALDataset::BeginAsyncReader`, :cpp:func:`GDALDataset::CopyLayer`,
+    ``GDALDriver::pfnCreate``, ``GDALDriver::pfnCreateCopy``,
+    :cpp:func:`GDALRasterBand::AdviseRead` and :cpp:func:`GDALRasterBand::GetVirtualMemAuto`
+    now take a ``CSLConstList papszOptions`` parameter instead of ``char **``.
 
 - Changes impacting C++ users:
 

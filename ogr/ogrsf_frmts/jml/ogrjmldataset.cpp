@@ -117,7 +117,7 @@ GDALDataset *OGRJMLDataset::Open(GDALOpenInfo *poOpenInfo)
 GDALDataset *OGRJMLDataset::Create(const char *pszFilename, int /* nXSize */,
                                    int /* nYSize */, int /* nBands */,
                                    GDALDataType /* eDT */,
-                                   char ** /* papszOptions */)
+                                   CSLConstList /* papszOptions */)
 {
     if (strcmp(pszFilename, "/dev/stdout") == 0)
         pszFilename = "/vsistdout/";

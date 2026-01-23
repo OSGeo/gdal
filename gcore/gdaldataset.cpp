@@ -84,16 +84,6 @@
 
 extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
 
-CPL_C_START
-GDALAsyncReader *GDALGetDefaultAsyncReader(GDALDataset *poDS, int nXOff,
-                                           int nYOff, int nXSize, int nYSize,
-                                           void *pBuf, int nBufXSize,
-                                           int nBufYSize, GDALDataType eBufType,
-                                           int nBandCount, int *panBandMap,
-                                           int nPixelSpace, int nLineSpace,
-                                           int nBandSpace, char **papszOptions);
-CPL_C_END
-
 enum class GDALAllowReadWriteMutexState
 {
     RW_MUTEX_STATE_UNKNOWN,
@@ -970,7 +960,7 @@ void GDALDataset::RasterInitialize(int nXSize, int nYSize)
  */
 
 CPLErr GDALDataset::AddBand(CPL_UNUSED GDALDataType eType,
-                            CPL_UNUSED char **papszOptions)
+                            CPL_UNUSED CSLConstList papszOptions)
 
 {
     ReportError(CE_Failure, CPLE_NotSupported,
@@ -3490,7 +3480,7 @@ int CPL_STDCALL GDALGetAccess(GDALDatasetH hDS)
 CPLErr GDALDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, int nBandCount,
-                               int *panBandMap, char **papszOptions)
+                               int *panBandMap, CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */
@@ -4908,7 +4898,7 @@ int CPL_STDCALL GDALDumpOpenDatasets(FILE *fp)
 GDALAsyncReader *GDALDataset::BeginAsyncReader(
     int nXOff, int nYOff, int nXSize, int nYSize, void *pBuf, int nBufXSize,
     int nBufYSize, GDALDataType eBufType, int nBandCount, int *panBandMap,
-    int nPixelSpace, int nLineSpace, int nBandSpace, char **papszOptions)
+    int nPixelSpace, int nLineSpace, int nBandSpace, CSLConstList papszOptions)
 {
     // See gdaldefaultasync.cpp
 
@@ -5905,8 +5895,7 @@ OGRLayerH GDALDatasetCopyLayer(GDALDatasetH hDS, OGRLayerH hSrcLayer,
     VALIDATE_POINTER1(pszNewName, "GDALDatasetCopyLayer", nullptr);
 
     return OGRLayer::ToHandle(GDALDataset::FromHandle(hDS)->CopyLayer(
-        OGRLayer::FromHandle(hSrcLayer), pszNewName,
-        const_cast<char **>(papszOptions)));
+        OGRLayer::FromHandle(hSrcLayer), pszNewName, papszOptions));
 }
 
 /************************************************************************/
@@ -6237,7 +6226,7 @@ GDALDataset::ICreateLayer(CPL_UNUSED const char *pszName,
 */
 
 OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */

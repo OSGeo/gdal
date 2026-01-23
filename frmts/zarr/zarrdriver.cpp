@@ -1160,7 +1160,7 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
 
 GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
                                  int nBandsIn, GDALDataType eType,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 {
     // To avoid any issue with short-lived string that would be passed to us
     const std::string osName = pszName;
@@ -1922,7 +1922,7 @@ CPLErr ZarrRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 /* static */
 GDALDataset *ZarrDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

@@ -355,7 +355,7 @@ static GDALDataset *OGRGeoPackageDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRGeoPackageDriverCreate(const char *pszFilename,
                                               int nXSize, int nYSize,
                                               int nBands, GDALDataType eDT,
-                                              char **papszOptions)
+                                              CSLConstList papszOptions)
 {
     if (strcmp(pszFilename, ":memory:") != 0)
     {
