@@ -1379,9 +1379,9 @@ static void BlendColorDodge_Generic(
         };
 
         // Dca.Sa/(1-Sca/Sa) + Sca.(1 - Da) + Dca.(1 - Sa)
-        auto processComponent_lessThan =
-            [&nFinalAlpha, &alphaMul255](GByte C, GByte A, GByte OverlayC,
-                                         GByte OverlayA) -> GByte
+        auto processComponent_lessThan = [&nFinalAlpha](GByte C, GByte A,
+                                                        GByte OverlayC,
+                                                        GByte OverlayA) -> GByte
         {
             return DivScale255(
                 DivScale255(MulScale255(C, OverlayA),
