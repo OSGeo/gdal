@@ -59,6 +59,7 @@ Program-Specific Options
 .. option:: --include-valid
 
    Include features for valid geometries in the output, maintaining 1:1 correspondence between input and output features.
+   The geometry of valid features will be an empty geometry.
 
 .. option:: --input-layer
 
@@ -104,3 +105,33 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+Examples
+--------
+
+.. example::
+   :title: Output coverage errors in a :ref:`vector.topojson` file to a :ref:`vector.geojson` file
+
+   .. code-block:: bash
+
+        $ gdal vector check-coverage "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" --layer counties counties-errors.geojson
+
+.. example::
+   :title: Output invalid coverage features to the command-line as part of a pipeline
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector pipeline !
+            ! read "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" --layer counties !
+            ! check-coverage !
+            ! info --features
+
+      .. code-tab:: powershell
+
+        gdal vector pipeline `
+            ! read "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" --layer counties `
+            ! check-coverage `
+            ! info --features
+
