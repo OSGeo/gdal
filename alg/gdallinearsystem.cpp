@@ -30,7 +30,6 @@
 #include <cassert>
 #include <cmath>
 
-#ifndef HAVE_ARMADILLO
 namespace
 {
 // LU decomposition of the quadratic matrix A
@@ -47,8 +46,22 @@ bool solve(GDALMatrix &A, GDALMatrix &RHS, GDALMatrix &X, double eps)
     for (int iRow = 0; iRow < m; ++iRow)
         perm[iRow] = iRow;
 
+    // Arbitrary threshold to trigger progress in debug mode
+    const bool bDebug = (m > 10000);
+    int nLastPct = -1;
+
     for (int step = 0; step < m - 1; ++step)
     {
+        if (bDebug)
+        {
+            const int nPct = (step * 100 * 10 / m) / 2;
+            if (nPct != nLastPct)
+            {
+                CPLDebug("GDAL", "solve(): %d.%d %%", nPct / 10, nPct % 10);
+                nLastPct = nPct;
+            }
+        }
+
         // determine pivot element
         int iMax = step;
         double dMax = std::abs(A(step, step));
@@ -91,6 +104,16 @@ bool solve(GDALMatrix &A, GDALMatrix &RHS, GDALMatrix &X, double eps)
     // LUP solve;
     for (int iCol = 0; iCol < n; ++iCol)
     {
+        if (bDebug)
+        {
+            const int nPct = 500 + (iCol * 100 * 10 / n) / 2;
+            if (nPct != nLastPct)
+            {
+                CPLDebug("GDAL", "solve(): %d.%d %%", nPct / 10, nPct % 10);
+                nLastPct = nPct;
+            }
+        }
+
         for (int iRow = 0; iRow < m; ++iRow)
         {
             X(iRow, iCol) = RHS(perm[iRow], iCol);
@@ -108,48 +131,60 @@ bool solve(GDALMatrix &A, GDALMatrix &RHS, GDALMatrix &X, double eps)
             X(iRow, iCol) /= A(iRow, iRow);
         }
     }
+
+    if (bDebug)
+    {
+        CPLDebug("GDAL", "solve(): 100.0 %%");
+    }
+
     return true;
 }
 }  // namespace
-#endif
+
 /************************************************************************/
 /*                       GDALLinearSystemSolve()                        */
 /*                                                                      */
 /*   Solves the linear system A*X_i = RHS_i for each column i           */
 /*   where A is a square matrix.                                        */
 /************************************************************************/
-bool GDALLinearSystemSolve(GDALMatrix &A, GDALMatrix &RHS, GDALMatrix &X)
+bool GDALLinearSystemSolve(GDALMatrix &A, GDALMatrix &RHS, GDALMatrix &X,
+                           [[maybe_unused]] bool bForceBuiltinMethod)
 {
     assert(A.getNumRows() == RHS.getNumRows());
     assert(A.getNumCols() == X.getNumRows());
     assert(RHS.getNumCols() == X.getNumCols());
-    try
-    {
+
 #ifdef HAVE_ARMADILLO
-        arma::mat matA(A.data(), A.getNumRows(), A.getNumCols(), false, true);
-        arma::mat matRHS(RHS.data(), RHS.getNumRows(), RHS.getNumCols(), false,
-                         true);
-        arma::mat matOut(X.data(), X.getNumRows(), X.getNumCols(), false, true);
+    if (!bForceBuiltinMethod)
+    {
+        try
+        {
+            arma::mat matA(A.data(), A.getNumRows(), A.getNumCols(), false,
+                           true);
+            arma::mat matRHS(RHS.data(), RHS.getNumRows(), RHS.getNumCols(),
+                             false, true);
+            arma::mat matOut(X.data(), X.getNumRows(), X.getNumCols(), false,
+                             true);
 #if ARMA_VERSION_MAJOR > 6 ||                                                  \
     (ARMA_VERSION_MAJOR == 6 && ARMA_VERSION_MINOR >= 500)
-        // Perhaps available in earlier versions, but didn't check
-        return arma::solve(matOut, matA, matRHS,
-                           arma::solve_opts::equilibrate +
-                               arma::solve_opts::no_approx);
+            // Perhaps available in earlier versions, but didn't check
+            return arma::solve(matOut, matA, matRHS,
+                               arma::solve_opts::equilibrate +
+                                   arma::solve_opts::no_approx);
 #else
-        return arma::solve(matOut, matA, matRHS);
+            return arma::solve(matOut, matA, matRHS);
 #endif
+        }
+        catch (std::exception const &e)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "GDALLinearSystemSolve: %s",
+                     e.what());
+            return false;
+        }
+    }
+#endif  // HAVE_ARMADILLO
 
-#else  // HAVE_ARMADILLO
-        return solve(A, RHS, X, 0);
-#endif
-    }
-    catch (std::exception const &e)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "GDALLinearSystemSolve: %s",
-                 e.what());
-        return false;
-    }
+    return solve(A, RHS, X, 0);
 }
 
 /*! @endcond */
