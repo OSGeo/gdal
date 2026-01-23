@@ -46,7 +46,7 @@
    Vector data formats
    ^^^^^^^^^^^^^^^^^^^
    
-   The most popular vector formats remain GeoPackage, Shapefile, GeoJSON and PostGIS. The responses clearly show increasing increasing adoption of GeoParquet.
+   The most popular vector formats remain GeoPackage, Shapefile, GeoJSON and PostGIS. The responses clearly show increasing adoption of GeoParquet.
 
    .. image:: ../../images/community/survey_2025/vector_data_formats.svg
 
