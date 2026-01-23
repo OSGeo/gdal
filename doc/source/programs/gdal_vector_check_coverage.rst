@@ -50,15 +50,10 @@ Program-Specific Options
    Specify the name of the geometry field to test, for layers having multiple geometry fields. By default the first
    geometry field will be used.
 
-.. option:: --include-field
-
-   .. versionadded:: 3.12.1
-
-   Optional field(s) to copy from the input features to the output.
-
 .. option:: --include-valid
 
    Include features for valid geometries in the output, maintaining 1:1 correspondence between input and output features.
+   The geometry of valid features will be an empty geometry.
 
 .. option:: --input-layer
 
@@ -104,3 +99,32 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+Examples
+--------
+
+.. example::
+   :title: Output coverage errors in a :ref:`TopoJSON <vector.topojson>` file to a :ref:`GeoJSON <vector.geojson>` file
+
+   .. code-block:: bash
+
+        $ gdal vector check-coverage "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" --layer counties counties-errors.geojson
+
+.. example::
+   :title: Output invalid coverage features to the command-line as part of a pipeline
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector pipeline \
+            ! read "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" --layer counties \
+            ! check-coverage \
+            ! info --features
+
+      .. code-tab:: powershell
+
+        gdal vector pipeline `
+            ! read "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" --layer counties `
+            ! check-coverage `
+            ! info --features
