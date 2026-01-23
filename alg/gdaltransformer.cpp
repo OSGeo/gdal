@@ -2433,9 +2433,12 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             part.pTransformer = GDALHomographyTransform;
         }
         else if (bGCPUseOK &&
-                 (pszMethod == nullptr || EQUAL(pszMethod, "GCP_POLYNOMIAL")) &&
-                 GDALGetGCPCount(hDS) > 0 && nOrder >= 0)
+                 ((pszMethod == nullptr && nOrder >= 0) ||
+                  (pszMethod && EQUAL(pszMethod, "GCP_POLYNOMIAL"))) &&
+                 GDALGetGCPCount(hDS) > 0)
         {
+            const int nSanitizedOrder = std::max(0, nOrder);
+
             if (pszSRS == nullptr)
             {
                 auto hSRS = GDALGetGCPSpatialRef(hDS);
@@ -2451,13 +2454,13 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             if (bRefine)
             {
                 part.pTransformArg = GDALCreateGCPRefineTransformer(
-                    nGCPCount, pasGCPList, nOrder, FALSE, dfTolerance,
+                    nGCPCount, pasGCPList, nSanitizedOrder, FALSE, dfTolerance,
                     nMinimumGcps);
             }
             else
             {
                 part.pTransformArg = GDALCreateGCPTransformer(
-                    nGCPCount, pasGCPList, nOrder, FALSE);
+                    nGCPCount, pasGCPList, nSanitizedOrder, FALSE);
             }
 
             GDALDeinitGCPs(nGCPCount, pasGCPList);
@@ -2470,8 +2473,9 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             part.pTransformer = GDALGCPTransform;
         }
 
-        else if (bGCPUseOK && GDALGetGCPCount(hDS) > 0 && nOrder <= 0 &&
-                 (pszMethod == nullptr || EQUAL(pszMethod, "GCP_TPS")))
+        else if (bGCPUseOK && GDALGetGCPCount(hDS) > 0 &&
+                 ((pszMethod == nullptr && nOrder < 0) ||
+                  (pszMethod && EQUAL(pszMethod, "GCP_TPS"))))
         {
             if (pszSRS == nullptr)
             {
