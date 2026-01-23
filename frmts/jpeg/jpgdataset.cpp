@@ -933,8 +933,8 @@ void JPGDatasetCommon::ReadFLIRMetadata()
 
         const auto ReadFloat32FromKelvin = [=](std::uint32_t nOffset)
         {
-            constexpr float ZERO_CELCIUS_IN_KELVIN = 273.15f;
-            return ReadFloat32(nOffset) - ZERO_CELCIUS_IN_KELVIN;
+            constexpr float ZERO_CELSIUS_IN_KELVIN = 273.15f;
+            return ReadFloat32(nOffset) - ZERO_CELSIUS_IN_KELVIN;
         };
         SetMetadataItem("Emissivity",
                         CPLSPrintf("%f", ReadFloat32(nRecOffset + 32)), "FLIR");
