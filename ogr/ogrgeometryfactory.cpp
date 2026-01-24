@@ -1560,8 +1560,8 @@ struct sPolyExtended
     // recent libc++ std::sort() involve unsigned integer overflow in some
     // situation
     CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-    static void SortByIncreasingEra(const sPolyExtended **pStart,
-                                    const sPolyExtended **pEnd)
+    static void SortByIncreasingArea(const sPolyExtended **pStart,
+                                     const sPolyExtended **pEnd)
     {
         std::sort(pStart, pEnd,
                   [](const sPolyExtended *psPoly1, const sPolyExtended *psPoly2)
@@ -2119,7 +2119,7 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
                 CPLFree);
 
         // Sort candidate outer rings by increasing area
-        sPolyExtended::SortByIncreasingEra(
+        sPolyExtended::SortByIncreasingArea(
             aphCandidateShells.get(), aphCandidateShells.get() + nCandidates);
 
         int j = 0;
