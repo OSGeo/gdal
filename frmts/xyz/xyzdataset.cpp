@@ -1073,11 +1073,29 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                     {
                         nUsefulColsFound++;
                         dfX = CPLAtofDelim(pszPtr, chLocalDecimalSep);
+                        if (std::isnan(dfX))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "At line " CPL_FRMT_GIB
+                                     ", NaN value found",
+                                     nLineNum);
+                            VSIFCloseL(fp);
+                            return nullptr;
+                        }
                     }
                     else if (nCol == nYIndex)
                     {
                         nUsefulColsFound++;
                         dfY = CPLAtofDelim(pszPtr, chLocalDecimalSep);
+                        if (std::isnan(dfY))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "At line " CPL_FRMT_GIB
+                                     ", NaN value found",
+                                     nLineNum);
+                            VSIFCloseL(fp);
+                            return nullptr;
+                        }
                     }
                     else if (nCol == nZIndex)
                     {
@@ -1097,7 +1115,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                             dfMaxZ = dfZ;
                         }
 
-                        if (dfZ < INT_MIN || dfZ > INT_MAX)
+                        if (!(dfZ >= INT_MIN && dfZ <= INT_MAX))
                         {
                             eDT = GDT_Float32;
                         }
