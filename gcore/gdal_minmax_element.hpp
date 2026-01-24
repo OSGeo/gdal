@@ -411,7 +411,10 @@ template <class T> static inline auto set1(T x)
     else if constexpr (std::is_same_v<T, float>)
         return _mm_set1_ps(x);
     else
+    {
+        static_assert(std::is_same_v<T, double>);
         return _mm_set1_pd(x);
+    }
 }
 
 // Return a _mm128[i|d] register with all its elements set to x
@@ -460,7 +463,10 @@ template <class T> static inline auto set1_unshifted(T x)
     else if constexpr (std::is_same_v<T, float>)
         return _mm_set1_ps(x);
     else
+    {
+        static_assert(std::is_same_v<T, double>);
         return _mm_set1_pd(x);
+    }
 }
 
 // Load as many values of type T at a _mm128[i|d] register can contain from x
@@ -595,7 +601,10 @@ static inline __m128i comp(SSE_T x, SSE_T y)
         else if constexpr (std::is_same_v<T, float>)
             return _mm_castps_si128(_mm_cmpgt_ps(x, y));
         else
+        {
+            static_assert(std::is_same_v<T, double>);
             return _mm_castpd_si128(_mm_cmpgt_pd(x, y));
+        }
     }
     else
     {
@@ -639,7 +648,10 @@ static inline __m128i comp(SSE_T x, SSE_T y)
         else if constexpr (std::is_same_v<T, float>)
             return _mm_castps_si128(_mm_cmplt_ps(x, y));
         else
+        {
+            static_assert(std::is_same_v<T, double>);
             return _mm_castpd_si128(_mm_cmplt_pd(x, y));
+        }
     }
 }
 
