@@ -1718,7 +1718,8 @@ VSICurlHandle::GetRedirectURLIfValid(bool &bHasExpired,
 
     if (m_pszURL != osURL)
     {
-        const char *pszAuthorizationHeaderAllowed = CPLGetConfigOption(
+        const char *pszAuthorizationHeaderAllowed = VSIGetPathSpecificOption(
+            m_osFilename.c_str(),
             "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT",
             "IF_SAME_HOST");
         if (EQUAL(pszAuthorizationHeaderAllowed, "IF_SAME_HOST"))

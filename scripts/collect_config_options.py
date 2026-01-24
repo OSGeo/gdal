@@ -67,12 +67,12 @@ def collect_config_options(filename):
             option = None
             if pos_start == len(l):
                 l += lines[i + 1][0:-1].strip()
-                ++i
+                i += 1
 
             pos_start2 = l.find(', "', pos_start)
             if pos_start2 < 0:
                 l += " " + lines[i + 1][0:-1].strip()
-                ++i
+                i += 1
 
             pos_start2 = l.find(', "', pos_start)
             if pos_start2 < 0:
