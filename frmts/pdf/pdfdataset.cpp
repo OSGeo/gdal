@@ -886,8 +886,10 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     const int nXOff = nBlockXOff * nBlockXSize;
     const int nReqXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
-    const int nYOff = nBlockYOff * nBlockYSize;
-    const int nReqYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
+    const int nReqYSize =
+        nBlockYSize == 1
+            ? nRasterYSize
+            : std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
 
     if (!poGDS->m_bTried)
     {
