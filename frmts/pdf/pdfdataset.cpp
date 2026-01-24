@@ -666,14 +666,12 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
 {
     PDFDataset *poGDS = cpl::down_cast<PDFDataset *>(poDS);
 
-    int nReqXSize = nBlockXSize;
-    int nReqYSize = nBlockYSize;
-    if ((nBlockXOff + 1) * nBlockXSize > nRasterXSize)
-        nReqXSize = nRasterXSize - nBlockXOff * nBlockXSize;
-    if ((nBlockYOff + 1) * nBlockYSize > nRasterYSize)
-        nReqYSize = nRasterYSize - nBlockYOff * nBlockYSize;
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nReqXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nReqYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
-    int nXBlocks = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+    const int nXBlocks = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     int iTile = poGDS->m_aiTiles[nBlockYOff * nXBlocks + nBlockXOff];
     if (iTile < 0)
     {
@@ -886,14 +884,10 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         }
     }
 
-    int nReqXSize = nBlockXSize;
-    int nReqYSize = nBlockYSize;
-    if ((nBlockXOff + 1) * nBlockXSize > nRasterXSize)
-        nReqXSize = nRasterXSize - nBlockXOff * nBlockXSize;
-    if (nBlockYSize == 1)
-        nReqYSize = nRasterYSize;
-    else if ((nBlockYOff + 1) * nBlockYSize > nRasterYSize)
-        nReqYSize = nRasterYSize - nBlockYOff * nBlockYSize;
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nReqXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nReqYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
     if (!poGDS->m_bTried)
     {

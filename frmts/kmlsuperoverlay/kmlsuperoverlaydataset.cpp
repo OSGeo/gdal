@@ -14,10 +14,10 @@
 #include "cpl_port.h"
 #include "kmlsuperoverlaydataset.h"
 
-#include <array>
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <array>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -1103,14 +1103,10 @@ KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(
 CPLErr KmlSuperOverlayRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                              void *pData)
 {
-    int nXOff = nBlockXOff * nBlockXSize;
-    int nYOff = nBlockYOff * nBlockYSize;
-    int nXSize = nBlockXSize;
-    int nYSize = nBlockYSize;
-    if (nXOff + nXSize > nRasterXSize)
-        nXSize = nRasterXSize - nXOff;
-    if (nYOff + nYSize > nRasterYSize)
-        nYSize = nRasterYSize - nYOff;
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -2163,15 +2159,13 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         memset(pImage, 0, static_cast<size_t>(nBlockXSize) * nBlockYSize);
         return CE_None;
     }
-    int nXSize = poImageDS->GetRasterXSize();
-    int nYSize = poImageDS->GetRasterYSize();
+    const int nXSize = poImageDS->GetRasterXSize();
+    const int nYSize = poImageDS->GetRasterYSize();
 
-    int nReqXSize = nBlockXSize;
-    if (nBlockXOff * nBlockXSize + nReqXSize > nRasterXSize)
-        nReqXSize = nRasterXSize - nBlockXOff * nBlockXSize;
-    int nReqYSize = nBlockYSize;
-    if (nBlockYOff * nBlockYSize + nReqYSize > nRasterYSize)
-        nReqYSize = nRasterYSize - nBlockYOff * nBlockYSize;
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nReqXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nReqYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
     if (nXSize != nReqXSize || nYSize != nReqYSize)
     {

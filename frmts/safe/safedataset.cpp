@@ -65,40 +65,28 @@ CPLErr SAFERasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     /*      over-requesting.  We also need to initialize the extra part     */
     /*      of the block to zero.                                           */
     /* -------------------------------------------------------------------- */
-    int nRequestYSize;
-    if ((nBlockYOff + 1) * nBlockYSize > nRasterYSize)
-    {
-        nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
-        memset(pImage, 0,
-               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
-                   nBlockXSize * nBlockYSize);
-    }
-    else
-    {
-        nRequestYSize = nBlockYSize;
-    }
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nRequestYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
     /*-------------------------------------------------------------------- */
     /*      If the input imagery is tiled, also need to avoid over-        */
     /*      requesting in the X-direction.                                 */
     /* ------------------------------------------------------------------- */
-    int nRequestXSize;
-    if ((nBlockXOff + 1) * nBlockXSize > nRasterXSize)
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nRequestXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+
+    if (nRequestXSize < nBlockXSize || nRequestYSize < nBlockYSize)
     {
-        nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
         memset(pImage, 0,
                static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
                    nBlockXSize * nBlockYSize);
     }
-    else
-    {
-        nRequestXSize = nBlockXSize;
-    }
+
     if (eDataType == GDT_CInt16 && poBandFile->GetRasterCount() == 2)
-        return poBandFile->RasterIO(
-            GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-            nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
-            GDT_Int16, 2, nullptr, 4, nBlockXSize * 4, 2, nullptr);
+        return poBandFile->RasterIO(GF_Read, nXOff, nYOff, nRequestXSize,
+                                    nRequestYSize, pImage, nRequestXSize,
+                                    nRequestYSize, GDT_Int16, 2, nullptr, 4,
+                                    nBlockXSize * 4, 2, nullptr);
 
     /* -------------------------------------------------------------------- */
     /*      File has one sample marked as sample format void, a 32bits.     */
@@ -106,9 +94,9 @@ CPLErr SAFERasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     else if (eDataType == GDT_CInt16 && poBandFile->GetRasterCount() == 1)
     {
         CPLErr eErr = poBandFile->RasterIO(
-            GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-            nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
-            GDT_CInt16, 1, nullptr, 4, nBlockXSize * 4, 0, nullptr);
+            GF_Read, nXOff, nYOff, nRequestXSize, nRequestYSize, pImage,
+            nRequestXSize, nRequestYSize, GDT_CInt16, 1, nullptr, 4,
+            nBlockXSize * 4, 0, nullptr);
 
         return eErr;
     }
@@ -118,16 +106,16 @@ CPLErr SAFERasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     /*      looks like a 16bit unsigned data too.                           */
     /* -------------------------------------------------------------------- */
     else if (eDataType == GDT_UInt16)
-        return poBandFile->RasterIO(
-            GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-            nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
-            GDT_UInt16, 1, nullptr, 2, nBlockXSize * 2, 0, nullptr);
+        return poBandFile->RasterIO(GF_Read, nXOff, nYOff, nRequestXSize,
+                                    nRequestYSize, pImage, nRequestXSize,
+                                    nRequestYSize, GDT_UInt16, 1, nullptr, 2,
+                                    nBlockXSize * 2, 0, nullptr);
 
     else if (eDataType == GDT_UInt8)
-        return poBandFile->RasterIO(
-            GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-            nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
-            GDT_UInt8, 1, nullptr, 1, nBlockXSize, 0, nullptr);
+        return poBandFile->RasterIO(GF_Read, nXOff, nYOff, nRequestXSize,
+                                    nRequestYSize, pImage, nRequestXSize,
+                                    nRequestYSize, GDT_UInt8, 1, nullptr, 1,
+                                    nBlockXSize, 0, nullptr);
 
     CPLAssert(false);
     return CE_Failure;
@@ -177,40 +165,35 @@ CPLErr SAFESLCRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     /*      over-requesting.  We also need to initialize the extra part     */
     /*      of the block to zero.                                           */
     /* -------------------------------------------------------------------- */
-    int nRequestYSize;
-    if ((nBlockYOff + 1) * nBlockYSize > nRasterYSize)
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nRequestXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nRequestYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
+
+    if (nRequestYSize < nBlockYSize)
     {
-        nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset(pImage, 0,
                static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
                    nBlockXSize * nBlockYSize);
-    }
-    else
-    {
-        nRequestYSize = nBlockYSize;
     }
 
     /*-------------------------------------------------------------------- */
     /*      If the input imagery is tiled, also need to avoid over-        */
     /*      requesting in the X-direction.                                 */
     /* ------------------------------------------------------------------- */
-    int nRequestXSize;
-    if ((nBlockXOff + 1) * nBlockXSize > nRasterXSize)
+    if (nRequestXSize < nBlockXSize)
     {
-        nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
         memset(pImage, 0,
                static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
                    nBlockXSize * nBlockYSize);
     }
-    else
-        nRequestXSize = nBlockXSize;
 
     if (m_eInputDataType == GDT_CInt16 && poBandFile->GetRasterCount() == 2)
     {
-        return poBandFile->RasterIO(
-            GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-            nRequestXSize, nRequestYSize, pImage, nRequestXSize, nRequestYSize,
-            GDT_Int16, 2, nullptr, 4, nBlockXSize * 4, 2, nullptr);
+        return poBandFile->RasterIO(GF_Read, nXOff, nYOff, nRequestXSize,
+                                    nRequestYSize, pImage, nRequestXSize,
+                                    nRequestYSize, GDT_Int16, 2, nullptr, 4,
+                                    nBlockXSize * 4, 2, nullptr);
     }
     // File has one sample marked as sample format void, a 32bits.
     else if (m_eInputDataType == GDT_CInt16 &&
@@ -219,10 +202,9 @@ CPLErr SAFESLCRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         if (m_eBandType == COMPLEX)
         {
             CPLErr eErr = poBandFile->RasterIO(
-                GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-                nRequestXSize, nRequestYSize, pImage, nRequestXSize,
-                nRequestYSize, GDT_CInt16, 1, nullptr, 4, nBlockXSize * 4, 0,
-                nullptr);
+                GF_Read, nXOff, nYOff, nRequestXSize, nRequestYSize, pImage,
+                nRequestXSize, nRequestYSize, GDT_CInt16, 1, nullptr, 4,
+                nBlockXSize * 4, 0, nullptr);
             if (eErr != CE_None)
             {
                 return eErr;
@@ -238,10 +220,9 @@ CPLErr SAFESLCRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             }
 
             CPLErr eErr = poBandFile->RasterIO(
-                GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,
-                nRequestXSize, nRequestYSize, pnImageTmp, nRequestXSize,
-                nRequestYSize, GDT_CInt16, 1, nullptr, 4, nBlockXSize * 4, 0,
-                nullptr);
+                GF_Read, nXOff, nYOff, nRequestXSize, nRequestYSize, pnImageTmp,
+                nRequestXSize, nRequestYSize, GDT_CInt16, 1, nullptr, 4,
+                nBlockXSize * 4, 0, nullptr);
             if (eErr != CE_None)
             {
                 CPLFree(pnImageTmp);
@@ -426,17 +407,27 @@ CPLErr SAFECalibratedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     /*      over-requesting.  We also need to initialize the extra part     */
     /*      of the block to zero.                                           */
     /* -------------------------------------------------------------------- */
-    int nRequestYSize;
-    if ((nBlockYOff + 1) * nBlockYSize > nRasterYSize)
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nRequestXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nRequestYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
+
+    if (nRequestYSize < nBlockYSize)
     {
-        nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
         memset(pImage, 0,
                static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
                    nBlockXSize * nBlockYSize);
     }
-    else
+
+    /*-------------------------------------------------------------------- */
+    /*      If the input imagery is tiled, also need to avoid over-        */
+    /*      requesting in the X-direction.                                 */
+    /* ------------------------------------------------------------------- */
+    if (nRequestXSize < nBlockXSize)
     {
-        nRequestYSize = nBlockYSize;
+        memset(pImage, 0,
+               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+                   nBlockXSize * nBlockYSize);
     }
 
     // Check LUT values and fail before reading
@@ -446,23 +437,6 @@ CPLErr SAFECalibratedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     if (((m_eInputDataType == GDT_CInt16) || (m_eInputDataType == GDT_Int16)) &&
         (!pszVec0Str || !pszVec1Str))
         return CE_Failure;
-
-    /*-------------------------------------------------------------------- */
-    /*      If the input imagery is tiled, also need to avoid over-        */
-    /*      requesting in the X-direction.                                 */
-    /* ------------------------------------------------------------------- */
-    int nRequestXSize;
-    if ((nBlockXOff + 1) * nBlockXSize > nRasterXSize)
-    {
-        nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
-        memset(pImage, 0,
-               static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *
-                   nBlockXSize * nBlockYSize);
-    }
-    else
-    {
-        nRequestXSize = nBlockXSize;
-    }
 
     TimePoint azTime = getazTime(m_oStartTimePoint, m_oStopTimePoint,
                                  nRasterYSize, nBlockYOff);

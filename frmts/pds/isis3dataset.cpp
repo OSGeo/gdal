@@ -1191,7 +1191,7 @@ static void FillMask(void *pvBuffer, GByte *pabyDst, int nReqXSize,
 /*                           IReadBlock()                               */
 /************************************************************************/
 
-CPLErr ISISMaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
+CPLErr ISISMaskBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
     const GDALDataType eSrcDT = m_poBaseBand->GetRasterDataType();
@@ -1203,14 +1203,10 @@ CPLErr ISISMaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
             return CE_Failure;
     }
 
-    int nXOff = nXBlock * nBlockXSize;
-    int nReqXSize = nBlockXSize;
-    if (nXOff + nReqXSize > nRasterXSize)
-        nReqXSize = nRasterXSize - nXOff;
-    int nYOff = nYBlock * nBlockYSize;
-    int nReqYSize = nBlockYSize;
-    if (nYOff + nReqYSize > nRasterYSize)
-        nReqYSize = nRasterYSize - nYOff;
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nReqXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nReqYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
     if (m_poBaseBand->RasterIO(GF_Read, nXOff, nYOff, nReqXSize, nReqYSize,
                                m_pBuffer, nReqXSize, nReqYSize, eSrcDT,

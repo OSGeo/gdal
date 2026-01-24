@@ -309,25 +309,20 @@ bool GDALEEDAIRasterBand::DecodeNPYArray(const GByte *pabyData, int nDataLen,
 
     for (int iYBlock = 0; iYBlock < nYBlocks; iYBlock++)
     {
-        int nBlockActualYSize = nBlockYSize;
-        if ((iYBlock + nBlockYOff + 1) * nBlockYSize > nRasterYSize)
-        {
-            nBlockActualYSize =
-                nRasterYSize - (iYBlock + nBlockYOff) * nBlockYSize;
-        }
+        const int nYOff = (nBlockYOff + iYBlock) * nBlockYSize;
+        const int nBlockActualYSize =
+            std::min(nBlockYSize, nRasterYSize - nYOff);
 
         for (int iXBlock = 0; iXBlock < nXBlocks; iXBlock++)
         {
-            int nBlockActualXSize = nBlockXSize;
-            if ((iXBlock + nBlockXOff + 1) * nBlockXSize > nRasterXSize)
-            {
-                nBlockActualXSize =
-                    nRasterXSize - (iXBlock + nBlockXOff) * nBlockXSize;
-            }
+            const int nXOff = (nBlockXOff + iXBlock) * nBlockXSize;
+            const int nBlockActualXSize =
+                std::min(nBlockXSize, nRasterXSize - nXOff);
 
-            int nOffsetBand =
+            size_t nOffsetBand =
                 10 + nHeaderLen +
-                (iYBlock * nBlockYSize * nReqXSize + iXBlock * nBlockXSize) *
+                (static_cast<size_t>(iYBlock) * nBlockYSize * nReqXSize +
+                 iXBlock * nBlockXSize) *
                     nTotalDataTypeSize;
 
             for (int i = 1; i <= poGDS->GetRasterCount(); i++)
@@ -439,21 +434,15 @@ bool GDALEEDAIRasterBand::DecodeGDALDataset(const GByte *pabyData, int nDataLen,
 
     for (int iYBlock = 0; iYBlock < nYBlocks; iYBlock++)
     {
-        int nBlockActualYSize = nBlockYSize;
-        if ((iYBlock + nBlockYOff + 1) * nBlockYSize > nRasterYSize)
-        {
-            nBlockActualYSize =
-                nRasterYSize - (iYBlock + nBlockYOff) * nBlockYSize;
-        }
+        const int nYOff = (nBlockYOff + iYBlock) * nBlockYSize;
+        const int nBlockActualYSize =
+            std::min(nBlockYSize, nRasterYSize - nYOff);
 
         for (int iXBlock = 0; iXBlock < nXBlocks; iXBlock++)
         {
-            int nBlockActualXSize = nBlockXSize;
-            if ((iXBlock + nBlockXOff + 1) * nBlockXSize > nRasterXSize)
-            {
-                nBlockActualXSize =
-                    nRasterXSize - (iXBlock + nBlockXOff) * nBlockXSize;
-            }
+            const int nXOff = (nBlockXOff + iXBlock) * nBlockXSize;
+            const int nBlockActualXSize =
+                std::min(nBlockXSize, nRasterXSize - nXOff);
 
             for (int i = 1; i <= poGDS->GetRasterCount(); i++)
             {
@@ -536,16 +525,13 @@ CPLErr GDALEEDAIRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     }
     json_object_object_add(poReq, "bandIds", poBands);
 
-    int nReqXSize = nBlockXSize * nXBlocks;
-    if ((nBlockXOff + nXBlocks) * nBlockXSize > nRasterXSize)
-        nReqXSize = nRasterXSize - nBlockXOff * nBlockXSize;
-    int nReqYSize = nBlockYSize * nYBlocks;
-    if ((nBlockYOff + nYBlocks) * nBlockYSize > nRasterYSize)
-        nReqYSize = nRasterYSize - nBlockYOff * nBlockYSize;
-    const double dfX0 =
-        poGDS->m_gt[0] + nBlockXOff * nBlockXSize * poGDS->m_gt[1];
-    const double dfY0 =
-        poGDS->m_gt[3] + nBlockYOff * nBlockYSize * poGDS->m_gt[5];
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nReqXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nReqYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
+
+    const double dfX0 = poGDS->m_gt[0] + nXOff * poGDS->m_gt[1];
+    const double dfY0 = poGDS->m_gt[3] + nYOff * poGDS->m_gt[5];
 #ifdef DEBUG_VERBOSE
     CPLDebug("EEDAI",
              "nBlockYOff=%d nBlockYOff=%d "

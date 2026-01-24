@@ -1166,42 +1166,23 @@ CPLErr NITFComplexRasterBand::IBlockIO(int nBlockXOff, int nBlockYOff,
                                        void *pImage, GDALRWFlag rwFlag)
 
 {
-    int nRequestYSize;
-    int nRequestXSize;
-    bool bMemset = false;
-
     /* -------------------------------------------------------------------- */
     /*      If the last strip is partial, we need to avoid                  */
     /*      over-requesting.  We also need to initialize the extra part     */
     /*      of the block to zero.                                           */
     /* -------------------------------------------------------------------- */
-    if ((nBlockYOff + 1) * nBlockYSize > nRasterYSize)
-    {
-        nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
-        if (rwFlag == GF_Read)
-            bMemset = true;
-    }
-    else
-    {
-        nRequestYSize = nBlockYSize;
-    }
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nRequestYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
     /*-------------------------------------------------------------------- */
     /*      If the input imagery is tiled, also need to avoid over-        */
     /*      requesting in the X-direction.                                 */
     /* ------------------------------------------------------------------- */
-    if ((nBlockXOff + 1) * nBlockXSize > nRasterXSize)
-    {
-        nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
-        if (rwFlag == GF_Read)
-            bMemset = true;
-    }
-    else
-    {
-        nRequestXSize = nBlockXSize;
-    }
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nRequestXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
 
-    if (bMemset)
+    if (rwFlag == GF_Read &&
+        (nRequestXSize < nBlockXSize || nRequestYSize < nBlockYSize))
     {
         memset(pImage, 0,
                static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *

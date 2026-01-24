@@ -1057,13 +1057,10 @@ CPLErr ECWRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr ECWRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    int nXOff = nBlockXOff * nBlockXSize, nYOff = nBlockYOff * nBlockYSize,
-        nXSize = nBlockXSize, nYSize = nBlockYSize;
-
-    if (nXOff + nXSize > nRasterXSize)
-        nXSize = nRasterXSize - nXOff;
-    if (nYOff + nYSize > nRasterYSize)
-        nYSize = nRasterYSize - nYOff;
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
     const GSpacing nPixelSpace = GDALGetDataTypeSizeBytes(eDataType);
     const GSpacing nLineSpace = nPixelSpace * nBlockXSize;
