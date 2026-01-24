@@ -4266,6 +4266,10 @@ class CPL_DLL OGRGeometryFactory
                                 const char *const *papszOptions = nullptr);
 
     static std::unique_ptr<OGRGeometry>
+    forceTo(std::unique_ptr<OGRGeometry> poGeom, OGRwkbGeometryType eTargetType,
+            const char *const *papszOptions = nullptr);
+
+    static std::unique_ptr<OGRGeometry>
     makeCompatibleWith(std::unique_ptr<OGRGeometry>,
                        OGRwkbGeometryType eTargetType);
 
