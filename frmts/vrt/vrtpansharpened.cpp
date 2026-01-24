@@ -1485,12 +1485,8 @@ CPLErr VRTPansharpenedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 {
     const int nReqXOff = nBlockXOff * nBlockXSize;
     const int nReqYOff = nBlockYOff * nBlockYSize;
-    int nReqXSize = nBlockXSize;
-    int nReqYSize = nBlockYSize;
-    if (nReqXOff + nReqXSize > nRasterXSize)
-        nReqXSize = nRasterXSize - nReqXOff;
-    if (nReqYOff + nReqYSize > nRasterYSize)
-        nReqYSize = nRasterYSize - nReqYOff;
+    const int nReqXSize = std::min(nBlockXSize, nRasterXSize - nReqXOff);
+    const int nReqYSize = std::min(nBlockYSize, nRasterYSize - nReqYOff);
 
     //{static int bDone = 0; if (!bDone) printf("(4)\n"); bDone = 1; }
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
