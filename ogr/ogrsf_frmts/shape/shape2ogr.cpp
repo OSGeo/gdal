@@ -854,9 +854,9 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
             // for PolyhedralSurface and TIN
             if (eType == wkbPolyhedralSurface || eType == wkbTIN)
             {
-                poGeomToDelete =
-                    std::unique_ptr<OGRGeometry>(OGRGeometryFactory::forceTo(
-                        poGeom->clone(), wkbMultiPolygon, nullptr));
+                poGeomToDelete = OGRGeometryFactory::forceTo(
+                    std::unique_ptr<OGRGeometry>(poGeom->clone()),
+                    wkbMultiPolygon, nullptr);
                 poGC = poGeomToDelete->toGeometryCollection();
             }
 

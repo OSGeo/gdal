@@ -1240,9 +1240,11 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
                 {
                     OGRwkbGeometryType eTargetType =
                         OGR_GT_GetLinear(poGeom->getGeometryType());
-                    poGeom = OGRGeometryFactory::forceTo(
-                        poFeature->StealGeometry(i), eTargetType);
-                    poFeature->SetGeomFieldDirectly(i, poGeom);
+                    auto poGeomUniquePtr = OGRGeometryFactory::forceTo(
+                        std::unique_ptr<OGRGeometry>(
+                            poFeature->StealGeometry(i)),
+                        eTargetType);
+                    poFeature->SetGeomField(i, std::move(poGeomUniquePtr));
                     poGeom = poFeature->GetGeomFieldRef(i);
                 }
 

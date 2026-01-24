@@ -5440,8 +5440,11 @@ OGRGeometryH OGR_G_ForceTo(OGRGeometryH hGeom, OGRwkbGeometryType eTargetType,
                            char **papszOptions)
 
 {
-    return OGRGeometry::ToHandle(OGRGeometryFactory::forceTo(
-        OGRGeometry::FromHandle(hGeom), eTargetType, papszOptions));
+    return OGRGeometry::ToHandle(
+        OGRGeometryFactory::forceTo(
+            std::unique_ptr<OGRGeometry>(OGRGeometry::FromHandle(hGeom)),
+            eTargetType, papszOptions)
+            .release());
 }
 
 /************************************************************************/
@@ -5482,8 +5485,8 @@ OGRGeometryFactory::makeCompatibleWith(std::unique_ptr<OGRGeometry> poGeom,
     {
         if (OGR_GT_GetCollection(eGeomType) == eFlattenTargetType)
         {
-            poGeom.reset(
-                OGRGeometryFactory::forceTo(poGeom.release(), eTargetType));
+            poGeom =
+                OGRGeometryFactory::forceTo(std::move(poGeom), eTargetType);
         }
         else if (eGeomType == OGR_GT_GetCollection(eTargetType) &&
                  poGeom->toGeometryCollection()->getNumGeometries() == 1)

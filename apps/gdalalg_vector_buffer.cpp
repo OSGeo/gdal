@@ -139,8 +139,8 @@ std::unique_ptr<OGRFeature> GDALVectorBufferAlgorithmLayer::TranslateFeature(
                 {
                     const auto poGeomFieldDefn =
                         m_poFeatureDefn->GetGeomFieldDefn(i);
-                    poGeom.reset(OGRGeometryFactory::forceTo(
-                        poGeom.release(), poGeomFieldDefn->GetType()));
+                    poGeom = OGRGeometryFactory::forceTo(
+                        std::move(poGeom), poGeomFieldDefn->GetType());
                     if (poGeom)
                     {
                         poGeom->assignSpatialReference(

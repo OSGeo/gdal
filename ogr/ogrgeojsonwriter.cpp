@@ -1142,10 +1142,10 @@ GetLinearCollection(const OGRGeometryCollection *poGeomColl)
         else
         {
             auto poNewGeom = OGRGeometryFactory::forceTo(
-                poSubGeom->clone(),
+                std::unique_ptr<OGRGeometry>(poSubGeom->clone()),
                 OGR_GT_GetLinear(poSubGeom->getGeometryType()));
             if (poNewGeom)
-                poFlatGeom->addGeometryDirectly(poNewGeom);
+                poFlatGeom->addGeometry(std::move(poNewGeom));
         }
     }
     return poFlatGeom;
@@ -1176,8 +1176,8 @@ json_object *OGRGeoJSONWriteGeometry(const OGRGeometry *poGeometry,
         }
         else
         {
-            poFlatGeom.reset(
-                OGRGeometryFactory::forceTo(poGeometry->clone(), eTargetType));
+            poFlatGeom = OGRGeometryFactory::forceTo(
+                std::unique_ptr<OGRGeometry>(poGeometry->clone()), eTargetType);
         }
         return OGRGeoJSONWriteGeometry(poFlatGeom.get(), oOptions);
     }

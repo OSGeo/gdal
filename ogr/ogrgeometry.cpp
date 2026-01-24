@@ -3351,13 +3351,12 @@ GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt,
     }
     else if (eType == wkbPolyhedralSurface || eType == wkbTIN)
     {
-        OGRGeometry *poGC = OGRGeometryFactory::forceTo(
-            poLinearGeom->clone(),
+        auto poGC = OGRGeometryFactory::forceTo(
+            std::unique_ptr<OGRGeometry>(poLinearGeom->clone()),
             OGR_GT_SetModifier(wkbGeometryCollection, poLinearGeom->Is3D(),
                                poLinearGeom->IsMeasured()),
             nullptr);
-        hGeom = convertToGEOSGeom(hGEOSCtxt, poGC);
-        delete poGC;
+        hGeom = convertToGEOSGeom(hGEOSCtxt, poGC.get());
     }
     else if (eType == wkbGeometryCollection)
     {
@@ -3382,18 +3381,17 @@ GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt,
         }
         if (bCanConvertToMultiPoly /* && bMustConvertToMultiPoly */)
         {
-            OGRGeometry *poMultiPolygon = OGRGeometryFactory::forceTo(
-                poLinearGeom->clone(),
+            auto poMultiPolygon = OGRGeometryFactory::forceTo(
+                std::unique_ptr<OGRGeometry>(poLinearGeom->clone()),
                 OGR_GT_SetModifier(wkbMultiPolygon, poLinearGeom->Is3D(),
                                    poLinearGeom->IsMeasured()),
                 nullptr);
-            OGRGeometry *poGCDest = OGRGeometryFactory::forceTo(
-                poMultiPolygon,
+            auto poGCDest = OGRGeometryFactory::forceTo(
+                std::move(poMultiPolygon),
                 OGR_GT_SetModifier(wkbGeometryCollection, poLinearGeom->Is3D(),
                                    poLinearGeom->IsMeasured()),
                 nullptr);
-            hGeom = convertToGEOSGeom(hGEOSCtxt, poGCDest);
-            delete poGCDest;
+            hGeom = convertToGEOSGeom(hGEOSCtxt, poGCDest.get());
         }
         else
         {
@@ -3984,8 +3982,10 @@ OGRGeometry *OGRGeometry::MakeValid(CSLConstList papszOptions) const
                 !OGR_GT_IsSubClassOf(poOGRProduct->getGeometryType(),
                                      wkbGeometryCollection))
             {
-                poOGRProduct = OGRGeometryFactory::forceTo(poOGRProduct,
-                                                           getGeometryType());
+                poOGRProduct = OGRGeometryFactory::forceTo(
+                                   std::unique_ptr<OGRGeometry>(poOGRProduct),
+                                   getGeometryType())
+                                   .release();
             }
 #endif
         }

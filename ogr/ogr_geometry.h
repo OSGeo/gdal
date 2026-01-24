@@ -4263,7 +4263,12 @@ class CPL_DLL OGRGeometryFactory
 
     static OGRGeometry *forceTo(OGRGeometry *poGeom,
                                 OGRwkbGeometryType eTargetType,
-                                const char *const *papszOptions = nullptr);
+                                const char *const *papszOptions = nullptr)
+#ifndef DOXYGEN_SKIP
+        CPL_WARN_DEPRECATED("Use variant that accepts and returns a "
+                            "std::unique_ptr<OGRGeometry")
+#endif
+            ;
 
     static std::unique_ptr<OGRGeometry>
     forceTo(std::unique_ptr<OGRGeometry> poGeom, OGRwkbGeometryType eTargetType,

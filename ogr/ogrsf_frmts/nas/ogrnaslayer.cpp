@@ -107,42 +107,35 @@ OGRFeature *OGRNASLayer::GetNextFeature()
          */
         const CPLXMLNode *const *papsGeometry = poNASFeature->GetGeometryList();
 
-        std::vector<OGRGeometry *> poGeom(poNASFeature->GetGeometryCount());
+        std::vector<std::unique_ptr<OGRGeometry>> apoGeom(
+            poNASFeature->GetGeometryCount());
 
         bool bErrored = false, bFiltered = false;
         CPLString osLastErrorMsg;
         for (int iGeom = 0; iGeom < poNASFeature->GetGeometryCount(); ++iGeom)
         {
-            if (papsGeometry[iGeom] == nullptr)
-            {
-                poGeom[iGeom] = nullptr;
-            }
-            else
+            if (papsGeometry[iGeom])
             {
                 CPLPushErrorHandler(CPLQuietErrorHandler);
 
-                poGeom[iGeom] =
-                    (OGRGeometry *)OGR_G_CreateFromGMLTree(papsGeometry[iGeom]);
+                apoGeom[iGeom].reset(OGRGeometry::FromHandle(
+                    OGR_G_CreateFromGMLTree(papsGeometry[iGeom])));
                 CPLPopErrorHandler();
-                if (poGeom[iGeom] == nullptr)
+                if (apoGeom[iGeom] == nullptr)
                     osLastErrorMsg = CPLGetLastErrorMsg();
-                poGeom[iGeom] = NASReader::ConvertGeometry(poGeom[iGeom]);
-                poGeom[iGeom] =
-                    OGRGeometryFactory::forceTo(poGeom[iGeom], GetGeomType());
-                // poGeom->dumpReadable( 0, "NAS: " );
+                apoGeom[iGeom] =
+                    NASReader::ConvertGeometry(std::move(apoGeom[iGeom]));
+                apoGeom[iGeom] = OGRGeometryFactory::forceTo(
+                    std::move(apoGeom[iGeom]), GetGeomType());
 
-                if (poGeom[iGeom] == nullptr)
+                if (apoGeom[iGeom] == nullptr)
                     bErrored = true;
             }
 
-            bFiltered =
-                m_poFilterGeom != nullptr && !FilterGeometry(poGeom[iGeom]);
+            bFiltered = m_poFilterGeom != nullptr &&
+                        !FilterGeometry(apoGeom[iGeom].get());
             if (bErrored || bFiltered)
             {
-                while (iGeom > 0)
-                    delete poGeom[--iGeom];
-                poGeom.clear();
-
                 break;
             }
         }
@@ -253,10 +246,8 @@ OGRFeature *OGRNASLayer::GetNextFeature()
 
         for (int iGeom = 0; iGeom < poNASFeature->GetGeometryCount(); ++iGeom)
         {
-            poOGRFeature->SetGeomFieldDirectly(iGeom, poGeom[iGeom]);
-            poGeom[iGeom] = nullptr;
+            poOGRFeature->SetGeomField(iGeom, std::move(apoGeom[iGeom]));
         }
-        poGeom.clear();
 
         /* --------------------------------------------------------------------
          */

@@ -328,10 +328,14 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
                     // geometry type.
                     if (poGeom != nullptr)
                     {
-                        papoGeometries[i] = OGRGeometryFactory::forceTo(
-                            poGeom,
-                            poFeatureDefn->GetGeomFieldDefn(i)->GetType());
+                        auto poGeomUniquePtr =
+                            std::unique_ptr<OGRGeometry>(poGeom);
                         poGeom = nullptr;
+                        papoGeometries[i] =
+                            OGRGeometryFactory::forceTo(
+                                std::move(poGeomUniquePtr),
+                                poFeatureDefn->GetGeomFieldDefn(i)->GetType())
+                                .release();
                     }
                     else
                     {
@@ -382,7 +386,10 @@ OGRFeature *OGRGMLLayer::GetNextFeature()
             // Do geometry type changes if needed to match layer geometry type.
             if (poGeom != nullptr)
             {
-                poGeom = OGRGeometryFactory::forceTo(poGeom, GetGeomType());
+                poGeom =
+                    OGRGeometryFactory::forceTo(
+                        std::unique_ptr<OGRGeometry>(poGeom), GetGeomType())
+                        .release();
             }
             else
             {
@@ -905,11 +912,10 @@ OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)
             char *pszGeometry = nullptr;
             if (!bIsGML3Output && OGR_GT_IsNonLinear(poGeom->getGeometryType()))
             {
-                OGRGeometry *poGeomTmp = OGRGeometryFactory::forceTo(
-                    poGeom->clone(),
+                auto poGeomTmp = OGRGeometryFactory::forceTo(
+                    std::unique_ptr<OGRGeometry>(poGeom->clone()),
                     OGR_GT_GetLinear(poGeom->getGeometryType()));
                 pszGeometry = poGeomTmp->exportToGML(papszOptions);
-                delete poGeomTmp;
             }
             else
             {

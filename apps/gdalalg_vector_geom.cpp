@@ -317,8 +317,8 @@ GDALGeosNonStreamingAlgorithmLayer::GetNextProcessedFeature()
         wkbFlatten(poResultGeom->getGeometryType()) !=
             wkbFlatten(eLayerGeomType))
     {
-        poResultGeom.reset(OGRGeometryFactory::forceTo(poResultGeom.release(),
-                                                       eLayerGeomType));
+        poResultGeom = OGRGeometryFactory::forceTo(std::move(poResultGeom),
+                                                   eLayerGeomType);
     }
 
     if (poResultGeom == nullptr)
