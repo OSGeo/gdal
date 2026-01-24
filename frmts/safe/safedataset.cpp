@@ -19,6 +19,8 @@
 
 #include "cpl_time.h"
 
+#include <algorithm>
+
 #ifdef USE_OMP
 #include <omp.h>
 #endif

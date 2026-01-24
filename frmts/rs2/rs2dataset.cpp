@@ -21,6 +21,8 @@
 #include "gdal_cpp_functions.h"
 #include "ogr_spatialref.h"
 
+#include <algorithm>
+
 typedef enum eCalibration_t
 {
     Sigma0 = 0,
