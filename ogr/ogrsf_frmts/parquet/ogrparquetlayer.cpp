@@ -2971,8 +2971,8 @@ OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
     m_iRecordBatch = 0;
     for (int iGroup = 0; iGroup < nNumGroups; ++iGroup)
     {
-        const int64_t nNextAccRows =
-            nAccRows + metadata->RowGroup(iGroup)->num_rows();
+        const auto nRowsInRowGroup = metadata->RowGroup(iGroup)->num_rows();
+        const int64_t nNextAccRows = nAccRows + nRowsInRowGroup;
         if (nIndex < nNextAccRows)
         {
             if (!CreateRecordBatchReader(iGroup))
@@ -3010,8 +3010,7 @@ OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
         }
         nAccRows = nNextAccRows;
         m_iRecordBatch +=
-            (metadata->RowGroup(iGroup)->num_rows() + nBatchSize - 1) /
-            nBatchSize;
+            static_cast<int>(cpl::div_round_up(nRowsInRowGroup, nBatchSize));
     }
 
     m_iRecordBatch = -1;
