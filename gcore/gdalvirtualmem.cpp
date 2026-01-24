@@ -659,8 +659,8 @@ GDALGetVirtualMem(GDALDatasetH hDS, GDALRasterBandH hBand, GDALRWFlag eRWFlag,
         hDS ? GDALGetRasterYSize(hDS) : GDALGetRasterBandYSize(hBand);
 
     if (nXOff < 0 || nYOff < 0 || nXSize == 0 || nYSize == 0 || nBufXSize < 0 ||
-        nBufYSize < 0 || nXOff + nXSize > nRasterXSize ||
-        nYOff + nYSize > nRasterYSize)
+        nBufYSize < 0 || nXSize > nRasterXSize - nXOff ||
+        nYSize > nRasterYSize - nYOff)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid window request");
         return nullptr;

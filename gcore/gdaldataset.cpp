@@ -2978,9 +2978,8 @@ CPLErr GDALDataset::ValidateRasterIOOrAdviseReadParameters(
     CPLErr eErr = CE_None;
     *pbStopProcessingOnCENone = FALSE;
 
-    if (nXOff < 0 || nXOff > INT_MAX - nXSize ||
-        nXOff + nXSize > nRasterXSize || nYOff < 0 ||
-        nYOff > INT_MAX - nYSize || nYOff + nYSize > nRasterYSize)
+    if (nXOff < 0 || nXSize > nRasterXSize - nXOff || nYOff < 0 ||
+        nYSize > nRasterYSize - nYOff)
     {
         ReportError(CE_Failure, CPLE_IllegalArg,
                     "Access window out of range in %s.  Requested "
