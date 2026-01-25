@@ -44,7 +44,7 @@ class GDALRasterOverviewAlgorithmAdd /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterOverviewAlgorithmAddStandalone             */
+/*               GDALRasterOverviewAlgorithmAddStandalone               */
 /************************************************************************/
 
 class GDALRasterOverviewAlgorithmAddStandalone final

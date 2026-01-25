@@ -17,7 +17,7 @@
 #include "ogrwarpedlayer.h"
 
 /************************************************************************/
-/*                          OGRWarpedLayer()                            */
+/*                           OGRWarpedLayer()                           */
 /************************************************************************/
 
 OGRWarpedLayer::OGRWarpedLayer(
@@ -43,7 +43,7 @@ OGRWarpedLayer::OGRWarpedLayer(
 }
 
 /************************************************************************/
-/*                         ~OGRWarpedLayer()                            */
+/*                          ~OGRWarpedLayer()                           */
 /************************************************************************/
 
 OGRWarpedLayer::~OGRWarpedLayer()
@@ -104,7 +104,7 @@ OGRErr OGRWarpedLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                         TranslateFeature()                           */
+/*                          TranslateFeature()                          */
 /************************************************************************/
 
 void OGRWarpedLayer::TranslateFeature(
@@ -165,7 +165,7 @@ OGRWarpedLayer::WarpedFeatureToSrcFeature(std::unique_ptr<OGRFeature> poFeature)
 }
 
 /************************************************************************/
-/*                          GetNextFeature()                            */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGRWarpedLayer::GetNextFeature()
@@ -204,7 +204,7 @@ OGRFeature *OGRWarpedLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                            */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRWarpedLayer::ISetFeature(OGRFeature *poFeature)
@@ -218,7 +218,7 @@ OGRErr OGRWarpedLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          ISetFeatureUniqPtr()                        */
+/*                         ISetFeatureUniqPtr()                         */
 /************************************************************************/
 
 OGRErr OGRWarpedLayer::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
@@ -231,7 +231,7 @@ OGRErr OGRWarpedLayer::ISetFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature)
 }
 
 /************************************************************************/
-/*                            ICreateFeature()                          */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRWarpedLayer::ICreateFeature(OGRFeature *poFeature)
@@ -245,7 +245,7 @@ OGRErr OGRWarpedLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          ICreateFeatureUniqPtr()                     */
+/*                       ICreateFeatureUniqPtr()                        */
 /************************************************************************/
 
 OGRErr
@@ -260,7 +260,7 @@ OGRWarpedLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
 }
 
 /************************************************************************/
-/*                            IUpsertFeature()                          */
+/*                           IUpsertFeature()                           */
 /************************************************************************/
 
 OGRErr OGRWarpedLayer::IUpsertFeature(OGRFeature *poFeature)
@@ -274,7 +274,7 @@ OGRErr OGRWarpedLayer::IUpsertFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                            IUpdateFeature()                          */
+/*                           IUpdateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRWarpedLayer::IUpdateFeature(OGRFeature *poFeature,
@@ -295,7 +295,7 @@ OGRErr OGRWarpedLayer::IUpdateFeature(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                            GetLayerDefn()                           */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn() const
@@ -304,7 +304,7 @@ const OGRFeatureDefn *OGRWarpedLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                            GetSpatialRef()                           */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *OGRWarpedLayer::GetSpatialRef() const
@@ -316,7 +316,7 @@ const OGRSpatialReference *OGRWarpedLayer::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRWarpedLayer::GetFeatureCount(int bForce)
@@ -361,7 +361,7 @@ OGRErr OGRWarpedLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                    TransformAndUpdateBBAndReturnX()                  */
+/*                   TransformAndUpdateBBAndReturnX()                   */
 /************************************************************************/
 
 static double TransformAndUpdateBBAndReturnX(OGRCoordinateTransformation *poCT,
@@ -388,7 +388,7 @@ static double TransformAndUpdateBBAndReturnX(OGRCoordinateTransformation *poCT,
 }
 
 /************************************************************************/
-/*                            FindXDiscontinuity()                      */
+/*                         FindXDiscontinuity()                         */
 /************************************************************************/
 
 static void FindXDiscontinuity(OGRCoordinateTransformation *poCT, double dfX1,
@@ -418,7 +418,7 @@ static void FindXDiscontinuity(OGRCoordinateTransformation *poCT, double dfX1,
 }
 
 /************************************************************************/
-/*                            ReprojectEnvelope()                       */
+/*                         ReprojectEnvelope()                          */
 /************************************************************************/
 
 int OGRWarpedLayer::ReprojectEnvelope(OGREnvelope *psEnvelope,
@@ -532,7 +532,7 @@ int OGRWarpedLayer::ReprojectEnvelope(OGREnvelope *psEnvelope,
 }
 
 /************************************************************************/
-/*                             TestCapability()                         */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRWarpedLayer::TestCapability(const char *pszCapability) const
@@ -562,7 +562,7 @@ int OGRWarpedLayer::TestCapability(const char *pszCapability) const
 }
 
 /************************************************************************/
-/*                              SetExtent()                             */
+/*                             SetExtent()                              */
 /************************************************************************/
 
 void OGRWarpedLayer::SetExtent(double dfXMin, double dfYMin, double dfXMax,
@@ -575,7 +575,7 @@ void OGRWarpedLayer::SetExtent(double dfXMin, double dfYMin, double dfXMax,
 }
 
 /************************************************************************/
-/*                            GetArrowStream()                          */
+/*                           GetArrowStream()                           */
 /************************************************************************/
 
 bool OGRWarpedLayer::GetArrowStream(struct ArrowArrayStream *out_stream,

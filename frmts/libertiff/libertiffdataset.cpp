@@ -45,7 +45,7 @@
 #define XSTRINGIFY(x) STRINGIFY(x)
 
 /************************************************************************/
-/*                       LIBERTIFFDatasetFileReader                     */
+/*                      LIBERTIFFDatasetFileReader                      */
 /************************************************************************/
 
 struct LIBERTIFFDatasetFileReader final : public LIBERTIFF_NS::FileReader
@@ -98,7 +98,7 @@ size_t LIBERTIFFDatasetFileReader::read(uint64_t offset, size_t count,
 }
 
 /************************************************************************/
-/*                         LIBERTIFFDataset                             */
+/*                           LIBERTIFFDataset                           */
 /************************************************************************/
 
 class LIBERTIFFDataset final : public GDALPamDataset
@@ -243,7 +243,7 @@ class LIBERTIFFDataset final : public GDALPamDataset
 };
 
 /************************************************************************/
-/*                          LIBERTIFFBand                               */
+/*                            LIBERTIFFBand                             */
 /************************************************************************/
 
 class LIBERTIFFBand final : public GDALPamRasterBand
@@ -427,7 +427,7 @@ class LIBERTIFFBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           IReadBlock()                               */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr LIBERTIFFBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
@@ -445,7 +445,7 @@ CPLErr LIBERTIFFBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 }
 
 /************************************************************************/
-/*                           ReadColorMap()                             */
+/*                            ReadColorMap()                            */
 /************************************************************************/
 
 void LIBERTIFFBand::ReadColorMap()
@@ -479,7 +479,7 @@ void LIBERTIFFBand::ReadColorMap()
 }
 
 /************************************************************************/
-/*                          GetTLSState()                               */
+/*                            GetTLSState()                             */
 /************************************************************************/
 
 LIBERTIFFBand::ThreadLocalState &LIBERTIFFBand::GetTLSState() const
@@ -499,7 +499,7 @@ LIBERTIFFBand::ThreadLocalState &LIBERTIFFBand::GetTLSState() const
 }
 
 /************************************************************************/
-/*                        InterpolateAtPoint()                          */
+/*                         InterpolateAtPoint()                         */
 /************************************************************************/
 
 CPLErr LIBERTIFFBand::InterpolateAtPoint(double dfPixel, double dfLine,
@@ -529,7 +529,7 @@ CPLErr LIBERTIFFBand::InterpolateAtPoint(double dfPixel, double dfLine,
 }
 
 /************************************************************************/
-/*                           InitMaskBand()                             */
+/*                            InitMaskBand()                            */
 /************************************************************************/
 
 void LIBERTIFFBand::InitMaskBand()
@@ -660,7 +660,7 @@ const char *LIBERTIFFBand::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                          GetTLSState()                               */
+/*                            GetTLSState()                             */
 /************************************************************************/
 
 LIBERTIFFDataset::ThreadLocalState &LIBERTIFFDataset::GetTLSState() const
@@ -681,7 +681,7 @@ LIBERTIFFDataset::ThreadLocalState &LIBERTIFFDataset::GetTLSState() const
 }
 
 /************************************************************************/
-/*                           IRasterIO()                                */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr LIBERTIFFDataset::IRasterIO(
@@ -963,7 +963,7 @@ CPLErr LIBERTIFFDataset::IRasterIO(
 }
 
 /************************************************************************/
-/*                       HorizPredictorDecode()                         */
+/*                        HorizPredictorDecode()                        */
 /************************************************************************/
 
 template <class T, class U>
@@ -1126,7 +1126,7 @@ HorizPredictorDecode(void *bufferIn, size_t nPixelCount,
 }
 
 /************************************************************************/
-/*                FloatingPointHorizPredictorDecode()                   */
+/*                 FloatingPointHorizPredictorDecode()                  */
 /************************************************************************/
 
 template <class T>
@@ -1221,7 +1221,7 @@ FloatingPointHorizPredictorDecode(std::vector<uint8_t> &tmpBuffer,
 }
 
 /************************************************************************/
-/*                           ReadBlock()                                */
+/*                             ReadBlock()                              */
 /************************************************************************/
 
 bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
@@ -1883,7 +1883,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 /* static */ int LIBERTIFFDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -1997,7 +1997,7 @@ GDALDataType LIBERTIFFDataset::ComputeGDALDataType() const
 }
 
 /************************************************************************/
-/*                       ProcessCompressionMethod()                     */
+/*                      ProcessCompressionMethod()                      */
 /************************************************************************/
 
 bool LIBERTIFFDataset::ProcessCompressionMethod()
@@ -2197,7 +2197,7 @@ bool LIBERTIFFDataset::ProcessCompressionMethod()
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
@@ -2470,7 +2470,7 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -3017,7 +3017,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             ReadSRS()                                */
+/*                              ReadSRS()                               */
 /************************************************************************/
 
 // Simplified GeoTIFF SRS reader, assuming the SRS is encoded as a EPSG code
@@ -3184,7 +3184,7 @@ void LIBERTIFFDataset::ReadSRS()
 }
 
 /************************************************************************/
-/*                       ReadGeoTransform()                             */
+/*                          ReadGeoTransform()                          */
 /************************************************************************/
 
 void LIBERTIFFDataset::ReadGeoTransform()
@@ -3329,7 +3329,7 @@ void LIBERTIFFDataset::ReadRPCTag()
 }
 
 /************************************************************************/
-/*                           OpenStatic()                               */
+/*                             OpenStatic()                             */
 /************************************************************************/
 
 /* static */ GDALDataset *LIBERTIFFDataset::OpenStatic(GDALOpenInfo *poOpenInfo)

@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorLayerAlgebraAlgorithm                   */
+/*                   GDALVectorLayerAlgebraAlgorithm                    */
 /************************************************************************/
 
 class GDALVectorLayerAlgebraAlgorithm final : public GDALAlgorithm

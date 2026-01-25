@@ -17,7 +17,7 @@
 #include "ogr_nas.h"
 
 /************************************************************************/
-/*                           OGRNASLayer()                              */
+/*                            OGRNASLayer()                             */
 /************************************************************************/
 
 OGRNASLayer::OGRNASLayer(const char *pszName, OGRNASDataSource *poDSIn)
@@ -33,7 +33,7 @@ OGRNASLayer::OGRNASLayer(const char *pszName, OGRNASDataSource *poDSIn)
 }
 
 /************************************************************************/
-/*                           ~OGRNASLayer()                           */
+/*                            ~OGRNASLayer()                            */
 /************************************************************************/
 
 OGRNASLayer::~OGRNASLayer()
@@ -288,7 +288,7 @@ GIntBig OGRNASLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRNASLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,

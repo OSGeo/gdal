@@ -42,7 +42,7 @@ class GDALRasterRoughnessAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterRoughnessAlgorithmStandalone               */
+/*                GDALRasterRoughnessAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterRoughnessAlgorithmStandalone final

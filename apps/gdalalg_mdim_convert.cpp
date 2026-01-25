@@ -23,7 +23,7 @@
 #endif
 
 /************************************************************************/
-/*            GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()      */
+/*         GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()         */
 /************************************************************************/
 
 GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()
@@ -123,7 +123,7 @@ GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()
 }
 
 /************************************************************************/
-/*                   GDALMdimConvertAlgorithm::RunImpl()                */
+/*                 GDALMdimConvertAlgorithm::RunImpl()                  */
 /************************************************************************/
 
 bool GDALMdimConvertAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

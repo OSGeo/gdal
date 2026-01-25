@@ -48,7 +48,7 @@ class OGRESSortDesc
 };
 
 /************************************************************************/
-/*                          OGRElasticLayer                             */
+/*                           OGRElasticLayer                            */
 /************************************************************************/
 
 class OGRElasticLayer final : public OGRLayer

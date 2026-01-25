@@ -34,7 +34,7 @@ static std::string SanitizeDispositionFilename(const std::string &osVal)
 }
 
 /************************************************************************/
-/*               HTTPFetchContentDispositionFilename()                 */
+/*                HTTPFetchContentDispositionFilename()                 */
 /************************************************************************/
 
 static std::string HTTPFetchContentDispositionFilename(char **papszHeaders)

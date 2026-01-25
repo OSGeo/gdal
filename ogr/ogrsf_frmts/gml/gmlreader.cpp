@@ -165,7 +165,7 @@ GMLReader::~GMLReader()
 }
 
 /************************************************************************/
-/*                          SetSourceFile()                             */
+/*                           SetSourceFile()                            */
 /************************************************************************/
 
 void GMLReader::SetSourceFile(const char *pszFilename)
@@ -176,7 +176,7 @@ void GMLReader::SetSourceFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                       GetSourceFileName()                           */
+/*                         GetSourceFileName()                          */
 /************************************************************************/
 
 const char *GMLReader::GetSourceFileName()
@@ -236,7 +236,7 @@ bool GMLReader::SetupParser()
 
 #ifdef HAVE_XERCES
 /************************************************************************/
-/*                        SetupParserXerces()                           */
+/*                         SetupParserXerces()                          */
 /************************************************************************/
 
 bool GMLReader::SetupParserXerces()
@@ -312,7 +312,7 @@ bool GMLReader::SetupParserXerces()
 #endif
 
 /************************************************************************/
-/*                        SetupParserExpat()                            */
+/*                          SetupParserExpat()                          */
 /************************************************************************/
 
 #ifdef HAVE_EXPAT
@@ -392,7 +392,7 @@ void GMLReader::CleanupParser()
 }
 
 /************************************************************************/
-/*                        NextFeatureXerces()                           */
+/*                         NextFeatureXerces()                          */
 /************************************************************************/
 
 #ifdef HAVE_XERCES
@@ -756,7 +756,7 @@ int GMLReader::GetFeatureElementIndex(const char *pszElement,
 }
 
 /************************************************************************/
-/*                IsCityGMLGenericAttributeElement()                    */
+/*                  IsCityGMLGenericAttributeElement()                  */
 /************************************************************************/
 
 bool GMLReader::IsCityGMLGenericAttributeElement(const char *pszElement,
@@ -796,7 +796,7 @@ bool GMLReader::IsCityGMLGenericAttributeElement(const char *pszElement,
 }
 
 /************************************************************************/
-/*                       GetAttributeElementIndex()                     */
+/*                      GetAttributeElementIndex()                      */
 /************************************************************************/
 
 int GMLReader::GetAttributeElementIndex(const char *pszElement, int nLen,
@@ -1528,7 +1528,7 @@ void GMLReader::SetGlobalSRSName(const char *pszGlobalSRSName)
 }
 
 /************************************************************************/
-/*                       SetFilteredClassName()                         */
+/*                        SetFilteredClassName()                        */
 /************************************************************************/
 
 bool GMLReader::SetFilteredClassName(const char *pszClassName)

@@ -54,7 +54,7 @@ class OGRGPSBabelDataSource final : public GDALDataset
 };
 
 /************************************************************************/
-/*                   OGRGPSBabelWriteDataSource                         */
+/*                      OGRGPSBabelWriteDataSource                      */
 /************************************************************************/
 
 class OGRGPSBabelWriteDataSource final : public GDALDataset

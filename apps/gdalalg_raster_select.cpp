@@ -79,7 +79,7 @@ GDALRasterSelectAlgorithm::GDALRasterSelectAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*              GDALRasterSelectAlgorithm::RunStep()                    */
+/*                 GDALRasterSelectAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALRasterSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)

@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterContourAlgorithm                       */
+/*                      GDALRasterContourAlgorithm                      */
 /************************************************************************/
 
 class GDALRasterContourAlgorithm /* non final */
@@ -75,7 +75,7 @@ class GDALRasterContourAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                  GDALRasterContourAlgorithmStandalone                */
+/*                 GDALRasterContourAlgorithmStandalone                 */
 /************************************************************************/
 
 class GDALRasterContourAlgorithmStandalone final

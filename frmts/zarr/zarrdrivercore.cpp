@@ -45,7 +45,7 @@ static bool CheckExistenceOfOneZarrFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                   ZARRIsLikelyKerchunkJSONRef()                      */
+/*                    ZARRIsLikelyKerchunkJSONRef()                     */
 /************************************************************************/
 
 bool ZARRIsLikelyKerchunkJSONRef(const GDALOpenInfo *poOpenInfo)
@@ -67,7 +67,7 @@ bool ZARRIsLikelyKerchunkJSONRef(const GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     ZARRDriverIdentify()                             */
+/*                         ZARRDriverIdentify()                         */
 /************************************************************************/
 
 int ZARRDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -105,7 +105,7 @@ int ZARRDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     ZARRDriverSetCommonMetadata()                    */
+/*                    ZARRDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -178,7 +178,7 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                    DeclareDeferredZarrPlugin()                       */
+/*                     DeclareDeferredZarrPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

@@ -516,7 +516,7 @@ static CPLErr ConjPixelFunc(void **papoSources, int nSources, void *pData,
 #ifdef USE_SSE2
 
 /************************************************************************/
-/*                        OptimizedSumToFloat_SSE2()                    */
+/*                      OptimizedSumToFloat_SSE2()                      */
 /************************************************************************/
 
 template <typename Tsrc>
@@ -575,7 +575,7 @@ static void OptimizedSumToFloat_SSE2(double dfK, void *pOutBuffer,
 }
 
 /************************************************************************/
-/*                       OptimizedSumToDouble_SSE2()                    */
+/*                     OptimizedSumToDouble_SSE2()                      */
 /************************************************************************/
 
 template <typename Tsrc>
@@ -628,7 +628,7 @@ static void OptimizedSumToDouble_SSE2(double dfK, void *pOutBuffer,
 }
 
 /************************************************************************/
-/*                       OptimizedSumSameType_SSE2()                    */
+/*                     OptimizedSumSameType_SSE2()                      */
 /************************************************************************/
 
 template <typename T, typename Tsigned, typename Tacc, class SSEWrapper>
@@ -713,7 +713,7 @@ static void OptimizedSumSameType_SSE2(double dfK, void *pOutBuffer,
 #endif  // USE_SSE2
 
 /************************************************************************/
-/*                       OptimizedSumPackedOutput()                     */
+/*                      OptimizedSumPackedOutput()                      */
 /************************************************************************/
 
 template <typename Tsrc, typename Tdest>
@@ -780,7 +780,7 @@ static void OptimizedSumPackedOutput(double dfK, void *pOutBuffer,
 }
 
 /************************************************************************/
-/*                       OptimizedSumPackedOutput()                     */
+/*                      OptimizedSumPackedOutput()                      */
 /************************************************************************/
 
 template <typename Tdest>
@@ -834,7 +834,7 @@ static bool OptimizedSumPackedOutput(GDALDataType eSrcType, double dfK,
 }
 
 /************************************************************************/
-/*                    OptimizedSumThroughLargerType()                   */
+/*                   OptimizedSumThroughLargerType()                    */
 /************************************************************************/
 
 namespace
@@ -915,7 +915,7 @@ static bool OptimizedSumThroughLargerType(double dfK, void *pOutBuffer,
 }
 
 /************************************************************************/
-/*                     OptimizedSumThroughLargerType()                  */
+/*                   OptimizedSumThroughLargerType()                    */
 /************************************************************************/
 
 template <typename Tsrc>
@@ -955,7 +955,7 @@ static bool OptimizedSumThroughLargerType(GDALDataType eBufType, double dfK,
 }
 
 /************************************************************************/
-/*                    OptimizedSumThroughLargerType()                   */
+/*                   OptimizedSumThroughLargerType()                    */
 /************************************************************************/
 
 static bool OptimizedSumThroughLargerType(GDALDataType eSrcType,
@@ -2343,7 +2343,7 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
 }  // NormDiffPixelFunc
 
 /************************************************************************/
-/*                   pszMinMaxFuncMetadataNodata                        */
+/*                     pszMinMaxFuncMetadataNodata                      */
 /************************************************************************/
 
 static const char pszArgMinMaxFuncMetadataNodata[] =
@@ -3930,7 +3930,7 @@ static CPLErr BasicPixelFunc(void **papoSources, int nSources, void *pData,
 }  // BasicPixelFunc
 
 /************************************************************************/
-/*                     GDALRegisterDefaultPixelFunc()                   */
+/*                    GDALRegisterDefaultPixelFunc()                    */
 /************************************************************************/
 
 /**

@@ -37,37 +37,37 @@ static bool IsEitherSlash(char c)
 }
 
 /************************************************************************/
-/*                    ~VSIArchiveEntryFileOffset()                      */
+/*                     ~VSIArchiveEntryFileOffset()                     */
 /************************************************************************/
 
 VSIArchiveEntryFileOffset::~VSIArchiveEntryFileOffset() = default;
 
 /************************************************************************/
-/*                        ~VSIArchiveReader()                           */
+/*                         ~VSIArchiveReader()                          */
 /************************************************************************/
 
 VSIArchiveReader::~VSIArchiveReader() = default;
 
 /************************************************************************/
-/*                        ~VSIArchiveContent()                          */
+/*                         ~VSIArchiveContent()                         */
 /************************************************************************/
 
 VSIArchiveContent::~VSIArchiveContent() = default;
 
 /************************************************************************/
-/*                   VSIArchiveFilesystemHandler()                      */
+/*                    VSIArchiveFilesystemHandler()                     */
 /************************************************************************/
 
 VSIArchiveFilesystemHandler::VSIArchiveFilesystemHandler() = default;
 
 /************************************************************************/
-/*                   ~VSIArchiveFilesystemHandler()                     */
+/*                    ~VSIArchiveFilesystemHandler()                    */
 /************************************************************************/
 
 VSIArchiveFilesystemHandler::~VSIArchiveFilesystemHandler() = default;
 
 /************************************************************************/
-/*                       GetStrippedFilename()                          */
+/*                        GetStrippedFilename()                         */
 /************************************************************************/
 
 static std::string GetStrippedFilename(const std::string &osFileName,
@@ -117,7 +117,7 @@ static void BuildDirectoryIndex(VSIArchiveContent *content)
 }
 
 /************************************************************************/
-/*                       GetContentOfArchive()                          */
+/*                        GetContentOfArchive()                         */
 /************************************************************************/
 
 const VSIArchiveContent *
@@ -234,7 +234,7 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
 }
 
 /************************************************************************/
-/*                        FindFileInArchive()                           */
+/*                         FindFileInArchive()                          */
 /************************************************************************/
 
 bool VSIArchiveFilesystemHandler::FindFileInArchive(
@@ -268,7 +268,7 @@ bool VSIArchiveFilesystemHandler::FindFileInArchive(
 }
 
 /************************************************************************/
-/*                           CompactFilename()                          */
+/*                          CompactFilename()                           */
 /************************************************************************/
 
 static std::string CompactFilename(const char *pszArchiveInFileNameIn)
@@ -525,7 +525,7 @@ char *VSIArchiveFilesystemHandler::SplitFilename(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                           OpenArchiveFile()                          */
+/*                          OpenArchiveFile()                           */
 /************************************************************************/
 
 std::unique_ptr<VSIArchiveReader>
@@ -631,7 +631,7 @@ VSIArchiveFilesystemHandler::OpenArchiveFile(const char *archiveFilename,
 }
 
 /************************************************************************/
-/*                                 Stat()                               */
+/*                                Stat()                                */
 /************************************************************************/
 
 int VSIArchiveFilesystemHandler::Stat(const char *pszFilename,
@@ -772,7 +772,7 @@ char **VSIArchiveFilesystemHandler::ReadDirEx(const char *pszDirname,
 }
 
 /************************************************************************/
-/*                               IsLocal()                              */
+/*                              IsLocal()                               */
 /************************************************************************/
 
 bool VSIArchiveFilesystemHandler::IsLocal(const char *pszPath) const
@@ -786,7 +786,7 @@ bool VSIArchiveFilesystemHandler::IsLocal(const char *pszPath) const
 }
 
 /************************************************************************/
-/*                               IsArchive()                            */
+/*                             IsArchive()                              */
 /************************************************************************/
 
 bool VSIArchiveFilesystemHandler::IsArchive(const char *pszPath) const

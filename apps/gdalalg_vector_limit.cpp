@@ -27,7 +27,7 @@
 #endif
 
 /************************************************************************/
-/*         GDALVectorLimitAlgorithm::GDALVectorLimitAlgorithm()       */
+/*         GDALVectorLimitAlgorithm::GDALVectorLimitAlgorithm()         */
 /************************************************************************/
 
 GDALVectorLimitAlgorithm::GDALVectorLimitAlgorithm(bool standaloneStep)
@@ -100,7 +100,7 @@ GDALVectorReadLimitedLayer::~GDALVectorReadLimitedLayer() = default;
 }  // namespace
 
 /************************************************************************/
-/*               GDALVectorLimitAlgorithm::RunStep()                   */
+/*                 GDALVectorLimitAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALVectorLimitAlgorithm::RunStep(GDALPipelineStepRunContext &)

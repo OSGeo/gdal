@@ -197,7 +197,7 @@ static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyUShort(GDALWarpKernel *);
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyUShort(GDALWarpKernel *);
 
 /************************************************************************/
-/*                           GWKJobStruct                               */
+/*                             GWKJobStruct                             */
 /************************************************************************/
 
 struct GWKJobStruct
@@ -240,7 +240,7 @@ struct GWKThreadData
 };
 
 /************************************************************************/
-/*                        GWKProgressThread()                           */
+/*                         GWKProgressThread()                          */
 /************************************************************************/
 
 // Return TRUE if the computation must be interrupted.
@@ -258,7 +258,7 @@ static int GWKProgressThread(GWKJobStruct *psJob)
 }
 
 /************************************************************************/
-/*                      GWKProgressMonoThread()                         */
+/*                       GWKProgressMonoThread()                        */
 /************************************************************************/
 
 // Return TRUE if the computation must be interrupted.
@@ -279,7 +279,7 @@ static int GWKProgressMonoThread(GWKJobStruct *psJob)
 }
 
 /************************************************************************/
-/*                       GWKGenericMonoThread()                         */
+/*                        GWKGenericMonoThread()                        */
 /************************************************************************/
 
 static CPLErr GWKGenericMonoThread(GDALWarpKernel *poWK,
@@ -343,7 +343,7 @@ void *GWKThreadsCreate(char **papszWarpOptions,
 }
 
 /************************************************************************/
-/*                             GWKThreadsEnd()                          */
+/*                           GWKThreadsEnd()                            */
 /************************************************************************/
 
 void GWKThreadsEnd(void *psThreadDataIn)
@@ -442,7 +442,7 @@ static void ThreadFuncAdapter(void *pData)
 }
 
 /************************************************************************/
-/*                                GWKRun()                              */
+/*                               GWKRun()                               */
 /************************************************************************/
 
 static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
@@ -1402,7 +1402,7 @@ static void GWKOverlayDensity(const GDALWarpKernel *poWK, GPtrDiff_t iDstOffset,
 }
 
 /************************************************************************/
-/*                          GWKRoundValueT()                            */
+/*                           GWKRoundValueT()                           */
 /************************************************************************/
 
 template <class T, class U, bool is_signed> struct sGWKRoundValueT
@@ -1444,7 +1444,7 @@ template <> double GWKRoundValueT<double, double>(double value)
 #endif
 
 /************************************************************************/
-/*                            GWKClampValueT()                          */
+/*                           GWKClampValueT()                           */
 /************************************************************************/
 
 template <class T, class U> static CPL_INLINE T GWKClampValueT(U value)
@@ -1470,7 +1470,7 @@ template <> double GWKClampValueT<double, double>(double dfValue)
 #endif
 
 /************************************************************************/
-/*                             AvoidNoData()                            */
+/*                            AvoidNoData()                             */
 /************************************************************************/
 
 template <class T> inline void AvoidNoData(T *pDst, GPtrDiff_t iDstOffset)
@@ -1502,7 +1502,7 @@ template <class T> inline void AvoidNoData(T *pDst, GPtrDiff_t iDstOffset)
 }
 
 /************************************************************************/
-/*                             AvoidNoData()                            */
+/*                            AvoidNoData()                             */
 /************************************************************************/
 
 template <class T>
@@ -1533,7 +1533,7 @@ inline void AvoidNoData(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                       GWKAvoidNoDataMultiBand()                      */
+/*                      GWKAvoidNoDataMultiBand()                       */
 /************************************************************************/
 
 template <class T>
@@ -1581,7 +1581,7 @@ static void GWKAvoidNoDataMultiBand(const GDALWarpKernel *poWK,
 }
 
 /************************************************************************/
-/*                       GWKAvoidNoDataMultiBand()                      */
+/*                      GWKAvoidNoDataMultiBand()                       */
 /************************************************************************/
 
 static void GWKAvoidNoDataMultiBand(const GDALWarpKernel *poWK,
@@ -1645,7 +1645,7 @@ static void GWKAvoidNoDataMultiBand(const GDALWarpKernel *poWK,
 }
 
 /************************************************************************/
-/*                         GWKSetPixelValueRealT()                      */
+/*                       GWKSetPixelValueRealT()                        */
 /************************************************************************/
 
 template <class T>
@@ -1712,7 +1712,7 @@ static bool GWKSetPixelValueRealT(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                       ClampRoundAndAvoidNoData()                     */
+/*                      ClampRoundAndAvoidNoData()                      */
 /************************************************************************/
 
 template <class T>
@@ -2031,7 +2031,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                       GWKSetPixelValueReal()                         */
+/*                        GWKSetPixelValueReal()                        */
 /************************************************************************/
 
 static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
@@ -2342,7 +2342,7 @@ static bool GWKGetPixelValue(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                       GWKGetPixelValueReal()                         */
+/*                        GWKGetPixelValueReal()                        */
 /************************************************************************/
 
 static bool GWKGetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
@@ -2428,7 +2428,7 @@ static bool GWKGetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                          GWKGetPixelRow()                            */
+/*                           GWKGetPixelRow()                           */
 /************************************************************************/
 
 /* It is assumed that adfImag[] is set to 0 by caller code for non-complex */
@@ -2777,7 +2777,7 @@ static bool GWKGetPixelRow(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                          GWKGetPixelT()                              */
+/*                            GWKGetPixelT()                            */
 /************************************************************************/
 
 template <class T>
@@ -3523,7 +3523,7 @@ static bool GWKCubicResampleNoMasks4SampleT(const GDALWarpKernel *poWK,
 }
 
 /************************************************************************/
-/*                          GWKLanczosSinc()                            */
+/*                           GWKLanczosSinc()                           */
 /************************************************************************/
 
 /*
@@ -3580,7 +3580,7 @@ static double GWKLanczosSinc4Values(double *padfValues)
 }
 
 /************************************************************************/
-/*                           GWKBilinear()                              */
+/*                            GWKBilinear()                             */
 /************************************************************************/
 
 static double GWKBilinear(double dfX)
@@ -3618,7 +3618,7 @@ static double GWKBilinear4Values(double *padfValues)
 }
 
 /************************************************************************/
-/*                            GWKCubic()                                */
+/*                              GWKCubic()                              */
 /************************************************************************/
 
 static double GWKCubic(double dfX)
@@ -3669,7 +3669,7 @@ static double GWKCubic4Values(double *padfValues)
 }
 
 /************************************************************************/
-/*                           GWKBSpline()                               */
+/*                             GWKBSpline()                             */
 /************************************************************************/
 
 // https://www.cs.utexas.edu/~fussell/courses/cs384g-fall2013/lectures/mitchell/Mitchell.pdf
@@ -3731,7 +3731,7 @@ static double GWKBSpline4Values(double *padfValues)
     return padfValues[0] + padfValues[1] + padfValues[2] + padfValues[3];
 }
 /************************************************************************/
-/*                       GWKResampleWrkStruct                           */
+/*                         GWKResampleWrkStruct                         */
 /************************************************************************/
 
 typedef struct _GWKResampleWrkStruct GWKResampleWrkStruct;
@@ -3771,7 +3771,7 @@ struct _GWKResampleWrkStruct
 };
 
 /************************************************************************/
-/*                    GWKResampleCreateWrkStruct()                      */
+/*                     GWKResampleCreateWrkStruct()                     */
 /************************************************************************/
 
 static bool GWKResample(const GDALWarpKernel *poWK, int iBand, double dfSrcX,
@@ -3869,7 +3869,7 @@ static GWKResampleWrkStruct *GWKResampleCreateWrkStruct(GDALWarpKernel *poWK)
 }
 
 /************************************************************************/
-/*                    GWKResampleDeleteWrkStruct()                      */
+/*                     GWKResampleDeleteWrkStruct()                     */
 /************************************************************************/
 
 static void GWKResampleDeleteWrkStruct(GWKResampleWrkStruct *psWrkStruct)
@@ -3884,7 +3884,7 @@ static void GWKResampleDeleteWrkStruct(GWKResampleWrkStruct *psWrkStruct)
 }
 
 /************************************************************************/
-/*                           GWKResample()                              */
+/*                            GWKResample()                             */
 /************************************************************************/
 
 static bool GWKResample(const GDALWarpKernel *poWK, int iBand, double dfSrcX,
@@ -4045,7 +4045,7 @@ static bool GWKResample(const GDALWarpKernel *poWK, int iBand, double dfSrcX,
 }
 
 /************************************************************************/
-/*                      GWKResampleOptimizedLanczos()                   */
+/*                    GWKResampleOptimizedLanczos()                     */
 /************************************************************************/
 
 static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
@@ -4597,7 +4597,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                        GWKComputeWeights()                           */
+/*                         GWKComputeWeights()                          */
 /************************************************************************/
 
 static void GWKComputeWeights(GDALResampleAlg eResample, int iMin, int iMax,
@@ -4772,7 +4772,7 @@ GWKResampleNoMasksT(const GDALWarpKernel *poWK, int iBand, double dfSrcX,
 #if defined(USE_SSE2)
 
 /************************************************************************/
-/*                    GWKResampleNoMasks_SSE2_T()                       */
+/*                     GWKResampleNoMasks_SSE2_T()                      */
 /************************************************************************/
 
 template <class T>
@@ -4972,7 +4972,7 @@ bool GWKResampleNoMasksT<GByte>(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                     GWKResampleNoMasksT<GInt16>()                    */
+/*                    GWKResampleNoMasksT<GInt16>()                     */
 /************************************************************************/
 
 template <>
@@ -4988,7 +4988,7 @@ bool GWKResampleNoMasksT<GInt16>(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                     GWKResampleNoMasksT<GUInt16>()                   */
+/*                    GWKResampleNoMasksT<GUInt16>()                    */
 /************************************************************************/
 
 template <>
@@ -5022,7 +5022,7 @@ bool GWKResampleNoMasksT<float>(const GDALWarpKernel *poWK, int iBand,
 #ifdef INSTANTIATE_FLOAT64_SSE2_IMPL
 
 /************************************************************************/
-/*                     GWKResampleNoMasksT<double>()                    */
+/*                    GWKResampleNoMasksT<double>()                     */
 /************************************************************************/
 
 template <>
@@ -5088,7 +5088,7 @@ static void GWKRoundSourceCoordinates(
 }
 
 /************************************************************************/
-/*                     GWKCheckAndComputeSrcOffsets()                   */
+/*                    GWKCheckAndComputeSrcOffsets()                    */
 /************************************************************************/
 static CPL_INLINE bool
 GWKCheckAndComputeSrcOffsets(GWKJobStruct *psJob, int *_pabSuccess, int _iDstX,
@@ -5205,7 +5205,7 @@ GWKCheckAndComputeSrcOffsets(GWKJobStruct *psJob, int *_pabSuccess, int _iDstX,
 }
 
 /************************************************************************/
-/*                   GWKOneSourceCornerFailsToReproject()               */
+/*                 GWKOneSourceCornerFailsToReproject()                 */
 /************************************************************************/
 
 static bool GWKOneSourceCornerFailsToReproject(GWKJobStruct *psJob)
@@ -5229,7 +5229,7 @@ static bool GWKOneSourceCornerFailsToReproject(GWKJobStruct *psJob)
 }
 
 /************************************************************************/
-/*                       GWKAdjustSrcOffsetOnEdge()                     */
+/*                      GWKAdjustSrcOffsetOnEdge()                      */
 /************************************************************************/
 
 static bool GWKAdjustSrcOffsetOnEdge(GWKJobStruct *psJob,
@@ -5305,7 +5305,7 @@ static bool GWKAdjustSrcOffsetOnEdge(GWKJobStruct *psJob,
 }
 
 /************************************************************************/
-/*                 GWKAdjustSrcOffsetOnEdgeUnifiedSrcDensity()          */
+/*             GWKAdjustSrcOffsetOnEdgeUnifiedSrcDensity()              */
 /************************************************************************/
 
 static bool GWKAdjustSrcOffsetOnEdgeUnifiedSrcDensity(GWKJobStruct *psJob,
@@ -6118,7 +6118,7 @@ static void GWKCubicResampleNoMasks4MultiBandT(const GDALWarpKernel *poWK,
 #endif  // defined(USE_SSE2)
 
 /************************************************************************/
-/*                GWKResampleNoMasksOrDstDensityOnlyThreadInternal()    */
+/*          GWKResampleNoMasksOrDstDensityOnlyThreadInternal()          */
 /************************************************************************/
 
 template <class T, GDALResampleAlg eResample, int bUse4SamplesFormula>
@@ -6708,7 +6708,7 @@ static CPLErr GWKAverageOrMode(GDALWarpKernel *poWK)
 }
 
 /************************************************************************/
-/*                   GWKAverageOrModeComputeLineCoords()                */
+/*                 GWKAverageOrModeComputeLineCoords()                  */
 /************************************************************************/
 
 static void GWKAverageOrModeComputeLineCoords(
@@ -6754,7 +6754,7 @@ static void GWKAverageOrModeComputeLineCoords(
 }
 
 /************************************************************************/
-/*              GWKAverageOrModeComputeSourceCoords()                   */
+/*                GWKAverageOrModeComputeSourceCoords()                 */
 /************************************************************************/
 
 static bool GWKAverageOrModeComputeSourceCoords(
@@ -6860,7 +6860,7 @@ static bool GWKAverageOrModeComputeSourceCoords(
 }
 
 /************************************************************************/
-/*                         GWKModeRealType()                            */
+/*                          GWKModeRealType()                           */
 /************************************************************************/
 
 template <class T> static inline bool IsSame(T a, T b)
@@ -7130,7 +7130,7 @@ template <class T> static void GWKModeRealType(GWKJobStruct *psJob)
 }
 
 /************************************************************************/
-/*                        GWKModeComplexType()                          */
+/*                         GWKModeComplexType()                         */
 /************************************************************************/
 
 static void GWKModeComplexType(GWKJobStruct *psJob)
@@ -8265,7 +8265,7 @@ static void GWKAverageOrModeThread(void *pData)
 }
 
 /************************************************************************/
-/*                         getOrientation()                             */
+/*                           getOrientation()                           */
 /************************************************************************/
 
 typedef std::pair<double, double> XYPair;
@@ -8291,7 +8291,7 @@ static int getOrientation(const XYPair &p1, const XYPair &p2, const XYPair &p3)
 }
 
 /************************************************************************/
-/*                          isConvex()                                  */
+/*                              isConvex()                              */
 /************************************************************************/
 
 typedef std::vector<XYPair> XYPoly;
@@ -8352,7 +8352,7 @@ static bool pointIntersectsConvexPoly(const XYPair &xy, const XYPoly &poly)
 }
 
 /************************************************************************/
-/*                     getIntersection()                                */
+/*                          getIntersection()                           */
 /************************************************************************/
 
 /* Returns intersection of [p1,p2] with [p3,p4], if
@@ -8517,7 +8517,7 @@ static void getConvexPolyIntersection(const XYPoly &poly1, const XYPoly &poly2,
 }
 
 /************************************************************************/
-/*                            getArea()                                 */
+/*                              getArea()                               */
 /************************************************************************/
 
 // poly may or may not be closed.
@@ -8540,7 +8540,7 @@ static double getArea(const XYPoly &poly)
 }
 
 /************************************************************************/
-/*                           GWKSumPreserving()                         */
+/*                          GWKSumPreserving()                          */
 /************************************************************************/
 
 static void GWKSumPreservingThread(void *pData);

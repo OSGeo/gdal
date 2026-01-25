@@ -26,7 +26,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                GDALVectorPipelineStepAlgorithm                       */
+/*                   GDALVectorPipelineStepAlgorithm                    */
 /************************************************************************/
 
 class GDALRasterAlgorithmStepRegistry;
@@ -63,7 +63,7 @@ class GDALVectorPipelineStepAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                      GDALVectorAlgorithmStepRegistry                 */
+/*                   GDALVectorAlgorithmStepRegistry                    */
 /************************************************************************/
 
 class GDALVectorAlgorithmStepRegistry : public virtual GDALAlgorithmRegistry
@@ -156,7 +156,7 @@ class GDALVectorPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm
 };
 
 /************************************************************************/
-/*                  GDALVectorOutputDataset                             */
+/*                       GDALVectorOutputDataset                        */
 /************************************************************************/
 
 class GDALVectorOutputDataset final : public GDALDataset
@@ -185,7 +185,7 @@ class GDALVectorOutputDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                  GDALVectorAlgorithmLayerProgressHelper              */
+/*                GDALVectorAlgorithmLayerProgressHelper                */
 /************************************************************************/
 
 /**
@@ -287,7 +287,7 @@ class GDALVectorAlgorithmLayerProgressHelper
 };
 
 /************************************************************************/
-/*                  GDALVectorPipelineOutputLayer                       */
+/*                    GDALVectorPipelineOutputLayer                     */
 /************************************************************************/
 
 /** Class that implements GetNextFeature() by forwarding to
@@ -408,7 +408,7 @@ class GDALVectorNonStreamingAlgorithmLayer
 };
 
 /************************************************************************/
-/*                 GDALVectorNonStreamingAlgorithmDataset               */
+/*                GDALVectorNonStreamingAlgorithmDataset                */
 /************************************************************************/
 
 /**
@@ -439,7 +439,7 @@ class GDALVectorNonStreamingAlgorithmDataset /* non final */
 };
 
 /************************************************************************/
-/*                 GDALVectorPipelineOutputDataset                      */
+/*                   GDALVectorPipelineOutputDataset                    */
 /************************************************************************/
 
 /** Class used by vector pipeline steps to create an output on-the-fly

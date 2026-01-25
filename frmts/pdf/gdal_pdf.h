@@ -82,7 +82,7 @@ class OGRPDFLayer final : public OGRMemLayer
 #endif
 
 /************************************************************************/
-/*                          OGRPDFWritableLayer                         */
+/*                         OGRPDFWritableLayer                          */
 /************************************************************************/
 
 class PDFWritableVectorDataset;
@@ -105,7 +105,7 @@ class OGRPDFWritableLayer final : public OGRMemLayer
 };
 
 /************************************************************************/
-/*                            GDALPDFTileDesc                           */
+/*                           GDALPDFTileDesc                            */
 /************************************************************************/
 
 typedef struct
@@ -129,7 +129,7 @@ typedef struct
  */
 
 /************************************************************************/
-/*                           TPdfiumPageStruct                          */
+/*                          TPdfiumPageStruct                           */
 /************************************************************************/
 
 // Map of Pdfium pages in following structure
@@ -144,7 +144,7 @@ typedef struct
 typedef std::map<int, TPdfiumPageStruct *> TMapPdfiumPages;
 
 /************************************************************************/
-/*                         TPdfiumDocumentStruct                        */
+/*                        TPdfiumDocumentStruct                         */
 /************************************************************************/
 
 // Structure for Mutex on File

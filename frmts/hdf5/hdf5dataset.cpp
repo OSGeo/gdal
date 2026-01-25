@@ -40,7 +40,7 @@ constexpr size_t MAX_METADATA_LEN = 32768;
 #ifdef ENABLE_HDF5_GLOBAL_LOCK
 
 /************************************************************************/
-/*                          GetHDF5GlobalMutex()                        */
+/*                         GetHDF5GlobalMutex()                         */
 /************************************************************************/
 
 std::recursive_mutex &GetHDF5GlobalMutex()
@@ -52,7 +52,7 @@ std::recursive_mutex &GetHDF5GlobalMutex()
 #endif
 
 /************************************************************************/
-/*                          HDF5GetFileDriver()                         */
+/*                         HDF5GetFileDriver()                          */
 /************************************************************************/
 
 hid_t HDF5GetFileDriver()
@@ -70,7 +70,7 @@ void HDF5UnloadFileDriver()
 }
 
 /************************************************************************/
-/*                     HDF5DatasetDriverUnload()                        */
+/*                      HDF5DatasetDriverUnload()                       */
 /************************************************************************/
 
 static void HDF5DatasetDriverUnload(GDALDriver *)
@@ -85,7 +85,7 @@ static void HDF5DatasetDriverUnload(GDALDriver *)
 /************************************************************************/
 
 /************************************************************************/
-/*                        GDALRegister_HDF5()                           */
+/*                         GDALRegister_HDF5()                          */
 /************************************************************************/
 void GDALRegister_HDF5()
 
@@ -118,7 +118,7 @@ void GDALRegister_HDF5()
 }
 
 /************************************************************************/
-/*                           HDF5Dataset()                              */
+/*                            HDF5Dataset()                             */
 /************************************************************************/
 HDF5Dataset::HDF5Dataset()
     : hGroupID(-1), papszSubDatasets(nullptr), nDatasetType(-1),
@@ -402,7 +402,7 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
 }
 
 /************************************************************************/
-/*                         GDAL_HDF5Open()                              */
+/*                           GDAL_HDF5Open()                            */
 /************************************************************************/
 hid_t GDAL_HDF5Open(const std::string &osFilename)
 {
@@ -875,7 +875,7 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
 }
 
 /************************************************************************/
-/*                     HDF5DatasetCreateMetadataContext                 */
+/*                   HDF5DatasetCreateMetadataContext                   */
 /************************************************************************/
 
 struct HDF5DatasetCreateMetadataContext
@@ -1584,7 +1584,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
 }
 
 /************************************************************************/
-/*                       ReadGlobalAttributes()                         */
+/*                        ReadGlobalAttributes()                        */
 /************************************************************************/
 CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
 {

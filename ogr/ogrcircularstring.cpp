@@ -32,7 +32,7 @@ static inline double dist(double x0, double y0, double x1, double y1)
 }
 
 /************************************************************************/
-/*              OGRCircularString( const OGRCircularString& )           */
+/*            OGRCircularString( const OGRCircularString& )             */
 /************************************************************************/
 
 /**
@@ -42,7 +42,7 @@ static inline double dist(double x0, double y0, double x1, double y1)
 OGRCircularString::OGRCircularString(const OGRCircularString &) = default;
 
 /************************************************************************/
-/*                  operator=( const OGRCircularString& )               */
+/*                operator=( const OGRCircularString& )                 */
 /************************************************************************/
 
 /**
@@ -224,7 +224,7 @@ double OGRCircularString::get_Length() const
 }
 
 /************************************************************************/
-/*                       ExtendEnvelopeWithCircular()                   */
+/*                     ExtendEnvelopeWithCircular()                     */
 /************************************************************************/
 
 void OGRCircularString::ExtendEnvelopeWithCircular(
@@ -314,7 +314,7 @@ void OGRCircularString::getEnvelope(OGREnvelope3D *psEnvelope) const
 }
 
 /************************************************************************/
-/*                     OGRCircularString::segmentize()                  */
+/*                   OGRCircularString::segmentize()                    */
 /************************************************************************/
 
 bool OGRCircularString::segmentize(double dfMaxLength)
@@ -658,7 +658,7 @@ void OGRCircularString::Value(double dfDistance, OGRPoint *poPoint) const
 }
 
 /************************************************************************/
-/*                          CurveToLine()                               */
+/*                            CurveToLine()                             */
 /************************************************************************/
 
 OGRLineString *
@@ -683,7 +683,7 @@ OGRCircularString::CurveToLine(double dfMaxAngleStepSizeDegrees,
 }
 
 /************************************************************************/
-/*                        IsValidFast()                                 */
+/*                            IsValidFast()                             */
 /************************************************************************/
 
 OGRBoolean OGRCircularString::IsValidFast() const
@@ -700,7 +700,7 @@ OGRBoolean OGRCircularString::IsValidFast() const
 }
 
 /************************************************************************/
-/*                            IsValid()                                 */
+/*                              IsValid()                               */
 /************************************************************************/
 
 OGRBoolean OGRCircularString::IsValid() const
@@ -710,7 +710,7 @@ OGRBoolean OGRCircularString::IsValid() const
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
 OGRBoolean
@@ -720,7 +720,7 @@ OGRCircularString::hasCurveGeometry(int /* bLookForNonLinear */) const
 }
 
 /************************************************************************/
-/*                         getLinearGeometry()                        */
+/*                         getLinearGeometry()                          */
 /************************************************************************/
 
 OGRGeometry *
@@ -732,7 +732,7 @@ OGRCircularString::getLinearGeometry(double dfMaxAngleStepSizeDegrees,
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                     GetCasterToLineString()                          */
+/*                       GetCasterToLineString()                        */
 /************************************************************************/
 
 static OGRLineString *CasterToLineString(OGRCurve *poGeom)
@@ -749,7 +749,7 @@ OGRCurveCasterToLineString OGRCircularString::GetCasterToLineString() const
 }
 
 /************************************************************************/
-/*                        GetCasterToLinearRing()                       */
+/*                       GetCasterToLinearRing()                        */
 /************************************************************************/
 
 static OGRLinearRing *CasterToLinearRing(OGRCurve *poGeom)
@@ -820,7 +820,7 @@ int OGRCircularString::IsFullCircle(double &cx, double &cy,
 }
 
 /************************************************************************/
-/*                       get_AreaOfCurveSegments()                      */
+/*                      get_AreaOfCurveSegments()                       */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -859,7 +859,7 @@ double OGRCircularString::get_AreaOfCurveSegments() const
 //! @endcond
 
 /************************************************************************/
-/*                           get_Area()                                 */
+/*                              get_Area()                              */
 /************************************************************************/
 
 double OGRCircularString::get_Area() const
@@ -896,7 +896,7 @@ double OGRCircularString::get_Area() const
 }
 
 /************************************************************************/
-/*                        get_GeodesicArea()                            */
+/*                          get_GeodesicArea()                          */
 /************************************************************************/
 
 double OGRCircularString::get_GeodesicArea(
@@ -919,7 +919,7 @@ double OGRCircularString::get_GeodesicArea(
 }
 
 /************************************************************************/
-/*                        get_GeodesicLength()                          */
+/*                         get_GeodesicLength()                         */
 /************************************************************************/
 
 double OGRCircularString::get_GeodesicLength(
@@ -956,7 +956,7 @@ int OGRCircularString::ContainsPoint(const OGRPoint *p) const
 }
 
 /************************************************************************/
-/*                       IntersectsPoint()                              */
+/*                          IntersectsPoint()                           */
 /************************************************************************/
 
 int OGRCircularString::IntersectsPoint(const OGRPoint *p) const

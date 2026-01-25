@@ -16,7 +16,7 @@
 #include "cpl_json.h"
 
 /************************************************************************/
-/*              ZarrSharedResource::ZarrSharedResource()                */
+/*               ZarrSharedResource::ZarrSharedResource()               */
 /************************************************************************/
 
 ZarrSharedResource::ZarrSharedResource(const std::string &osRootDirectoryName,
@@ -35,7 +35,7 @@ ZarrSharedResource::ZarrSharedResource(const std::string &osRootDirectoryName,
 }
 
 /************************************************************************/
-/*              ZarrSharedResource::Create()                            */
+/*                     ZarrSharedResource::Create()                     */
 /************************************************************************/
 
 std::shared_ptr<ZarrSharedResource>
@@ -84,7 +84,7 @@ ZarrSharedResource::~ZarrSharedResource()
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::OpenRootGroup()                      */
+/*                 ZarrSharedResource::OpenRootGroup()                  */
 /************************************************************************/
 
 std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
@@ -270,6 +270,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 }
 
 /************************************************************************/
+<<<<<<< HEAD
 /*                   ZarrSharedResource::GetRootGroup()                 */
 /************************************************************************/
 
@@ -285,6 +286,9 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::GetRootGroup()
 
 /************************************************************************/
 /*         ZarrSharedResource::InitConsolidatedMetadataIfNeeded()       */
+=======
+/*        ZarrSharedResource::InitConsolidatedMetadataIfNeeded()        */
+>>>>>>> e2e413714c (Apply fix_gdal_block_headers.py)
 /************************************************************************/
 
 void ZarrSharedResource::InitConsolidatedMetadataIfNeeded()
@@ -307,7 +311,7 @@ void ZarrSharedResource::InitConsolidatedMetadataIfNeeded()
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::SetZMetadataItem()                   */
+/*                ZarrSharedResource::SetZMetadataItem()                */
 /************************************************************************/
 
 void ZarrSharedResource::SetZMetadataItem(const std::string &osFilename,
@@ -344,7 +348,7 @@ void ZarrSharedResource::SetZMetadataItem(const std::string &osFilename,
 }
 
 /************************************************************************/
-/*         ZarrSharedResource::DeleteZMetadataItemRecursive()           */
+/*          ZarrSharedResource::DeleteZMetadataItemRecursive()          */
 /************************************************************************/
 
 void ZarrSharedResource::DeleteZMetadataItemRecursive(
@@ -386,7 +390,7 @@ void ZarrSharedResource::DeleteZMetadataItemRecursive(
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::RenameZMetadataRecursive()           */
+/*            ZarrSharedResource::RenameZMetadataRecursive()            */
 /************************************************************************/
 
 void ZarrSharedResource::RenameZMetadataRecursive(
@@ -428,7 +432,7 @@ void ZarrSharedResource::RenameZMetadataRecursive(
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::UpdateDimensionSize()                */
+/*              ZarrSharedResource::UpdateDimensionSize()               */
 /************************************************************************/
 
 void ZarrSharedResource::UpdateDimensionSize(
@@ -449,7 +453,7 @@ void ZarrSharedResource::UpdateDimensionSize(
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::AddArrayInLoading()                  */
+/*               ZarrSharedResource::AddArrayInLoading()                */
 /************************************************************************/
 
 bool ZarrSharedResource::AddArrayInLoading(const std::string &osZarrayFilename)
@@ -473,7 +477,7 @@ bool ZarrSharedResource::AddArrayInLoading(const std::string &osZarrayFilename)
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::RemoveArrayInLoading()               */
+/*              ZarrSharedResource::RemoveArrayInLoading()              */
 /************************************************************************/
 
 void ZarrSharedResource::RemoveArrayInLoading(

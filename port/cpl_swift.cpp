@@ -59,7 +59,7 @@ static struct curl_slist *GetSwiftHeaders(const std::string &osAuthToken,
 }
 
 /************************************************************************/
-/*                     VSISwiftHandleHelper()                           */
+/*                        VSISwiftHandleHelper()                        */
 /************************************************************************/
 VSISwiftHandleHelper::VSISwiftHandleHelper(const std::string &osStorageURL,
                                            const std::string &osAuthToken,
@@ -72,7 +72,7 @@ VSISwiftHandleHelper::VSISwiftHandleHelper(const std::string &osStorageURL,
 }
 
 /************************************************************************/
-/*                      ~VSISwiftHandleHelper()                         */
+/*                       ~VSISwiftHandleHelper()                        */
 /************************************************************************/
 
 VSISwiftHandleHelper::~VSISwiftHandleHelper()
@@ -80,7 +80,7 @@ VSISwiftHandleHelper::~VSISwiftHandleHelper()
 }
 
 /************************************************************************/
-/*                        GetConfiguration()                            */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 bool VSISwiftHandleHelper::GetConfiguration(const std::string &osPathForOption,
@@ -205,7 +205,7 @@ bool VSISwiftHandleHelper::AuthV1(const std::string &osPathForOption,
 }
 
 /************************************************************************/
-/*                      CreateAuthV3RequestObject()                     */
+/*                     CreateAuthV3RequestObject()                      */
 /************************************************************************/
 
 CPLJSONObject VSISwiftHandleHelper::CreateAuthV3RequestObject(
@@ -286,7 +286,7 @@ CPLJSONObject VSISwiftHandleHelper::CreateAuthV3RequestObject(
 }
 
 /************************************************************************/
-/*                      GetAuthV3StorageURL()                           */
+/*                        GetAuthV3StorageURL()                         */
 /************************************************************************/
 
 bool VSISwiftHandleHelper::GetAuthV3StorageURL(
@@ -361,7 +361,7 @@ bool VSISwiftHandleHelper::GetAuthV3StorageURL(
 }
 
 /************************************************************************/
-/*                                AuthV3()                              */
+/*                               AuthV3()                               */
 /************************************************************************/
 
 bool VSISwiftHandleHelper::AuthV3(const std::string &osPathForOption,
@@ -449,7 +449,7 @@ bool VSISwiftHandleHelper::AuthV3(const std::string &osPathForOption,
 }
 
 /************************************************************************/
-/*                           Authenticate()                             */
+/*                            Authenticate()                            */
 /************************************************************************/
 
 bool VSISwiftHandleHelper::Authenticate(const std::string &osPathForOption)
@@ -552,7 +552,7 @@ bool VSISwiftHandleHelper::CheckCredentialsV3(
 }
 
 /************************************************************************/
-/*                            GetCached()                               */
+/*                             GetCached()                              */
 /************************************************************************/
 
 bool VSISwiftHandleHelper::GetCached(const std::string &osPathForOption,
@@ -583,7 +583,7 @@ bool VSISwiftHandleHelper::GetCached(const std::string &osPathForOption,
 }
 
 /************************************************************************/
-/*                          BuildFromURI()                              */
+/*                            BuildFromURI()                            */
 /************************************************************************/
 
 VSISwiftHandleHelper *
@@ -617,7 +617,7 @@ VSISwiftHandleHelper::BuildFromURI(const char *pszURI,
 }
 
 /************************************************************************/
-/*                            BuildURL()                                */
+/*                              BuildURL()                              */
 /************************************************************************/
 
 std::string VSISwiftHandleHelper::BuildURL(const std::string &osStorageURL,
@@ -633,7 +633,7 @@ std::string VSISwiftHandleHelper::BuildURL(const std::string &osStorageURL,
 }
 
 /************************************************************************/
-/*                           RebuildURL()                               */
+/*                             RebuildURL()                             */
 /************************************************************************/
 
 void VSISwiftHandleHelper::RebuildURL()
@@ -653,7 +653,7 @@ struct curl_slist *VSISwiftHandleHelper::GetCurlHeaders(
 }
 
 /************************************************************************/
-/*                          CleanMutex()                                */
+/*                             CleanMutex()                             */
 /************************************************************************/
 
 void VSISwiftHandleHelper::CleanMutex()
@@ -664,7 +664,7 @@ void VSISwiftHandleHelper::CleanMutex()
 }
 
 /************************************************************************/
-/*                          ClearCache()                                */
+/*                             ClearCache()                             */
 /************************************************************************/
 
 void VSISwiftHandleHelper::ClearCache()

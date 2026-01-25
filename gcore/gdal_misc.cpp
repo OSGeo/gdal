@@ -162,7 +162,7 @@ GDALDataType CPL_STDCALL GDALDataTypeUnion(GDALDataType eType1,
 }
 
 /************************************************************************/
-/*                        GDALDataTypeUnionWithValue()                  */
+/*                     GDALDataTypeUnionWithValue()                     */
 /************************************************************************/
 
 /**
@@ -193,7 +193,7 @@ GDALDataType CPL_STDCALL GDALDataTypeUnionWithValue(GDALDataType eDT,
 }
 
 /************************************************************************/
-/*                        GetMinBitsForValue()                          */
+/*                         GetMinBitsForValue()                         */
 /************************************************************************/
 static int GetMinBitsForValue(double dValue)
 {
@@ -238,7 +238,7 @@ static int GetMinBitsForValue(double dValue)
 }
 
 /************************************************************************/
-/*                        GDALFindDataType()                            */
+/*                          GDALFindDataType()                          */
 /************************************************************************/
 
 /**
@@ -332,7 +332,7 @@ GDALDataType CPL_STDCALL GDALFindDataType(int nBits, int bSigned, int bFloating,
 }
 
 /************************************************************************/
-/*                        GDALFindDataTypeForValue()                    */
+/*                      GDALFindDataTypeForValue()                      */
 /************************************************************************/
 
 /**
@@ -358,7 +358,7 @@ GDALDataType CPL_STDCALL GDALFindDataTypeForValue(double dValue, int bComplex)
 }
 
 /************************************************************************/
-/*                        GDALGetDataTypeSizeBytes()                    */
+/*                      GDALGetDataTypeSizeBytes()                      */
 /************************************************************************/
 
 /**
@@ -410,7 +410,7 @@ int CPL_STDCALL GDALGetDataTypeSizeBytes(GDALDataType eDataType)
 }
 
 /************************************************************************/
-/*                        GDALGetDataTypeSizeBits()                     */
+/*                      GDALGetDataTypeSizeBits()                       */
 /************************************************************************/
 
 /**
@@ -581,7 +581,7 @@ int CPL_STDCALL GDALDataTypeIsInteger(GDALDataType eDataType)
 }
 
 /************************************************************************/
-/*                       GDALDataTypeIsSigned()                         */
+/*                        GDALDataTypeIsSigned()                        */
 /************************************************************************/
 
 /**
@@ -622,7 +622,7 @@ int CPL_STDCALL GDALDataTypeIsSigned(GDALDataType eDataType)
 }
 
 /************************************************************************/
-/*                    GDALDataTypeIsConversionLossy()                   */
+/*                   GDALDataTypeIsConversionLossy()                    */
 /************************************************************************/
 
 /**
@@ -776,7 +776,7 @@ const char *CPL_STDCALL GDALGetDataTypeName(GDALDataType eDataType)
 }
 
 /************************************************************************/
-/*                        GDALGetDataTypeByName()                       */
+/*                       GDALGetDataTypeByName()                        */
 /************************************************************************/
 
 /**
@@ -812,7 +812,7 @@ GDALDataType CPL_STDCALL GDALGetDataTypeByName(const char *pszName)
 }
 
 /************************************************************************/
-/*                      GDALAdjustValueToDataType()                     */
+/*                     GDALAdjustValueToDataType()                      */
 /************************************************************************/
 
 template <class T>
@@ -1009,7 +1009,7 @@ bool GDALIsValueExactAs(double dfValue, GDALDataType eDT)
 }
 
 /************************************************************************/
-/*                         GDALIsValueInRangeOf()                       */
+/*                        GDALIsValueInRangeOf()                        */
 /************************************************************************/
 
 /**
@@ -1064,7 +1064,7 @@ bool GDALIsValueInRangeOf(double dfValue, GDALDataType eDT)
 }
 
 /************************************************************************/
-/*                        GDALGetNonComplexDataType()                   */
+/*                     GDALGetNonComplexDataType()                      */
 /************************************************************************/
 /**
  * \brief Return the base data type for the specified input.
@@ -1114,7 +1114,7 @@ GDALDataType CPL_STDCALL GDALGetNonComplexDataType(GDALDataType eDataType)
 }
 
 /************************************************************************/
-/*                        GDALGetAsyncStatusTypeByName()                */
+/*                    GDALGetAsyncStatusTypeByName()                    */
 /************************************************************************/
 /**
  * Get AsyncStatusType by symbolic name.
@@ -1145,7 +1145,7 @@ GDALGetAsyncStatusTypeByName(const char *pszName)
 }
 
 /************************************************************************/
-/*                        GDALGetAsyncStatusTypeName()                 */
+/*                     GDALGetAsyncStatusTypeName()                     */
 /************************************************************************/
 
 /**
@@ -1375,7 +1375,7 @@ const char *GDALGetColorInterpretationName(GDALColorInterp eInterp)
 }
 
 /************************************************************************/
-/*                GDALGetColorInterpretationByName()                    */
+/*                  GDALGetColorInterpretationByName()                  */
 /************************************************************************/
 
 /**
@@ -1415,7 +1415,7 @@ GDALColorInterp GDALGetColorInterpretationByName(const char *pszName)
 }
 
 /************************************************************************/
-/*                  GDALGetColorInterpFromSTACCommonName()              */
+/*                GDALGetColorInterpFromSTACCommonName()                */
 /************************************************************************/
 
 static const struct
@@ -1465,7 +1465,7 @@ GDALColorInterp GDALGetColorInterpFromSTACCommonName(const char *pszName)
 }
 
 /************************************************************************/
-/*                  GDALGetSTACCommonNameFromColorInterp()              */
+/*                GDALGetSTACCommonNameFromColorInterp()                */
 /************************************************************************/
 
 /** Get STAC eo:common_name from GDAL color interpretation
@@ -1707,7 +1707,7 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
 }
 
 /************************************************************************/
-/*                             gdal::GCP                                */
+/*                              gdal::GCP                               */
 /************************************************************************/
 
 namespace gdal
@@ -2195,7 +2195,7 @@ int CPL_STDCALL GDALLoadOziMapFile(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                       GDALReadOziMapFile()                           */
+/*                         GDALReadOziMapFile()                         */
 /************************************************************************/
 
 /** Helper function for translator implementer wanting support for OZI .map
@@ -2389,7 +2389,7 @@ int CPL_STDCALL GDALLoadTabFile(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALReadTabFile()                            */
+/*                          GDALReadTabFile()                           */
 /************************************************************************/
 
 /** Helper function for translator implementer wanting support for MapInfo
@@ -3026,7 +3026,7 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 }
 
 /************************************************************************/
-/*                         GDALCheckVersion()                           */
+/*                          GDALCheckVersion()                          */
 /************************************************************************/
 
 /** Return TRUE if GDAL library version at runtime matches
@@ -3476,7 +3476,7 @@ void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2,
 }
 
 /************************************************************************/
-/*                      StripIrrelevantOptions()                        */
+/*                       StripIrrelevantOptions()                       */
 /************************************************************************/
 
 static void StripIrrelevantOptions(CPLXMLNode *psCOL, int nOptions)
@@ -3538,7 +3538,7 @@ static void StripIrrelevantOptions(CPLXMLNode *psCOL, int nOptions)
 }
 
 /************************************************************************/
-/*                         GDALPrintDriverList()                        */
+/*                        GDALPrintDriverList()                         */
 /************************************************************************/
 
 /** Print on stdout the driver list */
@@ -4702,7 +4702,7 @@ GDALDataset *GDALFindAssociatedAuxFile(const char *pszBasename,
 }
 
 /************************************************************************/
-/* Infrastructure to check that dataset characteristics are valid       */
+/*    Infrastructure to check that dataset characteristics are valid    */
 /************************************************************************/
 
 CPL_C_START
@@ -4826,7 +4826,7 @@ void GDALSerializeGCPListToXML(CPLXMLNode *psParentNode,
 }
 
 /************************************************************************/
-/*                     GDALDeserializeGCPListFromXML()                  */
+/*                   GDALDeserializeGCPListFromXML()                    */
 /************************************************************************/
 
 void GDALDeserializeGCPListFromXML(const CPLXMLNode *psGCPList,
@@ -4972,7 +4972,7 @@ void GDALSerializeOpenOptionsToXML(CPLXMLNode *psParentNode,
 }
 
 /************************************************************************/
-/*                  GDALDeserializeOpenOptionsFromXML()                 */
+/*                 GDALDeserializeOpenOptionsFromXML()                  */
 /************************************************************************/
 
 char **GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode)
@@ -5004,7 +5004,7 @@ char **GDALDeserializeOpenOptionsFromXML(const CPLXMLNode *psParentNode)
 }
 
 /************************************************************************/
-/*                    GDALRasterIOGetResampleAlg()                      */
+/*                     GDALRasterIOGetResampleAlg()                     */
 /************************************************************************/
 
 GDALRIOResampleAlg GDALRasterIOGetResampleAlg(const char *pszResampling)
@@ -5035,7 +5035,7 @@ GDALRIOResampleAlg GDALRasterIOGetResampleAlg(const char *pszResampling)
 }
 
 /************************************************************************/
-/*                    GDALRasterIOGetResampleAlgStr()                   */
+/*                   GDALRasterIOGetResampleAlgStr()                    */
 /************************************************************************/
 
 const char *GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg)
@@ -5067,7 +5067,7 @@ const char *GDALRasterIOGetResampleAlg(GDALRIOResampleAlg eResampleAlg)
 }
 
 /************************************************************************/
-/*                   GDALRasterIOExtraArgSetResampleAlg()               */
+/*                 GDALRasterIOExtraArgSetResampleAlg()                 */
 /************************************************************************/
 
 void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg *psExtraArg,
@@ -5088,7 +5088,7 @@ void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg *psExtraArg,
 }
 
 /************************************************************************/
-/*                     GDALCanFileAcceptSidecarFile()                   */
+/*                    GDALCanFileAcceptSidecarFile()                    */
 /************************************************************************/
 
 int GDALCanFileAcceptSidecarFile(const char *pszFilename)
@@ -5102,7 +5102,7 @@ int GDALCanFileAcceptSidecarFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                   GDALCanReliablyUseSiblingFileList()                */
+/*                 GDALCanReliablyUseSiblingFileList()                  */
 /************************************************************************/
 
 /* Try to address https://github.com/OSGeo/gdal/issues/2903 */
@@ -5160,7 +5160,7 @@ bool GDALCanReliablyUseSiblingFileList(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                    GDALAdjustNoDataCloseToFloatMax()                 */
+/*                  GDALAdjustNoDataCloseToFloatMax()                   */
 /************************************************************************/
 
 double GDALAdjustNoDataCloseToFloatMax(double dfVal)
@@ -5292,7 +5292,7 @@ bool GDALCopyNoDataValue(GDALRasterBand *poDstBand, GDALRasterBand *poSrcBand,
 }
 
 /************************************************************************/
-/*                     GDALGetNoDataValueCastToDouble()                 */
+/*                   GDALGetNoDataValueCastToDouble()                   */
 /************************************************************************/
 
 double GDALGetNoDataValueCastToDouble(int64_t nVal)
@@ -5324,7 +5324,7 @@ double GDALGetNoDataValueCastToDouble(uint64_t nVal)
 }
 
 /************************************************************************/
-/*                GDALGetCompressionFormatForJPEG()                     */
+/*                  GDALGetCompressionFormatForJPEG()                   */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -5526,7 +5526,7 @@ std::string GDALGetCompressionFormatForJPEG(const void *pBuffer,
 //! @endcond
 
 /************************************************************************/
-/*                      GDALGetNoDataReplacementValue()                 */
+/*                   GDALGetNoDataReplacementValue()                    */
 /************************************************************************/
 
 /**
@@ -5747,7 +5747,7 @@ double GDALGetNoDataReplacementValue(GDALDataType dt, double dfNoDataValue)
 }
 
 /************************************************************************/
-/*                        GDALGetCacheDirectory()                       */
+/*                       GDALGetCacheDirectory()                        */
 /************************************************************************/
 
 /** Return the root path of the GDAL cache.
@@ -5810,7 +5810,7 @@ std::string GDALGetCacheDirectory()
 }
 
 /************************************************************************/
-/*                      GDALDoesFileOrDatasetExist()                    */
+/*                     GDALDoesFileOrDatasetExist()                     */
 /************************************************************************/
 
 /** Return whether a file already exists.
@@ -5843,7 +5843,7 @@ bool GDALDoesFileOrDatasetExist(const char *pszName, const char **ppszType,
 }
 
 /************************************************************************/
-/*                           GDALGeoTransform::Apply                    */
+/*                       GDALGeoTransform::Apply                        */
 /************************************************************************/
 
 bool GDALGeoTransform::Apply(const OGREnvelope &env,

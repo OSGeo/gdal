@@ -42,7 +42,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                          GDALGridOptions                             */
+/*                           GDALGridOptions                            */
 /************************************************************************/
 
 /** Options for use with GDALGrid(). GDALGridOptions* must be allocated
@@ -600,7 +600,7 @@ static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
 }
 
 /************************************************************************/
-/*                               GDALGrid()                             */
+/*                              GDALGrid()                              */
 /************************************************************************/
 
 /* clang-format off */
@@ -957,7 +957,7 @@ GDALDatasetH GDALGrid(const char *pszDest, GDALDatasetH hSrcDataset,
 }
 
 /************************************************************************/
-/*                       GDALGridOptionsGetParser()                     */
+/*                      GDALGridOptionsGetParser()                      */
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */
@@ -1177,7 +1177,7 @@ GDALGridOptionsGetParser(GDALGridOptions *psOptions,
 /*! @endcond */
 
 /************************************************************************/
-/*                         GDALGridGetParserUsage()                     */
+/*                       GDALGridGetParserUsage()                       */
 /************************************************************************/
 
 std::string GDALGridGetParserUsage()
@@ -1199,7 +1199,7 @@ std::string GDALGridGetParserUsage()
 }
 
 /************************************************************************/
-/*                   CHECK_HAS_ENOUGH_ADDITIONAL_ARGS()                 */
+/*                  CHECK_HAS_ENOUGH_ADDITIONAL_ARGS()                  */
 /************************************************************************/
 
 #ifndef CheckHasEnoughAdditionalArgs_defined
@@ -1226,7 +1226,7 @@ static bool CheckHasEnoughAdditionalArgs(CSLConstList papszArgv, int i,
     }
 
 /************************************************************************/
-/*                             GDALGridOptionsNew()                     */
+/*                         GDALGridOptionsNew()                         */
 /************************************************************************/
 
 /**
@@ -1464,7 +1464,7 @@ GDALGridOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                          GDALGridOptionsFree()                       */
+/*                        GDALGridOptionsFree()                         */
 /************************************************************************/
 
 /**

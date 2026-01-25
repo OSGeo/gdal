@@ -54,7 +54,7 @@ struct TPSTransformInfo
 };
 
 /************************************************************************/
-/*                   GDALCreateSimilarTPSTransformer()                  */
+/*                  GDALCreateSimilarTPSTransformer()                   */
 /************************************************************************/
 
 static void *GDALCreateSimilarTPSTransformer(void *hTransformArg,

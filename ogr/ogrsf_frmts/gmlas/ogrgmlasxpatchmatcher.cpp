@@ -15,7 +15,7 @@
 #include "ogr_gmlas.h"
 
 /************************************************************************/
-/*                           SetRefXPaths()                             */
+/*                            SetRefXPaths()                            */
 /************************************************************************/
 
 void GMLASXPathMatcher::SetRefXPaths(
@@ -123,7 +123,7 @@ void GMLASXPathMatcher::SetDocumentMapURIToPrefix(
 }
 
 /************************************************************************/
-/*                         MatchesRefXPath()                            */
+/*                          MatchesRefXPath()                           */
 /************************************************************************/
 
 // This is a performance critical function, especially on geosciml schemas,
@@ -177,7 +177,7 @@ bool GMLASXPathMatcher::MatchesRefXPath(
 }
 
 /************************************************************************/
-/*                         MatchesRefXPath()                            */
+/*                          MatchesRefXPath()                           */
 /************************************************************************/
 
 bool GMLASXPathMatcher::MatchesRefXPath(const CPLString &osXPath,

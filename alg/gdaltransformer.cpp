@@ -61,7 +61,7 @@ static void *GDALCreateApproxTransformer2(GDALTransformerFunc pfnRawTransformer,
                                           double dfMaxErrorReverse);
 
 /************************************************************************/
-/*                            GDALIsTransformer()                       */
+/*                         GDALIsTransformer()                          */
 /************************************************************************/
 
 bool GDALIsTransformer(void *hTransformerArg, const char *pszClassName)
@@ -1241,7 +1241,7 @@ retry:
 }
 
 /************************************************************************/
-/*                    GetCurrentCheckWithInvertPROJ()                   */
+/*                   GetCurrentCheckWithInvertPROJ()                    */
 /************************************************************************/
 
 static bool GetCurrentCheckWithInvertPROJ()
@@ -1250,7 +1250,7 @@ static bool GetCurrentCheckWithInvertPROJ()
 }
 
 /************************************************************************/
-/*               GDALCreateGenImgProjTransformerInternal()              */
+/*              GDALCreateGenImgProjTransformerInternal()               */
 /************************************************************************/
 
 static void *GDALCreateSimilarGenImgProjTransformer(void *hTransformArg,
@@ -1281,7 +1281,7 @@ static GDALGenImgProjTransformInfo *GDALCreateGenImgProjTransformerInternal()
 }
 
 /************************************************************************/
-/*                GDALCreateSimilarGenImgProjTransformer()              */
+/*               GDALCreateSimilarGenImgProjTransformer()               */
 /************************************************************************/
 
 static void *GDALCreateSimilarGenImgProjTransformer(void *hTransformArg,
@@ -1499,7 +1499,7 @@ static void InsertCenterLong(GDALDatasetH hDS, const OGRSpatialReference *poSRS,
 }
 
 /************************************************************************/
-/*                      GDALComputeAreaOfInterest()                     */
+/*                     GDALComputeAreaOfInterest()                      */
 /************************************************************************/
 
 bool GDALComputeAreaOfInterest(const OGRSpatialReference *poSRS,
@@ -1669,7 +1669,7 @@ bool GDALComputeAreaOfInterest(const OGRSpatialReference *poSRS, double dfX1,
 }
 
 /************************************************************************/
-/*                    GDALGCPAntimeridianUnwrap()                       */
+/*                     GDALGCPAntimeridianUnwrap()                      */
 /************************************************************************/
 
 /* Deal with discontinuties of dfGCPX longitudes around the anti-meridian.
@@ -1721,7 +1721,7 @@ static void GDALGCPAntimeridianUnwrap(int nGCPCount, GDAL_GCP *pasGCPList,
 }
 
 /************************************************************************/
-/*              GDALGetGenImgProjTranformerOptionList()                 */
+/*               GDALGetGenImgProjTranformerOptionList()                */
 /************************************************************************/
 
 /** Return a XML string describing options accepted by
@@ -3182,7 +3182,7 @@ int GDALGenImgProjTransform(void *pTransformArgIn, int bDstToSrc,
 }
 
 /************************************************************************/
-/*              GDALTransformLonLatToDestGenImgProjTransformer()        */
+/*           GDALTransformLonLatToDestGenImgProjTransformer()           */
 /************************************************************************/
 
 int GDALTransformLonLatToDestGenImgProjTransformer(void *hTransformArg,
@@ -3499,7 +3499,7 @@ void *GDALCreateReprojectionTransformer(const char *pszSrcWKT,
 }
 
 /************************************************************************/
-/*                 GDALCreateReprojectionTransformerEx()                */
+/*                GDALCreateReprojectionTransformerEx()                 */
 /************************************************************************/
 
 /**
@@ -3890,7 +3890,7 @@ static void *GDALDeserializeReprojectionTransformer(CPLXMLNode *psTree)
 /************************************************************************/
 
 /************************************************************************/
-/*                  GDALCreateSimilarApproxTransformer()                */
+/*                 GDALCreateSimilarApproxTransformer()                 */
 /************************************************************************/
 
 static void *GDALCreateSimilarApproxTransformer(void *hTransformArg,
@@ -4082,7 +4082,7 @@ void GDALDestroyApproxTransformer(void *pCBData)
 }
 
 /************************************************************************/
-/*                  GDALRefreshApproxTransformer()                      */
+/*                    GDALRefreshApproxTransformer()                    */
 /************************************************************************/
 
 void GDALRefreshApproxTransformer(void *hTransformArg)
@@ -4098,7 +4098,7 @@ void GDALRefreshApproxTransformer(void *hTransformArg)
 }
 
 /************************************************************************/
-/*                      GDALApproxTransformInternal()                   */
+/*                    GDALApproxTransformInternal()                     */
 /************************************************************************/
 
 static int GDALApproxTransformInternal(void *pCBData, int bDstToSrc,
@@ -4481,7 +4481,7 @@ static void *GDALDeserializeApproxTransformer(CPLXMLNode *psTree)
 }
 
 /************************************************************************/
-/*                 GDALTransformLonLatToDestApproxTransformer()         */
+/*             GDALTransformLonLatToDestApproxTransformer()             */
 /************************************************************************/
 
 int GDALTransformLonLatToDestApproxTransformer(void *hTransformArg,
@@ -4630,7 +4630,7 @@ CPLXMLNode *GDALSerializeTransformer(GDALTransformerFunc /* pfnFunc */,
 }
 
 /************************************************************************/
-/*                  GDALRegisterTransformDeserializer()                 */
+/*                 GDALRegisterTransformDeserializer()                  */
 /************************************************************************/
 
 static CPLList *psListDeserializer = nullptr;
@@ -4887,7 +4887,7 @@ void *GDALCloneTransformer(void *pTransformArg)
 }
 
 /************************************************************************/
-/*                   GDALCreateSimilarTransformer()                     */
+/*                    GDALCreateSimilarTransformer()                    */
 /************************************************************************/
 
 void *GDALCreateSimilarTransformer(void *pTransformArg, double dfRatioX,
@@ -4915,7 +4915,7 @@ void *GDALCreateSimilarTransformer(void *pTransformArg, double dfRatioX,
 }
 
 /************************************************************************/
-/*                      GetGenImgProjTransformInfo()                    */
+/*                     GetGenImgProjTransformInfo()                     */
 /************************************************************************/
 
 static GDALTransformerInfo *GetGenImgProjTransformInfo(const char *pszFunc,
@@ -5075,7 +5075,7 @@ bool GDALTransformIsTranslationOnPixelBoundaries(GDALTransformerFunc,
 }
 
 /************************************************************************/
-/*                   GDALTransformIsAffineNoRotation()                  */
+/*                  GDALTransformIsAffineNoRotation()                   */
 /************************************************************************/
 
 bool GDALTransformIsAffineNoRotation(GDALTransformerFunc, void *pTransformerArg)
@@ -5102,7 +5102,7 @@ bool GDALTransformIsAffineNoRotation(GDALTransformerFunc, void *pTransformerArg)
 }
 
 /************************************************************************/
-/*                        GDALTransformHasFastClone()                   */
+/*                     GDALTransformHasFastClone()                      */
 /************************************************************************/
 
 /** Returns whether GDALCloneTransformer() on this transformer is

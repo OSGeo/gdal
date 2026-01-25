@@ -75,7 +75,7 @@ char **VSIReadDir(const char *pszPath)
 }
 
 /************************************************************************/
-/*                             VSIReadDirEx()                           */
+/*                            VSIReadDirEx()                            */
 /************************************************************************/
 
 /**
@@ -110,7 +110,7 @@ char **VSIReadDirEx(const char *pszPath, int nMaxFiles)
 }
 
 /************************************************************************/
-/*                             VSISiblingFiles()                        */
+/*                          VSISiblingFiles()                           */
 /************************************************************************/
 
 /**
@@ -138,7 +138,7 @@ char **VSISiblingFiles(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           VSIFnMatch()                               */
+/*                             VSIFnMatch()                             */
 /************************************************************************/
 
 static bool VSIFnMatch(const char *pszPattern, const char *pszStr)
@@ -223,7 +223,7 @@ static bool VSIFnMatch(const char *pszPattern, const char *pszStr)
 }
 
 /************************************************************************/
-/*                             VSIGlob()                                */
+/*                              VSIGlob()                               */
 /************************************************************************/
 
 /**
@@ -428,7 +428,7 @@ const char *VSIGetDirectorySeparator(const char *pszPath)
 }
 
 /************************************************************************/
-/*                             VSIReadRecursive()                       */
+/*                          VSIReadRecursive()                          */
 /************************************************************************/
 
 /**
@@ -548,7 +548,7 @@ VSIDIR *VSIOpenDir(const char *pszPath, int nRecurseDepth,
 }
 
 /************************************************************************/
-/*                          VSIGetNextDirEntry()                        */
+/*                         VSIGetNextDirEntry()                         */
 /************************************************************************/
 
 /**
@@ -584,7 +584,7 @@ const VSIDIREntry *VSIGetNextDirEntry(VSIDIR *dir)
 }
 
 /************************************************************************/
-/*                             VSICloseDir()                            */
+/*                            VSICloseDir()                             */
 /************************************************************************/
 
 /**
@@ -630,7 +630,7 @@ int VSIMkdir(const char *pszPathname, long mode)
 }
 
 /************************************************************************/
-/*                       VSIMkdirRecursive()                            */
+/*                         VSIMkdirRecursive()                          */
 /************************************************************************/
 
 /**
@@ -799,7 +799,7 @@ int VSIRename(const char *oldpath, const char *newpath)
 }
 
 /************************************************************************/
-/*                             VSIMove()                                */
+/*                              VSIMove()                               */
 /************************************************************************/
 
 /**
@@ -906,7 +906,7 @@ int VSIMove(const char *oldpath, const char *newpath,
 }
 
 /************************************************************************/
-/*                             VSICopyFile()                            */
+/*                            VSICopyFile()                             */
 /************************************************************************/
 
 /**
@@ -1060,7 +1060,7 @@ int VSICopyFileRestartable(const char *pszSource, const char *pszTarget,
 }
 
 /************************************************************************/
-/*                             VSISync()                                */
+/*                              VSISync()                               */
 /************************************************************************/
 
 /**
@@ -1169,7 +1169,7 @@ int VSISync(const char *pszSource, const char *pszTarget,
 }
 
 /************************************************************************/
-/*                    VSIMultipartUploadGetCapabilities()               */
+/*                 VSIMultipartUploadGetCapabilities()                  */
 /************************************************************************/
 
 /**
@@ -1208,7 +1208,7 @@ int VSIMultipartUploadGetCapabilities(
 }
 
 /************************************************************************/
-/*                     VSIMultipartUploadStart()                        */
+/*                      VSIMultipartUploadStart()                       */
 /************************************************************************/
 
 /**
@@ -1331,7 +1331,7 @@ int VSIMultipartUploadEnd(const char *pszFilename, const char *pszUploadId,
 }
 
 /************************************************************************/
-/*                       VSIMultipartUploadAbort()                      */
+/*                      VSIMultipartUploadAbort()                       */
 /************************************************************************/
 
 /**
@@ -1366,7 +1366,7 @@ int VSIMultipartUploadAbort(const char *pszFilename, const char *pszUploadId,
 #ifndef DOXYGEN_SKIP
 
 /************************************************************************/
-/*                     MultipartUploadGetCapabilities()                 */
+/*                   MultipartUploadGetCapabilities()                   */
 /************************************************************************/
 
 bool VSIFilesystemHandler::MultipartUploadGetCapabilities(int *, int *, int *,
@@ -1380,7 +1380,7 @@ bool VSIFilesystemHandler::MultipartUploadGetCapabilities(int *, int *, int *,
 }
 
 /************************************************************************/
-/*                         MultipartUploadStart()                       */
+/*                        MultipartUploadStart()                        */
 /************************************************************************/
 
 char *VSIFilesystemHandler::MultipartUploadStart(const char *, CSLConstList)
@@ -1418,7 +1418,7 @@ bool VSIFilesystemHandler::MultipartUploadEnd(const char *, const char *,
 }
 
 /************************************************************************/
-/*                         MultipartUploadAbort()                       */
+/*                        MultipartUploadAbort()                        */
 /************************************************************************/
 
 bool VSIFilesystemHandler::MultipartUploadAbort(const char *, const char *,
@@ -1432,7 +1432,7 @@ bool VSIFilesystemHandler::MultipartUploadAbort(const char *, const char *,
 #endif
 
 /************************************************************************/
-/*                         VSIAbortPendingUploads()                     */
+/*                       VSIAbortPendingUploads()                       */
 /************************************************************************/
 
 /**
@@ -1551,7 +1551,7 @@ int VSIStatL(const char *pszFilename, VSIStatBufL *psStatBuf)
 }
 
 /************************************************************************/
-/*                            VSIStatExL()                              */
+/*                             VSIStatExL()                             */
 /************************************************************************/
 
 /**
@@ -1610,7 +1610,7 @@ int VSIStatExL(const char *pszFilename, VSIStatBufL *psStatBuf, int nFlags)
 }
 
 /************************************************************************/
-/*                       VSIGetFileMetadata()                           */
+/*                         VSIGetFileMetadata()                         */
 /************************************************************************/
 
 /**
@@ -1669,7 +1669,7 @@ char **VSIGetFileMetadata(const char *pszFilename, const char *pszDomain,
 }
 
 /************************************************************************/
-/*                       VSISetFileMetadata()                           */
+/*                         VSISetFileMetadata()                         */
 /************************************************************************/
 
 /**
@@ -1742,7 +1742,7 @@ int VSISetFileMetadata(const char *pszFilename, CSLConstList papszMetadata,
 }
 
 /************************************************************************/
-/*                       VSIIsCaseSensitiveFS()                         */
+/*                        VSIIsCaseSensitiveFS()                        */
 /************************************************************************/
 
 /**
@@ -1800,7 +1800,7 @@ int VSISupportsSparseFiles(const char *pszPath)
 }
 
 /************************************************************************/
-/*                           VSIIsLocal()                               */
+/*                             VSIIsLocal()                             */
 /************************************************************************/
 
 /**
@@ -1828,7 +1828,7 @@ bool VSIIsLocal(const char *pszPath)
 }
 
 /************************************************************************/
-/*                       VSIGetCanonicalFilename()                      */
+/*                      VSIGetCanonicalFilename()                       */
 /************************************************************************/
 
 /**
@@ -1853,7 +1853,7 @@ char *VSIGetCanonicalFilename(const char *pszPath)
 }
 
 /************************************************************************/
-/*                      VSISupportsSequentialWrite()                    */
+/*                     VSISupportsSequentialWrite()                     */
 /************************************************************************/
 
 /**
@@ -1877,7 +1877,7 @@ bool VSISupportsSequentialWrite(const char *pszPath, bool bAllowLocalTempFile)
 }
 
 /************************************************************************/
-/*                      VSISupportsRandomWrite()                        */
+/*                       VSISupportsRandomWrite()                       */
 /************************************************************************/
 
 /**
@@ -1901,7 +1901,7 @@ bool VSISupportsRandomWrite(const char *pszPath, bool bAllowLocalTempFile)
 }
 
 /************************************************************************/
-/*                     VSIHasOptimizedReadMultiRange()                  */
+/*                   VSIHasOptimizedReadMultiRange()                    */
 /************************************************************************/
 
 /**
@@ -1925,7 +1925,7 @@ int VSIHasOptimizedReadMultiRange(const char *pszPath)
 }
 
 /************************************************************************/
-/*                        VSIGetActualURL()                             */
+/*                          VSIGetActualURL()                           */
 /************************************************************************/
 
 /**
@@ -1953,7 +1953,7 @@ const char *VSIGetActualURL(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                        VSIGetSignedURL()                             */
+/*                          VSIGetSignedURL()                           */
 /************************************************************************/
 
 /**
@@ -2031,7 +2031,7 @@ VSILFILE *VSIFOpenL(const char *pszFilename, const char *pszAccess)
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 #ifndef DOXYGEN_SKIP
@@ -2046,7 +2046,7 @@ VSIFilesystemHandler::OpenStatic(const char *pszFilename, const char *pszAccess,
 }
 
 /************************************************************************/
-/*                             CopyFile()                               */
+/*                              CopyFile()                              */
 /************************************************************************/
 
 int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
@@ -2160,7 +2160,7 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
 }
 
 /************************************************************************/
-/*                       CopyFileRestartable()                          */
+/*                        CopyFileRestartable()                         */
 /************************************************************************/
 
 int VSIFilesystemHandler::CopyFileRestartable(
@@ -2176,7 +2176,7 @@ int VSIFilesystemHandler::CopyFileRestartable(
 }
 
 /************************************************************************/
-/*                               Sync()                                 */
+/*                                Sync()                                */
 /************************************************************************/
 
 bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
@@ -2354,7 +2354,7 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
 }
 
 /************************************************************************/
-/*                  VSIVirtualHandleOnlyVisibleAtCloseTime()            */
+/*               VSIVirtualHandleOnlyVisibleAtCloseTime()               */
 /************************************************************************/
 
 class VSIVirtualHandleOnlyVisibleAtCloseTime final : public VSIProxyFileHandle
@@ -2411,7 +2411,7 @@ int VSIVirtualHandleOnlyVisibleAtCloseTime::Close()
 }
 
 /************************************************************************/
-/*                       CreateOnlyVisibleAtCloseTime()                 */
+/*                    CreateOnlyVisibleAtCloseTime()                    */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr VSIFilesystemHandler::CreateOnlyVisibleAtCloseTime(
@@ -2454,7 +2454,7 @@ VSIDIREntry::VSIDIREntry(const VSIDIREntry &other)
 }
 
 /************************************************************************/
-/*                           ~VSIDIREntry()                             */
+/*                            ~VSIDIREntry()                            */
 /************************************************************************/
 
 VSIDIREntry::~VSIDIREntry()
@@ -2502,7 +2502,7 @@ struct VSIDIRGeneric : public VSIDIR
 };
 
 /************************************************************************/
-/*                         ~VSIDIRGeneric()                             */
+/*                           ~VSIDIRGeneric()                           */
 /************************************************************************/
 
 VSIDIRGeneric::~VSIDIRGeneric()
@@ -2518,7 +2518,7 @@ VSIDIRGeneric::~VSIDIRGeneric()
 }  // namespace
 
 /************************************************************************/
-/*                            OpenDir()                                 */
+/*                              OpenDir()                               */
 /************************************************************************/
 
 VSIDIR *VSIFilesystemHandler::OpenDir(const char *pszPath, int nRecurseDepth,
@@ -2543,7 +2543,7 @@ VSIDIR *VSIFilesystemHandler::OpenDir(const char *pszPath, int nRecurseDepth,
 }
 
 /************************************************************************/
-/*                           NextDirEntry()                             */
+/*                            NextDirEntry()                            */
 /************************************************************************/
 
 const VSIDIREntry *VSIDIRGeneric::NextDirEntry()
@@ -2668,7 +2668,7 @@ begin:
 }
 
 /************************************************************************/
-/*                           UnlinkBatch()                              */
+/*                            UnlinkBatch()                             */
 /************************************************************************/
 
 int *VSIFilesystemHandler::UnlinkBatch(CSLConstList papszFiles)
@@ -2683,7 +2683,7 @@ int *VSIFilesystemHandler::UnlinkBatch(CSLConstList papszFiles)
 }
 
 /************************************************************************/
-/*                          RmdirRecursive()                            */
+/*                           RmdirRecursive()                           */
 /************************************************************************/
 
 int VSIFilesystemHandler::RmdirRecursive(const char *pszDirname)
@@ -2762,7 +2762,7 @@ bool VSIFilesystemHandler::SetFileMetadata(const char * /* pszFilename*/,
 #endif
 
 /************************************************************************/
-/*                             VSIFOpenExL()                            */
+/*                            VSIFOpenExL()                             */
 /************************************************************************/
 
 /**
@@ -3134,7 +3134,7 @@ size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp)
 }
 
 /************************************************************************/
-/*                       VSIFReadMultiRangeL()                          */
+/*                        VSIFReadMultiRangeL()                         */
 /************************************************************************/
 
 /**
@@ -3265,7 +3265,7 @@ int VSIFEofL(VSILFILE *fp)
 }
 
 /************************************************************************/
-/*                            VSIFErrorL()                              */
+/*                             VSIFErrorL()                             */
 /************************************************************************/
 
 /**
@@ -3347,7 +3347,7 @@ void VSIFClearErrL(VSILFILE *fp)
 }
 
 /************************************************************************/
-/*                            VSIFTruncateL()                           */
+/*                           VSIFTruncateL()                            */
 /************************************************************************/
 
 /**
@@ -3477,7 +3477,7 @@ size_t VSIVirtualHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 }
 
 /************************************************************************/
-/*                       VSIVirtualHandle::Write()                      */
+/*                      VSIVirtualHandle::Write()                       */
 /************************************************************************/
 
 /**
@@ -3502,7 +3502,7 @@ size_t VSIVirtualHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
  */
 
 /************************************************************************/
-/*                       VSIVirtualHandle::Write()                      */
+/*                      VSIVirtualHandle::Write()                       */
 /************************************************************************/
 
 /**
@@ -3534,7 +3534,7 @@ size_t VSIVirtualHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 }
 
 /************************************************************************/
-/*                 VSIVirtualHandle::Printf()                           */
+/*                      VSIVirtualHandle::Printf()                      */
 /************************************************************************/
 
 /**
@@ -3563,7 +3563,7 @@ int VSIVirtualHandle::Printf(CPL_FORMAT_STRING(const char *pszFormat), ...)
 }
 
 /************************************************************************/
-/*                              VSIFPutcL()                              */
+/*                             VSIFPutcL()                              */
 /************************************************************************/
 
 // TODO: should we put in conformance with POSIX regarding the return
@@ -3593,7 +3593,7 @@ int VSIFPutcL(int nChar, VSILFILE *fp)
 }
 
 /************************************************************************/
-/*                        VSIFGetRangeStatusL()                        */
+/*                        VSIFGetRangeStatusL()                         */
 /************************************************************************/
 
 /**
@@ -3829,7 +3829,7 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
 }
 
 /************************************************************************/
-/*                         VSIOverwriteFile()                           */
+/*                          VSIOverwriteFile()                          */
 /************************************************************************/
 
 /**
@@ -3884,7 +3884,7 @@ int VSIOverwriteFile(VSILFILE *fpTarget, const char *pszSourceFilename)
 }
 
 /************************************************************************/
-/*                        VSIFGetNativeFileDescriptorL()                */
+/*                    VSIFGetNativeFileDescriptorL()                    */
 /************************************************************************/
 
 /**
@@ -3920,7 +3920,7 @@ void *VSIFGetNativeFileDescriptorL(VSILFILE *fp)
 }
 
 /************************************************************************/
-/*                      VSIGetDiskFreeSpace()                           */
+/*                        VSIGetDiskFreeSpace()                         */
 /************************************************************************/
 
 /**
@@ -3940,7 +3940,7 @@ GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
 }
 
 /************************************************************************/
-/*                    VSIGetFileSystemsPrefixes()                       */
+/*                     VSIGetFileSystemsPrefixes()                      */
 /************************************************************************/
 
 /**
@@ -3958,7 +3958,7 @@ char **VSIGetFileSystemsPrefixes(void)
 }
 
 /************************************************************************/
-/*                     VSIGetFileSystemOptions()                        */
+/*                      VSIGetFileSystemOptions()                       */
 /************************************************************************/
 
 /**
@@ -3979,7 +3979,7 @@ const char *VSIGetFileSystemOptions(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                       VSISetPathSpecificOption()                     */
+/*                      VSISetPathSpecificOption()                      */
 /************************************************************************/
 
 static std::mutex oMutexPathSpecificOptions;
@@ -4051,7 +4051,7 @@ void VSISetPathSpecificOption(const char *pszPathPrefix, const char *pszKey,
 }
 
 /************************************************************************/
-/*                       VSIClearPathSpecificOptions()                  */
+/*                    VSIClearPathSpecificOptions()                     */
 /************************************************************************/
 
 /**
@@ -4091,7 +4091,7 @@ void VSIClearPathSpecificOptions(const char *pszPathPrefix)
 }
 
 /************************************************************************/
-/*                        VSIGetPathSpecificOption()                    */
+/*                      VSIGetPathSpecificOption()                      */
 /************************************************************************/
 
 /**
@@ -4139,7 +4139,7 @@ const char *VSIGetPathSpecificOption(const char *pszPath, const char *pszKey,
 }
 
 /************************************************************************/
-/*                      VSIDuplicateFileSystemHandler()                 */
+/*                   VSIDuplicateFileSystemHandler()                    */
 /************************************************************************/
 
 /**
@@ -4271,7 +4271,7 @@ VSIFileManager *VSIFileManager::Get()
 }
 
 /************************************************************************/
-/*                           GetPrefixes()                              */
+/*                            GetPrefixes()                             */
 /************************************************************************/
 
 char **VSIFileManager::GetPrefixes()
@@ -4348,7 +4348,7 @@ void VSIFileManager::InstallHandler(
 }
 
 /************************************************************************/
-/*                          RemoveHandler()                             */
+/*                           RemoveHandler()                            */
 /************************************************************************/
 
 void VSIFileManager::RemoveHandler(const std::string &osPrefix)
@@ -4384,7 +4384,7 @@ void VSICleanupFileManager()
 }
 
 /************************************************************************/
-/*                            Truncate()                                */
+/*                              Truncate()                              */
 /************************************************************************/
 
 int VSIVirtualHandle::Truncate(vsi_l_offset nNewSize)
@@ -4450,7 +4450,7 @@ int VSIVirtualHandle::ReadMultiRange(int nRanges, void **ppData,
 #endif  // #ifndef DOXYGEN_SKIP
 
 /************************************************************************/
-/*                            HasPRead()                                */
+/*                              HasPRead()                              */
 /************************************************************************/
 
 /** Returns whether this file handle supports the PRead() method.
@@ -4463,7 +4463,7 @@ bool VSIVirtualHandle::HasPRead() const
 }
 
 /************************************************************************/
-/*                             PRead()                                  */
+/*                               PRead()                                */
 /************************************************************************/
 
 /** Do a parallel-compatible read operation.
@@ -4492,7 +4492,7 @@ size_t VSIVirtualHandle::PRead(CPL_UNUSED void *pBuffer,
 
 #ifndef DOXYGEN_SKIP
 /************************************************************************/
-/*                  VSIProxyFileHandle::CancelCreation()                */
+/*                 VSIProxyFileHandle::CancelCreation()                 */
 /************************************************************************/
 
 void VSIProxyFileHandle::CancelCreation()
@@ -4502,7 +4502,7 @@ void VSIProxyFileHandle::CancelCreation()
 #endif
 
 /************************************************************************/
-/*                         VSIURIToVSIPath()                            */
+/*                          VSIURIToVSIPath()                           */
 /************************************************************************/
 
 /** Return a VSI compatible path from a URI / URL

@@ -90,7 +90,7 @@ class VRTOverviewInfo
 };
 
 /************************************************************************/
-/*                            VRTMapSharedResources                     */
+/*                        VRTMapSharedResources                         */
 /************************************************************************/
 
 /** Map of shared datasets */
@@ -1125,7 +1125,7 @@ class CPL_DLL VRTWarpedRasterBand final : public VRTRasterBand
 };
 
 /************************************************************************/
-/*                        VRTPansharpenedRasterBand                     */
+/*                      VRTPansharpenedRasterBand                       */
 /************************************************************************/
 
 class VRTPansharpenedRasterBand final : public VRTRasterBand
@@ -1745,7 +1745,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
 };
 
 /************************************************************************/
-/*                           VRTFilteredSource                          */
+/*                          VRTFilteredSource                           */
 /************************************************************************/
 
 class VRTFilteredSource CPL_NON_FINAL : public VRTComplexSource
@@ -1882,7 +1882,7 @@ class VRTFuncSource final : public VRTSource
 };
 
 /************************************************************************/
-/*                              VRTGroup                                */
+/*                               VRTGroup                               */
 /************************************************************************/
 
 #ifdef TMPEXPORT
@@ -2053,7 +2053,7 @@ class VRTGroup final : public GDALGroup
 };
 
 /************************************************************************/
-/*                            VRTDimension                              */
+/*                             VRTDimension                             */
 /************************************************************************/
 
 class VRTDimension final : public GDALDimension
@@ -2087,7 +2087,7 @@ class VRTDimension final : public GDALDimension
 };
 
 /************************************************************************/
-/*                            VRTAttribute                              */
+/*                             VRTAttribute                             */
 /************************************************************************/
 
 class VRTAttribute final : public GDALAttribute
@@ -2158,7 +2158,7 @@ class VRTAttribute final : public GDALAttribute
 };
 
 /************************************************************************/
-/*                          VRTMDArraySource                            */
+/*                           VRTMDArraySource                           */
 /************************************************************************/
 
 class VRTMDArraySource
@@ -2190,7 +2190,7 @@ class VRTMDArraySource
 };
 
 /************************************************************************/
-/*                            VRTMDArray                                */
+/*                              VRTMDArray                              */
 /************************************************************************/
 
 class VRTMDArray final : public GDALMDArray
@@ -2394,7 +2394,7 @@ class VRTMDArray final : public GDALMDArray
 };
 
 /************************************************************************/
-/*                       VRTMDArraySourceInlinedValues                  */
+/*                    VRTMDArraySourceInlinedValues                     */
 /************************************************************************/
 
 class VRTMDArraySourceInlinedValues final : public VRTMDArraySource
@@ -2464,7 +2464,7 @@ class VRTMDArraySourceInlinedValues final : public VRTMDArraySource
 };
 
 /************************************************************************/
-/*                     VRTMDArraySourceRegularlySpaced                  */
+/*                   VRTMDArraySourceRegularlySpaced                    */
 /************************************************************************/
 
 class VRTMDArraySourceRegularlySpaced final : public VRTMDArraySource
@@ -2500,7 +2500,7 @@ class VRTMDArraySourceRegularlySpaced final : public VRTMDArraySource
 };
 
 /************************************************************************/
-/*                       VRTMDArraySourceFromArray                      */
+/*                      VRTMDArraySourceFromArray                       */
 /************************************************************************/
 
 struct VRTArrayDatasetWrapper;

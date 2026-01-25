@@ -25,7 +25,7 @@
 constexpr int BEZIER_STEPS = 10;
 
 /************************************************************************/
-/*                        OpenVectorLayers()                            */
+/*                          OpenVectorLayers()                          */
 /************************************************************************/
 
 bool PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
@@ -106,7 +106,7 @@ bool PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
 }
 
 /************************************************************************/
-/*                   CleanupIntermediateResources()                     */
+/*                    CleanupIntermediateResources()                    */
 /************************************************************************/
 
 void PDFDataset::CleanupIntermediateResources()
@@ -230,7 +230,7 @@ const OGRLayer *PDFDataset::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                            GetLayerCount()                           */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int PDFDataset::GetLayerCount() const
@@ -415,7 +415,7 @@ void PDFDataset::GraphicState::PreMultiplyBy(double adfMatrix[6])
 }
 
 /************************************************************************/
-/*                   GraphicState::ApplyMatrix()                        */
+/*                     GraphicState::ApplyMatrix()                      */
 /************************************************************************/
 
 void PDFDataset::GraphicState::ApplyMatrix(double adfCoords[2]) const
@@ -428,7 +428,7 @@ void PDFDataset::GraphicState::ApplyMatrix(double adfCoords[2]) const
 }
 
 /************************************************************************/
-/*                         PDFCoordsToSRSCoords()                       */
+/*                        PDFCoordsToSRSCoords()                        */
 /************************************************************************/
 
 void PDFDataset::PDFCoordsToSRSCoords(double x, double y, double &X, double &Y)
@@ -577,7 +577,7 @@ static std::unique_ptr<OGRPoint> PDFGetStarCenter(OGRLineString *poLS)
 }
 
 /************************************************************************/
-/*                            UnstackTokens()                           */
+/*                           UnstackTokens()                            */
 /************************************************************************/
 
 int PDFDataset::UnstackTokens(
@@ -637,7 +637,7 @@ static void AddBezierCurve(std::vector<double> &oCoords, const double *x0_y0,
 }
 
 /************************************************************************/
-/*                           ParseContent()                             */
+/*                            ParseContent()                            */
 /************************************************************************/
 
 #define NEW_SUBPATH -99
@@ -1942,7 +1942,7 @@ void PDFDataset::ExploreContents(GDALPDFObject *poObj,
 }
 
 /************************************************************************/
-/*                   ExploreContentsNonStructured()                     */
+/*                    ExploreContentsNonStructured()                    */
 /************************************************************************/
 
 void PDFDataset::ExploreContentsNonStructuredInternal(
@@ -2006,7 +2006,7 @@ void PDFDataset::ExploreContentsNonStructuredInternal(
 }
 
 /************************************************************************/
-/*                         ExploreResourceProperty()                    */
+/*                      ExploreResourceProperty()                       */
 /************************************************************************/
 
 static void ExploreResourceProperty(
@@ -2220,7 +2220,7 @@ static void ExploreResourceProperty(
 }
 
 /************************************************************************/
-/*                   ExploreContentsNonStructured()                     */
+/*                    ExploreContentsNonStructured()                    */
 /************************************************************************/
 
 void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,

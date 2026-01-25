@@ -17,7 +17,7 @@
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/blosc/index.html
 
 /************************************************************************/
-/*                       ZarrV3CodecBlosc()                             */
+/*                          ZarrV3CodecBlosc()                          */
 /************************************************************************/
 
 ZarrV3CodecBlosc::ZarrV3CodecBlosc() : ZarrV3CodecAbstractCompressor(NAME)
@@ -25,7 +25,7 @@ ZarrV3CodecBlosc::ZarrV3CodecBlosc() : ZarrV3CodecAbstractCompressor(NAME)
 }
 
 /************************************************************************/
-/*                           GetConfiguration()                         */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 /* static */ CPLJSONObject
@@ -44,7 +44,7 @@ ZarrV3CodecBlosc::GetConfiguration(const char *cname, int clevel,
 }
 
 /************************************************************************/
-/*                   ZarrV3CodecBlosc::InitFromConfiguration()           */
+/*              ZarrV3CodecBlosc::InitFromConfiguration()               */
 /************************************************************************/
 
 bool ZarrV3CodecBlosc::InitFromConfiguration(
@@ -167,7 +167,7 @@ bool ZarrV3CodecBlosc::InitFromConfiguration(
 }
 
 /************************************************************************/
-/*                      ZarrV3CodecBlosc::Clone()                        */
+/*                      ZarrV3CodecBlosc::Clone()                       */
 /************************************************************************/
 
 std::unique_ptr<ZarrV3Codec> ZarrV3CodecBlosc::Clone() const

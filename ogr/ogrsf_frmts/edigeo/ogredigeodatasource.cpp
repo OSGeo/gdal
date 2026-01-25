@@ -37,7 +37,7 @@ OGREDIGEODataSource::OGREDIGEODataSource()
 }
 
 /************************************************************************/
-/*                      ~OGREDIGEODataSource()                          */
+/*                        ~OGREDIGEODataSource()                        */
 /************************************************************************/
 
 OGREDIGEODataSource::~OGREDIGEODataSource()
@@ -69,7 +69,7 @@ const OGRLayer *OGREDIGEODataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                         GetLayerCount()                              */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int OGREDIGEODataSource::GetLayerCount() const
@@ -148,7 +148,7 @@ int OGREDIGEODataSource::ReadTHF(VSILFILE *fp) const
 }
 
 /************************************************************************/
-/*                             OpenFile()                               */
+/*                              OpenFile()                              */
 /************************************************************************/
 
 VSILFILE *OGREDIGEODataSource::OpenFile(const char *pszType,
@@ -530,7 +530,7 @@ int OGREDIGEODataSource::ReadQAL() const
 }
 
 /************************************************************************/
-/*                       CreateLayerFromObjectDesc()                    */
+/*                     CreateLayerFromObjectDesc()                      */
 /************************************************************************/
 
 int OGREDIGEODataSource::CreateLayerFromObjectDesc(
@@ -879,7 +879,7 @@ int OGREDIGEODataSource::ReadVEC(const char *pszVECName) const
 }
 
 /************************************************************************/
-/*                        CreateFeature()                               */
+/*                           CreateFeature()                            */
 /************************************************************************/
 
 OGRFeature *OGREDIGEODataSource::CreateFeature(const CPLString &osFEA) const
@@ -941,7 +941,7 @@ OGRFeature *OGREDIGEODataSource::CreateFeature(const CPLString &osFEA) const
 }
 
 /************************************************************************/
-/*                             SetStyle()                               */
+/*                              SetStyle()                              */
 /************************************************************************/
 
 int OGREDIGEODataSource::SetStyle(const CPLString &osFEA,
@@ -1029,7 +1029,7 @@ int OGREDIGEODataSource::SetStyle(const CPLString &osFEA,
 }
 
 /************************************************************************/
-/*                           BuildPoints()                              */
+/*                            BuildPoints()                             */
 /************************************************************************/
 
 int OGREDIGEODataSource::BuildPoints() const
@@ -1064,7 +1064,7 @@ int OGREDIGEODataSource::BuildPoints() const
 }
 
 /************************************************************************/
-/*                        BuildLineStrings()                            */
+/*                          BuildLineStrings()                          */
 /************************************************************************/
 
 int OGREDIGEODataSource::BuildLineStrings() const
@@ -1124,7 +1124,7 @@ int OGREDIGEODataSource::BuildLineStrings() const
 }
 
 /************************************************************************/
-/*                           BuildPolygon()                             */
+/*                            BuildPolygon()                            */
 /************************************************************************/
 
 int OGREDIGEODataSource::BuildPolygon(const CPLString &osFEA,
@@ -1272,7 +1272,7 @@ int OGREDIGEODataSource::BuildPolygon(const CPLString &osFEA,
 }
 
 /************************************************************************/
-/*                          BuildPolygons()                             */
+/*                           BuildPolygons()                            */
 /************************************************************************/
 
 int OGREDIGEODataSource::BuildPolygons() const
@@ -1288,7 +1288,7 @@ int OGREDIGEODataSource::BuildPolygons() const
 }
 
 /************************************************************************/
-/*                  OGREDIGEOSortForQGIS()                              */
+/*                        OGREDIGEOSortForQGIS()                        */
 /************************************************************************/
 
 static int OGREDIGEOSortForQGIS(const void *a, const void *b)
@@ -1383,7 +1383,7 @@ int OGREDIGEODataSource::Open(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           ReadEDIGEO()                               */
+/*                             ReadEDIGEO()                             */
 /************************************************************************/
 
 void OGREDIGEODataSource::ReadEDIGEO() const

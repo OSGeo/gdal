@@ -58,7 +58,7 @@ typedef enum
 } MaskMode;
 
 /************************************************************************/
-/*                         GDALTranslateScaleParams                     */
+/*                       GDALTranslateScaleParams                       */
 /************************************************************************/
 
 /** scaling parameters for use in GDALTranslateOptions.
@@ -463,7 +463,7 @@ static bool FixSrcDstWindow(GDALTranslateOptions::PixelLineWindow &srcWin,
 }
 
 /************************************************************************/
-/*                        GDALTranslateFlush()                          */
+/*                         GDALTranslateFlush()                         */
 /************************************************************************/
 
 static GDALDatasetH GDALTranslateFlush(GDALDatasetH hOutDS)
@@ -482,7 +482,7 @@ static GDALDatasetH GDALTranslateFlush(GDALDatasetH hOutDS)
 }
 
 /************************************************************************/
-/*                    EditISIS3MetadataForBandChange()                  */
+/*                   EditISIS3MetadataForBandChange()                   */
 /************************************************************************/
 
 static CPLJSONObject Clone(const CPLJSONObject &obj)
@@ -642,7 +642,7 @@ EditISIS3ForMetadataChanges(const char *pszJSON, bool bKeepExtent,
 }
 
 /************************************************************************/
-/*                             GDALTranslate()                          */
+/*                           GDALTranslate()                            */
 /************************************************************************/
 
 /* clang-format off */
@@ -2645,7 +2645,7 @@ static void AttachMetadata(GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                           AttachDomainMetadata()                     */
+/*                        AttachDomainMetadata()                        */
 /************************************************************************/
 
 static void AttachDomainMetadata(GDALDatasetH hDS,
@@ -2679,7 +2679,7 @@ static void AttachDomainMetadata(GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                           CopyBandInfo()                            */
+/*                            CopyBandInfo()                            */
 /************************************************************************/
 
 /* A bit of a clone of VRTRasterBand::CopyCommonInfoFrom(), but we need */
@@ -2770,7 +2770,7 @@ static void CopyBandInfo(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
 }
 
 /************************************************************************/
-/*                             GetColorInterp()                         */
+/*                           GetColorInterp()                           */
 /************************************************************************/
 
 static int GetColorInterp(const char *pszStr)
@@ -2786,7 +2786,7 @@ static int GetColorInterp(const char *pszStr)
 }
 
 /************************************************************************/
-/*                     GDALTranslateOptionsGetParser()                  */
+/*                   GDALTranslateOptionsGetParser()                    */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -3210,7 +3210,7 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
 }
 
 /************************************************************************/
-/*                      GDALTranslateGetParserUsage()                   */
+/*                    GDALTranslateGetParserUsage()                     */
 /************************************************************************/
 
 std::string GDALTranslateGetParserUsage()
@@ -3232,7 +3232,7 @@ std::string GDALTranslateGetParserUsage()
 }
 
 /************************************************************************/
-/*                             GDALTranslateOptionsNew()                */
+/*                      GDALTranslateOptionsNew()                       */
 /************************************************************************/
 
 /**
@@ -3567,7 +3567,7 @@ GDALTranslateOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                        GDALTranslateOptionsFree()                    */
+/*                      GDALTranslateOptionsFree()                      */
 /************************************************************************/
 
 /**
@@ -3584,7 +3584,7 @@ void GDALTranslateOptionsFree(GDALTranslateOptions *psOptions)
 }
 
 /************************************************************************/
-/*                 GDALTranslateOptionsSetProgress()                    */
+/*                  GDALTranslateOptionsSetProgress()                   */
 /************************************************************************/
 
 /**

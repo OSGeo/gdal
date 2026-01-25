@@ -15,7 +15,7 @@
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/bytes/index.html
 
 /************************************************************************/
-/*                       ZarrV3CodecBytes()                            */
+/*                          ZarrV3CodecBytes()                          */
 /************************************************************************/
 
 ZarrV3CodecBytes::ZarrV3CodecBytes() : ZarrV3Codec(NAME)
@@ -23,7 +23,7 @@ ZarrV3CodecBytes::ZarrV3CodecBytes() : ZarrV3Codec(NAME)
 }
 
 /************************************************************************/
-/*                           GetConfiguration()                         */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 /* static */ CPLJSONObject ZarrV3CodecBytes::GetConfiguration(bool bLittle)
@@ -34,7 +34,7 @@ ZarrV3CodecBytes::ZarrV3CodecBytes() : ZarrV3Codec(NAME)
 }
 
 /************************************************************************/
-/*                 ZarrV3CodecBytes::InitFromConfiguration()            */
+/*              ZarrV3CodecBytes::InitFromConfiguration()               */
 /************************************************************************/
 
 bool ZarrV3CodecBytes::InitFromConfiguration(
@@ -94,7 +94,7 @@ bool ZarrV3CodecBytes::InitFromConfiguration(
 }
 
 /************************************************************************/
-/*                     ZarrV3CodecBytes::Clone()                        */
+/*                      ZarrV3CodecBytes::Clone()                       */
 /************************************************************************/
 
 std::unique_ptr<ZarrV3Codec> ZarrV3CodecBytes::Clone() const

@@ -58,7 +58,7 @@ typedef struct _curve_data
 } CURVE_DATA;
 
 /************************************************************************/
-/*                         SetupTargetLayer()                           */
+/*                          SetupTargetLayer()                          */
 /************************************************************************/
 
 static OGRLayer *SetupTargetLayer(OGRLayer *poSrcLayer, GDALDataset *poDstDS,
@@ -1097,7 +1097,7 @@ static OGRErr GetCoordinates(OGRLayer *const poPkLayer, double dfPos,
 }
 
 /************************************************************************/
-/*                           OGRLineRefOptions                          */
+/*                          OGRLineRefOptions                           */
 /************************************************************************/
 
 struct OGRLineRefOptions
@@ -1148,7 +1148,7 @@ struct OGRLineRefOptions
 };
 
 /************************************************************************/
-/*                           OGRLineRefGetParser                        */
+/*                         OGRLineRefGetParser                          */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -1312,7 +1312,7 @@ OGRLineRefAppOptionsGetParser(OGRLineRefOptions *psOptions)
 }
 
 /************************************************************************/
-/*                              GetOutputDriver()                       */
+/*                          GetOutputDriver()                           */
 /************************************************************************/
 
 static GDALDriver *GetOutputDriver(OGRLineRefOptions &sOptions)

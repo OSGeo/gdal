@@ -15,7 +15,7 @@
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/transpose/index.html
 
 /************************************************************************/
-/*                       ZarrV3CodecTranspose()                         */
+/*                        ZarrV3CodecTranspose()                        */
 /************************************************************************/
 
 ZarrV3CodecTranspose::ZarrV3CodecTranspose() : ZarrV3Codec(NAME)
@@ -23,7 +23,7 @@ ZarrV3CodecTranspose::ZarrV3CodecTranspose() : ZarrV3Codec(NAME)
 }
 
 /************************************************************************/
-/*                             IsNoOp()                                 */
+/*                               IsNoOp()                               */
 /************************************************************************/
 
 bool ZarrV3CodecTranspose::IsNoOp() const
@@ -37,7 +37,7 @@ bool ZarrV3CodecTranspose::IsNoOp() const
 }
 
 /************************************************************************/
-/*                           GetConfiguration()                         */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 /* static */ CPLJSONObject
@@ -52,7 +52,7 @@ ZarrV3CodecTranspose::GetConfiguration(const std::vector<int> &anOrder)
 }
 
 /************************************************************************/
-/*                ZarrV3CodecTranspose::InitFromConfiguration()         */
+/*            ZarrV3CodecTranspose::InitFromConfiguration()             */
 /************************************************************************/
 
 bool ZarrV3CodecTranspose::InitFromConfiguration(
@@ -160,7 +160,7 @@ bool ZarrV3CodecTranspose::InitFromConfiguration(
 }
 
 /************************************************************************/
-/*              ZarrV3CodecTranspose::GetInnerMostBlockSize()           */
+/*            ZarrV3CodecTranspose::GetInnerMostBlockSize()             */
 /************************************************************************/
 
 std::vector<size_t> ZarrV3CodecTranspose::GetInnerMostBlockSize(
@@ -173,7 +173,7 @@ std::vector<size_t> ZarrV3CodecTranspose::GetInnerMostBlockSize(
 }
 
 /************************************************************************/
-/*                   ZarrV3CodecTranspose::Clone()                      */
+/*                    ZarrV3CodecTranspose::Clone()                     */
 /************************************************************************/
 
 std::unique_ptr<ZarrV3Codec> ZarrV3CodecTranspose::Clone() const
@@ -339,7 +339,7 @@ bool ZarrV3CodecTranspose::Decode(const ZarrByteVectorQuickResize &abySrc,
 }
 
 /************************************************************************/
-/*                   ZarrV3CodecTranspose::DecodePartial()              */
+/*                ZarrV3CodecTranspose::DecodePartial()                 */
 /************************************************************************/
 
 bool ZarrV3CodecTranspose::DecodePartial(

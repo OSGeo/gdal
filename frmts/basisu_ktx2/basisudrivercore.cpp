@@ -17,7 +17,7 @@
 #include "commoncore.h"
 
 /************************************************************************/
-/*                     BASISUDriverIdentify()                           */
+/*                        BASISUDriverIdentify()                        */
 /************************************************************************/
 
 int BASISUDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -45,7 +45,7 @@ int BASISUDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      BASISUDriverSetCommonMetadata()                 */
+/*                   BASISUDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void BASISUDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -70,7 +70,7 @@ void BASISUDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredBASISUPlugin()                    */
+/*                    DeclareDeferredBASISUPlugin()                     */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

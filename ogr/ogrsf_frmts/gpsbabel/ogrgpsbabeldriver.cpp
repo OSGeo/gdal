@@ -16,7 +16,7 @@
 #include "ogr_gpsbabel.h"
 
 /************************************************************************/
-/*                         OGRGPSBabelDriverIdentify()                  */
+/*                     OGRGPSBabelDriverIdentify()                      */
 /************************************************************************/
 
 static bool

@@ -82,7 +82,7 @@ static CPLErr OGRGeoRSSDriverDelete(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           RegisterOGRGeoRSS()                           */
+/*                         RegisterOGRGeoRSS()                          */
 /************************************************************************/
 
 void RegisterOGRGeoRSS()

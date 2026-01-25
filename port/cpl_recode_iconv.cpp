@@ -47,7 +47,7 @@ extern char *CPLRecodeFromWCharIconv(const wchar_t *, const char *,
 extern wchar_t *CPLRecodeToWCharIconv(const char *, const char *, const char *);
 
 /************************************************************************/
-/*                 CPLClearRecodeIconvWarningFlags()                    */
+/*                  CPLClearRecodeIconvWarningFlags()                   */
 /************************************************************************/
 
 static bool bHaveWarned1 = false;
@@ -60,7 +60,7 @@ void CPLClearRecodeIconvWarningFlags()
 }
 
 /************************************************************************/
-/*                      CPLFixInputEncoding()                           */
+/*                        CPLFixInputEncoding()                         */
 /************************************************************************/
 
 static const char *CPLFixInputEncoding(const char *pszSrcEncoding,
@@ -83,7 +83,7 @@ static const char *CPLFixInputEncoding(const char *pszSrcEncoding,
 }
 
 /************************************************************************/
-/*                          CPLRecodeIconv()                            */
+/*                           CPLRecodeIconv()                           */
 /************************************************************************/
 
 /**
@@ -371,7 +371,7 @@ char *CPLRecodeFromWCharIconv(const wchar_t *pwszSource,
 }
 
 /************************************************************************/
-/*                        CPLRecodeToWCharIconv()                       */
+/*                       CPLRecodeToWCharIconv()                        */
 /************************************************************************/
 
 /**

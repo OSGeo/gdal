@@ -44,7 +44,7 @@ S57ClassRegistrar::~S57ClassRegistrar()
 }
 
 /************************************************************************/
-/*                        S57ClassContentExplorer()                     */
+/*                      S57ClassContentExplorer()                       */
 /************************************************************************/
 
 S57ClassContentExplorer::S57ClassContentExplorer(
@@ -55,7 +55,7 @@ S57ClassContentExplorer::S57ClassContentExplorer(
 }
 
 /************************************************************************/
-/*                        ~S57ClassContentExplorer()                    */
+/*                      ~S57ClassContentExplorer()                      */
 /************************************************************************/
 
 S57ClassContentExplorer::~S57ClassContentExplorer()
@@ -401,7 +401,7 @@ bool S57ClassContentExplorer::SelectClassByIndex(int nNewIndex)
 }
 
 /************************************************************************/
-/*                             SelectClass()                            */
+/*                            SelectClass()                             */
 /************************************************************************/
 
 bool S57ClassContentExplorer::SelectClass(int nOBJL)

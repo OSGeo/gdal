@@ -106,7 +106,7 @@ typedef struct
 } SBNNodeIdBinStartPair;
 
 /************************************************************************/
-/*                     SBNCompareNodeIdBinStartPairs()                  */
+/*                   SBNCompareNodeIdBinStartPairs()                    */
 /************************************************************************/
 
 /* helper for qsort, to sort SBNNodeIdBinStartPair by increasing nBinStart */
@@ -117,7 +117,7 @@ static int SBNCompareNodeIdBinStartPairs(const void *a, const void *b)
 }
 
 /************************************************************************/
-/*                         SBNOpenDiskTree()                            */
+/*                          SBNOpenDiskTree()                           */
 /************************************************************************/
 
 SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
@@ -491,8 +491,8 @@ SBNSearchHandle SBNOpenDiskTree(const char *pszSBNFilename,
     return hSBN;
 }
 
-/***********************************************************************/
-/*                          SBNCloseDiskTree()                         */
+/************************************************************************/
+/*                          SBNCloseDiskTree()                          */
 /************************************************************************/
 
 void SBNCloseDiskTree(SBNSearchHandle hSBN)
@@ -518,7 +518,7 @@ void SBNCloseDiskTree(SBNSearchHandle hSBN)
 }
 
 /************************************************************************/
-/*                         SBNAddShapeId()                              */
+/*                           SBNAddShapeId()                            */
 /************************************************************************/
 
 static bool SBNAddShapeId(SearchStruct *psSearch, int nShapeId)
@@ -544,7 +544,7 @@ static bool SBNAddShapeId(SearchStruct *psSearch, int nShapeId)
 }
 
 /************************************************************************/
-/*                     SBNSearchDiskInternal()                          */
+/*                       SBNSearchDiskInternal()                        */
 /************************************************************************/
 
 /*      Due to the way integer coordinates are rounded,                 */
@@ -842,7 +842,7 @@ static bool SBNSearchDiskInternal(SearchStruct *psSearch, int nDepth,
 }
 
 /************************************************************************/
-/*                          compare_ints()                              */
+/*                            compare_ints()                            */
 /************************************************************************/
 
 /* helper for qsort */
@@ -852,7 +852,7 @@ static int compare_ints(const void *a, const void *b)
 }
 
 /************************************************************************/
-/*                        SBNSearchDiskTree()                           */
+/*                         SBNSearchDiskTree()                          */
 /************************************************************************/
 
 int *SBNSearchDiskTree(const SBNSearchHandle hSBN, const double *padfBoundsMin,
@@ -951,7 +951,7 @@ int *SBNSearchDiskTree(const SBNSearchHandle hSBN, const double *padfBoundsMin,
 }
 
 /************************************************************************/
-/*                     SBNSearchDiskTreeInteger()                       */
+/*                      SBNSearchDiskTreeInteger()                      */
 /************************************************************************/
 
 int *SBNSearchDiskTreeInteger(const SBNSearchHandle hSBN, int bMinX, int bMinY,
@@ -1009,7 +1009,7 @@ int *SBNSearchDiskTreeInteger(const SBNSearchHandle hSBN, int bMinX, int bMinY,
 }
 
 /************************************************************************/
-/*                         SBNSearchFreeIds()                           */
+/*                          SBNSearchFreeIds()                          */
 /************************************************************************/
 
 void SBNSearchFreeIds(int *panShapeId)

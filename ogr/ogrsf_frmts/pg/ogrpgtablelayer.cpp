@@ -119,7 +119,7 @@ void OGRPGTableFeatureDefn::UnsetLayer()
 }
 
 /************************************************************************/
-/*                           SolveFields()                              */
+/*                            SolveFields()                             */
 /************************************************************************/
 
 void OGRPGTableFeatureDefn::SolveFields() const
@@ -235,7 +235,7 @@ OGRPGTableLayer::~OGRPGTableLayer()
 }
 
 /************************************************************************/
-/*                              LoadMetadata()                          */
+/*                            LoadMetadata()                            */
 /************************************************************************/
 
 void OGRPGTableLayer::LoadMetadata()
@@ -405,7 +405,7 @@ void OGRPGTableLayer::SerializeMetadata()
 }
 
 /************************************************************************/
-/*                          GetMetadataDomainList()                     */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **OGRPGTableLayer::GetMetadataDomainList()
@@ -420,7 +420,7 @@ char **OGRPGTableLayer::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                              GetMetadata()                           */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList OGRPGTableLayer::GetMetadata(const char *pszDomain)
@@ -460,7 +460,7 @@ CSLConstList OGRPGTableLayer::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                            GetMetadataItem()                         */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *OGRPGTableLayer::GetMetadataItem(const char *pszName,
@@ -473,7 +473,7 @@ const char *OGRPGTableLayer::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                              SetMetadata()                           */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
 CPLErr OGRPGTableLayer::SetMetadata(CSLConstList papszMD, const char *pszDomain)
@@ -513,7 +513,7 @@ CPLErr OGRPGTableLayer::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 }
 
 /************************************************************************/
-/*                            SetMetadataItem()                         */
+/*                          SetMetadataItem()                           */
 /************************************************************************/
 
 CPLErr OGRPGTableLayer::SetMetadataItem(const char *pszName,
@@ -541,7 +541,7 @@ CPLErr OGRPGTableLayer::SetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                      SetForcedDescription()                          */
+/*                        SetForcedDescription()                        */
 /************************************************************************/
 
 void OGRPGTableLayer::SetForcedDescription(const char *pszDescriptionIn)
@@ -553,7 +553,7 @@ void OGRPGTableLayer::SetForcedDescription(const char *pszDescriptionIn)
 }
 
 /************************************************************************/
-/*                      SetGeometryInformation()                        */
+/*                       SetGeometryInformation()                       */
 /************************************************************************/
 
 void OGRPGTableLayer::SetGeometryInformation(PGGeomColumnDesc *pasDesc,
@@ -1636,7 +1636,7 @@ OGRErr OGRPGTableLayer::IUpdateFeature(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRPGTableLayer::ICreateFeature(OGRFeature *poFeature)
@@ -2555,7 +2555,7 @@ OGRPGTableLayer::RunAddGeometryColumn(const OGRPGGeomFieldDefn *poGeomField)
 }
 
 /************************************************************************/
-/*                        RunCreateSpatialIndex()                       */
+/*                       RunCreateSpatialIndex()                        */
 /************************************************************************/
 
 OGRErr
@@ -2591,7 +2591,7 @@ OGRPGTableLayer::RunCreateSpatialIndex(const OGRPGGeomFieldDefn *poGeomField,
 }
 
 /************************************************************************/
-/*                           CreateGeomField()                          */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
 OGRErr OGRPGTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
@@ -3375,7 +3375,7 @@ GIntBig OGRPGTableLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                             ResolveSRID()                            */
+/*                            ResolveSRID()                             */
 /************************************************************************/
 
 void OGRPGTableLayer::ResolveSRID(const OGRPGGeomFieldDefn *poGFldDefn)
@@ -3602,7 +3602,7 @@ CPLString OGRPGTableLayer::BuildCopyFields()
 }
 
 /************************************************************************/
-/*                    CheckGeomTypeCompatibility()                      */
+/*                     CheckGeomTypeCompatibility()                     */
 /************************************************************************/
 
 void OGRPGTableLayer::CheckGeomTypeCompatibility(int iGeomField,
@@ -3638,7 +3638,7 @@ void OGRPGTableLayer::CheckGeomTypeCompatibility(int iGeomField,
 }
 
 /************************************************************************/
-/*                        SetOverrideColumnTypes()                      */
+/*                       SetOverrideColumnTypes()                       */
 /************************************************************************/
 
 void OGRPGTableLayer::SetOverrideColumnTypes(const char *pszOverrideColumnTypes)
@@ -3739,7 +3739,7 @@ OGRErr OGRPGTableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                           Rename()                                   */
+/*                               Rename()                               */
 /************************************************************************/
 
 OGRErr OGRPGTableLayer::Rename(const char *pszNewName)
@@ -3796,7 +3796,7 @@ void OGRPGTableLayer::SetDeferredCreation(int bDeferredCreationIn,
 }
 
 /************************************************************************/
-/*                      RunDeferredCreationIfNecessary()                */
+/*                   RunDeferredCreationIfNecessary()                   */
 /************************************************************************/
 
 OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
@@ -3886,7 +3886,7 @@ OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
 }
 
 /************************************************************************/
-/*                         GetGeometryTypes()                           */
+/*                          GetGeometryTypes()                          */
 /************************************************************************/
 
 OGRGeometryTypeCounter *OGRPGTableLayer::GetGeometryTypes(
@@ -4068,7 +4068,7 @@ OGRGeometryTypeCounter *OGRPGTableLayer::GetGeometryTypes(
 }
 
 /************************************************************************/
-/*                          FindFieldIndex()                            */
+/*                           FindFieldIndex()                           */
 /************************************************************************/
 
 int OGRPGTableLayer::FindFieldIndex(const char *pszFieldName, int bExactMatch)

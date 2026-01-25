@@ -21,7 +21,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALVectorCheckCoverageAlgorithm                 */
+/*                   GDALVectorCheckCoverageAlgorithm                   */
 /************************************************************************/
 
 class GDALVectorCheckCoverageAlgorithm : public GDALVectorPipelineStepAlgorithm
@@ -49,7 +49,7 @@ class GDALVectorCheckCoverageAlgorithm : public GDALVectorPipelineStepAlgorithm
 };
 
 /************************************************************************/
-/*                 GDALVectorCheckCoverageAlgorithmStandalone           */
+/*              GDALVectorCheckCoverageAlgorithmStandalone              */
 /************************************************************************/
 
 class GDALVectorCheckCoverageAlgorithmStandalone final

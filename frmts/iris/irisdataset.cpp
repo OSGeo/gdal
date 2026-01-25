@@ -444,7 +444,7 @@ IRISDataset::IRISDataset()
 }
 
 /************************************************************************/
-/*                           ~IRISDataset()                             */
+/*                            ~IRISDataset()                            */
 /************************************************************************/
 
 IRISDataset::~IRISDataset()
@@ -456,7 +456,7 @@ IRISDataset::~IRISDataset()
 }
 
 /************************************************************************/
-/*           Calculates the projection and Geotransform                 */
+/*              Calculates the projection and Geotransform              */
 /************************************************************************/
 void IRISDataset::LoadProjection() const
 {
@@ -714,7 +714,7 @@ CPLErr IRISDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *IRISDataset::GetSpatialRef() const
@@ -1169,7 +1169,7 @@ GDALDataset *IRISDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GDALRegister_IRIS()                         */
+/*                         GDALRegister_IRIS()                          */
 /************************************************************************/
 
 void GDALRegister_IRIS()

@@ -182,7 +182,7 @@ void TABMAPObjectBlock::SetCenterFromOtherBlock(
 }
 
 /************************************************************************/
-/*                        Rewind()                                      */
+/*                               Rewind()                               */
 /************************************************************************/
 void TABMAPObjectBlock::Rewind()
 {

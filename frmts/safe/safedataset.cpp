@@ -124,7 +124,7 @@ CPLErr SAFERasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                            SAFESLCRasterBand                         */
+/*                          SAFESLCRasterBand                           */
 /************************************************************************/
 
 SAFESLCRasterBand::SAFESLCRasterBand(
@@ -262,7 +262,7 @@ CPLErr SAFESLCRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                            SAFECalibRasterBand                       */
+/*                         SAFECalibRasterBand                          */
 /************************************************************************/
 
 SAFECalibratedRasterBand::SAFECalibratedRasterBand(
@@ -290,7 +290,7 @@ SAFECalibratedRasterBand::SAFECalibratedRasterBand(
 }
 
 /************************************************************************/
-/*                            ReadLUT()                                 */
+/*                              ReadLUT()                               */
 /************************************************************************/
 /* Read the provided LUT in to m_ndTable                                */
 /************************************************************************/
@@ -584,7 +584,7 @@ CPLErr SAFECalibratedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                             SAFEDataset()                            */
+/*                            SAFEDataset()                             */
 /************************************************************************/
 
 SAFEDataset::SAFEDataset()
@@ -614,7 +614,7 @@ SAFEDataset::~SAFEDataset()
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int SAFEDataset::CloseDependentDatasets()
@@ -634,7 +634,7 @@ int SAFEDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                      GetMetaDataObject()                             */
+/*                         GetMetaDataObject()                          */
 /************************************************************************/
 
 const CPLXMLNode *
@@ -668,7 +668,7 @@ SAFEDataset::GetMetaDataObject(const CPLXMLNode *psMetaDataObjects,
 }
 
 /************************************************************************/
-/*                      GetDataObject()                                 */
+/*                           GetDataObject()                            */
 /************************************************************************/
 
 const CPLXMLNode *SAFEDataset::GetDataObject(const CPLXMLNode *psDataObjects,
@@ -742,7 +742,7 @@ char **SAFEDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int SAFEDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -1889,7 +1889,7 @@ GDALDataset *SAFEDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            AddSubDataset()                           */
+/*                           AddSubDataset()                            */
 /************************************************************************/
 void SAFEDataset::AddSubDataset(const CPLString &osName,
                                 const CPLString &osDesc)
@@ -1923,7 +1923,7 @@ const OGRSpatialReference *SAFEDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *SAFEDataset::GetGCPs()
@@ -1933,7 +1933,7 @@ const GDAL_GCP *SAFEDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **SAFEDataset::GetMetadataDomainList()
@@ -1978,7 +1978,7 @@ void GDALRegister_SAFE()
 }
 
 /************************************************************************/
-/*                  Azimuth time handling functions                     */
+/*                   Azimuth time handling functions                    */
 /************************************************************************/
 
 SAFECalibratedRasterBand::TimePoint
@@ -2024,7 +2024,7 @@ SAFECalibratedRasterBand::getazTime(TimePoint oStart, TimePoint oStop,
 }
 
 /************************************************************************/
-/*                Utility functions used in interpolation              */
+/*               Utility functions used in interpolation                */
 /************************************************************************/
 
 int SAFECalibratedRasterBand::getCalibrationVectorIndex(int nLineNo)

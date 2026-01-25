@@ -359,7 +359,7 @@ int GDALDriverManager::GetDriverCount(bool bIncludeHidden) const
 //! @endcond
 
 /************************************************************************/
-/*                            IsKnownDriver()                           */
+/*                           IsKnownDriver()                            */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -379,7 +379,7 @@ bool GDALDriverManager::IsKnownDriver(const char *pszDriverName) const
 //! @endcond
 
 /************************************************************************/
-/*                        GetHiddenDriverByName()                       */
+/*                       GetHiddenDriverByName()                        */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -846,7 +846,7 @@ void GDALDriverManager::AutoSkipDrivers()
 }
 
 /************************************************************************/
-/*                          GetSearchPaths()                            */
+/*                           GetSearchPaths()                           */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -910,7 +910,7 @@ char **GDALDriverManager::GetSearchPaths(const char *pszGDAL_DRIVER_PATH)
 //! @endcond
 
 /************************************************************************/
-/*                          LoadPlugin()                                */
+/*                             LoadPlugin()                             */
 /************************************************************************/
 
 /**
@@ -1304,7 +1304,7 @@ void GDALDriverManager::ReorderDrivers()
 }
 
 /************************************************************************/
-/*                       GDALPluginDriverProxy                          */
+/*                        GDALPluginDriverProxy                         */
 /************************************************************************/
 
 /** Constructor for a plugin driver proxy.
@@ -1646,7 +1646,7 @@ GDALDriver *GDALPluginDriverProxy::GetRealDriver()
 }
 
 /************************************************************************/
-/*                        GetPluginFullPath()                           */
+/*                         GetPluginFullPath()                          */
 /************************************************************************/
 
 std::string GDALDriverManager::GetPluginFullPath(const char *pszFilename) const
@@ -1716,7 +1716,7 @@ std::string GDALDriverManager::GetPluginFullPath(const char *pszFilename) const
 }
 
 /************************************************************************/
-/*                      DeclareDeferredPluginDriver()                   */
+/*                    DeclareDeferredPluginDriver()                     */
 /************************************************************************/
 
 /** Declare a driver that will be loaded as a plugin, when actually needed.

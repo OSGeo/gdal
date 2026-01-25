@@ -24,7 +24,7 @@
 #include <vector>
 
 /************************************************************************/
-/*                CPLErrorHandlerAccumulatorStruct                      */
+/*                   CPLErrorHandlerAccumulatorStruct                   */
 /************************************************************************/
 
 class CPL_DLL CPLErrorHandlerAccumulatorStruct
@@ -46,7 +46,7 @@ class CPL_DLL CPLErrorHandlerAccumulatorStruct
 };
 
 /************************************************************************/
-/*                       CPLErrorAccumulator                            */
+/*                         CPLErrorAccumulator                          */
 /************************************************************************/
 
 /** Class typically used by a worker thread to store errors emitted by their

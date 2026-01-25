@@ -31,7 +31,7 @@
 #include "../arrow_common/ograrrowdataset.hpp"
 
 /************************************************************************/
-/*                    OGRParquetLayerBase()                             */
+/*                        OGRParquetLayerBase()                         */
 /************************************************************************/
 
 OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset *poDS,
@@ -50,7 +50,7 @@ OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset *poDS,
 }
 
 /************************************************************************/
-/*                           GetDataset()                               */
+/*                             GetDataset()                             */
 /************************************************************************/
 
 GDALDataset *OGRParquetLayerBase::GetDataset()
@@ -59,7 +59,7 @@ GDALDataset *OGRParquetLayerBase::GetDataset()
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRParquetLayerBase::ResetReading()
@@ -72,7 +72,7 @@ void OGRParquetLayerBase::ResetReading()
 }
 
 /************************************************************************/
-/*                     InvalidateCachedBatches()                        */
+/*                      InvalidateCachedBatches()                       */
 /************************************************************************/
 
 void OGRParquetLayerBase::InvalidateCachedBatches()
@@ -129,7 +129,7 @@ void OGRParquetLayerBase::LoadGeoMetadata(
 }
 
 /************************************************************************/
-/*                   ParseGeometryColumnCovering()                      */
+/*                    ParseGeometryColumnCovering()                     */
 /************************************************************************/
 
 //! Parse bounding box column definition
@@ -189,7 +189,7 @@ bool OGRParquetLayerBase::ParseGeometryColumnCovering(
 }
 
 /************************************************************************/
-/*                      DealWithGeometryColumn()                        */
+/*                       DealWithGeometryColumn()                       */
 /************************************************************************/
 
 bool OGRParquetLayerBase::DealWithGeometryColumn(
@@ -842,7 +842,7 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRParquetLayerBase::TestCapability(const char *pszCap) const
@@ -867,7 +867,7 @@ int OGRParquetLayerBase::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           GetNumCPUs()                               */
+/*                             GetNumCPUs()                             */
 /************************************************************************/
 
 /* static */
@@ -888,7 +888,7 @@ int OGRParquetLayerBase::GetNumCPUs()
 }
 
 /************************************************************************/
-/*                        OGRParquetLayer()                             */
+/*                          OGRParquetLayer()                           */
 /************************************************************************/
 
 OGRParquetLayer::OGRParquetLayer(
@@ -1216,7 +1216,7 @@ void OGRParquetLayer::EstablishFeatureDefn()
 }
 
 /************************************************************************/
-/*                  ProcessGeometryColumnCovering()                     */
+/*                   ProcessGeometryColumnCovering()                    */
 /************************************************************************/
 
 /** Process GeoParquet JSON geometry field object to extract information about
@@ -1310,7 +1310,7 @@ void OGRParquetLayer::ProcessGeometryColumnCovering(
 }
 
 /************************************************************************/
-/*                               FindNode()                             */
+/*                              FindNode()                              */
 /************************************************************************/
 
 static const parquet::schema::Node *FindNode(const parquet::schema::Node *node,
@@ -1365,7 +1365,7 @@ static void CollectLeaveNodes(
 }
 
 /************************************************************************/
-/*                 GetParquetColumnIndicesForArrowField()               */
+/*                GetParquetColumnIndicesForArrowField()                */
 /************************************************************************/
 
 std::vector<int> OGRParquetLayer::GetParquetColumnIndicesForArrowField(
@@ -1400,7 +1400,7 @@ std::vector<int> OGRParquetLayer::GetParquetColumnIndicesForArrowField(
 }
 
 /************************************************************************/
-/*                CheckMatchArrowParquetColumnNames()                   */
+/*                 CheckMatchArrowParquetColumnNames()                  */
 /************************************************************************/
 
 bool OGRParquetLayer::CheckMatchArrowParquetColumnNames(
@@ -1437,7 +1437,7 @@ bool OGRParquetLayer::CheckMatchArrowParquetColumnNames(
 }
 
 /************************************************************************/
-/*                         CreateFieldFromSchema()                      */
+/*                       CreateFieldFromSchema()                        */
 /************************************************************************/
 
 void OGRParquetLayer::CreateFieldFromSchema(
@@ -1545,7 +1545,7 @@ void OGRParquetLayer::CreateFieldFromSchema(
 }
 
 /************************************************************************/
-/*                          BuildDomain()                               */
+/*                            BuildDomain()                             */
 /************************************************************************/
 
 std::unique_ptr<OGRFieldDomain>
@@ -1821,7 +1821,7 @@ OGRFeature *OGRParquetLayer::GetFeatureByIndex(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           GetFeature()                               */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRParquetLayer::GetFeature(GIntBig nFID)
@@ -1837,7 +1837,7 @@ OGRFeature *OGRParquetLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRParquetLayer::ResetReading()
@@ -1909,7 +1909,7 @@ bool OGRParquetLayer::CreateRecordBatchReader(
 }
 
 /************************************************************************/
-/*                       IsConstraintPossible()                         */
+/*                        IsConstraintPossible()                        */
 /************************************************************************/
 
 enum class IsConstraintPossibleRes
@@ -2466,7 +2466,7 @@ bool OGRParquetLayer::ReadNextBatch()
 }
 
 /************************************************************************/
-/*                     InvalidateCachedBatches()                        */
+/*                      InvalidateCachedBatches()                       */
 /************************************************************************/
 
 void OGRParquetLayer::InvalidateCachedBatches()
@@ -2476,7 +2476,7 @@ void OGRParquetLayer::InvalidateCachedBatches()
 }
 
 /************************************************************************/
-/*                        SetIgnoredFields()                            */
+/*                          SetIgnoredFields()                          */
 /************************************************************************/
 
 OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
@@ -2643,7 +2643,7 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
 }
 
 /************************************************************************/
-/*                        GetFeatureCount()                             */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRParquetLayer::GetFeatureCount(int bForce)
@@ -2658,7 +2658,7 @@ GIntBig OGRParquetLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                         FastGetExtent()                              */
+/*                           FastGetExtent()                            */
 /************************************************************************/
 
 bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
@@ -2727,7 +2727,7 @@ bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRParquetLayer::TestCapability(const char *pszCap) const
@@ -2805,7 +2805,7 @@ int OGRParquetLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                         GetMetadataItem()                            */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *OGRParquetLayer::GetMetadataItem(const char *pszName,
@@ -2882,7 +2882,7 @@ const char *OGRParquetLayer::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList OGRParquetLayer::GetMetadata(const char *pszDomain)
@@ -2914,7 +2914,7 @@ CSLConstList OGRParquetLayer::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                          GetArrowStream()                            */
+/*                           GetArrowStream()                           */
 /************************************************************************/
 
 bool OGRParquetLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
@@ -3018,9 +3018,9 @@ OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
     return OGRERR_FAILURE;
 }
 
-/***********************************************************************/
-/*                            GetStats()                               */
-/***********************************************************************/
+/************************************************************************/
+/*                              GetStats()                              */
+/************************************************************************/
 
 template <class STAT_TYPE> struct GetStats
 {
@@ -3232,7 +3232,7 @@ bool OGRParquetLayer::GetMinMaxForOGRField(int iRowGroup,  // -1 for all
 }
 
 /************************************************************************/
-/*                        GetMinMaxForParquetCol()                      */
+/*                       GetMinMaxForParquetCol()                       */
 /************************************************************************/
 
 bool OGRParquetLayer::GetMinMaxForParquetCol(

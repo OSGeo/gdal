@@ -38,7 +38,7 @@ constexpr int knDEFAULT_SERVER_BYTE_LIMIT = 100 * 1024 * 1024;
 constexpr int MAIN_MASK_BAND_NUMBER = 0;
 
 /************************************************************************/
-/*                          GDALDAASBandDesc                            */
+/*                           GDALDAASBandDesc                           */
 /************************************************************************/
 
 class GDALDAASBandDesc
@@ -54,7 +54,7 @@ class GDALDAASBandDesc
 };
 
 /************************************************************************/
-/*                          GDALDAASDataset                             */
+/*                           GDALDAASDataset                            */
 /************************************************************************/
 
 class GDALDAASRasterBand;
@@ -155,7 +155,7 @@ class GDALDAASDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                         GDALDAASRasterBand                            */
+/*                          GDALDAASRasterBand                          */
 /************************************************************************/
 
 class GDALDAASRasterBand final : public GDALRasterBand
@@ -247,7 +247,7 @@ GDALDAASDataset::GDALDAASDataset(GDALDAASDataset *poParentDS, int iOvrLevel)
 }
 
 /************************************************************************/
-/*                         ~GDALDAASDataset()                            */
+/*                          ~GDALDAASDataset()                          */
 /************************************************************************/
 
 GDALDAASDataset::~GDALDAASDataset()
@@ -294,7 +294,7 @@ void GDALDAASDataset::InstantiateBands()
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int GDALDAASDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -303,7 +303,7 @@ int GDALDAASDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GetGeoTransform()                             */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr GDALDAASDataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -313,7 +313,7 @@ CPLErr GDALDAASDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                            */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *GDALDAASDataset::GetSpatialRef() const
@@ -334,7 +334,7 @@ static CPLString URLEscape(const CPLString &osStr)
 }
 
 /************************************************************************/
-/*                             GetHTTPOptions()                         */
+/*                           GetHTTPOptions()                           */
 /************************************************************************/
 
 char **GDALDAASDataset::GetHTTPOptions()
@@ -379,7 +379,7 @@ char **GDALDAASDataset::GetHTTPOptions()
 }
 
 /************************************************************************/
-/*                          DAASBackoffFactor()                         */
+/*                         DAASBackoffFactor()                          */
 /************************************************************************/
 
 /* Add a small amount of random jitter to avoid cyclic server stampedes */
@@ -394,7 +394,7 @@ static double DAASBackoffFactor(double base)
 }
 
 /************************************************************************/
-/*                          DAAS_CPLHTTPFetch()                         */
+/*                         DAAS_CPLHTTPFetch()                          */
 /************************************************************************/
 
 static CPLHTTPResult *DAAS_CPLHTTPFetch(const char *pszURL,
@@ -461,7 +461,7 @@ static CPLHTTPResult *DAAS_CPLHTTPFetch(const char *pszURL,
 }
 
 /************************************************************************/
-/*                           GetAuthorization()                         */
+/*                          GetAuthorization()                          */
 /************************************************************************/
 
 bool GDALDAASDataset::GetAuthorization()
@@ -586,7 +586,7 @@ bool GDALDAASDataset::GetAuthorization()
 }
 
 /************************************************************************/
-/*                           GetObject()                                */
+/*                             GetObject()                              */
 /************************************************************************/
 
 static CPLJSONObject GetObject(const CPLJSONObject &oContainer,
@@ -618,7 +618,7 @@ static CPLJSONObject GetObject(const CPLJSONObject &oContainer,
 }
 
 /************************************************************************/
-/*                          GetInteger()                                */
+/*                             GetInteger()                             */
 /************************************************************************/
 
 static int GetInteger(const CPLJSONObject &oContainer, const char *pszPath,
@@ -635,7 +635,7 @@ static int GetInteger(const CPLJSONObject &oContainer, const char *pszPath,
 }
 
 /************************************************************************/
-/*                          GetDouble()                                */
+/*                             GetDouble()                              */
 /************************************************************************/
 
 static double GetDouble(const CPLJSONObject &oContainer, const char *pszPath,
@@ -662,7 +662,7 @@ static double GetDouble(const CPLJSONObject &oContainer, const char *pszPath,
 }
 
 /************************************************************************/
-/*                          GetString()                                 */
+/*                             GetString()                              */
 /************************************************************************/
 
 static CPLString GetString(const CPLJSONObject &oContainer, const char *pszPath,
@@ -679,7 +679,7 @@ static CPLString GetString(const CPLJSONObject &oContainer, const char *pszPath,
 }
 
 /************************************************************************/
-/*                     GetGDALDataTypeFromDAASPixelType()               */
+/*                  GetGDALDataTypeFromDAASPixelType()                  */
 /************************************************************************/
 
 static GDALDataType
@@ -707,7 +707,7 @@ GetGDALDataTypeFromDAASPixelType(const CPLString &osPixelType)
 }
 
 /************************************************************************/
-/*                         GetImageMetadata()                           */
+/*                          GetImageMetadata()                          */
 /************************************************************************/
 
 bool GDALDAASDataset::GetImageMetadata()
@@ -972,7 +972,7 @@ bool GDALDAASDataset::GetImageMetadata()
 }
 
 /************************************************************************/
-/*                            ReadSRS()                                 */
+/*                              ReadSRS()                               */
 /************************************************************************/
 
 void GDALDAASDataset::ReadSRS(const CPLJSONObject &oProperties)
@@ -1032,7 +1032,7 @@ void GDALDAASDataset::ReadSRS(const CPLJSONObject &oProperties)
 }
 
 /************************************************************************/
-/*                            ReadRPCs()                                */
+/*                              ReadRPCs()                              */
 /************************************************************************/
 
 void GDALDAASDataset::ReadRPCs(const CPLJSONObject &oProperties)
@@ -1117,7 +1117,7 @@ void GDALDAASDataset::ReadRPCs(const CPLJSONObject &oProperties)
 }
 
 /************************************************************************/
-/*                      SetupServerSideReprojection()                   */
+/*                    SetupServerSideReprojection()                     */
 /************************************************************************/
 
 bool GDALDAASDataset::SetupServerSideReprojection(const char *pszTargetSRS)
@@ -1195,7 +1195,7 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char *pszTargetSRS)
 }
 
 /************************************************************************/
-/*                              Open()                                  */
+/*                                Open()                                */
 /************************************************************************/
 
 bool GDALDAASDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -1336,7 +1336,7 @@ GDALDataset *GDALDAASDataset::OpenStatic(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       GDALDAASRasterBand()                          */
+/*                         GDALDAASRasterBand()                         */
 /************************************************************************/
 
 GDALDAASRasterBand::GDALDAASRasterBand(GDALDAASDataset *poDSIn, int nBandIn,
@@ -1392,7 +1392,7 @@ GDALDAASRasterBand::GDALDAASRasterBand(GDALDAASDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                         GetNoDataValue()                             */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double GDALDAASRasterBand::GetNoDataValue(int *pbHasNoData)
@@ -1431,7 +1431,7 @@ GDALRasterBand *GDALDAASRasterBand::GetMaskBand()
 }
 
 /************************************************************************/
-/*                           GetMaskFlags()                             */
+/*                            GetMaskFlags()                            */
 /************************************************************************/
 
 int GDALDAASRasterBand::GetMaskFlags()
@@ -1443,7 +1443,7 @@ int GDALDAASRasterBand::GetMaskFlags()
 }
 
 /************************************************************************/
-/*                      CanSpatiallySplit()                             */
+/*                         CanSpatiallySplit()                          */
 /************************************************************************/
 
 static bool CanSpatiallySplit(GUInt32 nRetryFlags, int nXOff, int nYOff,
@@ -1490,7 +1490,7 @@ static bool CanSpatiallySplit(GUInt32 nRetryFlags, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                           IRasterIO()                                */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr GDALDAASDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -1592,7 +1592,7 @@ CPLErr GDALDAASDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                          AdviseRead()                                */
+/*                             AdviseRead()                             */
 /************************************************************************/
 
 CPLErr GDALDAASDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
@@ -1612,7 +1612,7 @@ CPLErr GDALDAASDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                          FlushCache()                                */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr GDALDAASDataset::FlushCache(bool bAtClosing)
@@ -1626,7 +1626,7 @@ CPLErr GDALDAASDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                           GetOverviewCount()                         */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int GDALDAASRasterBand::GetOverviewCount()
@@ -1636,7 +1636,7 @@ int GDALDAASRasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                              GetOverview()                           */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *GDALDAASRasterBand::GetOverview(int iIndex)
@@ -1650,7 +1650,7 @@ GDALRasterBand *GDALDAASRasterBand::GetOverview(int iIndex)
 }
 
 /************************************************************************/
-/*                          IReadBlock()                                */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GDALDAASRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -1661,7 +1661,7 @@ CPLErr GDALDAASRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                           IRasterIO()                                */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -1748,7 +1748,7 @@ CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                          AdviseRead()                                */
+/*                             AdviseRead()                             */
 /************************************************************************/
 
 CPLErr GDALDAASRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize,
@@ -1768,7 +1768,7 @@ CPLErr GDALDAASRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize,
 }
 
 /************************************************************************/
-/*                          PrefetchBlocks()                            */
+/*                           PrefetchBlocks()                           */
 /************************************************************************/
 
 // Return or'ed flags among 0, RETRY_PER_BAND, RETRY_SPATIAL_SPLIT if the user
@@ -1961,7 +1961,7 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                           GetBlocks()                                */
+/*                             GetBlocks()                              */
 /************************************************************************/
 
 CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
@@ -2529,7 +2529,7 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                       GDALRegister_DAAS()                            */
+/*                         GDALRegister_DAAS()                          */
 /************************************************************************/
 
 void GDALRegister_DAAS()

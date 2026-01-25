@@ -48,7 +48,7 @@ using namespace FileGDBAPI;
 class FGdbDriver;
 
 /************************************************************************/
-/*                           FGdbBaseLayer                              */
+/*                            FGdbBaseLayer                             */
 /************************************************************************/
 
 class FGdbBaseLayer CPL_NON_FINAL : public OGRLayer
@@ -81,7 +81,7 @@ class FGdbBaseLayer CPL_NON_FINAL : public OGRLayer
 };
 
 /************************************************************************/
-/*                            FGdbLayer                                 */
+/*                              FGdbLayer                               */
 /************************************************************************/
 
 class FGdbDataSource;
@@ -196,7 +196,7 @@ class FGdbLayer final : public FGdbBaseLayer
 };
 
 /************************************************************************/
-/*                         FGdbResultLayer                              */
+/*                           FGdbResultLayer                            */
 /************************************************************************/
 
 class FGdbResultLayer final : public FGdbBaseLayer
@@ -221,7 +221,7 @@ class FGdbResultLayer final : public FGdbBaseLayer
 };
 
 /************************************************************************/
-/*                           FGdbDataSource                            */
+/*                            FGdbDataSource                            */
 /************************************************************************/
 
 class FGdbDatabaseConnection;
@@ -326,7 +326,7 @@ class FGdbDataSource final : public GDALDataset
 };
 
 /************************************************************************/
-/*                              FGdbDriver                                */
+/*                              FGdbDriver                              */
 /************************************************************************/
 
 class FGdbDatabaseConnection

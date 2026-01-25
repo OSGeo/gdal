@@ -17,7 +17,7 @@
 #include "ogrcaddrivercore.h"
 
 /************************************************************************/
-/*                           OGRCADDriverOpen()                         */
+/*                          OGRCADDriverOpen()                          */
 /************************************************************************/
 
 static GDALDataset *OGRCADDriverOpen(GDALOpenInfo *poOpenInfo)

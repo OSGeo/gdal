@@ -91,7 +91,7 @@ bool CPL_DLL OGRWKBTransform(GByte *pabyWkb, size_t nWKBSize,
                              OGREnvelope3D &sEnvelope);
 
 /************************************************************************/
-/*                       OGRAppendBuffer                                */
+/*                           OGRAppendBuffer                            */
 /************************************************************************/
 
 /** Append buffer that can be grown dynamically. */
@@ -146,7 +146,7 @@ class CPL_DLL OGRAppendBuffer
 };
 
 /************************************************************************/
-/*                       OGRWKTToWKBTranslator                          */
+/*                        OGRWKTToWKBTranslator                         */
 /************************************************************************/
 
 /** Translate WKT geometry to WKB geometry and append it to a buffer */

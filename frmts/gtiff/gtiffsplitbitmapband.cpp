@@ -19,7 +19,7 @@
 #include "cpl_error_internal.h"
 
 /************************************************************************/
-/*                       GTiffSplitBitmapBand()                         */
+/*                        GTiffSplitBitmapBand()                        */
 /************************************************************************/
 
 GTiffSplitBitmapBand::GTiffSplitBitmapBand(GTiffDataset *poDSIn, int nBandIn)
@@ -31,7 +31,7 @@ GTiffSplitBitmapBand::GTiffSplitBitmapBand(GTiffDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                      ~GTiffSplitBitmapBand()                         */
+/*                       ~GTiffSplitBitmapBand()                        */
 /************************************************************************/
 
 GTiffSplitBitmapBand::~GTiffSplitBitmapBand()

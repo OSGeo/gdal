@@ -15,7 +15,7 @@
 /*! @cond Doxygen_Suppress */
 
 /************************************************************************/
-/*                        GDALGeoLocDatasetAccessors                    */
+/*                      GDALGeoLocDatasetAccessors                      */
 /************************************************************************/
 
 class GDALGeoLocDatasetAccessors
@@ -93,7 +93,7 @@ GDALGeoLocDatasetAccessors::~GDALGeoLocDatasetAccessors()
 }
 
 /************************************************************************/
-/*                         AllocateBackMap()                            */
+/*                          AllocateBackMap()                           */
 /************************************************************************/
 
 bool GDALGeoLocDatasetAccessors::AllocateBackMap()
@@ -143,7 +143,7 @@ bool GDALGeoLocDatasetAccessors::AllocateBackMap()
 }
 
 /************************************************************************/
-/*                         FreeWghtsBackMap()                           */
+/*                          FreeWghtsBackMap()                          */
 /************************************************************************/
 
 void GDALGeoLocDatasetAccessors::FreeWghtsBackMap()
@@ -157,7 +157,7 @@ void GDALGeoLocDatasetAccessors::FreeWghtsBackMap()
 }
 
 /************************************************************************/
-/*                        GetBackmapDataset()                           */
+/*                         GetBackmapDataset()                          */
 /************************************************************************/
 
 GDALDataset *GDALGeoLocDatasetAccessors::GetBackmapDataset()
@@ -170,7 +170,7 @@ GDALDataset *GDALGeoLocDatasetAccessors::GetBackmapDataset()
 }
 
 /************************************************************************/
-/*                       FlushBackmapCaches()                           */
+/*                         FlushBackmapCaches()                         */
 /************************************************************************/
 
 void GDALGeoLocDatasetAccessors::FlushBackmapCaches()
@@ -180,7 +180,7 @@ void GDALGeoLocDatasetAccessors::FlushBackmapCaches()
 }
 
 /************************************************************************/
-/*                             Load()                                   */
+/*                                Load()                                */
 /************************************************************************/
 
 bool GDALGeoLocDatasetAccessors::Load(bool bIsRegularGrid, bool bUseQuadtree)
@@ -192,7 +192,7 @@ bool GDALGeoLocDatasetAccessors::Load(bool bIsRegularGrid, bool bUseQuadtree)
 }
 
 /************************************************************************/
-/*                          LoadGeoloc()                                */
+/*                             LoadGeoloc()                             */
 /************************************************************************/
 
 bool GDALGeoLocDatasetAccessors::LoadGeoloc(bool bIsRegularGrid)

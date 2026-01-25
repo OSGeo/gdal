@@ -28,7 +28,7 @@ ods_formula_node::ods_formula_node()
 }
 
 /************************************************************************/
-/*                         ods_formula_node(int)                        */
+/*                        ods_formula_node(int)                         */
 /************************************************************************/
 
 ods_formula_node::ods_formula_node(int nValueIn)
@@ -39,7 +39,7 @@ ods_formula_node::ods_formula_node(int nValueIn)
 }
 
 /************************************************************************/
-/*                      ods_formula_node(double)                        */
+/*                       ods_formula_node(double)                       */
 /************************************************************************/
 
 ods_formula_node::ods_formula_node(double dfValueIn)
@@ -50,7 +50,7 @@ ods_formula_node::ods_formula_node(double dfValueIn)
 }
 
 /************************************************************************/
-/*                       ods_formula_node(const char*)                  */
+/*                    ods_formula_node(const char*)                     */
 /************************************************************************/
 
 ods_formula_node::ods_formula_node(const char *pszValueIn,
@@ -63,7 +63,7 @@ ods_formula_node::ods_formula_node(const char *pszValueIn,
 }
 
 /************************************************************************/
-/*                        ods_formula_node(ods_formula_op)              */
+/*                   ods_formula_node(ods_formula_op)                   */
 /************************************************************************/
 
 ods_formula_node::ods_formula_node(ods_formula_op eOpIn)
@@ -96,7 +96,7 @@ ods_formula_node::ods_formula_node(const ods_formula_node &other)
 }
 
 /************************************************************************/
-/*                          ~ods_formula_node()                         */
+/*                         ~ods_formula_node()                          */
 /************************************************************************/
 
 ods_formula_node::~ods_formula_node()
@@ -136,7 +136,7 @@ void ods_formula_node::ReverseSubExpressions()
 }
 
 /************************************************************************/
-/*                        GetOperatorName()                             */
+/*                          GetOperatorName()                           */
 /************************************************************************/
 
 static const char *ODSGetOperatorName(ods_formula_op eOp)
@@ -254,7 +254,7 @@ void ods_formula_node::Dump(FILE *fp, int depth)
 }
 
 /************************************************************************/
-/*                             FreeSubExpr()                            */
+/*                            FreeSubExpr()                             */
 /************************************************************************/
 
 void ods_formula_node::FreeSubExpr()
@@ -523,7 +523,7 @@ bool ods_formula_node::EvaluateNOT(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                            EvaluateIF()                              */
+/*                             EvaluateIF()                             */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateIF(IODSCellEvaluator *poEvaluator)
@@ -602,7 +602,7 @@ bool ods_formula_node::EvaluateIF(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                            EvaluateEQ()                              */
+/*                             EvaluateEQ()                             */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateEQ(IODSCellEvaluator *poEvaluator)
@@ -669,7 +669,7 @@ bool ods_formula_node::EvaluateEQ(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                           EvaluateNE()                               */
+/*                             EvaluateNE()                             */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateNE(IODSCellEvaluator *poEvaluator)
@@ -724,7 +724,7 @@ static CaseType GetCase(const char *pszStr)
 }
 
 /************************************************************************/
-/*                            EvaluateLE()                              */
+/*                             EvaluateLE()                             */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateLE(IODSCellEvaluator *poEvaluator)
@@ -800,7 +800,7 @@ bool ods_formula_node::EvaluateLE(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                            EvaluateGE()                              */
+/*                             EvaluateGE()                             */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateGE(IODSCellEvaluator *poEvaluator)
@@ -874,7 +874,7 @@ bool ods_formula_node::EvaluateGE(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                            EvaluateLT()                              */
+/*                             EvaluateLT()                             */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateLT(IODSCellEvaluator *poEvaluator)
@@ -950,7 +950,7 @@ bool ods_formula_node::EvaluateLT(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                            EvaluateGT()                              */
+/*                             EvaluateGT()                             */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateGT(IODSCellEvaluator *poEvaluator)
@@ -1024,7 +1024,7 @@ bool ods_formula_node::EvaluateGT(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                         EvaluateSingleArgOp()                        */
+/*                        EvaluateSingleArgOp()                         */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateSingleArgOp(IODSCellEvaluator *poEvaluator)
@@ -1066,7 +1066,7 @@ bool ods_formula_node::EvaluateSingleArgOp(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                       EvaluateBinaryArithmetic()                     */
+/*                      EvaluateBinaryArithmetic()                      */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateBinaryArithmetic(IODSCellEvaluator *poEvaluator)
@@ -1570,7 +1570,7 @@ bool ods_formula_node::EvaluateListArgOp(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                           EvaluateCELL()                             */
+/*                            EvaluateCELL()                            */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateCELL(IODSCellEvaluator *poEvaluator)
@@ -1617,7 +1617,7 @@ bool ods_formula_node::EvaluateCELL(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                           EvaluateLEN()                              */
+/*                            EvaluateLEN()                             */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateLEN(IODSCellEvaluator *poEvaluator)
@@ -1642,7 +1642,7 @@ bool ods_formula_node::EvaluateLEN(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                           EvaluateLEFT()                             */
+/*                            EvaluateLEFT()                            */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateLEFT(IODSCellEvaluator *poEvaluator)
@@ -1720,7 +1720,7 @@ bool ods_formula_node::EvaluateRIGHT(IODSCellEvaluator *poEvaluator)
 }
 
 /************************************************************************/
-/*                           EvaluateMID()                             */
+/*                            EvaluateMID()                             */
 /************************************************************************/
 
 bool ods_formula_node::EvaluateMID(IODSCellEvaluator *poEvaluator)

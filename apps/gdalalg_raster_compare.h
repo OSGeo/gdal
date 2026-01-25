@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterCompareAlgorithm                       */
+/*                      GDALRasterCompareAlgorithm                      */
 /************************************************************************/
 
 class GDALRasterCompareAlgorithm /* non final */

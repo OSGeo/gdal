@@ -18,7 +18,7 @@
 #include <set>
 
 /************************************************************************/
-/*                       OGRElasticAggregationLayer()                   */
+/*                     OGRElasticAggregationLayer()                     */
 /************************************************************************/
 
 OGRElasticAggregationLayer::OGRElasticAggregationLayer(
@@ -44,7 +44,7 @@ OGRElasticAggregationLayer::OGRElasticAggregationLayer(
 }
 
 /************************************************************************/
-/*                      ~OGRElasticAggregationLayer()                   */
+/*                    ~OGRElasticAggregationLayer()                     */
 /************************************************************************/
 
 OGRElasticAggregationLayer::~OGRElasticAggregationLayer()
@@ -53,7 +53,7 @@ OGRElasticAggregationLayer::~OGRElasticAggregationLayer()
 }
 
 /************************************************************************/
-/*                                  Build()                             */
+/*                               Build()                                */
 /************************************************************************/
 
 std::unique_ptr<OGRElasticAggregationLayer>
@@ -216,7 +216,7 @@ OGRElasticAggregationLayer::Build(OGRElasticDataSource *poDS,
 }
 
 /************************************************************************/
-/*                          ResetReading()                              */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRElasticAggregationLayer::ResetReading()
@@ -225,7 +225,7 @@ void OGRElasticAggregationLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRElasticAggregationLayer::ISetSpatialFilter(int iGeomField,
@@ -242,7 +242,7 @@ OGRErr OGRElasticAggregationLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                          BuildRequest()                              */
+/*                            BuildRequest()                            */
 /************************************************************************/
 
 #define FILTERED_STR "filtered"
@@ -360,7 +360,7 @@ std::string OGRElasticAggregationLayer::BuildRequest()
 }
 
 /************************************************************************/
-/*                       IssueAggregationRequest()                      */
+/*                      IssueAggregationRequest()                       */
 /************************************************************************/
 
 void OGRElasticAggregationLayer::IssueAggregationRequest()
@@ -536,7 +536,7 @@ void OGRElasticAggregationLayer::IssueAggregationRequest()
 }
 
 /************************************************************************/
-/*                        GetNextRawFeature()                           */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRElasticAggregationLayer::GetNextRawFeature()
@@ -575,7 +575,7 @@ GIntBig OGRElasticAggregationLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                          TestCapability()                            */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRElasticAggregationLayer::TestCapability(const char *pszCap) const

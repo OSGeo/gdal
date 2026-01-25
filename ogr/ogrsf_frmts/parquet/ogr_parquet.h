@@ -28,7 +28,7 @@ constexpr int DEFAULT_COMPRESSION_LEVEL = -1;
 constexpr int OGR_PARQUET_ZSTD_DEFAULT_COMPRESSION_LEVEL = 9;
 
 /************************************************************************/
-/*                       OGRParquetLayerBase                            */
+/*                         OGRParquetLayerBase                          */
 /************************************************************************/
 
 class OGRParquetDataset;
@@ -80,7 +80,7 @@ class OGRParquetLayerBase CPL_NON_FINAL : public OGRArrowLayer
 };
 
 /************************************************************************/
-/*                        OGRParquetLayer                               */
+/*                           OGRParquetLayer                            */
 /************************************************************************/
 
 class OGRParquetLayer final : public OGRParquetLayerBase
@@ -226,7 +226,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
 };
 
 /************************************************************************/
-/*                      OGRParquetDatasetLayer                          */
+/*                        OGRParquetDatasetLayer                        */
 /************************************************************************/
 
 #ifdef GDAL_USE_ARROWDATASET
@@ -295,7 +295,7 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
 #endif
 
 /************************************************************************/
-/*                         OGRParquetDataset                            */
+/*                          OGRParquetDataset                           */
 /************************************************************************/
 
 class OGRParquetDataset final : public OGRArrowDataset
@@ -448,7 +448,7 @@ class OGRParquetWriterLayer final : public OGRArrowWriterLayer
 };
 
 /************************************************************************/
-/*                        OGRParquetWriterDataset                       */
+/*                       OGRParquetWriterDataset                        */
 /************************************************************************/
 
 class OGRParquetWriterDataset final : public GDALPamDataset

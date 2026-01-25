@@ -31,7 +31,7 @@
 OGRMultiLineString::OGRMultiLineString(const OGRMultiLineString &) = default;
 
 /************************************************************************/
-/*                  operator=( const OGRMultiCurve&)                    */
+/*                   operator=( const OGRMultiCurve&)                   */
 /************************************************************************/
 
 /**
@@ -95,7 +95,7 @@ const char *OGRMultiLineString::getGeometryName() const
 }
 
 /************************************************************************/
-/*                          isCompatibleSubType()                       */
+/*                        isCompatibleSubType()                         */
 /************************************************************************/
 
 OGRBoolean
@@ -156,7 +156,7 @@ std::string OGRMultiLineString::exportToWkt(const OGRWktOptions &opts,
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
 OGRBoolean

@@ -94,7 +94,7 @@ class ValueRange
 };
 
 /************************************************************************/
-/*                     ILWISInfo                                        */
+/*                              ILWISInfo                               */
 /************************************************************************/
 
 struct ILWISInfo
@@ -141,7 +141,7 @@ class ILWISRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                         ILWISDataset                                 */
+/*                             ILWISDataset                             */
 /************************************************************************/
 class ILWISDataset final : public GDALPamDataset
 {

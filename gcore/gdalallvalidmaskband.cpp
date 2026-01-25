@@ -83,7 +83,7 @@ CPLErr GDALAllValidMaskBand::IRasterIO(GDALRWFlag eRWFlag, int, int, int, int,
 }
 
 /************************************************************************/
-/*                   EmitErrorMessageIfWriteNotSupported()              */
+/*                EmitErrorMessageIfWriteNotSupported()                 */
 /************************************************************************/
 
 bool GDALAllValidMaskBand::EmitErrorMessageIfWriteNotSupported(
@@ -117,7 +117,7 @@ int GDALAllValidMaskBand::GetMaskFlags()
 }
 
 /************************************************************************/
-/*                           ComputeStatistics()                        */
+/*                         ComputeStatistics()                          */
 /************************************************************************/
 
 CPLErr GDALAllValidMaskBand::ComputeStatistics(

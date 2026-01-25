@@ -265,7 +265,7 @@ static void gvBurnScanline(GDALRasterizeInfo *psInfo, int nY, int nXStart,
 }
 
 /************************************************************************/
-/*                        gvBurnPointBasic()                            */
+/*                          gvBurnPointBasic()                          */
 /************************************************************************/
 template <typename T>
 static inline void gvBurnPointBasic(GDALRasterizeInfo *psInfo, int nY, int nX,
@@ -1823,7 +1823,7 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
 }
 
 /************************************************************************/
-/*                        GDALRasterizeLayersBuf()                      */
+/*                       GDALRasterizeLayersBuf()                       */
 /************************************************************************/
 
 /**

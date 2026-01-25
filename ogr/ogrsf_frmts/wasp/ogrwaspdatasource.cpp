@@ -18,7 +18,7 @@
 #include <sstream>
 
 /************************************************************************/
-/*                          OGRWAsPDataSource()                          */
+/*                         OGRWAsPDataSource()                          */
 /************************************************************************/
 
 OGRWAsPDataSource::OGRWAsPDataSource(const char *pszName, VSILFILE *hFileHandle)
@@ -27,7 +27,7 @@ OGRWAsPDataSource::OGRWAsPDataSource(const char *pszName, VSILFILE *hFileHandle)
 }
 
 /************************************************************************/
-/*                         ~OGRWAsPDataSource()                          */
+/*                         ~OGRWAsPDataSource()                         */
 /************************************************************************/
 
 OGRWAsPDataSource::~OGRWAsPDataSource()
@@ -53,7 +53,7 @@ int OGRWAsPDataSource::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                              GetLayerByName()                        */
+/*                           GetLayerByName()                           */
 /************************************************************************/
 
 OGRLayer *OGRWAsPDataSource::GetLayerByName(const char *pszName)
@@ -64,7 +64,7 @@ OGRLayer *OGRWAsPDataSource::GetLayerByName(const char *pszName)
 }
 
 /************************************************************************/
-/*                              Load()                                  */
+/*                                Load()                                */
 /************************************************************************/
 
 OGRErr OGRWAsPDataSource::Load(bool bSilent)
@@ -167,7 +167,7 @@ const OGRLayer *OGRWAsPDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                             ICreateLayer()                           */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *

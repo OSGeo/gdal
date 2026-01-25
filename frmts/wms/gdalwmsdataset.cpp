@@ -755,7 +755,7 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 const OGRSpatialReference *GDALWMSDataset::GetSpatialRef() const
 {
@@ -821,7 +821,7 @@ CPLErr GDALWMSDataset::AdviseRead(int x0, int y0, int sx, int sy, int bsx,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **GDALWMSDataset::GetMetadataDomainList()

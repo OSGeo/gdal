@@ -28,7 +28,7 @@
 #endif
 
 /************************************************************************/
-/*                          OGRDXFWriterDS()                          */
+/*                           OGRDXFWriterDS()                           */
 /************************************************************************/
 
 OGRDXFWriterDS::OGRDXFWriterDS()
@@ -38,7 +38,7 @@ OGRDXFWriterDS::OGRDXFWriterDS()
 }
 
 /************************************************************************/
-/*                         ~OGRDXFWriterDS()                          */
+/*                          ~OGRDXFWriterDS()                           */
 /************************************************************************/
 
 OGRDXFWriterDS::~OGRDXFWriterDS()
@@ -319,7 +319,7 @@ int OGRDXFWriterDS::Open(const char *pszFilename, CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *OGRDXFWriterDS::ICreateLayer(const char *pszName,
@@ -1262,7 +1262,7 @@ bool OGRDXFWriterDS::WriteEntityID(VSILFILE *fpIn, unsigned int &nAssignedFID,
 }
 
 /************************************************************************/
-/*                           UpdateExtent()                             */
+/*                            UpdateExtent()                            */
 /************************************************************************/
 
 void OGRDXFWriterDS::UpdateExtent(OGREnvelope *psEnvelope)

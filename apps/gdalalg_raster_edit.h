@@ -56,7 +56,7 @@ class GDALRasterEditAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                     GDALRasterEditAlgorithmStandalone                */
+/*                  GDALRasterEditAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALRasterEditAlgorithmStandalone final : public GDALRasterEditAlgorithm

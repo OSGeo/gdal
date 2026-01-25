@@ -15,7 +15,7 @@
 #include "ogrlibjsonutils.h"
 
 /************************************************************************/
-/*                        OGRCARTODataSource()                        */
+/*                         OGRCARTODataSource()                         */
 /************************************************************************/
 
 OGRCARTODataSource::OGRCARTODataSource()
@@ -27,7 +27,7 @@ OGRCARTODataSource::OGRCARTODataSource()
 }
 
 /************************************************************************/
-/*                       ~OGRCARTODataSource()                        */
+/*                        ~OGRCARTODataSource()                         */
 /************************************************************************/
 
 OGRCARTODataSource::~OGRCARTODataSource()
@@ -82,7 +82,7 @@ const OGRLayer *OGRCARTODataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                     OGRCARTOGetOptionValue()                       */
+/*                       OGRCARTOGetOptionValue()                       */
 /************************************************************************/
 
 static CPLString OGRCARTOGetOptionValue(const char *pszFilename,
@@ -304,7 +304,7 @@ int OGRCARTODataSource::Open(const char *pszFilename, char **papszOpenOptionsIn,
 }
 
 /************************************************************************/
-/*                            GetAPIURL()                               */
+/*                             GetAPIURL()                              */
 /************************************************************************/
 
 const char *OGRCARTODataSource::GetAPIURL() const
@@ -377,7 +377,7 @@ int OGRCARTODataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                          ICreateLayer()                              */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -540,7 +540,7 @@ OGRErr OGRCARTODataSource::DeleteLayer(int iLayer)
 }
 
 /************************************************************************/
-/*                          AddHTTPOptions()                            */
+/*                           AddHTTPOptions()                           */
 /************************************************************************/
 
 char **OGRCARTODataSource::AddHTTPOptions()
@@ -551,7 +551,7 @@ char **OGRCARTODataSource::AddHTTPOptions()
 }
 
 /************************************************************************/
-/*                               RunCopyFrom()                               */
+/*                            RunCopyFrom()                             */
 /************************************************************************/
 
 json_object *OGRCARTODataSource::RunCopyFrom(const char *pszSQL,
@@ -797,7 +797,7 @@ json_object *OGRCARTODataSource::RunSQL(const char *pszUnescapedSQL)
 }
 
 /************************************************************************/
-/*                        OGRCARTOGetSingleRow()                      */
+/*                        OGRCARTOGetSingleRow()                        */
 /************************************************************************/
 
 json_object *OGRCARTOGetSingleRow(json_object *poObj)

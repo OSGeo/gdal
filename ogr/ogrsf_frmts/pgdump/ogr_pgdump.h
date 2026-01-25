@@ -83,7 +83,7 @@ class OGRPGDumpGeomFieldDefn final : public OGRGeomFieldDefn
 };
 
 /************************************************************************/
-/*                          OGRPGDumpLayer                              */
+/*                            OGRPGDumpLayer                            */
 /************************************************************************/
 
 class OGRPGDumpDataSource;
@@ -255,7 +255,7 @@ class OGRPGDumpLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                       OGRPGDumpDataSource                            */
+/*                         OGRPGDumpDataSource                          */
 /************************************************************************/
 class OGRPGDumpDataSource final : public GDALDataset
 {

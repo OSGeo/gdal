@@ -19,7 +19,7 @@
 #include <cinttypes>
 
 /************************************************************************/
-/*                       ~OGRDXFReaderBase()                            */
+/*                         ~OGRDXFReaderBase()                          */
 /************************************************************************/
 
 OGRDXFReaderBase::~OGRDXFReaderBase() = default;

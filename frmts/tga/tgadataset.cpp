@@ -46,7 +46,7 @@ struct ImageHeader
 };
 
 /************************************************************************/
-/*                         GDALTGADataset                               */
+/*                            GDALTGADataset                            */
 /************************************************************************/
 
 class GDALTGADataset final : public GDALPamDataset
@@ -87,7 +87,7 @@ class GDALTGADataset final : public GDALPamDataset
 };
 
 /************************************************************************/
-/*                        GDALTGARasterBand                             */
+/*                          GDALTGARasterBand                           */
 /************************************************************************/
 
 class GDALTGARasterBand final : public GDALPamRasterBand
@@ -129,7 +129,7 @@ class GDALTGARasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int GDALTGADataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -277,7 +277,7 @@ GDALTGARasterBand::GDALTGARasterBand(GDALTGADataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                            IReadBlock()                              */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
@@ -533,7 +533,7 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                              Open()                                  */
+/*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
@@ -740,7 +740,7 @@ GDALDataset *GDALTGADataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       GDALRegister_TGA()                             */
+/*                          GDALRegister_TGA()                          */
 /************************************************************************/
 
 void GDALRegister_TGA()

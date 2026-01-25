@@ -45,7 +45,7 @@ class GDALVectorSwapXYAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                  GDALVectorSwapXYAlgorithmStandalone                 */
+/*                 GDALVectorSwapXYAlgorithmStandalone                  */
 /************************************************************************/
 
 class GDALVectorSwapXYAlgorithmStandalone final

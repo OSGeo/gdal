@@ -16,7 +16,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                          GDALNullDataset                             */
+/*                           GDALNullDataset                            */
 /************************************************************************/
 
 class GDALNullDataset final : public GDALDataset
@@ -54,7 +54,7 @@ class GDALNullDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                           GDALNullLayer                              */
+/*                            GDALNullLayer                             */
 /************************************************************************/
 
 class GDALNullRasterBand final : public GDALRasterBand
@@ -128,7 +128,7 @@ class GDALNullRasterBand final : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                           GDALNullLayer                              */
+/*                            GDALNullLayer                             */
 /************************************************************************/
 
 class GDALNullLayer final : public OGRLayer
@@ -174,7 +174,7 @@ class GDALNullLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                           GDALNullRasterBand()                       */
+/*                         GDALNullRasterBand()                         */
 /************************************************************************/
 
 GDALNullRasterBand::GDALNullRasterBand(GDALDataType eDT)
@@ -235,7 +235,7 @@ CPLErr GDALNullRasterBand::IReadBlock(int, int, void *pData)
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr GDALNullRasterBand::IWriteBlock(int, int, void *)
@@ -253,7 +253,7 @@ GDALNullDataset::GDALNullDataset() : m_nLayers(0), m_papoLayers(nullptr)
 }
 
 /************************************************************************/
-/*                         ~GDALNullDataset()                           */
+/*                          ~GDALNullDataset()                          */
 /************************************************************************/
 
 GDALNullDataset::~GDALNullDataset()
@@ -264,7 +264,7 @@ GDALNullDataset::~GDALNullDataset()
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *GDALNullDataset::ICreateLayer(const char *pszLayerName,
@@ -330,7 +330,7 @@ CPLErr GDALNullDataset::SetGeoTransform(const GDALGeoTransform &)
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *GDALNullDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -361,7 +361,7 @@ GDALDataset *GDALNullDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *GDALNullDataset::Create(const char *, int nXSize, int nYSize,
@@ -420,7 +420,7 @@ int GDALNullLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                             CreateField()                            */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr GDALNullLayer::CreateField(const OGRFieldDefn *poField, int)
@@ -430,7 +430,7 @@ OGRErr GDALNullLayer::CreateField(const OGRFieldDefn *poField, int)
 }
 
 /************************************************************************/
-/*                        GDALRegister_NULL()                           */
+/*                         GDALRegister_NULL()                          */
 /************************************************************************/
 
 void GDALRegister_NULL()

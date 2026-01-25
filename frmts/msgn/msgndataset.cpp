@@ -117,7 +117,7 @@ class MSGNRasterBand final : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                           MSGNRasterBand()                            */
+/*                           MSGNRasterBand()                           */
 /************************************************************************/
 
 MSGNRasterBand::MSGNRasterBand(MSGNDataset *poDSIn, int nBandIn,
@@ -359,7 +359,7 @@ MSGNDataset::MSGNDataset() : fp(nullptr), msg_reader_core(nullptr)
 }
 
 /************************************************************************/
-/*                            ~MSGNDataset()                             */
+/*                            ~MSGNDataset()                            */
 /************************************************************************/
 
 MSGNDataset::~MSGNDataset()
@@ -387,7 +387,7 @@ CPLErr MSGNDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *MSGNDataset::GetSpatialRef() const
@@ -791,7 +791,7 @@ GDALDataset *MSGNDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GDALRegister_MSGN()                         */
+/*                         GDALRegister_MSGN()                          */
 /************************************************************************/
 
 void GDALRegister_MSGN()

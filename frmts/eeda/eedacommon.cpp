@@ -232,7 +232,7 @@ BuildBandDescArray(json_object *poBands,
 }
 
 /************************************************************************/
-/*                      GDALEEDABaseDataset()                           */
+/*                        GDALEEDABaseDataset()                         */
 /************************************************************************/
 
 GDALEEDABaseDataset::GDALEEDABaseDataset()
@@ -241,7 +241,7 @@ GDALEEDABaseDataset::GDALEEDABaseDataset()
 }
 
 /************************************************************************/
-/*                     ~GDALEEDABaseDataset()                           */
+/*                        ~GDALEEDABaseDataset()                        */
 /************************************************************************/
 
 GDALEEDABaseDataset::~GDALEEDABaseDataset()
@@ -256,7 +256,7 @@ GDALEEDABaseDataset::~GDALEEDABaseDataset()
 }
 
 /************************************************************************/
-/*                          ConvertPathToName()                        */
+/*                         ConvertPathToName()                          */
 /************************************************************************/
 
 CPLString GDALEEDABaseDataset::ConvertPathToName(const CPLString &path)
@@ -298,7 +298,7 @@ CPLString GDALEEDABaseDataset::ConvertPathToName(const CPLString &path)
 }
 
 /************************************************************************/
-/*                          GetBaseHTTPOptions()                        */
+/*                         GetBaseHTTPOptions()                         */
 /************************************************************************/
 
 char **GDALEEDABaseDataset::GetBaseHTTPOptions()

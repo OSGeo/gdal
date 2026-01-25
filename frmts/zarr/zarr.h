@@ -38,7 +38,7 @@ const CPLCompressor *ZarrGetTIFFDecompressor();
 const CPLCompressor *ZarrGetFixedScaleOffsetDecompressor();
 
 /************************************************************************/
-/*                           MultiplyElements()                         */
+/*                          MultiplyElements()                          */
 /************************************************************************/
 
 /** Return the product of elements in the vector
@@ -50,7 +50,7 @@ template <class T> inline T MultiplyElements(const std::vector<T> &vector)
 }
 
 /************************************************************************/
-/*                            ZarrDataset                               */
+/*                             ZarrDataset                              */
 /************************************************************************/
 
 class ZarrGroupBase;
@@ -109,7 +109,7 @@ class ZarrDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                          ZarrRasterBand                              */
+/*                            ZarrRasterBand                            */
 /************************************************************************/
 
 class ZarrRasterBand final : public GDALRasterBand
@@ -148,7 +148,7 @@ class ZarrRasterBand final : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                        ZarrAttributeGroup()                          */
+/*                         ZarrAttributeGroup()                         */
 /************************************************************************/
 
 class ZarrAttributeGroup
@@ -247,7 +247,7 @@ class ZarrAttributeGroup
 };
 
 /************************************************************************/
-/*                         ZarrSharedResource                           */
+/*                          ZarrSharedResource                          */
 /************************************************************************/
 
 class ZarrSharedResource
@@ -384,7 +384,7 @@ class ZarrSharedResource
 };
 
 /************************************************************************/
-/*                             ZarrGroup                                */
+/*                              ZarrGroup                               */
 /************************************************************************/
 
 class ZarrArray;
@@ -685,7 +685,7 @@ class ZarrV3Group final : public ZarrGroupBase
 };
 
 /************************************************************************/
-/*                           ZarrDimension                              */
+/*                            ZarrDimension                             */
 /************************************************************************/
 
 class ZarrDimension final : public GDALDimensionWeakIndexingVar
@@ -871,7 +871,7 @@ class ZarrByteVectorQuickResize
 };
 
 /************************************************************************/
-/*                             ZarrArray                                */
+/*                              ZarrArray                               */
 /************************************************************************/
 
 class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
@@ -1235,7 +1235,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                           ZarrV2Array                                */
+/*                             ZarrV2Array                              */
 /************************************************************************/
 
 class ZarrV2Array final : public ZarrArray
@@ -1330,7 +1330,7 @@ class ZarrV2Array final : public ZarrArray
 };
 
 /************************************************************************/
-/*                           ZarrV3Array                                */
+/*                             ZarrV3Array                              */
 /************************************************************************/
 
 class ZarrV3CodecSequence;

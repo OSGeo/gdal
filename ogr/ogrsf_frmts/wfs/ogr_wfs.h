@@ -237,7 +237,7 @@ class OGRWFSLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                          OGRWFSJoinLayer                             */
+/*                           OGRWFSJoinLayer                            */
 /************************************************************************/
 
 class OGRWFSJoinLayer final : public OGRLayer

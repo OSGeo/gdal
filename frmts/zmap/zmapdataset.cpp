@@ -200,7 +200,7 @@ CPLErr ZMapRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                            */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double ZMapRasterBand::GetNoDataValue(int *pbSuccess)
@@ -230,7 +230,7 @@ ZMapDataset::~ZMapDataset()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int ZMapDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -488,7 +488,7 @@ GDALDataset *ZMapDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       WriteRightJustified()                          */
+/*                        WriteRightJustified()                         */
 /************************************************************************/
 
 static void WriteRightJustified(VSIVirtualHandleUniquePtr &fp,

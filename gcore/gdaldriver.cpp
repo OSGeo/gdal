@@ -54,7 +54,7 @@ GDALDriver::~GDALDriver()
 }
 
 /************************************************************************/
-/*                         GDALCreateDriver()                           */
+/*                          GDALCreateDriver()                          */
 /************************************************************************/
 
 /**
@@ -90,7 +90,7 @@ void CPL_STDCALL GDALDestroyDriver(GDALDriverH hDriver)
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -414,7 +414,7 @@ GDALDriver::CreateMultiDimensional(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                       GDALCreateMultiDimensional()                   */
+/*                     GDALCreateMultiDimensional()                     */
 /************************************************************************/
 
 /** \brief Create a new multidimensional dataset with this driver.
@@ -434,7 +434,7 @@ GDALDatasetH GDALCreateMultiDimensional(GDALDriverH hDriver,
 }
 
 /************************************************************************/
-/*                  DefaultCreateCopyMultiDimensional()                 */
+/*                 DefaultCreateCopyMultiDimensional()                  */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -907,7 +907,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                       DefaultCopyMetadata()                          */
+/*                        DefaultCopyMetadata()                         */
 /************************************************************************/
 
 void GDALDriver::DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
@@ -1423,7 +1423,7 @@ GDALDatasetH CPL_STDCALL GDALCreateCopy(GDALDriverH hDriver,
 }
 
 /************************************************************************/
-/*                      CanVectorTranslateFrom()                        */
+/*                       CanVectorTranslateFrom()                       */
 /************************************************************************/
 
 /** Returns whether the driver can translate from a vector dataset,
@@ -1502,7 +1502,7 @@ bool GDALDriver::HasOpenOption(const char *pszOpenOptionName) const
 }
 
 /************************************************************************/
-/*                         VectorTranslateFrom()                        */
+/*                        VectorTranslateFrom()                         */
 /************************************************************************/
 
 /** Create a copy of a vector dataset, using the arguments passed to
@@ -2052,7 +2052,7 @@ CPLErr CPL_STDCALL GDALCopyDatasetFiles(GDALDriverH hDriver,
 }
 
 /************************************************************************/
-/*                       GDALDriverHasOpenOption()                      */
+/*                      GDALDriverHasOpenOption()                       */
 /************************************************************************/
 
 /**
@@ -2146,7 +2146,7 @@ const char *CPL_STDCALL GDALGetDriverHelpTopic(GDALDriverH hDriver)
 }
 
 /************************************************************************/
-/*                   GDALGetDriverCreationOptionList()                  */
+/*                  GDALGetDriverCreationOptionList()                   */
 /************************************************************************/
 
 /**
@@ -2177,7 +2177,7 @@ const char *CPL_STDCALL GDALGetDriverCreationOptionList(GDALDriverH hDriver)
 }
 
 /************************************************************************/
-/*                   GDALValidateCreationOptions()                      */
+/*                    GDALValidateCreationOptions()                     */
 /************************************************************************/
 
 /**
@@ -2258,7 +2258,7 @@ int CPL_STDCALL GDALValidateCreationOptions(GDALDriverH hDriver,
 }
 
 /************************************************************************/
-/*                     GDALValidateOpenOptions()                        */
+/*                      GDALValidateOpenOptions()                       */
 /************************************************************************/
 
 int GDALValidateOpenOptions(GDALDriverH hDriver,
@@ -2276,7 +2276,7 @@ int GDALValidateOpenOptions(GDALDriverH hDriver,
 }
 
 /************************************************************************/
-/*                           GDALValidateOptions()                      */
+/*                        GDALValidateOptions()                         */
 /************************************************************************/
 
 int GDALValidateOptions(const char *pszOptionList,
@@ -2707,7 +2707,7 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriver(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALIdentifyDriverEx()                       */
+/*                        GDALIdentifyDriverEx()                        */
 /************************************************************************/
 
 /**
@@ -2953,7 +2953,7 @@ CPLErr GDALDriver::SetMetadataItem(const char *pszName, const char *pszValue,
 }
 
 /************************************************************************/
-/*                         InstantiateAlgorithm()                       */
+/*                        InstantiateAlgorithm()                        */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -2968,7 +2968,7 @@ GDALDriver::InstantiateAlgorithm(const std::vector<std::string> &aosPath)
 }
 
 /************************************************************************/
-/*                        DeclareAlgorithm()                            */
+/*                          DeclareAlgorithm()                          */
 /************************************************************************/
 
 void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
@@ -3032,7 +3032,7 @@ void GDALDriver::DeclareAlgorithm(const std::vector<std::string> &aosPath)
 //! @endcond
 
 /************************************************************************/
-/*                   DoesDriverHandleExtension()                        */
+/*                     DoesDriverHandleExtension()                      */
 /************************************************************************/
 
 static bool DoesDriverHandleExtension(GDALDriverH hDriver, const char *pszExt)
@@ -3057,7 +3057,7 @@ static bool DoesDriverHandleExtension(GDALDriverH hDriver, const char *pszExt)
 }
 
 /************************************************************************/
-/*                     IsOnlyExpectedGDBDrivers()                       */
+/*                      IsOnlyExpectedGDBDrivers()                      */
 /************************************************************************/
 
 static bool IsOnlyExpectedGDBDrivers(const CPLStringList &aosDriverNames)
@@ -3074,7 +3074,7 @@ static bool IsOnlyExpectedGDBDrivers(const CPLStringList &aosDriverNames)
 }
 
 /************************************************************************/
-/*                  GDALGetOutputDriversForDatasetName()                */
+/*                 GDALGetOutputDriversForDatasetName()                 */
 /************************************************************************/
 
 /** Return a list of driver short names that are likely candidates for the
@@ -3277,7 +3277,7 @@ char **GDALGetOutputDriversForDatasetName(const char *pszDestDataset,
 }
 
 /************************************************************************/
-/*                GDALGetMessageAboutMissingPluginDriver()              */
+/*               GDALGetMessageAboutMissingPluginDriver()               */
 /************************************************************************/
 
 std::string

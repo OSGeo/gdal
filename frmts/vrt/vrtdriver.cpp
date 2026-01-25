@@ -56,7 +56,7 @@ VRTDriver::~VRTDriver()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **VRTDriver::GetMetadataDomainList()

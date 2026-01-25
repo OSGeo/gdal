@@ -42,8 +42,8 @@ struct GDALMultiDimTranslateOptions
     bool bNoOverwrite = false;
 };
 
-/*************************************************************************/
-/*             GDALMultiDimTranslateAppOptionsGetParser()                */
+/************************************************************************/
+/*              GDALMultiDimTranslateAppOptionsGetParser()              */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -155,7 +155,7 @@ GDALMultiDimTranslateAppOptionsGetParser(
 }
 
 /************************************************************************/
-/*            GDALMultiDimTranslateAppGetParserUsage()                  */
+/*               GDALMultiDimTranslateAppGetParserUsage()               */
 /************************************************************************/
 
 std::string GDALMultiDimTranslateAppGetParserUsage()
@@ -471,7 +471,7 @@ static void FindMinMaxIdxString(const GDALMDArray *var, const char **ppszTmp,
 }
 
 /************************************************************************/
-/*                             GetDimensionDesc()                       */
+/*                          GetDimensionDesc()                          */
 /************************************************************************/
 
 struct DimensionDesc
@@ -1414,7 +1414,7 @@ static bool TranslateArray(
 }
 
 /************************************************************************/
-/*                               GetGroup()                             */
+/*                              GetGroup()                              */
 /************************************************************************/
 
 static std::shared_ptr<GDALGroup>
@@ -1438,7 +1438,7 @@ GetGroup(const std::shared_ptr<GDALGroup> &poRootGroup,
 }
 
 /************************************************************************/
-/*                                CopyGroup()                           */
+/*                             CopyGroup()                              */
 /************************************************************************/
 
 static bool CopyGroup(
@@ -1597,7 +1597,7 @@ static bool ParseGroupSpec(const std::string &groupSpec, std::string &srcName,
 }
 
 /************************************************************************/
-/*                           TranslateInternal()                        */
+/*                         TranslateInternal()                          */
 /************************************************************************/
 
 static bool TranslateInternal(std::shared_ptr<VRTGroup> &poDstRootGroup,
@@ -1711,7 +1711,7 @@ static bool TranslateInternal(std::shared_ptr<VRTGroup> &poDstRootGroup,
 }
 
 /************************************************************************/
-/*                      CopyToNonMultiDimensionalDriver()               */
+/*                  CopyToNonMultiDimensionalDriver()                   */
 /************************************************************************/
 
 static GDALDatasetH
@@ -1810,7 +1810,7 @@ CopyToNonMultiDimensionalDriver(GDALDriver *poDriver, const char *pszDest,
 }
 
 /************************************************************************/
-/*                        GDALMultiDimTranslate()                       */
+/*                       GDALMultiDimTranslate()                        */
 /************************************************************************/
 
 /* clang-format off */
@@ -2017,7 +2017,7 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 }
 
 /************************************************************************/
-/*                     GDALMultiDimTranslateOptionsNew()                */
+/*                  GDALMultiDimTranslateOptionsNew()                   */
 /************************************************************************/
 
 /**
@@ -2092,7 +2092,7 @@ GDALMultiDimTranslateOptions *GDALMultiDimTranslateOptionsNew(
 }
 
 /************************************************************************/
-/*                     GDALMultiDimTranslateOptionsFree()               */
+/*                  GDALMultiDimTranslateOptionsFree()                  */
 /************************************************************************/
 
 /**
@@ -2109,7 +2109,7 @@ void GDALMultiDimTranslateOptionsFree(GDALMultiDimTranslateOptions *psOptions)
 }
 
 /************************************************************************/
-/*               GDALMultiDimTranslateOptionsSetProgress()              */
+/*              GDALMultiDimTranslateOptionsSetProgress()               */
 /************************************************************************/
 
 /**

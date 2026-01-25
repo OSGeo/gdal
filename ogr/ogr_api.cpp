@@ -62,7 +62,7 @@ bool OGRGetGEOSVersion(int *pnMajor, int *pnMinor, int *pnPatch)
 #endif
 
 /************************************************************************/
-/*                           ToPointer()                                */
+/*                             ToPointer()                              */
 /************************************************************************/
 
 static inline OGRGeometry *ToPointer(OGRGeometryH hGeom)
@@ -71,7 +71,7 @@ static inline OGRGeometry *ToPointer(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                           ToHandle()                                 */
+/*                              ToHandle()                              */
 /************************************************************************/
 
 static inline OGRGeometryH ToHandle(OGRGeometry *poGeom)
@@ -401,7 +401,7 @@ int OGR_G_GetPoints(OGRGeometryH hGeom, void *pabyX, int nXStride, void *pabyY,
 }
 
 /************************************************************************/
-/*                          OGR_G_GetPointsZM()                         */
+/*                         OGR_G_GetPointsZM()                          */
 /************************************************************************/
 
 /**
@@ -546,7 +546,7 @@ void OGR_G_GetPoint(OGRGeometryH hGeom, int i, double *pdfX, double *pdfY,
 }
 
 /************************************************************************/
-/*                           OGR_G_GetPointZM()                         */
+/*                          OGR_G_GetPointZM()                          */
 /************************************************************************/
 
 /**
@@ -622,7 +622,7 @@ void OGR_G_GetPointZM(OGRGeometryH hGeom, int i, double *pdfX, double *pdfY,
 }
 
 /************************************************************************/
-/*                           OGR_G_SetPoints()                          */
+/*                          OGR_G_SetPoints()                           */
 /************************************************************************/
 /**
  * \brief Assign all points in a point or a line string geometry.
@@ -724,7 +724,7 @@ OGRErr CPL_DLL OGR_G_SetPoints(OGRGeometryH hGeom, int nPointsIn,
 }
 
 /************************************************************************/
-/*                           OGR_G_SetPointsZM()                        */
+/*                         OGR_G_SetPointsZM()                          */
 /************************************************************************/
 /**
  * \brief Assign all points in a point or a line string geometry.
@@ -1021,7 +1021,7 @@ OGRErr OGR_G_SetPoint_2D(OGRGeometryH hGeom, int i, double dfX, double dfY)
 }
 
 /************************************************************************/
-/*                           OGR_G_SetPointM()                          */
+/*                          OGR_G_SetPointM()                           */
 /************************************************************************/
 /**
  * \brief Set the location of a vertex in a point or linestring geometry.
@@ -1092,7 +1092,7 @@ OGRErr OGR_G_SetPointM(OGRGeometryH hGeom, int i, double dfX, double dfY,
 }
 
 /************************************************************************/
-/*                           OGR_G_SetPointZM()                         */
+/*                          OGR_G_SetPointZM()                          */
 /************************************************************************/
 /**
  * \brief Set the location of a vertex in a point or linestring geometry.
@@ -1219,7 +1219,7 @@ OGRErr OGR_G_AddPoint(OGRGeometryH hGeom, double dfX, double dfY, double dfZ)
 }
 
 /************************************************************************/
-/*                           OGR_G_AddPoint_2D()                        */
+/*                         OGR_G_AddPoint_2D()                          */
 /************************************************************************/
 /**
  * \brief Add a point to a geometry (line string or point).
@@ -1269,7 +1269,7 @@ OGRErr OGR_G_AddPoint_2D(OGRGeometryH hGeom, double dfX, double dfY)
 }
 
 /************************************************************************/
-/*                           OGR_G_AddPointM()                          */
+/*                          OGR_G_AddPointM()                           */
 /************************************************************************/
 /**
  * \brief Add a point to a geometry (line string or point).
@@ -1321,7 +1321,7 @@ OGRErr OGR_G_AddPointM(OGRGeometryH hGeom, double dfX, double dfY, double dfM)
 }
 
 /************************************************************************/
-/*                           OGR_G_AddPointZM()                         */
+/*                          OGR_G_AddPointZM()                          */
 /************************************************************************/
 /**
  * \brief Add a point to a geometry (line string or point).
@@ -1682,7 +1682,7 @@ OGRErr OGR_G_RemoveGeometry(OGRGeometryH hGeom, int iGeom, int bDelete)
 }
 
 /************************************************************************/
-/*                           OGR_G_Length()                             */
+/*                            OGR_G_Length()                            */
 /************************************************************************/
 
 /**
@@ -1735,7 +1735,7 @@ double OGR_G_Length(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                      OGR_G_GeodesicLength()                          */
+/*                        OGR_G_GeodesicLength()                        */
 /************************************************************************/
 
 /**
@@ -1796,7 +1796,7 @@ double OGR_G_GeodesicLength(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                           OGR_G_Area()                               */
+/*                             OGR_G_Area()                             */
 /************************************************************************/
 
 /**
@@ -1964,7 +1964,7 @@ bool OGR_G_IsClockwise(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                         OGR_G_HasCurveGeometry()                     */
+/*                       OGR_G_HasCurveGeometry()                       */
 /************************************************************************/
 
 /**
@@ -1998,7 +1998,7 @@ int OGR_G_HasCurveGeometry(OGRGeometryH hGeom, int bLookForNonLinear)
 }
 
 /************************************************************************/
-/*                         OGR_G_GetLinearGeometry()                   */
+/*                      OGR_G_GetLinearGeometry()                       */
 /************************************************************************/
 
 /**
@@ -2036,7 +2036,7 @@ OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry(OGRGeometryH hGeom,
 }
 
 /************************************************************************/
-/*                         OGR_G_GetCurveGeometry()                     */
+/*                       OGR_G_GetCurveGeometry()                       */
 /************************************************************************/
 
 /**
@@ -2072,7 +2072,7 @@ OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry(OGRGeometryH hGeom,
 }
 
 /************************************************************************/
-/*                          OGR_G_Value()                               */
+/*                            OGR_G_Value()                             */
 /************************************************************************/
 /**
  * \brief Fetch point at given distance along curve.
@@ -2105,7 +2105,7 @@ OGRGeometryH OGR_G_Value(OGRGeometryH hGeom, double dfDistance)
 }
 
 /************************************************************************/
-/*                 OGRSetNonLinearGeometriesEnabledFlag()               */
+/*                OGRSetNonLinearGeometriesEnabledFlag()                */
 /************************************************************************/
 
 /**
@@ -2138,7 +2138,7 @@ void OGRSetNonLinearGeometriesEnabledFlag(int bFlag)
 }
 
 /************************************************************************/
-/*                 OGRGetNonLinearGeometriesEnabledFlag()               */
+/*                OGRGetNonLinearGeometriesEnabledFlag()                */
 /************************************************************************/
 
 /**

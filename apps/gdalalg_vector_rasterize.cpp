@@ -26,7 +26,7 @@
 #endif
 
 /************************************************************************/
-/*        GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()  */
+/*     GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()     */
 /************************************************************************/
 
 GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
@@ -129,7 +129,7 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
 }
 
 /************************************************************************/
-/*                GDALVectorRasterizeAlgorithm::RunStep()               */
+/*               GDALVectorRasterizeAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -351,7 +351,7 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*               GDALVectorRasterizeAlgorithm::RunImpl()               */
+/*               GDALVectorRasterizeAlgorithm::RunImpl()                */
 /************************************************************************/
 
 bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

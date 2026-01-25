@@ -947,7 +947,7 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                GDALRasterCalcAlgorithm::RunStep()                    */
+/*                  GDALRasterCalcAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

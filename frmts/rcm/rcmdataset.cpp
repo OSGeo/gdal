@@ -287,7 +287,7 @@ RCMRasterBand::RCMRasterBand(RCMDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                            RCMRasterBand()                            */
+/*                           RCMRasterBand()                            */
 /************************************************************************/
 
 RCMRasterBand::~RCMRasterBand()
@@ -383,7 +383,7 @@ CPLErr RCMRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                            ReadLUT()                                 */
+/*                              ReadLUT()                               */
 /************************************************************************/
 /* Read the provided LUT in to m_ndTable                                */
 /* 1. The gains list spans the range extent covered by all              */
@@ -521,7 +521,7 @@ void RCMCalibRasterBand::ReadLUT()
 }
 
 /************************************************************************/
-/*                            ReadNoiseLevels()                         */
+/*                          ReadNoiseLevels()                           */
 /************************************************************************/
 /* Read the provided LUT in to m_nfTableNoiseLevels                     */
 /* 1. The gains list spans the range extent covered by all              */
@@ -624,7 +624,7 @@ void RCMCalibRasterBand::ReadNoiseLevels()
 }
 
 /************************************************************************/
-/*                        RCMCalibRasterBand()                          */
+/*                         RCMCalibRasterBand()                         */
 /************************************************************************/
 
 RCMCalibRasterBand::RCMCalibRasterBand(
@@ -655,7 +655,7 @@ RCMCalibRasterBand::RCMCalibRasterBand(
 }
 
 /************************************************************************/
-/*                       ~RCMCalibRasterBand()                          */
+/*                        ~RCMCalibRasterBand()                         */
 /************************************************************************/
 
 RCMCalibRasterBand::~RCMCalibRasterBand()
@@ -668,7 +668,7 @@ RCMCalibRasterBand::~RCMCalibRasterBand()
 }
 
 /************************************************************************/
-/*                        IReadBlock()                                  */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr RCMCalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -985,7 +985,7 @@ RCMDataset::~RCMDataset()
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int RCMDataset::CloseDependentDatasets()
@@ -2499,7 +2499,7 @@ const OGRSpatialReference *RCMDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *RCMDataset::GetGCPs()
@@ -2509,7 +2509,7 @@ const GDAL_GCP *RCMDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *RCMDataset::GetSpatialRef() const
@@ -2536,7 +2536,7 @@ CPLErr RCMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **RCMDataset::GetMetadataDomainList()
@@ -2560,7 +2560,7 @@ CSLConstList RCMDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                         GDALRegister_RCM()                           */
+/*                          GDALRegister_RCM()                          */
 /************************************************************************/
 
 void GDALRegister_RCM()

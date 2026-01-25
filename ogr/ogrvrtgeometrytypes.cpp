@@ -67,7 +67,7 @@ OGRwkbGeometryType OGRVRTGetGeometryType(const char *pszGType, int *pbError)
 }
 
 /************************************************************************/
-/*                     OGRVRTGetSerializedGeometryType()                */
+/*                  OGRVRTGetSerializedGeometryType()                   */
 /************************************************************************/
 
 std::string OGRVRTGetSerializedGeometryType(OGRwkbGeometryType eGeomType)

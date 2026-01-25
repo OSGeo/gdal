@@ -17,7 +17,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                            OGRDGNLayer                               */
+/*                             OGRDGNLayer                              */
 /************************************************************************/
 
 class OGRDGNDataSource;
@@ -80,7 +80,7 @@ class OGRDGNLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                          OGRDGNDataSource                            */
+/*                           OGRDGNDataSource                           */
 /************************************************************************/
 
 class OGRDGNDataSource final : public GDALDataset

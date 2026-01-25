@@ -27,7 +27,7 @@
 #endif
 
 /************************************************************************/
-/*                 GDALVectorLayerAlgebraAlgorithm()                    */
+/*                  GDALVectorLayerAlgebraAlgorithm()                   */
 /************************************************************************/
 
 GDALVectorLayerAlgebraAlgorithm::GDALVectorLayerAlgebraAlgorithm()
@@ -108,7 +108,7 @@ GDALVectorLayerAlgebraAlgorithm::GDALVectorLayerAlgebraAlgorithm()
 }
 
 /************************************************************************/
-/*               GDALVectorLayerAlgebraAlgorithm::RunImpl()             */
+/*              GDALVectorLayerAlgebraAlgorithm::RunImpl()              */
 /************************************************************************/
 
 bool GDALVectorLayerAlgebraAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

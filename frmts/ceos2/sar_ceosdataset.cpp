@@ -466,7 +466,7 @@ CPLErr CCPRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                           PALSARRasterBand()                         */
+/*                          PALSARRasterBand()                          */
 /************************************************************************/
 
 PALSARRasterBand::PALSARRasterBand(SAR_CEOSDataset *poGDSIn, int nBandIn)
@@ -741,7 +741,7 @@ const GDAL_GCP *SAR_CEOSDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **SAR_CEOSDataset::GetMetadataDomainList()

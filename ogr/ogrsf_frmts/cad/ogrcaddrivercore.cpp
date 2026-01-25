@@ -21,7 +21,7 @@
 #include "ogrcaddrivercore.h"
 
 /************************************************************************/
-/*                    OGRCADDriverIdentify()                            */
+/*                        OGRCADDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRCADDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -36,7 +36,7 @@ static int OGRCADDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                  OGRCADDriverSetCommonMetadata()                  */
+/*                   OGRCADDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void OGRCADDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -77,7 +77,7 @@ void OGRCADDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredOGRCADPlugin()                      */
+/*                    DeclareDeferredOGRCADPlugin()                     */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

@@ -20,7 +20,7 @@
 extern "C" void RegisterOGRCarto();
 
 /************************************************************************/
-/*                           OGRCartoDriverOpen()                     */
+/*                         OGRCartoDriverOpen()                         */
 /************************************************************************/
 
 static GDALDataset *OGRCartoDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -42,7 +42,7 @@ static GDALDataset *OGRCartoDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      OGRCartoDriverCreate()                        */
+/*                        OGRCartoDriverCreate()                        */
 /************************************************************************/
 
 static GDALDataset *OGRCartoDriverCreate(const char *pszName,
@@ -67,7 +67,7 @@ static GDALDataset *OGRCartoDriverCreate(const char *pszName,
 }
 
 /************************************************************************/
-/*                         RegisterOGRCARTO()                         */
+/*                          RegisterOGRCARTO()                          */
 /************************************************************************/
 
 void RegisterOGRCarto()

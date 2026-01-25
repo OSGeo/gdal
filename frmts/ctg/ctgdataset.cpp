@@ -160,7 +160,7 @@ CTGRasterBand::CTGRasterBand(CTGDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                          ~CTGRasterBand()                            */
+/*                           ~CTGRasterBand()                           */
 /************************************************************************/
 
 CTGRasterBand::~CTGRasterBand()
@@ -229,7 +229,7 @@ char **CTGRasterBand::GetCategoryNames()
 }
 
 /************************************************************************/
-/*                            ~CTGDataset()                            */
+/*                            ~CTGDataset()                             */
 /************************************************************************/
 
 CTGDataset::CTGDataset()
@@ -240,7 +240,7 @@ CTGDataset::CTGDataset()
 }
 
 /************************************************************************/
-/*                            ~CTGDataset()                            */
+/*                            ~CTGDataset()                             */
 /************************************************************************/
 
 CTGDataset::~CTGDataset()
@@ -252,7 +252,7 @@ CTGDataset::~CTGDataset()
 }
 
 /************************************************************************/
-/*                              ExtractField()                          */
+/*                            ExtractField()                            */
 /************************************************************************/
 
 const char *CTGDataset::ExtractField(char *szField, const char *pszBuffer,
@@ -332,7 +332,7 @@ int CTGDataset::ReadImagery()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int CTGDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -539,7 +539,7 @@ CPLErr CTGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         GDALRegister_CTG()                           */
+/*                          GDALRegister_CTG()                          */
 /************************************************************************/
 
 void GDALRegister_CTG()

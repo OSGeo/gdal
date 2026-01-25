@@ -912,7 +912,7 @@ static int getEPSGObjectCodeValue(CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                         getProjectionParam()                          */
+/*                         getProjectionParam()                         */
 /************************************************************************/
 
 static double getProjectionParam(CPLXMLNode *psRootNode, int nParameterCode,

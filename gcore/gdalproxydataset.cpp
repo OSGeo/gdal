@@ -209,7 +209,7 @@ D_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, (int nFlagsIn),
                         (nFlagsIn))
 
 /************************************************************************/
-/*                    UnrefUnderlyingDataset()                        */
+/*                       UnrefUnderlyingDataset()                       */
 /************************************************************************/
 
 void GDALProxyDataset::UnrefUnderlyingDataset(
@@ -534,7 +534,7 @@ void GDALProxyRasterBand::EnablePixelTypeSignedByteWarning(bool b)
 }
 
 /************************************************************************/
-/*                 UnrefUnderlyingRasterBand()                        */
+/*                     UnrefUnderlyingRasterBand()                      */
 /************************************************************************/
 
 void GDALProxyRasterBand::UnrefUnderlyingRasterBand(

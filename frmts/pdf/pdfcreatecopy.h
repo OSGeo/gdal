@@ -52,7 +52,7 @@ class GDALFakePDFDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                          GDALPDFWriter                               */
+/*                            GDALPDFWriter                             */
 /************************************************************************/
 
 class GDALXRefEntry

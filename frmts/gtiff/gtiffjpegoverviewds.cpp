@@ -88,7 +88,7 @@ GTiffJPEGOverviewDS::GTiffJPEGOverviewDS(GTiffDataset *poParentDSIn,
 }
 
 /************************************************************************/
-/*                       ~GTiffJPEGOverviewDS()                         */
+/*                        ~GTiffJPEGOverviewDS()                        */
 /************************************************************************/
 
 GTiffJPEGOverviewDS::~GTiffJPEGOverviewDS()
@@ -100,7 +100,7 @@ GTiffJPEGOverviewDS::~GTiffJPEGOverviewDS()
 }
 
 /************************************************************************/
-/*                            IRasterIO()                               */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr GTiffJPEGOverviewDS::IRasterIO(
@@ -131,7 +131,7 @@ CPLErr GTiffJPEGOverviewDS::IRasterIO(
 }
 
 /************************************************************************/
-/*                        GTiffJPEGOverviewBand()                       */
+/*                       GTiffJPEGOverviewBand()                        */
 /************************************************************************/
 
 GTiffJPEGOverviewBand::GTiffJPEGOverviewBand(GTiffJPEGOverviewDS *poDSIn,
@@ -149,7 +149,7 @@ GTiffJPEGOverviewBand::GTiffJPEGOverviewBand(GTiffJPEGOverviewDS *poDSIn,
 }
 
 /************************************************************************/
-/*                          IReadBlock()                                */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,

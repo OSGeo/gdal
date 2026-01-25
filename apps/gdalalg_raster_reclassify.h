@@ -40,7 +40,7 @@ class GDALRasterReclassifyAlgorithm : public GDALRasterPipelineStepAlgorithm
 };
 
 /************************************************************************/
-/*                  GDALRasterResizeAlgorithmStandalone                 */
+/*                 GDALRasterResizeAlgorithmStandalone                  */
 /************************************************************************/
 
 class GDALRasterReclassifyAlgorithmStandalone final

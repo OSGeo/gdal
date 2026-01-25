@@ -44,7 +44,7 @@ bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, int nValue);
 bool GH5_WriteAttribute(hid_t loc_id, const char *pszAttrName, unsigned nValue);
 
 /************************************************************************/
-/*                                h5check()                             */
+/*                              h5check()                               */
 /************************************************************************/
 
 #ifdef DEBUG
@@ -64,7 +64,7 @@ template <class T> static T h5check(T ret, const char *filename, int line)
 #endif
 
 /************************************************************************/
-/*                              GH5_HIDBaseHolder                       */
+/*                          GH5_HIDBaseHolder                           */
 /************************************************************************/
 
 template <herr_t (*closeFunc)(hid_t)> struct GH5_HIDBaseHolder /* non final */

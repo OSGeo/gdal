@@ -91,7 +91,7 @@
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused) {}
 
 /************************************************************************/
-/*                         GTIFKeyGetSSHORT()                           */
+/*                          GTIFKeyGetSSHORT()                          */
 /************************************************************************/
 
 // Geotiff SHORT keys are supposed to be unsigned, but geo_normalize interface

@@ -26,7 +26,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                        GDALApplyVSGDataset                           */
+/*                         GDALApplyVSGDataset                          */
 /************************************************************************/
 
 class GDALApplyVSGDataset final : public GDALDataset
@@ -57,7 +57,7 @@ class GDALApplyVSGDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                       GDALApplyVSGRasterBand                         */
+/*                        GDALApplyVSGRasterBand                        */
 /************************************************************************/
 
 class GDALApplyVSGRasterBand final : public GDALRasterBand
@@ -100,7 +100,7 @@ GDALApplyVSGDataset::GDALApplyVSGDataset(GDALDataset *poSrcDataset,
 }
 
 /************************************************************************/
-/*                       ~GDALApplyVSGDataset()                         */
+/*                        ~GDALApplyVSGDataset()                        */
 /************************************************************************/
 
 GDALApplyVSGDataset::~GDALApplyVSGDataset()
@@ -109,7 +109,7 @@ GDALApplyVSGDataset::~GDALApplyVSGDataset()
 }
 
 /************************************************************************/
-/*                     CloseDependentDatasets()                         */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int GDALApplyVSGDataset::CloseDependentDatasets()
@@ -144,7 +144,7 @@ CPLErr GDALApplyVSGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *GDALApplyVSGDataset::GetSpatialRef() const
@@ -153,7 +153,7 @@ const OGRSpatialReference *GDALApplyVSGDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                             IsInitOK()                               */
+/*                              IsInitOK()                              */
 /************************************************************************/
 
 bool GDALApplyVSGDataset::IsInitOK()
@@ -199,7 +199,7 @@ double GDALApplyVSGRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                              IReadBlock()                            */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GDALApplyVSGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -270,7 +270,7 @@ CPLErr GDALApplyVSGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                      GDALApplyVerticalShiftGrid()                    */
+/*                     GDALApplyVerticalShiftGrid()                     */
 /************************************************************************/
 
 /** Apply a vertical shift grid to a source (DEM typically) dataset.
@@ -524,7 +524,7 @@ GDALDatasetH GDALApplyVerticalShiftGrid(GDALDatasetH hSrcDataset,
 }
 
 /************************************************************************/
-/*                           GetProj4Filename()                         */
+/*                          GetProj4Filename()                          */
 /************************************************************************/
 
 static CPLString GetProj4Filename(const char *pszFilename)
@@ -547,7 +547,7 @@ static CPLString GetProj4Filename(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                       GDALOpenVerticalShiftGrid()                    */
+/*                     GDALOpenVerticalShiftGrid()                      */
 /************************************************************************/
 
 /** Load proj.4 geoidgrids as GDAL dataset

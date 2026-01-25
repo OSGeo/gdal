@@ -32,13 +32,13 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                         OGRKMLDataSource()                           */
+/*                          OGRKMLDataSource()                          */
 /************************************************************************/
 
 OGRKMLDataSource::OGRKMLDataSource() = default;
 
 /************************************************************************/
-/*                        ~OGRKMLDataSource()                           */
+/*                         ~OGRKMLDataSource()                          */
 /************************************************************************/
 
 OGRKMLDataSource::~OGRKMLDataSource()
@@ -329,7 +329,7 @@ int OGRKMLDataSource::Create(const char *pszName, CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *

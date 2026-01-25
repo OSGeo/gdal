@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALRasterScaleAlgorithm                          */
+/*                       GDALRasterScaleAlgorithm                       */
 /************************************************************************/
 
 class GDALRasterScaleAlgorithm /* non final */
@@ -48,7 +48,7 @@ class GDALRasterScaleAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterScaleAlgorithmStandalone                   */
+/*                  GDALRasterScaleAlgorithmStandalone                  */
 /************************************************************************/
 
 class GDALRasterScaleAlgorithmStandalone final : public GDALRasterScaleAlgorithm

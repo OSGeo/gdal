@@ -111,7 +111,7 @@ CPLErr GeoHEIF::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 const OGRSpatialReference *GeoHEIF::GetSpatialRef() const
 {

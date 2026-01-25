@@ -26,13 +26,13 @@ OGRJSONFGMemLayer::OGRJSONFGMemLayer(GDALDataset *poDS, const char *pszName,
 }
 
 /************************************************************************/
-/*                OGRJSONFGMemLayer::~OGRJSONFGMemLayer()               */
+/*               OGRJSONFGMemLayer::~OGRJSONFGMemLayer()                */
 /************************************************************************/
 
 OGRJSONFGMemLayer::~OGRJSONFGMemLayer() = default;
 
 /************************************************************************/
-/*                           AddFeature                                 */
+/*                              AddFeature                              */
 /************************************************************************/
 
 void OGRJSONFGMemLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature)

@@ -27,7 +27,7 @@
 constexpr char RS = '\x1e';
 
 /************************************************************************/
-/*                        OGRGeoJSONSeqDataSource                       */
+/*                       OGRGeoJSONSeqDataSource                        */
 /************************************************************************/
 
 class OGRGeoJSONSeqDataSource final : public GDALDataset
@@ -61,7 +61,7 @@ class OGRGeoJSONSeqDataSource final : public GDALDataset
 };
 
 /************************************************************************/
-/*                           OGRGeoJSONSeqLayer                         */
+/*                          OGRGeoJSONSeqLayer                          */
 /************************************************************************/
 
 class OGRGeoJSONSeqLayer final : public OGRLayer
@@ -130,7 +130,7 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                       OGRGeoJSONSeqDataSource()                      */
+/*                      OGRGeoJSONSeqDataSource()                       */
 /************************************************************************/
 
 OGRGeoJSONSeqDataSource::OGRGeoJSONSeqDataSource()
@@ -154,7 +154,7 @@ OGRGeoJSONSeqDataSource::~OGRGeoJSONSeqDataSource()
 }
 
 /************************************************************************/
-/*                               GetLayer()                             */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *OGRGeoJSONSeqDataSource::GetLayer(int nIndex) const
@@ -165,7 +165,7 @@ const OGRLayer *OGRGeoJSONSeqDataSource::GetLayer(int nIndex) const
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *OGRGeoJSONSeqDataSource::ICreateLayer(
@@ -293,7 +293,7 @@ int OGRGeoJSONSeqDataSource::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONSeqLayer()                       */
+/*                         OGRGeoJSONSeqLayer()                         */
 /************************************************************************/
 
 OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(OGRGeoJSONSeqDataSource *poDS,
@@ -316,7 +316,7 @@ OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(OGRGeoJSONSeqDataSource *poDS,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONSeqLayer()                       */
+/*                         OGRGeoJSONSeqLayer()                         */
 /************************************************************************/
 
 // Write-only constructor
@@ -364,7 +364,7 @@ OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(
 }
 
 /************************************************************************/
-/*                          ~OGRGeoJSONSeqLayer()                       */
+/*                        ~OGRGeoJSONSeqLayer()                         */
 /************************************************************************/
 
 OGRGeoJSONSeqLayer::~OGRGeoJSONSeqLayer()
@@ -373,7 +373,7 @@ OGRGeoJSONSeqLayer::~OGRGeoJSONSeqLayer()
 }
 
 /************************************************************************/
-/*                           GetLayerDefn()                             */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGRGeoJSONSeqLayer::GetLayerDefn() const
@@ -388,7 +388,7 @@ const OGRFeatureDefn *OGRGeoJSONSeqLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                               Init()                                 */
+/*                                Init()                                */
 /************************************************************************/
 
 bool OGRGeoJSONSeqLayer::Init(bool bLooseIdentification,
@@ -762,7 +762,7 @@ OGRErr OGRGeoJSONSeqLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           CreateField()                              */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr OGRGeoJSONSeqLayer::CreateField(const OGRFieldDefn *poField,
@@ -775,7 +775,7 @@ OGRErr OGRGeoJSONSeqLayer::CreateField(const OGRFieldDefn *poField,
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
@@ -889,7 +889,7 @@ bool OGRGeoJSONSeqDataSource::Open(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 bool OGRGeoJSONSeqDataSource::Create(const char *pszName,
@@ -924,7 +924,7 @@ bool OGRGeoJSONSeqDataSource::Create(const char *pszName,
 }
 
 /************************************************************************/
-/*                       OGRGeoJSONSeqDriverIdentify()                  */
+/*                    OGRGeoJSONSeqDriverIdentify()                     */
 /************************************************************************/
 
 static int OGRGeoJSONSeqDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
@@ -946,7 +946,7 @@ static int OGRGeoJSONSeqDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                      OGRGeoJSONSeqDriverIdentify()                   */
+/*                    OGRGeoJSONSeqDriverIdentify()                     */
 /************************************************************************/
 
 static int OGRGeoJSONSeqDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -956,7 +956,7 @@ static int OGRGeoJSONSeqDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           Open()                                     */
+/*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRGeoJSONSeqDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -999,7 +999,7 @@ OGRGeoJSONSeqDriverCreate(const char *pszName, int /* nBands */,
 }
 
 /************************************************************************/
-/*                        RegisterOGRGeoJSONSeq()                       */
+/*                       RegisterOGRGeoJSONSeq()                        */
 /************************************************************************/
 
 void RegisterOGRGeoJSONSeq()

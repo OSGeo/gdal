@@ -22,7 +22,7 @@
 #include "ogrfeatherdrivercore.h"
 
 /************************************************************************/
-/*              OGRFeatherDriverIsArrowIPCStreamBasic()                 */
+/*               OGRFeatherDriverIsArrowIPCStreamBasic()                */
 /************************************************************************/
 
 static int OGRFeatherDriverIsArrowIPCStreamBasic(GDALOpenInfo *poOpenInfo)
@@ -91,7 +91,7 @@ static int OGRFeatherDriverIsArrowIPCStreamBasic(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                    OGRFeatherDriverIsArrowFileFormat()               */
+/*                 OGRFeatherDriverIsArrowFileFormat()                  */
 /************************************************************************/
 
 template <size_t N> constexpr int constexpr_length(const char (&)[N])
@@ -132,7 +132,7 @@ bool OGRFeatherDriverIsArrowFileFormat(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int OGRFeatherDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -151,7 +151,7 @@ int OGRFeatherDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                OGRFeatherDriverSetCommonMetadata()                   */
+/*                 OGRFeatherDriverSetCommonMetadata()                  */
 /************************************************************************/
 
 void OGRFeatherDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -198,7 +198,7 @@ void OGRFeatherDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                  DeclareDeferredOGRArrowPlugin()                     */
+/*                   DeclareDeferredOGRArrowPlugin()                    */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

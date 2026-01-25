@@ -61,7 +61,7 @@ GDALVectorClipAlgorithm::GDALVectorClipAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                   GDALVectorClipAlgorithmLayer                       */
+/*                     GDALVectorClipAlgorithmLayer                     */
 /************************************************************************/
 
 namespace
@@ -182,7 +182,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 }  // namespace
 
 /************************************************************************/
-/*                 GDALVectorClipAlgorithm::RunStep()                   */
+/*                  GDALVectorClipAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALVectorClipAlgorithm::RunStep(GDALPipelineStepRunContext &)

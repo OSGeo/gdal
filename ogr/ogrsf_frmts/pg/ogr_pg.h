@@ -96,7 +96,7 @@ typedef struct
 } PGGeomColumnDesc;
 
 /************************************************************************/
-/*                         OGRPGGeomFieldDefn                           */
+/*                          OGRPGGeomFieldDefn                          */
 /************************************************************************/
 
 class OGRPGGeomFieldDefn final : public OGRGeomFieldDefn
@@ -128,7 +128,7 @@ class OGRPGGeomFieldDefn final : public OGRGeomFieldDefn
 };
 
 /************************************************************************/
-/*                          OGRPGFeatureDefn                            */
+/*                           OGRPGFeatureDefn                           */
 /************************************************************************/
 
 class OGRPGFeatureDefn CPL_NON_FINAL : public OGRFeatureDefn
@@ -156,7 +156,7 @@ class OGRPGFeatureDefn CPL_NON_FINAL : public OGRFeatureDefn
 };
 
 /************************************************************************/
-/*                            OGRPGLayer                                */
+/*                              OGRPGLayer                              */
 /************************************************************************/
 
 class OGRPGLayer CPL_NON_FINAL : public OGRLayer

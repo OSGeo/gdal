@@ -235,7 +235,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRGeoJSONDataSource                       */
+/*                         OGRGeoJSONDataSource                         */
 /************************************************************************/
 
 class OGRGeoJSONDataSource final : public GDALDataset

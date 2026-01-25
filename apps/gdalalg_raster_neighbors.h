@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALRasterNeighborsAlgorithm                      */
+/*                     GDALRasterNeighborsAlgorithm                     */
 /************************************************************************/
 
 class GDALRasterNeighborsAlgorithm : public GDALRasterPipelineStepAlgorithm
@@ -49,7 +49,7 @@ class GDALRasterNeighborsAlgorithm : public GDALRasterPipelineStepAlgorithm
 };
 
 /************************************************************************/
-/*                  GDALRasterNeighborsAlgorithmStandalone              */
+/*                GDALRasterNeighborsAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterNeighborsAlgorithmStandalone final

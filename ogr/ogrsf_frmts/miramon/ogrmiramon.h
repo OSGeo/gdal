@@ -18,7 +18,7 @@
 #include "mm_wrlayr.h"
 
 /************************************************************************/
-/*                             OGRMiraMonLayer                          */
+/*                           OGRMiraMonLayer                            */
 /************************************************************************/
 
 class OGRMiraMonLayer final
@@ -109,7 +109,7 @@ class OGRMiraMonLayer final
 };
 
 /************************************************************************/
-/*                           OGRMiraMonDataSource                       */
+/*                         OGRMiraMonDataSource                         */
 /************************************************************************/
 
 class OGRMiraMonDataSource final : public GDALDataset

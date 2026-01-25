@@ -92,7 +92,7 @@ inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 }  // namespace
 
 /************************************************************************/
-/*                      ZarrArray::ParseChunkSize()                     */
+/*                     ZarrArray::ParseChunkSize()                      */
 /************************************************************************/
 
 /* static */ bool ZarrArray::ParseChunkSize(const CPLJSONArray &oChunks,
@@ -121,7 +121,7 @@ inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 }
 
 /************************************************************************/
-/*                     ZarrArray::ComputeBlockCount()                   */
+/*                    ZarrArray::ComputeBlockCount()                    */
 /************************************************************************/
 
 /* static */ uint64_t ZarrArray::ComputeBlockCount(
@@ -150,7 +150,7 @@ inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 }
 
 /************************************************************************/
-/*                     ComputeCountInnerBlockInOuter()                  */
+/*                   ComputeCountInnerBlockInOuter()                    */
 /************************************************************************/
 
 static std::vector<GUInt64>
@@ -193,7 +193,7 @@ ComputeInnerBlockSizeBytes(const std::vector<DtypeElt> &aoDtypeElts,
 }
 
 /************************************************************************/
-/*                         ZarrArray::ZarrArray()                       */
+/*                        ZarrArray::ZarrArray()                        */
 /************************************************************************/
 
 ZarrArray::ZarrArray(
@@ -228,7 +228,7 @@ ZarrArray::ZarrArray(
 }
 
 /************************************************************************/
-/*                              ~ZarrArray()                            */
+/*                             ~ZarrArray()                             */
 /************************************************************************/
 
 ZarrArray::~ZarrArray()
@@ -243,7 +243,7 @@ ZarrArray::~ZarrArray()
 }
 
 /************************************************************************/
-/*              ZarrArray::SerializeSpecialAttributes()                 */
+/*               ZarrArray::SerializeSpecialAttributes()                */
 /************************************************************************/
 
 CPLJSONObject ZarrArray::SerializeSpecialAttributes()
@@ -534,7 +534,7 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
 }
 
 /************************************************************************/
-/*                          FillBlockSize()                             */
+/*                           FillBlockSize()                            */
 /************************************************************************/
 
 /* static */
@@ -594,7 +594,7 @@ bool ZarrArray::FillBlockSize(
 }
 
 /************************************************************************/
-/*                      DeallocateDecodedBlockData()                     */
+/*                     DeallocateDecodedBlockData()                     */
 /************************************************************************/
 
 void ZarrArray::DeallocateDecodedBlockData()
@@ -777,7 +777,7 @@ void ZarrArray::EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
 }
 
 /************************************************************************/
-/*                ZarrArray::SerializeNumericNoData()                   */
+/*                 ZarrArray::SerializeNumericNoData()                  */
 /************************************************************************/
 
 void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
@@ -809,7 +809,7 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
 }
 
 /************************************************************************/
-/*                    ZarrArray::GetSpatialRef()                        */
+/*                      ZarrArray::GetSpatialRef()                      */
 /************************************************************************/
 
 std::shared_ptr<OGRSpatialReference> ZarrArray::GetSpatialRef() const
@@ -823,7 +823,7 @@ std::shared_ptr<OGRSpatialReference> ZarrArray::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                        SetRawNoDataValue()                           */
+/*                         SetRawNoDataValue()                          */
 /************************************************************************/
 
 bool ZarrArray::SetRawNoDataValue(const void *pRawNoData)
@@ -871,7 +871,7 @@ void ZarrArray::RegisterNoDataValue(const void *pNoData)
 }
 
 /************************************************************************/
-/*                        DecodeSourceElt()                             */
+/*                          DecodeSourceElt()                           */
 /************************************************************************/
 
 /* static */
@@ -991,7 +991,7 @@ void ZarrArray::DecodeSourceElt(const std::vector<DtypeElt> &elts,
 }
 
 /************************************************************************/
-/*                  ZarrArray::IAdviseReadCommon()                      */
+/*                    ZarrArray::IAdviseReadCommon()                    */
 /************************************************************************/
 
 bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
@@ -1144,7 +1144,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                           ZarrArray::IRead()                         */
+/*                          ZarrArray::IRead()                          */
 /************************************************************************/
 
 bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -1643,7 +1643,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                           ZarrArray::IWrite()                        */
+/*                         ZarrArray::IWrite()                          */
 /************************************************************************/
 
 bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -2125,7 +2125,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                   ZarrArray::IsEmptyBlock()                           */
+/*                      ZarrArray::IsEmptyBlock()                       */
 /************************************************************************/
 
 bool ZarrArray::IsEmptyBlock(const ZarrByteVectorQuickResize &abyBlock) const
@@ -2173,7 +2173,7 @@ bool ZarrArray::IsEmptyBlock(const ZarrByteVectorQuickResize &abyBlock) const
 }
 
 /************************************************************************/
-/*                  ZarrArray::OpenBlockPresenceCache()                 */
+/*                 ZarrArray::OpenBlockPresenceCache()                  */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -2288,7 +2288,7 @@ ZarrArray::OpenBlockPresenceCache(bool bCanCreate) const
 }
 
 /************************************************************************/
-/*                    ZarrArray::BlockCachePresence()                   */
+/*                   ZarrArray::BlockCachePresence()                    */
 /************************************************************************/
 
 bool ZarrArray::BlockCachePresence()
@@ -2445,7 +2445,7 @@ bool ZarrArray::BlockCachePresence()
 }
 
 /************************************************************************/
-/*                      ZarrArray::CreateAttribute()                    */
+/*                     ZarrArray::CreateAttribute()                     */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> ZarrArray::CreateAttribute(
@@ -2472,7 +2472,7 @@ std::shared_ptr<GDALAttribute> ZarrArray::CreateAttribute(
 }
 
 /************************************************************************/
-/*                  ZarrGroupBase::DeleteAttribute()                    */
+/*                   ZarrGroupBase::DeleteAttribute()                   */
 /************************************************************************/
 
 bool ZarrArray::DeleteAttribute(const std::string &osName, CSLConstList)
@@ -2531,7 +2531,7 @@ bool ZarrArray::SetUnit(const std::string &osUnit)
 }
 
 /************************************************************************/
-/*                       ZarrArray::GetOffset()                         */
+/*                        ZarrArray::GetOffset()                        */
 /************************************************************************/
 
 double ZarrArray::GetOffset(bool *pbHasOffset,
@@ -2545,7 +2545,7 @@ double ZarrArray::GetOffset(bool *pbHasOffset,
 }
 
 /************************************************************************/
-/*                       ZarrArray::GetScale()                          */
+/*                        ZarrArray::GetScale()                         */
 /************************************************************************/
 
 double ZarrArray::GetScale(bool *pbHasScale, GDALDataType *peStorageType) const
@@ -2558,7 +2558,7 @@ double ZarrArray::GetScale(bool *pbHasScale, GDALDataType *peStorageType) const
 }
 
 /************************************************************************/
-/*                       ZarrArray::SetOffset()                         */
+/*                        ZarrArray::SetOffset()                        */
 /************************************************************************/
 
 bool ZarrArray::SetOffset(double dfOffset, GDALDataType /* eStorageType */)
@@ -2573,7 +2573,7 @@ bool ZarrArray::SetOffset(double dfOffset, GDALDataType /* eStorageType */)
 }
 
 /************************************************************************/
-/*                       ZarrArray::SetScale()                          */
+/*                        ZarrArray::SetScale()                         */
 /************************************************************************/
 
 bool ZarrArray::SetScale(double dfScale, GDALDataType /* eStorageType */)
@@ -2588,7 +2588,7 @@ bool ZarrArray::SetScale(double dfScale, GDALDataType /* eStorageType */)
 }
 
 /************************************************************************/
-/*                      GetDimensionTypeDirection()                     */
+/*                     GetDimensionTypeDirection()                      */
 /************************************************************************/
 
 /* static */
@@ -2653,7 +2653,7 @@ void ZarrArray::GetDimensionTypeDirection(CPLJSONObject &oAttributes,
 }
 
 /************************************************************************/
-/*                      GetCoordinateVariables()                        */
+/*                       GetCoordinateVariables()                       */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALMDArray>>
@@ -2706,7 +2706,7 @@ ZarrArray::GetCoordinateVariables() const
 }
 
 /************************************************************************/
-/*                            Resize()                                  */
+/*                               Resize()                               */
 /************************************************************************/
 
 bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
@@ -2785,7 +2785,7 @@ bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
 }
 
 /************************************************************************/
-/*                       NotifyChildrenOfRenaming()                     */
+/*                      NotifyChildrenOfRenaming()                      */
 /************************************************************************/
 
 void ZarrArray::NotifyChildrenOfRenaming()
@@ -2794,7 +2794,7 @@ void ZarrArray::NotifyChildrenOfRenaming()
 }
 
 /************************************************************************/
-/*                          ParentRenamed()                             */
+/*                           ParentRenamed()                            */
 /************************************************************************/
 
 void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
@@ -2813,7 +2813,7 @@ void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
 }
 
 /************************************************************************/
-/*                              Rename()                                */
+/*                               Rename()                               */
 /************************************************************************/
 
 bool ZarrArray::Rename(const std::string &osNewName)
@@ -2872,7 +2872,7 @@ bool ZarrArray::Rename(const std::string &osNewName)
 }
 
 /************************************************************************/
-/*                       NotifyChildrenOfDeletion()                     */
+/*                      NotifyChildrenOfDeletion()                      */
 /************************************************************************/
 
 void ZarrArray::NotifyChildrenOfDeletion()
@@ -2881,7 +2881,11 @@ void ZarrArray::NotifyChildrenOfDeletion()
 }
 
 /************************************************************************/
+<<<<<<< HEAD
 /*                           ParseProjCRS()                             */
+=======
+/*                       ParseSpecialAttributes()                       */
+>>>>>>> e2e413714c (Apply fix_gdal_block_headers.py)
 /************************************************************************/
 
 static void ParseProjCRS(const ZarrAttributeGroup *poAttrGroup,
@@ -2976,7 +2980,7 @@ static void ParseProjCRS(const ZarrAttributeGroup *poAttrGroup,
 }
 
 /************************************************************************/
-/*                        ParseSpatialConventions()                     */
+/*                      ParseSpatialConventions()                       */
 /************************************************************************/
 
 static void ParseSpatialConventions(
@@ -3138,7 +3142,7 @@ static void ParseSpatialConventions(
 }
 
 /************************************************************************/
-/*                 DetectSRSFromEOPFSampleServiceMetadata()             */
+/*               DetectSRSFromEOPFSampleServiceMetadata()               */
 /************************************************************************/
 
 /* This function is derived from ExtractCoordinateMetadata() of
@@ -3354,7 +3358,7 @@ static void DetectSRSFromEOPFSampleServiceMetadata(
 }
 
 /************************************************************************/
-/*                            SetAttributes()                           */
+/*                           SetAttributes()                            */
 /************************************************************************/
 
 void ZarrArray::SetAttributes(const std::shared_ptr<ZarrGroupBase> &poGroup,
@@ -3639,7 +3643,7 @@ bool ZarrArray::SetStatistics(bool bApproxStats, double dfMin, double dfMax,
 }
 
 /************************************************************************/
-/*                ZarrArray::IsBlockMissingFromCacheInfo()              */
+/*               ZarrArray::IsBlockMissingFromCacheInfo()               */
 /************************************************************************/
 
 bool ZarrArray::IsBlockMissingFromCacheInfo(const std::string &osFilename,

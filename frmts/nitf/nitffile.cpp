@@ -1479,7 +1479,7 @@ static bool NITFWriteTRE(VSILFILE *fp, vsi_l_offset nOffsetUDIDL, int *pnOffset,
 }
 
 /************************************************************************/
-/*                   NITFWriteTREsFromOptions()                         */
+/*                      NITFWriteTREsFromOptions()                      */
 /************************************************************************/
 
 static bool NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
@@ -1871,7 +1871,7 @@ const char *NITFFindTRE(const char *pszTREData, int nTREBytes,
 }
 
 /************************************************************************/
-/*                     NITFFindTREByIndex()                             */
+/*                         NITFFindTREByIndex()                         */
 /************************************************************************/
 
 const char *NITFFindTREByIndex(const char *pszTREData, int nTREBytes,
@@ -2025,7 +2025,7 @@ double NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude(double dfLat)
 }
 
 /************************************************************************/
-/*                        NITFGetSeriesInfo()                           */
+/*                         NITFGetSeriesInfo()                          */
 /************************************************************************/
 
 /* From
@@ -2410,7 +2410,7 @@ int NITFReconcileAttachments(NITFFile *psFile)
 }
 
 /************************************************************************/
-/*                        NITFFindValFromEnd()                          */
+/*                         NITFFindValFromEnd()                         */
 /************************************************************************/
 
 static const char *NITFFindValFromEnd(CSLConstList papszMD, int nMDSize,
@@ -2428,7 +2428,7 @@ static const char *NITFFindValFromEnd(CSLConstList papszMD, int nMDSize,
 }
 
 /************************************************************************/
-/*                  NITFFindValRecursive()                              */
+/*                        NITFFindValRecursive()                        */
 /************************************************************************/
 
 static const char *NITFFindValRecursive(CSLConstList papszMD, int nMDSize,
@@ -2624,7 +2624,7 @@ static int NITFEvaluateCond(const char *pszCond, char **papszMD, int *pnMDSize,
 }
 
 /************************************************************************/
-/*                  NITFGenericMetadataReadTREInternal()                */
+/*                 NITFGenericMetadataReadTREInternal()                 */
 /************************************************************************/
 
 static char **NITFGenericMetadataReadTREInternal(
@@ -3383,7 +3383,7 @@ static char **NITFGenericMetadataReadTREInternal(
 }
 
 /************************************************************************/
-/*                      NITFGenericMetadataReadTRE()                    */
+/*                     NITFGenericMetadataReadTRE()                     */
 /************************************************************************/
 
 static char **NITFGenericMetadataReadTRE(char **papszMD, const char *pszTREName,
@@ -3438,7 +3438,7 @@ static char **NITFGenericMetadataReadTRE(char **papszMD, const char *pszTREName,
 }
 
 /************************************************************************/
-/*                           NITFLoadXMLSpec()                          */
+/*                          NITFLoadXMLSpec()                           */
 /************************************************************************/
 
 #define NITF_SPEC_FILE "nitf_spec.xml"
@@ -3484,7 +3484,7 @@ static CPLXMLNode *NITFLoadXMLSpec(NITFFile *psFile)
 }
 
 /************************************************************************/
-/*                      NITFFindTREXMLDescFromName()                    */
+/*                     NITFFindTREXMLDescFromName()                     */
 /************************************************************************/
 
 static CPLXMLNode *NITFFindTREXMLDescFromName(NITFFile *psFile,
@@ -3523,7 +3523,7 @@ static CPLXMLNode *NITFFindTREXMLDescFromName(NITFFile *psFile,
 }
 
 /************************************************************************/
-/*                         NITFCreateXMLTre()                           */
+/*                          NITFCreateXMLTre()                          */
 /************************************************************************/
 
 CPLXMLNode *NITFCreateXMLTre(NITFFile *psFile, const char *pszTREName,
@@ -3610,7 +3610,7 @@ CPLXMLNode *NITFCreateXMLTre(NITFFile *psFile, const char *pszTREName,
 }
 
 /************************************************************************/
-/*                      NITFFindTREXMLDescFromName()                    */
+/*                     NITFFindTREXMLDescFromName()                     */
 /************************************************************************/
 
 static CPLXMLNode *NITFFindDESXMLDescFromName(NITFFile *psFile,
@@ -3649,7 +3649,7 @@ static CPLXMLNode *NITFFindDESXMLDescFromName(NITFFile *psFile,
 }
 
 /************************************************************************/
-/*                 NITFCreateXMLDesUserDefinedSubHeader()               */
+/*                NITFCreateXMLDesUserDefinedSubHeader()                */
 /************************************************************************/
 
 CPLXMLNode *NITFCreateXMLDesUserDefinedSubHeader(NITFFile *psFile,
@@ -3738,7 +3738,7 @@ CPLXMLNode *NITFCreateXMLDesUserDefinedSubHeader(NITFFile *psFile,
 }
 
 /************************************************************************/
-/*                   NITFCreateXMLDesDataFields()                       */
+/*                     NITFCreateXMLDesDataFields()                     */
 /************************************************************************/
 
 CPLXMLNode *NITFCreateXMLDesDataFields(NITFFile *psFile, const NITFDES *psDES,

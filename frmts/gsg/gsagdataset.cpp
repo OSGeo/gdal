@@ -760,7 +760,7 @@ double GSAGRasterBand::GetMaximum(int *pbSuccess)
 /************************************************************************/
 
 /************************************************************************/
-/*                             GSAGDataset()                            */
+/*                            GSAGDataset()                             */
 /************************************************************************/
 
 GSAGDataset::GSAGDataset(const char *pszEOL) : fp(nullptr), nMinMaxZOffset(0)
@@ -1370,7 +1370,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
 }
 
 /************************************************************************/
-/*                             UpdateHeader()                           */
+/*                            UpdateHeader()                            */
 /************************************************************************/
 
 CPLErr GSAGDataset::UpdateHeader()
@@ -1669,7 +1669,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GDALRegister_GSAG()                         */
+/*                         GDALRegister_GSAG()                          */
 /************************************************************************/
 
 void GDALRegister_GSAG()

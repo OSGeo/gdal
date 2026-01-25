@@ -31,7 +31,7 @@ namespace OGRHANA
 namespace
 {
 /************************************************************************/
-/*                          Helper methods                              */
+/*                            Helper methods                            */
 /************************************************************************/
 
 CPLString BuildQuery(const char *source, const char *columns, const char *where,
@@ -236,7 +236,7 @@ OGRGeometry *CreateGeometryFromWkb(const void *data, std::size_t size)
 }  // anonymous namespace
 
 /************************************************************************/
-/*                           OGRHanaLayer()                             */
+/*                            OGRHanaLayer()                            */
 /************************************************************************/
 
 OGRHanaLayer::OGRHanaLayer(OGRHanaDataSource *datasource)
@@ -246,7 +246,7 @@ OGRHanaLayer::OGRHanaLayer(OGRHanaDataSource *datasource)
 }
 
 /************************************************************************/
-/*                          ~OGRHanaLayer()                             */
+/*                           ~OGRHanaLayer()                            */
 /************************************************************************/
 
 OGRHanaLayer::~OGRHanaLayer()
@@ -270,7 +270,7 @@ void OGRHanaLayer::EnsureInitialized()
 }
 
 /************************************************************************/
-/*                         ClearQueryStatement()                        */
+/*                        ClearQueryStatement()                         */
 /************************************************************************/
 
 void OGRHanaLayer::ClearQueryStatement()
@@ -279,7 +279,7 @@ void OGRHanaLayer::ClearQueryStatement()
 }
 
 /************************************************************************/
-/*                          GetQueryStatement()                         */
+/*                         GetQueryStatement()                          */
 /************************************************************************/
 
 const CPLString &OGRHanaLayer::GetQueryStatement()
@@ -319,7 +319,7 @@ const CPLString &OGRHanaLayer::GetQueryStatement()
 }
 
 /************************************************************************/
-/*                         BuildWhereClause()                           */
+/*                          BuildWhereClause()                          */
 /************************************************************************/
 
 void OGRHanaLayer::BuildWhereClause()
@@ -356,7 +356,7 @@ void OGRHanaLayer::BuildWhereClause()
 }
 
 /************************************************************************/
-/*                       EnsureBufferCapacity()                         */
+/*                        EnsureBufferCapacity()                        */
 /************************************************************************/
 
 void OGRHanaLayer::EnsureBufferCapacity(std::size_t size)
@@ -366,7 +366,7 @@ void OGRHanaLayer::EnsureBufferCapacity(std::size_t size)
 }
 
 /************************************************************************/
-/*                         GetNextFeatureInternal()                     */
+/*                       GetNextFeatureInternal()                       */
 /************************************************************************/
 
 OGRFeature *OGRHanaLayer::GetNextFeatureInternal()
@@ -393,7 +393,7 @@ OGRFeature *OGRHanaLayer::GetNextFeatureInternal()
 }
 
 /************************************************************************/
-/*                         GetGeometryColumnSrid()                      */
+/*                       GetGeometryColumnSrid()                        */
 /************************************************************************/
 
 int OGRHanaLayer::GetGeometryColumnSrid(int columnIndex) const
@@ -405,7 +405,7 @@ int OGRHanaLayer::GetGeometryColumnSrid(int columnIndex) const
 }
 
 /************************************************************************/
-/*                          ReadFeature()                               */
+/*                            ReadFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRHanaLayer::ReadFeature()
@@ -680,7 +680,7 @@ OGRFeature *OGRHanaLayer::ReadFeature()
 }
 
 /************************************************************************/
-/*                      InitFeatureDefinition()                         */
+/*                       InitFeatureDefinition()                        */
 /************************************************************************/
 
 OGRErr OGRHanaLayer::InitFeatureDefinition(const CPLString &schemaName,
@@ -862,7 +862,7 @@ bool OGRHanaLayer::IsFastExtentAvailable() const
 }
 
 /************************************************************************/
-/*                          ResetReading()                              */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRHanaLayer::ResetReading()
@@ -872,7 +872,7 @@ void OGRHanaLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           IGetExtent()                               */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRHanaLayer::IGetExtent(int iGeomField, OGREnvelope *extent, bool force)
@@ -901,7 +901,7 @@ OGRErr OGRHanaLayer::IGetExtent(int iGeomField, OGREnvelope *extent, bool force)
 }
 
 /************************************************************************/
-/*                            GetFeatureCount()                         */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)
@@ -920,7 +920,7 @@ GIntBig OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)
 }
 
 /************************************************************************/
-/*                           GetLayerDefn()                             */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGRHanaLayer::GetLayerDefn() const
@@ -930,7 +930,7 @@ const OGRFeatureDefn *OGRHanaLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                               GetName()                              */
+/*                              GetName()                               */
 /************************************************************************/
 
 const char *OGRHanaLayer::GetName() const
@@ -939,7 +939,7 @@ const char *OGRHanaLayer::GetName() const
 }
 
 /************************************************************************/
-/*                         GetNextFeature()                             */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGRHanaLayer::GetNextFeature()
@@ -993,7 +993,7 @@ OGRErr OGRHanaLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRHanaLayer::ISetSpatialFilter(int iGeomField,

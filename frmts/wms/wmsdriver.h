@@ -227,7 +227,7 @@ void WMSDeregisterMiniDrivers(GDALDriver *);
 void WMSDeregister(GDALDriver *);
 
 /************************************************************************/
-/*                            GDALWMSCache                              */
+/*                             GDALWMSCache                             */
 /************************************************************************/
 enum GDALWMSCacheItemStatus
 {
@@ -516,7 +516,7 @@ class GDALWMSDataset final : public GDALPamDataset
 };
 
 /************************************************************************/
-/*                            GDALWMSRasterBand                         */
+/*                          GDALWMSRasterBand                           */
 /************************************************************************/
 
 class GDALWMSRasterBand final : public GDALPamRasterBand

@@ -373,7 +373,7 @@ OGRFieldDefnH OGR_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField)
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                        ReserveSpaceForFields()                       */
+/*                       ReserveSpaceForFields()                        */
 /************************************************************************/
 
 void OGRFeatureDefn::ReserveSpaceForFields(int nFieldCountIn)
@@ -468,7 +468,7 @@ void OGR_FD_AddFieldDefn(OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField)
 }
 
 /************************************************************************/
-/*                           DeleteFieldDefn()                          */
+/*                          DeleteFieldDefn()                           */
 /************************************************************************/
 
 /**
@@ -504,7 +504,7 @@ OGRErr OGRFeatureDefn::DeleteFieldDefn(int iField)
 }
 
 /************************************************************************/
-/*                          StealGeomFieldDefn()                       */
+/*                         StealGeomFieldDefn()                         */
 /************************************************************************/
 
 std::unique_ptr<OGRGeomFieldDefn> OGRFeatureDefn::StealGeomFieldDefn(int iField)
@@ -526,7 +526,7 @@ std::unique_ptr<OGRGeomFieldDefn> OGRFeatureDefn::StealGeomFieldDefn(int iField)
 }
 
 /************************************************************************/
-/*                          StealFieldDefn()                           */
+/*                           StealFieldDefn()                           */
 /************************************************************************/
 
 std::unique_ptr<OGRFieldDefn> OGRFeatureDefn::StealFieldDefn(int iField)
@@ -614,7 +614,7 @@ OGRErr OGRFeatureDefn::ReorderFieldDefns(const int *panMap)
 }
 
 /************************************************************************/
-/*                     OGR_FD_ReorderFieldDefns()                       */
+/*                      OGR_FD_ReorderFieldDefns()                      */
 /************************************************************************/
 
 /**
@@ -687,7 +687,7 @@ int OGR_FD_GetGeomFieldCount(OGRFeatureDefnH hDefn)
 }
 
 /************************************************************************/
-/*                           GetGeomFieldDefn()                         */
+/*                          GetGeomFieldDefn()                          */
 /************************************************************************/
 
 /**
@@ -865,7 +865,7 @@ void OGR_FD_AddGeomFieldDefn(OGRFeatureDefnH hDefn,
 }
 
 /************************************************************************/
-/*                         DeleteGeomFieldDefn()                        */
+/*                        DeleteGeomFieldDefn()                         */
 /************************************************************************/
 
 /**
@@ -1271,7 +1271,7 @@ int OGRFeatureDefn::GetFieldIndex(const char *pszFieldName) const
 }
 
 /************************************************************************/
-/*                      GetFieldIndexCaseSensitive()                    */
+/*                     GetFieldIndexCaseSensitive()                     */
 /************************************************************************/
 
 /**
@@ -1407,7 +1407,7 @@ void OGRFeatureDefn::SetGeometryIgnored(int bIgnore)
 }
 
 /************************************************************************/
-/*                      OGR_FD_SetGeometryIgnored()                     */
+/*                     OGR_FD_SetGeometryIgnored()                      */
 /************************************************************************/
 
 /**
@@ -1524,7 +1524,7 @@ void OGRFeatureDefn::DestroyFeatureDefn(OGRFeatureDefn *poDefn)
 }
 
 /************************************************************************/
-/*                             IsSame()                                 */
+/*                               IsSame()                               */
 /************************************************************************/
 
 /**
@@ -1591,7 +1591,7 @@ int OGR_FD_IsSame(OGRFeatureDefnH hFDefn, OGRFeatureDefnH hOtherFDefn)
 }
 
 /************************************************************************/
-/*                      ComputeMapForSetFrom()                          */
+/*                        ComputeMapForSetFrom()                        */
 /************************************************************************/
 
 /**
@@ -1681,7 +1681,7 @@ OGRFeatureDefn::ComputeMapForSetFrom(const OGRFeatureDefn *poSrcFDefn,
 }
 
 /************************************************************************/
-/*                       OGRFeatureDefn::Seal()                         */
+/*                        OGRFeatureDefn::Seal()                        */
 /************************************************************************/
 
 /** Seal a OGRFeatureDefn.
@@ -1760,7 +1760,7 @@ void OGRFeatureDefn::Unseal(bool bUnsealFields)
 }
 
 /************************************************************************/
-/*                  OGRFeatureDefn::GetTemporaryUnsealer()              */
+/*                OGRFeatureDefn::GetTemporaryUnsealer()                */
 /************************************************************************/
 
 /** Return an object that temporary unseals the OGRFeatureDefn
@@ -1830,7 +1830,7 @@ OGRFeatureDefn::TemporaryUnsealer::TemporaryUnsealer(
 }
 
 /************************************************************************/
-/*                TemporaryUnsealer::~TemporaryUnsealer()               */
+/*               TemporaryUnsealer::~TemporaryUnsealer()                */
 /************************************************************************/
 
 OGRFeatureDefn::TemporaryUnsealer::~TemporaryUnsealer()

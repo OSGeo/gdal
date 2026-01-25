@@ -274,7 +274,7 @@ void MMRBand::UpdateGeoTransform()
 }
 
 /************************************************************************/
-/*                      Other functions                                 */
+/*                           Other functions                            */
 /************************************************************************/
 
 // [ATTRIBUTE_DATA:xxxx] or [OVERVIEW:ASPECTES_TECNICS]
@@ -601,7 +601,7 @@ void MMRBand::UpdateBoundingBoxFromREL(const CPLString &osSection)
 }
 
 /************************************************************************/
-/*          Functions that read bytes from IMG file band                */
+/*             Functions that read bytes from IMG file band             */
 /************************************************************************/
 template <typename TYPE>
 CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
@@ -962,7 +962,7 @@ int MMRBand::PositionAtStartOfRowOffsetsInFile()
 }  // Fi de PositionAtStartOfRowOffsetsInFile()
 
 /************************************************************************/
-/*                              GetFileSize()                           */
+/*                            GetFileSize()                             */
 /************************************************************************/
 
 vsi_l_offset MMRBand::GetFileSize()
@@ -978,7 +978,7 @@ vsi_l_offset MMRBand::GetFileSize()
 }
 
 /************************************************************************/
-/*                              FillRowOffsets()                        */
+/*                           FillRowOffsets()                           */
 /************************************************************************/
 
 bool MMRBand::FillRowOffsets()

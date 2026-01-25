@@ -25,7 +25,7 @@
 #include "ogr_p.h"
 
 /************************************************************************/
-/*                  OGRLinearRing( const OGRLinearRing& )               */
+/*                OGRLinearRing( const OGRLinearRing& )                 */
 /************************************************************************/
 
 /**
@@ -65,7 +65,7 @@ OGRLinearRing::OGRLinearRing(const OGRLinearRing *poSrcRing)
 }
 
 /************************************************************************/
-/*                    operator=( const OGRLinearRing& )                 */
+/*                  operator=( const OGRLinearRing& )                   */
 /************************************************************************/
 
 /**
@@ -406,7 +406,7 @@ OGRLinearRing *OGRLinearRing::clone() const
 }
 
 /************************************************************************/
-/*                             reverseWindingOrder()                    */
+/*                        reverseWindingOrder()                         */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -440,7 +440,7 @@ void OGRLinearRing::closeRings()
 }
 
 /************************************************************************/
-/*                              isPointInRing()                         */
+/*                           isPointInRing()                            */
 /************************************************************************/
 
 /** Returns whether the point is inside the ring.
@@ -652,7 +652,7 @@ OGRLineString *OGRLinearRing::CastToLineString(OGRLinearRing *poLR)
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                     GetCasterToLineString()                          */
+/*                       GetCasterToLineString()                        */
 /************************************************************************/
 
 OGRLineString *OGRLinearRing::CasterToLineString(OGRCurve *poCurve)
@@ -666,7 +666,7 @@ OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const
 }
 
 /************************************************************************/
-/*                        GetCasterToLinearRing()                       */
+/*                       GetCasterToLinearRing()                        */
 /************************************************************************/
 
 static OGRLinearRing *CasterToLinearRing(OGRCurve *poCurve)

@@ -32,7 +32,7 @@ static CPLMutex *hMutex = nullptr;
 static std::map<CPLString, GDALDataset *> *poMap = nullptr;
 
 /************************************************************************/
-/*                         OGRCSVDriverIdentify()                       */
+/*                        OGRCSVDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRCSVDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -111,7 +111,7 @@ static int OGRCSVDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        OGRCSVDriverRemoveFromMap()                   */
+/*                     OGRCSVDriverRemoveFromMap()                      */
 /************************************************************************/
 
 void OGRCSVDriverRemoveFromMap(const char *pszName, GDALDataset *poDS)
@@ -252,7 +252,7 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 }
 
 /************************************************************************/
-/*                              Delete()                                */
+/*                               Delete()                               */
 /************************************************************************/
 
 static CPLErr OGRCSVDriverDelete(const char *pszFilename)
@@ -262,7 +262,7 @@ static CPLErr OGRCSVDriverDelete(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           OGRCSVDriverUnload()                       */
+/*                         OGRCSVDriverUnload()                         */
 /************************************************************************/
 
 static void OGRCSVDriverUnload(GDALDriver *)

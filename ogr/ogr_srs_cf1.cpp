@@ -16,7 +16,7 @@
 #include "ogr_srs_cf1.h"
 
 /************************************************************************/
-/*                         OSRImportFromCF1()                           */
+/*                          OSRImportFromCF1()                          */
 /************************************************************************/
 
 /**
@@ -54,7 +54,7 @@ static double FetchDoubleParam(CSLConstList papszKeyValues,
 }
 
 /************************************************************************/
-/*                           NCDFTokenizeArray()                        */
+/*                         NCDFTokenizeArray()                          */
 /************************************************************************/
 
 // Parse a string, and return as a string list.
@@ -87,7 +87,7 @@ static char **NCDFTokenizeArray(const char *pszValue)
 }
 
 /************************************************************************/
-/*                           FetchStandardParallels()                   */
+/*                       FetchStandardParallels()                       */
 /************************************************************************/
 
 static std::vector<std::string>
@@ -138,7 +138,7 @@ FetchStandardParallels(CSLConstList papszKeyValues)
 }
 
 /************************************************************************/
-/*                          importFromCF1()                             */
+/*                           importFromCF1()                            */
 /************************************************************************/
 
 /**
@@ -1374,7 +1374,7 @@ NCDFGetProjAttribs(const OGR_SRSNode *poPROJCS, const char *pszProjection)
 }
 
 /************************************************************************/
-/*                           exportToCF1()                              */
+/*                            exportToCF1()                             */
 /************************************************************************/
 
 /**
@@ -1719,7 +1719,7 @@ OGRSpatialReference::exportToCF1(char **ppszGridMappingName,
 }
 
 /************************************************************************/
-/*                          OSRExportToCF1()                            */
+/*                           OSRExportToCF1()                           */
 /************************************************************************/
 /**
  * \brief Export a CRS to netCDF CF-1 definitions.

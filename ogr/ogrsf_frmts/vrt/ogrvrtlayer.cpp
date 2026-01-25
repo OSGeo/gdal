@@ -44,7 +44,7 @@
     "%s : unsupported operation on a read-only datasource."
 
 /************************************************************************/
-/*                   GetFieldIndexCaseSensitiveFirst()                  */
+/*                  GetFieldIndexCaseSensitiveFirst()                   */
 /************************************************************************/
 
 static int GetFieldIndexCaseSensitiveFirst(const OGRFeatureDefn *poFDefn,
@@ -57,13 +57,13 @@ static int GetFieldIndexCaseSensitiveFirst(const OGRFeatureDefn *poFDefn,
 }
 
 /************************************************************************/
-/*                       OGRVRTGeomFieldProps()                         */
+/*                        OGRVRTGeomFieldProps()                        */
 /************************************************************************/
 
 OGRVRTGeomFieldProps::OGRVRTGeomFieldProps() = default;
 
 /************************************************************************/
-/*                      ~OGRVRTGeomFieldProps()                         */
+/*                       ~OGRVRTGeomFieldProps()                        */
 /************************************************************************/
 
 OGRVRTGeomFieldProps::~OGRVRTGeomFieldProps()
@@ -113,7 +113,7 @@ OGRVRTLayer::~OGRVRTLayer()
 }
 
 /************************************************************************/
-/*                         GetSrcLayerDefn()                            */
+/*                          GetSrcLayerDefn()                           */
 /************************************************************************/
 
 OGRFeatureDefn *OGRVRTLayer::GetSrcLayerDefn()
@@ -128,7 +128,7 @@ OGRFeatureDefn *OGRVRTLayer::GetSrcLayerDefn()
 }
 
 /************************************************************************/
-/*                         FastInitialize()                             */
+/*                           FastInitialize()                           */
 /************************************************************************/
 
 bool OGRVRTLayer::FastInitialize(CPLXMLNode *psLTreeIn,
@@ -251,7 +251,7 @@ bool OGRVRTLayer::FastInitialize(CPLXMLNode *psLTreeIn,
 }
 
 /************************************************************************/
-/*                       ParseGeometryField()                           */
+/*                         ParseGeometryField()                         */
 /************************************************************************/
 
 bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
@@ -513,7 +513,7 @@ bool OGRVRTLayer::ParseGeometryField(CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                         FullInitialize()                             */
+/*                           FullInitialize()                           */
 /************************************************************************/
 
 // TODO(schwehr): Remove gotos.
@@ -1712,7 +1712,7 @@ OGRFeature *OGRVRTLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                          SetNextByIndex()                            */
+/*                           SetNextByIndex()                           */
 /************************************************************************/
 
 OGRErr OGRVRTLayer::SetNextByIndex(GIntBig nIndex)
@@ -1915,7 +1915,7 @@ OGRVRTLayer::TranslateVRTFeatureToSrcFeature(OGRFeature *poVRTFeature)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRVRTLayer::ICreateFeature(OGRFeature *poVRTFeature)
@@ -1955,7 +1955,7 @@ OGRErr OGRVRTLayer::ICreateFeature(OGRFeature *poVRTFeature)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRVRTLayer::ISetFeature(OGRFeature *poVRTFeature)
@@ -2206,7 +2206,7 @@ GIntBig OGRVRTLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRVRTLayer::ISetSpatialFilter(int iGeomField,
@@ -2254,7 +2254,7 @@ const OGRFeatureDefn *OGRVRTLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                             GetGeomType()                            */
+/*                            GetGeomType()                             */
 /************************************************************************/
 
 OGRwkbGeometryType OGRVRTLayer::GetGeomType() const
@@ -2272,7 +2272,7 @@ OGRwkbGeometryType OGRVRTLayer::GetGeomType() const
 }
 
 /************************************************************************/
-/*                             GetFIDColumn()                           */
+/*                            GetFIDColumn()                            */
 /************************************************************************/
 
 const char *OGRVRTLayer::GetFIDColumn() const
@@ -2287,7 +2287,7 @@ const char *OGRVRTLayer::GetFIDColumn() const
 }
 
 /************************************************************************/
-/*                           StartTransaction()                         */
+/*                          StartTransaction()                          */
 /************************************************************************/
 
 OGRErr OGRVRTLayer::StartTransaction()
@@ -2301,7 +2301,7 @@ OGRErr OGRVRTLayer::StartTransaction()
 }
 
 /************************************************************************/
-/*                           CommitTransaction()                        */
+/*                         CommitTransaction()                          */
 /************************************************************************/
 
 OGRErr OGRVRTLayer::CommitTransaction()
@@ -2315,7 +2315,7 @@ OGRErr OGRVRTLayer::CommitTransaction()
 }
 
 /************************************************************************/
-/*                          RollbackTransaction()                       */
+/*                        RollbackTransaction()                         */
 /************************************************************************/
 
 OGRErr OGRVRTLayer::RollbackTransaction()
@@ -2496,7 +2496,7 @@ OGRErr OGRVRTLayer::SetIgnoredFields(CSLConstList papszFields)
 }
 
 /************************************************************************/
-/*                          GetSrcDataset()                             */
+/*                           GetSrcDataset()                            */
 /************************************************************************/
 
 GDALDataset *OGRVRTLayer::GetSrcDataset()

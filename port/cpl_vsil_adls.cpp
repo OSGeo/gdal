@@ -47,7 +47,7 @@ namespace cpl
 {
 
 /************************************************************************/
-/*                         GetContinuationToken()                       */
+/*                        GetContinuationToken()                        */
 /************************************************************************/
 
 static std::string GetContinuationToken(const char *pszHeaders)
@@ -71,7 +71,7 @@ static std::string GetContinuationToken(const char *pszHeaders)
 }
 
 /************************************************************************/
-/*                        RemoveTrailingSlash()                        */
+/*                        RemoveTrailingSlash()                         */
 /************************************************************************/
 
 static std::string RemoveTrailingSlash(const std::string &osFilename)
@@ -83,7 +83,7 @@ static std::string RemoveTrailingSlash(const std::string &osFilename)
 }
 
 /************************************************************************/
-/*                             VSIDIRADLS                               */
+/*                              VSIDIRADLS                              */
 /************************************************************************/
 
 class VSIADLSFSHandler;
@@ -140,7 +140,7 @@ struct VSIDIRADLS final : public VSIDIR
 };
 
 /************************************************************************/
-/*                       VSIADLSFSHandler                              */
+/*                           VSIADLSFSHandler                           */
 /************************************************************************/
 
 class VSIADLSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
@@ -322,7 +322,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 };
 
 /************************************************************************/
-/*                          VSIADLSWriteHandle                         */
+/*                          VSIADLSWriteHandle                          */
 /************************************************************************/
 
 class VSIADLSWriteHandle final : public VSIAppendWriteHandle
@@ -347,7 +347,7 @@ class VSIADLSWriteHandle final : public VSIAppendWriteHandle
 };
 
 /************************************************************************/
-/*                                clear()                               */
+/*                               clear()                                */
 /************************************************************************/
 
 void VSIDIRADLS::clear()
@@ -359,7 +359,7 @@ void VSIDIRADLS::clear()
 }
 
 /************************************************************************/
-/*                        GetUnixTimeFromRFC822()                       */
+/*                       GetUnixTimeFromRFC822()                        */
 /************************************************************************/
 
 static GIntBig GetUnixTimeFromRFC822(const char *pszRFC822DateTime)
@@ -381,7 +381,7 @@ static GIntBig GetUnixTimeFromRFC822(const char *pszRFC822DateTime)
 }
 
 /************************************************************************/
-/*                           AnalysePathList()                          */
+/*                          AnalysePathList()                           */
 /************************************************************************/
 
 bool VSIDIRADLS::AnalysePathList(const std::string &osBaseURL,
@@ -474,7 +474,7 @@ bool VSIDIRADLS::AnalysePathList(const std::string &osBaseURL,
 }
 
 /************************************************************************/
-/*                         AnalysePathList()                            */
+/*                          AnalysePathList()                           */
 /************************************************************************/
 
 bool VSIDIRADLS::AnalyseFilesystemList(const std::string &osBaseURL,
@@ -553,7 +553,7 @@ bool VSIDIRADLS::AnalyseFilesystemList(const std::string &osBaseURL,
 }
 
 /************************************************************************/
-/*                          IssueListDir()                              */
+/*                            IssueListDir()                            */
 /************************************************************************/
 
 bool VSIDIRADLS::IssueListDir()
@@ -658,7 +658,7 @@ bool VSIDIRADLS::IssueListDir()
 }
 
 /************************************************************************/
-/*                           NextDirEntry()                             */
+/*                            NextDirEntry()                            */
 /************************************************************************/
 
 const VSIDIREntry *VSIDIRADLS::NextDirEntry()
@@ -714,7 +714,7 @@ const VSIDIREntry *VSIDIRADLS::NextDirEntry()
 }
 
 /************************************************************************/
-/*                          VSIADLSHandle                              */
+/*                            VSIADLSHandle                             */
 /************************************************************************/
 
 class VSIADLSHandle final : public VSICurlHandle
@@ -749,7 +749,7 @@ VSICurlHandle *VSIADLSFSHandler::CreateFileHandle(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                          CreateWriteHandle()                         */
+/*                         CreateWriteHandle()                          */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -1154,7 +1154,7 @@ bool VSIADLSFSHandler::SetFileMetadata(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                       VSIADLSWriteHandle()                          */
+/*                         VSIADLSWriteHandle()                         */
 /************************************************************************/
 
 VSIADLSWriteHandle::VSIADLSWriteHandle(VSIADLSFSHandler *poFS,
@@ -1167,7 +1167,7 @@ VSIADLSWriteHandle::VSIADLSWriteHandle(VSIADLSFSHandler *poFS,
 }
 
 /************************************************************************/
-/*                      ~VSIADLSWriteHandle()                          */
+/*                        ~VSIADLSWriteHandle()                         */
 /************************************************************************/
 
 VSIADLSWriteHandle::~VSIADLSWriteHandle()
@@ -1176,7 +1176,7 @@ VSIADLSWriteHandle::~VSIADLSWriteHandle()
 }
 
 /************************************************************************/
-/*                    InvalidateParentDirectory()                       */
+/*                     InvalidateParentDirectory()                      */
 /************************************************************************/
 
 void VSIADLSWriteHandle::InvalidateParentDirectory()
@@ -1189,7 +1189,7 @@ void VSIADLSWriteHandle::InvalidateParentDirectory()
 }
 
 /************************************************************************/
-/*                          CreateFile()                                */
+/*                             CreateFile()                             */
 /************************************************************************/
 
 bool VSIADLSWriteHandle::CreateFile(CSLConstList papszOptions)
@@ -1200,7 +1200,7 @@ bool VSIADLSWriteHandle::CreateFile(CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                             Send()                                   */
+/*                                Send()                                */
 /************************************************************************/
 
 bool VSIADLSWriteHandle::Send(bool bIsLastBlock)
@@ -1221,7 +1221,7 @@ bool VSIADLSWriteHandle::Send(bool bIsLastBlock)
 }
 
 /************************************************************************/
-/*                          SendInternal()                              */
+/*                            SendInternal()                            */
 /************************************************************************/
 
 bool VSIADLSWriteHandle::SendInternal(VSIADLSFSHandler::Event event,
@@ -1238,7 +1238,7 @@ bool VSIADLSWriteHandle::SendInternal(VSIADLSFSHandler::Event event,
 }
 
 /************************************************************************/
-/*                            ClearCache()                              */
+/*                             ClearCache()                             */
 /************************************************************************/
 
 void VSIADLSFSHandler::ClearCache()
@@ -1249,7 +1249,7 @@ void VSIADLSFSHandler::ClearCache()
 }
 
 /************************************************************************/
-/*                          GetURLFromFilename()                        */
+/*                         GetURLFromFilename()                         */
 /************************************************************************/
 
 std::string
@@ -1266,7 +1266,7 @@ VSIADLSFSHandler::GetURLFromFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                          CreateHandleHelper()                        */
+/*                         CreateHandleHelper()                         */
 /************************************************************************/
 
 IVSIS3LikeHandleHelper *VSIADLSFSHandler::CreateHandleHelper(const char *pszURI,
@@ -1530,7 +1530,7 @@ int VSIADLSFSHandler::Mkdir(const char *pszDirname, long nMode)
 }
 
 /************************************************************************/
-/*                          RmdirInternal()                             */
+/*                           RmdirInternal()                            */
 /************************************************************************/
 
 int VSIADLSFSHandler::RmdirInternal(const char *pszDirname, bool bRecursive)
@@ -1713,7 +1713,7 @@ int VSIADLSFSHandler::Rmdir(const char *pszDirname)
 }
 
 /************************************************************************/
-/*                          RmdirRecursive()                            */
+/*                           RmdirRecursive()                           */
 /************************************************************************/
 
 int VSIADLSFSHandler::RmdirRecursive(const char *pszDirname)
@@ -1728,7 +1728,7 @@ int VSIADLSFSHandler::RmdirRecursive(const char *pszDirname)
 }
 
 /************************************************************************/
-/*                            CopyObject()                              */
+/*                             CopyObject()                             */
 /************************************************************************/
 
 int VSIADLSFSHandler::CopyObject(const char *oldpath, const char *newpath,
@@ -1838,7 +1838,7 @@ int VSIADLSFSHandler::CopyObject(const char *oldpath, const char *newpath,
 }
 
 /************************************************************************/
-/*                          UploadFile()                                */
+/*                             UploadFile()                             */
 /************************************************************************/
 
 bool VSIADLSFSHandler::UploadFile(
@@ -1978,7 +1978,7 @@ bool VSIADLSFSHandler::UploadFile(
 }
 
 /************************************************************************/
-/*                           GetFileList()                              */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 char **VSIADLSFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
@@ -2024,7 +2024,7 @@ char **VSIADLSFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
 }
 
 /************************************************************************/
-/*                           GetOptions()                               */
+/*                             GetOptions()                             */
 /************************************************************************/
 
 const char *VSIADLSFSHandler::GetOptions()
@@ -2046,7 +2046,7 @@ const char *VSIADLSFSHandler::GetOptions()
 }
 
 /************************************************************************/
-/*                           GetSignedURL()                             */
+/*                            GetSignedURL()                            */
 /************************************************************************/
 
 char *VSIADLSFSHandler::GetSignedURL(const char *pszFilename,
@@ -2071,7 +2071,7 @@ char *VSIADLSFSHandler::GetSignedURL(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            OpenDir()                                 */
+/*                              OpenDir()                               */
 /************************************************************************/
 
 VSIDIR *VSIADLSFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
@@ -2122,7 +2122,7 @@ VSIDIR *VSIADLSFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
 }
 
 /************************************************************************/
-/*                      GetStreamingFilename()                          */
+/*                        GetStreamingFilename()                        */
 /************************************************************************/
 
 std::string
@@ -2134,7 +2134,7 @@ VSIADLSFSHandler::GetStreamingFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                           VSIADLSHandle()                           */
+/*                           VSIADLSHandle()                            */
 /************************************************************************/
 
 VSIADLSHandle::VSIADLSHandle(VSIADLSFSHandler *poFSIn, const char *pszFilename,
@@ -2146,7 +2146,7 @@ VSIADLSHandle::VSIADLSHandle(VSIADLSFSHandler *poFSIn, const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GetCurlHeaders()                            */
+/*                           GetCurlHeaders()                           */
 /************************************************************************/
 
 struct curl_slist *VSIADLSHandle::GetCurlHeaders(const std::string &osVerb,
@@ -2156,7 +2156,7 @@ struct curl_slist *VSIADLSHandle::GetCurlHeaders(const std::string &osVerb,
 }
 
 /************************************************************************/
-/*                          CanRestartOnError()                         */
+/*                         CanRestartOnError()                          */
 /************************************************************************/
 
 bool VSIADLSHandle::CanRestartOnError(const char *pszErrorMsg,
@@ -2172,7 +2172,7 @@ bool VSIADLSHandle::CanRestartOnError(const char *pszErrorMsg,
 //! @endcond
 
 /************************************************************************/
-/*                      VSIInstallADLSFileHandler()                    */
+/*                     VSIInstallADLSFileHandler()                      */
 /************************************************************************/
 
 /*!

@@ -45,7 +45,7 @@ typedef std::vector<BlockLayer *> BlockLayerList;
 typedef std::vector<BlockInfo> BlockInfoList;
 
 /************************************************************************/
-/*                              class BlockDir                          */
+/*                            class BlockDir                            */
 /************************************************************************/
 
 /**

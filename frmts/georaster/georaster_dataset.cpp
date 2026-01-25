@@ -2546,7 +2546,7 @@ CPLErr GeoRasterDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **GeoRasterDataset::GetMetadataDomainList()
@@ -3046,9 +3046,9 @@ CPLErr GeoRasterDataset::CreateMaskBand(int /*nFlags*/)
     return CE_None;
 }
 
-/*****************************************************************************/
-/*                          GDALRegister_GEOR                                */
-/*****************************************************************************/
+/************************************************************************/
+/*                          GDALRegister_GEOR                           */
+/************************************************************************/
 
 void CPL_DLL GDALRegister_GEOR()
 

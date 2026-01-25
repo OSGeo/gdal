@@ -167,7 +167,7 @@ static GDALDataset *OGRXLSXDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       OGRXLSXDriverCreate()                          */
+/*                        OGRXLSXDriverCreate()                         */
 /************************************************************************/
 
 static GDALDataset *OGRXLSXDriverCreate(const char *pszName, int /* nXSize */,
@@ -211,7 +211,7 @@ static GDALDataset *OGRXLSXDriverCreate(const char *pszName, int /* nXSize */,
 }
 
 /************************************************************************/
-/*                           RegisterOGRXLSX()                           */
+/*                          RegisterOGRXLSX()                           */
 /************************************************************************/
 
 void RegisterOGRXLSX()

@@ -14,7 +14,7 @@
 #include "ogrplscenesdrivercore.h"
 
 /************************************************************************/
-/*                            OGRPLScenesOpen()                         */
+/*                          OGRPLScenesOpen()                           */
 /************************************************************************/
 
 static GDALDataset *OGRPLScenesOpen(GDALOpenInfo *poOpenInfo)

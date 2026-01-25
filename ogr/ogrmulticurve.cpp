@@ -31,7 +31,7 @@
 OGRMultiCurve::OGRMultiCurve(const OGRMultiCurve &) = default;
 
 /************************************************************************/
-/*                  operator=( const OGRMultiCurve&)                    */
+/*                   operator=( const OGRMultiCurve&)                   */
 /************************************************************************/
 
 /**
@@ -104,7 +104,7 @@ const char *OGRMultiCurve::getGeometryName() const
 }
 
 /************************************************************************/
-/*                          isCompatibleSubType()                       */
+/*                        isCompatibleSubType()                         */
 /************************************************************************/
 
 OGRBoolean
@@ -115,7 +115,7 @@ OGRMultiCurve::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
 
 /*! @cond Doxygen_Suppress */
 /************************************************************************/
-/*                       addCurveDirectlyFromWkt()                      */
+/*                      addCurveDirectlyFromWkt()                       */
 /************************************************************************/
 
 OGRErr OGRMultiCurve::addCurveDirectlyFromWkt(OGRGeometry *poSelf,
@@ -157,7 +157,7 @@ std::string OGRMultiCurve::exportToWkt(const OGRWktOptions &opts,
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
 OGRBoolean OGRMultiCurve::hasCurveGeometry(int bLookForNonLinear) const
@@ -168,7 +168,7 @@ OGRBoolean OGRMultiCurve::hasCurveGeometry(int bLookForNonLinear) const
 }
 
 /************************************************************************/
-/*                          CastToMultiLineString()                     */
+/*                       CastToMultiLineString()                        */
 /************************************************************************/
 
 /**

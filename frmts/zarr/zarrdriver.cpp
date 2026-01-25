@@ -38,7 +38,7 @@ ZarrDataset::ZarrDataset(const std::shared_ptr<ZarrGroupBase> &poRootGroup)
 }
 
 /************************************************************************/
-/*                           OpenMultidim()                             */
+/*                            OpenMultidim()                            */
 /************************************************************************/
 
 GDALDataset *ZarrDataset::OpenMultidim(const char *pszFilename,
@@ -126,7 +126,7 @@ static bool ExploreGroup(const std::shared_ptr<GDALGroup> &poGroup,
 }
 
 /************************************************************************/
-/*                           GetMetadataItem()                          */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *ZarrDataset::GetMetadataItem(const char *pszName,
@@ -138,7 +138,7 @@ const char *ZarrDataset::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                             GetMetadata()                            */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList ZarrDataset::GetMetadata(const char *pszDomain)
@@ -149,7 +149,7 @@ CSLConstList ZarrDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                      GetXYDimensionIndices()                         */
+/*                       GetXYDimensionIndices()                        */
 /************************************************************************/
 
 static void GetXYDimensionIndices(const std::shared_ptr<GDALMDArray> &poArray,
@@ -698,7 +698,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       ZarrDatasetDelete()                            */
+/*                         ZarrDatasetDelete()                          */
 /************************************************************************/
 
 static CPLErr ZarrDatasetDelete(const char *pszFilename)
@@ -714,7 +714,7 @@ static CPLErr ZarrDatasetDelete(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                       ZarrDatasetRename()                            */
+/*                         ZarrDatasetRename()                          */
 /************************************************************************/
 
 static CPLErr ZarrDatasetRename(const char *pszNewName, const char *pszOldName)
@@ -730,7 +730,7 @@ static CPLErr ZarrDatasetRename(const char *pszNewName, const char *pszOldName)
 }
 
 /************************************************************************/
-/*                       ZarrDatasetCopyFiles()                         */
+/*                        ZarrDatasetCopyFiles()                        */
 /************************************************************************/
 
 static CPLErr ZarrDatasetCopyFiles(const char *pszNewName,
@@ -751,7 +751,7 @@ static CPLErr ZarrDatasetCopyFiles(const char *pszNewName,
 }
 
 /************************************************************************/
-/*                           ZarrDriver()                               */
+/*                             ZarrDriver()                             */
 /************************************************************************/
 
 class ZarrDriver final : public GDALDriver
@@ -1135,7 +1135,7 @@ void ZarrDriver::InitMetadata()
 }
 
 /************************************************************************/
-/*                     CreateMultiDimensional()                         */
+/*                       CreateMultiDimensional()                       */
 /************************************************************************/
 
 GDALDataset *
@@ -1177,7 +1177,7 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            Create()                                  */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
@@ -1441,7 +1441,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                           ~ZarrDataset()                             */
+/*                            ~ZarrDataset()                            */
 /************************************************************************/
 
 ZarrDataset::~ZarrDataset()
@@ -1450,7 +1450,7 @@ ZarrDataset::~ZarrDataset()
 }
 
 /************************************************************************/
-/*                            FlushCache()                              */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr ZarrDataset::FlushCache(bool bAtClosing)
@@ -1500,7 +1500,7 @@ CPLErr ZarrDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                          GetRootGroup()                              */
+/*                            GetRootGroup()                            */
 /************************************************************************/
 
 std::shared_ptr<GDALGroup> ZarrDataset::GetRootGroup() const
@@ -1509,7 +1509,7 @@ std::shared_ptr<GDALGroup> ZarrDataset::GetRootGroup() const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *ZarrDataset::GetSpatialRef() const
@@ -1522,7 +1522,7 @@ const OGRSpatialReference *ZarrDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                          SetSpatialRef()                             */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 CPLErr ZarrDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -1536,7 +1536,7 @@ CPLErr ZarrDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                         GetGeoTransform()                            */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr ZarrDataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -1546,7 +1546,7 @@ CPLErr ZarrDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         SetGeoTransform()                            */
+/*                          SetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr ZarrDataset::SetGeoTransform(const GDALGeoTransform &gt)
@@ -1672,7 +1672,7 @@ CPLErr ZarrDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                          SetMetadata()                               */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
 CPLErr ZarrDataset::SetMetadata(CSLConstList papszMetadata,
@@ -1715,7 +1715,7 @@ CPLErr ZarrDataset::SetMetadata(CSLConstList papszMetadata,
 }
 
 /************************************************************************/
-/*                    ZarrRasterBand::ZarrRasterBand()                  */
+/*                   ZarrRasterBand::ZarrRasterBand()                   */
 /************************************************************************/
 
 ZarrRasterBand::ZarrRasterBand(const std::shared_ptr<GDALMDArray> &poArray)
@@ -1741,7 +1741,7 @@ double ZarrRasterBand::GetNoDataValue(int *pbHasNoData)
 }
 
 /************************************************************************/
-/*                        GetNoDataValueAsInt64()                       */
+/*                       GetNoDataValueAsInt64()                        */
 /************************************************************************/
 
 int64_t ZarrRasterBand::GetNoDataValueAsInt64(int *pbHasNoData)
@@ -1794,7 +1794,7 @@ CPLErr ZarrRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 double ZarrRasterBand::GetOffset(int *pbSuccess)
@@ -1807,7 +1807,7 @@ double ZarrRasterBand::GetOffset(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                              SetOffset()                             */
+/*                             SetOffset()                              */
 /************************************************************************/
 
 CPLErr ZarrRasterBand::SetOffset(double dfNewOffset)
@@ -1838,7 +1838,7 @@ CPLErr ZarrRasterBand::SetScale(double dfNewScale)
 }
 
 /************************************************************************/
-/*                             GetUnitType()                            */
+/*                            GetUnitType()                             */
 /************************************************************************/
 
 const char *ZarrRasterBand::GetUnitType()
@@ -1847,7 +1847,7 @@ const char *ZarrRasterBand::GetUnitType()
 }
 
 /************************************************************************/
-/*                             SetUnitType()                            */
+/*                            SetUnitType()                             */
 /************************************************************************/
 
 CPLErr ZarrRasterBand::SetUnitType(const char *pszNewValue)
@@ -1857,7 +1857,7 @@ CPLErr ZarrRasterBand::SetUnitType(const char *pszNewValue)
 }
 
 /************************************************************************/
-/*                      GetColorInterpretation()                        */
+/*                       GetColorInterpretation()                       */
 /************************************************************************/
 
 GDALColorInterp ZarrRasterBand::GetColorInterpretation()
@@ -1866,7 +1866,7 @@ GDALColorInterp ZarrRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
-/*                      SetColorInterpretation()                        */
+/*                       SetColorInterpretation()                       */
 /************************************************************************/
 
 CPLErr ZarrRasterBand::SetColorInterpretation(GDALColorInterp eColorInterp)
@@ -1898,7 +1898,7 @@ CPLErr ZarrRasterBand::SetColorInterpretation(GDALColorInterp eColorInterp)
 }
 
 /************************************************************************/
-/*                    ZarrRasterBand::IReadBlock()                      */
+/*                     ZarrRasterBand::IReadBlock()                     */
 /************************************************************************/
 
 CPLErr ZarrRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
@@ -1921,7 +1921,7 @@ CPLErr ZarrRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 }
 
 /************************************************************************/
-/*                    ZarrRasterBand::IWriteBlock()                      */
+/*                    ZarrRasterBand::IWriteBlock()                     */
 /************************************************************************/
 
 CPLErr ZarrRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pData)
@@ -1943,7 +1943,7 @@ CPLErr ZarrRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pData)
 }
 
 /************************************************************************/
-/*                            IRasterIO()                               */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr ZarrRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -1990,7 +1990,7 @@ CPLErr ZarrRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                     ZarrDataset::CreateCopy()                        */
+/*                      ZarrDataset::CreateCopy()                       */
 /************************************************************************/
 
 /* static */
@@ -2031,7 +2031,7 @@ GDALDataset *ZarrDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GDALRegister_Zarr()                         */
+/*                         GDALRegister_Zarr()                          */
 /************************************************************************/
 
 void GDALRegister_Zarr()

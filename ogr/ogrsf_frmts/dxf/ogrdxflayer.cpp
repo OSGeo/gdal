@@ -24,7 +24,7 @@
 #include <memory>
 
 /************************************************************************/
-/*                                push()                               */
+/*                                push()                                */
 /************************************************************************/
 
 void OGRDXFFeatureQueue::push(OGRDXFFeature *poFeature)
@@ -33,7 +33,7 @@ void OGRDXFFeatureQueue::push(OGRDXFFeature *poFeature)
 }
 
 /************************************************************************/
-/*                                 pop()                                */
+/*                                pop()                                 */
 /************************************************************************/
 
 void OGRDXFFeatureQueue::pop()
@@ -64,7 +64,7 @@ OGRDXFLayer::OGRDXFLayer(OGRDXFDataSource *poDSIn)
 }
 
 /************************************************************************/
-/*                           ~OGRDXFLayer()                           */
+/*                            ~OGRDXFLayer()                            */
 /************************************************************************/
 
 OGRDXFLayer::~OGRDXFLayer()
@@ -1161,7 +1161,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLINE()
 }
 
 /************************************************************************/
-/*                         TranslateLWPOLYLINE()                        */
+/*                        TranslateLWPOLYLINE()                         */
 /************************************************************************/
 OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 
@@ -1287,7 +1287,7 @@ OGRDXFFeature *OGRDXFLayer::TranslateLWPOLYLINE()
 }
 
 /************************************************************************/
-/*                             SafeAbs()                                */
+/*                              SafeAbs()                               */
 /************************************************************************/
 
 static inline int SafeAbs(int x)

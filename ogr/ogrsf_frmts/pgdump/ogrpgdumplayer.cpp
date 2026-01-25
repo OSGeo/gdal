@@ -35,7 +35,7 @@ static CPLString OGRPGDumpEscapeStringWithUserData(
 OGRPGDumpGeomFieldDefn::~OGRPGDumpGeomFieldDefn() = default;
 
 /************************************************************************/
-/*                        OGRPGDumpLayer()                              */
+/*                           OGRPGDumpLayer()                           */
 /************************************************************************/
 
 OGRPGDumpLayer::OGRPGDumpLayer(OGRPGDumpDataSource *poDSIn,
@@ -103,7 +103,7 @@ int OGRPGDumpLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                   LogDeferredFieldCreationIfNeeded()                 */
+/*                  LogDeferredFieldCreationIfNeeded()                  */
 /************************************************************************/
 
 void OGRPGDumpLayer::LogDeferredFieldCreationIfNeeded()
@@ -564,7 +564,7 @@ void OGRPGCommonAppendCopyFID(CPLString &osCommand, OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                OGRPGCommonAppendCopyRegularFields()                  */
+/*                 OGRPGCommonAppendCopyRegularFields()                 */
 /************************************************************************/
 
 void OGRPGCommonAppendCopyRegularFields(
@@ -873,7 +873,7 @@ CPLString OGRPGDumpLayer::BuildCopyFields(int bSetFID)
 }
 
 /************************************************************************/
-/*                       OGRPGDumpEscapeColumnName( )                   */
+/*                     OGRPGDumpEscapeColumnName( )                     */
 /************************************************************************/
 
 CPLString OGRPGDumpEscapeColumnName(const char *pszColumnName)
@@ -894,7 +894,7 @@ CPLString OGRPGDumpEscapeColumnName(const char *pszColumnName)
 }
 
 /************************************************************************/
-/*                             EscapeString( )                          */
+/*                           EscapeString( )                            */
 /************************************************************************/
 
 CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength,
@@ -947,7 +947,7 @@ CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength,
 }
 
 /************************************************************************/
-/*                    OGRPGDumpEscapeStringList( )                      */
+/*                     OGRPGDumpEscapeStringList( )                     */
 /************************************************************************/
 
 static CPLString
@@ -1185,7 +1185,7 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                      OGRPGCommonGByteArrayToBYTEA()                  */
+/*                    OGRPGCommonGByteArrayToBYTEA()                    */
 /************************************************************************/
 
 char *OGRPGCommonGByteArrayToBYTEA(const GByte *pabyData, size_t nLen)
@@ -1220,7 +1220,7 @@ char *OGRPGCommonGByteArrayToBYTEA(const GByte *pabyData, size_t nLen)
 }
 
 /************************************************************************/
-/*                       OGRPGCommonLayerGetType()                      */
+/*                      OGRPGCommonLayerGetType()                       */
 /************************************************************************/
 
 CPLString OGRPGCommonLayerGetType(const OGRFieldDefn &oField,
@@ -1333,7 +1333,7 @@ CPLString OGRPGCommonLayerGetType(const OGRFieldDefn &oField,
 }
 
 /************************************************************************/
-/*                         OGRPGCommonLayerSetType()                    */
+/*                      OGRPGCommonLayerSetType()                       */
 /************************************************************************/
 
 bool OGRPGCommonLayerSetType(OGRFieldDefn &oField, const char *pszType,
@@ -1573,7 +1573,7 @@ void OGRPGCommonLayerNormalizeDefault(OGRFieldDefn *poFieldDefn,
 }
 
 /************************************************************************/
-/*                     OGRPGCommonLayerGetPGDefault()                   */
+/*                    OGRPGCommonLayerGetPGDefault()                    */
 /************************************************************************/
 
 CPLString OGRPGCommonLayerGetPGDefault(OGRFieldDefn *poFieldDefn)
@@ -1595,7 +1595,7 @@ CPLString OGRPGCommonLayerGetPGDefault(OGRFieldDefn *poFieldDefn)
 }
 
 /************************************************************************/
-/*                OGRPGCommonGenerateShortEnoughIdentifier()            */
+/*              OGRPGCommonGenerateShortEnoughIdentifier()              */
 /************************************************************************/
 
 std::string OGRPGCommonGenerateShortEnoughIdentifier(const char *pszIdentifier)
@@ -1628,7 +1628,7 @@ std::string OGRPGCommonGenerateShortEnoughIdentifier(const char *pszIdentifier)
 }
 
 /************************************************************************/
-/*                 OGRPGCommonGenerateSpatialIndexName()                 */
+/*                OGRPGCommonGenerateSpatialIndexName()                 */
 /************************************************************************/
 
 /** Generates the name of the spatial index on table pszTableName
@@ -1813,7 +1813,7 @@ OGRErr OGRPGDumpLayer::CreateField(const OGRFieldDefn *poFieldIn, int bApproxOK)
 }
 
 /************************************************************************/
-/*                           CreateGeomField()                          */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
 OGRErr OGRPGDumpLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
@@ -1971,7 +1971,7 @@ OGRErr OGRPGDumpLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
 }
 
 /************************************************************************/
-/*                        SetOverrideColumnTypes()                      */
+/*                       SetOverrideColumnTypes()                       */
 /************************************************************************/
 
 void OGRPGDumpLayer::SetOverrideColumnTypes(const char *pszOverrideColumnTypes)
@@ -2015,7 +2015,7 @@ void OGRPGDumpLayer::SetOverrideColumnTypes(const char *pszOverrideColumnTypes)
 }
 
 /************************************************************************/
-/*                              SetMetadata()                           */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
 CPLErr OGRPGDumpLayer::SetMetadata(CSLConstList papszMD, const char *pszDomain)
@@ -2044,7 +2044,7 @@ CPLErr OGRPGDumpLayer::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 }
 
 /************************************************************************/
-/*                            SetMetadataItem()                         */
+/*                          SetMetadataItem()                           */
 /************************************************************************/
 
 CPLErr OGRPGDumpLayer::SetMetadataItem(const char *pszName,
@@ -2066,7 +2066,7 @@ CPLErr OGRPGDumpLayer::SetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                      SetForcedDescription()                          */
+/*                        SetForcedDescription()                        */
 /************************************************************************/
 
 void OGRPGDumpLayer::SetForcedDescription(const char *pszDescriptionIn)

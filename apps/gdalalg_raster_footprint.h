@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALRasterFootprintAlgorithm                       */
+/*                     GDALRasterFootprintAlgorithm                     */
 /************************************************************************/
 
 class GDALRasterFootprintAlgorithm /* non final */
@@ -70,7 +70,7 @@ class GDALRasterFootprintAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterFootprintAlgorithmStandalone               */
+/*                GDALRasterFootprintAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterFootprintAlgorithmStandalone final

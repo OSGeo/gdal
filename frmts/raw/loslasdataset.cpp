@@ -95,7 +95,7 @@ class LOSLASDataset final : public RawDataset
 /************************************************************************/
 
 /************************************************************************/
-/*                             LOSLASDataset()                          */
+/*                           LOSLASDataset()                            */
 /************************************************************************/
 
 LOSLASDataset::LOSLASDataset() : fpImage(nullptr), nRecordLength(0)
@@ -105,7 +105,7 @@ LOSLASDataset::LOSLASDataset() : fpImage(nullptr), nRecordLength(0)
 }
 
 /************************************************************************/
-/*                            ~LOSLASDataset()                          */
+/*                           ~LOSLASDataset()                           */
 /************************************************************************/
 
 LOSLASDataset::~LOSLASDataset()
@@ -115,7 +115,7 @@ LOSLASDataset::~LOSLASDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr LOSLASDataset::Close(GDALProgressFunc, void *)

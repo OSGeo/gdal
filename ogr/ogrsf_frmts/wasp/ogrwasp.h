@@ -166,7 +166,7 @@ class OGRWAsPLayer final : public OGRLayer,
 };
 
 /************************************************************************/
-/*                           OGRWAsPDataSource                          */
+/*                          OGRWAsPDataSource                           */
 /************************************************************************/
 
 class OGRWAsPDataSource final : public GDALDataset

@@ -44,7 +44,7 @@ class GDALRasterClipAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                   GDALRasterClipAlgorithmStandalone                  */
+/*                  GDALRasterClipAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALRasterClipAlgorithmStandalone final : public GDALRasterClipAlgorithm

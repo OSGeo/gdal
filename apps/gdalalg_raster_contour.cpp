@@ -27,7 +27,7 @@
 #endif
 
 /************************************************************************/
-/*          GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()    */
+/*       GDALRasterContourAlgorithm::GDALRasterContourAlgorithm()       */
 /************************************************************************/
 
 GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
@@ -81,7 +81,7 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                  GDALRasterContourAlgorithm::RunImpl()               */
+/*                GDALRasterContourAlgorithm::RunImpl()                 */
 /************************************************************************/
 
 bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
@@ -94,7 +94,7 @@ bool GDALRasterContourAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                  GDALRasterContourAlgorithm::RunStep()               */
+/*                GDALRasterContourAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALRasterContourAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

@@ -39,7 +39,7 @@ GDALAsyncReader::GDALAsyncReader()
 }
 
 /************************************************************************/
-/*                         ~GDALAsyncReader()                           */
+/*                          ~GDALAsyncReader()                          */
 /************************************************************************/
 GDALAsyncReader::~GDALAsyncReader() = default;
 
@@ -213,7 +213,7 @@ void GDALAsyncReader::UnlockBuffer()
 }
 
 /************************************************************************/
-/*                          GDALARUnlockBuffer()                        */
+/*                         GDALARUnlockBuffer()                         */
 /************************************************************************/
 
 /**

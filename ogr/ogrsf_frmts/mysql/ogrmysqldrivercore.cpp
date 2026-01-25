@@ -18,7 +18,7 @@
 #include "ogrmysqldrivercore.h"
 
 /************************************************************************/
-/*                         OGRMySQLDriverIdentify()                     */
+/*                       OGRMySQLDriverIdentify()                       */
 /************************************************************************/
 
 int OGRMySQLDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -28,7 +28,7 @@ int OGRMySQLDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                OGRMySQLDriverSetCommonMetadata()                     */
+/*                  OGRMySQLDriverSetCommonMetadata()                   */
 /************************************************************************/
 
 void OGRMySQLDriverSetCommonMetadata(GDALDriver *poDriver)

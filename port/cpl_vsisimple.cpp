@@ -392,7 +392,7 @@ static GUIntBig nVSIReallocs = 0;
 static GUIntBig nVSIFrees = 0;
 
 /************************************************************************/
-/*                         VSIShowMemStats()                            */
+/*                          VSIShowMemStats()                           */
 /************************************************************************/
 
 void VSIShowMemStats();
@@ -881,7 +881,7 @@ void VSIFree(void *pData)
 }
 
 /************************************************************************/
-/*                      VSIMallocAligned()                              */
+/*                          VSIMallocAligned()                          */
 /************************************************************************/
 
 /** Allocates a buffer with an alignment constraint.
@@ -931,7 +931,7 @@ void *VSIMallocAligned(size_t nAlignment, size_t nSize)
 }
 
 /************************************************************************/
-/*                     VSIMallocAlignedAuto()                           */
+/*                        VSIMallocAlignedAuto()                        */
 /************************************************************************/
 
 /** Allocates a buffer with an alignment constraint such that it can be
@@ -952,7 +952,7 @@ void *VSIMallocAlignedAuto(size_t nSize)
 }
 
 /************************************************************************/
-/*                        VSIMallocAlignedAutoVerbose()                 */
+/*                    VSIMallocAlignedAutoVerbose()                     */
 /************************************************************************/
 
 /** See VSIMallocAlignedAuto() */
@@ -970,7 +970,7 @@ void *VSIMallocAlignedAutoVerbose(size_t nSize, const char *pszFile, int nLine)
 }
 
 /************************************************************************/
-/*                        VSIFreeAligned()                              */
+/*                           VSIFreeAligned()                           */
 /************************************************************************/
 
 /** Free a buffer allocated with VSIMallocAligned().
@@ -1010,7 +1010,7 @@ char *VSIStrdup(const char *pszString)
 }
 
 /************************************************************************/
-/*                          VSICheckMul2()                              */
+/*                            VSICheckMul2()                            */
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
@@ -1046,7 +1046,7 @@ static size_t VSICheckMul2(size_t mul1, size_t mul2, bool *pbOverflowFlag,
 }
 
 /************************************************************************/
-/*                          VSICheckMul3()                              */
+/*                            VSICheckMul3()                            */
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
@@ -1149,7 +1149,7 @@ void *VSIMallocVerbose(size_t nSize, const char *pszFile, int nLine)
 }
 
 /************************************************************************/
-/*                          VSIMalloc2Verbose()                         */
+/*                         VSIMalloc2Verbose()                          */
 /************************************************************************/
 
 void *VSIMalloc2Verbose(size_t nSize1, size_t nSize2, const char *pszFile,
@@ -1173,7 +1173,7 @@ void *VSIMalloc2Verbose(size_t nSize1, size_t nSize2, const char *pszFile,
 }
 
 /************************************************************************/
-/*                          VSIMalloc3Verbose()                         */
+/*                         VSIMalloc3Verbose()                          */
 /************************************************************************/
 
 void *VSIMalloc3Verbose(size_t nSize1, size_t nSize2, size_t nSize3,
@@ -1217,7 +1217,7 @@ void *VSICallocVerbose(size_t nCount, size_t nSize, const char *pszFile,
 }
 
 /************************************************************************/
-/*                          VSIReallocVerbose()                         */
+/*                         VSIReallocVerbose()                          */
 /************************************************************************/
 
 void *VSIReallocVerbose(void *pOldPtr, size_t nNewSize, const char *pszFile,
@@ -1338,7 +1338,7 @@ struct tm *VSIGMTime(const time_t *pnTime, struct tm *poBrokenTime)
 }
 
 /************************************************************************/
-/*                             VSILocalTime()                           */
+/*                            VSILocalTime()                            */
 /************************************************************************/
 
 struct tm *VSILocalTime(const time_t *pnTime, struct tm *poBrokenTime)
@@ -1368,7 +1368,7 @@ char *VSIStrerror(int nErrno)
 }
 
 /************************************************************************/
-/*                        CPLGetPhysicalRAM()                           */
+/*                         CPLGetPhysicalRAM()                          */
 /************************************************************************/
 
 #if HAVE_SC_PHYS_PAGES
@@ -1598,7 +1598,7 @@ GIntBig CPLGetPhysicalRAM(void)
 #endif
 
 /************************************************************************/
-/*                       CPLGetUsablePhysicalRAM()                      */
+/*                      CPLGetUsablePhysicalRAM()                       */
 /************************************************************************/
 
 /** Return the total physical RAM, usable by a process, in bytes.

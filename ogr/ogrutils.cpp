@@ -191,7 +191,7 @@ void intelliround(std::string &s)
 }  // unnamed namespace
 
 /************************************************************************/
-/*                        OGRFormatDouble()                             */
+/*                          OGRFormatDouble()                           */
 /************************************************************************/
 
 void OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
@@ -944,7 +944,7 @@ int OGRGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
 }
 
 /************************************************************************/
-/*                       OGRTimezoneToTZFlag()                          */
+/*                        OGRTimezoneToTZFlag()                         */
 /************************************************************************/
 
 /** \brief Converts a text timezone into OGR TZFlag integer representation.
@@ -991,7 +991,7 @@ int OGRTimezoneToTZFlag(const char *pszTZ, bool bEmitErrorIfUnhandledFormat)
 }
 
 /************************************************************************/
-/*                       OGRTZFlagToTimezone()                          */
+/*                        OGRTZFlagToTimezone()                         */
 /************************************************************************/
 
 /** \brief Converts a OGR TZFlag integer representation into a string
@@ -1361,7 +1361,7 @@ int OGRParseDate(const char *pszInput, OGRField *psField, int nOptions)
 }
 
 /************************************************************************/
-/*               OGRParseDateTimeYYYYMMDDTHHMMZ()                       */
+/*                   OGRParseDateTimeYYYYMMDDTHHMMZ()                   */
 /************************************************************************/
 
 bool OGRParseDateTimeYYYYMMDDTHHMMZ(std::string_view sInput, OGRField *psField)
@@ -1411,7 +1411,7 @@ bool OGRParseDateTimeYYYYMMDDTHHMMZ(std::string_view sInput, OGRField *psField)
 }
 
 /************************************************************************/
-/*               OGRParseDateTimeYYYYMMDDTHHMMSSZ()                     */
+/*                  OGRParseDateTimeYYYYMMDDTHHMMSSZ()                  */
 /************************************************************************/
 
 bool OGRParseDateTimeYYYYMMDDTHHMMSSZ(std::string_view sInput,
@@ -1467,7 +1467,7 @@ bool OGRParseDateTimeYYYYMMDDTHHMMSSZ(std::string_view sInput,
 }
 
 /************************************************************************/
-/*              OGRParseDateTimeYYYYMMDDTHHMMSSsssZ()                   */
+/*                OGRParseDateTimeYYYYMMDDTHHMMSSsssZ()                 */
 /************************************************************************/
 
 bool OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(std::string_view sInput,
@@ -1529,7 +1529,7 @@ bool OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(std::string_view sInput,
 }
 
 /************************************************************************/
-/*                           OGRParseXMLDateTime()                      */
+/*                        OGRParseXMLDateTime()                         */
 /************************************************************************/
 
 int OGRParseXMLDateTime(const char *pszXMLDateTime, OGRField *psField)
@@ -1600,7 +1600,7 @@ int OGRParseXMLDateTime(const char *pszXMLDateTime, OGRField *psField)
 }
 
 /************************************************************************/
-/*                      OGRParseRFC822DateTime()                        */
+/*                       OGRParseRFC822DateTime()                       */
 /************************************************************************/
 
 static const char *const aszMonthStr[] = {"Jan", "Feb", "Mar", "Apr",
@@ -1659,7 +1659,7 @@ int OGRGetDayOfWeek(int day, int month, int year)
 }
 
 /************************************************************************/
-/*                         OGRGetRFC822DateTime()                       */
+/*                        OGRGetRFC822DateTime()                        */
 /************************************************************************/
 
 char *OGRGetRFC822DateTime(const OGRField *psField)
@@ -1698,7 +1698,7 @@ char *OGRGetRFC822DateTime(const OGRField *psField)
 }
 
 /************************************************************************/
-/*                            OGRGetXMLDateTime()                       */
+/*                         OGRGetXMLDateTime()                          */
 /************************************************************************/
 
 char *OGRGetXMLDateTime(const OGRField *psField)
@@ -1844,7 +1844,7 @@ int OGRGetISO8601DateTime(const OGRField *psField,
 }
 
 /************************************************************************/
-/*                 OGRGetXML_UTF8_EscapedString()                       */
+/*                    OGRGetXML_UTF8_EscapedString()                    */
 /************************************************************************/
 
 char *OGRGetXML_UTF8_EscapedString(const char *pszString)
@@ -1881,7 +1881,7 @@ char *OGRGetXML_UTF8_EscapedString(const char *pszString)
 }
 
 /************************************************************************/
-/*                        OGRCompareDate()                              */
+/*                           OGRCompareDate()                           */
 /************************************************************************/
 
 int OGRCompareDate(const OGRField *psFirstTuple, const OGRField *psSecondTuple)
@@ -1922,7 +1922,7 @@ int OGRCompareDate(const OGRField *psFirstTuple, const OGRField *psSecondTuple)
 }
 
 /************************************************************************/
-/*                        OGRFastAtof()                                 */
+/*                            OGRFastAtof()                             */
 /************************************************************************/
 
 // On Windows, CPLAtof() is very slow if the number is followed by other long
@@ -2226,7 +2226,7 @@ OGRErr OGRReadWKBGeometryType(const unsigned char *pabyData,
 }
 
 /************************************************************************/
-/*                      OGRReadWKTGeometryType()                        */
+/*                       OGRReadWKTGeometryType()                       */
 /************************************************************************/
 
 OGRErr OGRReadWKTGeometryType(const char *pszWKT,
@@ -2280,7 +2280,7 @@ OGRErr OGRReadWKTGeometryType(const char *pszWKT,
 }
 
 /************************************************************************/
-/*                        OGRFormatFloat()                              */
+/*                           OGRFormatFloat()                           */
 /************************************************************************/
 
 int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
@@ -2357,7 +2357,7 @@ int OGR_GET_MS(float fSec)
 }
 
 /************************************************************************/
-/*                    OGRDuplicateCharacter()                           */
+/*                       OGRDuplicateCharacter()                        */
 /************************************************************************/
 
 std::string OGRDuplicateCharacter(const std::string &osStr, char ch)

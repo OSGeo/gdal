@@ -20,7 +20,7 @@
 #include <list>
 
 /************************************************************************/
-/*                           OGRDGNLayer()                              */
+/*                            OGRDGNLayer()                             */
 /************************************************************************/
 
 OGRDGNLayer::OGRDGNLayer(OGRDGNDataSource *poDS, const char *pszName,
@@ -167,7 +167,7 @@ OGRDGNLayer::OGRDGNLayer(OGRDGNDataSource *poDS, const char *pszName,
 }
 
 /************************************************************************/
-/*                           ~OGRDGNLayer()                             */
+/*                            ~OGRDGNLayer()                            */
 /************************************************************************/
 
 OGRDGNLayer::~OGRDGNLayer()
@@ -988,7 +988,7 @@ GIntBig OGRDGNLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRDGNLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,

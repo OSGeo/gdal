@@ -26,7 +26,7 @@
 #endif
 
 /************************************************************************/
-/*   GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm()     */
+/*    GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm()    */
 /************************************************************************/
 
 GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm(
@@ -68,7 +68,7 @@ GDALRasterFillNodataAlgorithm::GDALRasterFillNodataAlgorithm(
 }
 
 /************************************************************************/
-/*                 GDALRasterFillNodataAlgorithm::RunStep()             */
+/*               GDALRasterFillNodataAlgorithm::RunStep()               */
 /************************************************************************/
 
 bool GDALRasterFillNodataAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

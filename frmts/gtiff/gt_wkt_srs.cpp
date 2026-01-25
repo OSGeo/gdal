@@ -256,7 +256,7 @@ static void GTIFCleanupImagineNames(char *pszCitation)
 #if LIBGEOTIFF_VERSION < 1600
 
 /************************************************************************/
-/*                       GDALGTIFKeyGet()                               */
+/*                           GDALGTIFKeyGet()                           */
 /************************************************************************/
 
 static int GDALGTIFKeyGet(GTIF *hGTIF, geokey_t key, void *pData, int nIndex,
@@ -276,7 +276,7 @@ static int GDALGTIFKeyGet(GTIF *hGTIF, geokey_t key, void *pData, int nIndex,
 }
 
 /************************************************************************/
-/*                       GDALGTIFKeyGetASCII()                          */
+/*                        GDALGTIFKeyGetASCII()                         */
 /************************************************************************/
 
 int GDALGTIFKeyGetASCII(GTIF *hGTIF, geokey_t key, char *szStr, int szStrMaxLen)
@@ -285,7 +285,7 @@ int GDALGTIFKeyGetASCII(GTIF *hGTIF, geokey_t key, char *szStr, int szStrMaxLen)
 }
 
 /************************************************************************/
-/*                       GDALGTIFKeyGetSHORT()                          */
+/*                        GDALGTIFKeyGetSHORT()                         */
 /************************************************************************/
 
 int GDALGTIFKeyGetSHORT(GTIF *hGTIF, geokey_t key, unsigned short *pnVal,
@@ -307,7 +307,7 @@ int GDALGTIFKeyGetDOUBLE(GTIF *hGTIF, geokey_t key, double *pdfVal, int nIndex,
 #endif
 
 /************************************************************************/
-/*                    FillCompoundCRSWithManualVertCS()                 */
+/*                  FillCompoundCRSWithManualVertCS()                   */
 /************************************************************************/
 
 static void FillCompoundCRSWithManualVertCS(GTIF *hGTIF,
@@ -453,7 +453,7 @@ static void FillCompoundCRSWithManualVertCS(GTIF *hGTIF,
 }
 
 /************************************************************************/
-/*                       GTIFGetOfficialCRS()                           */
+/*                         GTIFGetOfficialCRS()                         */
 /************************************************************************/
 
 static PJ *GTIFGetOfficialCRS(GTIF *hGTIF, PJ_TYPE searchType,
@@ -479,7 +479,7 @@ static PJ *GTIFGetOfficialCRS(GTIF *hGTIF, PJ_TYPE searchType,
 }
 
 /************************************************************************/
-/*                    GTIFGetEPSGOfficialName()                         */
+/*                      GTIFGetEPSGOfficialName()                       */
 /************************************************************************/
 
 static char *GTIFGetEPSGOfficialName(GTIF *hGTIF, PJ_TYPE searchType,
@@ -500,7 +500,7 @@ static char *GTIFGetEPSGOfficialName(GTIF *hGTIF, PJ_TYPE searchType,
 }
 
 /************************************************************************/
-/*                      GTIFGetOGISDefnAsOSR()                          */
+/*                        GTIFGetOGISDefnAsOSR()                        */
 /************************************************************************/
 
 OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)

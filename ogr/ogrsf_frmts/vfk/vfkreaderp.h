@@ -104,7 +104,7 @@ class VFKReader : public IVFKReader
 };
 
 /************************************************************************/
-/*                              VFKReaderSQLite                         */
+/*                           VFKReaderSQLite                            */
 /************************************************************************/
 
 class VFKReaderSQLite final : public VFKReader

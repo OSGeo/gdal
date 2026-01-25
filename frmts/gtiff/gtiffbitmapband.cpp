@@ -17,7 +17,7 @@
 #include "gdal_priv.h"
 
 /************************************************************************/
-/*                           GTiffBitmapBand()                          */
+/*                          GTiffBitmapBand()                           */
 /************************************************************************/
 
 GTiffBitmapBand::GTiffBitmapBand(GTiffDataset *poDSIn, int nBandIn)

@@ -336,7 +336,7 @@ class OGRPMTilesVectorLayer final
 #ifdef HAVE_MVT_WRITE_SUPPORT
 
 /************************************************************************/
-/*                     OGRPMTilesWriterDataset                          */
+/*                       OGRPMTilesWriterDataset                        */
 /************************************************************************/
 
 class OGRPMTilesWriterDataset final : public GDALDataset

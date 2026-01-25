@@ -26,7 +26,7 @@
 #endif
 
 /************************************************************************/
-/*            GDALVSIDeleteAlgorithm::GDALVSIDeleteAlgorithm()          */
+/*           GDALVSIDeleteAlgorithm::GDALVSIDeleteAlgorithm()           */
 /************************************************************************/
 
 GDALVSIDeleteAlgorithm::GDALVSIDeleteAlgorithm()
@@ -46,7 +46,7 @@ GDALVSIDeleteAlgorithm::GDALVSIDeleteAlgorithm()
 }
 
 /************************************************************************/
-/*                    GDALVSIDeleteAlgorithm::RunImpl()                 */
+/*                  GDALVSIDeleteAlgorithm::RunImpl()                   */
 /************************************************************************/
 
 bool GDALVSIDeleteAlgorithm::RunImpl(GDALProgressFunc, void *)

@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                      GDALVectorGridAverageAlgorithm                  */
+/*                    GDALVectorGridAverageAlgorithm                    */
 /************************************************************************/
 
 class GDALVectorGridAverageAlgorithm /* non final */

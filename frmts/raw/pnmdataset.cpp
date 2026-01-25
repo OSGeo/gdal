@@ -51,7 +51,7 @@ class PNMDataset final : public RawDataset
 };
 
 /************************************************************************/
-/*                            ~PNMDataset()                            */
+/*                            ~PNMDataset()                             */
 /************************************************************************/
 
 PNMDataset::~PNMDataset()
@@ -61,7 +61,7 @@ PNMDataset::~PNMDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr PNMDataset::Close(GDALProgressFunc, void *)
@@ -400,7 +400,7 @@ GDALDataset *PNMDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                         GDALRegister_PNM()                           */
+/*                          GDALRegister_PNM()                          */
 /************************************************************************/
 
 void GDALRegister_PNM()

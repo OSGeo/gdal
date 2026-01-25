@@ -27,7 +27,7 @@
 #include <set>
 
 /************************************************************************/
-/*                        CPLGettimeofday()                             */
+/*                          CPLGettimeofday()                           */
 /************************************************************************/
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -61,7 +61,7 @@ static double GetTimestamp()
 }
 
 /************************************************************************/
-/*                           OGRElasticLayer()                          */
+/*                          OGRElasticLayer()                           */
 /************************************************************************/
 
 OGRElasticLayer::OGRElasticLayer(const char *pszLayerName,
@@ -172,7 +172,7 @@ OGRElasticLayer::OGRElasticLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                           OGRElasticLayer()                          */
+/*                          OGRElasticLayer()                           */
 /************************************************************************/
 
 OGRElasticLayer::OGRElasticLayer(const char *pszLayerName,
@@ -230,7 +230,7 @@ OGRElasticLayer::OGRElasticLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                            CopyMembersTo()                           */
+/*                           CopyMembersTo()                            */
 /************************************************************************/
 
 void OGRElasticLayer::CopyMembersTo(OGRElasticLayer *poNew)
@@ -266,7 +266,7 @@ void OGRElasticLayer::CopyMembersTo(OGRElasticLayer *poNew)
 }
 
 /************************************************************************/
-/*                              Clone()                                 */
+/*                               Clone()                                */
 /************************************************************************/
 
 OGRElasticLayer *OGRElasticLayer::Clone()
@@ -279,7 +279,7 @@ OGRElasticLayer *OGRElasticLayer::Clone()
 }
 
 /************************************************************************/
-/*                         ~OGRElasticLayer()                           */
+/*                          ~OGRElasticLayer()                          */
 /************************************************************************/
 
 OGRElasticLayer::~OGRElasticLayer()
@@ -303,7 +303,7 @@ OGRElasticLayer::~OGRElasticLayer()
 }
 
 /************************************************************************/
-/*                              AddFieldDefn()                          */
+/*                            AddFieldDefn()                            */
 /************************************************************************/
 
 void OGRElasticLayer::AddFieldDefn(const char *pszName, OGRFieldType eType,
@@ -322,7 +322,7 @@ void OGRElasticLayer::AddFieldDefn(const char *pszName, OGRFieldType eType,
 }
 
 /************************************************************************/
-/*                           AddGeomFieldDefn()                         */
+/*                          AddGeomFieldDefn()                          */
 /************************************************************************/
 
 void OGRElasticLayer::AddGeomFieldDefn(const char *pszName,
@@ -508,7 +508,7 @@ void OGRElasticLayer::InitFeatureDefnFromMapping(
 }
 
 /************************************************************************/
-/*                        CreateFieldFromSchema()                       */
+/*                       CreateFieldFromSchema()                        */
 /************************************************************************/
 
 void OGRElasticLayer::CreateFieldFromSchema(const char *pszName,
@@ -889,7 +889,7 @@ OGRElasticLayer::BuildPathFromArray(const std::vector<CPLString> &aosPath)
 }
 
 /************************************************************************/
-/*                         GetOGRGeomTypeFromES()                       */
+/*                        GetOGRGeomTypeFromES()                        */
 /************************************************************************/
 
 static OGRwkbGeometryType GetOGRGeomTypeFromES(const char *pszType)
@@ -902,7 +902,7 @@ static OGRwkbGeometryType GetOGRGeomTypeFromES(const char *pszType)
 }
 
 /************************************************************************/
-/*                         AddOrUpdateField()                           */
+/*                          AddOrUpdateField()                          */
 /************************************************************************/
 
 void OGRElasticLayer::AddOrUpdateField(const char *pszAttrName,
@@ -1024,7 +1024,7 @@ void OGRElasticLayer::AddOrUpdateField(const char *pszAttrName,
 }
 
 /************************************************************************/
-/*                              SyncToDisk()                            */
+/*                             SyncToDisk()                             */
 /************************************************************************/
 
 OGRErr OGRElasticLayer::SyncToDisk()
@@ -1121,7 +1121,7 @@ OGRFeature *OGRElasticLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                           BuildSort()                                */
+/*                             BuildSort()                              */
 /************************************************************************/
 
 json_object *OGRElasticLayer::BuildSort()
@@ -1151,7 +1151,7 @@ json_object *OGRElasticLayer::BuildSort()
 }
 
 /************************************************************************/
-/*                           BuildQuery()                               */
+/*                             BuildQuery()                             */
 /************************************************************************/
 
 CPLString OGRElasticLayer::BuildQuery(bool bCountOnly)
@@ -1379,7 +1379,7 @@ OGRFeature *OGRElasticLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                      decode_geohash_bbox()                           */
+/*                        decode_geohash_bbox()                         */
 /************************************************************************/
 
 /* Derived from routine from
@@ -1782,7 +1782,7 @@ static json_object *AddPropertyMap(const CPLString &type)
 }
 
 /************************************************************************/
-/*                      GetContainerForMapping()                        */
+/*                       GetContainerForMapping()                       */
 /************************************************************************/
 
 static json_object *
@@ -1814,7 +1814,7 @@ GetContainerForMapping(json_object *poContainer,
 }
 
 /************************************************************************/
-/*                             BuildMap()                               */
+/*                              BuildMap()                              */
 /************************************************************************/
 
 CPLString OGRElasticLayer::BuildMap()
@@ -2086,7 +2086,7 @@ CPLString OGRElasticLayer::BuildMap()
 }
 
 /************************************************************************/
-/*                       BuildGeoJSONGeometry()                         */
+/*                        BuildGeoJSONGeometry()                        */
 /************************************************************************/
 
 static void BuildGeoJSONGeometry(json_object *geometry,
@@ -2283,7 +2283,7 @@ static void BuildGeoJSONGeometry(json_object *geometry,
 }
 
 /************************************************************************/
-/*                       WriteMapIfNecessary()                          */
+/*                        WriteMapIfNecessary()                         */
 /************************************************************************/
 
 OGRErr OGRElasticLayer::WriteMapIfNecessary()
@@ -2327,7 +2327,7 @@ OGRErr OGRElasticLayer::WriteMapIfNecessary()
 }
 
 /************************************************************************/
-/*                      GetContainerForFeature()                        */
+/*                       GetContainerForFeature()                       */
 /************************************************************************/
 
 static json_object *
@@ -2357,7 +2357,7 @@ GetContainerForFeature(json_object *poContainer,
 }
 
 /************************************************************************/
-/*                        BuildMappingURL()                             */
+/*                          BuildMappingURL()                           */
 /************************************************************************/
 CPLString OGRElasticLayer::BuildMappingURL(bool bMappingApi)
 {
@@ -2653,7 +2653,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
@@ -2735,7 +2735,7 @@ OGRErr OGRElasticLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           ISetFeature()                              */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
@@ -2784,7 +2784,7 @@ OGRErr OGRElasticLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          IUpsertFeature()                            */
+/*                           IUpsertFeature()                           */
 /************************************************************************/
 
 OGRErr OGRElasticLayer::IUpsertFeature(OGRFeature *poFeature)
@@ -2943,7 +2943,7 @@ OGRErr OGRElasticLayer::CreateField(const OGRFieldDefn *poFieldDefn,
 }
 
 /************************************************************************/
-/*                           CreateGeomField()                          */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
 OGRErr OGRElasticLayer::CreateGeomField(const OGRGeomFieldDefn *poFieldIn,
@@ -3181,7 +3181,7 @@ GIntBig OGRElasticLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            GetValue()                                */
+/*                              GetValue()                              */
 /************************************************************************/
 
 json_object *OGRElasticLayer::GetValue(int nFieldIdx, swq_expr_node *poValNode)
@@ -3234,7 +3234,7 @@ json_object *OGRElasticLayer::GetValue(int nFieldIdx, swq_expr_node *poValNode)
 }
 
 /************************************************************************/
-/*                      OGRESGetFieldIndexFromSQL()                     */
+/*                     OGRESGetFieldIndexFromSQL()                      */
 /************************************************************************/
 
 static int OGRESGetFieldIndexFromSQL(const swq_expr_node *poNode)
@@ -3713,7 +3713,7 @@ json_object *OGRElasticLayer::TranslateSQLToFilter(swq_expr_node *poNode)
 }
 
 /************************************************************************/
-/*                          SetAttributeFilter()                        */
+/*                         SetAttributeFilter()                         */
 /************************************************************************/
 
 OGRErr OGRElasticLayer::SetAttributeFilter(const char *pszFilter)
@@ -3749,7 +3749,7 @@ OGRErr OGRElasticLayer::SetAttributeFilter(const char *pszFilter)
 }
 
 /************************************************************************/
-/*                          ClampEnvelope()                             */
+/*                           ClampEnvelope()                            */
 /************************************************************************/
 
 void OGRElasticLayer::ClampEnvelope(OGREnvelope &sEnvelope)
@@ -3776,7 +3776,7 @@ void OGRElasticLayer::ClampEnvelope(OGREnvelope &sEnvelope)
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRElasticLayer::ISetSpatialFilter(int iGeomField,
@@ -3884,7 +3884,7 @@ OGRErr OGRElasticLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                           IGetExtent()                                */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRElasticLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,

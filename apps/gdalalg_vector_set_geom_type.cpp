@@ -66,7 +66,7 @@ namespace
 {
 
 /************************************************************************/
-/*                GDALVectorSetGeomTypeAlgorithmLayer                   */
+/*                 GDALVectorSetGeomTypeAlgorithmLayer                  */
 /************************************************************************/
 
 class GDALVectorSetGeomTypeAlgorithmLayer final
@@ -124,7 +124,7 @@ class GDALVectorSetGeomTypeAlgorithmLayer final
 };
 
 /************************************************************************/
-/*                  GDALVectorSetGeomTypeAlgorithmLayer()               */
+/*                GDALVectorSetGeomTypeAlgorithmLayer()                 */
 /************************************************************************/
 
 GDALVectorSetGeomTypeAlgorithmLayer::GDALVectorSetGeomTypeAlgorithmLayer(
@@ -150,7 +150,7 @@ GDALVectorSetGeomTypeAlgorithmLayer::GDALVectorSetGeomTypeAlgorithmLayer(
 }
 
 /************************************************************************/
-/*                           ConvertType()                              */
+/*                            ConvertType()                             */
 /************************************************************************/
 
 OGRwkbGeometryType
@@ -265,7 +265,7 @@ GDALVectorSetGeomTypeAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
 }
 
 /************************************************************************/
-/*            GDALVectorSetGeomTypeAlgorithm::RunStep()                 */
+/*              GDALVectorSetGeomTypeAlgorithm::RunStep()               */
 /************************************************************************/
 
 bool GDALVectorSetGeomTypeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

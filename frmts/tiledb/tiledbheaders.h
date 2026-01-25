@@ -302,7 +302,7 @@ class TileDBRasterDataset final : public TileDBDataset
 };
 
 /************************************************************************/
-/*                        OGRTileDBLayer                                */
+/*                            OGRTileDBLayer                            */
 /************************************************************************/
 
 class OGRTileDBDataset;
@@ -511,7 +511,7 @@ class OGRTileDBLayer final : public OGRLayer,
 };
 
 /************************************************************************/
-/*                         OGRTileDBDataset                             */
+/*                           OGRTileDBDataset                           */
 /************************************************************************/
 
 class OGRTileDBDataset final : public TileDBDataset

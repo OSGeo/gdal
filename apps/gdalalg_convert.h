@@ -21,7 +21,7 @@
 #include "gdalalg_dispatcher.h"
 
 /************************************************************************/
-/*                        GDALConvertAlgorithm                          */
+/*                         GDALConvertAlgorithm                         */
 /************************************************************************/
 
 class GDALConvertAlgorithm final

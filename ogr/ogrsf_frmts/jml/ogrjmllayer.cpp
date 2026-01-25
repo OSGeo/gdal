@@ -18,7 +18,7 @@
 constexpr int PARSER_BUF_SIZE = 8192;
 
 /************************************************************************/
-/*                              OGRJMLLayer()                           */
+/*                            OGRJMLLayer()                             */
 /************************************************************************/
 
 OGRJMLLayer::OGRJMLLayer(const char *pszLayerName, OGRJMLDataset *poDSIn,
@@ -41,7 +41,7 @@ OGRJMLLayer::OGRJMLLayer(const char *pszLayerName, OGRJMLDataset *poDSIn,
 }
 
 /************************************************************************/
-/*                             ~OGRJMLLayer()                           */
+/*                            ~OGRJMLLayer()                            */
 /************************************************************************/
 
 OGRJMLLayer::~OGRJMLLayer()
@@ -129,7 +129,7 @@ void OGRJMLLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                        startElementCbk()                            */
+/*                          startElementCbk()                           */
 /************************************************************************/
 
 void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
@@ -232,7 +232,7 @@ void OGRJMLLayer::startElementCbk(const char *pszName, const char **ppszAttr)
 }
 
 /************************************************************************/
-/*                        StopAccumulate()                              */
+/*                           StopAccumulate()                           */
 /************************************************************************/
 
 void OGRJMLLayer::StopAccumulate()
@@ -343,7 +343,7 @@ void OGRJMLLayer::endElementCbk(const char *pszName)
 }
 
 /************************************************************************/
-/*                        AddStringToElementValue()                     */
+/*                      AddStringToElementValue()                       */
 /************************************************************************/
 
 void OGRJMLLayer::AddStringToElementValue(const char *data, int nLen)
@@ -375,7 +375,7 @@ void OGRJMLLayer::AddStringToElementValue(const char *data, int nLen)
 }
 
 /************************************************************************/
-/*                          dataHandlerCbk()                            */
+/*                           dataHandlerCbk()                           */
 /************************************************************************/
 
 void OGRJMLLayer::dataHandlerCbk(const char *data, int nLen)
@@ -474,7 +474,7 @@ static void XMLCALL endElementLoadSchemaCbk(void *pUserData,
 }
 
 /************************************************************************/
-/*                           LoadSchema()                              */
+/*                             LoadSchema()                             */
 /************************************************************************/
 
 /** This function parses the beginning of the file to detect the fields */
@@ -563,7 +563,7 @@ void OGRJMLLayer::LoadSchema()
 }
 
 /************************************************************************/
-/*                  startElementLoadSchemaCbk()                         */
+/*                     startElementLoadSchemaCbk()                      */
 /************************************************************************/
 
 void OGRJMLLayer::startElementLoadSchemaCbk(const char *pszName,
@@ -676,7 +676,7 @@ void OGRJMLLayer::startElementLoadSchemaCbk(const char *pszName,
 }
 
 /************************************************************************/
-/*                   endElementLoadSchemaCbk()                          */
+/*                      endElementLoadSchemaCbk()                       */
 /************************************************************************/
 
 void OGRJMLLayer::endElementLoadSchemaCbk(const char * /* pszName */)

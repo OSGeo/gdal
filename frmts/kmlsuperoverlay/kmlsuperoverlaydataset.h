@@ -22,7 +22,7 @@
 #include "gdal_priv.h"
 
 /************************************************************************/
-/*                    KmlSuperOverlayReadDataset                        */
+/*                      KmlSuperOverlayReadDataset                      */
 /************************************************************************/
 class KmlSuperOverlayRasterBand;
 class KmlSuperOverlayReadDataset;
@@ -101,7 +101,7 @@ class KmlSuperOverlayReadDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                     KmlSuperOverlayRasterBand                        */
+/*                      KmlSuperOverlayRasterBand                       */
 /************************************************************************/
 
 class KmlSuperOverlayRasterBand final : public GDALRasterBand

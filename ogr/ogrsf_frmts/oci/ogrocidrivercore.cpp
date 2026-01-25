@@ -21,7 +21,7 @@
 #include "ogrocidrivercore.h"
 
 /************************************************************************/
-/*                         OGROCIDriverIdentify()                       */
+/*                        OGROCIDriverIdentify()                        */
 /************************************************************************/
 
 int OGROCIDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -31,7 +31,7 @@ int OGROCIDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                  OGROCIDriverSetCommonMetadata()                     */
+/*                   OGROCIDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void OGROCIDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -136,7 +136,7 @@ void OGROCIDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredOGROCIPlugin()                      */
+/*                    DeclareDeferredOGROCIPlugin()                     */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

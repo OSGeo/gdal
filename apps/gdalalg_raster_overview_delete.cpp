@@ -40,7 +40,7 @@ GDALRasterOverviewAlgorithmDelete::GDALRasterOverviewAlgorithmDelete()
 }
 
 /************************************************************************/
-/*               GDALRasterOverviewAlgorithmDelete::RunImpl()           */
+/*             GDALRasterOverviewAlgorithmDelete::RunImpl()             */
 /************************************************************************/
 
 bool GDALRasterOverviewAlgorithmDelete::RunImpl(GDALProgressFunc pfnProgress,

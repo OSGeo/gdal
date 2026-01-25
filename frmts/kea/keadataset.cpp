@@ -18,7 +18,7 @@
 #include "cpl_vsi_virtual.h"
 
 /************************************************************************/
-/*                     KEADatasetDriverUnload()                        */
+/*                       KEADatasetDriverUnload()                       */
 /************************************************************************/
 
 void KEADatasetDriverUnload(GDALDriver *)

@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALVectorConvertAlgorithm                       */
+/*                      GDALVectorConvertAlgorithm                      */
 /************************************************************************/
 
 class GDALVectorConvertAlgorithm final : public GDALVectorPipelineStepAlgorithm

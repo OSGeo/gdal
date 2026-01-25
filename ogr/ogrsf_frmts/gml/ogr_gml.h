@@ -33,7 +33,7 @@ typedef enum
 } ReadMode;
 
 /************************************************************************/
-/*                            OGRGMLLayer                               */
+/*                             OGRGMLLayer                              */
 /************************************************************************/
 
 class OGRGMLLayer final : public OGRLayer

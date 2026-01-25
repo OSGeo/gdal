@@ -190,7 +190,7 @@ class CPL_DLL GMLPropertyDefn
 };
 
 /************************************************************************/
-/*                    GMLGeometryPropertyDefn                           */
+/*                       GMLGeometryPropertyDefn                        */
 /************************************************************************/
 
 class CPL_DLL GMLGeometryPropertyDefn

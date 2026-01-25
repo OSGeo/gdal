@@ -17,7 +17,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*            GDALVectorGridDataMetricsAbstractAlgorithm()              */
+/*             GDALVectorGridDataMetricsAbstractAlgorithm()             */
 /************************************************************************/
 
 GDALVectorGridDataMetricsAbstractAlgorithm::
@@ -38,7 +38,7 @@ GDALVectorGridDataMetricsAbstractAlgorithm::
 }
 
 /************************************************************************/
-/*         GDALVectorGridDataMetricsAbstractAlgorithm::RunImpl()        */
+/*        GDALVectorGridDataMetricsAbstractAlgorithm::RunImpl()         */
 /************************************************************************/
 
 std::string GDALVectorGridDataMetricsAbstractAlgorithm::GetGridAlgorithm() const

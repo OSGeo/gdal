@@ -21,7 +21,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALVectorCheckGeometryAlgorithm                 */
+/*                   GDALVectorCheckGeometryAlgorithm                   */
 /************************************************************************/
 
 class GDALVectorCheckGeometryAlgorithm : public GDALVectorPipelineStepAlgorithm
@@ -44,7 +44,7 @@ class GDALVectorCheckGeometryAlgorithm : public GDALVectorPipelineStepAlgorithm
 };
 
 /************************************************************************/
-/*                 GDALVectorCheckGeometryAlgorithmStandalone           */
+/*              GDALVectorCheckGeometryAlgorithmStandalone              */
 /************************************************************************/
 
 class GDALVectorCheckGeometryAlgorithmStandalone final

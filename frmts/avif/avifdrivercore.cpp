@@ -18,7 +18,7 @@
 #endif
 
 /************************************************************************/
-/*                        AVIFDriverIdentify()                          */
+/*                         AVIFDriverIdentify()                         */
 /************************************************************************/
 
 int AVIFDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -35,7 +35,7 @@ int AVIFDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     AVIFDriverSetCommonMetadata()                    */
+/*                    AVIFDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void AVIFDriverSetCommonMetadata(GDALDriver *poDriver,

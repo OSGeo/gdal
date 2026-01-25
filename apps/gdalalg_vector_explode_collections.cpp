@@ -25,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*                 GDALVectorExplodeCollectionsAlgorithm()              */
+/*               GDALVectorExplodeCollectionsAlgorithm()                */
 /************************************************************************/
 
 GDALVectorExplodeCollectionsAlgorithm::GDALVectorExplodeCollectionsAlgorithm(
@@ -64,7 +64,7 @@ namespace
 {
 
 /************************************************************************/
-/*               GDALVectorExplodeCollectionsAlgorithmLayer             */
+/*              GDALVectorExplodeCollectionsAlgorithmLayer              */
 /************************************************************************/
 
 class GDALVectorExplodeCollectionsAlgorithmLayer final
@@ -128,7 +128,7 @@ class GDALVectorExplodeCollectionsAlgorithmLayer final
 };
 
 /************************************************************************/
-/*               GDALVectorExplodeCollectionsAlgorithmLayer()           */
+/*             GDALVectorExplodeCollectionsAlgorithmLayer()             */
 /************************************************************************/
 
 GDALVectorExplodeCollectionsAlgorithmLayer::
@@ -277,7 +277,7 @@ GDALVectorExplodeCollectionsAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
 }
 
 /************************************************************************/
-/*            GDALVectorExplodeCollectionsAlgorithm::RunStep()          */
+/*           GDALVectorExplodeCollectionsAlgorithm::RunStep()           */
 /************************************************************************/
 
 bool GDALVectorExplodeCollectionsAlgorithm::RunStep(

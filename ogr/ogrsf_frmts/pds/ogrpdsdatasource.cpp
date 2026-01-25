@@ -19,7 +19,7 @@
 using namespace OGRPDS;
 
 /************************************************************************/
-/*                           OGRPDSDataSource()                         */
+/*                          OGRPDSDataSource()                          */
 /************************************************************************/
 
 OGRPDSDataSource::OGRPDSDataSource() : papoLayers(nullptr), nLayers(0)
@@ -27,7 +27,7 @@ OGRPDSDataSource::OGRPDSDataSource() : papoLayers(nullptr), nLayers(0)
 }
 
 /************************************************************************/
-/*                        ~OGRPDSDataSource()                           */
+/*                         ~OGRPDSDataSource()                          */
 /************************************************************************/
 
 OGRPDSDataSource::~OGRPDSDataSource()
@@ -52,7 +52,7 @@ const OGRLayer *OGRPDSDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                          GetKeywordSub()                             */
+/*                           GetKeywordSub()                            */
 /************************************************************************/
 
 const char *OGRPDSDataSource::GetKeywordSub(const char *pszPath, int iSubscript,
@@ -111,7 +111,7 @@ void OGRPDSDataSource::CleanString(CPLString &osInput)
 }
 
 /************************************************************************/
-/*                           LoadTable()                                */
+/*                             LoadTable()                              */
 /************************************************************************/
 
 static CPLString MakeAttr(CPLString os1, CPLString os2)

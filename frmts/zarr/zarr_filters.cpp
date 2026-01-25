@@ -100,7 +100,7 @@ static bool ZarrShuffleCompressor(const void *input_data, size_t input_size,
 }
 
 /************************************************************************/
-/*                       ZarrShuffleDecompressor()                      */
+/*                      ZarrShuffleDecompressor()                       */
 /************************************************************************/
 
 static bool ZarrShuffleDecompressor(const void *input_data, size_t input_size,
@@ -182,7 +182,7 @@ static bool ZarrShuffleDecompressor(const void *input_data, size_t input_size,
 }
 
 /************************************************************************/
-/*                       ZarrGetShuffleCompressor()                     */
+/*                      ZarrGetShuffleCompressor()                      */
 /************************************************************************/
 
 const CPLCompressor *ZarrGetShuffleCompressor()
@@ -216,7 +216,7 @@ const CPLCompressor *ZarrGetShuffleDecompressor()
 }
 
 /************************************************************************/
-/*                       ZarrQuantizeDecompressor()                     */
+/*                      ZarrQuantizeDecompressor()                      */
 /************************************************************************/
 
 static bool ZarrQuantizeDecompressor(const void *input_data, size_t input_size,
@@ -359,7 +359,7 @@ static bool ZarrQuantizeDecompressor(const void *input_data, size_t input_size,
 }
 
 /************************************************************************/
-/*                     ZarrGetQuantizeDecompressor()                    */
+/*                    ZarrGetQuantizeDecompressor()                     */
 /************************************************************************/
 
 const CPLCompressor *ZarrGetQuantizeDecompressor()
@@ -376,7 +376,7 @@ const CPLCompressor *ZarrGetQuantizeDecompressor()
 }
 
 /************************************************************************/
-/*                 ZarrFixedScaleOffsetDecompressor()                   */
+/*                  ZarrFixedScaleOffsetDecompressor()                  */
 /************************************************************************/
 
 static bool ZarrFixedScaleOffsetDecompressor(const void *input_data,
@@ -577,7 +577,7 @@ static bool ZarrFixedScaleOffsetDecompressor(const void *input_data,
 }
 
 /************************************************************************/
-/*                  ZarrGetFixedScaleOffsetDecompressor()               */
+/*                ZarrGetFixedScaleOffsetDecompressor()                 */
 /************************************************************************/
 
 const CPLCompressor *ZarrGetFixedScaleOffsetDecompressor()

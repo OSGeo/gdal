@@ -13,7 +13,7 @@
 #include <cmath>
 
 /************************************************************************/
-/*                             OGRJSonParse()                           */
+/*                            OGRJSonParse()                            */
 /************************************************************************/
 
 bool OGRJSonParse(const char *pszText, json_object **ppoObj, bool bVerboseError)
@@ -41,7 +41,7 @@ bool OGRJSonParse(const char *pszText, json_object **ppoObj, bool bVerboseError)
 }
 
 /************************************************************************/
-/*                    CPL_json_object_object_get()                      */
+/*                     CPL_json_object_object_get()                     */
 /************************************************************************/
 
 // This is the same as json_object_object_get() except it will not raise
@@ -56,7 +56,7 @@ json_object *CPL_json_object_object_get(struct json_object *obj,
 }
 
 /************************************************************************/
-/*                       json_ex_get_object_by_path()                   */
+/*                     json_ex_get_object_by_path()                     */
 /************************************************************************/
 
 json_object *json_ex_get_object_by_path(json_object *poObj, const char *pszPath)
@@ -86,7 +86,7 @@ json_object *json_ex_get_object_by_path(json_object *poObj, const char *pszPath)
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONFindMemberByName                 */
+/*                      OGRGeoJSONFindMemberByName                      */
 /************************************************************************/
 
 lh_entry *OGRGeoJSONFindMemberEntryByName(json_object *poObj,
@@ -118,7 +118,7 @@ json_object *OGRGeoJSONFindMemberByName(json_object *poObj, const char *pszName)
 }
 
 /************************************************************************/
-/*               OGR_json_double_with_precision_to_string()             */
+/*              OGR_json_double_with_precision_to_string()              */
 /************************************************************************/
 
 static int OGR_json_double_with_precision_to_string(struct json_object *jso,
@@ -158,7 +158,7 @@ static int OGR_json_double_with_precision_to_string(struct json_object *jso,
 }
 
 /************************************************************************/
-/*                   json_object_new_double_with_precision()            */
+/*               json_object_new_double_with_precision()                */
 /************************************************************************/
 
 json_object *json_object_new_double_with_precision(double dfVal,
@@ -173,7 +173,7 @@ json_object *json_object_new_double_with_precision(double dfVal,
 }
 
 /************************************************************************/
-/*             OGR_json_double_with_significant_figures_to_string()     */
+/*         OGR_json_double_with_significant_figures_to_string()         */
 /************************************************************************/
 
 static int OGR_json_double_with_significant_figures_to_string(
@@ -257,7 +257,7 @@ static int OGR_json_double_with_significant_figures_to_string(
 }
 
 /************************************************************************/
-/*              json_object_new_double_with_significant_figures()       */
+/*          json_object_new_double_with_significant_figures()           */
 /************************************************************************/
 
 json_object *
@@ -273,7 +273,7 @@ json_object_new_double_with_significant_figures(double dfVal,
 }
 
 /************************************************************************/
-/*                           GeoJSONPropertyToFieldType()               */
+/*                     GeoJSONPropertyToFieldType()                     */
 /************************************************************************/
 
 constexpr GIntBig MY_INT64_MAX =
