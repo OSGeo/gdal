@@ -7,6 +7,16 @@ Migration guide
 From GDAL 3.12 to GDAL 3.13
 ---------------------------
 
+- C API changes:
+
+  * the following functions now return a ``OGRErr`` whereas they returned void
+    before: :cpp:func:`OGR_G_SetPointCount`, :cpp:func:`OGR_G_SetPoint`,
+    :cpp:func:`OGR_G_SetPoint_2D`, :cpp:func:`OGR_G_SetPointM`,
+    :cpp:func:`OGR_G_SetPointZM`, :cpp:func:`OGR_G_AddPoint`,
+    :cpp:func:`OGR_G_AddPoint_2D`, :cpp:func:`OGR_G_AddPointM`,
+    :cpp:func:`OGR_G_AddPointZM`, :cpp:func:`OGR_G_SetPoints` and
+    :cpp:func:`OGR_G_SetPointsZM`.
+
 - Changes impacting out-of-tree vector drivers:
 
   * :cpp:func:`GDALDataset::Close` takes now 2 input parameters ``(GDALProgressFunc pfnProgress, void *pProgressData)``,

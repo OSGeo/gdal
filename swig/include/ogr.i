@@ -3568,26 +3568,26 @@ public:
 #ifndef SWIGJAVA
   %feature("kwargs") AddPoint;
 #endif
-  void AddPoint(double x, double y, double z = 0) {
-    OGR_G_AddPoint( self, x, y, z );
+  OGRErr AddPoint(double x, double y, double z = 0) {
+    return OGR_G_AddPoint( self, x, y, z );
   }
 
 #ifndef SWIGJAVA
   %feature("kwargs") AddPointM;
 #endif
-  void AddPointM(double x, double y, double m) {
-      OGR_G_AddPointM( self, x, y, m );
+  OGRErr AddPointM(double x, double y, double m) {
+      return OGR_G_AddPointM( self, x, y, m );
   }
 
 #ifndef SWIGJAVA
   %feature("kwargs") AddPointZM;
 #endif
-  void AddPointZM(double x, double y, double z, double m) {
-      OGR_G_AddPointZM( self, x, y, z, m );
+  OGRErr AddPointZM(double x, double y, double z, double m) {
+      return OGR_G_AddPointZM( self, x, y, z, m );
   }
 
-  void AddPoint_2D(double x, double y) {
-    OGR_G_AddPoint_2D( self, x, y );
+  OGRErr AddPoint_2D(double x, double y) {
+    return OGR_G_AddPoint_2D( self, x, y );
   }
 
 /* The geometry now owns an inner geometry */
@@ -3778,29 +3778,29 @@ public:
 #ifndef SWIGJAVA
   %feature("kwargs") SetPoint;
 #endif
-  void SetPoint(int point, double x, double y, double z=0) {
-    OGR_G_SetPoint(self, point, x, y, z);
+  OGRErr SetPoint(int point, double x, double y, double z=0) {
+    return OGR_G_SetPoint(self, point, x, y, z);
   }
 
 #ifndef SWIGJAVA
   %feature("kwargs") SetPointM;
 #endif
-  void SetPointM(int point, double x, double y, double m) {
-      OGR_G_SetPointM(self, point, x, y, m);
+  OGRErr SetPointM(int point, double x, double y, double m) {
+      return OGR_G_SetPointM(self, point, x, y, m);
   }
 
 #ifndef SWIGJAVA
   %feature("kwargs") SetPointZM;
 #endif
-  void SetPointZM(int point, double x, double y, double z, double m) {
-      OGR_G_SetPointZM(self, point, x, y, z, m);
+  OGRErr SetPointZM(int point, double x, double y, double z, double m) {
+      return OGR_G_SetPointZM(self, point, x, y, z, m);
   }
 
 #ifndef SWIGJAVA
   %feature("kwargs") SetPoint_2D;
 #endif
-  void SetPoint_2D(int point, double x, double y) {
-    OGR_G_SetPoint_2D(self, point, x, y);
+  OGRErr SetPoint_2D(int point, double x, double y) {
+    return OGR_G_SetPoint_2D(self, point, x, y);
   }
 
   /* OGR >= 2.3 */
