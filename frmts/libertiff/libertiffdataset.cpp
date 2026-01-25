@@ -1370,7 +1370,7 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
             eBufType == eNativeDT &&
             nPixelSpace ==
                 static_cast<GSpacing>(nNativeDTSize) * nComponentsPerPixel &&
-            (nActualLineCount == 1 ||
+            ((nActualLineCount == 1 && !m_image->isTiled()) ||
              nLineSpace == nPixelSpace * nBlockXSize) &&
             ((bSeparate && nBandCount == 1) ||
              (!bSeparate && nBandCount == nBands &&

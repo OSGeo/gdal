@@ -5761,3 +5761,13 @@ def test_tiff_read_ossfuzz_470691578():
         ds = gdal.Open("data/gtiff/ossfuzz_470691578.tif")
         ds.GetRasterBand(1).GetOverviewCount()
         assert ds.GetRasterBand(1).Checksum() == -1
+
+
+###############################################################################
+
+
+def test_tiff_read_non_standard_tiled_blockysize_one():
+
+    with gdaltest.error_raised(gdal.CE_Warning):
+        ds = gdal.Open("data/gtiff/non_standard_tiled_blockysize_one.tif")
+    assert ds.ReadRaster() == b"\x01\x01\x01"
