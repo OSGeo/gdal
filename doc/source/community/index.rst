@@ -168,13 +168,14 @@ from all subscribers is welcome. A :ref:`list of past RFC <rfclist>` is availabl
 User survey
 +++++++++++
 
-Results of the :ref:`survey_2024` are available for review.
+Results of the :ref:`survey_2025` are available for review.
 
 
 .. toctree::
    :hidden:
 
    user_survey_2024
+   user_survey_2025
 
 
 GDAL Service Providers
