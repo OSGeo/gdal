@@ -200,8 +200,8 @@ static inline void ProcessAlphaChannels(size_t i,
     const GByte byOpacity = static_cast<GByte>(nOpacity);
     if (!bSwappedOpacity)
     {
-        outOverlaA = pabyOverlayA ? MulScale255(pabyOverlayA[i], byOpacity)
-                                  : byOpacity;
+        outOverlaA =
+            pabyOverlayA ? MulScale255(pabyOverlayA[i], byOpacity) : byOpacity;
 
         outA = pabyA ? pabyA[i] : 255;
     }
