@@ -3180,6 +3180,13 @@ bool NITFDataset::InitializeTREMetadata(bool bValidate)
         while (NITFDESGetTRE(psDES, nOffset, szTREName, &pabyTREData,
                              &nThisTRESize))
         {
+            if (nThisTRESize == 0)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid size=0 for TRE %s", szTREName);
+                break;
+            }
+
             char *pszEscapedData = CPLEscapeString(pabyTREData, nThisTRESize,
                                                    CPLES_BackslashQuotable);
             if (pszEscapedData == nullptr)
