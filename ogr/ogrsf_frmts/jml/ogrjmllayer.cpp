@@ -24,9 +24,9 @@ constexpr int PARSER_BUF_SIZE = 8192;
 OGRJMLLayer::OGRJMLLayer(const char *pszLayerName, OGRJMLDataset *poDSIn,
                          VSILFILE *fpIn)
     : m_poDS(poDSIn), poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
-      nNextFID(0), fp(fpIn), bHasReadSchema(false), oParser(nullptr),
-      currentDepth(0), bStopParsing(false), nWithoutEventCounter(0),
-      nDataHandlerCounter(0), bAccumulateElementValue(false),
+      nNextFID(0), fp(fpIn), bHasReadSchema(false), currentDepth(0),
+      bStopParsing(false), nWithoutEventCounter(0), nDataHandlerCounter(0),
+      bAccumulateElementValue(false),
       pszElementValue(static_cast<char *>(CPLCalloc(1024, 1))),
       nElementValueLen(0), nElementValueAlloc(1024), poFeature(nullptr),
       ppoFeatureTab(nullptr), nFeatureTabLength(0), nFeatureTabIndex(0),
@@ -47,8 +47,6 @@ OGRJMLLayer::OGRJMLLayer(const char *pszLayerName, OGRJMLDataset *poDSIn,
 OGRJMLLayer::~OGRJMLLayer()
 
 {
-    if (oParser)
-        XML_ParserFree(oParser);
     poFeatureDefn->Release();
 
     CPLFree(pszElementValue);
@@ -100,13 +98,11 @@ void OGRJMLLayer::ResetReading()
 
     VSIFSeekL(fp, 0, SEEK_SET);
     VSIFClearErrL(fp);
-    if (oParser)
-        XML_ParserFree(oParser);
 
-    oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementCbk, ::endElementCbk);
-    XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
-    XML_SetUserData(oParser, this);
+    poParser.reset(OGRCreateExpatXMLParser());
+    XML_SetElementHandler(poParser.get(), ::startElementCbk, ::endElementCbk);
+    XML_SetCharacterDataHandler(poParser.get(), ::dataHandlerCbk);
+    XML_SetUserData(poParser.get(), this);
 
     for (int i = nFeatureTabIndex; i < nFeatureTabLength; i++)
         delete ppoFeatureTab[i];
@@ -352,7 +348,7 @@ void OGRJMLLayer::AddStringToElementValue(const char *data, int nLen)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
                  "Too much data in a single element");
-        XML_StopParser(oParser, XML_FALSE);
+        XML_StopParser(poParser.get(), XML_FALSE);
         bStopParsing = true;
         return;
     }
@@ -362,7 +358,7 @@ void OGRJMLLayer::AddStringToElementValue(const char *data, int nLen)
             pszElementValue, nElementValueLen + nLen + 1 + 1000));
         if (pszNewElementValue == nullptr)
         {
-            XML_StopParser(oParser, XML_FALSE);
+            XML_StopParser(poParser.get(), XML_FALSE);
             bStopParsing = true;
             return;
         }
@@ -388,7 +384,7 @@ void OGRJMLLayer::dataHandlerCbk(const char *data, int nLen)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "File probably corrupted (million laugh pattern)");
-        XML_StopParser(oParser, XML_FALSE);
+        XML_StopParser(poParser.get(), XML_FALSE);
         bStopParsing = true;
         return;
     }
@@ -435,14 +431,15 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
         unsigned int nLen =
             (unsigned int)VSIFReadL(aBuf.data(), 1, aBuf.size(), fp);
         nDone = (nLen < aBuf.size());
-        if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(poParser.get(), aBuf.data(), nLen, nDone) ==
+            XML_STATUS_ERROR)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "XML parsing of JML file failed : %s "
                      "at line %d, column %d",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     (int)XML_GetCurrentLineNumber(oParser),
-                     (int)XML_GetCurrentColumnNumber(oParser));
+                     XML_ErrorString(XML_GetErrorCode(poParser.get())),
+                     (int)XML_GetCurrentLineNumber(poParser.get()),
+                     (int)XML_GetCurrentColumnNumber(poParser.get()));
             bStopParsing = true;
         }
         nWithoutEventCounter++;
@@ -485,11 +482,11 @@ void OGRJMLLayer::LoadSchema()
 
     bHasReadSchema = true;
 
-    oParser = OGRCreateExpatXMLParser();
-    XML_SetElementHandler(oParser, ::startElementLoadSchemaCbk,
+    poParser.reset(OGRCreateExpatXMLParser());
+    XML_SetElementHandler(poParser.get(), ::startElementLoadSchemaCbk,
                           ::endElementLoadSchemaCbk);
-    XML_SetCharacterDataHandler(oParser, ::dataHandlerCbk);
-    XML_SetUserData(oParser, this);
+    XML_SetCharacterDataHandler(poParser.get(), ::dataHandlerCbk);
+    XML_SetUserData(poParser.get(), this);
 
     VSIFSeekL(fp, 0, SEEK_SET);
 
@@ -501,22 +498,23 @@ void OGRJMLLayer::LoadSchema()
         const unsigned int nLen = static_cast<unsigned int>(
             VSIFReadL(aBuf.data(), 1, aBuf.size(), fp));
         nDone = (nLen < aBuf.size());
-        if (XML_Parse(oParser, aBuf.data(), nLen, nDone) == XML_STATUS_ERROR)
+        if (XML_Parse(poParser.get(), aBuf.data(), nLen, nDone) ==
+            XML_STATUS_ERROR)
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "XML parsing of JML file failed : %s at line %d, "
-                     "column %d",
-                     XML_ErrorString(XML_GetErrorCode(oParser)),
-                     static_cast<int>(XML_GetCurrentLineNumber(oParser)),
-                     static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "XML parsing of JML file failed : %s at line %d, "
+                "column %d",
+                XML_ErrorString(XML_GetErrorCode(poParser.get())),
+                static_cast<int>(XML_GetCurrentLineNumber(poParser.get())),
+                static_cast<int>(XML_GetCurrentColumnNumber(poParser.get())));
             bStopParsing = true;
         }
         nWithoutEventCounter++;
     } while (!nDone && !bStopParsing && !bSchemaFinished &&
              nWithoutEventCounter < 10);
 
-    XML_ParserFree(oParser);
-    oParser = nullptr;
+    poParser.reset();
 
     if (nWithoutEventCounter == 10)
     {
