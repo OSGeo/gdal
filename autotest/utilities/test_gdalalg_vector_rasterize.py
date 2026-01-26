@@ -13,6 +13,7 @@
 
 import contextlib
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -737,3 +738,40 @@ def test_gdalalg_vector_rasterize_to_cog(tmp_vsimem):
         ds = alg.Output()
         assert ds.GetRasterBand(1).Checksum() == 1842
         assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
+
+
+def test_gdalalg_vector_rasterize_out_of_range():
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="Attribute value 35043411 of feature 0 cannot be exactly burned to an output band of type Int16",
+    ):
+        gdal.alg.vector.rasterize(
+            input="../ogr/data/poly.shp",
+            attribute_name="PRFEDEA",
+            output_data_type="Int16",
+            output="",
+            output_format="MEM",
+            size=[100, 100],
+        )
+
+
+def test_gdalalg_vector_rasterize_invalid_attribute_value():
+
+    src_ds = gdal.VectorTranslate(
+        "",
+        "../ogr/data/poly.shp",
+        format="MEM",
+        SQLStatement="SELECT *, '3.12.1' as TXT_FIELD FROM poly",
+    )
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, match="Failed to parse attribute value"
+    ):
+        gdal.alg.vector.rasterize(
+            input=src_ds,
+            attribute_name="TXT_FIELD",
+            output="",
+            output_format="MEM",
+            size=[100, 100],
+        )

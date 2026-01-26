@@ -15,6 +15,7 @@
 #include "gdal_utils.h"
 #include "gdal_utils_priv.h"
 
+#include <cinttypes>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -584,6 +585,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
     /* -------------------------------------------------------------------- */
     int iBurnField = -1;
     bool bUseInt64 = false;
+    OGRFieldType eBurnAttributeType = OFTInteger;
     if (!osBurnAttribute.empty())
     {
         OGRFeatureDefnH hLayerDefn = OGR_L_GetLayerDefn(hSrcLayer);
@@ -598,8 +600,11 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
                 OCTDestroyCoordinateTransformation(hCT);
             return CE_Failure;
         }
-        if (OGR_Fld_GetType(OGR_FD_GetFieldDefn(hLayerDefn, iBurnField)) ==
-            OFTInteger64)
+
+        eBurnAttributeType =
+            OGR_Fld_GetType(OGR_FD_GetFieldDefn(hLayerDefn, iBurnField));
+
+        if (eBurnAttributeType == OFTInteger64)
         {
             GDALRasterBandH hBand = GDALGetRasterBand(hDstDS, anBandList[0]);
             if (hBand && GDALGetRasterDataType(hBand) == GDT_Int64)
@@ -642,6 +647,10 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
 
         for (unsigned int iBand = 0; iBand < anBandList.size(); iBand++)
         {
+            GDALRasterBandH hBand =
+                GDALGetRasterBand(hDstDS, anBandList[iBand]);
+            GDALDataType eDT = GDALGetRasterDataType(hBand);
+
             if (!adfBurnValues.empty())
                 adfFullBurnValues.push_back(adfBurnValues[std::min(
                     iBand,
@@ -652,8 +661,53 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
                     anFullBurnValues.push_back(
                         OGR_F_GetFieldAsInteger64(hFeat, iBurnField));
                 else
-                    adfFullBurnValues.push_back(
-                        OGR_F_GetFieldAsDouble(hFeat, iBurnField));
+                {
+                    double dfBurnValue;
+
+                    if (eBurnAttributeType == OFTInteger ||
+                        eBurnAttributeType == OFTReal)
+                    {
+                        dfBurnValue = OGR_F_GetFieldAsDouble(hFeat, iBurnField);
+                    }
+                    else
+                    {
+                        const char *pszAttribute =
+                            OGR_F_GetFieldAsString(hFeat, iBurnField);
+                        char *end;
+                        dfBurnValue = CPLStrtod(pszAttribute, &end);
+
+                        while (isspace(*end) && *end != '\0')
+                        {
+                            end++;
+                        }
+
+                        if (*end != '\0')
+                        {
+                            CPLErrorOnce(
+                                CE_Warning, CPLE_AppDefined,
+                                "Failed to parse attribute value %s of feature "
+                                "%" PRId64 " as a number. A value of zero will "
+                                "be burned for this feature.",
+                                pszAttribute,
+                                static_cast<int64_t>(OGR_F_GetFID(hFeat)));
+                        }
+                    }
+
+                    if (!GDALIsValueExactAs(dfBurnValue, eDT))
+                    {
+                        const char *pszAttribute =
+                            OGR_F_GetFieldAsString(hFeat, iBurnField);
+                        CPLErrorOnce(CE_Warning, CPLE_AppDefined,
+                                     "Attribute value %s of feature %" PRId64
+                                     " cannot be exactly burned to an output "
+                                     "band of type %s.",
+                                     pszAttribute,
+                                     static_cast<int64_t>(OGR_F_GetFID(hFeat)),
+                                     GDALGetDataTypeName(eDT));
+                    }
+
+                    adfFullBurnValues.push_back(dfBurnValue);
+                }
             }
             else if (b3D)
             {

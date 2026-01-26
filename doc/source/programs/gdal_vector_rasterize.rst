@@ -78,7 +78,7 @@ Program-Specific Options
 
 .. option:: -a, --attribute-name <ATTRIBUTE-NAME>
 
-    Attribute name.
+    Name of the attribute / field from which a burn value should be retrieved for each feature. GDAL will attempt to parse the field value as a number. If this is not successful, a value of zero will be written.
 
 .. option:: --band, -b <BAND>
 
