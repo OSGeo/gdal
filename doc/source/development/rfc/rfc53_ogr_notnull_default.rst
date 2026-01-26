@@ -420,7 +420,7 @@ interfaces.
 -  WFS: supports NOT NULL (for attribute fields only) on read
 -  FileGDB: supports NOT NULL (for attribute and its single geometry
    field) on read/write. GEOMETRY_NULLABLE layer creation added. DEFAULT
-   supported for String,Integer and Real fieds on creation/read (with
+   supported for String,Integer and Real fields on creation/read (with
    some bugs/weird behavior seen in FileGDB SDK and E$RI tools,
    workarounded by using the OpenFileGDB driver in problematic
    cases...). DEFAULT supported for DateTime on read, but unsupported on

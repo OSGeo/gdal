@@ -110,7 +110,6 @@ atof
 atoi
 atomicity
 attr
-Attrbute
 attrib
 attrname
 attrvalue
@@ -870,7 +869,6 @@ FHelvetica
 fi
 fid
 FID
-fieds
 FieldDomain
 fieldname
 fieldName
@@ -1732,7 +1730,6 @@ Maptech
 maptools
 Marek
 marshaller
-Matchine
 Mateusz
 MateuszL
 MateuzL
@@ -3485,7 +3482,6 @@ Viewsheds
 virtualenv
 virtualized
 virtualmem
-visibiliy
 visualisation
 vmaplv
 vnd

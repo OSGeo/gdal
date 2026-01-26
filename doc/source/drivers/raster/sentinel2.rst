@@ -212,7 +212,7 @@ The driver can be passed the following open options:
       -  4095 on areas with valid data.
 
 -  .. oo:: L1B_MODE
-      :choices: DEAULT, GRANULE, DATASTRIP
+      :choices: DEFAULT, GRANULE, DATASTRIP
       :default: DEFAULT
       :since: 3.12
 

@@ -22,7 +22,7 @@ Where:
 
 | user   = Oracle server user name, when a proxy user is used, it is in the format of proxyuser[username].
 | pwd    = user password
-| db     = Oracle Net connect identifier. This can be the TNS alias defined in the tnsnames.ora, or a quoted string of Oracle Net connect descriptor. The location of the tnsnames.ora is configureed by TNS_ADMIN environment variable. 
+| db     = Oracle Net connect identifier. This can be the TNS alias defined in the tnsnames.ora, or a quoted string of Oracle Net connect descriptor. The location of the tnsnames.ora is configured by TNS_ADMIN environment variable.
 | schema = name of a schema
 | table  = name of a GeoRaster table (table that contains GeoRaster
   columns)
@@ -46,15 +46,15 @@ Examples:
 Note: Do not use space around the field values and the commas.
 
 Note: The third example shows that the proxy user ``gisuser`` is used to connect
-to user ``scott`` The password ``welcome`` is the password to the proxy user 
-``gisuser``  
+to user ``scott`` The password ``welcome`` is the password to the proxy user
+``gisuser``
 
 Note: The fourth example shows how to connect when the database user credentials
-are stored in a client-side Oracle wallet. 
+are stored in a client-side Oracle wallet.
 
-Note: In the last two examples, the Oracle Net connect identifier is 
-left empty (",,") because it is connecting to a local database that is 
-configured in the environment.  
+Note: In the last two examples, the Oracle Net connect identifier is
+left empty (",,") because it is connecting to a local database that is
+configured in the environment.
 
 Note: If  the query results in more than one GeoRaster it will be
 treated as a GDAL metadata's list of sub-datasets (see below)
@@ -378,8 +378,8 @@ The following creation options are supported:
       :choices: TRUE, FALSE
       :default: FALSE
 
-      When this option is set to TRUE, OCI session pool is created and 
-      associated with the GeoRaster driver. The session pool is 
+      When this option is set to TRUE, OCI session pool is created and
+      associated with the GeoRaster driver. The session pool is
       destroyed when the GeoRaster driver is destroyed. This option can be used
       to improve the performance of the GeoRaster driver in GDAL APIs.
 
@@ -393,15 +393,15 @@ The following creation options are supported:
       :default: 10
 
       Only if :co:`POOL=TRUE`.
-      The maximum number of the sessions that can be opened in a session pool. 
-      Must be greater than 0. 
+      The maximum number of the sessions that can be opened in a session pool.
+      Must be greater than 0.
 
 -  .. co:: POOL_SESSINCR
       :default: 2
 
       Only if :co:`POOL=TRUE`.
       The next increment number for the sessions to be started if the current
-      number of sessions is less than POOL_SESSMAX. Must be greater than 0. 
+      number of sessions is less than POOL_SESSMAX. Must be greater than 0.
 
 Open Options
 ------------
@@ -413,11 +413,11 @@ The following open options are supported:
       :choices: TRUE, FALSE
       :default: FALSE
 
-      When this option is set to TRUE, OCI session pool is created and 
-      associated with the GeoRaster driver. The session pool is 
+      When this option is set to TRUE, OCI session pool is created and
+      associated with the GeoRaster driver. The session pool is
       destroyed when the GeoRaster driver is destroyed. This option can be used
-      to improve the performance of the GeoRaster driver when there are 
-      concurrent reading through the GeoRaster driver in GDAL APIs. 
+      to improve the performance of the GeoRaster driver when there are
+      concurrent reading through the GeoRaster driver in GDAL APIs.
 
 -  .. oo:: POOL_SESSMIN
       :default: 1
@@ -429,15 +429,15 @@ The following open options are supported:
       :default: 10
 
       Only if :oo:`POOL=TRUE`.
-      The maximum number of the sessions that can be opened in a session pool. 
-      Must be greater than 0. 
+      The maximum number of the sessions that can be opened in a session pool.
+      Must be greater than 0.
 
 -  .. oo:: POOL_SESSINCR
       :default: 2
 
       Only if :oo:`POOL=TRUE`.
       The next increment number for the sessions to be started if the current
-      number of sessions is less than POOL_SESSMAX. Must be greater than 0. 
+      number of sessions is less than POOL_SESSMAX. Must be greater than 0.
 
 Importing GeoRaster
 -------------------
