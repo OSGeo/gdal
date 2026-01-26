@@ -375,11 +375,14 @@ void GDALDefaultOverviews::OverviewScan()
                 osOvrFilename = pszProxyOvrFilename;
             }
 
+            // Exclude TILEDB because reading from /vsis3/ can be really slow
+            const char *const apszAllowedDrivers[] = {"-TILEDB", nullptr};
             CPLPushErrorHandler(CPLQuietErrorHandler);
             poODS = GDALDataset::Open(
                 osOvrFilename,
                 GDAL_OF_RASTER |
-                    (poDS->GetAccess() == GA_Update ? GDAL_OF_UPDATE : 0));
+                    (poDS->GetAccess() == GA_Update ? GDAL_OF_UPDATE : 0),
+                apszAllowedDrivers);
             CPLPopErrorHandler();
         }
     }
