@@ -270,8 +270,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 }
 
 /************************************************************************/
-<<<<<<< HEAD
-/*                   ZarrSharedResource::GetRootGroup()                 */
+/*                  ZarrSharedResource::GetRootGroup()                  */
 /************************************************************************/
 
 std::shared_ptr<ZarrGroupBase> ZarrSharedResource::GetRootGroup()
@@ -285,10 +284,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::GetRootGroup()
 }
 
 /************************************************************************/
-/*         ZarrSharedResource::InitConsolidatedMetadataIfNeeded()       */
-=======
 /*        ZarrSharedResource::InitConsolidatedMetadataIfNeeded()        */
->>>>>>> e2e413714c (Apply fix_gdal_block_headers.py)
 /************************************************************************/
 
 void ZarrSharedResource::InitConsolidatedMetadataIfNeeded()

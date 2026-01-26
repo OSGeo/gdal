@@ -2881,11 +2881,7 @@ void ZarrArray::NotifyChildrenOfDeletion()
 }
 
 /************************************************************************/
-<<<<<<< HEAD
-/*                           ParseProjCRS()                             */
-=======
-/*                       ParseSpecialAttributes()                       */
->>>>>>> e2e413714c (Apply fix_gdal_block_headers.py)
+/*                            ParseProjCRS()                            */
 /************************************************************************/
 
 static void ParseProjCRS(const ZarrAttributeGroup *poAttrGroup,

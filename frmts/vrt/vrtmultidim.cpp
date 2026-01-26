@@ -1195,7 +1195,6 @@ VRTMDArray::Create(const std::shared_ptr<VRTGroup> &poThisGroup,
 }
 
 /************************************************************************/
-<<<<<<< HEAD
 /*                          GetOverviewCount()                          */
 /************************************************************************/
 
@@ -1232,10 +1231,7 @@ std::shared_ptr<GDALMDArray> VRTMDArray::GetOverview(int idx) const
 }
 
 /************************************************************************/
-/*                              Create()                                */
-=======
 /*                               Create()                               */
->>>>>>> e2e413714c (Apply fix_gdal_block_headers.py)
 /************************************************************************/
 
 std::shared_ptr<VRTMDArray> VRTMDArray::Create(const char *pszVRTPath,
