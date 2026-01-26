@@ -197,10 +197,11 @@ static inline void ProcessAlphaChannels(size_t i,
                                         GByte &outFinalAlpha)
 {
     // Apply opacity depending on whether overlay and base were swapped
+    const GByte byOpacity = static_cast<GByte>(nOpacity);
     if (!bSwappedOpacity)
     {
-        outOverlaA = pabyOverlayA ? MulScale255(pabyOverlayA[i], nOpacity)
-                                  : static_cast<GByte>(nOpacity);
+        outOverlaA = pabyOverlayA ? MulScale255(pabyOverlayA[i], byOpacity)
+                                  : byOpacity;
 
         outA = pabyA ? pabyA[i] : 255;
     }
@@ -211,8 +212,7 @@ static inline void ProcessAlphaChannels(size_t i,
         {
             outOverlaA = pabyOverlayA ? pabyOverlayA[i] : 255;
         }
-        outA = pabyA ? MulScale255(pabyA[i], nOpacity)
-                     : static_cast<GByte>(nOpacity);
+        outA = pabyA ? MulScale255(pabyA[i], byOpacity) : byOpacity;
     }
 
     // Da'  = Sa + Da - Sa.Da
