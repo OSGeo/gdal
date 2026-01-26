@@ -42,7 +42,7 @@
 #ifdef HAVE_XERCES
 
 /************************************************************************/
-/*                        GMLXercesHandler()                            */
+/*                          GMLXercesHandler()                          */
 /************************************************************************/
 
 GMLXercesHandler::GMLXercesHandler(GMLReader *poReader)
@@ -51,7 +51,7 @@ GMLXercesHandler::GMLXercesHandler(GMLReader *poReader)
 }
 
 /************************************************************************/
-/*                    GMLXercesHandlerDealWithError()                   */
+/*                   GMLXercesHandlerDealWithError()                    */
 /************************************************************************/
 
 static void GMLXercesHandlerDealWithError(OGRErr eErr)
@@ -125,7 +125,7 @@ void GMLXercesHandler::fatalError(const SAXParseException &exception)
 }
 
 /************************************************************************/
-/*                             startEntity()                            */
+/*                            startEntity()                             */
 /************************************************************************/
 
 void GMLXercesHandler::startEntity(const XMLCh *const /* name */)
@@ -168,7 +168,7 @@ const char *GMLXercesHandler::GetFID(void *attr)
 }
 
 /************************************************************************/
-/*                        AddAttributes()                               */
+/*                           AddAttributes()                            */
 /************************************************************************/
 
 CPLXMLNode *GMLXercesHandler::AddAttributes(CPLXMLNode *psNode, void *attr)
@@ -197,7 +197,7 @@ CPLXMLNode *GMLXercesHandler::AddAttributes(CPLXMLNode *psNode, void *attr)
 }
 
 /************************************************************************/
-/*                    GetAttributeValue()                               */
+/*                         GetAttributeValue()                          */
 /************************************************************************/
 
 char *GMLXercesHandler::GetAttributeValue(void *attr,
@@ -217,7 +217,7 @@ char *GMLXercesHandler::GetAttributeValue(void *attr,
 }
 
 /************************************************************************/
-/*                    GetAttributeByIdx()                               */
+/*                         GetAttributeByIdx()                          */
 /************************************************************************/
 
 char *GMLXercesHandler::GetAttributeByIdx(void *attr, unsigned int idx,
@@ -241,7 +241,7 @@ char *GMLXercesHandler::GetAttributeByIdx(void *attr, unsigned int idx,
 #ifdef HAVE_EXPAT
 
 /************************************************************************/
-/*                            GMLExpatHandler()                         */
+/*                          GMLExpatHandler()                           */
 /************************************************************************/
 
 GMLExpatHandler::GMLExpatHandler(GMLReader *poReader, XML_Parser oParser)
@@ -251,7 +251,7 @@ GMLExpatHandler::GMLExpatHandler(GMLReader *poReader, XML_Parser oParser)
 }
 
 /************************************************************************/
-/*                  GMLExpatHandler::DealWithError()                    */
+/*                   GMLExpatHandler::DealWithError()                   */
 /************************************************************************/
 
 void GMLExpatHandler::DealWithError(OGRErr eErr)
@@ -266,7 +266,7 @@ void GMLExpatHandler::DealWithError(OGRErr eErr)
 }
 
 /************************************************************************/
-/*                           startElementCbk()                          */
+/*                          startElementCbk()                           */
 /************************************************************************/
 
 void XMLCALL GMLExpatHandler::startElementCbk(void *pUserData,
@@ -292,7 +292,7 @@ void XMLCALL GMLExpatHandler::startElementCbk(void *pUserData,
 }
 
 /************************************************************************/
-/*                            endElementCbk()                           */
+/*                           endElementCbk()                            */
 /************************************************************************/
 void XMLCALL GMLExpatHandler::endElementCbk(void *pUserData,
                                             const char * /* pszName */)
@@ -305,7 +305,7 @@ void XMLCALL GMLExpatHandler::endElementCbk(void *pUserData,
 }
 
 /************************************************************************/
-/*                            dataHandlerCbk()                          */
+/*                           dataHandlerCbk()                           */
 /************************************************************************/
 
 void XMLCALL GMLExpatHandler::dataHandlerCbk(void *pUserData, const char *data,
@@ -355,7 +355,7 @@ const char *GMLExpatHandler::GetFID(void *attr)
 }
 
 /************************************************************************/
-/*                        AddAttributes()                               */
+/*                           AddAttributes()                            */
 /************************************************************************/
 
 CPLXMLNode *GMLExpatHandler::AddAttributes(CPLXMLNode *psNode, void *attr)
@@ -383,7 +383,7 @@ CPLXMLNode *GMLExpatHandler::AddAttributes(CPLXMLNode *psNode, void *attr)
 }
 
 /************************************************************************/
-/*                    GetAttributeValue()                               */
+/*                         GetAttributeValue()                          */
 /************************************************************************/
 
 char *GMLExpatHandler::GetAttributeValue(void *attr,
@@ -402,7 +402,7 @@ char *GMLExpatHandler::GetAttributeValue(void *attr,
 }
 
 /************************************************************************/
-/*                    GetAttributeByIdx()                               */
+/*                         GetAttributeByIdx()                          */
 /************************************************************************/
 
 // CAUTION: should be called with increasing idx starting from 0 and
@@ -473,7 +473,7 @@ struct _GeometryNamesStruct
 };
 
 /************************************************************************/
-/*                            GMLHandler()                              */
+/*                             GMLHandler()                             */
 /************************************************************************/
 
 GMLHandler::GMLHandler(GMLReader *poReader)
@@ -517,7 +517,7 @@ GMLHandler::~GMLHandler()
 }
 
 /************************************************************************/
-/*                             startElement()                           */
+/*                            startElement()                            */
 /************************************************************************/
 
 OGRErr GMLHandler::startElement(const char *pszName, int nLenName, void *attr)
@@ -583,7 +583,7 @@ OGRErr GMLHandler::startElement(const char *pszName, int nLenName, void *attr)
 }
 
 /************************************************************************/
-/*                              endElement()                            */
+/*                             endElement()                             */
 /************************************************************************/
 
 OGRErr GMLHandler::endElement()
@@ -618,7 +618,7 @@ OGRErr GMLHandler::endElement()
 }
 
 /************************************************************************/
-/*                              dataHandler()                           */
+/*                            dataHandler()                             */
 /************************************************************************/
 
 OGRErr GMLHandler::dataHandler(const char *data, int nLen)
@@ -684,7 +684,7 @@ OGRErr GMLHandler::startElementBoundedBy(const char *pszName, int /*nLenName*/,
 }
 
 /************************************************************************/
-/*                       startElementGeometry()                         */
+/*                        startElementGeometry()                        */
 /************************************************************************/
 
 OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName,
@@ -772,7 +772,7 @@ OGRErr GMLHandler::startElementGeometry(const char *pszName, int nLenName,
 }
 
 /************************************************************************/
-/*                    startElementCityGMLGenericAttr()                  */
+/*                   startElementCityGMLGenericAttr()                   */
 /************************************************************************/
 
 OGRErr GMLHandler::startElementCityGMLGenericAttr(const char *pszName,
@@ -795,7 +795,7 @@ OGRErr GMLHandler::startElementCityGMLGenericAttr(const char *pszName,
 }
 
 /************************************************************************/
-/*                       DealWithAttributes()                           */
+/*                         DealWithAttributes()                         */
 /************************************************************************/
 
 void GMLHandler::DealWithAttributes(const char *pszName, int nLenName,
@@ -934,7 +934,7 @@ void GMLHandler::DealWithAttributes(const char *pszName, int nLenName,
 }
 
 /************************************************************************/
-/*                        IsConditionMatched()                          */
+/*                         IsConditionMatched()                         */
 /************************************************************************/
 
 /* FIXME! 'and' / 'or' operators are evaluated left to right, without */
@@ -1079,7 +1079,7 @@ int GMLHandler::FindRealPropertyByCheckingConditions(int nIdx, void *attr)
 }
 
 /************************************************************************/
-/*                      startElementFeatureAttribute()                  */
+/*                    startElementFeatureAttribute()                    */
 /************************************************************************/
 
 OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
@@ -1352,7 +1352,7 @@ OGRErr GMLHandler::startElementFeatureAttribute(const char *pszName,
 }
 
 /************************************************************************/
-/*                         startElementTop()                            */
+/*                          startElementTop()                           */
 /************************************************************************/
 
 OGRErr GMLHandler::startElementTop(const char *pszName, int /*nLenName*/,
@@ -1494,7 +1494,7 @@ OGRErr GMLHandler::endElementIgnoredFeature()
 }
 
 /************************************************************************/
-/*                         endElementBoundedBy()                        */
+/*                        endElementBoundedBy()                         */
 /************************************************************************/
 OGRErr GMLHandler::endElementBoundedBy()
 
@@ -1508,7 +1508,7 @@ OGRErr GMLHandler::endElementBoundedBy()
 }
 
 /************************************************************************/
-/*                     endElementBoundedByInFeature()                   */
+/*                    endElementBoundedByInFeature()                    */
 /************************************************************************/
 OGRErr GMLHandler::endElementBoundedByInFeature()
 
@@ -1532,7 +1532,7 @@ OGRErr GMLHandler::endElementBoundedByInFeature()
 }
 
 /************************************************************************/
-/*                      ParseAIXMElevationProperties()                  */
+/*                    ParseAIXMElevationProperties()                    */
 /************************************************************************/
 
 void GMLHandler::ParseAIXMElevationProperties(const CPLXMLNode *psGML)
@@ -1587,7 +1587,7 @@ void GMLHandler::ParseAIXMElevationProperties(const CPLXMLNode *psGML)
 }
 
 /************************************************************************/
-/*                       ParseAIXMElevationPoint()                      */
+/*                      ParseAIXMElevationPoint()                       */
 /************************************************************************/
 
 CPLXMLNode *GMLHandler::ParseAIXMElevationPoint(CPLXMLNode *psGML)
@@ -1918,7 +1918,7 @@ OGRErr GMLHandler::startElementFeatureProperty(const char * /*pszName*/,
 }
 
 /************************************************************************/
-/*                      endElementFeatureProperty()                      */
+/*                     endElementFeatureProperty()                      */
 /************************************************************************/
 
 OGRErr GMLHandler::endElementFeatureProperty()
@@ -1935,7 +1935,7 @@ OGRErr GMLHandler::endElementFeatureProperty()
 }
 
 /************************************************************************/
-/*                          endElementFeature()                         */
+/*                         endElementFeature()                          */
 /************************************************************************/
 OGRErr GMLHandler::endElementFeature()
 
@@ -1985,7 +1985,7 @@ OGRErr GMLHandler::endElementFeature()
 }
 
 /************************************************************************/
-/*                          endElementDefault()                         */
+/*                         endElementDefault()                          */
 /************************************************************************/
 OGRErr GMLHandler::endElementDefault()
 
@@ -1997,7 +1997,7 @@ OGRErr GMLHandler::endElementDefault()
 }
 
 /************************************************************************/
-/*                         dataHandlerAttribute()                       */
+/*                        dataHandlerAttribute()                        */
 /************************************************************************/
 
 OGRErr GMLHandler::dataHandlerAttribute(const char *data, int nLen)
@@ -2051,7 +2051,7 @@ OGRErr GMLHandler::dataHandlerAttribute(const char *data, int nLen)
 }
 
 /************************************************************************/
-/*                         dataHandlerGeometry()                        */
+/*                        dataHandlerGeometry()                         */
 /************************************************************************/
 
 OGRErr GMLHandler::dataHandlerGeometry(const char *data, int nLen)

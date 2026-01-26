@@ -136,7 +136,7 @@ void ILI2Handler::endElement(CPL_UNUSED const XMLCh *const uri,
 }
 
 /************************************************************************/
-/*                     characters() (xerces 3 version)                  */
+/*                   characters() (xerces 3 version)                    */
 /************************************************************************/
 
 void ILI2Handler::characters(const XMLCh *const chars,

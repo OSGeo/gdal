@@ -25,7 +25,7 @@
 #include "ograpispy.h"
 
 /************************************************************************/
-/*                         OGRGeomFieldDefn()                           */
+/*                          OGRGeomFieldDefn()                          */
 /************************************************************************/
 
 /**
@@ -63,7 +63,7 @@ OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn *poPrototype)
 }
 
 /************************************************************************/
-/*                           OGR_GFld_Create()                          */
+/*                          OGR_GFld_Create()                           */
 /************************************************************************/
 /**
  * \brief Create a new field geometry definition.
@@ -112,7 +112,7 @@ OGRGeomFieldDefn::~OGRGeomFieldDefn()
 }
 
 /************************************************************************/
-/*                   OGRGeomFieldDefn::OGRGeomFieldDefn()               */
+/*                 OGRGeomFieldDefn::OGRGeomFieldDefn()                 */
 /************************************************************************/
 
 /**
@@ -132,7 +132,7 @@ OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn &oOther)
 }
 
 /************************************************************************/
-/*                   OGRGeomFieldDefn::OGRGeomFieldDefn()               */
+/*                 OGRGeomFieldDefn::OGRGeomFieldDefn()                 */
 /************************************************************************/
 
 /**
@@ -150,7 +150,7 @@ OGRGeomFieldDefn::OGRGeomFieldDefn(OGRGeomFieldDefn &&oOther)
 }
 
 /************************************************************************/
-/*                          OGRGeomFieldDefn::operator=()               */
+/*                    OGRGeomFieldDefn::operator=()                     */
 /************************************************************************/
 
 /**
@@ -180,7 +180,7 @@ OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(const OGRGeomFieldDefn &oOther)
 }
 
 /************************************************************************/
-/*                          OGRGeomFieldDefn::operator=()               */
+/*                    OGRGeomFieldDefn::operator=()                     */
 /************************************************************************/
 
 /**
@@ -205,7 +205,7 @@ OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(OGRGeomFieldDefn &&oOther)
 }
 
 /************************************************************************/
-/*                         OGR_GFld_Destroy()                           */
+/*                          OGR_GFld_Destroy()                          */
 /************************************************************************/
 /**
  * \brief Destroy a geometry field definition.
@@ -258,7 +258,7 @@ void OGRGeomFieldDefn::SetName(const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                         OGR_GFld_SetName()                           */
+/*                          OGR_GFld_SetName()                          */
 /************************************************************************/
 /**
  * \brief Reset the name of this field.
@@ -472,7 +472,7 @@ int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
 }
 
 /************************************************************************/
-/*                            SetIgnored()                              */
+/*                             SetIgnored()                             */
 /************************************************************************/
 
 /**
@@ -641,7 +641,7 @@ void OGR_GFld_SetSpatialRef(OGRGeomFieldDefnH hDefn, OGRSpatialReferenceH hSRS)
 }
 
 /************************************************************************/
-/*                             IsSame()                                 */
+/*                               IsSame()                               */
 /************************************************************************/
 
 /**
@@ -695,7 +695,7 @@ int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
  */
 
 /************************************************************************/
-/*                         OGR_GFld_IsNullable()                        */
+/*                        OGR_GFld_IsNullable()                         */
 /************************************************************************/
 
 /**
@@ -789,7 +789,7 @@ void OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int bNullableIn)
 }
 
 /************************************************************************/
-/*                        GetCoordinatePrecision()                      */
+/*                       GetCoordinatePrecision()                       */
 /************************************************************************/
 
 /**
@@ -804,7 +804,7 @@ void OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int bNullableIn)
  */
 
 /************************************************************************/
-/*                     OGR_GFld_GetCoordinatePrecision()                */
+/*                  OGR_GFld_GetCoordinatePrecision()                   */
 /************************************************************************/
 
 /**
@@ -825,7 +825,7 @@ OGR_GFld_GetCoordinatePrecision(OGRGeomFieldDefnH hDefn)
 }
 
 /************************************************************************/
-/*                        SetCoordinatePrecision()                      */
+/*                       SetCoordinatePrecision()                       */
 /************************************************************************/
 
 /**
@@ -854,7 +854,7 @@ void OGRGeomFieldDefn::SetCoordinatePrecision(
 }
 
 /************************************************************************/
-/*                     OGR_GFld_SetCoordinatePrecision()                */
+/*                  OGR_GFld_SetCoordinatePrecision()                   */
 /************************************************************************/
 
 /**
@@ -896,7 +896,7 @@ void OGRGeomFieldDefn::Seal()
 }
 
 /************************************************************************/
-/*                       OGRGeomFieldDefn::Unseal()                     */
+/*                      OGRGeomFieldDefn::Unseal()                      */
 /************************************************************************/
 
 /** Unseal a OGRGeomFieldDefn.
@@ -915,7 +915,7 @@ void OGRGeomFieldDefn::Unseal()
 }
 
 /************************************************************************/
-/*                  OGRGeomFieldDefn::GetTemporaryUnsealer()            */
+/*               OGRGeomFieldDefn::GetTemporaryUnsealer()               */
 /************************************************************************/
 
 /** Return an object that temporary unseals the OGRGeomFieldDefn

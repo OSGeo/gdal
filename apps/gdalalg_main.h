@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                         GDALMainAlgorithm                            */
+/*                          GDALMainAlgorithm                           */
 /************************************************************************/
 
 class GDALMainAlgorithm final : public GDALAlgorithm

@@ -14,7 +14,7 @@
 #include "cpl_conv.h"
 
 /************************************************************************/
-/*                       OGRDGNDriverIdentify()                         */
+/*                        OGRDGNDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRDGNDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -70,7 +70,7 @@ static GDALDataset *OGRDGNDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 static GDALDataset *OGRDGNDriverCreate(const char *, int /* nBands */,
@@ -84,7 +84,7 @@ static GDALDataset *OGRDGNDriverCreate(const char *, int /* nBands */,
 }
 
 /************************************************************************/
-/*                          RegisterOGRDGN()                            */
+/*                           RegisterOGRDGN()                           */
 /************************************************************************/
 
 void RegisterOGRDGN()

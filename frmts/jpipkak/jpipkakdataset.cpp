@@ -186,7 +186,7 @@ JPIPKAKRasterBand::JPIPKAKRasterBand(int nBandIn, int nDiscardLevelsIn,
 }
 
 /************************************************************************/
-/*                         ~JPIPKAKRasterBand()                          */
+/*                         ~JPIPKAKRasterBand()                         */
 /************************************************************************/
 
 JPIPKAKRasterBand::~JPIPKAKRasterBand()
@@ -1050,7 +1050,7 @@ int JPIPKAKDataset::ReadFromInput(GByte *pabyData, int nLen, int &bError)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *JPIPKAKDataset::GetSpatialRef() const
@@ -1090,7 +1090,7 @@ int JPIPKAKDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                           GetGCPSpatialRef()                         */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
 const OGRSpatialReference *JPIPKAKDataset::GetGCPSpatialRef() const
@@ -1208,9 +1208,9 @@ int JPIPKAKDataset::TestUseBlockIO(CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
     return bUseBlockedIO;
 }
 
-/*************************************************************************/
-/*                     BeginAsyncReader()                              */
-/*************************************************************************/
+/************************************************************************/
+/*                          BeginAsyncReader()                          */
+/************************************************************************/
 
 GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
     int xOff, int yOff, int xSize, int ySize, void *pBuf, int bufXSize,
@@ -1373,7 +1373,7 @@ GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
 }
 
 /************************************************************************/
-/*                  EndAsyncReader()                                  */
+/*                           EndAsyncReader()                           */
 /************************************************************************/
 
 void JPIPKAKDataset::EndAsyncReader(GDALAsyncReader *poARIO)
@@ -1440,7 +1440,7 @@ void GDALRegister_JPIPKAK()
 }
 
 /************************************************************************/
-/*                         JPIPKAKAsyncReader                         */
+/*                          JPIPKAKAsyncReader                          */
 /************************************************************************/
 JPIPKAKAsyncReader::JPIPKAKAsyncReader()
 {
@@ -1458,7 +1458,7 @@ JPIPKAKAsyncReader::JPIPKAKAsyncReader()
 }
 
 /************************************************************************/
-/*                        ~JPIPKAKAsyncReader                         */
+/*                         ~JPIPKAKAsyncReader                          */
 /************************************************************************/
 JPIPKAKAsyncReader::~JPIPKAKAsyncReader()
 {

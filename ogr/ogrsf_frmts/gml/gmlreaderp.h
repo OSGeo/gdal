@@ -41,7 +41,7 @@ typedef struct _GeometryNamesStruct GeometryNamesStruct;
 bool OGRGMLIsGeometryElement(const char *pszElement);
 
 /************************************************************************/
-/*                        GFSTemplateList                               */
+/*                           GFSTemplateList                            */
 /************************************************************************/
 
 class GFSTemplateItem;
@@ -226,7 +226,7 @@ class GMLHandler /* non final */
 #if defined(HAVE_XERCES)
 
 /************************************************************************/
-/*                         GMLXercesHandler                             */
+/*                           GMLXercesHandler                           */
 /************************************************************************/
 class GMLXercesHandler final : public DefaultHandler, public GMLHandler
 {

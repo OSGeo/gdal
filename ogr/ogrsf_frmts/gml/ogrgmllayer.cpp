@@ -22,7 +22,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                           OGRGMLLayer()                              */
+/*                            OGRGMLLayer()                             */
 /************************************************************************/
 
 OGRGMLLayer::OGRGMLLayer(const char *pszName, bool bWriterIn,
@@ -46,7 +46,7 @@ OGRGMLLayer::OGRGMLLayer(const char *pszName, bool bWriterIn,
 }
 
 /************************************************************************/
-/*                           ~OGRGMLLayer()                           */
+/*                            ~OGRGMLLayer()                            */
 /************************************************************************/
 
 OGRGMLLayer::~OGRGMLLayer()
@@ -96,7 +96,7 @@ void OGRGMLLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                              Increment()                             */
+/*                             Increment()                              */
 /************************************************************************/
 
 static GIntBig Increment(GIntBig nVal)
@@ -638,7 +638,7 @@ GIntBig OGRGMLLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRGMLLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -692,7 +692,7 @@ static void GMLWriteField(OGRGMLDataSource *poDS, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRGMLLayer::ICreateFeature(OGRFeature *poFeature)

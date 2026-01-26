@@ -27,7 +27,7 @@
 #endif
 
 /************************************************************************/
-/*                        GDALTeeStepAlgorithmAbstract                  */
+/*                     GDALTeeStepAlgorithmAbstract                     */
 /************************************************************************/
 
 class GDALTeeStepAlgorithmAbstract /* non final */
@@ -58,7 +58,7 @@ class GDALTeeStepAlgorithmAbstract /* non final */
 };
 
 /************************************************************************/
-/*                        GDALTeeStepAlgorithmBase                      */
+/*                       GDALTeeStepAlgorithmBase                       */
 /************************************************************************/
 
 template <class BaseStepAlgorithm, int nDatasetType>
@@ -110,7 +110,7 @@ class GDALTeeStepAlgorithmBase /* non final */
 };
 
 /************************************************************************/
-/*             GDALTeeStepAlgorithmBase::GDALTeeStepAlgorithmBase()     */
+/*         GDALTeeStepAlgorithmBase::GDALTeeStepAlgorithmBase()         */
 /************************************************************************/
 
 template <class BaseStepAlgorithm, int nDatasetType>
@@ -133,7 +133,7 @@ GDALTeeStepAlgorithmBase<BaseStepAlgorithm,
 }
 
 /************************************************************************/
-/*                  GDALTeeStepAlgorithmBase::RunStep()                 */
+/*                 GDALTeeStepAlgorithmBase::RunStep()                  */
 /************************************************************************/
 
 template <class BaseStepAlgorithm, int nDatasetType>
@@ -219,7 +219,7 @@ bool GDALTeeStepAlgorithmBase<BaseStepAlgorithm, nDatasetType>::RunStep(
 }
 
 /************************************************************************/
-/*                         GDALTeeRasterAlgorithm                       */
+/*                        GDALTeeRasterAlgorithm                        */
 /************************************************************************/
 
 class GDALTeeRasterAlgorithm final
@@ -233,7 +233,7 @@ class GDALTeeRasterAlgorithm final
 };
 
 /************************************************************************/
-/*                         GDALTeeVectorAlgorithm                       */
+/*                        GDALTeeVectorAlgorithm                        */
 /************************************************************************/
 
 class GDALTeeVectorAlgorithm final

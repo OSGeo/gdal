@@ -27,7 +27,7 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                         GetEmptyNonEmptyFlag()                       */
+/*                        GetEmptyNonEmptyFlag()                        */
 /************************************************************************/
 
 static int GetEmptyNonEmptyFlag(double x, double y)
@@ -121,7 +121,7 @@ OGRPoint *OGRPoint::createXYM(double x, double y, double m)
 }
 
 /************************************************************************/
-/*                       OGRPoint( const OGRPoint& )                    */
+/*                     OGRPoint( const OGRPoint& )                      */
 /************************************************************************/
 
 /**
@@ -131,7 +131,7 @@ OGRPoint *OGRPoint::createXYM(double x, double y, double m)
 OGRPoint::OGRPoint(const OGRPoint &) = default;
 
 /************************************************************************/
-/*                       operator=( const OGRPoint& )                   */
+/*                     operator=( const OGRPoint& )                     */
 /************************************************************************/
 
 /**
@@ -735,7 +735,7 @@ OGRBoolean OGRPoint::Within(const OGRGeometry *poOtherGeom) const
 }
 
 /************************************************************************/
-/*                              Intersects()                            */
+/*                             Intersects()                             */
 /************************************************************************/
 
 OGRBoolean OGRPoint::Intersects(const OGRGeometry *poOtherGeom) const

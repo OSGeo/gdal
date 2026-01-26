@@ -22,7 +22,7 @@
 class OGRVDVDataSource;
 
 /************************************************************************/
-/*                        OGRIDFDataSource                              */
+/*                           OGRIDFDataSource                           */
 /************************************************************************/
 
 class OGRIDFDataSource final : public GDALDataset
@@ -46,7 +46,7 @@ class OGRIDFDataSource final : public GDALDataset
 };
 
 /************************************************************************/
-/*                          OGRVDVLayer                                 */
+/*                             OGRVDVLayer                              */
 /************************************************************************/
 
 class OGRVDVLayer final : public OGRLayer
@@ -180,7 +180,7 @@ class OGRVDVWriterLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                        OGRVDVDataSource                              */
+/*                           OGRVDVDataSource                           */
 /************************************************************************/
 
 class OGRVDVDataSource final : public GDALDataset

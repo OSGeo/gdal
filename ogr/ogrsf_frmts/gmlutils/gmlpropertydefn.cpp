@@ -63,7 +63,7 @@ void GMLPropertyDefn::SetSrcElement(const char *pszSrcElement)
 }
 
 /************************************************************************/
-/*                           SetCondition()                             */
+/*                            SetCondition()                            */
 /************************************************************************/
 
 void GMLPropertyDefn::SetCondition(const char *pszCondition)
@@ -278,7 +278,7 @@ GMLGeometryPropertyDefn::~GMLGeometryPropertyDefn()
 }
 
 /************************************************************************/
-/*                           MergeSRSName()                             */
+/*                            MergeSRSName()                            */
 /************************************************************************/
 
 void GMLGeometryPropertyDefn::MergeSRSName(const std::string &osSRSName)

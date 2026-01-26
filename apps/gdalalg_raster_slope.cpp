@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*       GDALRasterSlopeAlgorithm::GDALRasterSlopeAlgorithm()   */
+/*         GDALRasterSlopeAlgorithm::GDALRasterSlopeAlgorithm()         */
 /************************************************************************/
 
 GDALRasterSlopeAlgorithm::GDALRasterSlopeAlgorithm(bool standaloneStep)
@@ -54,7 +54,7 @@ GDALRasterSlopeAlgorithm::GDALRasterSlopeAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                GDALRasterSlopeAlgorithm::RunStep()                   */
+/*                 GDALRasterSlopeAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterSlopeAlgorithm::RunStep(GDALPipelineStepRunContext &)

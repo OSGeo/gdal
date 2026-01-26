@@ -121,7 +121,7 @@ class GS7BGRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           GS7BGRasterBand()                          */
+/*                          GS7BGRasterBand()                           */
 /************************************************************************/
 
 GS7BGRasterBand::GS7BGRasterBand(GS7BGDataset *poDSIn, int nBandIn)
@@ -140,7 +140,7 @@ GS7BGRasterBand::GS7BGRasterBand(GS7BGDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                           ~GSBGRasterBand()                          */
+/*                          ~GSBGRasterBand()                           */
 /************************************************************************/
 
 GS7BGRasterBand::~GS7BGRasterBand()
@@ -151,7 +151,7 @@ GS7BGRasterBand::~GS7BGRasterBand()
 }
 
 /************************************************************************/
-/*                          ScanForMinMaxZ()                            */
+/*                           ScanForMinMaxZ()                           */
 /************************************************************************/
 
 CPLErr GS7BGRasterBand::ScanForMinMaxZ()
@@ -857,7 +857,7 @@ CPLErr GS7BGDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                             WriteHeader()                            */
+/*                            WriteHeader()                             */
 /************************************************************************/
 
 CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
@@ -1023,7 +1023,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
 }
 
 /************************************************************************/
-/*                      GS7BGCreateCheckDims()                          */
+/*                        GS7BGCreateCheckDims()                        */
 /************************************************************************/
 
 static bool GS7BGCreateCheckDims(int nXSize, int nYSize)
@@ -1280,7 +1280,7 @@ GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GDALRegister_GS7BG()                        */
+/*                         GDALRegister_GS7BG()                         */
 /************************************************************************/
 void GDALRegister_GS7BG()
 

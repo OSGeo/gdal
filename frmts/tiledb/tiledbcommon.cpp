@@ -16,7 +16,7 @@
 TileDBDataset::~TileDBDataset() = default;
 
 /************************************************************************/
-/*                      VSI_to_tiledb_uri()                             */
+/*                         VSI_to_tiledb_uri()                          */
 /************************************************************************/
 
 CPLString TileDBDataset::VSI_to_tiledb_uri(const char *pszUri)
@@ -47,7 +47,7 @@ CPLString TileDBDataset::VSI_to_tiledb_uri(const char *pszUri)
 }
 
 /************************************************************************/
-/*                      TileDBObjectExists()                            */
+/*                         TileDBObjectExists()                         */
 /************************************************************************/
 bool TileDBDataset::TileDBObjectExists(const std::string &osArrayUri)
 {
@@ -57,7 +57,7 @@ bool TileDBDataset::TileDBObjectExists(const std::string &osArrayUri)
 }
 
 /************************************************************************/
-/*                           AddFilter()                                */
+/*                             AddFilter()                              */
 /************************************************************************/
 
 CPLErr TileDBDataset::AddFilter(tiledb::Context &ctx,
@@ -138,7 +138,7 @@ int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Delete()                                */
+/*                               Delete()                               */
 /************************************************************************/
 
 CPLErr TileDBDataset::Delete(const char *pszFilename)
@@ -334,7 +334,7 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *TileDBDataset::Create(const char *pszFilename, int nXSize,
@@ -359,7 +359,7 @@ GDALDataset *TileDBDataset::Create(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                              CreateCopy()                            */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *TileDBDataset::CreateCopy(const char *pszFilename,
@@ -399,7 +399,7 @@ GDALDataset *TileDBDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALRegister_TILEDB()                        */
+/*                        GDALRegister_TILEDB()                         */
 /************************************************************************/
 
 void GDALRegister_TileDB()

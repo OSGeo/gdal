@@ -16,7 +16,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       operator=( const OGRCurve& )                   */
+/*                     operator=( const OGRCurve& )                     */
 /************************************************************************/
 
 OGRCurve &OGRCurve::operator=(const OGRCurve &other)
@@ -332,7 +332,7 @@ OGRBoolean OGRCurve::IsConvex() const
 }
 
 /************************************************************************/
-/*                          CastToCompoundCurve()                       */
+/*                        CastToCompoundCurve()                         */
 /************************************************************************/
 
 /**
@@ -423,7 +423,7 @@ int OGRCurve::ContainsPoint(CPL_UNUSED const OGRPoint *p) const
 }
 
 /************************************************************************/
-/*                         IntersectsPoint()                            */
+/*                          IntersectsPoint()                           */
 /************************************************************************/
 
 /**
@@ -442,7 +442,7 @@ int OGRCurve::IntersectsPoint(CPL_UNUSED const OGRPoint *p) const
 }
 
 /************************************************************************/
-/*                          ~OGRPointIterator()                         */
+/*                         ~OGRPointIterator()                          */
 /************************************************************************/
 
 OGRPointIterator::~OGRPointIterator() = default;
@@ -472,7 +472,7 @@ void OGRPointIterator::destroy(OGRPointIterator *poIter)
 }
 
 /************************************************************************/
-/*                     OGRSimpleCurve::Iterator                         */
+/*                       OGRSimpleCurve::Iterator                       */
 /************************************************************************/
 
 OGRIteratedPoint::~OGRIteratedPoint() = default;
@@ -574,7 +574,7 @@ OGRSimpleCurve::Iterator OGRSimpleCurve::end()
 }
 
 /************************************************************************/
-/*                  OGRSimpleCurve::ConstIterator                       */
+/*                    OGRSimpleCurve::ConstIterator                     */
 /************************************************************************/
 
 struct OGRSimpleCurve::ConstIterator::Private
@@ -626,7 +626,7 @@ OGRSimpleCurve::ConstIterator OGRSimpleCurve::end() const
 }
 
 /************************************************************************/
-/*                     OGRCurve::ConstIterator                          */
+/*                       OGRCurve::ConstIterator                        */
 /************************************************************************/
 
 struct OGRCurve::ConstIterator::Private

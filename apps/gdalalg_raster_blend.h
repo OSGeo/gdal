@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterBlendAlgorithm                         */
+/*                       GDALRasterBlendAlgorithm                       */
 /************************************************************************/
 
 class GDALRasterBlendAlgorithm /* non final*/

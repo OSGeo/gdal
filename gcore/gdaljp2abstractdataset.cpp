@@ -34,13 +34,13 @@
 /*! @cond Doxygen_Suppress */
 
 /************************************************************************/
-/*                     GDALJP2AbstractDataset()                         */
+/*                       GDALJP2AbstractDataset()                       */
 /************************************************************************/
 
 GDALJP2AbstractDataset::GDALJP2AbstractDataset() = default;
 
 /************************************************************************/
-/*                     ~GDALJP2AbstractDataset()                        */
+/*                      ~GDALJP2AbstractDataset()                       */
 /************************************************************************/
 
 GDALJP2AbstractDataset::~GDALJP2AbstractDataset()
@@ -51,7 +51,7 @@ GDALJP2AbstractDataset::~GDALJP2AbstractDataset()
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int GDALJP2AbstractDataset::CloseDependentDatasets()
@@ -322,7 +322,7 @@ char **GDALJP2AbstractDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                        LoadVectorLayers()                            */
+/*                          LoadVectorLayers()                          */
 /************************************************************************/
 
 void GDALJP2AbstractDataset::LoadVectorLayers(int bOpenRemoteResources)
@@ -617,7 +617,7 @@ int GDALJP2AbstractDataset::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                             GetLayer()                               */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 OGRLayer *GDALJP2AbstractDataset::GetLayer(int i) const
@@ -652,7 +652,7 @@ CSLConstList GDALJP2AbstractDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                        GetMetadataItem()                             */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *GDALJP2AbstractDataset::GetMetadataItem(const char *pszName,

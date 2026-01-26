@@ -352,7 +352,7 @@ char **SAGADataset::GetFileList()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *SAGADataset::GetSpatialRef() const
@@ -769,7 +769,7 @@ CPLErr SAGADataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                             WriteHeader()                            */
+/*                            WriteHeader()                             */
 /************************************************************************/
 
 CPLErr SAGADataset::WriteHeader(const CPLString &osHDRFilename,
@@ -1059,7 +1059,7 @@ GDALDataset *SAGADataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GDALRegister_SAGA()                         */
+/*                         GDALRegister_SAGA()                          */
 /************************************************************************/
 
 void GDALRegister_SAGA()

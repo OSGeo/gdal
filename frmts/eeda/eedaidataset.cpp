@@ -33,7 +33,7 @@ const int SERVER_SIMUTANEOUS_BAND_LIMIT = 100;
 const int SERVER_DIMENSION_LIMIT = 10000;
 
 /************************************************************************/
-/*                          GDALEEDAIDataset                            */
+/*                           GDALEEDAIDataset                           */
 /************************************************************************/
 
 class GDALEEDAIDataset final : public GDALEEDABaseDataset
@@ -81,7 +81,7 @@ class GDALEEDAIDataset final : public GDALEEDABaseDataset
 };
 
 /************************************************************************/
-/*                        GDALEEDAIRasterBand                           */
+/*                         GDALEEDAIRasterBand                          */
 /************************************************************************/
 
 class GDALEEDAIRasterBand final : public GDALRasterBand
@@ -133,7 +133,7 @@ class GDALEEDAIRasterBand final : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                         GDALEEDAIDataset()                           */
+/*                          GDALEEDAIDataset()                          */
 /************************************************************************/
 
 GDALEEDAIDataset::GDALEEDAIDataset()
@@ -147,7 +147,7 @@ GDALEEDAIDataset::GDALEEDAIDataset()
 }
 
 /************************************************************************/
-/*                         GDALEEDAIDataset()                           */
+/*                          GDALEEDAIDataset()                          */
 /************************************************************************/
 
 GDALEEDAIDataset::GDALEEDAIDataset(GDALEEDAIDataset *poParentDS, int iOvrLevel)
@@ -172,7 +172,7 @@ GDALEEDAIDataset::GDALEEDAIDataset(GDALEEDAIDataset *poParentDS, int iOvrLevel)
 }
 
 /************************************************************************/
-/*                        ~GDALEEDAIDataset()                           */
+/*                         ~GDALEEDAIDataset()                          */
 /************************************************************************/
 
 GDALEEDAIDataset::~GDALEEDAIDataset()
@@ -197,7 +197,7 @@ GDALEEDAIRasterBand::GDALEEDAIRasterBand(GDALEEDAIDataset *poDSIn,
 }
 
 /************************************************************************/
-/*                       ~GDALEEDAIRasterBand()                         */
+/*                        ~GDALEEDAIRasterBand()                        */
 /************************************************************************/
 
 GDALEEDAIRasterBand::~GDALEEDAIRasterBand()
@@ -205,7 +205,7 @@ GDALEEDAIRasterBand::~GDALEEDAIRasterBand()
 }
 
 /************************************************************************/
-/*                           GetOverviewCount()                         */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int GDALEEDAIRasterBand::GetOverviewCount()
@@ -215,7 +215,7 @@ int GDALEEDAIRasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                              GetOverview()                           */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *GDALEEDAIRasterBand::GetOverview(int iIndex)
@@ -229,7 +229,7 @@ GDALRasterBand *GDALEEDAIRasterBand::GetOverview(int iIndex)
 }
 
 /************************************************************************/
-/*                            DecodeNPYArray()                          */
+/*                           DecodeNPYArray()                           */
 /************************************************************************/
 
 bool GDALEEDAIRasterBand::DecodeNPYArray(const GByte *pabyData, int nDataLen,
@@ -389,7 +389,7 @@ bool GDALEEDAIRasterBand::DecodeNPYArray(const GByte *pabyData, int nDataLen,
 }
 
 /************************************************************************/
-/*                            DecodeGDALDataset()                         */
+/*                         DecodeGDALDataset()                          */
 /************************************************************************/
 
 bool GDALEEDAIRasterBand::DecodeGDALDataset(const GByte *pabyData, int nDataLen,
@@ -663,7 +663,7 @@ CPLErr GDALEEDAIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                          PrefetchBlocks()                            */
+/*                           PrefetchBlocks()                           */
 /************************************************************************/
 
 // Return or'ed flags among 0, RETRY_PER_BAND, RETRY_SPATIAL_SPLIT if the user
@@ -809,7 +809,7 @@ GUInt32 GDALEEDAIRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize,
 }
 
 /************************************************************************/
-/*                              IRasterIO()                             */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr GDALEEDAIRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -904,7 +904,7 @@ CPLErr GDALEEDAIRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                              IRasterIO()                             */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr GDALEEDAIDataset::IRasterIO(
@@ -1096,7 +1096,7 @@ bool GDALEEDAIDataset::ComputeQueryStrategy()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *GDALEEDAIDataset::GetSpatialRef() const
@@ -1115,7 +1115,7 @@ CPLErr GDALEEDAIDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -1394,7 +1394,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       SetMetadataFromProperties()                    */
+/*                     SetMetadataFromProperties()                      */
 /************************************************************************/
 
 void GDALEEDAIDataset::SetMetadataFromProperties(
@@ -1456,7 +1456,7 @@ void GDALEEDAIDataset::SetMetadataFromProperties(
 }
 
 /************************************************************************/
-/*                          GDALEEDAIIdentify()                         */
+/*                         GDALEEDAIIdentify()                          */
 /************************************************************************/
 
 static int GDALEEDAIIdentify(GDALOpenInfo *poOpenInfo)
@@ -1465,7 +1465,7 @@ static int GDALEEDAIIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            GDALEEDAIOpen()                           */
+/*                           GDALEEDAIOpen()                            */
 /************************************************************************/
 
 static GDALDataset *GDALEEDAIOpen(GDALOpenInfo *poOpenInfo)

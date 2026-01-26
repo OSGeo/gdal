@@ -21,7 +21,7 @@ CPLString OGRAMIGOCLOUDGetOptionValue(const char *pszFilename,
                                       const char *pszOptionName);
 
 /************************************************************************/
-/*                        OGRAmigoCloudDataSource()                        */
+/*                      OGRAmigoCloudDataSource()                       */
 /************************************************************************/
 
 OGRAmigoCloudDataSource::OGRAmigoCloudDataSource()
@@ -31,7 +31,7 @@ OGRAmigoCloudDataSource::OGRAmigoCloudDataSource()
 }
 
 /************************************************************************/
-/*                       ~OGRAmigoCloudDataSource()                        */
+/*                      ~OGRAmigoCloudDataSource()                      */
 /************************************************************************/
 
 OGRAmigoCloudDataSource::~OGRAmigoCloudDataSource()
@@ -94,7 +94,7 @@ const OGRLayer *OGRAmigoCloudDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                          GetLayerByName()                            */
+/*                           GetLayerByName()                           */
 /************************************************************************/
 
 OGRLayer *OGRAmigoCloudDataSource::GetLayerByName(const char *pszLayerName)
@@ -111,7 +111,7 @@ OGRLayer *OGRAmigoCloudDataSource::GetLayerByName(const char *pszLayerName)
 }
 
 /************************************************************************/
-/*                     OGRAMIGOCLOUDGetOptionValue()                       */
+/*                    OGRAMIGOCLOUDGetOptionValue()                     */
 /************************************************************************/
 
 CPLString OGRAMIGOCLOUDGetOptionValue(const char *pszFilename,
@@ -279,7 +279,7 @@ int OGRAmigoCloudDataSource::Open(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            GetAPIURL()                               */
+/*                             GetAPIURL()                              */
 /************************************************************************/
 
 const char *OGRAmigoCloudDataSource::GetAPIURL() const
@@ -350,7 +350,7 @@ int OGRAmigoCloudDataSource::FetchSRSId(OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                          ICreateLayer()                              */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -445,7 +445,7 @@ OGRErr OGRAmigoCloudDataSource::DeleteLayer(int iLayer)
 }
 
 /************************************************************************/
-/*                          AddHTTPOptions()                            */
+/*                           AddHTTPOptions()                           */
 /************************************************************************/
 
 char **OGRAmigoCloudDataSource::AddHTTPOptions()
@@ -456,7 +456,7 @@ char **OGRAmigoCloudDataSource::AddHTTPOptions()
 }
 
 /************************************************************************/
-/*                               RunPOST()                               */
+/*                              RunPOST()                               */
 /************************************************************************/
 
 json_object *OGRAmigoCloudDataSource::RunPOST(const char *pszURL,
@@ -630,7 +630,7 @@ void OGRAmigoCloudDataSource::SubmitChangeset(const CPLString &json)
 }
 
 /************************************************************************/
-/*                               RunDELETE()                               */
+/*                             RunDELETE()                              */
 /************************************************************************/
 
 bool OGRAmigoCloudDataSource::RunDELETE(const char *pszURL)
@@ -812,7 +812,7 @@ json_object *OGRAmigoCloudDataSource::RunSQL(const char *pszUnescapedSQL)
 }
 
 /************************************************************************/
-/*                        OGRAMIGOCLOUDGetSingleRow()                      */
+/*                     OGRAMIGOCLOUDGetSingleRow()                      */
 /************************************************************************/
 
 json_object *OGRAMIGOCLOUDGetSingleRow(json_object *poObj)

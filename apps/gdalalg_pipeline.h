@@ -48,7 +48,7 @@ class GDALAlgorithmStepRegistry final : public GDALRasterAlgorithmStepRegistry,
 };
 
 /************************************************************************/
-/*                       GDALPipelineAlgorithm                          */
+/*                        GDALPipelineAlgorithm                         */
 /************************************************************************/
 
 class GDALPipelineAlgorithm final : public GDALAbstractPipelineAlgorithm

@@ -27,7 +27,7 @@
 #include <set>
 
 /************************************************************************/
-/*                       ZarrV3Array::ZarrV3Array()                     */
+/*                      ZarrV3Array::ZarrV3Array()                      */
 /************************************************************************/
 
 ZarrV3Array::ZarrV3Array(
@@ -44,7 +44,7 @@ ZarrV3Array::ZarrV3Array(
 }
 
 /************************************************************************/
-/*                         ZarrV3Array::Create()                        */
+/*                        ZarrV3Array::Create()                         */
 /************************************************************************/
 
 std::shared_ptr<ZarrV3Array> ZarrV3Array::Create(
@@ -66,7 +66,7 @@ std::shared_ptr<ZarrV3Array> ZarrV3Array::Create(
 }
 
 /************************************************************************/
-/*                             ~ZarrV3Array()                           */
+/*                            ~ZarrV3Array()                            */
 /************************************************************************/
 
 ZarrV3Array::~ZarrV3Array()
@@ -75,7 +75,7 @@ ZarrV3Array::~ZarrV3Array()
 }
 
 /************************************************************************/
-/*                                Flush()                               */
+/*                               Flush()                                */
 /************************************************************************/
 
 bool ZarrV3Array::Flush()
@@ -125,7 +125,7 @@ bool ZarrV3Array::Flush()
 }
 
 /************************************************************************/
-/*                    ZarrV3Array::Serialize()                          */
+/*                       ZarrV3Array::Serialize()                       */
 /************************************************************************/
 
 bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
@@ -252,7 +252,7 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
 }
 
 /************************************************************************/
-/*                  ZarrV3Array::NeedDecodedBuffer()                    */
+/*                   ZarrV3Array::NeedDecodedBuffer()                   */
 /************************************************************************/
 
 bool ZarrV3Array::NeedDecodedBuffer() const
@@ -268,7 +268,7 @@ bool ZarrV3Array::NeedDecodedBuffer() const
 }
 
 /************************************************************************/
-/*               ZarrV3Array::AllocateWorkingBuffers()                  */
+/*                ZarrV3Array::AllocateWorkingBuffers()                 */
 /************************************************************************/
 
 bool ZarrV3Array::AllocateWorkingBuffers() const
@@ -365,7 +365,7 @@ bool ZarrV3Array::AllocateWorkingBuffers(
 }
 
 /************************************************************************/
-/*                      ZarrV3Array::LoadBlockData()                     */
+/*                     ZarrV3Array::LoadBlockData()                     */
 /************************************************************************/
 
 bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices,
@@ -843,7 +843,7 @@ bool ZarrV3Array::FlushDirtyBlock() const
 }
 
 /************************************************************************/
-/*                         ZarrV3Array::IWrite()                        */
+/*                        ZarrV3Array::IWrite()                         */
 /************************************************************************/
 
 bool ZarrV3Array::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -863,7 +863,7 @@ bool ZarrV3Array::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                          BuildChunkFilename()                        */
+/*                         BuildChunkFilename()                         */
 /************************************************************************/
 
 std::string ZarrV3Array::BuildChunkFilename(const uint64_t *blockIndices) const
@@ -902,7 +902,7 @@ std::string ZarrV3Array::GetDataDirectory() const
 }
 
 /************************************************************************/
-/*                       GetChunkIndicesFromFilename()                  */
+/*                    GetChunkIndicesFromFilename()                     */
 /************************************************************************/
 
 CPLStringList
@@ -928,7 +928,7 @@ ZarrV3Array::GetChunkIndicesFromFilename(const char *pszFilename) const
 }
 
 /************************************************************************/
-/*                           ParseDtypeV3()                             */
+/*                            ParseDtypeV3()                            */
 /************************************************************************/
 
 static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
@@ -1036,7 +1036,7 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
 }
 
 /************************************************************************/
-/*                    ParseNoDataStringAsDouble()                       */
+/*                     ParseNoDataStringAsDouble()                      */
 /************************************************************************/
 
 static double ParseNoDataStringAsDouble(const std::string &osVal, bool &bOK)
@@ -1062,7 +1062,7 @@ static double ParseNoDataStringAsDouble(const std::string &osVal, bool &bOK)
 }
 
 /************************************************************************/
-/*                     ParseNoDataComponent()                           */
+/*                        ParseNoDataComponent()                        */
 /************************************************************************/
 
 template <typename T, typename Tint>
@@ -1105,7 +1105,7 @@ static T ParseNoDataComponent(const CPLJSONObject &oObj, bool &bOK)
 }
 
 /************************************************************************/
-/*                     ZarrV3Group::LoadArray()                         */
+/*                       ZarrV3Group::LoadArray()                       */
 /************************************************************************/
 
 std::shared_ptr<ZarrArray>
@@ -1659,7 +1659,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
 }
 
 /************************************************************************/
-/*                   ZarrV3Array::GetRawBlockInfoInfo()                 */
+/*                  ZarrV3Array::GetRawBlockInfoInfo()                  */
 /************************************************************************/
 
 CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
@@ -1735,7 +1735,7 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
 }
 
 /************************************************************************/
-/*                        ZarrV3Array::SetupCodecs()                    */
+/*                      ZarrV3Array::SetupCodecs()                      */
 /************************************************************************/
 
 /* static */ std::unique_ptr<ZarrV3CodecSequence> ZarrV3Array::SetupCodecs(
@@ -1789,7 +1789,7 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
 }
 
 /************************************************************************/
-/*                        ZarrV3Array::SetCodecs()                      */
+/*                       ZarrV3Array::SetCodecs()                       */
 /************************************************************************/
 
 void ZarrV3Array::SetCodecs(const CPLJSONArray &oJSONCodecs,
@@ -1800,7 +1800,7 @@ void ZarrV3Array::SetCodecs(const CPLJSONArray &oJSONCodecs,
 }
 
 /************************************************************************/
-/*                      ZarrV3Array::LoadOverviews()                    */
+/*                     ZarrV3Array::LoadOverviews()                     */
 /************************************************************************/
 
 void ZarrV3Array::LoadOverviews() const
@@ -2198,7 +2198,7 @@ void ZarrV3Array::LoadOverviews() const
 }
 
 /************************************************************************/
-/*                    ZarrV3Array::GetOverviewCount()                   */
+/*                   ZarrV3Array::GetOverviewCount()                    */
 /************************************************************************/
 
 int ZarrV3Array::GetOverviewCount() const

@@ -171,7 +171,7 @@ static CPLMutex *hMutex = nullptr;
 static std::vector<DSToBeOpened> oListDSToBeOpened;
 
 /************************************************************************/
-/*                    AddInterestLayersForDSName()                      */
+/*                     AddInterestLayersForDSName()                     */
 /************************************************************************/
 
 static void AddInterestLayersForDSName(const CPLString &osDSName,
@@ -186,7 +186,7 @@ static void AddInterestLayersForDSName(const CPLString &osDSName,
 }
 
 /************************************************************************/
-/*                    GetInterestLayersForDSName()                      */
+/*                     GetInterestLayersForDSName()                     */
 /************************************************************************/
 
 static CPLString GetInterestLayersForDSName(const CPLString &osDSName)
@@ -208,7 +208,7 @@ static CPLString GetInterestLayersForDSName(const CPLString &osDSName)
 }
 
 /************************************************************************/
-/*                        OGROSMDataSource()                            */
+/*                          OGROSMDataSource()                          */
 /************************************************************************/
 
 OGROSMDataSource::OGROSMDataSource()
@@ -222,7 +222,7 @@ OGROSMDataSource::OGROSMDataSource()
 }
 
 /************************************************************************/
-/*                          ~OGROSMDataSource()                         */
+/*                         ~OGROSMDataSource()                          */
 /************************************************************************/
 
 OGROSMDataSource::~OGROSMDataSource()
@@ -322,7 +322,7 @@ OGROSMDataSource::~OGROSMDataSource()
 }
 
 /************************************************************************/
-/*                             CloseDB()                               */
+/*                              CloseDB()                               */
 /************************************************************************/
 
 void OGROSMDataSource::CloseDB()
@@ -433,7 +433,7 @@ bool OGROSMDataSource::IndexPointSQLite(const OSMNode *psNode)
 }
 
 /************************************************************************/
-/*                           FlushCurrentSector()                       */
+/*                         FlushCurrentSector()                         */
 /************************************************************************/
 
 bool OGROSMDataSource::FlushCurrentSector()
@@ -517,7 +517,7 @@ Bucket *OGROSMDataSource::GetBucket(int nBucketId)
 }
 
 /************************************************************************/
-/*                     FlushCurrentSectorCompressedCase()               */
+/*                  FlushCurrentSectorCompressedCase()                  */
 /************************************************************************/
 
 bool OGROSMDataSource::FlushCurrentSectorCompressedCase()
@@ -599,7 +599,7 @@ bool OGROSMDataSource::FlushCurrentSectorCompressedCase()
 }
 
 /************************************************************************/
-/*                   FlushCurrentSectorNonCompressedCase()              */
+/*                FlushCurrentSectorNonCompressedCase()                 */
 /************************************************************************/
 
 bool OGROSMDataSource::FlushCurrentSectorNonCompressedCase()
@@ -702,7 +702,7 @@ bool OGROSMDataSource::IndexPointCustom(const OSMNode *psNode)
 }
 
 /************************************************************************/
-/*                             NotifyNodes()                            */
+/*                            NotifyNodes()                             */
 /************************************************************************/
 
 void OGROSMDataSource::NotifyNodes(unsigned int nNodes, const OSMNode *pasNodes)
@@ -871,7 +871,7 @@ void OGROSMDataSource::LookupNodes()
 }
 
 /************************************************************************/
-/*                           LookupNodesSQLite()                        */
+/*                         LookupNodesSQLite()                          */
 /************************************************************************/
 
 void OGROSMDataSource::LookupNodesSQLite()
@@ -931,7 +931,7 @@ void OGROSMDataSource::LookupNodesSQLite()
 }
 
 /************************************************************************/
-/*                           DecompressSector()                         */
+/*                          DecompressSector()                          */
 /************************************************************************/
 
 static bool DecompressSector(const GByte *pabyIn, int nSectorSize,
@@ -978,7 +978,7 @@ static bool DecompressSector(const GByte *pabyIn, int nSectorSize,
 }
 
 /************************************************************************/
-/*                           LookupNodesCustom()                        */
+/*                         LookupNodesCustom()                          */
 /************************************************************************/
 
 void OGROSMDataSource::LookupNodesCustom()
@@ -1060,7 +1060,7 @@ void OGROSMDataSource::LookupNodesCustom()
 }
 
 /************************************************************************/
-/*                      LookupNodesCustomCompressedCase()               */
+/*                  LookupNodesCustomCompressedCase()                   */
 /************************************************************************/
 
 void OGROSMDataSource::LookupNodesCustomCompressedCase()
@@ -1175,7 +1175,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
 }
 
 /************************************************************************/
-/*                    LookupNodesCustomNonCompressedCase()              */
+/*                 LookupNodesCustomNonCompressedCase()                 */
 /************************************************************************/
 
 void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
@@ -1364,7 +1364,7 @@ static void WriteVarSInt64(GIntBig nSVal, GByte **ppabyData)
 }
 
 /************************************************************************/
-/*                             CompressWay()                            */
+/*                            CompressWay()                             */
 /************************************************************************/
 
 void OGROSMDataSource::CompressWay(bool bIsArea, unsigned int nTags,
@@ -1449,7 +1449,7 @@ void OGROSMDataSource::CompressWay(bool bIsArea, unsigned int nTags,
 }
 
 /************************************************************************/
-/*                             UncompressWay()                          */
+/*                           UncompressWay()                            */
 /************************************************************************/
 
 void OGROSMDataSource::UncompressWay(int nBytes, const GByte *pabyCompressedWay,
@@ -1602,7 +1602,7 @@ int OGROSMDataSource::FindNode(GIntBig nID)
 }
 
 /************************************************************************/
-/*                         ProcessWaysBatch()                           */
+/*                          ProcessWaysBatch()                          */
 /************************************************************************/
 
 void OGROSMDataSource::ProcessWaysBatch()
@@ -1775,7 +1775,7 @@ void OGROSMDataSource::ProcessWaysBatch()
 }
 
 /************************************************************************/
-/*                      IsClosedWayTaggedAsPolygon()                    */
+/*                     IsClosedWayTaggedAsPolygon()                     */
 /************************************************************************/
 
 bool OGROSMDataSource::IsClosedWayTaggedAsPolygon(unsigned int nTags,
@@ -1843,7 +1843,7 @@ bool OGROSMDataSource::IsClosedWayTaggedAsPolygon(unsigned int nTags,
 }
 
 /************************************************************************/
-/*                              NotifyWay()                             */
+/*                             NotifyWay()                              */
 /************************************************************************/
 
 void OGROSMDataSource::NotifyWay(const OSMWay *psWay)
@@ -2139,7 +2139,7 @@ static void OGROSMNotifyWay(OSMWay *psWay, OSMContext * /* psOSMContext */,
 }
 
 /************************************************************************/
-/*                            LookupWays()                              */
+/*                             LookupWays()                             */
 /************************************************************************/
 
 unsigned int OGROSMDataSource::LookupWays(
@@ -2207,7 +2207,7 @@ unsigned int OGROSMDataSource::LookupWays(
 }
 
 /************************************************************************/
-/*                          BuildMultiPolygon()                         */
+/*                         BuildMultiPolygon()                          */
 /************************************************************************/
 
 OGRGeometry *OGROSMDataSource::BuildMultiPolygon(const OSMRelation *psRelation,
@@ -2417,7 +2417,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(const OSMRelation *psRelation,
 }
 
 /************************************************************************/
-/*                          BuildGeometryCollection()                   */
+/*                      BuildGeometryCollection()                       */
 /************************************************************************/
 
 OGRGeometry *
@@ -2493,7 +2493,7 @@ OGROSMDataSource::BuildGeometryCollection(const OSMRelation *psRelation,
 }
 
 /************************************************************************/
-/*                            NotifyRelation()                          */
+/*                           NotifyRelation()                           */
 /************************************************************************/
 
 void OGROSMDataSource::NotifyRelation(const OSMRelation *psRelation)
@@ -2628,7 +2628,7 @@ static void OGROSMNotifyRelation(OSMRelation *psRelation,
 }
 
 /************************************************************************/
-/*                      ProcessPolygonsStandalone()                     */
+/*                     ProcessPolygonsStandalone()                      */
 /************************************************************************/
 
 void OGROSMDataSource::ProcessPolygonsStandalone()
@@ -2720,7 +2720,7 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
 }
 
 /************************************************************************/
-/*                             NotifyBounds()                           */
+/*                            NotifyBounds()                            */
 /************************************************************************/
 
 void OGROSMDataSource::NotifyBounds(double dfXMin, double dfYMin, double dfXMax,
@@ -2970,7 +2970,7 @@ int OGROSMDataSource::Open(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                             CreateTempDB()                           */
+/*                            CreateTempDB()                            */
 /************************************************************************/
 
 bool OGROSMDataSource::CreateTempDB()
@@ -3153,7 +3153,7 @@ bool OGROSMDataSource::SetDBOptions()
 }
 
 /************************************************************************/
-/*                              SetCacheSize()                          */
+/*                            SetCacheSize()                            */
 /************************************************************************/
 
 void OGROSMDataSource::SetCacheSize()
@@ -3212,7 +3212,7 @@ void OGROSMDataSource::SetCacheSize()
 }
 
 /************************************************************************/
-/*                        CreatePreparedStatements()                    */
+/*                      CreatePreparedStatements()                      */
 /************************************************************************/
 
 bool OGROSMDataSource::CreatePreparedStatements()
@@ -3351,7 +3351,7 @@ bool OGROSMDataSource::StartTransactionCacheDB()
 }
 
 /************************************************************************/
-/*                        CommitTransactionCacheDB()                    */
+/*                      CommitTransactionCacheDB()                      */
 /************************************************************************/
 
 bool OGROSMDataSource::CommitTransactionCacheDB()
@@ -3375,7 +3375,7 @@ bool OGROSMDataSource::CommitTransactionCacheDB()
 }
 
 /************************************************************************/
-/*                     AddComputedAttributes()                          */
+/*                       AddComputedAttributes()                        */
 /************************************************************************/
 
 void OGROSMDataSource::AddComputedAttributes(
@@ -3392,7 +3392,7 @@ void OGROSMDataSource::AddComputedAttributes(
 }
 
 /************************************************************************/
-/*                           ParseConf()                                */
+/*                             ParseConf()                              */
 /************************************************************************/
 
 bool OGROSMDataSource::ParseConf(CSLConstList papszOpenOptionsIn)
@@ -3817,7 +3817,7 @@ bool OGROSMDataSource::ParseConf(CSLConstList papszOpenOptionsIn)
 }
 
 /************************************************************************/
-/*                          MyResetReading()                            */
+/*                           MyResetReading()                           */
 /************************************************************************/
 
 int OGROSMDataSource::MyResetReading()
@@ -3927,7 +3927,7 @@ int OGROSMDataSource::MyResetReading()
 }
 
 /************************************************************************/
-/*                             ResetReading()                           */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGROSMDataSource::ResetReading()
@@ -4289,7 +4289,7 @@ OGRErr OGROSMDataSource::GetNativeExtent(OGREnvelope *psExtent)
 }
 
 /************************************************************************/
-/*                   OGROSMSingleFeatureLayer                           */
+/*                       OGROSMSingleFeatureLayer                       */
 /************************************************************************/
 
 class OGROSMSingleFeatureLayer final : public OGRLayer
@@ -4328,7 +4328,7 @@ class OGROSMSingleFeatureLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                    OGROSMSingleFeatureLayer()                        */
+/*                      OGROSMSingleFeatureLayer()                      */
 /************************************************************************/
 
 OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer(const char *pszLayerName,
@@ -4342,7 +4342,7 @@ OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                    OGROSMSingleFeatureLayer()                        */
+/*                      OGROSMSingleFeatureLayer()                      */
 /************************************************************************/
 
 OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer(const char *pszLayerName,
@@ -4356,7 +4356,7 @@ OGROSMSingleFeatureLayer::OGROSMSingleFeatureLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                    ~OGROSMSingleFeatureLayer()                       */
+/*                     ~OGROSMSingleFeatureLayer()                      */
 /************************************************************************/
 
 OGROSMSingleFeatureLayer::~OGROSMSingleFeatureLayer()
@@ -4647,7 +4647,7 @@ void OGROSMDataSource::ReleaseResultSet(OGRLayer *poLayer)
 }
 
 /************************************************************************/
-/*                         IsInterleavedReading()                       */
+/*                        IsInterleavedReading()                        */
 /************************************************************************/
 
 int OGROSMDataSource::IsInterleavedReading()

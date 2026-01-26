@@ -826,7 +826,7 @@ CPLErr swq_expr_compile(const char *where_clause, int field_count,
 }
 
 /************************************************************************/
-/*                       swq_fixup_expression()                         */
+/*                        swq_fixup_expression()                        */
 /************************************************************************/
 
 void swq_fixup(swq_parse_context *psParseContext)
@@ -847,7 +847,7 @@ void swq_fixup(swq_parse_context *psParseContext)
 }
 
 /************************************************************************/
-/*                       swq_create_and_or_or()                         */
+/*                        swq_create_and_or_or()                        */
 /************************************************************************/
 
 swq_expr_node *swq_create_and_or_or(swq_op op, swq_expr_node *left,
@@ -940,7 +940,7 @@ CPLErr swq_expr_compile2(const char *where_clause, swq_field_list *field_list,
 }
 
 /************************************************************************/
-/*                        swq_is_reserved_keyword()                     */
+/*                      swq_is_reserved_keyword()                       */
 /************************************************************************/
 
 static const char *const apszSQLReservedKeywords[] = {
@@ -959,7 +959,7 @@ int swq_is_reserved_keyword(const char *pszStr)
 }
 
 /************************************************************************/
-/*                          SWQFieldTypeToString()                      */
+/*                        SWQFieldTypeToString()                        */
 /************************************************************************/
 
 const char *SWQFieldTypeToString(swq_field_type field_type)

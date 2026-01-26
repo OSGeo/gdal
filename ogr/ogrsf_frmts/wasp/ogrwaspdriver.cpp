@@ -49,7 +49,7 @@ static GDALDataset *OGRWAsPDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         OGRWAsPDriverCreate()                        */
+/*                        OGRWAsPDriverCreate()                         */
 /************************************************************************/
 
 static GDALDataset *OGRWAsPDriverCreate(const char *pszName, int, int, int,
@@ -66,7 +66,7 @@ static GDALDataset *OGRWAsPDriverCreate(const char *pszName, int, int, int,
 }
 
 /************************************************************************/
-/*                         OGRWAsPDriverDelete()                        */
+/*                        OGRWAsPDriverDelete()                         */
 /************************************************************************/
 
 static CPLErr OGRWAsPDriverDelete(const char *pszName)
@@ -76,7 +76,7 @@ static CPLErr OGRWAsPDriverDelete(const char *pszName)
 }
 
 /************************************************************************/
-/*                           RegisterOGRWAsP()                          */
+/*                          RegisterOGRWAsP()                           */
 /************************************************************************/
 
 void RegisterOGRWAsP()

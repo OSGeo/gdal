@@ -28,7 +28,7 @@
 CPLHTTPResult *EEDAHTTPFetch(const char *pszURL, CSLConstList papszOptions);
 
 /************************************************************************/
-/*                             EEDAIBandDesc                            */
+/*                            EEDAIBandDesc                             */
 /************************************************************************/
 
 class EEDAIBandDesc
@@ -55,7 +55,7 @@ BuildBandDescArray(json_object *poBands,
                    std::map<CPLString, CPLString> &oMapCodeToWKT);
 
 /************************************************************************/
-/*                      GDALEEDABaseDataset                             */
+/*                         GDALEEDABaseDataset                          */
 /************************************************************************/
 
 class GDALEEDABaseDataset CPL_NON_FINAL : public GDALDataset

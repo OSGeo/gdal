@@ -67,7 +67,7 @@ static GDALDataset *OGRMSSQLSpatialDriverCreateDataSource(
 }
 
 /************************************************************************/
-/*                           RegisterOGRMSSQLSpatial()                  */
+/*                      RegisterOGRMSSQLSpatial()                       */
 /************************************************************************/
 
 void RegisterOGRMSSQLSpatial()

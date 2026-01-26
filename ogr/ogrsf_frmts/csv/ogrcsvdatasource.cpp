@@ -34,7 +34,7 @@
 #include "ogr_schema_override.h"
 
 /************************************************************************/
-/*                     OGRCSVEditableLayerSynchronizer                  */
+/*                   OGRCSVEditableLayerSynchronizer                    */
 /************************************************************************/
 
 class OGRCSVEditableLayerSynchronizer final
@@ -65,7 +65,7 @@ class OGRCSVEditableLayerSynchronizer final
 };
 
 /************************************************************************/
-/*                     ~OGRCSVEditableLayerSynchronizer()               */
+/*                  ~OGRCSVEditableLayerSynchronizer()                  */
 /************************************************************************/
 
 OGRCSVEditableLayerSynchronizer::~OGRCSVEditableLayerSynchronizer()
@@ -74,7 +74,7 @@ OGRCSVEditableLayerSynchronizer::~OGRCSVEditableLayerSynchronizer()
 }
 
 /************************************************************************/
-/*                       EditableSyncToDisk()                           */
+/*                         EditableSyncToDisk()                         */
 /************************************************************************/
 
 OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
@@ -297,7 +297,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
 }
 
 /************************************************************************/
-/*                        OGRCSVEditableLayer                           */
+/*                         OGRCSVEditableLayer                          */
 /************************************************************************/
 
 class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
@@ -328,7 +328,7 @@ class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
 };
 
 /************************************************************************/
-/*                       OGRCSVEditableLayer()                          */
+/*                        OGRCSVEditableLayer()                         */
 /************************************************************************/
 
 OGRCSVEditableLayer::OGRCSVEditableLayer(OGRCSVLayer *poCSVLayer,
@@ -396,7 +396,7 @@ OGRErr OGRCSVEditableLayer::AlterFieldDefn(int iField,
 }
 
 /************************************************************************/
-/*                        GetFeatureCount()                             */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRCSVEditableLayer::GetFeatureCount(int bForce)
@@ -725,7 +725,7 @@ const std::vector<int> &OGRCSVDataSource::DeletedFieldIndexes() const
 }
 
 /************************************************************************/
-/*                      DealWithOgrSchemaOpenOption()                   */
+/*                    DealWithOgrSchemaOpenOption()                     */
 /************************************************************************/
 bool OGRCSVDataSource::DealWithOgrSchemaOpenOption(
     CSLConstList papszOpenOptionsIn)
@@ -768,7 +768,7 @@ bool OGRCSVDataSource::DealWithOgrSchemaOpenOption(
 }
 
 /************************************************************************/
-/*                              OpenTable()                             */
+/*                             OpenTable()                              */
 /************************************************************************/
 
 bool OGRCSVDataSource::OpenTable(const char *pszFilename,
@@ -958,7 +958,7 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -1239,7 +1239,7 @@ OGRErr OGRCSVDataSource::DeleteLayer(int iLayer)
 }
 
 /************************************************************************/
-/*                       CreateForSingleFile()                          */
+/*                        CreateForSingleFile()                         */
 /************************************************************************/
 
 void OGRCSVDataSource::CreateForSingleFile(const char *pszDirname,

@@ -81,7 +81,7 @@ OGRLIBKMLDataSource::OGRLIBKMLDataSource(KmlFactory *poKmlFactory)
 }
 
 /************************************************************************/
-/*                       OGRLIBKMLPreProcessInput()                     */
+/*                      OGRLIBKMLPreProcessInput()                      */
 /************************************************************************/
 
 // Substitute <snippet> by deprecated <Snippet> since libkml currently
@@ -245,7 +245,7 @@ static void OGRLIBKMLRemoveSpaces(std::string &osKml,
 }
 
 /************************************************************************/
-/*                      OGRLIBKMLPostProcessOutput()                    */
+/*                     OGRLIBKMLPostProcessOutput()                     */
 /************************************************************************/
 
 // Substitute deprecated <Snippet> by <snippet> since libkml currently
@@ -353,9 +353,9 @@ bool OGRLIBKMLDataSource::WriteKml()
     return bRet;
 }
 
-/******************************************************************************/
-/*                      OGRLIBKMLCreateOGCKml22()                             */
-/******************************************************************************/
+/************************************************************************/
+/*                      OGRLIBKMLCreateOGCKml22()                       */
+/************************************************************************/
 
 static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory *poFactory,
                                       CSLConstList papszOptions = nullptr)
@@ -1593,7 +1593,7 @@ static bool IsValidPhoneNumber(const char *pszPhoneNumber)
 }
 
 /************************************************************************/
-/*                           SetCommonOptions()                         */
+/*                          SetCommonOptions()                          */
 /************************************************************************/
 
 void OGRLIBKMLDataSource::SetCommonOptions(ContainerPtr poKmlContainer,

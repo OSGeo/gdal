@@ -41,7 +41,7 @@ typedef enum
 } OGRGeoRSSGeomDialect;
 
 /************************************************************************/
-/*                             OGRGeoRSSLayer                              */
+/*                            OGRGeoRSSLayer                            */
 /************************************************************************/
 
 class OGRGeoRSSLayer final : public OGRLayer
@@ -145,7 +145,7 @@ class OGRGeoRSSLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRGeoRSSDataSource                        */
+/*                         OGRGeoRSSDataSource                          */
 /************************************************************************/
 
 typedef enum

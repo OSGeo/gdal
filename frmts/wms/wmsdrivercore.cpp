@@ -20,7 +20,7 @@
 #include "gdalsubdatasetinfo.h"
 
 /************************************************************************/
-/*                     WMSDriverIdentify()                              */
+/*                         WMSDriverIdentify()                          */
 /************************************************************************/
 
 int WMSDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -109,7 +109,7 @@ int WMSDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                    OGRWMSDriverGetSubdatasetInfo()                   */
+/*                   OGRWMSDriverGetSubdatasetInfo()                    */
 /************************************************************************/
 
 struct WMSDriverSubdatasetInfo final : public GDALSubdatasetInfo
@@ -170,7 +170,7 @@ static GDALSubdatasetInfo *WMSDriverGetSubdatasetInfo(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                      WMSDriverSetCommonMetadata()                    */
+/*                     WMSDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void WMSDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -189,7 +189,7 @@ void WMSDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredWMSPlugin()                       */
+/*                      DeclareDeferredWMSPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

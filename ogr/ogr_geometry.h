@@ -291,7 +291,7 @@ class CPL_DLL OGRDefaultConstGeometryVisitor : public IOGRConstGeometryVisitor
 };
 
 /************************************************************************/
-/*                  OGRGeomCoordinateBinaryPrecision                    */
+/*                   OGRGeomCoordinateBinaryPrecision                   */
 /************************************************************************/
 
 /** Geometry coordinate precision for a binary representation.
@@ -315,7 +315,7 @@ class CPL_DLL OGRGeomCoordinateBinaryPrecision
 };
 
 /************************************************************************/
-/*                           OGRwkbExportOptions                        */
+/*                         OGRwkbExportOptions                          */
 /************************************************************************/
 
 /** WKB export options.
@@ -1248,7 +1248,7 @@ class CPL_DLL OGRPoint : public OGRGeometry
 };
 
 /************************************************************************/
-/*                            OGRPointIterator                          */
+/*                           OGRPointIterator                           */
 /************************************************************************/
 
 /**
@@ -1458,7 +1458,7 @@ class CPL_DLL OGRIteratedPoint : public OGRPoint
 };
 
 /************************************************************************/
-/*                             OGRSimpleCurve                           */
+/*                            OGRSimpleCurve                            */
 /************************************************************************/
 
 /**
@@ -1903,7 +1903,7 @@ class CPL_DLL OGRLinearRing : public OGRLineString
 };
 
 /************************************************************************/
-/*                         OGRCircularString                            */
+/*                          OGRCircularString                           */
 /************************************************************************/
 
 /**
@@ -2023,7 +2023,7 @@ class CPL_DLL OGRCircularString : public OGRSimpleCurve
 };
 
 /************************************************************************/
-/*                           OGRCurveCollection                         */
+/*                          OGRCurveCollection                          */
 /************************************************************************/
 
 /**
@@ -2137,7 +2137,7 @@ class CPL_DLL OGRCurveCollection
 //! @endcond
 
 /************************************************************************/
-/*                            OGRCompoundCurve                          */
+/*                           OGRCompoundCurve                           */
 /************************************************************************/
 
 /**
@@ -2398,7 +2398,7 @@ class CPL_DLL OGRSurface : public OGRGeometry
 };
 
 /************************************************************************/
-/*                          OGRCurvePolygon                             */
+/*                           OGRCurvePolygon                            */
 /************************************************************************/
 
 /**
@@ -2807,7 +2807,7 @@ inline OGRPolygon::ChildType **end(OGRPolygon *poGeom)
 //! @endcond
 
 /************************************************************************/
-/*                              OGRTriangle                             */
+/*                             OGRTriangle                              */
 /************************************************************************/
 
 /**
@@ -3087,7 +3087,7 @@ inline OGRGeometryCollection::ChildType **end(OGRGeometryCollection *poGeom)
 //! @endcond
 
 /************************************************************************/
-/*                          OGRMultiSurface                             */
+/*                           OGRMultiSurface                            */
 /************************************************************************/
 
 /**
@@ -3891,7 +3891,7 @@ inline OGRMultiPoint::ChildType **end(OGRMultiPoint *poGeom)
 //! @endcond
 
 /************************************************************************/
-/*                          OGRMultiCurve                               */
+/*                            OGRMultiCurve                             */
 /************************************************************************/
 
 /**

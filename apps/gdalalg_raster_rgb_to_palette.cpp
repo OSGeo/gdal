@@ -27,7 +27,7 @@
 #endif
 
 /************************************************************************/
-/*                    GDALRasterRGBToPaletteAlgorithm()                 */
+/*                  GDALRasterRGBToPaletteAlgorithm()                   */
 /************************************************************************/
 
 GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm(
@@ -55,7 +55,7 @@ GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm(
 }
 
 /************************************************************************/
-/*                GDALRasterRGBToPaletteAlgorithm::RunStep()            */
+/*              GDALRasterRGBToPaletteAlgorithm::RunStep()              */
 /************************************************************************/
 
 bool GDALRasterRGBToPaletteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

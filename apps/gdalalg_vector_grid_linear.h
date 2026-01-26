@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                      GDALVectorGridLinearAlgorithm                   */
+/*                    GDALVectorGridLinearAlgorithm                     */
 /************************************************************************/
 
 class GDALVectorGridLinearAlgorithm /* non final */
@@ -37,7 +37,7 @@ class GDALVectorGridLinearAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                GDALVectorGridLinearAlgorithmStandalone               */
+/*               GDALVectorGridLinearAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALVectorGridLinearAlgorithmStandalone final

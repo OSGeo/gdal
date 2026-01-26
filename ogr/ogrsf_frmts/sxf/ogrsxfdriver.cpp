@@ -71,7 +71,7 @@ static int OGRSXFDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GRSXFDriverDelete()                         */
+/*                         GRSXFDriverDelete()                          */
 /************************************************************************/
 
 static CPLErr OGRSXFDriverDelete(const char *pszName)
@@ -101,7 +101,7 @@ static CPLErr OGRSXFDriverDelete(const char *pszName)
 }
 
 /************************************************************************/
-/*                        RegisterOGRSXF()                       */
+/*                           RegisterOGRSXF()                           */
 /************************************************************************/
 void RegisterOGRSXF()
 {

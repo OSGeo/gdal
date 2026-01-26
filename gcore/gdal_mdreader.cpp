@@ -712,7 +712,7 @@ char **GDALLoadRPCFile(const CPLString &soFilePath)
 }
 
 /************************************************************************/
-/*                         GDALWriteRPCTXTFile()                        */
+/*                        GDALWriteRPCTXTFile()                         */
 /************************************************************************/
 
 CPLErr GDALWriteRPCTXTFile(const char *pszFilename, CSLConstList papszMD)

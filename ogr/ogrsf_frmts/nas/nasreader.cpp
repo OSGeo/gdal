@@ -77,7 +77,7 @@ NASReader::~NASReader()
 }
 
 /************************************************************************/
-/*                          SetSourceFile()                             */
+/*                           SetSourceFile()                            */
 /************************************************************************/
 
 void NASReader::SetSourceFile(const char *pszFilename)
@@ -88,7 +88,7 @@ void NASReader::SetSourceFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                       GetSourceFileName()                            */
+/*                         GetSourceFileName()                          */
 /************************************************************************/
 
 const char *NASReader::GetSourceFileName()
@@ -997,7 +997,7 @@ void NASReader::ResetReading()
 }
 
 /************************************************************************/
-/*                       GetAttributeElementIndex()                     */
+/*                      GetAttributeElementIndex()                      */
 /************************************************************************/
 
 int NASReader::GetAttributeElementIndex(const char *pszElement, int nLen,
@@ -1129,7 +1129,7 @@ bool NASReader::ResolveXlinks(const char * /*pszFile */,
 }
 
 /************************************************************************/
-/*                       SetFilteredClassName()                         */
+/*                        SetFilteredClassName()                        */
 /************************************************************************/
 
 bool NASReader::SetFilteredClassName(const char *pszClassName)
@@ -1140,7 +1140,7 @@ bool NASReader::SetFilteredClassName(const char *pszClassName)
 }
 
 /************************************************************************/
-/*                         ConvertGeometry()                            */
+/*                          ConvertGeometry()                           */
 /************************************************************************/
 
 std::unique_ptr<OGRGeometry>

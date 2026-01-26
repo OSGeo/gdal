@@ -625,7 +625,7 @@ CPLErr CPL_DLL GDALWarpRegionToBuffer(GDALWarpOperationH, int, int, int, int,
                                       void *, GDALDataType, int, int, int, int);
 
 /************************************************************************/
-/*      Warping kernel functions                                        */
+/*                       Warping kernel functions                       */
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */

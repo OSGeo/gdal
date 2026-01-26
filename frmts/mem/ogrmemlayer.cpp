@@ -33,7 +33,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                      IOGRMemLayerFeatureIterator                     */
+/*                     IOGRMemLayerFeatureIterator                      */
 /************************************************************************/
 
 class IOGRMemLayerFeatureIterator
@@ -83,7 +83,7 @@ OGRMemLayer::OGRMemLayer(const OGRFeatureDefn &oFeatureDefn)
 }
 
 /************************************************************************/
-/*                           ~OGRMemLayer()                           */
+/*                            ~OGRMemLayer()                            */
 /************************************************************************/
 
 OGRMemLayer::~OGRMemLayer()
@@ -186,7 +186,7 @@ OGRErr OGRMemLayer::SetNextByIndex(GIntBig nIndex)
 }
 
 /************************************************************************/
-/*                         GetFeatureRef()                              */
+/*                           GetFeatureRef()                            */
 /************************************************************************/
 
 OGRFeature *OGRMemLayer::GetFeatureRef(GIntBig nFeatureId)
@@ -224,7 +224,7 @@ OGRFeature *OGRMemLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                            */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
@@ -482,7 +482,7 @@ OGRErr OGRMemLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                        ICreateFeatureUniqPtr()                       */
+/*                       ICreateFeatureUniqPtr()                        */
 /************************************************************************/
 
 OGRErr OGRMemLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
@@ -1034,7 +1034,7 @@ OGRErr OGRMemLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
 }
 
 /************************************************************************/
-/*                        OGRMemLayerIteratorArray                      */
+/*                       OGRMemLayerIteratorArray                       */
 /************************************************************************/
 
 class OGRMemLayerIteratorArray final : public IOGRMemLayerFeatureIterator
@@ -1068,7 +1068,7 @@ OGRFeature *OGRMemLayerIteratorArray::Next()
 }
 
 /************************************************************************/
-/*                         OGRMemLayerIteratorMap                       */
+/*                        OGRMemLayerIteratorMap                        */
 /************************************************************************/
 
 class OGRMemLayerIteratorMap final : public IOGRMemLayerFeatureIterator

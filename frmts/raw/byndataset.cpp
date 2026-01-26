@@ -39,7 +39,7 @@ const static BYNEllipsoids EllipsoidTable[] = {
     {"CLARKE 1866", 6378206.4, 294.9786982}};
 
 /************************************************************************/
-/*                            BYNRasterBand()                           */
+/*                           BYNRasterBand()                            */
 /************************************************************************/
 
 BYNRasterBand::BYNRasterBand(GDALDataset *poDSIn, int nBandIn,
@@ -116,7 +116,7 @@ BYNDataset::~BYNDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr BYNDataset::Close(GDALProgressFunc, void *)
@@ -370,7 +370,7 @@ CPLErr BYNDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *BYNDataset::GetSpatialRef() const

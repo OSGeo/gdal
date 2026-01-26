@@ -305,7 +305,7 @@ struct DXFMLEADERLeader
 };
 
 /************************************************************************/
-/*                         TranslateMLEADER()                           */
+/*                          TranslateMLEADER()                          */
 /************************************************************************/
 
 OGRDXFFeature *OGRDXFLayer::TranslateMLEADER()

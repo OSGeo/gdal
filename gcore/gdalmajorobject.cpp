@@ -125,7 +125,7 @@ void CPL_STDCALL GDALSetDescription(GDALMajorObjectH hObject,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 /**
@@ -185,7 +185,7 @@ char **GDALMajorObject::BuildMetadataDomainList(char **papszList,
 }
 
 /************************************************************************/
-/*                    GDALGetMetadataDomainList()                       */
+/*                     GDALGetMetadataDomainList()                      */
 /************************************************************************/
 
 /**

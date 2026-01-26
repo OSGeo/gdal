@@ -1219,7 +1219,7 @@ TEST_F(test_cpl, CPLSetErrorHandler)
 }
 
 /************************************************************************/
-/*                         CPLString::replaceAll()                      */
+/*                       CPLString::replaceAll()                        */
 /************************************************************************/
 
 TEST_F(test_cpl, CPLString_replaceAll)
@@ -1255,7 +1255,7 @@ TEST_F(test_cpl, CPLString_replaceAll)
 }
 
 /************************************************************************/
-/*                        VSIMallocAligned()                            */
+/*                          VSIMallocAligned()                          */
 /************************************************************************/
 TEST_F(test_cpl, VSIMallocAligned)
 {
@@ -1303,7 +1303,7 @@ TEST_F(test_cpl, VSIMallocAligned)
 }
 
 /************************************************************************/
-/*             CPLGetConfigOptions() / CPLSetConfigOptions()            */
+/*            CPLGetConfigOptions() / CPLSetConfigOptions()             */
 /************************************************************************/
 TEST_F(test_cpl, CPLGetConfigOptions)
 {
@@ -1318,7 +1318,7 @@ TEST_F(test_cpl, CPLGetConfigOptions)
 }
 
 /************************************************************************/
-/*  CPLGetThreadLocalConfigOptions() / CPLSetThreadLocalConfigOptions() */
+/* CPLGetThreadLocalConfigOptions() / CPLSetThreadLocalConfigOptions()  */
 /************************************************************************/
 TEST_F(test_cpl, CPLGetThreadLocalConfigOptions)
 {

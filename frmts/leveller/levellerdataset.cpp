@@ -419,7 +419,7 @@ LevellerRasterBand::LevellerRasterBand(LevellerDataset *poDSIn)
 }
 
 /************************************************************************/
-/*                           Init()                                     */
+/*                                Init()                                */
 /************************************************************************/
 
 bool LevellerRasterBand::Init()
@@ -435,7 +435,7 @@ LevellerRasterBand::~LevellerRasterBand()
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr LevellerRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
@@ -823,7 +823,7 @@ CPLErr LevellerDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                           Create()                                   */
+/*                               Create()                               */
 /************************************************************************/
 GDALDataset *LevellerDataset::Create(const char *pszFilename, int nXSize,
                                      int nYSize, int nBandsIn,
@@ -1201,7 +1201,7 @@ bool LevellerDataset::make_local_coordsys(const char *pszName, UNITLABEL code)
 }
 
 /************************************************************************/
-/*                            load_from_file()                            */
+/*                           load_from_file()                           */
 /************************************************************************/
 
 bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
@@ -1393,7 +1393,7 @@ bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *LevellerDataset::GetSpatialRef() const
@@ -1495,7 +1495,7 @@ GDALDataset *LevellerDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GDALRegister_Leveller()                       */
+/*                       GDALRegister_Leveller()                        */
 /************************************************************************/
 
 void GDALRegister_Leveller()

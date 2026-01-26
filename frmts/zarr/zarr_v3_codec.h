@@ -18,7 +18,7 @@
 struct VSIVirtualHandle;
 
 /************************************************************************/
-/*                        ZarrArrayMetadata                             */
+/*                          ZarrArrayMetadata                           */
 /************************************************************************/
 
 /** Array-related metadata needed for the good working of Zarr V3 codecs */
@@ -35,7 +35,7 @@ struct ZarrArrayMetadata
 };
 
 /************************************************************************/
-/*                            ZarrV3Codec                               */
+/*                             ZarrV3Codec                              */
 /************************************************************************/
 
 /** Abstract class for a Zarr V3 codec */
@@ -114,7 +114,7 @@ class ZarrV3Codec CPL_NON_FINAL
 };
 
 /************************************************************************/
-/*                      ZarrV3CodecAbstractCompressor                   */
+/*                    ZarrV3CodecAbstractCompressor                     */
 /************************************************************************/
 
 class ZarrV3CodecAbstractCompressor CPL_NON_FINAL : public ZarrV3Codec
@@ -171,7 +171,7 @@ class ZarrV3CodecGZip final : public ZarrV3CodecAbstractCompressor
 };
 
 /************************************************************************/
-/*                          ZarrV3CodecBlosc                            */
+/*                           ZarrV3CodecBlosc                           */
 /************************************************************************/
 
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/blosc/v1.0.html
@@ -195,7 +195,7 @@ class ZarrV3CodecBlosc final : public ZarrV3CodecAbstractCompressor
 };
 
 /************************************************************************/
-/*                          ZarrV3CodecZstd                             */
+/*                           ZarrV3CodecZstd                            */
 /************************************************************************/
 
 // Implements https://github.com/zarr-developers/zarr-specs/pull/256
@@ -360,7 +360,7 @@ class ZarrV3CodecTranspose final : public ZarrV3Codec
 };
 
 /************************************************************************/
-/*                           ZarrV3CodecCRC32C                          */
+/*                          ZarrV3CodecCRC32C                           */
 /************************************************************************/
 
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/crc32c/index.html
@@ -397,7 +397,7 @@ class ZarrV3CodecCRC32C final : public ZarrV3Codec
 };
 
 /************************************************************************/
-/*                       ZarrV3CodecShardingIndexed                     */
+/*                      ZarrV3CodecShardingIndexed                      */
 /************************************************************************/
 
 class ZarrV3CodecSequence;
@@ -455,7 +455,7 @@ class ZarrV3CodecShardingIndexed final : public ZarrV3Codec
 };
 
 /************************************************************************/
-/*                          ZarrV3CodecSequence                         */
+/*                         ZarrV3CodecSequence                          */
 /************************************************************************/
 
 class ZarrV3CodecSequence

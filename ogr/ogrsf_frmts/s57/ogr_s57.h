@@ -61,7 +61,7 @@ class OGRS57Layer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                          OGRS57DataSource                            */
+/*                           OGRS57DataSource                           */
 /************************************************************************/
 
 class OGRS57DataSource final : public GDALDataset
@@ -126,7 +126,7 @@ class OGRS57DataSource final : public GDALDataset
 };
 
 /************************************************************************/
-/*                            OGRS57Driver                              */
+/*                             OGRS57Driver                             */
 /************************************************************************/
 
 class OGRS57Driver final : public GDALDriver

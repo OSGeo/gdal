@@ -105,7 +105,7 @@ NITFDataset::~NITFDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr NITFDataset::Close(GDALProgressFunc, void *)
@@ -224,7 +224,7 @@ CPLErr NITFDataset::Close(int &bHasDroppedRef)
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int NITFDataset::CloseDependentDatasets()
@@ -1838,7 +1838,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                             Validate()                               */
+/*                              Validate()                              */
 /************************************************************************/
 
 bool NITFDataset::Validate()
@@ -2317,7 +2317,7 @@ CPLErr NITFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                               SetGCPs()                              */
+/*                              SetGCPs()                               */
 /************************************************************************/
 
 CPLErr NITFDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
@@ -2406,7 +2406,7 @@ CPLErr NITFDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *NITFDataset::GetSpatialRef() const
@@ -2419,7 +2419,7 @@ const OGRSpatialReference *NITFDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                            SetSpatialRef()                           */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -2485,7 +2485,7 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 
 #ifdef ESRI_BUILD
 /************************************************************************/
-/*                       InitializeNITFDESMetadata()                    */
+/*                     InitializeNITFDESMetadata()                      */
 /************************************************************************/
 
 void NITFDataset::InitializeNITFDESMetadata()
@@ -2560,7 +2560,7 @@ void NITFDataset::InitializeNITFDESMetadata()
 }
 
 /************************************************************************/
-/*                       InitializeNITFTREs()                           */
+/*                         InitializeNITFTREs()                         */
 /************************************************************************/
 
 void NITFDataset::InitializeNITFTREs()
@@ -2681,7 +2681,7 @@ void NITFDataset::InitializeNITFTREs()
 #endif
 
 /************************************************************************/
-/*                       InitializeNITFDESs()                           */
+/*                         InitializeNITFDESs()                         */
 /************************************************************************/
 
 bool NITFDataset::InitializeNITFDESs(bool bValidate)
@@ -2728,7 +2728,7 @@ bool NITFDataset::InitializeNITFDESs(bool bValidate)
 }
 
 /************************************************************************/
-/*                       InitializeNITFMetadata()                        */
+/*                       InitializeNITFMetadata()                       */
 /************************************************************************/
 
 void NITFDataset::InitializeNITFMetadata()
@@ -3242,7 +3242,7 @@ bool NITFDataset::InitializeTREMetadata(bool bValidate)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **NITFDataset::GetMetadataDomainList()
@@ -3255,7 +3255,7 @@ char **NITFDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                      InitializeImageStructureMetadata()              */
+/*                  InitializeImageStructureMetadata()                  */
 /************************************************************************/
 
 void NITFDataset::InitializeImageStructureMetadata()
@@ -3470,7 +3470,7 @@ int NITFDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                      GetGCPSpatialRef()                              */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
 const OGRSpatialReference *NITFDataset::GetGCPSpatialRef() const
@@ -4320,7 +4320,7 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
 }
 
 /************************************************************************/
-/*              NITFExtractTEXTAndCGMCreationOption()                   */
+/*                NITFExtractTEXTAndCGMCreationOption()                 */
 /************************************************************************/
 
 static char **NITFExtractTEXTAndCGMCreationOption(GDALDataset *poSrcDS,
@@ -5925,7 +5925,7 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
 }
 
 /************************************************************************/
-/*                       NITFWriteCGMSegments()                        */
+/*                        NITFWriteCGMSegments()                        */
 /************************************************************************/
 static bool NITFWriteCGMSegments(const char *pszFilename, VSILFILE *&fpVSIL,
                                  CSLConstList papszList)
@@ -6614,7 +6614,7 @@ static bool NITFWriteDES(VSILFILE *&fp, const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          NITFWriteDESs()                             */
+/*                           NITFWriteDESs()                            */
 /************************************************************************/
 
 static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
@@ -6750,7 +6750,7 @@ static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
 }
 
 /************************************************************************/
-/*                         UpdateFileLength()                           */
+/*                          UpdateFileLength()                          */
 /************************************************************************/
 
 static bool UpdateFileLength(VSILFILE *fp)
@@ -7112,7 +7112,7 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
 #endif /* def JPEG_SUPPORTED */
 
 /************************************************************************/
-/*                          GDALRegister_NITF()                         */
+/*                         GDALRegister_NITF()                          */
 /************************************************************************/
 
 typedef struct
@@ -7211,7 +7211,7 @@ class NITFDriver final : public GDALDriver
 };
 
 /************************************************************************/
-/*                     NITFDriver::GetMetadataItem()                    */
+/*                    NITFDriver::GetMetadataItem()                     */
 /************************************************************************/
 
 const char *NITFDriver::GetMetadataItem(const char *pszName,
@@ -7226,7 +7226,7 @@ const char *NITFDriver::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                         InitCreationOptionList()                     */
+/*                       InitCreationOptionList()                       */
 /************************************************************************/
 
 void NITFDriver::InitCreationOptionList()

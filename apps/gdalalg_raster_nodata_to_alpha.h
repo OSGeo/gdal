@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                  GDALRasterNoDataToAlphaAlgorithm                    */
+/*                   GDALRasterNoDataToAlphaAlgorithm                   */
 /************************************************************************/
 
 class GDALRasterNoDataToAlphaAlgorithm /* non final */

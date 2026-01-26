@@ -15,7 +15,7 @@
 extern "C" void RegisterOGRAmigoCloud();
 
 /************************************************************************/
-/*                        OGRAmigoCloudDriverIdentify()                    */
+/*                    OGRAmigoCloudDriverIdentify()                     */
 /************************************************************************/
 
 static int OGRAmigoCloudDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -25,7 +25,7 @@ static int OGRAmigoCloudDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           OGRAmigoCloudDriverOpen()                     */
+/*                      OGRAmigoCloudDriverOpen()                       */
 /************************************************************************/
 
 static GDALDataset *OGRAmigoCloudDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -47,7 +47,7 @@ static GDALDataset *OGRAmigoCloudDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      OGRAmigoCloudDriverCreate()                        */
+/*                     OGRAmigoCloudDriverCreate()                      */
 /************************************************************************/
 
 static GDALDataset *
@@ -69,7 +69,7 @@ OGRAmigoCloudDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 }
 
 /************************************************************************/
-/*                         RegisterOGRAMIGOCLOUD()                         */
+/*                       RegisterOGRAMIGOCLOUD()                        */
 /************************************************************************/
 
 void RegisterOGRAmigoCloud()

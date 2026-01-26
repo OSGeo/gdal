@@ -29,7 +29,7 @@ GMLASXLinkResolver::GMLASXLinkResolver()
 }
 
 /************************************************************************/
-/*                             SetConf()                                */
+/*                              SetConf()                               */
 /************************************************************************/
 
 void GMLASXLinkResolver::SetConf(const GMLASXLinkResolutionConf &oConf)
@@ -218,7 +218,7 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString &osURL,
 }
 
 /************************************************************************/
-/*                     IsRawContentResolutionEnabled()                  */
+/*                   IsRawContentResolutionEnabled()                    */
 /************************************************************************/
 
 bool GMLASXLinkResolver::IsRawContentResolutionEnabled() const
@@ -229,7 +229,7 @@ bool GMLASXLinkResolver::IsRawContentResolutionEnabled() const
 }
 
 /************************************************************************/
-/*                      GetMatchingResolutionRule()                      */
+/*                     GetMatchingResolutionRule()                      */
 /************************************************************************/
 
 int GMLASXLinkResolver::GetMatchingResolutionRule(const CPLString &osURL) const
@@ -259,7 +259,7 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString &osURL)
 }
 
 /************************************************************************/
-/*                         GetRawContentForRule()                       */
+/*                        GetRawContentForRule()                        */
 /************************************************************************/
 
 CPLString GMLASXLinkResolver::GetRawContentForRule(const CPLString &osURL,

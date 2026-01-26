@@ -88,7 +88,7 @@ class OGRSQLiteExtensionData
 };
 
 /************************************************************************/
-/*                     OGRSQLiteExtensionData()                         */
+/*                       OGRSQLiteExtensionData()                       */
 /************************************************************************/
 
 OGRSQLiteExtensionData::OGRSQLiteExtensionData(CPL_UNUSED sqlite3 *hDB)
@@ -101,7 +101,7 @@ OGRSQLiteExtensionData::OGRSQLiteExtensionData(CPL_UNUSED sqlite3 *hDB)
 }
 
 /************************************************************************/
-/*                       ~OGRSQLiteExtensionData()                      */
+/*                      ~OGRSQLiteExtensionData()                       */
 /************************************************************************/
 
 OGRSQLiteExtensionData::~OGRSQLiteExtensionData()
@@ -116,7 +116,7 @@ OGRSQLiteExtensionData::~OGRSQLiteExtensionData()
 }
 
 /************************************************************************/
-/*                          GetTransform()                              */
+/*                            GetTransform()                            */
 /************************************************************************/
 
 #ifdef DEFINE_OGRSQLiteExtensionData_GetTransform
@@ -144,7 +144,7 @@ OGRCoordinateTransformation *OGRSQLiteExtensionData::GetTransform(int nSrcSRSId,
 #endif
 
 /************************************************************************/
-/*                          GetDataset()                                */
+/*                             GetDataset()                             */
 /************************************************************************/
 
 GDALDataset *OGRSQLiteExtensionData::GetDataset(const char *pszDSName)
@@ -166,7 +166,7 @@ GDALDataset *OGRSQLiteExtensionData::GetDataset(const char *pszDSName)
 }  // namespace
 
 /************************************************************************/
-/*                    OGRSQLITE_gdal_get_pixel_value()                  */
+/*                   OGRSQLITE_gdal_get_pixel_value()                   */
 /************************************************************************/
 
 static void OGRSQLITE_gdal_get_pixel_value(sqlite3_context *pContext, int argc,
@@ -207,7 +207,7 @@ static void OGRSQLITE_gdal_get_pixel_value(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                             OGRSQLITE_LIKE()                         */
+/*                           OGRSQLITE_LIKE()                           */
 /************************************************************************/
 
 static void OGRSQLITE_LIKE(sqlite3_context *pContext, int argc,
@@ -278,7 +278,7 @@ static void OGRSQLITE_STDDEV_Step(sqlite3_context *pContext, int /* argc*/,
 }
 
 /************************************************************************/
-/*                    OGRSQLITE_STDDEV_POP_Finalize()                   */
+/*                   OGRSQLITE_STDDEV_POP_Finalize()                    */
 /************************************************************************/
 
 static void OGRSQLITE_STDDEV_POP_Finalize(sqlite3_context *pContext)
@@ -294,7 +294,7 @@ static void OGRSQLITE_STDDEV_POP_Finalize(sqlite3_context *pContext)
 }
 
 /************************************************************************/
-/*                    OGRSQLITE_STDDEV_SAMP_Finalize()                  */
+/*                   OGRSQLITE_STDDEV_SAMP_Finalize()                   */
 /************************************************************************/
 
 static void OGRSQLITE_STDDEV_SAMP_Finalize(sqlite3_context *pContext)
@@ -470,7 +470,7 @@ static void OGRSQLITE_Percentile_Finalize(sqlite3_context *pCtx)
 }
 
 /************************************************************************/
-/*                         OGRSQLITE_Mode_Step()                        */
+/*                        OGRSQLITE_Mode_Step()                         */
 /************************************************************************/
 
 namespace
@@ -552,7 +552,7 @@ static void OGRSQLITE_Mode_Step(sqlite3_context *pCtx, int /*argc*/,
 }
 
 /************************************************************************/
-/*                       OGRSQLITE_Mode_Finalize()                      */
+/*                      OGRSQLITE_Mode_Finalize()                       */
 /************************************************************************/
 
 static void OGRSQLITE_Mode_Finalize(sqlite3_context *pCtx)
@@ -581,7 +581,7 @@ static void OGRSQLITE_Mode_Finalize(sqlite3_context *pCtx)
 }
 
 /************************************************************************/
-/*                    OGRSQLITE_ST_Hilbert_X_Y_BBOX()                   */
+/*                   OGRSQLITE_ST_Hilbert_X_Y_BBOX()                    */
 /************************************************************************/
 
 static void OGRSQLITE_ST_Hilbert_X_Y_BBOX(sqlite3_context *pContext,
@@ -609,7 +609,7 @@ static void OGRSQLITE_ST_Hilbert_X_Y_BBOX(sqlite3_context *pContext,
 }
 
 /************************************************************************/
-/*                 OGRSQLiteRegisterSQLFunctionsCommon()                */
+/*                OGRSQLiteRegisterSQLFunctionsCommon()                 */
 /************************************************************************/
 
 #ifndef SQLITE_DETERMINISTIC
@@ -675,7 +675,7 @@ static OGRSQLiteExtensionData *OGRSQLiteRegisterSQLFunctionsCommon(sqlite3 *hDB)
 }
 
 /************************************************************************/
-/*                   OGRSQLiteUnregisterSQLFunctions()                  */
+/*                  OGRSQLiteUnregisterSQLFunctions()                   */
 /************************************************************************/
 
 static void OGRSQLiteUnregisterSQLFunctions(void *hHandle)
@@ -687,7 +687,7 @@ static void OGRSQLiteUnregisterSQLFunctions(void *hHandle)
 
 #ifdef DEFINE_OGRSQLiteSQLFunctionsSetCaseSensitiveLike
 /************************************************************************/
-/*                OGRSQLiteSQLFunctionsSetCaseSensitiveLike()           */
+/*             OGRSQLiteSQLFunctionsSetCaseSensitiveLike()              */
 /************************************************************************/
 
 static void OGRSQLiteSQLFunctionsSetCaseSensitiveLike(void *hHandle, bool b)

@@ -111,7 +111,7 @@ OGRDXFOCSTransformer::OGRDXFOCSTransformer(double adfNIn[3],
 }
 
 /************************************************************************/
-/*                            Transform()                               */
+/*                             Transform()                              */
 /************************************************************************/
 
 int OGRDXFOCSTransformer::Transform(size_t nCount, double *adfX, double *adfY,

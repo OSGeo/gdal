@@ -33,7 +33,7 @@
 static bool gbHasLZW = false;
 
 /************************************************************************/
-/*                        HasZSTDCompression()                          */
+/*                         HasZSTDCompression()                         */
 /************************************************************************/
 
 static bool HasZSTDCompression()
@@ -76,7 +76,7 @@ static CPLString GetTmpFilename(const char *pszFilename, const char *pszExt)
 }
 
 /************************************************************************/
-/*                             GetResampling()                          */
+/*                           GetResampling()                            */
 /************************************************************************/
 
 static const char *GetResampling(GDALDataset *poSrcDS)
@@ -89,7 +89,7 @@ static const char *GetResampling(GDALDataset *poSrcDS)
 }
 
 /************************************************************************/
-/*                             GetPredictor()                          */
+/*                            GetPredictor()                            */
 /************************************************************************/
 static const char *GetPredictor(GDALDataset *poSrcDS, const char *pszPredictor)
 {
@@ -117,7 +117,7 @@ static const char *GetPredictor(GDALDataset *poSrcDS, const char *pszPredictor)
 }
 
 /************************************************************************/
-/*                            COGGetTargetSRS()                         */
+/*                          COGGetTargetSRS()                           */
 /************************************************************************/
 
 static bool COGGetTargetSRS(const char *const *papszOptions,
@@ -197,7 +197,7 @@ std::string COGGetResampling(GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                     COGGetWarpingCharacteristics()                   */
+/*                    COGGetWarpingCharacteristics()                    */
 /************************************************************************/
 
 static bool COGGetWarpingCharacteristics(
@@ -713,7 +713,7 @@ struct GDALCOGCreator final
 };
 
 /************************************************************************/
-/*                    GDALCOGCreator::~GDALCOGCreator()                 */
+/*                  GDALCOGCreator::~GDALCOGCreator()                   */
 /************************************************************************/
 
 GDALCOGCreator::~GDALCOGCreator()
@@ -745,7 +745,7 @@ GDALCOGCreator::~GDALCOGCreator()
 }
 
 /************************************************************************/
-/*                    GDALCOGCreator::Create()                          */
+/*                       GDALCOGCreator::Create()                       */
 /************************************************************************/
 
 std::unique_ptr<GDALDataset>
@@ -1402,7 +1402,7 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
 }
 
 /************************************************************************/
-/*                            COGCreateCopy()                           */
+/*                           COGCreateCopy()                            */
 /************************************************************************/
 
 static GDALDataset *COGCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
@@ -1416,7 +1416,7 @@ static GDALDataset *COGCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                              COGProxyDataset                         */
+/*                           COGProxyDataset                            */
 /************************************************************************/
 
 class COGProxyDataset final : public GDALProxyDataset
@@ -1469,7 +1469,7 @@ class COGProxyDataset final : public GDALProxyDataset
 };
 
 /************************************************************************/
-/*                    COGProxyDataset::~COGProxyDataset()               */
+/*                 COGProxyDataset::~COGProxyDataset()                  */
 /************************************************************************/
 
 COGProxyDataset::~COGProxyDataset()
@@ -1478,7 +1478,7 @@ COGProxyDataset::~COGProxyDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr COGProxyDataset::Close(GDALProgressFunc pfnProgress, void *pProgressData)
@@ -1511,7 +1511,7 @@ CPLErr COGProxyDataset::Close(GDALProgressFunc pfnProgress, void *pProgressData)
 }
 
 /************************************************************************/
-/*                              COGCreate()                             */
+/*                             COGCreate()                              */
 /************************************************************************/
 
 static GDALDataset *COGCreate(const char *pszFilename, int nXSize, int nYSize,

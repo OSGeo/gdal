@@ -20,7 +20,7 @@
 #include "gdalargumentparser.h"
 
 /************************************************************************/
-/*                     GDALManageOptions()                              */
+/*                         GDALManageOptions()                          */
 /************************************************************************/
 
 struct GDALManageOptions
@@ -76,7 +76,7 @@ static void ProcessIdentifyTarget(const char *pszTarget,
 }
 
 /************************************************************************/
-/*                     GDALManageAppOptionsGetParser()                 */
+/*                   GDALManageAppOptionsGetParser()                    */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>

@@ -22,9 +22,9 @@
 
 using std::string;
 
-/*************************************************************************/
-/*                          StringToWString()                            */
-/*************************************************************************/
+/************************************************************************/
+/*                          StringToWString()                           */
+/************************************************************************/
 
 std::wstring StringToWString(const std::string &utf8string)
 {
@@ -35,9 +35,9 @@ std::wstring StringToWString(const std::string &utf8string)
     return utf16string;
 }
 
-/*************************************************************************/
-/*                          WStringToString()                            */
-/*************************************************************************/
+/************************************************************************/
+/*                          WStringToString()                           */
+/************************************************************************/
 
 std::string WStringToString(const std::wstring &utf16string)
 {
@@ -48,9 +48,9 @@ std::string WStringToString(const std::wstring &utf16string)
     return utf8string;
 }
 
-/*************************************************************************/
-/*                                GDBErr()                               */
-/*************************************************************************/
+/************************************************************************/
+/*                               GDBErr()                               */
+/************************************************************************/
 
 bool GDBErr(long int hr, const std::string &desc, CPLErr errType,
             const char *pszAddMsg)
@@ -77,9 +77,9 @@ bool GDBErr(long int hr, const std::string &desc, CPLErr errType,
     return false;
 }
 
-/*************************************************************************/
-/*                            GDBDebug()                                 */
-/*************************************************************************/
+/************************************************************************/
+/*                              GDBDebug()                              */
+/************************************************************************/
 
 bool GDBDebug(long int hr, const std::string &desc)
 {
@@ -103,9 +103,9 @@ bool GDBDebug(long int hr, const std::string &desc)
     return false;
 }
 
-/*************************************************************************/
-/*                            GDBToOGRGeometry()                         */
-/*************************************************************************/
+/************************************************************************/
+/*                          GDBToOGRGeometry()                          */
+/************************************************************************/
 
 bool GDBToOGRGeometry(const std::string &geoType, bool hasZ, bool hasM,
                       OGRwkbGeometryType *pOut)
@@ -146,9 +146,9 @@ bool GDBToOGRGeometry(const std::string &geoType, bool hasZ, bool hasM,
     return true;
 }
 
-/*************************************************************************/
-/*                            OGRGeometryToGDB()                         */
-/*************************************************************************/
+/************************************************************************/
+/*                          OGRGeometryToGDB()                          */
+/************************************************************************/
 
 bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType,
                       bool *hasZ, bool *hasM)
@@ -201,9 +201,9 @@ bool OGRGeometryToGDB(OGRwkbGeometryType ogrType, std::string *gdbType,
     return true;
 }
 
-/*************************************************************************/
-/*                            OGRToGDBFieldType()                        */
-/*************************************************************************/
+/************************************************************************/
+/*                         OGRToGDBFieldType()                          */
+/************************************************************************/
 
 bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType,
                        std::string *gdbType)
@@ -255,9 +255,9 @@ bool OGRToGDBFieldType(OGRFieldType ogrType, OGRFieldSubType eSubType,
     return true;
 }
 
-/*************************************************************************/
-/*                       GDBFieldTypeToLengthInBytes()                   */
-/*************************************************************************/
+/************************************************************************/
+/*                    GDBFieldTypeToLengthInBytes()                     */
+/************************************************************************/
 
 bool GDBFieldTypeToLengthInBytes(const std::string &gdbType, int &lengthOut)
 {
@@ -314,9 +314,9 @@ bool GDBFieldTypeToLengthInBytes(const std::string &gdbType, int &lengthOut)
     return true;
 }
 
-/*************************************************************************/
-/*                        GDBGeometryToOGRGeometry()                     */
-/*************************************************************************/
+/************************************************************************/
+/*                      GDBGeometryToOGRGeometry()                      */
+/************************************************************************/
 
 bool GDBGeometryToOGRGeometry(bool forceMulti,
                               FileGDBAPI::ShapeBuffer *pGdbGeometry,
@@ -391,9 +391,9 @@ bool GDBGeometryToOGRGeometry(bool forceMulti,
     return true;
 }
 
-/*************************************************************************/
-/*                         GDBToOGRSpatialReference()                    */
-/*************************************************************************/
+/************************************************************************/
+/*                      GDBToOGRSpatialReference()                      */
+/************************************************************************/
 
 bool GDBToOGRSpatialReference(const string &wkt, OGRSpatialReference **ppSR)
 {
@@ -448,9 +448,9 @@ bool GDBToOGRSpatialReference(const string &wkt, OGRSpatialReference **ppSR)
     }
 }
 
-/*************************************************************************/
-/*                           FGDB_CPLAddXMLAttribute()                   */
-/*************************************************************************/
+/************************************************************************/
+/*                      FGDB_CPLAddXMLAttribute()                       */
+/************************************************************************/
 
 /* Utility method for attributing nodes */
 void FGDB_CPLAddXMLAttribute(CPLXMLNode *node, const char *attrname,
@@ -462,9 +462,9 @@ void FGDB_CPLAddXMLAttribute(CPLXMLNode *node, const char *attrname,
                      attrvalue);
 }
 
-/*************************************************************************/
-/*                          FGDBLaunderName()                            */
-/*************************************************************************/
+/************************************************************************/
+/*                          FGDBLaunderName()                           */
+/************************************************************************/
 
 std::wstring FGDBLaunderName(const std::wstring &name)
 {
@@ -495,9 +495,9 @@ std::wstring FGDBLaunderName(const std::wstring &name)
     return newName;
 }
 
-/*************************************************************************/
-/*                     FGDBEscapeUnsupportedPrefixes()                   */
-/*************************************************************************/
+/************************************************************************/
+/*                   FGDBEscapeUnsupportedPrefixes()                    */
+/************************************************************************/
 
 std::wstring FGDBEscapeUnsupportedPrefixes(const std::wstring &className)
 {
@@ -523,9 +523,9 @@ std::wstring FGDBEscapeUnsupportedPrefixes(const std::wstring &className)
     return newName;
 }
 
-/*************************************************************************/
-/*                        FGDBEscapeReservedKeywords()                   */
-/*************************************************************************/
+/************************************************************************/
+/*                     FGDBEscapeReservedKeywords()                     */
+/************************************************************************/
 
 std::wstring FGDBEscapeReservedKeywords(const std::wstring &name)
 {

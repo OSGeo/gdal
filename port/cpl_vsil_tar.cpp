@@ -130,7 +130,7 @@ class VSITarReader final : public VSIArchiveReader
 };
 
 /************************************************************************/
-/*                               VSIIsTGZ()                             */
+/*                              VSIIsTGZ()                              */
 /************************************************************************/
 
 static bool VSIIsTGZ(const char *pszFilename)
@@ -144,7 +144,7 @@ static bool VSIIsTGZ(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           VSITarReader()                             */
+/*                            VSITarReader()                            */
 /************************************************************************/
 
 // TODO(schwehr): What is this ***NEWFILE*** thing?
@@ -168,7 +168,7 @@ VSITarReader::VSITarReader(const char *pszTarFileName)
 }
 
 /************************************************************************/
-/*                          ~VSITarReader()                             */
+/*                           ~VSITarReader()                            */
 /************************************************************************/
 
 VSITarReader::~VSITarReader()
@@ -178,7 +178,7 @@ VSITarReader::~VSITarReader()
 }
 
 /************************************************************************/
-/*                          GetFileOffset()                             */
+/*                           GetFileOffset()                            */
 /************************************************************************/
 
 VSIArchiveEntryFileOffset *VSITarReader::GetFileOffset()
@@ -194,7 +194,7 @@ VSIArchiveEntryFileOffset *VSITarReader::GetFileOffset()
 }
 
 /************************************************************************/
-/*                       IsNumericFieldTerminator()                     */
+/*                      IsNumericFieldTerminator()                      */
 /************************************************************************/
 
 static bool IsNumericFieldTerminator(GByte byVal)
@@ -204,7 +204,7 @@ static bool IsNumericFieldTerminator(GByte byVal)
 }
 
 /************************************************************************/
-/*                           GotoNextFile()                             */
+/*                            GotoNextFile()                            */
 /************************************************************************/
 
 int VSITarReader::GotoNextFile()
@@ -443,7 +443,7 @@ int VSITarReader::GotoNextFile()
 }
 
 /************************************************************************/
-/*                          GotoFirstFile()                             */
+/*                           GotoFirstFile()                            */
 /************************************************************************/
 
 int VSITarReader::GotoFirstFile()
@@ -462,7 +462,7 @@ int VSITarReader::GotoFirstFile()
 }
 
 /************************************************************************/
-/*                         GotoFileOffset()                             */
+/*                           GotoFileOffset()                           */
 /************************************************************************/
 
 int VSITarReader::GotoFileOffset(VSIArchiveEntryFileOffset *pOffset)
@@ -515,7 +515,7 @@ class VSITarFilesystemHandler final : public VSIArchiveFilesystemHandler
 };
 
 /************************************************************************/
-/*                          GetExtensions()                             */
+/*                           GetExtensions()                            */
 /************************************************************************/
 
 std::vector<CPLString> VSITarFilesystemHandler::GetExtensions() const
@@ -528,7 +528,7 @@ std::vector<CPLString> VSITarFilesystemHandler::GetExtensions() const
 }
 
 /************************************************************************/
-/*                           CreateReader()                             */
+/*                            CreateReader()                            */
 /************************************************************************/
 
 std::unique_ptr<VSIArchiveReader>
@@ -554,7 +554,7 @@ VSITarFilesystemHandler::CreateReader(const char *pszTarFileName)
 }
 
 /************************************************************************/
-/*                                 Open()                               */
+/*                                Open()                                */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -604,7 +604,7 @@ VSITarFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
 //! @endcond
 
 /************************************************************************/
-/*                    VSIInstallTarFileHandler()                        */
+/*                      VSIInstallTarFileHandler()                      */
 /************************************************************************/
 
 /*!

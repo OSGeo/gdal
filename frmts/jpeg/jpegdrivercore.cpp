@@ -24,7 +24,7 @@
 #include "jpeglib.h"
 
 /************************************************************************/
-/*                    JPEGDatasetIsJPEGLS()                             */
+/*                        JPEGDatasetIsJPEGLS()                         */
 /************************************************************************/
 
 bool JPEGDatasetIsJPEGLS(GDALOpenInfo *poOpenInfo)
@@ -70,7 +70,7 @@ bool JPEGDatasetIsJPEGLS(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     JPEGDriverIdentify()                             */
+/*                         JPEGDriverIdentify()                         */
 /************************************************************************/
 
 int JPEGDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -115,7 +115,7 @@ int JPEGDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     JPEGDriverSetCommonMetadata()                    */
+/*                    JPEGDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void JPEGDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -159,7 +159,7 @@ void JPEGDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                    DeclareDeferredJPEGPlugin()                       */
+/*                     DeclareDeferredJPEGPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

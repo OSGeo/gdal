@@ -228,7 +228,7 @@ VRTDerivedRasterBand::~VRTDerivedRasterBand()
 }
 
 /************************************************************************/
-/*                               Cleanup()                              */
+/*                              Cleanup()                               */
 /************************************************************************/
 
 void VRTDerivedRasterBand::Cleanup()
@@ -236,7 +236,7 @@ void VRTDerivedRasterBand::Cleanup()
 }
 
 /************************************************************************/
-/*                      GetGlobalMapPixelFunction()                     */
+/*                     GetGlobalMapPixelFunction()                      */
 /************************************************************************/
 
 static std::map<std::string,
@@ -250,7 +250,7 @@ GetGlobalMapPixelFunction()
 }
 
 /************************************************************************/
-/*                           AddPixelFunction()                         */
+/*                          AddPixelFunction()                          */
 /************************************************************************/
 
 /*! @endcond */
@@ -359,7 +359,7 @@ CPLErr VRTDerivedRasterBand::AddPixelFunction(
 }
 
 /************************************************************************/
-/*                           GetPixelFunction()                         */
+/*                          GetPixelFunction()                          */
 /************************************************************************/
 
 /**
@@ -392,7 +392,7 @@ VRTDerivedRasterBand::GetPixelFunction(const char *pszFuncNameIn)
 }
 
 /************************************************************************/
-/*                        GetPixelFunctionNames()                       */
+/*                       GetPixelFunctionNames()                        */
 /************************************************************************/
 
 /**
@@ -410,7 +410,7 @@ std::vector<std::string> VRTDerivedRasterBand::GetPixelFunctionNames()
 }
 
 /************************************************************************/
-/*                         SetPixelFunctionName()                       */
+/*                        SetPixelFunctionName()                        */
 /************************************************************************/
 
 /**
@@ -426,7 +426,7 @@ void VRTDerivedRasterBand::SetPixelFunctionName(const char *pszFuncNameIn)
 }
 
 /************************************************************************/
-/*                     AddPixelFunctionArgument()                       */
+/*                      AddPixelFunctionArgument()                      */
 /************************************************************************/
 
 /**
@@ -443,7 +443,7 @@ void VRTDerivedRasterBand::AddPixelFunctionArgument(const char *pszArg,
 }
 
 /************************************************************************/
-/*                         SetPixelFunctionLanguage()                   */
+/*                      SetPixelFunctionLanguage()                      */
 /************************************************************************/
 
 /**
@@ -459,7 +459,7 @@ void VRTDerivedRasterBand::SetPixelFunctionLanguage(const char *pszLanguage)
 }
 
 /************************************************************************/
-/*                 SetSkipNonContributingSources()                      */
+/*                   SetSkipNonContributingSources()                    */
 /************************************************************************/
 
 /** Whether sources that do not intersect the VRTRasterBand RasterIO() requested
@@ -479,7 +479,7 @@ void VRTDerivedRasterBand::SetSkipNonContributingSources(bool bSkip)
 }
 
 /************************************************************************/
-/*                         SetSourceTransferType()                      */
+/*                       SetSourceTransferType()                        */
 /************************************************************************/
 
 /**
@@ -499,7 +499,7 @@ void VRTDerivedRasterBand::SetSourceTransferType(GDALDataType eDataTypeIn)
 }
 
 /************************************************************************/
-/*                           InitializePython()                         */
+/*                          InitializePython()                          */
 /************************************************************************/
 
 bool VRTDerivedRasterBand::InitializePython()
@@ -1632,7 +1632,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
 }
 
 /************************************************************************/
-/*                         IGetDataCoverageStatus()                     */
+/*                       IGetDataCoverageStatus()                       */
 /************************************************************************/
 
 int VRTDerivedRasterBand::IGetDataCoverageStatus(
@@ -1824,7 +1824,7 @@ double VRTDerivedRasterBand::GetMaximum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                       ComputeRasterMinMax()                          */
+/*                        ComputeRasterMinMax()                         */
 /************************************************************************/
 
 CPLErr VRTDerivedRasterBand::ComputeRasterMinMax(int bApproxOK,

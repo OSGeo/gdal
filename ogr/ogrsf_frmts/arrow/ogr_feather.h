@@ -38,7 +38,7 @@ constexpr const char *GDAL_GEO_FOOTER_KEY = "gdal:geo";
 constexpr const char *ARROW_DRIVER_NAME_UC = "ARROW";
 
 /************************************************************************/
-/*                        OGRFeatherLayer                               */
+/*                           OGRFeatherLayer                            */
 /************************************************************************/
 
 class OGRFeatherDataset;
@@ -120,7 +120,7 @@ class OGRFeatherLayer final : public OGRArrowLayer
 };
 
 /************************************************************************/
-/*                         OGRFeatherDataset                            */
+/*                          OGRFeatherDataset                           */
 /************************************************************************/
 
 class OGRFeatherDataset final : public OGRArrowDataset
@@ -197,7 +197,7 @@ class OGRFeatherWriterLayer final : public OGRArrowWriterLayer
 };
 
 /************************************************************************/
-/*                        OGRFeatherWriterDataset                       */
+/*                       OGRFeatherWriterDataset                        */
 /************************************************************************/
 
 class OGRFeatherWriterDataset final : public GDALPamDataset

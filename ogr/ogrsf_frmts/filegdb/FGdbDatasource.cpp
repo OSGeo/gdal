@@ -26,9 +26,9 @@
 using std::vector;
 using std::wstring;
 
-/***********************************************************************/
-/*                         OGRFileGDBGroup                             */
-/***********************************************************************/
+/************************************************************************/
+/*                           OGRFileGDBGroup                            */
+/************************************************************************/
 
 class OGRFileGDBGroup final : public GDALGroup
 {
@@ -95,7 +95,7 @@ OGRLayer *OGRFileGDBGroup::OpenVectorLayer(const std::string &osName,
 }
 
 /************************************************************************/
-/*                          FGdbDataSource()                           */
+/*                           FGdbDataSource()                           */
 /************************************************************************/
 
 FGdbDataSource::FGdbDataSource(bool bUseDriverMutex,
@@ -110,7 +110,7 @@ FGdbDataSource::FGdbDataSource(bool bUseDriverMutex,
 }
 
 /************************************************************************/
-/*                          ~FGdbDataSource()                          */
+/*                          ~FGdbDataSource()                           */
 /************************************************************************/
 
 FGdbDataSource::~FGdbDataSource()
@@ -181,7 +181,7 @@ int FGdbDataSource::CloseInternal(int bCloseGeodatabase)
 }
 
 /************************************************************************/
-/*                          OpenFGDBTables()                            */
+/*                           OpenFGDBTables()                           */
 /************************************************************************/
 
 bool FGdbDataSource::OpenFGDBTables(OGRFileGDBGroup *group,
@@ -279,7 +279,7 @@ bool FGdbDataSource::OpenFGDBTables(OGRFileGDBGroup *group,
 }
 
 /************************************************************************/
-/*                            LoadLayers()                             */
+/*                             LoadLayers()                             */
 /************************************************************************/
 
 bool FGdbDataSource::LoadLayers(const std::wstring &root)
@@ -474,7 +474,7 @@ const OGRLayer *FGdbDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                   OGRFGdbSingleFeatureLayer                          */
+/*                      OGRFGdbSingleFeatureLayer                       */
 /************************************************************************/
 
 class OGRFGdbSingleFeatureLayer final : public OGRLayer
@@ -507,7 +507,7 @@ class OGRFGdbSingleFeatureLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                    OGRFGdbSingleFeatureLayer()                       */
+/*                     OGRFGdbSingleFeatureLayer()                      */
 /************************************************************************/
 
 OGRFGdbSingleFeatureLayer::OGRFGdbSingleFeatureLayer(const char *pszLayerName,
@@ -524,7 +524,7 @@ OGRFGdbSingleFeatureLayer::OGRFGdbSingleFeatureLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                   ~OGRFGdbSingleFeatureLayer()                       */
+/*                     ~OGRFGdbSingleFeatureLayer()                     */
 /************************************************************************/
 
 OGRFGdbSingleFeatureLayer::~OGRFGdbSingleFeatureLayer()
@@ -551,7 +551,7 @@ OGRFeature *OGRFGdbSingleFeatureLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                              ExecuteSQL()                            */
+/*                             ExecuteSQL()                             */
 /************************************************************************/
 
 OGRLayer *FGdbDataSource::ExecuteSQL(const char *pszSQLCommand,
@@ -680,7 +680,7 @@ OGRLayer *FGdbDataSource::ExecuteSQL(const char *pszSQLCommand,
 }
 
 /************************************************************************/
-/*                           ReleaseResultSet()                         */
+/*                          ReleaseResultSet()                          */
 /************************************************************************/
 
 void FGdbDataSource::ReleaseResultSet(OGRLayer *poResultsSet)
@@ -691,7 +691,7 @@ void FGdbDataSource::ReleaseResultSet(OGRLayer *poResultsSet)
 }
 
 /************************************************************************/
-/*                        GetFieldDomain()                              */
+/*                           GetFieldDomain()                           */
 /************************************************************************/
 
 const OGRFieldDomain *
@@ -760,7 +760,7 @@ FGdbDataSource::GetRelationshipNames(CPL_UNUSED CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                        GetRelationship()                             */
+/*                          GetRelationship()                           */
 /************************************************************************/
 
 const GDALRelationship *

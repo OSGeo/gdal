@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALRasterFillNodataAlgorithm                      */
+/*                    GDALRasterFillNodataAlgorithm                     */
 /************************************************************************/
 
 class GDALRasterFillNodataAlgorithm /* non final */
@@ -50,7 +50,7 @@ class GDALRasterFillNodataAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                GDALRasterFillNodataAlgorithmStandalone               */
+/*               GDALRasterFillNodataAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterFillNodataAlgorithmStandalone final

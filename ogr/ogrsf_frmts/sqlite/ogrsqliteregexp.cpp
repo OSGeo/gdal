@@ -134,7 +134,7 @@ static pcre2_code *re_compile_with_cache(sqlite3_context *ctx, const char *re)
 }
 
 /************************************************************************/
-/*                         OGRSQLiteREGEXPFunction()                    */
+/*                      OGRSQLiteREGEXPFunction()                       */
 /************************************************************************/
 
 static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx,
@@ -207,7 +207,7 @@ typedef struct
 constexpr int CACHE_SIZE = 16;
 
 /************************************************************************/
-/*                         OGRSQLiteREGEXPFunction()                    */
+/*                      OGRSQLiteREGEXPFunction()                       */
 /************************************************************************/
 
 static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx,
@@ -309,7 +309,7 @@ static void OGRSQLiteREGEXPFunction(sqlite3_context *ctx,
 #endif  // HAVE_PCRE
 
 /************************************************************************/
-/*                        OGRSQLiteRegisterRegExpFunction()             */
+/*                  OGRSQLiteRegisterRegExpFunction()                   */
 /************************************************************************/
 
 static void *OGRSQLiteRegisterRegExpFunction(sqlite3 *
@@ -348,7 +348,7 @@ static void *OGRSQLiteRegisterRegExpFunction(sqlite3 *
 }
 
 /************************************************************************/
-/*                         OGRSQLiteFreeRegExpCache()                   */
+/*                      OGRSQLiteFreeRegExpCache()                      */
 /************************************************************************/
 
 static void OGRSQLiteFreeRegExpCache(void *

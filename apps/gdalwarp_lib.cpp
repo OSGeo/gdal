@@ -64,7 +64,7 @@
 #endif
 
 /************************************************************************/
-/*                        GDALWarpAppOptions                            */
+/*                          GDALWarpAppOptions                          */
 /************************************************************************/
 
 /** Options for use with GDALWarp(). GDALWarpAppOptions* must be allocated and
@@ -323,7 +323,7 @@ static double GetAverageSegmentLength(const OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                          FetchSrcMethod()                            */
+/*                           FetchSrcMethod()                           */
 /************************************************************************/
 
 static const char *FetchSrcMethod(CSLConstList papszTO,
@@ -414,7 +414,7 @@ static CPLString GetSrcDSProjection(GDALDatasetH hDS, CSLConstList papszTO)
 }
 
 /************************************************************************/
-/*                      CreateCTCutlineToSrc()                          */
+/*                        CreateCTCutlineToSrc()                        */
 /************************************************************************/
 
 static std::unique_ptr<OGRCoordinateTransformation> CreateCTCutlineToSrc(
@@ -694,7 +694,7 @@ static bool MustApplyVerticalShift(GDALDatasetH hWrkSrcDS,
 }
 
 /************************************************************************/
-/*                      ApplyVerticalShift()                            */
+/*                         ApplyVerticalShift()                         */
 /************************************************************************/
 
 static bool ApplyVerticalShift(GDALDatasetH hWrkSrcDS,
@@ -800,7 +800,7 @@ static bool ApplyVerticalShift(GDALDatasetH hWrkSrcDS,
 #else
 
 /************************************************************************/
-/*                      ApplyVerticalShiftGrid()                        */
+/*                       ApplyVerticalShiftGrid()                       */
 /************************************************************************/
 
 static GDALDatasetH ApplyVerticalShiftGrid(GDALDatasetH hWrkSrcDS,
@@ -1027,7 +1027,7 @@ static GDALDatasetH ApplyVerticalShiftGrid(GDALDatasetH hWrkSrcDS,
 #endif
 
 /************************************************************************/
-/*                        CanUseBuildVRT()                              */
+/*                           CanUseBuildVRT()                           */
 /************************************************************************/
 
 static bool CanUseBuildVRT(int nSrcCount, GDALDatasetH *pahSrcDS)
@@ -1134,7 +1134,7 @@ static bool CanUseBuildVRT(int nSrcCount, GDALDatasetH *pahSrcDS)
 #ifdef HAVE_TIFF
 
 /************************************************************************/
-/*                      DealWithCOGOptions()                            */
+/*                         DealWithCOGOptions()                         */
 /************************************************************************/
 
 static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
@@ -1258,7 +1258,7 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
 #endif
 
 /************************************************************************/
-/*                      GDALWarpIndirect()                              */
+/*                          GDALWarpIndirect()                          */
 /************************************************************************/
 
 static GDALDatasetH
@@ -1399,7 +1399,7 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
 }
 
 /************************************************************************/
-/*                             GDALWarp()                               */
+/*                              GDALWarp()                              */
 /************************************************************************/
 
 /**
@@ -1844,7 +1844,7 @@ EditISIS3ForMetadataChanges(const char *pszJSON,
 }
 
 /************************************************************************/
-/*                           ProcessMetadata()                          */
+/*                          ProcessMetadata()                           */
 /************************************************************************/
 
 static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
@@ -2013,7 +2013,7 @@ static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 }
 
 /************************************************************************/
-/*                             SetupNoData()                            */
+/*                            SetupNoData()                             */
 /************************************************************************/
 
 static CPLErr SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
@@ -2453,7 +2453,7 @@ static void SetupSkipNoSource(int iSrc, GDALDatasetH hDstDS,
 }
 
 /************************************************************************/
-/*                     AdjustOutputExtentForRPC()                       */
+/*                      AdjustOutputExtentForRPC()                      */
 /************************************************************************/
 
 /** Returns false if there's no intersection between source extent defined
@@ -5750,7 +5750,7 @@ static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
 }
 
 /************************************************************************/
-/*                             IsValidSRS                               */
+/*                              IsValidSRS                              */
 /************************************************************************/
 
 static bool IsValidSRS(const char *pszUserInput)
@@ -5771,7 +5771,7 @@ static bool IsValidSRS(const char *pszUserInput)
 }
 
 /************************************************************************/
-/*                     GDALWarpAppOptionsGetParser()                    */
+/*                    GDALWarpAppOptionsGetParser()                     */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -6338,7 +6338,7 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
 }
 
 /************************************************************************/
-/*                       GDALWarpAppGetParserUsage()                    */
+/*                     GDALWarpAppGetParserUsage()                      */
 /************************************************************************/
 
 std::string GDALWarpAppGetParserUsage()
@@ -6360,7 +6360,7 @@ std::string GDALWarpAppGetParserUsage()
 }
 
 /************************************************************************/
-/*                             GDALWarpAppOptionsNew()                  */
+/*                       GDALWarpAppOptionsNew()                        */
 /************************************************************************/
 
 #ifndef CheckHasEnoughAdditionalArgs_defined
@@ -6548,7 +6548,7 @@ GDALWarpAppOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                        GDALWarpAppOptionsFree()                    */
+/*                       GDALWarpAppOptionsFree()                       */
 /************************************************************************/
 
 /**
@@ -6565,7 +6565,7 @@ void GDALWarpAppOptionsFree(GDALWarpAppOptions *psOptions)
 }
 
 /************************************************************************/
-/*                 GDALWarpAppOptionsSetProgress()                    */
+/*                   GDALWarpAppOptionsSetProgress()                    */
 /************************************************************************/
 
 /**
@@ -6589,7 +6589,7 @@ void GDALWarpAppOptionsSetProgress(GDALWarpAppOptions *psOptions,
 }
 
 /************************************************************************/
-/*                    GDALWarpAppOptionsSetQuiet()                      */
+/*                     GDALWarpAppOptionsSetQuiet()                     */
 /************************************************************************/
 
 /**
@@ -6607,7 +6607,7 @@ void GDALWarpAppOptionsSetQuiet(GDALWarpAppOptions *psOptions, int bQuiet)
 }
 
 /************************************************************************/
-/*                 GDALWarpAppOptionsSetWarpOption()                    */
+/*                  GDALWarpAppOptionsSetWarpOption()                   */
 /************************************************************************/
 
 /**

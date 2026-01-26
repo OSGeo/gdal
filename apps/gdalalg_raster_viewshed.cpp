@@ -30,7 +30,7 @@
 #endif
 
 /************************************************************************/
-/*       GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()     */
+/*      GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()      */
 /************************************************************************/
 
 GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
@@ -151,7 +151,7 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                 GDALRasterViewshedAlgorithm::RunStep()               */
+/*                GDALRasterViewshedAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

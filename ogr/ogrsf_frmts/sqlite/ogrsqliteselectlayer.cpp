@@ -37,7 +37,7 @@
 IOGRSQLiteSelectLayer::~IOGRSQLiteSelectLayer() = default;
 
 /************************************************************************/
-/*                   OGRSQLiteSelectLayerCommonBehaviour()              */
+/*                OGRSQLiteSelectLayerCommonBehaviour()                 */
 /************************************************************************/
 
 OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(
@@ -195,7 +195,7 @@ OGRFeature *OGRSQLiteSelectLayerCommonBehaviour::GetNextFeature()
 }
 
 /************************************************************************/
-/*               OGRGenSQLResultsLayerHasSpecialField()                 */
+/*                OGRGenSQLResultsLayerHasSpecialField()                */
 /************************************************************************/
 
 static int HasSpecialFields(swq_expr_node *expr, int nMinIndexForSpecialField)
@@ -359,7 +359,7 @@ OGRErr OGRSQLiteSelectLayer::ResetStatement()
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRSQLiteSelectLayer::ISetSpatialFilter(int iGeomField,
@@ -495,7 +495,7 @@ OGRSQLiteSelectLayerCommonBehaviour::GetBaseLayer(size_t &i) const
 }
 
 /************************************************************************/
-/*                             BuildSQL()                               */
+/*                              BuildSQL()                              */
 /************************************************************************/
 
 int OGRSQLiteSelectLayerCommonBehaviour::BuildSQL()

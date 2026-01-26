@@ -29,7 +29,7 @@
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                        GDALNoDataMaskBand()                          */
+/*                         GDALNoDataMaskBand()                         */
 /************************************************************************/
 
 GDALNoDataMaskBand::GDALNoDataMaskBand(GDALRasterBand *poParentIn)
@@ -54,7 +54,7 @@ GDALNoDataMaskBand::GDALNoDataMaskBand(GDALRasterBand *poParentIn)
 }
 
 /************************************************************************/
-/*                        GDALNoDataMaskBand()                          */
+/*                         GDALNoDataMaskBand()                         */
 /************************************************************************/
 
 GDALNoDataMaskBand::GDALNoDataMaskBand(GDALRasterBand *poParentIn,
@@ -80,7 +80,7 @@ GDALNoDataMaskBand::GDALNoDataMaskBand(GDALRasterBand *poParentIn,
 }
 
 /************************************************************************/
-/*                       ~GDALNoDataMaskBand()                          */
+/*                        ~GDALNoDataMaskBand()                         */
 /************************************************************************/
 
 GDALNoDataMaskBand::~GDALNoDataMaskBand() = default;
@@ -580,7 +580,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                   EmitErrorMessageIfWriteNotSupported()              */
+/*                EmitErrorMessageIfWriteNotSupported()                 */
 /************************************************************************/
 
 bool GDALNoDataMaskBand::EmitErrorMessageIfWriteNotSupported(

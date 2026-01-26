@@ -108,7 +108,7 @@ class JDEMRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           JDEMRasterBand()                            */
+/*                           JDEMRasterBand()                           */
 /************************************************************************/
 
 JDEMRasterBand::JDEMRasterBand(JDEMDataset *poDSIn, int nBandIn)
@@ -125,7 +125,7 @@ JDEMRasterBand::JDEMRasterBand(JDEMDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                          ~JDEMRasterBand()                            */
+/*                          ~JDEMRasterBand()                           */
 /************************************************************************/
 
 JDEMRasterBand::~JDEMRasterBand()
@@ -207,7 +207,7 @@ JDEMDataset::JDEMDataset()
 }
 
 /************************************************************************/
-/*                           ~JDEMDataset()                             */
+/*                            ~JDEMDataset()                            */
 /************************************************************************/
 
 JDEMDataset::~JDEMDataset()
@@ -244,7 +244,7 @@ CPLErr JDEMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *JDEMDataset::GetSpatialRef() const
@@ -349,7 +349,7 @@ GDALDataset *JDEMDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GDALRegister_JDEM()                         */
+/*                         GDALRegister_JDEM()                          */
 /************************************************************************/
 
 void GDALRegister_JDEM()

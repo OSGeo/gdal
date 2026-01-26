@@ -265,7 +265,7 @@ OGRShapeLayer::~OGRShapeLayer()
 }
 
 /************************************************************************/
-/*                       SetModificationDate()                          */
+/*                        SetModificationDate()                         */
 /************************************************************************/
 
 void OGRShapeLayer::SetModificationDate(const char *pszStr)
@@ -286,7 +286,7 @@ void OGRShapeLayer::SetModificationDate(const char *pszStr)
 }
 
 /************************************************************************/
-/*                       SetWriteDBFEOFChar()                           */
+/*                         SetWriteDBFEOFChar()                         */
 /************************************************************************/
 
 void OGRShapeLayer::SetWriteDBFEOFChar(bool b)
@@ -781,7 +781,7 @@ void OGRShapeLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                        ClearMatchingFIDs()                           */
+/*                         ClearMatchingFIDs()                          */
 /************************************************************************/
 
 void OGRShapeLayer::ClearMatchingFIDs()
@@ -794,7 +794,7 @@ void OGRShapeLayer::ClearMatchingFIDs()
 }
 
 /************************************************************************/
-/*                        ClearSpatialFIDs()                           */
+/*                          ClearSpatialFIDs()                          */
 /************************************************************************/
 
 void OGRShapeLayer::ClearSpatialFIDs()
@@ -1056,7 +1056,7 @@ OGRFeature *OGRShapeLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                             StartUpdate()                            */
+/*                            StartUpdate()                             */
 /************************************************************************/
 
 bool OGRShapeLayer::StartUpdate(const char *pszOperation)
@@ -1079,7 +1079,7 @@ bool OGRShapeLayer::StartUpdate(const char *pszOperation)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRShapeLayer::ISetFeature(OGRFeature *poFeature)
@@ -1182,7 +1182,7 @@ OGRErr OGRShapeLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRShapeLayer::ICreateFeature(OGRFeature *poFeature)
@@ -2768,7 +2768,7 @@ OGRErr OGRShapeLayer::CreateSpatialIndex(int nMaxDepth)
 }
 
 /************************************************************************/
-/*                       CheckFileDeletion()                            */
+/*                         CheckFileDeletion()                          */
 /************************************************************************/
 
 static void CheckFileDeletion(const CPLString &osFilename)
@@ -2787,7 +2787,7 @@ static void CheckFileDeletion(const CPLString &osFilename)
 }
 
 /************************************************************************/
-/*                         ForceDeleteFile()                            */
+/*                          ForceDeleteFile()                           */
 /************************************************************************/
 
 static void ForceDeleteFile(const CPLString &osFilename)
@@ -3476,7 +3476,7 @@ OGRErr OGRShapeLayer::ResizeDBF()
 }
 
 /************************************************************************/
-/*                          TruncateDBF()                               */
+/*                            TruncateDBF()                             */
 /************************************************************************/
 
 void OGRShapeLayer::TruncateDBF()
@@ -3596,7 +3596,7 @@ OGRErr OGRShapeLayer::RecomputeExtent()
 }
 
 /************************************************************************/
-/*                              TouchLayer()                            */
+/*                             TouchLayer()                             */
 /************************************************************************/
 
 bool OGRShapeLayer::TouchLayer()
@@ -3612,7 +3612,7 @@ bool OGRShapeLayer::TouchLayer()
 }
 
 /************************************************************************/
-/*                        ReopenFileDescriptors()                       */
+/*                       ReopenFileDescriptors()                        */
 /************************************************************************/
 
 bool OGRShapeLayer::ReopenFileDescriptors()
@@ -3687,7 +3687,7 @@ void OGRShapeLayer::CloseUnderlyingLayer()
 }
 
 /************************************************************************/
-/*                            AddToFileList()                           */
+/*                           AddToFileList()                            */
 /************************************************************************/
 
 void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
@@ -3760,7 +3760,7 @@ void OGRShapeLayer::AddToFileList(CPLStringList &oFileList)
 }
 
 /************************************************************************/
-/*                   UpdateFollowingDeOrRecompression()                 */
+/*                  UpdateFollowingDeOrRecompression()                  */
 /************************************************************************/
 
 void OGRShapeLayer::UpdateFollowingDeOrRecompression()
@@ -3789,7 +3789,7 @@ void OGRShapeLayer::UpdateFollowingDeOrRecompression()
 }
 
 /************************************************************************/
-/*                           Rename()                                   */
+/*                               Rename()                               */
 /************************************************************************/
 
 OGRErr OGRShapeLayer::Rename(const char *pszNewName)
@@ -3875,7 +3875,7 @@ OGRErr OGRShapeLayer::Rename(const char *pszNewName)
 }
 
 /************************************************************************/
-/*                          GetDataset()                                */
+/*                             GetDataset()                             */
 /************************************************************************/
 
 GDALDataset *OGRShapeLayer::GetDataset()
@@ -3884,7 +3884,7 @@ GDALDataset *OGRShapeLayer::GetDataset()
 }
 
 /************************************************************************/
-/*                        GetNextArrowArray()                           */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 // Specialized implementation restricted to situations where only retrieving
@@ -3963,7 +3963,7 @@ int OGRShapeLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                        GetMetadataItem()                             */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *OGRShapeLayer::GetMetadataItem(const char *pszName,

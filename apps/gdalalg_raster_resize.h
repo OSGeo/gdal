@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterResizeAlgorithm                        */
+/*                      GDALRasterResizeAlgorithm                       */
 /************************************************************************/
 
 class GDALRasterResizeAlgorithm /* non final */
@@ -41,7 +41,7 @@ class GDALRasterResizeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                  GDALRasterResizeAlgorithmStandalone                 */
+/*                 GDALRasterResizeAlgorithmStandalone                  */
 /************************************************************************/
 
 class GDALRasterResizeAlgorithmStandalone final

@@ -145,7 +145,7 @@ CPLErr GIFRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                            GIFDataset()                            */
+/*                             GIFDataset()                             */
 /************************************************************************/
 
 GIFDataset::GIFDataset()
@@ -326,7 +326,7 @@ GDALDataset *GIFDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GDALPrintGifError()                           */
+/*                         GDALPrintGifError()                          */
 /************************************************************************/
 
 static void GDALPrintGifError(CPL_UNUSED GifFileType *hGifFile,

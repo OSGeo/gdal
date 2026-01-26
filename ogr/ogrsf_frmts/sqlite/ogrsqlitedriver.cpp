@@ -34,7 +34,7 @@
 #include "sqlite3.h"
 
 /************************************************************************/
-/*                     OGRSQLiteDriverIdentify()                        */
+/*                      OGRSQLiteDriverIdentify()                       */
 /************************************************************************/
 
 static int OGRSQLiteDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -253,7 +253,7 @@ static GDALDataset *OGRSQLiteDriverCreate(const char *pszName, int nBands,
 }
 
 /************************************************************************/
-/*                             Delete()                                 */
+/*                               Delete()                               */
 /************************************************************************/
 
 static CPLErr OGRSQLiteDriverDelete(const char *pszName)

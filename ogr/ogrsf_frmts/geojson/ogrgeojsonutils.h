@@ -22,7 +22,7 @@
 class OGRGeometry;
 
 /************************************************************************/
-/*                           GeoJSONSourceType                          */
+/*                          GeoJSONSourceType                           */
 /************************************************************************/
 
 enum GeoJSONSourceType
@@ -50,14 +50,14 @@ bool TopoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
 bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo);
 
 /************************************************************************/
-/*                      GeoJSONStringPropertyToFieldType                */
+/*                   GeoJSONStringPropertyToFieldType                   */
 /************************************************************************/
 
 OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
                                               int &nTZFlag);
 
 /************************************************************************/
-/*                  GeoJSONHTTPFetchWithContentTypeHeader               */
+/*                GeoJSONHTTPFetchWithContentTypeHeader                 */
 /************************************************************************/
 
 CPLHTTPResult *GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL);

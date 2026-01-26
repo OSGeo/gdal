@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                      GDALVectorGridAlgorithm                         */
+/*                       GDALVectorGridAlgorithm                        */
 /************************************************************************/
 
 class GDALVectorGridAlgorithm /* non final */ : public GDALPipelineStepAlgorithm
@@ -49,7 +49,7 @@ class GDALVectorGridAlgorithm /* non final */ : public GDALPipelineStepAlgorithm
 };
 
 /************************************************************************/
-/*                 GDALVectorGridAlgorithmStandalone                    */
+/*                  GDALVectorGridAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALVectorGridAlgorithmStandalone final : public GDALVectorGridAlgorithm
@@ -64,7 +64,7 @@ class GDALVectorGridAlgorithmStandalone final : public GDALVectorGridAlgorithm
 };
 
 /************************************************************************/
-/*                    GDALVectorGridAbstractAlgorithm                   */
+/*                   GDALVectorGridAbstractAlgorithm                    */
 /************************************************************************/
 
 class GDALVectorGridAbstractAlgorithm /* non final */

@@ -62,7 +62,7 @@ int OGRGmtDataSource::Open(const char *pszFilename, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *

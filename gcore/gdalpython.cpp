@@ -162,7 +162,7 @@ typedef HMODULE LibraryHandle;
 #define LOAD(libHandle, x) LOAD_WITH_NAME(libHandle, x, STRINGIFY(x))
 
 /************************************************************************/
-/*                          LoadPythonAPI()                             */
+/*                           LoadPythonAPI()                            */
 /************************************************************************/
 
 /** Load the subset of the Python C API that we need */
@@ -830,7 +830,7 @@ bool GDALPythonInitialize()
 }
 
 /************************************************************************/
-/*                        GDALPythonFinalize()                          */
+/*                         GDALPythonFinalize()                         */
 /************************************************************************/
 
 /** To be called by GDALDestroy() */
@@ -850,7 +850,7 @@ namespace GDALPy
 {
 
 /************************************************************************/
-/*                            GIL_Holder()                              */
+/*                             GIL_Holder()                             */
 /************************************************************************/
 
 GIL_Holder::GIL_Holder(bool bExclusiveLock) : m_bExclusiveLock(bExclusiveLock)
@@ -863,7 +863,7 @@ GIL_Holder::GIL_Holder(bool bExclusiveLock) : m_bExclusiveLock(bExclusiveLock)
 }
 
 /************************************************************************/
-/*                           ~GIL_Holder()                              */
+/*                            ~GIL_Holder()                             */
 /************************************************************************/
 
 GIL_Holder::~GIL_Holder()
@@ -902,7 +902,7 @@ CPLString GetString(PyObject *obj, bool bEmitError)
 }
 
 /************************************************************************/
-/*                      GetPyExceptionString()                          */
+/*                        GetPyExceptionString()                        */
 /************************************************************************/
 
 CPLString GetPyExceptionString()

@@ -41,7 +41,7 @@ OGRSFDriverRegistrar::~OGRSFDriverRegistrar()
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                           GetRegistrar()                             */
+/*                            GetRegistrar()                            */
 /************************************************************************/
 
 OGRSFDriverRegistrar *OGRSFDriverRegistrar::GetRegistrar()
@@ -274,7 +274,7 @@ OGRDataSourceH OGRGetOpenDS(int iDS)
 }
 
 /************************************************************************/
-/*                          OpenWithDriverArg()                         */
+/*                         OpenWithDriverArg()                          */
 /************************************************************************/
 
 GDALDataset *OGRSFDriverRegistrar::OpenWithDriverArg(GDALDriver *poDriver,

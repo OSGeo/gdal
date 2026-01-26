@@ -92,7 +92,7 @@ static CPLErr AIGProcessIntConstBlock(GByte *pabyCur, int nDataSize, int nMin,
 }
 
 /************************************************************************/
-/*                         AIGRolloverSignedAdd()                       */
+/*                        AIGRolloverSignedAdd()                        */
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW

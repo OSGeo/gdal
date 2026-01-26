@@ -27,7 +27,7 @@ static std::map<CPLString, FGdbDatabaseConnection *> *poMapConnections =
 CPLMutex *FGdbDriver::hMutex = nullptr;
 
 /************************************************************************/
-/*                     OGRFileGDBDriverUnload()                         */
+/*                       OGRFileGDBDriverUnload()                       */
 /************************************************************************/
 
 static void OGRFileGDBDriverUnload(GDALDriver *)
@@ -43,7 +43,7 @@ static void OGRFileGDBDriverUnload(GDALDriver *)
 }
 
 /************************************************************************/
-/*                      OGRFileGDBDriverOpen()                          */
+/*                        OGRFileGDBDriverOpen()                        */
 /************************************************************************/
 
 static GDALDataset *OGRFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -152,9 +152,9 @@ static GDALDataset *OGRFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
     }
 }
 
-/***********************************************************************/
-/*                    OGRFileGDBDriverCreate()                         */
-/***********************************************************************/
+/************************************************************************/
+/*                       OGRFileGDBDriverCreate()                       */
+/************************************************************************/
 
 static GDALDataset *
 OGRFileGDBDriverCreate(const char *pszName, CPL_UNUSED int nBands,
@@ -175,9 +175,9 @@ OGRFileGDBDriverCreate(const char *pszName, CPL_UNUSED int nBands,
     return nullptr;
 }
 
-/***********************************************************************/
-/*                            Release()                                */
-/***********************************************************************/
+/************************************************************************/
+/*                              Release()                               */
+/************************************************************************/
 
 void FGdbDriver::Release(const char *pszName)
 {
@@ -201,9 +201,9 @@ void FGdbDriver::Release(const char *pszName)
     }
 }
 
-/***********************************************************************/
-/*                         CloseGeodatabase()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                          CloseGeodatabase()                          */
+/************************************************************************/
 
 void FGdbDatabaseConnection::CloseGeodatabase()
 {
@@ -216,9 +216,9 @@ void FGdbDatabaseConnection::CloseGeodatabase()
     }
 }
 
-/***********************************************************************/
-/*                         OpenGeodatabase()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                          OpenGeodatabase()                           */
+/************************************************************************/
 
 int FGdbDatabaseConnection::OpenGeodatabase(const char *pszFSName)
 {
@@ -255,9 +255,9 @@ static CPLErr OGRFileGDBDeleteDataSource(const char *pszDataSource)
     return CE_None;
 }
 
-/***********************************************************************/
-/*                       RegisterOGRFileGDB()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                         RegisterOGRFileGDB()                         */
+/************************************************************************/
 
 void RegisterOGRFileGDB()
 

@@ -19,7 +19,7 @@ using std::string;
 using std::wstring;
 
 /************************************************************************/
-/*                         FGdbResultLayer()                            */
+/*                          FGdbResultLayer()                           */
 /************************************************************************/
 FGdbResultLayer::FGdbResultLayer(FGdbDataSource *pParentDataSource,
                                  const char *pszSQL, EnumRows *pEnumRows)
@@ -116,7 +116,7 @@ FGdbResultLayer::FGdbResultLayer(FGdbDataSource *pParentDataSource,
 }
 
 /************************************************************************/
-/*                         ~FGdbResultLayer()                           */
+/*                          ~FGdbResultLayer()                          */
 /************************************************************************/
 
 FGdbResultLayer::~FGdbResultLayer()

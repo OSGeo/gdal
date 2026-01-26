@@ -100,7 +100,7 @@ static CPLString getRscFilename(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            ROIPACDataset()                           */
+/*                           ROIPACDataset()                            */
 /************************************************************************/
 
 ROIPACDataset::ROIPACDataset()
@@ -111,7 +111,7 @@ ROIPACDataset::ROIPACDataset()
 }
 
 /************************************************************************/
-/*                            ~ROIPACDataset()                          */
+/*                           ~ROIPACDataset()                           */
 /************************************************************************/
 
 ROIPACDataset::~ROIPACDataset()
@@ -120,7 +120,7 @@ ROIPACDataset::~ROIPACDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr ROIPACDataset::Close(GDALProgressFunc, void *)
@@ -492,7 +492,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int ROIPACDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -533,7 +533,7 @@ int ROIPACDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
@@ -787,7 +787,7 @@ CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                         GetGeoTransform()                            */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr ROIPACDataset::GetGeoTransform(GDALGeoTransform &gt) const

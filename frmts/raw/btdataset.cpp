@@ -95,7 +95,7 @@ class BTRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           BTRasterBand()                             */
+/*                            BTRasterBand()                            */
 /************************************************************************/
 
 BTRasterBand::BTRasterBand(GDALDataset *poDSIn, VSILFILE *fp,

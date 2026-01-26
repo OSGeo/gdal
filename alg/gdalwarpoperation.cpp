@@ -496,7 +496,7 @@ static void SetAlphaMax(GDALWarpOptions *psOptions, GDALRasterBandH hBand,
 }
 
 /************************************************************************/
-/*                            SetTieStrategy()                          */
+/*                           SetTieStrategy()                           */
 /************************************************************************/
 
 static void SetTieStrategy(GDALWarpOptions *psOptions, CPLErr *peErr)
@@ -918,7 +918,7 @@ void GDALWarpOperation::DestroyDestinationBuffer(void *pDstBuffer)
 }
 
 /************************************************************************/
-/*                         GDALCreateWarpOperation()                    */
+/*                      GDALCreateWarpOperation()                       */
 /************************************************************************/
 
 /**
@@ -938,7 +938,7 @@ GDALWarpOperationH GDALCreateWarpOperation(const GDALWarpOptions *psNewOptions)
 }
 
 /************************************************************************/
-/*                         GDALDestroyWarpOperation()                   */
+/*                      GDALDestroyWarpOperation()                      */
 /************************************************************************/
 
 /**
@@ -1104,7 +1104,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpImage(int nDstXOff, int nDstYOff,
 }
 
 /************************************************************************/
-/*                         GDALChunkAndWarpImage()                      */
+/*                       GDALChunkAndWarpImage()                        */
 /************************************************************************/
 
 /**
@@ -1354,7 +1354,7 @@ CPLErr GDALWarpOperation::ChunkAndWarpMulti(int nDstXOff, int nDstYOff,
 }
 
 /************************************************************************/
-/*                         GDALChunkAndWarpMulti()                      */
+/*                       GDALChunkAndWarpMulti()                        */
 /************************************************************************/
 
 /**
@@ -1384,7 +1384,7 @@ void GDALWarpOperation::WipeChunkList()
 }
 
 /************************************************************************/
-/*                       GetWorkingMemoryForWindow()                    */
+/*                     GetWorkingMemoryForWindow()                      */
 /************************************************************************/
 
 /** Returns the amount of working memory, in bytes, required to process
@@ -1450,7 +1450,7 @@ double GDALWarpOperation::GetWorkingMemoryForWindow(int nSrcXSize,
 }
 
 /************************************************************************/
-/*                       CollectChunkListInternal()                     */
+/*                      CollectChunkListInternal()                      */
 /************************************************************************/
 
 CPLErr GDALWarpOperation::CollectChunkListInternal(int nDstXOff, int nDstYOff,
@@ -1836,7 +1836,7 @@ CPLErr GDALWarpOperation::WarpRegion(
 }
 
 /************************************************************************/
-/*                             GDALWarpRegion()                         */
+/*                           GDALWarpRegion()                           */
 /************************************************************************/
 
 /**
@@ -1856,7 +1856,7 @@ CPLErr GDALWarpRegion(GDALWarpOperationH hOperation, int nDstXOff, int nDstYOff,
 }
 
 /************************************************************************/
-/*                            WarpRegionToBuffer()                      */
+/*                         WarpRegionToBuffer()                         */
 /************************************************************************/
 
 /**
@@ -2474,7 +2474,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
 }
 
 /************************************************************************/
-/*                            GDALWarpRegionToBuffer()                  */
+/*                       GDALWarpRegionToBuffer()                       */
 /************************************************************************/
 
 /**
@@ -2748,7 +2748,7 @@ void GDALWarpOperation::ComputeSourceWindowStartingFromSource(
 }
 
 /************************************************************************/
-/*                    ComputeSourceWindowTransformPoints()              */
+/*                 ComputeSourceWindowTransformPoints()                 */
 /************************************************************************/
 
 bool GDALWarpOperation::ComputeSourceWindowTransformPoints(

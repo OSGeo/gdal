@@ -19,7 +19,7 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                       FreeResultAndNullify()                         */
+/*                        FreeResultAndNullify()                        */
 /************************************************************************/
 
 inline void FreeResultAndNullify(MYSQL_RES *&hResult)
@@ -60,7 +60,7 @@ OGRMySQLDataSource::~OGRMySQLDataSource()
 }
 
 /************************************************************************/
-/*                          GetUnknownSRID()                            */
+/*                           GetUnknownSRID()                           */
 /************************************************************************/
 
 int OGRMySQLDataSource::GetUnknownSRID() const
@@ -1135,7 +1135,7 @@ OGRErr OGRMySQLDataSource::DeleteLayer(int iLayer)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -1336,7 +1336,7 @@ OGRMySQLDataSource::ICreateLayer(const char *pszLayerNameIn,
 }
 
 /************************************************************************/
-/*                     OGRMySQLEscapeLiteral()                          */
+/*                       OGRMySQLEscapeLiteral()                        */
 /************************************************************************/
 
 std::string OGRMySQLEscapeLiteral(const char *pszLiteral)

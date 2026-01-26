@@ -222,7 +222,7 @@ class CPLThreadMutex final : public PCIDSK::Mutex
 };
 
 /************************************************************************/
-/*                            CPLThreadMutex()                            */
+/*                           CPLThreadMutex()                           */
 /************************************************************************/
 
 CPLThreadMutex::CPLThreadMutex()
@@ -233,7 +233,7 @@ CPLThreadMutex::CPLThreadMutex()
 }
 
 /************************************************************************/
-/*                           ~CPLThreadMutex()                            */
+/*                          ~CPLThreadMutex()                           */
 /************************************************************************/
 
 CPLThreadMutex::~CPLThreadMutex()

@@ -61,7 +61,7 @@ OGR_SRSNode::~OGR_SRSNode()
 OGR_SRSNode::Listener::~Listener() = default;
 
 /************************************************************************/
-/*                           RegisterListener()                         */
+/*                          RegisterListener()                          */
 /************************************************************************/
 
 void OGR_SRSNode::RegisterListener(const std::shared_ptr<Listener> &listener)
@@ -70,7 +70,7 @@ void OGR_SRSNode::RegisterListener(const std::shared_ptr<Listener> &listener)
 }
 
 /************************************************************************/
-/*                             notifyChange()                           */
+/*                            notifyChange()                            */
 /************************************************************************/
 
 void OGR_SRSNode::notifyChange()

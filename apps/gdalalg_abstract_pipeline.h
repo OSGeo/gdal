@@ -56,7 +56,7 @@ class GDALPipelineStepRunContext
 };
 
 /************************************************************************/
-/*                     GDALPipelineStepAlgorithm                        */
+/*                      GDALPipelineStepAlgorithm                       */
 /************************************************************************/
 
 class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm

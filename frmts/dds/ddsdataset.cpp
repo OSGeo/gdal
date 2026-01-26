@@ -119,7 +119,7 @@ class DDSRasterBandAllDecoded final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           ~DDSDataset()                              */
+/*                            ~DDSDataset()                             */
 /************************************************************************/
 
 DDSDataset::~DDSDataset()
@@ -347,7 +347,7 @@ GDALDataset *DDSDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        ~DDSDatasetAllDecoded()                       */
+/*                       ~DDSDatasetAllDecoded()                        */
 /************************************************************************/
 
 DDSDatasetAllDecoded::~DDSDatasetAllDecoded()
@@ -356,7 +356,7 @@ DDSDatasetAllDecoded::~DDSDatasetAllDecoded()
 }
 
 /************************************************************************/
-/*                        DDSRasterBandAllDecoded()                     */
+/*                      DDSRasterBandAllDecoded()                       */
 /************************************************************************/
 
 DDSRasterBandAllDecoded::DDSRasterBandAllDecoded(DDSDatasetAllDecoded *poDSIn,

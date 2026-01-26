@@ -319,7 +319,7 @@ class PDS4EditableLayer final : public OGREditableLayer
 };
 
 /************************************************************************/
-/*                            PDS4Dataset                               */
+/*                             PDS4Dataset                              */
 /************************************************************************/
 
 class PDS4Dataset final : public RawDataset

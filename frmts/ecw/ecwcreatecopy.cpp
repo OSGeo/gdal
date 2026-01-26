@@ -338,7 +338,7 @@ CPLErr GDALECWCompressor::WriteJP2Box(GDALJP2Box *poBox)
 }
 
 /************************************************************************/
-/*                         WriteXMLBoxes()                              */
+/*                           WriteXMLBoxes()                            */
 /************************************************************************/
 
 void GDALECWCompressor::WriteXMLBoxes()
@@ -1678,7 +1678,7 @@ CPLErr ECWWriteDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *ECWWriteDataset::GetSpatialRef() const

@@ -420,7 +420,7 @@ class OGROCILoaderLayer final : public OGROCIWritableLayer
 };
 
 /************************************************************************/
-/*                           OGROCITableLayer                            */
+/*                           OGROCITableLayer                           */
 /************************************************************************/
 
 class OGROCITableLayer final : public OGROCIWritableLayer

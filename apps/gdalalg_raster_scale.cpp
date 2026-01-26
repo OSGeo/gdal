@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*         GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm()        */
+/*         GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm()         */
 /************************************************************************/
 
 GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm(bool standaloneStep)
@@ -48,7 +48,7 @@ GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*               GDALRasterScaleAlgorithm::RunStep()                    */
+/*                 GDALRasterScaleAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterScaleAlgorithm::RunStep(GDALPipelineStepRunContext &)

@@ -17,7 +17,7 @@
 #include "ogr_srs_api.h"
 
 /************************************************************************/
-/*                         OGRIdrisiLayer()                             */
+/*                           OGRIdrisiLayer()                           */
 /************************************************************************/
 
 OGRIdrisiLayer::OGRIdrisiLayer(const char *pszFilename,
@@ -568,7 +568,7 @@ void OGRIdrisiLayer::SetExtent(double dfMinXIn, double dfMinYIn,
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRIdrisiLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,

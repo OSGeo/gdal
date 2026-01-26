@@ -65,7 +65,7 @@ swq_expr_node::swq_expr_node(double dfValueIn)
 }
 
 /************************************************************************/
-/*                        swq_expr_node(const char*)                    */
+/*                      swq_expr_node(const char*)                      */
 /************************************************************************/
 
 swq_expr_node::swq_expr_node(const char *pszValueIn)
@@ -75,7 +75,7 @@ swq_expr_node::swq_expr_node(const char *pszValueIn)
 }
 
 /************************************************************************/
-/*                      swq_expr_node(OGRGeometry *)                    */
+/*                     swq_expr_node(OGRGeometry *)                     */
 /************************************************************************/
 
 swq_expr_node::swq_expr_node(OGRGeometry *poGeomIn)
@@ -104,7 +104,7 @@ swq_expr_node::~swq_expr_node()
 }
 
 /************************************************************************/
-/*                              reset()                                 */
+/*                               reset()                                */
 /************************************************************************/
 
 void swq_expr_node::reset()
@@ -124,7 +124,7 @@ void swq_expr_node::reset()
 }
 
 /************************************************************************/
-/*                           operator==()                               */
+/*                             operator==()                             */
 /************************************************************************/
 
 bool swq_expr_node::operator==(const swq_expr_node &other) const
@@ -188,7 +188,7 @@ bool swq_expr_node::operator==(const swq_expr_node &other) const
 }
 
 /************************************************************************/
-/*             swq_expr_node(const swq_expr_node& other)                */
+/*              swq_expr_node(const swq_expr_node& other)               */
 /************************************************************************/
 
 swq_expr_node::swq_expr_node(const swq_expr_node &other)
@@ -197,7 +197,7 @@ swq_expr_node::swq_expr_node(const swq_expr_node &other)
 }
 
 /************************************************************************/
-/*                 operator= (const swq_expr_node& other)               */
+/*                operator= (const swq_expr_node& other)                */
 /************************************************************************/
 
 swq_expr_node &swq_expr_node::operator=(const swq_expr_node &other)
@@ -228,7 +228,7 @@ swq_expr_node &swq_expr_node::operator=(const swq_expr_node &other)
 }
 
 /************************************************************************/
-/*             swq_expr_node(swq_expr_node&& other)                     */
+/*                 swq_expr_node(swq_expr_node&& other)                 */
 /************************************************************************/
 
 swq_expr_node::swq_expr_node(swq_expr_node &&other)
@@ -237,7 +237,7 @@ swq_expr_node::swq_expr_node(swq_expr_node &&other)
 }
 
 /************************************************************************/
-/*                 operator= (swq_expr_node&& other)                    */
+/*                  operator= (swq_expr_node&& other)                   */
 /************************************************************************/
 
 swq_expr_node &swq_expr_node::operator=(swq_expr_node &&other)
@@ -645,7 +645,7 @@ char *swq_expr_node::Unparse(swq_field_list *field_list, char chColumnQuote)
 }
 
 /************************************************************************/
-/*                  UnparseOperationFromUnparsedSubExpr()               */
+/*                UnparseOperationFromUnparsedSubExpr()                 */
 /************************************************************************/
 
 CPLString swq_expr_node::UnparseOperationFromUnparsedSubExpr(char **apszSubExpr)
@@ -910,7 +910,7 @@ swq_expr_node *swq_expr_node::Evaluate(swq_field_fetcher pfnFetcher,
 }
 
 /************************************************************************/
-/*                      ReplaceBetweenByGEAndLERecurse()                */
+/*                   ReplaceBetweenByGEAndLERecurse()                   */
 /************************************************************************/
 
 void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
@@ -943,7 +943,7 @@ void swq_expr_node::ReplaceBetweenByGEAndLERecurse()
 }
 
 /************************************************************************/
-/*                      ReplaceInByOrRecurse()                          */
+/*                        ReplaceInByOrRecurse()                        */
 /************************************************************************/
 
 void swq_expr_node::ReplaceInByOrRecurse()
@@ -973,7 +973,7 @@ void swq_expr_node::ReplaceInByOrRecurse()
 }
 
 /************************************************************************/
-/*                         RebalanceAndOr()                             */
+/*                           RebalanceAndOr()                           */
 /************************************************************************/
 
 void swq_expr_node::RebalanceAndOr()
@@ -1036,7 +1036,7 @@ void swq_expr_node::RebalanceAndOr()
 }
 
 /************************************************************************/
-/*                   PushNotOperationDownToStack()                      */
+/*                    PushNotOperationDownToStack()                     */
 /************************************************************************/
 
 // Do things like:
@@ -1161,7 +1161,7 @@ void swq_expr_node::PushNotOperationDownToStack()
 }
 
 /************************************************************************/
-/*                        HasReachedMaxDepth()                          */
+/*                         HasReachedMaxDepth()                         */
 /************************************************************************/
 
 bool swq_expr_node::HasReachedMaxDepth() const

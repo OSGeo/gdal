@@ -112,7 +112,7 @@ void OGR_GPKG_Intersects_Spatial_Filter(sqlite3_context *pContext, int argc,
                                         sqlite3_value **argv);
 
 /************************************************************************/
-/*                          GDALGeoPackageDataset                       */
+/*                        GDALGeoPackageDataset                         */
 /************************************************************************/
 
 class OGRGeoPackageTableLayer;
@@ -478,7 +478,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 };
 
 /************************************************************************/
-/*                   GPKGTemporaryForeignKeyCheckDisabler               */
+/*                 GPKGTemporaryForeignKeyCheckDisabler                 */
 /************************************************************************/
 
 //! Instance of that class temporarily disable foreign key checks
@@ -513,7 +513,7 @@ class GPKGTemporaryForeignKeyCheckDisabler
 };
 
 /************************************************************************/
-/*                        GDALGeoPackageRasterBand                      */
+/*                       GDALGeoPackageRasterBand                       */
 /************************************************************************/
 
 class GDALGeoPackageRasterBand final : public GDALGPKGMBTilesLikeRasterBand
@@ -569,7 +569,7 @@ class GDALGeoPackageRasterBand final : public GDALGPKGMBTilesLikeRasterBand
 };
 
 /************************************************************************/
-/*                           OGRGeoPackageLayer                         */
+/*                          OGRGeoPackageLayer                          */
 /************************************************************************/
 
 class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
@@ -658,7 +658,7 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
 };
 
 /************************************************************************/
-/*                        OGRGeoPackageTableLayer                       */
+/*                       OGRGeoPackageTableLayer                        */
 /************************************************************************/
 
 struct OGRGPKGTableLayerFillArrowArray;
@@ -1046,7 +1046,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
 };
 
 /************************************************************************/
-/*                         OGRGeoPackageSelectLayer                     */
+/*                       OGRGeoPackageSelectLayer                       */
 /************************************************************************/
 
 class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,

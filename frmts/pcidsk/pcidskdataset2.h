@@ -32,7 +32,7 @@ using namespace PCIDSK;
 class OGRPCIDSKLayer;
 
 /************************************************************************/
-/*                              PCIDSK2Dataset                           */
+/*                            PCIDSK2Dataset                            */
 /************************************************************************/
 
 class PCIDSK2Dataset final : public GDALPamDataset
@@ -153,7 +153,7 @@ class PCIDSK2Band final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                             OGRPCIDSKLayer                              */
+/*                            OGRPCIDSKLayer                            */
 /************************************************************************/
 
 class OGRPCIDSKLayer final : public OGRLayer,

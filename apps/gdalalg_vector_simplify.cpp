@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*                   GDALVectorSimplifyAlgorithm()                      */
+/*                    GDALVectorSimplifyAlgorithm()                     */
 /************************************************************************/
 
 GDALVectorSimplifyAlgorithm::GDALVectorSimplifyAlgorithm(bool standaloneStep)
@@ -42,7 +42,7 @@ namespace
 {
 
 /************************************************************************/
-/*                    GDALVectorSimplifyAlgorithmLayer                  */
+/*                   GDALVectorSimplifyAlgorithmLayer                   */
 /************************************************************************/
 
 class GDALVectorSimplifyAlgorithmLayer final
@@ -99,7 +99,7 @@ std::unique_ptr<OGRFeature> GDALVectorSimplifyAlgorithmLayer::TranslateFeature(
 #endif  // HAVE_GEOS
 
 /************************************************************************/
-/*             GDALVectorSimplifyAlgorithm::CreateAlgLayer()            */
+/*            GDALVectorSimplifyAlgorithm::CreateAlgLayer()             */
 /************************************************************************/
 
 std::unique_ptr<OGRLayerWithTranslateFeature>
@@ -114,7 +114,7 @@ GDALVectorSimplifyAlgorithm::CreateAlgLayer([[maybe_unused]] OGRLayer &srcLayer)
 }
 
 /************************************************************************/
-/*                  GDALVectorSimplifyAlgorithm::RunStep()              */
+/*                GDALVectorSimplifyAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALVectorSimplifyAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

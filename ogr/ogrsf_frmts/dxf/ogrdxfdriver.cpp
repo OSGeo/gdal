@@ -17,7 +17,7 @@
 #include <algorithm>
 
 /************************************************************************/
-/*                       OGRDXFDriverIdentify()                         */
+/*                        OGRDXFDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRDXFDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -90,7 +90,7 @@ static GDALDataset *OGRDXFDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 static GDALDataset *
@@ -110,7 +110,7 @@ OGRDXFDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 }
 
 /************************************************************************/
-/*                   OGRDXFDriverCanVectorTranslateFrom()               */
+/*                 OGRDXFDriverCanVectorTranslateFrom()                 */
 /************************************************************************/
 
 static bool OGRDXFDriverCanVectorTranslateFrom(
@@ -170,7 +170,7 @@ static bool OGRDXFDriverCanVectorTranslateFrom(
 }
 
 /************************************************************************/
-/*                     OGRDXFDriverVectorTranslateFrom()                */
+/*                  OGRDXFDriverVectorTranslateFrom()                   */
 /************************************************************************/
 
 static GDALDataset *OGRDXFDriverVectorTranslateFrom(

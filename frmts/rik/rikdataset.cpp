@@ -168,7 +168,7 @@ RIKRasterBand::RIKRasterBand(RIKDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                             GetNextLZWCode()                         */
+/*                           GetNextLZWCode()                           */
 /************************************************************************/
 
 static int GetNextLZWCode(int codeBits, const GByte *blockData,
@@ -220,7 +220,7 @@ static int GetNextLZWCode(int codeBits, const GByte *blockData,
 }
 
 /************************************************************************/
-/*                             OutputPixel()                            */
+/*                            OutputPixel()                             */
 /************************************************************************/
 
 static void OutputPixel(GByte pixel, void *image, GUInt32 imageWidth,
@@ -647,7 +647,7 @@ CPLErr RIKDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *RIKDataset::GetSpatialRef() const
@@ -657,7 +657,7 @@ const OGRSpatialReference *RIKDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                             GetRikString()                           */
+/*                            GetRikString()                            */
 /************************************************************************/
 
 static GUInt16 GetRikString(VSILFILE *fp, char *str, GUInt16 strLength)
@@ -683,7 +683,7 @@ static GUInt16 GetRikString(VSILFILE *fp, char *str, GUInt16 strLength)
 }
 
 /************************************************************************/
-/*                          Identify()                                  */
+/*                              Identify()                              */
 /************************************************************************/
 
 int RIKDataset::Identify(GDALOpenInfo *poOpenInfo)

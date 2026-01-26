@@ -16,7 +16,7 @@
 #include "ogr_pgeo.h"
 
 /************************************************************************/
-/*                          OGRPGeoSelectLayer()                        */
+/*                         OGRPGeoSelectLayer()                         */
 /************************************************************************/
 
 OGRPGeoSelectLayer::OGRPGeoSelectLayer(OGRPGeoDataSource *poDSIn,
@@ -51,7 +51,7 @@ OGRPGeoSelectLayer::OGRPGeoSelectLayer(OGRPGeoDataSource *poDSIn,
 }
 
 /************************************************************************/
-/*                          ~OGRPGeoSelectLayer()                       */
+/*                        ~OGRPGeoSelectLayer()                         */
 /************************************************************************/
 
 OGRPGeoSelectLayer::~OGRPGeoSelectLayer()

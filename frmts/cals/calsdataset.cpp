@@ -228,7 +228,7 @@ CALSDataset::~CALSDataset()
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int CALSDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -253,7 +253,7 @@ int CALSDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           WriteLEInt16()                             */
+/*                            WriteLEInt16()                            */
 /************************************************************************/
 
 void CALSDataset::WriteLEInt16(VSILFILE *fp, GInt16 nVal)
@@ -585,7 +585,7 @@ GDALDataset *CALSDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                        GDALRegister_CALS()                           */
+/*                         GDALRegister_CALS()                          */
 /************************************************************************/
 
 void GDALRegister_CALS()

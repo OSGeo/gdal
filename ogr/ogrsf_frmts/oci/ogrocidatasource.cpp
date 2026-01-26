@@ -452,7 +452,7 @@ void OGROCIDataSource::TruncateLayer(const char *pszLayerName)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *

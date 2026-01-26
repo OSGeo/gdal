@@ -67,7 +67,7 @@ static GDALDataset *OGROCIDriverCreate(const char *pszName,
 }
 
 /************************************************************************/
-/*                           RegisterOGROCI()                            */
+/*                           RegisterOGROCI()                           */
 /************************************************************************/
 
 void RegisterOGROCI()

@@ -509,7 +509,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGROCITableLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
@@ -933,7 +933,7 @@ OGRErr OGROCITableLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGROCITableLayer::ICreateFeature(OGRFeature *poFeature)
@@ -1364,7 +1364,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           IGetExtent()                               */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGROCITableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -1690,7 +1690,7 @@ void OGROCITableLayer::UpdateLayerExtents()
 }
 
 /************************************************************************/
-/*                   AllocAndBindForWrite()                             */
+/*                        AllocAndBindForWrite()                        */
 /************************************************************************/
 
 int OGROCITableLayer::AllocAndBindForWrite()
@@ -2228,9 +2228,9 @@ OGRErr OGROCITableLayer::SyncToDisk()
     return eErr;
 }
 
-/*************************************************************************/
-/*                         CreateSpatialIndex()                          */
-/*************************************************************************/
+/************************************************************************/
+/*                         CreateSpatialIndex()                         */
+/************************************************************************/
 
 void OGROCITableLayer::CreateSpatialIndex()
 

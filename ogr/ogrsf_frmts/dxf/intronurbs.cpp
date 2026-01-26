@@ -119,7 +119,7 @@ static void knot(int n, int c, double x[])
 }
 
 /************************************************************************/
-/*                                basis()                               */
+/*                               basis()                                */
 /************************************************************************/
 
 /*  Subroutine to generate B-spline basis functions--open knot vector

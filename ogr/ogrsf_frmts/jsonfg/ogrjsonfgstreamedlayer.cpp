@@ -13,7 +13,7 @@
 #include "ogr_jsonfg.h"
 
 /************************************************************************/
-/*             OGRJSONFGStreamedLayer::OGRJSONFGStreamedLayer()         */
+/*           OGRJSONFGStreamedLayer::OGRJSONFGStreamedLayer()           */
 /************************************************************************/
 
 OGRJSONFGStreamedLayer::OGRJSONFGStreamedLayer(GDALDataset *poDS,
@@ -39,7 +39,7 @@ OGRJSONFGStreamedLayer::OGRJSONFGStreamedLayer(GDALDataset *poDS,
 }
 
 /************************************************************************/
-/*           OGRJSONFGStreamedLayer::~OGRJSONFGStreamedLayer()          */
+/*          OGRJSONFGStreamedLayer::~OGRJSONFGStreamedLayer()           */
 /************************************************************************/
 
 OGRJSONFGStreamedLayer::~OGRJSONFGStreamedLayer()
@@ -48,7 +48,7 @@ OGRJSONFGStreamedLayer::~OGRJSONFGStreamedLayer()
 }
 
 /************************************************************************/
-/*                            SetFile()                                 */
+/*                              SetFile()                               */
 /************************************************************************/
 
 void OGRJSONFGStreamedLayer::SetFile(VSIVirtualHandleUniquePtr &&poFile)
@@ -58,7 +58,7 @@ void OGRJSONFGStreamedLayer::SetFile(VSIVirtualHandleUniquePtr &&poFile)
 }
 
 /************************************************************************/
-/*                        SetStreamingParser()                          */
+/*                         SetStreamingParser()                         */
 /************************************************************************/
 
 void OGRJSONFGStreamedLayer::SetStreamingParser(
@@ -69,7 +69,7 @@ void OGRJSONFGStreamedLayer::SetStreamingParser(
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRJSONFGStreamedLayer::ResetReading()
@@ -82,7 +82,7 @@ void OGRJSONFGStreamedLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                             EnsureUniqueFID()                                 */
+/*                          EnsureUniqueFID()                           */
 /************************************************************************/
 
 OGRFeature *OGRJSONFGStreamedLayer::EnsureUniqueFID(OGRFeature *poFeat)
@@ -120,7 +120,7 @@ OGRFeature *OGRJSONFGStreamedLayer::EnsureUniqueFID(OGRFeature *poFeat)
 }
 
 /************************************************************************/
-/*                        GetNextRawFeature()                           */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRJSONFGStreamedLayer::GetNextRawFeature()
@@ -185,7 +185,7 @@ int OGRJSONFGStreamedLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRJSONFGStreamedLayer::GetFeatureCount(int bForce)

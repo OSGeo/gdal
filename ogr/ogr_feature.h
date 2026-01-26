@@ -305,7 +305,7 @@ inline OGRFieldDefn::TemporaryUnsealer whileUnsealing(OGRFieldDefn *object)
 #endif
 
 /************************************************************************/
-/*                          OGRGeomFieldDefn                            */
+/*                           OGRGeomFieldDefn                           */
 /************************************************************************/
 
 /**
@@ -1638,7 +1638,7 @@ inline OGRFeature::ConstFieldIterator end(const OGRFeatureUniquePtr &poFeature)
 //! @endcond
 
 /************************************************************************/
-/*                           OGRFieldDomain                             */
+/*                            OGRFieldDomain                            */
 /************************************************************************/
 
 /* clang-format off */

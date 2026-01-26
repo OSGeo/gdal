@@ -81,7 +81,7 @@ GXFRasterBand::GXFRasterBand(GXFDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                          */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double GXFRasterBand::GetNoDataValue(int *bGotNoDataValue)
@@ -193,7 +193,7 @@ CPLErr GXFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *GXFDataset::GetSpatialRef() const

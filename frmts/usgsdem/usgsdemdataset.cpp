@@ -87,7 +87,7 @@ typedef struct
 } Buffer;
 
 /************************************************************************/
-/*                       USGSDEMRefillBuffer()                          */
+/*                        USGSDEMRefillBuffer()                         */
 /************************************************************************/
 
 static void USGSDEMRefillBuffer(Buffer *psBuffer)
@@ -133,7 +133,7 @@ static void USGSDEMSetCurrentFilePos(Buffer *psBuffer, vsi_l_offset nNewPos)
 }
 
 /************************************************************************/
-/*               USGSDEMReadIntFromBuffer()                             */
+/*                      USGSDEMReadIntFromBuffer()                      */
 /************************************************************************/
 
 static int USGSDEMReadIntFromBuffer(Buffer *psBuffer, int *pbSuccess = nullptr)
@@ -216,7 +216,7 @@ static int USGSDEMReadIntFromBuffer(Buffer *psBuffer, int *pbSuccess = nullptr)
 }
 
 /************************************************************************/
-/*                USGSDEMReadDoubleFromBuffer()                         */
+/*                    USGSDEMReadDoubleFromBuffer()                     */
 /************************************************************************/
 
 static double USGSDEMReadDoubleFromBuffer(Buffer *psBuffer, int nCharCount,
@@ -328,7 +328,7 @@ class USGSDEMRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           USGSDEMRasterBand()                            */
+/*                         USGSDEMRasterBand()                          */
 /************************************************************************/
 
 USGSDEMRasterBand::USGSDEMRasterBand(USGSDEMDataset *poDSIn)
@@ -559,7 +559,7 @@ USGSDEMDataset::USGSDEMDataset()
 }
 
 /************************************************************************/
-/*                            ~USGSDEMDataset()                         */
+/*                          ~USGSDEMDataset()                           */
 /************************************************************************/
 
 USGSDEMDataset::~USGSDEMDataset()
@@ -856,7 +856,7 @@ CPLErr USGSDEMDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *USGSDEMDataset::GetSpatialRef() const

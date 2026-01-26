@@ -16,7 +16,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                   TileDBArray::TileDBArray()                         */
+/*                      TileDBArray::TileDBArray()                      */
 /************************************************************************/
 
 TileDBArray::TileDBArray(
@@ -32,7 +32,7 @@ TileDBArray::TileDBArray(
 }
 
 /************************************************************************/
-/*                   TileDBArray::Create()                              */
+/*                        TileDBArray::Create()                         */
 /************************************************************************/
 
 /*static*/ std::shared_ptr<TileDBArray> TileDBArray::Create(
@@ -48,7 +48,7 @@ TileDBArray::TileDBArray(
 }
 
 /************************************************************************/
-/*                   TileDBArray::~TileDBArray()                        */
+/*                     TileDBArray::~TileDBArray()                      */
 /************************************************************************/
 
 TileDBArray::~TileDBArray()
@@ -58,7 +58,7 @@ TileDBArray::~TileDBArray()
 }
 
 /************************************************************************/
-/*                   BuildDimensionLabelName()                          */
+/*                      BuildDimensionLabelName()                       */
 /************************************************************************/
 
 static std::string
@@ -68,7 +68,7 @@ BuildDimensionLabelName(const std::shared_ptr<GDALDimension> &poDim)
 }
 
 /************************************************************************/
-/*                   TileDBDataTypeToGDALDataType()                     */
+/*                    TileDBDataTypeToGDALDataType()                    */
 /************************************************************************/
 
 /*static*/ GDALDataType
@@ -161,7 +161,7 @@ TileDBArray::TileDBDataTypeToGDALDataType(tiledb_datatype_t tiledb_dt)
 }
 
 /************************************************************************/
-/*                   TileDBArray::Finalize()                            */
+/*                       TileDBArray::Finalize()                        */
 /************************************************************************/
 
 bool TileDBArray::Finalize() const
@@ -292,7 +292,7 @@ bool TileDBArray::Finalize() const
 }
 
 /************************************************************************/
-/*                   TileDBArray::OpenFromDisk()                        */
+/*                     TileDBArray::OpenFromDisk()                      */
 /************************************************************************/
 
 /* static */
@@ -844,7 +844,7 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
 }
 
 /************************************************************************/
-/*                   TileDBArray::EnsureOpenAs()                        */
+/*                     TileDBArray::EnsureOpenAs()                      */
 /************************************************************************/
 
 bool TileDBArray::EnsureOpenAs(tiledb_query_type_t mode) const
@@ -870,7 +870,7 @@ bool TileDBArray::EnsureOpenAs(tiledb_query_type_t mode) const
 }
 
 /************************************************************************/
-/*                          TileDBArray::IRead()                        */
+/*                         TileDBArray::IRead()                         */
 /************************************************************************/
 
 bool TileDBArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -936,7 +936,7 @@ bool TileDBArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                          TileDBArray::IWrite()                       */
+/*                        TileDBArray::IWrite()                         */
 /************************************************************************/
 
 bool TileDBArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -1000,7 +1000,7 @@ bool TileDBArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                  TileDBArray::GetRawNoDataValue()                    */
+/*                   TileDBArray::GetRawNoDataValue()                   */
 /************************************************************************/
 
 const void *TileDBArray::GetRawNoDataValue() const
@@ -1028,7 +1028,7 @@ const void *TileDBArray::GetRawNoDataValue() const
 }
 
 /************************************************************************/
-/*                  TileDBArray::SetRawNoDataValue()                    */
+/*                   TileDBArray::SetRawNoDataValue()                   */
 /************************************************************************/
 
 bool TileDBArray::SetRawNoDataValue(const void *pRawNoData)
@@ -1055,7 +1055,7 @@ bool TileDBArray::SetRawNoDataValue(const void *pRawNoData)
 }
 
 /************************************************************************/
-/*                  TileDBArray::CreateAttribute()                      */
+/*                    TileDBArray::CreateAttribute()                    */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> TileDBArray::CreateAttribute(
@@ -1066,7 +1066,7 @@ std::shared_ptr<GDALAttribute> TileDBArray::CreateAttribute(
 }
 
 /************************************************************************/
-/*                   TileDBArray::GetAttribute()                        */
+/*                     TileDBArray::GetAttribute()                      */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute>
@@ -1076,7 +1076,7 @@ TileDBArray::GetAttribute(const std::string &osName) const
 }
 
 /************************************************************************/
-/*                   TileDBArray::GetAttributes()                       */
+/*                     TileDBArray::GetAttributes()                     */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALAttribute>>
@@ -1086,7 +1086,7 @@ TileDBArray::GetAttributes(CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                   TileDBArray::DeleteAttribute()                     */
+/*                    TileDBArray::DeleteAttribute()                    */
 /************************************************************************/
 
 bool TileDBArray::DeleteAttribute(const std::string &osName,
@@ -1096,7 +1096,7 @@ bool TileDBArray::DeleteAttribute(const std::string &osName,
 }
 
 /************************************************************************/
-/*                   TileDBArray::SetSpatialRef()                       */
+/*                     TileDBArray::SetSpatialRef()                     */
 /************************************************************************/
 
 bool TileDBArray::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -1148,7 +1148,7 @@ bool TileDBArray::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                       TileDBArray::SetUnit()                         */
+/*                        TileDBArray::SetUnit()                        */
 /************************************************************************/
 
 bool TileDBArray::SetUnit(const std::string &osUnit)
@@ -1186,7 +1186,7 @@ bool TileDBArray::SetUnit(const std::string &osUnit)
 }
 
 /************************************************************************/
-/*                          FillBlockSize()                             */
+/*                           FillBlockSize()                            */
 /************************************************************************/
 
 static bool
@@ -1303,7 +1303,7 @@ FillBlockSize(const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
 }
 
 /************************************************************************/
-/*                 IsIncreasingOrDecreasing1DVar()                      */
+/*                   IsIncreasingOrDecreasing1DVar()                    */
 /************************************************************************/
 
 static void
@@ -1360,7 +1360,7 @@ IsIncreasingOrDecreasing1DVar(const std::shared_ptr<GDALMDArray> &poVar,
 }
 
 /************************************************************************/
-/*                   TileDBArray::CreateOnDisk()                        */
+/*                     TileDBArray::CreateOnDisk()                      */
 /************************************************************************/
 
 /* static */
@@ -1552,7 +1552,7 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
 }
 
 /************************************************************************/
-/*                    TileDBArray::GetStructuralInfo()                  */
+/*                   TileDBArray::GetStructuralInfo()                   */
 /************************************************************************/
 
 CSLConstList TileDBArray::GetStructuralInfo() const

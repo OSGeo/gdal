@@ -25,7 +25,7 @@
 class OGRKMLDataSource;
 
 /************************************************************************/
-/*                            OGRKMLLayer                               */
+/*                             OGRKMLLayer                              */
 /************************************************************************/
 
 class OGRKMLLayer final : public OGRLayer

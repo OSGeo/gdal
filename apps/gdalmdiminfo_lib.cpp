@@ -47,7 +47,7 @@ struct GDALMultiDimInfoOptions
 };
 
 /************************************************************************/
-/*                         HasUniqueNames()                             */
+/*                           HasUniqueNames()                           */
 /************************************************************************/
 
 static bool HasUniqueNames(const std::vector<std::string> &oNames)
@@ -65,7 +65,7 @@ static bool HasUniqueNames(const std::vector<std::string> &oNames)
 }
 
 /************************************************************************/
-/*                          DumpDataType()                              */
+/*                            DumpDataType()                            */
 /************************************************************************/
 
 static void DumpDataType(const GDALExtendedDataType &dt,
@@ -176,7 +176,7 @@ static void DumpDataType(const GDALExtendedDataType &dt,
 }
 
 /************************************************************************/
-/*                           DumpValue()                                */
+/*                             DumpValue()                              */
 /************************************************************************/
 
 template <typename T>
@@ -188,7 +188,7 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const void *bytes)
 }
 
 /************************************************************************/
-/*                         DumpComplexValue()                           */
+/*                          DumpComplexValue()                          */
 /************************************************************************/
 
 template <typename T>
@@ -203,7 +203,7 @@ static void DumpComplexValue(CPLJSonStreamingWriter &serializer,
 }
 
 /************************************************************************/
-/*                           DumpValue()                                */
+/*                             DumpValue()                              */
 /************************************************************************/
 
 static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
@@ -270,7 +270,7 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *values,
                       const GDALExtendedDataType &dt);
 
 /************************************************************************/
-/*                          DumpCompound()                              */
+/*                            DumpCompound()                            */
 /************************************************************************/
 
 static void DumpCompound(CPLJSonStreamingWriter &serializer,
@@ -287,7 +287,7 @@ static void DumpCompound(CPLJSonStreamingWriter &serializer,
 }
 
 /************************************************************************/
-/*                           DumpValue()                                */
+/*                             DumpValue()                              */
 /************************************************************************/
 
 static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *values,
@@ -316,7 +316,7 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *values,
 }
 
 /************************************************************************/
-/*                          SerializeJSON()                             */
+/*                           SerializeJSON()                            */
 /************************************************************************/
 
 static void SerializeJSON(const CPLJSONObject &obj,
@@ -391,7 +391,7 @@ static void SerializeJSON(const CPLJSONObject &obj,
 }
 
 /************************************************************************/
-/*                          DumpAttrValue()                             */
+/*                           DumpAttrValue()                            */
 /************************************************************************/
 
 static void DumpAttrValue(const std::shared_ptr<GDALAttribute> &attr,
@@ -560,7 +560,7 @@ static void DumpAttr(std::shared_ptr<GDALAttribute> attr,
 }
 
 /************************************************************************/
-/*                              DumpAttrs()                             */
+/*                             DumpAttrs()                              */
 /************************************************************************/
 
 static void DumpAttrs(const std::vector<std::shared_ptr<GDALAttribute>> &attrs,
@@ -701,7 +701,7 @@ static void DumpArrayRec(std::shared_ptr<GDALMDArray> array,
 }
 
 /************************************************************************/
-/*                        DumpDimensions()                               */
+/*                           DumpDimensions()                           */
 /************************************************************************/
 
 static void
@@ -777,7 +777,7 @@ DumpDimensions(const std::shared_ptr<GDALGroup> &rootGroup,
 }
 
 /************************************************************************/
-/*                        DumpStructuralInfo()                          */
+/*                         DumpStructuralInfo()                         */
 /************************************************************************/
 
 static void DumpStructuralInfo(CSLConstList papszStructuralInfo,
@@ -1032,7 +1032,7 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
 }
 
 /************************************************************************/
-/*                            DumpArrays()                              */
+/*                             DumpArrays()                             */
 /************************************************************************/
 
 static void DumpArrays(const std::shared_ptr<GDALGroup> &rootGroup,
@@ -1261,7 +1261,7 @@ static std::unique_ptr<GDALArgumentParser> GDALMultiDimInfoAppOptionsGetParser(
 }
 
 /************************************************************************/
-/*                  GDALMultiDimInfoAppGetParserUsage()                 */
+/*                 GDALMultiDimInfoAppGetParserUsage()                  */
 /************************************************************************/
 
 std::string GDALMultiDimInfoAppGetParserUsage()
@@ -1283,7 +1283,7 @@ std::string GDALMultiDimInfoAppGetParserUsage()
 }
 
 /************************************************************************/
-/*                         GDALMultiDimInfo()                           */
+/*                          GDALMultiDimInfo()                          */
 /************************************************************************/
 
 /* clang-format off */
@@ -1383,7 +1383,7 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
 }
 
 /************************************************************************/
-/*                       GDALMultiDimInfoOptionsNew()                   */
+/*                     GDALMultiDimInfoOptionsNew()                     */
 /************************************************************************/
 
 /**
@@ -1436,7 +1436,7 @@ GDALMultiDimInfoOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                         GDALMultiDimInfoOptionsFree()                */
+/*                    GDALMultiDimInfoOptionsFree()                     */
 /************************************************************************/
 
 /**

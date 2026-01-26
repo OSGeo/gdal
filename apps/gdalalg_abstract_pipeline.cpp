@@ -46,7 +46,7 @@ constexpr const char *const apszWriteParametersPrefixOmitted[] = {
 /* clang-format on */
 
 /************************************************************************/
-/*                     IsReadSpecificArgument()                         */
+/*                       IsReadSpecificArgument()                       */
 /************************************************************************/
 
 /* static */
@@ -61,7 +61,7 @@ bool GDALAbstractPipelineAlgorithm::IsReadSpecificArgument(
 }
 
 /************************************************************************/
-/*                     IsWriteSpecificArgument()                        */
+/*                      IsWriteSpecificArgument()                       */
 /************************************************************************/
 
 /* static */
@@ -76,7 +76,7 @@ bool GDALAbstractPipelineAlgorithm::IsWriteSpecificArgument(
 }
 
 /************************************************************************/
-/*          GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep()      */
+/*        GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep()        */
 /************************************************************************/
 
 bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
@@ -215,7 +215,7 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
 }
 
 /************************************************************************/
-/*              GDALAbstractPipelineAlgorithm::GetStepAlg()             */
+/*             GDALAbstractPipelineAlgorithm::GetStepAlg()              */
 /************************************************************************/
 
 std::unique_ptr<GDALPipelineStepAlgorithm>
@@ -227,7 +227,7 @@ GDALAbstractPipelineAlgorithm::GetStepAlg(const std::string &name) const
 }
 
 /************************************************************************/
-/*       GDALAbstractPipelineAlgorithm::ParseCommandLineArguments()     */
+/*      GDALAbstractPipelineAlgorithm::ParseCommandLineArguments()      */
 /************************************************************************/
 
 bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
@@ -1286,7 +1286,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
 }
 
 /************************************************************************/
-/*           GDALAbstractPipelineAlgorithm::BuildNestedPipeline()       */
+/*         GDALAbstractPipelineAlgorithm::BuildNestedPipeline()         */
 /************************************************************************/
 
 std::string GDALAbstractPipelineAlgorithm::BuildNestedPipeline(
@@ -1363,7 +1363,7 @@ std::string GDALAbstractPipelineAlgorithm::BuildNestedPipeline(
 }
 
 /************************************************************************/
-/*         GDALAbstractPipelineAlgorithm::GetAutoComplete()             */
+/*           GDALAbstractPipelineAlgorithm::GetAutoComplete()           */
 /************************************************************************/
 
 std::vector<std::string>
@@ -1727,7 +1727,7 @@ bool GDALAbstractPipelineAlgorithm::SaveGDALGFile(
 }
 
 /************************************************************************/
-/*              GDALAbstractPipelineAlgorithm::RunStep()                */
+/*               GDALAbstractPipelineAlgorithm::RunStep()               */
 /************************************************************************/
 
 bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -2051,7 +2051,7 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*             GDALAbstractPipelineAlgorithm::HasOutputString()         */
+/*           GDALAbstractPipelineAlgorithm::HasOutputString()           */
 /************************************************************************/
 
 bool GDALAbstractPipelineAlgorithm::HasOutputString() const
@@ -2065,7 +2065,7 @@ bool GDALAbstractPipelineAlgorithm::HasOutputString() const
 }
 
 /************************************************************************/
-/*               GDALAbstractPipelineAlgorithm::Finalize()              */
+/*              GDALAbstractPipelineAlgorithm::Finalize()               */
 /************************************************************************/
 
 bool GDALAbstractPipelineAlgorithm::Finalize()
@@ -2079,7 +2079,7 @@ bool GDALAbstractPipelineAlgorithm::Finalize()
 }
 
 /************************************************************************/
-/*             GDALAbstractPipelineAlgorithm::GetUsageAsJSON()          */
+/*           GDALAbstractPipelineAlgorithm::GetUsageAsJSON()            */
 /************************************************************************/
 
 std::string GDALAbstractPipelineAlgorithm::GetUsageAsJSON() const

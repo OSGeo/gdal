@@ -14,7 +14,7 @@
 #include "cpl_conv.h"
 
 /************************************************************************/
-/*                         OGRPG_PQexec()                               */
+/*                            OGRPG_PQexec()                            */
 /************************************************************************/
 
 PGresult *OGRPG_PQexec(PGconn *conn, const char *query,
@@ -72,7 +72,7 @@ PGresult *OGRPG_PQexec(PGconn *conn, const char *query,
 }
 
 /************************************************************************/
-/*                       OGRPG_Check_Table_Exists()                     */
+/*                      OGRPG_Check_Table_Exists()                      */
 /************************************************************************/
 
 bool OGRPG_Check_Table_Exists(PGconn *hPGConn, const char *pszTableName)

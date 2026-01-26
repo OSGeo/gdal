@@ -25,7 +25,7 @@ typedef struct dbl
 }  // namespace
 
 /************************************************************************/
-/*                          CPLVaxToIEEEDouble()                        */
+/*                         CPLVaxToIEEEDouble()                         */
 /************************************************************************/
 
 void CPLVaxToIEEEDouble(void *dbl)

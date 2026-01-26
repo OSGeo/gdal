@@ -527,9 +527,9 @@ OGRFeature *OGRLIBKMLLayer::GetNextRawFeature()
     return poOgrFeature;
 }
 
-/******************************************************************************/
-/*                              ScanAllFeatures()                             */
-/******************************************************************************/
+/************************************************************************/
+/*                          ScanAllFeatures()                           */
+/************************************************************************/
 
 void OGRLIBKMLLayer::ScanAllFeatures()
 {
@@ -1056,7 +1056,7 @@ int OGRLIBKMLLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                        LaunderFieldNames()                           */
+/*                         LaunderFieldNames()                          */
 /************************************************************************/
 
 CPLString OGRLIBKMLLayer::LaunderFieldNames(CPLString osName)
@@ -1075,7 +1075,7 @@ CPLString OGRLIBKMLLayer::LaunderFieldNames(CPLString osName)
 }
 
 /************************************************************************/
-/*                            SetLookAt()                               */
+/*                             SetLookAt()                              */
 /************************************************************************/
 
 void OGRLIBKMLLayer::SetLookAt(const char *pszLookatLongitude,
@@ -1130,7 +1130,7 @@ void OGRLIBKMLLayer::SetLookAt(const char *pszLookatLongitude,
 }
 
 /************************************************************************/
-/*                            SetCamera()                               */
+/*                             SetCamera()                              */
 /************************************************************************/
 
 void OGRLIBKMLLayer::SetCamera(const char *pszCameraLongitude,
@@ -1179,7 +1179,7 @@ void OGRLIBKMLLayer::SetCamera(const char *pszCameraLongitude,
 }
 
 /************************************************************************/
-/*                         SetWriteRegion()                             */
+/*                           SetWriteRegion()                           */
 /************************************************************************/
 
 void OGRLIBKMLLayer::SetWriteRegion(double dfMinLodPixels,
@@ -1210,7 +1210,7 @@ void OGRLIBKMLLayer::SetRegionBounds(double dfMinX, double dfMinY,
 }
 
 /************************************************************************/
-/*                            Finalize()                                */
+/*                              Finalize()                              */
 /************************************************************************/
 
 void OGRLIBKMLLayer::Finalize(DocumentPtr poKmlDocument)
@@ -1249,7 +1249,7 @@ void OGRLIBKMLLayer::Finalize(DocumentPtr poKmlDocument)
 }
 
 /************************************************************************/
-/*                             LIBKMLGetUnits()                         */
+/*                           LIBKMLGetUnits()                           */
 /************************************************************************/
 
 static int LIBKMLGetUnits(const char *pszUnits)
@@ -1264,7 +1264,7 @@ static int LIBKMLGetUnits(const char *pszUnits)
 }
 
 /************************************************************************/
-/*                         LIBKMLSetVec2()                              */
+/*                           LIBKMLSetVec2()                            */
 /************************************************************************/
 
 static void LIBKMLSetVec2(kmldom::Vec2Ptr vec2, const char *pszX,
@@ -1294,7 +1294,7 @@ static void LIBKMLSetVec2(kmldom::Vec2Ptr vec2, const char *pszX,
 }
 
 /************************************************************************/
-/*                         SetScreenOverlay()                           */
+/*                          SetScreenOverlay()                          */
 /************************************************************************/
 
 void OGRLIBKMLLayer::SetScreenOverlay(
@@ -1352,7 +1352,7 @@ void OGRLIBKMLLayer::SetScreenOverlay(
 }
 
 /************************************************************************/
-/*                           SetListStyle()                              */
+/*                            SetListStyle()                            */
 /************************************************************************/
 
 void OGRLIBKMLLayer::SetListStyle(const char *pszListStyleType,

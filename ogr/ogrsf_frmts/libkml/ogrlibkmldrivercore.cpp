@@ -18,7 +18,7 @@
 #include "ogrlibkmldrivercore.h"
 
 /************************************************************************/
-/*                    OGRLIBKMLDriverIdentify()                         */
+/*                      OGRLIBKMLDriverIdentify()                       */
 /************************************************************************/
 
 int OGRLIBKMLDriverIdentify(GDALOpenInfo *poOpenInfo)

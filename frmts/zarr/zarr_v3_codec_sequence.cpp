@@ -13,7 +13,7 @@
 #include "zarr_v3_codec.h"
 
 /************************************************************************/
-/*                    ZarrV3CodecSequence::Clone()                      */
+/*                     ZarrV3CodecSequence::Clone()                     */
 /************************************************************************/
 
 std::unique_ptr<ZarrV3CodecSequence> ZarrV3CodecSequence::Clone() const
@@ -27,7 +27,7 @@ std::unique_ptr<ZarrV3CodecSequence> ZarrV3CodecSequence::Clone() const
 }
 
 /************************************************************************/
-/*                    ZarrV3CodecSequence::InitFromJson()               */
+/*                 ZarrV3CodecSequence::InitFromJson()                  */
 /************************************************************************/
 
 bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
@@ -167,7 +167,7 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
 }
 
 /************************************************************************/
-/*                  ZarrV3CodecBytes::AllocateBuffer()                 */
+/*                  ZarrV3CodecBytes::AllocateBuffer()                  */
 /************************************************************************/
 
 bool ZarrV3CodecSequence::AllocateBuffer(ZarrByteVectorQuickResize &abyBuffer,
@@ -247,7 +247,7 @@ bool ZarrV3CodecSequence::Decode(ZarrByteVectorQuickResize &abyBuffer)
 }
 
 /************************************************************************/
-/*                ZarrV3CodecSequence::DecodePartial()                  */
+/*                 ZarrV3CodecSequence::DecodePartial()                 */
 /************************************************************************/
 
 bool ZarrV3CodecSequence::DecodePartial(VSIVirtualHandle *poFile,
@@ -284,7 +284,7 @@ bool ZarrV3CodecSequence::DecodePartial(VSIVirtualHandle *poFile,
 }
 
 /************************************************************************/
-/*           ZarrV3CodecSequence::GetInnerMostBlockSize()               */
+/*             ZarrV3CodecSequence::GetInnerMostBlockSize()             */
 /************************************************************************/
 
 std::vector<size_t> ZarrV3CodecSequence::GetInnerMostBlockSize(

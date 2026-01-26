@@ -16,7 +16,7 @@
 #include "ogrdgnv8drivercore.h"
 
 /************************************************************************/
-/*                         OGRDGNV8DriverUnload()                       */
+/*                        OGRDGNV8DriverUnload()                        */
 /************************************************************************/
 
 static void OGRDGNV8DriverUnload(GDALDriver *)
@@ -49,7 +49,7 @@ static GDALDataset *OGRDGNV8DriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 static GDALDataset *OGRDGNV8DriverCreate(const char *pszName, int /* nBands */,
@@ -71,7 +71,7 @@ static GDALDataset *OGRDGNV8DriverCreate(const char *pszName, int /* nBands */,
 }
 
 /************************************************************************/
-/*                         RegisterOGRDGNV8()                           */
+/*                          RegisterOGRDGNV8()                          */
 /************************************************************************/
 
 void RegisterOGRDGNV8()

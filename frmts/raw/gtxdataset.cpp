@@ -107,7 +107,7 @@ class GTXRasterBand final : public RawRasterBand
 };
 
 /************************************************************************/
-/*                            GTXRasterBand()                           */
+/*                           GTXRasterBand()                            */
 /************************************************************************/
 
 GTXRasterBand::GTXRasterBand(GDALDataset *poDSIn, int nBandIn,
@@ -162,7 +162,7 @@ GTXDataset::~GTXDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GTXDataset::Close(GDALProgressFunc, void *)

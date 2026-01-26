@@ -42,9 +42,9 @@
 #include "filegdb_coordprec_write.h"
 #include "filegdb_reserved_keywords.h"
 
-/*************************************************************************/
-/*                            StringToWString()                          */
-/*************************************************************************/
+/************************************************************************/
+/*                          StringToWString()                           */
+/************************************************************************/
 
 static std::wstring StringToWString(const std::string &utf8string)
 {
@@ -55,9 +55,9 @@ static std::wstring StringToWString(const std::string &utf8string)
     return utf16string;
 }
 
-/*************************************************************************/
-/*                            WStringToString()                          */
-/*************************************************************************/
+/************************************************************************/
+/*                          WStringToString()                           */
+/************************************************************************/
 
 static std::string WStringToString(const std::wstring &utf16string)
 {
@@ -68,9 +68,9 @@ static std::string WStringToString(const std::wstring &utf16string)
     return utf8string;
 }
 
-/*************************************************************************/
-/*                              LaunderName()                            */
-/*************************************************************************/
+/************************************************************************/
+/*                            LaunderName()                             */
+/************************************************************************/
 
 static std::wstring LaunderName(const std::wstring &name)
 {
@@ -101,9 +101,9 @@ static std::wstring LaunderName(const std::wstring &name)
     return newName;
 }
 
-/*************************************************************************/
-/*                      EscapeUnsupportedPrefixes()                      */
-/*************************************************************************/
+/************************************************************************/
+/*                     EscapeUnsupportedPrefixes()                      */
+/************************************************************************/
 
 static std::wstring EscapeUnsupportedPrefixes(const std::wstring &className)
 {
@@ -129,9 +129,9 @@ static std::wstring EscapeUnsupportedPrefixes(const std::wstring &className)
     return newName;
 }
 
-/*************************************************************************/
-/*                         EscapeReservedKeywords()                      */
-/*************************************************************************/
+/************************************************************************/
+/*                       EscapeReservedKeywords()                       */
+/************************************************************************/
 
 static std::wstring EscapeReservedKeywords(const std::wstring &name)
 {
@@ -152,9 +152,9 @@ static std::wstring EscapeReservedKeywords(const std::wstring &name)
     return StringToWString(newName);
 }
 
-/***********************************************************************/
-/*                     XMLSerializeGeomFieldBase()                     */
-/***********************************************************************/
+/************************************************************************/
+/*                     XMLSerializeGeomFieldBase()                      */
+/************************************************************************/
 
 static void XMLSerializeGeomFieldBase(CPLXMLNode *psRoot,
                                       const FileGDBGeomField *poGeomFieldDefn,
@@ -257,9 +257,9 @@ static void XMLSerializeGeomFieldBase(CPLXMLNode *psRoot,
     }
 }
 
-/***********************************************************************/
-/*                    CreateFeatureDataset()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                        CreateFeatureDataset()                        */
+/************************************************************************/
 
 bool OGROpenFileGDBLayer::CreateFeatureDataset(const char *pszFeatureDataset)
 {
@@ -327,9 +327,9 @@ bool OGROpenFileGDBLayer::CreateFeatureDataset(const char *pszFeatureDataset)
     return true;
 }
 
-/***********************************************************************/
-/*                      GetLaunderedLayerName()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                       GetLaunderedLayerName()                        */
+/************************************************************************/
 
 std::string
 OGROpenFileGDBLayer::GetLaunderedLayerName(const std::string &osNameOri) const
@@ -376,9 +376,9 @@ OGROpenFileGDBLayer::GetLaunderedLayerName(const std::string &osNameOri) const
     return WStringToString(wlayerName);
 }
 
-/***********************************************************************/
-/*                            Create()                                 */
-/***********************************************************************/
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
 
 bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
 {
@@ -764,7 +764,7 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
 }
 
 /************************************************************************/
-/*                       CreateXMLFieldDefinition()                     */
+/*                      CreateXMLFieldDefinition()                      */
 /************************************************************************/
 
 static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
@@ -974,7 +974,7 @@ static CPLXMLNode *CreateXMLFieldDefinition(const OGRFieldDefn *poFieldDefn,
 }
 
 /************************************************************************/
-/*                            GetDefault()                              */
+/*                             GetDefault()                             */
 /************************************************************************/
 
 static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
@@ -1041,7 +1041,7 @@ static bool GetDefault(const OGRFieldDefn *poField, FileGDBFieldType eType,
 }
 
 /************************************************************************/
-/*                         GetGDBFieldType()                            */
+/*                          GetGDBFieldType()                           */
 /************************************************************************/
 
 static FileGDBFieldType GetGDBFieldType(const OGRFieldDefn *poField,
@@ -1088,7 +1088,7 @@ static FileGDBFieldType GetGDBFieldType(const OGRFieldDefn *poField,
 }
 
 /************************************************************************/
-/*                        GetGPFieldInfoExsNode()                       */
+/*                       GetGPFieldInfoExsNode()                        */
 /************************************************************************/
 
 static CPLXMLNode *GetGPFieldInfoExsNode(CPLXMLNode *psParent)
@@ -1108,7 +1108,7 @@ static CPLXMLNode *GetGPFieldInfoExsNode(CPLXMLNode *psParent)
 }
 
 /************************************************************************/
-/*                      GetLaunderedFieldName()                         */
+/*                       GetLaunderedFieldName()                        */
 /************************************************************************/
 
 std::string
@@ -1898,7 +1898,7 @@ OGRErr OGROpenFileGDBLayer::AlterGeomFieldDefn(
 }
 
 /************************************************************************/
-/*                             DeleteField()                            */
+/*                            DeleteField()                             */
 /************************************************************************/
 
 OGRErr OGROpenFileGDBLayer::DeleteField(int iFieldToDelete)
@@ -2058,7 +2058,7 @@ OGRErr OGROpenFileGDBLayer::DeleteField(int iFieldToDelete)
 }
 
 /************************************************************************/
-/*                            GetLength()                               */
+/*                             GetLength()                              */
 /************************************************************************/
 
 static double GetLength(const OGRCurvePolygon *poPoly)
@@ -2082,7 +2082,7 @@ static double GetLength(const OGRMultiSurface *poMS)
 }
 
 /************************************************************************/
-/*                      PrepareFileGDBFeature()                         */
+/*                       PrepareFileGDBFeature()                        */
 /************************************************************************/
 
 bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
@@ -2402,7 +2402,7 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                   CheckFIDAndFIDColumnConsistency()                  */
+/*                  CheckFIDAndFIDColumnConsistency()                   */
 /************************************************************************/
 
 static bool CheckFIDAndFIDColumnConsistency(const OGRFeature *poFeature,
@@ -2535,7 +2535,7 @@ OGRErr OGROpenFileGDBLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           ISetFeature()                              */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGROpenFileGDBLayer::ISetFeature(OGRFeature *poFeature)
@@ -2619,7 +2619,7 @@ OGRErr OGROpenFileGDBLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                     RefreshXMLDefinitionInMemory()                   */
+/*                    RefreshXMLDefinitionInMemory()                    */
 /************************************************************************/
 
 void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
@@ -2806,7 +2806,7 @@ void OGROpenFileGDBLayer::RefreshXMLDefinitionInMemory()
 }
 
 /************************************************************************/
-/*                            RegisterTable()                           */
+/*                           RegisterTable()                            */
 /************************************************************************/
 
 bool OGROpenFileGDBLayer::RegisterTable()
@@ -2867,7 +2867,7 @@ OGRErr OGROpenFileGDBLayer::SyncToDisk()
 }
 
 /************************************************************************/
-/*                        CreateSpatialIndex()                          */
+/*                         CreateSpatialIndex()                         */
 /************************************************************************/
 
 void OGROpenFileGDBLayer::CreateSpatialIndex()
@@ -2882,7 +2882,7 @@ void OGROpenFileGDBLayer::CreateSpatialIndex()
 }
 
 /************************************************************************/
-/*                           CreateIndex()                              */
+/*                            CreateIndex()                             */
 /************************************************************************/
 
 void OGROpenFileGDBLayer::CreateIndex(const std::string &osIdxName,
@@ -2906,7 +2906,7 @@ void OGROpenFileGDBLayer::CreateIndex(const std::string &osIdxName,
 }
 
 /************************************************************************/
-/*                                Repack()                              */
+/*                               Repack()                               */
 /************************************************************************/
 
 bool OGROpenFileGDBLayer::Repack(GDALProgressFunc pfnProgress,
@@ -2922,7 +2922,7 @@ bool OGROpenFileGDBLayer::Repack(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                        RecomputeExtent()                             */
+/*                          RecomputeExtent()                           */
 /************************************************************************/
 
 void OGROpenFileGDBLayer::RecomputeExtent()
@@ -2937,7 +2937,7 @@ void OGROpenFileGDBLayer::RecomputeExtent()
 }
 
 /************************************************************************/
-/*                        CheckFreeListConsistency()                    */
+/*                      CheckFreeListConsistency()                      */
 /************************************************************************/
 
 bool OGROpenFileGDBLayer::CheckFreeListConsistency()
@@ -2949,7 +2949,7 @@ bool OGROpenFileGDBLayer::CheckFreeListConsistency()
 }
 
 /************************************************************************/
-/*                        BeginEmulatedTransaction()                    */
+/*                      BeginEmulatedTransaction()                      */
 /************************************************************************/
 
 bool OGROpenFileGDBLayer::BeginEmulatedTransaction()
@@ -2993,7 +2993,7 @@ bool OGROpenFileGDBLayer::BeginEmulatedTransaction()
 }
 
 /************************************************************************/
-/*                        CommitEmulatedTransaction()                   */
+/*                     CommitEmulatedTransaction()                      */
 /************************************************************************/
 
 bool OGROpenFileGDBLayer::CommitEmulatedTransaction()
@@ -3005,7 +3005,7 @@ bool OGROpenFileGDBLayer::CommitEmulatedTransaction()
 }
 
 /************************************************************************/
-/*                        RollbackEmulatedTransaction()                 */
+/*                    RollbackEmulatedTransaction()                     */
 /************************************************************************/
 
 bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
@@ -3149,7 +3149,7 @@ bool OGROpenFileGDBLayer::RollbackEmulatedTransaction()
 }
 
 /************************************************************************/
-/*                           Rename()                                   */
+/*                               Rename()                               */
 /************************************************************************/
 
 OGRErr OGROpenFileGDBLayer::Rename(const char *pszDstTableName)

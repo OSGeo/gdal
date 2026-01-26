@@ -39,7 +39,7 @@ constexpr double SCALE32BIT = 4294967294.0;
 void replaceExt(std::string &s, const std::string &newExt);
 
 /************************************************************************/
-/* Replace the extension on a filepath with an alternative extension    */
+/*  Replace the extension on a filepath with an alternative extension   */
 /************************************************************************/
 void replaceExt(std::string &s, const std::string &newExt)
 {
@@ -135,7 +135,7 @@ class NWT_GRDRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           NWT_GRDRasterBand()                        */
+/*                         NWT_GRDRasterBand()                          */
 /************************************************************************/
 NWT_GRDRasterBand::NWT_GRDRasterBand(NWT_GRDDataset *poDSIn, int nBandIn,
                                      int nBands)
@@ -230,7 +230,7 @@ GDALColorInterp NWT_GRDRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 CPLErr NWT_GRDRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                       void *pImage)
@@ -438,7 +438,7 @@ NWT_GRDDataset::NWT_GRDDataset()
 }
 
 /************************************************************************/
-/*                            ~NWT_GRDDataset()                         */
+/*                          ~NWT_GRDDataset()                           */
 /************************************************************************/
 
 NWT_GRDDataset::~NWT_GRDDataset()
@@ -463,7 +463,7 @@ NWT_GRDDataset::~NWT_GRDDataset()
 }
 
 /************************************************************************/
-/*                 ~FlushCache(bool bAtClosing)                         */
+/*                     ~FlushCache(bool bAtClosing)                     */
 /************************************************************************/
 CPLErr NWT_GRDDataset::FlushCache(bool bAtClosing)
 {
@@ -526,7 +526,7 @@ CPLErr NWT_GRDDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 const OGRSpatialReference *NWT_GRDDataset::GetSpatialRef() const
 {
@@ -550,7 +550,7 @@ const OGRSpatialReference *NWT_GRDDataset::GetSpatialRef() const
 
 #ifndef NO_MITAB_SUPPORT
 /************************************************************************/
-/*                            SetSpatialRef()                           */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 CPLErr NWT_GRDDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -685,7 +685,7 @@ GDALDataset *NWT_GRDDataset::Open(GDALOpenInfo *poOpenInfo)
 
 #ifndef NO_MITAB_SUPPORT
 /************************************************************************/
-/*                                UpdateHeader()                        */
+/*                            UpdateHeader()                            */
 /************************************************************************/
 int NWT_GRDDataset::UpdateHeader()
 {
@@ -893,7 +893,7 @@ int NWT_GRDDataset::WriteTab()
 }
 
 /************************************************************************/
-/*                                Create()                              */
+/*                               Create()                               */
 /************************************************************************/
 GDALDataset *NWT_GRDDataset::Create(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn,
@@ -1087,7 +1087,7 @@ GDALDataset *NWT_GRDDataset::Create(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                                CreateCopy()                          */
+/*                             CreateCopy()                             */
 /************************************************************************/
 GDALDataset *NWT_GRDDataset::CreateCopy(const char *pszFilename,
                                         GDALDataset *poSrcDS, int bStrict,

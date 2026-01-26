@@ -60,7 +60,7 @@
 #if defined(HAVE_SSE_AT_COMPILE_TIME) && !defined(HAVE_INLINE_SSE)
 
 /************************************************************************/
-/*                          CPLHaveRuntimeSSE()                         */
+/*                         CPLHaveRuntimeSSE()                          */
 /************************************************************************/
 
 bool CPLHaveRuntimeSSE()
@@ -75,7 +75,7 @@ bool CPLHaveRuntimeSSE()
 #if defined(HAVE_SSSE3_AT_COMPILE_TIME) && !defined(HAVE_INLINE_SSSE3)
 
 /************************************************************************/
-/*                         CPLHaveRuntimeSSSE3()                        */
+/*                        CPLHaveRuntimeSSSE3()                         */
 /************************************************************************/
 
 static inline bool CPLDetectSSSE3()
@@ -109,7 +109,7 @@ bool CPLHaveRuntimeSSSE3()
 #if defined(HAVE_AVX_AT_COMPILE_TIME) && !defined(HAVE_INLINE_AVX)
 
 /************************************************************************/
-/*                          CPLHaveRuntimeAVX()                         */
+/*                         CPLHaveRuntimeAVX()                          */
 /************************************************************************/
 
 #if defined(__GNUC__)

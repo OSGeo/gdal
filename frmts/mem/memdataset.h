@@ -35,7 +35,7 @@ GDALRasterBandH CPL_DLL MEMCreateRasterBandEx(GDALDataset *, int, GByte *,
 CPL_C_END
 
 /************************************************************************/
-/*                            MEMDataset                                */
+/*                              MEMDataset                              */
 /************************************************************************/
 
 class MEMRasterBand;

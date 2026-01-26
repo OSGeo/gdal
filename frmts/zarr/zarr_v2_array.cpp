@@ -26,7 +26,7 @@
 #include <set>
 
 /************************************************************************/
-/*                       ZarrV2Array::ZarrV2Array()                     */
+/*                      ZarrV2Array::ZarrV2Array()                      */
 /************************************************************************/
 
 ZarrV2Array::ZarrV2Array(
@@ -44,7 +44,7 @@ ZarrV2Array::ZarrV2Array(
 }
 
 /************************************************************************/
-/*                         ZarrV2Array::Create()                        */
+/*                        ZarrV2Array::Create()                         */
 /************************************************************************/
 
 std::shared_ptr<ZarrV2Array> ZarrV2Array::Create(
@@ -65,7 +65,7 @@ std::shared_ptr<ZarrV2Array> ZarrV2Array::Create(
 }
 
 /************************************************************************/
-/*                             ~ZarrV2Array()                           */
+/*                            ~ZarrV2Array()                            */
 /************************************************************************/
 
 ZarrV2Array::~ZarrV2Array()
@@ -74,7 +74,7 @@ ZarrV2Array::~ZarrV2Array()
 }
 
 /************************************************************************/
-/*                                Flush()                               */
+/*                               Flush()                                */
 /************************************************************************/
 
 bool ZarrV2Array::Flush()
@@ -141,7 +141,7 @@ bool ZarrV2Array::Flush()
 }
 
 /************************************************************************/
-/*           StripUselessItemsFromCompressorConfiguration()             */
+/*            StripUselessItemsFromCompressorConfiguration()            */
 /************************************************************************/
 
 static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject &o)
@@ -155,7 +155,7 @@ static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject &o)
 }
 
 /************************************************************************/
-/*                    ZarrV2Array::Serialize()                          */
+/*                       ZarrV2Array::Serialize()                       */
 /************************************************************************/
 
 bool ZarrV2Array::Serialize()
@@ -266,7 +266,7 @@ bool ZarrV2Array::Serialize()
 }
 
 /************************************************************************/
-/*                  ZarrV2Array::NeedDecodedBuffer()                    */
+/*                   ZarrV2Array::NeedDecodedBuffer()                   */
 /************************************************************************/
 
 bool ZarrV2Array::NeedDecodedBuffer() const
@@ -294,7 +294,7 @@ bool ZarrV2Array::NeedDecodedBuffer() const
 }
 
 /************************************************************************/
-/*               ZarrV2Array::AllocateWorkingBuffers()                  */
+/*                ZarrV2Array::AllocateWorkingBuffers()                 */
 /************************************************************************/
 
 bool ZarrV2Array::AllocateWorkingBuffers() const
@@ -404,7 +404,7 @@ bool ZarrV2Array::AllocateWorkingBuffers(
 }
 
 /************************************************************************/
-/*                     ZarrV2Array::BlockTranspose()                    */
+/*                    ZarrV2Array::BlockTranspose()                     */
 /************************************************************************/
 
 void ZarrV2Array::BlockTranspose(const ZarrByteVectorQuickResize &abySrc,
@@ -520,7 +520,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                      ZarrV2Array::LoadBlockData()                     */
+/*                     ZarrV2Array::LoadBlockData()                     */
 /************************************************************************/
 
 bool ZarrV2Array::LoadBlockData(const uint64_t *blockIndices,
@@ -1102,7 +1102,7 @@ bool ZarrV2Array::FlushDirtyBlock() const
 }
 
 /************************************************************************/
-/*                          BuildChunkFilename()                        */
+/*                         BuildChunkFilename()                         */
 /************************************************************************/
 
 std::string ZarrV2Array::BuildChunkFilename(const uint64_t *blockIndices) const
@@ -1136,7 +1136,7 @@ std::string ZarrV2Array::GetDataDirectory() const
 }
 
 /************************************************************************/
-/*                        GetChunkIndicesFromFilename()                 */
+/*                    GetChunkIndicesFromFilename()                     */
 /************************************************************************/
 
 CPLStringList
@@ -1396,7 +1396,7 @@ static void SetGDALOffset(const GDALExtendedDataType &dt,
 }
 
 /************************************************************************/
-/*                     ZarrV2Group::LoadArray()                         */
+/*                       ZarrV2Group::LoadArray()                       */
 /************************************************************************/
 
 std::shared_ptr<ZarrArray>
@@ -2117,7 +2117,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
 }
 
 /************************************************************************/
-/*                    ZarrV2Array::SetCompressorJson()                  */
+/*                   ZarrV2Array::SetCompressorJson()                   */
 /************************************************************************/
 
 void ZarrV2Array::SetCompressorJson(const CPLJSONObject &oCompressor)
@@ -2129,7 +2129,7 @@ void ZarrV2Array::SetCompressorJson(const CPLJSONObject &oCompressor)
 }
 
 /************************************************************************/
-/*                     ZarrV2Array::SetFilters()                        */
+/*                      ZarrV2Array::SetFilters()                       */
 /************************************************************************/
 
 void ZarrV2Array::SetFilters(const CPLJSONArray &oFiltersArray)
@@ -2141,7 +2141,7 @@ void ZarrV2Array::SetFilters(const CPLJSONArray &oFiltersArray)
 }
 
 /************************************************************************/
-/*                   ZarrV2Array::GetRawBlockInfoInfo()                 */
+/*                  ZarrV2Array::GetRawBlockInfoInfo()                  */
 /************************************************************************/
 
 CPLStringList ZarrV2Array::GetRawBlockInfoInfo() const

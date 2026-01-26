@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                      GDALVectorGridNearestAlgorithm                  */
+/*                    GDALVectorGridNearestAlgorithm                    */
 /************************************************************************/
 
 class GDALVectorGridNearestAlgorithm /* non final */

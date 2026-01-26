@@ -768,7 +768,7 @@ class CPL_DLL GDALAttribute : virtual public GDALAbstractMDArray
 };
 
 /************************************************************************/
-/*                            GDALAttributeString                       */
+/*                         GDALAttributeString                          */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -797,7 +797,7 @@ class CPL_DLL GDALAttributeString final : public GDALAttribute
 //! @endcond
 
 /************************************************************************/
-/*                           GDALAttributeNumeric                       */
+/*                         GDALAttributeNumeric                         */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -1163,7 +1163,7 @@ bool GDALMDRasterIOFromBand(GDALRasterBand *poBand, GDALRWFlag eRWFlag,
 //! @endcond
 
 /************************************************************************/
-/*                     GDALMDArrayRegularlySpaced                       */
+/*                      GDALMDArrayRegularlySpaced                      */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -1325,7 +1325,7 @@ class CPL_DLL GDALDimension
 };
 
 /************************************************************************/
-/*                   GDALDimensionWeakIndexingVar()                     */
+/*                    GDALDimensionWeakIndexingVar()                    */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress

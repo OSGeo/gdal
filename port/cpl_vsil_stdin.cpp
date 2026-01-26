@@ -44,7 +44,7 @@ static bool gbHasErrored = false;
 static uint64_t gnFileSize = 0;
 
 /************************************************************************/
-/*                           VSIStdinInit()                             */
+/*                            VSIStdinInit()                            */
 /************************************************************************/
 
 static void VSIStdinInit()
@@ -128,7 +128,7 @@ class VSIStdinHandle final : public VSIVirtualHandle
 };
 
 /************************************************************************/
-/*                              ReadAndCache()                          */
+/*                            ReadAndCache()                            */
 /************************************************************************/
 
 size_t VSIStdinHandle::ReadAndCache(void *pUserBuffer, size_t nToRead)
@@ -344,7 +344,7 @@ size_t VSIStdinHandle::Write(const void * /* pBuffer */, size_t /* nBytes */)
 }
 
 /************************************************************************/
-/*                             ClearErr()                               */
+/*                              ClearErr()                              */
 /************************************************************************/
 
 void VSIStdinHandle::ClearErr()
@@ -356,7 +356,7 @@ void VSIStdinHandle::ClearErr()
 }
 
 /************************************************************************/
-/*                              Error()                                 */
+/*                               Error()                                */
 /************************************************************************/
 
 int VSIStdinHandle::Error()
@@ -405,7 +405,7 @@ int VSIStdinHandle::Close()
 /************************************************************************/
 
 /************************************************************************/
-/*                        VSIStdinFilesystemHandler()                   */
+/*                     VSIStdinFilesystemHandler()                      */
 /************************************************************************/
 
 VSIStdinFilesystemHandler::VSIStdinFilesystemHandler()
@@ -413,7 +413,7 @@ VSIStdinFilesystemHandler::VSIStdinFilesystemHandler()
 }
 
 /************************************************************************/
-/*                       ~VSIStdinFilesystemHandler()                   */
+/*                     ~VSIStdinFilesystemHandler()                     */
 /************************************************************************/
 
 VSIStdinFilesystemHandler::~VSIStdinFilesystemHandler()

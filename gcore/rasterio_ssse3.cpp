@@ -73,7 +73,7 @@ void GDALUnrolledCopy_GByte_3_1_SSSE3(GByte *CPL_RESTRICT pDest,
 }
 
 /************************************************************************/
-/*                  GDALDeinterleave3Byte_SSSE3()                       */
+/*                    GDALDeinterleave3Byte_SSSE3()                     */
 /************************************************************************/
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -143,7 +143,7 @@ void GDALDeinterleave3Byte_SSSE3(const GByte *CPL_RESTRICT pabySrc,
 #endif
 
 /************************************************************************/
-/*                     GDALTranspose4x4Int32()                          */
+/*                       GDALTranspose4x4Int32()                        */
 /************************************************************************/
 
 // Consider that the input registers for 4x4 words of size 4 bytes each,
@@ -172,7 +172,7 @@ inline void GDALTranspose4x4Int32(__m128i in0, __m128i in1, __m128i in2,
 }
 
 /************************************************************************/
-/*                  GDALDeinterleave4Byte_SSSE3()                       */
+/*                    GDALDeinterleave4Byte_SSSE3()                     */
 /************************************************************************/
 
 #if !defined(__GNUC__) || defined(__clang__)
@@ -221,7 +221,7 @@ void GDALDeinterleave4Byte_SSSE3(const GByte *CPL_RESTRICT pabySrc,
 #endif
 
 /************************************************************************/
-/*                  GDALDeinterleave3UInt16_SSSE3()                     */
+/*                   GDALDeinterleave3UInt16_SSSE3()                    */
 /************************************************************************/
 
 #if (defined(__GNUC__) && !defined(__clang__)) ||                              \
@@ -246,7 +246,7 @@ void GDALDeinterleave3UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
 #endif
 
 /************************************************************************/
-/*                  GDALDeinterleave4UInt16_SSSE3()                     */
+/*                   GDALDeinterleave4UInt16_SSSE3()                    */
 /************************************************************************/
 
 #if (defined(__GNUC__) && !defined(__clang__)) ||                              \
@@ -292,7 +292,7 @@ inline void storeu(uint8_t *pDst, size_t i, size_t dstStride, __m128i reg)
 }
 
 /************************************************************************/
-/*                      GDALInterleave3Byte_SSSE3()                     */
+/*                     GDALInterleave3Byte_SSSE3()                      */
 /************************************************************************/
 
 #if (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
@@ -446,7 +446,7 @@ GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
 #endif
 
 /************************************************************************/
-/*                      GDALInterleave5Byte_SSSE3()                     */
+/*                     GDALInterleave5Byte_SSSE3()                      */
 /************************************************************************/
 
 inline __m128i GDAL_mm_or_5_si128(__m128i r0, __m128i r1, __m128i r2,
@@ -618,7 +618,7 @@ static void GDALInterleave5Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
 }
 
 /************************************************************************/
-/*                      GDALTranspose2D_Byte_SSSE3()                    */
+/*                     GDALTranspose2D_Byte_SSSE3()                     */
 /************************************************************************/
 
 // Given r = (b00, b01, b02, b03,

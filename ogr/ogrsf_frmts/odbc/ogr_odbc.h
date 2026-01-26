@@ -21,7 +21,7 @@
 #include <unordered_set>
 
 /************************************************************************/
-/*                            OGRODBCLayer                              */
+/*                             OGRODBCLayer                             */
 /************************************************************************/
 
 class OGRODBCDataSource;
@@ -78,7 +78,7 @@ class OGRODBCLayer CPL_NON_FINAL : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRODBCTableLayer                          */
+/*                          OGRODBCTableLayer                           */
 /************************************************************************/
 
 class OGRODBCTableLayer final : public OGRODBCLayer
@@ -160,7 +160,7 @@ class OGRODBCSelectLayer final : public OGRODBCLayer
 };
 
 /************************************************************************/
-/*                           OGRODBCDataSource                          */
+/*                          OGRODBCDataSource                           */
 /************************************************************************/
 
 class OGRODBCDataSource final : public GDALDataset

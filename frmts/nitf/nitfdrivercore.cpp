@@ -21,7 +21,7 @@
 #include "nitfdrivercore.h"
 
 /************************************************************************/
-/*                     NITFDriverIdentify()                             */
+/*                         NITFDriverIdentify()                         */
 /************************************************************************/
 
 int NITFDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -72,7 +72,7 @@ int NITFDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     NITFDriverSetCommonMetadata()                    */
+/*                    NITFDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void NITFDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -111,7 +111,7 @@ void NITFDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     RPFTOCDriverIdentify()                           */
+/*                        RPFTOCDriverIdentify()                        */
 /************************************************************************/
 
 int RPFTOCDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -187,7 +187,7 @@ int RPFTOCIsNonNITFFileTOC(GDALOpenInfo *poOpenInfo, const char *pszFilename)
 }
 
 /************************************************************************/
-/*                     RPFTOCDriverSetCommonMetadata()                  */
+/*                   RPFTOCDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void RPFTOCDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -205,7 +205,7 @@ void RPFTOCDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     ECRGTOCDriverIdentify()                          */
+/*                       ECRGTOCDriverIdentify()                        */
 /************************************************************************/
 
 int ECRGTOCDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -239,7 +239,7 @@ int ECRGTOCDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     ECRGTOCDriverSetCommonMetadata()                 */
+/*                   ECRGTOCDriverSetCommonMetadata()                   */
 /************************************************************************/
 
 void ECRGTOCDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -257,7 +257,7 @@ void ECRGTOCDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                    DeclareDeferredNITFPlugin()                       */
+/*                     DeclareDeferredNITFPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

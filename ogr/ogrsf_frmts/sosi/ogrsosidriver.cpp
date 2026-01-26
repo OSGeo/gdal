@@ -21,7 +21,7 @@ static int bFYBAInit = FALSE;
 static std::mutex oMutex;
 
 /************************************************************************/
-/*                          OGRSOSIInit()                               */
+/*                            OGRSOSIInit()                             */
 /************************************************************************/
 
 static void OGRSOSIInit()
@@ -51,7 +51,7 @@ static void OGRSOSIDriverUnload(CPL_UNUSED GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                              Open()                                  */
+/*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRSOSIDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -73,7 +73,7 @@ static GDALDataset *OGRSOSIDriverOpen(GDALOpenInfo *poOpenInfo)
 
 #ifdef WRITE_SUPPORT
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 static GDALDataset *OGRSOSIDriverCreate(const char *pszName,
@@ -95,7 +95,7 @@ static GDALDataset *OGRSOSIDriverCreate(const char *pszName,
 #endif
 
 /************************************************************************/
-/*                         RegisterOGRSOSI()                            */
+/*                          RegisterOGRSOSI()                           */
 /************************************************************************/
 
 void RegisterOGRSOSI()

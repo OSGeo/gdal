@@ -20,7 +20,7 @@
 class GDALGroup;
 
 /************************************************************************/
-/*                     GDALDatasetCheckAlgorithm                        */
+/*                      GDALDatasetCheckAlgorithm                       */
 /************************************************************************/
 
 class GDALDatasetCheckAlgorithm final : public GDALAlgorithm

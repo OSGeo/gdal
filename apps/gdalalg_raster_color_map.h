@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       GDALRasterColorMapAlgorithm                    */
+/*                     GDALRasterColorMapAlgorithm                      */
 /************************************************************************/
 
 class GDALRasterColorMapAlgorithm /* non final */
@@ -48,7 +48,7 @@ class GDALRasterColorMapAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                  GDALRasterColorMapAlgorithmStandalone               */
+/*                GDALRasterColorMapAlgorithmStandalone                 */
 /************************************************************************/
 
 class GDALRasterColorMapAlgorithmStandalone final

@@ -24,7 +24,7 @@
 // -I/home/even/spatialys/eea/inspire_gml/install-xerces-c-3.1.3/include
 
 /************************************************************************/
-/*                           OGRGMLASDriverOpen()                       */
+/*                         OGRGMLASDriverOpen()                         */
 /************************************************************************/
 
 static GDALDataset *OGRGMLASDriverOpen(GDALOpenInfo *poOpenInfo)

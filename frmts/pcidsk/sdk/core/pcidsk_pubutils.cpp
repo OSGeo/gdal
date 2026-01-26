@@ -131,7 +131,7 @@ const char * PCIDSK::DataTypeName( eChanType chan_type )
 }
 
 /************************************************************************/
-/*                      GetDataTypeFromName()                           */
+/*                        GetDataTypeFromName()                         */
 /************************************************************************/
 
 /**
@@ -178,7 +178,7 @@ eChanType PCIDSK::GetDataTypeFromName(const char * pszDataType)
 }
 
 /************************************************************************/
-/*                       IsDataTypeComplex()                           */
+/*                         IsDataTypeComplex()                          */
 /************************************************************************/
 
 /**

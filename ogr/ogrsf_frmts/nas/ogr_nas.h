@@ -22,7 +22,7 @@
 class OGRNASDataSource;
 
 /************************************************************************/
-/*                            OGRNASLayer                               */
+/*                             OGRNASLayer                              */
 /************************************************************************/
 
 class OGRNASLayer final : public OGRLayer

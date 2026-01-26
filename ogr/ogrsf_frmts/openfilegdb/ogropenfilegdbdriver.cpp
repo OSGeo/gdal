@@ -95,7 +95,7 @@ static GDALDataset *OGROpenFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 static GDALDataset *OGROpenFileGDBDriverCreate(const char *pszName, int nXSize,
@@ -151,7 +151,7 @@ static CPLErr OGROpenFileGDBDriverDelete(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                    OpenFileGDBRepackAlgorithm                        */
+/*                      OpenFileGDBRepackAlgorithm                      */
 /************************************************************************/
 
 #ifndef _
@@ -232,9 +232,9 @@ OGROpenFileGDBInstantiateAlgorithm(const std::vector<std::string> &aosPath)
     }
 }
 
-/***********************************************************************/
-/*                       RegisterOGROpenFileGDB()                      */
-/***********************************************************************/
+/************************************************************************/
+/*                       RegisterOGROpenFileGDB()                       */
+/************************************************************************/
 
 void RegisterOGROpenFileGDB()
 

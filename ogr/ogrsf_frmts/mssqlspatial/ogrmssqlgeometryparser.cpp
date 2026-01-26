@@ -89,7 +89,7 @@ SegmentType (1 byte)
 */
 
 /************************************************************************/
-/*                         Geometry parser macros                       */
+/*                        Geometry parser macros                        */
 /************************************************************************/
 
 #define ReadInt32(nPos) (*(reinterpret_cast<const int *>(pszData + (nPos))))
@@ -114,7 +114,7 @@ SegmentType (1 byte)
 #define ReadM(iPoint) (ReadDouble(nPointPos + 24 * nNumPoints + 8 * (iPoint)))
 
 /************************************************************************/
-/*                   OGRMSSQLGeometryParser()                           */
+/*                       OGRMSSQLGeometryParser()                       */
 /************************************************************************/
 
 OGRMSSQLGeometryParser::OGRMSSQLGeometryParser(int nGeomColumnType)
@@ -137,7 +137,7 @@ OGRMSSQLGeometryParser::OGRMSSQLGeometryParser(int nGeomColumnType)
 }
 
 /************************************************************************/
-/*                         ReadPoint()                                  */
+/*                             ReadPoint()                              */
 /************************************************************************/
 
 OGRPoint *OGRMSSQLGeometryParser::ReadPoint(int iFigure)
@@ -202,7 +202,7 @@ OGRPoint *OGRMSSQLGeometryParser::ReadPoint(int iFigure)
 }
 
 /************************************************************************/
-/*                         ReadMultiPoint()                             */
+/*                           ReadMultiPoint()                           */
 /************************************************************************/
 
 OGRMultiPoint *OGRMSSQLGeometryParser::ReadMultiPoint(int iShape)
@@ -226,7 +226,7 @@ OGRMultiPoint *OGRMSSQLGeometryParser::ReadMultiPoint(int iShape)
 }
 
 /************************************************************************/
-/*                         ReadSimpleCurve()                            */
+/*                          ReadSimpleCurve()                           */
 /************************************************************************/
 
 OGRErr OGRMSSQLGeometryParser::ReadSimpleCurve(OGRSimpleCurve *poCurve,
@@ -276,7 +276,7 @@ OGRErr OGRMSSQLGeometryParser::ReadSimpleCurve(OGRSimpleCurve *poCurve,
 }
 
 /************************************************************************/
-/*                         ReadLineString()                             */
+/*                           ReadLineString()                           */
 /************************************************************************/
 
 OGRLineString *OGRMSSQLGeometryParser::ReadLineString(int iFigure)
@@ -298,7 +298,7 @@ OGRLineString *OGRMSSQLGeometryParser::ReadLineString(int iFigure)
 }
 
 /************************************************************************/
-/*                         ReadLinearRing()                             */
+/*                           ReadLinearRing()                           */
 /************************************************************************/
 
 OGRLinearRing *OGRMSSQLGeometryParser::ReadLinearRing(int iFigure)
@@ -332,7 +332,7 @@ OGRCircularString *OGRMSSQLGeometryParser::ReadCircularString(int iFigure)
 }
 
 /************************************************************************/
-/*                         ReadMultiLineString()                        */
+/*                        ReadMultiLineString()                         */
 /************************************************************************/
 
 OGRMultiLineString *OGRMSSQLGeometryParser::ReadMultiLineString(int iShape)
@@ -356,7 +356,7 @@ OGRMultiLineString *OGRMSSQLGeometryParser::ReadMultiLineString(int iShape)
 }
 
 /************************************************************************/
-/*                         ReadPolygon()                                */
+/*                            ReadPolygon()                             */
 /************************************************************************/
 
 OGRPolygon *OGRMSSQLGeometryParser::ReadPolygon(int iShape)
@@ -389,7 +389,7 @@ OGRPolygon *OGRMSSQLGeometryParser::ReadPolygon(int iShape)
 }
 
 /************************************************************************/
-/*                         ReadMultiPolygon()                           */
+/*                          ReadMultiPolygon()                          */
 /************************************************************************/
 
 OGRMultiPolygon *OGRMSSQLGeometryParser::ReadMultiPolygon(int iShape)
@@ -413,7 +413,7 @@ OGRMultiPolygon *OGRMSSQLGeometryParser::ReadMultiPolygon(int iShape)
 }
 
 /************************************************************************/
-/*                         AddCurveSegment()                            */
+/*                          AddCurveSegment()                           */
 /************************************************************************/
 
 void OGRMSSQLGeometryParser::AddCurveSegment(OGRCompoundCurve *poCompoundCurve,
@@ -499,7 +499,7 @@ OGRCompoundCurve *OGRMSSQLGeometryParser::ReadCompoundCurve(int iFigure)
 }
 
 /************************************************************************/
-/*                         ReadCurvePolygon()                         */
+/*                          ReadCurvePolygon()                          */
 /************************************************************************/
 
 OGRCurvePolygon *OGRMSSQLGeometryParser::ReadCurvePolygon(int iShape)
@@ -542,7 +542,7 @@ OGRCurvePolygon *OGRMSSQLGeometryParser::ReadCurvePolygon(int iShape)
 }
 
 /************************************************************************/
-/*                         ReadGeometryCollection()                     */
+/*                       ReadGeometryCollection()                       */
 /************************************************************************/
 
 OGRGeometryCollection *
@@ -598,7 +598,7 @@ OGRMSSQLGeometryParser::ReadGeometryCollection(int iShape)
 }
 
 /************************************************************************/
-/*                         ParseSqlGeometry()                           */
+/*                          ParseSqlGeometry()                          */
 /************************************************************************/
 
 OGRErr OGRMSSQLGeometryParser::ParseSqlGeometry(const unsigned char *pszInput,

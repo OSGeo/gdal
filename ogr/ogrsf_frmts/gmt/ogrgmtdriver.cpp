@@ -15,7 +15,7 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                    OGRGMTDriverIdentify()                            */
+/*                        OGRGMTDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRGMTDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -33,7 +33,7 @@ static int OGRGMTDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           OGRGMTDriverOpen()                         */
+/*                          OGRGMTDriverOpen()                          */
 /************************************************************************/
 
 static GDALDataset *OGRGMTDriverOpen(GDALOpenInfo *poOpenInfo)

@@ -19,7 +19,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALRasterViewshedAlgorithm                       */
+/*                     GDALRasterViewshedAlgorithm                      */
 /************************************************************************/
 
 class GDALRasterViewshedAlgorithm /* non final */

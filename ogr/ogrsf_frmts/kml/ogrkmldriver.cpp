@@ -23,7 +23,7 @@
 #include "gdal_priv.h"
 
 /************************************************************************/
-/*                         OGRKMLDriverIdentify()                       */
+/*                        OGRKMLDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRKMLDriverIdentify(GDALOpenInfo *poOpenInfo)

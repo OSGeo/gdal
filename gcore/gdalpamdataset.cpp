@@ -154,7 +154,7 @@ GDALPamDataset::~GDALPamDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GDALPamDataset::Close(GDALProgressFunc, void *)
@@ -760,7 +760,7 @@ void GDALPamDataset::SetSubdatasetName(const char *pszSubdataset)
 }
 
 /************************************************************************/
-/*                        SetDerivedDatasetName()                        */
+/*                       SetDerivedDatasetName()                        */
 /************************************************************************/
 
 /* Mutually exclusive with SetSubdatasetName() */
@@ -833,7 +833,7 @@ const char *GDALPamDataset::BuildPamFilename()
 }
 
 /************************************************************************/
-/*                   IsPamFilenameAPotentialSiblingFile()               */
+/*                 IsPamFilenameAPotentialSiblingFile()                 */
 /************************************************************************/
 
 int GDALPamDataset::IsPamFilenameAPotentialSiblingFile()
@@ -1371,7 +1371,7 @@ const OGRSpatialReference *GDALPamDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                        GetSpatialRefRasterOnly()                     */
+/*                      GetSpatialRefRasterOnly()                       */
 /************************************************************************/
 
 const OGRSpatialReference *GDALPamDataset::GetSpatialRefRasterOnly() const
@@ -1440,7 +1440,7 @@ CPLErr GDALPamDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                        DeleteGeoTransform()                          */
+/*                         DeleteGeoTransform()                         */
 /************************************************************************/
 
 /** Remove geotransform from PAM.
@@ -1486,7 +1486,7 @@ const OGRSpatialReference *GDALPamDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *GDALPamDataset::GetGCPs()

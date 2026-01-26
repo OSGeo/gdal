@@ -18,7 +18,7 @@
 #include "ogr_p.h"
 
 /************************************************************************/
-/*                      ParseXMLFieldDomainDef()                        */
+/*                       ParseXMLFieldDomainDef()                       */
 /************************************************************************/
 
 inline std::unique_ptr<OGRFieldDomain>
@@ -212,7 +212,7 @@ ParseXMLFieldDomainDef(const std::string &domainDef)
 }
 
 /************************************************************************/
-/*                      BuildXMLFieldDomainDef()                        */
+/*                       BuildXMLFieldDomainDef()                       */
 /************************************************************************/
 
 inline std::string BuildXMLFieldDomainDef(const OGRFieldDomain *poDomain,

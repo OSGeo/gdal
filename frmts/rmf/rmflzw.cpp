@@ -43,7 +43,7 @@ constexpr GUInt32 STACKSIZE = TABSIZE;
 constexpr GUInt32 NOT_FND = 0xFFFF;
 
 /************************************************************************/
-/*                           LZWStringTab                               */
+/*                             LZWStringTab                             */
 /************************************************************************/
 
 typedef struct
@@ -55,7 +55,7 @@ typedef struct
 } LZWStringTab;
 
 /************************************************************************/
-/*                           LZWUpdateTab()                             */
+/*                            LZWUpdateTab()                            */
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
@@ -110,7 +110,7 @@ static void LZWUpdateTab(LZWStringTab *poCodeTab, GUInt32 iPred, GByte bFollow)
 }
 
 /************************************************************************/
-/*                           LZWCreateTab()                             */
+/*                            LZWCreateTab()                            */
 /************************************************************************/
 
 static LZWStringTab *LZWCreateTab()
@@ -319,7 +319,7 @@ size_t RMFDataset::LZWDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
 }
 
 /************************************************************************/
-/*                             LZWWriteStream()                         */
+/*                           LZWWriteStream()                           */
 /************************************************************************/
 
 static size_t LZWWriteStream(const GByte *pabyIn, GUInt32 nSizeIn,
@@ -380,7 +380,7 @@ static size_t LZWWriteStream(const GByte *pabyIn, GUInt32 nSizeIn,
 }
 
 /************************************************************************/
-/*                             LZWCompress()                            */
+/*                            LZWCompress()                             */
 /************************************************************************/
 
 size_t RMFDataset::LZWCompress(const GByte *pabyIn, GUInt32 nSizeIn,

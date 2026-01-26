@@ -15,7 +15,7 @@
 #include "ogrelasticdrivercore.h"
 
 /************************************************************************/
-/*                  OGRElasticsearchDriverOpen()                        */
+/*                     OGRElasticsearchDriverOpen()                     */
 /************************************************************************/
 
 static GDALDataset *OGRElasticsearchDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -35,7 +35,7 @@ static GDALDataset *OGRElasticsearchDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     OGRElasticsearchDriverCreate()                   */
+/*                    OGRElasticsearchDriverCreate()                    */
 /************************************************************************/
 static GDALDataset *OGRElasticsearchDriverCreate(const char *pszName,
                                                  CPL_UNUSED int nXSize,
@@ -56,7 +56,7 @@ static GDALDataset *OGRElasticsearchDriverCreate(const char *pszName,
 }
 
 /************************************************************************/
-/*                          RegisterOGRElastic()                        */
+/*                         RegisterOGRElastic()                         */
 /************************************************************************/
 
 void RegisterOGRElastic()

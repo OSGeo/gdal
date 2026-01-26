@@ -311,7 +311,7 @@ bool MakeDir(const std::string &dirname)
 }
 
 /************************************************************************/
-/*                       SearchChildWithValue()                         */
+/*                        SearchChildWithValue()                        */
 /************************************************************************/
 
 CPLXMLNode *SearchChildWithValue(CPLXMLNode *node, const char *path,

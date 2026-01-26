@@ -254,7 +254,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkb(const void *pabyData,
 }
 
 /************************************************************************/
-/*                      OGR_G_CreateFromWkbEx()                         */
+/*                       OGR_G_CreateFromWkbEx()                        */
 /************************************************************************/
 /**
  * \brief Create a geometry object of the appropriate type from its
@@ -547,7 +547,7 @@ OGRErr CPL_DLL OGR_G_CreateFromWkt(char **ppszData, OGRSpatialReferenceH hSRS,
 }
 
 /************************************************************************/
-/*                    OGR_G_CreateFromEnvelope()                        */
+/*                      OGR_G_CreateFromEnvelope()                      */
 /************************************************************************/
 /**
  * \brief Create a Polygon geometry from an envelope
@@ -737,7 +737,7 @@ void OGRGeometryFactory::destroyGeometry(OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                        OGR_G_DestroyGeometry()                       */
+/*                       OGR_G_DestroyGeometry()                        */
 /************************************************************************/
 /**
  * \brief Destroy geometry object.
@@ -1069,7 +1069,7 @@ OGRGeometryH OGR_G_ForceToMultiPolygon(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                        forceToMultiPoint()                           */
+/*                         forceToMultiPoint()                          */
 /************************************************************************/
 
 /**
@@ -1160,7 +1160,7 @@ OGRGeometryH OGR_G_ForceToMultiPoint(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                        forceToMultiLinestring()                      */
+/*                       forceToMultiLinestring()                       */
 /************************************************************************/
 
 /**
@@ -1408,7 +1408,7 @@ OGRGeometryH OGR_G_ForceToMultiLineString(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                      removeLowerDimensionSubGeoms()                  */
+/*                    removeLowerDimensionSubGeoms()                    */
 /************************************************************************/
 
 /** \brief Remove sub-geometries from a geometry collection that do not have
@@ -1499,7 +1499,7 @@ OGRGeometryFactory::removeLowerDimensionSubGeoms(const OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                  OGR_G_RemoveLowerDimensionSubGeoms()                */
+/*                 OGR_G_RemoveLowerDimensionSubGeoms()                 */
 /************************************************************************/
 
 /** \brief Remove sub-geometries from a geometry collection that do not have
@@ -2863,7 +2863,7 @@ OGRErr CPL_DLL OGR_G_CreateFromFgf(const void *pabyData,
 }
 
 /************************************************************************/
-/*                SplitLineStringAtDateline()                           */
+/*                     SplitLineStringAtDateline()                      */
 /************************************************************************/
 
 static void SplitLineStringAtDateline(OGRGeometryCollection *poMulti,
@@ -2980,7 +2980,7 @@ static void SplitLineStringAtDateline(OGRGeometryCollection *poMulti,
 }
 
 /************************************************************************/
-/*               FixPolygonCoordinatesAtDateLine()                      */
+/*                  FixPolygonCoordinatesAtDateLine()                   */
 /************************************************************************/
 
 #ifdef HAVE_GEOS
@@ -3041,7 +3041,7 @@ static void FixPolygonCoordinatesAtDateLine(OGRPolygon *poPoly,
 #endif
 
 /************************************************************************/
-/*                            AddOffsetToLon()                          */
+/*                           AddOffsetToLon()                           */
 /************************************************************************/
 
 static void AddOffsetToLon(OGRGeometry *poGeom, double dfOffset)
@@ -3127,7 +3127,7 @@ static void AddSimpleGeomToMulti(OGRGeometryCollection *poMulti,
 #endif  // #ifdef HAVE_GEOS
 
 /************************************************************************/
-/*                       WrapPointDateLine()                            */
+/*                         WrapPointDateLine()                          */
 /************************************************************************/
 
 static void WrapPointDateLine(OGRPoint *poPoint)
@@ -3321,7 +3321,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
 #ifdef HAVE_GEOS
 
 /************************************************************************/
-/*                             RemovePoint()                            */
+/*                            RemovePoint()                             */
 /************************************************************************/
 
 static void RemovePoint(OGRGeometry *poGeom, OGRPoint *poPoint)
@@ -3579,7 +3579,7 @@ static bool IsPolarToGeographic(OGRCoordinateTransformation *poCT,
 }
 
 /************************************************************************/
-/*                             ContainsPole()                           */
+/*                            ContainsPole()                            */
 /************************************************************************/
 
 static bool ContainsPole(const OGRGeometry *poGeom, const OGRPoint *poPole)
@@ -3886,7 +3886,7 @@ static void CollectPointsOnAntimeridian(OGRGeometry *poGeom,
 }
 
 /************************************************************************/
-/*                         SortPointsByAscendingY()                     */
+/*                       SortPointsByAscendingY()                       */
 /************************************************************************/
 
 struct SortPointsByAscendingY
@@ -4113,7 +4113,7 @@ OGRGeometryFactory::TransformWithOptionsCache::TransformWithOptionsCache()
 }
 
 /************************************************************************/
-/*                     ~TransformWithOptionsCache()                      */
+/*                     ~TransformWithOptionsCache()                     */
 /************************************************************************/
 
 OGRGeometryFactory::TransformWithOptionsCache::~TransformWithOptionsCache()
@@ -4121,7 +4121,7 @@ OGRGeometryFactory::TransformWithOptionsCache::~TransformWithOptionsCache()
 }
 
 /************************************************************************/
-/*              isTransformWithOptionsRegularTransform()                */
+/*               isTransformWithOptionsRegularTransform()               */
 /************************************************************************/
 
 #ifdef HAVE_GEOS
@@ -4181,7 +4181,7 @@ bool OGRGeometryFactory::isTransformWithOptionsRegularTransform(
 //! @endcond
 
 /************************************************************************/
-/*                       transformWithOptions()                         */
+/*                        transformWithOptions()                        */
 /************************************************************************/
 
 /** Transform a geometry.
@@ -4418,7 +4418,7 @@ OGRGeomTransformerH OGR_GeomTransformer_Create(OGRCoordinateTransformationH hCT,
 }
 
 /************************************************************************/
-/*                     OGR_GeomTransformer_Transform()                  */
+/*                   OGR_GeomTransformer_Transform()                    */
 /************************************************************************/
 
 /** Transforms a geometry.
@@ -4440,7 +4440,7 @@ OGRGeometryH OGR_GeomTransformer_Transform(OGRGeomTransformerH hTransformer,
 }
 
 /************************************************************************/
-/*                      OGR_GeomTransformer_Destroy()                   */
+/*                    OGR_GeomTransformer_Destroy()                     */
 /************************************************************************/
 
 /** Destroy a geometry transformer allocated with OGR_GeomTransformer_Create()
@@ -4454,7 +4454,7 @@ void OGR_GeomTransformer_Destroy(OGRGeomTransformerH hTransformer)
 }
 
 /************************************************************************/
-/*                OGRGeometryFactory::GetDefaultArcStepSize()           */
+/*             OGRGeometryFactory::GetDefaultArcStepSize()              */
 /************************************************************************/
 
 /** Return the default value of the angular step used when stroking curves
@@ -4701,7 +4701,7 @@ OGRGeometryH CPL_DLL OGR_G_ApproximateArcAngles(
 }
 
 /************************************************************************/
-/*                           forceToLineString()                        */
+/*                         forceToLineString()                          */
 /************************************************************************/
 
 /**
@@ -4897,7 +4897,7 @@ OGRGeometryH OGR_G_ForceToLineString(OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                           forceTo()                                  */
+/*                              forceTo()                               */
 /************************************************************************/
 
 /**
@@ -5422,7 +5422,7 @@ OGRGeometryFactory::forceTo(std::unique_ptr<OGRGeometry> poGeom,
 }
 
 /************************************************************************/
-/*                          OGR_G_ForceTo()                             */
+/*                           OGR_G_ForceTo()                            */
 /************************************************************************/
 
 /**
@@ -5449,7 +5449,7 @@ OGRGeometryH OGR_G_ForceTo(OGRGeometryH hGeom, OGRwkbGeometryType eTargetType,
 }
 
 /************************************************************************/
-/*                        makeCompatibleWith()                          */
+/*                         makeCompatibleWith()                         */
 /************************************************************************/
 
 /**
@@ -5515,7 +5515,7 @@ OGRGeometryFactory::makeCompatibleWith(std::unique_ptr<OGRGeometry> poGeom,
 }
 
 /************************************************************************/
-/*                         GetCurveParameters()                          */
+/*                         GetCurveParameters()                         */
 /************************************************************************/
 
 /**
@@ -5635,7 +5635,7 @@ int OGRGeometryFactory::GetCurveParameters(double x0, double y0, double x1,
 }
 
 /************************************************************************/
-/*                      OGRGeometryFactoryStrokeArc()                   */
+/*                    OGRGeometryFactoryStrokeArc()                     */
 /************************************************************************/
 
 static void OGRGeometryFactoryStrokeArc(OGRLineString *poLine, double cx,
@@ -5693,7 +5693,7 @@ static void OGRGeometryFactoryStrokeArc(OGRLineString *poLine, double cx,
 }
 
 /************************************************************************/
-/*                         OGRGF_SetHiddenValue()                       */
+/*                        OGRGF_SetHiddenValue()                        */
 /************************************************************************/
 
 // TODO(schwehr): Cleanup these static constants.
@@ -5725,7 +5725,7 @@ static void OGRGF_SetHiddenValue(GUInt16 nValue, double &dfX, double &dfY)
 }
 
 /************************************************************************/
-/*                         OGRGF_GetHiddenValue()                       */
+/*                        OGRGF_GetHiddenValue()                        */
 /************************************************************************/
 
 // Decode 16-bit nValue from the 8-lsb of dfX and dfY.
@@ -5741,7 +5741,7 @@ static GUInt16 OGRGF_GetHiddenValue(double dfX, double dfY)
 }
 
 /************************************************************************/
-/*                     OGRGF_NeedSwithArcOrder()                        */
+/*                      OGRGF_NeedSwithArcOrder()                       */
 /************************************************************************/
 
 // We need to define a full ordering between starting point and ending point
@@ -5981,7 +5981,7 @@ OGRLineString *OGRGeometryFactory::curveToLineString(
 }
 
 /************************************************************************/
-/*                         OGRGF_FixAngle()                             */
+/*                           OGRGF_FixAngle()                           */
 /************************************************************************/
 
 // Fix dfAngle by offsets of 2 PI so that it lies between dfAngleStart and
@@ -6003,7 +6003,7 @@ static double OGRGF_FixAngle(double dfAngleStart, double dfAngleStop,
 }
 
 /************************************************************************/
-/*                         OGRGF_DetectArc()                            */
+/*                          OGRGF_DetectArc()                           */
 /************************************************************************/
 
 // #define VERBOSE_DEBUG_CURVEFROMLINESTRING

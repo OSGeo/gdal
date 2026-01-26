@@ -18,7 +18,7 @@
 #include "nasakeywordhandler.h"
 
 /************************************************************************/
-/*                     GetVICARLabelOffsetFromPDS3()                    */
+/*                    GetVICARLabelOffsetFromPDS3()                     */
 /************************************************************************/
 
 vsi_l_offset GetVICARLabelOffsetFromPDS3(const char *pszHdr, VSILFILE *fp,
@@ -56,7 +56,7 @@ vsi_l_offset GetVICARLabelOffsetFromPDS3(const char *pszHdr, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                     PDSDriverIdentify()                              */
+/*                         PDSDriverIdentify()                          */
 /************************************************************************/
 
 int PDSDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -89,7 +89,7 @@ int PDSDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      PDSDriverSetCommonMetadata()                    */
+/*                     PDSDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void PDSDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -151,7 +151,7 @@ int PDS4DriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      PDS4DriverSetCommonMetadata()                   */
+/*                    PDS4DriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void PDS4DriverSetCommonMetadata(GDALDriver *poDriver)
@@ -329,7 +329,7 @@ void PDS4DriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                         ISIS2DriverIdentify()                        */
+/*                        ISIS2DriverIdentify()                         */
 /************************************************************************/
 
 int ISIS2DriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -345,7 +345,7 @@ int ISIS2DriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      ISIS2DriverSetCommonMetadata()                  */
+/*                    ISIS2DriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void ISIS2DriverSetCommonMetadata(GDALDriver *poDriver)
@@ -362,7 +362,7 @@ void ISIS2DriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                         ISIS3DriverIdentify()                        */
+/*                        ISIS3DriverIdentify()                         */
 /************************************************************************/
 
 int ISIS3DriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -376,7 +376,7 @@ int ISIS3DriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      ISIS3DriverSetCommonMetadata()                  */
+/*                    ISIS3DriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void ISIS3DriverSetCommonMetadata(GDALDriver *poDriver)
@@ -482,7 +482,7 @@ void ISIS3DriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     VICARGetLabelOffset()                            */
+/*                        VICARGetLabelOffset()                         */
 /************************************************************************/
 
 vsi_l_offset VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
@@ -555,7 +555,7 @@ vsi_l_offset VICARGetLabelOffset(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         VICARDriverIdentify()                        */
+/*                        VICARDriverIdentify()                         */
 /************************************************************************/
 
 static int VICARDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -564,7 +564,7 @@ static int VICARDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      VICARDriverSetCommonMetadata()                  */
+/*                    VICARDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void VICARDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -626,7 +626,7 @@ void VICARDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredPDSPlugin()                       */
+/*                      DeclareDeferredPDSPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

@@ -26,7 +26,7 @@ CPLString OGRCARTOEscapeLiteral(const char *pszStr);
 CPLString OGRCARTOEscapeLiteralCopy(const char *pszStr);
 
 /************************************************************************/
-/*                      OGRCartoGeomFieldDefn                           */
+/*                        OGRCartoGeomFieldDefn                         */
 /************************************************************************/
 
 class OGRCartoGeomFieldDefn final : public OGRGeomFieldDefn
@@ -43,7 +43,7 @@ class OGRCartoGeomFieldDefn final : public OGRGeomFieldDefn
 };
 
 /************************************************************************/
-/*                           OGRCARTOLayer                            */
+/*                            OGRCARTOLayer                             */
 /************************************************************************/
 class OGRCARTODataSource;
 
@@ -105,7 +105,7 @@ typedef enum
 } InsertState;
 
 /************************************************************************/
-/*                        OGRCARTOTableLayer                          */
+/*                          OGRCARTOTableLayer                          */
 /************************************************************************/
 
 class OGRCARTOTableLayer final : public OGRCARTOLayer
@@ -220,7 +220,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
 };
 
 /************************************************************************/
-/*                       OGRCARTOResultLayer                            */
+/*                         OGRCARTOResultLayer                          */
 /************************************************************************/
 
 class OGRCARTOResultLayer final : public OGRCARTOLayer
@@ -240,7 +240,7 @@ class OGRCARTOResultLayer final : public OGRCARTOLayer
 };
 
 /************************************************************************/
-/*                           OGRCARTODataSource                         */
+/*                          OGRCARTODataSource                          */
 /************************************************************************/
 
 class OGRCARTODataSource final : public GDALDataset

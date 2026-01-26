@@ -29,7 +29,7 @@
 #include <utility>
 
 /************************************************************************/
-/*                         ProcessMetadata()                            */
+/*                          ProcessMetadata()                           */
 /************************************************************************/
 
 static bool ProcessMetadata(GDALDataset *poSQLiteDS, pmtiles::headerv3 &sHeader,
@@ -175,7 +175,7 @@ static bool ProcessMetadata(GDALDataset *poSQLiteDS, pmtiles::headerv3 &sHeader,
 }
 
 /************************************************************************/
-/*                               HashArray()                            */
+/*                             HashArray()                              */
 /************************************************************************/
 
 // From https://codereview.stackexchange.com/questions/171999/specializing-stdhash-for-stdarray

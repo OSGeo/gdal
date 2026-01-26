@@ -44,7 +44,7 @@ class HFASpillFile;
 class HFAType;
 
 /************************************************************************/
-/*      Flag indicating read/write, or read-only access to data.        */
+/*       Flag indicating read/write, or read-only access to data.       */
 /************************************************************************/
 typedef enum
 {

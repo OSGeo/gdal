@@ -1556,7 +1556,7 @@ const CPLJSONObject CPLJSONArray::operator[](size_t nIndex) const
 }
 
 /************************************************************************/
-/*                      CPLParseKeyValueJson()                          */
+/*                        CPLParseKeyValueJson()                        */
 /************************************************************************/
 
 /** Return a string list of key/value pairs extracted from a JSON doc.

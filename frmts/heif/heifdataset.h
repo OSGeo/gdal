@@ -23,7 +23,7 @@
 #include <geoheif.h>
 
 /************************************************************************/
-/*                        GDALHEIFDataset                               */
+/*                           GDALHEIFDataset                            */
 /************************************************************************/
 
 class GDALHEIFDataset final : public GDALPamDataset

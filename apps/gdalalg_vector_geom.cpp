@@ -23,7 +23,7 @@
 #endif
 
 /************************************************************************/
-/*                 GDALVectorGeomAbstractAlgorithm()                    */
+/*                  GDALVectorGeomAbstractAlgorithm()                   */
 /************************************************************************/
 
 GDALVectorGeomAbstractAlgorithm::GDALVectorGeomAbstractAlgorithm(
@@ -41,7 +41,7 @@ GDALVectorGeomAbstractAlgorithm::GDALVectorGeomAbstractAlgorithm(
 }
 
 /************************************************************************/
-/*               GDALVectorGeomAbstractAlgorithm::RunStep()             */
+/*              GDALVectorGeomAbstractAlgorithm::RunStep()              */
 /************************************************************************/
 
 bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &)
@@ -85,7 +85,7 @@ bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &)
 #endif
 
 /************************************************************************/
-/*                    GDALGeosNonStreamingAlgorithmLayer              */
+/*                  GDALGeosNonStreamingAlgorithmLayer                  */
 /************************************************************************/
 
 GDALGeosNonStreamingAlgorithmLayer::GDALGeosNonStreamingAlgorithmLayer(

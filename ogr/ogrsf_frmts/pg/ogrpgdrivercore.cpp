@@ -31,7 +31,7 @@ int OGRPGDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                OGRPGDriverSetCommonMetadata()                        */
+/*                    OGRPGDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void OGRPGDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -173,7 +173,7 @@ void OGRPGDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredOGRPGPlugin()                       */
+/*                     DeclareDeferredOGRPGPlugin()                     */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

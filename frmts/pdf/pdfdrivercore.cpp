@@ -80,7 +80,7 @@ const char *PDFGetOpenOptionList()
 }
 
 /************************************************************************/
-/*                        PDFDatasetIdentify()                          */
+/*                         PDFDatasetIdentify()                         */
 /************************************************************************/
 
 int PDFDatasetIdentify(GDALOpenInfo *poOpenInfo)
@@ -97,7 +97,7 @@ int PDFDatasetIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      PDFDriverSetCommonMetadata()                    */
+/*                     PDFDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void PDFDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -249,7 +249,7 @@ void PDFDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredPDFPlugin()                       */
+/*                      DeclareDeferredPDFPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

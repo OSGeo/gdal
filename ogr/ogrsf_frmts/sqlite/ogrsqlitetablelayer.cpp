@@ -95,7 +95,7 @@ OGRSQLiteTableLayer::~OGRSQLiteTableLayer()
 }
 
 /************************************************************************/
-/*                     CreateSpatialIndexIfNecessary()                  */
+/*                   CreateSpatialIndexIfNecessary()                    */
 /************************************************************************/
 
 void OGRSQLiteTableLayer::CreateSpatialIndexIfNecessary()
@@ -174,7 +174,7 @@ CPLErr OGRSQLiteTableLayer::Initialize(const char *m_pszTableNameIn,
 }
 
 /************************************************************************/
-/*                            GetGeomFormat()                           */
+/*                           GetGeomFormat()                            */
 /************************************************************************/
 
 static OGRSQLiteGeomFormat GetGeomFormat(const char *pszGeomFormat)
@@ -195,7 +195,7 @@ static OGRSQLiteGeomFormat GetGeomFormat(const char *pszGeomFormat)
 }
 
 /************************************************************************/
-/*                         SetCreationParameters()                      */
+/*                       SetCreationParameters()                        */
 /************************************************************************/
 
 void OGRSQLiteTableLayer::SetCreationParameters(const char *pszFIDColumnName,
@@ -229,7 +229,7 @@ void OGRSQLiteTableLayer::SetCreationParameters(const char *pszFIDColumnName,
 }
 
 /************************************************************************/
-/*                               GetName()                              */
+/*                              GetName()                               */
 /************************************************************************/
 
 const char *OGRSQLiteTableLayer::GetName() const
@@ -299,7 +299,7 @@ const char *OGRSQLiteTableLayer::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                         EstablishFeatureDefn()                       */
+/*                        EstablishFeatureDefn()                        */
 /************************************************************************/
 
 CPLErr OGRSQLiteTableLayer::EstablishFeatureDefn(const char *pszGeomCol,
@@ -833,7 +833,7 @@ OGRErr OGRSQLiteTableLayer::RecomputeOrdinals()
 }
 
 /************************************************************************/
-/*                           GetLayerDefn()                             */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGRSQLiteTableLayer::GetLayerDefn() const
@@ -846,7 +846,7 @@ const OGRFeatureDefn *OGRSQLiteTableLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                          BuildLayerDefn()                            */
+/*                           BuildLayerDefn()                           */
 /************************************************************************/
 
 void OGRSQLiteTableLayer::BuildLayerDefn()
@@ -1021,7 +1021,7 @@ OGRErr OGRSQLiteTableLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                        CheckSpatialIndexTable()                      */
+/*                       CheckSpatialIndexTable()                       */
 /************************************************************************/
 
 bool OGRSQLiteTableLayer::CheckSpatialIndexTable(int iGeomCol)
@@ -1071,7 +1071,7 @@ bool OGRSQLiteTableLayer::CheckSpatialIndexTable(int iGeomCol)
 }
 
 /************************************************************************/
-/*                         HasFastSpatialFilter()                       */
+/*                        HasFastSpatialFilter()                        */
 /************************************************************************/
 
 bool OGRSQLiteTableLayer::HasFastSpatialFilter(int iGeomCol)
@@ -1084,7 +1084,7 @@ bool OGRSQLiteTableLayer::HasFastSpatialFilter(int iGeomCol)
 }
 
 /************************************************************************/
-/*                           GetSpatialWhere()                          */
+/*                          GetSpatialWhere()                           */
 /************************************************************************/
 
 CPLString OGRSQLiteTableLayer::GetSpatialWhere(int iGeomCol,
@@ -1276,7 +1276,7 @@ GIntBig OGRSQLiteTableLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRSQLiteTableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -1356,7 +1356,7 @@ OGRErr OGRSQLiteTableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                  OGRSQLiteFieldDefnToSQliteFieldDefn()               */
+/*                OGRSQLiteFieldDefnToSQliteFieldDefn()                 */
 /************************************************************************/
 
 CPLString OGRSQLiteFieldDefnToSQliteFieldDefn(const OGRFieldDefn *poFieldDefn,
@@ -1460,7 +1460,7 @@ CPLString OGRSQLiteFieldDefnToSQliteFieldDefn(const OGRFieldDefn *poFieldDefn,
 }
 
 /************************************************************************/
-/*                    FieldDefnToSQliteFieldDefn()                      */
+/*                     FieldDefnToSQliteFieldDefn()                     */
 /************************************************************************/
 
 CPLString
@@ -1599,7 +1599,7 @@ OGRErr OGRSQLiteTableLayer::CreateField(const OGRFieldDefn *poFieldIn,
 }
 
 /************************************************************************/
-/*                           CreateGeomField()                          */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
 OGRErr
@@ -1898,7 +1898,7 @@ void OGRSQLiteTableLayer::InitFieldListForRecrerate(
 }
 
 /************************************************************************/
-/*                         AddColumnDef()                               */
+/*                            AddColumnDef()                            */
 /************************************************************************/
 
 void OGRSQLiteTableLayer::AddColumnDef(char *pszNewFieldList, size_t nBufLen,
@@ -2035,7 +2035,7 @@ OGRErr OGRSQLiteTableLayer::RecreateTable(const char *pszFieldListForSelect,
 }
 
 /************************************************************************/
-/*                             DeleteField()                            */
+/*                            DeleteField()                             */
 /************************************************************************/
 
 OGRErr OGRSQLiteTableLayer::DeleteField(int iFieldToDelete)
@@ -2428,7 +2428,7 @@ OGRErr OGRSQLiteTableLayer::AlterFieldDefn(int iFieldToAlter,
 }
 
 /************************************************************************/
-/*                     AddForeignKeysToTable()                           */
+/*                       AddForeignKeysToTable()                        */
 /************************************************************************/
 
 OGRErr OGRSQLiteTableLayer::AddForeignKeysToTable(const char *pszKeys)
@@ -2825,7 +2825,7 @@ OGRErr OGRSQLiteTableLayer::BindValues(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRSQLiteTableLayer::ISetFeature(OGRFeature *poFeature)
@@ -3022,7 +3022,7 @@ static int AreTriggersSimilar(const char *pszExpectedTrigger,
 }
 
 /************************************************************************/
-/*                          ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRSQLiteTableLayer::ICreateFeature(OGRFeature *poFeature)
@@ -3555,7 +3555,7 @@ int OGRSQLiteTableLayer::CreateSpatialIndex(int iGeomCol)
 }
 
 /************************************************************************/
-/*                      RunDeferredCreationIfNecessary()                */
+/*                   RunDeferredCreationIfNecessary()                   */
 /************************************************************************/
 
 OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
@@ -3681,7 +3681,7 @@ OGRErr OGRSQLiteTableLayer::RunDeferredCreationIfNecessary()
 }
 
 /************************************************************************/
-/*                           HasSpatialIndex()                          */
+/*                          HasSpatialIndex()                           */
 /************************************************************************/
 
 bool OGRSQLiteTableLayer::HasSpatialIndex(int iGeomCol) const
@@ -3708,7 +3708,7 @@ void OGRSQLiteTableLayer::InitFeatureCount()
 }
 
 /************************************************************************/
-/*                 InvalidateCachedFeatureCountAndExtent()              */
+/*               InvalidateCachedFeatureCountAndExtent()                */
 /************************************************************************/
 
 void OGRSQLiteTableLayer::InvalidateCachedFeatureCountAndExtent()
@@ -3722,7 +3722,7 @@ void OGRSQLiteTableLayer::InvalidateCachedFeatureCountAndExtent()
 }
 
 /************************************************************************/
-/*                     DoStatisticsNeedToBeFlushed()                    */
+/*                    DoStatisticsNeedToBeFlushed()                     */
 /************************************************************************/
 
 bool OGRSQLiteTableLayer::DoStatisticsNeedToBeFlushed()
@@ -3750,7 +3750,7 @@ bool OGRSQLiteTableLayer::AreStatisticsValid()
 }
 
 /************************************************************************/
-/*                     LoadStatisticsSpatialite4DB()                    */
+/*                    LoadStatisticsSpatialite4DB()                     */
 /************************************************************************/
 
 void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
@@ -3880,7 +3880,7 @@ void OGRSQLiteTableLayer::LoadStatisticsSpatialite4DB()
 }
 
 /************************************************************************/
-/*                          LoadStatistics()                            */
+/*                           LoadStatistics()                           */
 /************************************************************************/
 
 void OGRSQLiteTableLayer::LoadStatistics()
@@ -3999,7 +3999,7 @@ void OGRSQLiteTableLayer::LoadStatistics()
 }
 
 /************************************************************************/
-/*                          SaveStatistics()                            */
+/*                           SaveStatistics()                           */
 /************************************************************************/
 
 int OGRSQLiteTableLayer::SaveStatistics()
@@ -4140,7 +4140,7 @@ int OGRSQLiteTableLayer::SaveStatistics()
 }
 
 /************************************************************************/
-/*                      SetCompressedColumns()                          */
+/*                        SetCompressedColumns()                        */
 /************************************************************************/
 
 void OGRSQLiteTableLayer::SetCompressedColumns(const char *pszCompressedColumns)

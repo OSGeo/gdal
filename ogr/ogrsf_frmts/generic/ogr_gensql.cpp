@@ -47,7 +47,7 @@ class OGRGenSQLGeomFieldDefn final : public OGRGeomFieldDefn
 OGRGenSQLGeomFieldDefn::~OGRGenSQLGeomFieldDefn() = default;
 
 /************************************************************************/
-/*               OGRGenSQLResultsLayerHasSpecialField()                 */
+/*                OGRGenSQLResultsLayerHasSpecialField()                */
 /************************************************************************/
 
 static bool OGRGenSQLResultsLayerHasSpecialField(swq_expr_node *expr,
@@ -547,7 +547,7 @@ void OGRGenSQLResultsLayer::ClearFilters()
 }
 
 /************************************************************************/
-/*                    MustEvaluateSpatialFilterOnGenSQL()               */
+/*                 MustEvaluateSpatialFilterOnGenSQL()                  */
 /************************************************************************/
 
 int OGRGenSQLResultsLayer::MustEvaluateSpatialFilterOnGenSQL()
@@ -564,7 +564,7 @@ int OGRGenSQLResultsLayer::MustEvaluateSpatialFilterOnGenSQL()
 }
 
 /************************************************************************/
-/*                       ApplyFiltersToSource()                         */
+/*                        ApplyFiltersToSource()                        */
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::ApplyFiltersToSource()
@@ -660,7 +660,7 @@ OGRErr OGRGenSQLResultsLayer::SetNextByIndex(GIntBig nIndex)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRGenSQLResultsLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -814,7 +814,7 @@ int OGRGenSQLResultsLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                        ContainGeomSpecialField()                     */
+/*                      ContainGeomSpecialField()                       */
 /************************************************************************/
 
 int OGRGenSQLResultsLayer::ContainGeomSpecialField(
@@ -2075,7 +2075,7 @@ const OGRFeatureDefn *OGRGenSQLResultsLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                         FreeIndexFields()                            */
+/*                          FreeIndexFields()                           */
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::FreeIndexFields(OGRField *pasIndexFields,
@@ -2127,7 +2127,7 @@ void OGRGenSQLResultsLayer::FreeIndexFields(OGRField *pasIndexFields,
 }
 
 /************************************************************************/
-/*                         ReadIndexFields()                            */
+/*                          ReadIndexFields()                           */
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::ReadIndexFields(OGRFeature *poSrcFeat,
@@ -2467,7 +2467,7 @@ void OGRGenSQLResultsLayer::SortIndexSection(const OGRField *pasIndexFields,
 }
 
 /************************************************************************/
-/*                           ComparePrimitive()                         */
+/*                          ComparePrimitive()                          */
 /************************************************************************/
 
 template <class T> static inline int ComparePrimitive(const T &a, const T &b)
@@ -2630,7 +2630,7 @@ void OGRGenSQLResultsLayer::AddFieldDefnToSet(int iTable, int iColumn,
 }
 
 /************************************************************************/
-/*                   ExploreExprForIgnoredFields()                      */
+/*                    ExploreExprForIgnoredFields()                     */
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::ExploreExprForIgnoredFields(swq_expr_node *expr,
@@ -2648,7 +2648,7 @@ void OGRGenSQLResultsLayer::ExploreExprForIgnoredFields(swq_expr_node *expr,
 }
 
 /************************************************************************/
-/*                     FindAndSetIgnoredFields()                        */
+/*                      FindAndSetIgnoredFields()                       */
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
@@ -2738,7 +2738,7 @@ void OGRGenSQLResultsLayer::InvalidateOrderByIndex()
 }
 
 /************************************************************************/
-/*                       SetAttributeFilter()                           */
+/*                         SetAttributeFilter()                         */
 /************************************************************************/
 
 OGRErr OGRGenSQLResultsLayer::SetAttributeFilter(const char *pszAttributeFilter)
@@ -2766,7 +2766,7 @@ OGRErr OGRGenSQLResultsLayer::SetAttributeFilter(const char *pszAttributeFilter)
 }
 
 /************************************************************************/
-/*                       ISetSpatialFilter()                            */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRGenSQLResultsLayer::ISetSpatialFilter(int iGeomField,
@@ -2777,7 +2777,7 @@ OGRErr OGRGenSQLResultsLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                  OGRGenSQLResultsLayerArrowStreamPrivateData         */
+/*             OGRGenSQLResultsLayerArrowStreamPrivateData              */
 /************************************************************************/
 
 // Structure whose instances are set on the ArrowArrayStream::private_data
@@ -2861,7 +2861,7 @@ struct OGRGenSQLResultsLayerArrowStreamPrivateData
 };
 
 /************************************************************************/
-/*                          GetArrowStream()                            */
+/*                           GetArrowStream()                           */
 /************************************************************************/
 
 bool OGRGenSQLResultsLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
@@ -2928,7 +2928,7 @@ bool OGRGenSQLResultsLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                          GetArrowSchema()                            */
+/*                           GetArrowSchema()                           */
 /************************************************************************/
 
 int OGRGenSQLResultsLayer::GetArrowSchema(struct ArrowArrayStream *stream,
@@ -3021,7 +3021,7 @@ int OGRGenSQLResultsLayer::GetArrowSchemaForwarded(
 }
 
 /************************************************************************/
-/*                      GetNextArrowArray()                             */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 int OGRGenSQLResultsLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
@@ -3038,7 +3038,7 @@ int OGRGenSQLResultsLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                  GetNextArrowArrayForwarded()                        */
+/*                     GetNextArrowArrayForwarded()                     */
 /************************************************************************/
 
 int OGRGenSQLResultsLayer::GetNextArrowArrayForwarded(

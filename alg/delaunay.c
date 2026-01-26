@@ -72,7 +72,7 @@
 #endif /* HAVE_INTERNAL_OR_EXTERNAL_QHULL*/
 
 /************************************************************************/
-/*                       GDALHasTriangulation()                         */
+/*                        GDALHasTriangulation()                        */
 /************************************************************************/
 
 /** Returns if GDAL is built with Delaunay triangulation support.
@@ -90,7 +90,7 @@ int GDALHasTriangulation()
 }
 
 /************************************************************************/
-/*                   GDALTriangulationCreateDelaunay()                  */
+/*                  GDALTriangulationCreateDelaunay()                   */
 /************************************************************************/
 
 /** Computes a Delaunay triangulation of the passed points
@@ -274,7 +274,7 @@ void GDALTriangulationFree(GDALTriangulation *psDT)
 }
 
 /************************************************************************/
-/*               GDALTriangulationComputeBarycentricCoefficients()      */
+/*          GDALTriangulationComputeBarycentricCoefficients()           */
 /************************************************************************/
 
 /** Computes barycentric coefficients for each triangles of the triangulation.
@@ -344,7 +344,7 @@ int GDALTriangulationComputeBarycentricCoefficients(GDALTriangulation *psDT,
 }
 
 /************************************************************************/
-/*               GDALTriangulationComputeBarycentricCoordinates()       */
+/*           GDALTriangulationComputeBarycentricCoordinates()           */
 /************************************************************************/
 
 #define BARYC_COORD_L1(psCoeffs, dfX, dfY)                                     \
@@ -391,7 +391,7 @@ int GDALTriangulationComputeBarycentricCoordinates(
 }
 
 /************************************************************************/
-/*               GDALTriangulationFindFacetBruteForce()                 */
+/*                GDALTriangulationFindFacetBruteForce()                */
 /************************************************************************/
 
 #define EPS 1e-10
@@ -483,7 +483,7 @@ int GDALTriangulationFindFacetBruteForce(const GDALTriangulation *psDT,
 }
 
 /************************************************************************/
-/*               GDALTriangulationFindFacetDirected()                   */
+/*                 GDALTriangulationFindFacetDirected()                 */
 /************************************************************************/
 
 #define EPS 1e-10

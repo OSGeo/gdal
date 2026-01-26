@@ -167,7 +167,7 @@ class OGRXLSXLayer final : public OGRMemLayer
 };
 
 /************************************************************************/
-/*                           OGRXLSXDataSource                          */
+/*                          OGRXLSXDataSource                           */
 /************************************************************************/
 #define STACK_SIZE 5
 

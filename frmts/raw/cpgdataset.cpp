@@ -91,7 +91,7 @@ class CPGDataset final : public RawDataset
 };
 
 /************************************************************************/
-/*                            CPGDataset()                             */
+/*                             CPGDataset()                             */
 /************************************************************************/
 
 CPGDataset::CPGDataset()
@@ -103,7 +103,7 @@ CPGDataset::CPGDataset()
 }
 
 /************************************************************************/
-/*                            ~CPGDataset()                            */
+/*                            ~CPGDataset()                             */
 /************************************************************************/
 
 CPGDataset::~CPGDataset()
@@ -113,7 +113,7 @@ CPGDataset::~CPGDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr CPGDataset::Close(GDALProgressFunc, void *)
@@ -342,7 +342,7 @@ int CPGDataset::FindType3(const char *pszFilename)
 #endif
 
 /************************************************************************/
-/*                        LoadStokesLine()                              */
+/*                           LoadStokesLine()                           */
 /************************************************************************/
 
 CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
@@ -1191,7 +1191,7 @@ int CPGDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                               GetGCPs()                               */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *CPGDataset::GetGCPs()
@@ -1212,7 +1212,7 @@ CPLErr CPGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                           SIRC_QSLCRasterBand()                      */
+/*                        SIRC_QSLCRasterBand()                         */
 /************************************************************************/
 
 SIRC_QSLCRasterBand::SIRC_QSLCRasterBand(CPGDataset *poGDSIn, int nBandIn,
@@ -1645,7 +1645,7 @@ CPLErr CPG_STOKESRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 }
 
 /************************************************************************/
-/*                         GDALRegister_CPG()                           */
+/*                          GDALRegister_CPG()                          */
 /************************************************************************/
 
 void GDALRegister_CPG()

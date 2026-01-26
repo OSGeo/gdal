@@ -180,7 +180,7 @@ struct GDALDEMProcessingOptions
 };
 
 /************************************************************************/
-/*                       AlgorithmParameters                            */
+/*                         AlgorithmParameters                          */
 /************************************************************************/
 
 struct AlgorithmParameters
@@ -199,7 +199,7 @@ struct AlgorithmParameters
 AlgorithmParameters::~AlgorithmParameters() = default;
 
 /************************************************************************/
-/*                          ComputeVal()                                */
+/*                             ComputeVal()                             */
 /************************************************************************/
 
 template <class T> struct GDALGeneric3x3ProcessingAlg
@@ -281,7 +281,7 @@ float ComputeVal(bool bSrcHasNoData, GInt32 fSrcNoDataValue,
 }
 
 /************************************************************************/
-/*                           INTERPOL()                                 */
+/*                              INTERPOL()                              */
 /************************************************************************/
 
 template <class T>
@@ -313,7 +313,7 @@ GInt32 INTERPOL(GInt32 a, GInt32 b, int bSrcHasNoData, GInt32 fSrcNoDataValue)
 }
 
 /************************************************************************/
-/*                  GDALGeneric3x3Processing()                          */
+/*                      GDALGeneric3x3Processing()                      */
 /************************************************************************/
 
 template <class T>
@@ -770,7 +770,7 @@ static CPLErr GDALGeneric3x3Processing(
 }
 
 /************************************************************************/
-/*                            GradientAlg                               */
+/*                             GradientAlg                              */
 /************************************************************************/
 
 template <class T, GradientAlg alg> struct Gradient
@@ -805,7 +805,7 @@ template <class T> struct Gradient<T, GradientAlg::ZEVENBERGEN_THORNE>
 };
 
 /************************************************************************/
-/*                         GDALHillshade()                              */
+/*                           GDALHillshade()                            */
 /************************************************************************/
 
 struct GDALHillshadeAlgData final : public AlgorithmParameters
@@ -1338,7 +1338,7 @@ GDALCreateHillshadeMultiDirectionalData(const double *adfGeoTransform, double z,
 }
 
 /************************************************************************/
-/*                         GDALSlope()                                  */
+/*                             GDALSlope()                              */
 /************************************************************************/
 
 struct GDALSlopeAlgData final : public AlgorithmParameters
@@ -1419,7 +1419,7 @@ GDALCreateSlopeData(double *adfGeoTransform, double xscale, double yscale,
 }
 
 /************************************************************************/
-/*                         GDALAspect()                                 */
+/*                             GDALAspect()                             */
 /************************************************************************/
 
 struct GDALAspectAlgData final : public AlgorithmParameters
@@ -1521,7 +1521,7 @@ GDALCreateAspectData(bool bAngleAsAzimuth)
 }
 
 /************************************************************************/
-/*                      GDALColorRelief()                               */
+/*                          GDALColorRelief()                           */
 /************************************************************************/
 
 static int GDALColorReliefSortColors(const GDALColorAssociation &pA,
@@ -2372,7 +2372,7 @@ static bool GDALGenerateVRTColorRelief(const char *pszDstFilename,
 }
 
 /************************************************************************/
-/*                         GDALTRIAlg()                                 */
+/*                             GDALTRIAlg()                             */
 /************************************************************************/
 
 // Implements Wilson et al. (2007), for bathymetric use cases
@@ -2408,7 +2408,7 @@ static float GDALTRIAlgRiley(const T *afWin, float /*fDstNoDataValue*/,
 }
 
 /************************************************************************/
-/*                         GDALTPIAlg()                                 */
+/*                             GDALTPIAlg()                             */
 /************************************************************************/
 
 template <class T>
@@ -2423,7 +2423,7 @@ static float GDALTPIAlg(const T *afWin, float /*fDstNoDataValue*/,
 }
 
 /************************************************************************/
-/*                     GDALRoughnessAlg()                               */
+/*                          GDALRoughnessAlg()                          */
 /************************************************************************/
 
 template <class T>
@@ -3066,7 +3066,7 @@ static Algorithm GetAlgorithm(const char *pszProcessing)
 }
 
 /************************************************************************/
-/*                    GDALDEMAppOptionsGetParser()                      */
+/*                     GDALDEMAppOptionsGetParser()                     */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser> GDALDEMAppOptionsGetParser(
@@ -3494,7 +3494,7 @@ static std::unique_ptr<GDALArgumentParser> GDALDEMAppOptionsGetParser(
 }
 
 /************************************************************************/
-/*                  GDALDEMAppGetParserUsage()                 */
+/*                      GDALDEMAppGetParserUsage()                      */
 /************************************************************************/
 
 std::string GDALDEMAppGetParserUsage(const std::string &osProcessingMode)
@@ -3530,7 +3530,7 @@ std::string GDALDEMAppGetParserUsage(const std::string &osProcessingMode)
 }
 
 /************************************************************************/
-/*                            GDALDEMProcessing()                       */
+/*                         GDALDEMProcessing()                          */
 /************************************************************************/
 
 /**
@@ -4231,7 +4231,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 }
 
 /************************************************************************/
-/*                           GDALDEMProcessingOptionsNew()              */
+/*                    GDALDEMProcessingOptionsNew()                     */
 /************************************************************************/
 
 /**
@@ -4413,7 +4413,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
 }
 
 /************************************************************************/
-/*                       GDALDEMProcessingOptionsFree()                 */
+/*                    GDALDEMProcessingOptionsFree()                    */
 /************************************************************************/
 
 /**
@@ -4430,7 +4430,7 @@ void GDALDEMProcessingOptionsFree(GDALDEMProcessingOptions *psOptions)
 }
 
 /************************************************************************/
-/*                 GDALDEMProcessingOptionsSetProgress()                */
+/*                GDALDEMProcessingOptionsSetProgress()                 */
 /************************************************************************/
 
 /**

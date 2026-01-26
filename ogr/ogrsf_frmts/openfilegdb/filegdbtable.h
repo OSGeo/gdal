@@ -28,7 +28,7 @@ constexpr uint64_t OFFSET_MINUS_ONE = static_cast<uint64_t>(-1);
 constexpr int MAX_CAR_COUNT_INDEXED_STR = 80;
 
 /************************************************************************/
-/*                        FileGDBTableGeometryType                      */
+/*                       FileGDBTableGeometryType                       */
 /************************************************************************/
 
 /* FGTGT = (F)ile(G)DB(T)able(G)eometry(T)ype */
@@ -43,7 +43,7 @@ typedef enum
 } FileGDBTableGeometryType;
 
 /************************************************************************/
-/*                          FileGDBFieldType                            */
+/*                           FileGDBFieldType                           */
 /************************************************************************/
 
 /* FGFT = (F)ile(G)DB(F)ield(T)ype */
@@ -70,7 +70,7 @@ typedef enum
 } FileGDBFieldType;
 
 /************************************************************************/
-/*                          FileGDBField                                */
+/*                             FileGDBField                             */
 /************************************************************************/
 
 class FileGDBTable;
@@ -177,7 +177,7 @@ class FileGDBField /* non final */
 };
 
 /************************************************************************/
-/*                         FileGDBGeomField                             */
+/*                           FileGDBGeomField                           */
 /************************************************************************/
 
 class FileGDBGeomField /* non final */ : public FileGDBField
@@ -341,7 +341,7 @@ class FileGDBGeomField /* non final */ : public FileGDBField
 };
 
 /************************************************************************/
-/*                         FileGDBRasterField                           */
+/*                          FileGDBRasterField                          */
 /************************************************************************/
 
 class FileGDBRasterField final : public FileGDBGeomField
@@ -384,7 +384,7 @@ class FileGDBRasterField final : public FileGDBGeomField
 };
 
 /************************************************************************/
-/*                           FileGDBIndex                               */
+/*                             FileGDBIndex                             */
 /************************************************************************/
 
 class FileGDBIndex
@@ -416,7 +416,7 @@ class FileGDBIndex
 };
 
 /************************************************************************/
-/*                           FileGDBTable                               */
+/*                             FileGDBTable                             */
 /************************************************************************/
 
 class FileGDBTable
@@ -760,7 +760,7 @@ class FileGDBTable
 };
 
 /************************************************************************/
-/*                           FileGDBSQLOp                               */
+/*                             FileGDBSQLOp                             */
 /************************************************************************/
 
 typedef enum
@@ -814,7 +814,7 @@ class FileGDBIterator /* non final */
 };
 
 /************************************************************************/
-/*                      FileGDBSpatialIndexIterator                     */
+/*                     FileGDBSpatialIndexIterator                      */
 /************************************************************************/
 
 class FileGDBSpatialIndexIterator /* non final */
@@ -830,7 +830,7 @@ class FileGDBSpatialIndexIterator /* non final */
 };
 
 /************************************************************************/
-/*                       FileGDBOGRGeometryConverter                    */
+/*                     FileGDBOGRGeometryConverter                      */
 /************************************************************************/
 
 class FileGDBOGRGeometryConverter /* non final */

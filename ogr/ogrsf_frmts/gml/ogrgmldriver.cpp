@@ -16,7 +16,7 @@
 #include "gmlreaderp.h"
 
 /************************************************************************/
-/*                         OGRGMLDriverIdentify()                       */
+/*                        OGRGMLDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRGMLDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -92,7 +92,7 @@ static GDALDataset *OGRGMLDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             Create()                                 */
+/*                               Create()                               */
 /************************************************************************/
 
 static GDALDataset *

@@ -30,7 +30,7 @@ CPL_C_START
 CPL_C_END
 
 /************************************************************************/
-/*                         Lon180to360()                                */
+/*                            Lon180to360()                             */
 /************************************************************************/
 
 static inline double Lon180to360(double lon)
@@ -51,7 +51,7 @@ static bool WriteByte(VSILFILE *fp, int nVal)
 }
 
 /************************************************************************/
-/*                            WriteSByte()                              */
+/*                             WriteSByte()                             */
 /************************************************************************/
 
 static bool WriteSByte(VSILFILE *fp, int nVal)
@@ -93,7 +93,7 @@ static bool WriteInt16(VSILFILE *fp, int nVal)
 }
 
 /************************************************************************/
-/*                             WriteUInt32()                            */
+/*                            WriteUInt32()                             */
 /************************************************************************/
 
 static bool WriteUInt32(VSILFILE *fp, GUInt32 nVal)
@@ -129,7 +129,7 @@ static bool WriteFloat32(VSILFILE *fp, float fVal)
 }
 
 /************************************************************************/
-/*                         PatchSectionSize()                           */
+/*                          PatchSectionSize()                          */
 /************************************************************************/
 
 static void PatchSectionSize(VSILFILE *fp, vsi_l_offset nStartSection)
@@ -207,7 +207,7 @@ GRIB2Section3Writer::GRIB2Section3Writer(VSILFILE *fpIn, GDALDataset *poSrcDSIn)
 }
 
 /************************************************************************/
-/*                     WriteEllipsoidAndRasterSize()                    */
+/*                    WriteEllipsoidAndRasterSize()                     */
 /************************************************************************/
 
 bool GRIB2Section3Writer::WriteEllipsoidAndRasterSize()
@@ -417,7 +417,7 @@ bool GRIB2Section3Writer::TransformToGeo(double &dfX, double &dfY)
 }
 
 /************************************************************************/
-/*                           WriteMercator1SP()                         */
+/*                          WriteMercator1SP()                          */
 /************************************************************************/
 
 bool GRIB2Section3Writer::WriteMercator1SP()
@@ -450,7 +450,7 @@ bool GRIB2Section3Writer::WriteMercator1SP()
 }
 
 /************************************************************************/
-/*                           WriteMercator2SP()                         */
+/*                          WriteMercator2SP()                          */
 /************************************************************************/
 
 bool GRIB2Section3Writer::WriteMercator2SP(OGRSpatialReference *poSRS)
@@ -528,7 +528,7 @@ bool GRIB2Section3Writer::WriteTransverseMercator()
 }
 
 /************************************************************************/
-/*                       WritePolarStereographic()                       */
+/*                      WritePolarStereographic()                       */
 /************************************************************************/
 
 bool GRIB2Section3Writer::WritePolarStereographic()
@@ -579,7 +579,7 @@ bool GRIB2Section3Writer::WriteLCC1SP()
 }
 
 /************************************************************************/
-/*                            WriteLCC2SPOrAEA()                        */
+/*                          WriteLCC2SPOrAEA()                          */
 /************************************************************************/
 
 bool GRIB2Section3Writer::WriteLCC2SPOrAEA(OGRSpatialReference *poSRS)
@@ -623,7 +623,7 @@ bool GRIB2Section3Writer::WriteLCC2SPOrAEA(OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                              WriteLAEA()                             */
+/*                             WriteLAEA()                              */
 /************************************************************************/
 
 bool GRIB2Section3Writer::WriteLAEA()
@@ -658,7 +658,7 @@ bool GRIB2Section3Writer::WriteLAEA()
 }
 
 /************************************************************************/
-/*                                Write()                               */
+/*                               Write()                                */
 /************************************************************************/
 
 bool GRIB2Section3Writer::Write()
@@ -809,7 +809,7 @@ bool GRIB2Section3Writer::Write()
 }
 
 /************************************************************************/
-/*                         GetBandOption()                              */
+/*                           GetBandOption()                            */
 /************************************************************************/
 
 static const char *GetBandOption(CSLConstList papszOptions,
@@ -877,7 +877,7 @@ class GRIB2Section567Writer
 };
 
 /************************************************************************/
-/*                      GRIB2Section567Writer()                         */
+/*                       GRIB2Section567Writer()                        */
 /************************************************************************/
 
 GRIB2Section567Writer::GRIB2Section567Writer(VSILFILE *fp, GDALDataset *poSrcDS,
@@ -896,7 +896,7 @@ GRIB2Section567Writer::GRIB2Section567Writer(VSILFILE *fp, GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                          GetFloatData()                              */
+/*                            GetFloatData()                            */
 /************************************************************************/
 
 float *GRIB2Section567Writer::GetFloatData()
@@ -1010,7 +1010,7 @@ float *GRIB2Section567Writer::GetFloatData()
 }
 
 /************************************************************************/
-/*                        WriteSimplePacking()                          */
+/*                         WriteSimplePacking()                         */
 /************************************************************************/
 
 // See http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_temp5-0.shtml
@@ -1136,7 +1136,7 @@ bool GRIB2Section567Writer::WriteSimplePacking()
 }
 
 /************************************************************************/
-/*                      WriteComplexPackingNoData()                     */
+/*                     WriteComplexPackingNoData()                      */
 /************************************************************************/
 
 void GRIB2Section567Writer::WriteComplexPackingNoData()
@@ -1163,7 +1163,7 @@ void GRIB2Section567Writer::WriteComplexPackingNoData()
 }
 
 /************************************************************************/
-/*                       WriteComplexPacking()                          */
+/*                        WriteComplexPacking()                         */
 /************************************************************************/
 
 // See http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_temp5-2.shtml
@@ -1471,7 +1471,7 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                        WrapArrayAsMemDataset()                       */
+/*                       WrapArrayAsMemDataset()                        */
 /************************************************************************/
 
 static GDALDataset *WrapArrayAsMemDataset(int nXSize, int nYSize,
@@ -1492,7 +1492,7 @@ static GDALDataset *WrapArrayAsMemDataset(int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                      GetRoundedToUpperPowerOfTwo()                   */
+/*                    GetRoundedToUpperPowerOfTwo()                     */
 /************************************************************************/
 
 static int GetRoundedToUpperPowerOfTwo(int nBits)
@@ -1507,7 +1507,7 @@ static int GetRoundedToUpperPowerOfTwo(int nBits)
 }
 
 /************************************************************************/
-/*                             GetScaledData()                          */
+/*                           GetScaledData()                            */
 /************************************************************************/
 
 static GUInt16 *GetScaledData(GUInt32 nDataPoints, const float *pafData,
@@ -1689,7 +1689,7 @@ bool GRIB2Section567Writer::WritePNG()
 }
 
 /************************************************************************/
-/*                             WriteJPEG2000()                          */
+/*                           WriteJPEG2000()                            */
 /************************************************************************/
 
 // See http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_temp5-40.shtml
@@ -2103,7 +2103,7 @@ bool GRIB2Section567Writer::Write(float fValOffset, CSLConstList papszOptions,
 }
 
 /************************************************************************/
-/*                           GetIDSOption()                             */
+/*                            GetIDSOption()                            */
 /************************************************************************/
 
 static const char *GetIDSOption(CSLConstList papszOptions, GDALDataset *poSrcDS,
@@ -2186,7 +2186,7 @@ static void WriteSection1(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
 }
 
 /************************************************************************/
-/*                        WriteAssembledPDS()                           */
+/*                         WriteAssembledPDS()                          */
 /************************************************************************/
 
 static void WriteAssembledPDS(VSILFILE *fp, const gtemplate *mappds,
@@ -2279,7 +2279,7 @@ static void WriteAssembledPDS(VSILFILE *fp, const gtemplate *mappds,
 }
 
 /************************************************************************/
-/*                         ComputeValOffset()                           */
+/*                          ComputeValOffset()                          */
 /************************************************************************/
 
 static float ComputeValOffset(int nTokens, char **papszTokens,

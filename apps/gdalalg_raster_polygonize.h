@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterPolygonizeAlgorithm                    */
+/*                    GDALRasterPolygonizeAlgorithm                     */
 /************************************************************************/
 
 class GDALRasterPolygonizeAlgorithm /* non final */
@@ -65,7 +65,7 @@ class GDALRasterPolygonizeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterPolygonizeAlgorithmStandalone              */
+/*               GDALRasterPolygonizeAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterPolygonizeAlgorithmStandalone final

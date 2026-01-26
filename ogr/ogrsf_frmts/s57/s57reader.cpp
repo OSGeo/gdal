@@ -2053,7 +2053,7 @@ void S57Reader::AssembleSoundingGeometry(DDFRecord *poFRecord,
 }
 
 /************************************************************************/
-/*                            GetIntSubfield()                          */
+/*                           GetIntSubfield()                           */
 /************************************************************************/
 
 static int GetIntSubfield(const DDFField *poField, const char *pszSubfield,

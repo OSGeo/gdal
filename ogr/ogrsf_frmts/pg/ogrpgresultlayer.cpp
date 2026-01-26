@@ -130,7 +130,7 @@ OGRPGResultLayer::OGRPGResultLayer(OGRPGDataSource *poDSIn,
 }
 
 /************************************************************************/
-/*                          ~OGRPGResultLayer()                          */
+/*                         ~OGRPGResultLayer()                          */
 /************************************************************************/
 
 OGRPGResultLayer::~OGRPGResultLayer()

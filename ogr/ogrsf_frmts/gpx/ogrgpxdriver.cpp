@@ -23,7 +23,7 @@
 #include "ogr_core.h"
 
 /************************************************************************/
-/*                               Identify()                             */
+/*                              Identify()                              */
 /************************************************************************/
 
 static int OGRGPXDriverIdentify(GDALOpenInfo *poOpenInfo)

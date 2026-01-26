@@ -86,7 +86,7 @@ class DTEDRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           DTEDRasterBand()                            */
+/*                           DTEDRasterBand()                           */
 /************************************************************************/
 
 DTEDRasterBand::DTEDRasterBand(DTEDDataset *poDSIn, int nBandIn)
@@ -542,7 +542,7 @@ CPLErr DTEDDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *DTEDDataset::GetSpatialRef() const

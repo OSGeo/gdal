@@ -23,9 +23,9 @@ bool MM_IsDoubleInfinite(double x)
     return std::isinf(x);
 }
 
-/****************************************************************************/
-/*                    OGRMMDriverIdentify()                                 */
-/****************************************************************************/
+/************************************************************************/
+/*                        OGRMMDriverIdentify()                         */
+/************************************************************************/
 
 static int OGRMiraMonDriverIdentify(GDALOpenInfo *poOpenInfo)
 
@@ -65,9 +65,9 @@ static int OGRMiraMonDriverIdentify(GDALOpenInfo *poOpenInfo)
     return FALSE;
 }
 
-/****************************************************************************/
-/*                           OGRMiraMonDriverOpen()                         */
-/****************************************************************************/
+/************************************************************************/
+/*                        OGRMiraMonDriverOpen()                        */
+/************************************************************************/
 
 static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
 
@@ -91,9 +91,9 @@ static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
     return poDS.release();
 }
 
-/****************************************************************************/
-/*                         OGRMiraMonDriverCreate()                              */
-/****************************************************************************/
+/************************************************************************/
+/*                       OGRMiraMonDriverCreate()                       */
+/************************************************************************/
 
 static GDALDataset *OGRMiraMonDriverCreate(const char *pszName,
                                            CPL_UNUSED int /*nBands*/,
@@ -112,9 +112,9 @@ static GDALDataset *OGRMiraMonDriverCreate(const char *pszName,
     return poDS.release();
 }
 
-/****************************************************************************/
-/*                           RegisterOGRMM()                                */
-/****************************************************************************/
+/************************************************************************/
+/*                           RegisterOGRMM()                            */
+/************************************************************************/
 
 void RegisterOGRMiraMon()
 

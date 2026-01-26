@@ -99,7 +99,7 @@ class DIMAPDataset final : public GDALPamDataset
 /************************************************************************/
 
 /************************************************************************/
-/*                             DIMAPDataset()                            */
+/*                            DIMAPDataset()                            */
 /************************************************************************/
 
 DIMAPDataset::DIMAPDataset()
@@ -109,7 +109,7 @@ DIMAPDataset::DIMAPDataset()
 }
 
 /************************************************************************/
-/*                            ~DIMAPDataset()                           */
+/*                           ~DIMAPDataset()                            */
 /************************************************************************/
 
 DIMAPDataset::~DIMAPDataset()
@@ -135,7 +135,7 @@ DIMAPDataset::~DIMAPDataset()
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int DIMAPDataset::CloseDependentDatasets()
@@ -153,7 +153,7 @@ int DIMAPDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **DIMAPDataset::GetMetadataDomainList()
@@ -187,7 +187,7 @@ CSLConstList DIMAPDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *DIMAPDataset::GetSpatialRef() const
@@ -362,7 +362,7 @@ int DIMAPRasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                             GetOverview()                            */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *DIMAPRasterBand::GetOverview(int iOvr)
@@ -375,7 +375,7 @@ GDALRasterBand *DIMAPRasterBand::GetOverview(int iOvr)
 }
 
 /************************************************************************/
-/*                         ComputeRasterMinMax()                        */
+/*                        ComputeRasterMinMax()                         */
 /************************************************************************/
 
 CPLErr DIMAPRasterBand::ComputeRasterMinMax(int bApproxOK, double adfMinMax[2])
@@ -388,7 +388,7 @@ CPLErr DIMAPRasterBand::ComputeRasterMinMax(int bApproxOK, double adfMinMax[2])
 }
 
 /************************************************************************/
-/*                          ComputeStatistics()                         */
+/*                         ComputeStatistics()                          */
 /************************************************************************/
 
 CPLErr DIMAPRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
@@ -802,7 +802,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*               ReadImageInformation() DIMAP Version 1                 */
+/*                ReadImageInformation() DIMAP Version 1                */
 /************************************************************************/
 
 int DIMAPDataset::ReadImageInformation()
@@ -1058,7 +1058,7 @@ int DIMAPDataset::ReadImageInformation()
 }
 
 /************************************************************************/
-/*               ReadImageInformation() DIMAP Version 2                 */
+/*                ReadImageInformation() DIMAP Version 2                */
 /************************************************************************/
 
 int DIMAPDataset::ReadImageInformation2()
@@ -1764,7 +1764,7 @@ int DIMAPDataset::ReadImageInformation2()
 }
 
 /************************************************************************/
-/*                          SetMetadataFromXML()                        */
+/*                         SetMetadataFromXML()                         */
 /************************************************************************/
 
 void DIMAPDataset::SetMetadataFromXML(
@@ -1882,7 +1882,7 @@ const OGRSpatialReference *DIMAPDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *DIMAPDataset::GetGCPs()

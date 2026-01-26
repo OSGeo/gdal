@@ -29,7 +29,7 @@
 #endif
 
 /************************************************************************/
-/*       GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()   */
+/*     GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()     */
 /************************************************************************/
 
 GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()
@@ -134,7 +134,7 @@ void GDALRasterPixelInfoAlgorithm::PrintLine(const std::string &str)
 }
 
 /************************************************************************/
-/*                GDALRasterPixelInfoAlgorithm::RunImpl()               */
+/*               GDALRasterPixelInfoAlgorithm::RunImpl()                */
 /************************************************************************/
 
 bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)

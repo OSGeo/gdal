@@ -57,7 +57,7 @@ class OGRAVCLayer CPL_NON_FINAL : public OGRLayer
 };
 
 /************************************************************************/
-/*                         OGRAVCDataSource                             */
+/*                           OGRAVCDataSource                           */
 /************************************************************************/
 
 class OGRAVCDataSource CPL_NON_FINAL : public GDALDataset

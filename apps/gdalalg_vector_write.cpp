@@ -23,7 +23,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*          GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()        */
+/*         GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()         */
 /************************************************************************/
 
 GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()
@@ -35,7 +35,7 @@ GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()
 }
 
 /************************************************************************/
-/*                  GDALVectorWriteAlgorithm::RunStep()                 */
+/*                 GDALVectorWriteAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALVectorWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

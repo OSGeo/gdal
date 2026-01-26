@@ -232,7 +232,7 @@ static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
 }
 
 /************************************************************************/
-/*                           Delete()                                   */
+/*                               Delete()                               */
 /************************************************************************/
 
 static CPLErr OGRShapeDriverDelete(const char *pszDataSource)

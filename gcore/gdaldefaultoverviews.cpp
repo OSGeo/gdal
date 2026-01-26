@@ -518,7 +518,7 @@ static int GetFloorPowerOfTwo(int n)
 }
 
 /************************************************************************/
-/*                         GDALComputeOvFactor()                        */
+/*                        GDALComputeOvFactor()                         */
 /************************************************************************/
 
 int GDALComputeOvFactor(int nOvrXSize, int nRasterXSize, int nOvrYSize,
@@ -763,7 +763,7 @@ static const char *GetOptionValue(CSLConstList papszOptions,
 }
 
 /************************************************************************/
-/*                           AddOverviews()                             */
+/*                            AddOverviews()                            */
 /************************************************************************/
 
 CPLErr GDALDefaultOverviews::AddOverviews(
@@ -1336,7 +1336,7 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
 }
 
 /************************************************************************/
-/*                          BuildOverviewsMask()                        */
+/*                         BuildOverviewsMask()                         */
 /************************************************************************/
 
 CPLErr GDALDefaultOverviews::BuildOverviewsMask(const char *pszResampling,
@@ -1654,7 +1654,7 @@ int GDALDefaultOverviews::HaveMaskFile(char **papszSiblingFiles,
 }
 
 /************************************************************************/
-/*                    GDALGetNormalizedOvrResampling()                  */
+/*                   GDALGetNormalizedOvrResampling()                   */
 /************************************************************************/
 
 std::string GDALGetNormalizedOvrResampling(const char *pszResampling)

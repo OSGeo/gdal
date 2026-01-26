@@ -127,7 +127,7 @@ GSBGRasterBand::GSBGRasterBand(GSBGDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                           ~GSBGRasterBand()                          */
+/*                          ~GSBGRasterBand()                           */
 /************************************************************************/
 
 GSBGRasterBand::~GSBGRasterBand()
@@ -140,7 +140,7 @@ GSBGRasterBand::~GSBGRasterBand()
 }
 
 /************************************************************************/
-/*                          ScanForMinMaxZ()                            */
+/*                           ScanForMinMaxZ()                           */
 /************************************************************************/
 
 CPLErr GSBGRasterBand::ScanForMinMaxZ()
@@ -680,7 +680,7 @@ CPLErr GSBGDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                             WriteHeader()                            */
+/*                            WriteHeader()                             */
 /************************************************************************/
 
 CPLErr GSBGDataset::WriteHeader(VSILFILE *fp, int nXSize, int nYSize,
@@ -1028,7 +1028,7 @@ GDALDataset *GSBGDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GDALRegister_GSBG()                         */
+/*                         GDALRegister_GSBG()                          */
 /************************************************************************/
 
 void GDALRegister_GSBG()

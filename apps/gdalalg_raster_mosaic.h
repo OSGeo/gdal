@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterMosaicAlgorithm                        */
+/*                      GDALRasterMosaicAlgorithm                       */
 /************************************************************************/
 
 class GDALRasterMosaicAlgorithm /* non final */
@@ -46,7 +46,7 @@ class GDALRasterMosaicAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                   GDALRasterMosaicAlgorithmStandalone                */
+/*                 GDALRasterMosaicAlgorithmStandalone                  */
 /************************************************************************/
 
 class GDALRasterMosaicAlgorithmStandalone final

@@ -53,7 +53,7 @@ class DXFBlockDefinition
 };
 
 /************************************************************************/
-/*                         OGRDXFFeatureQueue                           */
+/*                          OGRDXFFeatureQueue                          */
 /************************************************************************/
 
 class OGRDXFFeatureQueue
@@ -962,7 +962,7 @@ class OGRDXFBlocksWriterLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRDXFWriterDS                             */
+/*                            OGRDXFWriterDS                            */
 /************************************************************************/
 
 class OGRDXFWriterDS final : public GDALDataset

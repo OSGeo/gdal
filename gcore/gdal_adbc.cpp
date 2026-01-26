@@ -18,7 +18,7 @@
 static GDALAdbcLoadDriverFunc GDALAdbcLoadDriver = nullptr;
 
 /************************************************************************/
-/*                      GDALSetAdbcLoadDriverOverride()                 */
+/*                   GDALSetAdbcLoadDriverOverride()                    */
 /************************************************************************/
 
 /** When set, it is used by the OGR ADBC driver to populate AdbcDriver
@@ -37,7 +37,7 @@ void GDALSetAdbcLoadDriverOverride(GDALAdbcLoadDriverFunc init_func)
 }
 
 /************************************************************************/
-/*                    GDALGetAdbcLoadDriverOverride()                   */
+/*                   GDALGetAdbcLoadDriverOverride()                    */
 /************************************************************************/
 
 /** Gets the ADBC driver load function. This will be NULL if an explicit

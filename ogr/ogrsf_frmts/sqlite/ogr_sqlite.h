@@ -57,7 +57,7 @@
 #include "ogrsqlitebase.h"
 
 /************************************************************************/
-/*      SpatiaLite's own Geometry type IDs.                             */
+/*                 SpatiaLite's own Geometry type IDs.                  */
 /************************************************************************/
 
 enum OGRSpatialiteGeomType
@@ -453,7 +453,7 @@ class OGRSQLiteTableLayer final : public OGRSQLiteLayer
 };
 
 /************************************************************************/
-/*                         OGRSQLiteViewLayer                           */
+/*                          OGRSQLiteViewLayer                          */
 /************************************************************************/
 
 class OGRSQLiteViewLayer final : public OGRSQLiteLayer
@@ -874,7 +874,7 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
 #ifdef HAVE_RASTERLITE2
 /************************************************************************/
-/*                           RL2RasterBand                              */
+/*                            RL2RasterBand                             */
 /************************************************************************/
 
 class RL2RasterBand final : public GDALPamRasterBand

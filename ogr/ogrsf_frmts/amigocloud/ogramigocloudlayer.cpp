@@ -17,7 +17,7 @@
 OGRAmigoCloudGeomFieldDefn::~OGRAmigoCloudGeomFieldDefn() = default;
 
 /************************************************************************/
-/*                         OGRAmigoCloudLayer()                            */
+/*                         OGRAmigoCloudLayer()                         */
 /************************************************************************/
 
 OGRAmigoCloudLayer::OGRAmigoCloudLayer(OGRAmigoCloudDataSource *poDSIn)
@@ -28,7 +28,7 @@ OGRAmigoCloudLayer::OGRAmigoCloudLayer(OGRAmigoCloudDataSource *poDSIn)
 }
 
 /************************************************************************/
-/*                         ~OGRAmigoCloudLayer()                           */
+/*                        ~OGRAmigoCloudLayer()                         */
 /************************************************************************/
 
 OGRAmigoCloudLayer::~OGRAmigoCloudLayer()
@@ -58,7 +58,7 @@ void OGRAmigoCloudLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           GetLayerDefn()                             */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGRAmigoCloudLayer::GetLayerDefn() const
@@ -139,7 +139,7 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object *poRowObj)
 }
 
 /************************************************************************/
-/*                        FetchNewFeatures()                            */
+/*                          FetchNewFeatures()                          */
 /************************************************************************/
 
 json_object *OGRAmigoCloudLayer::FetchNewFeatures(GIntBig iNextIn)
@@ -157,7 +157,7 @@ json_object *OGRAmigoCloudLayer::FetchNewFeatures(GIntBig iNextIn)
 }
 
 /************************************************************************/
-/*                       GetNextRawFeature()                            */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRAmigoCloudLayer::GetNextRawFeature()
@@ -266,7 +266,7 @@ int OGRAmigoCloudLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                          EstablishLayerDefn()                        */
+/*                         EstablishLayerDefn()                         */
 /************************************************************************/
 
 void OGRAmigoCloudLayer::EstablishLayerDefn(const char *pszLayerName,

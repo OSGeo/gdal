@@ -15,7 +15,7 @@
 #include "io_selafin.h"
 
 /************************************************************************/
-/*                     OGRSelafinDriverIdentify()                       */
+/*                      OGRSelafinDriverIdentify()                      */
 /************************************************************************/
 
 static int OGRSelafinDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -50,7 +50,7 @@ static int OGRSelafinDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      OGRSelafinDriverOpen()                          */
+/*                        OGRSelafinDriverOpen()                        */
 /************************************************************************/
 
 static GDALDataset *OGRSelafinDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -190,7 +190,7 @@ OGRSelafinDriverCreate(const char *pszName, CPL_UNUSED int nXSize,
 }
 
 /************************************************************************/
-/*                      OGRSelafinDriverDelete()                        */
+/*                       OGRSelafinDriverDelete()                       */
 /************************************************************************/
 static CPLErr OGRSelafinDriverDelete(const char *pszFilename)
 {
@@ -201,7 +201,7 @@ static CPLErr OGRSelafinDriverDelete(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           RegisterOGRSelafin()                       */
+/*                         RegisterOGRSelafin()                         */
 /************************************************************************/
 
 void RegisterOGRSelafin()

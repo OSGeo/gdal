@@ -14,7 +14,7 @@
 #include "cpl_conv.h"
 
 /************************************************************************/
-/*                         OGRPGDumpDriverCreate()                      */
+/*                       OGRPGDumpDriverCreate()                        */
 /************************************************************************/
 
 static GDALDataset *
@@ -36,7 +36,7 @@ OGRPGDumpDriverCreate(const char *pszName, CPL_UNUSED int nXSize,
 }
 
 /************************************************************************/
-/*                        RegisterOGRPGDump()                           */
+/*                         RegisterOGRPGDump()                          */
 /************************************************************************/
 
 void RegisterOGRPGDump()

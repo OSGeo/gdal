@@ -171,7 +171,7 @@ int GTIFKeyGet(GTIF *gtif, geokey_t thekey, void *val, int nIndex, int count)
 }
 
 /************************************************************************/
-/*                       GTIFKeyGetInternal()                           */
+/*                         GTIFKeyGetInternal()                         */
 /************************************************************************/
 
 static int GTIFKeyGetInternal( GTIF *psGTIF, geokey_t key,
