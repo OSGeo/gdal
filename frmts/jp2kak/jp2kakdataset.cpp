@@ -2030,7 +2030,7 @@ static bool JP2KAKCreateCopy_WriteTile(
 
 static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 

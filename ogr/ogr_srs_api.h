@@ -615,7 +615,7 @@ OGRErr CPL_DLL OSRSetStatePlaneWithUnits(OGRSpatialReferenceH hSRS, int nZone,
 OGRErr CPL_DLL OSRAutoIdentifyEPSG(OGRSpatialReferenceH hSRS);
 
 OGRSpatialReferenceH CPL_DLL *OSRFindMatches(OGRSpatialReferenceH hSRS,
-                                             char **papszOptions,
+                                             CSLConstList papszOptions,
                                              int *pnEntries,
                                              int **ppanMatchConfidence);
 void CPL_DLL OSRFreeSRSArray(OGRSpatialReferenceH *pahSRS);

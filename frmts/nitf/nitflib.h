@@ -78,12 +78,12 @@ bool CPL_DLL NITFClose(NITFFile *);
 
 int CPL_DLL NITFCreate(const char *pszFilename, int nPixels, int nLines,
                        int nBands, int nBitsPerSample, const char *pszPVType,
-                       char **papszOptions);
+                       CSLConstList papszOptions);
 
 int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
-                 int nBitsPerSample, const char *pszPVType, char **papszOptions,
-                 int *pnIndex, int *pnImageCount, vsi_l_offset *pnImageOffset,
-                 vsi_l_offset *pnICOffset);
+                 int nBitsPerSample, const char *pszPVType,
+                 CSLConstList papszOptions, int *pnIndex, int *pnImageCount,
+                 vsi_l_offset *pnImageOffset, vsi_l_offset *pnICOffset);
 
 const char CPL_DLL *NITFFindTRE(const char *pszTREData, int nTREBytes,
                                 const char *pszTag, int *pnFoundTRESize);

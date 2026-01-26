@@ -553,7 +553,8 @@ OGRHanaDataSource::~OGRHanaDataSource()
 /*                                 Open()                               */
 /************************************************************************/
 
-int OGRHanaDataSource::Open(const char *newName, char **openOptions, int update)
+int OGRHanaDataSource::Open(const char *newName, CSLConstList openOptions,
+                            int update)
 {
     CPLAssert(layers_.size() == 0);
 

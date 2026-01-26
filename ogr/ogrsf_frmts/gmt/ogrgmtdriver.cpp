@@ -61,7 +61,8 @@ static GDALDataset *OGRGMTDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRGMTDriverCreate(const char *, CPL_UNUSED int nBands,
                                        CPL_UNUSED int nXSize,
                                        CPL_UNUSED int nYSize,
-                                       CPL_UNUSED GDALDataType eDT, char **)
+                                       CPL_UNUSED GDALDataType eDT,
+                                       CSLConstList)
 {
     return new OGRGmtDataSource();
 }

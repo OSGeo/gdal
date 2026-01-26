@@ -1957,7 +1957,8 @@ GDALDataset *PCIDSK2Dataset::LLOpen(const char *pszFilename,
 
 GDALDataset *PCIDSK2Dataset::Create(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn,
-                                    GDALDataType eType, char **papszParamList)
+                                    GDALDataType eType,
+                                    CSLConstList papszParamList)
 
 {
     /* -------------------------------------------------------------------- */

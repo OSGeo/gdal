@@ -253,7 +253,7 @@ int OGRKMLDataSource::Open(const char *pszNewName, int bTestOpen)
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRKMLDataSource::Create(const char *pszName, char **papszOptions)
+int OGRKMLDataSource::Create(const char *pszName, CSLConstList papszOptions)
 {
     CPLAssert(nullptr != pszName);
 

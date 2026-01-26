@@ -1215,7 +1215,7 @@ int JPIPKAKDataset::TestUseBlockIO(CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
 GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
     int xOff, int yOff, int xSize, int ySize, void *pBuf, int bufXSize,
     int bufYSize, GDALDataType bufType, int nBandCount, int *pBandMap,
-    int nPixelSpace, int nLineSpace, int nBandSpace, char **papszOptions)
+    int nPixelSpace, int nLineSpace, int nBandSpace, CSLConstList papszOptions)
 {
     CPLDebug("JPIP", "BeginAsyncReadeR(%d,%d,%d,%d -> %dx%d)", xOff, yOff,
              xSize, ySize, bufXSize, bufYSize);

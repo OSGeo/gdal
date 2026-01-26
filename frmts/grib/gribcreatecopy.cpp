@@ -812,9 +812,9 @@ bool GRIB2Section3Writer::Write()
 /*                         GetBandOption()                              */
 /************************************************************************/
 
-static const char *GetBandOption(char **papszOptions, GDALDataset *poSrcDS,
-                                 int nBand, const char *pszKey,
-                                 const char *pszDefault)
+static const char *GetBandOption(CSLConstList papszOptions,
+                                 GDALDataset *poSrcDS, int nBand,
+                                 const char *pszKey, const char *pszDefault)
 {
     const char *pszVal = CSLFetchNameValue(
         papszOptions, CPLSPrintf("BAND_%d_%s", nBand, pszKey));
@@ -865,13 +865,13 @@ class GRIB2Section567Writer
     bool WriteComplexPacking(int nSpatialDifferencingOrder);
     bool WriteIEEE(GDALProgressFunc pfnProgress, void *pProgressData);
     bool WritePNG();
-    bool WriteJPEG2000(char **papszOptions);
+    bool WriteJPEG2000(CSLConstList papszOptions);
 
   public:
     GRIB2Section567Writer(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
                           int nSplitAndSwap);
 
-    bool Write(float fValOffset, char **papszOptions,
+    bool Write(float fValOffset, CSLConstList papszOptions,
                GDALProgressFunc pfnProgress, void *pProgressData);
     void WriteComplexPackingNoData();
 };
@@ -1693,7 +1693,7 @@ bool GRIB2Section567Writer::WritePNG()
 /************************************************************************/
 
 // See http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_temp5-40.shtml
-bool GRIB2Section567Writer::WriteJPEG2000(char **papszOptions)
+bool GRIB2Section567Writer::WriteJPEG2000(CSLConstList papszOptions)
 {
     float *pafData = GetFloatData();
     if (pafData == nullptr)
@@ -1882,7 +1882,7 @@ bool GRIB2Section567Writer::WriteJPEG2000(char **papszOptions)
 /*                               Write()                                */
 /************************************************************************/
 
-bool GRIB2Section567Writer::Write(float fValOffset, char **papszOptions,
+bool GRIB2Section567Writer::Write(float fValOffset, CSLConstList papszOptions,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData)
 {
@@ -2106,7 +2106,7 @@ bool GRIB2Section567Writer::Write(float fValOffset, char **papszOptions,
 /*                           GetIDSOption()                             */
 /************************************************************************/
 
-static const char *GetIDSOption(char **papszOptions, GDALDataset *poSrcDS,
+static const char *GetIDSOption(CSLConstList papszOptions, GDALDataset *poSrcDS,
                                 int nBand, const char *pszKey,
                                 const char *pszDefault)
 {
@@ -2136,7 +2136,7 @@ static const char *GetIDSOption(char **papszOptions, GDALDataset *poSrcDS,
 /************************************************************************/
 
 static void WriteSection1(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
-                          char **papszOptions)
+                          CSLConstList papszOptions)
 {
     // Section 1: Identification Section
     WriteUInt32(fp, 21);  // section size
@@ -2318,7 +2318,7 @@ static float ComputeValOffset(int nTokens, char **papszTokens,
 /************************************************************************/
 
 static bool WriteSection4(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
-                          char **papszOptions, float &fValOffset)
+                          CSLConstList papszOptions, float &fValOffset)
 {
     // Section 4: Product Definition Section
     vsi_l_offset nStartSection4 = VSIFTellL(fp);
@@ -2562,7 +2562,7 @@ static bool WriteSection4(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
 
 GDALDataset *GRIBDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /* bStrict */,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 

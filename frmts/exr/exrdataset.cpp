@@ -77,10 +77,10 @@ class GDALEXRDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -843,7 +843,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                          getPixelType()                              */
 /************************************************************************/
 
-static PixelType getPixelType(GDALDataType eSrcDT, char **papszOptions)
+static PixelType getPixelType(GDALDataType eSrcDT, CSLConstList papszOptions)
 {
     PixelType pixelType =
         (eSrcDT == GDT_UInt8) ? HALF
@@ -939,7 +939,7 @@ static void FillHeaderFromOptions(Header &header, CSLConstList papszOptions)
 
 GDALDataset *GDALEXRDataset::CreateCopy(const char *pszFilename,
                                         GDALDataset *poSrcDS, int,
-                                        char **papszOptions,
+                                        CSLConstList papszOptions,
                                         GDALProgressFunc pfnProgress,
                                         void *pProgressData)
 {
@@ -1919,7 +1919,8 @@ CPLErr GDALEXRWritableRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
 GDALDataset *GDALEXRDataset::Create(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn,
-                                    GDALDataType eType, char **papszOptions)
+                                    GDALDataType eType,
+                                    CSLConstList papszOptions)
 {
     if (nBandsIn == 0)
         return nullptr;

@@ -101,9 +101,9 @@ OGRGeometryH
     CPL_DLL OGR_G_ForceToMultiPoint(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH
     CPL_DLL OGR_G_ForceToMultiLineString(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
-OGRGeometryH CPL_DLL OGR_G_ForceTo(OGRGeometryH hGeom,
-                                   OGRwkbGeometryType eTargetType,
-                                   char **papszOptions) CPL_WARN_UNUSED_RESULT;
+OGRGeometryH CPL_DLL
+OGR_G_ForceTo(OGRGeometryH hGeom, OGRwkbGeometryType eTargetType,
+              CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_RemoveLowerDimensionSubGeoms(
     const OGRGeometryH hGeom) CPL_WARN_UNUSED_RESULT;
 
@@ -148,8 +148,8 @@ void CPL_DLL OGR_G_CloseRings(OGRGeometryH);
 
 OGRGeometryH CPL_DLL OGR_G_CreateFromGML(const char *) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL *OGR_G_ExportToGML(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
-char CPL_DLL *OGR_G_ExportToGMLEx(OGRGeometryH,
-                                  char **papszOptions) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL *OGR_G_ExportToGMLEx(OGRGeometryH, CSLConstList papszOptions)
+    CPL_WARN_UNUSED_RESULT;
 
 OGRGeometryH CPL_DLL OGR_G_CreateFromGMLTree(const CPLXMLNode *)
     CPL_WARN_UNUSED_RESULT;
@@ -161,8 +161,8 @@ char CPL_DLL *OGR_G_ExportToKML(OGRGeometryH, const char *pszAltitudeMode)
     CPL_WARN_UNUSED_RESULT;
 
 char CPL_DLL *OGR_G_ExportToJson(OGRGeometryH) CPL_WARN_UNUSED_RESULT;
-char CPL_DLL *OGR_G_ExportToJsonEx(OGRGeometryH,
-                                   char **papszOptions) CPL_WARN_UNUSED_RESULT;
+char CPL_DLL *OGR_G_ExportToJsonEx(OGRGeometryH, CSLConstList papszOptions)
+    CPL_WARN_UNUSED_RESULT;
 /** Create a OGR geometry from a GeoJSON geometry object */
 OGRGeometryH CPL_DLL OGR_G_CreateGeometryFromJson(const char *)
     CPL_WARN_UNUSED_RESULT;
@@ -326,9 +326,9 @@ OGRErr CPL_DLL OGR_G_RemoveGeometry(OGRGeometryH, int, int);
 int CPL_DLL OGR_G_HasCurveGeometry(OGRGeometryH, int bLookForNonLinear);
 OGRGeometryH CPL_DLL
 OGR_G_GetLinearGeometry(OGRGeometryH hGeom, double dfMaxAngleStepSizeDegrees,
-                        char **papszOptions) CPL_WARN_UNUSED_RESULT;
+                        CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry(
-    OGRGeometryH hGeom, char **papszOptions) CPL_WARN_UNUSED_RESULT;
+    OGRGeometryH hGeom, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
 OGRGeometryH CPL_DLL OGRBuildPolygonFromEdges(
     OGRGeometryH hLinesAsCollection, int bBestEffort, int bAutoClose,
@@ -566,7 +566,7 @@ const char CPL_DLL *OGR_F_GetNativeMediaType(OGRFeatureH);
 void CPL_DLL OGR_F_SetNativeMediaType(OGRFeatureH, const char *);
 
 void CPL_DLL OGR_F_FillUnsetWithDefault(OGRFeatureH hFeat, int bNotNullableOnly,
-                                        char **papszOptions);
+                                        CSLConstList papszOptions);
 int CPL_DLL OGR_F_Validate(OGRFeatureH, int nValidateFlags, int bEmitError);
 
 /* OGRFieldDomain */
@@ -702,7 +702,7 @@ struct ArrowArrayStream;
 
 bool CPL_DLL OGR_L_GetArrowStream(OGRLayerH hLayer,
                                   struct ArrowArrayStream *out_stream,
-                                  char **papszOptions);
+                                  CSLConstList papszOptions);
 
 /** Data type for a Arrow C schema. Include ogr_recordbatch.h to get the
  * definition. */
@@ -710,11 +710,11 @@ struct ArrowSchema;
 
 bool CPL_DLL OGR_L_IsArrowSchemaSupported(OGRLayerH hLayer,
                                           const struct ArrowSchema *schema,
-                                          char **papszOptions,
+                                          CSLConstList papszOptions,
                                           char **ppszErrorMsg);
 bool CPL_DLL OGR_L_CreateFieldFromArrowSchema(OGRLayerH hLayer,
                                               const struct ArrowSchema *schema,
-                                              char **papszOptions);
+                                              CSLConstList papszOptions);
 
 /** Data type for a Arrow C array. Include ogr_recordbatch.h to get the
  * definition. */
@@ -723,7 +723,7 @@ struct ArrowArray;
 bool CPL_DLL OGR_L_WriteArrowBatch(OGRLayerH hLayer,
                                    const struct ArrowSchema *schema,
                                    struct ArrowArray *array,
-                                   char **papszOptions);
+                                   CSLConstList papszOptions);
 
 OGRErr CPL_DLL OGR_L_SetNextByIndex(OGRLayerH, GIntBig);
 OGRFeatureH CPL_DLL OGR_L_GetFeature(OGRLayerH, GIntBig) CPL_WARN_UNUSED_RESULT;
@@ -787,19 +787,19 @@ void CPL_DLL OGR_L_SetStyleTableDirectly(OGRLayerH, OGRStyleTableH);
 /** Set style table */
 void CPL_DLL OGR_L_SetStyleTable(OGRLayerH, OGRStyleTableH);
 OGRErr CPL_DLL OGR_L_SetIgnoredFields(OGRLayerH, const char **);
-OGRErr CPL_DLL OGR_L_Intersection(OGRLayerH, OGRLayerH, OGRLayerH, char **,
+OGRErr CPL_DLL OGR_L_Intersection(OGRLayerH, OGRLayerH, OGRLayerH, CSLConstList,
                                   GDALProgressFunc, void *);
-OGRErr CPL_DLL OGR_L_Union(OGRLayerH, OGRLayerH, OGRLayerH, char **,
+OGRErr CPL_DLL OGR_L_Union(OGRLayerH, OGRLayerH, OGRLayerH, CSLConstList,
                            GDALProgressFunc, void *);
-OGRErr CPL_DLL OGR_L_SymDifference(OGRLayerH, OGRLayerH, OGRLayerH, char **,
-                                   GDALProgressFunc, void *);
-OGRErr CPL_DLL OGR_L_Identity(OGRLayerH, OGRLayerH, OGRLayerH, char **,
+OGRErr CPL_DLL OGR_L_SymDifference(OGRLayerH, OGRLayerH, OGRLayerH,
+                                   CSLConstList, GDALProgressFunc, void *);
+OGRErr CPL_DLL OGR_L_Identity(OGRLayerH, OGRLayerH, OGRLayerH, CSLConstList,
                               GDALProgressFunc, void *);
-OGRErr CPL_DLL OGR_L_Update(OGRLayerH, OGRLayerH, OGRLayerH, char **,
+OGRErr CPL_DLL OGR_L_Update(OGRLayerH, OGRLayerH, OGRLayerH, CSLConstList,
                             GDALProgressFunc, void *);
-OGRErr CPL_DLL OGR_L_Clip(OGRLayerH, OGRLayerH, OGRLayerH, char **,
+OGRErr CPL_DLL OGR_L_Clip(OGRLayerH, OGRLayerH, OGRLayerH, CSLConstList,
                           GDALProgressFunc, void *);
-OGRErr CPL_DLL OGR_L_Erase(OGRLayerH, OGRLayerH, OGRLayerH, char **,
+OGRErr CPL_DLL OGR_L_Erase(OGRLayerH, OGRLayerH, OGRLayerH, CSLConstList,
                            GDALProgressFunc, void *);
 
 /* OGRDataSource */

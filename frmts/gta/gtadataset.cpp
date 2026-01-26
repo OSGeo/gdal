@@ -1282,7 +1282,7 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 static GDALDataset *GTACreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                  int bStrict, char **papszOptions,
+                                  int bStrict, CSLConstList papszOptions,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData)
 

@@ -528,7 +528,8 @@ json_object *PLMosaicDataset::RunRequest(const char *pszURL, int bQuiet404Error)
 /************************************************************************/
 
 static CPLString PLMosaicGetParameter(GDALOpenInfo *poOpenInfo,
-                                      char **papszOptions, const char *pszName,
+                                      CSLConstList papszOptions,
+                                      const char *pszName,
                                       const char *pszDefaultVal)
 {
     return CSLFetchNameValueDef(

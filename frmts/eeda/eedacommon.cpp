@@ -464,7 +464,7 @@ static double EEDABackoffFactor(double base)
 /*                           EEDAHTTPFetch()                            */
 /************************************************************************/
 
-CPLHTTPResult *EEDAHTTPFetch(const char *pszURL, char **papszOptions)
+CPLHTTPResult *EEDAHTTPFetch(const char *pszURL, CSLConstList papszOptions)
 {
     CPLHTTPResult *psResult;
     const int RETRY_COUNT = 4;

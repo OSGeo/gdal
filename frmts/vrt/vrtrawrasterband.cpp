@@ -408,7 +408,7 @@ void VRTRawRasterBand::ClearRawLink()
 CPLVirtualMem *VRTRawRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                    int *pnPixelSpace,
                                                    GIntBig *pnLineSpace,
-                                                   char **papszOptions)
+                                                   CSLConstList papszOptions)
 
 {
     // check the pointer to RawRasterBand

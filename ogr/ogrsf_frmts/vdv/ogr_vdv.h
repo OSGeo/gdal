@@ -220,7 +220,8 @@ class OGRVDVDataSource final : public GDALDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszName, int /*nXSize*/,
                                int /*nYSize*/, int /*nBands*/,
-                               GDALDataType /*eType*/, char **papszOptions);
+                               GDALDataType /*eType*/,
+                               CSLConstList papszOptions);
 };
 
 #endif /* ndef OGR_VDV_H_INCLUDED */

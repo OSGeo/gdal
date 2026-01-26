@@ -47,7 +47,7 @@ PDFWritableVectorDataset::~PDFWritableVectorDataset()
 GDALDataset *PDFWritableVectorDataset::Create(const char *pszName, int nXSize,
                                               int nYSize, int nBandsIn,
                                               GDALDataType eType,
-                                              char **papszOptions)
+                                              CSLConstList papszOptions)
 {
     if (nBandsIn == 0 && nXSize == 0 && nYSize == 0 && eType == GDT_Unknown)
     {

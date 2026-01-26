@@ -48,7 +48,7 @@ class S104Dataset final : public S100BaseDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -1756,7 +1756,7 @@ static void S104DatasetDriverUnload(GDALDriver *)
 /* static */
 GDALDataset *S104Dataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /* bStrict*/,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

@@ -95,10 +95,12 @@ static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
 /*                         OGRMiraMonDriverCreate()                              */
 /****************************************************************************/
 
-static GDALDataset *
-OGRMiraMonDriverCreate(const char *pszName, CPL_UNUSED int /*nBands*/,
-                       CPL_UNUSED int /*nXSize*/, CPL_UNUSED int /*nYSize*/,
-                       CPL_UNUSED GDALDataType /*eDT*/, char **papszOptions)
+static GDALDataset *OGRMiraMonDriverCreate(const char *pszName,
+                                           CPL_UNUSED int /*nBands*/,
+                                           CPL_UNUSED int /*nXSize*/,
+                                           CPL_UNUSED int /*nYSize*/,
+                                           CPL_UNUSED GDALDataType /*eDT*/,
+                                           CSLConstList papszOptions)
 {
     auto poDS = std::make_unique<OGRMiraMonDataSource>();
 

@@ -339,7 +339,7 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *TileDBDataset::Create(const char *pszFilename, int nXSize,
                                    int nYSize, int nBandsIn, GDALDataType eType,
-                                   char **papszOptions)
+                                   CSLConstList papszOptions)
 
 {
     try
@@ -364,7 +364,7 @@ GDALDataset *TileDBDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *TileDBDataset::CreateCopy(const char *pszFilename,
                                        GDALDataset *poSrcDS, int bStrict,
-                                       char **papszOptions,
+                                       CSLConstList papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 

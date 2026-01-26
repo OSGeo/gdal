@@ -146,7 +146,7 @@ class HDF4ImageDataset final : public HDF4Dataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
@@ -3775,7 +3775,8 @@ GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *HDF4ImageDataset::Create(const char *pszFilename, int nXSize,
                                       int nYSize, int nBandsIn,
-                                      GDALDataType eType, char **papszOptions)
+                                      GDALDataType eType,
+                                      CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */

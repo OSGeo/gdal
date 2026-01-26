@@ -687,7 +687,7 @@ int OGRGeoJSONDataSource::TestCapability(const char *pszCap) const
 /************************************************************************/
 
 int OGRGeoJSONDataSource::Create(const char *pszName,
-                                 char ** /* papszOptions */)
+                                 CSLConstList /* papszOptions */)
 {
     CPLAssert(nullptr == fpOut_);
 

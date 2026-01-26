@@ -921,7 +921,7 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
 #else
     /* No caching version */
     poSQLiteDS = new OGRSQLiteDataSource();
-    char **papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
+    CSLConstList papszOptions = CSLAddString(NULL, "SPATIALITE=YES");
     {
         CPLConfigOptionSetter oSetter("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO",
                                       false);

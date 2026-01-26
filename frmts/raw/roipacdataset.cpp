@@ -47,7 +47,7 @@ class ROIPACDataset final : public RawDataset
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
@@ -538,7 +538,7 @@ int ROIPACDataset::Identify(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
                                    int nYSize, int nBandsIn, GDALDataType eType,
-                                   char ** /* papszOptions */)
+                                   CSLConstList /* papszOptions */)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify input options.                                           */

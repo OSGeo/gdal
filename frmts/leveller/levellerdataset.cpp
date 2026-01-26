@@ -286,7 +286,7 @@ class LevellerDataset final : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
@@ -827,7 +827,8 @@ CPLErr LevellerDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 /************************************************************************/
 GDALDataset *LevellerDataset::Create(const char *pszFilename, int nXSize,
                                      int nYSize, int nBandsIn,
-                                     GDALDataType eType, char **papszOptions)
+                                     GDALDataType eType,
+                                     CSLConstList papszOptions)
 {
     if (nBandsIn != 1)
     {

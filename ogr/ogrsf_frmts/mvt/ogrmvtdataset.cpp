@@ -3527,7 +3527,7 @@ class OGRMVTWriterDataset final : public GDALDataset
 
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eDT,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     OGRSpatialReference *GetSRS()
     {
@@ -6130,7 +6130,8 @@ OGRMVTWriterDataset::ICreateLayer(const char *pszLayerName,
 
 GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
                                          int nYSize, int nBandsIn,
-                                         GDALDataType eDT, char **papszOptions)
+                                         GDALDataType eDT,
+                                         CSLConstList papszOptions)
 {
     if (nXSize != 0 || nYSize != 0 || nBandsIn != 0 || eDT != GDT_Unknown)
     {
@@ -6422,7 +6423,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *OGRMVTWriterDatasetCreate(const char *pszFilename, int nXSize,
                                        int nYSize, int nBandsIn,
-                                       GDALDataType eDT, char **papszOptions)
+                                       GDALDataType eDT,
+                                       CSLConstList papszOptions)
 {
     return OGRMVTWriterDataset::Create(pszFilename, nXSize, nYSize, nBandsIn,
                                        eDT, papszOptions);

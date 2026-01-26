@@ -4215,7 +4215,8 @@ bool OGRGeometryFactory::isTransformWithOptionsRegularTransform(
  */
 OGRGeometry *OGRGeometryFactory::transformWithOptions(
     const OGRGeometry *poSrcGeom, OGRCoordinateTransformation *poCT,
-    char **papszOptions, CPL_UNUSED const TransformWithOptionsCache &cache)
+    CSLConstList papszOptions,
+    CPL_UNUSED const TransformWithOptionsCache &cache)
 {
     auto poDstGeom = std::unique_ptr<OGRGeometry>(poSrcGeom->clone());
     if (poCT)
@@ -5398,7 +5399,7 @@ OGRGeometry *OGRGeometryFactory::forceTo(OGRGeometry *poGeom,
  */
 
 OGRGeometryH OGR_G_ForceTo(OGRGeometryH hGeom, OGRwkbGeometryType eTargetType,
-                           char **papszOptions)
+                           CSLConstList papszOptions)
 
 {
     return OGRGeometry::ToHandle(OGRGeometryFactory::forceTo(

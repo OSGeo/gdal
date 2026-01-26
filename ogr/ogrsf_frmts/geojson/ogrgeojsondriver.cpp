@@ -582,7 +582,7 @@ static GDALDataset *OGRGeoJSONDriverCreate(const char *pszName,
                                            int /* nBands */, int /* nXSize */,
                                            int /* nYSize */,
                                            GDALDataType /* eDT */,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     OGRGeoJSONDataSource *poDS = new OGRGeoJSONDataSource();
 

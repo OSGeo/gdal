@@ -150,7 +150,7 @@ class OGRMapMLWriterDataset final : public GDALPamDataset
 
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eDT,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -880,7 +880,7 @@ OGRMapMLWriterDataset::~OGRMapMLWriterDataset()
 GDALDataset *OGRMapMLWriterDataset::Create(const char *pszFilename, int nXSize,
                                            int nYSize, int nBandsIn,
                                            GDALDataType eDT,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     if (nXSize != 0 || nYSize != 0 || nBandsIn != 0 || eDT != GDT_Unknown)
     {

@@ -378,7 +378,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
                    const OGRSpatialReference *poSRS) override;
 
     virtual CPLErr AddBand(GDALDataType eType,
-                           char **papszOptions = nullptr) override;
+                           CSLConstList papszOptions = nullptr) override;
 
     char **GetFileList() override;
 
@@ -401,7 +401,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int nBufXSize, int nBufYSize, GDALDataType eDT,
                       int nBandCount, int *panBandList,
-                      char **papszOptions) override;
+                      CSLConstList papszOptions) override;
 
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath);
     virtual CPLErr XMLInit(const CPLXMLNode *, const char *);
@@ -453,7 +453,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
             GDALAccess eAccess = GA_ReadOnly);
     static GDALDataset *Create(const char *pszName, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static std::unique_ptr<VRTDataset>
     CreateVRTDataset(const char *pszName, int nXSize, int nYSize, int nBands,
                      GDALDataType eType, CSLConstList papszOptions);
@@ -522,7 +522,7 @@ class CPL_DLL VRTWarpedDataset final : public VRTDataset
     CPLErr XMLInit(const CPLXMLNode *, const char *) override;
 
     virtual CPLErr AddBand(GDALDataType eType,
-                           char **papszOptions = nullptr) override;
+                           CSLConstList papszOptions = nullptr) override;
 
     char **GetFileList() override;
 
@@ -598,7 +598,7 @@ class VRTPansharpenedDataset final : public VRTDataset
                    GDALRasterBandH *pahInputSpectralBandsIn);
 
     virtual CPLErr AddBand(GDALDataType eType,
-                           char **papszOptions = nullptr) override;
+                           CSLConstList papszOptions = nullptr) override;
 
     char **GetFileList() override;
 
@@ -1309,7 +1309,7 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL : public VRTRasterBand
 
     CPLVirtualMem *GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
                                      GIntBig *pnLineSpace,
-                                     char **papszOptions) override;
+                                     CSLConstList papszOptions) override;
 
     virtual void GetFileList(char ***ppapszFileList, int *pnSize,
                              int *pnMaxSize, CPLHashSet *hSetFiles) override;

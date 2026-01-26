@@ -114,7 +114,7 @@ void netCDFLayer::netCDFWriteAttributesFromConf(
 /*                               Create()                               */
 /************************************************************************/
 
-bool netCDFLayer::Create(char **papszOptions,
+bool netCDFLayer::Create(CSLConstList papszOptions,
                          const netCDFWriterConfigLayer *poLayerConfig)
 {
     m_poDS->SetDefineMode(true);

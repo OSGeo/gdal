@@ -358,7 +358,7 @@ bool OGRLIBKMLDataSource::WriteKml()
 /******************************************************************************/
 
 static KmlPtr OGRLIBKMLCreateOGCKml22(KmlFactory *poFactory,
-                                      char **papszOptions = nullptr)
+                                      CSLConstList papszOptions = nullptr)
 {
     const char *pszAuthorName = CSLFetchNameValue(papszOptions, "AUTHOR_NAME");
     const char *pszAuthorURI = CSLFetchNameValue(papszOptions, "AUTHOR_URI");
@@ -1824,7 +1824,7 @@ void OGRLIBKMLDataSource::ParseDocumentOptions(KmlPtr poKml,
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::CreateKml(const char * /* pszFilename */,
-                                   char **papszOptions)
+                                   CSLConstList papszOptions)
 {
     m_poKmlDSKml = OGRLIBKMLCreateOGCKml22(m_poKmlFactory, papszOptions);
     if (osUpdateTargetHref.empty())
@@ -1851,7 +1851,7 @@ int OGRLIBKMLDataSource::CreateKml(const char * /* pszFilename */,
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::CreateKmz(const char * /* pszFilename */,
-                                   char ** /* papszOptions */)
+                                   CSLConstList /* papszOptions */)
 {
     /***** create the doc.kml  *****/
     if (osUpdateTargetHref.empty())
@@ -1886,7 +1886,7 @@ int OGRLIBKMLDataSource::CreateKmz(const char * /* pszFilename */,
 ******************************************************************************/
 
 int OGRLIBKMLDataSource::CreateDir(const char *pszFilename,
-                                   char ** /* papszOptions */)
+                                   CSLConstList /* papszOptions */)
 {
     if (VSIMkdir(pszFilename, 0755))
     {
@@ -1927,7 +1927,8 @@ int OGRLIBKMLDataSource::CreateDir(const char *pszFilename,
 
 ******************************************************************************/
 
-int OGRLIBKMLDataSource::Create(const char *pszFilename, char **papszOptions)
+int OGRLIBKMLDataSource::Create(const char *pszFilename,
+                                CSLConstList papszOptions)
 {
     if (strcmp(pszFilename, "/dev/stdout") == 0)
         pszFilename = "/vsistdout/";

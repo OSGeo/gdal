@@ -135,7 +135,7 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -168,7 +168,7 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
 
     static bool WriteBox(VSILFILE *fp, GDALJP2Box *poBox);
     static bool WriteGDALMetadataBox(VSILFILE *fp, GDALDataset *poSrcDS,
-                                     char **papszOptions);
+                                     CSLConstList papszOptions);
     static bool WriteXMLBoxes(VSILFILE *fp, GDALDataset *poSrcDS);
     static bool WriteXMPBox(VSILFILE *fp, GDALDataset *poSrcDS);
     static bool WriteIPRBox(VSILFILE *fp, GDALDataset *poSrcDS);

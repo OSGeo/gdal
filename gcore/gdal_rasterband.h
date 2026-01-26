@@ -532,7 +532,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     virtual CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                               int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType, char **papszOptions);
+                              GDALDataType eBufType, CSLConstList papszOptions);
 
     virtual CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
                                 GUIntBig *panHistogram, int bIncludeOutOfRange,
@@ -560,7 +560,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLVirtualMem *
     GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
                       GIntBig *pnLineSpace,
-                      char **papszOptions) CPL_WARN_UNUSED_RESULT;
+                      CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
     int GetDataCoverageStatus(int nXOff, int nYOff, int nXSize, int nYSize,
                               int nMaskFlagStop = 0,

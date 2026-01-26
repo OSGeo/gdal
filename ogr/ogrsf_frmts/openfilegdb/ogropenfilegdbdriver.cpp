@@ -101,7 +101,7 @@ static GDALDataset *OGROpenFileGDBDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGROpenFileGDBDriverCreate(const char *pszName, int nXSize,
                                                int nYSize, int nBands,
                                                GDALDataType eType,
-                                               char ** /* papszOptions*/)
+                                               CSLConstList /* papszOptions*/)
 
 {
     if (!(nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown))

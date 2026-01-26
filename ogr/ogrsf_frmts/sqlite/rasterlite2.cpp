@@ -1460,7 +1460,7 @@ static int RasterLite2Callback(void *data, double dfTileMinX, double dfTileMinY,
 
 GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
                                        GDALDataset *poSrcDS, int /* bStrict */,
-                                       char **papszOptions,
+                                       CSLConstList papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {

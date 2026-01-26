@@ -2292,7 +2292,7 @@ static bool safe_png_write_end(jmp_buf sSetJmpContext, png_structp png_ptr,
 
 GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 
@@ -3296,7 +3296,7 @@ CPLErr PNGDataset::write_png_header()
 
 GDALDataset *PNGDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBands, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 {
     if (eType != GDT_UInt8 && eType != GDT_UInt16)
     {

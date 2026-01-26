@@ -41,7 +41,7 @@ class KRODataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static int Identify(GDALOpenInfo *);
 };
 
@@ -236,7 +236,7 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *KRODataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char ** /* papszOptions */)
+                                CSLConstList /* papszOptions */)
 {
     if (eType != GDT_UInt8 && eType != GDT_UInt16 && eType != GDT_Float32)
     {

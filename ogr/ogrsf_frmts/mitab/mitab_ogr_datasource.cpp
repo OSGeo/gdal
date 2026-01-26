@@ -58,7 +58,7 @@ OGRTABDataSource::~OGRTABDataSource()
 /*      Create a new dataset (directory or file).                       */
 /************************************************************************/
 
-int OGRTABDataSource::Create(const char *pszName, char **papszOptions)
+int OGRTABDataSource::Create(const char *pszName, CSLConstList papszOptions)
 
 {
     SetDescription(pszName);

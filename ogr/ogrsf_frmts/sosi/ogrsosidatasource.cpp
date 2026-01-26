@@ -640,7 +640,7 @@ int OGRSOSIDataSource::Create(const char *pszFilename)
 
 OGRLayer *OGRSOSIDataSource::ICreateLayer(
     const char *pszNameIn, const OGRSpatialReference *poSpatialRef,
-    OGRwkbGeometryType eGType, CPL_UNUSED char **papszOptions)
+    OGRwkbGeometryType eGType, CPL_UNUSED CSLConstList papszOptions)
 {
     /* SOSI does not really support layers - so let's first see that the global
      * settings are consistent */

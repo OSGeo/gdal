@@ -53,7 +53,7 @@ static GDALDataset *OGRWAsPDriverOpen(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 static GDALDataset *OGRWAsPDriverCreate(const char *pszName, int, int, int,
-                                        GDALDataType, char **)
+                                        GDALDataType, CSLConstList)
 
 {
     VSILFILE *fh = VSIFOpenL(pszName, "w");

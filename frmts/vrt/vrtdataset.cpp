@@ -1728,7 +1728,7 @@ std::unique_ptr<VRTDataset> VRTDataset::OpenXML(const char *pszXML,
 /*                              AddBand()                               */
 /************************************************************************/
 
-CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
+CPLErr VRTDataset::AddBand(GDALDataType eType, CSLConstList papszOptions)
 
 {
     if (eType == GDT_Unknown || eType == GDT_TypeCount)
@@ -1959,7 +1959,7 @@ CPLErr VRTDataset::AddBand(GDALDataType eType, char **papszOptions)
  */
 
 int CPL_STDCALL VRTAddBand(VRTDatasetH hDataset, GDALDataType eType,
-                           char **papszOptions)
+                           CSLConstList papszOptions)
 
 {
     VALIDATE_POINTER1(hDataset, "VRTAddBand", 0);
@@ -1976,7 +1976,7 @@ int CPL_STDCALL VRTAddBand(VRTDatasetH hDataset, GDALDataType eType,
 
 GDALDataset *VRTDataset::Create(const char *pszName, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 
 {
     return CreateVRTDataset(pszName, nXSize, nYSize, nBandsIn, eType,
@@ -2361,7 +2361,7 @@ GDALDataset *VRTDataset::GetSingleSimpleSource()
 CPLErr VRTDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                               int nBufXSize, int nBufYSize, GDALDataType eDT,
                               int nBandCount, int *panBandList,
-                              char **papszOptions)
+                              CSLConstList papszOptions)
 {
     if (!CheckCompatibleForDatasetIO())
         return CE_None;

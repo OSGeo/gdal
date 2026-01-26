@@ -948,7 +948,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteSRS_ISO32000(GDALDataset *poSrcDS,
 /************************************************************************/
 
 static const char *GDALPDFGetValueFromDSOrOption(GDALDataset *poSrcDS,
-                                                 char **papszOptions,
+                                                 CSLConstList papszOptions,
                                                  const char *pszKey)
 {
     const char *pszValue = CSLFetchNameValue(papszOptions, pszKey);
@@ -965,7 +965,7 @@ static const char *GDALPDFGetValueFromDSOrOption(GDALDataset *poSrcDS,
 /************************************************************************/
 
 GDALPDFObjectNum GDALPDFBaseWriter::SetInfo(GDALDataset *poSrcDS,
-                                            char **papszOptions)
+                                            CSLConstList papszOptions)
 {
     const char *pszAUTHOR =
         GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "AUTHOR");
@@ -4057,7 +4057,7 @@ void GDALPDFWriter::WritePages()
 /*                        GDALPDFGetJPEGQuality()                       */
 /************************************************************************/
 
-static int GDALPDFGetJPEGQuality(char **papszOptions)
+static int GDALPDFGetJPEGQuality(CSLConstList papszOptions)
 {
     int nJpegQuality = -1;
     const char *pszValue = CSLFetchNameValue(papszOptions, "JPEG_QUALITY");
@@ -4123,7 +4123,7 @@ const OGRSpatialReference *GDALPDFClippingDataset::GetSpatialRef() const
 /************************************************************************/
 
 GDALDataset *GDALPDFCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                               int bStrict, char **papszOptions,
+                               int bStrict, CSLConstList papszOptions,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData)
 {

@@ -1955,7 +1955,7 @@ int OGR_G_HasCurveGeometry(OGRGeometryH hGeom, int bLookForNonLinear)
 
 OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry(OGRGeometryH hGeom,
                                              double dfMaxAngleStepSizeDegrees,
-                                             char **papszOptions)
+                                             CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_GetLinearGeometry", nullptr);
     return ToHandle(ToPointer(hGeom)->getLinearGeometry(
@@ -1991,7 +1991,7 @@ OGRGeometryH CPL_DLL OGR_G_GetLinearGeometry(OGRGeometryH hGeom,
  */
 
 OGRGeometryH CPL_DLL OGR_G_GetCurveGeometry(OGRGeometryH hGeom,
-                                            char **papszOptions)
+                                            CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hGeom, "OGR_G_GetCurveGeometry", nullptr);
 

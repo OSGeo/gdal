@@ -22,7 +22,7 @@
 /************************************************************************/
 
 OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
-                                         char **papszOptions)
+                                         CSLConstList papszOptions)
 {
     SetDescription(pszNameIn);
 

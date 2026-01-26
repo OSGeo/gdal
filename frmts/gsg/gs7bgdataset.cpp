@@ -64,11 +64,10 @@ class GS7BGDataset final : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
-                               int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               int nBandsIn, GDALDataType eType, CSLConstList);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -1051,7 +1050,7 @@ static bool GS7BGCreateCheckDims(int nXSize, int nYSize)
 
 GDALDataset *GS7BGDataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eType,
-                                  char ** /* papszParamList*/)
+                                  CSLConstList /* papszParamList*/)
 
 {
     if (!GS7BGCreateCheckDims(nXSize, nYSize))
@@ -1124,7 +1123,7 @@ GDALDataset *GS7BGDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
                                       GDALDataset *poSrcDS, int bStrict,
-                                      char ** /*papszOptions*/,
+                                      CSLConstList /*papszOptions*/,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 {

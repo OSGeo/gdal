@@ -98,7 +98,7 @@ static GDALDataset *OGRGMLDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *
 OGRGMLDriverCreate(const char *pszName, CPL_UNUSED int nBands,
                    CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                   CPL_UNUSED GDALDataType eDT, char **papszOptions)
+                   CPL_UNUSED GDALDataType eDT, CSLConstList papszOptions)
 {
     OGRGMLDataSource *poDS = new OGRGMLDataSource();
 

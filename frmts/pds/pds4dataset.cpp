@@ -4721,7 +4721,7 @@ int PDS4Dataset::TestCapability(const char *pszCap) const
 
 GDALDataset *PDS4Dataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 {
     return CreateInternal(pszFilename, nullptr, nXSize, nYSize, nBandsIn, eType,
                           papszOptions)
@@ -5127,7 +5127,7 @@ static GDALDataset *PDS4GetUnderlyingDataset(GDALDataset *poSrcDS)
 
 GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

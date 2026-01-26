@@ -287,7 +287,7 @@ CPLErr ECWRasterBand::SetColorInterpretation(GDALColorInterp eNewInterp)
 
 CPLErr ECWRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                                  int nBufXSize, int nBufYSize, GDALDataType eDT,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 {
     const int nResFactor = 1 << (iOverview + 1);
 
@@ -1677,7 +1677,8 @@ void ECWDataset::WriteHeader()
 CPLErr ECWDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                               int nBufXSize, int nBufYSize,
                               CPL_UNUSED GDALDataType eDT, int nBandCount,
-                              int *panBandList, CPL_UNUSED char **papszOptions)
+                              int *panBandList,
+                              CPL_UNUSED CSLConstList papszOptions)
 {
     CPLDebug("ECW", "ECWDataset::AdviseRead(%d,%d,%d,%d->%d,%d)", nXOff, nYOff,
              nXSize, nYSize, nBufXSize, nBufYSize);

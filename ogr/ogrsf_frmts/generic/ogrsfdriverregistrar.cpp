@@ -294,11 +294,11 @@ GDALDataset *OGRSFDriverRegistrar::OpenWithDriverArg(GDALDriver *poDriver,
 
 GDALDataset *OGRSFDriverRegistrar::CreateVectorOnly(GDALDriver *poDriver,
                                                     const char *pszName,
-                                                    char **papszOptions)
+                                                    CSLConstList papszOptions)
 {
     OGRDataSource *poDS = reinterpret_cast<OGRDataSource *>(
         reinterpret_cast<OGRSFDriver *>(poDriver)->CreateDataSource(
-            pszName, papszOptions));
+            pszName, const_cast<char **>(papszOptions)));
     if (poDS != nullptr && poDS->GetName() != nullptr)
         poDS->SetDescription(poDS->GetName());
     return poDS;

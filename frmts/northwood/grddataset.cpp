@@ -89,10 +89,10 @@ class NWT_GRDDataset final : public GDALPamDataset
 #ifndef NO_MITAB_SUPPORT
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 #endif
@@ -897,7 +897,8 @@ int NWT_GRDDataset::WriteTab()
 /************************************************************************/
 GDALDataset *NWT_GRDDataset::Create(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn,
-                                    GDALDataType eType, char **papszParamList)
+                                    GDALDataType eType,
+                                    CSLConstList papszParamList)
 {
     if (nBandsIn != 1)
     {
@@ -1090,7 +1091,7 @@ GDALDataset *NWT_GRDDataset::Create(const char *pszFilename, int nXSize,
 /************************************************************************/
 GDALDataset *NWT_GRDDataset::CreateCopy(const char *pszFilename,
                                         GDALDataset *poSrcDS, int bStrict,
-                                        char **papszOptions,
+                                        CSLConstList papszOptions,
                                         GDALProgressFunc pfnProgress,
                                         void *pProgressData)
 {

@@ -2351,7 +2351,7 @@ int ENVIDataset::GetEnviType(GDALDataType eType)
 
 GDALDataset *ENVIDataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 
 {
     // Verify input options.

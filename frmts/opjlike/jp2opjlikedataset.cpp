@@ -1912,9 +1912,8 @@ bool JP2OPJLikeDataset<CODEC, BASE>::WriteBox(VSILFILE *fp, GDALJP2Box *poBox)
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
-bool JP2OPJLikeDataset<CODEC, BASE>::WriteGDALMetadataBox(VSILFILE *fp,
-                                                          GDALDataset *poSrcDS,
-                                                          char **papszOptions)
+bool JP2OPJLikeDataset<CODEC, BASE>::WriteGDALMetadataBox(
+    VSILFILE *fp, GDALDataset *poSrcDS, CSLConstList papszOptions)
 {
     bool bRet = true;
     GDALJP2Box *poBox = GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
@@ -2000,7 +1999,8 @@ static int FloorPowerOfTwo(int nVal)
 template <typename CODEC, typename BASE>
 GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     const char *pszFilename, GDALDataset *poSrcDS, CPL_UNUSED int bStrict,
-    char **papszOptions, GDALProgressFunc pfnProgress, void *pProgressData)
+    CSLConstList papszOptions, GDALProgressFunc pfnProgress,
+    void *pProgressData)
 
 {
     int nBands = poSrcDS->GetRasterCount();

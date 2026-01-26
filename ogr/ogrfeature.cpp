@@ -6969,7 +6969,7 @@ void OGR_F_SetStyleTable(OGRFeatureH hFeat, OGRStyleTableH hStyleTable)
  */
 
 void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
-                                      CPL_UNUSED char **papszOptions)
+                                      CPL_UNUSED CSLConstList papszOptions)
 {
     const int nFieldCount = poDefn->GetFieldCount();
     for (int i = 0; i < nFieldCount; i++)
@@ -7043,7 +7043,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
  */
 
 void OGR_F_FillUnsetWithDefault(OGRFeatureH hFeat, int bNotNullableOnly,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 
 {
     VALIDATE_POINTER0(hFeat, "OGR_F_FillUnsetWithDefault");

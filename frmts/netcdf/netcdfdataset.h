@@ -597,13 +597,14 @@ class netCDFDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
 
     static netCDFDataset *CreateLL(const char *pszFilename, int nXSize,
-                                   int nYSize, int nBands, char **papszOptions);
+                                   int nYSize, int nBands,
+                                   CSLConstList papszOptions);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -714,7 +715,7 @@ class netCDFLayer final : public OGRLayer
                 OGRwkbGeometryType eGeomType, OGRSpatialReference *poSRS);
     ~netCDFLayer() override;
 
-    bool Create(char **papszOptions,
+    bool Create(CSLConstList papszOptions,
                 const netCDFWriterConfigLayer *poLayerConfig);
     void SetRecordDimID(int nRecordDimID);
     void SetXYZVars(int nXVarId, int nYVarId, int nZVarId);

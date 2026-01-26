@@ -5357,8 +5357,8 @@ static OGRGeometry *promote_to_multi(OGRGeometry *poGeom)
  */
 
 OGRErr OGRLayer::Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                              char **papszOptions, GDALProgressFunc pfnProgress,
-                              void *pProgressArg)
+                              CSLConstList papszOptions,
+                              GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
     OGRFeatureDefn *poDefnInput = GetLayerDefn();
@@ -5681,7 +5681,7 @@ done:
  */
 
 OGRErr OGR_L_Intersection(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                          OGRLayerH pLayerResult, char **papszOptions,
+                          OGRLayerH pLayerResult, CSLConstList papszOptions,
                           GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -5775,7 +5775,7 @@ OGRErr OGR_L_Intersection(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                       char **papszOptions, GDALProgressFunc pfnProgress,
+                       CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                        void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
@@ -6231,7 +6231,7 @@ done:
  */
 
 OGRErr OGR_L_Union(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                   OGRLayerH pLayerResult, char **papszOptions,
+                   OGRLayerH pLayerResult, CSLConstList papszOptions,
                    GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -6312,7 +6312,7 @@ OGRErr OGR_L_Union(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                               char **papszOptions,
+                               CSLConstList papszOptions,
                                GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
@@ -6649,7 +6649,7 @@ done:
  */
 
 OGRErr OGR_L_SymDifference(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                           OGRLayerH pLayerResult, char **papszOptions,
+                           OGRLayerH pLayerResult, CSLConstList papszOptions,
                            GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -6742,8 +6742,8 @@ OGRErr OGR_L_SymDifference(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                          char **papszOptions, GDALProgressFunc pfnProgress,
-                          void *pProgressArg)
+                          CSLConstList papszOptions,
+                          GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
     OGRFeatureDefn *poDefnInput = GetLayerDefn();
@@ -7078,7 +7078,7 @@ done:
  */
 
 OGRErr OGR_L_Identity(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                      OGRLayerH pLayerResult, char **papszOptions,
+                      OGRLayerH pLayerResult, CSLConstList papszOptions,
                       GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -7160,7 +7160,7 @@ OGRErr OGR_L_Identity(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                        char **papszOptions, GDALProgressFunc pfnProgress,
+                        CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                         void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
@@ -7434,7 +7434,7 @@ done:
  */
 
 OGRErr OGR_L_Update(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                    OGRLayerH pLayerResult, char **papszOptions,
+                    OGRLayerH pLayerResult, CSLConstList papszOptions,
                     GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -7509,7 +7509,7 @@ OGRErr OGR_L_Update(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                      char **papszOptions, GDALProgressFunc pfnProgress,
+                      CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                       void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
@@ -7743,7 +7743,7 @@ done:
  */
 
 OGRErr OGR_L_Clip(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                  OGRLayerH pLayerResult, char **papszOptions,
+                  OGRLayerH pLayerResult, CSLConstList papszOptions,
                   GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -7818,7 +7818,7 @@ OGRErr OGR_L_Clip(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                       char **papszOptions, GDALProgressFunc pfnProgress,
+                       CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                        void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
@@ -8031,7 +8031,7 @@ done:
  */
 
 OGRErr OGR_L_Erase(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                   OGRLayerH pLayerResult, char **papszOptions,
+                   OGRLayerH pLayerResult, CSLConstList papszOptions,
                    GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {

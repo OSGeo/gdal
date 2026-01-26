@@ -295,8 +295,8 @@ class PostGISRasterDataset final : public VRTDataset
     PostGISRasterDataset();
     ~PostGISRasterDataset() override;
     static GDALDataset *Open(GDALOpenInfo *);
-    static GDALDataset *CreateCopy(const char *, GDALDataset *, int, char **,
-                                   GDALProgressFunc, void *);
+    static GDALDataset *CreateCopy(const char *, GDALDataset *, int,
+                                   CSLConstList, GDALProgressFunc, void *);
     static GBool InsertRaster(PGconn *, PostGISRasterDataset *, const char *,
                               const char *, const char *);
     static CPLErr Delete(const char *);

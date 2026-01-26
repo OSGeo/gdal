@@ -110,7 +110,7 @@ static GDALDataset *OGRTABDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *
 OGRTABDriverCreate(const char *pszName, CPL_UNUSED int nBands,
                    CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                   CPL_UNUSED GDALDataType eDT, char **papszOptions)
+                   CPL_UNUSED GDALDataType eDT, CSLConstList papszOptions)
 {
     // Try to create the data source.
     OGRTABDataSource *poDS = new OGRTABDataSource();

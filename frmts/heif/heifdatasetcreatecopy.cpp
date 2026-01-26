@@ -143,7 +143,7 @@ heif_error GDALHEIFDataset::VFS_WriterCallback(struct heif_context *,
 /************************************************************************/
 GDALDataset *
 GDALHEIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int,
-                            CPL_UNUSED char **papszOptions,
+                            CPL_UNUSED CSLConstList papszOptions,
                             CPL_UNUSED GDALProgressFunc pfnProgress,
                             CPL_UNUSED void *pProgressData)
 {

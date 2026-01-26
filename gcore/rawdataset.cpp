@@ -1515,7 +1515,7 @@ GDALColorInterp RawRasterBand::GetColorInterpretation()
 CPLVirtualMem *RawRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                 int *pnPixelSpace,
                                                 GIntBig *pnLineSpace,
-                                                char **papszOptions)
+                                                CSLConstList papszOptions)
 {
     CPLAssert(pnPixelSpace);
     CPLAssert(pnLineSpace);

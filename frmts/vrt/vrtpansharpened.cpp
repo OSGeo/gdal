@@ -1378,7 +1378,7 @@ void VRTPansharpenedDataset::GetBlockSize(int *pnBlockXSize,
 /************************************************************************/
 
 CPLErr VRTPansharpenedDataset::AddBand(CPL_UNUSED GDALDataType eType,
-                                       CPL_UNUSED char **papszOptions)
+                                       CPL_UNUSED CSLConstList papszOptions)
 
 {
     CPLError(CE_Failure, CPLE_NotSupported, "AddBand() not supported");

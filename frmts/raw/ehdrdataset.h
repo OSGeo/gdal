@@ -100,10 +100,10 @@ class EHdrDataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *, bool bFileSizeCheck);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     static CPLString GetImageRepFilename(const char *pszFilename);

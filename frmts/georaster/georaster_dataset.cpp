@@ -469,7 +469,8 @@ void GeoRasterDataset::JP2_Open(GDALAccess /* eAccess */)
 //                                                              JP2CreateCopy()
 //  ---------------------------------------------------------------------------
 
-void GeoRasterDataset::JP2_CreateCopy(GDALDataset *poJP2DS, char **papszOptions,
+void GeoRasterDataset::JP2_CreateCopy(GDALDataset *poJP2DS,
+                                      CSLConstList papszOptions,
                                       int *pnResolutions,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
@@ -860,7 +861,8 @@ static bool ParseCommaSeparatedString(const char *str, double pfValues[],
 
 GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
                                       int nYSize, int nBandsIn,
-                                      GDALDataType eType, char **papszOptions)
+                                      GDALDataType eType,
+                                      CSLConstList papszOptions)
 {
     //  -------------------------------------------------------------------
     //  Verify georaster prefix
@@ -1478,7 +1480,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
                                           GDALDataset *poSrcDS, int bStrict,
-                                          char **papszOptions,
+                                          CSLConstList papszOptions,
                                           GDALProgressFunc pfnProgress,
                                           void *pProgressData)
 {

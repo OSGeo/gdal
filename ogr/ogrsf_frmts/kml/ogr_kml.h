@@ -110,7 +110,7 @@ class OGRKMLDataSource final : public GDALDataset
     //
     // OGRKMLDataSource Interface
     //
-    int Create(const char *pszName, char **papszOptions);
+    int Create(const char *pszName, CSLConstList papszOptions);
 
     const char *GetNameField() const
     {

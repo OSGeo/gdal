@@ -125,7 +125,7 @@ class OGRDGNV8DataSource final : public GDALDataset
     ~OGRDGNV8DataSource() override;
 
     int Open(const char *, bool bUpdate);
-    bool PreCreate(const char *, char **);
+    bool PreCreate(const char *, CSLConstList);
 
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRGeomFieldDefn *poGeomFieldDefn,

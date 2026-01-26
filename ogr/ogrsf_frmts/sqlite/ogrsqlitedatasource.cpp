@@ -1811,7 +1811,8 @@ void *OGRSQLiteBaseDataSource::GetInternalHandle(const char *pszKey)
 /*                               Create()                               */
 /************************************************************************/
 
-bool OGRSQLiteDataSource::Create(const char *pszNameIn, char **papszOptions)
+bool OGRSQLiteDataSource::Create(const char *pszNameIn,
+                                 CSLConstList papszOptions)
 {
     CPLString osCommand;
 

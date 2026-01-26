@@ -2167,7 +2167,8 @@ CPLErr VRTWarpedDataset::IRasterIO(
 /*                              AddBand()                               */
 /************************************************************************/
 
-CPLErr VRTWarpedDataset::AddBand(GDALDataType eType, char ** /* papszOptions */)
+CPLErr VRTWarpedDataset::AddBand(GDALDataType eType,
+                                 CSLConstList /* papszOptions */)
 
 {
     if (eType == GDT_Unknown || eType == GDT_TypeCount)

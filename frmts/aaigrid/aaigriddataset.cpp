@@ -1298,7 +1298,7 @@ const OGRSpatialReference *AAIGDataset::GetSpatialRef() const
 
 GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /* bStrict */,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

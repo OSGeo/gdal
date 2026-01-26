@@ -121,7 +121,7 @@ static GDALDataset *OGRPMTilesDriverVectorTranslateFrom(
 static GDALDataset *OGRPMTilesDriverCreate(const char *pszFilename, int nXSize,
                                            int nYSize, int nBandsIn,
                                            GDALDataType eDT,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     if (nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eDT == GDT_Unknown)
     {

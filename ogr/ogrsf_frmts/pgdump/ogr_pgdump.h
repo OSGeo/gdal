@@ -269,7 +269,7 @@ class OGRPGDumpDataSource final : public GDALDataset
     const char *m_pszEOL = "\n";
 
   public:
-    OGRPGDumpDataSource(const char *pszName, char **papszOptions);
+    OGRPGDumpDataSource(const char *pszName, CSLConstList papszOptions);
     ~OGRPGDumpDataSource() override;
 
     bool Log(const char *pszStr, bool bAddSemiColumn = true);

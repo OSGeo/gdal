@@ -302,10 +302,11 @@ class OGRNGWDataset final : public GDALDataset
     OGRNGWDataset();
     ~OGRNGWDataset() override;
 
-    bool Open(const char *pszFilename, char **papszOpenOptionsIn,
+    bool Open(const char *pszFilename, CSLConstList papszOpenOptionsIn,
               bool bUpdateIn, int nOpenFlagsIn);
     bool Open(const std::string &osUrlIn, const std::string &osResourceIdIn,
-              char **papszOpenOptionsIn, bool bUpdateIn, int nOpenFlagsIn);
+              CSLConstList papszOpenOptionsIn, bool bUpdateIn,
+              int nOpenFlagsIn);
     std::string Extensions() const;
 
     /* GDALDataset */

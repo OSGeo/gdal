@@ -67,7 +67,7 @@ static GDALDataset *GNMDBDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *
 GNMDBDriverCreate(const char *pszName, CPL_UNUSED int nBands,
                   CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                  CPL_UNUSED GDALDataType eDT, char **papszOptions)
+                  CPL_UNUSED GDALDataType eDT, CSLConstList papszOptions)
 {
     CPLAssert(nullptr != pszName);
     CPLDebug("GNM", "Attempt to create network at: %s", pszName);

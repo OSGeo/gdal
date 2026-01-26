@@ -659,7 +659,7 @@ const OGRSpatialReference *DTEDDataset::GetSpatialRef() const
 
 static GDALDataset *DTEDCreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char ** /* papszOptions */,
+                                   CSLConstList /* papszOptions */,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData)
 

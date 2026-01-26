@@ -9260,7 +9260,7 @@ static void CopyMetadata(GDALDataset *poSrcDS, GDALRasterBand *poSrcBand,
 
 netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
                                        int nYSize, int nBandsIn,
-                                       char **papszOptions)
+                                       CSLConstList papszOptions)
 {
     if (!((nXSize == 0 && nYSize == 0 && nBandsIn == 0) ||
           (nXSize > 0 && nYSize > 0 && nBandsIn > 0)))
@@ -9401,7 +9401,7 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
 
 GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
                                    int nYSize, int nBandsIn, GDALDataType eType,
-                                   char **papszOptions)
+                                   CSLConstList papszOptions)
 {
     CPLDebug("GDAL_netCDF", "\n=====\nnetCDFDataset::Create(%s, ...)",
              pszFilename);
@@ -9580,7 +9580,7 @@ static CPLErr NCDFCopyBand(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
 
 GDALDataset *
 netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                          CPL_UNUSED int bStrict, char **papszOptions,
+                          CPL_UNUSED int bStrict, CSLConstList papszOptions,
                           GDALProgressFunc pfnProgress, void *pProgressData)
 {
     CPLMutexHolderD(&hNCMutex);

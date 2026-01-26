@@ -65,7 +65,7 @@ typedef void *VRTSourcedRasterBandH;
 VRTDatasetH CPL_DLL CPL_STDCALL VRTCreate(int, int);
 void CPL_DLL CPL_STDCALL VRTFlushCache(VRTDatasetH);
 CPLXMLNode CPL_DLL *CPL_STDCALL VRTSerializeToXML(VRTDatasetH, const char *);
-int CPL_DLL CPL_STDCALL VRTAddBand(VRTDatasetH, GDALDataType, char **);
+int CPL_DLL CPL_STDCALL VRTAddBand(VRTDatasetH, GDALDataType, CSLConstList);
 
 /* ==================================================================== */
 /*      VRTSourcedRasterBand class.                                     */

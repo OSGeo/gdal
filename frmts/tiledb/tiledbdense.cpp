@@ -2580,7 +2580,7 @@ TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
                                                  int nXSize, int nYSize,
                                                  int nBandsIn,
                                                  GDALDataType eType,
-                                                 char **papszOptions)
+                                                 CSLConstList papszOptions)
 
 {
     CPLString osArrayPath = TileDBDataset::VSI_to_tiledb_uri(pszFilename);
@@ -2645,7 +2645,7 @@ TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
 
 GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
                                              GDALDataset *poSrcDS, int bStrict,
-                                             char **papszOptions,
+                                             CSLConstList papszOptions,
                                              GDALProgressFunc pfnProgress,
                                              void *pProgressData)
 

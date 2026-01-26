@@ -80,7 +80,7 @@ class GDALAVIFDataset final : public GDALPamDataset
     }
 
     static GDALDataset *CreateCopy(const char *, GDALDataset *, int,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -699,11 +699,10 @@ GDALPamDataset *GDALAVIFDataset::OpenStaticPAM(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 /* static */
-GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
-                                         GDALDataset *poSrcDS,
-                                         int /* bStrict */, char **papszOptions,
-                                         GDALProgressFunc pfnProgress,
-                                         void *pProgressData)
+GDALDataset *
+GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
+                            int /* bStrict */, CSLConstList papszOptions,
+                            GDALProgressFunc pfnProgress, void *pProgressData)
 {
     auto poDrv = GetGDALDriverManager()->GetDriverByName(DRIVER_NAME);
     if (poDrv && poDrv->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST) == nullptr)

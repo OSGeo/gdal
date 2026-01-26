@@ -362,7 +362,7 @@ const char *OGRDGNV8DataSource::GetMetadataItem(const char *pszName,
 /************************************************************************/
 
 bool OGRDGNV8DataSource::PreCreate(const char *pszFilename,
-                                   char **papszOptionsIn)
+                                   CSLConstList papszOptionsIn)
 
 {
     m_bUpdate = true;

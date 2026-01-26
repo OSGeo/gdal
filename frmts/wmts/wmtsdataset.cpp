@@ -175,7 +175,7 @@ class WMTSDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, CPL_UNUSED int bStrict,
-                                   CPL_UNUSED char **papszOptions,
+                                   CPL_UNUSED CSLConstList papszOptions,
                                    CPL_UNUSED GDALProgressFunc pfnProgress,
                                    CPL_UNUSED void *pProgressData);
 
@@ -2490,7 +2490,7 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
 GDALDataset *WMTSDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS,
                                      CPL_UNUSED int bStrict,
-                                     CPL_UNUSED char **papszOptions,
+                                     CPL_UNUSED CSLConstList papszOptions,
                                      CPL_UNUSED GDALProgressFunc pfnProgress,
                                      CPL_UNUSED void *pProgressData)
 {

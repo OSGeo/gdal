@@ -126,7 +126,7 @@ static const char FIELD_BLOB[] = "blob";
 /*                       OGRGeocodeGetParameter()                       */
 /************************************************************************/
 
-static const char *OGRGeocodeGetParameter(char **papszOptions,
+static const char *OGRGeocodeGetParameter(CSLConstList papszOptions,
                                           const char *pszKey,
                                           const char *pszDefaultValue)
 {
@@ -233,7 +233,7 @@ static bool OGRGeocodeHasStringValidFormat(const char *pszQueryTemplate)
  */
 /* clang-format on */
 
-OGRGeocodingSessionH OGRGeocodeCreateSession(char **papszOptions)
+OGRGeocodingSessionH OGRGeocodeCreateSession(CSLConstList papszOptions)
 {
     OGRGeocodingSessionH hSession = static_cast<OGRGeocodingSessionH>(
         CPLCalloc(1, sizeof(_OGRGeocodingSessionHS)));
@@ -1219,7 +1219,7 @@ static OGRLayerH OGRGeocodeBuildLayer(const char *pszContent,
 
 static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
                                   const std::string &osURLIn,
-                                  char **papszOptions)
+                                  CSLConstList papszOptions)
 {
     std::string osURL(osURLIn);
 
@@ -1402,7 +1402,7 @@ static OGRLayerH OGRGeocodeCommon(OGRGeocodingSessionH hSession,
 /* clang-format on */
 
 OGRLayerH OGRGeocode(OGRGeocodingSessionH hSession, const char *pszQuery,
-                     char **papszStructuredQuery, char **papszOptions)
+                     char **papszStructuredQuery, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hSession, "OGRGeocode", nullptr);
     if ((pszQuery == nullptr && papszStructuredQuery == nullptr) ||
@@ -1548,7 +1548,7 @@ static CPLString OGRGeocodeReverseSubstitute(CPLString osURL, double dfLon,
 /* clang-format on */
 
 OGRLayerH OGRGeocodeReverse(OGRGeocodingSessionH hSession, double dfLon,
-                            double dfLat, char **papszOptions)
+                            double dfLat, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hSession, "OGRGeocodeReverse", nullptr);
 

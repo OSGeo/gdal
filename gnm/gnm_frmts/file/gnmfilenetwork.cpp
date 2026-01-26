@@ -140,7 +140,7 @@ CPLErr GNMFileNetwork::Open(GDALOpenInfo *poOpenInfo)
 }
 
 int GNMFileNetwork::CheckNetworkExist(const char *pszFilename,
-                                      char **papszOptions)
+                                      CSLConstList papszOptions)
 {
     // check if path exist
     // if path exist check if network already present and OVERWRITE option
@@ -242,7 +242,7 @@ CPLErr GNMFileNetwork::Delete()
 
 CPLErr GNMFileNetwork::CreateMetadataLayerFromFile(const char *pszFilename,
                                                    int nVersion,
-                                                   char **papszOptions)
+                                                   CSLConstList papszOptions)
 {
     CPLErr eResult = CheckLayerDriver(GNM_MD_DEFAULT_FILE_FORMAT, papszOptions);
     if (CE_None != eResult)
@@ -329,7 +329,7 @@ CPLErr GNMFileNetwork::DeleteMetadataLayer()
 }
 
 CPLErr GNMFileNetwork::CreateGraphLayerFromFile(const char *pszFilename,
-                                                char **papszOptions)
+                                                CSLConstList papszOptions)
 {
     CPLErr eResult = CheckLayerDriver(GNM_MD_DEFAULT_FILE_FORMAT, papszOptions);
     if (CE_None != eResult)
@@ -366,7 +366,7 @@ CPLErr GNMFileNetwork::DeleteGraphLayer()
 }
 
 CPLErr GNMFileNetwork::CreateFeaturesLayerFromFile(const char *pszFilename,
-                                                   char **papszOptions)
+                                                   CSLConstList papszOptions)
 {
     CPLErr eResult = CheckLayerDriver(GNM_MD_DEFAULT_FILE_FORMAT, papszOptions);
     if (CE_None != eResult)
@@ -461,7 +461,8 @@ bool GNMFileNetwork::CheckStorageDriverSupport(const char *pszDriverName)
     return false;
 }
 
-CPLErr GNMFileNetwork::FormPath(const char *pszFilename, char **papszOptions)
+CPLErr GNMFileNetwork::FormPath(const char *pszFilename,
+                                CSLConstList papszOptions)
 {
     if (m_soNetworkFullName.empty())
     {
@@ -597,7 +598,8 @@ OGRLayer *GNMFileNetwork::ICreateLayer(const char *pszName,
     return pGNMLayer;
 }
 
-CPLErr GNMFileNetwork::Create(const char *pszFilename, char **papszOptions)
+CPLErr GNMFileNetwork::Create(const char *pszFilename,
+                              CSLConstList papszOptions)
 {
     // check required options
 

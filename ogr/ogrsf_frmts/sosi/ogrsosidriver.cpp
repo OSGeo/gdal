@@ -76,10 +76,12 @@ static GDALDataset *OGRSOSIDriverOpen(GDALOpenInfo *poOpenInfo)
 /*                              Create()                                */
 /************************************************************************/
 
-static GDALDataset *
-OGRSOSIDriverCreate(const char *pszName, CPL_UNUSED int nBands,
-                    CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                    CPL_UNUSED GDALDataType eDT, CPL_UNUSED char **papszOptions)
+static GDALDataset *OGRSOSIDriverCreate(const char *pszName,
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        CPL_UNUSED CSLConstList papszOptions)
 {
     OGRSOSIInit();
     OGRSOSIDataSource *poDS = new OGRSOSIDataSource();

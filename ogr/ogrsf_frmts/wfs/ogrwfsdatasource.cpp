@@ -1879,7 +1879,7 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char *pszLayerName,
 
     // CPLDebug("WFS", "%s", osPost.c_str());
 
-    char **papszOptions = NULL;
+    CSLConstList papszOptions = NULL;
     papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", osPost.c_str());
     papszOptions =
         CSLAddNameValue(papszOptions, "HEADERS",
@@ -2201,7 +2201,7 @@ CPLString WFS_DecodeURL(const CPLString &osSrc)
 /************************************************************************/
 
 CPLHTTPResult *OGRWFSDataSource::HTTPFetch(const char *pszURL,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     char **papszNewOptions = CSLDuplicate(papszOptions);
     if (bUseHttp10)

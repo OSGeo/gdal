@@ -2000,7 +2000,7 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
                    const char *pszLayerName, int bOverview, int nBlockSize,
                    int bCreateCompressed, int bCreateLargeRaster,
                    int bDependentLayer, int nXSize, int nYSize,
-                   EPTType eDataType, char ** /* papszOptions */,
+                   EPTType eDataType, CSLConstList /* papszOptions */,
                    // These are only related to external (large) files.
                    GIntBig nStackValidFlagsOffset, GIntBig nStackDataOffset,
                    int nStackCount, int nStackIndex)
@@ -2237,7 +2237,7 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
 /************************************************************************/
 
 HFAHandle HFACreate(const char *pszFilename, int nXSize, int nYSize, int nBands,
-                    EPTType eDataType, char **papszOptions)
+                    EPTType eDataType, CSLConstList papszOptions)
 
 {
     if (nXSize == 0 || nYSize == 0)

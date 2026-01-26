@@ -129,10 +129,10 @@ class MBTilesDataset final : public GDALPamDataset,
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eDT,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -170,7 +170,7 @@ class MBTilesDataset final : public GDALPamDataset,
     CPLString m_osClip;
     std::vector<std::unique_ptr<OGRLayer>> m_apoLayers;
 
-    void ParseCompressionOptions(char **papszOptions);
+    void ParseCompressionOptions(CSLConstList papszOptions);
     CPLErr FinalizeRasterRegistration();
     void ComputeTileAndPixelShifts();
     bool InitRaster(MBTilesDataset *poParentDS, int nZoomLevel, int nBandCount,
@@ -178,7 +178,8 @@ class MBTilesDataset final : public GDALPamDataset,
                     double dfGDALMaxX, double dfGDALMaxY);
 
     bool CreateInternal(const char *pszFilename, int nXSize, int nYSize,
-                        int nBandsIn, GDALDataType eDT, char **papszOptions);
+                        int nBandsIn, GDALDataType eDT,
+                        CSLConstList papszOptions);
     void InitVector(double dfMinX, double dfMinY, double dfMaxX, double dfMaxY,
                     bool bZoomLevelFromSpatialFilter, bool bJsonField);
 
@@ -2932,7 +2933,7 @@ end:
 
 GDALDataset *MBTilesDataset::Create(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn, GDALDataType eDT,
-                                    char **papszOptions)
+                                    CSLConstList papszOptions)
 {
 #ifdef HAVE_MVT_WRITE_SUPPORT
     if (nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eDT == GDT_Unknown)
@@ -2962,7 +2963,7 @@ GDALDataset *MBTilesDataset::Create(const char *pszFilename, int nXSize,
 
 bool MBTilesDataset::CreateInternal(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn, GDALDataType eDT,
-                                    char **papszOptions)
+                                    CSLConstList papszOptions)
 {
     if (eDT != GDT_UInt8)
     {
@@ -3125,7 +3126,7 @@ static const WarpResamplingAlg asResamplingAlg[] = {
 
 GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
                                         GDALDataset *poSrcDS, int /*bStrict*/,
-                                        char **papszOptions,
+                                        CSLConstList papszOptions,
                                         GDALProgressFunc pfnProgress,
                                         void *pProgressData)
 {
@@ -3454,7 +3455,7 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
 /*                        ParseCompressionOptions()                     */
 /************************************************************************/
 
-void MBTilesDataset::ParseCompressionOptions(char **papszOptions)
+void MBTilesDataset::ParseCompressionOptions(CSLConstList papszOptions)
 {
     const char *pszZLevel = CSLFetchNameValue(papszOptions, "ZLEVEL");
     if (pszZLevel)

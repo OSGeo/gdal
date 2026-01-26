@@ -176,10 +176,10 @@ class TileDBDataset /* non final */ : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -292,10 +292,11 @@ class TileDBRasterDataset final : public TileDBDataset
     static GDALDataset *Open(GDALOpenInfo *, tiledb::Object::Type objectType);
     static TileDBRasterDataset *Create(const char *pszFilename, int nXSize,
                                        int nYSize, int nBands,
-                                       GDALDataType eType, char **papszOptions);
+                                       GDALDataType eType,
+                                       CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };

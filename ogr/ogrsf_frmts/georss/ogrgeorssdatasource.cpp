@@ -350,7 +350,8 @@ int OGRGeoRSSDataSource::Open(const char *pszFilename, int bUpdateIn)
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRGeoRSSDataSource::Create(const char *pszFilename, char **papszOptions)
+int OGRGeoRSSDataSource::Create(const char *pszFilename,
+                                CSLConstList papszOptions)
 {
     if (fpOutput != nullptr)
     {
