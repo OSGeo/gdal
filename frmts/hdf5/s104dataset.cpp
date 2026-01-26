@@ -48,7 +48,7 @@ class S104Dataset final : public S100BaseDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -631,7 +631,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              S104Creator                             */
+/*                             S104Creator                              */
 /************************************************************************/
 
 class S104Creator final : public S100BaseWriter
@@ -668,7 +668,7 @@ class S104Creator final : public S100BaseWriter
 };
 
 /************************************************************************/
-/*                      S104Creator::~S104Creator()                     */
+/*                     S104Creator::~S104Creator()                      */
 /************************************************************************/
 
 S104Creator::~S104Creator()
@@ -677,7 +677,7 @@ S104Creator::~S104Creator()
 }
 
 /************************************************************************/
-/*                         S104Creator::Create()                        */
+/*                        S104Creator::Create()                         */
 /************************************************************************/
 
 bool S104Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
@@ -1125,7 +1125,7 @@ bool S104Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
 }
 
 /************************************************************************/
-/*            S104Creator::WriteFeatureGroupAttributes()                */
+/*              S104Creator::WriteFeatureGroupAttributes()              */
 /************************************************************************/
 
 bool S104Creator::WriteFeatureGroupAttributes()
@@ -1244,7 +1244,7 @@ bool S104Creator::WriteUncertaintyDataset()
 }
 
 /************************************************************************/
-/*              S104Creator::FillFeatureInstanceGroup()                 */
+/*               S104Creator::FillFeatureInstanceGroup()                */
 /************************************************************************/
 
 bool S104Creator::FillFeatureInstanceGroup(
@@ -1422,7 +1422,7 @@ bool S104Creator::FillFeatureInstanceGroup(
 }
 
 /************************************************************************/
-/*                      S104Creator::CreateGroupF()                     */
+/*                     S104Creator::CreateGroupF()                      */
 /************************************************************************/
 
 // Per S-104 v2.0 spec
@@ -1458,7 +1458,7 @@ bool S104Creator::CreateGroupF()
 }
 
 /************************************************************************/
-/*                       S104Creator::CopyValues()                      */
+/*                      S104Creator::CopyValues()                       */
 /************************************************************************/
 
 bool S104Creator::CopyValues(GDALDataset *poSrcDS, GDALProgressFunc pfnProgress,
@@ -1756,7 +1756,7 @@ static void S104DatasetDriverUnload(GDALDriver *)
 /* static */
 GDALDataset *S104Dataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /* bStrict*/,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

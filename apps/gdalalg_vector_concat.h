@@ -21,7 +21,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       GDALVectorConcatAlgorithm                      */
+/*                      GDALVectorConcatAlgorithm                       */
 /************************************************************************/
 
 class GDALVectorConcatAlgorithm /* non final */
@@ -57,7 +57,7 @@ class GDALVectorConcatAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                   GDALVectorConcatAlgorithmStandalone                */
+/*                 GDALVectorConcatAlgorithmStandalone                  */
 /************************************************************************/
 
 class GDALVectorConcatAlgorithmStandalone final

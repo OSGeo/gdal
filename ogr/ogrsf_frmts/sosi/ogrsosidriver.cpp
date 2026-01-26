@@ -21,7 +21,7 @@ static int bFYBAInit = FALSE;
 static std::mutex oMutex;
 
 /************************************************************************/
-/*                          OGRSOSIInit()                               */
+/*                            OGRSOSIInit()                             */
 /************************************************************************/
 
 static void OGRSOSIInit()
@@ -51,7 +51,7 @@ static void OGRSOSIDriverUnload(CPL_UNUSED GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                              Open()                                  */
+/*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRSOSIDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -73,13 +73,15 @@ static GDALDataset *OGRSOSIDriverOpen(GDALOpenInfo *poOpenInfo)
 
 #ifdef WRITE_SUPPORT
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
-static GDALDataset *
-OGRSOSIDriverCreate(const char *pszName, CPL_UNUSED int nBands,
-                    CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                    CPL_UNUSED GDALDataType eDT, CPL_UNUSED char **papszOptions)
+static GDALDataset *OGRSOSIDriverCreate(const char *pszName,
+                                        CPL_UNUSED int nBands,
+                                        CPL_UNUSED int nXSize,
+                                        CPL_UNUSED int nYSize,
+                                        CPL_UNUSED GDALDataType eDT,
+                                        CPL_UNUSED CSLConstList papszOptions)
 {
     OGRSOSIInit();
     OGRSOSIDataSource *poDS = new OGRSOSIDataSource();
@@ -93,7 +95,7 @@ OGRSOSIDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 #endif
 
 /************************************************************************/
-/*                         RegisterOGRSOSI()                            */
+/*                          RegisterOGRSOSI()                           */
 /************************************************************************/
 
 void RegisterOGRSOSI()

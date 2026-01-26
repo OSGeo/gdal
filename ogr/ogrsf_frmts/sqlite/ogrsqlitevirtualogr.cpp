@@ -31,7 +31,7 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                  OGR2SQLITE_GetNameForGeometryColumn()               */
+/*                OGR2SQLITE_GetNameForGeometryColumn()                 */
 /************************************************************************/
 
 CPLString OGR2SQLITE_GetNameForGeometryColumn(OGRLayer *poLayer)
@@ -77,7 +77,7 @@ int OGR2SQLITE_AddExtraDS(OGR2SQLITEModule *, GDALDataset *)
 #else
 
 /************************************************************************/
-/*                           OGR2SQLITE_Register()                      */
+/*                        OGR2SQLITE_Register()                         */
 /************************************************************************/
 
 CPL_C_START
@@ -199,7 +199,7 @@ static SQLITE_EXTENSION_INIT1
 };
 
 /************************************************************************/
-/*                        OGR2SQLITEModule()                            */
+/*                          OGR2SQLITEModule()                          */
 /************************************************************************/
 
 OGR2SQLITEModule::OGR2SQLITEModule()
@@ -225,7 +225,7 @@ OGR2SQLITEModule::~OGR2SQLITEModule()
 }
 
 /************************************************************************/
-/*                        SetHandleSQLFunctions()                       */
+/*                       SetHandleSQLFunctions()                        */
 /************************************************************************/
 
 void OGR2SQLITEModule::SetHandleSQLFunctions(void *hHandleSQLFunctionsIn)
@@ -235,7 +235,7 @@ void OGR2SQLITEModule::SetHandleSQLFunctions(void *hHandleSQLFunctionsIn)
 }
 
 /************************************************************************/
-/*                            AddExtraDS()                              */
+/*                             AddExtraDS()                             */
 /************************************************************************/
 
 int OGR2SQLITEModule::AddExtraDS(GDALDataset *poDSIn)
@@ -246,7 +246,7 @@ int OGR2SQLITEModule::AddExtraDS(GDALDataset *poDSIn)
 }
 
 /************************************************************************/
-/*                            GetExtraDS()                              */
+/*                             GetExtraDS()                             */
 /************************************************************************/
 
 GDALDataset *OGR2SQLITEModule::GetExtraDS(int nIndex)
@@ -257,7 +257,7 @@ GDALDataset *OGR2SQLITEModule::GetExtraDS(int nIndex)
 }
 
 /************************************************************************/
-/*                                Setup()                               */
+/*                               Setup()                                */
 /************************************************************************/
 
 int OGR2SQLITEModule::Setup(GDALDataset *poDSIn,
@@ -271,7 +271,7 @@ int OGR2SQLITEModule::Setup(GDALDataset *poDSIn,
 }
 
 /************************************************************************/
-/*                            FetchSRSId()                              */
+/*                             FetchSRSId()                             */
 /************************************************************************/
 
 // TODO(schwehr): Refactor FetchSRSId to be much simpler.
@@ -305,7 +305,7 @@ int OGR2SQLITEModule::FetchSRSId(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                          RegisterVTable()                            */
+/*                           RegisterVTable()                           */
 /************************************************************************/
 
 void OGR2SQLITEModule::RegisterVTable(const char *pszVTableName,
@@ -324,7 +324,7 @@ void OGR2SQLITEModule::UnregisterVTable(const char *pszVTableName)
 }
 
 /************************************************************************/
-/*                          GetLayerForVTable()                         */
+/*                         GetLayerForVTable()                          */
 /************************************************************************/
 
 OGRLayer *OGR2SQLITEModule::GetLayerForVTable(const char *pszVTableName)
@@ -359,7 +359,7 @@ OGRLayer *OGR2SQLITEModule::GetLayerForVTable(const char *pszVTableName)
    implement a new module for the Virtual Table mechanism. */
 
 /************************************************************************/
-/*                            OGR2SQLITE_vtab                           */
+/*                           OGR2SQLITE_vtab                            */
 /************************************************************************/
 
 typedef struct
@@ -380,7 +380,7 @@ typedef struct
 } OGR2SQLITE_vtab;
 
 /************************************************************************/
-/*                          OGR2SQLITE_vtab_cursor                      */
+/*                        OGR2SQLITE_vtab_cursor                        */
 /************************************************************************/
 
 typedef struct
@@ -408,7 +408,7 @@ typedef struct
 #ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 
 /************************************************************************/
-/*                     OGR2SQLITEDetectSuspiciousUsage()                */
+/*                  OGR2SQLITEDetectSuspiciousUsage()                   */
 /************************************************************************/
 
 static int OGR2SQLITEDetectSuspiciousUsage(sqlite3 *hDB,
@@ -1018,7 +1018,7 @@ static int OGR2SQLITE_BestIndex(sqlite3_vtab *pVTab, sqlite3_index_info *pIndex)
 }
 
 /************************************************************************/
-/*                      OGR2SQLITE_DisconnectDestroy()                  */
+/*                    OGR2SQLITE_DisconnectDestroy()                    */
 /************************************************************************/
 
 static int OGR2SQLITE_DisconnectDestroy(sqlite3_vtab *pVTab)
@@ -1040,7 +1040,7 @@ static int OGR2SQLITE_DisconnectDestroy(sqlite3_vtab *pVTab)
 }
 
 /************************************************************************/
-/*                           OGR2SQLITE_Open()                          */
+/*                          OGR2SQLITE_Open()                           */
 /************************************************************************/
 
 static int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
@@ -1098,7 +1098,7 @@ static int OGR2SQLITE_Open(sqlite3_vtab *pVTab, sqlite3_vtab_cursor **ppCursor)
 }
 
 /************************************************************************/
-/*                           OGR2SQLITE_Close()                         */
+/*                          OGR2SQLITE_Close()                          */
 /************************************************************************/
 
 static int OGR2SQLITE_Close(sqlite3_vtab_cursor *pCursor)
@@ -1123,7 +1123,7 @@ static int OGR2SQLITE_Close(sqlite3_vtab_cursor *pCursor)
 }
 
 /************************************************************************/
-/*                          OGR2SQLITE_Filter()                         */
+/*                         OGR2SQLITE_Filter()                          */
 /************************************************************************/
 
 static int OGR2SQLITE_Filter(sqlite3_vtab_cursor *pCursor,
@@ -1367,7 +1367,7 @@ static int OGR2SQLITE_Next(sqlite3_vtab_cursor *pCursor)
 }
 
 /************************************************************************/
-/*                          OGR2SQLITE_Eof()                            */
+/*                           OGR2SQLITE_Eof()                           */
 /************************************************************************/
 
 static int OGR2SQLITE_Eof(sqlite3_vtab_cursor *pCursor)
@@ -1389,7 +1389,7 @@ static int OGR2SQLITE_Eof(sqlite3_vtab_cursor *pCursor)
 }
 
 /************************************************************************/
-/*                      OGR2SQLITE_GoToWishedIndex()                    */
+/*                     OGR2SQLITE_GoToWishedIndex()                     */
 /************************************************************************/
 
 static void OGR2SQLITE_GoToWishedIndex(OGR2SQLITE_vtab_cursor *pMyCursor)
@@ -1419,7 +1419,7 @@ static void OGR2SQLITE_GoToWishedIndex(OGR2SQLITE_vtab_cursor *pMyCursor)
 }
 
 /************************************************************************/
-/*                    OGR2SQLITE_ExportGeometry()                       */
+/*                     OGR2SQLITE_ExportGeometry()                      */
 /************************************************************************/
 
 static void OGR2SQLITE_ExportGeometry(OGRGeometry *poGeom, int nSRSId,
@@ -1660,7 +1660,7 @@ static int OGR2SQLITE_Column(sqlite3_vtab_cursor *pCursor,
 }
 
 /************************************************************************/
-/*                         OGR2SQLITE_Rowid()                           */
+/*                          OGR2SQLITE_Rowid()                          */
 /************************************************************************/
 
 static int OGR2SQLITE_Rowid(sqlite3_vtab_cursor *pCursor, sqlite3_int64 *pRowid)
@@ -1694,7 +1694,7 @@ static int OGR2SQLITE_Rename(CPL_UNUSED sqlite3_vtab *pVtab,
 
 #if 0
 /************************************************************************/
-/*                        OGR2SQLITE_FindFunction()                     */
+/*                      OGR2SQLITE_FindFunction()                       */
 /************************************************************************/
 
 static
@@ -1853,7 +1853,7 @@ static OGRFeature *OGR2SQLITE_FeatureFromArgs(OGR2SQLITE_vtab *pMyVTab,
 }
 
 /************************************************************************/
-/*                            OGR2SQLITE_Update()                       */
+/*                         OGR2SQLITE_Update()                          */
 /************************************************************************/
 
 static int OGR2SQLITE_Update(sqlite3_vtab *pVTab, int argc,
@@ -1911,7 +1911,7 @@ static int OGR2SQLITE_Update(sqlite3_vtab *pVTab, int argc,
 }
 
 /************************************************************************/
-/*                        sOGR2SQLITEModule                             */
+/*                          sOGR2SQLITEModule                           */
 /************************************************************************/
 
 static const struct sqlite3_module sOGR2SQLITEModule = {
@@ -1947,7 +1947,7 @@ static const struct sqlite3_module sOGR2SQLITEModule = {
 };
 
 /************************************************************************/
-/*                           OGR2SQLITE_GetLayer()                      */
+/*                        OGR2SQLITE_GetLayer()                         */
 /************************************************************************/
 
 static OGRLayer *OGR2SQLITE_GetLayer(const char *pszFuncName,
@@ -1990,7 +1990,7 @@ static OGRLayer *OGR2SQLITE_GetLayer(const char *pszFuncName,
 }
 
 /************************************************************************/
-/*                       OGR2SQLITE_ogr_layer_Extent()                  */
+/*                    OGR2SQLITE_ogr_layer_Extent()                     */
 /************************************************************************/
 
 static void OGR2SQLITE_ogr_layer_Extent(sqlite3_context *pContext, int argc,
@@ -2044,7 +2044,7 @@ static void OGR2SQLITE_ogr_layer_Extent(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                       OGR2SQLITE_ogr_layer_SRID()                    */
+/*                     OGR2SQLITE_ogr_layer_SRID()                      */
 /************************************************************************/
 
 static void OGR2SQLITE_ogr_layer_SRID(sqlite3_context *pContext, int argc,
@@ -2097,7 +2097,7 @@ static void OGR2SQLITE_ogr_layer_GeometryType(sqlite3_context *pContext,
 }
 
 /************************************************************************/
-/*                OGR2SQLITE_ogr_layer_FeatureCount()                   */
+/*                 OGR2SQLITE_ogr_layer_FeatureCount()                  */
 /************************************************************************/
 
 static void OGR2SQLITE_ogr_layer_FeatureCount(sqlite3_context *pContext,
@@ -2112,7 +2112,7 @@ static void OGR2SQLITE_ogr_layer_FeatureCount(sqlite3_context *pContext,
 }
 
 /************************************************************************/
-/*                  OGR2SQLITE_ST_Hilbert_X_Y_TableName()               */
+/*                OGR2SQLITE_ST_Hilbert_X_Y_TableName()                 */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_Hilbert_X_Y_TableName(sqlite3_context *pContext,
@@ -2151,7 +2151,7 @@ static void OGR2SQLITE_ST_Hilbert_X_Y_TableName(sqlite3_context *pContext,
 }
 
 /************************************************************************/
-/*                      OGR2SQLITE_GetGeom()                            */
+/*                         OGR2SQLITE_GetGeom()                         */
 /************************************************************************/
 
 static std::unique_ptr<OGRGeometry>
@@ -2178,7 +2178,7 @@ OGR2SQLITE_GetGeom(sqlite3_context * /*pContext*/, int /* argc */,
 }
 
 /************************************************************************/
-/*                     OGR2SQLITE_ST_Hilbert_Geom_BBOX()                */
+/*                  OGR2SQLITE_ST_Hilbert_Geom_BBOX()                   */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_Hilbert_Geom_BBOX(sqlite3_context *pContext, int argc,
@@ -2214,7 +2214,7 @@ static void OGR2SQLITE_ST_Hilbert_Geom_BBOX(sqlite3_context *pContext, int argc,
 }
 
 /************************************************************************/
-/*                 OGR2SQLITE_ST_Hilbert_Geom_TableName()               */
+/*                OGR2SQLITE_ST_Hilbert_Geom_TableName()                */
 /************************************************************************/
 
 static void OGR2SQLITE_ST_Hilbert_Geom_TableName(sqlite3_context *pContext,
@@ -2286,7 +2286,7 @@ static void OGR2SQLITEDestroyModule(void *pData)
 #ifdef ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
 
 /************************************************************************/
-/*                    OGR2SQLITESpatialIndex_vtab                       */
+/*                     OGR2SQLITESpatialIndex_vtab                      */
 /************************************************************************/
 
 typedef struct
@@ -2326,7 +2326,7 @@ typedef struct
 } OGR2SQLITESpatialIndex_vtab_cursor;
 
 /************************************************************************/
-/*                   OGR2SQLITESpatialIndex_ConnectCreate()             */
+/*                OGR2SQLITESpatialIndex_ConnectCreate()                */
 /************************************************************************/
 
 static int OGR2SQLITESpatialIndex_ConnectCreate(sqlite3 *hDB, void *pAux,
@@ -2433,7 +2433,7 @@ static int OGR2SQLITESpatialIndex_ConnectCreate(sqlite3 *hDB, void *pAux,
 }
 
 /************************************************************************/
-/*                      OGR2SQLITESpatialIndex_BestIndex()              */
+/*                  OGR2SQLITESpatialIndex_BestIndex()                  */
 /************************************************************************/
 
 static int OGR2SQLITESpatialIndex_BestIndex(sqlite3_vtab *pVTab,
@@ -2534,7 +2534,7 @@ static int OGR2SQLITESpatialIndex_BestIndex(sqlite3_vtab *pVTab,
 }
 
 /************************************************************************/
-/*                  OGR2SQLITESpatialIndex_DisconnectDestroy()          */
+/*              OGR2SQLITESpatialIndex_DisconnectDestroy()              */
 /************************************************************************/
 
 static int OGR2SQLITESpatialIndex_DisconnectDestroy(sqlite3_vtab *pVTab)
@@ -2609,7 +2609,7 @@ static int OGR2SQLITESpatialIndex_Open(sqlite3_vtab *pVTab,
 }
 
 /************************************************************************/
-/*                      OGR2SQLITESpatialIndex_Close()                  */
+/*                    OGR2SQLITESpatialIndex_Close()                    */
 /************************************************************************/
 
 static int OGR2SQLITESpatialIndex_Close(sqlite3_vtab_cursor *pCursor)
@@ -2632,7 +2632,7 @@ static int OGR2SQLITESpatialIndex_Close(sqlite3_vtab_cursor *pCursor)
 }
 
 /************************************************************************/
-/*                     OGR2SQLITESpatialIndex_Filter()                  */
+/*                   OGR2SQLITESpatialIndex_Filter()                    */
 /************************************************************************/
 
 static int OGR2SQLITESpatialIndex_Filter(sqlite3_vtab_cursor *pCursor,
@@ -2715,7 +2715,7 @@ static int OGR2SQLITESpatialIndex_Next(sqlite3_vtab_cursor *pCursor)
 }
 
 /************************************************************************/
-/*                      OGR2SQLITESpatialIndex_Eof()                    */
+/*                     OGR2SQLITESpatialIndex_Eof()                     */
 /************************************************************************/
 
 static int OGR2SQLITESpatialIndex_Eof(sqlite3_vtab_cursor *pCursor)
@@ -2730,7 +2730,7 @@ static int OGR2SQLITESpatialIndex_Eof(sqlite3_vtab_cursor *pCursor)
 }
 
 /************************************************************************/
-/*                    OGR2SQLITESpatialIndex_Column()                   */
+/*                   OGR2SQLITESpatialIndex_Column()                    */
 /************************************************************************/
 
 static int OGR2SQLITESpatialIndex_Column(sqlite3_vtab_cursor *pCursor,
@@ -2850,7 +2850,7 @@ static const struct sqlite3_module sOGR2SQLITESpatialIndex = {
 #endif  // ENABLE_VIRTUAL_OGR_SPATIAL_INDEX
 
 /************************************************************************/
-/*                              Setup()                                 */
+/*                               Setup()                                */
 /************************************************************************/
 
 #ifndef SQLITE_DETERMINISTIC
@@ -2921,7 +2921,7 @@ int OGR2SQLITEModule::Setup(sqlite3 *hDBIn)
 }
 
 /************************************************************************/
-/*                        OGR2SQLITE_Setup()                            */
+/*                          OGR2SQLITE_Setup()                          */
 /************************************************************************/
 
 OGR2SQLITEModule *OGR2SQLITE_Setup(GDALDataset *poDS,
@@ -2964,7 +2964,7 @@ int OGR2SQLITE_AddExtraDS(OGR2SQLITEModule *poModule, GDALDataset *poDS)
 #ifdef VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 
 /************************************************************************/
-/*                        sqlite3_extension_init()                      */
+/*                       sqlite3_extension_init()                       */
 /************************************************************************/
 
 CPL_C_START
@@ -3034,7 +3034,7 @@ int sqlite3_extension_init(sqlite3 *hDB, char **pzErrMsg,
 #endif  // VIRTUAL_OGR_DYNAMIC_EXTENSION_ENABLED
 
 /************************************************************************/
-/*                        OGR2SQLITE_static_register()                  */
+/*                     OGR2SQLITE_static_register()                     */
 /************************************************************************/
 
 #ifndef _WIN32

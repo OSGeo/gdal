@@ -47,7 +47,7 @@ class ROIPACDataset final : public RawDataset
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
@@ -100,7 +100,7 @@ static CPLString getRscFilename(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            ROIPACDataset()                           */
+/*                           ROIPACDataset()                            */
 /************************************************************************/
 
 ROIPACDataset::ROIPACDataset()
@@ -111,7 +111,7 @@ ROIPACDataset::ROIPACDataset()
 }
 
 /************************************************************************/
-/*                            ~ROIPACDataset()                          */
+/*                           ~ROIPACDataset()                           */
 /************************************************************************/
 
 ROIPACDataset::~ROIPACDataset()
@@ -120,7 +120,7 @@ ROIPACDataset::~ROIPACDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr ROIPACDataset::Close(GDALProgressFunc, void *)
@@ -492,7 +492,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int ROIPACDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -533,12 +533,12 @@ int ROIPACDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
                                    int nYSize, int nBandsIn, GDALDataType eType,
-                                   char ** /* papszOptions */)
+                                   CSLConstList /* papszOptions */)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify input options.                                           */
@@ -787,7 +787,7 @@ CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                         GetGeoTransform()                            */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr ROIPACDataset::GetGeoTransform(GDALGeoTransform &gt) const

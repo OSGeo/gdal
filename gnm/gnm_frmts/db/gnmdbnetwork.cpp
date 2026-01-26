@@ -81,7 +81,8 @@ CPLErr GNMDatabaseNetwork::Open(GDALOpenInfo *poOpenInfo)
     return CE_None;
 }
 
-CPLErr GNMDatabaseNetwork::Create(const char *pszFilename, char **papszOptions)
+CPLErr GNMDatabaseNetwork::Create(const char *pszFilename,
+                                  CSLConstList papszOptions)
 {
     FormName(pszFilename, papszOptions);
 
@@ -192,7 +193,7 @@ CPLErr GNMDatabaseNetwork::Create(const char *pszFilename, char **papszOptions)
 }
 
 int GNMDatabaseNetwork::CheckNetworkExist(const char *pszFilename,
-                                          char **papszOptions)
+                                          CSLConstList papszOptions)
 {
     // check if path exist
     // if path exist check if network already present and OVERWRITE option
@@ -327,7 +328,7 @@ bool GNMDatabaseNetwork::CheckStorageDriverSupport(const char *pszDriverName)
 }
 
 CPLErr GNMDatabaseNetwork::FormName(const char *pszFilename,
-                                    char **papszOptions)
+                                    CSLConstList papszOptions)
 {
     if (m_soNetworkFullName.empty())
         m_soNetworkFullName = pszFilename;

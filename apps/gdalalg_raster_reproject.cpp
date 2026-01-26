@@ -27,7 +27,7 @@
 #endif
 
 /************************************************************************/
-/*      GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm()    */
+/*     GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm()     */
 /************************************************************************/
 
 GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
@@ -116,7 +116,7 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*           GDALRasterReprojectUtils::AddResamplingArg()               */
+/*             GDALRasterReprojectUtils::AddResamplingArg()             */
 /************************************************************************/
 
 /*static */ void
@@ -132,7 +132,7 @@ GDALRasterReprojectUtils::AddResamplingArg(GDALAlgorithm *alg,
 }
 
 /************************************************************************/
-/*            AddWarpOptTransformOptErrorThresholdArg()                 */
+/*              AddWarpOptTransformOptErrorThresholdArg()               */
 /************************************************************************/
 
 /* static */
@@ -195,7 +195,7 @@ bool GDALRasterReprojectAlgorithm::CanHandleNextStep(
 }
 
 /************************************************************************/
-/*            GDALRasterReprojectAlgorithm::RunStep()                   */
+/*               GDALRasterReprojectAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

@@ -27,7 +27,7 @@ static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE *f)
 }
 
 /************************************************************************/
-/*                         VSIPDFFileStream()                           */
+/*                          VSIPDFFileStream()                          */
 /************************************************************************/
 
 VSIPDFFileStream::VSIPDFFileStream(VSILFILE *fIn, const char *pszFilename,
@@ -39,7 +39,7 @@ VSIPDFFileStream::VSIPDFFileStream(VSILFILE *fIn, const char *pszFilename,
 }
 
 /************************************************************************/
-/*                         VSIPDFFileStream()                           */
+/*                          VSIPDFFileStream()                          */
 /************************************************************************/
 
 VSIPDFFileStream::VSIPDFFileStream(VSIPDFFileStream *poParentIn,
@@ -52,7 +52,7 @@ VSIPDFFileStream::VSIPDFFileStream(VSIPDFFileStream *poParentIn,
 }
 
 /************************************************************************/
-/*                        ~VSIPDFFileStream()                           */
+/*                         ~VSIPDFFileStream()                          */
 /************************************************************************/
 
 VSIPDFFileStream::~VSIPDFFileStream()
@@ -65,7 +65,7 @@ VSIPDFFileStream::~VSIPDFFileStream()
 }
 
 /************************************************************************/
-/*                                  copy()                              */
+/*                                copy()                                */
 /************************************************************************/
 
 BaseStream *VSIPDFFileStream::copy()
@@ -75,7 +75,7 @@ BaseStream *VSIPDFFileStream::copy()
 }
 
 /************************************************************************/
-/*                             makeSubStream()                          */
+/*                           makeSubStream()                            */
 /************************************************************************/
 
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
@@ -98,7 +98,7 @@ Stream *VSIPDFFileStream::makeSubStream(Goffset startA, bool limitedA,
 #endif
 
 /************************************************************************/
-/*                                 getPos()                             */
+/*                               getPos()                               */
 /************************************************************************/
 
 Goffset VSIPDFFileStream::getPos()
@@ -107,7 +107,7 @@ Goffset VSIPDFFileStream::getPos()
 }
 
 /************************************************************************/
-/*                                getStart()                            */
+/*                              getStart()                              */
 /************************************************************************/
 
 Goffset VSIPDFFileStream::getStart()
@@ -116,7 +116,7 @@ Goffset VSIPDFFileStream::getStart()
 }
 
 /************************************************************************/
-/*                             getKind()                                */
+/*                              getKind()                               */
 /************************************************************************/
 
 StreamKind VSIPDFFileStream::getKind() const
@@ -125,7 +125,7 @@ StreamKind VSIPDFFileStream::getKind() const
 }
 
 /************************************************************************/
-/*                           getFileName()                               */
+/*                            getFileName()                             */
 /************************************************************************/
 
 GooString *VSIPDFFileStream::getFileName()
@@ -185,7 +185,7 @@ int VSIPDFFileStream::FillBuffer()
 }
 
 /************************************************************************/
-/*                                getChar()                             */
+/*                              getChar()                               */
 /************************************************************************/
 
 /* The unoptimized version performs a bit less since we must go through */
@@ -215,7 +215,7 @@ int VSIPDFFileStream::getChar()
 }
 
 /************************************************************************/
-/*                       getUnfilteredChar()                            */
+/*                         getUnfilteredChar()                          */
 /************************************************************************/
 
 int VSIPDFFileStream::getUnfilteredChar()
@@ -224,7 +224,7 @@ int VSIPDFFileStream::getUnfilteredChar()
 }
 
 /************************************************************************/
-/*                               lookChar()                             */
+/*                              lookChar()                              */
 /************************************************************************/
 
 int VSIPDFFileStream::lookChar()
@@ -247,7 +247,7 @@ int VSIPDFFileStream::lookChar()
 }
 
 /************************************************************************/
-/*                                reset()                               */
+/*                               reset()                                */
 /************************************************************************/
 
 #if POPPLER_MAJOR_VERSION > 25
@@ -270,7 +270,7 @@ void VSIPDFFileStream::reset()
 }
 
 /************************************************************************/
-/*                         unfilteredReset()                            */
+/*                          unfilteredReset()                           */
 /************************************************************************/
 
 #if POPPLER_MAJOR_VERSION > 25
@@ -291,7 +291,7 @@ void VSIPDFFileStream::unfilteredReset()
 #endif
 
 /************************************************************************/
-/*                                close()                               */
+/*                               close()                                */
 /************************************************************************/
 
 void VSIPDFFileStream::close()
@@ -336,7 +336,7 @@ void VSIPDFFileStream::setPos(Goffset pos, int dir)
 }
 
 /************************************************************************/
-/*                            moveStart()                               */
+/*                             moveStart()                              */
 /************************************************************************/
 
 void VSIPDFFileStream::moveStart(Goffset delta)
@@ -349,7 +349,7 @@ void VSIPDFFileStream::moveStart(Goffset delta)
 }
 
 /************************************************************************/
-/*                          hasGetChars()                               */
+/*                            hasGetChars()                             */
 /************************************************************************/
 
 bool VSIPDFFileStream::hasGetChars()
@@ -358,7 +358,7 @@ bool VSIPDFFileStream::hasGetChars()
 }
 
 /************************************************************************/
-/*                            getChars()                                */
+/*                              getChars()                              */
 /************************************************************************/
 
 int VSIPDFFileStream::getChars(int nChars, unsigned char *buffer)

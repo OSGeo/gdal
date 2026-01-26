@@ -132,7 +132,7 @@ void OGRLVBAGLayer::AddSpatialRef(OGRwkbGeometryType eTypeIn)
 }
 
 /************************************************************************/
-/*                      AddIdentifierFieldDefn()                        */
+/*                       AddIdentifierFieldDefn()                       */
 /************************************************************************/
 
 void OGRLVBAGLayer::AddIdentifierFieldDefn()
@@ -143,7 +143,7 @@ void OGRLVBAGLayer::AddIdentifierFieldDefn()
 }
 
 /************************************************************************/
-/*                       AddDocumentFieldDefn()                         */
+/*                        AddDocumentFieldDefn()                        */
 /************************************************************************/
 
 void OGRLVBAGLayer::AddDocumentFieldDefn()
@@ -161,7 +161,7 @@ void OGRLVBAGLayer::AddDocumentFieldDefn()
 }
 
 /************************************************************************/
-/*                      AddOccurrenceFieldDefn()                        */
+/*                       AddOccurrenceFieldDefn()                       */
 /************************************************************************/
 
 void OGRLVBAGLayer::AddOccurrenceFieldDefn()
@@ -334,7 +334,7 @@ void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
 }
 
 /************************************************************************/
-/*                         StartDataCollect()                           */
+/*                          StartDataCollect()                          */
 /************************************************************************/
 
 void OGRLVBAGLayer::StartDataCollect()
@@ -345,7 +345,7 @@ void OGRLVBAGLayer::StartDataCollect()
 }
 
 /************************************************************************/
-/*                         StopDataCollect()                            */
+/*                          StopDataCollect()                           */
 /************************************************************************/
 
 void OGRLVBAGLayer::StopDataCollect()
@@ -368,7 +368,7 @@ void OGRLVBAGLayer::DataHandlerCbk(const char *data, int nLen)
 }
 
 /************************************************************************/
-/*                              TouchLayer()                            */
+/*                             TouchLayer()                             */
 /************************************************************************/
 
 bool OGRLVBAGLayer::TouchLayer()
@@ -415,7 +415,7 @@ void OGRLVBAGLayer::CloseUnderlyingLayer()
 }
 
 /************************************************************************/
-/*                        startElementCbk()                            */
+/*                          startElementCbk()                           */
 /************************************************************************/
 
 void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
@@ -812,7 +812,7 @@ void OGRLVBAGLayer::ConfigureParser()
 }
 
 /************************************************************************/
-/*                         IsParserFinished()                           */
+/*                          IsParserFinished()                          */
 /************************************************************************/
 
 bool OGRLVBAGLayer::IsParserFinished(XML_Status status)

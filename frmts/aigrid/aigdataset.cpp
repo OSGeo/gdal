@@ -293,7 +293,7 @@ GDALColorTable *AIGRasterBand::GetColorTable()
 /************************************************************************/
 
 /************************************************************************/
-/*                            AIGDataset()                            */
+/*                             AIGDataset()                             */
 /************************************************************************/
 
 AIGDataset::AIGDataset()
@@ -304,7 +304,7 @@ AIGDataset::AIGDataset()
 }
 
 /************************************************************************/
-/*                           ~AIGDataset()                            */
+/*                            ~AIGDataset()                             */
 /************************************************************************/
 
 AIGDataset::~AIGDataset()
@@ -351,7 +351,7 @@ char **AIGDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                          AIGErrorHandlerVATOpen()                    */
+/*                       AIGErrorHandlerVATOpen()                       */
 /************************************************************************/
 
 class AIGErrorDescription
@@ -771,7 +771,7 @@ CPLErr AIGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *AIGDataset::GetSpatialRef() const

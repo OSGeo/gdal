@@ -20,7 +20,7 @@
 #include <sstream>
 
 /************************************************************************/
-/*                            OGRWAsPLayer()                             */
+/*                            OGRWAsPLayer()                            */
 /************************************************************************/
 
 OGRWAsPLayer::OGRWAsPLayer(GDALDataset *poDS, const char *pszName,
@@ -68,7 +68,7 @@ OGRWAsPLayer::OGRWAsPLayer(
 }
 
 /************************************************************************/
-/*                            ~OGRWAsPLayer()                            */
+/*                           ~OGRWAsPLayer()                            */
 /************************************************************************/
 
 OGRWAsPLayer::~OGRWAsPLayer()
@@ -247,7 +247,7 @@ OGRWAsPLayer::~OGRWAsPLayer()
 }
 
 /************************************************************************/
-/*                            Simplify()                                */
+/*                              Simplify()                              */
 /************************************************************************/
 OGRLineString *OGRWAsPLayer::Simplify(const OGRLineString &line) const
 {
@@ -349,7 +349,7 @@ OGRLineString *OGRWAsPLayer::Simplify(const OGRLineString &line) const
 }
 
 /************************************************************************/
-/*                            WriteElevation()                          */
+/*                           WriteElevation()                           */
 /************************************************************************/
 
 OGRErr OGRWAsPLayer::WriteElevation(OGRLineString *poGeom, const double &dfZ)
@@ -405,7 +405,7 @@ OGRErr OGRWAsPLayer::WriteElevation(OGRGeometry *poGeom, const double &dfZ)
 }
 
 /************************************************************************/
-/*                            WriteRoughness()                          */
+/*                           WriteRoughness()                           */
 /************************************************************************/
 
 OGRErr OGRWAsPLayer::WriteRoughness(OGRPolygon *poGeom, const double &dfZ)
@@ -592,7 +592,7 @@ OGRErr OGRWAsPLayer::WriteRoughness(OGRGeometry *poGeom, const double &dfZleft,
 }
 
 /************************************************************************/
-/*                            ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRWAsPLayer::ICreateFeature(OGRFeature *poFeature)
@@ -680,7 +680,7 @@ OGRErr OGRWAsPLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                            CreateField()                            */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr OGRWAsPLayer::CreateField(const OGRFieldDefn *poField,
@@ -698,7 +698,7 @@ OGRErr OGRWAsPLayer::CreateField(const OGRFieldDefn *poField,
 }
 
 /************************************************************************/
-/*                           CreateGeomField()                          */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
 OGRErr OGRWAsPLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
@@ -725,7 +725,7 @@ OGRErr OGRWAsPLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
 }
 
 /************************************************************************/
-/*                           GetNextRawFeature()                        */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRWAsPLayer::GetNextRawFeature()
@@ -833,7 +833,7 @@ void OGRWAsPLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           AvgZ()                                     */
+/*                                AvgZ()                                */
 /************************************************************************/
 
 double OGRWAsPLayer::AvgZ(OGRLineString *poGeom)

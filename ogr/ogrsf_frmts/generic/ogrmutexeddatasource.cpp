@@ -120,7 +120,7 @@ OGRMutexedDataSource::ICreateLayer(const char *pszName,
 
 OGRLayer *OGRMutexedDataSource::CopyLayer(OGRLayer *poSrcLayer,
                                           const char *pszNewName,
-                                          char **papszOptions)
+                                          CSLConstList papszOptions)
 {
     CPLMutexHolderOptionalLockD(m_hGlobalMutex);
     return WrapLayerIfNecessary(

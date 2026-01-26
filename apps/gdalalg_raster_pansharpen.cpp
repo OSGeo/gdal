@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*       GDALRasterPansharpenAlgorithm::GetConstructorOptions()         */
+/*        GDALRasterPansharpenAlgorithm::GetConstructorOptions()        */
 /************************************************************************/
 
 /* static */ GDALRasterPansharpenAlgorithm::ConstructorOptions
@@ -37,7 +37,7 @@ GDALRasterPansharpenAlgorithm::GetConstructorOptions(bool standaloneStep)
 }
 
 /************************************************************************/
-/*     GDALRasterPansharpenAlgorithm::GDALRasterPansharpenAlgorithm()   */
+/*    GDALRasterPansharpenAlgorithm::GDALRasterPansharpenAlgorithm()    */
 /************************************************************************/
 
 GDALRasterPansharpenAlgorithm::GDALRasterPansharpenAlgorithm(
@@ -91,7 +91,7 @@ GDALRasterPansharpenAlgorithm::GDALRasterPansharpenAlgorithm(
 }
 
 /************************************************************************/
-/*            GDALRasterPansharpenAlgorithm::RunStep()                  */
+/*               GDALRasterPansharpenAlgorithm::RunStep()               */
 /************************************************************************/
 
 bool GDALRasterPansharpenAlgorithm::RunStep(GDALPipelineStepRunContext &)

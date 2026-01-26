@@ -113,7 +113,7 @@ struct BandProperty
 using namespace gdal::GDALBuildVRT;
 
 /************************************************************************/
-/*                         GetSrcDstWin()                               */
+/*                            GetSrcDstWin()                            */
 /************************************************************************/
 
 static int GetSrcDstWin(DatasetProperty *psDP, double we_res, double ns_res,
@@ -197,7 +197,7 @@ static int GetSrcDstWin(DatasetProperty *psDP, double we_res, double ns_res,
 }
 
 /************************************************************************/
-/*                            VRTBuilder                                */
+/*                              VRTBuilder                              */
 /************************************************************************/
 
 class VRTBuilder
@@ -295,7 +295,7 @@ class VRTBuilder
 };
 
 /************************************************************************/
-/*                          VRTBuilder()                                */
+/*                             VRTBuilder()                             */
 /************************************************************************/
 
 VRTBuilder::VRTBuilder(
@@ -383,7 +383,7 @@ VRTBuilder::VRTBuilder(
 }
 
 /************************************************************************/
-/*                         ~VRTBuilder()                                */
+/*                            ~VRTBuilder()                             */
 /************************************************************************/
 
 VRTBuilder::~VRTBuilder()
@@ -412,7 +412,7 @@ VRTBuilder::~VRTBuilder()
 }
 
 /************************************************************************/
-/*                           ProjAreEqual()                             */
+/*                            ProjAreEqual()                            */
 /************************************************************************/
 
 static int ProjAreEqual(const char *pszWKT1, const char *pszWKT2)
@@ -1322,7 +1322,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
 }
 
 /************************************************************************/
-/*                       CreateVRTNonSeparate()                         */
+/*                        CreateVRTNonSeparate()                        */
 /************************************************************************/
 
 void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
@@ -1667,7 +1667,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
 }
 
 /************************************************************************/
-/*                             Build()                                  */
+/*                               Build()                                */
 /************************************************************************/
 
 std::unique_ptr<GDALDataset> VRTBuilder::Build(GDALProgressFunc pfnProgress,
@@ -1894,7 +1894,7 @@ std::unique_ptr<GDALDataset> VRTBuilder::Build(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                        add_file_to_list()                            */
+/*                          add_file_to_list()                          */
 /************************************************************************/
 
 static bool add_file_to_list(const char *filename, const char *tile_index,
@@ -1960,7 +1960,7 @@ static bool add_file_to_list(const char *filename, const char *tile_index,
 }
 
 /************************************************************************/
-/*                        GDALBuildVRTOptions                           */
+/*                         GDALBuildVRTOptions                          */
 /************************************************************************/
 
 /** Options for use with GDALBuildVRT(). GDALBuildVRTOptions* must be allocated
@@ -2010,7 +2010,7 @@ struct GDALBuildVRTOptions
 };
 
 /************************************************************************/
-/*                           GDALBuildVRT()                             */
+/*                            GDALBuildVRT()                            */
 /************************************************************************/
 
 /* clang-format off */
@@ -2186,7 +2186,7 @@ static char *SanitizeSRS(const char *pszUserInput)
 }
 
 /************************************************************************/
-/*                     GDALBuildVRTOptionsGetParser()                    */
+/*                    GDALBuildVRTOptionsGetParser()                    */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -2499,7 +2499,7 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
 }
 
 /************************************************************************/
-/*                       GDALBuildVRTGetParserUsage()                   */
+/*                     GDALBuildVRTGetParserUsage()                     */
 /************************************************************************/
 
 std::string GDALBuildVRTGetParserUsage()
@@ -2521,7 +2521,7 @@ std::string GDALBuildVRTGetParserUsage()
 }
 
 /************************************************************************/
-/*                             GDALBuildVRTOptionsNew()                  */
+/*                       GDALBuildVRTOptionsNew()                       */
 /************************************************************************/
 
 /**
@@ -2617,7 +2617,7 @@ GDALBuildVRTOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                        GDALBuildVRTOptionsFree()                     */
+/*                      GDALBuildVRTOptionsFree()                       */
 /************************************************************************/
 
 /**
@@ -2634,7 +2634,7 @@ void GDALBuildVRTOptionsFree(GDALBuildVRTOptions *psOptions)
 }
 
 /************************************************************************/
-/*                 GDALBuildVRTOptionsSetProgress()                    */
+/*                   GDALBuildVRTOptionsSetProgress()                   */
 /************************************************************************/
 
 /**

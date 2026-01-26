@@ -244,7 +244,7 @@ class OGRHanaLayer : public OGRLayer
 };
 
 /************************************************************************/
-/*                             OGRHanaTableLayer                        */
+/*                          OGRHanaTableLayer                           */
 /************************************************************************/
 
 class OGRHanaTableLayer final : public OGRHanaLayer
@@ -353,7 +353,7 @@ class OGRHanaTableLayer final : public OGRHanaLayer
 };
 
 /************************************************************************/
-/*                              OGRHanaResultLayer                      */
+/*                          OGRHanaResultLayer                          */
 /************************************************************************/
 
 class OGRHanaResultLayer final : public OGRHanaLayer
@@ -370,7 +370,7 @@ class OGRHanaResultLayer final : public OGRHanaLayer
 }  // namespace OGRHANA
 
 /************************************************************************/
-/*                          OGRHanaDataSource                          */
+/*                          OGRHanaDataSource                           */
 /************************************************************************/
 
 class OGRHanaDataSource final : public GDALDataset
@@ -443,7 +443,7 @@ class OGRHanaDataSource final : public GDALDataset
     OGRHanaDataSource();
     ~OGRHanaDataSource() override;
 
-    int Open(const char *newName, char **options, int update);
+    int Open(const char *newName, CSLConstList options, int update);
 
     OGRHANA::HanaVersion GetHanaVersion() const
     {

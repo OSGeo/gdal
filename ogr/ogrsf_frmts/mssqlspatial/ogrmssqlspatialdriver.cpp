@@ -46,7 +46,7 @@ static GDALDataset *OGRMSSQLSpatialDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRMSSQLSpatialDriverCreateDataSource(
     const char *pszName, CPL_UNUSED int nBands, CPL_UNUSED int nXSize,
     CPL_UNUSED int nYSize, CPL_UNUSED GDALDataType eDT,
-    CPL_UNUSED char **papszOptions)
+    CPL_UNUSED CSLConstList papszOptions)
 {
     if (!STARTS_WITH_CI(pszName, "MSSQL:"))
         return nullptr;
@@ -67,7 +67,7 @@ static GDALDataset *OGRMSSQLSpatialDriverCreateDataSource(
 }
 
 /************************************************************************/
-/*                           RegisterOGRMSSQLSpatial()                  */
+/*                      RegisterOGRMSSQLSpatial()                       */
 /************************************************************************/
 
 void RegisterOGRMSSQLSpatial()

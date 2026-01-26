@@ -20,7 +20,7 @@
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/sharding-indexed/index.html
 
 /************************************************************************/
-/*                      ZarrV3CodecShardingIndexed()                    */
+/*                     ZarrV3CodecShardingIndexed()                     */
 /************************************************************************/
 
 ZarrV3CodecShardingIndexed::ZarrV3CodecShardingIndexed() : ZarrV3Codec(NAME)
@@ -28,7 +28,7 @@ ZarrV3CodecShardingIndexed::ZarrV3CodecShardingIndexed() : ZarrV3Codec(NAME)
 }
 
 /************************************************************************/
-/*                   ZarrV3CodecShardingIndexed::Clone()                */
+/*                 ZarrV3CodecShardingIndexed::Clone()                  */
 /************************************************************************/
 
 std::unique_ptr<ZarrV3Codec> ZarrV3CodecShardingIndexed::Clone() const
@@ -42,7 +42,7 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecShardingIndexed::Clone() const
 }
 
 /************************************************************************/
-/*          ZarrV3CodecShardingIndexed::InitFromConfiguration()         */
+/*         ZarrV3CodecShardingIndexed::InitFromConfiguration()          */
 /************************************************************************/
 
 bool ZarrV3CodecShardingIndexed::InitFromConfiguration(
@@ -238,7 +238,7 @@ bool ZarrV3CodecShardingIndexed::InitFromConfiguration(
 }
 
 /************************************************************************/
-/*                ZarrV3CodecShardingIndexed::Encode()                  */
+/*                 ZarrV3CodecShardingIndexed::Encode()                 */
 /************************************************************************/
 
 bool ZarrV3CodecShardingIndexed::Encode(const ZarrByteVectorQuickResize &,
@@ -250,7 +250,7 @@ bool ZarrV3CodecShardingIndexed::Encode(const ZarrByteVectorQuickResize &,
 }
 
 /************************************************************************/
-/*                      CopySubArrayIntoLargerOne()                     */
+/*                     CopySubArrayIntoLargerOne()                      */
 /************************************************************************/
 
 static void
@@ -341,7 +341,7 @@ static void FillWithNoData(ZarrByteVectorQuickResize &abyDst,
 }
 
 /************************************************************************/
-/*                ZarrV3CodecShardingIndexed::Decode()                  */
+/*                 ZarrV3CodecShardingIndexed::Decode()                 */
 /************************************************************************/
 
 bool ZarrV3CodecShardingIndexed::Decode(const ZarrByteVectorQuickResize &abySrc,
@@ -488,7 +488,7 @@ bool ZarrV3CodecShardingIndexed::Decode(const ZarrByteVectorQuickResize &abySrc,
 }
 
 /************************************************************************/
-/*               ZarrV3CodecShardingIndexed::DecodePartial()            */
+/*             ZarrV3CodecShardingIndexed::DecodePartial()              */
 /************************************************************************/
 
 bool ZarrV3CodecShardingIndexed::DecodePartial(
@@ -671,7 +671,7 @@ bool ZarrV3CodecShardingIndexed::DecodePartial(
 }
 
 /************************************************************************/
-/*          ZarrV3CodecShardingIndexed::GetInnerMostBlockSize()         */
+/*         ZarrV3CodecShardingIndexed::GetInnerMostBlockSize()          */
 /************************************************************************/
 
 std::vector<size_t> ZarrV3CodecShardingIndexed::GetInnerMostBlockSize(

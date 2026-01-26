@@ -17,7 +17,7 @@
 
 /************************************************************************/
 /************************************************************************/
-/*                      GDAL Algorithm C++ API                          */
+/*                        GDAL Algorithm C++ API                        */
 /************************************************************************/
 /************************************************************************/
 
@@ -136,7 +136,7 @@ constexpr const char *GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER =
     "raster-or-multidim-raster";
 
 /************************************************************************/
-/*                           GDALArgDatasetValue                        */
+/*                         GDALArgDatasetValue                          */
 /************************************************************************/
 
 /** Return the string representation of GDALArgDatasetType */
@@ -291,7 +291,7 @@ class CPL_DLL GDALArgDatasetValue final
 };
 
 /************************************************************************/
-/*                           GDALAlgorithmArgDecl                       */
+/*                         GDALAlgorithmArgDecl                         */
 /************************************************************************/
 
 /** Argument declaration.
@@ -1756,7 +1756,7 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
 };
 
 /************************************************************************/
-/*                     GDALInConstructionAlgorithmArg                   */
+/*                    GDALInConstructionAlgorithmArg                    */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -2126,7 +2126,7 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
 };
 
 /************************************************************************/
-/*                      GDALAlgorithmRegistry                           */
+/*                        GDALAlgorithmRegistry                         */
 /************************************************************************/
 
 /** Registry of GDAL algorithms.
@@ -3093,7 +3093,7 @@ struct GDALAlgorithmHS
 };
 
 /************************************************************************/
-/*                       GDALContainerAlgorithm                         */
+/*                        GDALContainerAlgorithm                        */
 /************************************************************************/
 
 class CPL_DLL GDALContainerAlgorithm : public GDALAlgorithm
@@ -3113,7 +3113,7 @@ class CPL_DLL GDALContainerAlgorithm : public GDALAlgorithm
 //! @endcond
 
 /************************************************************************/
-/*                   GDALGlobalAlgorithmRegistry                        */
+/*                     GDALGlobalAlgorithmRegistry                      */
 /************************************************************************/
 
 /** Global registry of GDAL algorithms.

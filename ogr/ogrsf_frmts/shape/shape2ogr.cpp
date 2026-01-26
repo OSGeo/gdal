@@ -59,7 +59,7 @@ static void RingStartEnd(SHPObject *psShape, int ring, int *start, int *end)
 }
 
 /************************************************************************/
-/*                        CreateLinearRing                              */
+/*                           CreateLinearRing                           */
 /************************************************************************/
 static std::unique_ptr<OGRLinearRing>
 CreateLinearRing(SHPObject *psShape, int ring, bool bHasZ, bool bHasM)
@@ -473,7 +473,7 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
 }
 
 /************************************************************************/
-/*                      CheckNonFiniteCoordinates()                     */
+/*                     CheckNonFiniteCoordinates()                      */
 /************************************************************************/
 
 static bool CheckNonFiniteCoordinates(const double *v, size_t vsize)
@@ -854,9 +854,9 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
             // for PolyhedralSurface and TIN
             if (eType == wkbPolyhedralSurface || eType == wkbTIN)
             {
-                poGeomToDelete =
-                    std::unique_ptr<OGRGeometry>(OGRGeometryFactory::forceTo(
-                        poGeom->clone(), wkbMultiPolygon, nullptr));
+                poGeomToDelete = OGRGeometryFactory::forceTo(
+                    std::unique_ptr<OGRGeometry>(poGeom->clone()),
+                    wkbMultiPolygon, nullptr);
                 poGC = poGeomToDelete->toGeometryCollection();
             }
 

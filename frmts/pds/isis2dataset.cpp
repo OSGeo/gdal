@@ -84,7 +84,7 @@ ISIS2Dataset::ISIS2Dataset()
 }
 
 /************************************************************************/
-/*                            ~ISIS2Dataset()                            */
+/*                           ~ISIS2Dataset()                            */
 /************************************************************************/
 
 ISIS2Dataset::~ISIS2Dataset()
@@ -94,7 +94,7 @@ ISIS2Dataset::~ISIS2Dataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr ISIS2Dataset::Close(GDALProgressFunc, void *)
@@ -131,7 +131,7 @@ char **ISIS2Dataset::GetFileList()
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *ISIS2Dataset::GetSpatialRef() const
@@ -752,7 +752,7 @@ const char *ISIS2Dataset::GetKeyword(const char *pszPath,
 }
 
 /************************************************************************/
-/*                            GetKeywordSub()                           */
+/*                           GetKeywordSub()                            */
 /************************************************************************/
 
 const char *ISIS2Dataset::GetKeywordSub(const char *pszPath, int iSubscript,

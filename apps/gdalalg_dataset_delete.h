@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALDatasetDeleteAlgorithm                         */
+/*                      GDALDatasetDeleteAlgorithm                      */
 /************************************************************************/
 
 class GDALDatasetDeleteAlgorithm final : public GDALAlgorithm

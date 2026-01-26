@@ -21,7 +21,7 @@
 #include "georasterdrivercore.h"
 
 /************************************************************************/
-/*                     GEORDriverIdentify()                             */
+/*                         GEORDriverIdentify()                         */
 /************************************************************************/
 
 int GEORDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -43,7 +43,7 @@ int GEORDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      GEORDriverSetCommonMetadata()                   */
+/*                    GEORDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void GEORDriverSetCommonMetadata(GDALDriver *poDriver)

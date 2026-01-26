@@ -50,7 +50,7 @@ const char *MSGDataset::metadataDomain = "msg";  // the metadata domain
 #define MAX_SATELLITES 4
 
 /************************************************************************/
-/*                    MSGDataset()                                     */
+/*                             MSGDataset()                             */
 /************************************************************************/
 
 MSGDataset::MSGDataset()
@@ -60,7 +60,7 @@ MSGDataset::MSGDataset()
 }
 
 /************************************************************************/
-/*                    ~MSGDataset()                                     */
+/*                            ~MSGDataset()                             */
 /************************************************************************/
 
 MSGDataset::~MSGDataset()
@@ -81,7 +81,7 @@ CPLErr MSGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                       Open()                                         */
+/*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *MSGDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -315,7 +315,7 @@ GDALDataset *MSGDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         MSGRasterBand()                              */
+/*                           MSGRasterBand()                            */
 /************************************************************************/
 
 const double MSGRasterBand::rRTOA[12] = {20.76, 23.24, 19.85, -1, -1, -1,
@@ -848,7 +848,7 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel,
 }
 
 /************************************************************************/
-/*                      GDALRegister_MSG()                              */
+/*                          GDALRegister_MSG()                          */
 /************************************************************************/
 
 void GDALRegister_MSG()

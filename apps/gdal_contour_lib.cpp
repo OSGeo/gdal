@@ -24,7 +24,7 @@
 #include "gdal_utils_priv.h"
 
 /************************************************************************/
-/*                     GDALContourOptions                               */
+/*                          GDALContourOptions                          */
 /************************************************************************/
 
 /** Options for use with GDALContour(). GDALContourOptions must be allocated
@@ -68,7 +68,7 @@ void GDALContourOptionsSetDestDataSource(GDALContourOptions *psOptions,
 }
 
 /************************************************************************/
-/*                  GDALContourOptionsSetProgress()                   */
+/*                   GDALContourOptionsSetProgress()                    */
 /************************************************************************/
 
 /**
@@ -91,7 +91,7 @@ void GDALContourOptionsSetProgress(GDALContourOptions *psOptions,
 ///@cond Doxygen_Suppress
 
 /************************************************************************/
-/*                  CreateElevAttrib()                                  */
+/*                          CreateElevAttrib()                          */
 /************************************************************************/
 
 static bool CreateElevAttrib(const char *pszElevAttrib, OGRLayerH hLayer)
@@ -103,7 +103,7 @@ static bool CreateElevAttrib(const char *pszElevAttrib, OGRLayerH hLayer)
 }
 
 /************************************************************************/
-/*                  GDALContourProcessOptions()                      */
+/*                     GDALContourProcessOptions()                      */
 /************************************************************************/
 
 CPLErr GDALContourProcessOptions(GDALContourOptions *psOptions,
@@ -433,7 +433,7 @@ CPLErr GDALContourProcessOptions(GDALContourOptions *psOptions,
 ///@endcond
 
 /************************************************************************/
-/*                     GDALContourAppOptionsGetParser()                 */
+/*                   GDALContourAppOptionsGetParser()                   */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -581,7 +581,7 @@ GDALContourAppOptionsGetParser(GDALContourOptions *psOptions,
 }
 
 /************************************************************************/
-/*                         GDALContourGetParserUsage()                     */
+/*                     GDALContourGetParserUsage()                      */
 /************************************************************************/
 
 std::string GDALContourGetParserUsage()
@@ -601,7 +601,7 @@ std::string GDALContourGetParserUsage()
 }
 
 /************************************************************************/
-/*                     GDALContourOptionsNew()                          */
+/*                       GDALContourOptionsNew()                        */
 /************************************************************************/
 
 /**
@@ -741,7 +741,7 @@ GDALContourOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                     GDALContourOptionsFree()                         */
+/*                       GDALContourOptionsFree()                       */
 /************************************************************************/
 
 /**

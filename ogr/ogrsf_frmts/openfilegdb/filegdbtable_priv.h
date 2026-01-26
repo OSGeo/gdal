@@ -45,7 +45,7 @@ inline GInt16 GetInt16(const GByte *pBaseAddr, int iOffset)
 }
 
 /************************************************************************/
-/*                              GetUInt16()                             */
+/*                             GetUInt16()                              */
 /************************************************************************/
 
 inline GUInt16 GetUInt16(const GByte *pBaseAddr, int iOffset)
@@ -69,7 +69,7 @@ inline GInt32 GetInt32(const GByte *pBaseAddr, int iOffset)
 }
 
 /************************************************************************/
-/*                              GetUInt32()                             */
+/*                             GetUInt32()                              */
 /************************************************************************/
 
 inline GUInt32 GetUInt32(const GByte *pBaseAddr, int iOffset)
@@ -93,7 +93,7 @@ inline int64_t GetInt64(const GByte *pBaseAddr, int iOffset)
 }
 
 /************************************************************************/
-/*                              GetUInt64()                             */
+/*                             GetUInt64()                              */
 /************************************************************************/
 
 inline uint64_t GetUInt64(const GByte *pBaseAddr, int iOffset)
@@ -129,7 +129,7 @@ inline double GetFloat64(const GByte *pBaseAddr, int iOffset)
 }
 
 /************************************************************************/
-/*                          ReadUInt32()                                */
+/*                             ReadUInt32()                             */
 /************************************************************************/
 
 inline bool ReadUInt32(VSILFILE *fp, uint32_t &nVal)
@@ -140,7 +140,7 @@ inline bool ReadUInt32(VSILFILE *fp, uint32_t &nVal)
 }
 
 /************************************************************************/
-/*                          WriteUInt32()                               */
+/*                            WriteUInt32()                             */
 /************************************************************************/
 
 inline bool WriteUInt32(VSILFILE *fp, uint32_t nVal)
@@ -150,7 +150,7 @@ inline bool WriteUInt32(VSILFILE *fp, uint32_t nVal)
 }
 
 /************************************************************************/
-/*                          WriteUInt64()                               */
+/*                            WriteUInt64()                             */
 /************************************************************************/
 
 inline bool WriteUInt64(VSILFILE *fp, uint64_t nVal)
@@ -160,7 +160,7 @@ inline bool WriteUInt64(VSILFILE *fp, uint64_t nVal)
 }
 
 /************************************************************************/
-/*                          WriteFloat64()                               */
+/*                            WriteFloat64()                            */
 /************************************************************************/
 
 inline bool WriteFloat64(VSILFILE *fp, double dfVal)
@@ -170,7 +170,7 @@ inline bool WriteFloat64(VSILFILE *fp, double dfVal)
 }
 
 /************************************************************************/
-/*                          WriteUInt32()                               */
+/*                            WriteUInt32()                             */
 /************************************************************************/
 
 inline void WriteUInt32(std::vector<GByte> &abyBuffer, uint32_t nVal)
@@ -181,7 +181,7 @@ inline void WriteUInt32(std::vector<GByte> &abyBuffer, uint32_t nVal)
 }
 
 /************************************************************************/
-/*                          WriteUInt32()                               */
+/*                            WriteUInt32()                             */
 /************************************************************************/
 
 inline void WriteUInt32(std::vector<GByte> &abyBuffer, uint32_t nVal,
@@ -193,7 +193,7 @@ inline void WriteUInt32(std::vector<GByte> &abyBuffer, uint32_t nVal,
 }
 
 /************************************************************************/
-/*                          WriteFloat32()                               */
+/*                            WriteFloat32()                            */
 /************************************************************************/
 
 inline void WriteFloat32(std::vector<GByte> &abyBuffer, float fVal)
@@ -204,7 +204,7 @@ inline void WriteFloat32(std::vector<GByte> &abyBuffer, float fVal)
 }
 
 /************************************************************************/
-/*                          WriteFloat64()                               */
+/*                            WriteFloat64()                            */
 /************************************************************************/
 
 inline void WriteFloat64(std::vector<GByte> &abyBuffer, double dfVal)
@@ -215,7 +215,7 @@ inline void WriteFloat64(std::vector<GByte> &abyBuffer, double dfVal)
 }
 
 /************************************************************************/
-/*                          WriteInt32()                                */
+/*                             WriteInt32()                             */
 /************************************************************************/
 
 inline void WriteInt32(std::vector<GByte> &abyBuffer, int32_t nVal)
@@ -226,7 +226,7 @@ inline void WriteInt32(std::vector<GByte> &abyBuffer, int32_t nVal)
 }
 
 /************************************************************************/
-/*                          WriteInt64()                                */
+/*                             WriteInt64()                             */
 /************************************************************************/
 
 inline void WriteInt64(std::vector<GByte> &abyBuffer, int64_t nVal)
@@ -237,7 +237,7 @@ inline void WriteInt64(std::vector<GByte> &abyBuffer, int64_t nVal)
 }
 
 /************************************************************************/
-/*                          WriteUInt16()                               */
+/*                            WriteUInt16()                             */
 /************************************************************************/
 
 inline void WriteUInt16(std::vector<GByte> &abyBuffer, uint16_t nVal)
@@ -248,7 +248,7 @@ inline void WriteUInt16(std::vector<GByte> &abyBuffer, uint16_t nVal)
 }
 
 /************************************************************************/
-/*                          WriteInt16()                                */
+/*                             WriteInt16()                             */
 /************************************************************************/
 
 inline void WriteInt16(std::vector<GByte> &abyBuffer, int16_t nVal)
@@ -259,7 +259,7 @@ inline void WriteInt16(std::vector<GByte> &abyBuffer, int16_t nVal)
 }
 
 /************************************************************************/
-/*                          WriteUInt8()                                */
+/*                             WriteUInt8()                             */
 /************************************************************************/
 
 inline void WriteUInt8(std::vector<GByte> &abyBuffer, uint8_t nVal)
@@ -268,7 +268,7 @@ inline void WriteUInt8(std::vector<GByte> &abyBuffer, uint8_t nVal)
 }
 
 /************************************************************************/
-/*                          WriteUInt64()                               */
+/*                            WriteUInt64()                             */
 /************************************************************************/
 
 inline void WriteUInt64(std::vector<GByte> &abyBuffer, uint64_t nVal)
@@ -279,7 +279,7 @@ inline void WriteUInt64(std::vector<GByte> &abyBuffer, uint64_t nVal)
 }
 
 /************************************************************************/
-/*                             WriteVarUInt()                           */
+/*                            WriteVarUInt()                            */
 /************************************************************************/
 
 inline void WriteVarUInt(std::vector<GByte> &abyBuffer, uint64_t nVal)
@@ -300,7 +300,7 @@ inline void WriteVarUInt(std::vector<GByte> &abyBuffer, uint64_t nVal)
 }
 
 /************************************************************************/
-/*                             WriteVarInt()                            */
+/*                            WriteVarInt()                             */
 /************************************************************************/
 
 inline void WriteVarInt(std::vector<GByte> &abyBuffer, int64_t nVal)
@@ -343,7 +343,7 @@ inline void WriteVarInt(std::vector<GByte> &abyBuffer, int64_t nVal)
 }
 
 /************************************************************************/
-/*                            ReadUTF16String()                         */
+/*                          ReadUTF16String()                           */
 /************************************************************************/
 
 inline std::string ReadUTF16String(const GByte *pabyIter, int nCarCount)
@@ -359,7 +359,7 @@ inline std::string ReadUTF16String(const GByte *pabyIter, int nCarCount)
 }
 
 /************************************************************************/
-/*                           WriteUTF16String()                         */
+/*                          WriteUTF16String()                          */
 /************************************************************************/
 
 enum UTF16StringFormat
@@ -440,7 +440,7 @@ inline void WriteUTF16String(std::vector<GByte> &abyBuffer, const char *pszStr,
 }
 
 /************************************************************************/
-/*                      FileGDBOGRDateToDoubleDate()                    */
+/*                     FileGDBOGRDateToDoubleDate()                     */
 /************************************************************************/
 
 inline double FileGDBOGRDateToDoubleDate(const OGRField *psField,
@@ -481,7 +481,7 @@ inline double FileGDBOGRDateToDoubleDate(const OGRField *psField,
 }
 
 /************************************************************************/
-/*                      FileGDBOGRTimeToDoubleTime()                    */
+/*                     FileGDBOGRTimeToDoubleTime()                     */
 /************************************************************************/
 
 inline double FileGDBOGRTimeToDoubleTime(const OGRField *psField)
@@ -497,7 +497,7 @@ void FileGDBTablePrintError(const char *pszFile, int nLineNumber);
 #define PrintError() FileGDBTablePrintError(__FILE__, __LINE__)
 
 /************************************************************************/
-/*                          returnError()                               */
+/*                            returnError()                             */
 /************************************************************************/
 
 #define returnError()                                                          \
@@ -508,7 +508,7 @@ void FileGDBTablePrintError(const char *pszFile, int nLineNumber);
     } while (0)
 
 /************************************************************************/
-/*                         returnErrorIf()                              */
+/*                           returnErrorIf()                            */
 /************************************************************************/
 
 #define returnErrorIf(expr)                                                    \
@@ -519,7 +519,7 @@ void FileGDBTablePrintError(const char *pszFile, int nLineNumber);
     } while (0)
 
 /************************************************************************/
-/*                       returnErrorAndCleanupIf()                      */
+/*                      returnErrorAndCleanupIf()                       */
 /************************************************************************/
 
 #define returnErrorAndCleanupIf(expr, cleanup)                                 \

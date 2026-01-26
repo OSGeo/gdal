@@ -305,7 +305,7 @@ class RS2CalibRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                            ReadLUT()                                 */
+/*                              ReadLUT()                               */
 /************************************************************************/
 /* Read the provided LUT in to m_ndTable                                */
 /************************************************************************/
@@ -334,7 +334,7 @@ void RS2CalibRasterBand::ReadLUT()
 }
 
 /************************************************************************/
-/*                        RS2CalibRasterBand()                          */
+/*                         RS2CalibRasterBand()                         */
 /************************************************************************/
 
 RS2CalibRasterBand::RS2CalibRasterBand(
@@ -365,7 +365,7 @@ RS2CalibRasterBand::RS2CalibRasterBand(
 }
 
 /************************************************************************/
-/*                       ~RS2CalibRasterBand()                          */
+/*                        ~RS2CalibRasterBand()                         */
 /************************************************************************/
 
 RS2CalibRasterBand::~RS2CalibRasterBand()
@@ -375,7 +375,7 @@ RS2CalibRasterBand::~RS2CalibRasterBand()
 }
 
 /************************************************************************/
-/*                        IReadBlock()                                  */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr RS2CalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -579,7 +579,7 @@ RS2Dataset::~RS2Dataset()
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int RS2Dataset::CloseDependentDatasets()
@@ -613,7 +613,7 @@ char **RS2Dataset::GetFileList()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int RS2Dataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -1558,7 +1558,7 @@ const OGRSpatialReference *RS2Dataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *RS2Dataset::GetGCPs()
@@ -1568,7 +1568,7 @@ const GDAL_GCP *RS2Dataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *RS2Dataset::GetSpatialRef() const
@@ -1593,7 +1593,7 @@ CPLErr RS2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **RS2Dataset::GetMetadataDomainList()
@@ -1617,7 +1617,7 @@ CSLConstList RS2Dataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                         GDALRegister_RS2()                          */
+/*                          GDALRegister_RS2()                          */
 /************************************************************************/
 
 void GDALRegister_RS2()

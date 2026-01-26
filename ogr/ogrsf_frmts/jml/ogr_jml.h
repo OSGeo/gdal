@@ -27,7 +27,7 @@ class OGRJMLDataset;
 #ifdef HAVE_EXPAT
 
 /************************************************************************/
-/*                            OGRJMLColumn                              */
+/*                             OGRJMLColumn                             */
 /************************************************************************/
 
 class OGRJMLColumn
@@ -58,7 +58,16 @@ class OGRJMLLayer final : public OGRLayer
     VSILFILE *fp;
     bool bHasReadSchema;
 
-    XML_Parser oParser;
+    struct XMLParserDeleter
+    {
+        void operator()(XML_Parser parser)
+        {
+            if (parser)
+                XML_ParserFree(parser);
+        }
+    };
+
+    std::unique_ptr<XML_ParserStruct, XMLParserDeleter> poParser{};
 
     int currentDepth;
     bool bStopParsing;
@@ -211,7 +220,7 @@ class OGRJMLDataset final : public GDALDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nBands, int nXSize,
                                int nYSize, GDALDataType eDT,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 #endif /* ndef OGR_JML_H_INCLUDED */

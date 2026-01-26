@@ -114,7 +114,7 @@ static const PCIDatums asEllips[] = {
     {nullptr, 0}};
 
 /************************************************************************/
-/*                         OSRImportFromPCI()                           */
+/*                          OSRImportFromPCI()                          */
 /************************************************************************/
 
 /**
@@ -134,7 +134,7 @@ OGRErr OSRImportFromPCI(OGRSpatialReferenceH hSRS, const char *pszProj,
 }
 
 /************************************************************************/
-/*                          importFromPCI()                             */
+/*                           importFromPCI()                            */
 /************************************************************************/
 
 /**
@@ -684,7 +684,7 @@ OGRErr OGRSpatialReference::importFromPCI(const char *pszProj,
 }
 
 /************************************************************************/
-/*                          OSRExportToPCI()                            */
+/*                           OSRExportToPCI()                           */
 /************************************************************************/
 /**
  * \brief Export coordinate system in PCI projection definition.
@@ -706,7 +706,7 @@ OGRErr OSRExportToPCI(OGRSpatialReferenceH hSRS, char **ppszProj,
 }
 
 /************************************************************************/
-/*                           exportToPCI()                              */
+/*                            exportToPCI()                             */
 /************************************************************************/
 
 /**

@@ -22,7 +22,7 @@
 #include "tiledbdrivercore.h"
 
 /************************************************************************/
-/*                 TileDBDriverIdentifySimplified()                     */
+/*                   TileDBDriverIdentifySimplified()                   */
 /************************************************************************/
 
 int TileDBDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
@@ -70,7 +70,7 @@ int TileDBDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      TileDBDriverSetCommonMetadata()                 */
+/*                   TileDBDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 #define XSTRINGIFY(X) #X
@@ -288,7 +288,7 @@ void TileDBDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredTileDBPlugin()                      */
+/*                    DeclareDeferredTileDBPlugin()                     */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

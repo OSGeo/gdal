@@ -375,11 +375,14 @@ void GDALDefaultOverviews::OverviewScan()
                 osOvrFilename = pszProxyOvrFilename;
             }
 
+            // Exclude TILEDB because reading from /vsis3/ can be really slow
+            const char *const apszAllowedDrivers[] = {"-TILEDB", nullptr};
             CPLPushErrorHandler(CPLQuietErrorHandler);
             poODS = GDALDataset::Open(
                 osOvrFilename,
                 GDAL_OF_RASTER |
-                    (poDS->GetAccess() == GA_Update ? GDAL_OF_UPDATE : 0));
+                    (poDS->GetAccess() == GA_Update ? GDAL_OF_UPDATE : 0),
+                apszAllowedDrivers);
             CPLPopErrorHandler();
         }
     }
@@ -515,7 +518,7 @@ static int GetFloorPowerOfTwo(int n)
 }
 
 /************************************************************************/
-/*                         GDALComputeOvFactor()                        */
+/*                        GDALComputeOvFactor()                         */
 /************************************************************************/
 
 int GDALComputeOvFactor(int nOvrXSize, int nRasterXSize, int nOvrYSize,
@@ -760,7 +763,7 @@ static const char *GetOptionValue(CSLConstList papszOptions,
 }
 
 /************************************************************************/
-/*                           AddOverviews()                             */
+/*                            AddOverviews()                            */
 /************************************************************************/
 
 CPLErr GDALDefaultOverviews::AddOverviews(
@@ -1333,7 +1336,7 @@ CPLErr GDALDefaultOverviews::BuildOverviews(
 }
 
 /************************************************************************/
-/*                          BuildOverviewsMask()                        */
+/*                         BuildOverviewsMask()                         */
 /************************************************************************/
 
 CPLErr GDALDefaultOverviews::BuildOverviewsMask(const char *pszResampling,
@@ -1651,7 +1654,7 @@ int GDALDefaultOverviews::HaveMaskFile(char **papszSiblingFiles,
 }
 
 /************************************************************************/
-/*                    GDALGetNormalizedOvrResampling()                  */
+/*                   GDALGetNormalizedOvrResampling()                   */
 /************************************************************************/
 
 std::string GDALGetNormalizedOvrResampling(const char *pszResampling)

@@ -23,7 +23,7 @@
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                        GDALRescaledAlphaBand()                       */
+/*                       GDALRescaledAlphaBand()                        */
 /************************************************************************/
 
 GDALRescaledAlphaBand::GDALRescaledAlphaBand(GDALRasterBand *poParentIn)
@@ -43,7 +43,7 @@ GDALRescaledAlphaBand::GDALRescaledAlphaBand(GDALRasterBand *poParentIn)
 }
 
 /************************************************************************/
-/*                      ~GDALRescaledAlphaBand()                        */
+/*                       ~GDALRescaledAlphaBand()                       */
 /************************************************************************/
 
 GDALRescaledAlphaBand::~GDALRescaledAlphaBand()
@@ -125,7 +125,7 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
 }
 
 /************************************************************************/
-/*                   EmitErrorMessageIfWriteNotSupported()              */
+/*                EmitErrorMessageIfWriteNotSupported()                 */
 /************************************************************************/
 
 bool GDALRescaledAlphaBand::EmitErrorMessageIfWriteNotSupported(

@@ -75,7 +75,7 @@ class WEBPDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -98,7 +98,7 @@ class WEBPRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                          WEBPRasterBand()                            */
+/*                           WEBPRasterBand()                           */
 /************************************************************************/
 
 WEBPRasterBand::WEBPRasterBand(WEBPDataset *poDSIn, int)
@@ -159,7 +159,7 @@ GDALColorInterp WEBPRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 /************************************************************************/
-/*                            WEBPDataset()                              */
+/*                            WEBPDataset()                             */
 /************************************************************************/
 
 WEBPDataset::WEBPDataset()
@@ -169,7 +169,7 @@ WEBPDataset::WEBPDataset()
 }
 
 /************************************************************************/
-/*                           ~WEBPDataset()                             */
+/*                            ~WEBPDataset()                            */
 /************************************************************************/
 
 WEBPDataset::~WEBPDataset()
@@ -180,7 +180,7 @@ WEBPDataset::~WEBPDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr WEBPDataset::Close(GDALProgressFunc, void *)
@@ -201,7 +201,7 @@ CPLErr WEBPDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                               GetFileList()                          */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 char **WEBPDataset::GetFileList()
@@ -218,7 +218,7 @@ char **WEBPDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                            GetGeoTransform()                         */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr WEBPDataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -249,7 +249,7 @@ CPLErr WEBPDataset::GetGeoTransform(GDALGeoTransform &gt,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **WEBPDataset::GetMetadataDomainList()
@@ -259,7 +259,7 @@ char **WEBPDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList WEBPDataset::GetMetadata(const char *pszDomain)
@@ -341,7 +341,7 @@ CSLConstList WEBPDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                            Uncompress()                              */
+/*                             Uncompress()                             */
 /************************************************************************/
 
 CPLErr WEBPDataset::Uncompress()
@@ -473,7 +473,7 @@ CPLStringList WEBPDataset::GetCompressionFormats(int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                       ReadCompressedData()                           */
+/*                         ReadCompressedData()                         */
 /************************************************************************/
 
 CPLErr WEBPDataset::ReadCompressedData(const char *pszFormat, int nXOff,
@@ -577,7 +577,7 @@ CPLErr WEBPDataset::ReadCompressedData(const char *pszFormat, int nXOff,
 }
 
 /************************************************************************/
-/*                          OpenPAM()                                   */
+/*                              OpenPAM()                               */
 /************************************************************************/
 
 GDALPamDataset *WEBPDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
@@ -662,7 +662,7 @@ GDALPamDataset *WEBPDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             Open()                                   */
+/*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *WEBPDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -672,7 +672,7 @@ GDALDataset *WEBPDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              WebPUserData                            */
+/*                             WebPUserData                             */
 /************************************************************************/
 
 typedef struct
@@ -695,7 +695,7 @@ static int WEBPDatasetWriter(const uint8_t *data, size_t data_size,
 }
 
 /************************************************************************/
-/*                        WEBPDatasetProgressHook()                     */
+/*                      WEBPDatasetProgressHook()                       */
 /************************************************************************/
 
 #if WEBP_ENCODER_ABI_VERSION >= 0x0100
@@ -710,12 +710,12 @@ static int WEBPDatasetProgressHook(int percent,
 #endif
 
 /************************************************************************/
-/*                              CreateCopy()                            */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *WEBPDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 

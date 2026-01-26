@@ -98,7 +98,7 @@ static CPL_INLINE bool CPL_RectOverlap(const CPLRectObj *a, const CPLRectObj *b)
 }
 
 /************************************************************************/
-/*                      CPLQuadTreeNodeCreate()                         */
+/*                       CPLQuadTreeNodeCreate()                        */
 /************************************************************************/
 
 static QuadTreeNode *CPLQuadTreeNodeCreate(const CPLRectObj *pRect)
@@ -166,7 +166,7 @@ CPLQuadTree *CPLQuadTreeCreate(const CPLRectObj *pGlobalBounds,
 }
 
 /************************************************************************/
-/*                         CPLQuadTreeCreateEx()                        */
+/*                        CPLQuadTreeCreateEx()                         */
 /************************************************************************/
 
 /**
@@ -216,7 +216,7 @@ CPLQuadTree *CPLQuadTreeCreateEx(const CPLRectObj *pGlobalBounds,
 }
 
 /************************************************************************/
-/*                 CPLQuadTreeGetAdvisedMaxDepth()                      */
+/*                   CPLQuadTreeGetAdvisedMaxDepth()                    */
 /************************************************************************/
 
 /**
@@ -264,7 +264,7 @@ int CPLQuadTreeGetAdvisedMaxDepth(int nExpectedFeatures)
 }
 
 /************************************************************************/
-/*                     CPLQuadTreeSetMaxDepth()                         */
+/*                       CPLQuadTreeSetMaxDepth()                       */
 /************************************************************************/
 
 /**
@@ -281,7 +281,7 @@ void CPLQuadTreeSetMaxDepth(CPLQuadTree *hQuadTree, int nMaxDepth)
 }
 
 /************************************************************************/
-/*                   CPLQuadTreeSetBucketCapacity()                     */
+/*                    CPLQuadTreeSetBucketCapacity()                    */
 /************************************************************************/
 
 /**
@@ -299,8 +299,8 @@ void CPLQuadTreeSetBucketCapacity(CPLQuadTree *hQuadTree, int nBucketCapacity)
         hQuadTree->nBucketCapacity = nBucketCapacity;
 }
 
-/***********************************************************************/
-/*                   CPLQuadTreeForceUseOfSubNodes()                   */
+/************************************************************************/
+/*                   CPLQuadTreeForceUseOfSubNodes()                    */
 /************************************************************************/
 
 /**
@@ -317,7 +317,7 @@ void CPLQuadTreeForceUseOfSubNodes(CPLQuadTree *hQuadTree)
 }
 
 /************************************************************************/
-/*                        CPLQuadTreeInsert()                           */
+/*                         CPLQuadTreeInsert()                          */
 /************************************************************************/
 
 /**
@@ -346,7 +346,7 @@ void CPLQuadTreeInsert(CPLQuadTree *hQuadTree, void *hFeature)
 }
 
 /************************************************************************/
-/*                        CPLQuadTreeInsertWithBounds()                 */
+/*                    CPLQuadTreeInsertWithBounds()                     */
 /************************************************************************/
 
 /**
@@ -364,7 +364,7 @@ void CPLQuadTreeInsertWithBounds(CPLQuadTree *hQuadTree, void *hFeature,
 }
 
 /************************************************************************/
-/*                            CPLQuadTreeRemove()                       */
+/*                         CPLQuadTreeRemove()                          */
 /************************************************************************/
 
 static bool CPLQuadTreeRemoveInternal(QuadTreeNode *psNode, void *hFeature,
@@ -470,7 +470,7 @@ void CPLQuadTreeRemove(CPLQuadTree *hQuadTree, void *hFeature,
 }
 
 /************************************************************************/
-/*                    CPLQuadTreeNodeDestroy()                          */
+/*                       CPLQuadTreeNodeDestroy()                       */
 /************************************************************************/
 
 static void CPLQuadTreeNodeDestroy(QuadTreeNode *psNode)
@@ -491,7 +491,7 @@ static void CPLQuadTreeNodeDestroy(QuadTreeNode *psNode)
 }
 
 /************************************************************************/
-/*                       CPLQuadTreeDestroy()                           */
+/*                         CPLQuadTreeDestroy()                         */
 /************************************************************************/
 
 /**
@@ -508,7 +508,7 @@ void CPLQuadTreeDestroy(CPLQuadTree *hQuadTree)
 }
 
 /************************************************************************/
-/*                     CPLQuadTreeSplitBounds()                         */
+/*                       CPLQuadTreeSplitBounds()                       */
 /************************************************************************/
 
 static void CPLQuadTreeSplitBounds(double dfSplitRatio, const CPLRectObj *in,
@@ -545,7 +545,7 @@ static void CPLQuadTreeSplitBounds(double dfSplitRatio, const CPLRectObj *in,
 }
 
 /************************************************************************/
-/*                  CPLQuadTreeNodeAddFeatureAlg1()                     */
+/*                   CPLQuadTreeNodeAddFeatureAlg1()                    */
 /************************************************************************/
 
 static void CPLQuadTreeNodeAddFeatureAlg1(CPLQuadTree *hQuadTree,
@@ -712,7 +712,7 @@ static void CPLQuadTreeNodeAddFeatureAlg1(CPLQuadTree *hQuadTree,
 }
 
 /************************************************************************/
-/*                  CPLQuadTreeNodeAddFeatureAlg2()                     */
+/*                   CPLQuadTreeNodeAddFeatureAlg2()                    */
 /************************************************************************/
 
 static void CPLQuadTreeNodeAddFeatureAlg2(CPLQuadTree *hQuadTree,
@@ -794,7 +794,7 @@ static void CPLQuadTreeNodeAddFeatureAlg2(CPLQuadTree *hQuadTree,
 }
 
 /************************************************************************/
-/*                  CPLQuadTreeAddFeatureInternal()                     */
+/*                   CPLQuadTreeAddFeatureInternal()                    */
 /************************************************************************/
 
 static void CPLQuadTreeAddFeatureInternal(CPLQuadTree *hQuadTree,
@@ -914,7 +914,7 @@ void **CPLQuadTreeSearch(const CPLQuadTree *hQuadTree, const CPLRectObj *pAoi,
 }
 
 /************************************************************************/
-/*                         CPLQuadTreeHasMatch()                        */
+/*                        CPLQuadTreeHasMatch()                         */
 /************************************************************************/
 
 static bool CPLQuadTreeHasMatch(const CPLQuadTree *hQuadTree,
@@ -986,7 +986,7 @@ bool CPLQuadTreeHasMatch(const CPLQuadTree *hQuadTree, const CPLRectObj *pAoi)
 }
 
 /************************************************************************/
-/*                    CPLQuadTreeNodeForeach()                          */
+/*                       CPLQuadTreeNodeForeach()                       */
 /************************************************************************/
 
 static bool CPLQuadTreeNodeForeach(const QuadTreeNode *psNode,
@@ -1010,7 +1010,7 @@ static bool CPLQuadTreeNodeForeach(const QuadTreeNode *psNode,
 }
 
 /************************************************************************/
-/*                       CPLQuadTreeForeach()                           */
+/*                         CPLQuadTreeForeach()                         */
 /************************************************************************/
 
 /**
@@ -1038,7 +1038,7 @@ void CPLQuadTreeForeach(const CPLQuadTree *hQuadTree,
 }
 
 /************************************************************************/
-/*                       CPLQuadTreeDumpNode()                          */
+/*                        CPLQuadTreeDumpNode()                         */
 /************************************************************************/
 
 static void CPLQuadTreeDumpNode(const QuadTreeNode *psNode, int nIndentLevel,
@@ -1088,7 +1088,7 @@ static void CPLQuadTreeDumpNode(const QuadTreeNode *psNode, int nIndentLevel,
 }
 
 /************************************************************************/
-/*                         CPLQuadTreeDump()                            */
+/*                          CPLQuadTreeDump()                           */
 /************************************************************************/
 
 /** Dump quad tree */
@@ -1100,7 +1100,7 @@ void CPLQuadTreeDump(const CPLQuadTree *hQuadTree,
 }
 
 /************************************************************************/
-/*                  CPLQuadTreeGetStatsNode()                           */
+/*                      CPLQuadTreeGetStatsNode()                       */
 /************************************************************************/
 
 static void CPLQuadTreeGetStatsNode(const QuadTreeNode *psNode, int nDepthLevel,
@@ -1121,7 +1121,7 @@ static void CPLQuadTreeGetStatsNode(const QuadTreeNode *psNode, int nDepthLevel,
 }
 
 /************************************************************************/
-/*                    CPLQuadTreeGetStats()                             */
+/*                        CPLQuadTreeGetStats()                         */
 /************************************************************************/
 
 /** Get stats */

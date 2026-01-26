@@ -41,7 +41,7 @@
 #define CURRENT_CART_VERSION "1O00_1970"
 
 /************************************************************************/
-/*                        PDS4WrapperRasterBand()                      */
+/*                       PDS4WrapperRasterBand()                        */
 /************************************************************************/
 
 PDS4WrapperRasterBand::PDS4WrapperRasterBand(GDALRasterBand *poBaseBandIn)
@@ -52,7 +52,7 @@ PDS4WrapperRasterBand::PDS4WrapperRasterBand(GDALRasterBand *poBaseBandIn)
 }
 
 /************************************************************************/
-/*                             SetMaskBand()                            */
+/*                            SetMaskBand()                             */
 /************************************************************************/
 
 void PDS4WrapperRasterBand::SetMaskBand(
@@ -63,7 +63,7 @@ void PDS4WrapperRasterBand::SetMaskBand(
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 double PDS4WrapperRasterBand::GetOffset(int *pbSuccess)
@@ -85,7 +85,7 @@ double PDS4WrapperRasterBand::GetScale(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                              SetOffset()                             */
+/*                             SetOffset()                              */
 /************************************************************************/
 
 CPLErr PDS4WrapperRasterBand::SetOffset(double dfNewOffset)
@@ -215,7 +215,7 @@ CPLErr PDS4WrapperRasterBand::SetNoDataValueAsUInt64(uint64_t nNewNoData)
 }
 
 /************************************************************************/
-/*                               Fill()                                 */
+/*                                Fill()                                */
 /************************************************************************/
 
 CPLErr PDS4WrapperRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
@@ -230,7 +230,7 @@ CPLErr PDS4WrapperRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                             */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr PDS4WrapperRasterBand::IWriteBlock(int nXBlock, int nYBlock,
@@ -268,7 +268,7 @@ CPLErr PDS4WrapperRasterBand::IRasterIO(
 }
 
 /************************************************************************/
-/*                       PDS4RawRasterBand()                            */
+/*                         PDS4RawRasterBand()                          */
 /************************************************************************/
 
 PDS4RawRasterBand::PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand,
@@ -284,7 +284,7 @@ PDS4RawRasterBand::PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand,
 }
 
 /************************************************************************/
-/*                             SetMaskBand()                            */
+/*                            SetMaskBand()                             */
 /************************************************************************/
 
 void PDS4RawRasterBand::SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand)
@@ -294,7 +294,7 @@ void PDS4RawRasterBand::SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand)
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 double PDS4RawRasterBand::GetOffset(int *pbSuccess)
@@ -316,7 +316,7 @@ double PDS4RawRasterBand::GetScale(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                              SetOffset()                             */
+/*                             SetOffset()                              */
 /************************************************************************/
 
 CPLErr PDS4RawRasterBand::SetOffset(double dfNewOffset)
@@ -494,7 +494,7 @@ PDS4MaskBand::~PDS4MaskBand()
 }
 
 /************************************************************************/
-/*                             FillMask()                               */
+/*                              FillMask()                              */
 /************************************************************************/
 
 template <class T>
@@ -530,7 +530,7 @@ static void FillMask(void *pvBuffer, GByte *pabyDst, int nReqXSize,
 }
 
 /************************************************************************/
-/*                           IReadBlock()                               */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr PDS4MaskBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
@@ -624,7 +624,7 @@ PDS4Dataset::PDS4Dataset()
 }
 
 /************************************************************************/
-/*                           ~PDS4Dataset()                             */
+/*                            ~PDS4Dataset()                            */
 /************************************************************************/
 
 PDS4Dataset::~PDS4Dataset()
@@ -633,7 +633,7 @@ PDS4Dataset::~PDS4Dataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr PDS4Dataset::Close(GDALProgressFunc, void *)
@@ -664,7 +664,7 @@ CPLErr PDS4Dataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                        GetRawBinaryLayout()                          */
+/*                         GetRawBinaryLayout()                         */
 /************************************************************************/
 
 bool PDS4Dataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
@@ -676,7 +676,7 @@ bool PDS4Dataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int PDS4Dataset::CloseDependentDatasets()
@@ -701,7 +701,7 @@ int PDS4Dataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *PDS4Dataset::GetSpatialRef() const
@@ -767,7 +767,7 @@ CPLErr PDS4Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                             SetMetadata()                            */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
 CPLErr PDS4Dataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
@@ -810,7 +810,7 @@ char **PDS4Dataset::GetFileList()
 }
 
 /************************************************************************/
-/*                            GetLinearValue()                          */
+/*                           GetLinearValue()                           */
 /************************************************************************/
 
 static const struct
@@ -851,7 +851,7 @@ static double GetLinearValue(const CPLXMLNode *psParent,
 }
 
 /************************************************************************/
-/*                          GetResolutionValue()                        */
+/*                         GetResolutionValue()                         */
 /************************************************************************/
 
 static const struct
@@ -893,7 +893,7 @@ static double GetResolutionValue(CPLXMLNode *psParent,
 }
 
 /************************************************************************/
-/*                            GetAngularValue()                         */
+/*                          GetAngularValue()                           */
 /************************************************************************/
 
 static const struct
@@ -942,7 +942,7 @@ static double GetAngularValue(CPLXMLNode *psParent, const char *pszElementName,
 }
 
 /************************************************************************/
-/*                          ReadGeoreferencing()                       */
+/*                         ReadGeoreferencing()                         */
 /************************************************************************/
 
 // See https://pds.nasa.gov/pds4/cart/v1/PDS4_CART_1G00_1950.xsd, (GDAL 3.4)
@@ -1525,7 +1525,7 @@ const OGRLayer *PDS4Dataset::GetLayer(int nIndex) const
 }
 
 /************************************************************************/
-/*                       FixupTableFilename()                           */
+/*                         FixupTableFilename()                         */
 /************************************************************************/
 
 static std::string FixupTableFilename(const std::string &osFilename)
@@ -1558,7 +1558,7 @@ static std::string FixupTableFilename(const std::string &osFilename)
 }
 
 /************************************************************************/
-/*                       OpenTableCharacter()                           */
+/*                         OpenTableCharacter()                         */
 /************************************************************************/
 
 bool PDS4Dataset::OpenTableCharacter(const char *pszFilename,
@@ -1591,7 +1591,7 @@ bool PDS4Dataset::OpenTableCharacter(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                       OpenTableBinary()                              */
+/*                          OpenTableBinary()                           */
 /************************************************************************/
 
 bool PDS4Dataset::OpenTableBinary(const char *pszFilename,
@@ -1624,7 +1624,7 @@ bool PDS4Dataset::OpenTableBinary(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                      OpenTableDelimited()                            */
+/*                         OpenTableDelimited()                         */
 /************************************************************************/
 
 bool PDS4Dataset::OpenTableDelimited(const char *pszFilename,
@@ -1658,7 +1658,7 @@ bool PDS4Dataset::OpenTableDelimited(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                           ConstantToDouble()                         */
+/*                          ConstantToDouble()                          */
 /************************************************************************/
 
 static std::optional<double> ConstantToDouble(const char *pszItem,
@@ -2476,7 +2476,7 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         IsCARTVersionGTE()                           */
+/*                          IsCARTVersionGTE()                          */
 /************************************************************************/
 
 // Returns true is pszCur >= pszRef
@@ -2487,7 +2487,7 @@ static bool IsCARTVersionGTE(const char *pszCur, const char *pszRef)
 }
 
 /************************************************************************/
-/*                         WriteGeoreferencing()                        */
+/*                        WriteGeoreferencing()                         */
 /************************************************************************/
 
 void PDS4Dataset::WriteGeoreferencing(CPLXMLNode *psCart,
@@ -3346,7 +3346,7 @@ void PDS4Dataset::WriteGeoreferencing(CPLXMLNode *psCart,
 }
 
 /************************************************************************/
-/*                         SubstituteVariables()                        */
+/*                        SubstituteVariables()                         */
 /************************************************************************/
 
 void PDS4Dataset::SubstituteVariables(CPLXMLNode *psNode, char **papszDict)
@@ -3402,7 +3402,7 @@ void PDS4Dataset::SubstituteVariables(CPLXMLNode *psNode, char **papszDict)
 }
 
 /************************************************************************/
-/*                         InitImageFile()                             */
+/*                           InitImageFile()                            */
 /************************************************************************/
 
 bool PDS4Dataset::InitImageFile()
@@ -3656,7 +3656,7 @@ bool PDS4Dataset::InitImageFile()
 }
 
 /************************************************************************/
-/*                          GetSpecialConstants()                       */
+/*                        GetSpecialConstants()                         */
 /************************************************************************/
 
 static CPLXMLNode *GetSpecialConstants(const CPLString &osPrefix,
@@ -3684,7 +3684,7 @@ static CPLXMLNode *GetSpecialConstants(const CPLString &osPrefix,
 }
 
 /************************************************************************/
-/*                          WriteHeaderAppendCase()                     */
+/*                       WriteHeaderAppendCase()                        */
 /************************************************************************/
 
 void PDS4Dataset::WriteHeaderAppendCase()
@@ -3722,7 +3722,7 @@ void PDS4Dataset::WriteHeaderAppendCase()
 }
 
 /************************************************************************/
-/*                              WriteArray()                            */
+/*                             WriteArray()                             */
 /************************************************************************/
 
 void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
@@ -3952,7 +3952,7 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
 }
 
 /************************************************************************/
-/*                          WriteVectorLayers()                         */
+/*                         WriteVectorLayers()                          */
 /************************************************************************/
 
 void PDS4Dataset::WriteVectorLayers(CPLXMLNode *psProduct)
@@ -4498,7 +4498,7 @@ void PDS4Dataset::CreateHeader(CPLXMLNode *psProduct,
 }
 
 /************************************************************************/
-/*                             WriteHeader()                            */
+/*                            WriteHeader()                             */
 /************************************************************************/
 
 void PDS4Dataset::WriteHeader()
@@ -4716,12 +4716,12 @@ int PDS4Dataset::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                             Create()                                 */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *PDS4Dataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 {
     return CreateInternal(pszFilename, nullptr, nXSize, nYSize, nBandsIn, eType,
                           papszOptions)
@@ -5122,12 +5122,12 @@ static GDALDataset *PDS4GetUnderlyingDataset(GDALDataset *poSrcDS)
 }
 
 /************************************************************************/
-/*                            CreateCopy()                              */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {
@@ -5334,7 +5334,7 @@ GDALDataset *PDS4Dataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                             Delete()                                 */
+/*                               Delete()                               */
 /************************************************************************/
 
 CPLErr PDS4Dataset::Delete(const char *pszFilename)

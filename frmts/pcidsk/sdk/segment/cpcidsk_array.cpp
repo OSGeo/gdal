@@ -22,7 +22,7 @@ using namespace PCIDSK;
 PCIDSK_ARRAY::~PCIDSK_ARRAY() = default;
 
 /************************************************************************/
-/*                            CPCIDSK_ARRAY()                           */
+/*                           CPCIDSK_ARRAY()                            */
 /************************************************************************/
 
 CPCIDSK_ARRAY::CPCIDSK_ARRAY( PCIDSKFile *fileIn, int segmentIn,

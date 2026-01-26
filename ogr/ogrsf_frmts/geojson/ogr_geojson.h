@@ -235,7 +235,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRGeoJSONDataSource                       */
+/*                         OGRGeoJSONDataSource                         */
 /************************************************************************/
 
 class OGRGeoJSONDataSource final : public GDALDataset
@@ -260,7 +260,7 @@ class OGRGeoJSONDataSource final : public GDALDataset
     //
     // OGRGeoJSONDataSource Interface
     //
-    int Create(const char *pszName, char **papszOptions);
+    int Create(const char *pszName, CSLConstList papszOptions);
 
     VSILFILE *GetOutputFile() const
     {

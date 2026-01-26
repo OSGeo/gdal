@@ -209,10 +209,10 @@ class ISIS3Dataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -484,7 +484,7 @@ CPLErr ISISTiledBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
 }
 
 /************************************************************************/
-/*                           RemapNoDataT()                             */
+/*                            RemapNoDataT()                            */
 /************************************************************************/
 
 template <class T>
@@ -609,7 +609,7 @@ CPLErr ISISTiledBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 }
 
 /************************************************************************/
-/*                             SetMaskBand()                            */
+/*                            SetMaskBand()                             */
 /************************************************************************/
 
 void ISISTiledBand::SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand)
@@ -619,7 +619,7 @@ void ISISTiledBand::SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand)
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 double ISISTiledBand::GetOffset(int *pbSuccess)
@@ -641,7 +641,7 @@ double ISISTiledBand::GetScale(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                              SetOffset()                             */
+/*                             SetOffset()                              */
 /************************************************************************/
 
 CPLErr ISISTiledBand::SetOffset(double dfNewOffset)
@@ -684,7 +684,7 @@ CPLErr ISISTiledBand::SetNoDataValue(double dfNewNoData)
 }
 
 /************************************************************************/
-/*                       ISIS3RawRasterBand()                           */
+/*                         ISIS3RawRasterBand()                         */
 /************************************************************************/
 
 ISIS3RawRasterBand::ISIS3RawRasterBand(GDALDataset *l_poDS, int l_nBand,
@@ -796,7 +796,7 @@ CPLErr ISIS3RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                             SetMaskBand()                            */
+/*                            SetMaskBand()                             */
 /************************************************************************/
 
 void ISIS3RawRasterBand::SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand)
@@ -806,7 +806,7 @@ void ISIS3RawRasterBand::SetMaskBand(std::unique_ptr<GDALRasterBand> poMaskBand)
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 double ISIS3RawRasterBand::GetOffset(int *pbSuccess)
@@ -828,7 +828,7 @@ double ISIS3RawRasterBand::GetScale(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                              SetOffset()                             */
+/*                             SetOffset()                              */
 /************************************************************************/
 
 CPLErr ISIS3RawRasterBand::SetOffset(double dfNewOffset)
@@ -871,7 +871,7 @@ CPLErr ISIS3RawRasterBand::SetNoDataValue(double dfNewNoData)
 }
 
 /************************************************************************/
-/*                        ISIS3WrapperRasterBand()                      */
+/*                       ISIS3WrapperRasterBand()                       */
 /************************************************************************/
 
 ISIS3WrapperRasterBand::ISIS3WrapperRasterBand(GDALRasterBand *poBaseBandIn)
@@ -882,7 +882,7 @@ ISIS3WrapperRasterBand::ISIS3WrapperRasterBand(GDALRasterBand *poBaseBandIn)
 }
 
 /************************************************************************/
-/*                             SetMaskBand()                            */
+/*                            SetMaskBand()                             */
 /************************************************************************/
 
 void ISIS3WrapperRasterBand::SetMaskBand(
@@ -893,7 +893,7 @@ void ISIS3WrapperRasterBand::SetMaskBand(
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 double ISIS3WrapperRasterBand::GetOffset(int *pbSuccess)
@@ -915,7 +915,7 @@ double ISIS3WrapperRasterBand::GetScale(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                              SetOffset()                             */
+/*                             SetOffset()                              */
 /************************************************************************/
 
 CPLErr ISIS3WrapperRasterBand::SetOffset(double dfNewOffset)
@@ -1043,7 +1043,7 @@ void ISIS3WrapperRasterBand::InitFile()
 }
 
 /************************************************************************/
-/*                               Fill()                                 */
+/*                                Fill()                                */
 /************************************************************************/
 
 CPLErr ISIS3WrapperRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
@@ -1062,7 +1062,7 @@ CPLErr ISIS3WrapperRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                             */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr ISIS3WrapperRasterBand::IWriteBlock(int nXBlock, int nYBlock,
@@ -1159,7 +1159,7 @@ ISISMaskBand::~ISISMaskBand()
 }
 
 /************************************************************************/
-/*                             FillMask()                               */
+/*                              FillMask()                              */
 /************************************************************************/
 
 template <class T>
@@ -1188,7 +1188,7 @@ static void FillMask(void *pvBuffer, GByte *pabyDst, int nReqXSize,
 }
 
 /************************************************************************/
-/*                           IReadBlock()                               */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr ISISMaskBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
@@ -1271,7 +1271,7 @@ ISIS3Dataset::~ISIS3Dataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr ISIS3Dataset::Close(GDALProgressFunc, void *)
@@ -1308,7 +1308,7 @@ CPLErr ISIS3Dataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int ISIS3Dataset::CloseDependentDatasets()
@@ -1425,7 +1425,7 @@ CPLErr ISIS3Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **ISIS3Dataset::GetMetadataDomainList()
@@ -1434,7 +1434,7 @@ char **ISIS3Dataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                             GetMetadata()                            */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList ISIS3Dataset::GetMetadata(const char *pszDomain)
@@ -1462,7 +1462,7 @@ CSLConstList ISIS3Dataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                        ResolveOfflineContentOfLabel()                */
+/*                    ResolveOfflineContentOfLabel()                    */
 /************************************************************************/
 
 void ISIS3Dataset::ResolveOfflineContentOfLabel()
@@ -1590,7 +1590,7 @@ void ISIS3Dataset::ResolveOfflineContentOfLabel()
 }
 
 /************************************************************************/
-/*                           InvalidateLabel()                          */
+/*                          InvalidateLabel()                           */
 /************************************************************************/
 
 void ISIS3Dataset::InvalidateLabel()
@@ -1601,7 +1601,7 @@ void ISIS3Dataset::InvalidateLabel()
 }
 
 /************************************************************************/
-/*                             SetMetadata()                            */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
 CPLErr ISIS3Dataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
@@ -1632,7 +1632,7 @@ CPLErr ISIS3Dataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 }
 
 /************************************************************************/
-/*                        GetRawBinaryLayout()                          */
+/*                         GetRawBinaryLayout()                         */
 /************************************************************************/
 
 bool ISIS3Dataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
@@ -1644,7 +1644,7 @@ bool ISIS3Dataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 }
 
 /************************************************************************/
-/*                           GetValueAndUnits()                         */
+/*                          GetValueAndUnits()                          */
 /************************************************************************/
 
 static void GetValueAndUnits(const CPLJSONObject &obj,
@@ -2695,7 +2695,7 @@ double ISIS3Dataset::FixLong(double dfLong)
 }
 
 /************************************************************************/
-/*                           BuildLabel()                               */
+/*                             BuildLabel()                             */
 /************************************************************************/
 
 void ISIS3Dataset::BuildLabel()
@@ -3340,7 +3340,7 @@ void ISIS3Dataset::BuildLabel()
 }
 
 /************************************************************************/
-/*                         BuildHistory()                               */
+/*                            BuildHistory()                            */
 /************************************************************************/
 
 void ISIS3Dataset::BuildHistory()
@@ -3505,7 +3505,7 @@ void ISIS3Dataset::BuildHistory()
 }
 
 /************************************************************************/
-/*                           WriteLabel()                               */
+/*                             WriteLabel()                             */
 /************************************************************************/
 
 void ISIS3Dataset::WriteLabel()
@@ -3768,7 +3768,7 @@ void ISIS3Dataset::WriteLabel()
 }
 
 /************************************************************************/
-/*                      SerializeAsPDL()                                */
+/*                           SerializeAsPDL()                           */
 /************************************************************************/
 
 CPLString ISIS3Dataset::SerializeAsPDL(const CPLJSONObject &oObj)
@@ -3784,7 +3784,7 @@ CPLString ISIS3Dataset::SerializeAsPDL(const CPLJSONObject &oObj)
 }
 
 /************************************************************************/
-/*                      SerializeAsPDL()                                */
+/*                           SerializeAsPDL()                           */
 /************************************************************************/
 
 constexpr size_t WIDTH = 79;
@@ -4166,12 +4166,12 @@ void ISIS3Dataset::SerializeAsPDL(VSILFILE *fp, const CPLJSONObject &oObj,
 }
 
 /************************************************************************/
-/*                           Create()                                   */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eType,
-                                  char **papszOptions)
+                                  CSLConstList papszOptions)
 {
     if (eType != GDT_UInt8 && eType != GDT_UInt16 && eType != GDT_Int16 &&
         eType != GDT_Float32)
@@ -4385,7 +4385,7 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                      GetUnderlyingDataset()                          */
+/*                        GetUnderlyingDataset()                        */
 /************************************************************************/
 
 static GDALDataset *GetUnderlyingDataset(GDALDataset *poSrcDS)
@@ -4401,12 +4401,12 @@ static GDALDataset *GetUnderlyingDataset(GDALDataset *poSrcDS)
 }
 
 /************************************************************************/
-/*                            CreateCopy()                              */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *ISIS3Dataset::CreateCopy(const char *pszFilename,
                                       GDALDataset *poSrcDS, int /*bStrict*/,
-                                      char **papszOptions,
+                                      CSLConstList papszOptions,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 {

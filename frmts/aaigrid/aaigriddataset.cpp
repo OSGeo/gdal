@@ -250,7 +250,7 @@ CPLErr AAIGRasterBand::SetNoDataValue(double dfNoData)
 /************************************************************************/
 
 /************************************************************************/
-/*                            AAIGDataset()                            */
+/*                            AAIGDataset()                             */
 /************************************************************************/
 
 AAIGDataset::AAIGDataset()
@@ -262,7 +262,7 @@ AAIGDataset::AAIGDataset()
 }
 
 /************************************************************************/
-/*                           ~AAIGDataset()                            */
+/*                            ~AAIGDataset()                            */
 /************************************************************************/
 
 AAIGDataset::~AAIGDataset()
@@ -341,7 +341,7 @@ char **AAIGDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int AAIGDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -373,7 +373,7 @@ int AAIGDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int GRASSASCIIDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -399,7 +399,7 @@ int GRASSASCIIDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int ISGDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -458,7 +458,7 @@ GDALDataset *AAIGDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          ParseHeader()                               */
+/*                            ParseHeader()                             */
 /************************************************************************/
 
 bool AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
@@ -620,7 +620,7 @@ GDALDataset *GRASSASCIIDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          ParseHeader()                               */
+/*                            ParseHeader()                             */
 /************************************************************************/
 
 bool GRASSASCIIDataset::ParseHeader(const char *pszHeader,
@@ -726,7 +726,7 @@ GDALDataset *ISGDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          ParseHeader()                               */
+/*                            ParseHeader()                             */
 /************************************************************************/
 
 bool ISGDataset::ParseHeader(const char *pszHeader, const char *)
@@ -1003,7 +1003,7 @@ bool ISGDataset::ParseHeader(const char *pszHeader, const char *)
 }
 
 /************************************************************************/
-/*                           CommonOpen()                               */
+/*                             CommonOpen()                             */
 /************************************************************************/
 
 GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
@@ -1284,7 +1284,7 @@ CPLErr AAIGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *AAIGDataset::GetSpatialRef() const
@@ -1293,12 +1293,12 @@ const OGRSpatialReference *AAIGDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                          CreateCopy()                                */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /* bStrict */,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {
@@ -1683,7 +1683,7 @@ void GDALRegister_AAIGrid()
 }
 
 /************************************************************************/
-/*                   GDALRegister_GRASSASCIIGrid()                      */
+/*                    GDALRegister_GRASSASCIIGrid()                     */
 /************************************************************************/
 
 void GDALRegister_GRASSASCIIGrid()
@@ -1709,7 +1709,7 @@ void GDALRegister_GRASSASCIIGrid()
 }
 
 /************************************************************************/
-/*                       GDALRegister_ISG()                             */
+/*                          GDALRegister_ISG()                          */
 /************************************************************************/
 
 void GDALRegister_ISG()

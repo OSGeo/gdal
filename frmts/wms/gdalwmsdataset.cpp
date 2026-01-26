@@ -755,7 +755,7 @@ CPLErr GDALWMSDataset::IRasterIO(GDALRWFlag rw, int x0, int y0, int sx, int sy,
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 const OGRSpatialReference *GDALWMSDataset::GetSpatialRef() const
 {
@@ -805,7 +805,8 @@ CPLErr GDALWMSDataset::SetGeoTransform(const GDALGeoTransform &)
 CPLErr GDALWMSDataset::AdviseRead(int x0, int y0, int sx, int sy, int bsx,
                                   int bsy, GDALDataType bdt,
                                   CPL_UNUSED int band_count,
-                                  CPL_UNUSED int *band_map, char **options)
+                                  CPL_UNUSED int *band_map,
+                                  CSLConstList options)
 {
     //    printf("AdviseRead(%d, %d, %d, %d)\n", x0, y0, sx, sy);
     if (m_offline_mode || !m_use_advise_read)
@@ -820,7 +821,7 @@ CPLErr GDALWMSDataset::AdviseRead(int x0, int y0, int sx, int sy, int bsx,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **GDALWMSDataset::GetMetadataDomainList()

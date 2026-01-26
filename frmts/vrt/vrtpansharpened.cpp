@@ -40,7 +40,7 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                    GDALCreatePansharpenedVRT()                       */
+/*                     GDALCreatePansharpenedVRT()                      */
 /************************************************************************/
 
 /**
@@ -130,7 +130,7 @@ VRTPansharpenedDataset::VRTPansharpenedDataset(int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                    ~VRTPansharpenedDataset()                         */
+/*                      ~VRTPansharpenedDataset()                       */
 /************************************************************************/
 
 VRTPansharpenedDataset::~VRTPansharpenedDataset()
@@ -142,7 +142,7 @@ VRTPansharpenedDataset::~VRTPansharpenedDataset()
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int VRTPansharpenedDataset::CloseDependentDatasets()
@@ -1378,7 +1378,7 @@ void VRTPansharpenedDataset::GetBlockSize(int *pnBlockXSize,
 /************************************************************************/
 
 CPLErr VRTPansharpenedDataset::AddBand(CPL_UNUSED GDALDataType eType,
-                                       CPL_UNUSED char **papszOptions)
+                                       CPL_UNUSED CSLConstList papszOptions)
 
 {
     CPLError(CE_Failure, CPLE_NotSupported, "AddBand() not supported");
@@ -1387,7 +1387,7 @@ CPLErr VRTPansharpenedDataset::AddBand(CPL_UNUSED GDALDataType eType,
 }
 
 /************************************************************************/
-/*                              IRasterIO()                             */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr VRTPansharpenedDataset::IRasterIO(
@@ -1446,7 +1446,7 @@ default_path:
 /************************************************************************/
 
 /************************************************************************/
-/*                        VRTPansharpenedRasterBand()                   */
+/*                     VRTPansharpenedRasterBand()                      */
 /************************************************************************/
 
 VRTPansharpenedRasterBand::VRTPansharpenedRasterBand(GDALDataset *poDSIn,
@@ -1466,7 +1466,7 @@ VRTPansharpenedRasterBand::VRTPansharpenedRasterBand(GDALDataset *poDSIn,
 }
 
 /************************************************************************/
-/*                        ~VRTPansharpenedRasterBand()                  */
+/*                     ~VRTPansharpenedRasterBand()                     */
 /************************************************************************/
 
 VRTPansharpenedRasterBand::~VRTPansharpenedRasterBand()
@@ -1556,7 +1556,7 @@ CPLErr VRTPansharpenedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                              IRasterIO()                             */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr VRTPansharpenedRasterBand::IRasterIO(
@@ -1702,7 +1702,7 @@ VRTPansharpenedRasterBand::SerializeToXML(const char *pszVRTPathIn,
 }
 
 /************************************************************************/
-/*                         GetOverviewCount()                           */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int VRTPansharpenedRasterBand::GetOverviewCount()

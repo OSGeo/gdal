@@ -247,7 +247,7 @@ class BMPDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
@@ -701,7 +701,7 @@ class BMPComprRasterBand final : public BMPRasterBand
 };
 
 /************************************************************************/
-/*                           BMPComprRasterBand()                       */
+/*                         BMPComprRasterBand()                         */
 /************************************************************************/
 
 BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
@@ -928,7 +928,7 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                           ~BMPComprRasterBand()                      */
+/*                        ~BMPComprRasterBand()                         */
 /************************************************************************/
 
 BMPComprRasterBand::~BMPComprRasterBand()
@@ -953,7 +953,7 @@ CPLErr BMPComprRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                           BMPDataset()                               */
+/*                             BMPDataset()                             */
 /************************************************************************/
 
 BMPDataset::BMPDataset()
@@ -1430,7 +1430,7 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 
 {
     if (eType != GDT_UInt8)
@@ -1679,7 +1679,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                        GDALRegister_BMP()                            */
+/*                          GDALRegister_BMP()                          */
 /************************************************************************/
 
 void GDALRegister_BMP()

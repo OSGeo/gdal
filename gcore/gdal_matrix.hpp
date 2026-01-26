@@ -16,7 +16,7 @@
 #include <algorithm>
 
 /************************************************************************/
-/*               GDALMatrixMultiplyAByTransposeAUpperTriangle()         */
+/*            GDALMatrixMultiplyAByTransposeAUpperTriangle()            */
 /************************************************************************/
 
 // Compute res = A * A.transpose(), by filling only the upper triangle.

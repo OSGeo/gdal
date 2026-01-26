@@ -79,7 +79,7 @@ template <class T>
 constexpr bool is_floating_point_v = is_floating_point<T>::value;
 
 /************************************************************************/
-/*                            compScalar()                              */
+/*                             compScalar()                             */
 /************************************************************************/
 
 template <class T, bool IS_MAX> inline static bool compScalar(T x, T y)
@@ -216,7 +216,7 @@ inline size_t extremum_element_with_nan_generic(const T *v, size_t size,
 }
 
 /************************************************************************/
-/*                       extremum_element_generic()                     */
+/*                      extremum_element_generic()                      */
 /************************************************************************/
 
 template <class T, bool IS_MAX>
@@ -350,7 +350,7 @@ inline size_t extremum_element_generic(const T *buffer, size_t size,
 #ifdef GDAL_MINMAX_ELEMENT_USE_SSE2
 
 /************************************************************************/
-/*                     extremum_element_sse2()                          */
+/*                       extremum_element_sse2()                        */
 /************************************************************************/
 
 static inline int8_t Shift8(uint8_t x)
@@ -913,7 +913,7 @@ extremum_element_sse2(const T *v, size_t size, T noDataValue)
 }
 
 /************************************************************************/
-/*                         extremum_element()                           */
+/*                          extremum_element()                          */
 /************************************************************************/
 
 template <class T, bool IS_MAX>
@@ -955,7 +955,7 @@ inline size_t extremum_element(const T *buffer, size_t size)
 #endif
 
 /************************************************************************/
-/*                            extremum_element()                        */
+/*                          extremum_element()                          */
 /************************************************************************/
 
 template <class T, bool IS_MAX>
@@ -1163,7 +1163,7 @@ namespace detail
 #ifdef NOT_EFFICIENT
 
 /************************************************************************/
-/*                         minmax_element()                             */
+/*                           minmax_element()                           */
 /************************************************************************/
 
 template <class T>
@@ -1298,7 +1298,7 @@ inline std::pair<size_t, size_t> minmax_element(const T *buffer, size_t size,
 #else
 
 /************************************************************************/
-/*                         minmax_element()                             */
+/*                           minmax_element()                           */
 /************************************************************************/
 
 template <class T>
@@ -1347,7 +1347,7 @@ inline std::pair<size_t, size_t> minmax_element(const T *buffer, size_t size,
 }  // namespace detail
 
 /************************************************************************/
-/*                          minmax_element()                            */
+/*                           minmax_element()                           */
 /************************************************************************/
 
 /** Return the index of the elements where the minimum and maximum values are hit.

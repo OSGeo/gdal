@@ -29,7 +29,7 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                GML_ExtractSrsNameFromGeometry()                      */
+/*                   GML_ExtractSrsNameFromGeometry()                   */
 /************************************************************************/
 
 const char *
@@ -100,7 +100,7 @@ bool GML_IsSRSLatLongOrder(const char *pszSRSName)
 }
 
 /************************************************************************/
-/*              OGRGML_SRSCacheEntry::~OGRGML_SRSCacheEntry()           */
+/*            OGRGML_SRSCacheEntry::~OGRGML_SRSCacheEntry()             */
 /************************************************************************/
 
 OGRGML_SRSCacheEntry::~OGRGML_SRSCacheEntry()
@@ -110,7 +110,7 @@ OGRGML_SRSCacheEntry::~OGRGML_SRSCacheEntry()
 }
 
 /************************************************************************/
-/*                             OGRGML_SRSCache                          */
+/*                           OGRGML_SRSCache                            */
 /************************************************************************/
 
 class OGRGML_SRSCache
@@ -121,7 +121,7 @@ class OGRGML_SRSCache
 };
 
 /************************************************************************/
-/*                        OGRGML_SRSCache_Create()                      */
+/*                       OGRGML_SRSCache_Create()                       */
 /************************************************************************/
 
 OGRGML_SRSCache *OGRGML_SRSCache_Create()
@@ -130,7 +130,7 @@ OGRGML_SRSCache *OGRGML_SRSCache_Create()
 }
 
 /************************************************************************/
-/*                        OGRGML_SRSCache_Destroy()                     */
+/*                      OGRGML_SRSCache_Destroy()                       */
 /************************************************************************/
 
 void OGRGML_SRSCache_Destroy(OGRGML_SRSCache *hSRSCache)
@@ -139,7 +139,7 @@ void OGRGML_SRSCache_Destroy(OGRGML_SRSCache *hSRSCache)
 }
 
 /************************************************************************/
-/*                         OGRGML_SRSCache_GetInfo()                    */
+/*                      OGRGML_SRSCache_GetInfo()                       */
 /************************************************************************/
 
 std::shared_ptr<OGRGML_SRSCacheEntry>
@@ -180,7 +180,7 @@ OGRGML_SRSCache_GetInfo(OGRGML_SRSCache *hSRSCache, const char *pszSRSName)
 }
 
 /************************************************************************/
-/*                 GML_BuildOGRGeometryFromList()                       */
+/*                    GML_BuildOGRGeometryFromList()                    */
 /************************************************************************/
 
 OGRGeometry *GML_BuildOGRGeometryFromList(
@@ -353,7 +353,7 @@ char *GML_GetSRSName(const OGRSpatialReference *poSRS,
 }
 
 /************************************************************************/
-/*                       GML_IsLegitSRSName()                           */
+/*                         GML_IsLegitSRSName()                         */
 /************************************************************************/
 
 bool GML_IsLegitSRSName(const char *pszSRSName)

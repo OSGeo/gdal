@@ -16,7 +16,7 @@
 #include <algorithm>
 
 /************************************************************************/
-/*                      OGRADBCBigQueryLayer()                          */
+/*                        OGRADBCBigQueryLayer()                        */
 /************************************************************************/
 
 OGRADBCBigQueryLayer::OGRADBCBigQueryLayer(OGRADBCDataset *poDS,
@@ -28,7 +28,7 @@ OGRADBCBigQueryLayer::OGRADBCBigQueryLayer(OGRADBCDataset *poDS,
 }
 
 /************************************************************************/
-/*                     GetBigQueryDatasetAndTableId()                   */
+/*                    GetBigQueryDatasetAndTableId()                    */
 /************************************************************************/
 
 bool OGRADBCBigQueryLayer::GetBigQueryDatasetAndTableId(
@@ -250,9 +250,9 @@ void OGRADBCBigQueryLayer::BuildLayerDefn()
     }
 }
 
-/***********************************************************************/
-/*                         SetAttributeFilter()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
 
 OGRErr OGRADBCBigQueryLayer::SetAttributeFilter(const char *pszFilter)
 {
@@ -268,7 +268,7 @@ OGRErr OGRADBCBigQueryLayer::SetAttributeFilter(const char *pszFilter)
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRADBCBigQueryLayer::GetFeatureCount(int /*bForce*/)
@@ -286,7 +286,7 @@ GIntBig OGRADBCBigQueryLayer::GetFeatureCount(int /*bForce*/)
 }
 
 /************************************************************************/
-/*                          TestCapability()                            */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRADBCBigQueryLayer::TestCapability(const char *pszCap) const
@@ -304,7 +304,7 @@ int OGRADBCBigQueryLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           IGetExtent()                               */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRADBCBigQueryLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -340,7 +340,7 @@ OGRErr OGRADBCBigQueryLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                      GetCurrentStatement()                           */
+/*                        GetCurrentStatement()                         */
 /************************************************************************/
 
 std::string OGRADBCBigQueryLayer::GetCurrentStatement() const
@@ -399,7 +399,7 @@ std::string OGRADBCBigQueryLayer::GetCurrentStatement() const
 }
 
 /************************************************************************/
-/*                           GetSQLType()                               */
+/*                             GetSQLType()                             */
 /************************************************************************/
 
 static std::string GetSQLType(const OGRFieldDefn *poField)
@@ -439,7 +439,7 @@ static std::string GetSQLType(const OGRFieldDefn *poField)
 }
 
 /************************************************************************/
-/*                           CreateField()                              */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr OGRADBCBigQueryLayer::CreateField(const OGRFieldDefn *poField,
@@ -494,7 +494,7 @@ OGRErr OGRADBCBigQueryLayer::CreateField(const OGRFieldDefn *poField,
 }
 
 /************************************************************************/
-/*                          GetFieldValue()                             */
+/*                           GetFieldValue()                            */
 /************************************************************************/
 
 static std::string GetFieldValue(const OGRFieldDefn *poFldDefn,
@@ -616,7 +616,7 @@ static std::string GetFieldValue(const OGRFieldDefn *poFldDefn,
 }
 
 /************************************************************************/
-/*                          ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRADBCBigQueryLayer::ICreateFeature(OGRFeature *poFeature)
@@ -747,7 +747,7 @@ OGRErr OGRADBCBigQueryLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           ISetFeature()                              */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRADBCBigQueryLayer::ISetFeature(OGRFeature *poFeature)

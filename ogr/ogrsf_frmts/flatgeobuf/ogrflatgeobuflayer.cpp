@@ -975,7 +975,7 @@ GIntBig OGRFlatGeobufLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                     ParseDateTime()                                  */
+/*                           ParseDateTime()                            */
 /************************************************************************/
 
 static inline bool ParseDateTime(std::string_view sInput, OGRField *psField)
@@ -1442,7 +1442,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                      GetNextArrowArray()                             */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,

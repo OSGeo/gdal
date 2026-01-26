@@ -149,7 +149,7 @@ class PLMosaicRasterBand final : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                        PLMosaicRasterBand()                          */
+/*                         PLMosaicRasterBand()                         */
 /************************************************************************/
 
 PLMosaicRasterBand::PLMosaicRasterBand(PLMosaicDataset *poDSIn, int nBandIn,
@@ -236,7 +236,7 @@ CPLErr PLMosaicRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                         GetMetadataItem()                            */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *PLMosaicRasterBand::GetMetadataItem(const char *pszName,
@@ -255,7 +255,7 @@ const char *PLMosaicRasterBand::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                         GetOverviewCount()                           */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int PLMosaicRasterBand::GetOverviewCount()
@@ -309,7 +309,7 @@ GDALColorInterp PLMosaicRasterBand::GetColorInterpretation()
 /************************************************************************/
 
 /************************************************************************/
-/*                        PLMosaicDataset()                            */
+/*                          PLMosaicDataset()                           */
 /************************************************************************/
 
 PLMosaicDataset::PLMosaicDataset()
@@ -325,7 +325,7 @@ PLMosaicDataset::PLMosaicDataset()
 }
 
 /************************************************************************/
-/*                         ~PLMosaicDataset()                           */
+/*                          ~PLMosaicDataset()                          */
 /************************************************************************/
 
 PLMosaicDataset::~PLMosaicDataset()
@@ -346,7 +346,7 @@ PLMosaicDataset::~PLMosaicDataset()
 }
 
 /************************************************************************/
-/*                      FlushDatasetsCache()                            */
+/*                         FlushDatasetsCache()                         */
 /************************************************************************/
 
 void PLMosaicDataset::FlushDatasetsCache()
@@ -365,7 +365,7 @@ void PLMosaicDataset::FlushDatasetsCache()
 }
 
 /************************************************************************/
-/*                            FlushCache()                              */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr PLMosaicDataset::FlushCache(bool bAtClosing)
@@ -383,7 +383,7 @@ CPLErr PLMosaicDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int PLMosaicDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -393,7 +393,7 @@ int PLMosaicDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GetBaseHTTPOptions()                         */
+/*                         GetBaseHTTPOptions()                         */
 /************************************************************************/
 
 char **PLMosaicDataset::GetBaseHTTPOptions()
@@ -421,7 +421,7 @@ char **PLMosaicDataset::GetBaseHTTPOptions()
 }
 
 /************************************************************************/
-/*                               Download()                             */
+/*                              Download()                              */
 /************************************************************************/
 
 CPLHTTPResult *PLMosaicDataset::Download(const char *pszURL, int bQuiet404Error)
@@ -491,7 +491,7 @@ CPLHTTPResult *PLMosaicDataset::Download(const char *pszURL, int bQuiet404Error)
 }
 
 /************************************************************************/
-/*                               RunRequest()                           */
+/*                             RunRequest()                             */
 /************************************************************************/
 
 json_object *PLMosaicDataset::RunRequest(const char *pszURL, int bQuiet404Error)
@@ -524,11 +524,12 @@ json_object *PLMosaicDataset::RunRequest(const char *pszURL, int bQuiet404Error)
 }
 
 /************************************************************************/
-/*                           PLMosaicGetParameter()                     */
+/*                        PLMosaicGetParameter()                        */
 /************************************************************************/
 
 static CPLString PLMosaicGetParameter(GDALOpenInfo *poOpenInfo,
-                                      char **papszOptions, const char *pszName,
+                                      CSLConstList papszOptions,
+                                      const char *pszName,
                                       const char *pszDefaultVal)
 {
     return CSLFetchNameValueDef(
@@ -657,7 +658,7 @@ GDALDataset *PLMosaicDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           ReplaceSubString()                         */
+/*                          ReplaceSubString()                          */
 /************************************************************************/
 
 static void ReplaceSubString(CPLString &osTarget, CPLString osPattern,
@@ -673,7 +674,7 @@ static void ReplaceSubString(CPLString &osTarget, CPLString osPattern,
 }
 
 /************************************************************************/
-/*                            GetMosaicCachePath()                      */
+/*                         GetMosaicCachePath()                         */
 /************************************************************************/
 
 CPLString PLMosaicDataset::GetMosaicCachePath()
@@ -688,7 +689,7 @@ CPLString PLMosaicDataset::GetMosaicCachePath()
 }
 
 /************************************************************************/
-/*                     CreateMosaicCachePathIfNecessary()               */
+/*                  CreateMosaicCachePathIfNecessary()                  */
 /************************************************************************/
 
 void PLMosaicDataset::CreateMosaicCachePathIfNecessary()
@@ -725,7 +726,7 @@ static void LongLatToSphericalMercator(double *x, double *y)
 }
 
 /************************************************************************/
-/*                               OpenMosaic()                           */
+/*                             OpenMosaic()                             */
 /************************************************************************/
 
 int PLMosaicDataset::OpenMosaic()
@@ -1145,7 +1146,7 @@ std::vector<CPLString> PLMosaicDataset::ListSubdatasets()
 }
 
 /************************************************************************/
-/*                            GetSpatialRef()                           */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *PLMosaicDataset::GetSpatialRef() const
@@ -1155,7 +1156,7 @@ const OGRSpatialReference *PLMosaicDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                            GetGeoTransform()                         */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr PLMosaicDataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -1165,7 +1166,7 @@ CPLErr PLMosaicDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          formatTileName()                            */
+/*                           formatTileName()                           */
 /************************************************************************/
 
 CPLString PLMosaicDataset::formatTileName(int tile_x, int tile_y)
@@ -1207,7 +1208,7 @@ void PLMosaicDataset::InsertNewDataset(const CPLString &osKey,
 }
 
 /************************************************************************/
-/*                         OpenAndInsertNewDataset()                    */
+/*                      OpenAndInsertNewDataset()                       */
 /************************************************************************/
 
 GDALDataset *
@@ -1372,7 +1373,7 @@ GDALDataset *PLMosaicDataset::GetMetaTile(int tile_x, int tile_y)
 }
 
 /************************************************************************/
-/*                         GetLocationInfo()                            */
+/*                          GetLocationInfo()                           */
 /************************************************************************/
 
 const char *PLMosaicDataset::GetLocationInfo(int nPixel, int nLine)
@@ -1473,7 +1474,7 @@ CPLErr PLMosaicDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                      GDALRegister_PLMOSAIC()                         */
+/*                       GDALRegister_PLMOSAIC()                        */
 /************************************************************************/
 
 void GDALRegister_PLMOSAIC()

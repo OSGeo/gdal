@@ -53,7 +53,7 @@ int WritePeStringIfNeeded(const OGRSpatialReference *poSRS, HFAHandle hHFA);
 void ClearSR(HFAHandle hHFA);
 
 /************************************************************************/
-/*                     HFARasterAttributeTable()                        */
+/*                      HFARasterAttributeTable()                       */
 /************************************************************************/
 
 HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand,
@@ -183,7 +183,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand,
 }
 
 /************************************************************************/
-/*                    ~HFARasterAttributeTable()                        */
+/*                      ~HFARasterAttributeTable()                      */
 /************************************************************************/
 
 HFARasterAttributeTable::~HFARasterAttributeTable()
@@ -191,7 +191,7 @@ HFARasterAttributeTable::~HFARasterAttributeTable()
 }
 
 /************************************************************************/
-/*                              Clone()                                 */
+/*                               Clone()                                */
 /************************************************************************/
 
 GDALRasterAttributeTable *HFARasterAttributeTable::Clone() const
@@ -292,7 +292,7 @@ GDALRasterAttributeTable *HFARasterAttributeTable::Clone() const
 }
 
 /************************************************************************/
-/*                          GetColumnCount()                            */
+/*                           GetColumnCount()                           */
 /************************************************************************/
 
 int HFARasterAttributeTable::GetColumnCount() const
@@ -301,7 +301,7 @@ int HFARasterAttributeTable::GetColumnCount() const
 }
 
 /************************************************************************/
-/*                          GetNameOfCol()                              */
+/*                            GetNameOfCol()                            */
 /************************************************************************/
 
 const char *HFARasterAttributeTable::GetNameOfCol(int nCol) const
@@ -313,7 +313,7 @@ const char *HFARasterAttributeTable::GetNameOfCol(int nCol) const
 }
 
 /************************************************************************/
-/*                          GetUsageOfCol()                             */
+/*                           GetUsageOfCol()                            */
 /************************************************************************/
 
 GDALRATFieldUsage HFARasterAttributeTable::GetUsageOfCol(int nCol) const
@@ -325,7 +325,7 @@ GDALRATFieldUsage HFARasterAttributeTable::GetUsageOfCol(int nCol) const
 }
 
 /************************************************************************/
-/*                          GetTypeOfCol()                              */
+/*                            GetTypeOfCol()                            */
 /************************************************************************/
 
 GDALRATFieldType HFARasterAttributeTable::GetTypeOfCol(int nCol) const
@@ -337,7 +337,7 @@ GDALRATFieldType HFARasterAttributeTable::GetTypeOfCol(int nCol) const
 }
 
 /************************************************************************/
-/*                          GetColOfUsage()                             */
+/*                           GetColOfUsage()                            */
 /************************************************************************/
 
 int HFARasterAttributeTable::GetColOfUsage(GDALRATFieldUsage eUsage) const
@@ -352,7 +352,7 @@ int HFARasterAttributeTable::GetColOfUsage(GDALRATFieldUsage eUsage) const
 }
 
 /************************************************************************/
-/*                          GetRowCount()                               */
+/*                            GetRowCount()                             */
 /************************************************************************/
 
 int HFARasterAttributeTable::GetRowCount() const
@@ -361,7 +361,7 @@ int HFARasterAttributeTable::GetRowCount() const
 }
 
 /************************************************************************/
-/*                      GetValueAsString()                              */
+/*                          GetValueAsString()                          */
 /************************************************************************/
 
 const char *HFARasterAttributeTable::GetValueAsString(int iRow,
@@ -383,7 +383,7 @@ const char *HFARasterAttributeTable::GetValueAsString(int iRow,
 }
 
 /************************************************************************/
-/*                        GetValueAsInt()                               */
+/*                           GetValueAsInt()                            */
 /************************************************************************/
 
 int HFARasterAttributeTable::GetValueAsInt(int iRow, int iField) const
@@ -400,7 +400,7 @@ int HFARasterAttributeTable::GetValueAsInt(int iRow, int iField) const
 }
 
 /************************************************************************/
-/*                      GetValueAsDouble()                              */
+/*                          GetValueAsDouble()                          */
 /************************************************************************/
 
 double HFARasterAttributeTable::GetValueAsDouble(int iRow, int iField) const
@@ -417,7 +417,7 @@ double HFARasterAttributeTable::GetValueAsDouble(int iRow, int iField) const
 }
 
 /************************************************************************/
-/*                        GetValueAsBoolean()                           */
+/*                         GetValueAsBoolean()                          */
 /************************************************************************/
 
 bool HFARasterAttributeTable::GetValueAsBoolean(int iRow, int iField) const
@@ -434,7 +434,7 @@ bool HFARasterAttributeTable::GetValueAsBoolean(int iRow, int iField) const
 }
 
 /************************************************************************/
-/*                        GetValueAsDateTime()                          */
+/*                         GetValueAsDateTime()                         */
 /************************************************************************/
 
 GDALRATDateTime HFARasterAttributeTable::GetValueAsDateTime(int iRow,
@@ -448,7 +448,7 @@ GDALRATDateTime HFARasterAttributeTable::GetValueAsDateTime(int iRow,
 }
 
 /************************************************************************/
-/*                        GetValueAsWKBGeometry()                       */
+/*                       GetValueAsWKBGeometry()                        */
 /************************************************************************/
 
 const GByte *
@@ -467,7 +467,7 @@ HFARasterAttributeTable::GetValueAsWKBGeometry(int iRow, int iField,
 }
 
 /************************************************************************/
-/*                          SetValue()                                  */
+/*                              SetValue()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField,
@@ -479,7 +479,7 @@ CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField,
 }
 
 /************************************************************************/
-/*                          SetValue()                                  */
+/*                              SetValue()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField, double dfValue)
@@ -489,7 +489,7 @@ CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField, double dfValue)
 }
 
 /************************************************************************/
-/*                          SetValue()                                  */
+/*                              SetValue()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField, int nValue)
@@ -499,7 +499,7 @@ CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField, int nValue)
 }
 
 /************************************************************************/
-/*                          SetValue()                                  */
+/*                              SetValue()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField, bool bValue)
@@ -509,7 +509,7 @@ CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField, bool bValue)
 }
 
 /************************************************************************/
-/*                          SetValue()                                  */
+/*                              SetValue()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField,
@@ -521,7 +521,7 @@ CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField,
 }
 
 /************************************************************************/
-/*                          SetValue()                                  */
+/*                              SetValue()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField,
@@ -534,7 +534,7 @@ CPLErr HFARasterAttributeTable::SetValue(int iRow, int iField,
 }
 
 /************************************************************************/
-/*                          ValuesIO()                                  */
+/*                              ValuesIO()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
@@ -760,7 +760,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                          ValuesIO()                                  */
+/*                              ValuesIO()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
@@ -956,7 +956,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                          ValuesIO()                                  */
+/*                              ValuesIO()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
@@ -1291,7 +1291,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                          ValuesIO()                                  */
+/*                              ValuesIO()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
@@ -1303,7 +1303,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                          ValuesIO()                                  */
+/*                              ValuesIO()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
@@ -1315,7 +1315,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                          ValuesIO()                                  */
+/*                              ValuesIO()                              */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
@@ -1327,7 +1327,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                               ColorsIO()                              */
+/*                              ColorsIO()                              */
 /************************************************************************/
 
 // Handle the fact that HFA stores colours as floats, but we need to
@@ -1409,7 +1409,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                       ChangesAreWrittenToFile()                      */
+/*                      ChangesAreWrittenToFile()                       */
 /************************************************************************/
 
 int HFARasterAttributeTable::ChangesAreWrittenToFile()
@@ -1418,7 +1418,7 @@ int HFARasterAttributeTable::ChangesAreWrittenToFile()
 }
 
 /************************************************************************/
-/*                          SetRowCount()                               */
+/*                            SetRowCount()                             */
 /************************************************************************/
 
 void HFARasterAttributeTable::SetRowCount(int iCount)
@@ -1512,7 +1512,7 @@ void HFARasterAttributeTable::SetRowCount(int iCount)
 }
 
 /************************************************************************/
-/*                          GetRowOfValue()                             */
+/*                           GetRowOfValue()                            */
 /************************************************************************/
 int HFARasterAttributeTable::GetRowOfValue(double dfValue) const
 {
@@ -1566,7 +1566,7 @@ int HFARasterAttributeTable::GetRowOfValue(int nValue) const
 }
 
 /************************************************************************/
-/*                          CreateColumn()                              */
+/*                            CreateColumn()                            */
 /************************************************************************/
 
 CPLErr HFARasterAttributeTable::CreateColumn(const char *pszFieldName,
@@ -1779,7 +1779,7 @@ int HFARasterAttributeTable::GetLinearBinning(double *pdfRow0Min,
 }
 
 /************************************************************************/
-/*                              Serialize()                             */
+/*                             Serialize()                              */
 /************************************************************************/
 
 CPLXMLNode *HFARasterAttributeTable::Serialize() const
@@ -1792,7 +1792,7 @@ CPLXMLNode *HFARasterAttributeTable::Serialize() const
 }
 
 /************************************************************************/
-/*                              SetTableType()                             */
+/*                            SetTableType()                            */
 /************************************************************************/
 
 CPLErr
@@ -1803,7 +1803,7 @@ HFARasterAttributeTable::SetTableType(const GDALRATTableType eInTableType)
 }
 
 /************************************************************************/
-/*                              GetTableType()                             */
+/*                            GetTableType()                            */
 /************************************************************************/
 
 GDALRATTableType HFARasterAttributeTable::GetTableType() const
@@ -2371,7 +2371,7 @@ void HFARasterBand::ReadHistogramMetadata()
 }
 
 /************************************************************************/
-/*                             GetNoDataValue()                         */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double HFARasterBand::GetNoDataValue(int *pbSuccess)
@@ -2390,7 +2390,7 @@ double HFARasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                             SetNoDataValue()                         */
+/*                           SetNoDataValue()                           */
 /************************************************************************/
 
 CPLErr HFARasterBand::SetNoDataValue(double dfValue)
@@ -2628,7 +2628,7 @@ CPLErr HFARasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                         GetDescription()                             */
+/*                           GetDescription()                           */
 /************************************************************************/
 
 const char *HFARasterBand::GetDescription() const
@@ -2642,7 +2642,7 @@ const char *HFARasterBand::GetDescription() const
 }
 
 /************************************************************************/
-/*                         SetDescription()                             */
+/*                           SetDescription()                           */
 /************************************************************************/
 void HFARasterBand::SetDescription(const char *pszName)
 {
@@ -3031,7 +3031,7 @@ GDALRasterAttributeTable *HFARasterBand::GetDefaultRAT()
 }
 
 /************************************************************************/
-/*                            WriteNamedRAT()                            */
+/*                           WriteNamedRAT()                            */
 /************************************************************************/
 
 CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
@@ -3305,7 +3305,7 @@ CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
 /************************************************************************/
 
 /************************************************************************/
-/*                            HFADataset()                            */
+/*                             HFADataset()                             */
 /************************************************************************/
 
 HFADataset::HFADataset()
@@ -3314,7 +3314,7 @@ HFADataset::HFADataset()
 }
 
 /************************************************************************/
-/*                           ~HFADataset()                            */
+/*                            ~HFADataset()                             */
 /************************************************************************/
 
 HFADataset::~HFADataset()
@@ -4739,7 +4739,7 @@ GDALDataset *HFADataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *HFADataset::GetSpatialRef() const
@@ -4965,7 +4965,7 @@ const OGRSpatialReference *HFADataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *HFADataset::GetGCPs()
@@ -5016,7 +5016,7 @@ char **HFADataset::GetFileList()
 
 GDALDataset *HFADataset::Create(const char *pszFilenameIn, int nXSize,
                                 int nYSize, int nBandsIn, GDALDataType eType,
-                                char **papszParamList)
+                                CSLConstList papszParamList)
 
 {
     const int nBits = CSLFetchNameValue(papszParamList, "NBITS") != nullptr
@@ -5223,7 +5223,7 @@ CPLErr HFADataset::CopyFiles(const char *pszNewName, const char *pszOldName)
 
 GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int /* bStrict */,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 {

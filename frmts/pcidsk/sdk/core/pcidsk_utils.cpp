@@ -129,7 +129,7 @@ int64 PCIDSK::atoint64( const char *str_value )
 }
 
 /************************************************************************/
-/*                            SwapPixels()                              */
+/*                             SwapPixels()                             */
 /************************************************************************/
 /**
  * @brief Perform an endianness swap for a given buffer of pixels
@@ -355,7 +355,7 @@ void PCIDSK::ParseTileFormat(const std::string& oOptionsIn,
 }
 
 /************************************************************************/
-/*                         ParseLinkedFilename()                        */
+/*                        ParseLinkedFilename()                         */
 /************************************************************************/
 
 std::string PCIDSK::ParseLinkedFilename(std::string oOptions)
@@ -499,7 +499,7 @@ std::vector<double> PCIDSK::ProjParamsFromText( std::string geosys,
 }
 
 /************************************************************************/
-/*                          ProjParamsToText()                           */
+/*                          ProjParamsToText()                          */
 /************************************************************************/
 
 std::string PCIDSK::ProjParamsToText( std::vector<double> dparms )

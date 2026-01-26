@@ -20,7 +20,7 @@
 #include <set>
 
 /************************************************************************/
-/*                      ZarrV3Group::Create()                           */
+/*                        ZarrV3Group::Create()                         */
 /************************************************************************/
 
 std::shared_ptr<ZarrV3Group>
@@ -35,7 +35,7 @@ ZarrV3Group::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
 }
 
 /************************************************************************/
-/*                             OpenZarrArray()                          */
+/*                           OpenZarrArray()                            */
 /************************************************************************/
 
 std::shared_ptr<ZarrArray> ZarrV3Group::OpenZarrArray(const std::string &osName,
@@ -70,7 +70,7 @@ std::shared_ptr<ZarrArray> ZarrV3Group::OpenZarrArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                   ZarrV3Group::LoadAttributes()                      */
+/*                    ZarrV3Group::LoadAttributes()                     */
 /************************************************************************/
 
 void ZarrV3Group::LoadAttributes() const
@@ -94,7 +94,7 @@ void ZarrV3Group::LoadAttributes() const
 }
 
 /************************************************************************/
-/*                        ExploreDirectory()                            */
+/*                          ExploreDirectory()                          */
 /************************************************************************/
 
 void ZarrV3Group::ExploreDirectory() const
@@ -186,7 +186,7 @@ ZarrV3Group::ZarrV3Group(
 }
 
 /************************************************************************/
-/*                      ZarrV3Group::~ZarrV3Group()                     */
+/*                     ZarrV3Group::~ZarrV3Group()                      */
 /************************************************************************/
 
 ZarrV3Group::~ZarrV3Group()
@@ -195,7 +195,7 @@ ZarrV3Group::~ZarrV3Group()
 }
 
 /************************************************************************/
-/*                            Close()                                   */
+/*                               Close()                                */
 /************************************************************************/
 
 bool ZarrV3Group::Close()
@@ -232,7 +232,7 @@ bool ZarrV3Group::Close()
 }
 
 /************************************************************************/
-/*                   ZarrV3Group::GetOrCreateSubGroup()                 */
+/*                  ZarrV3Group::GetOrCreateSubGroup()                  */
 /************************************************************************/
 
 std::shared_ptr<ZarrV3Group>
@@ -273,7 +273,7 @@ ZarrV3Group::GetOrCreateSubGroup(const std::string &osSubGroupFullname)
 }
 
 /************************************************************************/
-/*                ZarrV3Group::InitFromConsolidatedMetadata()           */
+/*             ZarrV3Group::InitFromConsolidatedMetadata()              */
 /************************************************************************/
 
 void ZarrV3Group::InitFromConsolidatedMetadata(
@@ -404,7 +404,7 @@ void ZarrV3Group::InitFromConsolidatedMetadata(
 }
 
 /************************************************************************/
-/*                            OpenZarrGroup()                           */
+/*                           OpenZarrGroup()                            */
 /************************************************************************/
 
 std::shared_ptr<ZarrGroupBase>
@@ -480,7 +480,7 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
 }
 
 /************************************************************************/
-/*                   ZarrV3Group::CreateOnDisk()                        */
+/*                     ZarrV3Group::CreateOnDisk()                      */
 /************************************************************************/
 
 std::shared_ptr<ZarrV3Group> ZarrV3Group::CreateOnDisk(
@@ -587,7 +587,7 @@ ZarrV3Group::CreateGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                          FillDTypeElts()                             */
+/*                           FillDTypeElts()                            */
 /************************************************************************/
 
 static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
@@ -924,9 +924,9 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         }
     }
 
-    auto poArray = ZarrV3Array::Create(
-        m_poSharedResource, GetFullName(), osName, aoDimensions, oDataType,
-        aoDtypeElts, anOuterBlockSize, anInnerBlockSize);
+    auto poArray = ZarrV3Array::Create(m_poSharedResource, Self(), osName,
+                                       aoDimensions, oDataType, aoDtypeElts,
+                                       anOuterBlockSize, anInnerBlockSize);
 
     if (!poArray)
         return nullptr;
@@ -944,6 +944,8 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     }
     if (poCodecs)
         poArray->SetCodecs(oCodecs, std::move(poCodecs));
+
+    poArray->SetCreationOptions(papszOptions);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     if (!cpl::starts_with(osFilename, "/vsi") && !poArray->Flush())

@@ -114,11 +114,11 @@ class PDSDataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
 };
 
 /************************************************************************/
-/*                            PDSDataset()                            */
+/*                             PDSDataset()                             */
 /************************************************************************/
 
 PDSDataset::PDSDataset()
@@ -127,7 +127,7 @@ PDSDataset::PDSDataset()
 }
 
 /************************************************************************/
-/*                            ~PDSDataset()                            */
+/*                            ~PDSDataset()                             */
 /************************************************************************/
 
 PDSDataset::~PDSDataset()
@@ -137,7 +137,7 @@ PDSDataset::~PDSDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr PDSDataset::Close(GDALProgressFunc, void *)
@@ -161,7 +161,7 @@ CPLErr PDSDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int PDSDataset::CloseDependentDatasets()
@@ -256,7 +256,7 @@ CPLErr PDSDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *PDSDataset::GetSpatialRef() const
@@ -733,7 +733,7 @@ void PDSDataset::ParseSRS()
 }
 
 /************************************************************************/
-/*                        GetRawBinaryLayout()                          */
+/*                         GetRawBinaryLayout()                         */
 /************************************************************************/
 
 bool PDSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
@@ -745,7 +745,7 @@ bool PDSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 }
 
 /************************************************************************/
-/*                        PDSConvertFromHex()                           */
+/*                         PDSConvertFromHex()                          */
 /************************************************************************/
 
 static GUInt32 PDSConvertFromHex(const char *pszVal)
@@ -1320,7 +1320,7 @@ PDSWrapperRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
 }
 
 /************************************************************************/
-/*                       ParseCompressedImage()                         */
+/*                        ParseCompressedImage()                        */
 /************************************************************************/
 
 int PDSDataset::ParseCompressedImage()
@@ -1533,7 +1533,7 @@ const char *PDSDataset::GetKeyword(const std::string &osPath,
 }
 
 /************************************************************************/
-/*                            GetKeywordSub()                           */
+/*                           GetKeywordSub()                            */
 /************************************************************************/
 
 const char *PDSDataset::GetKeywordSub(const std::string &osPath, int iSubscript,
@@ -1563,7 +1563,7 @@ const char *PDSDataset::GetKeywordSub(const std::string &osPath, int iSubscript,
 }
 
 /************************************************************************/
-/*                            GetKeywordUnit()                          */
+/*                           GetKeywordUnit()                           */
 /************************************************************************/
 
 const char *PDSDataset::GetKeywordUnit(const char *pszPath, int iSubscript,
@@ -1619,7 +1619,7 @@ CPLString PDSDataset::CleanString(const CPLString &osInput)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **PDSDataset::GetMetadataDomainList()
@@ -1628,7 +1628,7 @@ char **PDSDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                             GetMetadata()                            */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList PDSDataset::GetMetadata(const char *pszDomain)
@@ -1641,7 +1641,7 @@ CSLConstList PDSDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                         GDALRegister_PDS()                           */
+/*                          GDALRegister_PDS()                          */
 /************************************************************************/
 
 void GDALRegister_PDS()

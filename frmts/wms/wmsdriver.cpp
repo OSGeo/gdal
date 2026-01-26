@@ -48,7 +48,7 @@ WMSMiniDriverFactory::~WMSMiniDriverFactory() = default;
 GDALWMSCacheImpl::~GDALWMSCacheImpl() = default;
 
 /************************************************************************/
-/*              GDALWMSDatasetGetConfigFromURL()                        */
+/*                   GDALWMSDatasetGetConfigFromURL()                   */
 /************************************************************************/
 
 static CPLXMLNode *GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
@@ -358,7 +358,7 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromURL(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*              GDALWMSDatasetGetConfigFromTileMap()                    */
+/*                 GDALWMSDatasetGetConfigFromTileMap()                 */
 /************************************************************************/
 
 static CPLXMLNode *GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode *psXML)
@@ -528,7 +528,7 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromTileMap(CPLXMLNode *psXML)
 }
 
 /************************************************************************/
-/*             GDALWMSDatasetGetConfigFromArcGISJSON()                  */
+/*               GDALWMSDatasetGetConfigFromArcGISJSON()                */
 /************************************************************************/
 
 static CPLXMLNode *GDALWMSDatasetGetConfigFromArcGISJSON(const char *pszURL,
@@ -709,7 +709,7 @@ static CPLXMLNode *GDALWMSDatasetGetConfigFromArcGISJSON(const char *pszURL,
 }
 
 /************************************************************************/
-/*                                 Open()                               */
+/*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -1030,7 +1030,7 @@ GDALDataset *GDALWMSDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             GetServerConfig()                        */
+/*                          GetServerConfig()                           */
 /************************************************************************/
 
 const char *GDALWMSDataset::GetServerConfig(const char *URI,
@@ -1085,7 +1085,7 @@ void GDALWMSDataset::DestroyCfgMutex()
 GDALDataset *GDALWMSDataset::CreateCopy(const char *pszFilename,
                                         GDALDataset *poSrcDS,
                                         CPL_UNUSED int bStrict,
-                                        CPL_UNUSED char **papszOptions,
+                                        CPL_UNUSED CSLConstList papszOptions,
                                         CPL_UNUSED GDALProgressFunc pfnProgress,
                                         CPL_UNUSED void *pProgressData)
 {

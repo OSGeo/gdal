@@ -444,7 +444,7 @@ CPLErr GTiffDataset::FillEmptyTiles()
 }
 
 /************************************************************************/
-/*                         HasOnlyNoData()                              */
+/*                           HasOnlyNoData()                            */
 /************************************************************************/
 
 bool GTiffDataset::HasOnlyNoData(const void *pBuffer, int nWidth, int nHeight,
@@ -604,7 +604,7 @@ void GTiffDataset::WriteDealWithLercAndNan(T *pBuffer, int nActualBlockWidth,
 }
 
 /************************************************************************/
-/*                        WriteEncodedTile()                            */
+/*                          WriteEncodedTile()                          */
 /************************************************************************/
 
 bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
@@ -778,7 +778,7 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
 }
 
 /************************************************************************/
-/*                        WriteEncodedStrip()                           */
+/*                         WriteEncodedStrip()                          */
 /************************************************************************/
 
 bool GTiffDataset::WriteEncodedStrip(uint32_t strip, GByte *pabyData,
@@ -897,7 +897,7 @@ bool GTiffDataset::WriteEncodedStrip(uint32_t strip, GByte *pabyData,
 }
 
 /************************************************************************/
-/*                        InitCompressionThreads()                      */
+/*                       InitCompressionThreads()                       */
 /************************************************************************/
 
 void GTiffDataset::InitCompressionThreads(bool bUpdateMode,
@@ -970,7 +970,7 @@ void GTiffDataset::InitCompressionThreads(bool bUpdateMode,
 }
 
 /************************************************************************/
-/*                      ThreadCompressionFunc()                         */
+/*                       ThreadCompressionFunc()                        */
 /************************************************************************/
 
 void GTiffDataset::ThreadCompressionFunc(void *pData)
@@ -1217,7 +1217,7 @@ void GTiffDataset::WriteRawStripOrTile(int nStripOrTile,
 }
 
 /************************************************************************/
-/*                        WaitCompletionForJobIdx()                     */
+/*                      WaitCompletionForJobIdx()                       */
 /************************************************************************/
 
 void GTiffDataset::WaitCompletionForJobIdx(int i)
@@ -1275,7 +1275,7 @@ void GTiffDataset::WaitCompletionForJobIdx(int i)
 }
 
 /************************************************************************/
-/*                        WaitCompletionForBlock()                      */
+/*                       WaitCompletionForBlock()                       */
 /************************************************************************/
 
 void GTiffDataset::WaitCompletionForBlock(int nBlockId)
@@ -1310,7 +1310,7 @@ void GTiffDataset::WaitCompletionForBlock(int nBlockId)
 }
 
 /************************************************************************/
-/*                      SubmitCompressionJob()                          */
+/*                        SubmitCompressionJob()                        */
 /************************************************************************/
 
 bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
@@ -1444,7 +1444,7 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
 }
 
 /************************************************************************/
-/*                          DiscardLsb()                                */
+/*                             DiscardLsb()                             */
 /************************************************************************/
 
 template <class T> bool MustNotDiscardLsb(T value, bool bHasNoData, T nodata)
@@ -1961,7 +1961,7 @@ void GTiffDataset::DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes,
 }
 
 /************************************************************************/
-/*                  WriteEncodedTileOrStrip()                           */
+/*                      WriteEncodedTileOrStrip()                       */
 /************************************************************************/
 
 CPLErr GTiffDataset::WriteEncodedTileOrStrip(uint32_t tile_or_strip, void *data,
@@ -2014,7 +2014,7 @@ CPLErr GTiffDataset::FlushBlockBuf()
 }
 
 /************************************************************************/
-/*                   GTiffFillStreamableOffsetAndCount()                */
+/*                 GTiffFillStreamableOffsetAndCount()                  */
 /************************************************************************/
 
 static void GTiffFillStreamableOffsetAndCount(TIFF *hTIFF, int nSize)
@@ -2452,7 +2452,7 @@ CPLErr GTiffDataset::CleanOverviews()
 }
 
 /************************************************************************/
-/*                   RegisterNewOverviewDataset()                       */
+/*                     RegisterNewOverviewDataset()                     */
 /************************************************************************/
 
 CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
@@ -2631,7 +2631,7 @@ CPLErr GTiffDataset::RegisterNewOverviewDataset(toff_t nOverviewOffset,
 }
 
 /************************************************************************/
-/*                     CreateTIFFColorTable()                           */
+/*                        CreateTIFFColorTable()                        */
 /************************************************************************/
 
 static void CreateTIFFColorTable(
@@ -2682,7 +2682,7 @@ static void CreateTIFFColorTable(
 }
 
 /************************************************************************/
-/*                        GetOverviewParameters()                       */
+/*                       GetOverviewParameters()                        */
 /************************************************************************/
 
 bool GTiffDataset::GetOverviewParameters(
@@ -2943,7 +2943,7 @@ CPLErr GTiffDataset::CreateOverviewsFromSrcOverviews(GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                       CreateInternalMaskOverviews()                  */
+/*                    CreateInternalMaskOverviews()                     */
 /************************************************************************/
 
 CPLErr GTiffDataset::CreateInternalMaskOverviews(int nOvrBlockXSize,
@@ -3765,7 +3765,7 @@ CPLErr GTiffDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 }
 
 /************************************************************************/
-/*                      GTiffWriteDummyGeokeyDirectory()                */
+/*                   GTiffWriteDummyGeokeyDirectory()                   */
 /************************************************************************/
 
 static void GTiffWriteDummyGeokeyDirectory(TIFF *hTIFF)
@@ -3786,7 +3786,7 @@ static void GTiffWriteDummyGeokeyDirectory(TIFF *hTIFF)
 }
 
 /************************************************************************/
-/*                    IsSRSCompatibleOfGeoTIFF()                        */
+/*                      IsSRSCompatibleOfGeoTIFF()                      */
 /************************************************************************/
 
 static bool IsSRSCompatibleOfGeoTIFF(const OGRSpatialReference *poSRS,
@@ -4110,7 +4110,7 @@ static void AppendMetadataItem(CPLXMLNode **ppsRoot, CPLXMLNode **ppsTail,
 }
 
 /************************************************************************/
-/*                         WriteMDMetadata()                            */
+/*                          WriteMDMetadata()                           */
 /************************************************************************/
 
 static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
@@ -4289,7 +4289,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 }
 
 /************************************************************************/
-/*                           WriteRPC()                                 */
+/*                              WriteRPC()                              */
 /************************************************************************/
 
 void GTiffDataset::WriteRPC(GDALDataset *poSrcDS, TIFF *l_hTIFF,
@@ -4857,7 +4857,7 @@ void GTiffDataset::PushMetadataToPam()
 }
 
 /************************************************************************/
-/*                         WriteNoDataValue()                           */
+/*                          WriteNoDataValue()                          */
 /************************************************************************/
 
 void GTiffDataset::WriteNoDataValue(TIFF *hTIFF, double dfNoData)
@@ -4882,7 +4882,7 @@ void GTiffDataset::WriteNoDataValue(TIFF *hTIFF, uint64_t nNoData)
 }
 
 /************************************************************************/
-/*                         UnsetNoDataValue()                           */
+/*                          UnsetNoDataValue()                          */
 /************************************************************************/
 
 void GTiffDataset::UnsetNoDataValue(TIFF *l_hTIFF)
@@ -4910,7 +4910,7 @@ void GTiffDataset::UnsetNoDataValue(TIFF *l_hTIFF)
 /************************************************************************/
 
 void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
-                                  char **papszParamList,
+                                  CSLConstList papszParamList,
                                   uint32_t l_nBitsPerSample)
 {
     if ((pDS != nullptr) && (pDS->eAccess != GA_Update))
@@ -5160,7 +5160,7 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
     }
 }
 
-static signed char GTiffGetLZMAPreset(char **papszOptions)
+static signed char GTiffGetLZMAPreset(CSLConstList papszOptions)
 {
     int nLZMAPreset = -1;
     const char *pszValue = CSLFetchNameValue(papszOptions, "LZMA_PRESET");
@@ -5178,7 +5178,7 @@ static signed char GTiffGetLZMAPreset(char **papszOptions)
     return static_cast<signed char>(nLZMAPreset);
 }
 
-static signed char GTiffGetZSTDPreset(char **papszOptions)
+static signed char GTiffGetZSTDPreset(CSLConstList papszOptions)
 {
     int nZSTDLevel = -1;
     const char *pszValue = CSLFetchNameValue(papszOptions, "ZSTD_LEVEL");
@@ -5195,7 +5195,7 @@ static signed char GTiffGetZSTDPreset(char **papszOptions)
     return static_cast<signed char>(nZSTDLevel);
 }
 
-static signed char GTiffGetZLevel(char **papszOptions)
+static signed char GTiffGetZLevel(CSLConstList papszOptions)
 {
     int nZLevel = -1;
     const char *pszValue = CSLFetchNameValue(papszOptions, "ZLEVEL");
@@ -5227,7 +5227,7 @@ static signed char GTiffGetZLevel(char **papszOptions)
     return static_cast<signed char>(nZLevel);
 }
 
-static signed char GTiffGetJpegQuality(char **papszOptions)
+static signed char GTiffGetJpegQuality(CSLConstList papszOptions)
 {
     int nJpegQuality = -1;
     const char *pszValue = CSLFetchNameValue(papszOptions, "JPEG_QUALITY");
@@ -5245,7 +5245,7 @@ static signed char GTiffGetJpegQuality(char **papszOptions)
     return static_cast<signed char>(nJpegQuality);
 }
 
-static signed char GTiffGetJpegTablesMode(char **papszOptions)
+static signed char GTiffGetJpegTablesMode(CSLConstList papszOptions)
 {
     return static_cast<signed char>(atoi(
         CSLFetchNameValueDef(papszOptions, "JPEGTABLESMODE",
@@ -5257,7 +5257,7 @@ static signed char GTiffGetJpegTablesMode(char **papszOptions)
 /************************************************************************/
 
 static GTiffDataset::MaskOffset *GetDiscardLsbOption(TIFF *hTIFF,
-                                                     char **papszOptions)
+                                                     CSLConstList papszOptions)
 {
     const char *pszBits = CSLFetchNameValue(papszOptions, "DISCARD_LSB");
     if (pszBits == nullptr)
@@ -5337,7 +5337,7 @@ static GTiffDataset::MaskOffset *GetDiscardLsbOption(TIFF *hTIFF,
     return panMaskOffsetLsb;
 }
 
-void GTiffDataset::GetDiscardLsbOption(char **papszOptions)
+void GTiffDataset::GetDiscardLsbOption(CSLConstList papszOptions)
 {
     m_panMaskOffsetLsb = ::GetDiscardLsbOption(m_hTIFF, papszOptions);
 }
@@ -5375,9 +5375,10 @@ static GTiffProfile GetProfile(const char *pszProfile)
 TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                              int l_nBands, GDALDataType eType,
                              double dfExtraSpaceForOverviews,
-                             int nColorTableMultiplier, char **papszParamList,
-                             VSILFILE **pfpL, CPLString &l_osTmpFilename,
-                             bool bCreateCopy, bool &bTileInterleavingOut)
+                             int nColorTableMultiplier,
+                             CSLConstList papszParamList, VSILFILE **pfpL,
+                             CPLString &l_osTmpFilename, bool bCreateCopy,
+                             bool &bTileInterleavingOut)
 
 {
     bTileInterleavingOut = false;
@@ -6656,7 +6657,7 @@ int GTiffDataset::GuessJPEGQuality(bool &bOutHasQuantizationTable,
 }
 
 /************************************************************************/
-/*               SetJPEGQualityAndTablesModeFromFile()                  */
+/*                SetJPEGQualityAndTablesModeFromFile()                 */
 /************************************************************************/
 
 void GTiffDataset::SetJPEGQualityAndTablesModeFromFile(
@@ -6753,7 +6754,7 @@ void GTiffDataset::SetJPEGQualityAndTablesModeFromFile(
 
 GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int l_nBands, GDALDataType eType,
-                                  char **papszParamList)
+                                  CSLConstList papszParamList)
 
 {
     VSILFILE *l_fpL = nullptr;
@@ -6995,7 +6996,7 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                           CopyImageryAndMask()                       */
+/*                         CopyImageryAndMask()                         */
 /************************************************************************/
 
 CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
@@ -7312,7 +7313,7 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
 
 GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                                       GDALDataset *poSrcDS, int bStrict,
-                                      char **papszOptions,
+                                      CSLConstList papszOptions,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 
@@ -9103,7 +9104,7 @@ CPLErr GTiffDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                               SetGCPs()                              */
+/*                              SetGCPs()                               */
 /************************************************************************/
 
 CPLErr GTiffDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
@@ -9340,7 +9341,7 @@ CPLErr GTiffDataset::SetMetadataItem(const char *pszName, const char *pszValue,
 }
 
 /************************************************************************/
-/*                         CreateMaskBand()                             */
+/*                           CreateMaskBand()                           */
 /************************************************************************/
 
 CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
@@ -9442,7 +9443,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
 }
 
 /************************************************************************/
-/*                        MustCreateInternalMask()                      */
+/*                       MustCreateInternalMask()                       */
 /************************************************************************/
 
 bool GTiffDataset::MustCreateInternalMask()
@@ -9451,7 +9452,7 @@ bool GTiffDataset::MustCreateInternalMask()
 }
 
 /************************************************************************/
-/*                         CreateMaskBand()                             */
+/*                           CreateMaskBand()                           */
 /************************************************************************/
 
 CPLErr GTiffRasterBand::CreateMaskBand(int nFlagsIn)
@@ -9478,7 +9479,7 @@ CPLErr GTiffRasterBand::CreateMaskBand(int nFlagsIn)
 }
 
 /************************************************************************/
-/*                          ClampCTEntry()                              */
+/*                            ClampCTEntry()                            */
 /************************************************************************/
 
 /* static */ unsigned short GTiffDataset::ClampCTEntry(int iColor, int iComp,

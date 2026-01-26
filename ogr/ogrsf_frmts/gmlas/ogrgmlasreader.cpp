@@ -23,7 +23,7 @@
 IGMLASInputSourceClosing::~IGMLASInputSourceClosing() = default;
 
 /************************************************************************/
-/*                        GMLASBinInputStream                           */
+/*                         GMLASBinInputStream                          */
 /************************************************************************/
 
 class GMLASBinInputStream final : public BinInputStream
@@ -53,7 +53,7 @@ GMLASBinInputStream::GMLASBinInputStream(VSILFILE *fp)
 }
 
 /************************************************************************/
-/*                       ~GMLASBinInputStream()                         */
+/*                        ~GMLASBinInputStream()                        */
 /************************************************************************/
 
 GMLASBinInputStream::~GMLASBinInputStream()
@@ -61,7 +61,7 @@ GMLASBinInputStream::~GMLASBinInputStream()
 }
 
 /************************************************************************/
-/*                                curPos()                              */
+/*                               curPos()                               */
 /************************************************************************/
 
 XMLFilePos GMLASBinInputStream::curPos() const
@@ -70,7 +70,7 @@ XMLFilePos GMLASBinInputStream::curPos() const
 }
 
 /************************************************************************/
-/*                               readBytes()                            */
+/*                             readBytes()                              */
 /************************************************************************/
 
 XMLSize_t GMLASBinInputStream::readBytes(XMLByte *const toFill,
@@ -80,7 +80,7 @@ XMLSize_t GMLASBinInputStream::readBytes(XMLByte *const toFill,
 }
 
 /************************************************************************/
-/*                            getContentType()                          */
+/*                           getContentType()                           */
 /************************************************************************/
 
 const XMLCh *GMLASBinInputStream::getContentType() const
@@ -113,7 +113,7 @@ GMLASInputSource::GMLASInputSource(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                        SetClosingCallback()                          */
+/*                         SetClosingCallback()                         */
 /************************************************************************/
 
 void GMLASInputSource::SetClosingCallback(IGMLASInputSourceClosing *cbk)
@@ -132,7 +132,7 @@ GMLASInputSource::~GMLASInputSource()
 }
 
 /************************************************************************/
-/*                              makeStream()                            */
+/*                             makeStream()                             */
 /************************************************************************/
 
 BinInputStream *GMLASInputSource::makeStream() const
@@ -153,7 +153,7 @@ BinInputStream *GMLASInputSource::makeStream() const
 }
 
 /************************************************************************/
-/*                            warning()                                 */
+/*                              warning()                               */
 /************************************************************************/
 
 void GMLASErrorHandler::warning(const SAXParseException &e)
@@ -162,7 +162,7 @@ void GMLASErrorHandler::warning(const SAXParseException &e)
 }
 
 /************************************************************************/
-/*                             error()                                  */
+/*                               error()                                */
 /************************************************************************/
 
 void GMLASErrorHandler::error(const SAXParseException &e)
@@ -172,7 +172,7 @@ void GMLASErrorHandler::error(const SAXParseException &e)
 }
 
 /************************************************************************/
-/*                          fatalError()                                */
+/*                             fatalError()                             */
 /************************************************************************/
 
 void GMLASErrorHandler::fatalError(const SAXParseException &e)
@@ -182,7 +182,7 @@ void GMLASErrorHandler::fatalError(const SAXParseException &e)
 }
 
 /************************************************************************/
-/*                            handle()                                  */
+/*                               handle()                               */
 /************************************************************************/
 
 void GMLASErrorHandler::handle(const SAXParseException &e, CPLErr eErr)
@@ -233,7 +233,7 @@ void GMLASErrorHandler::handle(const SAXParseException &e, CPLErr eErr)
 }
 
 /************************************************************************/
-/*                     GMLASBaseEntityResolver()                        */
+/*                      GMLASBaseEntityResolver()                       */
 /************************************************************************/
 
 GMLASBaseEntityResolver::GMLASBaseEntityResolver(const CPLString &osBasePath,
@@ -244,7 +244,7 @@ GMLASBaseEntityResolver::GMLASBaseEntityResolver(const CPLString &osBasePath,
 }
 
 /************************************************************************/
-/*                    ~GMLASBaseEntityResolver()                        */
+/*                      ~GMLASBaseEntityResolver()                      */
 /************************************************************************/
 
 GMLASBaseEntityResolver::~GMLASBaseEntityResolver()
@@ -253,7 +253,7 @@ GMLASBaseEntityResolver::~GMLASBaseEntityResolver()
 }
 
 /************************************************************************/
-/*                            notifyClosing()                           */
+/*                           notifyClosing()                            */
 /************************************************************************/
 
 /* Called by GMLASInputSource destructor. This is useful for use to */
@@ -279,7 +279,7 @@ void GMLASBaseEntityResolver::SetBasePath(const CPLString &osBasePath)
 }
 
 /************************************************************************/
-/*                         DoExtraSchemaProcessing()                    */
+/*                      DoExtraSchemaProcessing()                       */
 /************************************************************************/
 
 void GMLASBaseEntityResolver::DoExtraSchemaProcessing(
@@ -289,7 +289,7 @@ void GMLASBaseEntityResolver::DoExtraSchemaProcessing(
 }
 
 /************************************************************************/
-/*                         resolveEntity()                              */
+/*                           resolveEntity()                            */
 /************************************************************************/
 
 InputSource *
@@ -344,7 +344,7 @@ GMLASBaseEntityResolver::resolveEntity(const XMLCh *const /*publicId*/,
 }
 
 /************************************************************************/
-/*                             Dump()                                   */
+/*                                Dump()                                */
 /************************************************************************/
 
 void GMLASReader::Context::Dump() const
@@ -368,7 +368,7 @@ void GMLASReader::Context::Dump() const
 }
 
 /************************************************************************/
-/*                             GMLASReader()                            */
+/*                            GMLASReader()                             */
 /************************************************************************/
 
 GMLASReader::GMLASReader(GMLASXSDCache &oCache,
@@ -416,7 +416,7 @@ GMLASReader::~GMLASReader()
 }
 
 /************************************************************************/
-/*                          SetLayerOfInterest()                        */
+/*                         SetLayerOfInterest()                         */
 /************************************************************************/
 
 void GMLASReader::SetLayerOfInterest(OGRGMLASLayer *poLayer)
@@ -596,7 +596,7 @@ bool GMLASReader::LoadXSDInParser(
 }
 
 /************************************************************************/
-/*                                  Init()                              */
+/*                                Init()                                */
 /************************************************************************/
 
 bool GMLASReader::Init(const char *pszFilename,
@@ -735,7 +735,7 @@ bool GMLASReader::Init(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                             IsArrayType()                            */
+/*                            IsArrayType()                             */
 /************************************************************************/
 
 static bool IsArrayType(OGRFieldType eType)
@@ -745,7 +745,7 @@ static bool IsArrayType(OGRFieldType eType)
 }
 
 /************************************************************************/
-/*                                SetField()                            */
+/*                              SetField()                              */
 /************************************************************************/
 
 void GMLASReader::SetField(OGRFeature *poFeature, OGRGMLASLayer *poLayer,
@@ -939,7 +939,7 @@ void GMLASReader::PushFeatureReady(std::unique_ptr<OGRFeature> &&poFeature,
 }
 
 /************************************************************************/
-/*                          CreateNewFeature                            */
+/*                           CreateNewFeature                           */
 /************************************************************************/
 
 void GMLASReader::CreateNewFeature(const CPLString &osLocalname)
@@ -1013,7 +1013,7 @@ void GMLASReader::AttachAsLastChild(CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*                         BuildXMLBlobStartElement()                   */
+/*                      BuildXMLBlobStartElement()                      */
 /************************************************************************/
 
 void GMLASReader::BuildXMLBlobStartElement(const CPLString &osXPath,
@@ -1143,7 +1143,7 @@ void GMLASReader::PushContext(const Context &oContext)
 }
 
 /************************************************************************/
-/*                            PopContext()                              */
+/*                             PopContext()                             */
 /************************************************************************/
 
 void GMLASReader::PopContext()
@@ -1166,7 +1166,7 @@ void GMLASReader::PopContext()
 }
 
 /************************************************************************/
-/*                             startElement()                           */
+/*                            startElement()                            */
 /************************************************************************/
 
 /* <xs:group ref="somegroup" maxOccurs="unbounded"/> are particularly hard to
@@ -2016,7 +2016,7 @@ void GMLASReader::startElement(const XMLCh *const uri,
 }
 
 /************************************************************************/
-/*                          ProcessAttributes()                         */
+/*                         ProcessAttributes()                          */
 /************************************************************************/
 
 void GMLASReader::ProcessAttributes(const Attributes &attrs)
@@ -2264,7 +2264,7 @@ void GMLASReader::ProcessAttributes(const Attributes &attrs)
 }
 
 /************************************************************************/
-/*                           ProcessXLinkHref()                         */
+/*                          ProcessXLinkHref()                          */
 /************************************************************************/
 
 void GMLASReader::ProcessXLinkHref(int nAttrIdx, const CPLString &osAttrXPath,
@@ -2422,7 +2422,7 @@ void GMLASReader::ProcessXLinkHref(int nAttrIdx, const CPLString &osAttrXPath,
 }
 
 /************************************************************************/
-/*                            ExploreXMLDoc()                           */
+/*                           ExploreXMLDoc()                            */
 /************************************************************************/
 
 void GMLASReader::ExploreXMLDoc(
@@ -2494,7 +2494,7 @@ void GMLASReader::ExploreXMLDoc(
 }
 
 /************************************************************************/
-/*                              endElement()                            */
+/*                             endElement()                             */
 /************************************************************************/
 
 void GMLASReader::endElement(const XMLCh *const uri,
@@ -2796,7 +2796,7 @@ void GMLASReader::endElement(const XMLCh *const uri,
 }
 
 /************************************************************************/
-/*                             startEntity()                            */
+/*                            startEntity()                             */
 /************************************************************************/
 
 void GMLASReader::startEntity(const XMLCh *const /* name */)
@@ -2810,7 +2810,7 @@ void GMLASReader::startEntity(const XMLCh *const /* name */)
 }
 
 /************************************************************************/
-/*                             SetSWEValue()                            */
+/*                            SetSWEValue()                             */
 /************************************************************************/
 
 static void SetSWEValue(OGRFeature *poFeature, int iField, CPLString &osValue)
@@ -2834,7 +2834,7 @@ static void SetSWEValue(OGRFeature *poFeature, int iField, CPLString &osValue)
 }
 
 /************************************************************************/
-/*                              SkipSpace()                             */
+/*                             SkipSpace()                              */
 /************************************************************************/
 
 static size_t SkipSpace(const char *pszValues, size_t i)
@@ -2845,7 +2845,7 @@ static size_t SkipSpace(const char *pszValues, size_t i)
 }
 
 /************************************************************************/
-/*                         ProcessSWEDataArray()                        */
+/*                        ProcessSWEDataArray()                         */
 /************************************************************************/
 
 void GMLASReader::ProcessSWEDataArray(CPLXMLNode *psRoot)
@@ -3053,7 +3053,7 @@ void GMLASReader::ProcessSWEDataRecord(CPLXMLNode *psRoot)
 }
 
 /************************************************************************/
-/*                            GMLASGetSRSName()                         */
+/*                          GMLASGetSRSName()                           */
 /************************************************************************/
 
 static const char *GMLASGetSRSName(CPLXMLNode *psNode)
@@ -3068,7 +3068,7 @@ static const char *GMLASGetSRSName(CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*                    AddMissingSRSDimension()                          */
+/*                       AddMissingSRSDimension()                       */
 /************************************************************************/
 
 static void AddMissingSRSDimension(CPLXMLNode *psRoot, int nDefaultSrsDimension)
@@ -3095,7 +3095,7 @@ static void AddMissingSRSDimension(CPLXMLNode *psRoot, int nDefaultSrsDimension)
 }
 
 /************************************************************************/
-/*                            ProcessGeometry()                         */
+/*                          ProcessGeometry()                           */
 /************************************************************************/
 
 void GMLASReader::ProcessGeometry(CPLXMLNode *psRoot)
@@ -3257,7 +3257,7 @@ void GMLASReader::ProcessGeometry(CPLXMLNode *psRoot)
 }
 
 /************************************************************************/
-/*                              characters()                            */
+/*                             characters()                             */
 /************************************************************************/
 
 void GMLASReader::characters(const XMLCh *const chars, const XMLSize_t length)
@@ -3363,7 +3363,7 @@ void GMLASReader::characters(const XMLCh *const chars, const XMLSize_t length)
 }
 
 /************************************************************************/
-/*                            GetNextFeature()                          */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *GMLASReader::GetNextFeature(OGRGMLASLayer **ppoBelongingLayer,
@@ -3474,7 +3474,7 @@ OGRFeature *GMLASReader::GetNextFeature(OGRGMLASLayer **ppoBelongingLayer,
 }
 
 /************************************************************************/
-/*                              RunFirstPass()                          */
+/*                            RunFirstPass()                            */
 /************************************************************************/
 
 bool GMLASReader::RunFirstPass(
@@ -3595,7 +3595,7 @@ bool GMLASReader::RunFirstPass(
 }
 
 /************************************************************************/
-/*                    ProcessInternalXLinkFirstPass()                   */
+/*                   ProcessInternalXLinkFirstPass()                    */
 /************************************************************************/
 
 void GMLASReader::ProcessInternalXLinkFirstPass(
@@ -3638,7 +3638,7 @@ void GMLASReader::ProcessInternalXLinkFirstPass(
 }
 
 /************************************************************************/
-/*                    CreateFieldsForURLSpecificRules()                 */
+/*                  CreateFieldsForURLSpecificRules()                   */
 /************************************************************************/
 
 void GMLASReader::CreateFieldsForURLSpecificRules()
@@ -3670,7 +3670,7 @@ void GMLASReader::CreateFieldsForURLSpecificRules()
 }
 
 /************************************************************************/
-/*                    CreateFieldsForURLSpecificRule()                  */
+/*                   CreateFieldsForURLSpecificRule()                   */
 /************************************************************************/
 
 void GMLASReader::CreateFieldsForURLSpecificRule(

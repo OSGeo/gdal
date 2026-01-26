@@ -21,7 +21,7 @@
 #include <set>
 
 /************************************************************************/
-/*                      ZarrV2Group::Create()                           */
+/*                        ZarrV2Group::Create()                         */
 /************************************************************************/
 
 std::shared_ptr<ZarrV2Group>
@@ -35,7 +35,7 @@ ZarrV2Group::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
 }
 
 /************************************************************************/
-/*                      ZarrV2Group::~ZarrV2Group()                     */
+/*                     ZarrV2Group::~ZarrV2Group()                      */
 /************************************************************************/
 
 ZarrV2Group::~ZarrV2Group()
@@ -44,7 +44,7 @@ ZarrV2Group::~ZarrV2Group()
 }
 
 /************************************************************************/
-/*                            Close()                                   */
+/*                               Close()                                */
 /************************************************************************/
 
 bool ZarrV2Group::Close()
@@ -65,7 +65,7 @@ bool ZarrV2Group::Close()
 }
 
 /************************************************************************/
-/*                        ExploreDirectory()                            */
+/*                          ExploreDirectory()                          */
 /************************************************************************/
 
 void ZarrV2Group::ExploreDirectory() const
@@ -126,7 +126,7 @@ void ZarrV2Group::ExploreDirectory() const
 }
 
 /************************************************************************/
-/*                             OpenZarrArray()                          */
+/*                           OpenZarrArray()                            */
 /************************************************************************/
 
 std::shared_ptr<ZarrArray> ZarrV2Group::OpenZarrArray(const std::string &osName,
@@ -161,7 +161,7 @@ std::shared_ptr<ZarrArray> ZarrV2Group::OpenZarrArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                              OpenZarrGroup()                         */
+/*                           OpenZarrGroup()                            */
 /************************************************************************/
 
 std::shared_ptr<ZarrGroupBase>
@@ -208,7 +208,7 @@ ZarrV2Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
 }
 
 /************************************************************************/
-/*                   ZarrV2Group::LoadAttributes()                      */
+/*                    ZarrV2Group::LoadAttributes()                     */
 /************************************************************************/
 
 void ZarrV2Group::LoadAttributes() const
@@ -228,7 +228,7 @@ void ZarrV2Group::LoadAttributes() const
 }
 
 /************************************************************************/
-/*                   ZarrV2Group::GetOrCreateSubGroup()                 */
+/*                  ZarrV2Group::GetOrCreateSubGroup()                  */
 /************************************************************************/
 
 std::shared_ptr<ZarrV2Group>
@@ -268,7 +268,7 @@ ZarrV2Group::GetOrCreateSubGroup(const std::string &osSubGroupFullname)
 }
 
 /************************************************************************/
-/*                ZarrV2Group::InitFromConsolidatedMetadata()           */
+/*             ZarrV2Group::InitFromConsolidatedMetadata()              */
 /************************************************************************/
 
 void ZarrV2Group::InitFromConsolidatedMetadata(const CPLJSONObject &obj)
@@ -413,7 +413,7 @@ void ZarrV2Group::InitFromConsolidatedMetadata(const CPLJSONObject &obj)
 }
 
 /************************************************************************/
-/*                   ZarrV2Group::InitFromZGroup()                      */
+/*                    ZarrV2Group::InitFromZGroup()                     */
 /************************************************************************/
 
 bool ZarrV2Group::InitFromZGroup(const CPLJSONObject &obj)
@@ -556,7 +556,7 @@ bool ZarrV2Group::InitFromZGroup(const CPLJSONObject &obj)
 }
 
 /************************************************************************/
-/*                   ZarrV2Group::CreateOnDisk()                        */
+/*                     ZarrV2Group::CreateOnDisk()                      */
 /************************************************************************/
 
 std::shared_ptr<ZarrV2Group> ZarrV2Group::CreateOnDisk(
@@ -651,7 +651,7 @@ ZarrV2Group::CreateGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                          FillDTypeElts()                             */
+/*                           FillDTypeElts()                            */
 /************************************************************************/
 
 static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
@@ -1133,9 +1133,9 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
     const char *pszDimSeparator =
         CSLFetchNameValueDef(papszOptions, "DIM_SEPARATOR", ".");
 
-    auto poArray = ZarrV2Array::Create(m_poSharedResource, GetFullName(),
-                                       osName, aoDimensions, oDataType,
-                                       aoDtypeElts, anBlockSize, bFortranOrder);
+    auto poArray =
+        ZarrV2Array::Create(m_poSharedResource, Self(), osName, aoDimensions,
+                            oDataType, aoDtypeElts, anBlockSize, bFortranOrder);
 
     if (!poArray)
         return nullptr;
@@ -1150,6 +1150,7 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
     if (oCompressor.IsValid())
         poArray->SetCompressorJson(oCompressor);
     poArray->SetFilters(oFilters);
+    poArray->SetCreationOptions(papszOptions);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     if (!cpl::starts_with(osZarrayFilename, "/vsi") && !poArray->Flush())

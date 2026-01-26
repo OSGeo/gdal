@@ -40,7 +40,7 @@ static CPLString ToUTF8(const OdString &str)
 }
 
 /************************************************************************/
-/*                       EscapeDoubleQuote()                            */
+/*                         EscapeDoubleQuote()                          */
 /************************************************************************/
 
 static CPLString EscapeDoubleQuote(const char *pszStr)
@@ -65,7 +65,7 @@ static CPLString EscapeDoubleQuote(const char *pszStr)
 }
 
 /************************************************************************/
-/*                          OGRDGNV8Layer()                             */
+/*                           OGRDGNV8Layer()                            */
 /************************************************************************/
 
 OGRDGNV8Layer::OGRDGNV8Layer(OGRDGNV8DataSource *poDS, OdDgModelPtr pModel)
@@ -166,7 +166,7 @@ OGRDGNV8Layer::OGRDGNV8Layer(OGRDGNV8DataSource *poDS, OdDgModelPtr pModel)
 }
 
 /************************************************************************/
-/*                          ~OGRDGNV8Layer()                            */
+/*                           ~OGRDGNV8Layer()                           */
 /************************************************************************/
 
 OGRDGNV8Layer::~OGRDGNV8Layer()
@@ -177,7 +177,7 @@ OGRDGNV8Layer::~OGRDGNV8Layer()
 }
 
 /************************************************************************/
-/*                       CleanPendingFeatures()                         */
+/*                        CleanPendingFeatures()                        */
 /************************************************************************/
 
 void OGRDGNV8Layer::CleanPendingFeatures()
@@ -239,7 +239,7 @@ OGRDGNV8Layer::CollectSubElements(OdDgElementIteratorPtr iterator, int level)
 }
 
 /************************************************************************/
-/*                        GetAnchorPosition()                           */
+/*                         GetAnchorPosition()                          */
 /************************************************************************/
 
 static int GetAnchorPosition(OdDg::TextJustification value)
@@ -288,7 +288,7 @@ static int GetAnchorPosition(OdDg::TextJustification value)
 }
 
 /************************************************************************/
-/*                        GetAnchorPosition()                           */
+/*                         GetAnchorPosition()                          */
 /************************************************************************/
 
 static OdDg::TextJustification GetAnchorPositionFromOGR(int value)
@@ -325,7 +325,7 @@ static OdDg::TextJustification GetAnchorPositionFromOGR(int value)
 }
 
 /************************************************************************/
-/*                           AlmostEqual()                              */
+/*                            AlmostEqual()                             */
 /************************************************************************/
 
 static bool AlmostEqual(double dfA, double dfB)
@@ -337,7 +337,7 @@ static bool AlmostEqual(double dfA, double dfB)
 }
 
 /************************************************************************/
-/*                         ProcessTextTraits                           */
+/*                          ProcessTextTraits                           */
 /************************************************************************/
 
 template <class TextPtr> struct ProcessTextTraits
@@ -373,7 +373,7 @@ template <> struct ProcessTextTraits<OdDgText3dPtr>
 };
 
 /************************************************************************/
-/*                           ProcessText()                              */
+/*                            ProcessText()                             */
 /************************************************************************/
 
 template <class TextPtr>
@@ -417,7 +417,7 @@ static void ProcessText(OGRFeature *poFeature, const CPLString &osColor,
 }
 
 /************************************************************************/
-/*                            ConsiderBrush()                           */
+/*                           ConsiderBrush()                            */
 /************************************************************************/
 
 static CPLString ConsiderBrush(OdDgGraphicsElementPtr element,
@@ -457,7 +457,7 @@ static CPLString ConsiderBrush(OdDgGraphicsElementPtr element,
 }
 
 /************************************************************************/
-/*                         ProcessCurveTraits                           */
+/*                          ProcessCurveTraits                          */
 /************************************************************************/
 
 template <class CurveElementPtr> struct ProcessCurveTraits
@@ -621,7 +621,7 @@ static void ProcessCurve(OGRFeature *poFeature, const CPLString &osPen,
 }
 
 /************************************************************************/
-/*                           IsContiguous()                             */
+/*                            IsContiguous()                            */
 /************************************************************************/
 
 static bool
@@ -1436,7 +1436,7 @@ OGRDGNV8Layer::ProcessElement(OdDgGraphicsElementPtr element, int level)
 }
 
 /************************************************************************/
-/*                    GetNextUnfilteredFeature()                        */
+/*                      GetNextUnfilteredFeature()                      */
 /************************************************************************/
 
 OGRFeature *OGRDGNV8Layer::GetNextUnfilteredFeature()
@@ -1502,7 +1502,7 @@ OGRFeature *OGRDGNV8Layer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                        GetFeatureInternal()                          */
+/*                         GetFeatureInternal()                         */
 /************************************************************************/
 
 OdDgGraphicsElementPtr
@@ -1520,7 +1520,7 @@ OGRDGNV8Layer::GetFeatureInternal(GIntBig nFID, OdDg::OpenMode openMode)
 }
 
 /************************************************************************/
-/*                            GetFeature()                              */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRDGNV8Layer::GetFeature(GIntBig nFID)
@@ -1542,7 +1542,7 @@ OGRFeature *OGRDGNV8Layer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                          DeleteFeature()                             */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 OGRErr OGRDGNV8Layer::DeleteFeature(GIntBig nFID)
@@ -1583,7 +1583,7 @@ OGRErr OGRDGNV8Layer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRDGNV8Layer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -1805,7 +1805,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::TranslateLabel(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                       GetColorFromString()                           */
+/*                         GetColorFromString()                         */
 /************************************************************************/
 
 int OGRDGNV8Layer::GetColorFromString(const char *pszColor)
@@ -1827,7 +1827,7 @@ int OGRDGNV8Layer::GetColorFromString(const char *pszColor)
 }
 
 /************************************************************************/
-/*                       AttachFillLinkage()                            */
+/*                         AttachFillLinkage()                          */
 /************************************************************************/
 
 void OGRDGNV8Layer::AttachFillLinkage(OGRFeature *poFeature,
@@ -1930,7 +1930,7 @@ void OGRDGNV8Layer::AttachCommonAttributes(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                          AddToComplexCurve()                         */
+/*                         AddToComplexCurve()                          */
 /************************************************************************/
 
 void OGRDGNV8Layer::AddToComplexCurve(OGRFeature *poFeature,
@@ -1990,7 +1990,7 @@ void OGRDGNV8Layer::AddToComplexCurve(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                        CreateShapeFromLS()                           */
+/*                         CreateShapeFromLS()                          */
 /************************************************************************/
 
 static OdDgGraphicsElementPtr CreateShapeFromLS(OGRLineString *poLS,
@@ -2030,7 +2030,7 @@ static OdDgGraphicsElementPtr CreateShapeFromLS(OGRLineString *poLS,
 }
 
 /************************************************************************/
-/*                           CreateShape()                              */
+/*                            CreateShape()                             */
 /************************************************************************/
 
 OdDgGraphicsElementPtr OGRDGNV8Layer::CreateShape(OGRFeature *poFeature,
@@ -2068,7 +2068,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::CreateShape(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                           IsFullCircle()                             */
+/*                            IsFullCircle()                            */
 /************************************************************************/
 
 static bool IsFullCircle(OGRCircularString *poCS, double &cx, double &cy,

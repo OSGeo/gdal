@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*                    GDALVectorBufferAlgorithm()                       */
+/*                     GDALVectorBufferAlgorithm()                      */
 /************************************************************************/
 
 GDALVectorBufferAlgorithm::GDALVectorBufferAlgorithm(bool standaloneStep)
@@ -62,7 +62,7 @@ namespace
 {
 
 /************************************************************************/
-/*                     GDALVectorBufferAlgorithmLayer                   */
+/*                    GDALVectorBufferAlgorithmLayer                    */
 /************************************************************************/
 
 class GDALVectorBufferAlgorithmLayer final
@@ -139,8 +139,8 @@ std::unique_ptr<OGRFeature> GDALVectorBufferAlgorithmLayer::TranslateFeature(
                 {
                     const auto poGeomFieldDefn =
                         m_poFeatureDefn->GetGeomFieldDefn(i);
-                    poGeom.reset(OGRGeometryFactory::forceTo(
-                        poGeom.release(), poGeomFieldDefn->GetType()));
+                    poGeom = OGRGeometryFactory::forceTo(
+                        std::move(poGeom), poGeomFieldDefn->GetType());
                     if (poGeom)
                     {
                         poGeom->assignSpatialReference(
@@ -161,7 +161,7 @@ std::unique_ptr<OGRFeature> GDALVectorBufferAlgorithmLayer::TranslateFeature(
 #endif  // HAVE_GEOS
 
 /************************************************************************/
-/*              GDALVectorBufferAlgorithm::CreateAlgLayer()             */
+/*             GDALVectorBufferAlgorithm::CreateAlgLayer()              */
 /************************************************************************/
 
 std::unique_ptr<OGRLayerWithTranslateFeature>
@@ -176,7 +176,7 @@ GDALVectorBufferAlgorithm::CreateAlgLayer([[maybe_unused]] OGRLayer &srcLayer)
 }
 
 /************************************************************************/
-/*                  GDALVectorBufferAlgorithm::RunStep()                */
+/*                 GDALVectorBufferAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALVectorBufferAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

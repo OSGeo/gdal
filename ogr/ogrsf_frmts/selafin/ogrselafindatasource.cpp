@@ -20,7 +20,7 @@
 #include <ctime>
 
 /************************************************************************/
-/*                          Range                                       */
+/*                                Range                                 */
 /************************************************************************/
 Range::~Range()
 {
@@ -273,7 +273,7 @@ size_t Range::getSize() const
 }
 
 /************************************************************************/
-/*                          OGRSelafinDataSource()                      */
+/*                        OGRSelafinDataSource()                        */
 /************************************************************************/
 
 OGRSelafinDataSource::OGRSelafinDataSource()
@@ -283,7 +283,7 @@ OGRSelafinDataSource::OGRSelafinDataSource()
 }
 
 /************************************************************************/
-/*                         ~OGRSelafinDataSource()                      */
+/*                       ~OGRSelafinDataSource()                        */
 /************************************************************************/
 
 OGRSelafinDataSource::~OGRSelafinDataSource()
@@ -416,7 +416,7 @@ int OGRSelafinDataSource::Open(const char *pszFilename, int bUpdateIn,
 }
 
 /************************************************************************/
-/*                              OpenTable()                             */
+/*                             OpenTable()                              */
 /************************************************************************/
 int OGRSelafinDataSource::OpenTable(const char *pszFilename)
 {
@@ -569,7 +569,7 @@ int OGRSelafinDataSource::OpenTable(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *

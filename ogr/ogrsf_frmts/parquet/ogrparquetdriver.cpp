@@ -34,7 +34,7 @@
 #ifdef GDAL_USE_ARROWDATASET
 
 /************************************************************************/
-/*                      OpenFromDatasetFactory()                        */
+/*                       OpenFromDatasetFactory()                       */
 /************************************************************************/
 
 static GDALDataset *OpenFromDatasetFactory(
@@ -57,7 +57,7 @@ static GDALDataset *OpenFromDatasetFactory(
 }
 
 /************************************************************************/
-/*                         GetFileSystem()                              */
+/*                           GetFileSystem()                            */
 /************************************************************************/
 
 static std::tuple<std::shared_ptr<arrow::fs::FileSystem>, std::string>
@@ -119,7 +119,7 @@ MakeParquetFileFormat()
 }
 
 /************************************************************************/
-/*                  OpenParquetDatasetWithMetadata()                    */
+/*                   OpenParquetDatasetWithMetadata()                   */
 /************************************************************************/
 
 static GDALDataset *OpenParquetDatasetWithMetadata(
@@ -191,7 +191,7 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
 #endif
 
 /************************************************************************/
-/*                  BuildMemDatasetWithRowGroupExtents()                */
+/*                 BuildMemDatasetWithRowGroupExtents()                 */
 /************************************************************************/
 
 /** Builds a MEM dataset that contains, for each row-group of the input file,
@@ -306,7 +306,7 @@ static GDALDataset *BuildMemDatasetWithRowGroupExtents(OGRParquetLayer *poLayer)
 }
 
 /************************************************************************/
-/*                     OGRParquetEditableLayerSynchronizer              */
+/*                 OGRParquetEditableLayerSynchronizer                  */
 /************************************************************************/
 
 class OGRParquetEditableLayer;
@@ -336,7 +336,7 @@ class OGRParquetEditableLayerSynchronizer final
 };
 
 /************************************************************************/
-/*                        OGRParquetEditableLayer                       */
+/*                       OGRParquetEditableLayer                        */
 /************************************************************************/
 
 class OGRParquetEditableLayer final : public IOGRArrowLayer,
@@ -699,7 +699,7 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRParquetDriverCreate(const char *pszName, int nXSize,
                                            int nYSize, int nBands,
                                            GDALDataType eType,
-                                           char ** /* papszOptions */)
+                                           CSLConstList /* papszOptions */)
 {
     if (!(nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown))
         return nullptr;
@@ -736,7 +736,7 @@ static GDALDataset *OGRParquetDriverCreate(const char *pszName, int nXSize,
 }
 
 /************************************************************************/
-/*                         OGRParquetDriver()                           */
+/*                          OGRParquetDriver()                          */
 /************************************************************************/
 
 class OGRParquetDriver final : public GDALDriver
@@ -1063,7 +1063,7 @@ class OGRParquetCreateMetadataFileAlgorithm final : public GDALAlgorithm
 };
 
 /************************************************************************/
-/*            OGRParquetCreateMetadataFileAlgorithm::RunImpl()          */
+/*           OGRParquetCreateMetadataFileAlgorithm::RunImpl()           */
 /************************************************************************/
 
 bool OGRParquetCreateMetadataFileAlgorithm::RunImpl(
@@ -1201,7 +1201,7 @@ bool OGRParquetCreateMetadataFileAlgorithm::RunImpl(
 }
 
 /************************************************************************/
-/*                 OGRParquetDriverInstantiateAlgorithm()               */
+/*                OGRParquetDriverInstantiateAlgorithm()                */
 /************************************************************************/
 
 static GDALAlgorithm *

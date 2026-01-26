@@ -461,7 +461,7 @@ ILWISDataset::ILWISDataset() : bGeoDirty(FALSE), bNewDataset(FALSE)
 }
 
 /************************************************************************/
-/*                  ~ILWISDataset()                                     */
+/*                           ~ILWISDataset()                            */
 /************************************************************************/
 
 ILWISDataset::~ILWISDataset()
@@ -603,7 +603,7 @@ void ILWISDataset::WriteGeoReference()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *ILWISDataset::GetSpatialRef() const
@@ -665,7 +665,7 @@ static bool CheckASCII(unsigned char *buf, int size)
 }
 
 /************************************************************************/
-/*                       Open()                                         */
+/*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -886,7 +886,7 @@ CPLErr ILWISDataset::FlushCache(bool bAtClosing)
 
 GDALDataset *ILWISDataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eType,
-                                  CPL_UNUSED char **papszParamList)
+                                  CSLConstList)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify input options.                                           */
@@ -1057,7 +1057,7 @@ GDALDataset *ILWISDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
                                       GDALDataset *poSrcDS, int /* bStrict */,
-                                      char **papszOptions,
+                                      CSLConstList papszOptions,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 
@@ -1293,7 +1293,7 @@ GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                       ILWISRasterBand()                              */
+/*                          ILWISRasterBand()                           */
 /************************************************************************/
 
 ILWISRasterBand::ILWISRasterBand(ILWISDataset *poDSIn, int nBandIn,
@@ -1389,7 +1389,7 @@ ILWISRasterBand::~ILWISRasterBand()
 }
 
 /************************************************************************/
-/*                             ILWISOpen()                             */
+/*                             ILWISOpen()                              */
 /************************************************************************/
 void ILWISRasterBand::ILWISOpen(const std::string &pszFileName)
 {
@@ -1402,7 +1402,7 @@ void ILWISRasterBand::ILWISOpen(const std::string &pszFileName)
 }
 
 /************************************************************************/
-/*                 ReadValueDomainProperties()                          */
+/*                     ReadValueDomainProperties()                      */
 /************************************************************************/
 // Helper function for GetILWISInfo, to avoid code-duplication
 // Unfortunately with side-effect (changes members psInfo and eDataType)
@@ -1454,7 +1454,7 @@ void ILWISRasterBand::ReadValueDomainProperties(const std::string &pszFileName)
 }
 
 /************************************************************************/
-/*                       GetILWISInfo()                                 */
+/*                            GetILWISInfo()                            */
 /************************************************************************/
 // Calculates members psInfo and eDataType
 CPLErr ILWISRasterBand::GetILWISInfo(const std::string &pszFileName)
@@ -1944,7 +1944,7 @@ double ILWISRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                      ValueRange()                                    */
+/*                             ValueRange()                             */
 /************************************************************************/
 
 static double doubleConv(const char *s)
@@ -2177,7 +2177,7 @@ int ValueRange::iRaw(double rValueIn) const
 }  // namespace GDAL
 
 /************************************************************************/
-/*                    GDALRegister_ILWIS()                              */
+/*                         GDALRegister_ILWIS()                         */
 /************************************************************************/
 
 void GDALRegister_ILWIS()

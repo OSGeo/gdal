@@ -61,7 +61,7 @@ GDALVectorClipAlgorithm::GDALVectorClipAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                   GDALVectorClipAlgorithmLayer                       */
+/*                     GDALVectorClipAlgorithmLayer                     */
 /************************************************************************/
 
 namespace
@@ -139,16 +139,16 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
             else if (OGR_GT_GetCollection(eFeatGeomType) ==
                      m_eFlattenSrcLayerGeomType)
             {
-                poIntersection.reset(OGRGeometryFactory::forceTo(
-                    poIntersection.release(), m_eSrcLayerGeomType));
-                poSrcFeature->SetGeometryDirectly(poIntersection.release());
+                poIntersection = OGRGeometryFactory::forceTo(
+                    std::move(poIntersection), m_eSrcLayerGeomType);
+                poSrcFeature->SetGeometry(std::move(poIntersection));
                 apoOutFeatures.push_back(std::move(poSrcFeature));
             }
             else if (m_eFlattenSrcLayerGeomType == wkbGeometryCollection)
             {
                 auto poGeomColl = std::make_unique<OGRGeometryCollection>();
                 poGeomColl->addGeometry(std::move(poIntersection));
-                poSrcFeature->SetGeometryDirectly(poGeomColl.release());
+                poSrcFeature->SetGeometry(std::move(poGeomColl));
                 apoOutFeatures.push_back(std::move(poSrcFeature));
             }
             // else discard geometries of incompatible type with the
@@ -156,7 +156,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         }
         else
         {
-            poSrcFeature->SetGeometryDirectly(poIntersection.release());
+            poSrcFeature->SetGeometry(std::move(poIntersection));
             apoOutFeatures.push_back(std::move(poSrcFeature));
         }
     }
@@ -182,7 +182,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 }  // namespace
 
 /************************************************************************/
-/*                 GDALVectorClipAlgorithm::RunStep()                   */
+/*                  GDALVectorClipAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALVectorClipAlgorithm::RunStep(GDALPipelineStepRunContext &)

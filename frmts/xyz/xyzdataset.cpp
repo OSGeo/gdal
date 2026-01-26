@@ -79,7 +79,7 @@ class XYZDataset final : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -592,7 +592,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                            GetMinimum()                              */
+/*                             GetMinimum()                             */
 /************************************************************************/
 
 double XYZRasterBand::GetMinimum(int *pbSuccess)
@@ -604,7 +604,7 @@ double XYZRasterBand::GetMinimum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                            GetMaximum()                              */
+/*                             GetMaximum()                             */
 /************************************************************************/
 
 double XYZRasterBand::GetMaximum(int *pbSuccess)
@@ -616,7 +616,7 @@ double XYZRasterBand::GetMaximum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                            */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double XYZRasterBand::GetNoDataValue(int *pbSuccess)
@@ -641,7 +641,7 @@ double XYZRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                            ~XYZDataset()                            */
+/*                            ~XYZDataset()                             */
 /************************************************************************/
 
 XYZDataset::XYZDataset()
@@ -653,7 +653,7 @@ XYZDataset::XYZDataset()
 }
 
 /************************************************************************/
-/*                            ~XYZDataset()                            */
+/*                            ~XYZDataset()                             */
 /************************************************************************/
 
 XYZDataset::~XYZDataset()
@@ -675,7 +675,7 @@ XYZDataset::~XYZDataset()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int XYZDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -689,7 +689,7 @@ int XYZDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            IdentifyEx()                              */
+/*                             IdentifyEx()                             */
 /************************************************************************/
 
 int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
@@ -1582,7 +1582,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 {
@@ -1808,7 +1808,7 @@ CPLErr XYZDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         GDALRegister_XYZ()                           */
+/*                          GDALRegister_XYZ()                          */
 /************************************************************************/
 
 void GDALRegister_XYZ()

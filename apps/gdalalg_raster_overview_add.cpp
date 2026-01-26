@@ -34,7 +34,7 @@ GDALRasterOverviewAlgorithmStandalone::
     ~GDALRasterOverviewAlgorithmStandalone() = default;
 
 /************************************************************************/
-/*                    GDALRasterOverviewAlgorithmAdd()                  */
+/*                   GDALRasterOverviewAlgorithmAdd()                   */
 /************************************************************************/
 
 GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd(
@@ -146,7 +146,7 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd(
 }
 
 /************************************************************************/
-/*                GDALRasterOverviewAlgorithmAdd::RunStep()             */
+/*              GDALRasterOverviewAlgorithmAdd::RunStep()               */
 /************************************************************************/
 
 bool GDALRasterOverviewAlgorithmAdd::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -289,7 +289,7 @@ bool GDALRasterOverviewAlgorithmAdd::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*                GDALRasterOverviewAlgorithmAdd::RunImpl()             */
+/*              GDALRasterOverviewAlgorithmAdd::RunImpl()               */
 /************************************************************************/
 
 bool GDALRasterOverviewAlgorithmAdd::RunImpl(GDALProgressFunc pfnProgress,

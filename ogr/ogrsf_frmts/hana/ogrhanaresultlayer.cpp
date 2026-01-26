@@ -22,7 +22,7 @@ namespace OGRHANA
 {
 
 /************************************************************************/
-/*                              OGRHanaResultLayer()                    */
+/*                         OGRHanaResultLayer()                         */
 /************************************************************************/
 
 OGRHanaResultLayer::OGRHanaResultLayer(OGRHanaDataSource *datasource,
@@ -34,7 +34,7 @@ OGRHanaResultLayer::OGRHanaResultLayer(OGRHanaDataSource *datasource,
 }
 
 /************************************************************************/
-/*                                Initialize()                          */
+/*                             Initialize()                             */
 /************************************************************************/
 
 OGRErr OGRHanaResultLayer::Initialize()

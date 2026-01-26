@@ -16,9 +16,9 @@
 #include "ogr_spatialref.h"
 #include "ogr_geomcoordinateprecision.h"
 
-/*************************************************************************/
-/*                      GDBGridSettingsFromOGR()                         */
-/*************************************************************************/
+/************************************************************************/
+/*                       GDBGridSettingsFromOGR()                       */
+/************************************************************************/
 
 /** Compute grid settings from coordinate precision of source geometry field
  * and layer creation options.

@@ -24,7 +24,7 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*               OGRCurvePolygon( const OGRCurvePolygon& )              */
+/*              OGRCurvePolygon( const OGRCurvePolygon& )               */
 /************************************************************************/
 
 /**
@@ -34,7 +34,7 @@
 OGRCurvePolygon::OGRCurvePolygon(const OGRCurvePolygon &) = default;
 
 /************************************************************************/
-/*                 operator=( const OGRCurvePolygon&)                  */
+/*                  operator=( const OGRCurvePolygon&)                  */
 /************************************************************************/
 
 /**
@@ -131,7 +131,7 @@ const char *OGRCurvePolygon::getGeometryName() const
 }
 
 /************************************************************************/
-/*                         getExteriorRingCurve()                       */
+/*                        getExteriorRingCurve()                        */
 /************************************************************************/
 
 /**
@@ -197,7 +197,7 @@ int OGRCurvePolygon::getNumInteriorRings() const
 }
 
 /************************************************************************/
-/*                       getInteriorRingCurve()                         */
+/*                        getInteriorRingCurve()                        */
 /************************************************************************/
 
 /**
@@ -243,7 +243,7 @@ const OGRCurve *OGRCurvePolygon::getInteriorRingCurve(int iRing) const
 }
 
 /************************************************************************/
-/*                        stealExteriorRingCurve()                      */
+/*                       stealExteriorRingCurve()                       */
 /************************************************************************/
 
 /**
@@ -266,7 +266,7 @@ OGRCurve *OGRCurvePolygon::stealExteriorRingCurve()
 }
 
 /************************************************************************/
-/*                            removeRing()                              */
+/*                             removeRing()                             */
 /************************************************************************/
 
 /**
@@ -322,7 +322,7 @@ OGRErr OGRCurvePolygon::addRing(const OGRCurve *poNewRing)
 }
 
 /************************************************************************/
-/*                            isRingCorrectType()                       */
+/*                         isRingCorrectType()                          */
 /************************************************************************/
 bool OGRCurvePolygon::isRingCorrectType(const OGRCurve *poRing) const
 {
@@ -330,7 +330,7 @@ bool OGRCurvePolygon::isRingCorrectType(const OGRCurve *poRing) const
 }
 
 /************************************************************************/
-/*                            checkRing()                               */
+/*                             checkRing()                              */
 /************************************************************************/
 
 bool OGRCurvePolygon::checkRing(const OGRCurve *poNewRing) const
@@ -409,7 +409,7 @@ OGRErr OGRCurvePolygon::addRingDirectlyInternal(OGRCurve *poNewRing,
 }
 
 /************************************************************************/
-/*                             addRing()                                */
+/*                              addRing()                               */
 /************************************************************************/
 
 /**
@@ -446,7 +446,7 @@ size_t OGRCurvePolygon::WkbSize() const
 }
 
 /************************************************************************/
-/*                       addCurveDirectlyFromWkb()                      */
+/*                      addCurveDirectlyFromWkb()                       */
 /************************************************************************/
 
 OGRErr OGRCurvePolygon::addCurveDirectlyFromWkb(OGRGeometry *poSelf,
@@ -505,7 +505,7 @@ OGRErr OGRCurvePolygon::exportToWkb(unsigned char *pabyData,
 }
 
 /************************************************************************/
-/*                       addCurveDirectlyFromWkt()                      */
+/*                      addCurveDirectlyFromWkt()                       */
 /************************************************************************/
 
 OGRErr OGRCurvePolygon::addCurveDirectlyFromWkt(OGRGeometry *poSelf,
@@ -543,7 +543,7 @@ std::string OGRCurvePolygon::exportToWkt(const OGRWktOptions &opts,
 }
 
 /************************************************************************/
-/*                           CurvePolyToPoly()                          */
+/*                          CurvePolyToPoly()                           */
 /************************************************************************/
 
 /**
@@ -585,7 +585,7 @@ OGRCurvePolygon::CurvePolyToPoly(double dfMaxAngleStepSizeDegrees,
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
 OGRBoolean OGRCurvePolygon::hasCurveGeometry(int bLookForNonLinear) const
@@ -599,7 +599,7 @@ OGRBoolean OGRCurvePolygon::hasCurveGeometry(int bLookForNonLinear) const
 }
 
 /************************************************************************/
-/*                         getLinearGeometry()                        */
+/*                         getLinearGeometry()                          */
 /************************************************************************/
 
 OGRGeometry *
@@ -659,7 +659,7 @@ OGRErr OGRCurvePolygon::transform(OGRCoordinateTransformation *poCT)
 }
 
 /************************************************************************/
-/*                              get_Length()                            */
+/*                             get_Length()                             */
 /************************************************************************/
 
 double OGRCurvePolygon::get_Length() const
@@ -675,7 +675,7 @@ double OGRCurvePolygon::get_Length() const
 }
 
 /************************************************************************/
-/*                        get_GeodesicLength()                          */
+/*                         get_GeodesicLength()                         */
 /************************************************************************/
 
 double OGRCurvePolygon::get_GeodesicLength(
@@ -718,7 +718,7 @@ double OGRCurvePolygon::get_Area() const
 }
 
 /************************************************************************/
-/*                        get_GeodesicArea()                            */
+/*                          get_GeodesicArea()                          */
 /************************************************************************/
 
 double OGRCurvePolygon::get_GeodesicArea(
@@ -774,7 +774,7 @@ void OGRCurvePolygon::assignSpatialReference(const OGRSpatialReference *poSR)
 }
 
 /************************************************************************/
-/*                               IsEmpty()                              */
+/*                              IsEmpty()                               */
 /************************************************************************/
 
 OGRBoolean OGRCurvePolygon::IsEmpty() const
@@ -783,7 +783,7 @@ OGRBoolean OGRCurvePolygon::IsEmpty() const
 }
 
 /************************************************************************/
-/*                              segmentize()                            */
+/*                             segmentize()                             */
 /************************************************************************/
 
 bool OGRCurvePolygon::segmentize(double dfMaxLength)
@@ -807,7 +807,7 @@ void OGRCurvePolygon::swapXY()
 }
 
 /************************************************************************/
-/*                           ContainsPoint()                             */
+/*                           ContainsPoint()                            */
 /************************************************************************/
 
 OGRBoolean OGRCurvePolygon::ContainsPoint(const OGRPoint *p) const
@@ -839,7 +839,7 @@ OGRBoolean OGRCurvePolygon::IntersectsPoint(const OGRPoint *p) const
 }
 
 /************************************************************************/
-/*                               Contains()                             */
+/*                              Contains()                              */
 /************************************************************************/
 
 OGRBoolean OGRCurvePolygon::Contains(const OGRGeometry *poOtherGeom) const
@@ -855,7 +855,7 @@ OGRBoolean OGRCurvePolygon::Contains(const OGRGeometry *poOtherGeom) const
 }
 
 /************************************************************************/
-/*                              Intersects()                            */
+/*                             Intersects()                             */
 /************************************************************************/
 
 OGRBoolean OGRCurvePolygon::Intersects(const OGRGeometry *poOtherGeom) const
@@ -914,7 +914,7 @@ OGRPolygon *OGRCurvePolygon::CastToPolygon(OGRCurvePolygon *poCP)
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                      GetCasterToPolygon()                            */
+/*                         GetCasterToPolygon()                         */
 /************************************************************************/
 
 OGRPolygon *OGRCurvePolygon::CasterToPolygon(OGRSurface *poSurface)

@@ -115,7 +115,7 @@ constexpr int JPEG_EXIF_JPEGIFBYTECOUNT = 0x202;
 #endif
 
 /************************************************************************/
-/*                      JPGVSIFileMultiplexerHandler                    */
+/*                     JPGVSIFileMultiplexerHandler                     */
 /************************************************************************/
 
 class JPGVSIFileMultiplexerHandler final : public VSIVirtualHandle
@@ -150,7 +150,7 @@ class JPGVSIFileMultiplexerHandler final : public VSIVirtualHandle
 };
 
 /************************************************************************/
-/*                     SetMaxMemoryToUse()                              */
+/*                         SetMaxMemoryToUse()                          */
 /************************************************************************/
 
 static void SetMaxMemoryToUse(struct jpeg_decompress_struct *psDInfo)
@@ -169,7 +169,7 @@ static void SetMaxMemoryToUse(struct jpeg_decompress_struct *psDInfo)
 #if !defined(JPGDataset)
 
 /************************************************************************/
-/*                      JPGVSIFileMultiplexerHandler                    */
+/*                     JPGVSIFileMultiplexerHandler                     */
 /************************************************************************/
 
 JPGVSIFileMultiplexerHandler::JPGVSIFileMultiplexerHandler(
@@ -337,7 +337,7 @@ void JPGDatasetCommon::ReadImageStructureMetadata()
 }
 
 /************************************************************************/
-/*                       ReadEXIFMetadata()                             */
+/*                          ReadEXIFMetadata()                          */
 /************************************************************************/
 void JPGDatasetCommon::ReadEXIFMetadata()
 {
@@ -441,7 +441,7 @@ void JPGDatasetCommon::ReadEXIFMetadata()
 }
 
 /************************************************************************/
-/*                        ReadXMPMetadata()                             */
+/*                          ReadXMPMetadata()                           */
 /************************************************************************/
 
 // See §2.1.3 of
@@ -534,7 +534,7 @@ void JPGDatasetCommon::ReadThermalMetadata()
 }
 
 /************************************************************************/
-/*                        ReadDJIMetadata()                             */
+/*                          ReadDJIMetadata()                           */
 /************************************************************************/
 
 void JPGDatasetCommon::ReadDJIMetadata()
@@ -667,7 +667,7 @@ void JPGDatasetCommon::ReadDJIMetadata()
 }
 
 /************************************************************************/
-/*                        ReadFLIRMetadata()                            */
+/*                          ReadFLIRMetadata()                          */
 /************************************************************************/
 
 // See https://exiftool.org/TagNames/FLIR.html
@@ -1225,7 +1225,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **JPGDatasetCommon::GetMetadataDomainList()
@@ -1239,7 +1239,7 @@ char **JPGDatasetCommon::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                        LoadForMetadataDomain()                       */
+/*                       LoadForMetadataDomain()                        */
 /************************************************************************/
 void JPGDatasetCommon::LoadForMetadataDomain(const char *pszDomain)
 {
@@ -1281,7 +1281,7 @@ void JPGDatasetCommon::LoadForMetadataDomain(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 CSLConstList JPGDatasetCommon::GetMetadata(const char *pszDomain)
 {
@@ -1290,7 +1290,7 @@ CSLConstList JPGDatasetCommon::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                       GetMetadataItem()                              */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 const char *JPGDatasetCommon::GetMetadataItem(const char *pszName,
                                               const char *pszDomain)
@@ -1930,7 +1930,7 @@ GDALRasterBand *JPGRasterBand::GetOverview(int i)
 }
 
 /************************************************************************/
-/*                         GetOverviewCount()                           */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int JPGRasterBand::GetOverviewCount()
@@ -1955,7 +1955,7 @@ int JPGRasterBand::GetOverviewCount()
 JPGDatasetCommon::JPGDatasetCommon() = default;
 
 /************************************************************************/
-/*                           ~JPGDataset()                              */
+/*                            ~JPGDataset()                             */
 /************************************************************************/
 
 JPGDatasetCommon::~JPGDatasetCommon()
@@ -1974,7 +1974,7 @@ JPGDatasetCommon::~JPGDatasetCommon()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr JPGDatasetCommon::Close(GDALProgressFunc, void *)
@@ -2286,7 +2286,7 @@ CPLErr JPGDatasetCommon::IBuildOverviews(const char *pszResampling,
 }
 
 /************************************************************************/
-/*                           FlushCache()                               */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr JPGDatasetCommon::FlushCache(bool bAtClosing)
@@ -2311,7 +2311,7 @@ CPLErr JPGDatasetCommon::FlushCache(bool bAtClosing)
 #endif  // !defined(JPGDataset)
 
 /************************************************************************/
-/*                            JPGDataset()                              */
+/*                             JPGDataset()                             */
 /************************************************************************/
 
 JPGDataset::JPGDataset()
@@ -2324,7 +2324,7 @@ JPGDataset::JPGDataset()
 }
 
 /************************************************************************/
-/*                           ~JPGDataset()                            */
+/*                            ~JPGDataset()                             */
 /************************************************************************/
 
 JPGDataset::~JPGDataset()
@@ -2675,7 +2675,7 @@ void JPGDataset::LoadDefaultTables(int n)
 #endif  // !defined(JPGDataset)
 
 /************************************************************************/
-/*                       SetScaleNumAndDenom()                          */
+/*                        SetScaleNumAndDenom()                         */
 /************************************************************************/
 
 void JPGDataset::SetScaleNumAndDenom()
@@ -2839,7 +2839,7 @@ const OGRSpatialReference *JPGDatasetCommon::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *JPGDatasetCommon::GetGCPs()
@@ -3140,7 +3140,7 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       OpenRawThermalImage()                          */
+/*                        OpenRawThermalImage()                         */
 /************************************************************************/
 
 GDALDataset *
@@ -3594,7 +3594,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 #if !defined(JPGDataset)
 
 /************************************************************************/
-/*                       LoadWorldFileOrTab()                           */
+/*                         LoadWorldFileOrTab()                         */
 /************************************************************************/
 
 void JPGDatasetCommon::LoadWorldFileOrTab()
@@ -3842,7 +3842,7 @@ CPLStringList JPGDatasetCommon::GetCompressionFormats(int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                       ReadCompressedData()                           */
+/*                         ReadCompressedData()                         */
 /************************************************************************/
 
 CPLErr JPGDatasetCommon::ReadCompressedData(
@@ -4013,7 +4013,7 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
 }
 
 /************************************************************************/
-/*                          OutputMessage()                             */
+/*                           OutputMessage()                            */
 /************************************************************************/
 
 void JPGDataset::OutputMessage(j_common_ptr cinfo)
@@ -4027,7 +4027,7 @@ void JPGDataset::OutputMessage(j_common_ptr cinfo)
 }
 
 /************************************************************************/
-/*                             EmitMessage()                            */
+/*                            EmitMessage()                             */
 /************************************************************************/
 
 void JPGDataset::EmitMessage(j_common_ptr cinfo, int msg_level)
@@ -4342,11 +4342,12 @@ CPLErr JPGAppendMask(const char *pszJPGFilename, GDALRasterBand *poMask,
 /*                             JPGAddEXIF()                             */
 /************************************************************************/
 
-void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
-                void *cinfo, my_jpeg_write_m_header p_jpeg_write_m_header,
+void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS,
+                CSLConstList papszOptions, void *cinfo,
+                my_jpeg_write_m_header p_jpeg_write_m_header,
                 my_jpeg_write_m_byte p_jpeg_write_m_byte,
                 GDALDataset *(pCreateCopy)(const char *, GDALDataset *, int,
-                                           char **,
+                                           CSLConstList,
                                            GDALProgressFunc pfnProgress,
                                            void *pProgressData))
 {
@@ -4482,12 +4483,12 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
 #endif  // !defined(JPGDataset)
 
 /************************************************************************/
-/*                              CreateCopy()                            */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 
@@ -4922,7 +4923,7 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 }
 
 GDALDataset *JPGDataset::CreateCopyStage2(
-    const char *pszFilename, GDALDataset *poSrcDS, char **papszOptions,
+    const char *pszFilename, GDALDataset *poSrcDS, CSLConstList papszOptions,
     GDALProgressFunc pfnProgress, void *pProgressData,
     VSIVirtualHandleUniquePtr fpImage, GDALDataType eDT, int nQuality,
     bool bAppendMask, GDALJPEGUserData &sUserData,

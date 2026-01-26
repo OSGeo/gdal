@@ -23,7 +23,7 @@ OGRMSSQLSpatialLayer::OGRMSSQLSpatialLayer(OGRMSSQLSpatialDataSource *poDSIn)
 }
 
 /************************************************************************/
-/*                      ~OGRMSSQLSpatialLayer()                         */
+/*                       ~OGRMSSQLSpatialLayer()                        */
 /************************************************************************/
 
 OGRMSSQLSpatialLayer::~OGRMSSQLSpatialLayer()
@@ -659,7 +659,7 @@ const char *OGRMSSQLSpatialLayer::GetGeometryColumn() const
 }
 
 /************************************************************************/
-/*                        GByteArrayToHexString()                       */
+/*                       GByteArrayToHexString()                        */
 /************************************************************************/
 
 char *OGRMSSQLSpatialLayer::GByteArrayToHexString(const GByte *pabyData,

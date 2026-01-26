@@ -38,7 +38,7 @@
 #include "memdataset.h"
 
 /************************************************************************/
-/*                   ReplaceSpaceByPct20IfNeeded()                      */
+/*                    ReplaceSpaceByPct20IfNeeded()                     */
 /************************************************************************/
 
 static CPLString ReplaceSpaceByPct20IfNeeded(const char *pszURL)
@@ -62,7 +62,7 @@ static CPLString ReplaceSpaceByPct20IfNeeded(const char *pszURL)
 }
 
 /************************************************************************/
-/*                         OGRGMLDataSource()                         */
+/*                          OGRGMLDataSource()                          */
 /************************************************************************/
 
 OGRGMLDataSource::OGRGMLDataSource()
@@ -82,7 +82,7 @@ OGRGMLDataSource::OGRGMLDataSource()
 }
 
 /************************************************************************/
-/*                          ~OGRGMLDataSource()                         */
+/*                         ~OGRGMLDataSource()                          */
 /************************************************************************/
 
 OGRGMLDataSource::~OGRGMLDataSource()
@@ -91,7 +91,7 @@ OGRGMLDataSource::~OGRGMLDataSource()
 }
 
 /************************************************************************/
-/*                                 Close()                              */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr OGRGMLDataSource::Close(GDALProgressFunc, void *)
@@ -352,7 +352,7 @@ bool OGRGMLDataSource::CheckHeader(const char *pszStr)
 }
 
 /************************************************************************/
-/*                          ExtractSRSName()                            */
+/*                           ExtractSRSName()                           */
 /************************************************************************/
 
 static bool ExtractSRSName(const char *pszXML, char *szSRSName,
@@ -1483,7 +1483,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          BuildJointClassFromXSD()                    */
+/*                       BuildJointClassFromXSD()                       */
 /************************************************************************/
 
 void OGRGMLDataSource::BuildJointClassFromXSD()
@@ -1557,7 +1557,7 @@ void OGRGMLDataSource::BuildJointClassFromXSD()
 }
 
 /************************************************************************/
-/*                   BuildJointClassFromScannedSchema()                 */
+/*                  BuildJointClassFromScannedSchema()                  */
 /************************************************************************/
 
 void OGRGMLDataSource::BuildJointClassFromScannedSchema()
@@ -1842,7 +1842,7 @@ OGRLayer *OGRGMLDataSource::TranslateGMLSchema(GMLFeatureClass *poClass)
 }
 
 /************************************************************************/
-/*                         GetGlobalSRSName()                           */
+/*                          GetGlobalSRSName()                          */
 /************************************************************************/
 
 const char *OGRGMLDataSource::GetGlobalSRSName()
@@ -1857,7 +1857,8 @@ const char *OGRGMLDataSource::GetGlobalSRSName()
 /*                               Create()                               */
 /************************************************************************/
 
-bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
+bool OGRGMLDataSource::Create(const char *pszFilename,
+                              CSLConstList papszOptions)
 
 {
     if (fpOutput != nullptr || poReader != nullptr)
@@ -2016,7 +2017,7 @@ bool OGRGMLDataSource::Create(const char *pszFilename, char **papszOptions)
 }
 
 /************************************************************************/
-/*                         WriteTopElements()                           */
+/*                          WriteTopElements()                          */
 /************************************************************************/
 
 void OGRGMLDataSource::WriteTopElements()
@@ -2070,7 +2071,7 @@ void OGRGMLDataSource::WriteTopElements()
 }
 
 /************************************************************************/
-/*                 DealWithOgrSchemaOpenOption()                        */
+/*                    DealWithOgrSchemaOpenOption()                     */
 /************************************************************************/
 
 bool OGRGMLDataSource::DealWithOgrSchemaOpenOption(
@@ -2303,7 +2304,7 @@ void OGRGMLDataSource::DeclareNewWriteSRS(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -3213,7 +3214,7 @@ void OGRGMLDataSource::InsertHeader()
 }
 
 /************************************************************************/
-/*                            PrintLine()                               */
+/*                             PrintLine()                              */
 /************************************************************************/
 
 void OGRGMLDataSource::PrintLine(VSILFILE *fp, const char *fmt, ...)
@@ -3241,7 +3242,7 @@ void OGRGMLDataSource::PrintLine(VSILFILE *fp, const char *fmt, ...)
 }
 
 /************************************************************************/
-/*                     OGRGMLSingleFeatureLayer                         */
+/*                       OGRGMLSingleFeatureLayer                       */
 /************************************************************************/
 
 class OGRGMLSingleFeatureLayer final : public OGRLayer
@@ -3307,7 +3308,7 @@ OGRFeature *OGRGMLSingleFeatureLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                            ExecuteSQL()                              */
+/*                             ExecuteSQL()                             */
 /************************************************************************/
 
 OGRLayer *OGRGMLDataSource::ExecuteSQL(const char *pszSQLCommand,
@@ -3623,7 +3624,7 @@ void OGRGMLDataSource::SetExtents(double dfMinX, double dfMinY, double dfMaxX,
 }
 
 /************************************************************************/
-/*                             GetAppPrefix()                           */
+/*                            GetAppPrefix()                            */
 /************************************************************************/
 
 const char *OGRGMLDataSource::GetAppPrefix() const
@@ -3632,7 +3633,7 @@ const char *OGRGMLDataSource::GetAppPrefix() const
 }
 
 /************************************************************************/
-/*                            RemoveAppPrefix()                         */
+/*                          RemoveAppPrefix()                           */
 /************************************************************************/
 
 bool OGRGMLDataSource::RemoveAppPrefix() const
@@ -3645,7 +3646,7 @@ bool OGRGMLDataSource::RemoveAppPrefix() const
 }
 
 /************************************************************************/
-/*                        WriteFeatureBoundedBy()                       */
+/*                       WriteFeatureBoundedBy()                        */
 /************************************************************************/
 
 bool OGRGMLDataSource::WriteFeatureBoundedBy() const
@@ -3655,7 +3656,7 @@ bool OGRGMLDataSource::WriteFeatureBoundedBy() const
 }
 
 /************************************************************************/
-/*                          GetSRSDimensionLoc()                        */
+/*                         GetSRSDimensionLoc()                         */
 /************************************************************************/
 
 const char *OGRGMLDataSource::GetSRSDimensionLoc() const
@@ -3664,7 +3665,7 @@ const char *OGRGMLDataSource::GetSRSDimensionLoc() const
 }
 
 /************************************************************************/
-/*                        GMLFeatureCollection()                     */
+/*                        GMLFeatureCollection()                        */
 /************************************************************************/
 
 bool OGRGMLDataSource::GMLFeatureCollection() const

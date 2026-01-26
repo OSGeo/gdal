@@ -17,7 +17,7 @@
 #include "gdal_priv.h"
 
 /************************************************************************/
-/*                        GDALConvertAlgorithm                          */
+/*                         GDALConvertAlgorithm                         */
 /************************************************************************/
 
 GDALConvertAlgorithm::GDALConvertAlgorithm()

@@ -23,7 +23,7 @@
 
 #ifdef WRITE_SUPPORT
 /************************************************************************/
-/*                              utility methods                         */
+/*                           utility methods                            */
 /************************************************************************/
 
 static int epsg2sosi(int nEPSG)
@@ -134,7 +134,7 @@ static int sosi2epsg(int nSOSI)
 }
 
 /************************************************************************/
-/*                              OGRSOSIDataSource()                     */
+/*                         OGRSOSIDataSource()                          */
 /************************************************************************/
 
 OGRSOSIDataSource::OGRSOSIDataSource()
@@ -159,7 +159,7 @@ OGRSOSIDataSource::OGRSOSIDataSource()
 }
 
 /************************************************************************/
-/*                              ~OGRSOSIDataSource()                    */
+/*                         ~OGRSOSIDataSource()                         */
 /************************************************************************/
 
 OGRSOSIDataSource::~OGRSOSIDataSource()
@@ -244,7 +244,7 @@ static OGRFeatureDefn *defineLayer(const char *szName,
 }
 
 /************************************************************************/
-/*                              Open()                                  */
+/*                                Open()                                */
 /************************************************************************/
 
 int OGRSOSIDataSource::Open(const char *pszFilename, int bUpdate)
@@ -609,7 +609,7 @@ int OGRSOSIDataSource::Open(const char *pszFilename, int bUpdate)
 
 #ifdef WRITE_SUPPORT
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 int OGRSOSIDataSource::Create(const char *pszFilename)
@@ -635,12 +635,12 @@ int OGRSOSIDataSource::Create(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                             ICreateLayer()                           */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *OGRSOSIDataSource::ICreateLayer(
     const char *pszNameIn, const OGRSpatialReference *poSpatialRef,
-    OGRwkbGeometryType eGType, CPL_UNUSED char **papszOptions)
+    OGRwkbGeometryType eGType, CPL_UNUSED CSLConstList papszOptions)
 {
     /* SOSI does not really support layers - so let's first see that the global
      * settings are consistent */

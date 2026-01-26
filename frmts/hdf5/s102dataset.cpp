@@ -52,7 +52,7 @@ class S102Dataset final : public S100BaseDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -112,7 +112,7 @@ S102RasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
 }
 
 /************************************************************************/
-/*                   S102GeoreferencedMetadataRasterBand                */
+/*                 S102GeoreferencedMetadataRasterBand                  */
 /************************************************************************/
 
 class S102GeoreferencedMetadataRasterBand final : public GDALProxyRasterBand
@@ -584,7 +584,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           OpenQuality()                              */
+/*                            OpenQuality()                             */
 /************************************************************************/
 
 bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
@@ -752,7 +752,7 @@ bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                              S102Creator                             */
+/*                             S102Creator                              */
 /************************************************************************/
 
 class S102Creator final : public S100BaseWriter
@@ -791,7 +791,7 @@ class S102Creator final : public S100BaseWriter
 };
 
 /************************************************************************/
-/*                      S102Creator::~S102Creator()                     */
+/*                     S102Creator::~S102Creator()                      */
 /************************************************************************/
 
 S102Creator::~S102Creator()
@@ -800,7 +800,7 @@ S102Creator::~S102Creator()
 }
 
 /************************************************************************/
-/*                         S102Creator::Create()                        */
+/*                        S102Creator::Create()                         */
 /************************************************************************/
 
 // S102 v3.0 Table 10-8 - Elements of featureAttributeTable compound datatype
@@ -1186,7 +1186,7 @@ bool S102Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
 }
 
 /************************************************************************/
-/*            S102Creator::WriteFeatureGroupAttributes()                */
+/*              S102Creator::WriteFeatureGroupAttributes()              */
 /************************************************************************/
 
 bool S102Creator::WriteFeatureGroupAttributes(bool isQuality)
@@ -1233,7 +1233,7 @@ bool S102Creator::WriteFeatureGroupAttributes(bool isQuality)
 }
 
 /************************************************************************/
-/*               S102Creator::WriteFeatureAttributeTable()              */
+/*              S102Creator::WriteFeatureAttributeTable()               */
 /************************************************************************/
 
 bool S102Creator::WriteFeatureAttributeTable(
@@ -1539,7 +1539,7 @@ bool S102Creator::WriteFeatureAttributeTable(
 }
 
 /************************************************************************/
-/*                      S102Creator::CreateGroupF()                     */
+/*                     S102Creator::CreateGroupF()                      */
 /************************************************************************/
 
 // Per S-102 v3.0 spec
@@ -1580,7 +1580,7 @@ bool S102Creator::CreateGroupF(bool hasQualityOfBathymetryCoverage)
 }
 
 /************************************************************************/
-/*                       S102Creator::CopyValues()                      */
+/*                      S102Creator::CopyValues()                       */
 /************************************************************************/
 
 bool S102Creator::CopyValues(GDALProgressFunc pfnProgress, void *pProgressData)
@@ -1793,7 +1793,7 @@ bool S102Creator::CopyValues(GDALProgressFunc pfnProgress, void *pProgressData)
 }
 
 /************************************************************************/
-/*                    S102Creator::CopyQualityValues()                  */
+/*                   S102Creator::CopyQualityValues()                   */
 /************************************************************************/
 
 bool S102Creator::CopyQualityValues(GDALDataset *poQualityDS,
@@ -1936,7 +1936,7 @@ bool S102Creator::CopyQualityValues(GDALDataset *poQualityDS,
 /* static */
 GDALDataset *S102Dataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /* bStrict*/,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

@@ -24,7 +24,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                       OGRTopoJSONDriverIdentify()                    */
+/*                     OGRTopoJSONDriverIdentify()                      */
 /************************************************************************/
 
 static int OGRTopoJSONDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -45,7 +45,7 @@ static int OGRTopoJSONDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           Open()                                     */
+/*                                Open()                                */
 /************************************************************************/
 
 static GDALDataset *OGRTopoJSONDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -57,7 +57,7 @@ static GDALDataset *OGRTopoJSONDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          RegisterOGRTopoJSON()                       */
+/*                        RegisterOGRTopoJSON()                         */
 /************************************************************************/
 
 void RegisterOGRTopoJSON()

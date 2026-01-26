@@ -69,7 +69,7 @@ static GDALDataset *OGRLIBKMLDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRLIBKMLDriverCreate(const char *pszName, int /* nBands */,
                                           int /* nXSize */, int /* nYSize */,
                                           GDALDataType /* eDT */,
-                                          char **papszOptions)
+                                          CSLConstList papszOptions)
 {
     CPLAssert(nullptr != pszName);
     CPLDebug("LIBKML", "Attempt to create: %s", pszName);

@@ -52,7 +52,7 @@ class GDALVectorSetFieldTypeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*               GDALVectorSetFieldTypeAlgorithmStandalone              */
+/*              GDALVectorSetFieldTypeAlgorithmStandalone               */
 /************************************************************************/
 
 class GDALVectorSetFieldTypeAlgorithmStandalone final

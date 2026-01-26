@@ -71,7 +71,7 @@ class ISCEDataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -138,7 +138,7 @@ static CPLString getXMLFilename(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             ISCEDataset()                            */
+/*                            ISCEDataset()                             */
 /************************************************************************/
 
 ISCEDataset::ISCEDataset()
@@ -157,7 +157,7 @@ ISCEDataset::~ISCEDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr ISCEDataset::Close(GDALProgressFunc, void *)
@@ -185,7 +185,7 @@ CPLErr ISCEDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                            FlushCache()                              */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr ISCEDataset::FlushCache(bool bAtClosing)
@@ -404,7 +404,7 @@ char **ISCEDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int ISCEDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -745,12 +745,12 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *ISCEDataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 {
     const char *sType = GDALGetDataTypeName(eType);
     const char *pszScheme = CSLFetchNameValueDef(papszOptions, "SCHEME", "BIP");
@@ -830,7 +830,7 @@ GDALDataset *ISCEDataset::Create(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                          ISCERasterBand()                            */
+/*                           ISCERasterBand()                           */
 /************************************************************************/
 
 ISCERasterBand::ISCERasterBand(GDALDataset *poDSIn, int nBandIn,

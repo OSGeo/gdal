@@ -84,16 +84,6 @@
 
 extern const swq_field_type SpecialFieldTypes[SPECIAL_FIELD_COUNT];
 
-CPL_C_START
-GDALAsyncReader *GDALGetDefaultAsyncReader(GDALDataset *poDS, int nXOff,
-                                           int nYOff, int nXSize, int nYSize,
-                                           void *pBuf, int nBufXSize,
-                                           int nBufYSize, GDALDataType eBufType,
-                                           int nBandCount, int *panBandMap,
-                                           int nPixelSpace, int nLineSpace,
-                                           int nBandSpace, char **papszOptions);
-CPL_C_END
-
 enum class GDALAllowReadWriteMutexState
 {
     RW_MUTEX_STATE_UNKNOWN,
@@ -211,7 +201,7 @@ GDALSharedDatasetConcatenateOpenOptions(CSLConstList papszOpenOptions)
 }
 
 /************************************************************************/
-/* Functions shared between gdalproxypool.cpp and gdaldataset.cpp */
+/*    Functions shared between gdalproxypool.cpp and gdaldataset.cpp    */
 /************************************************************************/
 
 // The open-shared mutex must be used by the ProxyPool too.
@@ -394,7 +384,7 @@ GDALDataset::~GDALDataset()
 }
 
 /************************************************************************/
-/*                             Close()                                  */
+/*                               Close()                                */
 /************************************************************************/
 
 /** Do final cleanup before a dataset is destroyed.
@@ -511,7 +501,7 @@ CPLErr GDALDataset::Close(GDALProgressFunc pfnProgress, void *pProgressData)
 }
 
 /************************************************************************/
-/*                   GDALDatasetRunCloseWithoutDestroying()             */
+/*                GDALDatasetRunCloseWithoutDestroying()                */
 /************************************************************************/
 
 /** Run the Close() method, without running destruction of the object.
@@ -542,7 +532,7 @@ CPLErr GDALDatasetRunCloseWithoutDestroying(GDALDatasetH hDS)
 }
 
 /************************************************************************/
-/*                  GDALDatasetRunCloseWithoutDestroyingEx()            */
+/*               GDALDatasetRunCloseWithoutDestroyingEx()               */
 /************************************************************************/
 
 /** Run the Close() method, without running destruction of the object.
@@ -582,7 +572,7 @@ CPLErr GDALDatasetRunCloseWithoutDestroyingEx(GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                         GetCloseReportsProgress()                    */
+/*                      GetCloseReportsProgress()                       */
 /************************************************************************/
 
 /** Returns whether the Close() operation will report progress / is a potential
@@ -603,7 +593,7 @@ bool GDALDataset::GetCloseReportsProgress() const
 }
 
 /************************************************************************/
-/*                   GDALDatasetGetCloseReportsProgress()               */
+/*                 GDALDatasetGetCloseReportsProgress()                 */
 /************************************************************************/
 
 /** Returns whether the Close() operation will report progress / is a potential
@@ -625,7 +615,7 @@ bool GDALDatasetGetCloseReportsProgress(GDALDatasetH hDS)
 }
 
 /************************************************************************/
-/*                   CanReopenWithCurrentDescription()                  */
+/*                  CanReopenWithCurrentDescription()                   */
 /************************************************************************/
 
 /** Returns whether, once this dataset is closed, it can be re-opened with
@@ -646,7 +636,7 @@ bool GDALDataset::CanReopenWithCurrentDescription() const
 }
 
 /************************************************************************/
-/*                UnregisterFromSharedDataset()                         */
+/*                    UnregisterFromSharedDataset()                     */
 /************************************************************************/
 
 void GDALDataset::UnregisterFromSharedDataset()
@@ -685,7 +675,7 @@ void GDALDataset::UnregisterFromSharedDataset()
 }
 
 /************************************************************************/
-/*                      AddToDatasetOpenList()                          */
+/*                        AddToDatasetOpenList()                        */
 /************************************************************************/
 
 void GDALDataset::AddToDatasetOpenList()
@@ -820,7 +810,7 @@ CPLErr GDALDataset::DropCache()
 }
 
 /************************************************************************/
-/*                           GDALDropCache()                           */
+/*                           GDALDropCache()                            */
 /************************************************************************/
 
 /**
@@ -840,7 +830,7 @@ CPLErr CPL_STDCALL GDALDropCache(GDALDatasetH hDS)
 }
 
 /************************************************************************/
-/*                      GetEstimatedRAMUsage()                          */
+/*                        GetEstimatedRAMUsage()                        */
 /************************************************************************/
 
 /**
@@ -970,7 +960,7 @@ void GDALDataset::RasterInitialize(int nXSize, int nYSize)
  */
 
 CPLErr GDALDataset::AddBand(CPL_UNUSED GDALDataType eType,
-                            CPL_UNUSED char **papszOptions)
+                            CPL_UNUSED CSLConstList papszOptions)
 
 {
     ReportError(CE_Failure, CPLE_NotSupported,
@@ -1387,7 +1377,7 @@ const OGRSpatialReference *GDALDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                       GetSpatialRefVectorOnly()                      */
+/*                      GetSpatialRefVectorOnly()                       */
 /************************************************************************/
 
 /**
@@ -1431,7 +1421,7 @@ const OGRSpatialReference *GDALDataset::GetSpatialRefVectorOnly() const
 }
 
 /************************************************************************/
-/*                       GetSpatialRefRasterOnly()                      */
+/*                      GetSpatialRefRasterOnly()                       */
 /************************************************************************/
 
 /**
@@ -1452,7 +1442,7 @@ const OGRSpatialReference *GDALDataset::GetSpatialRefRasterOnly() const
 }
 
 /************************************************************************/
-/*                        GDALGetSpatialRef()                           */
+/*                         GDALGetSpatialRef()                          */
 /************************************************************************/
 
 /**
@@ -1934,7 +1924,7 @@ int CPL_STDCALL GDALDereferenceDataset(GDALDatasetH hDataset)
 }
 
 /************************************************************************/
-/*                            ReleaseRef()                              */
+/*                             ReleaseRef()                             */
 /************************************************************************/
 
 /**
@@ -1955,7 +1945,7 @@ int GDALDataset::ReleaseRef()
 }
 
 /************************************************************************/
-/*                        GDALReleaseDataset()                          */
+/*                         GDALReleaseDataset()                         */
 /************************************************************************/
 
 /**
@@ -2080,7 +2070,7 @@ void GDALDataset::UnMarkSuppressOnClose()
 }
 
 /************************************************************************/
-/*                        CleanupPostFileClosing()                      */
+/*                       CleanupPostFileClosing()                       */
 /************************************************************************/
 
 /** This method should be called by driver implementations in their destructor,
@@ -2207,7 +2197,7 @@ const OGRSpatialReference *GDALDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                       GDALGetGCPSpatialRef()                         */
+/*                        GDALGetGCPSpatialRef()                        */
 /************************************************************************/
 
 /**
@@ -2246,7 +2236,7 @@ const char *CPL_STDCALL GDALGetGCPProjection(GDALDatasetH hDS)
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 /**
@@ -2399,7 +2389,7 @@ CPLErr CPL_STDCALL GDALSetGCPs(GDALDatasetH hDS, int nGCPCount,
 }
 
 /************************************************************************/
-/*                           GDALSetGCPs2()                             */
+/*                            GDALSetGCPs2()                            */
 /************************************************************************/
 
 /**
@@ -3405,7 +3395,7 @@ void CPL_STDCALL GDALGetOpenDatasets(GDALDatasetH **ppahDSList, int *pnCount)
 }
 
 /************************************************************************/
-/*                        GDALCleanOpenDatasetsList()                   */
+/*                     GDALCleanOpenDatasetsList()                      */
 /************************************************************************/
 
 // Useful when called from the child of a fork(), to avoid closing
@@ -3419,7 +3409,7 @@ void GDALNullifyOpenDatasetsList()
 }
 
 /************************************************************************/
-/*                             GDALGetAccess()                          */
+/*                           GDALGetAccess()                            */
 /************************************************************************/
 
 /**
@@ -3489,7 +3479,7 @@ int CPL_STDCALL GDALGetAccess(GDALDatasetH hDS)
 CPLErr GDALDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, int nBandCount,
-                               int *panBandMap, char **papszOptions)
+                               int *panBandMap, CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */
@@ -3548,7 +3538,7 @@ CPLErr CPL_STDCALL GDALDatasetAdviseRead(GDALDatasetH hDS, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                         GDALAntiRecursionStruct                      */
+/*                       GDALAntiRecursionStruct                        */
 /************************************************************************/
 
 // Prevent infinite recursion.
@@ -3901,7 +3891,7 @@ GDALDatasetH CPL_STDCALL GDALOpen(const char *pszFilename, GDALAccess eAccess)
 }
 
 /************************************************************************/
-/*                             GetSharedDS()                            */
+/*                            GetSharedDS()                             */
 /************************************************************************/
 
 static GDALDataset *GetSharedDS(const char *pszFilename,
@@ -4018,6 +4008,8 @@ static GDALDataset *GetSharedDS(const char *pszFilename,
  * @param papszAllowedDrivers NULL to consider all candidate drivers, or a NULL
  * terminated list of strings with the driver short names that must be
  * considered.
+ * Starting with GDAL 3.13, a string starting with the dash (-) character
+ * followed by the driver short name can be used to exclude a driver.
  *
  * @param papszOpenOptions NULL, or a NULL terminated list of strings with open
  * options passed to candidate drivers. An option exists for all drivers,
@@ -4114,7 +4106,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                       GDALDataset::Open()                            */
+/*                         GDALDataset::Open()                          */
 /************************************************************************/
 
 /**
@@ -4149,6 +4141,8 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
  * @param papszAllowedDrivers NULL to consider all candidate drivers, or a NULL
  * terminated list of strings with the driver short names that must be
  * considered.
+ * Starting with GDAL 3.13, a string starting with the dash (-) character
+ * followed by the driver short name can be used to exclude a driver.
  *
  * @param papszOpenOptions NULL, or a NULL terminated list of strings with open
  * options passed to candidate drivers. An option exists for all drivers,
@@ -4263,11 +4257,33 @@ retry:
         GDALDriver *poDriver =
             iPass == 1 ? poDM->GetDriver(iDriver, /*bIncludeHidden=*/true)
                        : apoSecondPassDrivers[iDriver];
-        if (papszAllowedDrivers != nullptr &&
-            CSLFindString(papszAllowedDrivers,
-                          GDALGetDriverShortName(poDriver)) == -1)
+        const char *pszDriverName = GDALGetDriverShortName(poDriver);
+        if (pszDriverName && papszAllowedDrivers)
         {
-            continue;
+            bool bDriverMatchedPositively = false;
+            bool bDriverMatchedNegatively = false;
+            bool bOnlyExcludedDrivers = true;
+            for (const char *pszAllowedDriver :
+                 cpl::Iterate(papszAllowedDrivers))
+            {
+                if (pszAllowedDriver[0] != '-')
+                    bOnlyExcludedDrivers = false;
+                if (EQUAL(pszAllowedDriver, pszDriverName))
+                {
+                    bDriverMatchedPositively = true;
+                }
+                else if (pszAllowedDriver[0] == '-' &&
+                         EQUAL(pszAllowedDriver + 1, pszDriverName))
+                {
+                    bDriverMatchedNegatively = true;
+                    break;
+                }
+            }
+            if ((!bDriverMatchedPositively && !bOnlyExcludedDrivers) ||
+                bDriverMatchedNegatively)
+            {
+                continue;
+            }
         }
 
         if (poDriver->GetMetadataItem(GDAL_DCAP_OPEN) == nullptr)
@@ -4681,7 +4697,7 @@ CPLErr CPL_STDCALL GDALClose(GDALDatasetH hDS)
 }
 
 /************************************************************************/
-/*                             GDALCloseEx()                            */
+/*                            GDALCloseEx()                             */
 /************************************************************************/
 
 /**
@@ -4827,7 +4843,7 @@ int CPL_STDCALL GDALDumpOpenDatasets(FILE *fp)
 }
 
 /************************************************************************/
-/*                        BeginAsyncReader()                            */
+/*                          BeginAsyncReader()                          */
 /************************************************************************/
 
 /**
@@ -4907,7 +4923,7 @@ int CPL_STDCALL GDALDumpOpenDatasets(FILE *fp)
 GDALAsyncReader *GDALDataset::BeginAsyncReader(
     int nXOff, int nYOff, int nXSize, int nYSize, void *pBuf, int nBufXSize,
     int nBufYSize, GDALDataType eBufType, int nBandCount, int *panBandMap,
-    int nPixelSpace, int nLineSpace, int nBandSpace, char **papszOptions)
+    int nPixelSpace, int nLineSpace, int nBandSpace, CSLConstList papszOptions)
 {
     // See gdaldefaultasync.cpp
 
@@ -4918,7 +4934,7 @@ GDALAsyncReader *GDALDataset::BeginAsyncReader(
 }
 
 /************************************************************************/
-/*                        GDALBeginAsyncReader()                      */
+/*                        GDALBeginAsyncReader()                        */
 /************************************************************************/
 
 /**
@@ -5013,7 +5029,7 @@ GDALAsyncReaderH CPL_STDCALL GDALBeginAsyncReader(
 }
 
 /************************************************************************/
-/*                        EndAsyncReader()                            */
+/*                           EndAsyncReader()                           */
 /************************************************************************/
 
 /**
@@ -5033,7 +5049,7 @@ void GDALDataset::EndAsyncReader(GDALAsyncReader *poARIO)
 }
 
 /************************************************************************/
-/*                        GDALEndAsyncReader()                        */
+/*                         GDALEndAsyncReader()                         */
 /************************************************************************/
 
 /**
@@ -5271,7 +5287,7 @@ CSLConstList GDALDataset::GetMetadata(const char *pszDomain)
 // clang-format on
 
 /************************************************************************/
-/*                            GetMetadataDomainList()                   */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **GDALDataset::GetMetadataDomainList()
@@ -5289,7 +5305,7 @@ char **GDALDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                            GetDriverName()                           */
+/*                           GetDriverName()                            */
 /************************************************************************/
 
 /** Return driver name.
@@ -5303,7 +5319,7 @@ const char *GDALDataset::GetDriverName() const
 }
 
 /************************************************************************/
-/*                     GDALDatasetReleaseResultSet()                    */
+/*                    GDALDatasetReleaseResultSet()                     */
 /************************************************************************/
 
 /**
@@ -5335,7 +5351,7 @@ void GDALDatasetReleaseResultSet(GDALDatasetH hDS, OGRLayerH hLayer)
 }
 
 /************************************************************************/
-/*                       GDALDatasetGetLayerCount()                     */
+/*                      GDALDatasetGetLayerCount()                      */
 /************************************************************************/
 
 /**
@@ -5432,7 +5448,7 @@ OGRLayerH GDALDatasetGetLayerByName(GDALDatasetH hDS, const char *pszName)
 }
 
 /************************************************************************/
-/*                        GDALDatasetIsLayerPrivate()                   */
+/*                     GDALDatasetIsLayerPrivate()                      */
 /************************************************************************/
 
 /**
@@ -5460,7 +5476,7 @@ int GDALDatasetIsLayerPrivate(GDALDatasetH hDS, int iLayer)
 }
 
 /************************************************************************/
-/*                            GetLayerIndex()                           */
+/*                           GetLayerIndex()                            */
 /************************************************************************/
 
 /**
@@ -5497,7 +5513,7 @@ int GDALDataset::GetLayerIndex(const char *pszName) const
 }
 
 /************************************************************************/
-/*                        GDALDatasetDeleteLayer()                      */
+/*                       GDALDatasetDeleteLayer()                       */
 /************************************************************************/
 
 /**
@@ -5718,7 +5734,7 @@ OGRLayer *GDALDataset::CreateLayer(const char *pszName, std::nullptr_t)
 //!@endcond
 
 /************************************************************************/
-/*                         GDALDatasetCreateLayer()                     */
+/*                       GDALDatasetCreateLayer()                       */
 /************************************************************************/
 
 /**
@@ -5803,7 +5819,7 @@ OGRLayerH GDALDatasetCreateLayer(GDALDatasetH hDS, const char *pszName,
 }
 
 /************************************************************************/
-/*                 GDALDatasetCreateLayerFromGeomFieldDefn()            */
+/*              GDALDatasetCreateLayerFromGeomFieldDefn()               */
 /************************************************************************/
 
 /**
@@ -5870,7 +5886,7 @@ GDALDatasetCreateLayerFromGeomFieldDefn(GDALDatasetH hDS, const char *pszName,
 }
 
 /************************************************************************/
-/*                         GDALDatasetCopyLayer()                       */
+/*                        GDALDatasetCopyLayer()                        */
 /************************************************************************/
 
 /**
@@ -5904,12 +5920,11 @@ OGRLayerH GDALDatasetCopyLayer(GDALDatasetH hDS, OGRLayerH hSrcLayer,
     VALIDATE_POINTER1(pszNewName, "GDALDatasetCopyLayer", nullptr);
 
     return OGRLayer::ToHandle(GDALDataset::FromHandle(hDS)->CopyLayer(
-        OGRLayer::FromHandle(hSrcLayer), pszNewName,
-        const_cast<char **>(papszOptions)));
+        OGRLayer::FromHandle(hSrcLayer), pszNewName, papszOptions));
 }
 
 /************************************************************************/
-/*                        GDALDatasetExecuteSQL()                       */
+/*                       GDALDatasetExecuteSQL()                        */
 /************************************************************************/
 
 /**
@@ -6025,7 +6040,7 @@ OGRStyleTableH GDALDatasetGetStyleTable(GDALDatasetH hDS)
 }
 
 /************************************************************************/
-/*                    GDALDatasetSetStyleTableDirectly()                */
+/*                  GDALDatasetSetStyleTableDirectly()                  */
 /************************************************************************/
 
 /**
@@ -6054,7 +6069,7 @@ void GDALDatasetSetStyleTableDirectly(GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                     GDALDatasetSetStyleTable()                       */
+/*                      GDALDatasetSetStyleTable()                      */
 /************************************************************************/
 
 /**
@@ -6170,7 +6185,7 @@ int GDALDataset::GetSummaryRefCount() const
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 /**
@@ -6236,7 +6251,7 @@ GDALDataset::ICreateLayer(CPL_UNUSED const char *pszName,
 */
 
 OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */
@@ -6879,7 +6894,7 @@ OGRErr GDALDataset::ProcessSQLDropTable(const char *pszSQLCommand)
 //! @endcond
 
 /************************************************************************/
-/*                    GDALDatasetParseSQLType()                       */
+/*                      GDALDatasetParseSQLType()                       */
 /************************************************************************/
 
 /* All arguments will be altered */
@@ -7563,7 +7578,7 @@ GDALDataset::ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
 //! @endcond
 
 /************************************************************************/
-/*                             AbortSQL()                             */
+/*                              AbortSQL()                              */
 /************************************************************************/
 
 /**
@@ -7591,7 +7606,7 @@ OGRErr GDALDataset::AbortSQL()
 }
 
 /************************************************************************/
-/*                        BuildLayerFromSelectInfo()                    */
+/*                      BuildLayerFromSelectInfo()                      */
 /************************************************************************/
 
 struct GDALSQLParseInfo
@@ -7629,7 +7644,7 @@ OGRLayer *GDALDataset::BuildLayerFromSelectInfo(
 }
 
 /************************************************************************/
-/*                             DestroyParseInfo()                       */
+/*                          DestroyParseInfo()                          */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -7656,7 +7671,7 @@ void GDALDataset::DestroyParseInfo(GDALSQLParseInfo *psParseInfo)
 }
 
 /************************************************************************/
-/*                            BuildParseInfo()                          */
+/*                           BuildParseInfo()                           */
 /************************************************************************/
 
 GDALSQLParseInfo *
@@ -7953,7 +7968,7 @@ void GDALDataset::ReleaseResultSet(OGRLayer *poResultsSet)
 }
 
 /************************************************************************/
-/*                            GetStyleTable()                           */
+/*                           GetStyleTable()                            */
 /************************************************************************/
 
 /**
@@ -7972,7 +7987,7 @@ OGRStyleTable *GDALDataset::GetStyleTable()
 }
 
 /************************************************************************/
-/*                         SetStyleTableDirectly()                      */
+/*                       SetStyleTableDirectly()                        */
 /************************************************************************/
 
 /**
@@ -7995,7 +8010,7 @@ void GDALDataset::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 }
 
 /************************************************************************/
-/*                            SetStyleTable()                           */
+/*                           SetStyleTable()                            */
 /************************************************************************/
 
 /**
@@ -8020,7 +8035,7 @@ void GDALDataset::SetStyleTable(OGRStyleTable *poStyleTable)
 }
 
 /************************************************************************/
-/*                         IsGenericSQLDialect()                        */
+/*                        IsGenericSQLDialect()                         */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -8033,7 +8048,7 @@ int GDALDataset::IsGenericSQLDialect(const char *pszDialect)
 //! @endcond
 
 /************************************************************************/
-/*                            GetLayerCount()                           */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 /**
@@ -8054,7 +8069,7 @@ int GDALDataset::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                                GetLayer()                            */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 /**
@@ -8106,7 +8121,7 @@ const OGRLayer *GDALDataset::GetLayer(CPL_UNUSED int iLayer) const
 */
 
 /************************************************************************/
-/*                                IsLayerPrivate()                      */
+/*                           IsLayerPrivate()                           */
 /************************************************************************/
 
 /**
@@ -8129,7 +8144,7 @@ bool GDALDataset::IsLayerPrivate(CPL_UNUSED int iLayer) const
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 /**
@@ -8157,7 +8172,7 @@ void GDALDataset::ResetReading()
 }
 
 /************************************************************************/
-/*                         GDALDatasetResetReading()                    */
+/*                      GDALDatasetResetReading()                       */
 /************************************************************************/
 
 /**
@@ -8180,7 +8195,7 @@ void CPL_DLL GDALDatasetResetReading(GDALDatasetH hDS)
 }
 
 /************************************************************************/
-/*                          GetNextFeature()                            */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 /**
@@ -8412,7 +8427,7 @@ OGRFeatureH CPL_DLL GDALDatasetGetNextFeature(GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 /**
@@ -8529,7 +8544,7 @@ int GDALDatasetTestCapability(GDALDatasetH hDS, const char *pszCap)
 }
 
 /************************************************************************/
-/*                           StartTransaction()                         */
+/*                          StartTransaction()                          */
 /************************************************************************/
 
 /**
@@ -8585,7 +8600,7 @@ OGRErr GDALDataset::StartTransaction(CPL_UNUSED int bForce)
 }
 
 /************************************************************************/
-/*                      GDALDatasetStartTransaction()                   */
+/*                    GDALDatasetStartTransaction()                     */
 /************************************************************************/
 
 /**
@@ -8649,7 +8664,7 @@ OGRErr GDALDatasetStartTransaction(GDALDatasetH hDS, int bForce)
 }
 
 /************************************************************************/
-/*                           CommitTransaction()                        */
+/*                         CommitTransaction()                          */
 /************************************************************************/
 
 /**
@@ -8673,7 +8688,7 @@ OGRErr GDALDataset::CommitTransaction()
 }
 
 /************************************************************************/
-/*                        GDALDatasetCommitTransaction()                */
+/*                    GDALDatasetCommitTransaction()                    */
 /************************************************************************/
 
 /**
@@ -8705,7 +8720,7 @@ OGRErr GDALDatasetCommitTransaction(GDALDatasetH hDS)
 }
 
 /************************************************************************/
-/*                           RollbackTransaction()                      */
+/*                        RollbackTransaction()                         */
 /************************************************************************/
 
 /**
@@ -8726,7 +8741,7 @@ OGRErr GDALDataset::RollbackTransaction()
 }
 
 /************************************************************************/
-/*                     GDALDatasetRollbackTransaction()                 */
+/*                   GDALDatasetRollbackTransaction()                   */
 /************************************************************************/
 
 /**
@@ -8757,7 +8772,7 @@ OGRErr GDALDatasetRollbackTransaction(GDALDatasetH hDS)
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   ShareLockWithParentDataset()                       */
+/*                     ShareLockWithParentDataset()                     */
 /************************************************************************/
 
 /* To be used typically by the GTiff driver to link overview datasets */
@@ -8774,7 +8789,7 @@ void GDALDataset::ShareLockWithParentDataset(GDALDataset *poParentDataset)
 }
 
 /************************************************************************/
-/*                   SetQueryLoggerFunc()                               */
+/*                         SetQueryLoggerFunc()                         */
 /************************************************************************/
 
 bool GDALDataset::SetQueryLoggerFunc(CPL_UNUSED GDALQueryLoggerFunc callback,
@@ -8784,7 +8799,7 @@ bool GDALDataset::SetQueryLoggerFunc(CPL_UNUSED GDALQueryLoggerFunc callback,
 }
 
 /************************************************************************/
-/*                          EnterReadWrite()                            */
+/*                           EnterReadWrite()                           */
 /************************************************************************/
 
 int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
@@ -8850,7 +8865,7 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
 }
 
 /************************************************************************/
-/*                         LeaveReadWrite()                             */
+/*                           LeaveReadWrite()                           */
 /************************************************************************/
 
 void GDALDataset::LeaveReadWrite()
@@ -8873,7 +8888,7 @@ void GDALDataset::LeaveReadWrite()
 }
 
 /************************************************************************/
-/*                           InitRWLock()                               */
+/*                             InitRWLock()                             */
 /************************************************************************/
 
 void GDALDataset::InitRWLock()
@@ -8919,7 +8934,7 @@ void GDALDataset::DisableReadWriteMutex()
 }
 
 /************************************************************************/
-/*                      TemporarilyDropReadWriteLock()                  */
+/*                    TemporarilyDropReadWriteLock()                    */
 /************************************************************************/
 
 void GDALDataset::TemporarilyDropReadWriteLock()
@@ -9000,7 +9015,7 @@ void GDALDataset::ReacquireReadWriteLock()
 }
 
 /************************************************************************/
-/*                           AcquireMutex()                             */
+/*                            AcquireMutex()                            */
 /************************************************************************/
 
 int GDALDataset::AcquireMutex()
@@ -9016,7 +9031,7 @@ int GDALDataset::AcquireMutex()
 }
 
 /************************************************************************/
-/*                          ReleaseMutex()                              */
+/*                            ReleaseMutex()                            */
 /************************************************************************/
 
 void GDALDataset::ReleaseMutex()
@@ -9036,7 +9051,7 @@ void GDALDataset::ReleaseMutex()
 //! @endcond
 
 /************************************************************************/
-/*              GDALDataset::Features::Iterator::Private                */
+/*               GDALDataset::Features::Iterator::Private               */
 /************************************************************************/
 
 struct GDALDataset::Features::Iterator::Private
@@ -9113,7 +9128,7 @@ GDALDataset::Features GDALDataset::GetFeatures()
 }
 
 /************************************************************************/
-/*                                 begin()                              */
+/*                               begin()                                */
 /************************************************************************/
 
 /**
@@ -9127,7 +9142,7 @@ const GDALDataset::Features::Iterator GDALDataset::Features::begin() const
 }
 
 /************************************************************************/
-/*                                  end()                               */
+/*                                end()                                 */
 /************************************************************************/
 
 /**
@@ -9141,7 +9156,7 @@ const GDALDataset::Features::Iterator GDALDataset::Features::end() const
 }
 
 /************************************************************************/
-/*               GDALDataset::Layers::Iterator::Private                 */
+/*                GDALDataset::Layers::Iterator::Private                */
 /************************************************************************/
 
 struct GDALDataset::Layers::Iterator::Private
@@ -9259,7 +9274,7 @@ GDALDataset::Layers GDALDataset::GetLayers()
 }
 
 /************************************************************************/
-/*                                 begin()                              */
+/*                               begin()                                */
 /************************************************************************/
 
 /**
@@ -9273,7 +9288,7 @@ GDALDataset::Layers::Iterator GDALDataset::Layers::begin() const
 }
 
 /************************************************************************/
-/*                                  end()                               */
+/*                                end()                                 */
 /************************************************************************/
 
 /**
@@ -9287,7 +9302,7 @@ GDALDataset::Layers::Iterator GDALDataset::Layers::end() const
 }
 
 /************************************************************************/
-/*                                  size()                             */
+/*                                size()                                */
 /************************************************************************/
 
 /**
@@ -9303,7 +9318,7 @@ size_t GDALDataset::Layers::size() const
 }
 
 /************************************************************************/
-/*                                operator[]()                          */
+/*                             operator[]()                             */
 /************************************************************************/
 /**
  \brief Fetch a layer by index.
@@ -9323,7 +9338,7 @@ OGRLayer *GDALDataset::Layers::operator[](int iLayer)
 }
 
 /************************************************************************/
-/*                                operator[]()                          */
+/*                             operator[]()                             */
 /************************************************************************/
 /**
  \brief Fetch a layer by index.
@@ -9343,7 +9358,7 @@ OGRLayer *GDALDataset::Layers::operator[](size_t iLayer)
 }
 
 /************************************************************************/
-/*                                operator[]()                          */
+/*                             operator[]()                             */
 /************************************************************************/
 /**
  \brief Fetch a layer by name.
@@ -9363,7 +9378,7 @@ OGRLayer *GDALDataset::Layers::operator[](const char *pszLayerName)
 }
 
 /************************************************************************/
-/*               GDALDataset::ConstLayers::Iterator::Private            */
+/*             GDALDataset::ConstLayers::Iterator::Private              */
 /************************************************************************/
 
 struct GDALDataset::ConstLayers::Iterator::Private
@@ -9486,7 +9501,7 @@ GDALDataset::ConstLayers GDALDataset::GetLayers() const
 }
 
 /************************************************************************/
-/*                                 begin()                              */
+/*                               begin()                                */
 /************************************************************************/
 
 /**
@@ -9501,7 +9516,7 @@ GDALDataset::ConstLayers::Iterator GDALDataset::ConstLayers::begin() const
 }
 
 /************************************************************************/
-/*                                  end()                               */
+/*                                end()                                 */
 /************************************************************************/
 
 /**
@@ -9516,7 +9531,7 @@ GDALDataset::ConstLayers::Iterator GDALDataset::ConstLayers::end() const
 }
 
 /************************************************************************/
-/*                                  size()                             */
+/*                                size()                                */
 /************************************************************************/
 
 /**
@@ -9533,7 +9548,7 @@ size_t GDALDataset::ConstLayers::size() const
 }
 
 /************************************************************************/
-/*                                operator[]()                          */
+/*                             operator[]()                             */
 /************************************************************************/
 /**
  \brief Fetch a layer by index.
@@ -9554,7 +9569,7 @@ const OGRLayer *GDALDataset::ConstLayers::operator[](int iLayer)
 }
 
 /************************************************************************/
-/*                                operator[]()                          */
+/*                             operator[]()                             */
 /************************************************************************/
 /**
  \brief Fetch a layer by index.
@@ -9575,7 +9590,7 @@ const OGRLayer *GDALDataset::ConstLayers::operator[](size_t iLayer)
 }
 
 /************************************************************************/
-/*                                operator[]()                          */
+/*                             operator[]()                             */
 /************************************************************************/
 /**
  \brief Fetch a layer by name.
@@ -9596,7 +9611,7 @@ const OGRLayer *GDALDataset::ConstLayers::operator[](const char *pszLayerName)
 }
 
 /************************************************************************/
-/*               GDALDataset::Bands::Iterator::Private                 */
+/*                GDALDataset::Bands::Iterator::Private                 */
 /************************************************************************/
 
 struct GDALDataset::Bands::Iterator::Private
@@ -9675,7 +9690,7 @@ GDALDataset::Bands GDALDataset::GetBands()
 }
 
 /************************************************************************/
-/*                                 begin()                              */
+/*                               begin()                                */
 /************************************************************************/
 
 /**
@@ -9689,7 +9704,7 @@ const GDALDataset::Bands::Iterator GDALDataset::Bands::begin() const
 }
 
 /************************************************************************/
-/*                                  end()                               */
+/*                                end()                                 */
 /************************************************************************/
 
 /**
@@ -9703,7 +9718,7 @@ const GDALDataset::Bands::Iterator GDALDataset::Bands::end() const
 }
 
 /************************************************************************/
-/*                                  size()                             */
+/*                                size()                                */
 /************************************************************************/
 
 /**
@@ -9719,7 +9734,7 @@ size_t GDALDataset::Bands::size() const
 }
 
 /************************************************************************/
-/*                                operator[]()                          */
+/*                             operator[]()                             */
 /************************************************************************/
 /**
  \brief Fetch a raster band by index.
@@ -9742,7 +9757,7 @@ GDALRasterBand *GDALDataset::Bands::operator[](int iBand)
 }
 
 /************************************************************************/
-/*                                operator[]()                          */
+/*                             operator[]()                             */
 /************************************************************************/
 
 /**
@@ -9766,7 +9781,7 @@ GDALRasterBand *GDALDataset::Bands::operator[](size_t iBand)
 }
 
 /************************************************************************/
-/*               GDALDataset::ConstBands::Iterator::Private             */
+/*              GDALDataset::ConstBands::Iterator::Private              */
 /************************************************************************/
 
 struct GDALDataset::ConstBands::Iterator::Private
@@ -9823,7 +9838,7 @@ bool GDALDataset::ConstBands::Iterator::operator!=(const Iterator &it) const
 }
 
 /************************************************************************/
-/*                             GetBands()                               */
+/*                              GetBands()                              */
 /************************************************************************/
 
 /** Function that returns an iterable object over GDALRasterBand in the dataset.
@@ -9848,7 +9863,7 @@ GDALDataset::ConstBands GDALDataset::GetBands() const
 }
 
 /************************************************************************/
-/*                                 begin()                              */
+/*                               begin()                                */
 /************************************************************************/
 
 /**
@@ -9863,7 +9878,7 @@ const GDALDataset::ConstBands::Iterator GDALDataset::ConstBands::begin() const
 }
 
 /************************************************************************/
-/*                                  end()                               */
+/*                                end()                                 */
 /************************************************************************/
 
 /**
@@ -9878,7 +9893,7 @@ const GDALDataset::ConstBands::Iterator GDALDataset::ConstBands::end() const
 }
 
 /************************************************************************/
-/*                                  size()                             */
+/*                                size()                                */
 /************************************************************************/
 
 /**
@@ -9895,7 +9910,7 @@ size_t GDALDataset::ConstBands::size() const
 }
 
 /************************************************************************/
-/*                                operator[]()                          */
+/*                             operator[]()                             */
 /************************************************************************/
 /**
  \brief Fetch a raster band by index.
@@ -9919,7 +9934,7 @@ const GDALRasterBand *GDALDataset::ConstBands::operator[](int iBand) const
 }
 
 /************************************************************************/
-/*                                operator[]()                          */
+/*                             operator[]()                             */
 /************************************************************************/
 
 /**
@@ -9944,7 +9959,7 @@ const GDALRasterBand *GDALDataset::ConstBands::operator[](size_t iBand) const
 }
 
 /************************************************************************/
-/*                           GetRootGroup()                             */
+/*                            GetRootGroup()                            */
 /************************************************************************/
 
 /**
@@ -9963,7 +9978,7 @@ std::shared_ptr<GDALGroup> GDALDataset::GetRootGroup() const
 }
 
 /************************************************************************/
-/*                        GetRawBinaryLayout()                          */
+/*                         GetRawBinaryLayout()                         */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -10006,7 +10021,7 @@ void GDALDataset::ClearStatistics()
 }
 
 /************************************************************************/
-/*                        GDALDatasetClearStatistics()                  */
+/*                     GDALDatasetClearStatistics()                     */
 /************************************************************************/
 
 /**
@@ -10054,7 +10069,7 @@ GDALDataset::GetFieldDomainNames(CPL_UNUSED CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                      GDALDatasetGetFieldDomainNames()                */
+/*                   GDALDatasetGetFieldDomainNames()                   */
 /************************************************************************/
 
 /** Returns a list of the names of all field domains stored in the dataset.
@@ -10083,7 +10098,7 @@ char **GDALDatasetGetFieldDomainNames(GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                        GetFieldDomain()                              */
+/*                           GetFieldDomain()                           */
 /************************************************************************/
 
 /** Get a field domain from its name.
@@ -10100,7 +10115,7 @@ const OGRFieldDomain *GDALDataset::GetFieldDomain(const std::string &name) const
 }
 
 /************************************************************************/
-/*                      GDALDatasetGetFieldDomain()                     */
+/*                     GDALDatasetGetFieldDomain()                      */
 /************************************************************************/
 
 /** Get a field domain from its name.
@@ -10122,7 +10137,7 @@ OGRFieldDomainH GDALDatasetGetFieldDomain(GDALDatasetH hDS, const char *pszName)
 }
 
 /************************************************************************/
-/*                         AddFieldDomain()                             */
+/*                           AddFieldDomain()                           */
 /************************************************************************/
 
 /** Add a field domain to the dataset.
@@ -10201,7 +10216,7 @@ bool GDALDatasetAddFieldDomain(GDALDatasetH hDS, OGRFieldDomainH hFieldDomain,
 }
 
 /************************************************************************/
-/*                        DeleteFieldDomain()                           */
+/*                         DeleteFieldDomain()                          */
 /************************************************************************/
 
 /** Removes a field domain from the dataset.
@@ -10234,7 +10249,7 @@ bool GDALDataset::DeleteFieldDomain(CPL_UNUSED const std::string &name,
 }
 
 /************************************************************************/
-/*                  GDALDatasetDeleteFieldDomain()                      */
+/*                    GDALDatasetDeleteFieldDomain()                    */
 /************************************************************************/
 
 /** Removes a field domain from the dataset.
@@ -10274,7 +10289,7 @@ bool GDALDatasetDeleteFieldDomain(GDALDatasetH hDS, const char *pszName,
 }
 
 /************************************************************************/
-/*                       UpdateFieldDomain()                            */
+/*                         UpdateFieldDomain()                          */
 /************************************************************************/
 
 /** Updates an existing field domain by replacing its definition.
@@ -10305,7 +10320,7 @@ bool GDALDataset::UpdateFieldDomain(
 }
 
 /************************************************************************/
-/*                  GDALDatasetUpdateFieldDomain()                      */
+/*                    GDALDatasetUpdateFieldDomain()                    */
 /************************************************************************/
 
 /** Updates an existing field domain by replacing its definition.
@@ -10370,7 +10385,7 @@ GDALDataset::GetRelationshipNames(CPL_UNUSED CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                     GDALDatasetGetRelationshipNames()                */
+/*                  GDALDatasetGetRelationshipNames()                   */
 /************************************************************************/
 
 /** Returns a list of the names of all relationships stored in the dataset.
@@ -10399,7 +10414,7 @@ char **GDALDatasetGetRelationshipNames(GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                        GetRelationship()                             */
+/*                          GetRelationship()                           */
 /************************************************************************/
 
 /** Get a relationship from its name.
@@ -10414,7 +10429,7 @@ GDALDataset::GetRelationship(CPL_UNUSED const std::string &name) const
 }
 
 /************************************************************************/
-/*                      GDALDatasetGetRelationship()                    */
+/*                     GDALDatasetGetRelationship()                     */
 /************************************************************************/
 
 /** Get a relationship from its name.
@@ -10437,7 +10452,7 @@ GDALRelationshipH GDALDatasetGetRelationship(GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                         AddRelationship()                            */
+/*                          AddRelationship()                           */
 /************************************************************************/
 
 /** Add a relationship to the dataset.
@@ -10525,7 +10540,7 @@ bool GDALDatasetAddRelationship(GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                        DeleteRelationship()                          */
+/*                         DeleteRelationship()                         */
 /************************************************************************/
 
 /** Removes a relationship from the dataset.
@@ -10552,7 +10567,7 @@ bool GDALDataset::DeleteRelationship(CPL_UNUSED const std::string &name,
 }
 
 /************************************************************************/
-/*                  GDALDatasetDeleteRelationship()                     */
+/*                   GDALDatasetDeleteRelationship()                    */
 /************************************************************************/
 
 /** Removes a relationship from the dataset.
@@ -10591,7 +10606,7 @@ bool GDALDatasetDeleteRelationship(GDALDatasetH hDS, const char *pszName,
 }
 
 /************************************************************************/
-/*                       UpdateRelationship()                           */
+/*                         UpdateRelationship()                         */
 /************************************************************************/
 
 /** Updates an existing relationship by replacing its definition.
@@ -10621,7 +10636,7 @@ bool GDALDataset::UpdateRelationship(
 }
 
 /************************************************************************/
-/*                  GDALDatasetUpdateRelationship()                     */
+/*                   GDALDatasetUpdateRelationship()                    */
 /************************************************************************/
 
 /** Updates an existing relationship by replacing its definition.
@@ -10665,7 +10680,7 @@ bool GDALDatasetUpdateRelationship(GDALDatasetH hDS,
 }
 
 /************************************************************************/
-/*                  GDALDatasetSetQueryLoggerFunc()                     */
+/*                   GDALDatasetSetQueryLoggerFunc()                    */
 /************************************************************************/
 
 /**
@@ -10696,7 +10711,7 @@ bool GDALDatasetSetQueryLoggerFunc(GDALDatasetH hDS,
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       SetEnableOverviews()                           */
+/*                         SetEnableOverviews()                         */
 /************************************************************************/
 
 void GDALDataset::SetEnableOverviews(bool bEnable)
@@ -10708,7 +10723,7 @@ void GDALDataset::SetEnableOverviews(bool bEnable)
 }
 
 /************************************************************************/
-/*                      AreOverviewsEnabled()                           */
+/*                        AreOverviewsEnabled()                         */
 /************************************************************************/
 
 bool GDALDataset::AreOverviewsEnabled() const
@@ -10819,7 +10834,7 @@ GDALDataset::GetCompressionFormats(CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
 }
 
 /************************************************************************/
-/*                 GDALDatasetGetCompressionFormats()                   */
+/*                  GDALDatasetGetCompressionFormats()                  */
 /************************************************************************/
 
 /** Return the compression formats that can be natively obtained for the
@@ -11051,7 +11066,7 @@ CPLErr GDALDataset::ReadCompressedData(
 }
 
 /************************************************************************/
-/*                  GDALDatasetReadCompressedData()                     */
+/*                   GDALDatasetReadCompressedData()                    */
 /************************************************************************/
 
 /** Return the compressed content that can be natively obtained for the
@@ -11145,7 +11160,7 @@ CPLErr GDALDatasetReadCompressedData(GDALDatasetH hDS, const char *pszFormat,
 }
 
 /************************************************************************/
-/*                           CanBeCloned()                              */
+/*                            CanBeCloned()                             */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -11217,7 +11232,7 @@ GDALDataset::Clone(int nScopeFlags, [[maybe_unused]] bool bCanShareState) const
 //! @endcond
 
 /************************************************************************/
-/*                    GeolocationToPixelLine()                          */
+/*                       GeolocationToPixelLine()                       */
 /************************************************************************/
 
 /** Transform georeferenced coordinates to pixel/line coordinates.
@@ -11319,7 +11334,7 @@ GDALDataset::GeolocationToPixelLine(double dfGeolocX, double dfGeolocY,
 }
 
 /************************************************************************/
-/*                  GDALDatasetGeolocationToPixelLine()                 */
+/*                 GDALDatasetGeolocationToPixelLine()                  */
 /************************************************************************/
 
 /** Transform georeferenced coordinates to pixel/line coordinates.
@@ -11343,7 +11358,7 @@ CPLErr GDALDatasetGeolocationToPixelLine(GDALDatasetH hDS, double dfGeolocX,
 }
 
 /************************************************************************/
-/*                               GetExtent()                            */
+/*                             GetExtent()                              */
 /************************************************************************/
 
 /** Return extent of dataset in specified CRS.
@@ -11502,7 +11517,7 @@ CPLErr GDALGetExtent(GDALDatasetH hDS, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                         GetExtentWGS84LongLat()                      */
+/*                       GetExtentWGS84LongLat()                        */
 /************************************************************************/
 
 /** Return extent of dataset in WGS84 longitude/latitude
@@ -11527,7 +11542,7 @@ CPLErr GDALDataset::GetExtentWGS84LongLat(OGREnvelope *psExtent) const
 }
 
 /************************************************************************/
-/*                    GDALGetExtentWGS84LongLat()                       */
+/*                     GDALGetExtentWGS84LongLat()                      */
 /************************************************************************/
 
 /** Return extent of dataset in WGS84 longitude/latitude
@@ -11570,7 +11585,7 @@ void GDALDataset::ReportUpdateNotSupportedByDriver(const char *pszDriverName)
 //! @endcond
 
 /************************************************************************/
-/*                         BuildFilename()                              */
+/*                           BuildFilename()                            */
 /************************************************************************/
 
 /** Generates a filename, potentially relative to another one.
@@ -11700,7 +11715,7 @@ std::string GDALDataset::BuildFilename(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                       GDALMDArrayFromDataset                         */
+/*                        GDALMDArrayFromDataset                        */
 /************************************************************************/
 
 class GDALMDArrayFromDataset final : public GDALMDArray
@@ -11716,9 +11731,11 @@ class GDALMDArrayFromDataset final : public GDALMDArray
     std::shared_ptr<GDALMDArray> m_varY{};
     std::shared_ptr<GDALMDArray> m_varBand{};
     const std::string m_osFilename;
+    const CPLStringList m_aosOptions;
     int m_iBandDim = 0;
     int m_iYDim = 1;
     int m_iXDim = 2;
+    mutable std::vector<std::shared_ptr<GDALMDArray>> m_apoOverviews{};
 
     bool ReadWrite(GDALRWFlag eRWFlag, const GUInt64 *arrayStartIdx,
                    const size_t *count, const GInt64 *arrayStep,
@@ -11733,7 +11750,7 @@ class GDALMDArrayFromDataset final : public GDALMDArray
           GDALMDArray(std::string(), std::string(poDS->GetDescription())),
           m_poDS(poDS), m_dt(GDALExtendedDataType::Create(
                             poDS->GetRasterBand(1)->GetRasterDataType())),
-          m_osFilename(poDS->GetDescription())
+          m_osFilename(poDS->GetDescription()), m_aosOptions(papszOptions)
     {
         m_poDS->Reference();
 
@@ -12185,6 +12202,58 @@ class GDALMDArrayFromDataset final : public GDALMDArray
         }
         return res;
     }
+
+    int GetOverviewCount() const override
+    {
+        int nOvrCount = 0;
+        GDALDataset *poOvrDS = nullptr;
+        bool bOK = true;
+        for (int i = 1; bOK && i <= m_poDS->GetRasterCount(); ++i)
+        {
+            auto poBand = m_poDS->GetRasterBand(i);
+            const int nThisOvrCount = poBand->GetOverviewCount();
+            bOK = (nThisOvrCount > 0 && (i == 1 || nThisOvrCount == nOvrCount));
+            if (bOK)
+            {
+                nOvrCount = nThisOvrCount;
+                auto poFirstOvrBand = poBand->GetOverview(0);
+                bOK = poFirstOvrBand != nullptr;
+                if (bOK)
+                {
+                    auto poThisOvrDS = poFirstOvrBand->GetDataset();
+                    bOK = poThisOvrDS != nullptr &&
+                          poThisOvrDS->GetRasterBand(i) == poFirstOvrBand &&
+                          (i == 1 || poThisOvrDS == poOvrDS);
+                    if (bOK)
+                        poOvrDS = poThisOvrDS;
+                }
+            }
+        }
+        return bOK ? nOvrCount : 0;
+    }
+
+    std::shared_ptr<GDALMDArray> GetOverview(int idx) const override
+    {
+        const int nOverviews = GetOverviewCount();
+        if (idx < 0 || idx >= nOverviews)
+            return nullptr;
+        m_apoOverviews.resize(nOverviews);
+        if (!m_apoOverviews[idx])
+        {
+            if (auto poBand = m_poDS->GetRasterBand(1))
+            {
+                if (auto poOvrBand = poBand->GetOverview(idx))
+                {
+                    if (auto poOvrDS = poOvrBand->GetDataset())
+                    {
+                        m_apoOverviews[idx] =
+                            Create(poOvrDS, m_aosOptions.List());
+                    }
+                }
+            }
+        }
+        return m_apoOverviews[idx];
+    }
 };
 
 bool GDALMDArrayFromDataset::IRead(const GUInt64 *arrayStartIdx,
@@ -12198,7 +12267,7 @@ bool GDALMDArrayFromDataset::IRead(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                            ReadWrite()                               */
+/*                             ReadWrite()                              */
 /************************************************************************/
 
 bool GDALMDArrayFromDataset::ReadWrite(
@@ -12255,7 +12324,7 @@ bool GDALMDArrayFromDataset::ReadWrite(
 }
 
 /************************************************************************/
-/*                            AsMDArray()                               */
+/*                             AsMDArray()                              */
 /************************************************************************/
 
 /** Return a view of this dataset as a 3D multidimensional GDALMDArray.
@@ -12346,7 +12415,7 @@ std::shared_ptr<GDALMDArray> GDALDataset::AsMDArray(CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*              GDALDataset::GetInterBandCovarianceMatrix()             */
+/*             GDALDataset::GetInterBandCovarianceMatrix()              */
 /************************************************************************/
 
 /**
@@ -12464,7 +12533,7 @@ std::vector<double> GDALDataset::GetInterBandCovarianceMatrix(
 }
 
 /************************************************************************/
-/*              GDALDataset::GetInterBandCovarianceMatrix()             */
+/*             GDALDataset::GetInterBandCovarianceMatrix()              */
 /************************************************************************/
 
 /**
@@ -12622,7 +12691,7 @@ CPLErr GDALDataset::GetInterBandCovarianceMatrix(
 }
 
 /************************************************************************/
-/*                  GDALDatasetGetInterBandCovarianceMatrix()           */
+/*              GDALDatasetGetInterBandCovarianceMatrix()               */
 /************************************************************************/
 
 /**
@@ -12720,7 +12789,7 @@ CPLErr GDALDatasetGetInterBandCovarianceMatrix(
 }
 
 /************************************************************************/
-/*              GDALDataset::ComputeInterBandCovarianceMatrix()         */
+/*           GDALDataset::ComputeInterBandCovarianceMatrix()            */
 /************************************************************************/
 
 /**
@@ -12830,7 +12899,7 @@ std::vector<double> GDALDataset::ComputeInterBandCovarianceMatrix(
 }
 
 /************************************************************************/
-/*                 ComputeInterBandCovarianceMatrixInternal()           */
+/*              ComputeInterBandCovarianceMatrixInternal()              */
 /************************************************************************/
 
 template <class T>
@@ -13395,7 +13464,7 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
 }
 
 /************************************************************************/
-/*              GDALDataset::ComputeInterBandCovarianceMatrix()         */
+/*           GDALDataset::ComputeInterBandCovarianceMatrix()            */
 /************************************************************************/
 
 /**
@@ -13625,7 +13694,7 @@ CPLErr GDALDataset::ComputeInterBandCovarianceMatrix(
 }
 
 /************************************************************************/
-/*               GDALDatasetComputeInterBandCovarianceMatrix()          */
+/*            GDALDatasetComputeInterBandCovarianceMatrix()             */
 /************************************************************************/
 
 /**

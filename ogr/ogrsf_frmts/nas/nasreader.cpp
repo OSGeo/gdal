@@ -77,7 +77,7 @@ NASReader::~NASReader()
 }
 
 /************************************************************************/
-/*                          SetSourceFile()                             */
+/*                           SetSourceFile()                            */
 /************************************************************************/
 
 void NASReader::SetSourceFile(const char *pszFilename)
@@ -88,7 +88,7 @@ void NASReader::SetSourceFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                       GetSourceFileName()                            */
+/*                         GetSourceFileName()                          */
 /************************************************************************/
 
 const char *NASReader::GetSourceFileName()
@@ -883,7 +883,9 @@ bool NASReader::PrescanForSchema(bool bGetExtents, bool /*bOnlyDetectSRS*/)
             {
                 poGeometry =
                     (OGRGeometry *)OGR_G_CreateFromGMLTree(papsGeometry[0]);
-                poGeometry = ConvertGeometry(poGeometry);
+                poGeometry =
+                    ConvertGeometry(std::unique_ptr<OGRGeometry>(poGeometry))
+                        .release();
             }
 
             if (poGeometry != nullptr)
@@ -995,7 +997,7 @@ void NASReader::ResetReading()
 }
 
 /************************************************************************/
-/*                       GetAttributeElementIndex()                     */
+/*                      GetAttributeElementIndex()                      */
 /************************************************************************/
 
 int NASReader::GetAttributeElementIndex(const char *pszElement, int nLen,
@@ -1127,7 +1129,7 @@ bool NASReader::ResolveXlinks(const char * /*pszFile */,
 }
 
 /************************************************************************/
-/*                       SetFilteredClassName()                         */
+/*                        SetFilteredClassName()                        */
 /************************************************************************/
 
 bool NASReader::SetFilteredClassName(const char *pszClassName)
@@ -1138,18 +1140,17 @@ bool NASReader::SetFilteredClassName(const char *pszClassName)
 }
 
 /************************************************************************/
-/*                         ConvertGeometry()                            */
+/*                          ConvertGeometry()                           */
 /************************************************************************/
 
-OGRGeometry *NASReader::ConvertGeometry(OGRGeometry *poGeom)
+std::unique_ptr<OGRGeometry>
+NASReader::ConvertGeometry(std::unique_ptr<OGRGeometry> poGeom)
 {
-    // poGeom = OGRGeometryFactory::forceToLineString( poGeom, false );
-    if (poGeom != nullptr)
+    if (poGeom == nullptr ||
+        wkbFlatten(poGeom->getGeometryType()) != wkbMultiLineString)
     {
-        if (wkbFlatten(poGeom->getGeometryType()) == wkbMultiLineString)
-        {
-            poGeom = OGRGeometryFactory::forceTo(poGeom, wkbLineString);
-        }
+        return poGeom;
     }
-    return poGeom;
+
+    return OGRGeometryFactory::forceTo(std::move(poGeom), wkbLineString);
 }

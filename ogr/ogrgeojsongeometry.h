@@ -14,7 +14,7 @@
 #include "ogr_geometry.h"
 
 /************************************************************************/
-/*                           GeoJSONObject                              */
+/*                            GeoJSONObject                             */
 /************************************************************************/
 
 struct GeoJSONObject
@@ -47,7 +47,7 @@ struct GeoJSONObject
 };
 
 /************************************************************************/
-/*                 GeoJSON Geometry Translators                         */
+/*                     GeoJSON Geometry Translators                     */
 /************************************************************************/
 
 GeoJSONObject::Type CPL_DLL OGRGeoJSONGetType(json_object *poObj);

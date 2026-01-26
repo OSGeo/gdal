@@ -402,13 +402,13 @@ void VRTRawRasterBand::ClearRawLink()
 }
 
 /************************************************************************/
-/*                            GetVirtualMemAuto()                       */
+/*                         GetVirtualMemAuto()                          */
 /************************************************************************/
 
 CPLVirtualMem *VRTRawRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                    int *pnPixelSpace,
                                                    GIntBig *pnLineSpace,
-                                                   char **papszOptions)
+                                                   CSLConstList papszOptions)
 
 {
     // check the pointer to RawRasterBand
@@ -580,7 +580,7 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML(const char *pszVRTPath,
 }
 
 /************************************************************************/
-/*                             GetFileList()                            */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 void VRTRawRasterBand::GetFileList(char ***ppapszFileList, int *pnSize,

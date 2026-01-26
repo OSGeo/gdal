@@ -24,7 +24,7 @@
 #include "ogrfeatherdrivercore.h"
 
 /************************************************************************/
-/*                        IsArrowIPCStream()                            */
+/*                          IsArrowIPCStream()                          */
 /************************************************************************/
 
 static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
@@ -283,7 +283,7 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRFeatherDriverCreate(const char *pszName, int nXSize,
                                            int nYSize, int nBands,
                                            GDALDataType eType,
-                                           char ** /* papszOptions */)
+                                           CSLConstList /* papszOptions */)
 {
     if (!(nXSize == 0 && nYSize == 0 && nBands == 0 && eType == GDT_Unknown))
         return nullptr;
@@ -317,7 +317,7 @@ static GDALDataset *OGRFeatherDriverCreate(const char *pszName, int nXSize,
 }
 
 /************************************************************************/
-/*                         OGRFeatherDriver()                           */
+/*                          OGRFeatherDriver()                          */
 /************************************************************************/
 
 class OGRFeatherDriver final : public GDALDriver
@@ -468,7 +468,7 @@ void OGRFeatherDriver::InitMetadata()
 }
 
 /************************************************************************/
-/*                         RegisterOGRArrow()                           */
+/*                          RegisterOGRArrow()                          */
 /************************************************************************/
 
 void RegisterOGRArrow()

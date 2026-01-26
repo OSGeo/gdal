@@ -25,9 +25,9 @@
 #endif
 
 static bool NITFWriteBLOCKA(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
-                            int *pnOffset, char **papszOptions);
+                            int *pnOffset, CSLConstList papszOptions);
 static bool NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
-                                     int *pnOffset, char **papszOptions,
+                                     int *pnOffset, CSLConstList papszOptions,
                                      const char *pszTREPrefix);
 
 static int NITFCollectSegmentInfo(NITFFile *psFile, int nFileHeaderLenSize,
@@ -40,9 +40,9 @@ static void NITFExtractAndRecodeMetadata(char ***ppapszMetadata,
                                          int nLength, const char *pszName,
                                          const char *pszSrcEncoding);
 
-static bool NITFWriteOption(VSILFILE *fp, char **papszOptions, size_t nWidth,
-                            GUIntBig nLocation, const char *pszName,
-                            const char *pszText);
+static bool NITFWriteOption(VSILFILE *fp, CSLConstList papszOptions,
+                            size_t nWidth, GUIntBig nLocation,
+                            const char *pszName, const char *pszText);
 
 /************************************************************************/
 /*                              NITFOpen()                              */
@@ -527,7 +527,8 @@ static bool NITFGotoOffset(VSILFILE *fp, GUIntBig nLocation)
 /************************************************************************/
 
 int NITFCreate(const char *pszFilename, int nPixels, int nLines, int nBands,
-               int nBitsPerSample, const char *pszPVType, char **papszOptions)
+               int nBitsPerSample, const char *pszPVType,
+               CSLConstList papszOptions)
 
 {
     return NITFCreateEx(pszFilename, nPixels, nLines, nBands, nBitsPerSample,
@@ -536,9 +537,9 @@ int NITFCreate(const char *pszFilename, int nPixels, int nLines, int nBands,
 }
 
 int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
-                 int nBitsPerSample, const char *pszPVType, char **papszOptions,
-                 int *pnIndex, int *pnImageCount, vsi_l_offset *pnImageOffset,
-                 vsi_l_offset *pnICOffset)
+                 int nBitsPerSample, const char *pszPVType,
+                 CSLConstList papszOptions, int *pnIndex, int *pnImageCount,
+                 vsi_l_offset *pnImageOffset, vsi_l_offset *pnICOffset)
 
 {
     VSILFILE *fp;
@@ -1395,7 +1396,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
     return bOK;
 }
 
-static bool NITFWriteOption(VSILFILE *psFile, char **papszOptions,
+static bool NITFWriteOption(VSILFILE *psFile, CSLConstList papszOptions,
                             size_t nWidth, GUIntBig nLocation,
                             const char *pszName, const char *pszText)
 {
@@ -1478,11 +1479,11 @@ static bool NITFWriteTRE(VSILFILE *fp, vsi_l_offset nOffsetUDIDL, int *pnOffset,
 }
 
 /************************************************************************/
-/*                   NITFWriteTREsFromOptions()                         */
+/*                      NITFWriteTREsFromOptions()                      */
 /************************************************************************/
 
 static bool NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
-                                     int *pnOffset, char **papszOptions,
+                                     int *pnOffset, CSLConstList papszOptions,
                                      const char *pszTREPrefix)
 
 {
@@ -1610,7 +1611,7 @@ static bool NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
 /************************************************************************/
 
 static bool NITFWriteBLOCKA(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
-                            int *pnOffset, char **papszOptions)
+                            int *pnOffset, CSLConstList papszOptions)
 
 {
     static const char *const apszFields[] = {
@@ -1870,7 +1871,7 @@ const char *NITFFindTRE(const char *pszTREData, int nTREBytes,
 }
 
 /************************************************************************/
-/*                     NITFFindTREByIndex()                             */
+/*                         NITFFindTREByIndex()                         */
 /************************************************************************/
 
 const char *NITFFindTREByIndex(const char *pszTREData, int nTREBytes,
@@ -2024,7 +2025,7 @@ double NITF_WGS84_Geocentric_Latitude_To_Geodetic_Latitude(double dfLat)
 }
 
 /************************************************************************/
-/*                        NITFGetSeriesInfo()                           */
+/*                         NITFGetSeriesInfo()                          */
 /************************************************************************/
 
 /* From
@@ -2409,7 +2410,7 @@ int NITFReconcileAttachments(NITFFile *psFile)
 }
 
 /************************************************************************/
-/*                        NITFFindValFromEnd()                          */
+/*                         NITFFindValFromEnd()                         */
 /************************************************************************/
 
 static const char *NITFFindValFromEnd(CSLConstList papszMD, int nMDSize,
@@ -2427,7 +2428,7 @@ static const char *NITFFindValFromEnd(CSLConstList papszMD, int nMDSize,
 }
 
 /************************************************************************/
-/*                  NITFFindValRecursive()                              */
+/*                        NITFFindValRecursive()                        */
 /************************************************************************/
 
 static const char *NITFFindValRecursive(CSLConstList papszMD, int nMDSize,
@@ -2623,7 +2624,7 @@ static int NITFEvaluateCond(const char *pszCond, char **papszMD, int *pnMDSize,
 }
 
 /************************************************************************/
-/*                  NITFGenericMetadataReadTREInternal()                */
+/*                 NITFGenericMetadataReadTREInternal()                 */
 /************************************************************************/
 
 static char **NITFGenericMetadataReadTREInternal(
@@ -3382,7 +3383,7 @@ static char **NITFGenericMetadataReadTREInternal(
 }
 
 /************************************************************************/
-/*                      NITFGenericMetadataReadTRE()                    */
+/*                     NITFGenericMetadataReadTRE()                     */
 /************************************************************************/
 
 static char **NITFGenericMetadataReadTRE(char **papszMD, const char *pszTREName,
@@ -3437,7 +3438,7 @@ static char **NITFGenericMetadataReadTRE(char **papszMD, const char *pszTREName,
 }
 
 /************************************************************************/
-/*                           NITFLoadXMLSpec()                          */
+/*                          NITFLoadXMLSpec()                           */
 /************************************************************************/
 
 #define NITF_SPEC_FILE "nitf_spec.xml"
@@ -3483,7 +3484,7 @@ static CPLXMLNode *NITFLoadXMLSpec(NITFFile *psFile)
 }
 
 /************************************************************************/
-/*                      NITFFindTREXMLDescFromName()                    */
+/*                     NITFFindTREXMLDescFromName()                     */
 /************************************************************************/
 
 static CPLXMLNode *NITFFindTREXMLDescFromName(NITFFile *psFile,
@@ -3522,7 +3523,7 @@ static CPLXMLNode *NITFFindTREXMLDescFromName(NITFFile *psFile,
 }
 
 /************************************************************************/
-/*                         NITFCreateXMLTre()                           */
+/*                          NITFCreateXMLTre()                          */
 /************************************************************************/
 
 CPLXMLNode *NITFCreateXMLTre(NITFFile *psFile, const char *pszTREName,
@@ -3609,7 +3610,7 @@ CPLXMLNode *NITFCreateXMLTre(NITFFile *psFile, const char *pszTREName,
 }
 
 /************************************************************************/
-/*                      NITFFindTREXMLDescFromName()                    */
+/*                     NITFFindTREXMLDescFromName()                     */
 /************************************************************************/
 
 static CPLXMLNode *NITFFindDESXMLDescFromName(NITFFile *psFile,
@@ -3648,7 +3649,7 @@ static CPLXMLNode *NITFFindDESXMLDescFromName(NITFFile *psFile,
 }
 
 /************************************************************************/
-/*                 NITFCreateXMLDesUserDefinedSubHeader()               */
+/*                NITFCreateXMLDesUserDefinedSubHeader()                */
 /************************************************************************/
 
 CPLXMLNode *NITFCreateXMLDesUserDefinedSubHeader(NITFFile *psFile,
@@ -3737,7 +3738,7 @@ CPLXMLNode *NITFCreateXMLDesUserDefinedSubHeader(NITFFile *psFile,
 }
 
 /************************************************************************/
-/*                   NITFCreateXMLDesDataFields()                       */
+/*                     NITFCreateXMLDesDataFields()                     */
 /************************************************************************/
 
 CPLXMLNode *NITFCreateXMLDesDataFields(NITFFile *psFile, const NITFDES *psDES,

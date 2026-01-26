@@ -152,7 +152,7 @@ class OGRVICARBinaryPrefixesLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                       GetTypeFromString()                            */
+/*                         GetTypeFromString()                          */
 /************************************************************************/
 
 OGRVICARBinaryPrefixesLayer::Type
@@ -176,7 +176,7 @@ OGRVICARBinaryPrefixesLayer::GetTypeFromString(const char *pszStr)
 }
 
 /************************************************************************/
-/*                     OGRVICARBinaryPrefixesLayer()                    */
+/*                    OGRVICARBinaryPrefixesLayer()                     */
 /************************************************************************/
 
 OGRVICARBinaryPrefixesLayer::OGRVICARBinaryPrefixesLayer(
@@ -449,7 +449,7 @@ OGRFeature *OGRVICARBinaryPrefixesLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                         VICARRawRasterBand                           */
+/*                          VICARRawRasterBand                          */
 /************************************************************************/
 
 class VICARRawRasterBand final : public RawRasterBand
@@ -472,7 +472,7 @@ class VICARRawRasterBand final : public RawRasterBand
 };
 
 /************************************************************************/
-/*                        VICARRawRasterBand()                          */
+/*                         VICARRawRasterBand()                         */
 /************************************************************************/
 
 VICARRawRasterBand::VICARRawRasterBand(VICARDataset *poDSIn, int nBandIn,
@@ -534,7 +534,7 @@ CPLErr VICARRawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                        VICARBASICRasterBand                          */
+/*                         VICARBASICRasterBand                         */
 /************************************************************************/
 
 class VICARBASICRasterBand final : public GDALPamRasterBand
@@ -1170,7 +1170,7 @@ VICARDataset::~VICARDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr VICARDataset::Close(GDALProgressFunc, void *)
@@ -1260,7 +1260,7 @@ CPLErr VICARDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                        GetRawBinaryLayout()                          */
+/*                         GetRawBinaryLayout()                         */
 /************************************************************************/
 
 bool VICARDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
@@ -1272,7 +1272,7 @@ bool VICARDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **VICARDataset::GetMetadataDomainList()
@@ -1281,7 +1281,7 @@ char **VICARDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                             GetMetadata()                            */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList VICARDataset::GetMetadata(const char *pszDomain)
@@ -1305,7 +1305,7 @@ CSLConstList VICARDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                           InvalidateLabel()                          */
+/*                          InvalidateLabel()                           */
 /************************************************************************/
 
 void VICARDataset::InvalidateLabel()
@@ -1315,7 +1315,7 @@ void VICARDataset::InvalidateLabel()
 }
 
 /************************************************************************/
-/*                             SetMetadata()                            */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
 CPLErr VICARDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
@@ -1346,7 +1346,7 @@ CPLErr VICARDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 }
 
 /************************************************************************/
-/*                         SerializeString()                            */
+/*                          SerializeString()                           */
 /************************************************************************/
 
 static std::string SerializeString(const std::string &s)
@@ -1423,7 +1423,7 @@ static void WriteLabelItemValue(std::string &osLabel, const CPLJSONObject &obj)
 }
 
 /************************************************************************/
-/*                      SanitizeItemName()                              */
+/*                          SanitizeItemName()                          */
 /************************************************************************/
 
 static std::string SanitizeItemName(const std::string &osItemName)
@@ -1456,7 +1456,7 @@ static std::string SanitizeItemName(const std::string &osItemName)
 }
 
 /************************************************************************/
-/*                        WriteLabelItem()                              */
+/*                           WriteLabelItem()                           */
 /************************************************************************/
 
 static void WriteLabelItem(std::string &osLabel, const CPLJSONObject &obj,
@@ -1470,7 +1470,7 @@ static void WriteLabelItem(std::string &osLabel, const CPLJSONObject &obj,
 }
 
 /************************************************************************/
-/*                           WriteLabel()                               */
+/*                             WriteLabel()                             */
 /************************************************************************/
 
 void VICARDataset::WriteLabel()
@@ -1594,7 +1594,7 @@ void VICARDataset::WriteLabel()
 }
 
 /************************************************************************/
-/*                           PatchLabel()                               */
+/*                             PatchLabel()                             */
 /************************************************************************/
 
 void VICARDataset::PatchLabel()
@@ -1633,7 +1633,7 @@ void VICARDataset::PatchLabel()
 }
 
 /************************************************************************/
-/*                           BuildLabel()                               */
+/*                             BuildLabel()                             */
 /************************************************************************/
 
 void VICARDataset::BuildLabel()
@@ -1763,7 +1763,7 @@ void VICARDataset::BuildLabel()
 }
 
 /************************************************************************/
-/*                        BuildLabelPropertyMap()                       */
+/*                       BuildLabelPropertyMap()                        */
 /************************************************************************/
 
 void VICARDataset::BuildLabelPropertyMap(CPLJSONObject &oLabel)
@@ -1886,7 +1886,7 @@ void VICARDataset::BuildLabelPropertyMap(CPLJSONObject &oLabel)
 }
 
 /************************************************************************/
-/*                    BuildLabelPropertyGeoTIFF()                       */
+/*                     BuildLabelPropertyGeoTIFF()                      */
 /************************************************************************/
 
 #if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
@@ -2003,7 +2003,7 @@ void VICARDataset::BuildLabelPropertyGeoTIFF(CPLJSONObject &oLabel)
 #endif
 
 /************************************************************************/
-/*                       ReadProjectionFromMapGroup()                   */
+/*                     ReadProjectionFromMapGroup()                     */
 /************************************************************************/
 
 void VICARDataset::ReadProjectionFromMapGroup()
@@ -2301,7 +2301,7 @@ void VICARDataset::ReadProjectionFromMapGroup()
 }
 
 /************************************************************************/
-/*                    ReadProjectionFromGeoTIFFGroup()                  */
+/*                   ReadProjectionFromGeoTIFFGroup()                   */
 /************************************************************************/
 
 #if defined(HAVE_TIFF) && defined(HAVE_GEOTIFF)
@@ -3039,7 +3039,7 @@ const char *VICARDataset::GetKeyword(const char *pszPath,
 }
 
 /************************************************************************/
-/*                        GetDataTypeFromFormat()                       */
+/*                       GetDataTypeFromFormat()                        */
 /************************************************************************/
 
 GDALDataType VICARDataset::GetDataTypeFromFormat(const char *pszFormat)
@@ -3066,7 +3066,7 @@ GDALDataType VICARDataset::GetDataTypeFromFormat(const char *pszFormat)
 }
 
 /************************************************************************/
-/*                             GetSpacings()                            */
+/*                            GetSpacings()                             */
 /************************************************************************/
 
 bool VICARDataset::GetSpacings(const VICARKeywordHandler &keywords,
@@ -3142,12 +3142,12 @@ bool VICARDataset::GetSpacings(const VICARKeywordHandler &keywords,
 }
 
 /************************************************************************/
-/*                           Create()                                   */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *VICARDataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eType,
-                                  char **papszOptions)
+                                  CSLConstList papszOptions)
 {
     return CreateInternal(pszFilename, nXSize, nYSize, nBandsIn, eType,
                           papszOptions);
@@ -3156,7 +3156,7 @@ GDALDataset *VICARDataset::Create(const char *pszFilename, int nXSize,
 VICARDataset *VICARDataset::CreateInternal(const char *pszFilename, int nXSize,
                                            int nYSize, int nBandsIn,
                                            GDALDataType eType,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     if (eType != GDT_UInt8 && eType != GDT_Int16 && eType != GDT_Int32 &&
         eType != GDT_Float32 && eType != GDT_Float64 && eType != GDT_CFloat32)
@@ -3327,12 +3327,12 @@ VICARDataset *VICARDataset::CreateInternal(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                            CreateCopy()                              */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *VICARDataset::CreateCopy(const char *pszFilename,
                                       GDALDataset *poSrcDS, int /*bStrict*/,
-                                      char **papszOptions,
+                                      CSLConstList papszOptions,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 {

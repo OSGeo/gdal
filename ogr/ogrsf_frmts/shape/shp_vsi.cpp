@@ -29,7 +29,7 @@ typedef struct
 } OGRSHPDBFFile;
 
 /************************************************************************/
-/*                         VSI_SHP_OpenInternal()                       */
+/*                        VSI_SHP_OpenInternal()                        */
 /************************************************************************/
 
 static SAFile VSI_SHP_OpenInternal(const char *pszFilename,
@@ -219,7 +219,7 @@ void SASetupDefaultHooks(SAHooks *psHooks)
 #ifndef SHP_VSI_ONLY_SETUP_HOOKS
 
 /************************************************************************/
-/*                         VSI_SHP_GetVSIL()                            */
+/*                          VSI_SHP_GetVSIL()                           */
 /************************************************************************/
 
 VSILFILE *VSI_SHP_GetVSIL(SAFile file)
@@ -251,7 +251,7 @@ static SAFile VSI_SHP_Open2GBLimit(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                         VSI_SHP_GetHook()                            */
+/*                          VSI_SHP_GetHook()                           */
 /************************************************************************/
 
 static const SAHooks sOGRHook = {VSI_SHP_Open,  VSI_SHP_Read,   VSI_SHP_Write,

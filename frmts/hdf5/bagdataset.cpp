@@ -192,12 +192,12 @@ class BAGDataset final : public GDALPamDataset
                                       CSLConstList papszCreationOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     OGRErr ParseWKTFromXML(const char *pszISOXML);
 };
@@ -211,12 +211,15 @@ class BAGCreator
     hid_t m_hdf5 = -1;
     hid_t m_bagRoot = -1;
 
-    bool CreateBase(const char *pszFilename, char **papszOptions);
+    bool CreateBase(const char *pszFilename, CSLConstList papszOptions);
     bool CreateTrackingListDataset();
-    bool CreateElevationOrUncertainty(
-        GDALDataset *poSrcDS, int nBand, const char *pszDSName,
-        const char *pszMaxAttrName, const char *pszMinAttrName,
-        char **papszOptions, GDALProgressFunc pfnProgress, void *pProgressData);
+    bool CreateElevationOrUncertainty(GDALDataset *poSrcDS, int nBand,
+                                      const char *pszDSName,
+                                      const char *pszMaxAttrName,
+                                      const char *pszMinAttrName,
+                                      CSLConstList papszOptions,
+                                      GDALProgressFunc pfnProgress,
+                                      void *pProgressData);
     bool Close();
 
   public:
@@ -227,16 +230,16 @@ class BAGCreator
     static CPLString GenerateMetadata(int nXSize, int nYSize,
                                       const GDALGeoTransform &gt,
                                       const OGRSpatialReference *poSRS,
-                                      char **papszOptions);
+                                      CSLConstList papszOptions);
     static bool CreateAndWriteMetadata(hid_t hdf5,
                                        const CPLString &osXMLMetadata);
 
     bool Create(const char *pszFilename, GDALDataset *poSrcDS,
-                char **papszOptions, GDALProgressFunc pfnProgress,
+                CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                 void *pProgressData);
 
     bool Create(const char *pszFilename, int nBands, GDALDataType eType,
-                char **papszOptions);
+                CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -576,7 +579,7 @@ bool BAGRasterBand::Initialize(hid_t hDatasetIDIn, const char *pszName)
 }
 
 /************************************************************************/
-/*                         CreateDatasetIfNeeded()                      */
+/*                       CreateDatasetIfNeeded()                        */
 /************************************************************************/
 
 bool BAGRasterBand::CreateDatasetIfNeeded()
@@ -655,7 +658,7 @@ bool BAGRasterBand::CreateDatasetIfNeeded()
 }
 
 /************************************************************************/
-/*                         FinalizeDataset()                            */
+/*                          FinalizeDataset()                           */
 /************************************************************************/
 
 void BAGRasterBand::FinalizeDataset()
@@ -930,7 +933,7 @@ CPLErr BAGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                           BAGSuperGridBand()                         */
+/*                          BAGSuperGridBand()                          */
 /************************************************************************/
 
 BAGSuperGridBand::BAGSuperGridBand(BAGDataset *poDSIn, int nBandIn,
@@ -949,7 +952,7 @@ BAGSuperGridBand::BAGSuperGridBand(BAGDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                          ~BAGSuperGridBand()                         */
+/*                         ~BAGSuperGridBand()                          */
 /************************************************************************/
 
 BAGSuperGridBand::~BAGSuperGridBand() = default;
@@ -1014,7 +1017,7 @@ CPLErr BAGSuperGridBand::IReadBlock(int, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                           BAGResampledBand()                         */
+/*                          BAGResampledBand()                          */
 /************************************************************************/
 
 BAGResampledBand::BAGResampledBand(BAGDataset *poDSIn, int nBandIn,
@@ -1054,13 +1057,13 @@ BAGResampledBand::BAGResampledBand(BAGDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                          ~BAGResampledBand()                         */
+/*                         ~BAGResampledBand()                          */
 /************************************************************************/
 
 BAGResampledBand::~BAGResampledBand() = default;
 
 /************************************************************************/
-/*                           InitializeMinMax()                         */
+/*                          InitializeMinMax()                          */
 /************************************************************************/
 
 void BAGResampledBand::InitializeMinMax()
@@ -1489,7 +1492,7 @@ BAGInterpolatedBand::BAGInterpolatedBand(BAGDataset *poDSIn, int nBandIn,
 BAGInterpolatedBand::~BAGInterpolatedBand() = default;
 
 /************************************************************************/
-/*                           InitializeMinMax()                         */
+/*                          InitializeMinMax()                          */
 /************************************************************************/
 
 void BAGInterpolatedBand::InitializeMinMax()
@@ -1548,7 +1551,7 @@ double BAGInterpolatedBand::GetMaximum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                     BarycentricInterpolation()                       */
+/*                      BarycentricInterpolation()                      */
 /************************************************************************/
 
 static bool BarycentricInterpolation(double dfX, double dfY,
@@ -1578,7 +1581,7 @@ static bool BarycentricInterpolation(double dfX, double dfY,
 }
 
 /************************************************************************/
-/*                               SQ()                                   */
+/*                                 SQ()                                 */
 /************************************************************************/
 
 static inline double SQ(double v)
@@ -2075,7 +2078,7 @@ end:
 }
 
 /************************************************************************/
-/*                   LoadClosestRefinedNodes()                          */
+/*                      LoadClosestRefinedNodes()                       */
 /************************************************************************/
 
 void BAGInterpolatedBand::LoadClosestRefinedNodes(
@@ -2179,7 +2182,7 @@ class BAGGeorefMDBandBase CPL_NON_FINAL : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                         GetNoDataValue()                             */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double BAGGeorefMDBandBase::GetNoDataValue(int *pbSuccess)
@@ -2190,7 +2193,7 @@ double BAGGeorefMDBandBase::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                   IReadBlockFromElevBand()                           */
+/*                       IReadBlockFromElevBand()                       */
 /************************************************************************/
 
 CPLErr BAGGeorefMDBandBase::IReadBlockFromElevBand(int nBlockXOff,
@@ -2243,7 +2246,7 @@ class BAGGeorefMDBand final : public BAGGeorefMDBandBase
 };
 
 /************************************************************************/
-/*                         BAGGeorefMDBand()                            */
+/*                          BAGGeorefMDBand()                           */
 /************************************************************************/
 
 BAGGeorefMDBand::BAGGeorefMDBand(const std::shared_ptr<GDALMDArray> &poValues,
@@ -2361,7 +2364,7 @@ class BAGGeorefMDSuperGridBand final : public BAGGeorefMDBandBase
 };
 
 /************************************************************************/
-/*                     BAGGeorefMDSuperGridBand()                       */
+/*                      BAGGeorefMDSuperGridBand()                      */
 /************************************************************************/
 
 BAGGeorefMDSuperGridBand::BAGGeorefMDSuperGridBand(
@@ -2556,7 +2559,7 @@ BAGDataset::~BAGDataset()
 }
 
 /************************************************************************/
-/*                          GH5DopenNoWarning()                         */
+/*                         GH5DopenNoWarning()                          */
 /************************************************************************/
 
 static hid_t GH5DopenNoWarning(hid_t hHDF5, const char *pszDatasetName)
@@ -2754,7 +2757,7 @@ GDALDataset *BAGDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          OpenRaster()                                */
+/*                             OpenRaster()                             */
 /************************************************************************/
 
 bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
@@ -3475,7 +3478,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                            GetLayer()                                */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *BAGDataset::GetLayer(int idx) const
@@ -3486,7 +3489,7 @@ const OGRLayer *BAGDataset::GetLayer(int idx) const
 }
 
 /************************************************************************/
-/*                        BAGTrackingListLayer                          */
+/*                         BAGTrackingListLayer                         */
 /************************************************************************/
 
 class BAGTrackingListLayer final
@@ -3520,7 +3523,7 @@ class BAGTrackingListLayer final
 };
 
 /************************************************************************/
-/*                       BAGTrackingListLayer()                         */
+/*                        BAGTrackingListLayer()                        */
 /************************************************************************/
 
 BAGTrackingListLayer::BAGTrackingListLayer(
@@ -3550,7 +3553,7 @@ BAGTrackingListLayer::BAGTrackingListLayer(
 }
 
 /************************************************************************/
-/*                      ~BAGTrackingListLayer()                         */
+/*                       ~BAGTrackingListLayer()                        */
 /************************************************************************/
 
 BAGTrackingListLayer::~BAGTrackingListLayer()
@@ -3568,7 +3571,7 @@ void BAGTrackingListLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                          GetNextRawFeature()                         */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *BAGTrackingListLayer::GetNextRawFeature()
@@ -3621,7 +3624,7 @@ OGRFeature *BAGTrackingListLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                          OpenVector()                                */
+/*                             OpenVector()                             */
 /************************************************************************/
 
 bool BAGDataset::OpenVector()
@@ -3640,7 +3643,7 @@ bool BAGDataset::OpenVector()
 }
 
 /************************************************************************/
-/*                          OpenForCreate()                             */
+/*                           OpenForCreate()                            */
 /************************************************************************/
 
 GDALDataset *BAGDataset::OpenForCreate(GDALOpenInfo *poOpenInfo, int nXSizeIn,
@@ -3711,7 +3714,7 @@ GDALDataset *BAGDataset::OpenForCreate(GDALOpenInfo *poOpenInfo, int nXSizeIn,
 }
 
 /************************************************************************/
-/*                      GetMeanSupergridsResolution()                   */
+/*                    GetMeanSupergridsResolution()                     */
 /************************************************************************/
 
 bool BAGDataset::GetMeanSupergridsResolution(double &dfResX, double &dfResY)
@@ -3778,7 +3781,7 @@ bool BAGDataset::GetMeanSupergridsResolution(double &dfResX, double &dfResY)
 }
 
 /************************************************************************/
-/*                      GetVarresMetadataChunkSizes()                   */
+/*                    GetVarresMetadataChunkSizes()                     */
 /************************************************************************/
 
 void BAGDataset::GetVarresMetadataChunkSizes(int &nChunkXSize, int &nChunkYSize)
@@ -3804,7 +3807,7 @@ void BAGDataset::GetVarresMetadataChunkSizes(int &nChunkXSize, int &nChunkYSize)
 }
 
 /************************************************************************/
-/*                     GetVarresRefinementChunkSize()                   */
+/*                    GetVarresRefinementChunkSize()                    */
 /************************************************************************/
 
 void BAGDataset::GetVarresRefinementChunkSize(unsigned &nChunkSize)
@@ -3879,7 +3882,7 @@ const float *BAGDataset::GetRefinementValues(unsigned nRefinementIndex)
 }
 
 /************************************************************************/
-/*                        ReadVarresMetadataValue()                     */
+/*                      ReadVarresMetadataValue()                       */
 /************************************************************************/
 
 bool BAGDataset::ReadVarresMetadataValue(int y, int x, hid_t memspace,
@@ -3925,7 +3928,7 @@ bool BAGDataset::ReadVarresMetadataValue(int y, int x, hid_t memspace,
 }
 
 /************************************************************************/
-/*                        LookForRefinementGrids()                      */
+/*                       LookForRefinementGrids()                       */
 /************************************************************************/
 
 bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
@@ -4879,7 +4882,7 @@ CPLErr BAGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *BAGDataset::GetSpatialRef() const
@@ -4929,7 +4932,7 @@ CPLErr BAGDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                         WriteMetadataIfNeeded()                      */
+/*                       WriteMetadataIfNeeded()                        */
 /************************************************************************/
 
 bool BAGDataset::WriteMetadataIfNeeded()
@@ -4962,7 +4965,7 @@ bool BAGDataset::WriteMetadataIfNeeded()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **BAGDataset::GetMetadataDomainList()
@@ -4995,7 +4998,7 @@ CSLConstList BAGDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                      BAGDatasetDriverUnload()                        */
+/*                       BAGDatasetDriverUnload()                       */
 /************************************************************************/
 
 static void BAGDatasetDriverUnload(GDALDriver *)
@@ -5004,7 +5007,7 @@ static void BAGDatasetDriverUnload(GDALDriver *)
 }
 
 /************************************************************************/
-/*                            ~BAGCreator()()                           */
+/*                           ~BAGCreator()()                            */
 /************************************************************************/
 
 BAGCreator::~BAGCreator()
@@ -5033,7 +5036,7 @@ bool BAGCreator::Close()
 }
 
 /************************************************************************/
-/*                         SubstituteVariables()                        */
+/*                        SubstituteVariables()                         */
 /************************************************************************/
 
 bool BAGCreator::SubstituteVariables(CPLXMLNode *psNode, char **papszDict)
@@ -5164,7 +5167,7 @@ bool BAGCreator::SubstituteVariables(CPLXMLNode *psNode, char **papszDict)
 CPLString BAGCreator::GenerateMetadata(int nXSize, int nYSize,
                                        const GDALGeoTransform &gt,
                                        const OGRSpatialReference *poSRS,
-                                       char **papszOptions)
+                                       CSLConstList papszOptions)
 {
     CPLXMLNode *psRoot;
     CPLString osTemplateFilename =
@@ -5224,7 +5227,7 @@ CPLString BAGCreator::GenerateMetadata(int nXSize, int nYSize,
         return CPLString();
     }
 
-    CPLStringList osOptions(papszOptions, FALSE);
+    CPLStringList osOptions(papszOptions);
     if (osOptions.FetchNameValue("VAR_PROCESS_STEP_DESCRIPTION") == nullptr)
     {
         osOptions.SetNameValue("VAR_PROCESS_STEP_DESCRIPTION",
@@ -5362,7 +5365,7 @@ CPLString BAGCreator::GenerateMetadata(int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                         CreateAndWriteMetadata()                     */
+/*                       CreateAndWriteMetadata()                       */
 /************************************************************************/
 
 bool BAGCreator::CreateAndWriteMetadata(hid_t hdf5,
@@ -5436,7 +5439,7 @@ bool BAGCreator::CreateAndWriteMetadata(hid_t hdf5,
 }
 
 /************************************************************************/
-/*                       CreateTrackingListDataset()                    */
+/*                     CreateTrackingListDataset()                      */
 /************************************************************************/
 
 bool BAGCreator::CreateTrackingListDataset()
@@ -5532,13 +5535,16 @@ bool BAGCreator::CreateTrackingListDataset()
 }
 
 /************************************************************************/
-/*                     CreateElevationOrUncertainty()                   */
+/*                    CreateElevationOrUncertainty()                    */
 /************************************************************************/
 
-bool BAGCreator::CreateElevationOrUncertainty(
-    GDALDataset *poSrcDS, int nBand, const char *pszDSName,
-    const char *pszMaxAttrName, const char *pszMinAttrName, char **papszOptions,
-    GDALProgressFunc pfnProgress, void *pProgressData)
+bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS, int nBand,
+                                              const char *pszDSName,
+                                              const char *pszMaxAttrName,
+                                              const char *pszMinAttrName,
+                                              CSLConstList papszOptions,
+                                              GDALProgressFunc pfnProgress,
+                                              void *pProgressData)
 {
     const int nYSize = poSrcDS->GetRasterYSize();
     const int nXSize = poSrcDS->GetRasterXSize();
@@ -5744,10 +5750,10 @@ bool BAGCreator::CreateElevationOrUncertainty(
 }
 
 /************************************************************************/
-/*                           CreateBase()                               */
+/*                             CreateBase()                             */
 /************************************************************************/
 
-bool BAGCreator::CreateBase(const char *pszFilename, char **papszOptions)
+bool BAGCreator::CreateBase(const char *pszFilename, CSLConstList papszOptions)
 {
     hid_t fapl = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
@@ -5789,7 +5795,7 @@ bool BAGCreator::CreateBase(const char *pszFilename, char **papszOptions)
 /************************************************************************/
 
 bool BAGCreator::Create(const char *pszFilename, GDALDataset *poSrcDS,
-                        char **papszOptions, GDALProgressFunc pfnProgress,
+                        CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                         void *pProgressData)
 {
     const int nBands = poSrcDS->GetRasterCount();
@@ -5864,7 +5870,7 @@ bool BAGCreator::Create(const char *pszFilename, GDALDataset *poSrcDS,
 /************************************************************************/
 
 bool BAGCreator::Create(const char *pszFilename, int nBands, GDALDataType eType,
-                        char **papszOptions)
+                        CSLConstList papszOptions)
 {
     if (nBands != 1 && nBands != 2)
     {
@@ -5889,12 +5895,12 @@ bool BAGCreator::Create(const char *pszFilename, int nBands, GDALDataType eType,
 }
 
 /************************************************************************/
-/*                              CreateCopy()                            */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *BAGDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int /* bStrict */,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 
@@ -5916,7 +5922,7 @@ GDALDataset *BAGDataset::CreateCopy(const char *pszFilename,
 
 GDALDataset *BAGDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 {
     if (!BAGCreator().Create(pszFilename, nBandsIn, eType, papszOptions))
     {

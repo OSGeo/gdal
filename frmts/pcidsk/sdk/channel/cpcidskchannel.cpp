@@ -173,7 +173,7 @@ void CPCIDSKChannel::EstablishOverviewInfo() const
 }
 
 /************************************************************************/
-/*                       UpdateOverviewInfo()                           */
+/*                         UpdateOverviewInfo()                         */
 /************************************************************************/
 /** Update the in-memory information for an overview.
   * This method will add overview information to the in-memory arrays
@@ -351,7 +351,7 @@ void CPCIDSKChannel::InvalidateOverviews()
 }
 
 /************************************************************************/
-/*                  GetOverviewLevelMapping()                           */
+/*                      GetOverviewLevelMapping()                       */
 /************************************************************************/
 
 std::vector<int> CPCIDSKChannel::GetOverviewLevelMapping() const
@@ -362,7 +362,7 @@ std::vector<int> CPCIDSKChannel::GetOverviewLevelMapping() const
 }
 
 /************************************************************************/
-/*                              GetFilename()                           */
+/*                            GetFilename()                             */
 /************************************************************************/
 std::string CPCIDSKChannel::GetFilename() const
 {

@@ -765,7 +765,7 @@ int DGNUpdateElemCoreExtended(CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement)
 }
 
 /************************************************************************/
-/*                         DGNInitializeElemCore()                      */
+/*                       DGNInitializeElemCore()                        */
 /************************************************************************/
 
 static void DGNInitializeElemCore(CPL_UNUSED DGNHandle hDGN,
@@ -1164,7 +1164,7 @@ DGNElemCore *DGNCreateArcElem(DGNHandle hDGN, int nType, double dfOriginX,
 }
 
 /************************************************************************/
-/*                          DGNCreateConeElem()                         */
+/*                         DGNCreateConeElem()                          */
 /************************************************************************/
 
 /**
@@ -1721,7 +1721,7 @@ DGNElemCore *DGNCreateComplexHeaderFromGroup(DGNHandle hDGN, int nType,
 }
 
 /************************************************************************/
-/*                     DGNCreateSolidHeaderElem()                       */
+/*                      DGNCreateSolidHeaderElem()                      */
 /************************************************************************/
 
 /**
@@ -1803,7 +1803,7 @@ DGNElemCore *DGNCreateSolidHeaderElem(DGNHandle hDGN, int nType, int nSurfType,
 }
 
 /************************************************************************/
-/*                  DGNCreateSolidHeaderFromGroup()                     */
+/*                   DGNCreateSolidHeaderFromGroup()                    */
 /************************************************************************/
 
 /**

@@ -40,7 +40,7 @@ static GDALDataset *OGRHanaDriverCreate(const char *name, CPL_UNUSED int nBands,
                                         CPL_UNUSED int nXSize,
                                         CPL_UNUSED int nYSize,
                                         CPL_UNUSED GDALDataType eDT,
-                                        CPL_UNUSED char **options)
+                                        CSLConstList options)
 {
     auto ds = std::make_unique<OGRHanaDataSource>();
     if (!ds->Open(name, options, TRUE))

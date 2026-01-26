@@ -21,7 +21,7 @@ static const char *const apszURNNames[] = {
     nullptr,          nullptr};
 
 /************************************************************************/
-/*                         OGRNASDataSource()                           */
+/*                          OGRNASDataSource()                          */
 /************************************************************************/
 
 OGRNASDataSource::OGRNASDataSource()
@@ -30,7 +30,7 @@ OGRNASDataSource::OGRNASDataSource()
 }
 
 /************************************************************************/
-/*                        ~OGRNASDataSource()                         */
+/*                         ~OGRNASDataSource()                          */
 /************************************************************************/
 
 OGRNASDataSource::~OGRNASDataSource()

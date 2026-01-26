@@ -38,7 +38,7 @@ const CPLCompressor *ZarrGetTIFFDecompressor();
 const CPLCompressor *ZarrGetFixedScaleOffsetDecompressor();
 
 /************************************************************************/
-/*                           MultiplyElements()                         */
+/*                          MultiplyElements()                          */
 /************************************************************************/
 
 /** Return the product of elements in the vector
@@ -50,7 +50,7 @@ template <class T> inline T MultiplyElements(const std::vector<T> &vector)
 }
 
 /************************************************************************/
-/*                            ZarrDataset                               */
+/*                             ZarrDataset                              */
 /************************************************************************/
 
 class ZarrGroupBase;
@@ -63,6 +63,7 @@ class ZarrDataset final : public GDALDataset
     CPLStringList m_aosSubdatasets{};
     GDALGeoTransform m_gt{};
     bool m_bHasGT = false;
+    bool m_bSpatialProjConvention = false;
     std::shared_ptr<GDALDimension> m_poDimX{};
     std::shared_ptr<GDALDimension> m_poDimY{};
     std::shared_ptr<GDALMDArray> m_poSingleArray{};
@@ -84,10 +85,10 @@ class ZarrDataset final : public GDALDataset
 
     static GDALDataset *Create(const char *pszName, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     static GDALDataset *CreateCopy(const char *, GDALDataset *, int,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -108,7 +109,7 @@ class ZarrDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                          ZarrRasterBand                              */
+/*                            ZarrRasterBand                            */
 /************************************************************************/
 
 class ZarrRasterBand final : public GDALRasterBand
@@ -147,7 +148,7 @@ class ZarrRasterBand final : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                        ZarrAttributeGroup()                          */
+/*                         ZarrAttributeGroup()                         */
 /************************************************************************/
 
 class ZarrAttributeGroup
@@ -246,7 +247,7 @@ class ZarrAttributeGroup
 };
 
 /************************************************************************/
-/*                         ZarrSharedResource                           */
+/*                          ZarrSharedResource                          */
 /************************************************************************/
 
 class ZarrSharedResource
@@ -274,6 +275,7 @@ class ZarrSharedResource
     CPLStringList m_aosOpenOptions{};
     std::weak_ptr<ZarrGroupBase> m_poWeakRootGroup{};
     std::set<std::string> m_oSetArrayInLoading{};
+    std::map<std::string, std::shared_ptr<GDALMDArray>> m_oCacheIndexingVar{};
 
     explicit ZarrSharedResource(const std::string &osRootDirectoryName,
                                 bool bUpdatable);
@@ -320,6 +322,11 @@ class ZarrSharedResource
         return m_poPAM;
     }
 
+    const std::string &GetRootDirectoryName() const
+    {
+        return m_osRootDirectoryName;
+    }
+
     const CPLStringList &GetOpenOptions() const
     {
         return m_aosOpenOptions;
@@ -333,15 +340,7 @@ class ZarrSharedResource
     void
     UpdateDimensionSize(const std::shared_ptr<GDALDimension> &poUpdatedDim);
 
-    std::shared_ptr<ZarrGroupBase> GetRootGroup()
-    {
-        auto poRootGroup = m_poWeakRootGroup.lock();
-        if (poRootGroup)
-            return poRootGroup;
-        poRootGroup = OpenRootGroup();
-        m_poWeakRootGroup = poRootGroup;
-        return poRootGroup;
-    }
+    std::shared_ptr<ZarrGroupBase> GetRootGroup();
 
     void SetRootGroup(const std::shared_ptr<ZarrGroupBase> &poRootGroup)
     {
@@ -376,10 +375,16 @@ class ZarrSharedResource
             return m_bOK;
         }
     };
+
+    void RegisterIndexingVariable(const std::string &osDimName,
+                                  const std::shared_ptr<GDALMDArray> &poVar)
+    {
+        m_oCacheIndexingVar[osDimName] = poVar;
+    }
 };
 
 /************************************************************************/
-/*                             ZarrGroup                                */
+/*                              ZarrGroup                               */
 /************************************************************************/
 
 class ZarrArray;
@@ -538,6 +543,19 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 
     void NotifyArrayRenamed(const std::string &osOldName,
                             const std::string &osNewName);
+
+    //! Return the group owning the array. Might be nullptr
+    std::shared_ptr<ZarrGroupBase> GetParentGroup() const;
+
+    std::shared_ptr<ZarrGroupBase> Self() const
+    {
+        return std::dynamic_pointer_cast<ZarrGroupBase>(m_pSelf.lock());
+    }
+
+    const ZarrAttributeGroup &GetAttributeGroup() const
+    {
+        return m_oAttrGroup;
+    }
 };
 
 /************************************************************************/
@@ -667,7 +685,7 @@ class ZarrV3Group final : public ZarrGroupBase
 };
 
 /************************************************************************/
-/*                           ZarrDimension                              */
+/*                            ZarrDimension                             */
 /************************************************************************/
 
 class ZarrDimension final : public GDALDimensionWeakIndexingVar
@@ -853,13 +871,17 @@ class ZarrByteVectorQuickResize
 };
 
 /************************************************************************/
-/*                             ZarrArray                                */
+/*                              ZarrArray                               */
 /************************************************************************/
 
 class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 {
   protected:
     std::shared_ptr<ZarrSharedResource> m_poSharedResource;
+
+    //! weak reference to owning parent
+    std::weak_ptr<ZarrGroupBase> m_poParent{};
+
     const std::vector<std::shared_ptr<GDALDimension>> m_aoDims;
     const GDALExtendedDataType m_oType;
 
@@ -929,6 +951,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     mutable bool m_bHasTriedBlockCachePresenceArray = false;
     mutable std::shared_ptr<GDALMDArray> m_poBlockCachePresenceArray{};
     mutable std::mutex m_oMutex{};
+    CPLStringList m_aosCreationOptions{};
 
     struct CachedBlock
     {
@@ -943,7 +966,8 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
                       const std::vector<GUInt64> &anBlockSize);
 
     ZarrArray(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-              const std::string &osParentName, const std::string &osName,
+              const std::shared_ptr<ZarrGroupBase> &poParent,
+              const std::string &osName,
               const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
               const GDALExtendedDataType &oType,
               const std::vector<DtypeElt> &aoDtypeElts,
@@ -1119,13 +1143,8 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
         m_osDimSeparator = osDimSeparator;
     }
 
-    void ParseSpecialAttributes(const std::shared_ptr<GDALGroup> &poGroup,
-                                CPLJSONObject &oAttributes);
-
-    void SetAttributes(const CPLJSONObject &attrs)
-    {
-        m_oAttrGroup.Init(attrs, m_bUpdatable);
-    }
+    void SetAttributes(const std::shared_ptr<ZarrGroupBase> &poGroup,
+                       CPLJSONObject &oAttributes);
 
     void SetSRS(const std::shared_ptr<OGRSpatialReference> &srs)
     {
@@ -1183,6 +1202,10 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     virtual bool Flush() = 0;
 
+    //! Return the group owning the array. Might be nullptr
+    std::shared_ptr<ZarrGroupBase> GetParentGroup() const;
+
+    //! Return the root group. Might be nullptr
     std::shared_ptr<GDALGroup> GetRootGroup() const override
     {
         return m_poSharedResource->GetRootGroup();
@@ -1198,6 +1221,11 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
         m_aosStructuralInfo.SetNameValue(pszKey, pszValue);
     }
 
+    void SetCreationOptions(CSLConstList papszOptions)
+    {
+        m_aosCreationOptions = papszOptions;
+    }
+
     static void DecodeSourceElt(const std::vector<DtypeElt> &elts,
                                 const GByte *pSrc, GByte *pDst);
 
@@ -1207,7 +1235,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                           ZarrV2Array                                */
+/*                             ZarrV2Array                              */
 /************************************************************************/
 
 class ZarrV2Array final : public ZarrArray
@@ -1222,7 +1250,8 @@ class ZarrV2Array final : public ZarrArray
         m_abyTmpRawBlockData{};  // used for Fortran order
 
     ZarrV2Array(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-                const std::string &osParentName, const std::string &osName,
+                const std::shared_ptr<ZarrGroupBase> &poParent,
+                const std::string &osName,
                 const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
                 const GDALExtendedDataType &oType,
                 const std::vector<DtypeElt> &aoDtypeElts,
@@ -1257,7 +1286,8 @@ class ZarrV2Array final : public ZarrArray
 
     static std::shared_ptr<ZarrV2Array>
     Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-           const std::string &osParentName, const std::string &osName,
+           const std::shared_ptr<ZarrGroupBase> &poParent,
+           const std::string &osName,
            const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
            const GDALExtendedDataType &oType,
            const std::vector<DtypeElt> &aoDtypeElts,
@@ -1300,7 +1330,7 @@ class ZarrV2Array final : public ZarrArray
 };
 
 /************************************************************************/
-/*                           ZarrV3Array                                */
+/*                             ZarrV3Array                              */
 /************************************************************************/
 
 class ZarrV3CodecSequence;
@@ -1310,9 +1340,12 @@ class ZarrV3Array final : public ZarrArray
     bool m_bV2ChunkKeyEncoding = false;
     std::unique_ptr<ZarrV3CodecSequence> m_poCodecs{};
     CPLJSONArray m_oJSONCodecs{};
+    mutable bool m_bOverviewsLoaded = false;
+    mutable std::vector<std::shared_ptr<GDALMDArray>> m_apoOverviews{};
 
     ZarrV3Array(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-                const std::string &osParentName, const std::string &osName,
+                const std::shared_ptr<ZarrGroupBase> &poParent,
+                const std::string &osName,
                 const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
                 const GDALExtendedDataType &oType,
                 const std::vector<DtypeElt> &aoDtypeElts,
@@ -1338,12 +1371,15 @@ class ZarrV3Array final : public ZarrArray
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
+    void LoadOverviews() const;
+
   public:
     ~ZarrV3Array() override;
 
     static std::shared_ptr<ZarrV3Array>
     Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-           const std::string &osParentName, const std::string &osName,
+           const std::shared_ptr<ZarrGroupBase> &poParent,
+           const std::string &osName,
            const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
            const GDALExtendedDataType &oType,
            const std::vector<DtypeElt> &aoDtypeElts,
@@ -1365,6 +1401,9 @@ class ZarrV3Array final : public ZarrArray
                 const std::vector<GUInt64> &anOuterBlockSize,
                 std::vector<GUInt64> &anInnerBlockSize, DtypeElt &zarrDataType,
                 const std::vector<GByte> &abyNoData);
+    int GetOverviewCount() const override;
+
+    std::shared_ptr<GDALMDArray> GetOverview(int idx) const override;
 
   protected:
     std::string GetDataDirectory() const override;

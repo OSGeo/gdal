@@ -60,7 +60,7 @@ static int OGRFlatGeobufDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           Delete()                                   */
+/*                               Delete()                               */
 /************************************************************************/
 
 static CPLErr OGRFlatGoBufDriverDelete(const char *pszDataSource)
@@ -174,7 +174,7 @@ void RegisterOGRFlatGeobuf()
 }
 
 /************************************************************************/
-/*                         OGRFlatGeobufDataset()                       */
+/*                        OGRFlatGeobufDataset()                        */
 /************************************************************************/
 
 OGRFlatGeobufDataset::OGRFlatGeobufDataset(const char *pszName, bool bIsDir,
@@ -185,7 +185,7 @@ OGRFlatGeobufDataset::OGRFlatGeobufDataset(const char *pszName, bool bIsDir,
 }
 
 /************************************************************************/
-/*                         ~OGRFlatGeobufDataset()                      */
+/*                       ~OGRFlatGeobufDataset()                        */
 /************************************************************************/
 
 OGRFlatGeobufDataset::~OGRFlatGeobufDataset()
@@ -194,7 +194,7 @@ OGRFlatGeobufDataset::~OGRFlatGeobufDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr OGRFlatGeobufDataset::Close(GDALProgressFunc, void *)
@@ -292,7 +292,7 @@ GDALDataset *OGRFlatGeobufDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           OpenFile()                                 */
+/*                              OpenFile()                              */
 /************************************************************************/
 
 bool OGRFlatGeobufDataset::OpenFile(const char *pszFilename, VSILFILE *fp,
@@ -324,7 +324,7 @@ GDALDataset *OGRFlatGeobufDataset::Create(const char *pszName, int /* nBands */,
                                           CPL_UNUSED int nXSize,
                                           CPL_UNUSED int nYSize,
                                           CPL_UNUSED GDALDataType eDT,
-                                          char ** /* papszOptions */)
+                                          CSLConstList /* papszOptions */)
 {
     // First, ensure there isn't any such file yet.
     VSIStatBufL sStatBuf;
@@ -378,7 +378,7 @@ int OGRFlatGeobufDataset::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                        LaunderLayerName()                            */
+/*                          LaunderLayerName()                          */
 /************************************************************************/
 
 static CPLString LaunderLayerName(const char *pszLayerName)

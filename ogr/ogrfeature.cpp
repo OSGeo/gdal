@@ -278,7 +278,7 @@ void OGRFeature::DestroyFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                                Reset()                               */
+/*                               Reset()                                */
 /************************************************************************/
 
 /** Reset the state of a OGRFeature to its state after construction.
@@ -364,7 +364,7 @@ void OGRFeature::Reset()
 }
 
 /************************************************************************/
-/*                        SetFDefnUnsafe()                              */
+/*                           SetFDefnUnsafe()                           */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -571,7 +571,7 @@ OGRErr OGR_F_SetGeometry(OGRFeatureH hFeat, OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                        SetGeometry()                                 */
+/*                            SetGeometry()                             */
 /************************************************************************/
 
 /**
@@ -793,9 +793,10 @@ OGRGeometryH OGR_F_GetGeometryRef(OGRFeatureH hFeat)
     {
         const OGRwkbGeometryType eTargetType =
             OGR_GT_GetLinear(poGeom->getGeometryType());
-        poGeom = OGRGeometryFactory::forceTo(poFeature->StealGeometry(),
-                                             eTargetType);
-        poFeature->SetGeomFieldDirectly(0, poGeom);
+        auto poNewGeom = OGRGeometryFactory::forceTo(
+            std::unique_ptr<OGRGeometry>(poFeature->StealGeometry()),
+            eTargetType);
+        poFeature->SetGeomField(0, std::move(poNewGeom));
         poGeom = poFeature->GetGeometryRef();
     }
 
@@ -803,7 +804,7 @@ OGRGeometryH OGR_F_GetGeometryRef(OGRFeatureH hFeat)
 }
 
 /************************************************************************/
-/*                           GetGeomFieldRef()                          */
+/*                          GetGeomFieldRef()                           */
 /************************************************************************/
 
 /**
@@ -846,7 +847,7 @@ const OGRGeometry *OGRFeature::GetGeomFieldRef(int iField) const
 }
 
 /************************************************************************/
-/*                           GetGeomFieldRef()                          */
+/*                          GetGeomFieldRef()                           */
 /************************************************************************/
 
 /**
@@ -915,9 +916,10 @@ OGRGeometryH OGR_F_GetGeomFieldRef(OGRFeatureH hFeat, int iField)
     {
         const OGRwkbGeometryType eTargetType =
             OGR_GT_GetLinear(poGeom->getGeometryType());
-        poGeom = OGRGeometryFactory::forceTo(poFeature->StealGeometry(iField),
-                                             eTargetType);
-        poFeature->SetGeomFieldDirectly(iField, poGeom);
+        auto poNewGeom = OGRGeometryFactory::forceTo(
+            std::unique_ptr<OGRGeometry>(poFeature->StealGeometry(iField)),
+            eTargetType);
+        poFeature->SetGeomField(iField, std::move(poNewGeom));
         poGeom = poFeature->GetGeomFieldRef(iField);
     }
 
@@ -925,7 +927,7 @@ OGRGeometryH OGR_F_GetGeomFieldRef(OGRFeatureH hFeat, int iField)
 }
 
 /************************************************************************/
-/*                       SetGeomFieldDirectly()                         */
+/*                        SetGeomFieldDirectly()                        */
 /************************************************************************/
 
 /**
@@ -1038,7 +1040,7 @@ OGRErr OGRFeature::SetGeomField(int iField, const OGRGeometry *poGeomIn)
 }
 
 /************************************************************************/
-/*                        OGR_F_SetGeomField()                          */
+/*                         OGR_F_SetGeomField()                         */
 /************************************************************************/
 
 /**
@@ -1069,7 +1071,7 @@ OGRErr OGR_F_SetGeomField(OGRFeatureH hFeat, int iField, OGRGeometryH hGeom)
 }
 
 /************************************************************************/
-/*                       SetGeomField()                                 */
+/*                            SetGeomField()                            */
 /************************************************************************/
 
 /**
@@ -1422,7 +1424,7 @@ int OGR_F_GetGeomFieldCount(OGRFeatureH hFeat)
 /* clang-format on */
 
 /************************************************************************/
-/*                       OGR_F_GetGeomFieldDefnRef()                    */
+/*                     OGR_F_GetGeomFieldDefnRef()                      */
 /************************************************************************/
 
 /**
@@ -1449,7 +1451,7 @@ OGRGeomFieldDefnH OGR_F_GetGeomFieldDefnRef(OGRFeatureH hFeat, int i)
 }
 
 /************************************************************************/
-/*                           GetGeomFieldIndex()                            */
+/*                         GetGeomFieldIndex()                          */
 /************************************************************************/
 
 /**
@@ -1469,7 +1471,7 @@ OGRGeomFieldDefnH OGR_F_GetGeomFieldDefnRef(OGRFeatureH hFeat, int i)
  */
 
 /************************************************************************/
-/*                       OGR_F_GetGeomFieldIndex()                      */
+/*                      OGR_F_GetGeomFieldIndex()                       */
 /************************************************************************/
 
 /**
@@ -1677,7 +1679,7 @@ bool OGRFeature::IsFieldNull(int iField) const
 }
 
 /************************************************************************/
-/*                          OGR_F_IsFieldNull()                         */
+/*                         OGR_F_IsFieldNull()                          */
 /************************************************************************/
 
 /**
@@ -1708,7 +1710,7 @@ int OGR_F_IsFieldNull(OGRFeatureH hFeat, int iField)
 }
 
 /************************************************************************/
-/*                       IsFieldSetAndNull()                            */
+/*                         IsFieldSetAndNull()                          */
 /************************************************************************/
 
 /**
@@ -1737,7 +1739,7 @@ bool OGRFeature::IsFieldSetAndNotNull(int iField) const
 }
 
 /************************************************************************/
-/*                      OGR_F_IsFieldSetAndNotNull()                    */
+/*                     OGR_F_IsFieldSetAndNotNull()                     */
 /************************************************************************/
 
 /**
@@ -1770,7 +1772,7 @@ int OGR_F_IsFieldSetAndNotNull(OGRFeatureH hFeat, int iField)
 }
 
 /************************************************************************/
-/*                             SetFieldNull()                           */
+/*                            SetFieldNull()                            */
 /************************************************************************/
 
 /**
@@ -1821,7 +1823,7 @@ void OGRFeature::SetFieldNull(int iField)
 }
 
 /************************************************************************/
-/*                          OGR_F_SetFieldNull()                        */
+/*                         OGR_F_SetFieldNull()                         */
 /************************************************************************/
 
 /**
@@ -1843,7 +1845,7 @@ void OGR_F_SetFieldNull(OGRFeatureH hFeat, int iField)
 }
 
 /************************************************************************/
-/*                           operator[]                                */
+/*                              operator[]                              */
 /************************************************************************/
 
 /**
@@ -2191,7 +2193,7 @@ GIntBig OGRFeature::GetFieldAsInteger64(int iField) const
 }
 
 /************************************************************************/
-/*                      OGR_F_GetFieldAsInteger64()                     */
+/*                     OGR_F_GetFieldAsInteger64()                      */
 /************************************************************************/
 
 /**
@@ -2332,7 +2334,7 @@ double OGR_F_GetFieldAsDouble(OGRFeatureH hFeat, int iField)
 }
 
 /************************************************************************/
-/*                      OGRFeatureFormatDateTimeBuffer()                */
+/*                   OGRFeatureFormatDateTimeBuffer()                   */
 /************************************************************************/
 
 static void OGRFeatureFormatDateTimeBuffer(char *szTempBuffer, size_t nMaxSize,
@@ -2837,7 +2839,7 @@ const char *OGRFeature::GetFieldAsISO8601DateTime(
 }
 
 /************************************************************************/
-/*                     OGR_F_GetFieldAsISO8601DateTime()                */
+/*                  OGR_F_GetFieldAsISO8601DateTime()                   */
 /************************************************************************/
 
 /**
@@ -3460,7 +3462,7 @@ int OGR_F_GetFieldAsDateTimeEx(OGRFeatureH hFeat, int iField, int *pnYear,
 }
 
 /************************************************************************/
-/*                        OGRFeatureGetIntegerValue()                   */
+/*                     OGRFeatureGetIntegerValue()                      */
 /************************************************************************/
 
 static int OGRFeatureGetIntegerValue(const OGRFeatureDefn *poDefn,
@@ -3497,7 +3499,7 @@ static int OGRFeatureGetIntegerValue(const OGRFeatureDefn *poDefn,
 }
 
 /************************************************************************/
-/*                        GetFieldAsSerializedJSon()                   */
+/*                      GetFieldAsSerializedJSon()                      */
 /************************************************************************/
 
 /**
@@ -5572,7 +5574,7 @@ bool OGRFeature::SetFieldInternal(int iField, const OGRField *puValue)
 }
 
 /************************************************************************/
-/*                      OGR_F_SetFieldRaw()                             */
+/*                         OGR_F_SetFieldRaw()                          */
 /************************************************************************/
 
 /**
@@ -5640,7 +5642,7 @@ void OGRFeature::DumpReadable(FILE *fpOut, CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                       DumpReadableAsString()                         */
+/*                        DumpReadableAsString()                        */
 /************************************************************************/
 
 /**
@@ -5788,7 +5790,7 @@ void OGR_F_DumpReadable(OGRFeatureH hFeat, FILE *fpOut)
 }
 
 /************************************************************************/
-/*                         OGR_F_DumpReadableAsString()                 */
+/*                     OGR_F_DumpReadableAsString()                     */
 /************************************************************************/
 
 /**
@@ -5836,7 +5838,7 @@ char *OGR_F_DumpReadableAsString(OGRFeatureH hFeat, CSLConstList papszOptions)
  */
 
 /************************************************************************/
-/*                            OGR_F_GetFID()                          */
+/*                            OGR_F_GetFID()                            */
 /************************************************************************/
 
 /**
@@ -6348,7 +6350,7 @@ OGRErr OGRFeature::SetFrom(const OGRFeature *poSrcFeature, const int *panMap,
 }
 
 /************************************************************************/
-/*                      OGR_F_SetFromWithMap()                          */
+/*                        OGR_F_SetFromWithMap()                        */
 /************************************************************************/
 
 /**
@@ -6624,7 +6626,7 @@ OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
 }
 
 /************************************************************************/
-/*                             GetStyleString()                         */
+/*                           GetStyleString()                           */
 /************************************************************************/
 
 /**
@@ -6676,7 +6678,7 @@ const char *OGR_F_GetStyleString(OGRFeatureH hFeat)
 }
 
 /************************************************************************/
-/*                             SetStyleString()                         */
+/*                           SetStyleString()                           */
 /************************************************************************/
 
 /**
@@ -6750,7 +6752,7 @@ void OGRFeature::SetStyleStringDirectly(char *pszString)
 }
 
 /************************************************************************/
-/*                     OGR_F_SetStyleStringDirectly()                   */
+/*                    OGR_F_SetStyleStringDirectly()                    */
 /************************************************************************/
 
 /**
@@ -6789,7 +6791,7 @@ void OGRFeature::SetStyleTable(OGRStyleTable *poStyleTable)
 }
 
 //************************************************************************/
-/*                          SetStyleTableDirectly()                      */
+/*                       SetStyleTableDirectly()                        */
 /************************************************************************/
 
 /** Set style table.
@@ -6915,7 +6917,7 @@ OGRErr OGRFeature::RemapGeomFields(const OGRFeatureDefn *poNewDefn,
 //! @endcond
 
 /************************************************************************/
-/*                         OGR_F_GetStyleTable()                        */
+/*                        OGR_F_GetStyleTable()                         */
 /************************************************************************/
 
 OGRStyleTableH OGR_F_GetStyleTable(OGRFeatureH hFeat)
@@ -6928,7 +6930,7 @@ OGRStyleTableH OGR_F_GetStyleTable(OGRFeatureH hFeat)
 }
 
 /************************************************************************/
-/*                         OGR_F_SetStyleTableDirectly()                */
+/*                    OGR_F_SetStyleTableDirectly()                     */
 /************************************************************************/
 
 void OGR_F_SetStyleTableDirectly(OGRFeatureH hFeat, OGRStyleTableH hStyleTable)
@@ -6941,7 +6943,7 @@ void OGR_F_SetStyleTableDirectly(OGRFeatureH hFeat, OGRStyleTableH hStyleTable)
 }
 
 /************************************************************************/
-/*                         OGR_F_SetStyleTable()                        */
+/*                        OGR_F_SetStyleTable()                         */
 /************************************************************************/
 
 void OGR_F_SetStyleTable(OGRFeatureH hFeat, OGRStyleTableH hStyleTable)
@@ -6955,7 +6957,7 @@ void OGR_F_SetStyleTable(OGRFeatureH hFeat, OGRStyleTableH hStyleTable)
 }
 
 /************************************************************************/
-/*                          FillUnsetWithDefault()                      */
+/*                        FillUnsetWithDefault()                        */
 /************************************************************************/
 
 /**
@@ -6969,7 +6971,7 @@ void OGR_F_SetStyleTable(OGRFeatureH hFeat, OGRStyleTableH hStyleTable)
  */
 
 void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
-                                      CPL_UNUSED char **papszOptions)
+                                      CPL_UNUSED CSLConstList papszOptions)
 {
     const int nFieldCount = poDefn->GetFieldCount();
     for (int i = 0; i < nFieldCount; i++)
@@ -7043,7 +7045,7 @@ void OGRFeature::FillUnsetWithDefault(int bNotNullableOnly,
  */
 
 void OGR_F_FillUnsetWithDefault(OGRFeatureH hFeat, int bNotNullableOnly,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 
 {
     VALIDATE_POINTER0(hFeat, "OGR_F_FillUnsetWithDefault");
@@ -7204,7 +7206,7 @@ int OGR_F_Validate(OGRFeatureH hFeat, int nValidateFlags, int bEmitError)
 }
 
 /************************************************************************/
-/*                          GetNativeData()                             */
+/*                           GetNativeData()                            */
 /************************************************************************/
 
 /**
@@ -7235,7 +7237,7 @@ int OGR_F_Validate(OGRFeatureH hFeat, int nValidateFlags, int bEmitError)
  */
 
 /************************************************************************/
-/*                         OGR_F_GetNativeData()                        */
+/*                        OGR_F_GetNativeData()                         */
 /************************************************************************/
 
 /**
@@ -7273,7 +7275,7 @@ const char *OGR_F_GetNativeData(OGRFeatureH hFeat)
 }
 
 /************************************************************************/
-/*                        GetNativeMediaType()                          */
+/*                         GetNativeMediaType()                         */
 /************************************************************************/
 
 /**
@@ -7294,7 +7296,7 @@ const char *OGR_F_GetNativeData(OGRFeatureH hFeat)
  */
 
 /************************************************************************/
-/*                       OGR_F_GetNativeMediaType()                     */
+/*                      OGR_F_GetNativeMediaType()                      */
 /************************************************************************/
 
 /**
@@ -7348,7 +7350,7 @@ void OGRFeature::SetNativeData(const char *pszNativeData)
 }
 
 /************************************************************************/
-/*                          OGR_F_SetNativeData()                       */
+/*                        OGR_F_SetNativeData()                         */
 /************************************************************************/
 
 /**
@@ -7403,7 +7405,7 @@ void OGRFeature::SetNativeMediaType(const char *pszNativeMediaType)
 }
 
 /************************************************************************/
-/*                          OGR_F_SetNativeMediaType()                  */
+/*                      OGR_F_SetNativeMediaType()                      */
 /************************************************************************/
 
 /**
@@ -7431,7 +7433,7 @@ void OGR_F_SetNativeMediaType(OGRFeatureH hFeat, const char *pszNativeMediaType)
 }
 
 /************************************************************************/
-/*                           OGR_RawField_IsUnset()                     */
+/*                        OGR_RawField_IsUnset()                        */
 /************************************************************************/
 
 /**
@@ -7451,7 +7453,7 @@ int OGR_RawField_IsUnset(const OGRField *puField)
 }
 
 /************************************************************************/
-/*                           OGR_RawField_IsNull()                      */
+/*                        OGR_RawField_IsNull()                         */
 /************************************************************************/
 
 /**
@@ -7471,7 +7473,7 @@ int OGR_RawField_IsNull(const OGRField *puField)
 }
 
 /************************************************************************/
-/*                          OGR_RawField_SetUnset()                     */
+/*                       OGR_RawField_SetUnset()                        */
 /************************************************************************/
 
 /**
@@ -7494,7 +7496,7 @@ void OGR_RawField_SetUnset(OGRField *puField)
 }
 
 /************************************************************************/
-/*                          OGR_RawField_SetNull()                      */
+/*                        OGR_RawField_SetNull()                        */
 /************************************************************************/
 
 /**
@@ -7517,7 +7519,7 @@ void OGR_RawField_SetNull(OGRField *puField)
 }
 
 /************************************************************************/
-/*                     OGRFeatureUniquePtrDeleter                       */
+/*                      OGRFeatureUniquePtrDeleter                      */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -7533,7 +7535,7 @@ namespace
 // Implementation borrowed to OpenFileGDB
 
 /************************************************************************/
-/*                            WriteUInt8()                              */
+/*                             WriteUInt8()                             */
 /************************************************************************/
 
 inline void WriteUInt8(std::vector<GByte> &abyBuffer, uint8_t nVal)
@@ -7542,7 +7544,7 @@ inline void WriteUInt8(std::vector<GByte> &abyBuffer, uint8_t nVal)
 }
 
 /************************************************************************/
-/*                             WriteVarUInt()                           */
+/*                            WriteVarUInt()                            */
 /************************************************************************/
 
 inline void WriteVarUInt(std::vector<GByte> &abyBuffer, uint64_t nVal)
@@ -7563,7 +7565,7 @@ inline void WriteVarUInt(std::vector<GByte> &abyBuffer, uint64_t nVal)
 }
 
 /************************************************************************/
-/*                             WriteVarInt()                            */
+/*                            WriteVarInt()                             */
 /************************************************************************/
 
 inline void WriteVarInt(std::vector<GByte> &abyBuffer, int64_t nVal)
@@ -7606,7 +7608,7 @@ inline void WriteVarInt(std::vector<GByte> &abyBuffer, int64_t nVal)
 }
 
 /************************************************************************/
-/*                          WriteFloat32()                              */
+/*                            WriteFloat32()                            */
 /************************************************************************/
 
 inline void WriteFloat32(std::vector<GByte> &abyBuffer, float fVal)
@@ -7617,7 +7619,7 @@ inline void WriteFloat32(std::vector<GByte> &abyBuffer, float fVal)
 }
 
 /************************************************************************/
-/*                          WriteFloat64()                              */
+/*                            WriteFloat64()                            */
 /************************************************************************/
 
 inline void WriteFloat64(std::vector<GByte> &abyBuffer, double dfVal)
@@ -7630,7 +7632,7 @@ inline void WriteFloat64(std::vector<GByte> &abyBuffer, double dfVal)
 }  // namespace
 
 /************************************************************************/
-/*                    OGRFeature::SerializeToBinary()                   */
+/*                   OGRFeature::SerializeToBinary()                    */
 /************************************************************************/
 
 /** Serialize the feature to a binary encoding.
@@ -7815,7 +7817,7 @@ namespace
 // Implementation borrowed to OpenFileGDB
 
 /************************************************************************/
-/*                          ReadVarUInt()                               */
+/*                            ReadVarUInt()                             */
 /************************************************************************/
 
 template <class OutType>
@@ -7909,7 +7911,7 @@ ReadVarInt(const GByte *&pabyIter, const GByte *pabyEnd, OutType &nOutVal)
 }
 
 /************************************************************************/
-/*                          ReadUInt8()                                 */
+/*                             ReadUInt8()                              */
 /************************************************************************/
 
 inline bool ReadUInt8(const GByte *&pabyIter, const GByte *pabyEnd, GByte &nVal)
@@ -7922,7 +7924,7 @@ inline bool ReadUInt8(const GByte *&pabyIter, const GByte *pabyEnd, GByte &nVal)
 }
 
 /************************************************************************/
-/*                          ReadFloat32()                               */
+/*                            ReadFloat32()                             */
 /************************************************************************/
 
 inline bool ReadFloat32(const GByte *&pabyIter, const GByte *pabyEnd,
@@ -7938,7 +7940,7 @@ inline bool ReadFloat32(const GByte *&pabyIter, const GByte *pabyEnd,
 }
 
 /************************************************************************/
-/*                          ReadFloat64()                               */
+/*                            ReadFloat64()                             */
 /************************************************************************/
 
 inline bool ReadFloat64(const GByte *&pabyIter, const GByte *pabyEnd,
@@ -7955,7 +7957,7 @@ inline bool ReadFloat64(const GByte *&pabyIter, const GByte *pabyEnd,
 }  // namespace
 
 /************************************************************************/
-/*                    OGRFeature::DeserializeFromBinary()               */
+/*                 OGRFeature::DeserializeFromBinary()                  */
 /************************************************************************/
 
 /** Instantiate a feature from a binary encoding produces by SerializeToBinary()
@@ -8343,7 +8345,7 @@ OGRFeature::ConstFieldIterator OGRFeature::end() const
 }
 
 /************************************************************************/
-/*                      OGRFeature::FieldValue                          */
+/*                        OGRFeature::FieldValue                        */
 /************************************************************************/
 
 OGRFeature::FieldValue::FieldValue(const OGRFeature *poFeature, int iFieldIndex)

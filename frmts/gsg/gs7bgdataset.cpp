@@ -64,11 +64,10 @@ class GS7BGDataset final : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
-                               int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               int nBandsIn, GDALDataType eType, CSLConstList);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -122,7 +121,7 @@ class GS7BGRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           GS7BGRasterBand()                          */
+/*                          GS7BGRasterBand()                           */
 /************************************************************************/
 
 GS7BGRasterBand::GS7BGRasterBand(GS7BGDataset *poDSIn, int nBandIn)
@@ -141,7 +140,7 @@ GS7BGRasterBand::GS7BGRasterBand(GS7BGDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                           ~GSBGRasterBand()                          */
+/*                          ~GSBGRasterBand()                           */
 /************************************************************************/
 
 GS7BGRasterBand::~GS7BGRasterBand()
@@ -152,7 +151,7 @@ GS7BGRasterBand::~GS7BGRasterBand()
 }
 
 /************************************************************************/
-/*                          ScanForMinMaxZ()                            */
+/*                           ScanForMinMaxZ()                           */
 /************************************************************************/
 
 CPLErr GS7BGRasterBand::ScanForMinMaxZ()
@@ -858,7 +857,7 @@ CPLErr GS7BGDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                             WriteHeader()                            */
+/*                            WriteHeader()                             */
 /************************************************************************/
 
 CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
@@ -1024,7 +1023,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
 }
 
 /************************************************************************/
-/*                      GS7BGCreateCheckDims()                          */
+/*                        GS7BGCreateCheckDims()                        */
 /************************************************************************/
 
 static bool GS7BGCreateCheckDims(int nXSize, int nYSize)
@@ -1051,7 +1050,7 @@ static bool GS7BGCreateCheckDims(int nXSize, int nYSize)
 
 GDALDataset *GS7BGDataset::Create(const char *pszFilename, int nXSize,
                                   int nYSize, int nBandsIn, GDALDataType eType,
-                                  char ** /* papszParamList*/)
+                                  CSLConstList /* papszParamList*/)
 
 {
     if (!GS7BGCreateCheckDims(nXSize, nYSize))
@@ -1124,7 +1123,7 @@ GDALDataset *GS7BGDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
                                       GDALDataset *poSrcDS, int bStrict,
-                                      char ** /*papszOptions*/,
+                                      CSLConstList /*papszOptions*/,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 {
@@ -1281,7 +1280,7 @@ GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GDALRegister_GS7BG()                        */
+/*                         GDALRegister_GS7BG()                         */
 /************************************************************************/
 void GDALRegister_GS7BG()
 

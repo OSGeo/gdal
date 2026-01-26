@@ -18,7 +18,7 @@
 #include "pcidskdrivercore.h"
 
 /************************************************************************/
-/*                     PCIDSKDriverIdentify()                           */
+/*                        PCIDSKDriverIdentify()                        */
 /************************************************************************/
 
 int PCIDSKDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -29,7 +29,7 @@ int PCIDSKDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     PCIDSKDriverSetCommonMetadata()                  */
+/*                   PCIDSKDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void PCIDSKDriverSetCommonMetadata(GDALDriver *poDriver)

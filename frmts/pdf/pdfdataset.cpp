@@ -70,7 +70,7 @@ static double Get(GDALPDFObject *poObj, int nIndice = -1);
 static CPLMutex *hGlobalParamsMutex = nullptr;
 
 /************************************************************************/
-/*                         GDALPDFOutputDev                             */
+/*                           GDALPDFOutputDev                           */
 /************************************************************************/
 
 class GDALPDFOutputDev final : public SplashOutputDev
@@ -265,7 +265,7 @@ void GDALPDFOutputDev::startPage(int pageNum, GfxState *state, XRef *xrefIn)
 #endif  // ~ HAVE_POPPLER
 
 /************************************************************************/
-/*                         Dump routines                                */
+/*                            Dump routines                             */
 /************************************************************************/
 
 class GDALPDFDumper
@@ -483,7 +483,7 @@ void GDALPDFDumper::Dump(GDALPDFDictionary *poDict, int nDepth)
 }
 
 /************************************************************************/
-/*                         PDFRasterBand()                              */
+/*                           PDFRasterBand()                            */
 /************************************************************************/
 
 PDFRasterBand::PDFRasterBand(PDFDataset *poDSIn, int nBandIn,
@@ -497,7 +497,7 @@ PDFRasterBand::PDFRasterBand(PDFDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                             SetSize()                                */
+/*                              SetSize()                               */
 /************************************************************************/
 
 void PDFRasterBand::SetSize(int nXSize, int nYSize)
@@ -532,7 +532,7 @@ void PDFRasterBand::SetSize(int nXSize, int nYSize)
 }
 
 /************************************************************************/
-/*                         InitOverviews()                              */
+/*                           InitOverviews()                            */
 /************************************************************************/
 
 void PDFDataset::InitOverviews()
@@ -600,7 +600,7 @@ void PDFDataset::InitOverviews()
 }
 
 /************************************************************************/
-/*                        GetColorInterpretation()                      */
+/*                       GetColorInterpretation()                       */
 /************************************************************************/
 
 GDALColorInterp PDFRasterBand::GetColorInterpretation()
@@ -846,7 +846,7 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                     GetSuggestedBlockAccessPattern()                 */
+/*                   GetSuggestedBlockAccessPattern()                   */
 /************************************************************************/
 
 GDALSuggestedBlockAccessPattern
@@ -995,7 +995,7 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                    PDFEnterPasswordFromConsoleIfNeeded()             */
+/*                PDFEnterPasswordFromConsoleIfNeeded()                 */
 /************************************************************************/
 
 static const char *PDFEnterPasswordFromConsoleIfNeeded(const char *pszUserPwd)
@@ -1444,7 +1444,7 @@ class GDALPDFiumOCContext final : public CPDF_OCContextInterface
 };
 
 /************************************************************************/
-/*                      GDALPDFiumRenderDeviceDriver                    */
+/*                     GDALPDFiumRenderDeviceDriver                     */
 /************************************************************************/
 
 class GDALPDFiumRenderDeviceDriver final : public RenderDeviceDriverIface
@@ -1690,7 +1690,7 @@ class GDALPDFiumRenderDeviceDriver final : public RenderDeviceDriverIface
 };
 
 /************************************************************************/
-/*                         PDFiumRenderPageBitmap()                     */
+/*                       PDFiumRenderPageBitmap()                       */
 /************************************************************************/
 
 /* This method is a customization of RenderPageImpl()
@@ -2325,7 +2325,7 @@ class PDFImageRasterBand final : public PDFRasterBand
 };
 
 /************************************************************************/
-/*                        PDFImageRasterBand()                          */
+/*                         PDFImageRasterBand()                         */
 /************************************************************************/
 
 PDFImageRasterBand::PDFImageRasterBand(PDFDataset *poDSIn, int nBandIn)
@@ -2408,7 +2408,7 @@ CPLErr PDFImageRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                            PDFDataset()                              */
+/*                             PDFDataset()                             */
 /************************************************************************/
 
 PDFDataset::PDFDataset(PDFDataset *poParentDSIn, int nXSize, int nYSize)
@@ -2461,7 +2461,7 @@ CPLErr PDFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
 }
 
 /************************************************************************/
-/*                           PDFFreeDoc()                               */
+/*                             PDFFreeDoc()                             */
 /************************************************************************/
 
 #ifdef HAVE_POPPLER
@@ -2483,7 +2483,7 @@ static void PDFFreeDoc(PDFDoc *poDoc)
 #endif
 
 /************************************************************************/
-/*                            GetCatalog()                              */
+/*                             GetCatalog()                             */
 /************************************************************************/
 
 GDALPDFObject *PDFDataset::GetCatalog()
@@ -2542,7 +2542,7 @@ GDALPDFObject *PDFDataset::GetCatalog()
 }
 
 /************************************************************************/
-/*                            ~PDFDataset()                            */
+/*                            ~PDFDataset()                             */
 /************************************************************************/
 
 PDFDataset::~PDFDataset()
@@ -2671,7 +2671,7 @@ PDFDataset::~PDFDataset()
 }
 
 /************************************************************************/
-/*                            IRasterIO()                               */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -2729,7 +2729,7 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                            IRasterIO()                               */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr PDFRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -2764,7 +2764,7 @@ CPLErr PDFRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                    PDFDatasetErrorFunction()                         */
+/*                      PDFDatasetErrorFunction()                       */
 /************************************************************************/
 
 #ifdef HAVE_POPPLER
@@ -2812,7 +2812,7 @@ static void PDFDatasetErrorFunction(ErrorCategory /* eErrCategory */,
 #endif
 
 /************************************************************************/
-/*                GDALPDFParseStreamContentOnlyDrawForm()               */
+/*               GDALPDFParseStreamContentOnlyDrawForm()                */
 /************************************************************************/
 
 static CPLString GDALPDFParseStreamContentOnlyDrawForm(const char *pszContent)
@@ -2867,7 +2867,7 @@ static CPLString GDALPDFParseStreamContentOnlyDrawForm(const char *pszContent)
 }
 
 /************************************************************************/
-/*                    GDALPDFParseStreamContent()                       */
+/*                     GDALPDFParseStreamContent()                      */
 /************************************************************************/
 
 typedef enum
@@ -3068,7 +3068,7 @@ static int GDALPDFParseStreamContent(const char *pszContent,
 }
 
 /************************************************************************/
-/*                         CheckTiledRaster()                           */
+/*                          CheckTiledRaster()                          */
 /************************************************************************/
 
 int PDFDataset::CheckTiledRaster()
@@ -3197,7 +3197,7 @@ int PDFDataset::CheckTiledRaster()
 }
 
 /************************************************************************/
-/*                       GuessDPIAndBandCount()                         */
+/*                        GuessDPIAndBandCount()                        */
 /************************************************************************/
 
 void PDFDataset::GuessDPIAndBandCount(GDALPDFDictionary *poPageDict,
@@ -3545,7 +3545,7 @@ void PDFDataset::ParseInfo(GDALPDFObject *poInfoObj)
 #if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
 
 /************************************************************************/
-/*                             AddLayer()                               */
+/*                              AddLayer()                              */
 /************************************************************************/
 
 void PDFDataset::AddLayer(const std::string &osName, int iPage)
@@ -3558,7 +3558,7 @@ void PDFDataset::AddLayer(const std::string &osName, int iPage)
 }
 
 /************************************************************************/
-/*                            SortLayerList()                           */
+/*                           SortLayerList()                            */
 /************************************************************************/
 
 // recent libc++ std::sort() involve unsigned integer overflow in some
@@ -3579,7 +3579,7 @@ void PDFDataset::SortLayerList()
 }
 
 /************************************************************************/
-/*                           CreateLayerList()                          */
+/*                          CreateLayerList()                           */
 /************************************************************************/
 
 void PDFDataset::CreateLayerList()
@@ -3607,7 +3607,7 @@ void PDFDataset::CreateLayerList()
 }
 
 /************************************************************************/
-/*                  BuildPostfixedLayerNameAndAddLayer()                */
+/*                 BuildPostfixedLayerNameAndAddLayer()                 */
 /************************************************************************/
 
 /** Append a suffix with the page number(s) to the provided layer name, if
@@ -3664,7 +3664,7 @@ std::string PDFDataset::BuildPostfixedLayerNameAndAddLayer(
 #ifdef HAVE_POPPLER
 
 /************************************************************************/
-/*                       ExploreLayersPoppler()                         */
+/*                        ExploreLayersPoppler()                        */
 /************************************************************************/
 
 void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
@@ -3997,7 +3997,7 @@ void PDFDataset::TurnLayersOnOffPoppler()
 #ifdef HAVE_PDFIUM
 
 /************************************************************************/
-/*                       ExploreLayersPdfium()                          */
+/*                        ExploreLayersPdfium()                         */
 /************************************************************************/
 
 void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int iPageOfInterest,
@@ -4066,7 +4066,7 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int iPageOfInterest,
 }
 
 /************************************************************************/
-/*                         FindLayersPdfium()                          */
+/*                          FindLayersPdfium()                          */
 /************************************************************************/
 
 void PDFDataset::FindLayersPdfium(int iPageOfInterest)
@@ -4111,7 +4111,7 @@ void PDFDataset::FindLayersPdfium(int iPageOfInterest)
 }
 
 /************************************************************************/
-/*                       TurnLayersOnOffPdfium()                       */
+/*                       TurnLayersOnOffPdfium()                        */
 /************************************************************************/
 
 void PDFDataset::TurnLayersOnOffPdfium()
@@ -4284,7 +4284,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
 }
 
 /************************************************************************/
-/*                    GetVisibilityStateForOGCPdfium()                  */
+/*                   GetVisibilityStateForOGCPdfium()                   */
 /************************************************************************/
 
 PDFDataset::VisibilityState PDFDataset::GetVisibilityStateForOGCPdfium(int nNum,
@@ -4378,7 +4378,7 @@ void PDFDataset::MapOCGsToPages()
 }
 
 /************************************************************************/
-/*                           FindLayerOCG()                             */
+/*                            FindLayerOCG()                            */
 /************************************************************************/
 
 CPLString PDFDataset::FindLayerOCG(GDALPDFDictionary *poPageDict,
@@ -5705,7 +5705,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       ParseLGIDictObject()                           */
+/*                         ParseLGIDictObject()                         */
 /************************************************************************/
 
 int PDFDataset::ParseLGIDictObject(GDALPDFObject *poLGIDict)
@@ -5758,7 +5758,7 @@ int PDFDataset::ParseLGIDictObject(GDALPDFObject *poLGIDict)
 }
 
 /************************************************************************/
-/*                            Get()                                     */
+/*                                Get()                                 */
 /************************************************************************/
 
 static double Get(GDALPDFObject *poObj, int nIndice)
@@ -5816,7 +5816,7 @@ static double Get(GDALPDFObject *poObj, int nIndice)
 }
 
 /************************************************************************/
-/*                            Get()                                */
+/*                                Get()                                 */
 /************************************************************************/
 
 static double Get(GDALPDFDictionary *poDict, const char *pszName)
@@ -5829,7 +5829,7 @@ static double Get(GDALPDFDictionary *poDict, const char *pszName)
 }
 
 /************************************************************************/
-/*                   ParseLGIDictDictFirstPass()                        */
+/*                     ParseLGIDictDictFirstPass()                      */
 /************************************************************************/
 
 int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary *poLGIDict,
@@ -5991,7 +5991,7 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary *poLGIDict,
 }
 
 /************************************************************************/
-/*                  ParseLGIDictDictSecondPass()                        */
+/*                     ParseLGIDictDictSecondPass()                     */
 /************************************************************************/
 
 int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary *poLGIDict)
@@ -6109,7 +6109,7 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary *poLGIDict)
 }
 
 /************************************************************************/
-/*                         ParseProjDict()                               */
+/*                           ParseProjDict()                            */
 /************************************************************************/
 
 int PDFDataset::ParseProjDict(GDALPDFDictionary *poProjDict)
@@ -6909,7 +6909,7 @@ int PDFDataset::ParseVP(GDALPDFObject *poVP, double dfMediaBoxWidth,
 }
 
 /************************************************************************/
-/*                           ParseMeasure()                             */
+/*                            ParseMeasure()                            */
 /************************************************************************/
 
 int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
@@ -7272,7 +7272,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                            */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *PDFDataset::GetSpatialRef() const
@@ -7303,7 +7303,7 @@ CPLErr PDFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                            SetSpatialRef()                           */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 CPLErr PDFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -7338,7 +7338,7 @@ CPLErr PDFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **PDFDataset::GetMetadataDomainList()
@@ -7349,7 +7349,7 @@ char **PDFDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList PDFDataset::GetMetadata(const char *pszDomain)
@@ -7570,7 +7570,7 @@ const GDAL_GCP *PDFDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                               SetGCPs()                              */
+/*                              SetGCPs()                               */
 /************************************************************************/
 
 CPLErr PDFDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
@@ -7610,7 +7610,7 @@ CPLErr PDFDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 #endif  // #ifdef HAVE_PDF_READ_SUPPORT
 
 /************************************************************************/
-/*                          GDALPDFOpen()                               */
+/*                            GDALPDFOpen()                             */
 /************************************************************************/
 
 GDALDataset *GDALPDFOpen(
@@ -7630,7 +7630,7 @@ GDALDataset *GDALPDFOpen(
 }
 
 /************************************************************************/
-/*                       GDALPDFUnloadDriver()                          */
+/*                        GDALPDFUnloadDriver()                         */
 /************************************************************************/
 
 static void GDALPDFUnloadDriver(CPL_UNUSED GDALDriver *poDriver)
@@ -7688,7 +7688,7 @@ static void GDALPDFUnloadDriver(CPL_UNUSED GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                           PDFSanitizeLayerName()                     */
+/*                        PDFSanitizeLayerName()                        */
 /************************************************************************/
 
 CPLString PDFSanitizeLayerName(const char *pszName)
@@ -7710,7 +7710,7 @@ CPLString PDFSanitizeLayerName(const char *pszName)
 }
 
 /************************************************************************/
-/*                    GDALPDFListLayersAlgorithm                        */
+/*                      GDALPDFListLayersAlgorithm                      */
 /************************************************************************/
 
 #ifdef HAVE_PDF_READ_SUPPORT
@@ -7794,7 +7794,7 @@ GDALPDFInstantiateAlgorithm(const std::vector<std::string> &aosPath)
 #endif  // HAVE_PDF_READ_SUPPORT
 
 /************************************************************************/
-/*                         GDALRegister_PDF()                           */
+/*                          GDALRegister_PDF()                          */
 /************************************************************************/
 
 void GDALRegister_PDF()

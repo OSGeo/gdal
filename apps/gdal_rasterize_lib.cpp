@@ -38,7 +38,7 @@
 #include "gdalargumentparser.h"
 
 /************************************************************************/
-/*                          GDALRasterizeOptions()                      */
+/*                        GDALRasterizeOptions()                        */
 /************************************************************************/
 
 struct GDALRasterizeOptions
@@ -73,7 +73,7 @@ struct GDALRasterizeOptions
 };
 
 /************************************************************************/
-/*                     GDALRasterizeOptionsGetParser()                  */
+/*                   GDALRasterizeOptionsGetParser()                    */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -329,7 +329,7 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
 }
 
 /************************************************************************/
-/*                          GDALRasterizeAppGetParserUsage()            */
+/*                   GDALRasterizeAppGetParserUsage()                   */
 /************************************************************************/
 
 std::string GDALRasterizeAppGetParserUsage()
@@ -824,7 +824,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
 }
 
 /************************************************************************/
-/*                  CreateOutputDataset()                               */
+/*                        CreateOutputDataset()                         */
 /************************************************************************/
 
 static std::unique_ptr<GDALDataset> CreateOutputDataset(
@@ -969,7 +969,7 @@ static std::unique_ptr<GDALDataset> CreateOutputDataset(
 }
 
 /************************************************************************/
-/*                             GDALRasterize()                          */
+/*                           GDALRasterize()                            */
 /************************************************************************/
 
 /* clang-format off */
@@ -1504,7 +1504,7 @@ static bool ArgIsNumericRasterize(const char *pszArg)
 }
 
 /************************************************************************/
-/*                           GDALRasterizeOptionsNew()                  */
+/*                      GDALRasterizeOptionsNew()                       */
 /************************************************************************/
 
 /**
@@ -1766,7 +1766,7 @@ GDALRasterizeOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                       GDALRasterizeOptionsFree()                     */
+/*                      GDALRasterizeOptionsFree()                      */
 /************************************************************************/
 
 /**

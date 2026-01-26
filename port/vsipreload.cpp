@@ -176,7 +176,7 @@ std::map<int, std::string> oMapDirFdToName;
 std::string osCurDir;
 
 /************************************************************************/
-/*                             myinit()                                 */
+/*                               myinit()                               */
 /************************************************************************/
 
 #define LOAD_SYMBOL(x)                                                         \
@@ -267,7 +267,7 @@ static void myinit()
 }
 
 /************************************************************************/
-/*                          getVSILFILE()                               */
+/*                            getVSILFILE()                             */
 /************************************************************************/
 
 static VSILFILE *getVSILFILE(FILE *stream)
@@ -284,7 +284,7 @@ static VSILFILE *getVSILFILE(FILE *stream)
 }
 
 /************************************************************************/
-/*                          getVSILFILE()                               */
+/*                            getVSILFILE()                             */
 /************************************************************************/
 
 static VSILFILE *getVSILFILE(int fd)
@@ -300,7 +300,7 @@ static VSILFILE *getVSILFILE(int fd)
 }
 
 /************************************************************************/
-/*                        VSIFSeekLHelper()                             */
+/*                          VSIFSeekLHelper()                           */
 /************************************************************************/
 
 static int VSIFSeekLHelper(VSILFILE *fpVSIL, off64_t off, int whence)
@@ -319,7 +319,7 @@ static int VSIFSeekLHelper(VSILFILE *fpVSIL, off64_t off, int whence)
 }
 
 /************************************************************************/
-/*                          VSIFopenHelper()                            */
+/*                           VSIFopenHelper()                           */
 /************************************************************************/
 
 static VSILFILE *VSIFfopenHelper(const char *path, const char *mode)
@@ -357,7 +357,7 @@ static int getfdFromVSILFILE(VSILFILE *fpVSIL)
 }
 
 /************************************************************************/
-/*                          VSIFopenHelper()                            */
+/*                           VSIFopenHelper()                           */
 /************************************************************************/
 
 static int VSIFopenHelper(const char *path, int flags)
@@ -396,7 +396,7 @@ static int VSIFopenHelper(const char *path, int flags)
 }
 
 /************************************************************************/
-/*                    GET_DEBUG_VSIPRELOAD_COND()                             */
+/*                     GET_DEBUG_VSIPRELOAD_COND()                      */
 /************************************************************************/
 
 static bool GET_DEBUG_VSIPRELOAD_COND(const char *path)
@@ -423,7 +423,7 @@ static bool GET_DEBUG_VSIPRELOAD_COND(VSIDIRPreload *dirP)
 }
 
 /************************************************************************/
-/*                     copyVSIStatBufLToBuf()                           */
+/*                        copyVSIStatBufLToBuf()                        */
 /************************************************************************/
 
 static void copyVSIStatBufLToBuf(VSIStatBufL *bufSrc, struct stat *buf)
@@ -445,7 +445,7 @@ static void copyVSIStatBufLToBuf(VSIStatBufL *bufSrc, struct stat *buf)
 }
 
 /************************************************************************/
-/*                     copyVSIStatBufLToBuf64()                         */
+/*                       copyVSIStatBufLToBuf64()                       */
 /************************************************************************/
 
 static void copyVSIStatBufLToBuf64(VSIStatBufL *bufSrc, struct stat64 *buf)
@@ -467,7 +467,7 @@ static void copyVSIStatBufLToBuf64(VSIStatBufL *bufSrc, struct stat64 *buf)
 }
 
 /************************************************************************/
-/*                             fopen()                                  */
+/*                               fopen()                                */
 /************************************************************************/
 
 FILE CPL_DLL *fopen(const char *path, const char *mode)
@@ -492,7 +492,7 @@ FILE CPL_DLL *fopen(const char *path, const char *mode)
 }
 
 /************************************************************************/
-/*                            fopen64()                                 */
+/*                              fopen64()                               */
 /************************************************************************/
 
 #ifndef FOPEN64_ALIAS_OF_FOPEN
@@ -519,7 +519,7 @@ FILE CPL_DLL *fopen64(const char *path, const char *mode)
 #endif
 
 /************************************************************************/
-/*                            fread()                                   */
+/*                               fread()                                */
 /************************************************************************/
 
 size_t CPL_DLL fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
@@ -543,7 +543,7 @@ size_t CPL_DLL fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 }
 
 /************************************************************************/
-/*                            fwrite()                                  */
+/*                               fwrite()                               */
 /************************************************************************/
 
 size_t CPL_DLL fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
@@ -567,7 +567,7 @@ size_t CPL_DLL fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 }
 
 /************************************************************************/
-/*                            fclose()                                  */
+/*                               fclose()                               */
 /************************************************************************/
 
 int CPL_DLL fclose(FILE *stream)
@@ -601,7 +601,7 @@ int CPL_DLL fclose(FILE *stream)
 }
 
 /************************************************************************/
-/*                            __xstat()                                 */
+/*                              __xstat()                               */
 /************************************************************************/
 
 int CPL_DLL __xstat(int ver, const char *path, struct stat *buf)
@@ -646,7 +646,7 @@ int CPL_DLL __xstat(int ver, const char *path, struct stat *buf)
 }
 
 /************************************************************************/
-/*                           __lxstat()                                 */
+/*                              __lxstat()                              */
 /************************************************************************/
 
 int CPL_DLL __lxstat(int ver, const char *path, struct stat *buf)
@@ -694,7 +694,7 @@ int CPL_DLL __lxstat(int ver, const char *path, struct stat *buf)
 }
 
 /************************************************************************/
-/*                           __xstat64()                                */
+/*                             __xstat64()                              */
 /************************************************************************/
 
 int CPL_DLL __xstat64(int ver, const char *path, struct stat64 *buf)
@@ -734,7 +734,7 @@ int CPL_DLL __xstat64(int ver, const char *path, struct stat64 *buf)
 }
 
 /************************************************************************/
-/*                           fseeko64()                                 */
+/*                              fseeko64()                              */
 /************************************************************************/
 
 #ifndef FSEEKO64_ALIAS_OF_FSEEKO
@@ -754,7 +754,7 @@ int CPL_DLL fseeko64(FILE *stream, off64_t off, int whence)
 #endif
 
 /************************************************************************/
-/*                           fseeko()                                 */
+/*                               fseeko()                               */
 /************************************************************************/
 
 int CPL_DLL fseeko(FILE *stream, off_t off, int whence)
@@ -778,7 +778,7 @@ int CPL_DLL fseeko(FILE *stream, off_t off, int whence)
 }
 
 /************************************************************************/
-/*                            fseek()                                   */
+/*                               fseek()                                */
 /************************************************************************/
 
 int CPL_DLL fseek(FILE *stream, off_t off, int whence)
@@ -796,7 +796,7 @@ int CPL_DLL fseek(FILE *stream, off_t off, int whence)
 }
 
 /************************************************************************/
-/*                           ftello64()                                 */
+/*                              ftello64()                              */
 /************************************************************************/
 
 #ifndef FTELLO64_ALIAS_OF_FTELLO
@@ -815,7 +815,7 @@ off64_t CPL_DLL ftello64(FILE *stream)
 #endif
 
 /************************************************************************/
-/*                            ftello()                                  */
+/*                               ftello()                               */
 /************************************************************************/
 
 off_t CPL_DLL ftello(FILE *stream)
@@ -838,7 +838,7 @@ off_t CPL_DLL ftello(FILE *stream)
 }
 
 /************************************************************************/
-/*                            ftell()                                   */
+/*                               ftell()                                */
 /************************************************************************/
 
 off_t CPL_DLL ftell(FILE *stream)
@@ -855,7 +855,7 @@ off_t CPL_DLL ftell(FILE *stream)
 }
 
 /************************************************************************/
-/*                             feof()                                   */
+/*                                feof()                                */
 /************************************************************************/
 
 int CPL_DLL feof(FILE *stream)
@@ -872,7 +872,7 @@ int CPL_DLL feof(FILE *stream)
 }
 
 /************************************************************************/
-/*                            rewind()                                  */
+/*                               rewind()                               */
 /************************************************************************/
 
 void CPL_DLL rewind(FILE *stream)
@@ -881,7 +881,7 @@ void CPL_DLL rewind(FILE *stream)
 }
 
 /************************************************************************/
-/*                            fflush()                                  */
+/*                               fflush()                               */
 /************************************************************************/
 
 int CPL_DLL fflush(FILE *stream)
@@ -898,7 +898,7 @@ int CPL_DLL fflush(FILE *stream)
 }
 
 /************************************************************************/
-/*                            fgetpos()                                 */
+/*                              fgetpos()                               */
 /************************************************************************/
 
 int CPL_DLL fgetpos(FILE *stream, fpos_t *pos)
@@ -918,7 +918,7 @@ int CPL_DLL fgetpos(FILE *stream, fpos_t *pos)
 }
 
 /************************************************************************/
-/*                            fsetpos()                                 */
+/*                              fsetpos()                               */
 /************************************************************************/
 
 int CPL_DLL fsetpos(FILE *stream, fpos_t *pos)
@@ -938,7 +938,7 @@ int CPL_DLL fsetpos(FILE *stream, fpos_t *pos)
 }
 
 /************************************************************************/
-/*                             fileno()                                 */
+/*                               fileno()                               */
 /************************************************************************/
 
 int CPL_DLL fileno(FILE *stream)
@@ -959,7 +959,7 @@ int CPL_DLL fileno(FILE *stream)
 }
 
 /************************************************************************/
-/*                             ferror()                                 */
+/*                               ferror()                               */
 /************************************************************************/
 
 int CPL_DLL ferror(FILE *stream)
@@ -979,7 +979,7 @@ int CPL_DLL ferror(FILE *stream)
 }
 
 /************************************************************************/
-/*                             clearerr()                               */
+/*                              clearerr()                              */
 /************************************************************************/
 
 void CPL_DLL clearerr(FILE *stream)
@@ -998,7 +998,7 @@ void CPL_DLL clearerr(FILE *stream)
 }
 
 /************************************************************************/
-/*                             fdopen()                                 */
+/*                               fdopen()                               */
 /************************************************************************/
 
 FILE CPL_DLL *fdopen(int fd, const char *mode)
@@ -1018,7 +1018,7 @@ FILE CPL_DLL *fdopen(int fd, const char *mode)
 }
 
 /************************************************************************/
-/*                             freopen()                                */
+/*                              freopen()                               */
 /************************************************************************/
 
 FILE CPL_DLL *freopen(const char *path, const char *mode, FILE *stream)
@@ -1039,7 +1039,7 @@ FILE CPL_DLL *freopen(const char *path, const char *mode, FILE *stream)
 }
 
 /************************************************************************/
-/*                              open()                                  */
+/*                                open()                                */
 /************************************************************************/
 
 static int myopen(const char *path, int flags, ...)
@@ -1109,7 +1109,7 @@ int CPL_DLL open(const char *path, int flags, ...)
 }
 
 /************************************************************************/
-/*                             open64()                                 */
+/*                               open64()                               */
 /************************************************************************/
 
 #ifndef OPEN64_ALIAS_OF_OPEN
@@ -1171,7 +1171,7 @@ int CPL_DLL open64(const char *path, int flags, ...)
 #endif
 
 /************************************************************************/
-/*                             creat()                                  */
+/*                               creat()                                */
 /************************************************************************/
 
 int CPL_DLL creat(const char *path, mode_t mode)
@@ -1180,7 +1180,7 @@ int CPL_DLL creat(const char *path, mode_t mode)
 }
 
 /************************************************************************/
-/*                             close()                                  */
+/*                               close()                                */
 /************************************************************************/
 
 int CPL_DLL close(int fd)
@@ -1218,7 +1218,7 @@ int CPL_DLL close(int fd)
 }
 
 /************************************************************************/
-/*                              read()                                  */
+/*                                read()                                */
 /************************************************************************/
 
 ssize_t CPL_DLL read(int fd, void *buf, size_t count)
@@ -1253,7 +1253,7 @@ ssize_t CPL_DLL read(int fd, void *buf, size_t count)
 }
 
 /************************************************************************/
-/*                              write()                                 */
+/*                               write()                                */
 /************************************************************************/
 
 ssize_t CPL_DLL write(int fd, const void *buf, size_t count)
@@ -1271,7 +1271,7 @@ ssize_t CPL_DLL write(int fd, const void *buf, size_t count)
 }
 
 /************************************************************************/
-/*                              fsync()                                 */
+/*                               fsync()                                */
 /************************************************************************/
 
 int CPL_DLL fsync(int fd)
@@ -1288,7 +1288,7 @@ int CPL_DLL fsync(int fd)
 }
 
 /************************************************************************/
-/*                           fdatasync()                                */
+/*                             fdatasync()                              */
 /************************************************************************/
 
 int CPL_DLL fdatasync(int fd)
@@ -1305,7 +1305,7 @@ int CPL_DLL fdatasync(int fd)
 }
 
 /************************************************************************/
-/*                            __fxstat()                                */
+/*                              __fxstat()                              */
 /************************************************************************/
 
 int CPL_DLL __fxstat(int ver, int fd, struct stat *buf)
@@ -1365,7 +1365,7 @@ int CPL_DLL __fxstat(int ver, int fd, struct stat *buf)
 }
 
 /************************************************************************/
-/*                           __fxstat64()                               */
+/*                             __fxstat64()                             */
 /************************************************************************/
 
 int CPL_DLL __fxstat64(int ver, int fd, struct stat64 *buf)
@@ -1399,7 +1399,7 @@ int CPL_DLL __fxstat64(int ver, int fd, struct stat64 *buf)
 }
 
 /************************************************************************/
-/*                           __fxstatat()                               */
+/*                             __fxstatat()                             */
 /************************************************************************/
 
 #ifdef HAVE_FSTATAT
@@ -1443,7 +1443,7 @@ int CPL_DLL __fxstatat(int ver, int dirfd, const char *pathname,
 #endif
 
 /************************************************************************/
-/*                             lstat()                                 */
+/*                               lstat()                                */
 /************************************************************************/
 
 #ifdef LSTAT64_ALIAS_OF_LSTAT
@@ -1475,7 +1475,7 @@ int CPL_DLL lstat(const char *pathname, struct stat *buf)
 #endif
 
 /************************************************************************/
-/*                              lseek()                                 */
+/*                               lseek()                                */
 /************************************************************************/
 
 off_t CPL_DLL lseek(int fd, off_t off, int whence)
@@ -1500,7 +1500,7 @@ off_t CPL_DLL lseek(int fd, off_t off, int whence)
 }
 
 /************************************************************************/
-/*                             lseek64()                                */
+/*                              lseek64()                               */
 /************************************************************************/
 
 #ifndef LSEEK64_ALIAS_OF_LSEEK
@@ -1527,7 +1527,7 @@ off64_t CPL_DLL lseek64(int fd, off64_t off, int whence)
 #endif
 
 /************************************************************************/
-/*                            truncate()                                */
+/*                              truncate()                              */
 /************************************************************************/
 
 int CPL_DLL truncate(const char *path, off_t length)
@@ -1555,7 +1555,7 @@ int CPL_DLL truncate(const char *path, off_t length)
 }
 
 /************************************************************************/
-/*                           ftruncate()                                */
+/*                             ftruncate()                              */
 /************************************************************************/
 
 int CPL_DLL ftruncate(int fd, off_t length)
@@ -1576,7 +1576,7 @@ int CPL_DLL ftruncate(int fd, off_t length)
 }
 
 /************************************************************************/
-/*                             opendir()                                */
+/*                              opendir()                               */
 /************************************************************************/
 
 DIR CPL_DLL *opendir(const char *name)
@@ -1638,7 +1638,7 @@ DIR CPL_DLL *opendir(const char *name)
 }
 
 /************************************************************************/
-/*                             filldir()                                */
+/*                              filldir()                               */
 /************************************************************************/
 
 static bool filldir(VSIDIRPreload *mydir)
@@ -1673,7 +1673,7 @@ static bool filldir(VSIDIRPreload *mydir)
 }
 
 /************************************************************************/
-/*                             readdir()                                */
+/*                              readdir()                               */
 /************************************************************************/
 
 struct dirent CPL_DLL *readdir(DIR *dirp)
@@ -1719,7 +1719,7 @@ struct dirent64 CPL_DLL *readdir64(DIR *dirp)
 #endif
 
 /************************************************************************/
-/*                             closedir()                               */
+/*                              closedir()                              */
 /************************************************************************/
 
 int CPL_DLL closedir(DIR *dirp)
@@ -1777,7 +1777,7 @@ int CPL_DLL dirfd(DIR *dirp)
 }
 
 /************************************************************************/
-/*                              fchdir()                                */
+/*                               fchdir()                               */
 /************************************************************************/
 
 int CPL_DLL fchdir(int fd)
@@ -1826,7 +1826,7 @@ int CPL_DLL fchdir(int fd)
 }
 
 /************************************************************************/
-/*                        acl_extended_file()                           */
+/*                         acl_extended_file()                          */
 /************************************************************************/
 
 // #include <acl/acl.h>
@@ -1856,7 +1856,7 @@ int acl_extended_file(const char *path)
 }
 
 /************************************************************************/
-/*                          getfilecon()                                */
+/*                             getfilecon()                             */
 /************************************************************************/
 
 // #include <selinux/selinux.h>
@@ -1889,7 +1889,7 @@ int getfilecon(const char *path, /*security_context_t **/ void *con)
 }
 
 /************************************************************************/
-/*                          lgetfilecon()                                */
+/*                            lgetfilecon()                             */
 /************************************************************************/
 
 // #include <selinux/selinux.h>

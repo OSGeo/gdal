@@ -92,7 +92,7 @@ inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 }  // namespace
 
 /************************************************************************/
-/*                      ZarrArray::ParseChunkSize()                     */
+/*                     ZarrArray::ParseChunkSize()                      */
 /************************************************************************/
 
 /* static */ bool ZarrArray::ParseChunkSize(const CPLJSONArray &oChunks,
@@ -121,7 +121,7 @@ inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 }
 
 /************************************************************************/
-/*                     ZarrArray::ComputeBlockCount()                   */
+/*                    ZarrArray::ComputeBlockCount()                    */
 /************************************************************************/
 
 /* static */ uint64_t ZarrArray::ComputeBlockCount(
@@ -150,7 +150,7 @@ inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 }
 
 /************************************************************************/
-/*                     ComputeCountInnerBlockInOuter()                  */
+/*                   ComputeCountInnerBlockInOuter()                    */
 /************************************************************************/
 
 static std::vector<GUInt64>
@@ -193,23 +193,25 @@ ComputeInnerBlockSizeBytes(const std::vector<DtypeElt> &aoDtypeElts,
 }
 
 /************************************************************************/
-/*                         ZarrArray::ZarrArray()                       */
+/*                        ZarrArray::ZarrArray()                        */
 /************************************************************************/
 
 ZarrArray::ZarrArray(
     const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-    const std::string &osParentName, const std::string &osName,
+    const std::shared_ptr<ZarrGroupBase> &poParent, const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
     const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
     const std::vector<GUInt64> &anOuterBlockSize,
     const std::vector<GUInt64> &anInnerBlockSize)
     :
 #if !defined(COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT)
-      GDALAbstractMDArray(osParentName, osName),
+      GDALAbstractMDArray(poParent->GetFullName(), osName),
 #endif
-      GDALPamMDArray(osParentName, osName, poSharedResource->GetPAM()),
-      m_poSharedResource(poSharedResource), m_aoDims(aoDims), m_oType(oType),
-      m_aoDtypeElts(aoDtypeElts), m_anOuterBlockSize(anOuterBlockSize),
+      GDALPamMDArray(poParent->GetFullName(), osName,
+                     poSharedResource->GetPAM()),
+      m_poSharedResource(poSharedResource), m_poParent(poParent),
+      m_aoDims(aoDims), m_oType(oType), m_aoDtypeElts(aoDtypeElts),
+      m_anOuterBlockSize(anOuterBlockSize),
       m_anInnerBlockSize(anInnerBlockSize),
       m_anCountInnerBlockInOuter(ComputeCountInnerBlockInOuter(
           m_anInnerBlockSize, m_anOuterBlockSize)),
@@ -226,7 +228,7 @@ ZarrArray::ZarrArray(
 }
 
 /************************************************************************/
-/*                              ~ZarrArray()                            */
+/*                             ~ZarrArray()                             */
 /************************************************************************/
 
 ZarrArray::~ZarrArray()
@@ -241,7 +243,7 @@ ZarrArray::~ZarrArray()
 }
 
 /************************************************************************/
-/*              ZarrArray::SerializeSpecialAttributes()                 */
+/*               ZarrArray::SerializeSpecialAttributes()                */
 /************************************************************************/
 
 CPLJSONObject ZarrArray::SerializeSpecialAttributes()
@@ -251,14 +253,20 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
 
     auto oAttrs = m_oAttrGroup.Serialize();
 
-    if (m_poSRS)
+    const bool bUseSpatialProjConventions =
+        EQUAL(m_aosCreationOptions.FetchNameValueDef(
+                  "GEOREFERENCING_CONVENTION", "GDAL"),
+              "SPATIAL_PROJ");
+
+    const auto ExportToWkt2AndPROJJSON = [this](CPLJSONObject &oContainer,
+                                                const char *pszWKT2AttrName,
+                                                const char *pszPROJJSONAttrName)
     {
-        CPLJSONObject oCRS;
         const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
         char *pszWKT = nullptr;
         if (m_poSRS->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE)
         {
-            oCRS.Add("wkt", pszWKT);
+            oContainer.Set(pszWKT2AttrName, pszWKT);
         }
         CPLFree(pszWKT);
 
@@ -271,11 +279,212 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
                 CPLJSONDocument oDocProjJSON;
                 if (oDocProjJSON.LoadMemory(std::string(projjson)))
                 {
-                    oCRS.Add("projjson", oDocProjJSON.GetRoot());
+                    oContainer.Set(pszPROJJSONAttrName, oDocProjJSON.GetRoot());
                 }
             }
             CPLFree(projjson);
         }
+    };
+
+    CPLJSONArray oZarrConventionsArray;
+    if (bUseSpatialProjConventions)
+    {
+        if (m_poSRS)
+        {
+            CPLJSONObject oConventionProj;
+            oConventionProj.Set(
+                "schema_url",
+                "https://raw.githubusercontent.com/zarr-experimental/geo-proj/"
+                "refs/tags/v1/schema.json");
+            oConventionProj.Set("spec_url",
+                                "https://github.com/zarr-experimental/geo-proj/"
+                                "blob/v1/README.md");
+            oConventionProj.Set("uuid", "f17cb550-5864-4468-aeb7-f3180cfb622f");
+            oConventionProj.Set("name", "proj:");  // ending colon intended
+            oConventionProj.Set(
+                "description",
+                "Coordinate reference system information for geospatial data");
+
+            oZarrConventionsArray.Add(oConventionProj);
+
+            const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+            const char *pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
+            if (pszAuthorityName && pszAuthorityCode)
+            {
+                oAttrs.Set("proj:code", CPLSPrintf("%s:%s", pszAuthorityName,
+                                                   pszAuthorityCode));
+            }
+            else
+            {
+                ExportToWkt2AndPROJJSON(oAttrs, "proj:wkt2", "proj:projjson");
+            }
+        }
+
+        if (GetDimensionCount() >= 2)
+        {
+            bool bAddSpatialProjConvention = false;
+
+            double dfXOff = std::numeric_limits<double>::quiet_NaN();
+            double dfXRes = std::numeric_limits<double>::quiet_NaN();
+            double dfYOff = std::numeric_limits<double>::quiet_NaN();
+            double dfYRes = std::numeric_limits<double>::quiet_NaN();
+            std::string osDimXName;
+            std::string osDimYName;
+            std::string osDimZName;
+            double dfWidth = 0, dfHeight = 0;
+            for (const auto &poDim : GetDimensions())
+            {
+                if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X)
+                {
+                    osDimXName = poDim->GetName();
+                    dfWidth = static_cast<double>(poDim->GetSize());
+                    auto poVar = poDim->GetIndexingVariable();
+                    if (poVar && poVar->IsRegularlySpaced(dfXOff, dfXRes))
+                    {
+                        dfXOff -= dfXRes / 2;
+                    }
+                }
+                else if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y)
+                {
+                    osDimYName = poDim->GetName();
+                    dfHeight = static_cast<double>(poDim->GetSize());
+                    auto poVar = poDim->GetIndexingVariable();
+                    if (poVar && poVar->IsRegularlySpaced(dfYOff, dfYRes))
+                    {
+                        dfYOff -= dfYRes / 2;
+                    }
+                }
+                else if (poDim->GetType() == GDAL_DIM_TYPE_VERTICAL)
+                {
+                    osDimZName = poDim->GetName();
+                }
+            }
+
+            GDALGeoTransform gt;
+            if (!osDimXName.empty() && !osDimYName.empty())
+            {
+                const auto oGDALGeoTransform = oAttrs["gdal:geotransform"];
+                const bool bHasGDALGeoTransform =
+                    (oGDALGeoTransform.GetType() ==
+                         CPLJSONObject::Type::Array &&
+                     oGDALGeoTransform.ToArray().size() == 6);
+                if (bHasGDALGeoTransform)
+                {
+                    const auto oGDALGeoTransformArray =
+                        oGDALGeoTransform.ToArray();
+                    for (int i = 0; i < 6; ++i)
+                    {
+                        gt[i] = oGDALGeoTransformArray[i].ToDouble();
+                    }
+                    bAddSpatialProjConvention = true;
+                }
+                else if (!std::isnan(dfXOff) && !std::isnan(dfXRes) &&
+                         !std::isnan(dfYOff) && !std::isnan(dfYRes))
+                {
+                    gt[0] = dfXOff;
+                    gt[1] = dfXRes;
+                    gt[2] = 0;  // xrot
+                    gt[3] = dfYOff;
+                    gt[4] = 0;  // yrot
+                    gt[5] = dfYRes;
+                    bAddSpatialProjConvention = true;
+                }
+            }
+
+            if (bAddSpatialProjConvention)
+            {
+                const auto osGDALMD_AREA_OR_POINT =
+                    oAttrs.GetString(GDALMD_AREA_OR_POINT);
+                if (osGDALMD_AREA_OR_POINT == GDALMD_AOP_AREA)
+                {
+                    oAttrs.Add("spatial:registration", "pixel");
+                    oAttrs.Delete(GDALMD_AREA_OR_POINT);
+                }
+                else if (osGDALMD_AREA_OR_POINT == GDALMD_AOP_POINT)
+                {
+                    oAttrs.Add("spatial:registration", "node");
+                    oAttrs.Delete(GDALMD_AREA_OR_POINT);
+
+                    // Going from GDAL's corner convention to pixel center
+                    gt[0] += 0.5 * gt[1] + 0.5 * gt[2];
+                    gt[3] += 0.5 * gt[4] + 0.5 * gt[5];
+                    dfWidth -= 1.0;
+                    dfHeight -= 1.0;
+                }
+
+                CPLJSONArray oAttrSpatialTransform;
+                oAttrSpatialTransform.Add(gt[1]);  // xres
+                oAttrSpatialTransform.Add(gt[2]);  // xrot
+                oAttrSpatialTransform.Add(gt[0]);  // xoff
+                oAttrSpatialTransform.Add(gt[4]);  // yrot
+                oAttrSpatialTransform.Add(gt[5]);  // yres
+                oAttrSpatialTransform.Add(gt[3]);  // yoff
+
+                oAttrs.Add("spatial:transform_type", "affine");
+                oAttrs.Add("spatial:transform", oAttrSpatialTransform);
+                oAttrs.Delete("gdal:geotransform");
+
+                double dfX0, dfY0;
+                double dfX1, dfY1;
+                double dfX2, dfY2;
+                double dfX3, dfY3;
+                gt.Apply(0, 0, &dfX0, &dfY0);
+                gt.Apply(dfWidth, 0, &dfX1, &dfY1);
+                gt.Apply(0, dfHeight, &dfX2, &dfY2);
+                gt.Apply(dfWidth, dfHeight, &dfX3, &dfY3);
+                const double dfXMin =
+                    std::min(std::min(dfX0, dfX1), std::min(dfX2, dfX3));
+                const double dfYMin =
+                    std::min(std::min(dfY0, dfY1), std::min(dfY2, dfY3));
+                const double dfXMax =
+                    std::max(std::max(dfX0, dfX1), std::max(dfX2, dfX3));
+                const double dfYMax =
+                    std::max(std::max(dfY0, dfY1), std::max(dfY2, dfY3));
+
+                CPLJSONArray oAttrSpatialBBOX;
+                oAttrSpatialBBOX.Add(dfXMin);
+                oAttrSpatialBBOX.Add(dfYMin);
+                oAttrSpatialBBOX.Add(dfXMax);
+                oAttrSpatialBBOX.Add(dfYMax);
+                oAttrs.Add("spatial:bbox", oAttrSpatialBBOX);
+
+                CPLJSONArray aoSpatialDimensions;
+                if (!osDimZName.empty())
+                    aoSpatialDimensions.Add(osDimZName);
+                aoSpatialDimensions.Add(osDimYName);
+                aoSpatialDimensions.Add(osDimXName);
+                oAttrs.Add("spatial:dimensions", aoSpatialDimensions);
+
+                CPLJSONObject oConventionSpatial;
+                oConventionSpatial.Set(
+                    "schema_url",
+                    "https://raw.githubusercontent.com/zarr-conventions/"
+                    "spatial/refs/tags/v1/schema.json");
+                oConventionSpatial.Set("spec_url",
+                                       "https://github.com/zarr-conventions/"
+                                       "spatial/blob/v1/README.md");
+                oConventionSpatial.Set("uuid",
+                                       "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4");
+                oConventionSpatial.Set("name",
+                                       "spatial:");  // ending colon intended
+                oConventionSpatial.Set("description",
+                                       "Spatial coordinate information");
+
+                oZarrConventionsArray.Add(oConventionSpatial);
+            }
+        }
+
+        if (oZarrConventionsArray.size() > 0)
+        {
+            oAttrs.Add("zarr_conventions", oZarrConventionsArray);
+        }
+    }
+    else if (m_poSRS)
+    {
+        // GDAL convention
+
+        CPLJSONObject oCRS;
+        ExportToWkt2AndPROJJSON(oCRS, "wkt", "projjson");
 
         const char *pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
         const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
@@ -325,7 +534,7 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
 }
 
 /************************************************************************/
-/*                          FillBlockSize()                             */
+/*                           FillBlockSize()                            */
 /************************************************************************/
 
 /* static */
@@ -385,7 +594,7 @@ bool ZarrArray::FillBlockSize(
 }
 
 /************************************************************************/
-/*                      DeallocateDecodedBlockData()                     */
+/*                     DeallocateDecodedBlockData()                     */
 /************************************************************************/
 
 void ZarrArray::DeallocateDecodedBlockData()
@@ -568,7 +777,7 @@ void ZarrArray::EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
 }
 
 /************************************************************************/
-/*                ZarrArray::SerializeNumericNoData()                   */
+/*                 ZarrArray::SerializeNumericNoData()                  */
 /************************************************************************/
 
 void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
@@ -600,7 +809,7 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
 }
 
 /************************************************************************/
-/*                    ZarrArray::GetSpatialRef()                        */
+/*                      ZarrArray::GetSpatialRef()                      */
 /************************************************************************/
 
 std::shared_ptr<OGRSpatialReference> ZarrArray::GetSpatialRef() const
@@ -614,7 +823,7 @@ std::shared_ptr<OGRSpatialReference> ZarrArray::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                        SetRawNoDataValue()                           */
+/*                         SetRawNoDataValue()                          */
 /************************************************************************/
 
 bool ZarrArray::SetRawNoDataValue(const void *pRawNoData)
@@ -662,7 +871,7 @@ void ZarrArray::RegisterNoDataValue(const void *pNoData)
 }
 
 /************************************************************************/
-/*                        DecodeSourceElt()                             */
+/*                          DecodeSourceElt()                           */
 /************************************************************************/
 
 /* static */
@@ -782,7 +991,7 @@ void ZarrArray::DecodeSourceElt(const std::vector<DtypeElt> &elts,
 }
 
 /************************************************************************/
-/*                  ZarrArray::IAdviseReadCommon()                      */
+/*                    ZarrArray::IAdviseReadCommon()                    */
 /************************************************************************/
 
 bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
@@ -935,7 +1144,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                           ZarrArray::IRead()                         */
+/*                          ZarrArray::IRead()                          */
 /************************************************************************/
 
 bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -1434,7 +1643,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                           ZarrArray::IWrite()                        */
+/*                         ZarrArray::IWrite()                          */
 /************************************************************************/
 
 bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -1916,7 +2125,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                   ZarrArray::IsEmptyBlock()                           */
+/*                      ZarrArray::IsEmptyBlock()                       */
 /************************************************************************/
 
 bool ZarrArray::IsEmptyBlock(const ZarrByteVectorQuickResize &abyBlock) const
@@ -1964,7 +2173,7 @@ bool ZarrArray::IsEmptyBlock(const ZarrByteVectorQuickResize &abyBlock) const
 }
 
 /************************************************************************/
-/*                  ZarrArray::OpenBlockPresenceCache()                 */
+/*                 ZarrArray::OpenBlockPresenceCache()                  */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -2079,7 +2288,7 @@ ZarrArray::OpenBlockPresenceCache(bool bCanCreate) const
 }
 
 /************************************************************************/
-/*                    ZarrArray::BlockCachePresence()                   */
+/*                   ZarrArray::BlockCachePresence()                    */
 /************************************************************************/
 
 bool ZarrArray::BlockCachePresence()
@@ -2236,7 +2445,7 @@ bool ZarrArray::BlockCachePresence()
 }
 
 /************************************************************************/
-/*                      ZarrArray::CreateAttribute()                    */
+/*                     ZarrArray::CreateAttribute()                     */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> ZarrArray::CreateAttribute(
@@ -2263,7 +2472,7 @@ std::shared_ptr<GDALAttribute> ZarrArray::CreateAttribute(
 }
 
 /************************************************************************/
-/*                  ZarrGroupBase::DeleteAttribute()                    */
+/*                   ZarrGroupBase::DeleteAttribute()                   */
 /************************************************************************/
 
 bool ZarrArray::DeleteAttribute(const std::string &osName, CSLConstList)
@@ -2322,7 +2531,7 @@ bool ZarrArray::SetUnit(const std::string &osUnit)
 }
 
 /************************************************************************/
-/*                       ZarrArray::GetOffset()                         */
+/*                        ZarrArray::GetOffset()                        */
 /************************************************************************/
 
 double ZarrArray::GetOffset(bool *pbHasOffset,
@@ -2336,7 +2545,7 @@ double ZarrArray::GetOffset(bool *pbHasOffset,
 }
 
 /************************************************************************/
-/*                       ZarrArray::GetScale()                          */
+/*                        ZarrArray::GetScale()                         */
 /************************************************************************/
 
 double ZarrArray::GetScale(bool *pbHasScale, GDALDataType *peStorageType) const
@@ -2349,7 +2558,7 @@ double ZarrArray::GetScale(bool *pbHasScale, GDALDataType *peStorageType) const
 }
 
 /************************************************************************/
-/*                       ZarrArray::SetOffset()                         */
+/*                        ZarrArray::SetOffset()                        */
 /************************************************************************/
 
 bool ZarrArray::SetOffset(double dfOffset, GDALDataType /* eStorageType */)
@@ -2364,7 +2573,7 @@ bool ZarrArray::SetOffset(double dfOffset, GDALDataType /* eStorageType */)
 }
 
 /************************************************************************/
-/*                       ZarrArray::SetScale()                          */
+/*                        ZarrArray::SetScale()                         */
 /************************************************************************/
 
 bool ZarrArray::SetScale(double dfScale, GDALDataType /* eStorageType */)
@@ -2379,7 +2588,7 @@ bool ZarrArray::SetScale(double dfScale, GDALDataType /* eStorageType */)
 }
 
 /************************************************************************/
-/*                      GetDimensionTypeDirection()                     */
+/*                     GetDimensionTypeDirection()                      */
 /************************************************************************/
 
 /* static */
@@ -2444,7 +2653,7 @@ void ZarrArray::GetDimensionTypeDirection(CPLJSONObject &oAttributes,
 }
 
 /************************************************************************/
-/*                      GetCoordinateVariables()                        */
+/*                       GetCoordinateVariables()                       */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALMDArray>>
@@ -2497,7 +2706,7 @@ ZarrArray::GetCoordinateVariables() const
 }
 
 /************************************************************************/
-/*                            Resize()                                  */
+/*                               Resize()                               */
 /************************************************************************/
 
 bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
@@ -2576,7 +2785,7 @@ bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
 }
 
 /************************************************************************/
-/*                       NotifyChildrenOfRenaming()                     */
+/*                      NotifyChildrenOfRenaming()                      */
 /************************************************************************/
 
 void ZarrArray::NotifyChildrenOfRenaming()
@@ -2585,7 +2794,7 @@ void ZarrArray::NotifyChildrenOfRenaming()
 }
 
 /************************************************************************/
-/*                          ParentRenamed()                             */
+/*                           ParentRenamed()                            */
 /************************************************************************/
 
 void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
@@ -2604,7 +2813,7 @@ void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
 }
 
 /************************************************************************/
-/*                              Rename()                                */
+/*                               Rename()                               */
 /************************************************************************/
 
 bool ZarrArray::Rename(const std::string &osNewName)
@@ -2663,7 +2872,7 @@ bool ZarrArray::Rename(const std::string &osNewName)
 }
 
 /************************************************************************/
-/*                       NotifyChildrenOfDeletion()                     */
+/*                      NotifyChildrenOfDeletion()                      */
 /************************************************************************/
 
 void ZarrArray::NotifyChildrenOfDeletion()
@@ -2672,11 +2881,484 @@ void ZarrArray::NotifyChildrenOfDeletion()
 }
 
 /************************************************************************/
-/*                     ParseSpecialAttributes()                         */
+/*                            ParseProjCRS()                            */
 /************************************************************************/
 
-void ZarrArray::ParseSpecialAttributes(
-    const std::shared_ptr<GDALGroup> &poGroup, CPLJSONObject &oAttributes)
+static void ParseProjCRS(const ZarrAttributeGroup *poAttrGroup,
+                         CPLJSONObject &oAttributes, bool bFoundProjUUID,
+                         std::shared_ptr<OGRSpatialReference> &poSRS)
+{
+    const auto poAttrProjCode =
+        bFoundProjUUID ? poAttrGroup->GetAttribute("proj:code") : nullptr;
+    const char *pszProjCode =
+        poAttrProjCode ? poAttrProjCode->ReadAsString() : nullptr;
+    if (pszProjCode)
+    {
+        poSRS = std::make_shared<OGRSpatialReference>();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSRS->SetFromUserInput(
+                pszProjCode,
+                OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
+            OGRERR_NONE)
+        {
+            poSRS.reset();
+        }
+        else
+        {
+            oAttributes.Delete("proj:code");
+        }
+    }
+    else
+    {
+        // EOP Sentinel Zarr Samples Service only
+        const auto poAttrProjEPSG = poAttrGroup->GetAttribute("proj:epsg");
+        if (poAttrProjEPSG)
+        {
+            poSRS = std::make_shared<OGRSpatialReference>();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if (poSRS->importFromEPSG(poAttrProjEPSG->ReadAsInt()) !=
+                OGRERR_NONE)
+            {
+                poSRS.reset();
+            }
+            else
+            {
+                oAttributes.Delete("proj:epsg");
+            }
+        }
+        else
+        {
+            // Both EOPF Sentinel Zarr Samples Service and geo-proj convention
+            const auto poAttrProjWKT2 = poAttrGroup->GetAttribute("proj:wkt2");
+            const char *pszProjWKT2 =
+                poAttrProjWKT2 ? poAttrProjWKT2->ReadAsString() : nullptr;
+            if (pszProjWKT2)
+            {
+                poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (poSRS->importFromWkt(pszProjWKT2) != OGRERR_NONE)
+                {
+                    poSRS.reset();
+                }
+                else
+                {
+                    oAttributes.Delete("proj:wkt2");
+                }
+            }
+            else if (bFoundProjUUID)
+            {
+                // geo-proj convention
+                const auto poAttrProjPROJJSON =
+                    poAttrGroup->GetAttribute("proj:projjson");
+                const char *pszProjPROJJSON =
+                    poAttrProjPROJJSON ? poAttrProjPROJJSON->ReadAsString()
+                                       : nullptr;
+                if (pszProjPROJJSON)
+                {
+                    poSRS = std::make_shared<OGRSpatialReference>();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    if (poSRS->SetFromUserInput(
+                            pszProjPROJJSON,
+                            OGRSpatialReference::
+                                SET_FROM_USER_INPUT_LIMITATIONS_get()) !=
+                        OGRERR_NONE)
+                    {
+                        poSRS.reset();
+                    }
+                    else
+                    {
+                        oAttributes.Delete("proj:projjson");
+                    }
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                      ParseSpatialConventions()                       */
+/************************************************************************/
+
+static void ParseSpatialConventions(
+    const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+    const ZarrAttributeGroup *poAttrGroup, CPLJSONObject &oAttributes,
+    std::shared_ptr<OGRSpatialReference> &poSRS, bool &bAxisAssigned,
+    const std::vector<std::shared_ptr<GDALDimension>> &apoDims)
+{
+    // From https://github.com/zarr-conventions/spatial
+    const auto poAttrSpatialDimensions =
+        poAttrGroup->GetAttribute("spatial:dimensions");
+    if (!poAttrSpatialDimensions)
+        return;
+
+    const auto aosSpatialDimensions =
+        poAttrSpatialDimensions->ReadAsStringArray();
+    if (aosSpatialDimensions.size() < 2)
+        return;
+
+    int iDimNameY = 0;
+    int iDimNameX = 0;
+    const char *pszNameY =
+        aosSpatialDimensions[aosSpatialDimensions.size() - 2];
+    const char *pszNameX =
+        aosSpatialDimensions[aosSpatialDimensions.size() - 1];
+    int iDim = 1;
+    for (const auto &poDim : apoDims)
+    {
+        if (poDim->GetName() == pszNameX)
+            iDimNameX = iDim;
+        else if (poDim->GetName() == pszNameY)
+            iDimNameY = iDim;
+        ++iDim;
+    }
+    if (iDimNameX == 0)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "spatial:dimensions[%d] = %s is a unknown "
+                 "Zarr dimension",
+                 static_cast<int>(aosSpatialDimensions.size() - 1), pszNameX);
+    }
+    if (iDimNameY == 0)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "spatial_dimensions[%d] = %s is a unknown "
+                 "Zarr dimension",
+                 static_cast<int>(aosSpatialDimensions.size() - 2), pszNameY);
+    }
+
+    if (iDimNameX > 0 && iDimNameY > 0)
+    {
+        oAttributes.Delete("spatial:dimensions");
+
+        if (!bAxisAssigned && poSRS)
+        {
+            const auto &oMapping = poSRS->GetDataAxisToSRSAxisMapping();
+            if (oMapping == std::vector<int>{2, 1} ||
+                oMapping == std::vector<int>{2, 1, 3})
+                poSRS->SetDataAxisToSRSAxisMapping({iDimNameY, iDimNameX});
+            else if (oMapping == std::vector<int>{1, 2} ||
+                     oMapping == std::vector<int>{1, 2, 3})
+                poSRS->SetDataAxisToSRSAxisMapping({iDimNameX, iDimNameY});
+
+            bAxisAssigned = true;
+        }
+    }
+
+    const auto poAttrSpatialRegistration =
+        poAttrGroup->GetAttribute("spatial:registration");
+    bool bIsNodeRegistration = false;
+    if (!poAttrSpatialRegistration)
+        oAttributes.Set("spatial:registration", "pixel");  // default value
+    else
+    {
+        const char *pszSpatialRegistration =
+            poAttrSpatialRegistration->ReadAsString();
+        if (pszSpatialRegistration &&
+            strcmp(pszSpatialRegistration, "node") == 0)
+            bIsNodeRegistration = true;
+    }
+
+    const auto poAttrSpatialTransform =
+        poAttrGroup->GetAttribute("spatial:transform");
+    const auto poAttrSpatialTransformType =
+        poAttrGroup->GetAttribute("spatial:transform_type");
+    const char *pszAttrSpatialTransformType =
+        poAttrSpatialTransformType ? poAttrSpatialTransformType->ReadAsString()
+                                   : nullptr;
+
+    if (poAttrSpatialTransform &&
+        (!pszAttrSpatialTransformType ||
+         strcmp(pszAttrSpatialTransformType, "affine") == 0))
+    {
+        auto adfSpatialTransform = poAttrSpatialTransform->ReadAsDoubleArray();
+        if (adfSpatialTransform.size() == 6)
+        {
+            oAttributes.Delete("spatial:transform");
+            oAttributes.Delete("spatial:transform_type");
+
+            // If we have rotation/shear coefficients, expose a gdal:geotransform
+            // attributes
+            if (adfSpatialTransform[1] != 0 || adfSpatialTransform[3] != 0)
+            {
+                if (bIsNodeRegistration)
+                {
+                    // From pixel center convention to GDAL's corner convention
+                    adfSpatialTransform[2] -= 0.5 * adfSpatialTransform[0] +
+                                              0.5 * adfSpatialTransform[1];
+                    adfSpatialTransform[5] -= 0.5 * adfSpatialTransform[3] +
+                                              0.5 * adfSpatialTransform[4];
+                }
+
+                CPLJSONArray oGeoTransform;
+                // Reorder coefficients to GDAL convention
+                for (int idx : {2, 0, 1, 5, 3, 4})
+                    oGeoTransform.Add(adfSpatialTransform[idx]);
+                oAttributes["gdal:geotransform"] = oGeoTransform;
+            }
+            else
+            {
+                auto &poDimX = apoDims[iDimNameX - 1];
+                auto &poDimY = apoDims[iDimNameY - 1];
+                if (!dynamic_cast<GDALMDArrayRegularlySpaced *>(
+                        poDimX->GetIndexingVariable().get()) &&
+                    !dynamic_cast<GDALMDArrayRegularlySpaced *>(
+                        poDimY->GetIndexingVariable().get()))
+                {
+                    auto poIndexingVarX = GDALMDArrayRegularlySpaced::Create(
+                        std::string(), poDimX->GetName(), poDimX,
+                        adfSpatialTransform[2] + adfSpatialTransform[0] / 2,
+                        adfSpatialTransform[0], 0);
+                    poDimX->SetIndexingVariable(poIndexingVarX);
+
+                    // Make the shared resource hold a strong
+                    // reference on the indexing variable,
+                    // so that it remains available to anyone
+                    // querying the dimension for it.
+                    poSharedResource->RegisterIndexingVariable(
+                        poDimX->GetFullName(), poIndexingVarX);
+
+                    auto poIndexingVarY = GDALMDArrayRegularlySpaced::Create(
+                        std::string(), poDimY->GetName(), poDimY,
+                        adfSpatialTransform[5] + adfSpatialTransform[4] / 2,
+                        adfSpatialTransform[4], 0);
+                    poDimY->SetIndexingVariable(poIndexingVarY);
+                    poSharedResource->RegisterIndexingVariable(
+                        poDimY->GetFullName(), poIndexingVarY);
+                }
+            }
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "spatial:transform[] contains an "
+                     "unexpected number of values: %d",
+                     static_cast<int>(adfSpatialTransform.size()));
+        }
+    }
+}
+
+/************************************************************************/
+/*               DetectSRSFromEOPFSampleServiceMetadata()               */
+/************************************************************************/
+
+/* This function is derived from ExtractCoordinateMetadata() of
+ * https://github.com/EOPF-Sample-Service/GDAL-ZARR-EOPF/blob/main/src/eopf_metadata.cpp
+ * released under the MIT license and
+ * Copyright (c) 2024 Yuvraj Adagale and contributors
+ *
+ * Note: it does not handle defaulting to EPSG:4326 as it is not clear to me
+ * (E. Rouault) why this would be needed, at least for Sentinel2 L1C or L2
+ * products
+ */
+static void DetectSRSFromEOPFSampleServiceMetadata(
+    const std::string &osRootDirectoryName,
+    const std::shared_ptr<ZarrGroupBase> &poGroup,
+    std::shared_ptr<OGRSpatialReference> &poSRS)
+{
+    const CPLJSONObject obj = poGroup->GetAttributeGroup().Serialize();
+
+    // -----------------------------------
+    // STEP 1: Extract spatial reference information
+    // -----------------------------------
+
+    // Find EPSG code directly or in STAC properties
+    int nEPSGCode = 0;
+    const CPLJSONObject &stacDiscovery = obj.GetObj("stac_discovery");
+    if (stacDiscovery.IsValid())
+    {
+        const CPLJSONObject &properties = stacDiscovery.GetObj("properties");
+        if (properties.IsValid())
+        {
+            // Try to get proj:epsg as a number first, then as a string
+            nEPSGCode = properties.GetInteger("proj:epsg", 0);
+            if (nEPSGCode <= 0)
+            {
+                nEPSGCode =
+                    std::atoi(properties.GetString("proj:epsg", "").c_str());
+            }
+            if (nEPSGCode > 0)
+            {
+                CPLDebugOnly(ZARR_DEBUG_KEY,
+                             "Found proj:epsg in STAC properties: %d",
+                             nEPSGCode);
+            }
+        }
+    }
+
+    // If not found in STAC, try top level
+    if (nEPSGCode <= 0)
+    {
+        nEPSGCode = obj.GetInteger("proj:epsg", obj.GetInteger("epsg", 0));
+        if (nEPSGCode <= 0)
+        {
+            nEPSGCode = std::atoi(
+                obj.GetString("proj:epsg", obj.GetString("epsg", "")).c_str());
+        }
+        if (nEPSGCode > 0)
+        {
+            CPLDebugOnly(ZARR_DEBUG_KEY, "Found proj:epsg at top level: %d",
+                         nEPSGCode);
+        }
+    }
+
+    // If still not found, simple search in common locations
+    if (nEPSGCode <= 0)
+    {
+        for (const auto &child : obj.GetChildren())
+        {
+            if (child.GetType() == CPLJSONObject::Type::Object)
+            {
+                nEPSGCode =
+                    child.GetInteger("proj:epsg", child.GetInteger("epsg", 0));
+                if (nEPSGCode <= 0)
+                {
+                    nEPSGCode = std::atoi(
+                        child
+                            .GetString("proj:epsg", child.GetString("epsg", ""))
+                            .c_str());
+                }
+                if (nEPSGCode > 0)
+                {
+                    CPLDebugOnly(ZARR_DEBUG_KEY,
+                                 "Found proj:epsg in child %s: %d",
+                                 child.GetName().c_str(), nEPSGCode);
+                    break;
+                }
+            }
+        }
+    }
+
+    // Enhanced search for STAC discovery metadata with better structure parsing
+    if (nEPSGCode <= 0 && stacDiscovery.IsValid())
+    {
+        // Try to get the full STAC item
+        const CPLJSONObject &geometry = stacDiscovery.GetObj("geometry");
+
+        if (geometry.IsValid())
+        {
+            const CPLJSONObject &geomCrs = geometry.GetObj("crs");
+            if (geomCrs.IsValid())
+            {
+                const CPLJSONObject &geomProps = geomCrs.GetObj("properties");
+                if (geomProps.IsValid())
+                {
+                    const int nGeomEpsg = geomProps.GetInteger("code", 0);
+                    if (nGeomEpsg != 0)
+                    {
+                        nEPSGCode = nGeomEpsg;
+                        CPLDebugOnly(ZARR_DEBUG_KEY,
+                                     "Found CRS code in STAC geometry: %d",
+                                     nEPSGCode);
+                    }
+                }
+            }
+        }
+    }
+
+    // Try to infer CRS from Sentinel-2 tile naming convention
+    if (nEPSGCode <= 0)
+    {
+        // Look for Sentinel-2 tile ID pattern in dataset name or metadata
+        std::string tileName;
+
+        // First, try to extract from dataset name if it contains T##XXX pattern
+        std::string dsNameStr(CPLGetFilename(osRootDirectoryName.c_str()));
+        const size_t tilePos = dsNameStr.find("_T");
+        if (tilePos != std::string::npos && tilePos + 6 < dsNameStr.length())
+        {
+            tileName = dsNameStr.substr(tilePos + 1, 6);  // Extract T##XXX
+            CPLDebugOnly(ZARR_DEBUG_KEY,
+                         "Extracted tile name from dataset name: %s",
+                         tileName.c_str());
+        }
+
+        // Also check in STAC discovery metadata
+        if (tileName.empty() && stacDiscovery.IsValid())
+        {
+            const CPLJSONObject &properties =
+                stacDiscovery.GetObj("properties");
+            if (properties.IsValid())
+            {
+                tileName = properties.GetString(
+                    "s2:mgrs_tile",
+                    properties.GetString("mgrs_tile",
+                                         properties.GetString("tile_id", "")));
+                if (!tileName.empty())
+                {
+                    CPLDebug("EOPFZARR",
+                             "Found tile name in STAC properties: %s",
+                             tileName.c_str());
+                }
+            }
+        }
+
+        // Parse tile name to get EPSG code (T##XXX -> UTM Zone ## North/South)
+        if (!tileName.empty() && tileName.length() >= 3 && tileName[0] == 'T')
+        {
+            // Extract zone number (characters 1-2)
+            const std::string zoneStr = tileName.substr(1, 2);
+            const int zone = std::atoi(zoneStr.c_str());
+
+            if (zone >= 1 && zone <= 60)
+            {
+                // Determine hemisphere from the third character
+                const char hemisphere =
+                    tileName.length() > 3 ? tileName[3] : 'N';
+
+                // For Sentinel-2, assume Northern hemisphere unless explicitly Southern
+                // Most Sentinel-2 data is Northern hemisphere
+                // Cf https://en.wikipedia.org/wiki/Military_Grid_Reference_System#Grid_zone_designation
+                const bool isNorth = (hemisphere >= 'N' && hemisphere <= 'X');
+
+                nEPSGCode = isNorth ? (32600 + zone) : (32700 + zone);
+                CPLDebugOnly(ZARR_DEBUG_KEY,
+                             "Inferred EPSG %d from Sentinel-2 tile %s (zone "
+                             "%d, %s hemisphere)",
+                             nEPSGCode, tileName.c_str(), zone,
+                             isNorth ? "North" : "South");
+            }
+        }
+    }
+
+    if (nEPSGCode > 0)
+    {
+        poSRS = std::make_shared<OGRSpatialReference>();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSRS->importFromEPSG(nEPSGCode) == OGRERR_NONE)
+        {
+            return;
+        }
+        poSRS.reset();
+    }
+
+    // Look for WKT
+    std::string wkt = obj.GetString("spatial_ref", "");
+    if (wkt.empty() && stacDiscovery.IsValid())
+    {
+        const CPLJSONObject &properties = stacDiscovery.GetObj("properties");
+        if (properties.IsValid())
+        {
+            wkt = properties.GetString("spatial_ref", "");
+        }
+    }
+    if (!wkt.empty())
+    {
+        poSRS = std::make_shared<OGRSpatialReference>();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSRS->importFromWkt(wkt.c_str()) == OGRERR_NONE)
+        {
+            return;
+        }
+        poSRS.reset();
+    }
+}
+
+/************************************************************************/
+/*                           SetAttributes()                            */
+/************************************************************************/
+
+void ZarrArray::SetAttributes(const std::shared_ptr<ZarrGroupBase> &poGroup,
+                              CPLJSONObject &oAttributes)
 {
     const auto crs = oAttributes[CRS_ATTRIBUTE_NAME];
     std::shared_ptr<OGRSpatialReference> poSRS;
@@ -2746,39 +3428,120 @@ void ZarrArray::ParseSpecialAttributes(
 
     // For EOPF Sentinel Zarr Samples Service datasets, read attributes from
     // the STAC Proj extension attributes to get the CRS.
-    if (!poSRS)
-    {
-        const auto oProjEPSG = oAttributes["proj:epsg"];
-        if (oProjEPSG.GetType() == CPLJSONObject::Type::Integer)
-        {
-            poSRS = std::make_shared<OGRSpatialReference>();
-            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-            if (poSRS->importFromEPSG(oProjEPSG.ToInteger()) != OGRERR_NONE)
-            {
-                poSRS.reset();
-            }
-        }
-        else
-        {
-            const auto oProjWKT2 = oAttributes["proj:wkt2"];
-            if (oProjWKT2.GetType() == CPLJSONObject::Type::String)
-            {
-                poSRS = std::make_shared<OGRSpatialReference>();
-                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if (poSRS->importFromWkt(oProjWKT2.ToString().c_str()) !=
-                    OGRERR_NONE)
-                {
-                    poSRS.reset();
-                }
-            }
-        }
+    // There is also partly intersection with https://github.com/zarr-conventions/geo-proj
+    // For zarr-conventions/geo-proj and zarr-conventions/spatial, try first
+    // at array level, then parent and finally grandparent.
 
-        // There is also a "proj:transform" attribute, but we don't need to
-        // use it since the x and y dimensions are already associated with a
-        // 1-dimensional array with the values.
+    auto poRootGroup = std::dynamic_pointer_cast<ZarrGroupBase>(GetRootGroup());
+
+    std::vector<const ZarrAttributeGroup *> apoAttrGroup;
+
+    ZarrAttributeGroup oThisAttrGroup(std::string(),
+                                      /* bContainerIsGroup = */ false);
+    oThisAttrGroup.Init(oAttributes, /* bUpdatable=*/false);
+
+    apoAttrGroup.push_back(&oThisAttrGroup);
+    if (GetDimensionCount() >= 2)
+    {
+        apoAttrGroup.push_back(&(poGroup->GetAttributeGroup()));
+        // Only use root group to detect conventions
+        if (poRootGroup)
+            apoAttrGroup.push_back(&(poRootGroup->GetAttributeGroup()));
     }
 
-    if (poSRS)
+    // Look for declaration of geo-proj and spatial conventions
+    bool bFoundSpatialUUID = false;
+    bool bFoundProjUUID = false;
+    for (const ZarrAttributeGroup *poAttrGroup : apoAttrGroup)
+    {
+        const auto poAttrZarrConventions =
+            poAttrGroup->GetAttribute("zarr_conventions");
+        if (poAttrZarrConventions)
+        {
+            const char *pszZarrConventions =
+                poAttrZarrConventions->ReadAsString();
+            if (pszZarrConventions)
+            {
+                CPLJSONDocument oDoc;
+                if (oDoc.LoadMemory(pszZarrConventions))
+                {
+                    const auto oZarrConventions = oDoc.GetRoot();
+                    if (oZarrConventions.GetType() ==
+                        CPLJSONObject::Type::Array)
+                    {
+                        const auto oZarrConventionsArray =
+                            oZarrConventions.ToArray();
+
+                        const auto hasSpatialUUIDLambda =
+                            [](const CPLJSONObject &obj)
+                        {
+                            constexpr const char *SPATIAL_UUID =
+                                "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4";
+                            return obj.GetString("uuid") == SPATIAL_UUID;
+                        };
+                        bFoundSpatialUUID =
+                            std::find_if(oZarrConventionsArray.begin(),
+                                         oZarrConventionsArray.end(),
+                                         hasSpatialUUIDLambda) !=
+                            oZarrConventionsArray.end();
+
+                        const auto hasProjUUIDLambda =
+                            [](const CPLJSONObject &obj)
+                        {
+                            constexpr const char *PROJ_UUID =
+                                "f17cb550-5864-4468-aeb7-f3180cfb622f";
+                            return obj.GetString("uuid") == PROJ_UUID;
+                        };
+                        bFoundProjUUID =
+                            std::find_if(oZarrConventionsArray.begin(),
+                                         oZarrConventionsArray.end(),
+                                         hasProjUUIDLambda) !=
+                            oZarrConventionsArray.end();
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    // If there is neither spatial nor geo-proj, just consider the current array
+    // for EOPF Sentinel Zarr Samples Service datasets
+    if (!bFoundSpatialUUID && !bFoundProjUUID)
+        apoAttrGroup.resize(1);
+    else if (apoAttrGroup.size() == 3)
+        apoAttrGroup.resize(2);
+
+    bool bAxisAssigned = false;
+    for (const ZarrAttributeGroup *poAttrGroup : apoAttrGroup)
+    {
+        if (!poSRS)
+        {
+            ParseProjCRS(poAttrGroup, oAttributes, bFoundProjUUID, poSRS);
+        }
+
+        if (GetDimensionCount() >= 2 && bFoundSpatialUUID)
+        {
+            const bool bAxisAssignedBefore = bAxisAssigned;
+            ParseSpatialConventions(m_poSharedResource, poAttrGroup,
+                                    oAttributes, poSRS, bAxisAssigned,
+                                    m_aoDims);
+            if (bAxisAssigned && !bAxisAssignedBefore)
+                SetSRS(poSRS);
+
+            // Note: we ignore EOPF Sentinel Zarr Samples Service "proj:transform"
+            // attribute, as we don't need to
+            // use it since the x and y dimensions are already associated with a
+            // 1-dimensional array with the values.
+        }
+    }
+
+    if (!poSRS && poRootGroup && oAttributes.GetObj("_eopf_attrs").IsValid())
+    {
+        DetectSRSFromEOPFSampleServiceMetadata(
+            m_poSharedResource->GetRootDirectoryName(), poRootGroup, poSRS);
+    }
+
+    if (poSRS && !bAxisAssigned)
     {
         int iDimX = 0;
         int iDimY = 0;
@@ -2839,6 +3602,8 @@ void ZarrArray::ParseSpecialAttributes(
         oAttributes.Delete(CF_SCALE_FACTOR);
         RegisterScale(dfScale);
     }
+
+    m_oAttrGroup.Init(oAttributes, m_bUpdatable);
 }
 
 /************************************************************************/
@@ -2874,7 +3639,7 @@ bool ZarrArray::SetStatistics(bool bApproxStats, double dfMin, double dfMax,
 }
 
 /************************************************************************/
-/*                ZarrArray::IsBlockMissingFromCacheInfo()              */
+/*               ZarrArray::IsBlockMissingFromCacheInfo()               */
 /************************************************************************/
 
 bool ZarrArray::IsBlockMissingFromCacheInfo(const std::string &osFilename,
@@ -3013,4 +3778,27 @@ bool ZarrArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
     info.papszInfo = CSLDuplicate(GetRawBlockInfoInfo().List());
 
     return true;
+}
+
+/************************************************************************/
+/*                     ZarrArray::GetParentGroup()                      */
+/************************************************************************/
+
+std::shared_ptr<ZarrGroupBase> ZarrArray::GetParentGroup() const
+{
+    std::shared_ptr<ZarrGroupBase> poGroup = m_poParent.lock();
+    if (!poGroup)
+    {
+        if (auto poRootGroup = m_poSharedResource->GetRootGroup())
+        {
+            const auto nPos = m_osFullName.rfind('/');
+            if (nPos != 0 && nPos != std::string::npos)
+            {
+                poGroup = std::dynamic_pointer_cast<ZarrGroupBase>(
+                    poRootGroup->OpenGroupFromFullname(
+                        m_osFullName.substr(0, nPos)));
+            }
+        }
+    }
+    return poGroup;
 }

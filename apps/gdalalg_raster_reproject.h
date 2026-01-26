@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALRasterReprojectAlgorithm                      */
+/*                     GDALRasterReprojectAlgorithm                     */
 /************************************************************************/
 
 class GDALRasterReprojectAlgorithm /* non final */
@@ -65,7 +65,7 @@ class GDALRasterReprojectAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterReprojectAlgorithmStandalone               */
+/*                GDALRasterReprojectAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterReprojectAlgorithmStandalone final
@@ -81,7 +81,7 @@ class GDALRasterReprojectAlgorithmStandalone final
 };
 
 /************************************************************************/
-/*                     GDALRasterReprojectUtils                         */
+/*                       GDALRasterReprojectUtils                       */
 /************************************************************************/
 
 class GDALRasterReprojectUtils final

@@ -36,7 +36,7 @@
 GDALFakePDFDataset::~GDALFakePDFDataset() = default;
 
 /************************************************************************/
-/*                        GDALPDFBaseWriter()                           */
+/*                         GDALPDFBaseWriter()                          */
 /************************************************************************/
 
 GDALPDFBaseWriter::GDALPDFBaseWriter(VSILFILE *fp) : m_fp(fp)
@@ -44,7 +44,7 @@ GDALPDFBaseWriter::GDALPDFBaseWriter(VSILFILE *fp) : m_fp(fp)
 }
 
 /************************************************************************/
-/*                       ~GDALPDFBaseWriter()                           */
+/*                         ~GDALPDFBaseWriter()                         */
 /************************************************************************/
 
 GDALPDFBaseWriter::~GDALPDFBaseWriter()
@@ -53,7 +53,7 @@ GDALPDFBaseWriter::~GDALPDFBaseWriter()
 }
 
 /************************************************************************/
-/*                              ~Close()                                */
+/*                               ~Close()                               */
 /************************************************************************/
 
 void GDALPDFBaseWriter::Close()
@@ -66,7 +66,7 @@ void GDALPDFBaseWriter::Close()
 }
 
 /************************************************************************/
-/*                           GDALPDFUpdateWriter()                      */
+/*                        GDALPDFUpdateWriter()                         */
 /************************************************************************/
 
 GDALPDFUpdateWriter::GDALPDFUpdateWriter(VSILFILE *fp) : GDALPDFBaseWriter(fp)
@@ -74,7 +74,7 @@ GDALPDFUpdateWriter::GDALPDFUpdateWriter(VSILFILE *fp) : GDALPDFBaseWriter(fp)
 }
 
 /************************************************************************/
-/*                          ~GDALPDFUpdateWriter()                      */
+/*                        ~GDALPDFUpdateWriter()                        */
 /************************************************************************/
 
 GDALPDFUpdateWriter::~GDALPDFUpdateWriter()
@@ -83,7 +83,7 @@ GDALPDFUpdateWriter::~GDALPDFUpdateWriter()
 }
 
 /************************************************************************/
-/*                              ~Close()                                */
+/*                               ~Close()                               */
 /************************************************************************/
 
 void GDALPDFUpdateWriter::Close()
@@ -100,7 +100,7 @@ void GDALPDFUpdateWriter::Close()
 }
 
 /************************************************************************/
-/*                          StartNewDoc()                               */
+/*                            StartNewDoc()                             */
 /************************************************************************/
 
 void GDALPDFBaseWriter::StartNewDoc()
@@ -116,7 +116,7 @@ void GDALPDFBaseWriter::StartNewDoc()
 }
 
 /************************************************************************/
-/*                         GDALPDFWriter()                              */
+/*                           GDALPDFWriter()                            */
 /************************************************************************/
 
 GDALPDFWriter::GDALPDFWriter(VSILFILE *fpIn) : GDALPDFBaseWriter(fpIn)
@@ -125,7 +125,7 @@ GDALPDFWriter::GDALPDFWriter(VSILFILE *fpIn) : GDALPDFBaseWriter(fpIn)
 }
 
 /************************************************************************/
-/*                         ~GDALPDFWriter()                             */
+/*                           ~GDALPDFWriter()                           */
 /************************************************************************/
 
 GDALPDFWriter::~GDALPDFWriter()
@@ -165,7 +165,7 @@ static int ParseIndirectRef(const char *pszStr, GDALPDFObjectNum &nNum,
 }
 
 /************************************************************************/
-/*                       ParseTrailerAndXRef()                          */
+/*                        ParseTrailerAndXRef()                         */
 /************************************************************************/
 
 int GDALPDFUpdateWriter::ParseTrailerAndXRef()
@@ -284,7 +284,7 @@ int GDALPDFUpdateWriter::ParseTrailerAndXRef()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 void GDALPDFWriter::Close()
@@ -302,7 +302,7 @@ void GDALPDFWriter::Close()
 }
 
 /************************************************************************/
-/*                           UpdateProj()                               */
+/*                             UpdateProj()                             */
 /************************************************************************/
 
 void GDALPDFUpdateWriter::UpdateProj(GDALDataset *poSrcDS, double dfDPI,
@@ -364,7 +364,7 @@ void GDALPDFUpdateWriter::UpdateProj(GDALDataset *poSrcDS, double dfDPI,
 }
 
 /************************************************************************/
-/*                           UpdateInfo()                               */
+/*                             UpdateInfo()                             */
 /************************************************************************/
 
 void GDALPDFUpdateWriter::UpdateInfo(GDALDataset *poSrcDS)
@@ -390,7 +390,7 @@ void GDALPDFUpdateWriter::UpdateInfo(GDALDataset *poSrcDS)
 }
 
 /************************************************************************/
-/*                           UpdateXMP()                                */
+/*                             UpdateXMP()                              */
 /************************************************************************/
 
 void GDALPDFUpdateWriter::UpdateXMP(GDALDataset *poSrcDS,
@@ -441,7 +441,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::AllocNewObject()
 }
 
 /************************************************************************/
-/*                        WriteXRefTableAndTrailer()                    */
+/*                      WriteXRefTableAndTrailer()                      */
 /************************************************************************/
 
 void GDALPDFBaseWriter::WriteXRefTableAndTrailer(bool bUpdate,
@@ -610,7 +610,7 @@ void GDALPDFBaseWriter::EndObjWithStream()
 }
 
 /************************************************************************/
-/*                         GDALPDFFind4Corners()                        */
+/*                        GDALPDFFind4Corners()                         */
 /************************************************************************/
 
 static void GDALPDFFind4Corners(const GDAL_GCP *pasGCPList, int &iUL, int &iUR,
@@ -944,11 +944,11 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteSRS_ISO32000(GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                     GDALPDFGetValueFromDSOrOption()                  */
+/*                   GDALPDFGetValueFromDSOrOption()                    */
 /************************************************************************/
 
 static const char *GDALPDFGetValueFromDSOrOption(GDALDataset *poSrcDS,
-                                                 char **papszOptions,
+                                                 CSLConstList papszOptions,
                                                  const char *pszKey)
 {
     const char *pszValue = CSLFetchNameValue(papszOptions, pszKey);
@@ -961,11 +961,11 @@ static const char *GDALPDFGetValueFromDSOrOption(GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                             SetInfo()                                */
+/*                              SetInfo()                               */
 /************************************************************************/
 
 GDALPDFObjectNum GDALPDFBaseWriter::SetInfo(GDALDataset *poSrcDS,
-                                            char **papszOptions)
+                                            CSLConstList papszOptions)
 {
     const char *pszAUTHOR =
         GDALPDFGetValueFromDSOrOption(poSrcDS, papszOptions, "AUTHOR");
@@ -986,7 +986,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::SetInfo(GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                             SetInfo()                                */
+/*                              SetInfo()                               */
 /************************************************************************/
 
 GDALPDFObjectNum
@@ -1025,7 +1025,7 @@ GDALPDFBaseWriter::SetInfo(const char *pszAUTHOR, const char *pszPRODUCER,
 }
 
 /************************************************************************/
-/*                             SetXMP()                                 */
+/*                               SetXMP()                               */
 /************************************************************************/
 
 GDALPDFObjectNum GDALPDFBaseWriter::SetXMP(GDALDataset *poSrcDS,
@@ -1098,7 +1098,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteOCG(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                              StartPage()                             */
+/*                             StartPage()                              */
 /************************************************************************/
 
 bool GDALPDFWriter::StartPage(GDALDataset *poClippingDS, double dfDPI,
@@ -1183,7 +1183,7 @@ bool GDALPDFWriter::StartPage(GDALDataset *poClippingDS, double dfDPI,
 }
 
 /************************************************************************/
-/*                             WriteColorTable()                        */
+/*                          WriteColorTable()                           */
 /************************************************************************/
 
 GDALPDFObjectNum GDALPDFBaseWriter::WriteColorTable(GDALDataset *poSrcDS)
@@ -1240,7 +1240,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteColorTable(GDALDataset *poSrcDS)
 }
 
 /************************************************************************/
-/*                             WriteImagery()                           */
+/*                            WriteImagery()                            */
 /************************************************************************/
 
 bool GDALPDFWriter::WriteImagery(GDALDataset *poDS, const char *pszLayerName,
@@ -1503,7 +1503,7 @@ bool GDALPDFWriter::WriteClippedImagery(
 }
 
 /************************************************************************/
-/*                          WriteOGRDataSource()                        */
+/*                         WriteOGRDataSource()                         */
 /************************************************************************/
 
 bool GDALPDFWriter::WriteOGRDataSource(const char *pszOGRDataSource,
@@ -1568,7 +1568,7 @@ GDALPDFLayerDesc GDALPDFWriter::StartOGRLayer(const std::string &osLayerName,
 }
 
 /************************************************************************/
-/*                           EndOGRLayer()                              */
+/*                            EndOGRLayer()                             */
 /************************************************************************/
 
 void GDALPDFWriter::EndOGRLayer(GDALPDFLayerDesc &osVectorDesc)
@@ -1691,7 +1691,7 @@ int GDALPDFWriter::WriteOGRLayer(GDALDatasetH hDS, int iLayer,
 }
 
 /************************************************************************/
-/*                             DrawGeometry()                           */
+/*                            DrawGeometry()                            */
 /************************************************************************/
 
 static void DrawGeometry(CPLString &osDS, OGRGeometryH hGeom,
@@ -1876,7 +1876,7 @@ static void CalculateText(const CPLString &osText, CPLString &osFont,
 }
 
 /************************************************************************/
-/*                          GetObjectStyle()                            */
+/*                           GetObjectStyle()                           */
 /************************************************************************/
 
 void GDALPDFBaseWriter::GetObjectStyle(
@@ -2214,7 +2214,7 @@ void GDALPDFBaseWriter::ComputeIntBBox(
 }
 
 /************************************************************************/
-/*                              WriteLink()                             */
+/*                             WriteLink()                              */
 /************************************************************************/
 
 GDALPDFObjectNum GDALPDFBaseWriter::WriteLink(OGRFeatureH hFeat,
@@ -2307,7 +2307,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteLink(OGRFeatureH hFeat,
 }
 
 /************************************************************************/
-/*                        GenerateDrawingStream()                       */
+/*                       GenerateDrawingStream()                        */
 /************************************************************************/
 
 CPLString GDALPDFBaseWriter::GenerateDrawingStream(OGRGeometryH hGeom,
@@ -2534,7 +2534,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteAttributes(
 }
 
 /************************************************************************/
-/*                            WriteLabel()                              */
+/*                             WriteLabel()                             */
 /************************************************************************/
 
 GDALPDFObjectNum GDALPDFBaseWriter::WriteLabel(
@@ -2865,7 +2865,7 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc &osVectorDesc,
 }
 
 /************************************************************************/
-/*                               EndPage()                              */
+/*                              EndPage()                               */
 /************************************************************************/
 
 int GDALPDFWriter::EndPage(const char *pszExtraImages,
@@ -3898,7 +3898,7 @@ GDALPDFWriter::WriteJavascriptFile(const char *pszJavascriptFile)
 }
 
 /************************************************************************/
-/*                              WritePages()                            */
+/*                             WritePages()                             */
 /************************************************************************/
 
 void GDALPDFWriter::WritePages()
@@ -4054,10 +4054,10 @@ void GDALPDFWriter::WritePages()
 }
 
 /************************************************************************/
-/*                        GDALPDFGetJPEGQuality()                       */
+/*                       GDALPDFGetJPEGQuality()                        */
 /************************************************************************/
 
-static int GDALPDFGetJPEGQuality(char **papszOptions)
+static int GDALPDFGetJPEGQuality(CSLConstList papszOptions)
 {
     int nJpegQuality = -1;
     const char *pszValue = CSLFetchNameValue(papszOptions, "JPEG_QUALITY");
@@ -4076,7 +4076,7 @@ static int GDALPDFGetJPEGQuality(char **papszOptions)
 }
 
 /************************************************************************/
-/*                         GDALPDFClippingDataset                       */
+/*                        GDALPDFClippingDataset                        */
 /************************************************************************/
 
 class GDALPDFClippingDataset final : public GDALDataset
@@ -4119,11 +4119,11 @@ const OGRSpatialReference *GDALPDFClippingDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                          GDALPDFCreateCopy()                         */
+/*                         GDALPDFCreateCopy()                          */
 /************************************************************************/
 
 GDALDataset *GDALPDFCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                               int bStrict, char **papszOptions,
+                               int bStrict, CSLConstList papszOptions,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData)
 {

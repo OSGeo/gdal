@@ -79,7 +79,7 @@ static GDALColorEntry GetXMLColorEntry(const CPLXMLNode *p)
 }
 
 /************************************************************************/
-/*                           SearchXMLSiblings()                        */
+/*                         SearchXMLSiblings()                          */
 /************************************************************************/
 
 /*

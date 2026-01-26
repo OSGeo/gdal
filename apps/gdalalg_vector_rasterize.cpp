@@ -26,7 +26,7 @@
 #endif
 
 /************************************************************************/
-/*        GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()  */
+/*     GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm()     */
 /************************************************************************/
 
 GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
@@ -129,7 +129,7 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
 }
 
 /************************************************************************/
-/*                GDALVectorRasterizeAlgorithm::RunStep()               */
+/*               GDALVectorRasterizeAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -238,6 +238,13 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (!std::isnan(m_nodata))
     {
+        if (m_update)
+        {
+            ReportError(
+                CE_Failure, CPLE_AppDefined,
+                "Cannot specify --nodata when updating an existing raster.");
+            return false;
+        }
         aosOptions.AddString("-a_nodata");
         aosOptions.AddString(CPLSPrintf("%.17g", m_nodata));
     }
@@ -253,6 +260,13 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (!m_srs.empty())
     {
+        if (m_update)
+        {
+            ReportError(
+                CE_Failure, CPLE_AppDefined,
+                "Cannot specify --crs when updating an existing raster.");
+            return false;
+        }
         aosOptions.AddString("-a_srs");
         aosOptions.AddString(m_srs.c_str());
     }
@@ -282,6 +296,13 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (m_targetResolution.size())
     {
+        if (m_update)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Cannot specify --resolution when updating an existing "
+                        "raster.");
+            return false;
+        }
         aosOptions.AddString("-tr");
         for (double targetResolution : m_targetResolution)
         {
@@ -290,6 +311,13 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
     else if (m_targetSize.size())
     {
+        if (m_update)
+        {
+            ReportError(
+                CE_Failure, CPLE_AppDefined,
+                "Cannot specify --size when updating an existing raster.");
+            return false;
+        }
         aosOptions.AddString("-ts");
         for (int targetSize : m_targetSize)
         {
@@ -307,6 +335,13 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (!m_outputType.empty())
     {
+        if (m_update)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Cannot specify --output-data-type when updating an "
+                        "existing raster.");
+            return false;
+        }
         aosOptions.AddString("-ot");
         aosOptions.AddString(m_outputType.c_str());
     }
@@ -351,7 +386,7 @@ bool GDALVectorRasterizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*               GDALVectorRasterizeAlgorithm::RunImpl()               */
+/*               GDALVectorRasterizeAlgorithm::RunImpl()                */
 /************************************************************************/
 
 bool GDALVectorRasterizeAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

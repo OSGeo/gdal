@@ -1026,7 +1026,7 @@ static const char *GetMarkerName(GByte byVal)
 }
 
 /************************************************************************/
-/*                       DumpJPK2CodeStream()                           */
+/*                         DumpJPK2CodeStream()                         */
 /************************************************************************/
 
 static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
@@ -2020,7 +2020,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                      GDALGetJPEG2000StructureInternal()              */
+/*                  GDALGetJPEG2000StructureInternal()                  */
 /************************************************************************/
 
 static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
@@ -2323,7 +2323,7 @@ static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                        GDALGetJPEG2000Structure()                    */
+/*                      GDALGetJPEG2000Structure()                      */
 /************************************************************************/
 
 constexpr unsigned char jpc_header[] = {0xff, 0x4f};
@@ -2358,7 +2358,7 @@ CPLXMLNode *GDALGetJPEG2000Structure(const char *pszFilename,
 #ifndef DOXYGEN_SKIP
 
 /************************************************************************/
-/*                        GDALGetJPEG2000Structure()                    */
+/*                      GDALGetJPEG2000Structure()                      */
 /************************************************************************/
 
 CPLXMLNode *GDALGetJPEG2000Structure(const char *pszFilename, VSILFILE *fp,
@@ -2436,7 +2436,7 @@ CPLXMLNode *GDALGetJPEG2000Structure(const char *pszFilename, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                     GDALGetJPEG2000Reversibility()                   */
+/*                    GDALGetJPEG2000Reversibility()                    */
 /************************************************************************/
 
 const char *GDALGetJPEG2000Reversibility(const char *pszFilename, VSILFILE *fp)

@@ -167,7 +167,7 @@ class OGRXLSXLayer final : public OGRMemLayer
 };
 
 /************************************************************************/
-/*                           OGRXLSXDataSource                          */
+/*                          OGRXLSXDataSource                           */
 /************************************************************************/
 #define STACK_SIZE 5
 
@@ -285,7 +285,7 @@ class OGRXLSXDataSource final : public GDALDataset
     int Open(const char *pszFilename, const char *pszPrefixedFilename,
              VSILFILE *fpWorkbook, VSILFILE *fpWorkbookRels,
              VSILFILE *fpSharedStrings, VSILFILE *fpStyles, int bUpdate);
-    int Create(const char *pszName, char **papszOptions);
+    int Create(const char *pszName, CSLConstList papszOptions);
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;

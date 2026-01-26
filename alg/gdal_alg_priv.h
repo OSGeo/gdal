@@ -73,7 +73,7 @@ typedef enum
 } GDALRasterizeOptim;
 
 /************************************************************************/
-/*      Low level rasterizer API.                                       */
+/*                      Low level rasterizer API.                       */
 /************************************************************************/
 
 typedef void (*llScanlineFunc)(GDALRasterizeInfo *, int, int, int, double);
@@ -339,7 +339,7 @@ typedef struct
 } GDALGenImgProjTransformInfo;
 
 /************************************************************************/
-/*      Color table related                                             */
+/*                         Color table related                          */
 /************************************************************************/
 
 // Definitions exists for T = GUInt32 and T = GUIntBig.
@@ -366,7 +366,7 @@ int GDALDitherRGB2PCTInternal(GDALRasterBandH hRed, GDALRasterBandH hGreen,
     (6 * sizeof(int) * PRIME_FOR_65536)
 
 /************************************************************************/
-/*      Float comparison function.                                      */
+/*                      Float comparison function.                      */
 /************************************************************************/
 
 /**

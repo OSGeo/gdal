@@ -21,7 +21,7 @@
 #endif
 
 /************************************************************************/
-/*                        GDALDatasetDeleteAlgorithm()                  */
+/*                     GDALDatasetDeleteAlgorithm()                     */
 /************************************************************************/
 
 GDALDatasetDeleteAlgorithm::GDALDatasetDeleteAlgorithm()
@@ -51,7 +51,7 @@ GDALDatasetDeleteAlgorithm::GDALDatasetDeleteAlgorithm()
 }
 
 /************************************************************************/
-/*                  GDALDatasetDeleteAlgorithm::RunImpl()               */
+/*                GDALDatasetDeleteAlgorithm::RunImpl()                 */
 /************************************************************************/
 
 bool GDALDatasetDeleteAlgorithm::RunImpl(GDALProgressFunc, void *)

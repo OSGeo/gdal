@@ -84,7 +84,7 @@ namespace PCIDSK
     void                Debug( void (*)(const char *), const char *fmt, ... ) PCIDSK_PRINT_FUNC_FORMAT(2,3);
 
 /************************************************************************/
-/*                           DIV_ROUND_UP()                             */
+/*                            DIV_ROUND_UP()                            */
 /************************************************************************/
 
 template <class T, class U> inline T DIV_ROUND_UP(T a, U b)

@@ -14,7 +14,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 static int OGRLVBAGDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -151,7 +151,7 @@ GDALDataset *OGRLVBAGDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         RegisterOGRLVBAG()                           */
+/*                          RegisterOGRLVBAG()                          */
 /************************************************************************/
 
 void RegisterOGRLVBAG()

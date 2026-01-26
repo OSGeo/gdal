@@ -45,7 +45,7 @@ static bool CheckExistenceOfOneZarrFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                   ZARRIsLikelyKerchunkJSONRef()                      */
+/*                    ZARRIsLikelyKerchunkJSONRef()                     */
 /************************************************************************/
 
 bool ZARRIsLikelyKerchunkJSONRef(const GDALOpenInfo *poOpenInfo)
@@ -67,7 +67,7 @@ bool ZARRIsLikelyKerchunkJSONRef(const GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     ZARRDriverIdentify()                             */
+/*                         ZARRDriverIdentify()                         */
 /************************************************************************/
 
 int ZARRDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -105,7 +105,7 @@ int ZARRDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     ZARRDriverSetCommonMetadata()                    */
+/*                    ZARRDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -161,8 +161,7 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
         "   </Option>"
         "   <Option name='CREATE_CONSOLIDATED_METADATA' "
         "alias='CREATE_ZMETADATA' type='boolean' "
-        "description='Whether to create consolidated metadata into .zmetadata "
-        "(Zarr V2 only)' default='YES'/>"
+        "description='Whether to create consolidated metadata' default='YES'/>"
         "</MultiDimDatasetCreationOptionList>");
 
     poDriver->pfnIdentify = ZARRDriverIdentify;
@@ -179,7 +178,7 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                    DeclareDeferredZarrPlugin()                       */
+/*                     DeclareDeferredZarrPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

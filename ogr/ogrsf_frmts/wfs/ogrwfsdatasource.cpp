@@ -206,7 +206,7 @@ const OGRLayer *OGRWFSDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                          GetLayerByName()                            */
+/*                           GetLayerByName()                           */
 /************************************************************************/
 
 OGRLayer *OGRWFSDataSource::GetLayerByName(const char *pszNameIn)
@@ -263,7 +263,7 @@ OGRLayer *OGRWFSDataSource::GetLayerByName(const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                        GetMetadataDomainList()                       */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **OGRWFSDataSource::GetMetadataDomainList()
@@ -273,7 +273,7 @@ char **OGRWFSDataSource::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList OGRWFSDataSource::GetMetadata(const char *pszDomain)
@@ -288,7 +288,7 @@ CSLConstList OGRWFSDataSource::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                          GetLayerIndex()                             */
+/*                           GetLayerIndex()                            */
 /************************************************************************/
 
 int OGRWFSDataSource::GetLayerIndex(const char *pszNameIn)
@@ -333,7 +333,7 @@ int OGRWFSDataSource::GetLayerIndex(const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                    FindSubStringInsensitive()                        */
+/*                      FindSubStringInsensitive()                      */
 /************************************************************************/
 
 const char *FindSubStringInsensitive(const char *pszStr, const char *pszSubStr)
@@ -345,7 +345,7 @@ const char *FindSubStringInsensitive(const char *pszStr, const char *pszSubStr)
 }
 
 /************************************************************************/
-/*                 DetectIfGetFeatureSupportHits()                      */
+/*                   DetectIfGetFeatureSupportHits()                    */
 /************************************************************************/
 
 static bool DetectIfGetFeatureSupportHits(const CPLXMLNode *psRoot)
@@ -417,7 +417,7 @@ static bool DetectIfGetFeatureSupportHits(const CPLXMLNode *psRoot)
 }
 
 /************************************************************************/
-/*                   DetectRequiresEnvelopeSpatialFilter()              */
+/*                DetectRequiresEnvelopeSpatialFilter()                 */
 /************************************************************************/
 
 bool OGRWFSDataSource::DetectRequiresEnvelopeSpatialFilter(
@@ -466,7 +466,7 @@ CPLString OGRWFSDataSource::GetPostTransactionURL()
 }
 
 /************************************************************************/
-/*                    DetectTransactionSupport()                        */
+/*                      DetectTransactionSupport()                      */
 /************************************************************************/
 
 bool OGRWFSDataSource::DetectTransactionSupport(const CPLXMLNode *psRoot)
@@ -567,7 +567,7 @@ bool OGRWFSDataSource::DetectTransactionSupport(const CPLXMLNode *psRoot)
 }
 
 /************************************************************************/
-/*                    DetectSupportPagingWFS2()                         */
+/*                      DetectSupportPagingWFS2()                       */
 /************************************************************************/
 
 bool OGRWFSDataSource::DetectSupportPagingWFS2(
@@ -705,7 +705,7 @@ bool OGRWFSDataSource::DetectSupportStandardJoinsWFS2(const CPLXMLNode *psRoot)
 }
 
 /************************************************************************/
-/*                      FindComparisonOperator()                        */
+/*                       FindComparisonOperator()                       */
 /************************************************************************/
 
 static bool FindComparisonOperator(const CPLXMLNode *psNode, const char *pszVal)
@@ -731,7 +731,7 @@ static bool FindComparisonOperator(const CPLXMLNode *psNode, const char *pszVal)
 }
 
 /************************************************************************/
-/*                          LoadFromFile()                              */
+/*                            LoadFromFile()                            */
 /************************************************************************/
 
 CPLXMLNode *OGRWFSDataSource::LoadFromFile(const char *pszFilename)
@@ -800,7 +800,7 @@ CPLXMLNode *OGRWFSDataSource::LoadFromFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                          SendGetCapabilities()                       */
+/*                        SendGetCapabilities()                         */
 /************************************************************************/
 
 CPLHTTPResult *OGRWFSDataSource::SendGetCapabilities(const char *pszBaseURL,
@@ -1879,7 +1879,7 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char *pszLayerName,
 
     // CPLDebug("WFS", "%s", osPost.c_str());
 
-    char **papszOptions = NULL;
+    CSLConstList papszOptions = NULL;
     papszOptions = CSLAddNameValue(papszOptions, "POSTFIELDS", osPost.c_str());
     papszOptions =
         CSLAddNameValue(papszOptions, "HEADERS",
@@ -2105,7 +2105,7 @@ void OGRWFSDataSource::LoadMultipleLayerDefn(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                         SaveLayerSchema()                            */
+/*                          SaveLayerSchema()                           */
 /************************************************************************/
 
 void OGRWFSDataSource::SaveLayerSchema(const char *pszLayerName,
@@ -2123,7 +2123,7 @@ void OGRWFSDataSource::SaveLayerSchema(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                           IsOldDeegree()                             */
+/*                            IsOldDeegree()                            */
 /************************************************************************/
 
 bool OGRWFSDataSource::IsOldDeegree(const char *pszErrorString)
@@ -2139,7 +2139,7 @@ bool OGRWFSDataSource::IsOldDeegree(const char *pszErrorString)
 }
 
 /************************************************************************/
-/*                         WFS_EscapeURL()                              */
+/*                           WFS_EscapeURL()                            */
 /************************************************************************/
 
 CPLString WFS_EscapeURL(const char *pszURL)
@@ -2172,7 +2172,7 @@ CPLString WFS_EscapeURL(const char *pszURL)
 }
 
 /************************************************************************/
-/*                         WFS_DecodeURL()                              */
+/*                           WFS_DecodeURL()                            */
 /************************************************************************/
 
 CPLString WFS_DecodeURL(const CPLString &osSrc)
@@ -2197,11 +2197,11 @@ CPLString WFS_DecodeURL(const CPLString &osSrc)
 }
 
 /************************************************************************/
-/*                            HTTPFetch()                               */
+/*                             HTTPFetch()                              */
 /************************************************************************/
 
 CPLHTTPResult *OGRWFSDataSource::HTTPFetch(const char *pszURL,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     char **papszNewOptions = CSLDuplicate(papszOptions);
     if (bUseHttp10)

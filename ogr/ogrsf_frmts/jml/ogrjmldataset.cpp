@@ -20,7 +20,7 @@
 // -lgdal
 
 /************************************************************************/
-/*                          OGRJMLDataset()                             */
+/*                           OGRJMLDataset()                            */
 /************************************************************************/
 
 OGRJMLDataset::OGRJMLDataset()
@@ -29,7 +29,7 @@ OGRJMLDataset::OGRJMLDataset()
 }
 
 /************************************************************************/
-/*                         ~OGRJMLDataset()                             */
+/*                           ~OGRJMLDataset()                           */
 /************************************************************************/
 
 OGRJMLDataset::~OGRJMLDataset()
@@ -70,7 +70,7 @@ const OGRLayer *OGRJMLDataset::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int OGRJMLDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -117,7 +117,7 @@ GDALDataset *OGRJMLDataset::Open(GDALOpenInfo *poOpenInfo)
 GDALDataset *OGRJMLDataset::Create(const char *pszFilename, int /* nXSize */,
                                    int /* nYSize */, int /* nBands */,
                                    GDALDataType /* eDT */,
-                                   char ** /* papszOptions */)
+                                   CSLConstList /* papszOptions */)
 {
     if (strcmp(pszFilename, "/dev/stdout") == 0)
         pszFilename = "/vsistdout/";
@@ -157,7 +157,7 @@ GDALDataset *OGRJMLDataset::Create(const char *pszFilename, int /* nXSize */,
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *OGRJMLDataset::ICreateLayer(const char *pszLayerName,
@@ -191,7 +191,7 @@ OGRLayer *OGRJMLDataset::ICreateLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                         RegisterOGRJML()                             */
+/*                           RegisterOGRJML()                           */
 /************************************************************************/
 
 void RegisterOGRJML()

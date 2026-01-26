@@ -82,7 +82,7 @@ IOInterfaces::~IOInterfaces() = default;
 EDBFile::~EDBFile() = default;
 
 /************************************************************************/
-/*                             CPCIDSKFile()                             */
+/*                            CPCIDSKFile()                             */
 /************************************************************************/
 
 CPCIDSKFile::CPCIDSKFile( const std::string& filename )
@@ -122,7 +122,7 @@ CPCIDSKFile::CPCIDSKFile( const std::string& filename )
 }
 
 /************************************************************************/
-/*                            ~CPCIDSKFile()                             */
+/*                            ~CPCIDSKFile()                            */
 /************************************************************************/
 
 CPCIDSKFile::~CPCIDSKFile()
@@ -1167,7 +1167,7 @@ bool CPCIDSKFile::GetEDBFileDetails( EDBFile** file_p,
 }
 
 /************************************************************************/
-/*                            GetUniqueEDBFilename()                    */
+/*                        GetUniqueEDBFilename()                        */
 /************************************************************************/
 /**
  * If the PIX file is a link pix where all channels are linked
@@ -1218,7 +1218,7 @@ std::string CPCIDSKFile::GetUniqueEDBFilename()
 }
 
 /************************************************************************/
-/*                              GetEDBChannelMap()                      */
+/*                          GetEDBChannelMap()                          */
 /************************************************************************/
 /**
  * Gets the mapping between channels in this CPCIDSKFile and the channels

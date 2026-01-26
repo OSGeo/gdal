@@ -166,7 +166,7 @@ int swq_test_like(const char *input, const char *pattern, char chEscape,
 }
 
 /************************************************************************/
-/*                        OGRHStoreGetValue()                           */
+/*                         OGRHStoreGetValue()                          */
 /************************************************************************/
 
 static char *OGRHStoreCheckEnd(char *pszIter, int bIsKey)
@@ -319,7 +319,7 @@ char *OGRHStoreGetValue(const char *pszHStore, const char *pszSearchedKey)
 
 #ifdef DEBUG_VERBOSE
 /************************************************************************/
-/*                         OGRFormatDate()                              */
+/*                           OGRFormatDate()                            */
 /************************************************************************/
 
 #ifdef __GNUC__
@@ -1229,7 +1229,7 @@ swq_expr_node *SWQGeneralEvaluator(swq_expr_node *node,
 }
 
 /************************************************************************/
-/*                SWQAutoPromoteIntegerToInteger64OrFloat()             */
+/*              SWQAutoPromoteIntegerToInteger64OrFloat()               */
 /************************************************************************/
 
 static void SWQAutoPromoteIntegerToInteger64OrFloat(swq_expr_node *poNode)
@@ -1278,7 +1278,7 @@ static void SWQAutoPromoteIntegerToInteger64OrFloat(swq_expr_node *poNode)
 }
 
 /************************************************************************/
-/*                    SWQAutoPromoteStringToDateTime()                  */
+/*                   SWQAutoPromoteStringToDateTime()                   */
 /************************************************************************/
 
 static void SWQAutoPromoteStringToDateTime(swq_expr_node *poNode)
@@ -1378,7 +1378,7 @@ static void SWQAutoConvertStringToNumeric(swq_expr_node *poNode)
 }
 
 /************************************************************************/
-/*                   SWQCheckSubExprAreNotGeometries()                  */
+/*                  SWQCheckSubExprAreNotGeometries()                   */
 /************************************************************************/
 
 static bool SWQCheckSubExprAreNotGeometries(swq_expr_node *poNode)

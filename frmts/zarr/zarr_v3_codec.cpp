@@ -13,7 +13,7 @@
 #include "zarr_v3_codec.h"
 
 /************************************************************************/
-/*                          ZarrV3Codec()                               */
+/*                            ZarrV3Codec()                             */
 /************************************************************************/
 
 ZarrV3Codec::ZarrV3Codec(const std::string &osName) : m_osName(osName)
@@ -21,13 +21,13 @@ ZarrV3Codec::ZarrV3Codec(const std::string &osName) : m_osName(osName)
 }
 
 /************************************************************************/
-/*                         ~ZarrV3Codec()                               */
+/*                            ~ZarrV3Codec()                            */
 /************************************************************************/
 
 ZarrV3Codec::~ZarrV3Codec() = default;
 
 /************************************************************************/
-/*                    ZarrV3Codec::DecodePartial()                      */
+/*                     ZarrV3Codec::DecodePartial()                     */
 /************************************************************************/
 
 bool ZarrV3Codec::DecodePartial(VSIVirtualHandle *,

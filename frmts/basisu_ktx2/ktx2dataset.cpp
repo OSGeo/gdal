@@ -21,7 +21,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                            KTX2Dataset                               */
+/*                             KTX2Dataset                              */
 /************************************************************************/
 
 class KTX2Dataset final : public GDALPamDataset
@@ -51,7 +51,7 @@ class KTX2Dataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -73,7 +73,7 @@ class KTX2RasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           KTX2Dataset()                              */
+/*                            KTX2Dataset()                             */
 /************************************************************************/
 
 KTX2Dataset::KTX2Dataset(uint32_t iLayer, uint32_t iFace, void *pEncodedData)
@@ -83,7 +83,7 @@ KTX2Dataset::KTX2Dataset(uint32_t iLayer, uint32_t iFace, void *pEncodedData)
 }
 
 /************************************************************************/
-/*                           KTX2Dataset()                              */
+/*                            KTX2Dataset()                             */
 /************************************************************************/
 
 KTX2Dataset::KTX2Dataset(KTX2Dataset *poParent, uint32_t iLevel)
@@ -98,7 +98,7 @@ KTX2Dataset::KTX2Dataset(KTX2Dataset *poParent, uint32_t iLevel)
 }
 
 /************************************************************************/
-/*                           ~KTX2Dataset()                             */
+/*                            ~KTX2Dataset()                            */
 /************************************************************************/
 
 KTX2Dataset::~KTX2Dataset()
@@ -108,7 +108,7 @@ KTX2Dataset::~KTX2Dataset()
 }
 
 /************************************************************************/
-/*                        GetDecodedData()                              */
+/*                           GetDecodedData()                           */
 /************************************************************************/
 
 void *KTX2Dataset::GetDecodedData(uint32_t &nLineStride)
@@ -199,7 +199,7 @@ CPLErr KTX2RasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                           GetOverviewCount()                         */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int KTX2RasterBand::GetOverviewCount()
@@ -209,7 +209,7 @@ int KTX2RasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                             GetOverview()                            */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *KTX2RasterBand::GetOverview(int nIdx)
@@ -397,12 +397,12 @@ GDALDataset *KTX2Dataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            CreateCopy()                              */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *KTX2Dataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /*bStrict*/,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

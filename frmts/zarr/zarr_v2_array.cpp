@@ -26,37 +26,36 @@
 #include <set>
 
 /************************************************************************/
-/*                       ZarrV2Array::ZarrV2Array()                     */
+/*                      ZarrV2Array::ZarrV2Array()                      */
 /************************************************************************/
 
 ZarrV2Array::ZarrV2Array(
     const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-    const std::string &osParentName, const std::string &osName,
+    const std::shared_ptr<ZarrGroupBase> &poParent, const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
     const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
     const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
-    : GDALAbstractMDArray(osParentName, osName),
-      ZarrArray(poSharedResource, osParentName, osName, aoDims, oType,
-                aoDtypeElts, anBlockSize, anBlockSize),
+    : GDALAbstractMDArray(poParent->GetFullName(), osName),
+      ZarrArray(poSharedResource, poParent, osName, aoDims, oType, aoDtypeElts,
+                anBlockSize, anBlockSize),
       m_bFortranOrder(bFortranOrder)
 {
     m_oCompressorJSon.Deinit();
 }
 
 /************************************************************************/
-/*                         ZarrV2Array::Create()                        */
+/*                        ZarrV2Array::Create()                         */
 /************************************************************************/
 
-std::shared_ptr<ZarrV2Array>
-ZarrV2Array::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-                    const std::string &osParentName, const std::string &osName,
-                    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
-                    const GDALExtendedDataType &oType,
-                    const std::vector<DtypeElt> &aoDtypeElts,
-                    const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
+std::shared_ptr<ZarrV2Array> ZarrV2Array::Create(
+    const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+    const std::shared_ptr<ZarrGroupBase> &poParent, const std::string &osName,
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+    const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
+    const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
 {
     auto arr = std::shared_ptr<ZarrV2Array>(
-        new ZarrV2Array(poSharedResource, osParentName, osName, aoDims, oType,
+        new ZarrV2Array(poSharedResource, poParent, osName, aoDims, oType,
                         aoDtypeElts, anBlockSize, bFortranOrder));
     if (arr->m_nTotalInnerChunkCount == 0)
         return nullptr;
@@ -66,7 +65,7 @@ ZarrV2Array::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
 }
 
 /************************************************************************/
-/*                             ~ZarrV2Array()                           */
+/*                            ~ZarrV2Array()                            */
 /************************************************************************/
 
 ZarrV2Array::~ZarrV2Array()
@@ -75,7 +74,7 @@ ZarrV2Array::~ZarrV2Array()
 }
 
 /************************************************************************/
-/*                                Flush()                               */
+/*                               Flush()                                */
 /************************************************************************/
 
 bool ZarrV2Array::Flush()
@@ -142,7 +141,7 @@ bool ZarrV2Array::Flush()
 }
 
 /************************************************************************/
-/*           StripUselessItemsFromCompressorConfiguration()             */
+/*            StripUselessItemsFromCompressorConfiguration()            */
 /************************************************************************/
 
 static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject &o)
@@ -156,7 +155,7 @@ static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject &o)
 }
 
 /************************************************************************/
-/*                    ZarrV2Array::Serialize()                          */
+/*                       ZarrV2Array::Serialize()                       */
 /************************************************************************/
 
 bool ZarrV2Array::Serialize()
@@ -267,7 +266,7 @@ bool ZarrV2Array::Serialize()
 }
 
 /************************************************************************/
-/*                  ZarrV2Array::NeedDecodedBuffer()                    */
+/*                   ZarrV2Array::NeedDecodedBuffer()                   */
 /************************************************************************/
 
 bool ZarrV2Array::NeedDecodedBuffer() const
@@ -295,7 +294,7 @@ bool ZarrV2Array::NeedDecodedBuffer() const
 }
 
 /************************************************************************/
-/*               ZarrV2Array::AllocateWorkingBuffers()                  */
+/*                ZarrV2Array::AllocateWorkingBuffers()                 */
 /************************************************************************/
 
 bool ZarrV2Array::AllocateWorkingBuffers() const
@@ -405,7 +404,7 @@ bool ZarrV2Array::AllocateWorkingBuffers(
 }
 
 /************************************************************************/
-/*                     ZarrV2Array::BlockTranspose()                    */
+/*                    ZarrV2Array::BlockTranspose()                     */
 /************************************************************************/
 
 void ZarrV2Array::BlockTranspose(const ZarrByteVectorQuickResize &abySrc,
@@ -521,7 +520,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                      ZarrV2Array::LoadBlockData()                     */
+/*                     ZarrV2Array::LoadBlockData()                     */
 /************************************************************************/
 
 bool ZarrV2Array::LoadBlockData(const uint64_t *blockIndices,
@@ -1103,7 +1102,7 @@ bool ZarrV2Array::FlushDirtyBlock() const
 }
 
 /************************************************************************/
-/*                          BuildChunkFilename()                        */
+/*                         BuildChunkFilename()                         */
 /************************************************************************/
 
 std::string ZarrV2Array::BuildChunkFilename(const uint64_t *blockIndices) const
@@ -1137,7 +1136,7 @@ std::string ZarrV2Array::GetDataDirectory() const
 }
 
 /************************************************************************/
-/*                        GetChunkIndicesFromFilename()                 */
+/*                    GetChunkIndicesFromFilename()                     */
 /************************************************************************/
 
 CPLStringList
@@ -1397,7 +1396,7 @@ static void SetGDALOffset(const GDALExtendedDataType &dt,
 }
 
 /************************************************************************/
-/*                     ZarrV2Group::LoadArray()                         */
+/*                       ZarrV2Group::LoadArray()                       */
 /************************************************************************/
 
 std::shared_ptr<ZarrArray>
@@ -2046,9 +2045,9 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         return nullptr;
     }
 
-    auto poArray = ZarrV2Array::Create(m_poSharedResource, GetFullName(),
-                                       osArrayName, aoDims, oType, aoDtypeElts,
-                                       anBlockSize, bFortranOrder);
+    auto poArray =
+        ZarrV2Array::Create(m_poSharedResource, Self(), osArrayName, aoDims,
+                            oType, aoDtypeElts, anBlockSize, bFortranOrder);
     if (!poArray)
         return nullptr;
     poArray->SetCompressorJson(oCompressor);
@@ -2094,8 +2093,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
         }
     }
 
-    poArray->ParseSpecialAttributes(m_pSelf.lock(), oAttributes);
-    poArray->SetAttributes(oAttributes);
+    poArray->SetAttributes(Self(), oAttributes);
     poArray->SetDtype(oDtype);
     RegisterArray(poArray);
 
@@ -2119,7 +2117,7 @@ ZarrV2Group::LoadArray(const std::string &osArrayName,
 }
 
 /************************************************************************/
-/*                    ZarrV2Array::SetCompressorJson()                  */
+/*                   ZarrV2Array::SetCompressorJson()                   */
 /************************************************************************/
 
 void ZarrV2Array::SetCompressorJson(const CPLJSONObject &oCompressor)
@@ -2131,7 +2129,7 @@ void ZarrV2Array::SetCompressorJson(const CPLJSONObject &oCompressor)
 }
 
 /************************************************************************/
-/*                     ZarrV2Array::SetFilters()                        */
+/*                      ZarrV2Array::SetFilters()                       */
 /************************************************************************/
 
 void ZarrV2Array::SetFilters(const CPLJSONArray &oFiltersArray)
@@ -2143,7 +2141,7 @@ void ZarrV2Array::SetFilters(const CPLJSONArray &oFiltersArray)
 }
 
 /************************************************************************/
-/*                   ZarrV2Array::GetRawBlockInfoInfo()                 */
+/*                  ZarrV2Array::GetRawBlockInfoInfo()                  */
 /************************************************************************/
 
 CPLStringList ZarrV2Array::GetRawBlockInfoInfo() const

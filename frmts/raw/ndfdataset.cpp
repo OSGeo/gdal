@@ -55,7 +55,7 @@ class NDFDataset final : public RawDataset
 };
 
 /************************************************************************/
-/*                            NDFDataset()                             */
+/*                             NDFDataset()                             */
 /************************************************************************/
 
 NDFDataset::NDFDataset() : papszExtraFiles(nullptr), papszHeader(nullptr)
@@ -74,7 +74,7 @@ NDFDataset::~NDFDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr NDFDataset::Close(GDALProgressFunc, void *)
@@ -139,7 +139,7 @@ char **NDFDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int NDFDataset::Identify(GDALOpenInfo *poOpenInfo)

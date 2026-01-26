@@ -17,7 +17,7 @@
 #include "mitab_ogr_driver.h"
 
 /************************************************************************/
-/*                  OGRTABDriverIdentify()                              */
+/*                        OGRTABDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRTABDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -61,7 +61,7 @@ static int OGRTABDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                  OGRTABDriver::Open()                                */
+/*                         OGRTABDriver::Open()                         */
 /************************************************************************/
 
 static GDALDataset *OGRTABDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -104,13 +104,13 @@ static GDALDataset *OGRTABDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 static GDALDataset *
 OGRTABDriverCreate(const char *pszName, CPL_UNUSED int nBands,
                    CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                   CPL_UNUSED GDALDataType eDT, char **papszOptions)
+                   CPL_UNUSED GDALDataType eDT, CSLConstList papszOptions)
 {
     // Try to create the data source.
     OGRTABDataSource *poDS = new OGRTABDataSource();
@@ -124,7 +124,7 @@ OGRTABDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 }
 
 /************************************************************************/
-/*                              Delete()                                */
+/*                               Delete()                               */
 /************************************************************************/
 
 static CPLErr OGRTABDriverDelete(const char *pszDataSource)
@@ -160,7 +160,7 @@ static CPLErr OGRTABDriverDelete(const char *pszDataSource)
 }
 
 /************************************************************************/
-/*                          OGRTABDriverUnload()                        */
+/*                         OGRTABDriverUnload()                         */
 /************************************************************************/
 
 static void OGRTABDriverUnload(CPL_UNUSED GDALDriver *poDriver)
@@ -169,7 +169,7 @@ static void OGRTABDriverUnload(CPL_UNUSED GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*              RegisterOGRTAB()                                        */
+/*                           RegisterOGRTAB()                           */
 /************************************************************************/
 
 void RegisterOGRTAB()

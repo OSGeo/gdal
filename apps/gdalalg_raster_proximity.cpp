@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*      GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()    */
+/*     GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()     */
 /************************************************************************/
 
 GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm(bool standaloneStep)
@@ -58,7 +58,7 @@ GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                 GDALRasterProximityAlgorithm::RunStep()              */
+/*               GDALRasterProximityAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterProximityAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

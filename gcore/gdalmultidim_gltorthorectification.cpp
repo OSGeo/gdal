@@ -207,7 +207,7 @@ class GLTOrthoRectifiedArray final : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                   GDALMDArrayResampled::IRead()                      */
+/*                    GDALMDArrayResampled::IRead()                     */
 /************************************************************************/
 
 bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
@@ -435,7 +435,7 @@ bool GLTOrthoRectifiedArray::IRead(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                     CreateGLTOrthorectified()                        */
+/*                      CreateGLTOrthorectified()                       */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress

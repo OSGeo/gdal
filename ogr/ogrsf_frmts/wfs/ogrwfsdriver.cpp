@@ -20,7 +20,7 @@
 extern "C" void RegisterOGRWFS();
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 static int OGRWFSDriverIdentify(GDALOpenInfo *poOpenInfo)

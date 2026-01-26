@@ -103,7 +103,7 @@ const OGRLayer *OGRGPXDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -163,7 +163,7 @@ OGRGPXDataSource::ICreateLayer(const char *pszLayerName,
 #ifdef HAVE_EXPAT
 
 /************************************************************************/
-/*                startElementValidateCbk()                             */
+/*                      startElementValidateCbk()                       */
 /************************************************************************/
 
 void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
@@ -342,7 +342,7 @@ void OGRGPXDataSource::startElementValidateCbk(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                    endElementValidateCbk()                           */
+/*                       endElementValidateCbk()                        */
 /************************************************************************/
 
 void OGRGPXDataSource::endElementValidateCbk(const char * /*pszName */)
@@ -386,7 +386,7 @@ void OGRGPXDataSource::endElementValidateCbk(const char * /*pszName */)
 }
 
 /************************************************************************/
-/*                      dataHandlerValidateCbk()                        */
+/*                       dataHandlerValidateCbk()                       */
 /************************************************************************/
 
 void OGRGPXDataSource::dataHandlerValidateCbk(const char *data, int nLen)
@@ -594,7 +594,7 @@ int OGRGPXDataSource::Open(GDALOpenInfo *poOpenInfo)
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
+int OGRGPXDataSource::Create(const char *pszFilename, CSLConstList papszOptions)
 {
     if (strcmp(pszFilename, "/dev/stdout") == 0)
         pszFilename = "/vsistdout/";
@@ -904,7 +904,7 @@ int OGRGPXDataSource::Create(const char *pszFilename, char **papszOptions)
 }
 
 /************************************************************************/
-/*                             AddCoord()                               */
+/*                              AddCoord()                              */
 /************************************************************************/
 
 void OGRGPXDataSource::AddCoord(double dfLon, double dfLat)
@@ -916,7 +916,7 @@ void OGRGPXDataSource::AddCoord(double dfLon, double dfLat)
 }
 
 /************************************************************************/
-/*                            PrintLine()                               */
+/*                             PrintLine()                              */
 /************************************************************************/
 
 void OGRGPXDataSource::PrintLine(const char *fmt, ...)

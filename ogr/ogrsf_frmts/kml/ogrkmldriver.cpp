@@ -23,7 +23,7 @@
 #include "gdal_priv.h"
 
 /************************************************************************/
-/*                         OGRKMLDriverIdentify()                       */
+/*                        OGRKMLDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRKMLDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -86,7 +86,7 @@ static GDALDataset *OGRKMLDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRKMLDriverCreate(const char *pszName, int /* nBands */,
                                        int /* nXSize */, int /* nYSize */,
                                        GDALDataType /* eDT */,
-                                       char **papszOptions)
+                                       CSLConstList papszOptions)
 {
     CPLAssert(nullptr != pszName);
     CPLDebug("KML", "Attempt to create: %s", pszName);

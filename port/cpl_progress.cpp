@@ -163,7 +163,7 @@ void CPL_STDCALL GDALDestroyScaledProgress(void *pData)
 }
 
 /************************************************************************/
-/*                      GDALTermProgressWidth()                         */
+/*                       GDALTermProgressWidth()                        */
 /************************************************************************/
 
 static constexpr int GDALTermProgressWidth(int nMaxTicks, int nMajorTickSpacing)

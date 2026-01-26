@@ -743,7 +743,7 @@ double PostGISRasterRasterBand::GetMaximum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                       ComputeRasterMinMax()                          */
+/*                        ComputeRasterMinMax()                         */
 /************************************************************************/
 
 CPLErr PostGISRasterRasterBand::ComputeRasterMinMax(int bApproxOK,

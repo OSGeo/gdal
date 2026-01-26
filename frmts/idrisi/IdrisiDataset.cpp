@@ -303,7 +303,7 @@ static int GetToMeterIndex(const char *pszToMeter);
 static int SaveAsCRLF(char **papszStrList, const char *pszFname);
 
 /************************************************************************/
-/*                     myCSLFetchNameValue()                            */
+/*                        myCSLFetchNameValue()                         */
 /************************************************************************/
 
 static const char *myCSLFetchNameValue(char **papszStrList, const char *pszName)
@@ -333,7 +333,7 @@ static const char *myCSLFetchNameValue(char **papszStrList, const char *pszName)
 }
 
 /************************************************************************/
-/*                   myCSLSetNameValueSeparator()                       */
+/*                     myCSLSetNameValueSeparator()                     */
 /************************************************************************/
 
 static void myCSLSetNameValueSeparator(char **papszList,
@@ -400,10 +400,10 @@ class IdrisiDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
     char **GetFileList(void) override;
@@ -848,7 +848,7 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *IdrisiDataset::Create(const char *pszFilename, int nXSize,
                                    int nYSize, int nBandsIn, GDALDataType eType,
-                                   char ** /* papszOptions */)
+                                   CSLConstList /* papszOptions */)
 {
     // --------------------------------------------------------------------
     //      Check input options
@@ -1001,7 +1001,7 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
                                        GDALDataset *poSrcDS, int bStrict,
-                                       char **papszOptions,
+                                       CSLConstList papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {
@@ -1324,7 +1324,7 @@ CPLErr IdrisiDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *IdrisiDataset::GetSpatialRef() const
@@ -1891,7 +1891,7 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
 }
 
 /************************************************************************/
-/*                           GetUnitType()                              */
+/*                            GetUnitType()                             */
 /************************************************************************/
 
 const char *IdrisiRasterBand::GetUnitType()
@@ -2754,7 +2754,7 @@ CPLErr IdrisiGeoReference2Wkt(const char *pszFilename, const char *pszRefSystem,
 }
 
 /************************************************************************/
-/*                        Wkt2GeoReference()                            */
+/*                          Wkt2GeoReference()                          */
 /************************************************************************/
 
 /***
@@ -3181,7 +3181,7 @@ const char *GetStateName(int nCode)
 }
 
 /************************************************************************/
-/*                            GetSpcs()                                 */
+/*                              GetSpcs()                               */
 /************************************************************************/
 
 char *GetSpcs(double dfLon, double dfLat)
@@ -3198,7 +3198,7 @@ char *GetSpcs(double dfLon, double dfLat)
 }
 
 /************************************************************************/
-/*                            NAD83to27()                               */
+/*                             NAD83to27()                              */
 /************************************************************************/
 void NAD83to27(char *pszOutRef, char *pszInRef)
 {
@@ -3232,7 +3232,7 @@ int GetUnitIndex(const char *pszUnitName)
 }
 
 /************************************************************************/
-/*                            GetToMeterIndex()                         */
+/*                          GetToMeterIndex()                           */
 /************************************************************************/
 
 int GetToMeterIndex(const char *pszToMeter)
@@ -3254,7 +3254,7 @@ int GetToMeterIndex(const char *pszToMeter)
 }
 
 /************************************************************************/
-/*                            GetUnitDefault()                          */
+/*                           GetUnitDefault()                           */
 /************************************************************************/
 
 char *GetUnitDefault(const char *pszUnitName, const char *pszToMeter)
@@ -3276,7 +3276,7 @@ char *GetUnitDefault(const char *pszUnitName, const char *pszToMeter)
 }
 
 /************************************************************************/
-/*                               CSLSaveCRLF()                          */
+/*                            CSLSaveCRLF()                             */
 /************************************************************************/
 
 /***

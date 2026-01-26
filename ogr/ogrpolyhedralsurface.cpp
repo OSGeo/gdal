@@ -32,7 +32,7 @@ OGRPolyhedralSurface::OGRPolyhedralSurface(const OGRPolyhedralSurface &) =
     default;
 
 /************************************************************************/
-/*                 operator=( const OGRPolyhedralSurface&)              */
+/*               operator=( const OGRPolyhedralSurface&)                */
 /************************************************************************/
 
 /**
@@ -485,7 +485,7 @@ OGRErr OGRPolyhedralSurface::transform(OGRCoordinateTransformation *poCT)
 }
 
 /************************************************************************/
-/*                      GetCasterToPolygon()                            */
+/*                         GetCasterToPolygon()                         */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -505,7 +505,7 @@ OGRSurfaceCasterToPolygon OGRPolyhedralSurface::GetCasterToPolygon() const
 //! @endcond
 
 /************************************************************************/
-/*                      OGRSurfaceCasterToCurvePolygon()                */
+/*                   OGRSurfaceCasterToCurvePolygon()                   */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -526,7 +526,7 @@ OGRPolyhedralSurface::GetCasterToCurvePolygon() const
 //! @endcond
 
 /************************************************************************/
-/*                         isCompatibleSubType()                        */
+/*                        isCompatibleSubType()                         */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -631,7 +631,7 @@ double OGRPolyhedralSurface::get_Area() const
 }
 
 /************************************************************************/
-/*                        get_GeodesicArea()                            */
+/*                          get_GeodesicArea()                          */
 /************************************************************************/
 
 double OGRPolyhedralSurface::get_GeodesicArea(const OGRSpatialReference *) const
@@ -645,7 +645,7 @@ double OGRPolyhedralSurface::get_GeodesicArea(const OGRSpatialReference *) const
 }
 
 /************************************************************************/
-/*                            get_Length()                              */
+/*                             get_Length()                             */
 /************************************************************************/
 
 double OGRPolyhedralSurface::get_Length() const
@@ -659,7 +659,7 @@ double OGRPolyhedralSurface::get_Length() const
 }
 
 /************************************************************************/
-/*                        get_GeodesicLength()                          */
+/*                         get_GeodesicLength()                         */
 /************************************************************************/
 
 double
@@ -683,7 +683,7 @@ OGRErr OGRPolyhedralSurface::PointOnSurface(OGRPoint *poPoint) const
 }
 
 /************************************************************************/
-/*                     GetCasterToMultiPolygon()                        */
+/*                      GetCasterToMultiPolygon()                       */
 /************************************************************************/
 //! @cond Doxygen_Suppress
 OGRPolyhedralSurfaceCastToMultiPolygon
@@ -693,7 +693,7 @@ OGRPolyhedralSurface::GetCasterToMultiPolygon() const
 }
 
 /************************************************************************/
-/*                      CastToMultiPolygonImpl()                        */
+/*                       CastToMultiPolygonImpl()                       */
 /************************************************************************/
 
 OGRMultiPolygon *
@@ -843,7 +843,7 @@ int OGRPolyhedralSurface::getNumGeometries() const
 }
 
 /************************************************************************/
-/*                         getGeometryRef()                             */
+/*                           getGeometryRef()                           */
 /************************************************************************/
 
 /**
@@ -865,7 +865,7 @@ OGRPolygon *OGRPolyhedralSurface::getGeometryRef(int i)
 }
 
 /************************************************************************/
-/*                         getGeometryRef()                             */
+/*                           getGeometryRef()                           */
 /************************************************************************/
 
 /**
@@ -887,7 +887,7 @@ const OGRPolygon *OGRPolyhedralSurface::getGeometryRef(int i) const
 }
 
 /************************************************************************/
-/*                               IsEmpty()                              */
+/*                              IsEmpty()                               */
 /************************************************************************/
 
 /**
@@ -902,7 +902,7 @@ OGRBoolean OGRPolyhedralSurface::IsEmpty() const
 }
 
 /************************************************************************/
-/*                                 set3D()                              */
+/*                               set3D()                                */
 /************************************************************************/
 
 /**
@@ -915,7 +915,7 @@ bool OGRPolyhedralSurface::set3D(OGRBoolean bIs3D)
 }
 
 /************************************************************************/
-/*                             setMeasured()                            */
+/*                            setMeasured()                             */
 /************************************************************************/
 
 /**
@@ -963,7 +963,7 @@ void OGRPolyhedralSurface::swapXY()
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
 OGRBoolean OGRPolyhedralSurface::hasCurveGeometry(int) const
@@ -972,7 +972,7 @@ OGRBoolean OGRPolyhedralSurface::hasCurveGeometry(int) const
 }
 
 /************************************************************************/
-/*                          removeGeometry()                            */
+/*                           removeGeometry()                           */
 /************************************************************************/
 
 /**

@@ -15,7 +15,7 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                        OGRDGNV8DataSource()                          */
+/*                         OGRDGNV8DataSource()                         */
 /************************************************************************/
 
 OGRDGNV8DataSource::OGRDGNV8DataSource(OGRDGNV8Services *poServices)
@@ -26,7 +26,7 @@ OGRDGNV8DataSource::OGRDGNV8DataSource(OGRDGNV8Services *poServices)
 }
 
 /************************************************************************/
-/*                       ~OGRDGNV8DataSource()                          */
+/*                        ~OGRDGNV8DataSource()                         */
 /************************************************************************/
 
 OGRDGNV8DataSource::~OGRDGNV8DataSource()
@@ -42,7 +42,7 @@ OGRDGNV8DataSource::~OGRDGNV8DataSource()
 }
 
 /************************************************************************/
-/*                              FlushCache()                            */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr OGRDGNV8DataSource::FlushCache(bool /* bAtClosing */)
@@ -172,7 +172,7 @@ const OGRLayer *OGRDGNV8DataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                         EraseSubElements()                           */
+/*                          EraseSubElements()                          */
 /************************************************************************/
 
 template <class T> static void EraseSubElements(T container)
@@ -192,7 +192,7 @@ template <class T> static void EraseSubElements(T container)
 }
 
 /************************************************************************/
-/*                          InitWithSeed()                              */
+/*                            InitWithSeed()                            */
 /************************************************************************/
 
 void OGRDGNV8DataSource::InitWithSeed()
@@ -294,7 +294,7 @@ void OGRDGNV8DataSource::InitWithSeed()
 }
 
 /************************************************************************/
-/*                            FillMD()                                  */
+/*                               FillMD()                               */
 /************************************************************************/
 
 static void FillMD(CPLStringList &osDGNMD, const char *pszKey, OdString str)
@@ -305,7 +305,7 @@ static void FillMD(CPLStringList &osDGNMD, const char *pszKey, OdString str)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **OGRDGNV8DataSource::GetMetadataDomainList()
@@ -315,7 +315,7 @@ char **OGRDGNV8DataSource::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                          GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList OGRDGNV8DataSource::GetMetadata(const char *pszDomain)
@@ -344,7 +344,7 @@ CSLConstList OGRDGNV8DataSource::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                        GetMetadataItem()                             */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *OGRDGNV8DataSource::GetMetadataItem(const char *pszName,
@@ -362,7 +362,7 @@ const char *OGRDGNV8DataSource::GetMetadataItem(const char *pszName,
 /************************************************************************/
 
 bool OGRDGNV8DataSource::PreCreate(const char *pszFilename,
-                                   char **papszOptionsIn)
+                                   CSLConstList papszOptionsIn)
 
 {
     m_bUpdate = true;
@@ -473,7 +473,7 @@ bool OGRDGNV8DataSource::PreCreate(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                             ToUTF8()                                 */
+/*                               ToUTF8()                               */
 /************************************************************************/
 
 CPLString OGRDGNV8DataSource::ToUTF8(const OdString &str)
@@ -488,7 +488,7 @@ CPLString OGRDGNV8DataSource::ToUTF8(const OdString &str)
 }
 
 /************************************************************************/
-/*                            FromUTF8()                                */
+/*                              FromUTF8()                              */
 /************************************************************************/
 
 OdString OGRDGNV8DataSource::FromUTF8(const CPLString &str)
@@ -502,7 +502,7 @@ OdString OGRDGNV8DataSource::FromUTF8(const CPLString &str)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *

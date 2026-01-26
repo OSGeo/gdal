@@ -537,7 +537,7 @@ int KmlSuperOverlayReadDataset::DetectTransparency(int rxsize, int rysize,
 }
 
 /************************************************************************/
-/*                           CreateCopy()                               */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 class KmlSuperOverlayDummyDataset final : public GDALDataset
@@ -551,7 +551,7 @@ KmlSuperOverlayDummyDataset::~KmlSuperOverlayDummyDataset() = default;
 
 static GDALDataset *
 KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                          CPL_UNUSED int bStrict, char **papszOptions,
+                          CPL_UNUSED int bStrict, CSLConstList papszOptions,
                           GDALProgressFunc pfnProgress, void *pProgressData)
 {
     bool isKmz = false;
@@ -975,7 +975,7 @@ KmlSuperOverlayCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                            KMLRemoveSlash()                          */
+/*                           KMLRemoveSlash()                           */
 /************************************************************************/
 
 /* replace "a/b/../c" pattern by "a/c" */
@@ -1000,7 +1000,7 @@ static std::string KMLRemoveSlash(const char *pszPathIn)
 }
 
 /************************************************************************/
-/*                      KmlSuperOverlayReadDataset()                    */
+/*                     KmlSuperOverlayReadDataset()                     */
 /************************************************************************/
 
 KmlSuperOverlayReadDataset::KmlSuperOverlayReadDataset()
@@ -1010,7 +1010,7 @@ KmlSuperOverlayReadDataset::KmlSuperOverlayReadDataset()
 }
 
 /************************************************************************/
-/*                     ~KmlSuperOverlayReadDataset()                    */
+/*                    ~KmlSuperOverlayReadDataset()                     */
 /************************************************************************/
 
 KmlSuperOverlayReadDataset::~KmlSuperOverlayReadDataset()
@@ -1022,7 +1022,7 @@ KmlSuperOverlayReadDataset::~KmlSuperOverlayReadDataset()
 }
 
 /************************************************************************/
-/*                         CloseDependentDatasets()                     */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int KmlSuperOverlayReadDataset::CloseDependentDatasets()
@@ -1063,7 +1063,7 @@ int KmlSuperOverlayReadDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *KmlSuperOverlayReadDataset::GetSpatialRef() const
@@ -1083,7 +1083,7 @@ CPLErr KmlSuperOverlayReadDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                        KmlSuperOverlayRasterBand()                   */
+/*                     KmlSuperOverlayRasterBand()                      */
 /************************************************************************/
 
 KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(
@@ -1097,7 +1097,7 @@ KmlSuperOverlayRasterBand::KmlSuperOverlayRasterBand(
 }
 
 /************************************************************************/
-/*                               IReadBlock()                           */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr KmlSuperOverlayRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -1116,7 +1116,7 @@ CPLErr KmlSuperOverlayRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                          GetColorInterpretation()                    */
+/*                       GetColorInterpretation()                       */
 /************************************************************************/
 
 GDALColorInterp KmlSuperOverlayRasterBand::GetColorInterpretation()
@@ -1125,7 +1125,7 @@ GDALColorInterp KmlSuperOverlayRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
-/*                            IRasterIO()                               */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr KmlSuperOverlayRasterBand::IRasterIO(
@@ -1154,7 +1154,7 @@ int KmlSuperOverlayRasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                           GetOverview()                              */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *KmlSuperOverlayRasterBand::GetOverview(int iOvr)
@@ -1169,7 +1169,7 @@ GDALRasterBand *KmlSuperOverlayRasterBand::GetOverview(int iOvr)
 }
 
 /************************************************************************/
-/*                     KmlSuperOverlayGetBoundingBox()                  */
+/*                   KmlSuperOverlayGetBoundingBox()                    */
 /************************************************************************/
 
 static bool KmlSuperOverlayGetBoundingBox(const CPLXMLNode *psNode,
@@ -1232,7 +1232,7 @@ static bool KmlSuperOverlayGetBoundingBox(const CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                            IRasterIO()                               */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 class SubImageDesc
@@ -1614,7 +1614,7 @@ CPLErr KmlSuperOverlayReadDataset::IRasterIO(
 }
 
 /************************************************************************/
-/*                    KmlSuperOverlayFindRegionStart()                  */
+/*                   KmlSuperOverlayFindRegionStart()                   */
 /************************************************************************/
 
 static int KmlSuperOverlayFindRegionStartInternal(CPLXMLNode *psNode,
@@ -1684,7 +1684,7 @@ static int KmlSuperOverlayFindRegionStart(CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int KmlSuperOverlayReadDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -1747,7 +1747,7 @@ GDALDataset *KmlSuperOverlayReadDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         KmlSuperOverlayLoadIcon()                    */
+/*                      KmlSuperOverlayLoadIcon()                       */
 /************************************************************************/
 
 #define BUFFER_SIZE 20000000
@@ -1906,7 +1906,7 @@ static bool KmlSuperOverlayComputeDepth(const std::string &osFilename,
 }
 
 /************************************************************************/
-/*                    KmlSingleDocRasterDataset                         */
+/*                      KmlSingleDocRasterDataset                       */
 /************************************************************************/
 
 class KmlSingleDocRasterRasterBand;
@@ -1962,7 +1962,7 @@ class KmlSingleDocRasterDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                    KmlSingleDocRasterRasterBand                      */
+/*                     KmlSingleDocRasterRasterBand                     */
 /************************************************************************/
 
 class KmlSingleDocRasterRasterBand final : public GDALRasterBand
@@ -1978,7 +1978,7 @@ class KmlSingleDocRasterRasterBand final : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                        KmlSingleDocRasterDataset()                   */
+/*                     KmlSingleDocRasterDataset()                      */
 /************************************************************************/
 
 KmlSingleDocRasterDataset::KmlSingleDocRasterDataset()
@@ -1988,7 +1988,7 @@ KmlSingleDocRasterDataset::KmlSingleDocRasterDataset()
 }
 
 /************************************************************************/
-/*                       ~KmlSingleDocRasterDataset()                   */
+/*                     ~KmlSingleDocRasterDataset()                     */
 /************************************************************************/
 
 KmlSingleDocRasterDataset::~KmlSingleDocRasterDataset()
@@ -1997,7 +1997,7 @@ KmlSingleDocRasterDataset::~KmlSingleDocRasterDataset()
 }
 
 /************************************************************************/
-/*                         CloseDependentDatasets()                     */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int KmlSingleDocRasterDataset::CloseDependentDatasets()
@@ -2118,7 +2118,7 @@ void KmlSingleDocRasterDataset::BuildOverviews()
 }
 
 /************************************************************************/
-/*                      KmlSingleDocRasterRasterBand()                  */
+/*                    KmlSingleDocRasterRasterBand()                    */
 /************************************************************************/
 
 KmlSingleDocRasterRasterBand::KmlSingleDocRasterRasterBand(
@@ -2132,7 +2132,7 @@ KmlSingleDocRasterRasterBand::KmlSingleDocRasterRasterBand(
 }
 
 /************************************************************************/
-/*                               IReadBlock()                           */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -2261,7 +2261,7 @@ CPLErr KmlSingleDocRasterRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                          GetColorInterpretation()                    */
+/*                       GetColorInterpretation()                       */
 /************************************************************************/
 
 GDALColorInterp KmlSingleDocRasterRasterBand::GetColorInterpretation()
@@ -2283,7 +2283,7 @@ int KmlSingleDocRasterRasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                           GetOverview()                              */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *KmlSingleDocRasterRasterBand::GetOverview(int iOvr)
@@ -2299,7 +2299,7 @@ GDALRasterBand *KmlSingleDocRasterRasterBand::GetOverview(int iOvr)
 }
 
 /************************************************************************/
-/*                       KmlSingleDocCollectTiles()                     */
+/*                      KmlSingleDocCollectTiles()                      */
 /************************************************************************/
 
 static void
@@ -2473,7 +2473,7 @@ GDALDataset *KmlSingleDocRasterDataset::Open(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                   KmlSingleOverlayRasterDataset                      */
+/*                    KmlSingleOverlayRasterDataset                     */
 /************************************************************************/
 
 class KmlSingleOverlayRasterDataset final : public VRTDataset

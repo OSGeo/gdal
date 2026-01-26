@@ -498,7 +498,7 @@ OGRErr OGROCILoaderLayer::WriteFeatureBinaryMode(OGRFeature * /*poFeature*/)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGROCILoaderLayer::ICreateFeature(OGRFeature *poFeature)

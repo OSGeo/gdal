@@ -29,7 +29,7 @@ typedef struct
 } FindFileTLS;
 
 /************************************************************************/
-/*                      CPLFindFileDeinitTLS()                          */
+/*                        CPLFindFileDeinitTLS()                        */
 /************************************************************************/
 
 static void CPLPopFinderLocationInternal(FindFileTLS *pTLSData);
@@ -52,7 +52,7 @@ static void CPLFindFileFreeTLS(void *pData)
 }
 
 /************************************************************************/
-/*                       CPLGetFindFileTLS()                            */
+/*                         CPLGetFindFileTLS()                          */
 /************************************************************************/
 
 static FindFileTLS *CPLGetFindFileTLS()
@@ -247,7 +247,7 @@ void CPLPushFinderLocation(const char *pszLocation)
 }
 
 /************************************************************************/
-/*                       CPLPopFinderLocation()                         */
+/*                        CPLPopFinderLocation()                        */
 /************************************************************************/
 
 static void CPLPopFinderLocationInternal(FindFileTLS *pTLSData)

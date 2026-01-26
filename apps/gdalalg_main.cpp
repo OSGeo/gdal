@@ -21,7 +21,7 @@
 #endif
 
 /************************************************************************/
-/*                  GDALMainAlgorithm::GDALMainAlgorithm()              */
+/*                GDALMainAlgorithm::GDALMainAlgorithm()                */
 /************************************************************************/
 
 GDALMainAlgorithm::GDALMainAlgorithm()
@@ -53,7 +53,7 @@ GDALMainAlgorithm::GDALMainAlgorithm()
 }
 
 /************************************************************************/
-/*              GDALMainAlgorithm::ParseCommandLineArguments()          */
+/*            GDALMainAlgorithm::ParseCommandLineArguments()            */
 /************************************************************************/
 
 bool GDALMainAlgorithm::ParseCommandLineArguments(
@@ -145,7 +145,7 @@ bool GDALMainAlgorithm::ParseCommandLineArguments(
 }
 
 /************************************************************************/
-/*                   GDALMainAlgorithm::GetUsageForCLI()                */
+/*                 GDALMainAlgorithm::GetUsageForCLI()                  */
 /************************************************************************/
 
 std::string
@@ -160,7 +160,7 @@ GDALMainAlgorithm::GetUsageForCLI(bool shortUsage,
 }
 
 /************************************************************************/
-/*                    GDALMainAlgorithm::RunImpl()                      */
+/*                     GDALMainAlgorithm::RunImpl()                     */
 /************************************************************************/
 
 bool GDALMainAlgorithm::RunImpl(GDALProgressFunc, void *)

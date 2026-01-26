@@ -28,7 +28,7 @@
 #include "sqlite3.h"
 
 /************************************************************************/
-/*                        OGRSQLiteViewLayer()                         */
+/*                         OGRSQLiteViewLayer()                         */
 /************************************************************************/
 
 OGRSQLiteViewLayer::OGRSQLiteViewLayer(OGRSQLiteDataSource *poDSIn)
@@ -37,7 +37,7 @@ OGRSQLiteViewLayer::OGRSQLiteViewLayer(OGRSQLiteDataSource *poDSIn)
 }
 
 /************************************************************************/
-/*                        ~OGRSQLiteViewLayer()                        */
+/*                        ~OGRSQLiteViewLayer()                         */
 /************************************************************************/
 
 OGRSQLiteViewLayer::~OGRSQLiteViewLayer()
@@ -81,7 +81,7 @@ CPLErr OGRSQLiteViewLayer::Initialize(const char *pszViewNameIn,
 }
 
 /************************************************************************/
-/*                           GetLayerDefn()                             */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGRSQLiteViewLayer::GetLayerDefn() const
@@ -94,7 +94,7 @@ const OGRFeatureDefn *OGRSQLiteViewLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                          BuildLayerDefn()                            */
+/*                           BuildLayerDefn()                           */
 /************************************************************************/
 
 void OGRSQLiteViewLayer::BuildLayerDefn()
@@ -111,7 +111,7 @@ void OGRSQLiteViewLayer::BuildLayerDefn()
 }
 
 /************************************************************************/
-/*                        GetUnderlyingLayer()                          */
+/*                         GetUnderlyingLayer()                         */
 /************************************************************************/
 
 OGRSQLiteLayer *OGRSQLiteViewLayer::GetUnderlyingLayer()
@@ -152,7 +152,7 @@ OGRwkbGeometryType OGRSQLiteViewLayer::GetGeomType() const
 }
 
 /************************************************************************/
-/*                         EstablishFeatureDefn()                       */
+/*                        EstablishFeatureDefn()                        */
 /************************************************************************/
 
 CPLErr OGRSQLiteViewLayer::EstablishFeatureDefn()
@@ -385,7 +385,7 @@ OGRErr OGRSQLiteViewLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
 }
 
 /************************************************************************/
-/*                           GetSpatialWhere()                          */
+/*                          GetSpatialWhere()                           */
 /************************************************************************/
 
 CPLString OGRSQLiteViewLayer::GetSpatialWhere(int iGeomCol,

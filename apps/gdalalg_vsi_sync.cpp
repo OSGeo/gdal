@@ -23,7 +23,7 @@
 #endif
 
 /************************************************************************/
-/*              GDALVSISyncAlgorithm::GDALVSISyncAlgorithm()            */
+/*             GDALVSISyncAlgorithm::GDALVSISyncAlgorithm()             */
 /************************************************************************/
 
 GDALVSISyncAlgorithm::GDALVSISyncAlgorithm()
@@ -58,7 +58,7 @@ GDALVSISyncAlgorithm::GDALVSISyncAlgorithm()
 }
 
 /************************************************************************/
-/*                    GDALVSISyncAlgorithm::RunImpl()                   */
+/*                   GDALVSISyncAlgorithm::RunImpl()                    */
 /************************************************************************/
 
 bool GDALVSISyncAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

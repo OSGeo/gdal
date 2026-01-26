@@ -768,7 +768,7 @@ CPLErr GNMGenericNetwork::ChangeAllBlockState(bool bIsBlock)
 
 OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
                                      GNMGraphAlgorithmType eAlgorithm,
-                                     char **papszOptions)
+                                     CSLConstList papszOptions)
 {
 
     if (!m_bIsGraphLoaded && LoadGraph() != CE_None)
@@ -1026,7 +1026,7 @@ void GNMGenericNetwork::FillResultLayer(OGRGNMWrappedResultLayer *poResLayer,
 }
 
 CPLErr GNMGenericNetwork::CheckLayerDriver(const char *pszDefaultDriverName,
-                                           char **papszOptions)
+                                           CSLConstList papszOptions)
 {
     if (nullptr == m_poLayerDriver)
     {
@@ -1402,7 +1402,7 @@ int GNMGenericNetwork::TestCapability(const char *pszCap) const
 
 OGRLayer *GNMGenericNetwork::CopyLayer(OGRLayer *poSrcLayer,
                                        const char *pszNewName,
-                                       char **papszOptions)
+                                       CSLConstList papszOptions)
 {
     CPLStringList aosOptions(CSLDuplicate(papszOptions));
     aosOptions.SetNameValue("DST_SRSWKT", GetProjectionRef());

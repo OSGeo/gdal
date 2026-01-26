@@ -52,7 +52,7 @@ class GPBException final : public std::exception
 #define THROW_GPB_EXCEPTION throw GPBException(__LINE__)
 
 /************************************************************************/
-/*                Google Protocol Buffer definitions                    */
+/*                  Google Protocol Buffer definitions                  */
 /************************************************************************/
 
 // TODO(schwehr): This should be an enum.
@@ -68,7 +68,7 @@ constexpr int WT_32BIT = 5;
 #define GET_FIELDNUMBER(nKey) (nKey >> 3)
 
 /************************************************************************/
-/*                          ReadVarUInt32()                             */
+/*                           ReadVarUInt32()                            */
 /************************************************************************/
 
 inline int ReadVarUInt32(const GByte **ppabyData)
@@ -118,7 +118,7 @@ inline int ReadVarUInt32(const GByte **ppabyData)
     }
 
 /************************************************************************/
-/*                          ReadVarUInt64()                             */
+/*                           ReadVarUInt64()                            */
 /************************************************************************/
 
 inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
@@ -168,7 +168,7 @@ inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
     }
 
 /************************************************************************/
-/*                           ReadVarInt64()                             */
+/*                            ReadVarInt64()                            */
 /************************************************************************/
 
 inline GIntBig ReadVarInt64(const GByte **ppabyData)
@@ -184,7 +184,7 @@ inline GIntBig ReadVarInt64(const GByte **ppabyData)
     }
 
 /************************************************************************/
-/*                            DecodeSInt()                              */
+/*                             DecodeSInt()                             */
 /************************************************************************/
 
 inline GIntBig DecodeSInt(GUIntBig nVal)
@@ -200,7 +200,7 @@ inline GInt32 DecodeSInt(GUInt32 nVal)
 }
 
 /************************************************************************/
-/*                            ReadVarSInt64()                           */
+/*                           ReadVarSInt64()                            */
 /************************************************************************/
 
 inline GIntBig ReadVarSInt64(const GByte **ppabyPtr)
@@ -221,7 +221,7 @@ inline GIntBig ReadVarSInt64(const GByte **ppabyPtr)
     }
 
 /************************************************************************/
-/*                           ReadVarInt32()                             */
+/*                            ReadVarInt32()                            */
 /************************************************************************/
 
 inline int ReadVarInt32(const GByte **ppabyData)
@@ -277,7 +277,7 @@ inline double ReadFloat64(const GByte **ppabyData, const GByte *pabyDataLimit)
 }
 
 /************************************************************************/
-/*                            SkipVarInt()                              */
+/*                             SkipVarInt()                             */
 /************************************************************************/
 
 inline void SkipVarInt(const GByte **ppabyData)
@@ -324,7 +324,7 @@ inline void SkipVarInt(const GByte **ppabyData)
     } while (0)
 
 /************************************************************************/
-/*                         SkipUnknownField()                           */
+/*                          SkipUnknownField()                          */
 /************************************************************************/
 
 #define SKIP_UNKNOWN_FIELD_INLINE(pabyData, pabyDataLimit, verbose)            \
@@ -396,7 +396,7 @@ inline int SkipUnknownField(int nKey, const GByte *pabyData,
     }
 
 /************************************************************************/
-/*                          GetVarUIntSize()                            */
+/*                           GetVarUIntSize()                           */
 /************************************************************************/
 
 inline int GetVarUIntSize(GUIntBig nVal)
@@ -411,7 +411,7 @@ inline int GetVarUIntSize(GUIntBig nVal)
 }
 
 /************************************************************************/
-/*                            EncodeSInt()                              */
+/*                             EncodeSInt()                             */
 /************************************************************************/
 
 inline GUIntBig EncodeSInt(GIntBig nVal)
@@ -431,7 +431,7 @@ inline GUInt32 EncodeSInt(GInt32 nVal)
 }
 
 /************************************************************************/
-/*                          GetVarIntSize()                             */
+/*                           GetVarIntSize()                            */
 /************************************************************************/
 
 inline int GetVarIntSize(GIntBig nVal)
@@ -440,7 +440,7 @@ inline int GetVarIntSize(GIntBig nVal)
 }
 
 /************************************************************************/
-/*                          GetVarSIntSize()                            */
+/*                           GetVarSIntSize()                           */
 /************************************************************************/
 
 inline int GetVarSIntSize(GIntBig nVal)
@@ -449,7 +449,7 @@ inline int GetVarSIntSize(GIntBig nVal)
 }
 
 /************************************************************************/
-/*                           WriteVarUInt()                             */
+/*                            WriteVarUInt()                            */
 /************************************************************************/
 
 inline void WriteVarUInt(GByte **ppabyData, GUIntBig nVal)
@@ -467,7 +467,7 @@ inline void WriteVarUInt(GByte **ppabyData, GUIntBig nVal)
 }
 
 /************************************************************************/
-/*                        WriteVarUIntSingleByte()                      */
+/*                       WriteVarUIntSingleByte()                       */
 /************************************************************************/
 
 inline void WriteVarUIntSingleByte(GByte **ppabyData, GUIntBig nVal)
@@ -480,7 +480,7 @@ inline void WriteVarUIntSingleByte(GByte **ppabyData, GUIntBig nVal)
 }
 
 /************************************************************************/
-/*                           WriteVarInt()                              */
+/*                            WriteVarInt()                             */
 /************************************************************************/
 
 inline void WriteVarInt(GByte **ppabyData, GIntBig nVal)
@@ -489,7 +489,7 @@ inline void WriteVarInt(GByte **ppabyData, GIntBig nVal)
 }
 
 /************************************************************************/
-/*                           WriteVarSInt()                             */
+/*                            WriteVarSInt()                            */
 /************************************************************************/
 
 inline void WriteVarSInt(GByte **ppabyData, GIntBig nVal)
@@ -498,7 +498,7 @@ inline void WriteVarSInt(GByte **ppabyData, GIntBig nVal)
 }
 
 /************************************************************************/
-/*                           WriteFloat32()                             */
+/*                            WriteFloat32()                            */
 /************************************************************************/
 
 inline void WriteFloat32(GByte **ppabyData, float fVal)
@@ -509,7 +509,7 @@ inline void WriteFloat32(GByte **ppabyData, float fVal)
 }
 
 /************************************************************************/
-/*                           WriteFloat64()                             */
+/*                            WriteFloat64()                            */
 /************************************************************************/
 
 inline void WriteFloat64(GByte **ppabyData, double dfVal)
@@ -520,7 +520,7 @@ inline void WriteFloat64(GByte **ppabyData, double dfVal)
 }
 
 /************************************************************************/
-/*                           GetTextSize()                              */
+/*                            GetTextSize()                             */
 /************************************************************************/
 
 inline int GetTextSize(const char *pszText)
@@ -536,7 +536,7 @@ inline int GetTextSize(const std::string &osText)
 }
 
 /************************************************************************/
-/*                            WriteText()                               */
+/*                             WriteText()                              */
 /************************************************************************/
 
 inline void WriteText(GByte **ppabyData, const char *pszText)

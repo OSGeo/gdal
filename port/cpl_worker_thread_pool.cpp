@@ -23,7 +23,7 @@
 static thread_local CPLWorkerThreadPool *threadLocalCurrentThreadPool = nullptr;
 
 /************************************************************************/
-/*                         CPLWorkerThreadPool()                        */
+/*                        CPLWorkerThreadPool()                         */
 /************************************************************************/
 
 /** Instantiate a new pool of worker threads.
@@ -45,7 +45,7 @@ CPLWorkerThreadPool::CPLWorkerThreadPool(int nThreads) : jobQueue{}
 }
 
 /************************************************************************/
-/*                          ~CPLWorkerThreadPool()                      */
+/*                        ~CPLWorkerThreadPool()                        */
 /************************************************************************/
 
 /** Destroys a pool of worker threads.
@@ -74,7 +74,7 @@ CPLWorkerThreadPool::~CPLWorkerThreadPool()
 }
 
 /************************************************************************/
-/*                        GetThreadCount()                              */
+/*                           GetThreadCount()                           */
 /************************************************************************/
 
 int CPLWorkerThreadPool::GetThreadCount() const
@@ -84,7 +84,7 @@ int CPLWorkerThreadPool::GetThreadCount() const
 }
 
 /************************************************************************/
-/*                       WorkerThreadFunction()                         */
+/*                        WorkerThreadFunction()                        */
 /************************************************************************/
 
 void CPLWorkerThreadPool::WorkerThreadFunction(void *user_data)
@@ -227,7 +227,7 @@ bool CPLWorkerThreadPool::SubmitJob(std::function<void()> task)
 }
 
 /************************************************************************/
-/*                             SubmitJobs()                              */
+/*                             SubmitJobs()                             */
 /************************************************************************/
 
 /** Queue several jobs
@@ -323,7 +323,7 @@ bool CPLWorkerThreadPool::SubmitJobs(CPLThreadFunc pfnFunc,
 }
 
 /************************************************************************/
-/*                            WaitCompletion()                          */
+/*                           WaitCompletion()                           */
 /************************************************************************/
 
 /** Wait for completion of part or whole jobs.
@@ -342,7 +342,7 @@ void CPLWorkerThreadPool::WaitCompletion(int nMaxRemainingJobs)
 }
 
 /************************************************************************/
-/*                            WaitEvent()                               */
+/*                             WaitEvent()                              */
 /************************************************************************/
 
 /** Wait for completion of at least one job, if there are any remaining,
@@ -380,7 +380,7 @@ void CPLWorkerThreadPool::WakeUpWaitEvent()
 }
 
 /************************************************************************/
-/*                                Setup()                               */
+/*                               Setup()                                */
 /************************************************************************/
 
 /** Setup the pool.
@@ -460,7 +460,7 @@ bool CPLWorkerThreadPool::Setup(int nThreads, CPLThreadFunc pfnInitFunc,
 }
 
 /************************************************************************/
-/*                          DeclareJobFinished()                        */
+/*                         DeclareJobFinished()                         */
 /************************************************************************/
 
 void CPLWorkerThreadPool::DeclareJobFinished()
@@ -539,7 +539,7 @@ CPLWorkerThreadPool::GetNextJob(CPLWorkerThread *psWorkerThread)
 }
 
 /************************************************************************/
-/*                         CreateJobQueue()                             */
+/*                           CreateJobQueue()                           */
 /************************************************************************/
 
 /** Create a new job queue based on this worker thread pool.
@@ -566,7 +566,7 @@ CPLJobQueue::CPLJobQueue(CPLWorkerThreadPool *poPool) : m_poPool(poPool)
 //! @endcond
 
 /************************************************************************/
-/*                           ~CPLJobQueue()                             */
+/*                            ~CPLJobQueue()                            */
 /************************************************************************/
 
 CPLJobQueue::~CPLJobQueue()
@@ -575,7 +575,7 @@ CPLJobQueue::~CPLJobQueue()
 }
 
 /************************************************************************/
-/*                          DeclareJobFinished()                        */
+/*                         DeclareJobFinished()                         */
 /************************************************************************/
 
 void CPLJobQueue::DeclareJobFinished()
@@ -623,7 +623,7 @@ bool CPLJobQueue::SubmitJob(std::function<void()> task)
 }
 
 /************************************************************************/
-/*                            WaitCompletion()                          */
+/*                           WaitCompletion()                           */
 /************************************************************************/
 
 /** Wait for completion of part or whole jobs.

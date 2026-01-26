@@ -142,6 +142,7 @@ Examples
 >>> xform = osr.CoordinateTransformation(wgs84, albers)
 >>> vt = ogr.Geometry(ogr.wkbPoint)
 >>> vt.AddPoint_2D(145.195, -37.836)
+0
 >>> vt.Transform(xform)
 0
 >>> vt.GetPoint_2D()
@@ -968,6 +969,7 @@ Examples
 >>> ogr.GeometryTypeToName(pt.GetGeometryType())
 'Point'
 >>> pt.AddPoint(3, 7)
+0
 >>> ogr.GeometryTypeToName(pt.GetGeometryType())
 '3D Point'
 ";
@@ -996,6 +998,7 @@ Examples
 >>> ogr.GeometryTypeToName(pt.GetGeometryType())
 'Point'
 >>> pt.AddPoint_2D(3, 7)
+0
 >>> ogr.GeometryTypeToName(pt.GetGeometryType())
 'Point'
 ";

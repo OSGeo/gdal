@@ -75,7 +75,7 @@ static CPLString ConvertUnitInText(bool bMetricUnits, const char *pszTxt)
 }
 
 /************************************************************************/
-/*                         Lon360to180()                               */
+/*                            Lon360to180()                             */
 /************************************************************************/
 
 static inline double Lon360to180(double lon)
@@ -86,7 +86,7 @@ static inline double Lon360to180(double lon)
 }
 
 /************************************************************************/
-/*                           GRIBRasterBand()                            */
+/*                           GRIBRasterBand()                           */
 /************************************************************************/
 
 GRIBRasterBand::GRIBRasterBand(GRIBDataset *poDSIn, int nBandIn,
@@ -132,7 +132,7 @@ GRIBRasterBand::GRIBRasterBand(GRIBDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                           FindMetaData()                             */
+/*                            FindMetaData()                            */
 /************************************************************************/
 
 void GRIBRasterBand::FindMetaData()
@@ -599,7 +599,7 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
 }
 
 /************************************************************************/
-/*                        FindNoDataGrib2()                             */
+/*                          FindNoDataGrib2()                           */
 /************************************************************************/
 
 void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
@@ -778,7 +778,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
 }
 
 /************************************************************************/
-/*                         GetDescription()                             */
+/*                           GetDescription()                           */
 /************************************************************************/
 
 const char *GRIBRasterBand::GetDescription() const
@@ -790,7 +790,7 @@ const char *GRIBRasterBand::GetDescription() const
 }
 
 /************************************************************************/
-/*                             LoadData()                               */
+/*                              LoadData()                              */
 /************************************************************************/
 
 CPLErr GRIBRasterBand::LoadData()
@@ -915,7 +915,7 @@ static bool IsGdalinfoInteractive()
 #endif
 
 /************************************************************************/
-/*                             GetMetaData()                            */
+/*                            GetMetaData()                             */
 /************************************************************************/
 CSLConstList GRIBRasterBand::GetMetadata(const char *pszDomain)
 {
@@ -956,7 +956,7 @@ CSLConstList GRIBRasterBand::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                             GetMetaDataItem()                        */
+/*                          GetMetaDataItem()                           */
 /************************************************************************/
 const char *GRIBRasterBand::GetMetadataItem(const char *pszName,
                                             const char *pszDomain)
@@ -1187,7 +1187,7 @@ void GRIBRasterBand::UncacheData()
 }
 
 /************************************************************************/
-/*                           ~GRIBRasterBand()                          */
+/*                          ~GRIBRasterBand()                           */
 /************************************************************************/
 
 GRIBRasterBand::~GRIBRasterBand()
@@ -1200,7 +1200,7 @@ GRIBRasterBand::~GRIBRasterBand()
 gdal::grib::InventoryWrapper::~InventoryWrapper() = default;
 
 /************************************************************************/
-/*                           InventoryWrapperGrib                       */
+/*                         InventoryWrapperGrib                         */
 /************************************************************************/
 class InventoryWrapperGrib final : public gdal::grib::InventoryWrapper
 {
@@ -1226,7 +1226,7 @@ InventoryWrapperGrib::~InventoryWrapperGrib()
 }
 
 /************************************************************************/
-/*                           InventoryWrapperSidecar                    */
+/*                       InventoryWrapperSidecar                        */
 /************************************************************************/
 
 class InventoryWrapperSidecar final : public gdal::grib::InventoryWrapper
@@ -1356,7 +1356,7 @@ GRIBDataset::GRIBDataset()
 }
 
 /************************************************************************/
-/*                            ~GRIBDataset()                             */
+/*                            ~GRIBDataset()                            */
 /************************************************************************/
 
 GRIBDataset::~GRIBDataset()
@@ -1379,7 +1379,7 @@ CPLErr GRIBDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                                Inventory()                           */
+/*                             Inventory()                              */
 /************************************************************************/
 
 std::unique_ptr<gdal::grib::InventoryWrapper>
@@ -1636,7 +1636,7 @@ GRIBSharedResource::~GRIBSharedResource()
 }
 
 /************************************************************************/
-/*                                GRIBGroup                             */
+/*                              GRIBGroup                               */
 /************************************************************************/
 
 class GRIBArray;
@@ -1679,7 +1679,7 @@ class GRIBGroup final : public GDALGroup
 };
 
 /************************************************************************/
-/*                                GRIBArray                             */
+/*                              GRIBArray                               */
 /************************************************************************/
 
 class GRIBArray final : public GDALPamMDArray
@@ -2021,7 +2021,7 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
 }
 
 /************************************************************************/
-/*                         ExtendTimeDim()                              */
+/*                           ExtendTimeDim()                            */
 /************************************************************************/
 
 void GRIBArray::ExtendTimeDim(vsi_l_offset nOffset, int subgNum,
@@ -2033,7 +2033,7 @@ void GRIBArray::ExtendTimeDim(vsi_l_offset nOffset, int subgNum,
 }
 
 /************************************************************************/
-/*                           Finalize()                                 */
+/*                              Finalize()                              */
 /************************************************************************/
 
 void GRIBArray::Finalize(GRIBGroup *poGroup, inventoryType *psInv)
@@ -2198,7 +2198,7 @@ const std::vector<double> &GRIBSharedResource::LoadData(vsi_l_offset nOffset,
 }
 
 /************************************************************************/
-/*                             IRead()                                  */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool GRIBArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -2294,7 +2294,7 @@ bool GRIBArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                          OpenMultiDim()                              */
+/*                            OpenMultiDim()                            */
 /************************************************************************/
 
 GDALDataset *GRIBDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
@@ -2865,7 +2865,7 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
 }
 
 /************************************************************************/
-/*                       GDALDeregister_GRIB()                          */
+/*                        GDALDeregister_GRIB()                         */
 /************************************************************************/
 
 static void GDALDeregister_GRIB(GDALDriver *)
@@ -2879,7 +2879,7 @@ static void GDALDeregister_GRIB(GDALDriver *)
 }
 
 /************************************************************************/
-/*                          GDALGRIBDriver                              */
+/*                            GDALGRIBDriver                            */
 /************************************************************************/
 
 class GDALGRIBDriver final : public GDALDriver

@@ -67,10 +67,10 @@ class SAGADataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -352,7 +352,7 @@ char **SAGADataset::GetFileList()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *SAGADataset::GetSpatialRef() const
@@ -769,7 +769,7 @@ CPLErr SAGADataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                             WriteHeader()                            */
+/*                            WriteHeader()                             */
 /************************************************************************/
 
 CPLErr SAGADataset::WriteHeader(const CPLString &osHDRFilename,
@@ -836,7 +836,7 @@ CPLErr SAGADataset::WriteHeader(const CPLString &osHDRFilename,
 
 GDALDataset *SAGADataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszParamList)
+                                 CSLConstList papszParamList)
 
 {
     if (nXSize <= 0 || nYSize <= 0)
@@ -986,7 +986,7 @@ GDALDataset *SAGADataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *SAGADataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     CPL_UNUSED char **papszOptions,
+                                     CPL_UNUSED CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {
@@ -1059,7 +1059,7 @@ GDALDataset *SAGADataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GDALRegister_SAGA()                         */
+/*                         GDALRegister_SAGA()                          */
 /************************************************************************/
 
 void GDALRegister_SAGA()

@@ -17,6 +17,7 @@
 
 #include <cstdint>
 #include <initializer_list>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -246,9 +247,28 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
         mutable CPLJSONObject m_oObj{};
 
       public:
+        using iterator_category = std::input_iterator_tag;
+        using value_type = CPLJSONObject;
+        using difference_type = std::ptrdiff_t;
+        using pointer = CPLJSONObject *;
+        using reference = CPLJSONObject &;
+
         ConstIterator(const CPLJSONArray &oSelf, bool bStart)
             : m_oSelf(oSelf), m_nIdx(bStart ? 0 : oSelf.Size())
         {
+        }
+
+        ConstIterator(const ConstIterator &) = default;
+
+        ConstIterator &operator=(const ConstIterator &other)
+        {
+            if (this != &other)
+            {
+                CPLAssert(&m_oSelf == &(other.m_oSelf));
+                m_nIdx = other.m_nIdx;
+                m_oObj = other.m_oObj;
+            }
+            return *this;
         }
 
         ~ConstIterator() = default;
@@ -279,6 +299,13 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     /*! @endcond */
   public:
     int Size() const;
+
+    //! Return the size of the array
+    inline size_t size() const
+    {
+        return Size();
+    }
+
     void AddNull();
     void Add(const CPLJSONObject &oValue);
     void Add(const std::string &osValue);
@@ -291,6 +318,9 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
 
     CPLJSONObject operator[](int nIndex);
     const CPLJSONObject operator[](int nIndex) const;
+
+    CPLJSONObject operator[](size_t nIndex);
+    const CPLJSONObject operator[](size_t nIndex) const;
 
     /** Iterator to first element */
     ConstIterator begin() const

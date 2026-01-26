@@ -249,7 +249,7 @@ static void fprintfstderr(const char *fmt, ...)
 #endif
 
 /************************************************************************/
-/*              CPLVirtualMemManagerRegisterVirtualMem()                */
+/*               CPLVirtualMemManagerRegisterVirtualMem()               */
 /************************************************************************/
 
 static bool CPLVirtualMemManagerRegisterVirtualMem(CPLVirtualMemVMA *ctxt)
@@ -280,7 +280,7 @@ static bool CPLVirtualMemManagerRegisterVirtualMem(CPLVirtualMemVMA *ctxt)
 }
 
 /************************************************************************/
-/*               CPLVirtualMemManagerUnregisterVirtualMem()             */
+/*              CPLVirtualMemManagerUnregisterVirtualMem()              */
 /************************************************************************/
 
 static void CPLVirtualMemManagerUnregisterVirtualMem(CPLVirtualMemVMA *ctxt)
@@ -305,7 +305,7 @@ static void CPLVirtualMemManagerUnregisterVirtualMem(CPLVirtualMemVMA *ctxt)
 }
 
 /************************************************************************/
-/*                           CPLVirtualMemNew()                         */
+/*                          CPLVirtualMemNew()                          */
 /************************************************************************/
 
 static void CPLVirtualMemFreeFileMemoryMapped(CPLVirtualMemVMA *ctxt);
@@ -459,7 +459,7 @@ CPLVirtualMem *CPLVirtualMemNew(size_t nSize, size_t nCacheSize,
 }
 
 /************************************************************************/
-/*                  CPLVirtualMemFreeFileMemoryMapped()                 */
+/*                 CPLVirtualMemFreeFileMemoryMapped()                  */
 /************************************************************************/
 
 static void CPLVirtualMemFreeFileMemoryMapped(CPLVirtualMemVMA *ctxt)
@@ -506,7 +506,7 @@ static volatile int nCountThreadsInSigUSR1 = 0;
 static volatile int nWaitHelperThread = 0;
 
 /************************************************************************/
-/*                   CPLVirtualMemSIGUSR1Handler()                      */
+/*                    CPLVirtualMemSIGUSR1Handler()                     */
 /************************************************************************/
 
 static void CPLVirtualMemSIGUSR1Handler(int /* signum_unused */,
@@ -530,7 +530,7 @@ static void CPLVirtualMemSIGUSR1Handler(int /* signum_unused */,
 #endif
 
 /************************************************************************/
-/*                      CPLVirtualMemDeclareThread()                    */
+/*                     CPLVirtualMemDeclareThread()                     */
 /************************************************************************/
 
 void CPLVirtualMemDeclareThread(CPLVirtualMem *ctxt)
@@ -551,7 +551,7 @@ void CPLVirtualMemDeclareThread(CPLVirtualMem *ctxt)
 }
 
 /************************************************************************/
-/*                     CPLVirtualMemUnDeclareThread()                   */
+/*                    CPLVirtualMemUnDeclareThread()                    */
 /************************************************************************/
 
 void CPLVirtualMemUnDeclareThread(CPLVirtualMem *ctxt)
@@ -806,7 +806,7 @@ static void CPLVirtualMemAddPage(CPLVirtualMemVMA *ctxt, void *target_addr,
 }
 
 /************************************************************************/
-/*                    CPLVirtualMemGetOpTypeImm()                       */
+/*                     CPLVirtualMemGetOpTypeImm()                      */
 /************************************************************************/
 
 #if defined(__x86_64__) || defined(__i386__)
@@ -836,7 +836,7 @@ static OpType CPLVirtualMemGetOpTypeImm(GByte val_rip)
 #endif
 
 /************************************************************************/
-/*                      CPLVirtualMemGetOpType()                        */
+/*                       CPLVirtualMemGetOpType()                       */
 /************************************************************************/
 
 // Don't need exhaustivity. It is just a hint for an optimization:
@@ -1501,7 +1501,7 @@ static OpType CPLVirtualMemGetOpType(const GByte *rip)
 #endif
 
 /************************************************************************/
-/*                    CPLVirtualMemManagerPinAddrInternal()             */
+/*                CPLVirtualMemManagerPinAddrInternal()                 */
 /************************************************************************/
 
 static int
@@ -1554,7 +1554,7 @@ CPLVirtualMemManagerPinAddrInternal(CPLVirtualMemMsgToWorkerThread *msg)
 }
 
 /************************************************************************/
-/*                      CPLVirtualMemPin()                              */
+/*                          CPLVirtualMemPin()                          */
 /************************************************************************/
 
 void CPLVirtualMemPin(CPLVirtualMem *ctxt, void *pAddr, size_t nSize,
@@ -1581,7 +1581,7 @@ void CPLVirtualMemPin(CPLVirtualMem *ctxt, void *pAddr, size_t nSize,
 }
 
 /************************************************************************/
-/*                   CPLVirtualMemManagerSIGSEGVHandler()               */
+/*                 CPLVirtualMemManagerSIGSEGVHandler()                 */
 /************************************************************************/
 
 #if defined(__x86_64__)
@@ -1683,7 +1683,7 @@ static void CPLVirtualMemManagerSIGSEGVHandler(int the_signal,
 }
 
 /************************************************************************/
-/*                      CPLVirtualMemManagerThread()                    */
+/*                     CPLVirtualMemManagerThread()                     */
 /************************************************************************/
 
 static void CPLVirtualMemManagerThread(void * /* unused_param */)
@@ -1848,7 +1848,7 @@ static void CPLVirtualMemManagerThread(void * /* unused_param */)
 }
 
 /************************************************************************/
-/*                       CPLVirtualMemManagerInit()                     */
+/*                      CPLVirtualMemManagerInit()                      */
 /************************************************************************/
 
 static bool CPLVirtualMemManagerInit()
@@ -1891,7 +1891,7 @@ static bool CPLVirtualMemManagerInit()
 }
 
 /************************************************************************/
-/*                      CPLVirtualMemManagerTerminate()                 */
+/*                   CPLVirtualMemManagerTerminate()                    */
 /************************************************************************/
 
 void CPLVirtualMemManagerTerminate(void)
@@ -1979,7 +1979,7 @@ void CPLVirtualMemManagerTerminate(void)
 #ifdef HAVE_MMAP
 
 /************************************************************************/
-/*                     CPLVirtualMemFreeFileMemoryMapped()              */
+/*                 CPLVirtualMemFreeFileMemoryMapped()                  */
 /************************************************************************/
 
 static void CPLVirtualMemFreeFileMemoryMapped(CPLVirtualMem *ctxt)
@@ -1992,7 +1992,7 @@ static void CPLVirtualMemFreeFileMemoryMapped(CPLVirtualMem *ctxt)
 }
 
 /************************************************************************/
-/*                       CPLVirtualMemFileMapNew()                      */
+/*                      CPLVirtualMemFileMapNew()                       */
 /************************************************************************/
 
 CPLVirtualMem *CPLVirtualMemFileMapNew(
@@ -2117,7 +2117,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew(
 #endif  // HAVE_MMAP
 
 /************************************************************************/
-/*                         CPLGetPageSize()                             */
+/*                           CPLGetPageSize()                           */
 /************************************************************************/
 
 size_t CPLGetPageSize(void)
@@ -2130,7 +2130,7 @@ size_t CPLGetPageSize(void)
 }
 
 /************************************************************************/
-/*                   CPLIsVirtualMemFileMapAvailable()                  */
+/*                  CPLIsVirtualMemFileMapAvailable()                   */
 /************************************************************************/
 
 int CPLIsVirtualMemFileMapAvailable(void)
@@ -2143,7 +2143,7 @@ int CPLIsVirtualMemFileMapAvailable(void)
 }
 
 /************************************************************************/
-/*                        CPLVirtualMemFree()                           */
+/*                         CPLVirtualMemFree()                          */
 /************************************************************************/
 
 void CPLVirtualMemFree(CPLVirtualMem *ctxt)
@@ -2176,7 +2176,7 @@ void CPLVirtualMemFree(CPLVirtualMem *ctxt)
 }
 
 /************************************************************************/
-/*                      CPLVirtualMemGetAddr()                          */
+/*                        CPLVirtualMemGetAddr()                        */
 /************************************************************************/
 
 void *CPLVirtualMemGetAddr(CPLVirtualMem *ctxt)
@@ -2221,7 +2221,7 @@ size_t CPLVirtualMemGetSize(CPLVirtualMem *ctxt)
 }
 
 /************************************************************************/
-/*                   CPLVirtualMemIsAccessThreadSafe()                  */
+/*                  CPLVirtualMemIsAccessThreadSafe()                   */
 /************************************************************************/
 
 int CPLVirtualMemIsAccessThreadSafe(CPLVirtualMem *ctxt)
@@ -2230,7 +2230,7 @@ int CPLVirtualMemIsAccessThreadSafe(CPLVirtualMem *ctxt)
 }
 
 /************************************************************************/
-/*                       CPLVirtualMemDerivedNew()                      */
+/*                      CPLVirtualMemDerivedNew()                       */
 /************************************************************************/
 
 CPLVirtualMem *CPLVirtualMemDerivedNew(

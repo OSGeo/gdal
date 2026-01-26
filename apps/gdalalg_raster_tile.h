@@ -143,7 +143,7 @@ class GDALRasterTileAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterTileAlgorithmStandalone                    */
+/*                  GDALRasterTileAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALRasterTileAlgorithmStandalone final : public GDALRasterTileAlgorithm

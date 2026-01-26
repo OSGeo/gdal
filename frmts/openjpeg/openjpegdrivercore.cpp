@@ -37,7 +37,7 @@
       OPJ_VERSION_BUILD) >= ((major)*10000 + (minor)*100 + (patch)))
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 #ifndef jpc_header_defined
@@ -246,7 +246,7 @@ void OPENJPEGDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                  DeclareDeferredOPENJPEGPlugin()                     */
+/*                   DeclareDeferredOPENJPEGPlugin()                    */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

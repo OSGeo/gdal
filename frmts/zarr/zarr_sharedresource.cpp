@@ -16,7 +16,7 @@
 #include "cpl_json.h"
 
 /************************************************************************/
-/*              ZarrSharedResource::ZarrSharedResource()                */
+/*               ZarrSharedResource::ZarrSharedResource()               */
 /************************************************************************/
 
 ZarrSharedResource::ZarrSharedResource(const std::string &osRootDirectoryName,
@@ -35,7 +35,7 @@ ZarrSharedResource::ZarrSharedResource(const std::string &osRootDirectoryName,
 }
 
 /************************************************************************/
-/*              ZarrSharedResource::Create()                            */
+/*                     ZarrSharedResource::Create()                     */
 /************************************************************************/
 
 std::shared_ptr<ZarrSharedResource>
@@ -84,13 +84,15 @@ ZarrSharedResource::~ZarrSharedResource()
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::OpenRootGroup()                      */
+/*                 ZarrSharedResource::OpenRootGroup()                  */
 /************************************************************************/
 
 std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 {
     {
         auto poRG = ZarrV2Group::Create(shared_from_this(), std::string(), "/");
+        // Prevents potential recursion
+        m_poWeakRootGroup = poRG;
         poRG->SetUpdatable(m_bUpdatable);
         poRG->SetDirectoryName(m_osRootDirectoryName);
 
@@ -123,6 +125,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
             }
             const std::string osArrayName(
                 CPLGetBasenameSafe(m_osRootDirectoryName.c_str()));
+
             if (!poRG->LoadArray(osArrayName, osZarrayFilename, oRoot, false,
                                  CPLJSONObject()))
                 return nullptr;
@@ -154,6 +157,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
                     ConsolidatedMetadataKind::EXTERNAL;
                 m_oObjConsolidatedMetadata = oDoc.GetRoot();
             }
+
             poRG->InitFromConsolidatedMetadata(m_oObjConsolidatedMetadata);
 
             return poRG;
@@ -176,6 +180,8 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
     // Zarr v3
     auto poRG_V3 = ZarrV3Group::Create(shared_from_this(), std::string(), "/",
                                        m_osRootDirectoryName);
+    // Prevents potential recursion
+    m_poWeakRootGroup = poRG_V3;
     poRG_V3->SetUpdatable(m_bUpdatable);
 
     const std::string osZarrJsonFilename(CPLFormFilenameSafe(
@@ -264,7 +270,21 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 }
 
 /************************************************************************/
-/*         ZarrSharedResource::InitConsolidatedMetadataIfNeeded()       */
+/*                  ZarrSharedResource::GetRootGroup()                  */
+/************************************************************************/
+
+std::shared_ptr<ZarrGroupBase> ZarrSharedResource::GetRootGroup()
+{
+    auto poRootGroup = m_poWeakRootGroup.lock();
+    if (poRootGroup)
+        return poRootGroup;
+    poRootGroup = OpenRootGroup();
+    m_poWeakRootGroup = poRootGroup;
+    return poRootGroup;
+}
+
+/************************************************************************/
+/*        ZarrSharedResource::InitConsolidatedMetadataIfNeeded()        */
 /************************************************************************/
 
 void ZarrSharedResource::InitConsolidatedMetadataIfNeeded()
@@ -287,7 +307,7 @@ void ZarrSharedResource::InitConsolidatedMetadataIfNeeded()
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::SetZMetadataItem()                   */
+/*                ZarrSharedResource::SetZMetadataItem()                */
 /************************************************************************/
 
 void ZarrSharedResource::SetZMetadataItem(const std::string &osFilename,
@@ -324,7 +344,7 @@ void ZarrSharedResource::SetZMetadataItem(const std::string &osFilename,
 }
 
 /************************************************************************/
-/*         ZarrSharedResource::DeleteZMetadataItemRecursive()           */
+/*          ZarrSharedResource::DeleteZMetadataItemRecursive()          */
 /************************************************************************/
 
 void ZarrSharedResource::DeleteZMetadataItemRecursive(
@@ -366,7 +386,7 @@ void ZarrSharedResource::DeleteZMetadataItemRecursive(
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::RenameZMetadataRecursive()           */
+/*            ZarrSharedResource::RenameZMetadataRecursive()            */
 /************************************************************************/
 
 void ZarrSharedResource::RenameZMetadataRecursive(
@@ -408,7 +428,7 @@ void ZarrSharedResource::RenameZMetadataRecursive(
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::UpdateDimensionSize()                */
+/*              ZarrSharedResource::UpdateDimensionSize()               */
 /************************************************************************/
 
 void ZarrSharedResource::UpdateDimensionSize(
@@ -429,7 +449,7 @@ void ZarrSharedResource::UpdateDimensionSize(
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::AddArrayInLoading()                  */
+/*               ZarrSharedResource::AddArrayInLoading()                */
 /************************************************************************/
 
 bool ZarrSharedResource::AddArrayInLoading(const std::string &osZarrayFilename)
@@ -453,7 +473,7 @@ bool ZarrSharedResource::AddArrayInLoading(const std::string &osZarrayFilename)
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::RemoveArrayInLoading()               */
+/*              ZarrSharedResource::RemoveArrayInLoading()              */
 /************************************************************************/
 
 void ZarrSharedResource::RemoveArrayInLoading(

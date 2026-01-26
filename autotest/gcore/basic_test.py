@@ -1191,3 +1191,22 @@ def test_basic_GetDataTypeByName():
 
     # For now, to avoid breaking backwards compatibility
     assert gdal.GetDataTypeName(gdal.GDT_UInt8) == "Byte"
+
+
+@gdaltest.enable_exceptions()
+def test_basic_exclude_driver_at_open_time():
+
+    if gdal.GetDriverByName("LIBERTIFF"):
+        ds = gdal.OpenEx(
+            "data/gtiff/non_square_pixels.tif",
+            gdal.OF_RASTER,
+            allowed_drivers=["-GTiff", "-idonotexist"],
+        )
+        assert ds.GetDriver().GetDescription() == "LIBERTIFF"
+
+    with pytest.raises(Exception, match="not recognized"):
+        gdal.OpenEx(
+            "data/gtiff/non_square_pixels.tif",
+            gdal.OF_RASTER | gdal.OF_VERBOSE_ERROR,
+            allowed_drivers=["-GTiff", "-LIBERTIFF"],
+        )

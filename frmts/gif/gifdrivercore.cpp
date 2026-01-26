@@ -17,7 +17,7 @@
 #include "gifdrivercore.h"
 
 /************************************************************************/
-/*                     GIFDriverIdentify()                              */
+/*                         GIFDriverIdentify()                          */
 /************************************************************************/
 
 int GIFDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -31,7 +31,7 @@ int GIFDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      BIGGIFDriverSetCommonMetadata()                 */
+/*                   BIGGIFDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void BIGGIFDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -50,7 +50,7 @@ void BIGGIFDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                      GIFDriverSetCommonMetadata()                    */
+/*                     GIFDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void GIFDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -78,7 +78,7 @@ void GIFDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredGIFPlugin()                       */
+/*                      DeclareDeferredGIFPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

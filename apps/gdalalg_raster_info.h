@@ -58,7 +58,7 @@ class GDALRasterInfoAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterInfoAlgorithmStandalone                    */
+/*                  GDALRasterInfoAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALRasterInfoAlgorithmStandalone final : public GDALRasterInfoAlgorithm

@@ -219,7 +219,7 @@ void PCIDSKBuffer::PutBin(double value, int offset)
 }
 
 /************************************************************************/
-/*                              PutBin(int16)                           */
+/*                            PutBin(int16)                             */
 /************************************************************************/
 
 void PCIDSKBuffer::PutBin(int16 value, int offset)

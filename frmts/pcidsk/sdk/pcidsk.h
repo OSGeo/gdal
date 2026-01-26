@@ -35,7 +35,7 @@
 
 namespace PCIDSK {
 /************************************************************************/
-/*                      PCIDSK Access Functions                         */
+/*                       PCIDSK Access Functions                        */
 /************************************************************************/
 PCIDSKFile PCIDSK_DLL *Open( const std::string& filename, const std::string& access,
                              const PCIDSKInterfaces *interfaces = nullptr,

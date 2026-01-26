@@ -96,11 +96,11 @@ class ERSDataset final : public RawDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
-/*                            ERSDataset()                             */
+/*                             ERSDataset()                             */
 /************************************************************************/
 
 ERSDataset::ERSDataset()
@@ -110,7 +110,7 @@ ERSDataset::ERSDataset()
 }
 
 /************************************************************************/
-/*                            ~ERSDataset()                            */
+/*                            ~ERSDataset()                             */
 /************************************************************************/
 
 ERSDataset::~ERSDataset()
@@ -120,7 +120,7 @@ ERSDataset::~ERSDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr ERSDataset::Close(GDALProgressFunc, void *)
@@ -154,7 +154,7 @@ CPLErr ERSDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int ERSDataset::CloseDependentDatasets()
@@ -214,7 +214,7 @@ CPLErr ERSDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **ERSDataset::GetMetadataDomainList()
@@ -224,7 +224,7 @@ char **ERSDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                           GetMetadataItem()                          */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *ERSDataset::GetMetadataItem(const char *pszName,
@@ -288,7 +288,7 @@ const OGRSpatialReference *ERSDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *ERSDataset::GetGCPs()
@@ -392,7 +392,7 @@ CPLErr ERSDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *ERSDataset::GetSpatialRef() const
@@ -447,7 +447,7 @@ CPLErr ERSDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                         WriteProjectionInfo()                        */
+/*                        WriteProjectionInfo()                         */
 /************************************************************************/
 
 void ERSDataset::WriteProjectionInfo(const char *pszProj, const char *pszDatum,
@@ -807,7 +807,7 @@ int ERSDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         ERSProxyRasterBand                           */
+/*                          ERSProxyRasterBand                          */
 /************************************************************************/
 
 namespace
@@ -1319,7 +1319,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */
@@ -1499,7 +1499,7 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                         GDALRegister_ERS()                           */
+/*                          GDALRegister_ERS()                          */
 /************************************************************************/
 
 void GDALRegister_ERS()

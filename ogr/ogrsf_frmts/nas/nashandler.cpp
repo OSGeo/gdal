@@ -127,7 +127,7 @@ NASHandler::~NASHandler()
 }
 
 /************************************************************************/
-/*                        GetAttributes()                               */
+/*                           GetAttributes()                            */
 /************************************************************************/
 
 CPLString NASHandler::GetAttributes(const Attributes *attrs)
@@ -146,7 +146,7 @@ CPLString NASHandler::GetAttributes(const Attributes *attrs)
 }
 
 /************************************************************************/
-/*                   setDocumentLocator()                               */
+/*                         setDocumentLocator()                         */
 /************************************************************************/
 
 void NASHandler::setDocumentLocator(const Locator *locator)
@@ -651,7 +651,7 @@ void NASHandler::endElement(const XMLCh *const /* uri */,
 }
 
 /************************************************************************/
-/*                             startEntity()                            */
+/*                            startEntity()                             */
 /************************************************************************/
 
 void NASHandler::startEntity(const XMLCh *const /* name */)

@@ -68,7 +68,7 @@ class GDALVectorSetGeomTypeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                GDALVectorSetGeomTypeAlgorithmStandalone              */
+/*               GDALVectorSetGeomTypeAlgorithmStandalone               */
 /************************************************************************/
 
 class GDALVectorSetGeomTypeAlgorithmStandalone final

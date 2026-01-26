@@ -70,7 +70,7 @@ int JP2OPJLikeRasterBand<CODEC, BASE>::HasArbitraryOverviews()
 }
 
 /************************************************************************/
-/*                  MayMultiBlockReadingBeMultiThreaded()               */
+/*                MayMultiBlockReadingBeMultiThreaded()                 */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -82,7 +82,7 @@ bool JP2OPJLikeRasterBand<CODEC, BASE>::MayMultiBlockReadingBeMultiThreaded()
 }
 
 /************************************************************************/
-/*                      ~JP2OPJLikeRasterBand()                         */
+/*                       ~JP2OPJLikeRasterBand()                        */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -195,7 +195,7 @@ template <typename CODEC, typename BASE> struct JP2JobStruct
 };
 
 /************************************************************************/
-/*                   GetFileHandle()                                    */
+/*                           GetFileHandle()                            */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -205,7 +205,7 @@ VSILFILE *JP2OPJLikeDataset<CODEC, BASE>::GetFileHandle()
 }
 
 /************************************************************************/
-/*                   ReadBlockInThread()                                */
+/*                         ReadBlockInThread()                          */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -384,7 +384,7 @@ int JP2OPJLikeDataset<CODEC, BASE>::PreloadBlocks(
 }
 
 /************************************************************************/
-/*                      GetEstimatedRAMUsage()                          */
+/*                        GetEstimatedRAMUsage()                        */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -714,7 +714,7 @@ end:
 }
 
 /************************************************************************/
-/*                         GetOverviewCount()                           */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -786,7 +786,7 @@ GDALColorInterp JP2OPJLikeRasterBand<CODEC, BASE>::GetColorInterpretation()
 /************************************************************************/
 
 /************************************************************************/
-/*                        JP2OPJLikeDataset()                           */
+/*                         JP2OPJLikeDataset()                          */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -808,7 +808,7 @@ JP2OPJLikeDataset<CODEC, BASE>::~JP2OPJLikeDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -1095,7 +1095,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -1134,7 +1134,7 @@ JP2OPJLikeDataset<CODEC, BASE>::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                           SetGeoTransform()                          */
+/*                          SetGeoTransform()                           */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -1153,7 +1153,7 @@ JP2OPJLikeDataset<CODEC, BASE>::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                           SetGCPs()                                  */
+/*                              SetGCPs()                               */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -1229,7 +1229,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::SetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 #ifndef jpc_header_defined
@@ -1254,7 +1254,7 @@ int JP2OPJLikeDataset<CODEC, BASE>::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        JP2FindCodeStream()                           */
+/*                         JP2FindCodeStream()                          */
 /************************************************************************/
 
 static vsi_l_offset JP2FindCodeStream(VSILFILE *fp, vsi_l_offset *pnLength)
@@ -1884,7 +1884,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           WriteBox()                                 */
+/*                              WriteBox()                              */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -1908,13 +1908,12 @@ bool JP2OPJLikeDataset<CODEC, BASE>::WriteBox(VSILFILE *fp, GDALJP2Box *poBox)
 }
 
 /************************************************************************/
-/*                         WriteGDALMetadataBox()                       */
+/*                        WriteGDALMetadataBox()                        */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
-bool JP2OPJLikeDataset<CODEC, BASE>::WriteGDALMetadataBox(VSILFILE *fp,
-                                                          GDALDataset *poSrcDS,
-                                                          char **papszOptions)
+bool JP2OPJLikeDataset<CODEC, BASE>::WriteGDALMetadataBox(
+    VSILFILE *fp, GDALDataset *poSrcDS, CSLConstList papszOptions)
 {
     bool bRet = true;
     GDALJP2Box *poBox = GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
@@ -1926,7 +1925,7 @@ bool JP2OPJLikeDataset<CODEC, BASE>::WriteGDALMetadataBox(VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                         WriteXMLBoxes()                              */
+/*                           WriteXMLBoxes()                            */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -1947,7 +1946,7 @@ bool JP2OPJLikeDataset<CODEC, BASE>::WriteXMLBoxes(VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                           WriteXMPBox()                              */
+/*                            WriteXMPBox()                             */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -1963,7 +1962,7 @@ bool JP2OPJLikeDataset<CODEC, BASE>::WriteXMPBox(VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                           WriteIPRBox()                              */
+/*                            WriteIPRBox()                             */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
@@ -1979,7 +1978,7 @@ bool JP2OPJLikeDataset<CODEC, BASE>::WriteIPRBox(VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                         FloorPowerOfTwo()                            */
+/*                          FloorPowerOfTwo()                           */
 /************************************************************************/
 
 static int FloorPowerOfTwo(int nVal)
@@ -1994,13 +1993,14 @@ static int FloorPowerOfTwo(int nVal)
 }
 
 /************************************************************************/
-/*                          CreateCopy()                                */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
 GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     const char *pszFilename, GDALDataset *poSrcDS, CPL_UNUSED int bStrict,
-    char **papszOptions, GDALProgressFunc pfnProgress, void *pProgressData)
+    CSLConstList papszOptions, GDALProgressFunc pfnProgress,
+    void *pProgressData)
 
 {
     int nBands = poSrcDS->GetRasterCount();

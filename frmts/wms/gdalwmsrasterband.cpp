@@ -488,7 +488,7 @@ void GDALWMSRasterBand::ComputeRequestInfo(GDALWMSImageRequestInfo &iri,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **GDALWMSRasterBand::GetMetadataDomainList()
@@ -603,7 +603,7 @@ const char *GDALWMSRasterBand::GetMetadataItem(const char *pszName,
     osMetadataItemURL = url;
 
     // This is OK, CPLHTTPFetch does not touch the options
-    char **papszOptions =
+    CSLConstList papszOptions =
         const_cast<char **>(m_parent_dataset->GetHTTPRequestOpts());
     CPLHTTPResult *psResult = CPLHTTPFetch(url, papszOptions);
 
@@ -1104,7 +1104,8 @@ CPLErr GDALWMSRasterBand::ReportWMSException(const char *file_name)
 
 CPLErr GDALWMSRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize,
                                      int nYSize, int nBufXSize, int nBufYSize,
-                                     GDALDataType eDT, char **papszOptions)
+                                     GDALDataType eDT,
+                                     CSLConstList papszOptions)
 {
     //    printf("AdviseRead(%d, %d, %d, %d)\n", nXOff, nYOff, nXSize, nYSize);
     if (m_parent_dataset->m_offline_mode ||

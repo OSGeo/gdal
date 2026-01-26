@@ -104,7 +104,7 @@ class VSICachedFile final : public VSIVirtualHandle
 };
 
 /************************************************************************/
-/*                           GetCacheMax()                              */
+/*                            GetCacheMax()                             */
 /************************************************************************/
 
 static size_t GetCacheMax(size_t nCacheSize)
@@ -452,7 +452,7 @@ size_t VSICachedFile::Write(const void * /* pBuffer */, size_t /*nBytes */)
 }
 
 /************************************************************************/
-/*                             ClearErr()                               */
+/*                              ClearErr()                              */
 /************************************************************************/
 
 void VSICachedFile::ClearErr()
@@ -464,7 +464,7 @@ void VSICachedFile::ClearErr()
 }
 
 /************************************************************************/
-/*                              Error()                                 */
+/*                               Error()                                */
 /************************************************************************/
 
 int VSICachedFile::Error()
@@ -513,7 +513,7 @@ class VSICachedFilesystemHandler final : public VSIFilesystemHandler
 };
 
 /************************************************************************/
-/*                               ParseSize()                            */
+/*                             ParseSize()                              */
 /************************************************************************/
 
 static bool ParseSize(const char *pszKey, const char *pszValue, size_t nMaxVal,
@@ -635,7 +635,7 @@ bool VSICachedFilesystemHandler::AnalyzeFilename(
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -667,7 +667,7 @@ VSICachedFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
 }
 
 /************************************************************************/
-/*                               Stat()                                 */
+/*                                Stat()                                */
 /************************************************************************/
 
 int VSICachedFilesystemHandler::Stat(const char *pszFilename,
@@ -683,7 +683,7 @@ int VSICachedFilesystemHandler::Stat(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          ReadDirEx()                                 */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
 char **VSICachedFilesystemHandler::ReadDirEx(const char *pszDirname,
@@ -726,7 +726,7 @@ VSIVirtualHandle *VSICreateCachedFile(VSIVirtualHandle *poBaseHandle,
 }
 
 /************************************************************************/
-/*                   VSIInstallCachedFileHandler()                      */
+/*                    VSIInstallCachedFileHandler()                     */
 /************************************************************************/
 
 /*!

@@ -91,7 +91,7 @@ void GDALVectorInfoOptionsFree(GDALVectorInfoOptions *psOptions)
 }
 
 /************************************************************************/
-/*                            Concat()                                  */
+/*                               Concat()                               */
 /************************************************************************/
 
 #ifndef Concat_defined
@@ -137,7 +137,7 @@ static void ConcatStr(CPLString &osRet, bool bStdoutOutput, const char *pszStr)
 }
 
 /************************************************************************/
-/*                        ReportFieldDomain()                           */
+/*                         ReportFieldDomain()                          */
 /************************************************************************/
 
 static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
@@ -453,7 +453,7 @@ static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
 }
 
 /************************************************************************/
-/*                       ReportRelationships()                          */
+/*                        ReportRelationships()                         */
 /************************************************************************/
 
 static void ReportRelationships(CPLString &osRet, CPLJSONObject &oRoot,
@@ -627,7 +627,7 @@ static void ReportRelationships(CPLString &osRet, CPLJSONObject &oRoot,
 }
 
 /************************************************************************/
-/*                     GDALVectorInfoPrintMetadata()                    */
+/*                    GDALVectorInfoPrintMetadata()                     */
 /************************************************************************/
 
 static void
@@ -1681,7 +1681,7 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
 }
 
 /************************************************************************/
-/*                           PrintLayerSummary()                        */
+/*                         PrintLayerSummary()                          */
 /************************************************************************/
 
 static void PrintLayerSummary(CPLString &osRet, CPLJSONObject &oLayer,
@@ -1763,7 +1763,7 @@ static void PrintLayerSummary(CPLString &osRet, CPLJSONObject &oLayer,
 }
 
 /************************************************************************/
-/*                       ReportHiearchicalLayers()                      */
+/*                      ReportHiearchicalLayers()                       */
 /************************************************************************/
 
 static void ReportHiearchicalLayers(CPLString &osRet, CPLJSONObject &oRoot,
@@ -2210,7 +2210,7 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
 }
 
 /************************************************************************/
-/*                    GDALVectorInfoOptionsGetParser()                  */
+/*                   GDALVectorInfoOptionsGetParser()                   */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
@@ -2482,7 +2482,7 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
 }
 
 /************************************************************************/
-/*                       GDALVectorInfoGetParserUsage()                 */
+/*                    GDALVectorInfoGetParserUsage()                    */
 /************************************************************************/
 
 std::string GDALVectorInfoGetParserUsage()

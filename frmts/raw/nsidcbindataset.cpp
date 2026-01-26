@@ -151,7 +151,7 @@ NSIDCbinRasterBand::NSIDCbinRasterBand(GDALDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                           ~NSIDCbinRasterBand()                      */
+/*                        ~NSIDCbinRasterBand()                         */
 /************************************************************************/
 
 NSIDCbinRasterBand::~NSIDCbinRasterBand()
@@ -190,7 +190,7 @@ double NSIDCbinRasterBand::GetScale(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                            NSIDCbinDataset()                         */
+/*                          NSIDCbinDataset()                           */
 /************************************************************************/
 
 NSIDCbinDataset::NSIDCbinDataset() : fp(nullptr), m_oSRS(OGRSpatialReference())
@@ -198,7 +198,7 @@ NSIDCbinDataset::NSIDCbinDataset() : fp(nullptr), m_oSRS(OGRSpatialReference())
 }
 
 /************************************************************************/
-/*                            ~NSIDCbinDataset()                        */
+/*                          ~NSIDCbinDataset()                          */
 /************************************************************************/
 
 NSIDCbinDataset::~NSIDCbinDataset()
@@ -421,7 +421,7 @@ CPLErr NSIDCbinDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                             GetUnitType()                            */
+/*                            GetUnitType()                             */
 /************************************************************************/
 
 const char *NSIDCbinRasterBand::GetUnitType()
@@ -437,7 +437,7 @@ const char *NSIDCbinRasterBand::GetUnitType()
 }
 
 /************************************************************************/
-/*                          GDALRegister_NSIDCbin()                        */
+/*                       GDALRegister_NSIDCbin()                        */
 /************************************************************************/
 
 void GDALRegister_NSIDCbin()

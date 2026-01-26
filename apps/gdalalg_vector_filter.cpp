@@ -25,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*         GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm()       */
+/*        GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm()        */
 /************************************************************************/
 
 GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm(bool standaloneStep)
@@ -47,7 +47,7 @@ GDALVectorFilterAlgorithm::GDALVectorFilterAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                GDALVectorFilterAlgorithmLayerChangeExtent            */
+/*              GDALVectorFilterAlgorithmLayerChangeExtent              */
 /************************************************************************/
 
 namespace
@@ -105,7 +105,7 @@ class GDALVectorFilterAlgorithmLayerChangeExtent final
 }  // namespace
 
 /************************************************************************/
-/*               GDALVectorFilterAlgorithm::RunStep()                   */
+/*                 GDALVectorFilterAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALVectorFilterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

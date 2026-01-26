@@ -16,7 +16,7 @@
 #include <stdexcept>
 
 /************************************************************************/
-/*                     Subdataset informational functions               */
+/*                  Subdataset informational functions                  */
 /************************************************************************/
 
 GDALSubdatasetInfoH GDALGetSubdatasetInfo(const char *pszFileName)
@@ -52,7 +52,7 @@ GDALSubdatasetInfoH GDALGetSubdatasetInfo(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                       GDALDestroySubdatasetInfo()                    */
+/*                     GDALDestroySubdatasetInfo()                      */
 /************************************************************************/
 
 /**

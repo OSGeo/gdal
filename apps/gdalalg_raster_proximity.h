@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALRasterProximityAlgorithm                       */
+/*                     GDALRasterProximityAlgorithm                     */
 /************************************************************************/
 
 class GDALRasterProximityAlgorithm /* non final */

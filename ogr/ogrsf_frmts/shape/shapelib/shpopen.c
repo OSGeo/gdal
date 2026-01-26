@@ -232,7 +232,7 @@ SHPHandle SHPAPI_CALL SHPOpen(const char *pszLayer, const char *pszAccess)
 }
 
 /************************************************************************/
-/*                      SHPGetLenWithoutExtension()                     */
+/*                     SHPGetLenWithoutExtension()                      */
 /************************************************************************/
 
 static int SHPGetLenWithoutExtension(const char *pszBasename)
@@ -932,7 +932,7 @@ void SHPAPI_CALL SHPClose(SHPHandle psSHP)
 }
 
 /************************************************************************/
-/*                    SHPSetFastModeReadObject()                        */
+/*                      SHPSetFastModeReadObject()                      */
 /************************************************************************/
 
 /* If setting bFastMode = TRUE, the content of SHPReadObject() is owned by the SHPHandle. */
@@ -1906,7 +1906,7 @@ int SHPAPI_CALL SHPWriteObject(SHPHandle psSHP, int nShapeId,
 }
 
 /************************************************************************/
-/*                         SHPAllocBuffer()                             */
+/*                           SHPAllocBuffer()                           */
 /************************************************************************/
 
 static void *SHPAllocBuffer(unsigned char **pBuffer, int nSize)
@@ -1923,7 +1923,7 @@ static void *SHPAllocBuffer(unsigned char **pBuffer, int nSize)
 }
 
 /************************************************************************/
-/*                    SHPReallocObjectBufIfNecessary()                  */
+/*                   SHPReallocObjectBufIfNecessary()                   */
 /************************************************************************/
 
 static unsigned char *SHPReallocObjectBufIfNecessary(SHPHandle psSHP,
@@ -2898,7 +2898,7 @@ static int SHPGetPartVertexCount(const SHPObject *psObject, int iPart)
 }
 
 /************************************************************************/
-/*                      SHPRewindIsInnerRing()                          */
+/*                        SHPRewindIsInnerRing()                        */
 /************************************************************************/
 
 /* Return -1 in case of ambiguity */

@@ -24,7 +24,7 @@ namespace GMLAS
 {
 
 /************************************************************************/
-/*                          GMLASWriter                                 */
+/*                             GMLASWriter                              */
 /************************************************************************/
 
 typedef std::pair<CPLString, CPLString> PairNSElement;
@@ -219,7 +219,7 @@ void GMLASWriter::Close()
 }
 
 /************************************************************************/
-/*                              Write()                                 */
+/*                               Write()                                */
 /************************************************************************/
 
 bool GMLASWriter::Write(GDALProgressFunc pfnProgress, void *pProgressData)
@@ -558,7 +558,7 @@ OGRLayer *GMLASWriter::GetLayerByName(const CPLString &osName)
 }
 
 /************************************************************************/
-/*                            XMLEscape()                               */
+/*                             XMLEscape()                              */
 /************************************************************************/
 
 static CPLString XMLEscape(const CPLString &osStr)
@@ -570,7 +570,7 @@ static CPLString XMLEscape(const CPLString &osStr)
 }
 
 /************************************************************************/
-/*                            WriteXSD()                                */
+/*                              WriteXSD()                              */
 /************************************************************************/
 
 bool GMLASWriter::WriteXSD(const CPLString &osXSDFilenameIn,
@@ -648,7 +648,7 @@ bool GMLASWriter::WriteXSD(const CPLString &osXSDFilenameIn,
 }
 
 /************************************************************************/
-/*                         WriteXMLHeader()                             */
+/*                           WriteXMLHeader()                           */
 /************************************************************************/
 
 bool GMLASWriter::WriteXMLHeader(
@@ -817,7 +817,7 @@ bool GMLASWriter::WriteXMLHeader(
 }
 
 /************************************************************************/
-/*                          CollectLayers()                             */
+/*                           CollectLayers()                            */
 /************************************************************************/
 
 bool GMLASWriter::CollectLayers()
@@ -892,7 +892,7 @@ bool GMLASWriter::CollectLayers()
 }
 
 /************************************************************************/
-/*                          CollectFields()                             */
+/*                           CollectFields()                            */
 /************************************************************************/
 
 bool GMLASWriter::CollectFields()
@@ -1085,7 +1085,7 @@ bool GMLASWriter::CollectFields()
 }
 
 /************************************************************************/
-/*                      CollectRelationships()                          */
+/*                        CollectRelationships()                        */
 /************************************************************************/
 
 bool GMLASWriter::CollectRelationships()
@@ -1239,7 +1239,7 @@ void GMLASWriter::ComputeTopLevelFIDs()
 }
 
 /************************************************************************/
-/*                           SplitXPath()                               */
+/*                             SplitXPath()                             */
 /************************************************************************/
 
 // Decompose a XPath ns1:foo1/@ns2:foo2/... in its components
@@ -1289,7 +1289,7 @@ const XPathComponents &GMLASWriter::SplitXPath(const CPLString &osXPath)
 }
 
 /************************************************************************/
-/*                            IsAttr()                                  */
+/*                               IsAttr()                               */
 /************************************************************************/
 
 static bool IsAttr(const PairNSElement &pair)
@@ -1298,7 +1298,7 @@ static bool IsAttr(const PairNSElement &pair)
 }
 
 /************************************************************************/
-/*                           MakeXPath()                                */
+/*                             MakeXPath()                              */
 /************************************************************************/
 
 static CPLString MakeXPath(const PairNSElement &pair)
@@ -1317,7 +1317,7 @@ static CPLString MakeXPath(const PairNSElement &pair)
 }
 
 /************************************************************************/
-/*                           WriteLayer()                               */
+/*                             WriteLayer()                             */
 /************************************************************************/
 
 bool GMLASWriter::WriteLayer(bool bWFS2FeatureCollection,
@@ -1386,7 +1386,7 @@ bool GMLASWriter::WriteLayer(bool bWFS2FeatureCollection,
 }
 
 /************************************************************************/
-/*                        FindCommonPrefixLength()                      */
+/*                       FindCommonPrefixLength()                       */
 /************************************************************************/
 
 static size_t FindCommonPrefixLength(const XPathComponents &a,
@@ -1402,7 +1402,7 @@ static size_t FindCommonPrefixLength(const XPathComponents &a,
 }
 
 /************************************************************************/
-/*                        WriteClosingTags()                            */
+/*                          WriteClosingTags()                          */
 /************************************************************************/
 
 void GMLASWriter::WriteClosingTags(size_t nCommonLength,
@@ -1491,7 +1491,7 @@ void GMLASWriter::WriteClosingTags(size_t nCommonLength,
 }
 
 /************************************************************************/
-/*                      WriteClosingAndStartingTags()                   */
+/*                    WriteClosingAndStartingTags()                     */
 /************************************************************************/
 
 void GMLASWriter::WriteClosingAndStartingTags(
@@ -1513,7 +1513,7 @@ void GMLASWriter::WriteClosingAndStartingTags(
 }
 
 /************************************************************************/
-/*                          WriteFeature()                              */
+/*                            WriteFeature()                            */
 /************************************************************************/
 
 bool GMLASWriter::WriteFeature(OGRFeature *poFeature,
@@ -1601,7 +1601,7 @@ bool GMLASWriter::WriteFeature(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                     PrintMultipleValuesSeparator()                   */
+/*                    PrintMultipleValuesSeparator()                    */
 /************************************************************************/
 
 void GMLASWriter::PrintMultipleValuesSeparator(
@@ -1622,7 +1622,7 @@ void GMLASWriter::PrintMultipleValuesSeparator(
 }
 
 /************************************************************************/
-/*                         PrintXMLDouble()                             */
+/*                           PrintXMLDouble()                           */
 /************************************************************************/
 
 static void PrintXMLDouble(VSILFILE *fp, double dfVal)
@@ -1654,7 +1654,7 @@ static bool AreGeomsEqualAxisOrderInsensitive(const OGRGeometry *poGeomRef,
 }
 
 /************************************************************************/
-/*                             GetCoordSwap()                           */
+/*                            GetCoordSwap()                            */
 /************************************************************************/
 
 bool GMLASWriter::GetCoordSwap(const OGRSpatialReference *poSRS)
@@ -1677,7 +1677,7 @@ bool GMLASWriter::GetCoordSwap(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                     WriteFieldRegular()                              */
+/*                         WriteFieldRegular()                          */
 /************************************************************************/
 
 bool GMLASWriter::WriteFieldRegular(
@@ -2266,7 +2266,7 @@ bool GMLASWriter::WriteFieldRegular(
 }
 
 /************************************************************************/
-/*                     WriteFieldNoLink()                               */
+/*                          WriteFieldNoLink()                          */
 /************************************************************************/
 
 bool GMLASWriter::WriteFieldNoLink(
@@ -2436,7 +2436,7 @@ bool GMLASWriter::WriteFieldNoLink(
 }
 
 /************************************************************************/
-/*                       GetFilteredLayer()                             */
+/*                          GetFilteredLayer()                          */
 /************************************************************************/
 
 OGRLayer *
@@ -2471,7 +2471,7 @@ GMLASWriter::GetFilteredLayer(OGRLayer *poSrcLayer, const CPLString &osFilter,
 }
 
 /************************************************************************/
-/*                      ReleaseFilteredLayer()                          */
+/*                        ReleaseFilteredLayer()                        */
 /************************************************************************/
 
 void GMLASWriter::ReleaseFilteredLayer(OGRLayer *poSrcLayer,
@@ -2484,7 +2484,7 @@ void GMLASWriter::ReleaseFilteredLayer(OGRLayer *poSrcLayer,
 }
 
 /************************************************************************/
-/*                     WriteFieldWithLink()                             */
+/*                         WriteFieldWithLink()                         */
 /************************************************************************/
 
 bool GMLASWriter::WriteFieldWithLink(
@@ -2619,7 +2619,7 @@ bool GMLASWriter::WriteFieldWithLink(
 }
 
 /************************************************************************/
-/*                   WriteFieldJunctionTable()                          */
+/*                      WriteFieldJunctionTable()                       */
 /************************************************************************/
 
 bool GMLASWriter::WriteFieldJunctionTable(
@@ -2770,7 +2770,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
 }
 
 /************************************************************************/
-/*                           PrintIndent()                              */
+/*                            PrintIndent()                             */
 /************************************************************************/
 
 void GMLASWriter::PrintIndent(VSILFILE *fp)
@@ -2782,7 +2782,7 @@ void GMLASWriter::PrintIndent(VSILFILE *fp)
 }
 
 /************************************************************************/
-/*                            PrintLine()                               */
+/*                             PrintLine()                              */
 /************************************************************************/
 
 void GMLASWriter::PrintLine(VSILFILE *fp, const char *fmt, ...)
@@ -2814,12 +2814,12 @@ class GMLASFakeDataset final : public GDALDataset
 GMLASFakeDataset::~GMLASFakeDataset() = default;
 
 /************************************************************************/
-/*                        OGRGMLASDriverCreateCopy()                    */
+/*                      OGRGMLASDriverCreateCopy()                      */
 /************************************************************************/
 
 GDALDataset *OGRGMLASDriverCreateCopy(const char *pszFilename,
                                       GDALDataset *poSrcDS, int /*bStrict*/,
-                                      char **papszOptions,
+                                      CSLConstList papszOptions,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
 {

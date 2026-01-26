@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                          GDALVSICopyAlgorithm                        */
+/*                         GDALVSICopyAlgorithm                         */
 /************************************************************************/
 
 class GDALVSICopyAlgorithm final : public GDALAlgorithm

@@ -61,7 +61,7 @@ OGRFeatureQuery::~OGRFeatureQuery()
 }
 
 /************************************************************************/
-/*                             Compile()                                */
+/*                              Compile()                               */
 /************************************************************************/
 
 OGRErr
@@ -77,7 +77,7 @@ OGRFeatureQuery::Compile(const OGRLayer *poLayer, const char *pszExpression,
 }
 
 /************************************************************************/
-/*                             Compile()                                */
+/*                              Compile()                               */
 /************************************************************************/
 
 OGRErr
@@ -91,7 +91,7 @@ OGRFeatureQuery::Compile(const OGRFeatureDefn *poDefn,
 }
 
 /************************************************************************/
-/*                             Compile()                                */
+/*                              Compile()                               */
 /************************************************************************/
 
 OGRErr
@@ -236,7 +236,7 @@ OGRFeatureQuery::Compile(const OGRLayer *poLayer, const OGRFeatureDefn *poDefn,
 }
 
 /************************************************************************/
-/*                    OGRFeatureFetcherFixFieldIndex()                  */
+/*                   OGRFeatureFetcherFixFieldIndex()                   */
 /************************************************************************/
 
 static int OGRFeatureFetcherFixFieldIndex(const OGRFeatureDefn *poFDefn,

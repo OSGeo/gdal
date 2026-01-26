@@ -127,7 +127,7 @@ void OGRGeoJSONWriteOptions::SetIDOptions(CSLConstList papszOptions)
 /*! @endcond */
 
 /************************************************************************/
-/*                        json_object_new_coord()                       */
+/*                       json_object_new_coord()                        */
 /************************************************************************/
 
 static json_object *
@@ -154,7 +154,7 @@ json_object_new_coord(double dfVal, int nDimIdx,
 }
 
 /************************************************************************/
-/*                     OGRGeoJSONIsPatchablePosition()                  */
+/*                   OGRGeoJSONIsPatchablePosition()                    */
 /************************************************************************/
 
 static bool OGRGeoJSONIsPatchablePosition(json_object *poJSonCoordinates,
@@ -171,7 +171,7 @@ static bool OGRGeoJSONIsPatchablePosition(json_object *poJSonCoordinates,
 }
 
 /************************************************************************/
-/*                    OGRGeoJSONIsCompatiblePosition()                  */
+/*                   OGRGeoJSONIsCompatiblePosition()                   */
 /************************************************************************/
 
 static bool OGRGeoJSONIsCompatiblePosition(json_object *poJSonCoordinates,
@@ -188,7 +188,7 @@ static bool OGRGeoJSONIsCompatiblePosition(json_object *poJSonCoordinates,
 }
 
 /************************************************************************/
-/*                       OGRGeoJSONPatchPosition()                      */
+/*                      OGRGeoJSONPatchPosition()                       */
 /************************************************************************/
 
 static void OGRGeoJSONPatchPosition(json_object *poJSonCoordinates,
@@ -204,7 +204,7 @@ static void OGRGeoJSONPatchPosition(json_object *poJSonCoordinates,
 }
 
 /************************************************************************/
-/*                      OGRGeoJSONIsPatchableArray()                    */
+/*                     OGRGeoJSONIsPatchableArray()                     */
 /************************************************************************/
 
 static bool OGRGeoJSONIsPatchableArray(json_object *poJSonArray,
@@ -240,7 +240,7 @@ static bool OGRGeoJSONIsPatchableArray(json_object *poJSonArray,
 }
 
 /************************************************************************/
-/*                OGRGeoJSONComputePatchableOrCompatibleArray()         */
+/*            OGRGeoJSONComputePatchableOrCompatibleArray()             */
 /************************************************************************/
 
 /* Returns true if the objects are comparable, ie Point vs Point, LineString
@@ -328,7 +328,7 @@ static void OGRGeoJSONPatchArray(json_object *poJSonArray,
 }
 
 /************************************************************************/
-/*                        OGRGeoJSONIsPatchableGeometry()                */
+/*                   OGRGeoJSONIsPatchableGeometry()                    */
 /************************************************************************/
 
 static bool OGRGeoJSONIsPatchableGeometry(json_object *poJSonGeometry,
@@ -414,7 +414,7 @@ static bool OGRGeoJSONIsPatchableGeometry(json_object *poJSonGeometry,
 }
 
 /************************************************************************/
-/*                        OGRGeoJSONPatchGeometry()                     */
+/*                      OGRGeoJSONPatchGeometry()                       */
 /************************************************************************/
 
 static void OGRGeoJSONPatchGeometry(json_object *poJSonGeometry,
@@ -489,7 +489,7 @@ static void OGRGeoJSONPatchGeometry(json_object *poJSonGeometry,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONGetBBox                          */
+/*                          OGRGeoJSONGetBBox                           */
 /************************************************************************/
 
 OGREnvelope3D OGRGeoJSONGetBBox(const OGRGeometry *poGeometry,
@@ -608,7 +608,7 @@ OGREnvelope3D OGRGeoJSONGetBBox(const OGRGeometry *poGeometry,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWriteFeature                     */
+/*                        OGRGeoJSONWriteFeature                        */
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
@@ -819,7 +819,7 @@ json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                        OGRGeoJSONWriteId                            */
+/*                          OGRGeoJSONWriteId                           */
 /************************************************************************/
 
 void OGRGeoJSONWriteId(const OGRFeature *poFeature, json_object *poObj,
@@ -869,7 +869,7 @@ void OGRGeoJSONWriteId(const OGRFeature *poFeature, json_object *poObj,
 }
 
 /************************************************************************/
-/*                        OGRGeoJSONWriteAttributes                     */
+/*                      OGRGeoJSONWriteAttributes                       */
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
@@ -1125,7 +1125,7 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                          GetLinearCollection()                       */
+/*                        GetLinearCollection()                         */
 /************************************************************************/
 
 static std::unique_ptr<OGRGeometry>
@@ -1142,17 +1142,17 @@ GetLinearCollection(const OGRGeometryCollection *poGeomColl)
         else
         {
             auto poNewGeom = OGRGeometryFactory::forceTo(
-                poSubGeom->clone(),
+                std::unique_ptr<OGRGeometry>(poSubGeom->clone()),
                 OGR_GT_GetLinear(poSubGeom->getGeometryType()));
             if (poNewGeom)
-                poFlatGeom->addGeometryDirectly(poNewGeom);
+                poFlatGeom->addGeometry(std::move(poNewGeom));
         }
     }
     return poFlatGeom;
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWriteGeometry                    */
+/*                       OGRGeoJSONWriteGeometry                        */
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteGeometry(const OGRGeometry *poGeometry,
@@ -1176,8 +1176,8 @@ json_object *OGRGeoJSONWriteGeometry(const OGRGeometry *poGeometry,
         }
         else
         {
-            poFlatGeom.reset(
-                OGRGeometryFactory::forceTo(poGeometry->clone(), eTargetType));
+            poFlatGeom = OGRGeometryFactory::forceTo(
+                std::unique_ptr<OGRGeometry>(poGeometry->clone()), eTargetType);
         }
         return OGRGeoJSONWriteGeometry(poFlatGeom.get(), oOptions);
     }
@@ -1297,7 +1297,7 @@ json_object *OGRGeoJSONWriteGeometry(const OGRGeometry *poGeometry,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWritePoint                       */
+/*                         OGRGeoJSONWritePoint                         */
 /************************************************************************/
 
 json_object *OGRGeoJSONWritePoint(const OGRPoint *poPoint,
@@ -1342,7 +1342,7 @@ json_object *OGRGeoJSONWritePoint(const OGRPoint *poPoint,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWriteSimpleCurve                  */
+/*                      OGRGeoJSONWriteSimpleCurve                      */
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteSimpleCurve(const OGRSimpleCurve *poLine,
@@ -1357,7 +1357,7 @@ json_object *OGRGeoJSONWriteSimpleCurve(const OGRSimpleCurve *poLine,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWritePolygon                     */
+/*                        OGRGeoJSONWritePolygon                        */
 /************************************************************************/
 
 json_object *OGRGeoJSONWritePolygon(const OGRPolygon *poPolygon,
@@ -1386,7 +1386,7 @@ json_object *OGRGeoJSONWritePolygon(const OGRPolygon *poPolygon,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWriteMultiPoint                  */
+/*                      OGRGeoJSONWriteMultiPoint                       */
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteMultiPoint(const OGRMultiPoint *poGeometry,
@@ -1413,7 +1413,7 @@ json_object *OGRGeoJSONWriteMultiPoint(const OGRMultiPoint *poGeometry,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWriteMultiLineString             */
+/*                    OGRGeoJSONWriteMultiLineString                    */
 /************************************************************************/
 
 json_object *
@@ -1441,7 +1441,7 @@ OGRGeoJSONWriteMultiLineString(const OGRMultiLineString *poGeometry,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWriteMultiPolygon                */
+/*                     OGRGeoJSONWriteMultiPolygon                      */
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteMultiPolygon(const OGRMultiPolygon *poGeometry,
@@ -1468,7 +1468,7 @@ json_object *OGRGeoJSONWriteMultiPolygon(const OGRMultiPolygon *poGeometry,
 }
 
 /************************************************************************/
-/*                   OGRGeoJSONWriteCollectionGeneric()                 */
+/*                  OGRGeoJSONWriteCollectionGeneric()                  */
 /************************************************************************/
 
 template <class T>
@@ -1497,7 +1497,7 @@ OGRGeoJSONWriteCollectionGeneric(const T *poGeometry,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWriteGeometryCollection          */
+/*                  OGRGeoJSONWriteGeometryCollection                   */
 /************************************************************************/
 
 json_object *
@@ -1508,7 +1508,7 @@ OGRGeoJSONWriteGeometryCollection(const OGRGeometryCollection *poGeometry,
 }
 
 /************************************************************************/
-/*                       OGRGeoJSONWriteCompoundCurve                   */
+/*                     OGRGeoJSONWriteCompoundCurve                     */
 /************************************************************************/
 
 json_object *
@@ -1519,7 +1519,7 @@ OGRGeoJSONWriteCompoundCurve(const OGRCompoundCurve *poGeometry,
 }
 
 /************************************************************************/
-/*                       OGRGeoJSONWriteCurvePolygon                    */
+/*                     OGRGeoJSONWriteCurvePolygon                      */
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteCurvePolygon(const OGRCurvePolygon *poGeometry,
@@ -1529,7 +1529,7 @@ json_object *OGRGeoJSONWriteCurvePolygon(const OGRCurvePolygon *poGeometry,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWriteCoords                      */
+/*                        OGRGeoJSONWriteCoords                         */
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteCoords(double dfX, double dfY,
@@ -1565,7 +1565,7 @@ json_object *OGRGeoJSONWriteCoords(double dfX, double dfY,
 }
 
 /************************************************************************/
-/*                           OGRGeoJSONWriteLineCoords                  */
+/*                      OGRGeoJSONWriteLineCoords                       */
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteLineCoords(const OGRSimpleCurve *poLine,
@@ -1618,7 +1618,7 @@ json_object *OGRGeoJSONWriteLineCoords(const OGRSimpleCurve *poLine,
 }
 
 /************************************************************************/
-/*                        OGRGeoJSONWriteRingCoords                     */
+/*                      OGRGeoJSONWriteRingCoords                       */
 /************************************************************************/
 
 json_object *OGRGeoJSONWriteRingCoords(const OGRLinearRing *poLine,
@@ -1677,7 +1677,7 @@ json_object *OGRGeoJSONWriteRingCoords(const OGRLinearRing *poLine,
 }
 
 /************************************************************************/
-/*             OGR_json_float_with_significant_figures_to_string()      */
+/*         OGR_json_float_with_significant_figures_to_string()          */
 /************************************************************************/
 
 static int OGR_json_float_with_significant_figures_to_string(
@@ -1720,7 +1720,7 @@ static int OGR_json_float_with_significant_figures_to_string(
 }
 
 /************************************************************************/
-/*              json_object_new_float_with_significant_figures()        */
+/*           json_object_new_float_with_significant_figures()           */
 /************************************************************************/
 
 json_object *
@@ -1738,7 +1738,7 @@ json_object_new_float_with_significant_figures(float fVal,
 /*! @endcond */
 
 /************************************************************************/
-/*                           OGR_G_ExportToJson                         */
+/*                          OGR_G_ExportToJson                          */
 /************************************************************************/
 
 /**
@@ -1758,7 +1758,7 @@ char *OGR_G_ExportToJson(OGRGeometryH hGeometry)
 }
 
 /************************************************************************/
-/*                           OGR_G_ExportToJsonEx                       */
+/*                         OGR_G_ExportToJsonEx                         */
 /************************************************************************/
 
 /**
@@ -1815,7 +1815,7 @@ char *OGR_G_ExportToJson(OGRGeometryH hGeometry)
  *
  */
 
-char *OGR_G_ExportToJsonEx(OGRGeometryH hGeometry, char **papszOptions)
+char *OGR_G_ExportToJsonEx(OGRGeometryH hGeometry, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hGeometry, "OGR_G_ExportToJson", nullptr);
 

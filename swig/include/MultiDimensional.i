@@ -1281,6 +1281,15 @@ public:
     return GDALMDArrayRename( self, newName ) ? CE_None : CE_Failure;
   }
 
+  int GetOverviewCount() {
+    return GDALMDArrayGetOverviewCount(self);
+  }
+
+%newobject GetOverview;
+  GDALMDArrayHS* GetOverview(int idx) {
+    return GDALMDArrayGetOverview(self, idx);
+  }
+
 } /* extend */
 }; /* GDALMDArrayH */
 

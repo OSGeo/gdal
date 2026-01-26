@@ -47,11 +47,11 @@ class PNMDataset final : public RawDataset
     static GDALDataset *OpenInternal(GDALOpenInfo *, bool bInCreation);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
-/*                            ~PNMDataset()                            */
+/*                            ~PNMDataset()                             */
 /************************************************************************/
 
 PNMDataset::~PNMDataset()
@@ -61,7 +61,7 @@ PNMDataset::~PNMDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr PNMDataset::Close(GDALProgressFunc, void *)
@@ -303,7 +303,7 @@ GDALDataset *PNMDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 
 GDALDataset *PNMDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 
 {
     /* -------------------------------------------------------------------- */
@@ -400,7 +400,7 @@ GDALDataset *PNMDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                         GDALRegister_PNM()                           */
+/*                          GDALRegister_PNM()                          */
 /************************************************************************/
 
 void GDALRegister_PNM()

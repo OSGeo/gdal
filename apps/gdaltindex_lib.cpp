@@ -63,7 +63,7 @@ typedef enum
 } SrcSRSFormat;
 
 /************************************************************************/
-/*                        GDALTileIndexRasterMetadata                   */
+/*                     GDALTileIndexRasterMetadata                      */
 /************************************************************************/
 
 struct GDALTileIndexRasterMetadata
@@ -74,7 +74,7 @@ struct GDALTileIndexRasterMetadata
 };
 
 /************************************************************************/
-/*                          GDALTileIndexOptions                        */
+/*                         GDALTileIndexOptions                         */
 /************************************************************************/
 
 struct GDALTileIndexOptions
@@ -118,7 +118,7 @@ struct GDALTileIndexOptions
 };
 
 /************************************************************************/
-/*                             ReleaseArray()                           */
+/*                            ReleaseArray()                            */
 /************************************************************************/
 
 static void ReleaseArray(struct ArrowArray *array)
@@ -146,7 +146,7 @@ static void ReleaseArray(struct ArrowArray *array)
 }
 
 /************************************************************************/
-/*                     GDALTileIndexAppOptionsGetParser()               */
+/*                  GDALTileIndexAppOptionsGetParser()                  */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser> GDALTileIndexAppOptionsGetParser(
@@ -367,7 +367,7 @@ static std::unique_ptr<GDALArgumentParser> GDALTileIndexAppOptionsGetParser(
 }
 
 /************************************************************************/
-/*                  GDALTileIndexAppGetParserUsage()                    */
+/*                   GDALTileIndexAppGetParserUsage()                   */
 /************************************************************************/
 
 std::string GDALTileIndexAppGetParserUsage()
@@ -389,7 +389,7 @@ std::string GDALTileIndexAppGetParserUsage()
 }
 
 /************************************************************************/
-/*                        GDALTileIndexTileIterator                     */
+/*                      GDALTileIndexTileIterator                       */
 /************************************************************************/
 
 struct GDALTileIndexTileIterator
@@ -2837,7 +2837,7 @@ static char *SanitizeSRS(const char *pszUserInput)
 }
 
 /************************************************************************/
-/*                          GDALTileIndexOptionsNew()                   */
+/*                      GDALTileIndexOptionsNew()                       */
 /************************************************************************/
 
 /**
@@ -2975,7 +2975,7 @@ GDALTileIndexOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                        GDALTileIndexOptionsFree()                    */
+/*                      GDALTileIndexOptionsFree()                      */
 /************************************************************************/
 
 /**
@@ -2992,7 +2992,7 @@ void GDALTileIndexOptionsFree(GDALTileIndexOptions *psOptions)
 }
 
 /************************************************************************/
-/*                 GDALTileIndexOptionsSetProgress()                    */
+/*                  GDALTileIndexOptionsSetProgress()                   */
 /************************************************************************/
 
 /**

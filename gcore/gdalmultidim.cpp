@@ -40,7 +40,7 @@
 #endif
 
 /************************************************************************/
-/*                       GDALMDArrayUnscaled                            */
+/*                         GDALMDArrayUnscaled                          */
 /************************************************************************/
 
 class GDALMDArrayUnscaled final : public GDALPamMDArray
@@ -216,7 +216,7 @@ GDALIHasAttribute::GetAttribute(const std::string &osName) const
 }
 
 /************************************************************************/
-/*                       GetAttributeFromAttributes()                   */
+/*                     GetAttributeFromAttributes()                     */
 /************************************************************************/
 
 /** Possible fallback implementation for GetAttribute() using GetAttributes().
@@ -261,7 +261,7 @@ GDALIHasAttribute::GetAttributes(CPL_UNUSED CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                             CreateAttribute()                         */
+/*                          CreateAttribute()                           */
 /************************************************************************/
 
 /** Create an attribute within a GDALMDArray or GDALGroup.
@@ -329,7 +329,7 @@ bool GDALIHasAttribute::DeleteAttribute(CPL_UNUSED const std::string &osName,
 }
 
 /************************************************************************/
-/*                            GDALGroup()                               */
+/*                             GDALGroup()                              */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -347,7 +347,7 @@ GDALGroup::GDALGroup(const std::string &osParentName, const std::string &osName,
 //! @endcond
 
 /************************************************************************/
-/*                            ~GDALGroup()                              */
+/*                             ~GDALGroup()                             */
 /************************************************************************/
 
 GDALGroup::~GDALGroup() = default;
@@ -377,7 +377,7 @@ GDALGroup::GetMDArrayNames(CPL_UNUSED CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                     GetMDArrayFullNamesRecursive()                   */
+/*                    GetMDArrayFullNamesRecursive()                    */
 /************************************************************************/
 
 /** Return the list of multidimensional array full names contained in this
@@ -533,7 +533,7 @@ GDALGroup::GetVectorLayerNames(CPL_UNUSED CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                           OpenVectorLayer()                          */
+/*                          OpenVectorLayer()                           */
 /************************************************************************/
 
 /** Open and return a vector layer.
@@ -563,7 +563,7 @@ OGRLayer *GDALGroup::OpenVectorLayer(CPL_UNUSED const std::string &osName,
 }
 
 /************************************************************************/
-/*                             GetDimensions()                          */
+/*                           GetDimensions()                            */
 /************************************************************************/
 
 /** Return the list of dimensions contained in this group and used by its
@@ -607,7 +607,7 @@ CSLConstList GDALGroup::GetStructuralInfo() const
 }
 
 /************************************************************************/
-/*                              CreateGroup()                           */
+/*                            CreateGroup()                             */
 /************************************************************************/
 
 /** Create a sub-group within a group.
@@ -633,7 +633,7 @@ GDALGroup::CreateGroup(CPL_UNUSED const std::string &osName,
 }
 
 /************************************************************************/
-/*                          DeleteGroup()                               */
+/*                            DeleteGroup()                             */
 /************************************************************************/
 
 /** Delete a sub-group from a group.
@@ -662,7 +662,7 @@ bool GDALGroup::DeleteGroup(CPL_UNUSED const std::string &osName,
 }
 
 /************************************************************************/
-/*                            CreateDimension()                         */
+/*                          CreateDimension()                           */
 /************************************************************************/
 
 /** Create a dimension within a group.
@@ -696,7 +696,7 @@ std::shared_ptr<GDALDimension> GDALGroup::CreateDimension(
 }
 
 /************************************************************************/
-/*                             CreateMDArray()                          */
+/*                           CreateMDArray()                            */
 /************************************************************************/
 
 /** Create a multidimensional array within a group.
@@ -737,7 +737,7 @@ std::shared_ptr<GDALMDArray> GDALGroup::CreateMDArray(
 }
 
 /************************************************************************/
-/*                          DeleteMDArray()                             */
+/*                           DeleteMDArray()                            */
 /************************************************************************/
 
 /** Delete an array from a group.
@@ -766,7 +766,7 @@ bool GDALGroup::DeleteMDArray(CPL_UNUSED const std::string &osName,
 }
 
 /************************************************************************/
-/*                           GetTotalCopyCost()                         */
+/*                          GetTotalCopyCost()                          */
 /************************************************************************/
 
 /** Return a total "cost" to copy the group.
@@ -801,7 +801,7 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
 }
 
 /************************************************************************/
-/*                               CopyFrom()                             */
+/*                              CopyFrom()                              */
 /************************************************************************/
 
 /** Copy the content of a group into a new (generally empty) group.
@@ -1312,7 +1312,7 @@ GDALGroup::OpenMDArrayFromFullname(const std::string &osFullName,
 }
 
 /************************************************************************/
-/*                      OpenAttributeFromFullname()                     */
+/*                     OpenAttributeFromFullname()                      */
 /************************************************************************/
 
 /** Get an attribute from its fully qualified name */
@@ -1337,7 +1337,7 @@ GDALGroup::OpenAttributeFromFullname(const std::string &osFullName,
 }
 
 /************************************************************************/
-/*                          ResolveMDArray()                            */
+/*                           ResolveMDArray()                           */
 /************************************************************************/
 
 /** Locate an array in a group and its subgroups by name.
@@ -1471,7 +1471,7 @@ GDALGroup::OpenGroupFromFullname(const std::string &osFullName,
 }
 
 /************************************************************************/
-/*                      OpenDimensionFromFullname()                     */
+/*                     OpenDimensionFromFullname()                      */
 /************************************************************************/
 
 /** Get a dimension from its fully qualified name */
@@ -1493,7 +1493,7 @@ GDALGroup::OpenDimensionFromFullname(const std::string &osFullName) const
 }
 
 /************************************************************************/
-/*                           ClearStatistics()                          */
+/*                          ClearStatistics()                           */
 /************************************************************************/
 
 /**
@@ -1525,7 +1525,7 @@ void GDALGroup::ClearStatistics()
 }
 
 /************************************************************************/
-/*                            Rename()                                  */
+/*                               Rename()                               */
 /************************************************************************/
 
 /** Rename the group.
@@ -1548,7 +1548,7 @@ bool GDALGroup::Rename(CPL_UNUSED const std::string &osNewName)
 }
 
 /************************************************************************/
-/*                         BaseRename()                                 */
+/*                             BaseRename()                             */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -1564,7 +1564,7 @@ void GDALGroup::BaseRename(const std::string &osNewName)
 //! @endcond
 
 /************************************************************************/
-/*                        ParentRenamed()                               */
+/*                           ParentRenamed()                            */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -1580,7 +1580,7 @@ void GDALGroup::ParentRenamed(const std::string &osNewParentFullName)
 //! @endcond
 
 /************************************************************************/
-/*                             Deleted()                                */
+/*                              Deleted()                               */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -1594,7 +1594,7 @@ void GDALGroup::Deleted()
 //! @endcond
 
 /************************************************************************/
-/*                        ParentDeleted()                               */
+/*                           ParentDeleted()                            */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -1623,7 +1623,7 @@ bool GDALGroup::CheckValidAndErrorOutIfNot() const
 //! @endcond
 
 /************************************************************************/
-/*                       ~GDALAbstractMDArray()                         */
+/*                        ~GDALAbstractMDArray()                        */
 /************************************************************************/
 
 GDALAbstractMDArray::~GDALAbstractMDArray() = default;
@@ -1657,7 +1657,7 @@ GDALAbstractMDArray::GDALAbstractMDArray(const std::string &osParentName,
  */
 
 /************************************************************************/
-/*                           GetDataType()                              */
+/*                            GetDataType()                             */
 /************************************************************************/
 
 /** \fn GDALAbstractMDArray::GetDataType() const
@@ -1668,7 +1668,7 @@ GDALAbstractMDArray::GDALAbstractMDArray(const std::string &osParentName,
  */
 
 /************************************************************************/
-/*                        GetDimensionCount()                           */
+/*                         GetDimensionCount()                          */
 /************************************************************************/
 
 /** Return the number of dimensions.
@@ -1686,7 +1686,7 @@ size_t GDALAbstractMDArray::GetDimensionCount() const
 }
 
 /************************************************************************/
-/*                            Rename()                                  */
+/*                               Rename()                               */
 /************************************************************************/
 
 /** Rename the attribute/array.
@@ -1933,7 +1933,7 @@ bool GDALExtendedDataType::CopyValues(const void *pSrc,
 }
 
 /************************************************************************/
-/*                       CheckReadWriteParams()                         */
+/*                        CheckReadWriteParams()                        */
 /************************************************************************/
 //! @cond Doxygen_Suppress
 bool GDALAbstractMDArray::CheckReadWriteParams(
@@ -2177,7 +2177,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
 //! @endcond
 
 /************************************************************************/
-/*                               Read()                                 */
+/*                                Read()                                */
 /************************************************************************/
 
 /** Read part or totality of a multidimensional array or attribute.
@@ -2266,7 +2266,7 @@ bool GDALAbstractMDArray::Read(
 }
 
 /************************************************************************/
-/*                                IWrite()                              */
+/*                               IWrite()                               */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -2281,7 +2281,7 @@ bool GDALAbstractMDArray::IWrite(const GUInt64 *, const size_t *,
 //! @endcond
 
 /************************************************************************/
-/*                               Write()                                 */
+/*                               Write()                                */
 /************************************************************************/
 
 /** Write part or totality of a multidimensional array or attribute.
@@ -2371,7 +2371,7 @@ bool GDALAbstractMDArray::Write(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                          GetTotalElementsCount()                     */
+/*                       GetTotalElementsCount()                        */
 /************************************************************************/
 
 /** Return the total number of values in the array.
@@ -2403,7 +2403,7 @@ GUInt64 GDALAbstractMDArray::GetTotalElementsCount() const
 }
 
 /************************************************************************/
-/*                           GetBlockSize()                             */
+/*                            GetBlockSize()                            */
 /************************************************************************/
 
 /** Return the "natural" block size of the array along all dimensions.
@@ -2540,7 +2540,7 @@ GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunkMemory) const
 }
 
 /************************************************************************/
-/*                         BaseRename()                                 */
+/*                             BaseRename()                             */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -2557,7 +2557,7 @@ void GDALAbstractMDArray::BaseRename(const std::string &osNewName)
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                          ParentRenamed()                             */
+/*                           ParentRenamed()                            */
 /************************************************************************/
 
 void GDALAbstractMDArray::ParentRenamed(const std::string &osNewParentFullName)
@@ -2572,7 +2572,7 @@ void GDALAbstractMDArray::ParentRenamed(const std::string &osNewParentFullName)
 //! @endcond
 
 /************************************************************************/
-/*                             Deleted()                                */
+/*                              Deleted()                               */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -2586,7 +2586,7 @@ void GDALAbstractMDArray::Deleted()
 //! @endcond
 
 /************************************************************************/
-/*                        ParentDeleted()                               */
+/*                           ParentDeleted()                            */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -2615,7 +2615,7 @@ bool GDALAbstractMDArray::CheckValidAndErrorOutIfNot() const
 //! @endcond
 
 /************************************************************************/
-/*                             SetUnit()                                */
+/*                              SetUnit()                               */
 /************************************************************************/
 
 /** Set the variable unit.
@@ -2642,7 +2642,7 @@ bool GDALMDArray::SetUnit(CPL_UNUSED const std::string &osUnit)
 }
 
 /************************************************************************/
-/*                             GetUnit()                                */
+/*                              GetUnit()                               */
 /************************************************************************/
 
 /** Return the array unit.
@@ -2664,7 +2664,7 @@ const std::string &GDALMDArray::GetUnit() const
 }
 
 /************************************************************************/
-/*                          SetSpatialRef()                             */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 /** Assign a spatial reference system object to the array.
@@ -2678,7 +2678,7 @@ bool GDALMDArray::SetSpatialRef(CPL_UNUSED const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 /** Return the spatial reference system object associated with the array.
@@ -2691,7 +2691,7 @@ std::shared_ptr<OGRSpatialReference> GDALMDArray::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                        GetRawNoDataValue()                           */
+/*                         GetRawNoDataValue()                          */
 /************************************************************************/
 
 /** Return the nodata value as a "raw" value.
@@ -2717,7 +2717,7 @@ const void *GDALMDArray::GetRawNoDataValue() const
 }
 
 /************************************************************************/
-/*                        GetNoDataValueAsDouble()                      */
+/*                       GetNoDataValueAsDouble()                       */
 /************************************************************************/
 
 /** Return the nodata value as a double.
@@ -2748,7 +2748,7 @@ double GDALMDArray::GetNoDataValueAsDouble(bool *pbHasNoData) const
 }
 
 /************************************************************************/
-/*                        GetNoDataValueAsInt64()                       */
+/*                       GetNoDataValueAsInt64()                        */
 /************************************************************************/
 
 /** Return the nodata value as a Int64.
@@ -2810,7 +2810,7 @@ uint64_t GDALMDArray::GetNoDataValueAsUInt64(bool *pbHasNoData) const
 }
 
 /************************************************************************/
-/*                        SetRawNoDataValue()                           */
+/*                         SetRawNoDataValue()                          */
 /************************************************************************/
 
 /** Set the nodata value as a "raw" value.
@@ -2920,7 +2920,7 @@ bool GDALMDArray::SetNoDataValue(uint64_t nNoData)
 }
 
 /************************************************************************/
-/*                            Resize()                                  */
+/*                               Resize()                               */
 /************************************************************************/
 
 /** Resize an array to new dimensions.
@@ -2948,7 +2948,7 @@ bool GDALMDArray::Resize(CPL_UNUSED const std::vector<GUInt64> &anNewDimSizes,
 }
 
 /************************************************************************/
-/*                               SetScale()                             */
+/*                              SetScale()                              */
 /************************************************************************/
 
 /** Set the scale value to apply to raw values.
@@ -2976,7 +2976,7 @@ bool GDALMDArray::SetScale(CPL_UNUSED double dfScale,
 }
 
 /************************************************************************/
-/*                               SetOffset)                             */
+/*                              SetOffset)                              */
 /************************************************************************/
 
 /** Set the offset value to apply to raw values.
@@ -3004,7 +3004,7 @@ bool GDALMDArray::SetOffset(CPL_UNUSED double dfOffset,
 }
 
 /************************************************************************/
-/*                               GetScale()                             */
+/*                              GetScale()                              */
 /************************************************************************/
 
 /** Get the scale value to apply to raw values.
@@ -3034,7 +3034,7 @@ double GDALMDArray::GetScale(CPL_UNUSED bool *pbHasScale,
 }
 
 /************************************************************************/
-/*                               GetOffset()                            */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 /** Get the offset value to apply to raw values.
@@ -3064,7 +3064,7 @@ double GDALMDArray::GetOffset(CPL_UNUSED bool *pbHasOffset,
 }
 
 /************************************************************************/
-/*                         ProcessPerChunk()                            */
+/*                          ProcessPerChunk()                           */
 /************************************************************************/
 
 namespace
@@ -3230,7 +3230,7 @@ end:
 }
 
 /************************************************************************/
-/*                          GDALAttribute()                             */
+/*                           GDALAttribute()                            */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -3247,7 +3247,7 @@ GDALAttribute::~GDALAttribute() = default;
 //! @endcond
 
 /************************************************************************/
-/*                        GetDimensionSize()                            */
+/*                          GetDimensionSize()                          */
 /************************************************************************/
 
 /** Return the size of the dimensions of the attribute.
@@ -3267,7 +3267,7 @@ std::vector<GUInt64> GDALAttribute::GetDimensionsSize() const
 }
 
 /************************************************************************/
-/*                            GDALRawResult()                           */
+/*                           GDALRawResult()                            */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -3281,7 +3281,7 @@ GDALRawResult::GDALRawResult(GByte *raw, const GDALExtendedDataType &dt,
 //! @endcond
 
 /************************************************************************/
-/*                            GDALRawResult()                           */
+/*                           GDALRawResult()                            */
 /************************************************************************/
 
 /** Move constructor. */
@@ -3332,7 +3332,7 @@ GDALRawResult &GDALRawResult::operator=(GDALRawResult &&other)
 }
 
 /************************************************************************/
-/*                         ~GDALRawResult()                             */
+/*                           ~GDALRawResult()                           */
 /************************************************************************/
 
 /** Destructor. */
@@ -3342,7 +3342,7 @@ GDALRawResult::~GDALRawResult()
 }
 
 /************************************************************************/
-/*                            StealData()                               */
+/*                             StealData()                              */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -3430,7 +3430,7 @@ const char *GDALAttribute::ReadAsString() const
 }
 
 /************************************************************************/
-/*                            ReadAsInt()                               */
+/*                             ReadAsInt()                              */
 /************************************************************************/
 
 /** Return the value of an attribute as a integer.
@@ -3506,7 +3506,7 @@ double GDALAttribute::ReadAsDouble() const
 }
 
 /************************************************************************/
-/*                          ReadAsStringArray()                         */
+/*                         ReadAsStringArray()                          */
 /************************************************************************/
 
 /** Return the value of an attribute as an array of strings.
@@ -3540,7 +3540,7 @@ CPLStringList GDALAttribute::ReadAsStringArray() const
 }
 
 /************************************************************************/
-/*                          ReadAsIntArray()                            */
+/*                           ReadAsIntArray()                           */
 /************************************************************************/
 
 /** Return the value of an attribute as an array of integers.
@@ -3715,7 +3715,7 @@ bool GDALAttribute::WriteInt(int nVal)
 }
 
 /************************************************************************/
-/*                              WriteInt64()                             */
+/*                             WriteInt64()                             */
 /************************************************************************/
 
 /** Write an attribute from an int64_t value.
@@ -3739,7 +3739,7 @@ bool GDALAttribute::WriteInt64(int64_t nVal)
 }
 
 /************************************************************************/
-/*                                Write()                               */
+/*                               Write()                                */
 /************************************************************************/
 
 /** Write an attribute from a double value.
@@ -3763,7 +3763,7 @@ bool GDALAttribute::Write(double dfVal)
 }
 
 /************************************************************************/
-/*                                Write()                               */
+/*                               Write()                                */
 /************************************************************************/
 
 /** Write an attribute from an array of strings.
@@ -3796,7 +3796,7 @@ bool GDALAttribute::Write(CSLConstList vals)
 }
 
 /************************************************************************/
-/*                                Write()                               */
+/*                               Write()                                */
 /************************************************************************/
 
 /** Write an attribute from an array of int.
@@ -3830,7 +3830,7 @@ bool GDALAttribute::Write(const int *vals, size_t nVals)
 }
 
 /************************************************************************/
-/*                                Write()                               */
+/*                               Write()                                */
 /************************************************************************/
 
 /** Write an attribute from an array of int64_t.
@@ -3865,7 +3865,7 @@ bool GDALAttribute::Write(const int64_t *vals, size_t nVals)
 }
 
 /************************************************************************/
-/*                                Write()                               */
+/*                               Write()                                */
 /************************************************************************/
 
 /** Write an attribute from an array of double.
@@ -3899,7 +3899,7 @@ bool GDALAttribute::Write(const double *vals, size_t nVals)
 }
 
 /************************************************************************/
-/*                           GDALMDArray()                              */
+/*                            GDALMDArray()                             */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -3917,7 +3917,7 @@ GDALMDArray::GDALMDArray(CPL_UNUSED const std::string &osParentName,
 //! @endcond
 
 /************************************************************************/
-/*                           GetTotalCopyCost()                         */
+/*                          GetTotalCopyCost()                          */
 /************************************************************************/
 
 /** Return a total "cost" to copy the array.
@@ -3931,7 +3931,7 @@ GUInt64 GDALMDArray::GetTotalCopyCost() const
 }
 
 /************************************************************************/
-/*                       CopyFromAllExceptValues()                      */
+/*                      CopyFromAllExceptValues()                       */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -4020,7 +4020,7 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray *poSrcArray,
 //! @endcond
 
 /************************************************************************/
-/*                               CopyFrom()                             */
+/*                              CopyFrom()                              */
 /************************************************************************/
 
 /** Copy the content of an array into a new (generally empty) array.
@@ -4211,7 +4211,7 @@ CSLConstList GDALMDArray::GetStructuralInfo() const
 }
 
 /************************************************************************/
-/*                          AdviseRead()                                */
+/*                             AdviseRead()                             */
 /************************************************************************/
 
 /** Advise driver of upcoming read requests.
@@ -4297,7 +4297,7 @@ bool GDALMDArray::AdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                             IAdviseRead()                            */
+/*                            IAdviseRead()                             */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -4423,7 +4423,7 @@ GDALMDArray::GetCacheRootGroup(bool bCanCreate,
 //! @endcond
 
 /************************************************************************/
-/*                              Cache()                                 */
+/*                               Cache()                                */
 /************************************************************************/
 
 /** Cache the content of the array into an auxiliary filename.
@@ -4523,7 +4523,7 @@ bool GDALMDArray::Cache(CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                               Read()                                 */
+/*                                Read()                                */
 /************************************************************************/
 
 bool GDALMDArray::Read(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -4606,7 +4606,7 @@ bool GDALMDArray::Read(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                          GetRootGroup()                              */
+/*                            GetRootGroup()                            */
 /************************************************************************/
 
 /** Return the root group to which this arrays belongs too.
@@ -4628,7 +4628,7 @@ std::shared_ptr<GDALGroup> GDALMDArray::GetRootGroup() const
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       IsTransposedRequest()                          */
+/*                        IsTransposedRequest()                         */
 /************************************************************************/
 
 bool GDALMDArray::IsTransposedRequest(
@@ -4725,7 +4725,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                        CopyToFinalBuffer()                           */
+/*                         CopyToFinalBuffer()                          */
 /************************************************************************/
 
 static void CopyToFinalBuffer(const void *pSrcBuffer,
@@ -4802,7 +4802,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                      TransposeLast2Dims()                            */
+/*                         TransposeLast2Dims()                         */
 /************************************************************************/
 
 static bool TransposeLast2Dims(void *pDstBuffer,
@@ -4933,7 +4933,7 @@ bool GDALMDArray::ReadForTransposedRequest(
 }
 
 /************************************************************************/
-/*               IsStepOneContiguousRowMajorOrderedSameDataType()       */
+/*           IsStepOneContiguousRowMajorOrderedSameDataType()           */
 /************************************************************************/
 
 // Returns true if at all following conditions are met:
@@ -5038,7 +5038,7 @@ bool GDALMDArray::ReadUsingContiguousIRead(
 //! @endcond
 
 /************************************************************************/
-/*                       GDALSlicedMDArray                              */
+/*                          GDALSlicedMDArray                           */
 /************************************************************************/
 
 class GDALSlicedMDArray final : public GDALPamMDArray
@@ -5279,7 +5279,7 @@ void GDALSlicedMDArray::PrepareParentArrays(
 }
 
 /************************************************************************/
-/*                             IRead()                                  */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool GDALSlicedMDArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -5295,7 +5295,7 @@ bool GDALSlicedMDArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                             IWrite()                                  */
+/*                               IWrite()                               */
 /************************************************************************/
 
 bool GDALSlicedMDArray::IWrite(const GUInt64 *arrayStartIdx,
@@ -5311,7 +5311,7 @@ bool GDALSlicedMDArray::IWrite(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                             IAdviseRead()                            */
+/*                            IAdviseRead()                             */
 /************************************************************************/
 
 bool GDALSlicedMDArray::IAdviseRead(const GUInt64 *arrayStartIdx,
@@ -5324,7 +5324,7 @@ bool GDALSlicedMDArray::IAdviseRead(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                        CreateSlicedArray()                           */
+/*                         CreateSlicedArray()                          */
 /************************************************************************/
 
 static std::shared_ptr<GDALMDArray>
@@ -5684,7 +5684,7 @@ class GDALExtractFieldMDArray final : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                             IRead()                                  */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool GDALExtractFieldMDArray::IRead(const GUInt64 *arrayStartIdx,
@@ -5705,7 +5705,7 @@ bool GDALExtractFieldMDArray::IRead(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                      CreateFieldNameExtractArray()                   */
+/*                    CreateFieldNameExtractArray()                     */
 /************************************************************************/
 
 static std::shared_ptr<GDALMDArray>
@@ -5732,7 +5732,7 @@ CreateFieldNameExtractArray(const std::shared_ptr<GDALMDArray> &self,
 }
 
 /************************************************************************/
-/*                             GetView()                                */
+/*                              GetView()                               */
 /************************************************************************/
 
 // clang-format off
@@ -5933,7 +5933,7 @@ GDALMDArray::GetView(const std::vector<GUInt64> &indices) const
 }
 
 /************************************************************************/
-/*                            operator[]                                */
+/*                              operator[]                              */
 /************************************************************************/
 
 /** Return a view of the array using field access
@@ -5952,7 +5952,7 @@ GDALMDArray::operator[](const std::string &fieldName) const
 }
 
 /************************************************************************/
-/*                      GDALMDArrayTransposed                           */
+/*                        GDALMDArrayTransposed                         */
 /************************************************************************/
 
 class GDALMDArrayTransposed final : public GDALPamMDArray
@@ -6159,7 +6159,7 @@ class GDALMDArrayTransposed final : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                         PrepareParentArrays()                        */
+/*                        PrepareParentArrays()                         */
 /************************************************************************/
 
 void GDALMDArrayTransposed::PrepareParentArrays(
@@ -6186,7 +6186,7 @@ void GDALMDArrayTransposed::PrepareParentArrays(
 }
 
 /************************************************************************/
-/*                             IRead()                                  */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool GDALMDArrayTransposed::IRead(const GUInt64 *arrayStartIdx,
@@ -6202,7 +6202,7 @@ bool GDALMDArrayTransposed::IRead(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                            IWrite()                                  */
+/*                               IWrite()                               */
 /************************************************************************/
 
 bool GDALMDArrayTransposed::IWrite(const GUInt64 *arrayStartIdx,
@@ -6218,7 +6218,7 @@ bool GDALMDArrayTransposed::IWrite(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                             IAdviseRead()                            */
+/*                            IAdviseRead()                             */
 /************************************************************************/
 
 bool GDALMDArrayTransposed::IAdviseRead(const GUInt64 *arrayStartIdx,
@@ -6231,7 +6231,7 @@ bool GDALMDArrayTransposed::IAdviseRead(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                           Transpose()                                */
+/*                             Transpose()                              */
 /************************************************************************/
 
 /** Return a view of the array whose axis have been reordered.
@@ -6300,7 +6300,7 @@ GDALMDArray::Transpose(const std::vector<int> &anMapNewAxisToOldAxis) const
 }
 
 /************************************************************************/
-/*                             IRead()                                  */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool GDALMDArrayUnscaled::IRead(const GUInt64 *arrayStartIdx,
@@ -6467,7 +6467,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                             IWrite()                                 */
+/*                               IWrite()                               */
 /************************************************************************/
 
 bool GDALMDArrayUnscaled::IWrite(const GUInt64 *arrayStartIdx,
@@ -6669,7 +6669,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                           GetUnscaled()                              */
+/*                            GetUnscaled()                             */
 /************************************************************************/
 
 /** Return an array that is the unscaled version of the current one.
@@ -6728,7 +6728,7 @@ GDALMDArray::GetUnscaled(double dfOverriddenScale, double dfOverriddenOffset,
 }
 
 /************************************************************************/
-/*                         GDALMDArrayMask                              */
+/*                           GDALMDArrayMask                            */
 /************************************************************************/
 
 class GDALMDArrayMask final : public GDALPamMDArray
@@ -6817,7 +6817,7 @@ class GDALMDArrayMask final : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                    GDALMDArrayMask::Create()                         */
+/*                      GDALMDArrayMask::Create()                       */
 /************************************************************************/
 
 /* static */ std::shared_ptr<GDALMDArrayMask>
@@ -6832,7 +6832,7 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
 }
 
 /************************************************************************/
-/*                    GDALMDArrayMask::Init()                           */
+/*                       GDALMDArrayMask::Init()                        */
 /************************************************************************/
 
 bool GDALMDArrayMask::Init(CSLConstList papszOptions)
@@ -7034,7 +7034,7 @@ bool GDALMDArrayMask::Init(CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                             IRead()                                  */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -7263,7 +7263,7 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                          IsValidForDT()                              */
+/*                            IsValidForDT()                            */
 /************************************************************************/
 
 template <typename Type> static bool IsValidForDT(double dfVal)
@@ -7283,7 +7283,7 @@ template <> bool IsValidForDT<double>(double)
 }
 
 /************************************************************************/
-/*                              IsNan()                                 */
+/*                               IsNan()                                */
 /************************************************************************/
 
 template <typename Type> inline bool IsNan(Type)
@@ -7302,7 +7302,7 @@ template <> bool IsNan<float>(float val)
 }
 
 /************************************************************************/
-/*                         ReadInternal()                               */
+/*                            ReadInternal()                            */
 /************************************************************************/
 
 template <typename Type>
@@ -7500,7 +7500,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                            GetMask()                                 */
+/*                              GetMask()                               */
 /************************************************************************/
 
 /** Return an array that is a mask for the current array
@@ -7716,7 +7716,7 @@ bool GDALMDArray::GuessGeoTransform(size_t nDimX, size_t nDimY,
 }
 
 /************************************************************************/
-/*                       GDALMDArrayResampled                           */
+/*                         GDALMDArrayResampled                         */
 /************************************************************************/
 
 class GDALMDArrayResampledDataset;
@@ -7833,7 +7833,7 @@ GDALMDArrayResampledDataset::~GDALMDArrayResampledDataset()
 }
 
 /************************************************************************/
-/*                   GDALMDArrayResampledDatasetRasterBand()            */
+/*               GDALMDArrayResampledDatasetRasterBand()                */
 /************************************************************************/
 
 GDALMDArrayResampledDatasetRasterBand::GDALMDArrayResampledDatasetRasterBand(
@@ -7869,7 +7869,7 @@ double GDALMDArrayResampledDatasetRasterBand::GetNoDataValue(int *pbHasNoData)
 }
 
 /************************************************************************/
-/*                            IReadBlock()                              */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GDALMDArrayResampledDatasetRasterBand::IReadBlock(int nBlockXOff,
@@ -7889,7 +7889,7 @@ CPLErr GDALMDArrayResampledDatasetRasterBand::IReadBlock(int nBlockXOff,
 }
 
 /************************************************************************/
-/*                            IRasterIO()                               */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr GDALMDArrayResampledDatasetRasterBand::IRasterIO(
@@ -8043,7 +8043,7 @@ class GDALMDArrayResampled final : public GDALPamMDArray
 };
 
 /************************************************************************/
-/*                   GDALMDArrayResampled::Create()                     */
+/*                    GDALMDArrayResampled::Create()                    */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
@@ -8473,7 +8473,7 @@ std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
 }
 
 /************************************************************************/
-/*                   GDALMDArrayResampled::IRead()                      */
+/*                    GDALMDArrayResampled::IRead()                     */
 /************************************************************************/
 
 bool GDALMDArrayResampled::IRead(const GUInt64 *arrayStartIdx,
@@ -8561,7 +8561,7 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                           GetResampled()                             */
+/*                            GetResampled()                            */
 /************************************************************************/
 
 /** Return an array that is a resampled / reprojected view of the current array
@@ -8675,7 +8675,7 @@ std::shared_ptr<GDALMDArray> GDALMDArray::GetResampled(
 }
 
 /************************************************************************/
-/*                         GDALDatasetFromArray()                       */
+/*                        GDALDatasetFromArray()                        */
 /************************************************************************/
 
 class GDALDatasetFromArray;
@@ -8731,6 +8731,8 @@ class GDALRasterBandFromArray final : public GDALPamRasterBand
     double GetScale(int *pbHasScale) override;
     const char *GetUnitType() override;
     GDALColorInterp GetColorInterpretation() override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int idx) override;
 };
 
 class GDALDatasetFromArray final : public GDALPamDataset
@@ -8738,18 +8740,24 @@ class GDALDatasetFromArray final : public GDALPamDataset
     friend class GDALRasterBandFromArray;
 
     std::shared_ptr<GDALMDArray> m_poArray;
-    size_t m_iXDim;
-    size_t m_iYDim;
+    const size_t m_iXDim;
+    const size_t m_iYDim;
+    const CPLStringList m_aosOptions;
     GDALGeoTransform m_gt{};
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
     GDALMultiDomainMetadata m_oMDD{};
     std::string m_osOvrFilename{};
+    bool m_bOverviewsDiscovered = false;
+    std::vector<std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>>
+        m_apoOverviews{};
 
   public:
     GDALDatasetFromArray(const std::shared_ptr<GDALMDArray> &array,
-                         size_t iXDim, size_t iYDim)
-        : m_poArray(array), m_iXDim(iXDim), m_iYDim(iYDim)
+                         size_t iXDim, size_t iYDim,
+                         const CPLStringList &aosOptions)
+        : m_poArray(array), m_iXDim(iXDim), m_iYDim(iYDim),
+          m_aosOptions(aosOptions)
     {
         // Initialize an overview filename from the filename of the array
         // and its name.
@@ -8775,7 +8783,7 @@ class GDALDatasetFromArray final : public GDALPamDataset
         }
     }
 
-    static GDALDatasetFromArray *
+    static std::unique_ptr<GDALDatasetFromArray>
     Create(const std::shared_ptr<GDALMDArray> &array, size_t iXDim,
            size_t iYDim, const std::shared_ptr<GDALGroup> &poRootGroup,
            CSLConstList papszOptions);
@@ -8843,6 +8851,45 @@ class GDALDatasetFromArray final : public GDALPamDataset
             return m_osOvrFilename.c_str();
         }
         return m_oMDD.GetMetadataItem(pszName, pszDomain);
+    }
+
+    void DiscoverOverviews()
+    {
+        if (!m_bOverviewsDiscovered)
+        {
+            m_bOverviewsDiscovered = true;
+            if (const int nOverviews = m_poArray->GetOverviewCount())
+            {
+                if (auto poRootGroup = m_poArray->GetRootGroup())
+                {
+                    const size_t nDims = m_poArray->GetDimensionCount();
+                    CPLStringList aosOptions(m_aosOptions);
+                    aosOptions.SetNameValue("LOAD_PAM", "NO");
+                    for (int iOvr = 0; iOvr < nOverviews; ++iOvr)
+                    {
+                        if (auto poOvrArray = m_poArray->GetOverview(iOvr))
+                        {
+                            if (poOvrArray->GetDimensionCount() == nDims &&
+                                poOvrArray->GetDataType() ==
+                                    m_poArray->GetDataType())
+                            {
+                                auto poOvrDS =
+                                    Create(poOvrArray, m_iXDim, m_iYDim,
+                                           poRootGroup, aosOptions);
+                                if (poOvrDS)
+                                {
+                                    m_apoOverviews.push_back(
+                                        std::unique_ptr<
+                                            GDALDataset,
+                                            GDALDatasetUniquePtrReleaser>(
+                                            poOvrDS.release()));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 };
 
@@ -9116,7 +9163,7 @@ int64_t GDALRasterBandFromArray::GetNoDataValueAsInt64(int *pbHasNoData)
 }
 
 /************************************************************************/
-/*                      GetNoDataValueAsUInt64()                        */
+/*                       GetNoDataValueAsUInt64()                       */
 /************************************************************************/
 
 uint64_t GDALRasterBandFromArray::GetNoDataValueAsUInt64(int *pbHasNoData)
@@ -9146,7 +9193,7 @@ double GDALRasterBandFromArray::GetOffset(int *pbHasOffset)
 }
 
 /************************************************************************/
-/*                           GetUnitType()                              */
+/*                            GetUnitType()                             */
 /************************************************************************/
 
 const char *GDALRasterBandFromArray::GetUnitType()
@@ -9157,7 +9204,7 @@ const char *GDALRasterBandFromArray::GetUnitType()
 }
 
 /************************************************************************/
-/*                             GetScale()                              */
+/*                              GetScale()                              */
 /************************************************************************/
 
 double GDALRasterBandFromArray::GetScale(int *pbHasScale)
@@ -9172,7 +9219,7 @@ double GDALRasterBandFromArray::GetScale(int *pbHasScale)
 }
 
 /************************************************************************/
-/*                            IReadBlock()                              */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GDALRasterBandFromArray::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -9210,7 +9257,7 @@ CPLErr GDALRasterBandFromArray::IWriteBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                            IRasterIO()                               */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
@@ -9262,7 +9309,7 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
 }
 
 /************************************************************************/
-/*                      GetColorInterpretation()                        */
+/*                       GetColorInterpretation()                       */
 /************************************************************************/
 
 GDALColorInterp GDALRasterBandFromArray::GetColorInterpretation()
@@ -9317,10 +9364,42 @@ GDALColorInterp GDALRasterBandFromArray::GetColorInterpretation()
 }
 
 /************************************************************************/
+/*             GDALRasterBandFromArray::GetOverviewCount()              */
+/************************************************************************/
+
+int GDALRasterBandFromArray::GetOverviewCount()
+{
+    const int nPAMCount = GDALPamRasterBand::GetOverviewCount();
+    if (nPAMCount)
+        return nPAMCount;
+    auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));
+    l_poDS->DiscoverOverviews();
+    return static_cast<int>(l_poDS->m_apoOverviews.size());
+}
+
+/************************************************************************/
+/*                GDALRasterBandFromArray::GetOverview()                */
+/************************************************************************/
+
+GDALRasterBand *GDALRasterBandFromArray::GetOverview(int idx)
+{
+    const int nPAMCount = GDALPamRasterBand::GetOverviewCount();
+    if (nPAMCount)
+        return GDALPamRasterBand::GetOverview(idx);
+    auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));
+    l_poDS->DiscoverOverviews();
+    if (idx < 0 || static_cast<size_t>(idx) >= l_poDS->m_apoOverviews.size())
+    {
+        return nullptr;
+    }
+    return l_poDS->m_apoOverviews[idx]->GetRasterBand(nBand);
+}
+
+/************************************************************************/
 /*                    GDALDatasetFromArray::Create()                    */
 /************************************************************************/
 
-GDALDatasetFromArray *GDALDatasetFromArray::Create(
+std::unique_ptr<GDALDatasetFromArray> GDALDatasetFromArray::Create(
     const std::shared_ptr<GDALMDArray> &array, size_t iXDim, size_t iYDim,
     const std::shared_ptr<GDALGroup> &poRootGroup, CSLConstList papszOptions)
 
@@ -9936,7 +10015,8 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
         }
     }
 
-    auto poDS = std::make_unique<GDALDatasetFromArray>(array, iXDim, iYDim);
+    auto poDS = std::make_unique<GDALDatasetFromArray>(
+        array, iXDim, iYDim, CPLStringList(papszOptions));
 
     poDS->eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
 
@@ -9964,7 +10044,30 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
     const auto attrs(array->GetAttributes());
     for (const auto &attr : attrs)
     {
-        if (attr->GetName() != "COLOR_INTERPRETATION")
+        if (attr->GetName() == "spatial:registration")
+        {
+            // From https://github.com/zarr-conventions/spatial
+            const char *pszValue = attr->ReadAsString();
+            if (pszValue && strcmp(pszValue, "pixel") == 0)
+                poDS->m_oMDD.SetMetadataItem(GDALMD_AREA_OR_POINT,
+                                             GDALMD_AOP_AREA);
+            else if (pszValue && strcmp(pszValue, "node") == 0)
+                poDS->m_oMDD.SetMetadataItem(GDALMD_AREA_OR_POINT,
+                                             GDALMD_AOP_POINT);
+            else if (pszValue)
+                poDS->m_oMDD.SetMetadataItem(attr->GetName().c_str(), pszValue);
+        }
+        else if (attr->GetName() == "gdal:geotransform")
+        {
+            // From Zarr driver
+            const auto doubleArray = attr->ReadAsDoubleArray();
+            if (doubleArray.size() == 6)
+            {
+                poDS->m_bHasGT = true;
+                poDS->m_gt = GDALGeoTransform(doubleArray.data());
+            }
+        }
+        else if (attr->GetName() != "COLOR_INTERPRETATION")
         {
             auto stringArray = attr->ReadAsStringArray();
             std::string val;
@@ -10025,7 +10128,8 @@ lbl_next_depth:
     if (iDim > 0)
         goto lbl_return_to_caller;
 
-    if (!array->GetFilename().empty())
+    if (!array->GetFilename().empty() &&
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "LOAD_PAM", "YES")))
     {
         poDS->SetPhysicalFilename(array->GetFilename().c_str());
         std::string osDerivedDatasetName(
@@ -10047,11 +10151,11 @@ lbl_next_depth:
         }
     }
 
-    return poDS.release();
+    return poDS;
 }
 
 /************************************************************************/
-/*                          AsClassicDataset()                         */
+/*                          AsClassicDataset()                          */
 /************************************************************************/
 
 /** Return a view of this array as a "classic" GDALDataset (ie 2D)
@@ -10213,7 +10317,8 @@ GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim,
         return nullptr;
     }
     return GDALDatasetFromArray::Create(self, iXDim, iYDim, poRootGroup,
-                                        papszOptions);
+                                        papszOptions)
+        .release();
 }
 
 /************************************************************************/
@@ -10500,7 +10605,7 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
 }
 
 /************************************************************************/
-/*                            SetStatistics()                           */
+/*                           SetStatistics()                            */
 /************************************************************************/
 //! @cond Doxygen_Suppress
 bool GDALMDArray::SetStatistics(bool /* bApproxStats */, double /* dfMin */,
@@ -10516,7 +10621,7 @@ bool GDALMDArray::SetStatistics(bool /* bApproxStats */, double /* dfMin */,
 //! @endcond
 
 /************************************************************************/
-/*                           ClearStatistics()                          */
+/*                          ClearStatistics()                           */
 /************************************************************************/
 
 /**
@@ -10529,7 +10634,7 @@ void GDALMDArray::ClearStatistics()
 }
 
 /************************************************************************/
-/*                      GetCoordinateVariables()                        */
+/*                       GetCoordinateVariables()                       */
 /************************************************************************/
 
 /**
@@ -10638,7 +10743,7 @@ GDALExtendedDataType::GDALExtendedDataType(const GDALExtendedDataType &other)
 }
 
 /************************************************************************/
-/*                            operator= ()                              */
+/*                             operator= ()                             */
 /************************************************************************/
 
 /** Copy assignment. */
@@ -10667,7 +10772,7 @@ GDALExtendedDataType::operator=(const GDALExtendedDataType &other)
 }
 
 /************************************************************************/
-/*                            operator= ()                              */
+/*                             operator= ()                             */
 /************************************************************************/
 
 /** Move assignment. */
@@ -10675,7 +10780,7 @@ GDALExtendedDataType &
 GDALExtendedDataType::operator=(GDALExtendedDataType &&other) = default;
 
 /************************************************************************/
-/*                           Create()                                   */
+/*                               Create()                               */
 /************************************************************************/
 
 /** Return a new GDALExtendedDataType of class GEDTC_NUMERIC.
@@ -10691,7 +10796,7 @@ GDALExtendedDataType GDALExtendedDataType::Create(GDALDataType eType)
 }
 
 /************************************************************************/
-/*                           Create()                                   */
+/*                               Create()                               */
 /************************************************************************/
 
 /** Return a new GDALExtendedDataType from a raster attribute table.
@@ -10709,7 +10814,7 @@ GDALExtendedDataType::Create(const std::string &osName, GDALDataType eBaseType,
 }
 
 /************************************************************************/
-/*                           Create()                                   */
+/*                               Create()                               */
 /************************************************************************/
 
 /** Return a new GDALExtendedDataType of class GEDTC_COMPOUND.
@@ -10756,7 +10861,7 @@ GDALExtendedDataType GDALExtendedDataType::Create(
 }
 
 /************************************************************************/
-/*                           Create()                                   */
+/*                               Create()                               */
 /************************************************************************/
 
 /** Return a new GDALExtendedDataType of class GEDTC_STRING.
@@ -10775,7 +10880,7 @@ GDALExtendedDataType::CreateString(size_t nMaxStringLength,
 }
 
 /************************************************************************/
-/*                           operator==()                               */
+/*                             operator==()                             */
 /************************************************************************/
 
 /** Equality operator.
@@ -10813,7 +10918,7 @@ bool GDALExtendedDataType::operator==(const GDALExtendedDataType &other) const
 }
 
 /************************************************************************/
-/*                        CanConvertTo()                                */
+/*                            CanConvertTo()                            */
 /************************************************************************/
 
 /** Return whether this data type can be converted to the other one.
@@ -10859,7 +10964,7 @@ bool GDALExtendedDataType::CanConvertTo(const GDALExtendedDataType &other) const
 }
 
 /************************************************************************/
-/*                     NeedsFreeDynamicMemory()                         */
+/*                       NeedsFreeDynamicMemory()                       */
 /************************************************************************/
 
 /** Return whether the data type holds dynamically allocated memory, that
@@ -10889,7 +10994,7 @@ bool GDALExtendedDataType::NeedsFreeDynamicMemory() const
 }
 
 /************************************************************************/
-/*                        FreeDynamicMemory()                           */
+/*                         FreeDynamicMemory()                          */
 /************************************************************************/
 
 /** Release the dynamic memory (strings typically) from a raw value.
@@ -10932,13 +11037,13 @@ void GDALExtendedDataType::FreeDynamicMemory(void *pBuffer) const
 }
 
 /************************************************************************/
-/*                      ~GDALEDTComponent()                             */
+/*                         ~GDALEDTComponent()                          */
 /************************************************************************/
 
 GDALEDTComponent::~GDALEDTComponent() = default;
 
 /************************************************************************/
-/*                      GDALEDTComponent()                              */
+/*                          GDALEDTComponent()                          */
 /************************************************************************/
 
 /** constructor of a GDALEDTComponent
@@ -10959,14 +11064,14 @@ GDALEDTComponent::GDALEDTComponent(const std::string &name, size_t offset,
 }
 
 /************************************************************************/
-/*                      GDALEDTComponent()                              */
+/*                          GDALEDTComponent()                          */
 /************************************************************************/
 
 /** Copy constructor. */
 GDALEDTComponent::GDALEDTComponent(const GDALEDTComponent &) = default;
 
 /************************************************************************/
-/*                           operator==()                               */
+/*                             operator==()                             */
 /************************************************************************/
 
 /** Equality operator.
@@ -10978,13 +11083,13 @@ bool GDALEDTComponent::operator==(const GDALEDTComponent &other) const
 }
 
 /************************************************************************/
-/*                        ~GDALDimension()                              */
+/*                           ~GDALDimension()                           */
 /************************************************************************/
 
 GDALDimension::~GDALDimension() = default;
 
 /************************************************************************/
-/*                         GDALDimension()                              */
+/*                           GDALDimension()                            */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -11012,7 +11117,7 @@ GDALDimension::GDALDimension(const std::string &osParentName,
 //! @endcond
 
 /************************************************************************/
-/*                         GetIndexingVariable()                        */
+/*                        GetIndexingVariable()                         */
 /************************************************************************/
 
 /** Return the variable that is used to index the dimension (if there is one).
@@ -11026,7 +11131,7 @@ std::shared_ptr<GDALMDArray> GDALDimension::GetIndexingVariable() const
 }
 
 /************************************************************************/
-/*                         SetIndexingVariable()                        */
+/*                        SetIndexingVariable()                         */
 /************************************************************************/
 
 /** Set the variable that is used to index the dimension.
@@ -11050,7 +11155,7 @@ bool GDALDimension::SetIndexingVariable(
 }
 
 /************************************************************************/
-/*                            Rename()                                  */
+/*                               Rename()                               */
 /************************************************************************/
 
 /** Rename the dimension.
@@ -11073,7 +11178,7 @@ bool GDALDimension::Rename(CPL_UNUSED const std::string &osNewName)
 }
 
 /************************************************************************/
-/*                         BaseRename()                                 */
+/*                             BaseRename()                             */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -11088,7 +11193,7 @@ void GDALDimension::BaseRename(const std::string &osNewName)
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                          ParentRenamed()                             */
+/*                           ParentRenamed()                            */
 /************************************************************************/
 
 void GDALDimension::ParentRenamed(const std::string &osNewParentFullName)
@@ -11102,7 +11207,7 @@ void GDALDimension::ParentRenamed(const std::string &osNewParentFullName)
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                          ParentDeleted()                             */
+/*                           ParentDeleted()                            */
 /************************************************************************/
 
 void GDALDimension::ParentDeleted()
@@ -11120,7 +11225,7 @@ void GDALDimension::ParentDeleted()
 /************************************************************************/
 
 /************************************************************************/
-/*                      GDALExtendedDataTypeCreate()                    */
+/*                     GDALExtendedDataTypeCreate()                     */
 /************************************************************************/
 
 /** Return a new GDALExtendedDataType of class GEDTC_NUMERIC.
@@ -11147,7 +11252,7 @@ GDALExtendedDataTypeH GDALExtendedDataTypeCreate(GDALDataType eType)
 }
 
 /************************************************************************/
-/*                    GDALExtendedDataTypeCreateString()                */
+/*                  GDALExtendedDataTypeCreateString()                  */
 /************************************************************************/
 
 /** Return a new GDALExtendedDataType of class GEDTC_STRING.
@@ -11165,7 +11270,7 @@ GDALExtendedDataTypeH GDALExtendedDataTypeCreateString(size_t nMaxStringLength)
 }
 
 /************************************************************************/
-/*                   GDALExtendedDataTypeCreateStringEx()               */
+/*                 GDALExtendedDataTypeCreateStringEx()                 */
 /************************************************************************/
 
 /** Return a new GDALExtendedDataType of class GEDTC_STRING.
@@ -11186,7 +11291,7 @@ GDALExtendedDataTypeCreateStringEx(size_t nMaxStringLength,
 }
 
 /************************************************************************/
-/*                   GDALExtendedDataTypeCreateCompound()               */
+/*                 GDALExtendedDataTypeCreateCompound()                 */
 /************************************************************************/
 
 /** Return a new GDALExtendedDataType of class GEDTC_COMPOUND.
@@ -11222,7 +11327,7 @@ GDALExtendedDataTypeCreateCompound(const char *pszName, size_t nTotalSize,
 }
 
 /************************************************************************/
-/*                     GDALExtendedDataTypeRelease()                    */
+/*                    GDALExtendedDataTypeRelease()                     */
 /************************************************************************/
 
 /** Release the GDAL in-memory object associated with a GDALExtendedDataTypeH.
@@ -11236,7 +11341,7 @@ void GDALExtendedDataTypeRelease(GDALExtendedDataTypeH hEDT)
 }
 
 /************************************************************************/
-/*                     GDALExtendedDataTypeGetName()                    */
+/*                    GDALExtendedDataTypeGetName()                     */
 /************************************************************************/
 
 /** Return type name.
@@ -11250,7 +11355,7 @@ const char *GDALExtendedDataTypeGetName(GDALExtendedDataTypeH hEDT)
 }
 
 /************************************************************************/
-/*                     GDALExtendedDataTypeGetClass()                    */
+/*                    GDALExtendedDataTypeGetClass()                    */
 /************************************************************************/
 
 /** Return type class.
@@ -11279,7 +11384,7 @@ GDALDataType GDALExtendedDataTypeGetNumericDataType(GDALExtendedDataTypeH hEDT)
 }
 
 /************************************************************************/
-/*                   GDALExtendedDataTypeGetSize()                      */
+/*                    GDALExtendedDataTypeGetSize()                     */
 /************************************************************************/
 
 /** Return data type size in bytes.
@@ -11293,7 +11398,7 @@ size_t GDALExtendedDataTypeGetSize(GDALExtendedDataTypeH hEDT)
 }
 
 /************************************************************************/
-/*              GDALExtendedDataTypeGetMaxStringLength()                */
+/*               GDALExtendedDataTypeGetMaxStringLength()               */
 /************************************************************************/
 
 /** Return the maximum length of a string in bytes.
@@ -11309,7 +11414,7 @@ size_t GDALExtendedDataTypeGetMaxStringLength(GDALExtendedDataTypeH hEDT)
 }
 
 /************************************************************************/
-/*                    GDALExtendedDataTypeCanConvertTo()                */
+/*                  GDALExtendedDataTypeCanConvertTo()                  */
 /************************************************************************/
 
 /** Return whether this data type can be converted to the other one.
@@ -11329,7 +11434,7 @@ int GDALExtendedDataTypeCanConvertTo(GDALExtendedDataTypeH hSourceEDT,
 }
 
 /************************************************************************/
-/*                        GDALExtendedDataTypeEquals()                  */
+/*                     GDALExtendedDataTypeEquals()                     */
 /************************************************************************/
 
 /** Return whether this data type is equal to another one.
@@ -11349,7 +11454,7 @@ int GDALExtendedDataTypeEquals(GDALExtendedDataTypeH hFirstEDT,
 }
 
 /************************************************************************/
-/*                    GDALExtendedDataTypeGetSubType()                  */
+/*                   GDALExtendedDataTypeGetSubType()                   */
 /************************************************************************/
 
 /** Return the subtype of a type.
@@ -11368,7 +11473,7 @@ GDALExtendedDataTypeGetSubType(GDALExtendedDataTypeH hEDT)
 }
 
 /************************************************************************/
-/*                      GDALExtendedDataTypeGetRAT()                    */
+/*                     GDALExtendedDataTypeGetRAT()                     */
 /************************************************************************/
 
 /** Return associated raster attribute table, when there is one.
@@ -11390,7 +11495,7 @@ GDALRasterAttributeTableH GDALExtendedDataTypeGetRAT(GDALExtendedDataTypeH hEDT)
 }
 
 /************************************************************************/
-/*                     GDALExtendedDataTypeGetComponents()              */
+/*                 GDALExtendedDataTypeGetComponents()                  */
 /************************************************************************/
 
 /** Return the components of the data type (only valid when GetClass() ==
@@ -11424,7 +11529,7 @@ GDALEDTComponentH *GDALExtendedDataTypeGetComponents(GDALExtendedDataTypeH hEDT,
 }
 
 /************************************************************************/
-/*                     GDALExtendedDataTypeFreeComponents()             */
+/*                 GDALExtendedDataTypeFreeComponents()                 */
 /************************************************************************/
 
 /** Free the return of GDALExtendedDataTypeGetComponents().
@@ -11443,7 +11548,7 @@ void GDALExtendedDataTypeFreeComponents(GDALEDTComponentH *components,
 }
 
 /************************************************************************/
-/*                         GDALEDTComponentCreate()                     */
+/*                       GDALEDTComponentCreate()                       */
 /************************************************************************/
 
 /** Create a new GDALEDTComponent.
@@ -11462,7 +11567,7 @@ GDALEDTComponentH GDALEDTComponentCreate(const char *pszName, size_t nOffset,
 }
 
 /************************************************************************/
-/*                         GDALEDTComponentRelease()                    */
+/*                      GDALEDTComponentRelease()                       */
 /************************************************************************/
 
 /** Release the GDAL in-memory object associated with a GDALEDTComponentH.
@@ -11476,7 +11581,7 @@ void GDALEDTComponentRelease(GDALEDTComponentH hComp)
 }
 
 /************************************************************************/
-/*                         GDALEDTComponentGetName()                    */
+/*                      GDALEDTComponentGetName()                       */
 /************************************************************************/
 
 /** Return the name.
@@ -11492,7 +11597,7 @@ const char *GDALEDTComponentGetName(GDALEDTComponentH hComp)
 }
 
 /************************************************************************/
-/*                       GDALEDTComponentGetOffset()                    */
+/*                     GDALEDTComponentGetOffset()                      */
 /************************************************************************/
 
 /** Return the offset (in bytes) of the component in the compound data type.
@@ -11506,7 +11611,7 @@ size_t GDALEDTComponentGetOffset(GDALEDTComponentH hComp)
 }
 
 /************************************************************************/
-/*                       GDALEDTComponentGetType()                      */
+/*                      GDALEDTComponentGetType()                       */
 /************************************************************************/
 
 /** Return the data type of the component.
@@ -11521,7 +11626,7 @@ GDALExtendedDataTypeH GDALEDTComponentGetType(GDALEDTComponentH hComp)
 }
 
 /************************************************************************/
-/*                           GDALGroupRelease()                         */
+/*                          GDALGroupRelease()                          */
 /************************************************************************/
 
 /** Release the GDAL in-memory object associated with a GDALGroupH.
@@ -11535,7 +11640,7 @@ void GDALGroupRelease(GDALGroupH hGroup)
 }
 
 /************************************************************************/
-/*                           GDALGroupGetName()                         */
+/*                          GDALGroupGetName()                          */
 /************************************************************************/
 
 /** Return the name of the group.
@@ -11551,7 +11656,7 @@ const char *GDALGroupGetName(GDALGroupH hGroup)
 }
 
 /************************************************************************/
-/*                         GDALGroupGetFullName()                       */
+/*                        GDALGroupGetFullName()                        */
 /************************************************************************/
 
 /** Return the full name of the group.
@@ -11567,7 +11672,7 @@ const char *GDALGroupGetFullName(GDALGroupH hGroup)
 }
 
 /************************************************************************/
-/*                          GDALGroupGetMDArrayNames()                  */
+/*                      GDALGroupGetMDArrayNames()                      */
 /************************************************************************/
 
 /** Return the list of multidimensional array names contained in this group.
@@ -11589,7 +11694,7 @@ char **GDALGroupGetMDArrayNames(GDALGroupH hGroup, CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                  GDALGroupGetMDArrayFullNamesRecursive()             */
+/*               GDALGroupGetMDArrayFullNamesRecursive()                */
 /************************************************************************/
 
 /** Return the list of multidimensional array full names contained in this
@@ -11617,7 +11722,7 @@ char **GDALGroupGetMDArrayFullNamesRecursive(GDALGroupH hGroup,
 }
 
 /************************************************************************/
-/*                          GDALGroupOpenMDArray()                      */
+/*                        GDALGroupOpenMDArray()                        */
 /************************************************************************/
 
 /** Open and return a multidimensional array.
@@ -11687,7 +11792,7 @@ GDALMDArrayH GDALGroupResolveMDArray(GDALGroupH hGroup, const char *pszName,
 }
 
 /************************************************************************/
-/*                        GDALGroupGetGroupNames()                      */
+/*                       GDALGroupGetGroupNames()                       */
 /************************************************************************/
 
 /** Return the list of sub-groups contained in this group.
@@ -11709,7 +11814,7 @@ char **GDALGroupGetGroupNames(GDALGroupH hGroup, CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                           GDALGroupOpenGroup()                       */
+/*                         GDALGroupOpenGroup()                         */
 /************************************************************************/
 
 /** Open and return a sub-group.
@@ -11731,7 +11836,7 @@ GDALGroupH GDALGroupOpenGroup(GDALGroupH hGroup, const char *pszSubGroupName,
 }
 
 /************************************************************************/
-/*                   GDALGroupGetVectorLayerNames()                     */
+/*                    GDALGroupGetVectorLayerNames()                    */
 /************************************************************************/
 
 /** Return the list of layer names contained in this group.
@@ -11780,7 +11885,7 @@ OGRLayerH GDALGroupOpenVectorLayer(GDALGroupH hGroup,
 }
 
 /************************************************************************/
-/*                       GDALGroupOpenMDArrayFromFullname()             */
+/*                  GDALGroupOpenMDArrayFromFullname()                  */
 /************************************************************************/
 
 /** Open and return a sub-group from its fully qualified name.
@@ -11805,7 +11910,7 @@ GDALGroupH GDALGroupOpenGroupFromFullname(GDALGroupH hGroup,
 }
 
 /************************************************************************/
-/*                         GDALGroupGetDimensions()                     */
+/*                       GDALGroupGetDimensions()                       */
 /************************************************************************/
 
 /** Return the list of dimensions contained in this group and used by its
@@ -11841,7 +11946,7 @@ GDALDimensionH *GDALGroupGetDimensions(GDALGroupH hGroup, size_t *pnCount,
 }
 
 /************************************************************************/
-/*                          GDALGroupGetAttribute()                     */
+/*                       GDALGroupGetAttribute()                        */
 /************************************************************************/
 
 /** Return an attribute by its name.
@@ -11861,7 +11966,7 @@ GDALAttributeH GDALGroupGetAttribute(GDALGroupH hGroup, const char *pszName)
 }
 
 /************************************************************************/
-/*                         GDALGroupGetAttributes()                     */
+/*                       GDALGroupGetAttributes()                       */
 /************************************************************************/
 
 /** Return the list of attributes contained in this group.
@@ -11915,7 +12020,7 @@ CSLConstList GDALGroupGetStructuralInfo(GDALGroupH hGroup)
 }
 
 /************************************************************************/
-/*                   GDALGroupGetDataTypeCount()                        */
+/*                     GDALGroupGetDataTypeCount()                      */
 /************************************************************************/
 
 /** Return the number of data types associated with the group
@@ -11932,7 +12037,7 @@ size_t GDALGroupGetDataTypeCount(GDALGroupH hGroup)
 }
 
 /************************************************************************/
-/*                      GDALGroupGetDataType()                          */
+/*                        GDALGroupGetDataType()                        */
 /************************************************************************/
 
 /** Return one of the data types associated with the group.
@@ -11953,7 +12058,7 @@ GDALExtendedDataTypeH GDALGroupGetDataType(GDALGroupH hGroup, size_t nIdx)
 }
 
 /************************************************************************/
-/*                         GDALReleaseAttributes()                      */
+/*                       GDALReleaseAttributes()                        */
 /************************************************************************/
 
 /** Free the return of GDALGroupGetAttributes() or GDALMDArrayGetAttributes()
@@ -11971,7 +12076,7 @@ void GDALReleaseAttributes(GDALAttributeH *attributes, size_t nCount)
 }
 
 /************************************************************************/
-/*                         GDALGroupCreateGroup()                       */
+/*                        GDALGroupCreateGroup()                        */
 /************************************************************************/
 
 /** Create a sub-group within a group.
@@ -11993,7 +12098,7 @@ GDALGroupH GDALGroupCreateGroup(GDALGroupH hGroup, const char *pszSubGroupName,
 }
 
 /************************************************************************/
-/*                         GDALGroupDeleteGroup()                       */
+/*                        GDALGroupDeleteGroup()                        */
 /************************************************************************/
 
 /** Delete a sub-group from a group.
@@ -12041,7 +12146,7 @@ GDALDimensionH GDALGroupCreateDimension(GDALGroupH hGroup, const char *pszName,
 }
 
 /************************************************************************/
-/*                      GDALGroupCreateMDArray()                        */
+/*                       GDALGroupCreateMDArray()                       */
 /************************************************************************/
 
 /** Create a multidimensional array within a group.
@@ -12071,7 +12176,7 @@ GDALMDArrayH GDALGroupCreateMDArray(GDALGroupH hGroup, const char *pszName,
 }
 
 /************************************************************************/
-/*                         GDALGroupDeleteMDArray()                     */
+/*                       GDALGroupDeleteMDArray()                       */
 /************************************************************************/
 
 /** Delete an array from a group.
@@ -12122,7 +12227,7 @@ GDALAttributeH GDALGroupCreateAttribute(GDALGroupH hGroup, const char *pszName,
 }
 
 /************************************************************************/
-/*                         GDALGroupDeleteAttribute()                   */
+/*                      GDALGroupDeleteAttribute()                      */
 /************************************************************************/
 
 /** Delete an attribute from a group.
@@ -12167,7 +12272,7 @@ bool GDALGroupRename(GDALGroupH hGroup, const char *pszNewName)
 }
 
 /************************************************************************/
-/*                 GDALGroupSubsetDimensionFromSelection()              */
+/*               GDALGroupSubsetDimensionFromSelection()                */
 /************************************************************************/
 
 /** Return a virtual group whose one dimension has been subset according to a
@@ -12192,7 +12297,7 @@ GDALGroupSubsetDimensionFromSelection(GDALGroupH hGroup,
 }
 
 /************************************************************************/
-/*                        GDALMDArrayRelease()                          */
+/*                         GDALMDArrayRelease()                         */
 /************************************************************************/
 
 /** Release the GDAL in-memory object associated with a GDALMDArray.
@@ -12206,7 +12311,7 @@ void GDALMDArrayRelease(GDALMDArrayH hMDArray)
 }
 
 /************************************************************************/
-/*                        GDALMDArrayGetName()                          */
+/*                         GDALMDArrayGetName()                         */
 /************************************************************************/
 
 /** Return array name.
@@ -12220,7 +12325,7 @@ const char *GDALMDArrayGetName(GDALMDArrayH hArray)
 }
 
 /************************************************************************/
-/*                    GDALMDArrayGetFullName()                          */
+/*                       GDALMDArrayGetFullName()                       */
 /************************************************************************/
 
 /** Return array full name.
@@ -12234,7 +12339,7 @@ const char *GDALMDArrayGetFullName(GDALMDArrayH hArray)
 }
 
 /************************************************************************/
-/*                        GDALMDArrayGetName()                          */
+/*                         GDALMDArrayGetName()                         */
 /************************************************************************/
 
 /** Return the total number of values in the array.
@@ -12249,7 +12354,7 @@ GUInt64 GDALMDArrayGetTotalElementsCount(GDALMDArrayH hArray)
 }
 
 /************************************************************************/
-/*                        GDALMDArrayGetDimensionCount()                */
+/*                    GDALMDArrayGetDimensionCount()                    */
 /************************************************************************/
 
 /** Return the number of dimensions.
@@ -12263,7 +12368,7 @@ size_t GDALMDArrayGetDimensionCount(GDALMDArrayH hArray)
 }
 
 /************************************************************************/
-/*                        GDALMDArrayGetDimensions()                    */
+/*                      GDALMDArrayGetDimensions()                      */
 /************************************************************************/
 
 /** Return the dimensions of the array
@@ -12295,7 +12400,7 @@ GDALDimensionH *GDALMDArrayGetDimensions(GDALMDArrayH hArray, size_t *pnCount)
 }
 
 /************************************************************************/
-/*                        GDALReleaseDimensions()                       */
+/*                       GDALReleaseDimensions()                        */
 /************************************************************************/
 
 /** Free the return of GDALGroupGetDimensions() or GDALMDArrayGetDimensions()
@@ -12313,7 +12418,7 @@ void GDALReleaseDimensions(GDALDimensionH *dims, size_t nCount)
 }
 
 /************************************************************************/
-/*                        GDALMDArrayGetDataType()                     */
+/*                       GDALMDArrayGetDataType()                       */
 /************************************************************************/
 
 /** Return the data type
@@ -12359,7 +12464,7 @@ int GDALMDArrayRead(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                          GDALMDArrayWrite()                           */
+/*                          GDALMDArrayWrite()                          */
 /************************************************************************/
 
 /** Write part or totality of a multidimensional array.
@@ -12428,7 +12533,7 @@ int GDALMDArrayAdviseReadEx(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*                         GDALMDArrayGetAttribute()                    */
+/*                      GDALMDArrayGetAttribute()                       */
 /************************************************************************/
 
 /** Return an attribute by its name.
@@ -12448,7 +12553,7 @@ GDALAttributeH GDALMDArrayGetAttribute(GDALMDArrayH hArray, const char *pszName)
 }
 
 /************************************************************************/
-/*                        GDALMDArrayGetAttributes()                    */
+/*                      GDALMDArrayGetAttributes()                      */
 /************************************************************************/
 
 /** Return the list of attributes contained in this array.
@@ -12483,7 +12588,7 @@ GDALAttributeH *GDALMDArrayGetAttributes(GDALMDArrayH hArray, size_t *pnCount,
 }
 
 /************************************************************************/
-/*                       GDALMDArrayCreateAttribute()                   */
+/*                     GDALMDArrayCreateAttribute()                     */
 /************************************************************************/
 
 /** Create a attribute within an array.
@@ -12514,7 +12619,7 @@ GDALAttributeH GDALMDArrayCreateAttribute(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
-/*                       GDALMDArrayDeleteAttribute()                   */
+/*                     GDALMDArrayDeleteAttribute()                     */
 /************************************************************************/
 
 /** Delete an attribute from an array.
@@ -12537,7 +12642,7 @@ bool GDALMDArrayDeleteAttribute(GDALMDArrayH hArray, const char *pszName,
 }
 
 /************************************************************************/
-/*                       GDALMDArrayGetRawNoDataValue()                 */
+/*                    GDALMDArrayGetRawNoDataValue()                    */
 /************************************************************************/
 
 /** Return the nodata value as a "raw" value.
@@ -12559,7 +12664,7 @@ const void *GDALMDArrayGetRawNoDataValue(GDALMDArrayH hArray)
 }
 
 /************************************************************************/
-/*                      GDALMDArrayGetNoDataValueAsDouble()             */
+/*                 GDALMDArrayGetNoDataValueAsDouble()                  */
 /************************************************************************/
 
 /** Return the nodata value as a double.
@@ -12590,7 +12695,7 @@ double GDALMDArrayGetNoDataValueAsDouble(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
-/*                      GDALMDArrayGetNoDataValueAsInt64()              */
+/*                  GDALMDArrayGetNoDataValueAsInt64()                  */
 /************************************************************************/
 
 /** Return the nodata value as a Int64.
@@ -12616,7 +12721,7 @@ int64_t GDALMDArrayGetNoDataValueAsInt64(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
-/*                      GDALMDArrayGetNoDataValueAsUInt64()              */
+/*                 GDALMDArrayGetNoDataValueAsUInt64()                  */
 /************************************************************************/
 
 /** Return the nodata value as a UInt64.
@@ -12642,7 +12747,7 @@ uint64_t GDALMDArrayGetNoDataValueAsUInt64(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
-/*                     GDALMDArraySetRawNoDataValue()                   */
+/*                    GDALMDArraySetRawNoDataValue()                    */
 /************************************************************************/
 
 /** Set the nodata value as a "raw" value.
@@ -12659,7 +12764,7 @@ int GDALMDArraySetRawNoDataValue(GDALMDArrayH hArray, const void *pNoData)
 }
 
 /************************************************************************/
-/*                   GDALMDArraySetNoDataValueAsDouble()                */
+/*                 GDALMDArraySetNoDataValueAsDouble()                  */
 /************************************************************************/
 
 /** Set the nodata value as a double.
@@ -12678,7 +12783,7 @@ int GDALMDArraySetNoDataValueAsDouble(GDALMDArrayH hArray, double dfNoDataValue)
 }
 
 /************************************************************************/
-/*                   GDALMDArraySetNoDataValueAsInt64()                 */
+/*                  GDALMDArraySetNoDataValueAsInt64()                  */
 /************************************************************************/
 
 /** Set the nodata value as a Int64.
@@ -12698,7 +12803,7 @@ int GDALMDArraySetNoDataValueAsInt64(GDALMDArrayH hArray, int64_t nNoDataValue)
 }
 
 /************************************************************************/
-/*                   GDALMDArraySetNoDataValueAsUInt64()                */
+/*                 GDALMDArraySetNoDataValueAsUInt64()                  */
 /************************************************************************/
 
 /** Set the nodata value as a UInt64.
@@ -12719,7 +12824,7 @@ int GDALMDArraySetNoDataValueAsUInt64(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
-/*                        GDALMDArrayResize()                           */
+/*                         GDALMDArrayResize()                          */
 /************************************************************************/
 
 /** Resize an array to new dimensions.
@@ -12753,7 +12858,7 @@ bool GDALMDArrayResize(GDALMDArrayH hArray, const GUInt64 *panNewDimSizes,
 }
 
 /************************************************************************/
-/*                          GDALMDArraySetScale()                       */
+/*                        GDALMDArraySetScale()                         */
 /************************************************************************/
 
 /** Set the scale value to apply to raw values.
@@ -12771,7 +12876,7 @@ int GDALMDArraySetScale(GDALMDArrayH hArray, double dfScale)
 }
 
 /************************************************************************/
-/*                        GDALMDArraySetScaleEx()                       */
+/*                       GDALMDArraySetScaleEx()                        */
 /************************************************************************/
 
 /** Set the scale value to apply to raw values.
@@ -12791,7 +12896,7 @@ int GDALMDArraySetScaleEx(GDALMDArrayH hArray, double dfScale,
 }
 
 /************************************************************************/
-/*                          GDALMDArraySetOffset()                       */
+/*                        GDALMDArraySetOffset()                        */
 /************************************************************************/
 
 /** Set the scale value to apply to raw values.
@@ -12829,7 +12934,7 @@ int GDALMDArraySetOffsetEx(GDALMDArrayH hArray, double dfOffset,
 }
 
 /************************************************************************/
-/*                          GDALMDArrayGetScale()                       */
+/*                        GDALMDArrayGetScale()                         */
 /************************************************************************/
 
 /** Get the scale value to apply to raw values.
@@ -12851,7 +12956,7 @@ double GDALMDArrayGetScale(GDALMDArrayH hArray, int *pbHasValue)
 }
 
 /************************************************************************/
-/*                        GDALMDArrayGetScaleEx()                       */
+/*                       GDALMDArrayGetScaleEx()                        */
 /************************************************************************/
 
 /** Get the scale value to apply to raw values.
@@ -12875,7 +12980,7 @@ double GDALMDArrayGetScaleEx(GDALMDArrayH hArray, int *pbHasValue,
 }
 
 /************************************************************************/
-/*                          GDALMDArrayGetOffset()                      */
+/*                        GDALMDArrayGetOffset()                        */
 /************************************************************************/
 
 /** Get the scale value to apply to raw values.
@@ -12897,7 +13002,7 @@ double GDALMDArrayGetOffset(GDALMDArrayH hArray, int *pbHasValue)
 }
 
 /************************************************************************/
-/*                        GDALMDArrayGetOffsetEx()                      */
+/*                       GDALMDArrayGetOffsetEx()                       */
 /************************************************************************/
 
 /** Get the scale value to apply to raw values.
@@ -12960,8 +13065,8 @@ GUInt64 *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount)
     return ret;
 }
 
-/***********************************************************************/
-/*                   GDALMDArrayGetProcessingChunkSize()               */
+/************************************************************************/
+/*                 GDALMDArrayGetProcessingChunkSize()                  */
 /************************************************************************/
 
 /** \brief Return an optimal chunk size for read/write operations, given the
@@ -12999,7 +13104,7 @@ size_t *GDALMDArrayGetProcessingChunkSize(GDALMDArrayH hArray, size_t *pnCount,
 }
 
 /************************************************************************/
-/*                     GDALMDArrayGetStructuralInfo()                   */
+/*                    GDALMDArrayGetStructuralInfo()                    */
 /************************************************************************/
 
 /** Return structural information on the array.
@@ -13018,7 +13123,7 @@ CSLConstList GDALMDArrayGetStructuralInfo(GDALMDArrayH hArray)
 }
 
 /************************************************************************/
-/*                        GDALMDArrayGetView()                          */
+/*                         GDALMDArrayGetView()                         */
 /************************************************************************/
 
 /** Return a view of the array using slicing or field access.
@@ -13038,7 +13143,7 @@ GDALMDArrayH GDALMDArrayGetView(GDALMDArrayH hArray, const char *pszViewExpr)
 }
 
 /************************************************************************/
-/*                       GDALMDArrayTranspose()                         */
+/*                        GDALMDArrayTranspose()                        */
 /************************************************************************/
 
 /** Return a view of the array whose axis have been reordered.
@@ -13064,7 +13169,7 @@ GDALMDArrayH GDALMDArrayTranspose(GDALMDArrayH hArray, size_t nNewAxisCount,
 }
 
 /************************************************************************/
-/*                      GDALMDArrayGetUnscaled()                        */
+/*                       GDALMDArrayGetUnscaled()                       */
 /************************************************************************/
 
 /** Return an array that is the unscaled version of the current one.
@@ -13089,7 +13194,7 @@ GDALMDArrayH GDALMDArrayGetUnscaled(GDALMDArrayH hArray)
 }
 
 /************************************************************************/
-/*                          GDALMDArrayGetMask()                         */
+/*                         GDALMDArrayGetMask()                         */
 /************************************************************************/
 
 /** Return an array that is a mask for the current array
@@ -13111,7 +13216,7 @@ GDALMDArrayH GDALMDArrayGetMask(GDALMDArrayH hArray, CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                   GDALMDArrayGetResampled()                          */
+/*                      GDALMDArrayGetResampled()                       */
 /************************************************************************/
 
 /** Return an array that is a resampled / reprojected view of the current array
@@ -13148,7 +13253,7 @@ GDALMDArrayH GDALMDArrayGetResampled(GDALMDArrayH hArray, size_t nNewDimCount,
 }
 
 /************************************************************************/
-/*                      GDALMDArraySetUnit()                            */
+/*                         GDALMDArraySetUnit()                         */
 /************************************************************************/
 
 /** Set the variable unit.
@@ -13174,7 +13279,7 @@ int GDALMDArraySetUnit(GDALMDArrayH hArray, const char *pszUnit)
 }
 
 /************************************************************************/
-/*                      GDALMDArrayGetUnit()                            */
+/*                         GDALMDArrayGetUnit()                         */
 /************************************************************************/
 
 /** Return the array unit.
@@ -13257,7 +13362,7 @@ CPLErr GDALMDArrayGetStatistics(GDALMDArrayH hArray, GDALDatasetH /*hDS*/,
 }
 
 /************************************************************************/
-/*                      GDALMDArrayComputeStatistics()                  */
+/*                    GDALMDArrayComputeStatistics()                    */
 /************************************************************************/
 
 /**
@@ -13283,7 +13388,7 @@ int GDALMDArrayComputeStatistics(GDALMDArrayH hArray, GDALDatasetH /* hDS */,
 }
 
 /************************************************************************/
-/*                     GDALMDArrayComputeStatisticsEx()                 */
+/*                   GDALMDArrayComputeStatisticsEx()                   */
 /************************************************************************/
 
 /**
@@ -13345,7 +13450,7 @@ GDALMDArrayH *GDALMDArrayGetCoordinateVariables(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
-/*                     GDALMDArrayGetGridded()                          */
+/*                       GDALMDArrayGetGridded()                        */
 /************************************************************************/
 
 /** Return a gridded array from scattered point data, that is from an array
@@ -13373,7 +13478,7 @@ GDALMDArrayH GDALMDArrayGetGridded(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
-/*                      GDALMDArrayGetMeshGrid()                        */
+/*                       GDALMDArrayGetMeshGrid()                       */
 /************************************************************************/
 
 /** Return a list of multidimensional arrays from a list of one-dimensional
@@ -13448,7 +13553,7 @@ GDALMDArrayH *GDALMDArrayGetMeshGrid(const GDALMDArrayH *pahInputArrays,
 }
 
 /************************************************************************/
-/*                        GDALReleaseArrays()                           */
+/*                         GDALReleaseArrays()                          */
 /************************************************************************/
 
 /** Free the return of GDALMDArrayGetCoordinateVariables()
@@ -13466,7 +13571,7 @@ void GDALReleaseArrays(GDALMDArrayH *arrays, size_t nCount)
 }
 
 /************************************************************************/
-/*                           GDALMDArrayCache()                         */
+/*                          GDALMDArrayCache()                          */
 /************************************************************************/
 
 /**
@@ -13484,7 +13589,7 @@ int GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                       GDALMDArrayRename()                           */
+/*                         GDALMDArrayRename()                          */
 /************************************************************************/
 
 /** Rename the array.
@@ -13552,7 +13657,7 @@ const char *GDALAttributeGetFullName(GDALAttributeH hAttr)
 }
 
 /************************************************************************/
-/*                   GDALAttributeGetTotalElementsCount()               */
+/*                 GDALAttributeGetTotalElementsCount()                 */
 /************************************************************************/
 
 /** Return the total number of values in the attribute.
@@ -13567,7 +13672,7 @@ GUInt64 GDALAttributeGetTotalElementsCount(GDALAttributeH hAttr)
 }
 
 /************************************************************************/
-/*                    GDALAttributeGetDimensionCount()                */
+/*                   GDALAttributeGetDimensionCount()                   */
 /************************************************************************/
 
 /** Return the number of dimensions.
@@ -13581,7 +13686,7 @@ size_t GDALAttributeGetDimensionCount(GDALAttributeH hAttr)
 }
 
 /************************************************************************/
-/*                       GDALAttributeGetDimensionsSize()                */
+/*                   GDALAttributeGetDimensionsSize()                   */
 /************************************************************************/
 
 /** Return the dimension sizes of the attribute.
@@ -13608,7 +13713,7 @@ GUInt64 *GDALAttributeGetDimensionsSize(GDALAttributeH hAttr, size_t *pnCount)
 }
 
 /************************************************************************/
-/*                       GDALAttributeGetDataType()                     */
+/*                      GDALAttributeGetDataType()                      */
 /************************************************************************/
 
 /** Return the data type
@@ -13653,7 +13758,7 @@ GByte *GDALAttributeReadAsRaw(GDALAttributeH hAttr, size_t *pnSize)
 }
 
 /************************************************************************/
-/*                       GDALAttributeFreeRawResult()                   */
+/*                     GDALAttributeFreeRawResult()                     */
 /************************************************************************/
 
 /** Free the return of GDALAttributeAsRaw()
@@ -13679,7 +13784,7 @@ void GDALAttributeFreeRawResult(GDALAttributeH hAttr, GByte *raw,
 }
 
 /************************************************************************/
-/*                       GDALAttributeReadAsString()                    */
+/*                     GDALAttributeReadAsString()                      */
 /************************************************************************/
 
 /** Return the value of an attribute as a string.
@@ -13701,7 +13806,7 @@ const char *GDALAttributeReadAsString(GDALAttributeH hAttr)
 }
 
 /************************************************************************/
-/*                      GDALAttributeReadAsInt()                        */
+/*                       GDALAttributeReadAsInt()                       */
 /************************************************************************/
 
 /** Return the value of an attribute as a integer.
@@ -13741,7 +13846,7 @@ int64_t GDALAttributeReadAsInt64(GDALAttributeH hAttr)
 }
 
 /************************************************************************/
-/*                       GDALAttributeReadAsDouble()                    */
+/*                     GDALAttributeReadAsDouble()                      */
 /************************************************************************/
 
 /** Return the value of an attribute as a double.
@@ -13761,7 +13866,7 @@ double GDALAttributeReadAsDouble(GDALAttributeH hAttr)
 }
 
 /************************************************************************/
-/*                     GDALAttributeReadAsStringArray()                 */
+/*                   GDALAttributeReadAsStringArray()                   */
 /************************************************************************/
 
 /** Return the value of an attribute as an array of strings.
@@ -13777,7 +13882,7 @@ char **GDALAttributeReadAsStringArray(GDALAttributeH hAttr)
 }
 
 /************************************************************************/
-/*                     GDALAttributeReadAsIntArray()                    */
+/*                    GDALAttributeReadAsIntArray()                     */
 /************************************************************************/
 
 /** Return the value of an attribute as an array of integers.
@@ -13805,7 +13910,7 @@ int *GDALAttributeReadAsIntArray(GDALAttributeH hAttr, size_t *pnCount)
 }
 
 /************************************************************************/
-/*                     GDALAttributeReadAsInt64Array()                  */
+/*                   GDALAttributeReadAsInt64Array()                    */
 /************************************************************************/
 
 /** Return the value of an attribute as an array of int64_t.
@@ -13834,7 +13939,7 @@ int64_t *GDALAttributeReadAsInt64Array(GDALAttributeH hAttr, size_t *pnCount)
 }
 
 /************************************************************************/
-/*                     GDALAttributeReadAsDoubleArray()                 */
+/*                   GDALAttributeReadAsDoubleArray()                   */
 /************************************************************************/
 
 /** Return the value of an attribute as an array of doubles.
@@ -13863,7 +13968,7 @@ double *GDALAttributeReadAsDoubleArray(GDALAttributeH hAttr, size_t *pnCount)
 }
 
 /************************************************************************/
-/*                     GDALAttributeWriteRaw()                          */
+/*                       GDALAttributeWriteRaw()                        */
 /************************************************************************/
 
 /** Write an attribute from raw values expressed in GetDataType()
@@ -13888,7 +13993,7 @@ int GDALAttributeWriteRaw(GDALAttributeH hAttr, const void *pabyValue,
 }
 
 /************************************************************************/
-/*                     GDALAttributeWriteString()                       */
+/*                      GDALAttributeWriteString()                      */
 /************************************************************************/
 
 /** Write an attribute from a string value.
@@ -13909,7 +14014,7 @@ int GDALAttributeWriteString(GDALAttributeH hAttr, const char *pszVal)
 }
 
 /************************************************************************/
-/*                        GDALAttributeWriteInt()                       */
+/*                       GDALAttributeWriteInt()                        */
 /************************************************************************/
 
 /** Write an attribute from a integer value.
@@ -13930,7 +14035,7 @@ int GDALAttributeWriteInt(GDALAttributeH hAttr, int nVal)
 }
 
 /************************************************************************/
-/*                        GDALAttributeWriteInt64()                     */
+/*                      GDALAttributeWriteInt64()                       */
 /************************************************************************/
 
 /** Write an attribute from an int64_t value.
@@ -13951,7 +14056,7 @@ int GDALAttributeWriteInt64(GDALAttributeH hAttr, int64_t nVal)
 }
 
 /************************************************************************/
-/*                        GDALAttributeWriteDouble()                    */
+/*                      GDALAttributeWriteDouble()                      */
 /************************************************************************/
 
 /** Write an attribute from a double value.
@@ -13973,7 +14078,7 @@ int GDALAttributeWriteDouble(GDALAttributeH hAttr, double dfVal)
 }
 
 /************************************************************************/
-/*                       GDALAttributeWriteStringArray()                */
+/*                   GDALAttributeWriteStringArray()                    */
 /************************************************************************/
 
 /** Write an attribute from an array of strings.
@@ -13996,7 +14101,7 @@ int GDALAttributeWriteStringArray(GDALAttributeH hAttr,
 }
 
 /************************************************************************/
-/*                       GDALAttributeWriteIntArray()                */
+/*                     GDALAttributeWriteIntArray()                     */
 /************************************************************************/
 
 /** Write an attribute from an array of int.
@@ -14021,7 +14126,7 @@ int GDALAttributeWriteIntArray(GDALAttributeH hAttr, const int *panValues,
 }
 
 /************************************************************************/
-/*                       GDALAttributeWriteInt64Array()                 */
+/*                    GDALAttributeWriteInt64Array()                    */
 /************************************************************************/
 
 /** Write an attribute from an array of int64_t.
@@ -14046,7 +14151,7 @@ int GDALAttributeWriteInt64Array(GDALAttributeH hAttr, const int64_t *panValues,
 }
 
 /************************************************************************/
-/*                       GDALAttributeWriteDoubleArray()                */
+/*                   GDALAttributeWriteDoubleArray()                    */
 /************************************************************************/
 
 /** Write an attribute from an array of double.
@@ -14071,7 +14176,7 @@ int GDALAttributeWriteDoubleArray(GDALAttributeH hAttr,
 }
 
 /************************************************************************/
-/*                      GDALAttributeRename()                           */
+/*                        GDALAttributeRename()                         */
 /************************************************************************/
 
 /** Rename the attribute.
@@ -14177,7 +14282,7 @@ GUInt64 GDALDimensionGetSize(GDALDimensionH hDim)
 }
 
 /************************************************************************/
-/*                     GDALDimensionGetIndexingVariable()               */
+/*                  GDALDimensionGetIndexingVariable()                  */
 /************************************************************************/
 
 /** Return the variable that is used to index the dimension (if there is one).
@@ -14199,7 +14304,7 @@ GDALMDArrayH GDALDimensionGetIndexingVariable(GDALDimensionH hDim)
 }
 
 /************************************************************************/
-/*                      GDALDimensionSetIndexingVariable()              */
+/*                  GDALDimensionSetIndexingVariable()                  */
 /************************************************************************/
 
 /** Set the variable that is used to index the dimension.
@@ -14219,7 +14324,7 @@ int GDALDimensionSetIndexingVariable(GDALDimensionH hDim, GDALMDArrayH hArray)
 }
 
 /************************************************************************/
-/*                      GDALDimensionRename()                           */
+/*                        GDALDimensionRename()                         */
 /************************************************************************/
 
 /** Rename the dimension.
@@ -14241,7 +14346,7 @@ bool GDALDimensionRename(GDALDimensionH hDim, const char *pszNewName)
 }
 
 /************************************************************************/
-/*                       GDALDatasetGetRootGroup()                      */
+/*                      GDALDatasetGetRootGroup()                       */
 /************************************************************************/
 
 /** Return the root GDALGroup of this dataset.
@@ -14262,7 +14367,7 @@ GDALGroupH GDALDatasetGetRootGroup(GDALDatasetH hDS)
 }
 
 /************************************************************************/
-/*                      GDALRasterBandAsMDArray()                        */
+/*                      GDALRasterBandAsMDArray()                       */
 /************************************************************************/
 
 /** Return a view of this raster band as a 2D multidimensional GDALMDArray.
@@ -14361,7 +14466,7 @@ GDALMDArrayH GDALDatasetAsMDArray(GDALDatasetH hDS, CSLConstList papszOptions)
 }
 
 /************************************************************************/
-/*                       GDALMDArrayAsClassicDataset()                  */
+/*                    GDALMDArrayAsClassicDataset()                     */
 /************************************************************************/
 
 /** Return a view of this array as a "classic" GDALDataset (ie 2D)
@@ -14390,7 +14495,7 @@ GDALDatasetH GDALMDArrayAsClassicDataset(GDALMDArrayH hArray, size_t iXDim,
 }
 
 /************************************************************************/
-/*                     GDALMDArrayAsClassicDatasetEx()                  */
+/*                   GDALMDArrayAsClassicDatasetEx()                    */
 /************************************************************************/
 
 /** Return a view of this array as a "classic" GDALDataset (ie 2D)
@@ -14601,6 +14706,14 @@ bool GDALMDArrayRegularlySpaced::IRead(
     return true;
 }
 
+bool GDALMDArrayRegularlySpaced::IsRegularlySpaced(double &dfStart,
+                                                   double &dfIncrement) const
+{
+    dfStart = m_dfStart + m_dfOffsetInIncrement * m_dfIncrement;
+    dfIncrement = m_dfIncrement;
+    return true;
+}
+
 GDALDimensionWeakIndexingVar::GDALDimensionWeakIndexingVar(
     const std::string &osParentName, const std::string &osName,
     const std::string &osType, const std::string &osDirection, GUInt64 nSize)
@@ -14662,7 +14775,7 @@ struct GDALPamMultiDim::Private
 };
 
 /************************************************************************/
-/*                          GDALPamMultiDim                             */
+/*                           GDALPamMultiDim                            */
 /************************************************************************/
 
 GDALPamMultiDim::GDALPamMultiDim(const std::string &osFilename)
@@ -14672,7 +14785,7 @@ GDALPamMultiDim::GDALPamMultiDim(const std::string &osFilename)
 }
 
 /************************************************************************/
-/*                   GDALPamMultiDim::~GDALPamMultiDim()                */
+/*                 GDALPamMultiDim::~GDALPamMultiDim()                  */
 /************************************************************************/
 
 GDALPamMultiDim::~GDALPamMultiDim()
@@ -14682,7 +14795,7 @@ GDALPamMultiDim::~GDALPamMultiDim()
 }
 
 /************************************************************************/
-/*                          GDALPamMultiDim::Load()                     */
+/*                       GDALPamMultiDim::Load()                        */
 /************************************************************************/
 
 void GDALPamMultiDim::Load()
@@ -14792,7 +14905,7 @@ void GDALPamMultiDim::Load()
 }
 
 /************************************************************************/
-/*                          GDALPamMultiDim::Save()                     */
+/*                       GDALPamMultiDim::Save()                        */
 /************************************************************************/
 
 void GDALPamMultiDim::Save()
@@ -14899,7 +15012,7 @@ void GDALPamMultiDim::Save()
 }
 
 /************************************************************************/
-/*                    GDALPamMultiDim::GetSpatialRef()                  */
+/*                   GDALPamMultiDim::GetSpatialRef()                   */
 /************************************************************************/
 
 std::shared_ptr<OGRSpatialReference>
@@ -14915,7 +15028,7 @@ GDALPamMultiDim::GetSpatialRef(const std::string &osArrayFullName,
 }
 
 /************************************************************************/
-/*                    GDALPamMultiDim::SetSpatialRef()                  */
+/*                   GDALPamMultiDim::SetSpatialRef()                   */
 /************************************************************************/
 
 void GDALPamMultiDim::SetSpatialRef(const std::string &osArrayFullName,
@@ -14989,7 +15102,7 @@ void GDALPamMultiDim::SetStatistics(const std::string &osArrayFullName,
 }
 
 /************************************************************************/
-/*                           ClearStatistics()                          */
+/*                          ClearStatistics()                           */
 /************************************************************************/
 
 void GDALPamMultiDim::ClearStatistics(const std::string &osArrayFullName,
@@ -15002,7 +15115,7 @@ void GDALPamMultiDim::ClearStatistics(const std::string &osArrayFullName,
 }
 
 /************************************************************************/
-/*                           ClearStatistics()                          */
+/*                          ClearStatistics()                           */
 /************************************************************************/
 
 void GDALPamMultiDim::ClearStatistics()
@@ -15014,7 +15127,7 @@ void GDALPamMultiDim::ClearStatistics()
 }
 
 /************************************************************************/
-/*                             GetPAM()                                 */
+/*                               GetPAM()                               */
 /************************************************************************/
 
 /*static*/ std::shared_ptr<GDALPamMultiDim>
@@ -15027,7 +15140,7 @@ GDALPamMultiDim::GetPAM(const std::shared_ptr<GDALMDArray> &poParent)
 }
 
 /************************************************************************/
-/*                           GDALPamMDArray                             */
+/*                            GDALPamMDArray                            */
 /************************************************************************/
 
 GDALPamMDArray::GDALPamMDArray(const std::string &osParentName,
@@ -15043,7 +15156,7 @@ GDALPamMDArray::GDALPamMDArray(const std::string &osParentName,
 }
 
 /************************************************************************/
-/*                    GDALPamMDArray::SetSpatialRef()                   */
+/*                   GDALPamMDArray::SetSpatialRef()                    */
 /************************************************************************/
 
 bool GDALPamMDArray::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -15055,7 +15168,7 @@ bool GDALPamMDArray::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                    GDALPamMDArray::GetSpatialRef()                   */
+/*                   GDALPamMDArray::GetSpatialRef()                    */
 /************************************************************************/
 
 std::shared_ptr<OGRSpatialReference> GDALPamMDArray::GetSpatialRef() const
@@ -15107,7 +15220,7 @@ bool GDALPamMDArray::SetStatistics(bool bApproxStats, double dfMin,
 }
 
 /************************************************************************/
-/*                           ClearStatistics()                          */
+/*                          ClearStatistics()                           */
 /************************************************************************/
 
 void GDALPamMDArray::ClearStatistics()
@@ -15118,7 +15231,7 @@ void GDALPamMDArray::ClearStatistics()
 }
 
 /************************************************************************/
-/*                       GDALMDIAsAttribute::GetDimensions()            */
+/*                 GDALMDIAsAttribute::GetDimensions()                  */
 /************************************************************************/
 
 const std::vector<std::shared_ptr<GDALDimension>> &
@@ -15128,7 +15241,7 @@ GDALMDIAsAttribute::GetDimensions() const
 }
 
 /************************************************************************/
-/*           GDALMDArrayRawBlockInfo::~GDALMDArrayRawBlockInfo()        */
+/*         GDALMDArrayRawBlockInfo::~GDALMDArrayRawBlockInfo()          */
 /************************************************************************/
 
 GDALMDArrayRawBlockInfo::~GDALMDArrayRawBlockInfo()
@@ -15137,7 +15250,7 @@ GDALMDArrayRawBlockInfo::~GDALMDArrayRawBlockInfo()
 }
 
 /************************************************************************/
-/*                     GDALMDArrayRawBlockInfo::clear()                 */
+/*                   GDALMDArrayRawBlockInfo::clear()                   */
 /************************************************************************/
 
 void GDALMDArrayRawBlockInfo::clear()
@@ -15153,7 +15266,7 @@ void GDALMDArrayRawBlockInfo::clear()
 }
 
 /************************************************************************/
-/*            GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo()        */
+/*          GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo()          */
 /************************************************************************/
 
 GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
@@ -15173,7 +15286,7 @@ GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
 }
 
 /************************************************************************/
-/*                GDALMDArrayRawBlockInfo::operator=()                  */
+/*                 GDALMDArrayRawBlockInfo::operator=()                 */
 /************************************************************************/
 
 GDALMDArrayRawBlockInfo &
@@ -15203,7 +15316,7 @@ GDALMDArrayRawBlockInfo::operator=(const GDALMDArrayRawBlockInfo &other)
 }
 
 /************************************************************************/
-/*            GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo()        */
+/*          GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo()          */
 /************************************************************************/
 
 GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
@@ -15218,7 +15331,7 @@ GDALMDArrayRawBlockInfo::GDALMDArrayRawBlockInfo(
 }
 
 /************************************************************************/
-/*                GDALMDArrayRawBlockInfo::operator=()                  */
+/*                 GDALMDArrayRawBlockInfo::operator=()                 */
 /************************************************************************/
 
 GDALMDArrayRawBlockInfo &
@@ -15238,7 +15351,7 @@ GDALMDArrayRawBlockInfo::operator=(GDALMDArrayRawBlockInfo &&other)
 //! @endcond
 
 /************************************************************************/
-/*                       GDALMDArray::GetRawBlockInfo()                 */
+/*                    GDALMDArray::GetRawBlockInfo()                    */
 /************************************************************************/
 
 /** Return information on a raw block.
@@ -15291,7 +15404,7 @@ bool GDALMDArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
 }
 
 /************************************************************************/
-/*                      GDALMDArrayGetRawBlockInfo()                    */
+/*                     GDALMDArrayGetRawBlockInfo()                     */
 /************************************************************************/
 
 /** Return information on a raw block.
@@ -15349,7 +15462,7 @@ bool GDALMDArrayGetRawBlockInfo(GDALMDArrayH hArray,
 }
 
 /************************************************************************/
-/*                    GDALMDArrayRawBlockInfoCreate()                   */
+/*                   GDALMDArrayRawBlockInfoCreate()                    */
 /************************************************************************/
 
 /** Allocate a new instance of GDALMDArrayRawBlockInfo.
@@ -15364,7 +15477,7 @@ GDALMDArrayRawBlockInfo *GDALMDArrayRawBlockInfoCreate(void)
 }
 
 /************************************************************************/
-/*                    GDALMDArrayRawBlockInfoRelease()                  */
+/*                   GDALMDArrayRawBlockInfoRelease()                   */
 /************************************************************************/
 
 /** Free an instance of GDALMDArrayRawBlockInfo.
@@ -15374,4 +15487,92 @@ GDALMDArrayRawBlockInfo *GDALMDArrayRawBlockInfoCreate(void)
 void GDALMDArrayRawBlockInfoRelease(GDALMDArrayRawBlockInfo *psBlockInfo)
 {
     delete psBlockInfo;
+}
+
+/************************************************************************/
+/*                   GDALMDArray::GetOverviewCount()                    */
+/************************************************************************/
+
+/**
+ * \brief Return the number of overview arrays available.
+ *
+ * This method is the same as the C function GDALMDArrayGetOverviewCount().
+ *
+ * @return overview count, zero if none.
+ *
+ * @since 3.13
+ */
+
+int GDALMDArray::GetOverviewCount() const
+{
+    return 0;
+}
+
+/************************************************************************/
+/*                    GDALMDArrayGetOverviewCount()                     */
+/************************************************************************/
+/**
+ * \brief Return the number of overview arrays available.
+ *
+ * This method is the same as the C++ method GDALMDArray::GetOverviewCount().
+ *
+ * @param hArray Array.
+ * @return overview count, zero if none.
+ *
+ * @since 3.13
+ */
+
+int GDALMDArrayGetOverviewCount(GDALMDArrayH hArray)
+{
+    VALIDATE_POINTER1(hArray, __func__, 0);
+    return hArray->m_poImpl->GetOverviewCount();
+}
+
+/************************************************************************/
+/*                      GDALMDArray::GetOverview()                      */
+/************************************************************************/
+
+/**
+ * \brief Get overview array object.
+ *
+ * This method is the same as the C function GDALMDArrayGetOverview().
+ *
+ * @param nIdx overview index between 0 and GetOverviewCount()-1.
+ *
+ * @return overview GDALMDArray, or nullptr
+ *
+ * @since 3.13
+ */
+
+std::shared_ptr<GDALMDArray> GDALMDArray::GetOverview(int nIdx) const
+{
+    (void)nIdx;
+    return nullptr;
+}
+
+/************************************************************************/
+/*                       GDALMDArrayGetOverview()                       */
+/************************************************************************/
+
+/**
+ * \brief Get overview array object.
+ *
+ * This method is the same as the C++ method GDALMDArray::GetOverview().
+ *
+ * @param hArray Array.
+ * @param nIdx overview index between 0 and GDALMDArrayGetOverviewCount()-1.
+ *
+ * @return overview GDALMDArray, or nullptr.
+ * Must be released with GDALMDArrayRelease()
+ *
+ * @since 3.13
+ */
+
+GDALMDArrayH GDALMDArrayGetOverview(GDALMDArrayH hArray, int nIdx)
+{
+    VALIDATE_POINTER1(hArray, __func__, nullptr);
+    auto poOverview = hArray->m_poImpl->GetOverview(nIdx);
+    if (!poOverview)
+        return nullptr;
+    return new GDALMDArrayHS(poOverview);
 }

@@ -45,7 +45,7 @@ class CPL_DLL OGRUnionLayerGeomFieldDefn final : public OGRGeomFieldDefn
 };
 
 /************************************************************************/
-/*                         OGRUnionLayer                                */
+/*                            OGRUnionLayer                             */
 /************************************************************************/
 
 typedef enum

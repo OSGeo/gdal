@@ -67,7 +67,7 @@ OGRErr OGRSpatialReference::importFromDict(const char *pszDictFile,
 }
 
 /************************************************************************/
-/*                          lookupInDict()                              */
+/*                            lookupInDict()                            */
 /************************************************************************/
 
 CPLString OGRSpatialReference::lookupInDict(const char *pszDictFile,

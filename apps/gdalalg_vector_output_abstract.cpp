@@ -25,7 +25,7 @@ GDALVectorOutputAbstractAlgorithm::~GDALVectorOutputAbstractAlgorithm() =
     default;
 
 /************************************************************************/
-/*      GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs()           */
+/*        GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs()         */
 /************************************************************************/
 
 void GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs()
@@ -55,7 +55,7 @@ void GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs()
 }
 
 /************************************************************************/
-/*         GDALVectorOutputAbstractAlgorithm::SetupOutputDataset()      */
+/*       GDALVectorOutputAbstractAlgorithm::SetupOutputDataset()        */
 /************************************************************************/
 
 GDALVectorOutputAbstractAlgorithm::SetupOutputDatasetRet

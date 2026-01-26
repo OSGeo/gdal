@@ -1119,7 +1119,7 @@ netCDFRasterBand::~netCDFRasterBand()
 }
 
 /************************************************************************/
-/*                          GetMetadata()                               */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList netCDFRasterBand::GetMetadata(const char *pszDomain)
@@ -1130,7 +1130,7 @@ CSLConstList netCDFRasterBand::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                        GetMetadataItem()                             */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *netCDFRasterBand::GetMetadataItem(const char *pszName,
@@ -1144,7 +1144,7 @@ const char *netCDFRasterBand::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                        SetMetadataItem()                             */
+/*                          SetMetadataItem()                           */
 /************************************************************************/
 
 CPLErr netCDFRasterBand::SetMetadataItem(const char *pszName,
@@ -1183,7 +1183,7 @@ CPLErr netCDFRasterBand::SetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                          SetMetadata()                               */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
 CPLErr netCDFRasterBand::SetMetadata(CSLConstList papszMD,
@@ -1298,7 +1298,7 @@ CPLErr netCDFRasterBand::SetScale(double dfNewScale)
 }
 
 /************************************************************************/
-/*                         SetScaleNoUpdate()                           */
+/*                          SetScaleNoUpdate()                          */
 /************************************************************************/
 void netCDFRasterBand::SetScaleNoUpdate(double dfVal)
 {
@@ -1320,7 +1320,7 @@ const char *netCDFRasterBand::GetUnitType()
 }
 
 /************************************************************************/
-/*                           SetUnitType()                              */
+/*                            SetUnitType()                             */
 /************************************************************************/
 
 CPLErr netCDFRasterBand::SetUnitType(const char *pszNewValue)
@@ -1358,7 +1358,7 @@ CPLErr netCDFRasterBand::SetUnitType(const char *pszNewValue)
 }
 
 /************************************************************************/
-/*                       SetUnitTypeNoUpdate()                          */
+/*                        SetUnitTypeNoUpdate()                         */
 /************************************************************************/
 
 void netCDFRasterBand::SetUnitTypeNoUpdate(const char *pszNewValue)
@@ -1398,7 +1398,7 @@ double netCDFRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                        GetNoDataValueAsInt64()                       */
+/*                       GetNoDataValueAsInt64()                        */
 /************************************************************************/
 
 int64_t netCDFRasterBand::GetNoDataValueAsInt64(int *pbSuccess)
@@ -1416,7 +1416,7 @@ int64_t netCDFRasterBand::GetNoDataValueAsInt64(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                        GetNoDataValueAsUInt64()                      */
+/*                       GetNoDataValueAsUInt64()                       */
 /************************************************************************/
 
 uint64_t netCDFRasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
@@ -1558,7 +1558,7 @@ void netCDFRasterBand::SetNoDataValueNoUpdate(double dfNoData)
 }
 
 /************************************************************************/
-/*                        SetNoDataValueAsInt64()                       */
+/*                       SetNoDataValueAsInt64()                        */
 /************************************************************************/
 
 CPLErr netCDFRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
@@ -1642,7 +1642,7 @@ void netCDFRasterBand::SetNoDataValueNoUpdate(int64_t nNoData)
 }
 
 /************************************************************************/
-/*                        SetNoDataValueAsUInt64()                      */
+/*                       SetNoDataValueAsUInt64()                       */
 /************************************************************************/
 
 CPLErr netCDFRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
@@ -1726,7 +1726,7 @@ void netCDFRasterBand::SetNoDataValueNoUpdate(uint64_t nNoData)
 }
 
 /************************************************************************/
-/*                        DeleteNoDataValue()                           */
+/*                         DeleteNoDataValue()                          */
 /************************************************************************/
 
 #ifdef notdef
@@ -1822,7 +1822,7 @@ CPLXMLNode *netCDFRasterBand::SerializeToXML(const char * /* pszUnused */)
 }
 
 /************************************************************************/
-/*               Get1DVariableIndexedByDimension()                      */
+/*                  Get1DVariableIndexedByDimension()                   */
 /************************************************************************/
 
 static int Get1DVariableIndexedByDimension(int cdfid, int nDimId,
@@ -1896,7 +1896,7 @@ static int Get1DVariableIndexedByDimension(int cdfid, int nDimId,
 }
 
 /************************************************************************/
-/*                      CreateMetadataFromAttributes()                  */
+/*                    CreateMetadataFromAttributes()                    */
 /************************************************************************/
 
 void netCDFRasterBand::CreateMetadataFromAttributes()
@@ -1942,7 +1942,7 @@ void netCDFRasterBand::CreateMetadataFromAttributes()
 }
 
 /************************************************************************/
-/*                      CreateMetadataFromOtherVars()                   */
+/*                    CreateMetadataFromOtherVars()                     */
 /************************************************************************/
 
 void netCDFRasterBand::CreateMetadataFromOtherVars()
@@ -2211,7 +2211,7 @@ void netCDFRasterBand::CheckData(void *pImage, void *pImageNC,
 }
 
 /************************************************************************/
-/*                             CheckDataCpx()                              */
+/*                            CheckDataCpx()                            */
 /************************************************************************/
 template <class T>
 void netCDFRasterBand::CheckDataCpx(void *pImage, void *pImageNC,
@@ -2270,7 +2270,7 @@ void netCDFRasterBand::CheckDataCpx(void *pImage, void *pImageNC,
 }
 
 /************************************************************************/
-/*                         FetchNetcdfChunk()                           */
+/*                          FetchNetcdfChunk()                          */
 /************************************************************************/
 
 bool netCDFRasterBand::FetchNetcdfChunk(size_t xstart, size_t ystart,
@@ -2627,7 +2627,7 @@ CPLErr netCDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
@@ -2857,7 +2857,7 @@ netCDFDataset::~netCDFDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr netCDFDataset::Close(GDALProgressFunc, void *)
@@ -2937,7 +2937,7 @@ CPLErr netCDFDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                            SetDefineMode()                           */
+/*                           SetDefineMode()                            */
 /************************************************************************/
 bool netCDFDataset::SetDefineMode(bool bNewDefineMode)
 {
@@ -2963,7 +2963,7 @@ bool netCDFDataset::SetDefineMode(bool bNewDefineMode)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **netCDFDataset::GetMetadataDomainList()
@@ -2994,7 +2994,7 @@ CSLConstList netCDFDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                        SetMetadataItem()                             */
+/*                          SetMetadataItem()                           */
 /************************************************************************/
 
 CPLErr netCDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
@@ -3030,7 +3030,7 @@ CPLErr netCDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
 }
 
 /************************************************************************/
-/*                          SetMetadata()                               */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
 CPLErr netCDFDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
@@ -3054,7 +3054,7 @@ CPLErr netCDFDataset::SetMetadata(CSLConstList papszMD, const char *pszDomain)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *netCDFDataset::GetSpatialRef() const
@@ -3066,7 +3066,7 @@ const OGRSpatialReference *netCDFDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                           FetchCopyParam()                            */
+/*                           FetchCopyParam()                           */
 /************************************************************************/
 
 double netCDFDataset::FetchCopyParam(const char *pszGridMappingValue,
@@ -3093,7 +3093,7 @@ double netCDFDataset::FetchCopyParam(const char *pszGridMappingValue,
 }
 
 /************************************************************************/
-/*                           FetchStandardParallels()                   */
+/*                       FetchStandardParallels()                       */
 /************************************************************************/
 
 std::vector<std::string>
@@ -3142,7 +3142,7 @@ netCDFDataset::FetchStandardParallels(const char *pszGridMappingValue)
 }
 
 /************************************************************************/
-/*                           FetchAttr()                                */
+/*                             FetchAttr()                              */
 /************************************************************************/
 
 const char *netCDFDataset::FetchAttr(const char *pszVarFullName,
@@ -3167,7 +3167,7 @@ const char *netCDFDataset::FetchAttr(int nGroupId, int nVarId,
 }
 
 /************************************************************************/
-/*                       IsDifferenceBelow()                            */
+/*                         IsDifferenceBelow()                          */
 /************************************************************************/
 
 static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
@@ -3177,7 +3177,7 @@ static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
 }
 
 /************************************************************************/
-/*                      SetProjectionFromVar()                          */
+/*                        SetProjectionFromVar()                        */
 /************************************************************************/
 void netCDFDataset::SetProjectionFromVar(
     int nGroupId, int nVarId, bool bReadSRSOnly, const char *pszGivenGM,
@@ -4994,7 +4994,7 @@ double *netCDFDataset::Get1DGeolocation(CPL_UNUSED const char *szDimName,
 }
 
 /************************************************************************/
-/*                        SetSpatialRefNoUpdate()                       */
+/*                       SetSpatialRefNoUpdate()                        */
 /************************************************************************/
 
 void netCDFDataset::SetSpatialRefNoUpdate(const OGRSpatialReference *poSRS)
@@ -5006,7 +5006,7 @@ void netCDFDataset::SetSpatialRefNoUpdate(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                          SetSpatialRef()                             */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 CPLErr netCDFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -5039,7 +5039,7 @@ CPLErr netCDFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                     SetGeoTransformNoUpdate()                        */
+/*                      SetGeoTransformNoUpdate()                       */
 /************************************************************************/
 
 void netCDFDataset::SetGeoTransformNoUpdate(const GDALGeoTransform &gt)
@@ -5084,7 +5084,7 @@ CPLErr netCDFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                         NCDFWriteSRSVariable()                       */
+/*                        NCDFWriteSRSVariable()                        */
 /************************************************************************/
 
 int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference *poSRS,
@@ -5262,7 +5262,7 @@ void NCDFWriteLonLatVarsAttributes(nccfdriver::netCDFVID &vcdf, int nVarLonID,
 }
 
 /************************************************************************/
-/*                   NCDFWriteRLonRLatVarsAttributes()                    */
+/*                  NCDFWriteRLonRLatVarsAttributes()                   */
 /************************************************************************/
 
 void NCDFWriteRLonRLatVarsAttributes(nccfdriver::netCDFVID &vcdf,
@@ -5289,7 +5289,7 @@ void NCDFWriteRLonRLatVarsAttributes(nccfdriver::netCDFVID &vcdf,
 }
 
 /************************************************************************/
-/*                        NCDFGetProjectedCFUnit()                      */
+/*                       NCDFGetProjectedCFUnit()                       */
 /************************************************************************/
 
 std::string NCDFGetProjectedCFUnit(const OGRSpatialReference *poSRS)
@@ -5328,7 +5328,7 @@ void NCDFWriteXYVarsAttributes(nccfdriver::netCDFVID &vcdf, int nVarXID,
 }
 
 /************************************************************************/
-/*                          AddProjectionVars()                         */
+/*                         AddProjectionVars()                          */
 /************************************************************************/
 
 CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
@@ -6300,7 +6300,7 @@ double netCDFDataset::rint(double dfX)
 }
 
 /************************************************************************/
-/*                          NCDFReadIsoMetadata()                       */
+/*                        NCDFReadIsoMetadata()                         */
 /************************************************************************/
 
 static void NCDFReadMetadataAsJson(int cdfid, CPLJSONObject &obj)
@@ -6401,7 +6401,7 @@ std::string NCDFReadMetadataAsJson(int cdfid)
 }
 
 /************************************************************************/
-/*                        ReadAttributes()                              */
+/*                           ReadAttributes()                           */
 /************************************************************************/
 CPLErr netCDFDataset::ReadAttributes(int cdfidIn, int var)
 
@@ -6632,7 +6632,7 @@ void netCDFDataset::CreateSubDatasetList(int nGroupId)
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int netCDFDataset::TestCapability(const char *pszCap) const
@@ -6650,7 +6650,7 @@ int netCDFDataset::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                            GetLayer()                                */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *netCDFDataset::GetLayer(int nIdx) const
@@ -6792,7 +6792,7 @@ OGRLayer *netCDFDataset::ICreateLayer(const char *pszName,
 }
 
 /************************************************************************/
-/*                           CloneAttributes()                          */
+/*                          CloneAttributes()                           */
 /************************************************************************/
 
 bool netCDFDataset::CloneAttributes(int old_cdfid, int new_cdfid, int nSrcVarId,
@@ -6820,7 +6820,7 @@ bool netCDFDataset::CloneAttributes(int old_cdfid, int new_cdfid, int nSrcVarId,
 }
 
 /************************************************************************/
-/*                          CloneVariableContent()                      */
+/*                        CloneVariableContent()                        */
 /************************************************************************/
 
 bool netCDFDataset::CloneVariableContent(int old_cdfid, int new_cdfid,
@@ -7353,7 +7353,7 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
 #ifdef ENABLE_NCDUMP
 
 /************************************************************************/
-/*                      netCDFDatasetCreateTempFile()                   */
+/*                    netCDFDatasetCreateTempFile()                     */
 /************************************************************************/
 
 /* Create a netCDF file from a text dump (format of ncdump) */
@@ -9260,7 +9260,7 @@ static void CopyMetadata(GDALDataset *poSrcDS, GDALRasterBand *poSrcBand,
 
 netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
                                        int nYSize, int nBandsIn,
-                                       char **papszOptions)
+                                       CSLConstList papszOptions)
 {
     if (!((nXSize == 0 && nYSize == 0 && nBandsIn == 0) ||
           (nXSize > 0 && nYSize > 0 && nBandsIn > 0)))
@@ -9396,12 +9396,12 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                            Create()                                  */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *netCDFDataset::Create(const char *pszFilename, int nXSize,
                                    int nYSize, int nBandsIn, GDALDataType eType,
-                                   char **papszOptions)
+                                   CSLConstList papszOptions)
 {
     CPLDebug("GDAL_netCDF", "\n=====\nnetCDFDataset::Create(%s, ...)",
              pszFilename);
@@ -9575,12 +9575,12 @@ static CPLErr NCDFCopyBand(GDALRasterBand *poSrcBand, GDALRasterBand *poDstBand,
 }
 
 /************************************************************************/
-/*                            CreateCopy()                              */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *
 netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                          CPL_UNUSED int bStrict, char **papszOptions,
+                          CPL_UNUSED int bStrict, CSLConstList papszOptions,
                           GDALProgressFunc pfnProgress, void *pProgressData)
 {
     CPLMutexHolderD(&hNCMutex);
@@ -10263,7 +10263,7 @@ int netCDFDataset::DefVarDeflate(int nVarId, bool bChunkingArg)
 }
 
 /************************************************************************/
-/*                           NCDFUnloadDriver()                         */
+/*                          NCDFUnloadDriver()                          */
 /************************************************************************/
 
 static void NCDFUnloadDriver(CPL_UNUSED GDALDriver *poDriver)
@@ -10274,7 +10274,7 @@ static void NCDFUnloadDriver(CPL_UNUSED GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                          GDALRegister_netCDF()                       */
+/*                        GDALRegister_netCDF()                         */
 /************************************************************************/
 
 class GDALnetCDFDriver final : public GDALDriver
@@ -10350,7 +10350,7 @@ void GDALRegister_netCDF()
 }
 
 /************************************************************************/
-/*                          New functions                               */
+/*                            New functions                             */
 /************************************************************************/
 
 /* Test for GDAL version string >= target */
@@ -11466,7 +11466,7 @@ static CPLErr NCDFPut1DVar(int nCdfId, int nVarId, const char *pszValue)
 }
 
 /************************************************************************/
-/*                           GetDefaultNoDataValue()                    */
+/*                       GetDefaultNoDataValue()                        */
 /************************************************************************/
 
 double NCDFGetDefaultNoDataValue(int nCdfId, int nVarId, int nVarType,
@@ -11588,7 +11588,7 @@ double NCDFGetDefaultNoDataValue(int nCdfId, int nVarId, int nVarType,
 }
 
 /************************************************************************/
-/*                      NCDFGetDefaultNoDataValueAsInt64()              */
+/*                  NCDFGetDefaultNoDataValueAsInt64()                  */
 /************************************************************************/
 
 int64_t NCDFGetDefaultNoDataValueAsInt64(int nCdfId, int nVarId,
@@ -11611,7 +11611,7 @@ int64_t NCDFGetDefaultNoDataValueAsInt64(int nCdfId, int nVarId,
 }
 
 /************************************************************************/
-/*                     NCDFGetDefaultNoDataValueAsUInt64()              */
+/*                 NCDFGetDefaultNoDataValueAsUInt64()                  */
 /************************************************************************/
 
 uint64_t NCDFGetDefaultNoDataValueAsUInt64(int nCdfId, int nVarId,

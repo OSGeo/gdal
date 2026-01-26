@@ -353,7 +353,7 @@ bool FileGDBTable::RewriteTableToAddLastAddedField()
 }
 
 /************************************************************************/
-/*                       WriteFieldDescriptor()                         */
+/*                        WriteFieldDescriptor()                        */
 /************************************************************************/
 
 static void
@@ -896,7 +896,7 @@ bool FileGDBTable::DeleteField(int iField)
 }
 
 /************************************************************************/
-/*                            AlterField()                              */
+/*                             AlterField()                             */
 /************************************************************************/
 
 bool FileGDBTable::AlterField(int iField, const std::string &osName,
@@ -965,7 +965,7 @@ bool FileGDBTable::AlterField(int iField, const std::string &osName,
 }
 
 /************************************************************************/
-/*                          AlterGeomField()                            */
+/*                           AlterGeomField()                           */
 /************************************************************************/
 
 bool FileGDBTable::AlterGeomField(const std::string &osName,

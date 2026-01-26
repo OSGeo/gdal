@@ -44,7 +44,7 @@ OGROpenFileGDBGeomFieldDefn::~OGROpenFileGDBGeomFieldDefn() = default;
 OGROpenFileGDBFeatureDefn::~OGROpenFileGDBFeatureDefn() = default;
 
 /************************************************************************/
-/*                      OGROpenFileGDBLayer()                           */
+/*                        OGROpenFileGDBLayer()                         */
 /************************************************************************/
 
 OGROpenFileGDBLayer::OGROpenFileGDBLayer(
@@ -77,7 +77,7 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(
 }
 
 /************************************************************************/
-/*                      OGROpenFileGDBLayer()                           */
+/*                        OGROpenFileGDBLayer()                         */
 /************************************************************************/
 
 OGROpenFileGDBLayer::OGROpenFileGDBLayer(OGROpenFileGDBDataSource *poDS,
@@ -93,9 +93,9 @@ OGROpenFileGDBLayer::OGROpenFileGDBLayer(OGROpenFileGDBDataSource *poDS,
 {
 }
 
-/***********************************************************************/
-/*                      ~OGROpenFileGDBLayer()                         */
-/***********************************************************************/
+/************************************************************************/
+/*                        ~OGROpenFileGDBLayer()                        */
+/************************************************************************/
 
 OGROpenFileGDBLayer::~OGROpenFileGDBLayer()
 {
@@ -119,7 +119,7 @@ OGROpenFileGDBLayer::~OGROpenFileGDBLayer()
 }
 
 /************************************************************************/
-/*                                 Close()                              */
+/*                               Close()                                */
 /************************************************************************/
 
 void OGROpenFileGDBLayer::Close()
@@ -306,7 +306,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
 }
 
 /************************************************************************/
-/*                   TryToDetectMultiPatchKind()                        */
+/*                     TryToDetectMultiPatchKind()                      */
 /************************************************************************/
 
 // If the first and last feature have the same geometry type, then use
@@ -360,7 +360,7 @@ void OGROpenFileGDBLayer::TryToDetectMultiPatchKind()
 }
 
 /************************************************************************/
-/*                      BuildLayerDefinition()                          */
+/*                        BuildLayerDefinition()                        */
 /************************************************************************/
 
 int OGROpenFileGDBLayer::BuildLayerDefinition()
@@ -856,7 +856,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
 }
 
 /************************************************************************/
-/*                           GetGeomType()                              */
+/*                            GetGeomType()                             */
 /************************************************************************/
 
 OGRwkbGeometryType OGROpenFileGDBLayer::GetGeomType() const
@@ -870,18 +870,18 @@ OGRwkbGeometryType OGROpenFileGDBLayer::GetGeomType() const
     return m_eGeomType;
 }
 
-/***********************************************************************/
-/*                          GetLayerDefn()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                            GetLayerDefn()                            */
+/************************************************************************/
 
 const OGRFeatureDefn *OGROpenFileGDBLayer::GetLayerDefn() const
 {
     return m_poFeatureDefn;
 }
 
-/***********************************************************************/
-/*                          GetFIDColumn()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                            GetFIDColumn()                            */
+/************************************************************************/
 
 const char *OGROpenFileGDBLayer::GetFIDColumn() const
 {
@@ -893,9 +893,9 @@ const char *OGROpenFileGDBLayer::GetFIDColumn() const
     return m_poLyrTable->GetField(iIdx)->GetName().c_str();
 }
 
-/***********************************************************************/
-/*                          ResetReading()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
 
 void OGROpenFileGDBLayer::ResetReading()
 {
@@ -914,9 +914,9 @@ void OGROpenFileGDBLayer::ResetReading()
         m_poCombinedIterator->Reset();
 }
 
-/***********************************************************************/
-/*                        ISetSpatialFilter()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                         ISetSpatialFilter()                          */
+/************************************************************************/
 
 OGRErr OGROpenFileGDBLayer::ISetSpatialFilter(int iGeomField,
                                               const OGRGeometry *poGeom)
@@ -1000,9 +1000,9 @@ OGRErr OGROpenFileGDBLayer::ISetSpatialFilter(int iGeomField,
     return OGRERR_NONE;
 }
 
-/***********************************************************************/
-/*                            CompValues()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                             CompValues()                             */
+/************************************************************************/
 
 static int CompValues(const OGRFieldDefn *poFieldDefn,
                       const swq_expr_node *poValue1,
@@ -1066,9 +1066,9 @@ static int CompValues(const OGRFieldDefn *poFieldDefn,
     return ret;
 }
 
-/***********************************************************************/
-/*                    OGROpenFileGDBIsComparisonOp()                   */
-/***********************************************************************/
+/************************************************************************/
+/*                    OGROpenFileGDBIsComparisonOp()                    */
+/************************************************************************/
 
 int OGROpenFileGDBIsComparisonOp(int op)
 {
@@ -1076,9 +1076,9 @@ int OGROpenFileGDBIsComparisonOp(int op)
             op == SWQ_GT || op == SWQ_GE);
 }
 
-/***********************************************************************/
-/*                        AreExprExclusive()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                          AreExprExclusive()                          */
+/************************************************************************/
 
 static const struct
 {
@@ -1154,9 +1154,9 @@ static int AreExprExclusive(const OGRFeatureDefn *poFeatureDefn,
     return FALSE;
 }
 
-/***********************************************************************/
-/*                     FillTargetValueFromSrcExpr()                    */
-/***********************************************************************/
+/************************************************************************/
+/*                     FillTargetValueFromSrcExpr()                     */
+/************************************************************************/
 
 static int FillTargetValueFromSrcExpr(const OGRFieldDefn *poFieldDefn,
                                       OGRField *poTargetValue,
@@ -1228,9 +1228,9 @@ static int FillTargetValueFromSrcExpr(const OGRFieldDefn *poFieldDefn,
     return TRUE;
 }
 
-/***********************************************************************/
-/*                        GetColumnSubNode()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                          GetColumnSubNode()                          */
+/************************************************************************/
 
 static swq_expr_node *GetColumnSubNode(swq_expr_node *poNode)
 {
@@ -1244,9 +1244,9 @@ static swq_expr_node *GetColumnSubNode(swq_expr_node *poNode)
     return nullptr;
 }
 
-/***********************************************************************/
-/*                        GetConstantSubNode()                         */
-/***********************************************************************/
+/************************************************************************/
+/*                         GetConstantSubNode()                         */
+/************************************************************************/
 
 static swq_expr_node *GetConstantSubNode(swq_expr_node *poNode)
 {
@@ -1260,9 +1260,9 @@ static swq_expr_node *GetConstantSubNode(swq_expr_node *poNode)
     return nullptr;
 }
 
-/***********************************************************************/
-/*                     BuildIteratorFromExprNode()                     */
-/***********************************************************************/
+/************************************************************************/
+/*                     BuildIteratorFromExprNode()                      */
+/************************************************************************/
 
 FileGDBIterator *
 OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node *poNode)
@@ -1663,9 +1663,9 @@ OGROpenFileGDBLayer::BuildIteratorFromExprNode(swq_expr_node *poNode)
     return nullptr;
 }
 
-/***********************************************************************/
-/*                         SetAttributeFilter()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
 
 OGRErr OGROpenFileGDBLayer::SetAttributeFilter(const char *pszFilter)
 {
@@ -1702,9 +1702,9 @@ OGRErr OGROpenFileGDBLayer::SetAttributeFilter(const char *pszFilter)
     return eErr;
 }
 
-/***********************************************************************/
-/*                       BuildCombinedIterator()                       */
-/***********************************************************************/
+/************************************************************************/
+/*                       BuildCombinedIterator()                        */
+/************************************************************************/
 
 void OGROpenFileGDBLayer::BuildCombinedIterator()
 {
@@ -1720,9 +1720,9 @@ void OGROpenFileGDBLayer::BuildCombinedIterator()
     }
 }
 
-/***********************************************************************/
-/*                         GetCurrentFeature()                         */
-/***********************************************************************/
+/************************************************************************/
+/*                         GetCurrentFeature()                          */
+/************************************************************************/
 
 OGRFeature *OGROpenFileGDBLayer::GetCurrentFeature()
 {
@@ -1873,9 +1873,9 @@ OGRFeature *OGROpenFileGDBLayer::GetCurrentFeature()
     return poFeature;
 }
 
-/***********************************************************************/
-/*                         GetNextFeature()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
 
 OGRFeature *OGROpenFileGDBLayer::GetNextFeature()
 {
@@ -1980,9 +1980,9 @@ OGRFeature *OGROpenFileGDBLayer::GetNextFeature()
     }
 }
 
-/***********************************************************************/
-/*                          GetFeature()                               */
-/***********************************************************************/
+/************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
 
 OGRFeature *OGROpenFileGDBLayer::GetFeature(GIntBig nFeatureId)
 {
@@ -2011,9 +2011,9 @@ OGRFeature *OGROpenFileGDBLayer::GetFeature(GIntBig nFeatureId)
     return poFeature;
 }
 
-/***********************************************************************/
-/*                         SetNextByIndex()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                           SetNextByIndex()                           */
+/************************************************************************/
 
 OGRErr OGROpenFileGDBLayer::SetNextByIndex(GIntBig nIndex)
 {
@@ -2053,9 +2053,9 @@ OGRErr OGROpenFileGDBLayer::SetNextByIndex(GIntBig nIndex)
         return OGRLayer::SetNextByIndex(nIndex);
 }
 
-/***********************************************************************/
-/*                          IGetExtent()                               */
-/***********************************************************************/
+/************************************************************************/
+/*                             IGetExtent()                             */
+/************************************************************************/
 
 OGRErr OGROpenFileGDBLayer::IGetExtent(int /* iGeomField */,
                                        OGREnvelope *psExtent, bool /* bForce */)
@@ -2080,9 +2080,9 @@ OGRErr OGROpenFileGDBLayer::IGetExtent(int /* iGeomField */,
     return OGRERR_FAILURE;
 }
 
-/***********************************************************************/
-/*                          IGetExtent3D()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                            IGetExtent3D()                            */
+/************************************************************************/
 
 OGRErr OGROpenFileGDBLayer::IGetExtent3D(int iGeomField,
                                          OGREnvelope3D *psExtent, bool bForce)
@@ -2122,9 +2122,9 @@ OGRErr OGROpenFileGDBLayer::IGetExtent3D(int iGeomField,
     return OGRLayer::IGetExtent3D(iGeomField, psExtent, bForce);
 }
 
-/***********************************************************************/
-/*                         GetFeatureCount()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
 
 GIntBig OGROpenFileGDBLayer::GetFeatureCount(int bForce)
 {
@@ -2281,9 +2281,9 @@ GIntBig OGROpenFileGDBLayer::GetFeatureCount(int bForce)
     return OGRLayer::GetFeatureCount(bForce);
 }
 
-/***********************************************************************/
-/*                         TestCapability()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
 
 int OGROpenFileGDBLayer::TestCapability(const char *pszCap) const
 {
@@ -2369,9 +2369,9 @@ int OGROpenFileGDBLayer::TestCapability(const char *pszCap) const
     return FALSE;
 }
 
-/***********************************************************************/
-/*                         HasIndexForField()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                          HasIndexForField()                          */
+/************************************************************************/
 
 bool OGROpenFileGDBLayer::HasIndexForField(const char *pszFieldName)
 {
@@ -2384,9 +2384,9 @@ bool OGROpenFileGDBLayer::HasIndexForField(const char *pszFieldName)
             m_poLyrTable->GetField(nTableColIdx)->HasIndex());
 }
 
-/***********************************************************************/
-/*                             BuildIndex()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                             BuildIndex()                             */
+/************************************************************************/
 
 FileGDBIterator *OGROpenFileGDBLayer::BuildIndex(const char *pszFieldName,
                                                  int bAscending, int op,
@@ -2440,9 +2440,9 @@ FileGDBIterator *OGROpenFileGDBLayer::BuildIndex(const char *pszFieldName,
     return nullptr;
 }
 
-/***********************************************************************/
-/*                          GetMinMaxValue()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                           GetMinMaxValue()                           */
+/************************************************************************/
 
 const OGRField *
 OGROpenFileGDBLayer::GetMinMaxValue(const OGRFieldDefn *poFieldDefn, int bIsMin,
@@ -2474,9 +2474,9 @@ OGROpenFileGDBLayer::GetMinMaxValue(const OGRFieldDefn *poFieldDefn, int bIsMin,
     return nullptr;
 }
 
-/***********************************************************************/
-/*                        GetMinMaxSumCount()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                         GetMinMaxSumCount()                          */
+/************************************************************************/
 
 int OGROpenFileGDBLayer::GetMinMaxSumCount(const OGRFieldDefn *poFieldDefn,
                                            double &dfMin, double &dfMax,

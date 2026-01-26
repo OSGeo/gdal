@@ -83,7 +83,7 @@ class SNODASRasterBand final : public RawRasterBand
 };
 
 /************************************************************************/
-/*                         SNODASRasterBand()                           */
+/*                          SNODASRasterBand()                          */
 /************************************************************************/
 
 SNODASRasterBand::SNODASRasterBand(VSILFILE *fpRawIn, int nXSize, int nYSize)
@@ -93,7 +93,7 @@ SNODASRasterBand::SNODASRasterBand(VSILFILE *fpRawIn, int nXSize, int nYSize)
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                            */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double SNODASRasterBand::GetNoDataValue(int *pbSuccess)
@@ -109,7 +109,7 @@ double SNODASRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                            GetMinimum()                              */
+/*                             GetMinimum()                             */
 /************************************************************************/
 
 double SNODASRasterBand::GetMinimum(int *pbSuccess)
@@ -125,7 +125,7 @@ double SNODASRasterBand::GetMinimum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                            GetMaximum()                             */
+/*                             GetMaximum()                             */
 /************************************************************************/
 
 double SNODASRasterBand::GetMaximum(int *pbSuccess)
@@ -169,7 +169,7 @@ SNODASDataset::~SNODASDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr SNODASDataset::Close(GDALProgressFunc, void *)
@@ -217,7 +217,7 @@ char **SNODASDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int SNODASDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -502,7 +502,7 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       GDALRegister_SNODAS()                          */
+/*                        GDALRegister_SNODAS()                         */
 /************************************************************************/
 
 void GDALRegister_SNODAS()

@@ -25,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*                 GDALVectorExplodeCollectionsAlgorithm()              */
+/*               GDALVectorExplodeCollectionsAlgorithm()                */
 /************************************************************************/
 
 GDALVectorExplodeCollectionsAlgorithm::GDALVectorExplodeCollectionsAlgorithm(
@@ -64,7 +64,7 @@ namespace
 {
 
 /************************************************************************/
-/*               GDALVectorExplodeCollectionsAlgorithmLayer             */
+/*              GDALVectorExplodeCollectionsAlgorithmLayer              */
 /************************************************************************/
 
 class GDALVectorExplodeCollectionsAlgorithmLayer final
@@ -128,7 +128,7 @@ class GDALVectorExplodeCollectionsAlgorithmLayer final
 };
 
 /************************************************************************/
-/*               GDALVectorExplodeCollectionsAlgorithmLayer()           */
+/*             GDALVectorExplodeCollectionsAlgorithmLayer()             */
 /************************************************************************/
 
 GDALVectorExplodeCollectionsAlgorithmLayer::
@@ -206,8 +206,8 @@ void GDALVectorExplodeCollectionsAlgorithmLayer::TranslateFeature(
                     auto poNewGeom =
                         std::unique_ptr<OGRGeometry>(poSubGeomRef->clone());
                     if (poNewGeom->getGeometryType() != eTargetType)
-                        poNewGeom.reset(OGRGeometryFactory::forceTo(
-                            poNewGeom.release(), eTargetType));
+                        poNewGeom = OGRGeometryFactory::forceTo(
+                            std::move(poNewGeom), eTargetType);
                     if (m_opts.m_skip && !m_opts.m_type.empty() &&
                         (!poNewGeom ||
                          (wkbFlatten(eTargetType) != wkbUnknown &&
@@ -277,7 +277,7 @@ GDALVectorExplodeCollectionsAlgorithm::CreateAlgLayer(OGRLayer &srcLayer)
 }
 
 /************************************************************************/
-/*            GDALVectorExplodeCollectionsAlgorithm::RunStep()          */
+/*           GDALVectorExplodeCollectionsAlgorithm::RunStep()           */
 /************************************************************************/
 
 bool GDALVectorExplodeCollectionsAlgorithm::RunStep(

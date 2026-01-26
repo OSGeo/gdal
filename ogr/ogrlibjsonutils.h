@@ -21,7 +21,7 @@ json_object CPL_DLL *json_ex_get_object_by_path(json_object *poObj,
                                                 const char *pszPath);
 
 /************************************************************************/
-/*                 GeoJSON Parsing Utilities                            */
+/*                      GeoJSON Parsing Utilities                       */
 /************************************************************************/
 
 lh_entry CPL_DLL *OGRGeoJSONFindMemberEntryByName(json_object *poObj,
@@ -30,7 +30,7 @@ json_object CPL_DLL *OGRGeoJSONFindMemberByName(json_object *poObj,
                                                 const char *pszName);
 
 /************************************************************************/
-/*                           GeoJSONPropertyToFieldType                 */
+/*                      GeoJSONPropertyToFieldType                      */
 /************************************************************************/
 
 OGRFieldType CPL_DLL GeoJSONPropertyToFieldType(json_object *poObject,

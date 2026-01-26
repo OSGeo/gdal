@@ -40,7 +40,7 @@ typedef opj_image_comp_t jp2_image_comp;
       OPJ_VERSION_BUILD) >= ((major)*10000 + (minor)*100 + (patch)))
 
 /************************************************************************/
-/*                 JP2OpenJPEG_WarningCallback()                        */
+/*                    JP2OpenJPEG_WarningCallback()                     */
 /************************************************************************/
 
 static void JP2OpenJPEG_WarningCallback(const char *pszMsg,
@@ -77,7 +77,7 @@ static void JP2OpenJPEG_WarningCallback(const char *pszMsg,
 }
 
 /************************************************************************/
-/*                 JP2OpenJPEG_InfoCallback()                           */
+/*                      JP2OpenJPEG_InfoCallback()                      */
 /************************************************************************/
 
 static void JP2OpenJPEG_InfoCallback(const char *pszMsg,
@@ -90,7 +90,7 @@ static void JP2OpenJPEG_InfoCallback(const char *pszMsg,
 }
 
 /************************************************************************/
-/*                  JP2OpenJPEG_ErrorCallback()                         */
+/*                     JP2OpenJPEG_ErrorCallback()                      */
 /************************************************************************/
 
 static void JP2OpenJPEG_ErrorCallback(const char *pszMsg,
@@ -100,7 +100,7 @@ static void JP2OpenJPEG_ErrorCallback(const char *pszMsg,
 }
 
 /************************************************************************/
-/*                      JP2Dataset_Read()                               */
+/*                          JP2Dataset_Read()                           */
 /************************************************************************/
 
 static size_t JP2Dataset_Read(void *pBuffer, size_t nBytes, void *pUserData)
@@ -120,7 +120,7 @@ static size_t JP2Dataset_Read(void *pBuffer, size_t nBytes, void *pUserData)
 }
 
 /************************************************************************/
-/*                      JP2Dataset_Write()                              */
+/*                          JP2Dataset_Write()                          */
 /************************************************************************/
 
 static size_t JP2Dataset_Write(void *pBuffer, size_t nBytes, void *pUserData)
@@ -139,7 +139,7 @@ static size_t JP2Dataset_Write(void *pBuffer, size_t nBytes, void *pUserData)
 }
 
 /************************************************************************/
-/*                       JP2Dataset_Seek()                              */
+/*                          JP2Dataset_Seek()                           */
 /************************************************************************/
 
 static OPJ_BOOL JP2Dataset_Seek(int64_t nBytes, void *pUserData)
@@ -154,7 +154,7 @@ static OPJ_BOOL JP2Dataset_Seek(int64_t nBytes, void *pUserData)
 }
 
 /************************************************************************/
-/*                     JP2Dataset_Skip()                                */
+/*                          JP2Dataset_Skip()                           */
 /************************************************************************/
 
 static int64_t JP2Dataset_Skip(int64_t nBytes, void *pUserData)
@@ -437,8 +437,9 @@ struct OPJCodecWrapper
         return true;
     }
 
-    bool initCompress(char **papszOptions, const std::vector<double> &adfRates,
-                      int nBlockXSize, int nBlockYSize, bool bIsIrreversible,
+    bool initCompress(CSLConstList papszOptions,
+                      const std::vector<double> &adfRates, int nBlockXSize,
+                      int nBlockYSize, bool bIsIrreversible,
                       int nNumResolutions, JP2_PROG_ORDER eProgOrder, int bYCC,
                       int nCblockW, int nCblockH, int bYCBCR420, int bProfile1,
                       int nBands, int nXSize, int nYSize,

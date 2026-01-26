@@ -16,7 +16,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                         OGRIdrisiLayer                               */
+/*                            OGRIdrisiLayer                            */
 /************************************************************************/
 
 class OGRIdrisiLayer final : public OGRLayer,
@@ -70,7 +70,7 @@ class OGRIdrisiLayer final : public OGRLayer,
 };
 
 /************************************************************************/
-/*                        OGRIdrisiDataSource                           */
+/*                         OGRIdrisiDataSource                          */
 /************************************************************************/
 
 class OGRIdrisiDataSource final : public GDALDataset

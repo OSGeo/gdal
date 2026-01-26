@@ -26,7 +26,7 @@
 using namespace PCIDSK;
 
 /************************************************************************/
-/*                               SysTileDir()                           */
+/*                             SysTileDir()                             */
 /************************************************************************/
 SysTileDir::SysTileDir(PCIDSKFile * poFile, int nSegment,
                        const char * pbySegmentData)
@@ -36,7 +36,7 @@ SysTileDir::SysTileDir(PCIDSKFile * poFile, int nSegment,
 }
 
 /************************************************************************/
-/*                              ~SysTileDir()                           */
+/*                            ~SysTileDir()                             */
 /************************************************************************/
 SysTileDir::~SysTileDir(void)
 {
@@ -52,7 +52,7 @@ SysTileDir::~SysTileDir(void)
 }
 
 /************************************************************************/
-/*                               Initialize()                           */
+/*                             Initialize()                             */
 /************************************************************************/
 void SysTileDir::Initialize(void)
 {
@@ -68,7 +68,7 @@ void SysTileDir::Synchronize(void)
 }
 
 /************************************************************************/
-/*                              LoadTileDir()                           */
+/*                            LoadTileDir()                             */
 /************************************************************************/
 void SysTileDir::LoadTileDir(void)
 {
@@ -93,7 +93,7 @@ void SysTileDir::LoadTileDir(void)
 }
 
 /************************************************************************/
-/*                             CreateTileDir()                          */
+/*                           CreateTileDir()                            */
 /************************************************************************/
 void SysTileDir::CreateTileDir(void)
 {
@@ -118,7 +118,7 @@ void SysTileDir::CreateTileDir(void)
 }
 
 /************************************************************************/
-/*                              GetTileLayer()                          */
+/*                            GetTileLayer()                            */
 /************************************************************************/
 BlockTileLayer * SysTileDir::GetTileLayer(uint32 nLayer)
 {
@@ -128,7 +128,7 @@ BlockTileLayer * SysTileDir::GetTileLayer(uint32 nLayer)
 }
 
 /************************************************************************/
-/*                            CreateTileLayer()                         */
+/*                          CreateTileLayer()                           */
 /************************************************************************/
 uint32 SysTileDir::CreateTileLayer(uint32 nWidth, uint32 nHeight,
                                    uint32 nTileWidth, uint32 nTileHeight,

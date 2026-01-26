@@ -16,7 +16,7 @@
 #include "ddsdrivercore.h"
 
 /************************************************************************/
-/*                     DDSDriverIdentify()                              */
+/*                         DDSDriverIdentify()                          */
 /************************************************************************/
 
 int DDSDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -38,7 +38,7 @@ int DDSDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      DDSDriverSetCommonMetadata()                    */
+/*                     DDSDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void DDSDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -79,7 +79,7 @@ void DDSDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredDDSPlugin()                       */
+/*                      DeclareDeferredDDSPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

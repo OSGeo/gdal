@@ -36,7 +36,7 @@ constexpr const char *DEFAULT_PATTERN_FLAT = "{LAYER_NAME}_{FIELD_VALUE}_%010d";
 constexpr char DIGIT_ZERO = '0';
 
 /************************************************************************/
-/*                        GetConstructorOptions()                       */
+/*                       GetConstructorOptions()                        */
 /************************************************************************/
 
 /* static */
@@ -51,7 +51,7 @@ GDALVectorPartitionAlgorithm::GetConstructorOptions(bool standaloneStep)
 }
 
 /************************************************************************/
-/*      GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm()    */
+/*     GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm()     */
 /************************************************************************/
 
 GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
@@ -223,7 +223,7 @@ GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                              PercentEncode()                         */
+/*                           PercentEncode()                            */
 /************************************************************************/
 
 static void PercentEncode(std::string &out, const std::string_view &s)
@@ -250,7 +250,7 @@ static std::string PercentEncode(const std::string_view &s)
 }
 
 /************************************************************************/
-/*                       GetEstimatedFeatureSize()                      */
+/*                      GetEstimatedFeatureSize()                       */
 /************************************************************************/
 
 static size_t GetEstimatedFeatureSize(
@@ -351,7 +351,7 @@ static size_t GetEstimatedFeatureSize(
 }
 
 /************************************************************************/
-/*                      GetCurrentOutputLayer()                         */
+/*                       GetCurrentOutputLayer()                        */
 /************************************************************************/
 
 constexpr int MIN_FILE_SIZE = 65536;
@@ -762,7 +762,7 @@ static bool GetCurrentOutputLayer(
 }
 
 /************************************************************************/
-/*                GDALVectorPartitionAlgorithm::RunStep()               */
+/*               GDALVectorPartitionAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -1388,7 +1388,7 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*                GDALVectorPartitionAlgorithm::RunImpl()               */
+/*               GDALVectorPartitionAlgorithm::RunImpl()                */
 /************************************************************************/
 
 bool GDALVectorPartitionAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

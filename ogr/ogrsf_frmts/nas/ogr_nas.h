@@ -22,7 +22,7 @@
 class OGRNASDataSource;
 
 /************************************************************************/
-/*                            OGRNASLayer                               */
+/*                             OGRNASLayer                              */
 /************************************************************************/
 
 class OGRNASLayer final : public OGRLayer
@@ -78,7 +78,7 @@ class OGRNASDataSource final : public GDALDataset
     ~OGRNASDataSource() override;
 
     int Open(const char *);
-    int Create(const char *pszFile, char **papszOptions);
+    int Create(const char *pszFile, CSLConstList papszOptions);
 
     int GetLayerCount() const override
     {

@@ -167,13 +167,13 @@ static GDALDataset *OGRXLSXDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       OGRXLSXDriverCreate()                          */
+/*                        OGRXLSXDriverCreate()                         */
 /************************************************************************/
 
 static GDALDataset *OGRXLSXDriverCreate(const char *pszName, int /* nXSize */,
                                         int /* nYSize */, int /* nBands */,
                                         GDALDataType /* eDT */,
-                                        char **papszOptions)
+                                        CSLConstList papszOptions)
 
 {
     if (!EQUAL(CPLGetExtensionSafe(pszName).c_str(), "XLSX"))
@@ -211,7 +211,7 @@ static GDALDataset *OGRXLSXDriverCreate(const char *pszName, int /* nXSize */,
 }
 
 /************************************************************************/
-/*                           RegisterOGRXLSX()                           */
+/*                          RegisterOGRXLSX()                           */
 /************************************************************************/
 
 void RegisterOGRXLSX()

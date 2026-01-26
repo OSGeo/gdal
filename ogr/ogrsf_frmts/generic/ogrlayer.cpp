@@ -176,7 +176,7 @@ int OGR_L_GetRefCount(OGRLayerH hLayer)
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                            */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 /**
@@ -220,7 +220,7 @@ GIntBig OGRLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                      OGR_L_GetFeatureCount()                         */
+/*                       OGR_L_GetFeatureCount()                        */
 /************************************************************************/
 
 /**
@@ -261,7 +261,7 @@ GIntBig OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
 }
 
 /************************************************************************/
-/*                            GetExtent()                               */
+/*                             GetExtent()                              */
 /************************************************************************/
 
 /**
@@ -353,7 +353,7 @@ OGRErr OGRLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, bool bForce)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 /**
@@ -587,7 +587,7 @@ OGRErr OGRLayer::GetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 }
 
 /************************************************************************/
-/*                           IGetExtent3D()                             */
+/*                            IGetExtent3D()                            */
 /************************************************************************/
 
 /**
@@ -665,7 +665,7 @@ OGRErr OGRLayer::IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
 }
 
 /************************************************************************/
-/*                          OGR_L_GetExtent3D()                         */
+/*                         OGR_L_GetExtent3D()                          */
 /************************************************************************/
 
 /**
@@ -789,7 +789,7 @@ OGRErr OGRLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                        ContainGeomSpecialField()                     */
+/*                      ContainGeomSpecialField()                       */
 /************************************************************************/
 
 static int ContainGeomSpecialField(swq_expr_node *expr, int nLayerFieldCount)
@@ -816,7 +816,7 @@ static int ContainGeomSpecialField(swq_expr_node *expr, int nLayerFieldCount)
 }
 
 /************************************************************************/
-/*                AttributeFilterEvaluationNeedsGeometry()              */
+/*               AttributeFilterEvaluationNeedsGeometry()               */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -1097,7 +1097,7 @@ OGRErr OGR_L_SetNextByIndex(OGRLayerH hLayer, GIntBig nIndex)
 }
 
 /************************************************************************/
-/*                       OGRLayer::GetNextFeature()                     */
+/*                      OGRLayer::GetNextFeature()                      */
 /************************************************************************/
 
 /**
@@ -1186,7 +1186,7 @@ OGRFeatureH OGR_L_GetNextFeature(OGRLayerH hLayer)
 }
 
 /************************************************************************/
-/*                       ConvertGeomsIfNecessary()                      */
+/*                      ConvertGeomsIfNecessary()                       */
 /************************************************************************/
 
 void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
@@ -1240,9 +1240,11 @@ void OGRLayer::ConvertGeomsIfNecessary(OGRFeature *poFeature)
                 {
                     OGRwkbGeometryType eTargetType =
                         OGR_GT_GetLinear(poGeom->getGeometryType());
-                    poGeom = OGRGeometryFactory::forceTo(
-                        poFeature->StealGeometry(i), eTargetType);
-                    poFeature->SetGeomFieldDirectly(i, poGeom);
+                    auto poGeomUniquePtr = OGRGeometryFactory::forceTo(
+                        std::unique_ptr<OGRGeometry>(
+                            poFeature->StealGeometry(i)),
+                        eTargetType);
+                    poFeature->SetGeomField(i, std::move(poGeomUniquePtr));
                     poGeom = poFeature->GetGeomFieldRef(i);
                 }
 
@@ -1320,7 +1322,7 @@ OGRErr OGRLayer::SetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                            */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 /**
@@ -1404,7 +1406,7 @@ OGRErr OGR_L_SetFeature(OGRLayerH hLayer, OGRFeatureH hFeat)
 }
 
 /************************************************************************/
-/*                             SetFeature()                              */
+/*                             SetFeature()                             */
 /************************************************************************/
 
 /**
@@ -1453,7 +1455,7 @@ OGRErr OGRLayer::SetFeature(std::unique_ptr<OGRFeature> poFeature)
 }
 
 /************************************************************************/
-/*                           ISetFeatureUniqPtr()                       */
+/*                         ISetFeatureUniqPtr()                         */
 /************************************************************************/
 
 /**
@@ -1518,7 +1520,7 @@ OGRErr OGRLayer::CreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 /**
@@ -1624,7 +1626,7 @@ OGRErr OGRLayer::CreateFeature(std::unique_ptr<OGRFeature> poFeature,
 }
 
 /************************************************************************/
-/*                         ICreateFeatureUniqPtr()                      */
+/*                       ICreateFeatureUniqPtr()                        */
 /************************************************************************/
 
 /**
@@ -1662,7 +1664,7 @@ OGRErr OGRLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
 }
 
 /************************************************************************/
-/*                           UpsertFeature()                           */
+/*                           UpsertFeature()                            */
 /************************************************************************/
 
 /**
@@ -2243,7 +2245,7 @@ OGRErr OGRLayer::ReorderFields(int *panMap)
 }
 
 /************************************************************************/
-/*                       OGR_L_ReorderFields()                          */
+/*                        OGR_L_ReorderFields()                         */
 /************************************************************************/
 
 /**
@@ -2381,7 +2383,7 @@ OGRErr OGRLayer::ReorderField(int iOldFieldPos, int iNewFieldPos)
 }
 
 /************************************************************************/
-/*                        OGR_L_ReorderField()                          */
+/*                         OGR_L_ReorderField()                         */
 /************************************************************************/
 
 /**
@@ -2529,7 +2531,7 @@ OGRErr OGR_L_AlterFieldDefn(OGRLayerH hLayer, int iField,
 }
 
 /************************************************************************/
-/*                        AlterGeomFieldDefn()                          */
+/*                         AlterGeomFieldDefn()                         */
 /************************************************************************/
 
 /**
@@ -2639,7 +2641,7 @@ OGRErr OGR_L_AlterGeomFieldDefn(OGRLayerH hLayer, int iGeomField,
 }
 
 /************************************************************************/
-/*                         CreateGeomField()                            */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
 /**
@@ -2683,7 +2685,7 @@ OGRErr OGRLayer::CreateGeomField(const OGRGeomFieldDefn *poField, int bApproxOK)
 }
 
 /************************************************************************/
-/*                        OGR_L_CreateGeomField()                       */
+/*                       OGR_L_CreateGeomField()                        */
 /************************************************************************/
 
 /**
@@ -2818,7 +2820,7 @@ OGRErr OGRLayer::CommitTransaction()
 }
 
 /************************************************************************/
-/*                       OGR_L_CommitTransaction()                      */
+/*                      OGR_L_CommitTransaction()                       */
 /************************************************************************/
 
 /**
@@ -2924,7 +2926,7 @@ OGRErr OGR_L_RollbackTransaction(OGRLayerH hLayer)
 }
 
 /************************************************************************/
-/*                        OGRLayer::GetLayerDefn()                      */
+/*                       OGRLayer::GetLayerDefn()                       */
 /************************************************************************/
 
 /**
@@ -2992,7 +2994,7 @@ OGRFeatureDefnH OGR_L_GetLayerDefn(OGRLayerH hLayer)
 }
 
 /************************************************************************/
-/*                         OGR_L_FindFieldIndex()                       */
+/*                        OGR_L_FindFieldIndex()                        */
 /************************************************************************/
 
 /**
@@ -3115,7 +3117,7 @@ OGRSpatialReferenceH OGR_L_GetSpatialRef(OGRLayerH hLayer)
 }
 
 /************************************************************************/
-/*                     OGRLayer::TestCapability()                       */
+/*                      OGRLayer::TestCapability()                      */
 /************************************************************************/
 
 /**
@@ -3389,7 +3391,7 @@ OGRGeometryH OGR_L_GetSpatialFilter(OGRLayerH hLayer)
 }
 
 /************************************************************************/
-/*             ValidateGeometryFieldIndexForSetSpatialFilter()          */
+/*           ValidateGeometryFieldIndexForSetSpatialFilter()            */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -3902,7 +3904,7 @@ int OGRLayer::InstallFilter(const OGRGeometry *poFilter)
 //! @endcond
 
 /************************************************************************/
-/*                   DoesGeometryHavePointInEnvelope()                  */
+/*                  DoesGeometryHavePointInEnvelope()                   */
 /************************************************************************/
 
 static bool DoesGeometryHavePointInEnvelope(const OGRGeometry *poGeometry,
@@ -4129,7 +4131,7 @@ bool OGRLayer::FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
 }
 
 /************************************************************************/
-/*                          PrepareStartTransaction()                   */
+/*                      PrepareStartTransaction()                       */
 /************************************************************************/
 
 void OGRLayer::PrepareStartTransaction()
@@ -4139,7 +4141,7 @@ void OGRLayer::PrepareStartTransaction()
 }
 
 /************************************************************************/
-/*                          FinishRollbackTransaction()                 */
+/*                     FinishRollbackTransaction()                      */
 /************************************************************************/
 
 void OGRLayer::FinishRollbackTransaction(const std::string &osSavepointName)
@@ -4323,7 +4325,7 @@ void OGRLayer::FinishRollbackTransaction(const std::string &osSavepointName)
 //! @endcond
 
 /************************************************************************/
-/*                    OGRLayer::ResetReading()                          */
+/*                       OGRLayer::ResetReading()                       */
 /************************************************************************/
 
 /**
@@ -4656,7 +4658,7 @@ const char *OGR_L_GetGeometryColumn(OGRLayerH hLayer)
 }
 
 /************************************************************************/
-/*                            GetStyleTable()                           */
+/*                           GetStyleTable()                            */
 /************************************************************************/
 
 /**
@@ -4674,7 +4676,7 @@ OGRStyleTable *OGRLayer::GetStyleTable()
 }
 
 /************************************************************************/
-/*                         SetStyleTableDirectly()                      */
+/*                       SetStyleTableDirectly()                        */
 /************************************************************************/
 
 /**
@@ -4696,7 +4698,7 @@ void OGRLayer::SetStyleTableDirectly(OGRStyleTable *poStyleTable)
 }
 
 /************************************************************************/
-/*                            SetStyleTable()                           */
+/*                           SetStyleTable()                            */
 /************************************************************************/
 
 /**
@@ -4719,7 +4721,7 @@ void OGRLayer::SetStyleTable(OGRStyleTable *poStyleTable)
 }
 
 /************************************************************************/
-/*                         OGR_L_GetStyleTable()                        */
+/*                        OGR_L_GetStyleTable()                         */
 /************************************************************************/
 
 OGRStyleTableH OGR_L_GetStyleTable(OGRLayerH hLayer)
@@ -4732,7 +4734,7 @@ OGRStyleTableH OGR_L_GetStyleTable(OGRLayerH hLayer)
 }
 
 /************************************************************************/
-/*                         OGR_L_SetStyleTableDirectly()                */
+/*                    OGR_L_SetStyleTableDirectly()                     */
 /************************************************************************/
 
 void OGR_L_SetStyleTableDirectly(OGRLayerH hLayer, OGRStyleTableH hStyleTable)
@@ -4745,7 +4747,7 @@ void OGR_L_SetStyleTableDirectly(OGRLayerH hLayer, OGRStyleTableH hStyleTable)
 }
 
 /************************************************************************/
-/*                         OGR_L_SetStyleTable()                        */
+/*                        OGR_L_SetStyleTable()                         */
 /************************************************************************/
 
 void OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable)
@@ -4759,7 +4761,7 @@ void OGR_L_SetStyleTable(OGRLayerH hLayer, OGRStyleTableH hStyleTable)
 }
 
 /************************************************************************/
-/*                               GetName()                              */
+/*                              GetName()                               */
 /************************************************************************/
 
 /**
@@ -5002,7 +5004,7 @@ OGRErr OGR_L_SetIgnoredFields(OGRLayerH hLayer, const char **papszFields)
 }
 
 /************************************************************************/
-/*                             Rename()                                 */
+/*                               Rename()                               */
 /************************************************************************/
 
 /** Rename layer.
@@ -5031,7 +5033,7 @@ OGRErr OGRLayer::Rename(CPL_UNUSED const char *pszNewName)
 }
 
 /************************************************************************/
-/*                           OGR_L_Rename()                             */
+/*                            OGR_L_Rename()                            */
 /************************************************************************/
 
 /** Rename layer.
@@ -5062,7 +5064,7 @@ OGRErr OGR_L_Rename(OGRLayerH hLayer, const char *pszNewName)
 }
 
 /************************************************************************/
-/*         helper functions for layer overlay methods                   */
+/*              helper functions for layer overlay methods              */
 /************************************************************************/
 
 static OGRErr clone_spatial_filter(OGRLayer *pLayer, OGRGeometry **ppGeometry)
@@ -5278,7 +5280,7 @@ static OGRGeometry *promote_to_multi(OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                          Intersection()                              */
+/*                            Intersection()                            */
 /************************************************************************/
 /**
  * \brief Intersection of two layers.
@@ -5357,8 +5359,8 @@ static OGRGeometry *promote_to_multi(OGRGeometry *poGeom)
  */
 
 OGRErr OGRLayer::Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                              char **papszOptions, GDALProgressFunc pfnProgress,
-                              void *pProgressArg)
+                              CSLConstList papszOptions,
+                              GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
     OGRFeatureDefn *poDefnInput = GetLayerDefn();
@@ -5600,7 +5602,7 @@ done:
 }
 
 /************************************************************************/
-/*                       OGR_L_Intersection()                           */
+/*                         OGR_L_Intersection()                         */
 /************************************************************************/
 /**
  * \brief Intersection of two layers.
@@ -5681,7 +5683,7 @@ done:
  */
 
 OGRErr OGR_L_Intersection(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                          OGRLayerH pLayerResult, char **papszOptions,
+                          OGRLayerH pLayerResult, CSLConstList papszOptions,
                           GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -5698,7 +5700,7 @@ OGRErr OGR_L_Intersection(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
 }
 
 /************************************************************************/
-/*                              Union()                                 */
+/*                               Union()                                */
 /************************************************************************/
 
 /**
@@ -5775,7 +5777,7 @@ OGRErr OGR_L_Intersection(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::Union(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                       char **papszOptions, GDALProgressFunc pfnProgress,
+                       CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                        void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
@@ -6152,7 +6154,7 @@ done:
 }
 
 /************************************************************************/
-/*                           OGR_L_Union()                              */
+/*                            OGR_L_Union()                             */
 /************************************************************************/
 
 /**
@@ -6231,7 +6233,7 @@ done:
  */
 
 OGRErr OGR_L_Union(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                   OGRLayerH pLayerResult, char **papszOptions,
+                   OGRLayerH pLayerResult, CSLConstList papszOptions,
                    GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -6246,7 +6248,7 @@ OGRErr OGR_L_Union(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
 }
 
 /************************************************************************/
-/*                          SymDifference()                             */
+/*                           SymDifference()                            */
 /************************************************************************/
 
 /**
@@ -6312,7 +6314,7 @@ OGRErr OGR_L_Union(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::SymDifference(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                               char **papszOptions,
+                               CSLConstList papszOptions,
                                GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
@@ -6649,7 +6651,7 @@ done:
  */
 
 OGRErr OGR_L_SymDifference(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                           OGRLayerH pLayerResult, char **papszOptions,
+                           OGRLayerH pLayerResult, CSLConstList papszOptions,
                            GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -6667,7 +6669,7 @@ OGRErr OGR_L_SymDifference(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
 }
 
 /************************************************************************/
-/*                            Identity()                                */
+/*                              Identity()                              */
 /************************************************************************/
 
 /**
@@ -6742,8 +6744,8 @@ OGRErr OGR_L_SymDifference(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::Identity(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                          char **papszOptions, GDALProgressFunc pfnProgress,
-                          void *pProgressArg)
+                          CSLConstList papszOptions,
+                          GDALProgressFunc pfnProgress, void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
     OGRFeatureDefn *poDefnInput = GetLayerDefn();
@@ -7001,7 +7003,7 @@ done:
 }
 
 /************************************************************************/
-/*                         OGR_L_Identity()                             */
+/*                           OGR_L_Identity()                           */
 /************************************************************************/
 
 /**
@@ -7078,7 +7080,7 @@ done:
  */
 
 OGRErr OGR_L_Identity(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                      OGRLayerH pLayerResult, char **papszOptions,
+                      OGRLayerH pLayerResult, CSLConstList papszOptions,
                       GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -7093,7 +7095,7 @@ OGRErr OGR_L_Identity(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
 }
 
 /************************************************************************/
-/*                             Update()                                 */
+/*                               Update()                               */
 /************************************************************************/
 
 /**
@@ -7160,7 +7162,7 @@ OGRErr OGR_L_Identity(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::Update(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                        char **papszOptions, GDALProgressFunc pfnProgress,
+                        CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                         void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
@@ -7365,7 +7367,7 @@ done:
 }
 
 /************************************************************************/
-/*                          OGR_L_Update()                              */
+/*                            OGR_L_Update()                            */
 /************************************************************************/
 
 /**
@@ -7434,7 +7436,7 @@ done:
  */
 
 OGRErr OGR_L_Update(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                    OGRLayerH pLayerResult, char **papszOptions,
+                    OGRLayerH pLayerResult, CSLConstList papszOptions,
                     GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -7449,7 +7451,7 @@ OGRErr OGR_L_Update(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
 }
 
 /************************************************************************/
-/*                              Clip()                                  */
+/*                                Clip()                                */
 /************************************************************************/
 
 /**
@@ -7509,7 +7511,7 @@ OGRErr OGR_L_Update(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::Clip(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                      char **papszOptions, GDALProgressFunc pfnProgress,
+                      CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                       void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
@@ -7681,7 +7683,7 @@ done:
 }
 
 /************************************************************************/
-/*                           OGR_L_Clip()                               */
+/*                             OGR_L_Clip()                             */
 /************************************************************************/
 
 /**
@@ -7743,7 +7745,7 @@ done:
  */
 
 OGRErr OGR_L_Clip(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                  OGRLayerH pLayerResult, char **papszOptions,
+                  OGRLayerH pLayerResult, CSLConstList papszOptions,
                   GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -7758,7 +7760,7 @@ OGRErr OGR_L_Clip(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
 }
 
 /************************************************************************/
-/*                              Erase()                                 */
+/*                               Erase()                                */
 /************************************************************************/
 
 /**
@@ -7818,7 +7820,7 @@ OGRErr OGR_L_Clip(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
  */
 
 OGRErr OGRLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
-                       char **papszOptions, GDALProgressFunc pfnProgress,
+                       CSLConstList papszOptions, GDALProgressFunc pfnProgress,
                        void *pProgressArg)
 {
     OGRErr ret = OGRERR_NONE;
@@ -7969,7 +7971,7 @@ done:
 }
 
 /************************************************************************/
-/*                           OGR_L_Erase()                              */
+/*                            OGR_L_Erase()                             */
 /************************************************************************/
 
 /**
@@ -8031,7 +8033,7 @@ done:
  */
 
 OGRErr OGR_L_Erase(OGRLayerH pLayerInput, OGRLayerH pLayerMethod,
-                   OGRLayerH pLayerResult, char **papszOptions,
+                   OGRLayerH pLayerResult, CSLConstList papszOptions,
                    GDALProgressFunc pfnProgress, void *pProgressArg)
 
 {
@@ -8061,7 +8063,7 @@ struct OGRLayer::FeatureIterator::Private
 };
 
 /************************************************************************/
-/*                OGRLayer::FeatureIterator::FeatureIterator()          */
+/*             OGRLayer::FeatureIterator::FeatureIterator()             */
 /************************************************************************/
 
 OGRLayer::FeatureIterator::FeatureIterator(OGRLayer *poLayer, bool bStart)
@@ -8089,7 +8091,7 @@ OGRLayer::FeatureIterator::FeatureIterator(OGRLayer *poLayer, bool bStart)
 }
 
 /************************************************************************/
-/*               ~OGRLayer::FeatureIterator::FeatureIterator()          */
+/*            ~OGRLayer::FeatureIterator::FeatureIterator()             */
 /************************************************************************/
 
 OGRLayer::FeatureIterator::~FeatureIterator()
@@ -8099,7 +8101,7 @@ OGRLayer::FeatureIterator::~FeatureIterator()
 }
 
 /************************************************************************/
-/*                              operator*()                             */
+/*                             operator*()                              */
 /************************************************************************/
 
 OGRFeatureUniquePtr &OGRLayer::FeatureIterator::operator*()
@@ -8108,7 +8110,7 @@ OGRFeatureUniquePtr &OGRLayer::FeatureIterator::operator*()
 }
 
 /************************************************************************/
-/*                              operator++()                            */
+/*                             operator++()                             */
 /************************************************************************/
 
 OGRLayer::FeatureIterator &OGRLayer::FeatureIterator::operator++()
@@ -8129,7 +8131,7 @@ bool OGRLayer::FeatureIterator::operator!=(
 }
 
 /************************************************************************/
-/*                                 begin()                              */
+/*                               begin()                                */
 /************************************************************************/
 
 OGRLayer::FeatureIterator OGRLayer::begin()
@@ -8138,7 +8140,7 @@ OGRLayer::FeatureIterator OGRLayer::begin()
 }
 
 /************************************************************************/
-/*                                  end()                               */
+/*                                end()                                 */
 /************************************************************************/
 
 OGRLayer::FeatureIterator OGRLayer::end()
@@ -8309,7 +8311,7 @@ OGRLayer::GetGeometryTypes(int iGeomField, int nFlagsGGT, int &nEntryCountOut,
 }
 
 /************************************************************************/
-/*                      OGR_L_GetGeometryTypes()                        */
+/*                       OGR_L_GetGeometryTypes()                       */
 /************************************************************************/
 
 /** \brief Get actual geometry types found in features.
@@ -8341,7 +8343,7 @@ OGRGeometryTypeCounter *OGR_L_GetGeometryTypes(OGRLayerH hLayer, int iGeomField,
 }
 
 /************************************************************************/
-/*                    OGRLayer::GetSupportedSRSList()                   */
+/*                   OGRLayer::GetSupportedSRSList()                    */
 /************************************************************************/
 
 /** \brief Get the list of SRS supported.
@@ -8364,7 +8366,7 @@ OGRLayer::GetSupportedSRSList(CPL_UNUSED int iGeomField)
 }
 
 /************************************************************************/
-/*                    OGR_L_GetSupportedSRSList()                       */
+/*                     OGR_L_GetSupportedSRSList()                      */
 /************************************************************************/
 
 /** \brief Get the list of SRS supported.

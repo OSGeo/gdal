@@ -70,7 +70,7 @@ GDALVectorEditAlgorithm::GDALVectorEditAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                   GDALVectorEditAlgorithmLayer                       */
+/*                     GDALVectorEditAlgorithmLayer                     */
 /************************************************************************/
 
 namespace
@@ -198,7 +198,7 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 }  // namespace
 
 /************************************************************************/
-/*                GDALVectorEditAlgorithm::RunStep()                    */
+/*                  GDALVectorEditAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALVectorEditAlgorithm::RunStep(GDALPipelineStepRunContext &)

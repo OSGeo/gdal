@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*                     GDALMaterializeRasterAlgorithm()                 */
+/*                   GDALMaterializeRasterAlgorithm()                   */
 /************************************************************************/
 
 GDALMaterializeRasterAlgorithm::GDALMaterializeRasterAlgorithm()
@@ -46,7 +46,7 @@ GDALMaterializeRasterAlgorithm::GDALMaterializeRasterAlgorithm()
 }
 
 /************************************************************************/
-/*               GDALMaterializeRasterAlgorithm::RunStep()              */
+/*              GDALMaterializeRasterAlgorithm::RunStep()               */
 /************************************************************************/
 
 bool GDALMaterializeRasterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -152,7 +152,7 @@ bool GDALMaterializeRasterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*                     GDALMaterializeVectorAlgorithm()                 */
+/*                   GDALMaterializeVectorAlgorithm()                   */
 /************************************************************************/
 
 GDALMaterializeVectorAlgorithm::GDALMaterializeVectorAlgorithm()
@@ -178,7 +178,7 @@ GDALMaterializeVectorAlgorithm::GDALMaterializeVectorAlgorithm()
 }
 
 /************************************************************************/
-/*               GDALMaterializeVectorAlgorithm::RunStep()              */
+/*              GDALMaterializeVectorAlgorithm::RunStep()               */
 /************************************************************************/
 
 bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

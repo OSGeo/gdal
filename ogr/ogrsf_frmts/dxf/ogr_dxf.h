@@ -53,7 +53,7 @@ class DXFBlockDefinition
 };
 
 /************************************************************************/
-/*                         OGRDXFFeatureQueue                           */
+/*                          OGRDXFFeatureQueue                          */
 /************************************************************************/
 
 class OGRDXFFeatureQueue
@@ -962,7 +962,7 @@ class OGRDXFBlocksWriterLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRDXFWriterDS                             */
+/*                            OGRDXFWriterDS                            */
 /************************************************************************/
 
 class OGRDXFWriterDS final : public GDALDataset
@@ -1012,7 +1012,7 @@ class OGRDXFWriterDS final : public GDALDataset
     OGRDXFWriterDS();
     ~OGRDXFWriterDS() override;
 
-    int Open(const char *pszFilename, char **papszOptions);
+    int Open(const char *pszFilename, CSLConstList papszOptions);
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;

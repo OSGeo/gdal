@@ -26,7 +26,7 @@ typedef void (*FreeUserDataFunc)(void *user_data);
 class OGRLayerPool;
 
 /************************************************************************/
-/*                      OGRAbstractProxiedLayer                         */
+/*                       OGRAbstractProxiedLayer                        */
 /************************************************************************/
 
 class CPL_DLL OGRAbstractProxiedLayer : public OGRLayer

@@ -18,11 +18,11 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                      OGRPGDumpDataSource()                           */
+/*                        OGRPGDumpDataSource()                         */
 /************************************************************************/
 
 OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
-                                         char **papszOptions)
+                                         CSLConstList papszOptions)
 {
     SetDescription(pszNameIn);
 
@@ -65,7 +65,7 @@ OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                          ~OGRPGDumpDataSource()                          */
+/*                        ~OGRPGDumpDataSource()                        */
 /************************************************************************/
 
 OGRPGDumpDataSource::~OGRPGDumpDataSource()
@@ -83,7 +83,7 @@ OGRPGDumpDataSource::~OGRPGDumpDataSource()
 }
 
 /************************************************************************/
-/*                         LogStartTransaction()                        */
+/*                        LogStartTransaction()                         */
 /************************************************************************/
 
 void OGRPGDumpDataSource::LogStartTransaction()
@@ -109,7 +109,7 @@ void OGRPGDumpDataSource::LogCommit()
 }
 
 /************************************************************************/
-/*                         OGRPGCommonLaunderName()                     */
+/*                       OGRPGCommonLaunderName()                       */
 /************************************************************************/
 
 char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix,
@@ -186,7 +186,7 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix,
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -739,7 +739,7 @@ const OGRLayer *OGRPGDumpDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                                  Log()                               */
+/*                                Log()                                 */
 /************************************************************************/
 
 bool OGRPGDumpDataSource::Log(const char *pszStr, bool bAddSemiColumn)

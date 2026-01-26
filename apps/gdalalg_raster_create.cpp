@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*           GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()     */
+/*        GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm()        */
 /************************************************************************/
 
 GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm(
@@ -80,7 +80,7 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm(
 }
 
 /************************************************************************/
-/*                  GDALRasterCreateAlgorithm::RunImpl()                  */
+/*                 GDALRasterCreateAlgorithm::RunImpl()                 */
 /************************************************************************/
 
 bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
@@ -93,7 +93,7 @@ bool GDALRasterCreateAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                  GDALRasterCreateAlgorithm::RunStep()                */
+/*                 GDALRasterCreateAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)

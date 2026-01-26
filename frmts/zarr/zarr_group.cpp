@@ -19,7 +19,7 @@
 #include <set>
 
 /************************************************************************/
-/*                          ~ZarrGroupBase()                            */
+/*                           ~ZarrGroupBase()                           */
 /************************************************************************/
 
 ZarrGroupBase::~ZarrGroupBase()
@@ -28,7 +28,7 @@ ZarrGroupBase::~ZarrGroupBase()
 }
 
 /************************************************************************/
-/*                            Close()                                   */
+/*                               Close()                                */
 /************************************************************************/
 
 bool ZarrGroupBase::Close()
@@ -48,7 +48,7 @@ bool ZarrGroupBase::Close()
 }
 
 /************************************************************************/
-/*                           GetMDArrayNames()                          */
+/*                          GetMDArrayNames()                           */
 /************************************************************************/
 
 std::vector<std::string> ZarrGroupBase::GetMDArrayNames(CSLConstList) const
@@ -63,7 +63,7 @@ std::vector<std::string> ZarrGroupBase::GetMDArrayNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                            RegisterArray()                           */
+/*                           RegisterArray()                            */
 /************************************************************************/
 
 void ZarrGroupBase::RegisterArray(const std::shared_ptr<ZarrArray> &array) const
@@ -79,7 +79,7 @@ void ZarrGroupBase::RegisterArray(const std::shared_ptr<ZarrArray> &array) const
 }
 
 /************************************************************************/
-/*                            GetGroupNames()                           */
+/*                           GetGroupNames()                            */
 /************************************************************************/
 
 std::vector<std::string> ZarrGroupBase::GetGroupNames(CSLConstList) const
@@ -94,7 +94,7 @@ std::vector<std::string> ZarrGroupBase::GetGroupNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                             DeleteGroup()                            */
+/*                            DeleteGroup()                             */
 /************************************************************************/
 
 bool ZarrGroupBase::DeleteGroup(const std::string &osName,
@@ -150,7 +150,7 @@ bool ZarrGroupBase::DeleteGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                       NotifyChildrenOfDeletion()                     */
+/*                      NotifyChildrenOfDeletion()                      */
 /************************************************************************/
 
 void ZarrGroupBase::NotifyChildrenOfDeletion()
@@ -168,7 +168,7 @@ void ZarrGroupBase::NotifyChildrenOfDeletion()
 }
 
 /************************************************************************/
-/*                  ZarrGroupBase::CreateAttribute()                    */
+/*                   ZarrGroupBase::CreateAttribute()                   */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> ZarrGroupBase::CreateAttribute(
@@ -196,7 +196,7 @@ std::shared_ptr<GDALAttribute> ZarrGroupBase::CreateAttribute(
 }
 
 /************************************************************************/
-/*                  ZarrGroupBase::DeleteAttribute()                   */
+/*                   ZarrGroupBase::DeleteAttribute()                   */
 /************************************************************************/
 
 bool ZarrGroupBase::DeleteAttribute(const std::string &osName, CSLConstList)
@@ -216,7 +216,7 @@ bool ZarrGroupBase::DeleteAttribute(const std::string &osName, CSLConstList)
 }
 
 /************************************************************************/
-/*                            GetDimensions()                           */
+/*                           GetDimensions()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALDimension>>
@@ -245,7 +245,7 @@ ZarrGroupBase::GetDimensions(CSLConstList) const
 }
 
 /************************************************************************/
-/*                            DeleteMDArray()                           */
+/*                           DeleteMDArray()                            */
 /************************************************************************/
 
 bool ZarrGroupBase::DeleteMDArray(const std::string &osName,
@@ -301,7 +301,7 @@ bool ZarrGroupBase::DeleteMDArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                             CreateDimension()                        */
+/*                          CreateDimension()                           */
 /************************************************************************/
 
 std::shared_ptr<GDALDimension> ZarrGroupBase::CreateDimension(
@@ -360,7 +360,7 @@ bool ZarrGroupBase::RenameDimension(const std::string &osOldName,
 }
 
 /************************************************************************/
-/*                  ZarrGroupBase::UpdateDimensionSize()                */
+/*                 ZarrGroupBase::UpdateDimensionSize()                 */
 /************************************************************************/
 
 void ZarrGroupBase::UpdateDimensionSize(
@@ -402,7 +402,7 @@ void ZarrGroupBase::UpdateDimensionSize(
 }
 
 /************************************************************************/
-/*                  ZarrGroupBase::NotifyArrayRenamed()                 */
+/*                 ZarrGroupBase::NotifyArrayRenamed()                  */
 /************************************************************************/
 
 void ZarrGroupBase::NotifyArrayRenamed(const std::string &osOldName,
@@ -441,7 +441,7 @@ bool ZarrGroupBase::IsValidObjectName(const std::string &osName)
 }
 
 /************************************************************************/
-/*                 CheckArrayOrGroupWithSameNameDoesNotExist()          */
+/*             CheckArrayOrGroupWithSameNameDoesNotExist()              */
 /************************************************************************/
 
 bool ZarrGroupBase::CheckArrayOrGroupWithSameNameDoesNotExist(
@@ -469,7 +469,7 @@ bool ZarrGroupBase::CheckArrayOrGroupWithSameNameDoesNotExist(
 }
 
 /************************************************************************/
-/*                              Rename()                                */
+/*                               Rename()                               */
 /************************************************************************/
 
 bool ZarrGroupBase::Rename(const std::string &osNewName)
@@ -544,7 +544,7 @@ bool ZarrGroupBase::Rename(const std::string &osNewName)
 }
 
 /************************************************************************/
-/*                          ParentRenamed()                             */
+/*                           ParentRenamed()                            */
 /************************************************************************/
 
 void ZarrGroupBase::ParentRenamed(const std::string &osNewParentFullName)
@@ -560,7 +560,7 @@ void ZarrGroupBase::ParentRenamed(const std::string &osNewParentFullName)
 }
 
 /************************************************************************/
-/*                       NotifyChildrenOfRenaming()                     */
+/*                      NotifyChildrenOfRenaming()                      */
 /************************************************************************/
 
 void ZarrGroupBase::NotifyChildrenOfRenaming()
@@ -575,4 +575,31 @@ void ZarrGroupBase::NotifyChildrenOfRenaming()
 
     for (const auto &oIter : m_oMapDimensions)
         oIter.second->ParentRenamed(m_osFullName);
+}
+
+/************************************************************************/
+/*                   ZarrGroupBase::GetParentGroup()                    */
+/************************************************************************/
+
+std::shared_ptr<ZarrGroupBase> ZarrGroupBase::GetParentGroup() const
+{
+    std::shared_ptr<ZarrGroupBase> poGroup = m_poParent.lock();
+    if (!poGroup)
+    {
+        if (auto poRootGroup = m_poSharedResource->GetRootGroup())
+        {
+            const auto nPos = m_osFullName.rfind('/');
+            if (nPos == 0)
+            {
+                poGroup = poRootGroup;
+            }
+            else if (nPos != std::string::npos)
+            {
+                poGroup = std::dynamic_pointer_cast<ZarrGroupBase>(
+                    poRootGroup->OpenGroupFromFullname(
+                        m_osFullName.substr(0, nPos)));
+            }
+        }
+    }
+    return poGroup;
 }

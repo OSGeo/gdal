@@ -56,7 +56,7 @@
 #include <stdlib.h>
 
 /************************************************************************/
-/*        Little endian <==> big endian byte swap macros.               */
+/*           Little endian <==> big endian byte swap macros.            */
 /************************************************************************/
 
 #if (defined(__GNUC__) && __GNUC__ >= 5) ||                                    \

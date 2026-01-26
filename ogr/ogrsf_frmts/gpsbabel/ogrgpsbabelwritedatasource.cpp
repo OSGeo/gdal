@@ -19,13 +19,13 @@
 #include "ogr_gpsbabel.h"
 
 /************************************************************************/
-/*                    OGRGPSBabelWriteDataSource()                      */
+/*                     OGRGPSBabelWriteDataSource()                     */
 /************************************************************************/
 
 OGRGPSBabelWriteDataSource::OGRGPSBabelWriteDataSource() = default;
 
 /************************************************************************/
-/*                  ~OGRGPSBabelWriteDataSource()                       */
+/*                    ~OGRGPSBabelWriteDataSource()                     */
 /************************************************************************/
 
 OGRGPSBabelWriteDataSource::~OGRGPSBabelWriteDataSource()
@@ -41,7 +41,7 @@ OGRGPSBabelWriteDataSource::~OGRGPSBabelWriteDataSource()
 }
 
 /************************************************************************/
-/*                                Convert()                             */
+/*                              Convert()                               */
 /************************************************************************/
 
 bool OGRGPSBabelWriteDataSource::Convert()
@@ -114,11 +114,11 @@ bool OGRGPSBabelWriteDataSource::Convert()
 }
 
 /************************************************************************/
-/*                                 Create()                             */
+/*                               Create()                               */
 /************************************************************************/
 
 int OGRGPSBabelWriteDataSource::Create(const char *pszNameIn,
-                                       char **papszOptions)
+                                       CSLConstList papszOptions)
 {
     GDALDriver *poGPXDriver =
         OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("GPX");
@@ -185,7 +185,7 @@ int OGRGPSBabelWriteDataSource::Create(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *OGRGPSBabelWriteDataSource::ICreateLayer(
@@ -225,7 +225,7 @@ const OGRLayer *OGRGPSBabelWriteDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                         GetLayerCount()                              */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int OGRGPSBabelWriteDataSource::GetLayerCount() const
