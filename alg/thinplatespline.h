@@ -132,7 +132,7 @@ class VizGeorefSpline2D
     bool change_point(int index, double x, double y, double* Pvars);
     void reset(void) { _nof_points = 0; }
 #endif
-    int solve(void);
+    int solve(bool bForceBuiltinMethod);
 
   private:
     vizGeorefInterType type;
