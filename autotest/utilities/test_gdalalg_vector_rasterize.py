@@ -716,6 +716,37 @@ def test_gdalalg_vector_rasterize_missing_size_and_res():
         rasterize.Run()
 
 
+@pytest.mark.parametrize(
+    "option,value",
+    [
+        ("nodata", 99),
+        ("crs", "EPSG:4326"),
+        ("output-data-type", "Int16"),
+        ("size", [50, 50]),
+        ("resolution", [60, 60]),
+    ],
+)
+def test_gdalalg_vector_rasterize_invalid_option_with_update(option, value, tmp_vsimem):
+
+    rasterize = get_rasterize_alg()
+    rasterize["input"] = "../ogr/data/poly.shp"
+    rasterize["burn"] = 1
+    rasterize["output"] = tmp_vsimem / "out.tif"
+    rasterize["size"] = [100, 100]
+
+    assert rasterize.Run()
+
+    rasterize = get_rasterize_alg()
+    rasterize["input"] = "../ogr/data/poly.shp"
+    rasterize["output"] = tmp_vsimem / "out.tif"
+    rasterize["update"] = True
+    rasterize["burn"] = 2
+    rasterize[option] = value
+
+    with pytest.raises(Exception, match=f"Cannot specify --{option} when updating"):
+        rasterize.Run()
+
+
 @pytest.mark.require_driver("COG")
 def test_gdalalg_vector_rasterize_to_cog(tmp_vsimem):
 
