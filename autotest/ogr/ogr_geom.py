@@ -1110,6 +1110,12 @@ def test_ogr_geom_linestring_limits():
     with pytest.raises(Exception):
         geom.SetPoint_2D((1 << 31) - 1, 5, 6)
 
+    with pytest.raises(Exception):
+        geom.SetPointM((1 << 31) - 1, 5, 6, 7)
+
+    with pytest.raises(Exception):
+        geom.SetPointZM((1 << 31) - 1, 5, 6, 7, 8)
+
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0)")
     assert geom.Length() == 0
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0, 1 0)")
@@ -3480,47 +3486,107 @@ def test_ogr_geom_GT_GetLinear(gt, res):
 # Limit cases
 
 
+@gdaltest.enable_exceptions()
 def test_ogr_geom_api_limit_tests():
 
     p = ogr.Geometry(ogr.wkbPoint)
     lyr = ogr.Geometry(ogr.wkbLineString)
     poly = ogr.Geometry(ogr.wkbPolygon)
 
-    with gdal.quiet_errors():
+    with pytest.raises(Exception):
         p.GetX(1)
+
+    with pytest.raises(Exception):
         p.GetY(1)
+
+    with pytest.raises(Exception):
         p.GetZ(1)
 
+    with pytest.raises(Exception):
         lyr.GetX(1)
+
+    with pytest.raises(Exception):
         lyr.GetY(1)
+
+    with pytest.raises(Exception):
         lyr.GetZ(1)
 
+    with pytest.raises(Exception):
         poly.GetX()
+
+    with pytest.raises(Exception):
         poly.GetY()
+
+    with pytest.raises(Exception):
         poly.GetZ()
 
+    with pytest.raises(Exception):
         poly.GetPoints()
 
+    with pytest.raises(Exception):
         p.GetPoint(1)
+
+    with pytest.raises(Exception):
         lyr.GetPoint(1)
+
+    with pytest.raises(Exception):
         poly.GetPoint(1)
 
+    with pytest.raises(Exception):
         p.SetPoint(1, 0, 0)
+
+    with pytest.raises(Exception):
         lyr.SetPoint(-1, 0, 0)
+
+    with pytest.raises(Exception):
         poly.SetPoint(0, 0, 0)
 
+    with pytest.raises(Exception):
         p.SetPoint_2D(1, 0, 0)
+
+    with pytest.raises(Exception):
         lyr.SetPoint_2D(-1, 0, 0)
+
+    with pytest.raises(Exception):
         poly.SetPoint_2D(0, 0, 0)
 
+    with pytest.raises(Exception):
+        p.SetPointM(1, 0, 0, 0)
+
+    with pytest.raises(Exception):
+        lyr.SetPointM(-1, 0, 0, 0)
+
+    with pytest.raises(Exception):
+        poly.SetPointM(0, 0, 0, 0)
+
+    with pytest.raises(Exception):
+        p.SetPointZM(1, 0, 0, 0, 0)
+
+    with pytest.raises(Exception):
+        lyr.SetPointZM(-1, 0, 0, 0, 0)
+
+    with pytest.raises(Exception):
+        poly.SetPointZM(0, 0, 0, 0, 0)
+
+    with pytest.raises(Exception):
         poly.AddPoint(0, 0)
 
+    with pytest.raises(Exception):
+        poly.AddPointM(0, 0, 0)
+
+    with pytest.raises(Exception):
+        poly.AddPointZM(0, 0, 0, 0, 0)
+
+    with pytest.raises(Exception):
         poly.AddPoint_2D(0, 0)
 
+    with pytest.raises(Exception):
         p.GetGeometryRef(1)
 
+    with pytest.raises(Exception):
         p.AddGeometry(p)
 
+    with pytest.raises(Exception):
         p.AddGeometryDirectly(p)
 
 

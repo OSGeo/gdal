@@ -295,24 +295,26 @@ void CPL_DLL OGR_G_GetPoint(OGRGeometryH, int iPoint, double *, double *,
                             double *);
 void CPL_DLL OGR_G_GetPointZM(OGRGeometryH, int iPoint, double *, double *,
                               double *, double *);
-void CPL_DLL OGR_G_SetPointCount(OGRGeometryH hGeom, int nNewPointCount);
-void CPL_DLL OGR_G_SetPoint(OGRGeometryH, int iPoint, double, double, double);
-void CPL_DLL OGR_G_SetPoint_2D(OGRGeometryH, int iPoint, double, double);
-void CPL_DLL OGR_G_SetPointM(OGRGeometryH, int iPoint, double, double, double);
-void CPL_DLL OGR_G_SetPointZM(OGRGeometryH, int iPoint, double, double, double,
-                              double);
-void CPL_DLL OGR_G_AddPoint(OGRGeometryH, double, double, double);
-void CPL_DLL OGR_G_AddPoint_2D(OGRGeometryH, double, double);
-void CPL_DLL OGR_G_AddPointM(OGRGeometryH, double, double, double);
-void CPL_DLL OGR_G_AddPointZM(OGRGeometryH, double, double, double, double);
-void CPL_DLL OGR_G_SetPoints(OGRGeometryH hGeom, int nPointsIn,
-                             const void *pabyX, int nXStride, const void *pabyY,
-                             int nYStride, const void *pabyZ, int nZStride);
-void CPL_DLL OGR_G_SetPointsZM(OGRGeometryH hGeom, int nPointsIn,
+OGRErr CPL_DLL OGR_G_SetPointCount(OGRGeometryH hGeom, int nNewPointCount);
+OGRErr CPL_DLL OGR_G_SetPoint(OGRGeometryH, int iPoint, double, double, double);
+OGRErr CPL_DLL OGR_G_SetPoint_2D(OGRGeometryH, int iPoint, double, double);
+OGRErr CPL_DLL OGR_G_SetPointM(OGRGeometryH, int iPoint, double, double,
+                               double);
+OGRErr CPL_DLL OGR_G_SetPointZM(OGRGeometryH, int iPoint, double, double,
+                                double, double);
+OGRErr CPL_DLL OGR_G_AddPoint(OGRGeometryH, double, double, double);
+OGRErr CPL_DLL OGR_G_AddPoint_2D(OGRGeometryH, double, double);
+OGRErr CPL_DLL OGR_G_AddPointM(OGRGeometryH, double, double, double);
+OGRErr CPL_DLL OGR_G_AddPointZM(OGRGeometryH, double, double, double, double);
+OGRErr CPL_DLL OGR_G_SetPoints(OGRGeometryH hGeom, int nPointsIn,
                                const void *pabyX, int nXStride,
                                const void *pabyY, int nYStride,
-                               const void *pabyZ, int nZStride,
-                               const void *pabyM, int nMStride);
+                               const void *pabyZ, int nZStride);
+OGRErr CPL_DLL OGR_G_SetPointsZM(OGRGeometryH hGeom, int nPointsIn,
+                                 const void *pabyX, int nXStride,
+                                 const void *pabyY, int nYStride,
+                                 const void *pabyZ, int nZStride,
+                                 const void *pabyM, int nMStride);
 void CPL_DLL OGR_G_SwapXY(OGRGeometryH hGeom);
 
 /* Methods for getting/setting rings and members collections */
