@@ -2948,6 +2948,18 @@ CPLErr VRTComplexSource::XMLInit(const CPLXMLNode *psSrc,
 }
 
 /************************************************************************/
+/*                               SetLUT()                               */
+/************************************************************************/
+
+void VRTComplexSource::SetLUT(const std::vector<double> &adfLUTInputs,
+                              const std::vector<double> &adfLUTOutputs)
+{
+    m_adfLUTInputs = adfLUTInputs;
+    m_adfLUTOutputs = adfLUTOutputs;
+    m_nProcessingFlags |= PROCESSING_FLAG_LUT;
+}
+
+/************************************************************************/
 /*                            LookupValue()                             */
 /************************************************************************/
 
