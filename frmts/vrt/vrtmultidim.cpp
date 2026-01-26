@@ -1160,7 +1160,74 @@ VRTMDArray::Create(const std::shared_ptr<VRTGroup> &poThisGroup,
         }
     }
 
+    const CPLXMLNode *psOverviews = CPLGetXMLNode(psNode, "Overviews");
+    if (psOverviews)
+    {
+        for (const CPLXMLNode *psIter = psOverviews->psChild; psIter;
+             psIter = psIter->psNext)
+        {
+            if (psIter->eType == CXT_Element &&
+                strcmp(psIter->pszValue, "ArrayFullName") == 0 &&
+                psIter->psChild->pszValue)
+            {
+                array->m_aosOverviewFullname.push_back(
+                    psIter->psChild->pszValue);
+                array->m_apoOverviews.push_back(nullptr);
+            }
+            else
+            {
+                CPLXMLNode sNode;
+                sNode.eType = CXT_Element;
+                sNode.pszValue = const_cast<char *>("!temp!");
+                sNode.psNext = nullptr;
+                sNode.psChild = const_cast<CPLXMLNode *>(psIter);
+                auto poOvrArray = ParseArray(
+                    &sNode, poThisGroup->GetVRTPath().c_str(), "Overviews");
+                if (!poOvrArray)
+                    return nullptr;
+                array->m_aosOverviewFullname.push_back(std::string());
+                array->m_apoOverviews.push_back(std::move(poOvrArray));
+            }
+        }
+    }
+
     return array;
+}
+
+/************************************************************************/
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int VRTMDArray::GetOverviewCount() const
+{
+    CPLAssert(m_apoOverviews.size() == m_aosOverviewFullname.size());
+    return static_cast<int>(m_apoOverviews.size());
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> VRTMDArray::GetOverview(int idx) const
+{
+    if (idx < 0 || idx >= GetOverviewCount())
+        return nullptr;
+    if (!m_apoOverviews[idx] && !m_aosOverviewFullname[idx].empty())
+    {
+        if (auto poRG = GetRootGroup())
+        {
+            m_apoOverviews[idx] =
+                poRG->OpenMDArrayFromFullname(m_aosOverviewFullname[idx]);
+            if (!m_apoOverviews[idx])
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Cannot resolve overview full name '%s' to an actual array",
+                    m_aosOverviewFullname[idx].c_str());
+            }
+        }
+    }
+    return m_apoOverviews[idx];
 }
 
 /************************************************************************/

@@ -924,9 +924,9 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         }
     }
 
-    auto poArray = ZarrV3Array::Create(
-        m_poSharedResource, GetFullName(), osName, aoDimensions, oDataType,
-        aoDtypeElts, anOuterBlockSize, anInnerBlockSize);
+    auto poArray = ZarrV3Array::Create(m_poSharedResource, Self(), osName,
+                                       aoDimensions, oDataType, aoDtypeElts,
+                                       anOuterBlockSize, anInnerBlockSize);
 
     if (!poArray)
         return nullptr;
@@ -944,6 +944,8 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     }
     if (poCodecs)
         poArray->SetCodecs(oCodecs, std::move(poCodecs));
+
+    poArray->SetCreationOptions(papszOptions);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     if (!cpl::starts_with(osFilename, "/vsi") && !poArray->Flush())

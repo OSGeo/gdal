@@ -91,6 +91,8 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 {
     {
         auto poRG = ZarrV2Group::Create(shared_from_this(), std::string(), "/");
+        // Prevents potential recursion
+        m_poWeakRootGroup = poRG;
         poRG->SetUpdatable(m_bUpdatable);
         poRG->SetDirectoryName(m_osRootDirectoryName);
 
@@ -123,6 +125,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
             }
             const std::string osArrayName(
                 CPLGetBasenameSafe(m_osRootDirectoryName.c_str()));
+
             if (!poRG->LoadArray(osArrayName, osZarrayFilename, oRoot, false,
                                  CPLJSONObject()))
                 return nullptr;
@@ -154,6 +157,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
                     ConsolidatedMetadataKind::EXTERNAL;
                 m_oObjConsolidatedMetadata = oDoc.GetRoot();
             }
+
             poRG->InitFromConsolidatedMetadata(m_oObjConsolidatedMetadata);
 
             return poRG;
@@ -176,6 +180,8 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
     // Zarr v3
     auto poRG_V3 = ZarrV3Group::Create(shared_from_this(), std::string(), "/",
                                        m_osRootDirectoryName);
+    // Prevents potential recursion
+    m_poWeakRootGroup = poRG_V3;
     poRG_V3->SetUpdatable(m_bUpdatable);
 
     const std::string osZarrJsonFilename(CPLFormFilenameSafe(
@@ -261,6 +267,20 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
         return poRG_V3;
 
     return nullptr;
+}
+
+/************************************************************************/
+/*                   ZarrSharedResource::GetRootGroup()                 */
+/************************************************************************/
+
+std::shared_ptr<ZarrGroupBase> ZarrSharedResource::GetRootGroup()
+{
+    auto poRootGroup = m_poWeakRootGroup.lock();
+    if (poRootGroup)
+        return poRootGroup;
+    poRootGroup = OpenRootGroup();
+    m_poWeakRootGroup = poRootGroup;
+    return poRootGroup;
 }
 
 /************************************************************************/

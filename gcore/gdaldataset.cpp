@@ -11731,9 +11731,11 @@ class GDALMDArrayFromDataset final : public GDALMDArray
     std::shared_ptr<GDALMDArray> m_varY{};
     std::shared_ptr<GDALMDArray> m_varBand{};
     const std::string m_osFilename;
+    const CPLStringList m_aosOptions;
     int m_iBandDim = 0;
     int m_iYDim = 1;
     int m_iXDim = 2;
+    mutable std::vector<std::shared_ptr<GDALMDArray>> m_apoOverviews{};
 
     bool ReadWrite(GDALRWFlag eRWFlag, const GUInt64 *arrayStartIdx,
                    const size_t *count, const GInt64 *arrayStep,
@@ -11748,7 +11750,7 @@ class GDALMDArrayFromDataset final : public GDALMDArray
           GDALMDArray(std::string(), std::string(poDS->GetDescription())),
           m_poDS(poDS), m_dt(GDALExtendedDataType::Create(
                             poDS->GetRasterBand(1)->GetRasterDataType())),
-          m_osFilename(poDS->GetDescription())
+          m_osFilename(poDS->GetDescription()), m_aosOptions(papszOptions)
     {
         m_poDS->Reference();
 
@@ -12199,6 +12201,58 @@ class GDALMDArrayFromDataset final : public GDALMDArray
             CPLFree(pszKey);
         }
         return res;
+    }
+
+    int GetOverviewCount() const override
+    {
+        int nOvrCount = 0;
+        GDALDataset *poOvrDS = nullptr;
+        bool bOK = true;
+        for (int i = 1; bOK && i <= m_poDS->GetRasterCount(); ++i)
+        {
+            auto poBand = m_poDS->GetRasterBand(i);
+            const int nThisOvrCount = poBand->GetOverviewCount();
+            bOK = (nThisOvrCount > 0 && (i == 1 || nThisOvrCount == nOvrCount));
+            if (bOK)
+            {
+                nOvrCount = nThisOvrCount;
+                auto poFirstOvrBand = poBand->GetOverview(0);
+                bOK = poFirstOvrBand != nullptr;
+                if (bOK)
+                {
+                    auto poThisOvrDS = poFirstOvrBand->GetDataset();
+                    bOK = poThisOvrDS != nullptr &&
+                          poThisOvrDS->GetRasterBand(i) == poFirstOvrBand &&
+                          (i == 1 || poThisOvrDS == poOvrDS);
+                    if (bOK)
+                        poOvrDS = poThisOvrDS;
+                }
+            }
+        }
+        return bOK ? nOvrCount : 0;
+    }
+
+    std::shared_ptr<GDALMDArray> GetOverview(int idx) const override
+    {
+        const int nOverviews = GetOverviewCount();
+        if (idx < 0 || idx >= nOverviews)
+            return nullptr;
+        m_apoOverviews.resize(nOverviews);
+        if (!m_apoOverviews[idx])
+        {
+            if (auto poBand = m_poDS->GetRasterBand(1))
+            {
+                if (auto poOvrBand = poBand->GetOverview(idx))
+                {
+                    if (auto poOvrDS = poOvrBand->GetDataset())
+                    {
+                        m_apoOverviews[idx] =
+                            Create(poOvrDS, m_aosOptions.List());
+                    }
+                }
+            }
+        }
+        return m_apoOverviews[idx];
     }
 };
 

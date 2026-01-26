@@ -2215,6 +2215,8 @@ class VRTMDArray final : public GDALMDArray
     bool m_bHasOffset = false;
     std::string m_osFilename{};
     std::vector<GUInt64> m_anBlockSize{};
+    std::vector<std::string> m_aosOverviewFullname{};
+    mutable std::vector<std::shared_ptr<GDALMDArray>> m_apoOverviews{};
 
     bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
@@ -2385,6 +2387,10 @@ class VRTMDArray final : public GDALMDArray
 
     bool GetRawBlockInfo(const uint64_t *panBlockCoordinates,
                          GDALMDArrayRawBlockInfo &info) const override;
+
+    int GetOverviewCount() const override;
+
+    std::shared_ptr<GDALMDArray> GetOverview(int idx) const override;
 };
 
 /************************************************************************/

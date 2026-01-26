@@ -8731,6 +8731,8 @@ class GDALRasterBandFromArray final : public GDALPamRasterBand
     double GetScale(int *pbHasScale) override;
     const char *GetUnitType() override;
     GDALColorInterp GetColorInterpretation() override;
+    int GetOverviewCount() override;
+    GDALRasterBand *GetOverview(int idx) override;
 };
 
 class GDALDatasetFromArray final : public GDALPamDataset
@@ -8738,18 +8740,24 @@ class GDALDatasetFromArray final : public GDALPamDataset
     friend class GDALRasterBandFromArray;
 
     std::shared_ptr<GDALMDArray> m_poArray;
-    size_t m_iXDim;
-    size_t m_iYDim;
+    const size_t m_iXDim;
+    const size_t m_iYDim;
+    const CPLStringList m_aosOptions;
     GDALGeoTransform m_gt{};
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
     GDALMultiDomainMetadata m_oMDD{};
     std::string m_osOvrFilename{};
+    bool m_bOverviewsDiscovered = false;
+    std::vector<std::unique_ptr<GDALDataset, GDALDatasetUniquePtrReleaser>>
+        m_apoOverviews{};
 
   public:
     GDALDatasetFromArray(const std::shared_ptr<GDALMDArray> &array,
-                         size_t iXDim, size_t iYDim)
-        : m_poArray(array), m_iXDim(iXDim), m_iYDim(iYDim)
+                         size_t iXDim, size_t iYDim,
+                         const CPLStringList &aosOptions)
+        : m_poArray(array), m_iXDim(iXDim), m_iYDim(iYDim),
+          m_aosOptions(aosOptions)
     {
         // Initialize an overview filename from the filename of the array
         // and its name.
@@ -8775,7 +8783,7 @@ class GDALDatasetFromArray final : public GDALPamDataset
         }
     }
 
-    static GDALDatasetFromArray *
+    static std::unique_ptr<GDALDatasetFromArray>
     Create(const std::shared_ptr<GDALMDArray> &array, size_t iXDim,
            size_t iYDim, const std::shared_ptr<GDALGroup> &poRootGroup,
            CSLConstList papszOptions);
@@ -8843,6 +8851,45 @@ class GDALDatasetFromArray final : public GDALPamDataset
             return m_osOvrFilename.c_str();
         }
         return m_oMDD.GetMetadataItem(pszName, pszDomain);
+    }
+
+    void DiscoverOverviews()
+    {
+        if (!m_bOverviewsDiscovered)
+        {
+            m_bOverviewsDiscovered = true;
+            if (const int nOverviews = m_poArray->GetOverviewCount())
+            {
+                if (auto poRootGroup = m_poArray->GetRootGroup())
+                {
+                    const size_t nDims = m_poArray->GetDimensionCount();
+                    CPLStringList aosOptions(m_aosOptions);
+                    aosOptions.SetNameValue("LOAD_PAM", "NO");
+                    for (int iOvr = 0; iOvr < nOverviews; ++iOvr)
+                    {
+                        if (auto poOvrArray = m_poArray->GetOverview(iOvr))
+                        {
+                            if (poOvrArray->GetDimensionCount() == nDims &&
+                                poOvrArray->GetDataType() ==
+                                    m_poArray->GetDataType())
+                            {
+                                auto poOvrDS =
+                                    Create(poOvrArray, m_iXDim, m_iYDim,
+                                           poRootGroup, aosOptions);
+                                if (poOvrDS)
+                                {
+                                    m_apoOverviews.push_back(
+                                        std::unique_ptr<
+                                            GDALDataset,
+                                            GDALDatasetUniquePtrReleaser>(
+                                            poOvrDS.release()));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 };
 
@@ -9317,10 +9364,42 @@ GDALColorInterp GDALRasterBandFromArray::GetColorInterpretation()
 }
 
 /************************************************************************/
+/*               GDALRasterBandFromArray::GetOverviewCount()            */
+/************************************************************************/
+
+int GDALRasterBandFromArray::GetOverviewCount()
+{
+    const int nPAMCount = GDALPamRasterBand::GetOverviewCount();
+    if (nPAMCount)
+        return nPAMCount;
+    auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));
+    l_poDS->DiscoverOverviews();
+    return static_cast<int>(l_poDS->m_apoOverviews.size());
+}
+
+/************************************************************************/
+/*                  GDALRasterBandFromArray::GetOverview()              */
+/************************************************************************/
+
+GDALRasterBand *GDALRasterBandFromArray::GetOverview(int idx)
+{
+    const int nPAMCount = GDALPamRasterBand::GetOverviewCount();
+    if (nPAMCount)
+        return GDALPamRasterBand::GetOverview(idx);
+    auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));
+    l_poDS->DiscoverOverviews();
+    if (idx < 0 || static_cast<size_t>(idx) >= l_poDS->m_apoOverviews.size())
+    {
+        return nullptr;
+    }
+    return l_poDS->m_apoOverviews[idx]->GetRasterBand(nBand);
+}
+
+/************************************************************************/
 /*                    GDALDatasetFromArray::Create()                    */
 /************************************************************************/
 
-GDALDatasetFromArray *GDALDatasetFromArray::Create(
+std::unique_ptr<GDALDatasetFromArray> GDALDatasetFromArray::Create(
     const std::shared_ptr<GDALMDArray> &array, size_t iXDim, size_t iYDim,
     const std::shared_ptr<GDALGroup> &poRootGroup, CSLConstList papszOptions)
 
@@ -9936,7 +10015,8 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
         }
     }
 
-    auto poDS = std::make_unique<GDALDatasetFromArray>(array, iXDim, iYDim);
+    auto poDS = std::make_unique<GDALDatasetFromArray>(
+        array, iXDim, iYDim, CPLStringList(papszOptions));
 
     poDS->eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
 
@@ -9964,7 +10044,30 @@ GDALDatasetFromArray *GDALDatasetFromArray::Create(
     const auto attrs(array->GetAttributes());
     for (const auto &attr : attrs)
     {
-        if (attr->GetName() != "COLOR_INTERPRETATION")
+        if (attr->GetName() == "spatial:registration")
+        {
+            // From https://github.com/zarr-conventions/spatial
+            const char *pszValue = attr->ReadAsString();
+            if (pszValue && strcmp(pszValue, "pixel") == 0)
+                poDS->m_oMDD.SetMetadataItem(GDALMD_AREA_OR_POINT,
+                                             GDALMD_AOP_AREA);
+            else if (pszValue && strcmp(pszValue, "node") == 0)
+                poDS->m_oMDD.SetMetadataItem(GDALMD_AREA_OR_POINT,
+                                             GDALMD_AOP_POINT);
+            else if (pszValue)
+                poDS->m_oMDD.SetMetadataItem(attr->GetName().c_str(), pszValue);
+        }
+        else if (attr->GetName() == "gdal:geotransform")
+        {
+            // From Zarr driver
+            const auto doubleArray = attr->ReadAsDoubleArray();
+            if (doubleArray.size() == 6)
+            {
+                poDS->m_bHasGT = true;
+                poDS->m_gt = GDALGeoTransform(doubleArray.data());
+            }
+        }
+        else if (attr->GetName() != "COLOR_INTERPRETATION")
         {
             auto stringArray = attr->ReadAsStringArray();
             std::string val;
@@ -10025,7 +10128,8 @@ lbl_next_depth:
     if (iDim > 0)
         goto lbl_return_to_caller;
 
-    if (!array->GetFilename().empty())
+    if (!array->GetFilename().empty() &&
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "LOAD_PAM", "YES")))
     {
         poDS->SetPhysicalFilename(array->GetFilename().c_str());
         std::string osDerivedDatasetName(
@@ -10047,7 +10151,7 @@ lbl_next_depth:
         }
     }
 
-    return poDS.release();
+    return poDS;
 }
 
 /************************************************************************/
@@ -10213,7 +10317,8 @@ GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim,
         return nullptr;
     }
     return GDALDatasetFromArray::Create(self, iXDim, iYDim, poRootGroup,
-                                        papszOptions);
+                                        papszOptions)
+        .release();
 }
 
 /************************************************************************/
@@ -14601,6 +14706,14 @@ bool GDALMDArrayRegularlySpaced::IRead(
     return true;
 }
 
+bool GDALMDArrayRegularlySpaced::IsRegularlySpaced(double &dfStart,
+                                                   double &dfIncrement) const
+{
+    dfStart = m_dfStart + m_dfOffsetInIncrement * m_dfIncrement;
+    dfIncrement = m_dfIncrement;
+    return true;
+}
+
 GDALDimensionWeakIndexingVar::GDALDimensionWeakIndexingVar(
     const std::string &osParentName, const std::string &osName,
     const std::string &osType, const std::string &osDirection, GUInt64 nSize)
@@ -15374,4 +15487,92 @@ GDALMDArrayRawBlockInfo *GDALMDArrayRawBlockInfoCreate(void)
 void GDALMDArrayRawBlockInfoRelease(GDALMDArrayRawBlockInfo *psBlockInfo)
 {
     delete psBlockInfo;
+}
+
+/************************************************************************/
+/*                      GDALMDArray::GetOverviewCount()                 */
+/************************************************************************/
+
+/**
+ * \brief Return the number of overview arrays available.
+ *
+ * This method is the same as the C function GDALMDArrayGetOverviewCount().
+ *
+ * @return overview count, zero if none.
+ *
+ * @since 3.13
+ */
+
+int GDALMDArray::GetOverviewCount() const
+{
+    return 0;
+}
+
+/************************************************************************/
+/*                      GDALMDArrayGetOverviewCount()                   */
+/************************************************************************/
+/**
+ * \brief Return the number of overview arrays available.
+ *
+ * This method is the same as the C++ method GDALMDArray::GetOverviewCount().
+ *
+ * @param hArray Array.
+ * @return overview count, zero if none.
+ *
+ * @since 3.13
+ */
+
+int GDALMDArrayGetOverviewCount(GDALMDArrayH hArray)
+{
+    VALIDATE_POINTER1(hArray, __func__, 0);
+    return hArray->m_poImpl->GetOverviewCount();
+}
+
+/************************************************************************/
+/*                      GDALMDArray::GetOverview()                      */
+/************************************************************************/
+
+/**
+ * \brief Get overview array object.
+ *
+ * This method is the same as the C function GDALMDArrayGetOverview().
+ *
+ * @param nIdx overview index between 0 and GetOverviewCount()-1.
+ *
+ * @return overview GDALMDArray, or nullptr
+ *
+ * @since 3.13
+ */
+
+std::shared_ptr<GDALMDArray> GDALMDArray::GetOverview(int nIdx) const
+{
+    (void)nIdx;
+    return nullptr;
+}
+
+/************************************************************************/
+/*                         GDALMDArrayGetOverview()                     */
+/************************************************************************/
+
+/**
+ * \brief Get overview array object.
+ *
+ * This method is the same as the C++ method GDALMDArray::GetOverview().
+ *
+ * @param hArray Array.
+ * @param nIdx overview index between 0 and GDALMDArrayGetOverviewCount()-1.
+ *
+ * @return overview GDALMDArray, or nullptr.
+ * Must be released with GDALMDArrayRelease()
+ *
+ * @since 3.13
+ */
+
+GDALMDArrayH GDALMDArrayGetOverview(GDALMDArrayH hArray, int nIdx)
+{
+    VALIDATE_POINTER1(hArray, __func__, nullptr);
+    auto poOverview = hArray->m_poImpl->GetOverview(nIdx);
+    if (!poOverview)
+        return nullptr;
+    return new GDALMDArrayHS(poOverview);
 }

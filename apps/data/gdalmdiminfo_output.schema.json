@@ -67,6 +67,9 @@
         },
         "structural_info": {
           "$ref": "#/definitions/structural_info"
+        },
+        "overviews": {
+          "$ref": "#/definitions/overviews"
         }
       },
       "additionalProperties": false
@@ -237,7 +240,17 @@
           "type": "string"
         },
         "indexing_variable": {
-          "type": "string"
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/array"
+              }
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -314,6 +327,20 @@
           }
         }
       ]
+    },
+
+    "overviews": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/definitions/array"
+          }
+        ]
+      }
     },
 
     "srs": {
