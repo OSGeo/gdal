@@ -253,7 +253,8 @@ class OGCAPITiledLayer final
     OGRFeature *GetNextRawFeature();
     GDALDataset *OpenTile(int nX, int nY, bool &bEmptyContent);
     void FinalizeFeatureDefnWithLayer(OGRLayer *poUnderlyingLayer);
-    OGRFeature *BuildFeature(OGRFeature *poSrcFeature, int nX, int nY);
+    OGRFeature *BuildFeature(std::unique_ptr<OGRFeature> poSrcFeature, int nX,
+                             int nY);
 
     CPL_DISALLOW_COPY_ASSIGN(OGCAPITiledLayer)
 
@@ -2532,8 +2533,9 @@ void OGCAPITiledLayer::FinalizeFeatureDefnWithLayer(OGRLayer *poUnderlyingLayer)
 /*                            BuildFeature()                            */
 /************************************************************************/
 
-OGRFeature *OGCAPITiledLayer::BuildFeature(OGRFeature *poSrcFeature, int nX,
-                                           int nY)
+OGRFeature *
+OGCAPITiledLayer::BuildFeature(std::unique_ptr<OGRFeature> poSrcFeature, int nX,
+                               int nY)
 {
     int nCoalesce = GetCoalesceFactorForRow(nY);
     if (nCoalesce <= 0)
@@ -2544,21 +2546,20 @@ OGRFeature *OGCAPITiledLayer::BuildFeature(OGRFeature *poSrcFeature, int nX,
     const GIntBig nFID = nY * m_oTileMatrix.mMatrixWidth + nX +
                          poSrcFeature->GetFID() * m_oTileMatrix.mMatrixWidth *
                              m_oTileMatrix.mMatrixHeight;
-    auto poGeom = poSrcFeature->StealGeometry();
+    auto poGeom = std::unique_ptr<OGRGeometry>(poSrcFeature->StealGeometry());
     if (poGeom && m_poFeatureDefn->GetGeomType() != wkbUnknown)
     {
-        poGeom =
-            OGRGeometryFactory::forceTo(poGeom, m_poFeatureDefn->GetGeomType());
+        poGeom = OGRGeometryFactory::forceTo(std::move(poGeom),
+                                             m_poFeatureDefn->GetGeomType());
     }
-    poFeature->SetFrom(poSrcFeature, true);
+    poFeature->SetFrom(poSrcFeature.get(), true);
     poFeature->SetFID(nFID);
     if (poGeom && m_poFeatureDefn->GetGeomFieldCount() > 0)
     {
         poGeom->assignSpatialReference(
             m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef());
     }
-    poFeature->SetGeometryDirectly(poGeom);
-    delete poSrcFeature;
+    poFeature->SetGeometry(std::move(poGeom));
     return poFeature;
 }
 
@@ -2623,10 +2624,11 @@ OGRFeature *OGCAPITiledLayer::GetNextRawFeature()
             FinalizeFeatureDefnWithLayer(m_poUnderlyingLayer);
         }
 
-        auto poSrcFeature = m_poUnderlyingLayer->GetNextFeature();
+        auto poSrcFeature =
+            std::unique_ptr<OGRFeature>(m_poUnderlyingLayer->GetNextFeature());
         if (poSrcFeature != nullptr)
         {
-            return BuildFeature(poSrcFeature, m_nCurX, m_nCurY);
+            return BuildFeature(std::move(poSrcFeature), m_nCurX, m_nCurY);
         }
 
         m_poUnderlyingDS.reset();
@@ -2660,10 +2662,11 @@ OGRFeature *OGCAPITiledLayer::GetFeature(GIntBig nFID)
     if (poUnderlyingLayer == nullptr)
         return nullptr;
     FinalizeFeatureDefnWithLayer(poUnderlyingLayer);
-    OGRFeature *poSrcFeature = poUnderlyingLayer->GetFeature(nFIDInTile);
+    auto poSrcFeature =
+        std::unique_ptr<OGRFeature>(poUnderlyingLayer->GetFeature(nFIDInTile));
     if (poSrcFeature == nullptr)
         return nullptr;
-    return BuildFeature(poSrcFeature, nX, nY);
+    return BuildFeature(std::move(poSrcFeature), nX, nY);
 }
 
 /************************************************************************/

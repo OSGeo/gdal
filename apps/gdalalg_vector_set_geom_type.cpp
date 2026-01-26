@@ -224,10 +224,12 @@ GDALVectorSetGeomTypeAlgorithmLayer::TranslateFeature(
             const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
             if (!m_opts.m_layerOnly && IsSelectedGeomField(i))
             {
-                poGeom = poSrcFeature->StealGeometry(i);
-                const auto eTargetType = ConvertType(poGeom->getGeometryType());
                 auto poNewGeom = std::unique_ptr<OGRGeometry>(
-                    OGRGeometryFactory::forceTo(poGeom, eTargetType));
+                    poSrcFeature->StealGeometry(i));
+                const auto eTargetType =
+                    ConvertType(poNewGeom->getGeometryType());
+                poNewGeom = OGRGeometryFactory::forceTo(std::move(poNewGeom),
+                                                        eTargetType);
                 if (m_opts.m_skip &&
                     (!poNewGeom ||
                      (wkbFlatten(eTargetType) != wkbUnknown &&
@@ -237,7 +239,7 @@ GDALVectorSetGeomTypeAlgorithmLayer::TranslateFeature(
                 }
                 poNewGeom->assignSpatialReference(
                     poGeomFieldDefn->GetSpatialRef());
-                poSrcFeature->SetGeomFieldDirectly(i, poNewGeom.release());
+                poSrcFeature->SetGeomField(i, std::move(poNewGeom));
             }
             else
             {

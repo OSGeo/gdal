@@ -260,7 +260,8 @@ class NASReader final : public IGMLReader
         return m_pszFilteredClassName;
     }
 
-    static OGRGeometry *ConvertGeometry(OGRGeometry *);
+    static std::unique_ptr<OGRGeometry>
+        ConvertGeometry(std::unique_ptr<OGRGeometry>);
 };
 
 #endif /* CPL_NASREADERP_H_INCLUDED */

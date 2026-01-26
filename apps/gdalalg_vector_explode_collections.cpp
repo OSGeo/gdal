@@ -206,8 +206,8 @@ void GDALVectorExplodeCollectionsAlgorithmLayer::TranslateFeature(
                     auto poNewGeom =
                         std::unique_ptr<OGRGeometry>(poSubGeomRef->clone());
                     if (poNewGeom->getGeometryType() != eTargetType)
-                        poNewGeom.reset(OGRGeometryFactory::forceTo(
-                            poNewGeom.release(), eTargetType));
+                        poNewGeom = OGRGeometryFactory::forceTo(
+                            std::move(poNewGeom), eTargetType);
                     if (m_opts.m_skip && !m_opts.m_type.empty() &&
                         (!poNewGeom ||
                          (wkbFlatten(eTargetType) != wkbUnknown &&

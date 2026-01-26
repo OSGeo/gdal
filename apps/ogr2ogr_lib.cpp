@@ -7025,8 +7025,8 @@ bool LayerTranslator::Translate(
                         {
                             OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(
                                 poDstGeometry->getGeometryType());
-                            poDstGeometry.reset(OGRGeometryFactory::forceTo(
-                                poDstGeometry.release(), eTargetType));
+                            poDstGeometry = OGRGeometryFactory::forceTo(
+                                std::move(poDstGeometry), eTargetType);
                         }
                     }
                     else if (bReprojCanInvalidateValidity &&
@@ -7035,9 +7035,9 @@ bool LayerTranslator::Translate(
                                  static_cast<OGRwkbGeometryType>(eGType)) &&
                              poDstGeometry->hasCurveGeometry(TRUE))
                     {
-                        poDstGeometry.reset(OGRGeometryFactory::forceTo(
-                            poDstGeometry.release(),
-                            static_cast<OGRwkbGeometryType>(eGType)));
+                        poDstGeometry = OGRGeometryFactory::forceTo(
+                            std::move(poDstGeometry),
+                            static_cast<OGRwkbGeometryType>(eGType));
                     }
 
                     // Collect left-most, right-most, top-most, bottom-most coordinates.
@@ -7124,21 +7124,20 @@ bool LayerTranslator::Translate(
                         {
                             OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(
                                 poDstGeometry->getGeometryType());
-                            auto poDstGeometryTmp =
+                            auto poDstGeometryTmp = OGRGeometryFactory::forceTo(
                                 std::unique_ptr<OGRGeometry>(
-                                    OGRGeometryFactory::forceTo(
-                                        poReprojectedGeom->clone(),
-                                        eTargetType));
+                                    poReprojectedGeom->clone()),
+                                eTargetType);
                             if (!IsValid(poDstGeometryTmp.get()))
                             {
                                 CPLDebug("OGR2OGR",
                                          "Curve geometry no longer valid after "
                                          "reprojection: transforming it into "
                                          "linear one before reprojecting");
-                                poDstGeometry.reset(OGRGeometryFactory::forceTo(
-                                    poDstGeometry.release(), eTargetType));
-                                poDstGeometry.reset(OGRGeometryFactory::forceTo(
-                                    poDstGeometry.release(), eType));
+                                poDstGeometry = OGRGeometryFactory::forceTo(
+                                    std::move(poDstGeometry), eTargetType);
+                                poDstGeometry = OGRGeometryFactory::forceTo(
+                                    std::move(poDstGeometry), eType);
                             }
                             else
                             {
@@ -7273,19 +7272,18 @@ bool LayerTranslator::Translate(
                             poDstGeometry->getGeometryType();
                         eTargetType =
                             ConvertType(m_eGeomTypeConversion, eTargetType);
-                        poDstGeometry.reset(OGRGeometryFactory::forceTo(
-                            poDstGeometry.release(), eTargetType));
+                        poDstGeometry = OGRGeometryFactory::forceTo(
+                            std::move(poDstGeometry), eTargetType);
                     }
                     else if (eGType != GEOMTYPE_UNCHANGED)
                     {
-                        poDstGeometry.reset(OGRGeometryFactory::forceTo(
-                            poDstGeometry.release(),
-                            static_cast<OGRwkbGeometryType>(eGType)));
+                        poDstGeometry = OGRGeometryFactory::forceTo(
+                            std::move(poDstGeometry),
+                            static_cast<OGRwkbGeometryType>(eGType));
                     }
                 }
 
-                poDstFeature->SetGeomFieldDirectly(iGeom,
-                                                   poDstGeometry.release());
+                poDstFeature->SetGeomField(iGeom, std::move(poDstGeometry));
             }
 
             CPLErrorReset();
