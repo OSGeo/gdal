@@ -1539,6 +1539,14 @@ GDAL provides a set of default pixel functions that can be used without writing 
        Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
 
        (set with ``<NoDataValue>``), the result will be the NoData value.
+   * - **quantile**
+     - 1
+     - ``q``
+     - Calculate the specified quantile (``q``) of the input raster bands.
+
+       If the input is equal to the derived band's NoData value
+
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **real**
      - 1
      - -

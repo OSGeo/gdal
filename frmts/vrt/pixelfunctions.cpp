@@ -3283,8 +3283,13 @@ struct QuantileKernel
         const char *pszQ = CSLFetchNameValue(papszArgs, "q");
         if (pszQ)
         {
-            const double dq = CPLAtof(pszQ);
-            if (dq < 0.0 || dq > 1.0)
+            char *end;
+            const double dq = CPLStrtod(pszQ, &end);
+            while (isspace(*end))
+            {
+                end++;
+            }
+            if (*end != '\0' || dq < 0.0 || dq > 1.0 || std::isnan(dq))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "quantile: q must be between 0 and 1");
@@ -3292,13 +3297,21 @@ struct QuantileKernel
             }
             q = dq;
         }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "quantile: q must be specified");
+            return CE_Failure;
+        }
         return CE_None;
     }
 
     void ProcessPixel(double dfVal)
     {
         if (!std::isnan(dfVal))
+        {
             values.push_back(dfVal);
+        }
     }
 
     bool HasValue() const
@@ -3309,13 +3322,26 @@ struct QuantileKernel
     double GetValue() const
     {
         if (values.empty())
+        {
             return std::numeric_limits<double>::quiet_NaN();
+        }
 
-        std::vector<double> tmp = values;
-        const size_t n = tmp.size();
-        const size_t idx = static_cast<size_t>(q * (n - 1));
-        std::nth_element(tmp.begin(), tmp.begin() + idx, tmp.end());
-        return tmp[idx];
+        std::sort(values.begin(), values.end());
+        const double loc = q * static_cast<double>(values.size() - 1);
+
+        // Use formula from NumPy docs with default linear interpolation
+        // g: fractional component of loc
+        // j: integral component of loc
+        double j;
+        const double g = std::modf(loc, &j);
+
+        if (static_cast<size_t>(j) + 1 == values.size())
+        {
+            return values[static_cast<size_t>(j)];
+        }
+
+        return (1 - g) * values[static_cast<size_t>(j)] +
+               g * values[static_cast<size_t>(j) + 1];
     }
 };
 
@@ -3387,11 +3413,10 @@ static const char pszBasicPixelFuncMetadata[] =
 
 static const char pszQuantilePixelFuncMetadata[] =
     "<PixelFunctionArgumentsList>"
-    "   <Argument name='q' type='float' description='Quantile in [0,1]' default='0.5' />"
+    "   <Argument name='q' type='float' description='Quantile in [0,1]' />"
     "   <Argument type='builtin' value='NoData' optional='true' />"
     "   <Argument name='propagateNoData' type='boolean' default='false' />"
     "</PixelFunctionArgumentsList>";
-
 
 #if defined(USE_SSE2) && !defined(USE_NEON_OPTIMIZATIONS)
 inline __m128i packus_epi32(__m128i low, __m128i high)
@@ -4136,8 +4161,9 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszBasicPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("median", BasicPixelFunc<MedianKernel>,
                                         pszBasicPixelFuncMetadata);
-    GDALAddDerivedBandPixelFuncWithArgs("quantile", BasicPixelFunc<QuantileKernel>,
-                                    pszQuantilePixelFuncMetadata);                                        
+    GDALAddDerivedBandPixelFuncWithArgs("quantile",
+                                        BasicPixelFunc<QuantileKernel>,
+                                        pszQuantilePixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("mode", BasicPixelFunc<ModeKernel>,
                                         pszBasicPixelFuncMetadata);
     return CE_None;
