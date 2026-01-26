@@ -2083,7 +2083,8 @@ const char *GDALGetGenImgProjTranformerOptionList(void)
  * </li>
  * <li> MAX_GCP_ORDER: the maximum order to use for GCP derived polynomials if
  * possible.  The default is to autoselect based on the number of GCPs.
- * A value of -1 triggers use of Thin Plate Spline instead of polynomials.
+ * A value of -1 triggers use of Thin Plate Spline instead of polynomials if
+ * SRC_METHOD/DST_METHOD is not specified.
  * </li>
  * <li>GCP_ANTIMERIDIAN_UNWRAP=AUTO/YES/NO. (GDAL &gt;= 3.8) Whether to
  * "unwrap" longitudes of ground control points that span the antimeridian.
@@ -2100,6 +2101,8 @@ const char *GDALGetGenImgProjTranformerOptionList(void)
  * method to be considered on the source dataset. Will be used for pixel/line
  * to georef transformation on the source dataset. NO_GEOTRANSFORM can be
  * used to specify the identity geotransform (ungeoreferenced image)
+ * Note that using GCP_TPS with more than a few thousand GCPs requires significant RAM usage
+ * (at least numGCPs * numGCPs * 8 bytes) and processing time.
  * </li>
  * <li> DST_METHOD: may have a value which is one of GEOTRANSFORM,
  * GCP_POLYNOMIAL, GCP_HOMOGRAPHY, GCP_TPS, GEOLOC_ARRAY (added in 3.5), RPC to
@@ -2108,6 +2111,8 @@ const char *GDALGetGenImgProjTranformerOptionList(void)
  * pixel/line to georef transformation on the destination dataset.
  * NO_GEOTRANSFORM can be used to specify the identity geotransform
  * (ungeoreferenced image)
+ * Note that using GCP_TPS with more than a few thousand GCPs requires significant RAM usage
+ * (at least numGCPs * numGCPs * 8 bytes) and processing time.
  * </li>
  * <li> RPC_HEIGHT: A fixed height to be used with RPC
  * calculations. If RPC_HEIGHT and RPC_DEM are not specified but that the RPC
@@ -2433,9 +2438,12 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             part.pTransformer = GDALHomographyTransform;
         }
         else if (bGCPUseOK &&
-                 (pszMethod == nullptr || EQUAL(pszMethod, "GCP_POLYNOMIAL")) &&
-                 GDALGetGCPCount(hDS) > 0 && nOrder >= 0)
+                 ((pszMethod == nullptr && nOrder >= 0) ||
+                  (pszMethod && EQUAL(pszMethod, "GCP_POLYNOMIAL"))) &&
+                 GDALGetGCPCount(hDS) > 0)
         {
+            const int nSanitizedOrder = std::max(0, nOrder);
+
             if (pszSRS == nullptr)
             {
                 auto hSRS = GDALGetGCPSpatialRef(hDS);
@@ -2451,13 +2459,13 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             if (bRefine)
             {
                 part.pTransformArg = GDALCreateGCPRefineTransformer(
-                    nGCPCount, pasGCPList, nOrder, FALSE, dfTolerance,
+                    nGCPCount, pasGCPList, nSanitizedOrder, FALSE, dfTolerance,
                     nMinimumGcps);
             }
             else
             {
                 part.pTransformArg = GDALCreateGCPTransformer(
-                    nGCPCount, pasGCPList, nOrder, FALSE);
+                    nGCPCount, pasGCPList, nSanitizedOrder, FALSE);
             }
 
             GDALDeinitGCPs(nGCPCount, pasGCPList);
@@ -2470,8 +2478,9 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             part.pTransformer = GDALGCPTransform;
         }
 
-        else if (bGCPUseOK && GDALGetGCPCount(hDS) > 0 && nOrder <= 0 &&
-                 (pszMethod == nullptr || EQUAL(pszMethod, "GCP_TPS")))
+        else if (bGCPUseOK && GDALGetGCPCount(hDS) > 0 &&
+                 ((pszMethod == nullptr && nOrder < 0) ||
+                  (pszMethod && EQUAL(pszMethod, "GCP_TPS"))))
         {
             if (pszSRS == nullptr)
             {
