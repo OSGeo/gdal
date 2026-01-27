@@ -1814,6 +1814,42 @@ def test_vrt_pixelfn_nodata(
     assert result == pytest.approx(expected, nan_ok=True)
 
 
+@pytest.mark.parametrize("propagate", (True, False))
+def test_vrt_pixelfn_complexsource_nodata(tmp_vsimem, propagate):
+
+    pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    values = [1, 2, 3, 4, 5]
+
+    src_nodata = 4
+    dst_nodata = 99
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, len(values)
+    ) as src:
+        for i, value in enumerate(values):
+            src.GetRasterBand(i + 1).Fill(value)
+            src.GetRasterBand(i + 1).SetNoDataValue(src_nodata)
+
+    xml = f"""
+    <VRTDataset rasterXSize="1" rasterYSize="1">
+      <VRTRasterBand dataType="Float32" band="1" subclass="VRTDerivedRasterBand">
+        <NoDataValue>{dst_nodata}</NoDataValue>
+        <PixelFunctionType>sum</PixelFunctionType>
+        <PixelFunctionArguments propagateNoData="{propagate}" />
+        {"".join(f'<ComplexSource><NODATA>{src_nodata}</NODATA><SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename><SourceBand>{i + 1}</SourceBand></ComplexSource>' for i in range(len(values)))}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    result = gdal.Open(xml).ReadAsArray()[0, 0]
+
+    if propagate:
+        assert result == dst_nodata
+    else:
+        assert result == 1 + 2 + 3 + 5
+
+
 @pytest.mark.parametrize(
     "values",
     [
