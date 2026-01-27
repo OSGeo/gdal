@@ -591,7 +591,7 @@ std::shared_ptr<ZarrGroupBase> ZarrGroupBase::GetParentGroup() const
             const auto nPos = m_osFullName.rfind('/');
             if (nPos == 0)
             {
-                poGroup = poRootGroup;
+                poGroup = std::move(poRootGroup);
             }
             else if (nPos != std::string::npos)
             {
