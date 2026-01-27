@@ -267,42 +267,42 @@ use ``--error-threshold=0`` which disables this approximator entirely.
 Frequently Asked Questions
 --------------------------
 
-Q1. Why does the quality of the output looks so bad (no anti-aliasing)?
+.. rubric:: Q1. Why does the quality of the output looks so bad (no anti-aliasing)?
 
-A1. Did you specify a resampling method, with :option:`--resampling`, other than
-    the default nearest neighbour?
-
-
-Q2. Why do I get slightly different results whether the output dataset is tiled or not?
-
-A2. This is related to the fact that an approximate coordinate transformation is
-    used by default to speed-up computation. If you want to maximize the chances
-    to get the same results whether the output is tiled or not, set:option:`--error-threshold` to zero.
-    Note, however, that this will only work for relatively small images; other factors
-    can still result in different result. See following question (Q3).
+Did you specify a resampling method, with :option:`--resampling`, other than the
+default nearest neighbour?
 
 
-Q3. Why do I observe artifacts, that look like resolution changes and are aligned
-    with rectangular areas of the output raster, when warping sufficiently large
-    rasters, particularly in areas where the reprojection involves significant
-    deformation and only with non-nearest resampling ?
+.. rubric:: Q2. Why do I get slightly different results whether the output dataset is tiled or not?
 
-A3. The warping engine operates on rectangular areas of the output
-    dataset (generally aligned with tile boundaries for a compressed tile dataset).
+This is related to the fact that an approximate coordinate transformation is
+used by default to speed-up computation. If you want to get the same results
+whether the output is tiled or not, set :option:`--error-threshold` to zero.
+Note, however, that this will only work for relatively small images; other factors
+can still result in different result. See following question (Q3).
 
-    When reprojection happens, one source pixel does not generally correspond
-    to a single output pixel. The resampling method used must properly take that
-    into account and computes a ratio between the number of source and target pixels
-    in the horizontal/X and vertical/Y directions. Those ratios are computed per
-    warping chunk. This maximizes the local quality of the warping but has the
-    downside of creating visual discontinuities between warping chunks.
 
-    If you favor a seamless result, you may manually specify the
-    XSCALE and YSCALE warping options with :option:`--wo`.
-    The XSCALE (resp. YSCALE) value is the ratio expressing the resampling factor,
-    i.e. the number of destination pixels per source pixel, along the
-    horizontal (resp. vertical) axis. It equals to one for no resampling, is
-    below one for downsampling, and above one for upsampling.
+.. rubric:: Q3. Why do I observe artifacts, that look like resolution changes and are aligned
+   with rectangular areas of the output raster, when warping sufficiently large
+   rasters, particularly in areas where the reprojection involves significant
+   deformation and only with non-nearest resampling ?
+
+The warping engine operates on rectangular areas of the output
+dataset (generally aligned with tile boundaries for a compressed tile dataset).
+
+During reprojection, a single source pixel does not generally correspond to a
+single output pixel. The resampling method must therefore properly account for this
+and compute a ratio between the number of source and target pixels in the
+horizontal (X) and vertical (Y) directions. These ratios are computed per warping
+chunk. This maximizes the local quality of the warping but has the downside of
+creating visual discontinuities between warping chunks.
+
+If you favor a seamless result, you may manually specify the
+XSCALE and YSCALE warping options with :option:`--wo`.
+The XSCALE (resp. YSCALE) value is the ratio expressing the resampling factor,
+i.e. the number of destination pixels per source pixel, along the
+horizontal (resp. vertical) axis. It equals to one for no resampling, is
+below one for downsampling, and above one for upsampling.
 
 
 .. GDALG output (on-the-fly / streamed dataset)
