@@ -414,3 +414,5 @@ Examples
     RGB
     RGBA
     HSV
+    hsv-value
+    hillshades
