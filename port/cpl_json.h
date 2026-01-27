@@ -303,7 +303,7 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     //! Return the size of the array
     inline size_t size() const
     {
-        return Size();
+        return static_cast<size_t>(Size());
     }
 
     void AddNull();
