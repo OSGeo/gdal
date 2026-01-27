@@ -2896,6 +2896,15 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         }
         bNewDataSource = true;
 
+        if (psOptions->bInvokedFromGdalVectorConvert && !bSingleLayer &&
+            poODS->TestCapability(ODsCCreateLayer))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s driver does not support multiple layers.",
+                     poDriver->GetDescription());
+            return nullptr;
+        }
+
         if (psOptions->bCopyMD)
         {
             const CPLStringList aosDomains(poDS->GetMetadataDomainList());

@@ -289,6 +289,23 @@ def test_gdalalg_vector_convert_output_format_not_guessed(tmp_vsimem):
         convert.Run()
 
 
+def test_gdalalg_vector_convert_output_format_cannot_write_multiple_layers(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    with gdal.OpenEx("../ogr/data/poly.shp") as poly_ds:
+        src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_1")
+        src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_2")
+
+    convert = get_convert_alg()
+    convert["input"] = src_ds
+    convert["output"] = tmp_vsimem / "out.geojson"
+
+    with pytest.raises(
+        Exception, match="GeoJSON driver does not support multiple layers"
+    ):
+        convert.Run()
+
+
 @pytest.mark.require_driver("GeoJSON")
 def test_gdalalg_vector_convert_to_stdout():
 
