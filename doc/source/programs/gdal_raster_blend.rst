@@ -119,20 +119,33 @@ For all operator (unless otherwise specified) the alpha channel is computed as:
 
 The following blending operators are available:
 
-.. csv-table:: Overview of raster blend operators
-   :header: "Operator", "Description", "Typical use"
-   :widths: 18, 52, 30
+.. list-table:: Overview of raster blend operators
+   :header-rows: 1
+   :widths: 18 42 30
 
-   "src-over", "Standard alpha blending (overlay composited over input)", "Default compositing"
-   "hsv-value", "Uses value from overlay and hue/saturation from input", "Colorized hillshades"
-   "multiply", "Multiplies input and overlay colors", "Darkening images"
-   "screen", "Complement then multiply colors", "Lightening images"
-   "overlay", "Combines multiply and screen", "Contrast enhancement"
-   "hard-light", "Multiply or screen depending on overlay brightness", "Highlights and shadows"
-   "darken", "Keeps the minimum of input and overlay components", "Emphasize darker regions"
-   "lighten", "Keeps the maximum of input and overlay components", "Emphasize lighter regions"
-   "color-dodge", "Brightens input based on overlay", "Glow effects"
-   "color-burn", "Darkens input based on overlay", "Strong contrast effects"
+   * - Operator
+     - Description
+     - Example
+   * - ``src-over``
+     - Standard alpha blending (overlay composited over input)
+     - .. image:: ../../images/programs/gdal_raster_blend/src-over.jpg
+          :width: 140px
+          :alt: src-over blending example
+   * - ``hsv-value``
+     - Uses value from overlay and hue/saturation from input
+     - .. image:: ../../images/programs/gdal_raster_blend/hsv-value.jpg
+          :width: 140px
+          :alt: hsv-value blending example
+   * - ``multiply``
+     - Multiplies input and overlay colors
+     - .. image:: ../../images/programs/gdal_raster_blend/multiply.jpg
+          :width: 140px
+          :alt: multiply blending example
+   * - ``screen``
+     - Complement then multiply colors
+     - .. image:: ../../images/programs/gdal_raster_blend/screen.jpg
+          :width: 140px
+          :alt: screen blending example
 
 - ``src-over`` performs standard alpha blending, by compositing the overlay
     dataset over the input dataset.
