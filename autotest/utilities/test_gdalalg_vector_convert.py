@@ -235,7 +235,8 @@ def test_gdalalg_vector_convert_overwrite_non_dataset_file(tmp_vsimem):
     assert convert.Run()
 
 
-def test_gdalalg_vector_convert_skip_errors(tmp_vsimem):
+@pytest.mark.parametrize("skip_errors", (True, False))
+def test_gdalalg_vector_convert_skip_errors(tmp_vsimem, skip_errors):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     lyr = src_ds.CreateLayer("test")
@@ -252,11 +253,18 @@ def test_gdalalg_vector_convert_skip_errors(tmp_vsimem):
     convert = get_convert_alg()
     convert["input"] = src_ds
     convert["output"] = tmp_vsimem / "out.shp"
-    convert["skip-errors"] = True
-    assert convert.Run()
+    convert["skip-errors"] = skip_errors
 
-    out_ds = convert["output"].GetDataset()
-    assert out_ds.GetLayer(0).GetFeatureCount() == 2
+    if skip_errors:
+        assert convert.Run()
+
+        out_ds = convert["output"].GetDataset()
+        assert out_ds.GetLayer(0).GetFeatureCount() == 2
+    else:
+        with pytest.raises(
+            Exception, match="Failed to write layer 'test'. Use --skip-errors"
+        ):
+            convert.Run()
 
 
 def test_gdalalg_vector_convert_to_non_available_db_driver():
