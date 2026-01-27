@@ -358,7 +358,7 @@ def test_gdalalg_vector_partition_errors(tmp_vsimem):
 
     with pytest.raises(
         Exception,
-        match="Invalid value for argument 'output-format'. Driver 'SXF' does not expose the required 'DCAP_CREATE' capability",
+        match="Invalid value for argument 'output-format'. Driver 'SXF' does not have write support",
     ):
         gdal.Run(
             "vector",

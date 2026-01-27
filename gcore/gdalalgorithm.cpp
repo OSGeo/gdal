@@ -4229,16 +4229,26 @@ bool GDALAlgorithm::ValidateFormat(const GDALAlgorithmArg &arg,
                                 {
                                     continue;
                                 }
-                            }
 
-                            ReportError(
-                                CE_Failure, CPLE_AppDefined,
-                                "Invalid value for argument '%s'. Driver '%s' "
-                                "does "
-                                "not expose the required '%s' capability.",
-                                arg.GetName().c_str(), val.c_str(),
-                                cap.c_str());
-                            return false;
+                                ReportError(
+                                    CE_Failure, CPLE_AppDefined,
+                                    "Invalid value for argument '%s'. "
+                                    "Driver '%s' does not have write support.",
+                                    arg.GetName().c_str(), val.c_str());
+                                return false;
+                            }
+                            else
+                            {
+                                ReportError(
+                                    CE_Failure, CPLE_AppDefined,
+                                    "Invalid value for argument '%s'. Driver "
+                                    "'%s' "
+                                    "does "
+                                    "not expose the required '%s' capability.",
+                                    arg.GetName().c_str(), val.c_str(),
+                                    cap.c_str());
+                                return false;
+                            }
                         }
                     }
                 }
