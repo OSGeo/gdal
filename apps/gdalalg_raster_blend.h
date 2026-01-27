@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                        CompositionMode                               */
+/*                           CompositionMode                            */
 /************************************************************************/
 
 //! Blend composition modes (aka: operators)

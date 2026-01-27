@@ -38,7 +38,7 @@
 #endif
 
 /************************************************************************/
-/*                        CompositionModes                              */
+/*                           CompositionModes                           */
 /************************************************************************/
 std::map<CompositionMode, std::string> CompositionModes()
 {
@@ -56,9 +56,9 @@ std::map<CompositionMode, std::string> CompositionModes()
     };
 }
 
-/**************************************************************************/
-/*                    CompositionModeToString()                           */
-/**************************************************************************/
+/************************************************************************/
+/*                      CompositionModeToString()                       */
+/************************************************************************/
 
 std::string CompositionModeToString(CompositionMode mode)
 {
@@ -75,7 +75,7 @@ std::string CompositionModeToString(CompositionMode mode)
 }
 
 /************************************************************************/
-/*               CompositionModesIdentifiers()                          */
+/*                    CompositionModesIdentifiers()                     */
 /************************************************************************/
 
 std::vector<std::string> CompositionModesIdentifiers()
@@ -90,7 +90,7 @@ std::vector<std::string> CompositionModesIdentifiers()
 }
 
 /************************************************************************/
-/*               CompositionModeFromString()                            */
+/*                     CompositionModeFromString()                      */
 /************************************************************************/
 
 CompositionMode CompositionModeFromString(const std::string &str)
@@ -110,7 +110,7 @@ CompositionMode CompositionModeFromString(const std::string &str)
 }
 
 /************************************************************************/
-/*              MinBandCountForCompositionMode()                        */
+/*                   MinBandCountForCompositionMode()                   */
 /************************************************************************/
 
 //! Returns the minimum number of bands required for the given composition mode
@@ -136,7 +136,7 @@ int MinBandCountForCompositionMode(CompositionMode mode)
 }
 
 /************************************************************************/
-/*              MaxBandCountForCompositionMode()                        */
+/*                   MaxBandCountForCompositionMode()                   */
 /************************************************************************/
 
 /**
@@ -163,8 +163,8 @@ int MaxBandCountForCompositionMode(CompositionMode mode)
 }
 
 /************************************************************************/
-/*  BandCountIsCompatibleWithCompositionMode()                          */
-/***********************************************************************/
+/*              BandCountIsCompatibleWithCompositionMode()              */
+/************************************************************************/
 
 //! Checks whether the number of bands is compatible with the given composition mode
 bool BandCountIsCompatibleWithCompositionMode(int bandCount,
@@ -176,7 +176,7 @@ bool BandCountIsCompatibleWithCompositionMode(int bandCount,
 }
 
 /************************************************************************/
-/*                      MulScale255()                                   */
+/*                            MulScale255()                             */
 /************************************************************************/
 
 /** Multiply 2 bytes considering them as ratios with 255 = 100%, and return their product unscaled to [0, 255], by ceiling */
@@ -185,9 +185,9 @@ inline GByte MulScale255(GByte a, GByte b)
     return static_cast<GByte>((a * b + 255) / 256);
 }
 
-/*************************************************************************/
-/*        ProcessAlphaChannels                                           */
-/*************************************************************************/
+/************************************************************************/
+/*                         ProcessAlphaChannels                         */
+/************************************************************************/
 
 static inline void ProcessAlphaChannels(size_t i,
                                         const GByte *CPL_RESTRICT pabyA,
@@ -221,7 +221,7 @@ static inline void ProcessAlphaChannels(size_t i,
 }
 
 /************************************************************************/
-/*                      DivScale255()                                   */
+/*                            DivScale255()                             */
 /************************************************************************/
 
 /** Divide 2 bytes considering them as ratios with 255 = 100%, and return their quotient unscaled to [0, 255], by flooring
@@ -247,9 +247,9 @@ inline GByte DivScale255(GByte a, GByte b)
     }
 }
 
-/*************************************************************************/
-/*        PremultiplyChannels                                            */
-/*************************************************************************/
+/************************************************************************/
+/*                         PremultiplyChannels                          */
+/************************************************************************/
 
 //! Premultiply RGB channels by alpha (A)
 static inline void PremultiplyChannels(size_t i, const GByte *pabyR,
@@ -885,7 +885,7 @@ constexpr auto gTabInvDstA = []()
 }();
 
 /************************************************************************/
-/*                         BlendMultiply_Generic                        */
+/*                        BlendMultiply_Generic                         */
 /************************************************************************/
 
 static void BlendMultiply_Generic(
@@ -1153,7 +1153,7 @@ static void BlendOverlay_Generic(
 }
 
 /************************************************************************/
-/*                         BlendHardLight_Generic                       */
+/*                        BlendHardLight_Generic                        */
 /************************************************************************/
 
 static void BlendHardLight_Generic(
@@ -1173,9 +1173,9 @@ static void BlendHardLight_Generic(
                          !bSwappedOpacity);
 }
 
-/*************************************************************************/
-/*                         BlendDarken_Generic                           */
-/*************************************************************************/
+/************************************************************************/
+/*                         BlendDarken_Generic                          */
+/************************************************************************/
 
 static void BlendDarken_Generic(
     const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
@@ -1248,9 +1248,9 @@ static void BlendDarken_Generic(
     }
 }
 
-/*************************************************************************/
-/*                         BlendLighten_Generic                          */
-/*************************************************************************/
+/************************************************************************/
+/*                         BlendLighten_Generic                         */
+/************************************************************************/
 
 static void BlendLighten_Generic(
     const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
@@ -1324,9 +1324,9 @@ static void BlendLighten_Generic(
     }
 }
 
-/*************************************************************************/
-/*                         BlendColorDodge_Generic                       */
-/*************************************************************************/
+/************************************************************************/
+/*                       BlendColorDodge_Generic                        */
+/************************************************************************/
 
 static void BlendColorDodge_Generic(
     const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
@@ -1454,9 +1454,9 @@ static void BlendColorDodge_Generic(
     }
 }
 
-/*************************************************************************/
-/*                         BlendColorBurn_Generic                        */
-/*************************************************************************/
+/************************************************************************/
+/*                        BlendColorBurn_Generic                        */
+/************************************************************************/
 
 static void BlendColorBurn_Generic(
     const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
