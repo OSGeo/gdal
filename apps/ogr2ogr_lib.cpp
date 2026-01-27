@@ -2832,23 +2832,28 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                      "-doo ignored when creating the output datasource.");
         }
 
-        /* --------------------------------------------------------------------
-         */
-        /*      Special case to improve user experience when translating */
-        /*      a datasource with multiple layers into a shapefile. If the */
-        /*      user gives a target datasource with .shp and it does not exist,
-         */
-        /*      the shapefile driver will try to create a file, but this is not
-         */
-        /*      appropriate because here we have several layers, so create */
-        /*      a directory instead. */
-        /* --------------------------------------------------------------------
-         */
-
         const bool bSingleLayer =
             (!psOptions->osSQLStatement.empty() ||
              psOptions->aosLayers.size() == 1 ||
              (psOptions->aosLayers.empty() && poDS->GetLayerCount() == 1));
+
+        bool bOutputDirectory = false;
+        if (!bSingleLayer && CPLGetExtensionSafe(osDestFilename).empty() &&
+            (EQUAL(poDriver->GetDescription(), "CSV") ||
+             EQUAL(poDriver->GetDescription(), "ESRI Shapefile") ||
+             EQUAL(poDriver->GetDescription(), "MapInfo File")))
+        {
+            bOutputDirectory = true;
+        }
+
+        /* ------------------------------------------------------------------ */
+        /*   Special case to improve user experience when translating         */
+        /*   a datasource with multiple layers into a shapefile. If the       */
+        /*   user gives a target datasource with .shp and it does not exist,  */
+        /*   the shapefile driver will try to create a file, but this is not  */
+        /*   appropriate because here we have several layers, so create       */
+        /*   a directory instead.                                             */
+        /* ------------------------------------------------------------------ */
 
         VSIStatBufL sStat;
         if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
@@ -2864,6 +2869,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                          osDestFilename.c_str());
                 return nullptr;
             }
+            bOutputDirectory = true;
         }
 
         CPLStringList aosDSCO(psOptions->aosDSCO);
@@ -2895,6 +2901,18 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             return nullptr;
         }
         bNewDataSource = true;
+
+        if (psOptions->bInvokedFromGdalVectorConvert && !bSingleLayer &&
+            !bOutputDirectory &&
+            (!poODS->TestCapability(ODsCCreateLayer) ||
+             !poDriver->GetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS)))
+        {
+            poDriver->Delete(osDestFilename);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "%s driver does not support multiple layers.",
+                     poDriver->GetDescription());
+            return nullptr;
+        }
 
         if (psOptions->bCopyMD)
         {
