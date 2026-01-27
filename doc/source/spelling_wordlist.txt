@@ -2722,6 +2722,7 @@ qtcreator
 quadkey
 Quadrilateralized
 quadtree
+quantile
 Quantile
 quantizeCoordinates
 quantized

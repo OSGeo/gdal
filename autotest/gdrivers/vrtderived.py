@@ -1440,6 +1440,106 @@ def test_vrt_pixelfn_constant_factor(tmp_vsimem, fn):
 
 
 ###############################################################################
+# Test "quantile" pixel function
+
+
+@pytest.mark.parametrize(
+    "values,quantile",
+    [
+        ([6, 3, 5], 0.4),
+        ([4, 5, 11], 0.5),
+        ([9, 2], 0),
+        ([9, 2], 1),
+        ([100], 0),
+        ([100], 1),
+    ],
+)
+def test_vrt_pixelfn_quantile(tmp_vsimem, values, quantile):
+
+    np = pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", 1, 1, len(values), gdal.GDT_Float64
+    ) as src:
+        for i in range(len(values)):
+            src.GetRasterBand(i + 1).Fill(values[i])
+
+    xml = f"""
+    <VRTDataset rasterXSize="1" rasterYSize="1">
+      <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>quantile</PixelFunctionType>
+        <PixelFunctionArguments q="{quantile}" />
+        {"".join(f'<SimpleSource><SourceFilename>{tmp_vsimem / "src.tif"}</SourceFilename><SourceBand>{i + 1}</SourceBand></SimpleSource>' for i in range(len(values)))}
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with gdal.Open(xml) as ds:
+        result = ds.ReadAsArray()[0, 0]
+        assert result == np.quantile(values, quantile)
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_pixelfn_quantile_missing():
+
+    xml = """
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>quantile</PixelFunctionType>
+        <SimpleSource>
+           <SourceFilename>data/byte.tif</SourceFilename>
+           <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with pytest.raises(Exception, match="q must be specified"):
+        with gdal.Open(xml) as ds:
+            ds.ReadRaster()
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_pixelfn_quantile_complex_input():
+
+    xml = """
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>quantile</PixelFunctionType>
+        <PixelFunctionArguments q="0.3"/>
+        <SimpleSource>
+           <SourceFilename>../gcore/data/cfloat32.tif</SourceFilename>
+           <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with pytest.raises(Exception, match="Complex data types not supported"):
+        with gdal.Open(xml) as ds:
+            ds.ReadRaster()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("q", (-3, float("nan"), float("inf"), "0.12.1"))
+def test_vrt_pixelfn_quantile_invalid(q):
+
+    xml = f"""
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <VRTRasterBand dataType="Float32" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>quantile</PixelFunctionType>
+        <PixelFunctionArguments q="{q}"/>
+        <SimpleSource>
+           <SourceFilename>data/byte.tif</SourceFilename>
+           <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    with pytest.raises(Exception, match="q must be between 0 and 1"):
+        with gdal.Open(xml) as ds:
+            ds.ReadRaster()
+
+
+###############################################################################
 # Test reclassification
 
 
@@ -1676,6 +1776,10 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
         ("norm_diff", [3, 7], 7, {}, 7),
         ("norm_diff", [7, 3], 7, {}, 7),
         ("pow", [7], 7, {"power": 10}, 7),
+        ("quantile", [7], 7, {"q": 0}, 7),
+        ("quantile", [7], 7, {"q": 1}, 7),
+        ("quantile", [7, 6, 1, 2], 7, {"q": 0.5}, 2),
+        ("quantile", [7, 6, 1, 2], 7, {"q": 0.5, "propagateNoData": True}, 7),
         ("scale", [7], 7, {"scale": 5, "offset": 10}, 7),
         ("sqrt", [7], 7, {}, 7),
         ("sum", [3, 7, 9], 7, {}, 12),
