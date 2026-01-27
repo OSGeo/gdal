@@ -2850,6 +2850,8 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
              psOptions->aosLayers.size() == 1 ||
              (psOptions->aosLayers.empty() && poDS->GetLayerCount() == 1));
 
+        bool bOutputShpDirectory = false;
+
         VSIStatBufL sStat;
         if (EQUAL(poDriver->GetDescription(), "ESRI Shapefile") &&
             !bSingleLayer && psOptions->osNewLayerName.empty() &&
@@ -2864,6 +2866,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                          osDestFilename.c_str());
                 return nullptr;
             }
+            bOutputShpDirectory = true;
         }
 
         CPLStringList aosDSCO(psOptions->aosDSCO);
@@ -2897,8 +2900,11 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         bNewDataSource = true;
 
         if (psOptions->bInvokedFromGdalVectorConvert && !bSingleLayer &&
-            poODS->TestCapability(ODsCCreateLayer))
+            !bOutputShpDirectory &&
+            (!poODS->TestCapability(ODsCCreateLayer) ||
+             !poDriver->GetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS)))
         {
+            poDriver->Delete(osDestFilename);
             CPLError(CE_Failure, CPLE_AppDefined,
                      "%s driver does not support multiple layers.",
                      poDriver->GetDescription());
