@@ -118,6 +118,7 @@ For all operator (unless otherwise specified) the alpha channel is computed as:
     output_{A} = overlay_{A} + input_{A} - overlay_{A} * input_{A}
 
 The following blending operators are available:
+
 .. csv-table:: Overview of raster blend operators
    :header: "Operator", "Description", "Typical use"
    :widths: 18, 52, 30
