@@ -1283,9 +1283,127 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
 
     std::vector<int> anBands;
 
+    // Check for 'block' option and validate/convert to srcwin
+    int nBlockXOff = -1;
+    int nBlockYOff = -1;
+    bool bFoundBlock = false;
+    for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(aosTokens))
+    {
+        if (EQUAL(pszKey, "block"))
+        {
+            const CPLStringList aosBlockParams(
+                CSLTokenizeString2(pszValue, ",", 0));
+            if (aosBlockParams.size() != 2)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid block option: %s, must be two "
+                         "values separated by comma nXBlockOff,nYBlockOff",
+                         pszValue);
+                return nullptr;
+            }
+
+            // Convert using CPLStrtod to handle scientific notation (e.g., 1e0)
+            // and detect non-numeric values via endPtr
+            char *pszEnd = nullptr;
+            const double dfBlockXOff = CPLStrtod(aosBlockParams[0], &pszEnd);
+            if (pszEnd == aosBlockParams[0] || *pszEnd != '\0' ||
+                dfBlockXOff < 0 || dfBlockXOff != static_cast<int>(dfBlockXOff))
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid block option: nXBlockOff '%s' is not a valid "
+                         "non-negative integer",
+                         aosBlockParams[0]);
+                return nullptr;
+            }
+
+            pszEnd = nullptr;
+            const double dfBlockYOff = CPLStrtod(aosBlockParams[1], &pszEnd);
+            if (pszEnd == aosBlockParams[1] || *pszEnd != '\0' ||
+                dfBlockYOff < 0 || dfBlockYOff != static_cast<int>(dfBlockYOff))
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "Invalid block option: nYBlockOff '%s' is not a valid "
+                         "non-negative integer",
+                         aosBlockParams[1]);
+                return nullptr;
+            }
+
+            nBlockXOff = static_cast<int>(dfBlockXOff);
+            nBlockYOff = static_cast<int>(dfBlockYOff);
+            bFoundBlock = true;
+        }
+    }
+
+    // Validate block indices and convert to pixel coordinates
+    int nBlockSrcWinXOff = 0;
+    int nBlockSrcWinYOff = 0;
+    int nBlockSrcWinXSize = 0;
+    int nBlockSrcWinYSize = 0;
+    if (bFoundBlock)
+    {
+        // Check mutual exclusivity with other spatial options
+        for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(aosTokens))
+        {
+            if (EQUAL(pszKey, "srcwin") || EQUAL(pszKey, "projwin") ||
+                EQUAL(pszKey, "outsize") || EQUAL(pszKey, "tr") ||
+                EQUAL(pszKey, "r") || EQUAL(pszKey, "ovr"))
+            {
+                CPLError(
+                    CE_Failure, CPLE_IllegalArg,
+                    "'block' is mutually exclusive with options "
+                    "'srcwin', 'projwin', 'outsize', 'tr', 'r', and 'ovr'");
+                return nullptr;
+            }
+        }
+
+        // Check that the dataset has at least one band
+        if (poSrcDS->GetRasterCount() == 0)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "'block' option requires a raster with at least one band");
+            return nullptr;
+        }
+
+        // Validate using GetActualBlockSize which handles bounds checking
+        int nXValid = 0;
+        int nYValid = 0;
+        int nBlockXSize = 0;
+        int nBlockYSize = 0;
+        poSrcDS->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
+        if (poSrcDS->GetRasterBand(1)->GetActualBlockSize(
+                nBlockXOff, nBlockYOff, &nXValid, &nYValid) != CE_None)
+        {
+
+            const int nMaxXBlock =
+                cpl::div_round_up(poSrcDS->GetRasterXSize(), nBlockXSize);
+            const int nMaxYBlock =
+                cpl::div_round_up(poSrcDS->GetRasterYSize(), nBlockYSize);
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Invalid block indices: %d,%d. "
+                     "Valid range is 0-%d for X and 0-%d for Y",
+                     nBlockXOff, nBlockYOff, nMaxXBlock - 1, nMaxYBlock - 1);
+            return nullptr;
+        }
+
+        nBlockSrcWinXOff = nBlockXOff * nBlockXSize;
+        nBlockSrcWinYOff = nBlockYOff * nBlockYSize;
+        nBlockSrcWinXSize = nXValid;
+        nBlockSrcWinYSize = nYValid;
+    }
+
     CPLStringList argv;
     argv.AddString("-of");
     argv.AddString("VRT");
+
+    // Add srcwin from block option before processing other options
+    if (bFoundBlock)
+    {
+        argv.AddString("-srcwin");
+        argv.AddString(CPLSPrintf("%d", nBlockSrcWinXOff));
+        argv.AddString(CPLSPrintf("%d", nBlockSrcWinYOff));
+        argv.AddString(CPLSPrintf("%d", nBlockSrcWinXSize));
+        argv.AddString(CPLSPrintf("%d", nBlockSrcWinYSize));
+    }
 
     for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(aosTokens))
     {
@@ -1555,6 +1673,10 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             // do nothing, we passed this in earlier
         }
         else if (EQUAL(pszKey, "transpose"))
+        {
+            // do nothing, we passed this in earlier
+        }
+        else if (EQUAL(pszKey, "block"))
         {
             // do nothing, we passed this in earlier
         }
