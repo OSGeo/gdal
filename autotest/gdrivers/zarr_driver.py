@@ -722,6 +722,7 @@ def test_zarr_read_shuffle_quantize_update_not_supported():
         "data/zarr/fixedscaleoffset_dtype_f8_astype_u1.zarr",
         "data/zarr/fixedscaleoffset_dtype_f8_astype_u2.zarr",
         "data/zarr/fixedscaleoffset_dtype_f8_astype_u4.zarr",
+        "data/zarr/fixedscaleoffset_dtype_f8_astype_f4.zarr",
     ],
 )
 def test_zarr_read_fixedscaleoffset(filename):
