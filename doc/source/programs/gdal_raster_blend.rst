@@ -37,6 +37,7 @@ This subcommand is also available as a potential step of :ref:`gdal_raster_pipel
 
 .. include:: gdal_cli_include/gdalg_raster_compatible.rst
 
+
 Program-Specific Options
 ------------------------
 
@@ -54,55 +55,12 @@ Program-Specific Options
     of its alpha channel.
     Defaults to 100.
 
-.. option:: --operator src-over|hsv-value
+.. option:: --operator src-over|hsv-value|multiply|screen|overlay|hard-light|lighten|darken
 
     Select the blending operator, which defines how the overlay dataset is
     blended into the input dataset. Defaults to ``src-over``.
 
-    - ``src-over`` performs standard alpha blending, by compositing the overlay
-      dataset over the input dataset.
-
-      Given :math:`overlay_{C}` the value of one of the red, green or blue
-      component of the overlay dataset,
-      :math:`overlay_{A}` the value of the alpha component of the overlay dataset,
-      :math:`input_{C}` the value of the corresponding component of the input dataset,
-      :math:`input_{A}` the value of the alpha component of the input dataset
-      and :math:`opacity`, the value of :option:`--opacity`, the resulting
-      component :math:`output_{C}` is (all values normalized to [0,1] range):
-
-      .. math::
-
-          output_{C} * output_{A} = (overlay_{C} * overlay_{A} * opacity) + (input_{C} * input_{A} * (1 - overlay_{A} * opacity))
-
-      with
-
-      .. math::
-
-          output_{A} = (overlay_{A} * opacity) + (input_{A} * (1 - overlay_{A} * opacity))
-
-    - ``hsv-value`` creates a color with the value of the overlay and the hue
-      and saturation of the input. It performs the following steps:
-
-      * read the RGB (Red,Green,Blue) components of the input dataset
-
-      * transform the RGB components into the HSV (Hue,Saturation,Value) color space
-
-      * compute the output value :math:`output_{V}`, from
-        :math:`input_{V}` the input value computed in the previous step,
-        :math:`overlay_{V}` the overlay value,
-        :math:`overlay_{A}` the value of the alpha component of the overlay dataset
-        and :math:`opacity`, the value of :option:`--opacity` (all values normalized to [0,1] range):
-
-        .. math::
-
-            output_{V} = (overlay_{V} * overlay_{A} * opacity) + (input_{V} * (1 - overlay_{A} * opacity))
-
-        If the overlay dataset is a RGB/RGBA dataset, :math:`overlay_{V}` is
-        :math:`max(overlay_{R},overlay_{G},overlay_{B})`.
-
-      * transform back (Hue,Saturation,:math:`output_{V}`) to RGB.
-
-      If the the alpha channel of the input dataset is present, it is preserved unchanged.
+    See :ref:`gdal_raster_blend_operator_details` below for details about each operator.
 
 
 .. option:: --overlay <OVERLAY>
@@ -128,33 +86,311 @@ Standard Options
     .. include:: gdal_options/overwrite.rst
 
 
+
+.. _gdal_raster_blend_operator_details:
+
+Details of blending operations
+------------------------------
+
+In the description of the blending operations, all values are normalized to [0,1] range
+and each channel value is premultiplied with the alpha channel value.
+
+The following notations are used:
+
+- :math:`overlay_{C}` is the value of one of the red, green or blue
+  component of the overlay dataset,
+- :math:`overlay_{A}` is the value of the alpha component of the overlay dataset premultiplied by :option:`--opacity`,
+- :math:`input_{C}` is the value of the corresponding component of the input dataset,
+- :math:`input_{A}` is the value of the alpha component of the input dataset
+- :math:`output_{C}` is the resulting component of the output dataset,
+- :math:`opacity` is the value of :option:`--opacity`
+
+.. note::
+
+    For efficiency, the implementation uses integer arithmetic on
+    [0,255] range rather than floating point arithmetic on [0,1] range.
+    This can explain minor differences with the formulas described below.
+
+For all operator (unless otherwise specified) the alpha channel is computed as:
+
+.. math::
+
+    output_{A} = overlay_{A} + input_{A} - overlay_{A} * input_{A}
+
+The following blending operators are available:
+
+- ``src-over`` performs standard alpha blending, by compositing the overlay
+    dataset over the input dataset.
+
+    The following formula is applied for each of the red, green and blue
+    components:
+
+    .. math::
+
+        output_{C} * output_{A} = (overlay_{C} * overlay_{A} * opacity) + (input_{C} * input_{A} * (1 - overlay_{A} * opacity))
+
+
+- ``hsv-value`` creates a color with the value of the overlay and the hue
+    and saturation of the input. It performs the following steps:
+
+    * read the RGB (Red,Green,Blue) components of the input dataset
+
+    * transform the RGB components into the HSV (Hue,Saturation,Value) color space
+
+    * compute the output value :math:`output_{V}`, using the following formula:
+
+    .. math::
+
+        output_{V} = (overlay_{V} * overlay_{A} * opacity) + (input_{V} * (1 - overlay_{A} * opacity))
+
+    If the overlay dataset is a RGB/RGBA dataset, :math:`overlay_{V}` is
+    :math:`max(overlay_{R},overlay_{G},overlay_{B})`.
+
+    * transform back (Hue,Saturation,:math:`output_{V}`) to RGB.
+
+    If the the alpha channel of the input dataset is present, it is preserved unchanged.
+
+- ``multiply`` multiplies the input and overlay colors.
+    The resulting color is always at least as dark as either of the two
+    constituent colors.
+
+    The following formula is applied for each of the red, green and blue
+    components:
+
+    .. math::
+
+        output_{C} = overlay_{C} * input_{C} + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+- ``screen`` The overlay and input are complemented and then multiplied. The resultant color is always at least as light as either of the two constituent colors. Screening any color with white produces white. Screening any color with black leaves the original color unchanged.
+
+    The following formula is applied for each of the red, green and blue
+    components:
+
+    .. math::
+
+        output_{C} = overlay_{C} + input_{C} - overlay_{C} * input_{C}
+
+
+- ``overlay`` Overlay combines Multiply and Screen blend modes, at half strength. The parts of the overlay layer where the input layer is light become lighter, the parts where the input layer is dark become darker. Areas where the overlay layer are mid grey are unaffected.
+
+    The following formula is applied for each of the red, green and blue
+    components:
+
+    If the input component is less than 0.5 (dark):
+
+    .. math::
+
+        output_{C} = 2 * overlay_{C} * input_{C} + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+    If the input component is greater than or equal to 0.5 (light):
+
+    .. math::
+
+        output_{C} = overlay_{A} *  input_{A} - 2 * (input_{A} - input_{C}) * (overlay_{A} - overlay_{C}) + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+
+- ``hard-light`` The overlay is used to either multiply or screen the input, depending on the overlay color value. If the overlay color value is lighter than 50% gray, the input is screened, otherwise it is multiplied. This is useful for adding highlights or shadows to an image. The implementation is the same of ``overlay`` but with the roles of input and overlay swapped.
+
+    The following formula is applied for each of the red, green and blue
+    components:
+
+    If the overlay component is less than 0.5 (dark):
+
+    .. math::
+
+        output_{C} = overlay_{A} *  input_{A} - 2 * (input_{A} - input_{C}) * (overlay_{A} - overlay_{C}) + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+    If the overlay component is greater than or equal to 0.5 (light):
+
+    .. math::
+
+        output_{C} = 2 * overlay_{C} * input_{C} + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+
+- ``darken`` Creates a image that retains the smallest components of the overlay and input pixels. If the overlay pixel has the components r1, g1, and b1, and the input pixel has r2, g2, b2, the resultant pixel is [min(r1,r2), min(g1,g2), min(b1,b2)]
+
+    The following formula is applied for each of the red, green and blue
+    components:
+
+    .. math::
+
+        output_{C} = min(overlay_{C}, input_{C}) + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+
+- ``lighten`` Lighten has the opposite action of Darken. It selects the maximum of each component from the overlay and input pixels. If the overlay pixel has the components r1, g1, and b1, and the input pixel has r2, g2, b2, the resultant pixel is [max(r1,r2), max(g1,g2), max(b1,b2)]
+
+    The following formula is applied for each of the red, green and blue
+    components:
+
+    .. math::
+
+        output_{C} = max(overlay_{C}, input_{C}) + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+
+- ``color-dodge`` Divides the input layer by the inverted overlay layer. This lightens the input layer depending on the value of the overlay layer: the brighter the overlay layer, the more its color affects the input layer. Blending any color with white gives white. Blending with black does not change the image.
+
+    The following formula is applied for each of the red, green and blue
+    components:
+
+
+    If the :math:`overlay_{C} * input_{A}` is greater than or equal to
+    :math:`overlay_{A} * input_{A}` then:
+
+    .. math::
+
+        output_{C} = overlay_{A} * input_{A} + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+    If the :math:`overlay_{C} * input_{A}` is less than
+    :math:`overlay_{A} * input_{A}` then:
+
+    .. math::
+
+        output_{C} = input_{C} * overlay_{A} / (1 - overlay_{C} / overlay_{A}) + overlay_{C} * (1 - input_{A}) + input_{C} * (1 - overlay_{A})
+
+
+- ``color-burn`` Divides the inverted input layer by the overlay layer, and then inverts the result. This darkens the overlay layer increasing the contrast to reflect the color of the input layer. The darker the input layer, the more its color is used.
+
+    The following formula is applied for each of the red, green and blue
+    components:
+
+    If the :math:`overlay_{C} * input_{A}` is greater than or equal to
+    :math:`overlay_{A} * input_{A}` then:
+
+    .. math::
+
+        output_{C} = overlay_{A} * input_{A} + input_{C} * (1 - overlay_{A}) + overlay_{C} * (1 - input_{A})
+
+    If the :math:`overlay_{C} * input_{A}` is greater than
+    :math:`overlay_{A} * input_{A}` then:
+
+    .. math::
+
+        output_{C} = input_{C} * overlay_{A} / (1 - overlay_{C} / overlay_{A}) + overlay_{C} * (1 - input_{A}) + input_{C} * (1 - overlay_{A})
+
+
 Examples
 --------
 
 .. example::
-   :title: Alpha blending of two datasets using 75% opacity for the overlay dataset.
+    :title: Alpha blending of two datasets using 75% opacity for the overlay dataset.
 
-   .. code-block:: bash
+    .. code-block:: bash
 
         $ gdal raster blend --opacity 75 source.tif overlay.tif out.tif
 
-.. example::
-   :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade.
 
-   .. image:: ../../images/programs/gdal_raster_blend/hillshade.jpg
+.. example::
+    :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``hsv-value`` blending operator.
+
+    .. image:: ../../data/hillshade.jpg
        :alt:   Hillshade rendering of a DEM
 
-   .. image:: ../../images/programs/gdal_raster_blend/hypsometric.jpg
+    .. image:: ../../data/hypsometric.jpg
        :alt:   Hypsometric rendering of a DEM
 
-   .. code-block:: bash
+    .. code-block:: bash
 
         $ gdal raster blend --overlay=hillshade.tif --operator=hsv-value \
                             hypsometric.tif hypsometric_combined_with_hillshade.tif
 
-
-   .. image:: ../../images/programs/gdal_raster_blend/hypsometric_combined_with_hillshade.jpg
+    .. image:: ../../images/programs/gdal_raster_blend/hsv-value.jpg
        :alt:   Colorized hillshade
+
+
+.. example::
+    :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``multiply`` blending operator.
+
+    .. code-block:: bash
+
+        $ gdal raster blend --overlay=hillshade.tif --operator=multiply \
+                            hypsometric.tif hypsometric_combined_with_hillshade.tif
+
+    .. image:: ../../images/programs/gdal_raster_blend/multiply.jpg
+        :alt:   Colorized hillshade
+
+
+.. example::
+    :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``screen`` blending operator.
+
+    .. code-block:: bash
+
+        $ gdal raster blend --overlay=hillshade.tif --operator=screen \
+                            hypsometric.tif hypsometric_combined_with_hillshade.tif
+
+    .. image:: ../../images/programs/gdal_raster_blend/screen.jpg
+       :alt:   Colorized hillshade
+
+
+.. example::
+    :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``overlay`` blending operator.
+
+    .. code-block:: bash
+
+        $ gdal raster blend --overlay=hillshade.tif --operator=overlay \
+                            hypsometric.tif hypsometric_combined_with_hillshade.tif
+
+    .. image:: ../../images/programs/gdal_raster_blend/overlay.jpg
+        :alt:   Colorized hillshade
+
+
+.. example::
+    :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``hard-light`` blending operator.
+
+    .. code-block:: bash
+
+        $ gdal raster blend --overlay=hillshade.tif --operator=hard-light \
+                            hypsometric.tif hypsometric_combined_with_hillshade.tif
+
+    .. image:: ../../images/programs/gdal_raster_blend/hard-light.jpg
+        :alt:   Colorized hillshade
+
+
+.. example::
+    :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``darken`` blending operator.
+
+    .. code-block:: bash
+
+        $ gdal raster blend --overlay=hillshade.tif --operator=darken \
+                            hypsometric.tif hypsometric_combined_with_hillshade.tif
+
+    .. image:: ../../images/programs/gdal_raster_blend/darken_3band.jpg
+        :alt:   Colorized hillshade
+
+
+.. example::
+    :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``lighten`` blending operator.
+
+    .. code-block:: bash
+
+        $ gdal raster blend --overlay=hillshade.tif --operator=lighten \
+                            hypsometric.tif hypsometric_combined_with_hillshade.tif
+
+    .. image:: ../../images/programs/gdal_raster_blend/lighten_3band.jpg
+        :alt:   Colorized hillshade
+
+
+.. example::
+    :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``color-dodge`` blending operator.
+
+    .. code-block:: bash
+
+        $ gdal raster blend --overlay=hillshade.tif --operator=color-dodge \
+                            hypsometric.tif hypsometric_combined_with_hillshade.tif
+
+    .. image:: ../../images/programs/gdal_raster_blend/color-dodge.jpg
+        :alt:   Colorized hillshade
+
+
+.. example::
+    :title: Combine a hillshade and a hypsometric rendering of a DEM into a colorized hillshade using the ``color-burn`` blending operator.
+
+    .. code-block:: bash
+
+        $ gdal raster blend --overlay=hillshade.tif --operator=color-burn \
+                            hypsometric.tif hypsometric_combined_with_hillshade.tif
+
+    .. image:: ../../images/programs/gdal_raster_blend/color-burn.jpg
+        :alt:   Colorized hillshade
 
 
 .. below is an allow-list for spelling checker.
