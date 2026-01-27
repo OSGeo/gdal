@@ -289,21 +289,33 @@ def test_gdalalg_vector_convert_output_format_not_guessed(tmp_vsimem):
         convert.Run()
 
 
-@pytest.mark.require_driver("GeoJSON")
-@pytest.mark.require_driver("GPKG")
-@pytest.mark.parametrize("driver", ("GeoJSON", "GPKG"))
+@pytest.mark.parametrize(
+    "driver", ("GeoJSON", "GPKG", "ESRI Shapefile", "CSV", "MapInfo File")
+)
 def test_gdalalg_vector_convert_output_format_multiple_layers(tmp_vsimem, driver):
+
+    if not gdal.GetDriverByName(driver):
+        pytest.skip(f"Driver {driver} not available")
+
+    ext = {
+        "GeoJSON": ".geojson",
+        "GPKG": ".gpkg",
+        "ESRI Shapefile": "",
+        "CSV": "",
+        "MapInfo File": "",
+    }
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     with gdal.OpenEx("../ogr/data/poly.shp") as poly_ds:
         src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_1")
         src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_2")
 
-    dst_fname = tmp_vsimem / f"out.{driver}".lower()
+    dst_fname = tmp_vsimem / f"out{ext[driver]}"
 
     convert = get_convert_alg()
     convert["input"] = src_ds
     convert["output"] = dst_fname
+    convert["output-format"] = driver
 
     if driver == "GeoJSON":
         with pytest.raises(
