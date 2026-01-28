@@ -134,6 +134,52 @@ static CPLErr FetchDoubleArg(CSLConstList papszArgs, const char *pszName,
     return CE_None;
 }
 
+static CPLErr FetchIntegerArg(CSLConstList papszArgs, const char *pszName,
+                              int *pnX, int *pnDefault = nullptr)
+{
+    const char *pszVal = CSLFetchNameValue(papszArgs, pszName);
+
+    if (pszVal == nullptr)
+    {
+        if (pnDefault == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Missing pixel function argument: %s", pszName);
+            return CE_Failure;
+        }
+        else
+        {
+            *pnX = *pnDefault;
+            return CE_None;
+        }
+    }
+
+    char *pszEnd = nullptr;
+    const auto ret = std::strtol(pszVal, &pszEnd, 10);
+    while (std::isspace(*pszEnd))
+    {
+        pszEnd++;
+    }
+    if (*pszEnd != '\0')
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Failed to parse pixel function argument: %s", pszName);
+        return CE_Failure;
+    }
+
+    if (ret > std::numeric_limits<int>::max())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Pixel function argument %s is above the maximum value of %d",
+                 pszName, std::numeric_limits<int>::max());
+        return CE_Failure;
+    }
+
+    *pnX = static_cast<int>(ret);
+
+    return CE_None;
+}
+
 static CPLErr RealPixelFunc(void **papoSources, int nSources, void *pData,
                             int nXSize, int nYSize, GDALDataType eSrcType,
                             GDALDataType eBufType, int nPixelSpace,
@@ -512,6 +558,71 @@ static CPLErr ConjPixelFunc(void **papoSources, int nSources, void *pData,
     /* ---- Return success ---- */
     return CE_None;
 }  // ConjPixelFunc
+
+static constexpr char pszRoundPixelFuncMetadata[] =
+    "<PixelFunctionArgumentsList>"
+    "   <Argument name='digits' description='Digits' type='integer' "
+    "default='0' />"
+    "   <Argument type='builtin' value='NoData' optional='true' />"
+    "</PixelFunctionArgumentsList>";
+
+static CPLErr RoundPixelFunc(void **papoSources, int nSources, void *pData,
+                             int nXSize, int nYSize, GDALDataType eSrcType,
+                             GDALDataType eBufType, int nPixelSpace,
+                             int nLineSpace, CSLConstList papszArgs)
+{
+    /* ---- Init ---- */
+    if (nSources != 1)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "round: input must be a single band");
+        return CE_Failure;
+    }
+
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "round: complex data types not supported");
+        return CE_Failure;
+    }
+
+    double dfNoData{0};
+    const bool bHasNoData = CSLFindName(papszArgs, "NoData") != -1;
+    if (bHasNoData && FetchDoubleArg(papszArgs, "NoData", &dfNoData) != CE_None)
+        return CE_Failure;
+
+    int nDigits{0};
+    if (FetchIntegerArg(papszArgs, "digits", &nDigits, &nDigits) != CE_None)
+        return CE_Failure;
+
+    const double dfScaleVal = std::pow(10, nDigits);
+    const double dfInvScaleVal = 1. / dfScaleVal;
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+        {
+            // Source raster pixels may be obtained with GetSrcVal macro.
+            const double dfSrcVal = GetSrcVal(papoSources[0], eSrcType, ii);
+
+            const double dfDstVal =
+                bHasNoData && IsNoData(dfSrcVal, dfNoData)
+                    ? dfNoData
+                    : std::round(dfSrcVal * dfScaleVal) * dfInvScaleVal;
+
+            GDALCopyWords(&dfDstVal, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}  // RoundPixelFunc
 
 #ifdef USE_SSE2
 
@@ -4151,6 +4262,8 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszExprPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("reclassify", ReclassifyPixelFunc,
                                         pszReclassifyPixelFuncMetadata);
+    GDALAddDerivedBandPixelFuncWithArgs("round", RoundPixelFunc,
+                                        pszRoundPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("mean", BasicPixelFunc<MeanKernel>,
                                         pszBasicPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("geometric_mean",
