@@ -2440,7 +2440,7 @@ For example:
 
 The supported options currently are ``bands``, ``a_nodata``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, ``eco``, ``sd_name``, and ``sd``.
+``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, ``eco``, ``sd_name``, ``sd``, and ``block``.
 
 Other options may be added in the future.
 
@@ -2550,6 +2550,21 @@ The usage syntax is ``vrt://somefile.extension?transpose=varname:iXDim,iYDim`` w
 ``vrt://somefile.extension?transpose=varname:0,1`` and ``vrt://somefile.extension?transpose=varname:1,0`` would be a
 transpose on the first two axes. There must be two unique axis indexes with values between 0 and the maximum available.
 This option is mutually exclusive with ``sd_name`` and ``sd``.
+
+The effect of the ``block`` option (added in GDAL 3.13) is to access a natural block
+from the raster as a subwindow defined by the internal block indexing as per
+:cpp:func:`GDALRasterBand::ReadBlock`. The value consists of two integers separated by commas,
+in the order 'nXBlockOff,nYBlockOff', the horizontal and vertical block offset, with 0 indicating
+the left-most or top-most block, 1 the next block, and so forth. Marginal blocks are extracted with
+reduced size if implied by imperfect divisor matching of block size versus raster size. It is an error
+to provide fewer or more than two values to the ``block`` option, and an error for values that are
+less than zero, or greater than the maximum block index. This option is mutually exclusive with
+``srcwin``, ``projwin``, ``outsize``, ``tr``, ``r``, and ``ovr``.
+
+.. spelling:word-list::
+    nXBlockOff
+    nYBlockOff
+
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).

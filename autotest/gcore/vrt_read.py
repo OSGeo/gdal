@@ -1766,6 +1766,156 @@ def test_vrt_protocol_transpose_option():
         gdal.Open("vrt://../gdrivers/data/hdf5/fwhm.h5?sd=1&transpose=/MyDataField:1,0")
 
 
+@gdaltest.enable_exceptions()
+def test_vrt_protocol_block_option(tmp_vsimem):
+    """Test vrt:// protocol block option for accessing natural blocks."""
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    # Create a tiled test file with known block size
+    src_filename = tmp_vsimem / "block_test.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        src_filename,
+        100,
+        80,
+        1,
+        gdal.GDT_Byte,
+        options=["TILED=YES", "BLOCKXSIZE=32", "BLOCKYSIZE=32"],
+    )
+    # Fill with pattern: pixel value = (x + y) % 256
+
+    data = np.zeros((80, 100), dtype=np.uint8)
+    for y in range(80):
+        for x in range(100):
+            data[y, x] = (x + y) % 256
+    ds.GetRasterBand(1).WriteArray(data)
+    ds = None
+
+    # Test block 0,0 (top-left, full 32x32)
+    ds = gdal.Open(f"vrt://{src_filename}?block=0,0")
+    assert ds.RasterXSize == 32
+    assert ds.RasterYSize == 32
+    arr = ds.GetRasterBand(1).ReadAsArray()
+    assert arr[0, 0] == 0  # (0+0) % 256
+    assert arr[0, 31] == 31  # (31+0) % 256
+    assert arr[31, 0] == 31  # (0+31) % 256
+    ds = None
+
+    # Test block 1,0 (second column, full 32x32)
+    ds = gdal.Open(f"vrt://{src_filename}?block=1,0")
+    assert ds.RasterXSize == 32
+    assert ds.RasterYSize == 32
+    arr = ds.GetRasterBand(1).ReadAsArray()
+    assert arr[0, 0] == 32  # pixel at x=32, y=0 -> (32+0) % 256
+    ds = None
+
+    # Test block 3,0 (marginal block in X direction: 100 - 3*32 = 4 pixels wide)
+    ds = gdal.Open(f"vrt://{src_filename}?block=3,0")
+    assert ds.RasterXSize == 4  # 100 - 96 = 4
+    assert ds.RasterYSize == 32
+    ds = None
+
+    # Test block 0,2 (marginal block in Y direction: 80 - 2*32 = 16 pixels tall)
+    ds = gdal.Open(f"vrt://{src_filename}?block=0,2")
+    assert ds.RasterXSize == 32
+    assert ds.RasterYSize == 16  # 80 - 64 = 16
+    ds = None
+
+    # Test block 3,2 (corner marginal block: 4x16)
+    ds = gdal.Open(f"vrt://{src_filename}?block=3,2")
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 16
+    ds = None
+
+    # Test with bands option (should work together)
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "block_test_3band.tif",
+        100,
+        80,
+        3,
+        gdal.GDT_Byte,
+        options=["TILED=YES", "BLOCKXSIZE=32", "BLOCKYSIZE=32"],
+    )
+    ds.GetRasterBand(1).Fill(10)
+    ds.GetRasterBand(2).Fill(20)
+    ds.GetRasterBand(3).Fill(30)
+    ds = None
+
+    ds = gdal.Open(f"vrt://{tmp_vsimem / 'block_test_3band.tif'}?block=0,0&bands=3,1")
+    assert ds.RasterCount == 2
+    assert ds.RasterXSize == 32
+    assert ds.RasterYSize == 32
+    assert ds.GetRasterBand(1).ReadAsArray()[0, 0] == 30
+    assert ds.GetRasterBand(2).ReadAsArray()[0, 0] == 10
+    ds = None
+
+    # Test error: wrong number of values
+    with pytest.raises(Exception, match="must be two values"):
+        gdal.Open(f"vrt://{src_filename}?block=0")
+
+    with pytest.raises(Exception, match="must be two values"):
+        gdal.Open(f"vrt://{src_filename}?block=0,0,0")
+
+    # Test error: non-numeric values
+    # Test scientific notation works (1e0 = 1)
+    ds = gdal.Open(f"vrt://{src_filename}?block=1e0,0")
+    assert ds.RasterXSize == 32
+    ds = None
+
+    # Test error: non-numeric values
+    with pytest.raises(Exception, match="not a valid non-negative integer"):
+        gdal.Open(f"vrt://{src_filename}?block=abc,0")
+
+    with pytest.raises(Exception, match="not a valid non-negative integer"):
+        gdal.Open(f"vrt://{src_filename}?block=0,xyz")
+
+    # Test error: non-integer float values
+    with pytest.raises(Exception, match="not a valid non-negative integer"):
+        gdal.Open(f"vrt://{src_filename}?block=1.5,0")
+
+    with pytest.raises(Exception, match="not a valid non-negative integer"):
+        gdal.Open(f"vrt://{src_filename}?block=0,2.7")
+
+    # Test error: negative values
+    with pytest.raises(Exception, match="not a valid non-negative integer"):
+        gdal.Open(f"vrt://{src_filename}?block=-1,0")
+
+    with pytest.raises(Exception, match="not a valid non-negative integer"):
+        gdal.Open(f"vrt://{src_filename}?block=0,-1")
+
+    # Test error: out of range (max X block is 3, max Y block is 2)
+    with pytest.raises(Exception, match="Invalid block indices"):
+        gdal.Open(f"vrt://{src_filename}?block=4,0")
+
+    with pytest.raises(Exception, match="Invalid block indices"):
+        gdal.Open(f"vrt://{src_filename}?block=0,3")
+
+    # Test mutual exclusivity with srcwin
+    with pytest.raises(Exception, match="mutually exclusive"):
+        gdal.Open(f"vrt://{src_filename}?block=0,0&srcwin=0,0,10,10")
+
+    # Test mutual exclusivity with projwin
+    with pytest.raises(Exception, match="mutually exclusive"):
+        gdal.Open(f"vrt://{src_filename}?block=0,0&projwin=0,100,100,0")
+
+    # Test mutual exclusivity with outsize
+    with pytest.raises(Exception, match="mutually exclusive"):
+        gdal.Open(f"vrt://{src_filename}?block=0,0&outsize=50,50")
+
+    # Test mutual exclusivity with tr
+    with pytest.raises(Exception, match="mutually exclusive"):
+        gdal.Open(f"vrt://{src_filename}?block=0,0&tr=2,2")
+
+    # Test mutual exclusivity with r (resampling)
+    with pytest.raises(Exception, match="mutually exclusive"):
+        gdal.Open(f"vrt://{src_filename}?block=0,0&r=bilinear")
+
+    # Test mutual exclusivity with ovr (overview level)
+    with pytest.raises(Exception, match="mutually exclusive"):
+        gdal.Open(f"vrt://{src_filename}?block=0,0&ovr=0")
+
+
 def test_vrt_source_no_dstrect():
 
     vrt_text = """<VRTDataset rasterXSize="20" rasterYSize="20">
