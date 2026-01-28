@@ -146,6 +146,37 @@ The following blending operators are available:
      - .. image:: ../../images/programs/gdal_raster_blend/screen.jpg
           :width: 140px
           :alt: screen blending example
+   * - ``overlay``
+     - Combines multiply and screen
+     - .. image:: ../../images/programs/gdal_raster_blend/overlay.jpg
+          :width: 140px
+          :alt: overlay blending example
+   * - ``hard-light``
+     - Multiply or screen depending on overlay brightness
+     - .. image:: ../../images/programs/gdal_raster_blend/hard-light.jpg
+          :width: 140px
+          :alt: hard-light blending example
+   * - ``darken``
+     - Keeps the minimum of input and overlay components
+     - .. image:: ../../images/programs/gdal_raster_blend/darken_3band.jpg
+          :width: 140px
+          :alt: darken blending example
+   * - ``lighten``
+     - Keeps the maximum of input and overlay components
+     - .. image:: ../../images/programs/gdal_raster_blend/lighten_3band.jpg
+          :width: 140px
+          :alt: lighten blending example
+   * - ``color-dodge``
+     - Brightens input based on overlay
+     - .. image:: ../../images/programs/gdal_raster_blend/color-dodge.jpg
+          :width: 140px
+          :alt: color-dodge blending example
+   * - ``color-burn``
+     - Darkens input based on overlay
+     - .. image:: ../../images/programs/gdal_raster_blend/color-burn.jpg
+          :width: 140px
+          :alt: color-burn blending example
+
 
 - ``src-over`` performs standard alpha blending, by compositing the overlay
     dataset over the input dataset.
