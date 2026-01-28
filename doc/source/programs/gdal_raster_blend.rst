@@ -119,6 +119,65 @@ For all operator (unless otherwise specified) the alpha channel is computed as:
 
 The following blending operators are available:
 
+.. list-table:: Overview of raster blend operators
+   :header-rows: 1
+   :widths: 18 42 30
+
+   * - Operator
+     - Description
+     - Example
+   * - ``src-over``
+     - Standard alpha blending (overlay composited over input)
+     - .. image:: ../../images/programs/gdal_raster_blend/src-over.jpg
+          :width: 140px
+          :alt: src-over blending example
+   * - ``hsv-value``
+     - Uses value from overlay and hue/saturation from input
+     - .. image:: ../../images/programs/gdal_raster_blend/hsv-value.jpg
+          :width: 140px
+          :alt: hsv-value blending example
+   * - ``multiply``
+     - Multiplies input and overlay colors
+     - .. image:: ../../images/programs/gdal_raster_blend/multiply.jpg
+          :width: 140px
+          :alt: multiply blending example
+   * - ``screen``
+     - Complement then multiply colors
+     - .. image:: ../../images/programs/gdal_raster_blend/screen.jpg
+          :width: 140px
+          :alt: screen blending example
+   * - ``overlay``
+     - Combines multiply and screen
+     - .. image:: ../../images/programs/gdal_raster_blend/overlay.jpg
+          :width: 140px
+          :alt: overlay blending example
+   * - ``hard-light``
+     - Multiply or screen depending on overlay brightness
+     - .. image:: ../../images/programs/gdal_raster_blend/hard-light.jpg
+          :width: 140px
+          :alt: hard-light blending example
+   * - ``darken``
+     - Keeps the minimum of input and overlay components
+     - .. image:: ../../images/programs/gdal_raster_blend/darken_3band.jpg
+          :width: 140px
+          :alt: darken blending example
+   * - ``lighten``
+     - Keeps the maximum of input and overlay components
+     - .. image:: ../../images/programs/gdal_raster_blend/lighten_3band.jpg
+          :width: 140px
+          :alt: lighten blending example
+   * - ``color-dodge``
+     - Brightens input based on overlay
+     - .. image:: ../../images/programs/gdal_raster_blend/color-dodge.jpg
+          :width: 140px
+          :alt: color-dodge blending example
+   * - ``color-burn``
+     - Darkens input based on overlay
+     - .. image:: ../../images/programs/gdal_raster_blend/color-burn.jpg
+          :width: 140px
+          :alt: color-burn blending example
+
+
 - ``src-over`` performs standard alpha blending, by compositing the overlay
     dataset over the input dataset.
 
@@ -399,3 +458,5 @@ Examples
     RGB
     RGBA
     HSV
+    hsv-value
+    hillshades
