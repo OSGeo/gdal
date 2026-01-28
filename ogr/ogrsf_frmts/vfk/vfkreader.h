@@ -452,6 +452,7 @@ class IVFKReader /* non final */
 
     virtual const char *GetEncoding() const = 0;
     virtual bool IsSpatial() const = 0;
+    virtual bool IsBudMulti() const = 0;
     virtual bool IsPreProcessed() const = 0;
     virtual bool IsValid() const = 0;
     virtual bool HasFileField() const = 0;

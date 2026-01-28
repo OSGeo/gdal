@@ -73,6 +73,11 @@ class VFKReader : public IVFKReader
         return false;
     }
 
+    bool IsBudMulti() const override
+    {
+        return false;
+    }
+
     bool IsPreProcessed() const override
     {
         return false;
@@ -113,6 +118,7 @@ class VFKReaderSQLite final : public VFKReader
     char *m_pszDBname;
     sqlite3 *m_poDB;
     bool m_bSpatial;
+    bool m_bBudMulti;
     bool m_bNewDb;
     bool m_bDbSource;
 
@@ -134,6 +140,11 @@ class VFKReaderSQLite final : public VFKReader
     bool IsSpatial() const override
     {
         return m_bSpatial;
+    }
+
+    bool IsBudMulti() const override
+    {
+        return m_bBudMulti;
     }
 
     bool IsPreProcessed() const override
