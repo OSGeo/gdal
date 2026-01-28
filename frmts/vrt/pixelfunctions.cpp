@@ -3166,22 +3166,25 @@ static CPLErr AreaPixelFunc(void ** /*papoSources*/, int nSources, void *pData,
     }
 
     size_t nCrsPtr = 0;
-    if (pszCrsPtr)
+    try
     {
-        try
-        {
-            nCrsPtr = std::stoul(pszCrsPtr, nullptr, 10);
-        }
-        catch (std::exception &)
-        {
-            // Since "crs" is populated by GDAL, this should never happen.
-            CPLError(CE_Failure, CPLE_AppDefined, "Failed to read CRS");
-            return CE_Failure;
-        }
+        nCrsPtr = std::stoul(pszCrsPtr, nullptr, 10);
+    }
+    catch (std::exception &)
+    {
+        // Since "crs" is populated by GDAL, this should never happen.
+        CPLError(CE_Failure, CPLE_AppDefined, "Failed to read CRS");
+        return CE_Failure;
     }
 
     const OGRSpatialReference *poCRS =
         reinterpret_cast<const OGRSpatialReference *>(nCrsPtr);
+
+    if (!poCRS)
+    {
+        // can't get here, but cppcheck doesn't know that
+        return CE_Failure;
+    }
 
     const OGRSpatialReference *poGeographicCRS = nullptr;
     std::unique_ptr<OGRSpatialReference> poGeographicCRSHolder;
