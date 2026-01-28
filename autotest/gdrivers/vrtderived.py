@@ -1701,6 +1701,7 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
     )
 
 
+@gdaltest.enable_exceptions()
 @pytest.mark.parametrize(
     "pixelfn,values,nodata_value,pixelfn_args,expected",
     [
@@ -1780,6 +1781,12 @@ def test_vrt_pixelfn_reclassify_nan(tmp_vsimem):
         ("quantile", [7], 7, {"q": 1}, 7),
         ("quantile", [7, 6, 1, 2], 7, {"q": 0.5}, 2),
         ("quantile", [7, 6, 1, 2], 7, {"q": 0.5, "propagateNoData": True}, 7),
+        ("round", [7.1], 7.1, {}, 7.1),
+        ("round", [7.1], 7.2, {}, 7),
+        ("round", [3.14159], 7, {"digits": 3}, 3.142),
+        ("round", [6253], 7, {"digits": -2}, 6300),
+        ("round", [6253], 7, {"digits": "invalid"}, "Failed to parse .* digits"),
+        ("round", [3, 4], 7, {}, "input must be a single band"),
         ("scale", [7], 7, {"scale": 5, "offset": 10}, 7),
         ("sqrt", [7], 7, {}, 7),
         ("sum", [3, 7, 9], 7, {}, 12),
@@ -1794,7 +1801,7 @@ def test_vrt_pixelfn_nodata(
     gdaltest.importorskip_gdal_array()
 
     with gdal.GetDriverByName("GTiff").Create(
-        tmp_vsimem / "src.tif", 1, 1, len(values), gdal.GDT_Float32
+        tmp_vsimem / "src.tif", 1, 1, len(values), gdal.GDT_Float64
     ) as src:
         for i in range(len(values)):
             src.GetRasterBand(i + 1).Fill(values[i])
@@ -1809,9 +1816,15 @@ def test_vrt_pixelfn_nodata(
       </VRTRasterBand>
     </VRTDataset>"""
 
-    result = gdal.Open(xml).ReadAsArray()[0, 0]
+    ds = gdal.Open(xml)
 
-    assert result == pytest.approx(expected, nan_ok=True)
+    if type(expected) is str:
+        with pytest.raises(Exception, match=expected):
+            ds.ReadAsArray()
+    else:
+        result = ds.ReadAsArray()[0, 0]
+
+        assert result == pytest.approx(expected, nan_ok=True)
 
 
 @pytest.mark.parametrize("propagate", (True, False))
