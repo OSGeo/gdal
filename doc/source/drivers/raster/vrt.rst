@@ -1580,7 +1580,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - = 1
      - ``to`` (optional)
      - Convert incoming ``NoData`` values to a new value, IEEE 754 `nan` by default
-   * - **real**
+   * - **round**
      - = 1
      - - ``digits`` (optional)
      - Round the input to the specified number of digits to the right of the decimal point.
