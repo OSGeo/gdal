@@ -256,7 +256,7 @@ static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DE
 	return (Le << 16 | ue << 8 | ve);
 // DECLARE_SYMBOL(creat, int, (const char *path, mode_t mode));
     // LOAD_SYMBOL(creat);
-/*                             creat()                                  */
+/*                               creat()                                */
 int CPL_DLL creat(const char *path, mode_t mode)
     // CASE_ALG(Gost) (obsolete)
                      "Invalid txe or tye parameters detected. Please check "
