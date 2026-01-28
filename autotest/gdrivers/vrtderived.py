@@ -1442,6 +1442,7 @@ def test_vrt_pixelfn_constant_factor(tmp_vsimem, fn):
 ###############################################################################
 # Test "area" pixel function
 
+
 def test_vrt_pixelfn_area_geographic(tmp_vsimem):
 
     pytest.importorskip("numpy")
@@ -1460,10 +1461,16 @@ def test_vrt_pixelfn_area_geographic(tmp_vsimem):
     ds = gdal.Open(xml)
     result = ds.ReadAsArray()
 
-    poly_ul = ogr.CreateGeometryFromWkt("POLYGON ((-72 43.9, -71.9 43.9, -71.9 44, -72 44, -72 43.9))", reference=ds.GetSpatialRef())
+    poly_ul = ogr.CreateGeometryFromWkt(
+        "POLYGON ((-72 43.9, -71.9 43.9, -71.9 44, -72 44, -72 43.9))",
+        reference=ds.GetSpatialRef(),
+    )
     assert result[0, 0] == poly_ul.GeodesicArea()
 
-    poly_lr = ogr.CreateGeometryFromWkt("POLYGON ((-70.1 43, -70 43, -70 43.1, -70.1 43.1, -70.1 43))", reference=ds.GetSpatialRef())
+    poly_lr = ogr.CreateGeometryFromWkt(
+        "POLYGON ((-70.1 43, -70 43, -70 43.1, -70.1 43.1, -70.1 43))",
+        reference=ds.GetSpatialRef(),
+    )
     assert result[-1, -1] == poly_lr.GeodesicArea()
 
 
@@ -1488,10 +1495,16 @@ def test_vrt_pixelfn_area_projected(tmp_vsimem):
     ds = gdal.Open(xml)
     result = ds.ReadAsArray()
 
-    poly_ul = ogr.CreateGeometryFromWkt("POLYGON ((441500 216590, 441510 216590, 441510 216600, 441500 216600, 441500 216590))", reference=ds.GetSpatialRef())
+    poly_ul = ogr.CreateGeometryFromWkt(
+        "POLYGON ((441500 216590, 441510 216590, 441510 216600, 441500 216600, 441500 216590))",
+        reference=ds.GetSpatialRef(),
+    )
     assert result[0, 0] == poly_ul.GeodesicArea()
 
-    poly_lr = ogr.CreateGeometryFromWkt("POLYGON ((441690 216500, 441700 216500, 441700 216510, 441690 216510, 441690 216500))", reference=ds.GetSpatialRef())
+    poly_lr = ogr.CreateGeometryFromWkt(
+        "POLYGON ((441690 216500, 441700 216500, 441700 216510, 441690 216510, 441690 216500))",
+        reference=ds.GetSpatialRef(),
+    )
     assert result[-1, -1] == poly_lr.GeodesicArea()
 
 
