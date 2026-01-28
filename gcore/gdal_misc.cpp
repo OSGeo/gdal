@@ -5906,3 +5906,35 @@ bool GDALGeoTransform::Apply(const GDALRasterWindow &window,
 
     return true;
 }
+
+/************************************************************************/
+/*                        GDALGeoTransform::Init                        */
+/************************************************************************/
+
+bool GDALGeoTransform::Init(const char *pszText, const char *pszSep)
+{
+    CPLStringList aosGeoTransform(
+        CSLTokenizeString2(pszText, pszSep, CSLT_HONOURSTRINGS));
+    if (aosGeoTransform.size() != 6)
+    {
+        return false;
+    }
+
+    for (int i = 0; i < 6; i++)
+    {
+        (*this)[i] = CPLAtof(aosGeoTransform[i]);
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                      GDALGeoTransform::ToString                      */
+/************************************************************************/
+
+std::string GDALGeoTransform::ToString(const char *pszSep) const
+{
+    return CPLSPrintf("%.17g%s%.17g%s%.17g%s%.17g%s%.17g%s%.17g", (*this)[0],
+                      pszSep, (*this)[1], pszSep, (*this)[2], pszSep,
+                      (*this)[3], pszSep, (*this)[4], pszSep, (*this)[5]);
+}

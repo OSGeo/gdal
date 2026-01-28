@@ -913,9 +913,7 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                             // is needed, the pixel function can emit the error.
                             continue;
                         }
-                        osVal = CPLSPrintf(
-                            "%.17g,%.17g,%.17g,%.17g,%.17g,%.17g", gt[0], gt[1],
-                            gt[2], gt[3], gt[4], gt[5]);
+                        osVal = gt.ToString();
                         success = true;
                     }
                     else if (osArgName == "source_names")
