@@ -2561,6 +2561,10 @@ to provide fewer or more than two values to the ``block`` option, and an error f
 less than zero, or greater than the maximum block index. This option is mutually exclusive with
 ``srcwin``, ``projwin``, ``outsize``, ``tr``, ``r``, and ``ovr``.
 
+.. spelling:word-list::
+    nXBlockOff
+    nYBlockOff
+
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
