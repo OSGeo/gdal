@@ -44,18 +44,18 @@ Examples
 
    .. code-block:: console
 
-       $ gdal vsi move /vsis3/bucket/my.tif /vsis3/bucket/new_name.tif
+       $ gdal vsi move /vsigs/bucket/my.tif /vsigs/bucket/new_name.tif
 
 .. example::
    :title: Move a file into another directory within the same virtual file system
 
    .. code-block:: console
 
-       $ gdal vsi move /vsis3/bucket/my.tif /vsis3/bucket/existing_subdir
+       $ gdal vsi move /vsigs/bucket/my.tif /vsigs/bucket/existing_subdir
 
 .. example::
    :title: Move a directory between two different virtual file systems
 
    .. code-block:: console
 
-       $ gdal vsi move /vsis3/bucket/my_directory /vsigs/bucket/
+       $ gdal vsi move /vsigs/bucket/my_directory /vsigs/bucket/

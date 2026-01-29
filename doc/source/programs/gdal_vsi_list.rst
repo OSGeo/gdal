@@ -70,8 +70,8 @@ Examples
 --------
 
 .. example::
-   :title: Listing recursively files in /vsis3/bucket with details
+   :title: Listing recursively files in /vsigs/bucket with details
 
    .. code-block:: console
 
-       $ gdal vsi list -lR /vsis3/bucket
+       $ gdal vsi list -lR /vsigs/bucket
