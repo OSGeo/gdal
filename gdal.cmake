@@ -140,13 +140,20 @@ endif ()
 
 # Check that all symbols we need are present in our dependencies This is in particular useful to check that drivers
 # built as plugins can access all symbols they need.
+include(CheckLinkerFlag)
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  include(CheckLinkerFlag)
   check_linker_flag(C "-Wl,--no-undefined" HAS_NO_UNDEFINED)
   if (HAS_NO_UNDEFINED AND (NOT "${CMAKE_CXX_FLAGS}" MATCHES "-fsanitize") AND NOT CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
     string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--no-undefined")
     string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--no-undefined")
   endif ()
+endif ()
+
+check_linker_flag(C "LINKER:-z,relro;LINKER:-z,now" HAVE_FULL_RELRO)
+
+if (HAVE_FULL_RELRO)
+  string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,-z,relro,-z,now")
+  string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,-z,relro,-z,now")
 endif ()
 
 macro(set_alternate_linker linker)
