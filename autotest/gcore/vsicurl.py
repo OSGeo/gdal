@@ -293,7 +293,10 @@ def test_vsicurl_test_redirect(server, authorization_header_allowed):
 @pytest.mark.parametrize(
     "authorization_header_allowed", [None, "YES", "NO", "IF_SAME_HOST"]
 )
-def test_vsicurl_test_redirect_different_server(server, authorization_header_allowed):
+@pytest.mark.parametrize("redirect_code", [301, 302])
+def test_vsicurl_test_redirect_different_server(
+    server, authorization_header_allowed, redirect_code
+):
 
     gdal.VSICurlClearCache()
 
@@ -309,18 +312,42 @@ def test_vsicurl_test_redirect_different_server(server, authorization_header_all
     handler.add(
         "HEAD",
         "/test_redirect/test.bin",
-        301,
+        redirect_code,
         {"Location": "http://127.0.0.1:%d/redirected/test.bin" % server.port},
         expected_headers={"Authorization": "Bearer xxx"},
     )
-    handler.add(
-        "HEAD",
-        "/redirected/test.bin",
-        200,
-        {"Content-Length": "3"},
-        expected_headers=expected_headers,
-        unexpected_headers=unexpected_headers,
-    )
+    if redirect_code == 302 and authorization_header_allowed is None:
+        handler.add(
+            "HEAD",
+            "/redirected/test.bin",
+            403,
+            expected_headers=expected_headers,
+            unexpected_headers=unexpected_headers,
+        )
+        handler.add(
+            "GET",
+            "/redirected/test.bin",
+            200,
+            {"Content-Length": "3"},
+            b"xyz",
+        )
+    else:
+        handler.add(
+            "HEAD",
+            "/redirected/test.bin",
+            200,
+            {"Content-Length": "3"},
+            expected_headers=expected_headers,
+            unexpected_headers=unexpected_headers,
+        )
+    if redirect_code == 302:
+        handler.add(
+            "GET",
+            "/test_redirect/test.bin",
+            redirect_code,
+            {"Location": "http://127.0.0.1:%d/redirected/test.bin" % server.port},
+            expected_headers={"Authorization": "Bearer xxx"},
+        )
     handler.add(
         "GET",
         "/redirected/test.bin",
