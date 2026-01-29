@@ -1735,10 +1735,16 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                 // Create band information objects.
                 for (int i = 1; i <= poDS->nBands; ++i)
                 {
-                    CPLString osAttr =
-                        TILEDB_VALUES + CPLString().Printf("_%i", i);
-                    poDS->SetBand(i,
-                                  new TileDBRasterBand(poDS.get(), i, osAttr));
+                    tiledb::Attribute const &attr = schema.attribute(i - 1);
+                    std::string const &attr_name = attr.name();
+
+                    CPLDebug("TileDB", "Set attribute '%s' from TileDB schema",
+                             attr_name.c_str());
+
+                    GDALRasterBand *band =
+                        new TileDBRasterBand(poDS.get(), i, attr_name.c_str());
+
+                    poDS->SetBand(i, band);
                 }
             }
             else
