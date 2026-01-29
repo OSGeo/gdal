@@ -12,6 +12,7 @@
  *****************************************************************************/
 
 #include <array>
+#include <charconv>
 #include <cmath>
 #include "gdal.h"
 #include "vrtdataset.h"
@@ -3165,12 +3166,10 @@ static CPLErr AreaPixelFunc(void ** /*papoSources*/, int nSources, void *pData,
         return CE_Failure;
     }
 
-    size_t nCrsPtr = 0;
-    try
-    {
-        nCrsPtr = std::stoul(pszCrsPtr, nullptr, 10);
-    }
-    catch (std::exception &)
+    std::uintptr_t nCrsPtr = 0;
+    if (auto [end, ec] =
+            std::from_chars(pszCrsPtr, pszCrsPtr + strlen(pszCrsPtr), nCrsPtr);
+        ec != std::errc())
     {
         // Since "crs" is populated by GDAL, this should never happen.
         CPLError(CE_Failure, CPLE_AppDefined, "Failed to read CRS");
