@@ -7280,7 +7280,7 @@ OGRGeometry *OGRGeometryFromHexEWKB(const char *pszBytea, int *pnSRID,
 /*                        OGRGeometryToHexEWKB()                        */
 /************************************************************************/
 
-char *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
+char *OGRGeometryToHexEWKB(const OGRGeometry *poGeometry, int nSRSId,
                            int nPostGISMajor, int nPostGISMinor)
 {
     const size_t nWkbSize = poGeometry->WkbSize();

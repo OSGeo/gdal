@@ -192,7 +192,7 @@ OGRGeometry CPL_DLL *OGRGeometryFromEWKB(GByte *pabyWKB, int nLength,
                                          int *pnSRID, int bIsPostGIS1_EWKB);
 OGRGeometry CPL_DLL *OGRGeometryFromHexEWKB(const char *pszBytea, int *pnSRID,
                                             int bIsPostGIS1_EWKB);
-char CPL_DLL *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
+char CPL_DLL *OGRGeometryToHexEWKB(const OGRGeometry *poGeometry, int nSRSId,
                                    int nPostGISMajor, int nPostGISMinor);
 
 /************************************************************************/
