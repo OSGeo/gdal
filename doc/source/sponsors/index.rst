@@ -74,6 +74,13 @@ Bronze
 
     .. container:: horizontal-logo
 
+        .. image:: ../../images/sponsors/logo-miramon.png
+           :class: img-logos
+           :width: 150 px
+           :target: https://www.miramon.cat/Index_eng.htm
+
+    .. container:: horizontal-logo
+
         .. image:: ../../images/sponsors/logo-sparkgeo.png
            :class: img-logos
            :width: 150 px
