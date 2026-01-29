@@ -22,7 +22,7 @@ usage()
     echo ""
     echo "--push: push image to docker repository (defaults to ghcr.io)"
     echo "--tag name: suffix to append to image name. Defaults to 'latest' for non release builds or the GDAL tag name for release builds"
-    echo "--gdal tag|sha1|master: GDAL version to use. Defaults to master"
+    echo "--gdal local|tag|sha1|master: GDAL version to use. Local uses the local repository, the others use the GitHub repository. Defaults to master"
     echo "--proj tag|sha1|master: PROJ version to use. Defaults to master"
     echo "--gdal-repository repo: github repository. Defaults to OSGeo/gdal"
     echo "--release: Whether this is a release build. In which case --gdal tag must be used."

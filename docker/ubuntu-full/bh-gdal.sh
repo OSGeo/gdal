@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+cd gdal
+
 if [ "${GDAL_VERSION}" = "master" ]; then
     GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
     export GDAL_VERSION
@@ -8,19 +10,20 @@ if [ "${GDAL_VERSION}" = "master" ]; then
     export GDAL_RELEASE_DATE
 fi
 
+if [ "${GDAL_VERSION}" = "local" ]; then
+    GDAL_VERSION=$(git describe --match=BOGUSTAG --always --abbrev=40 --dirty)
+    export GDAL_VERSION
+else
+    rm -rf ./*
+    (curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
+      | tar xz --strip-components=1) || exit 1
+fi
+
 if [ -z "${GDAL_BUILD_IS_RELEASE:-}" ]; then
     export GDAL_SHA1SUM=${GDAL_VERSION}
 fi
 
-mkdir gdal
-curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
-    | tar xz -C gdal --strip-components=1
-
-
-
 (
-    cd gdal
-
     if test "${RSYNC_REMOTE:-}" != ""; then
         echo "Downloading cache..."
         rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/.cache/" || /bin/true
@@ -110,7 +113,6 @@ curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.t
     fi
 )
 
-rm -rf gdal
 mkdir -p /build_gdal_python/usr/lib
 mkdir -p /build_gdal_python/usr/bin
 mkdir -p /build_gdal_version_changing/usr/include

@@ -478,6 +478,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && cd ../../.. \
     && rm -rf arrow-adbc-apache-arrow-adbc-${ARROW_ADBC_VERSION}
 
+RUN mkdir gdal
+
 ARG WITH_DEBUG_SYMBOLS=no
 
 # Refresh grids
@@ -519,6 +521,7 @@ ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
 COPY ./docker/ubuntu-full/bh-gdal.sh /buildscripts/bh-gdal.sh
+COPY --link . gdal/
 RUN --mount=type=cache,id=ubuntu-full-gdal,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     # Forcefully remove the development files for libproj so GDAL cannot
