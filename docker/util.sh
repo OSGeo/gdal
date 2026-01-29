@@ -286,6 +286,7 @@ if test "${RELEASE}" = "yes"; then
         fi
     fi
 
+    cd "${SCRIPT_DIR}/../.."
     LABEL_ARGS=(
        "--label" "org.opencontainers.image.description=GDAL is an open source MIT licensed translator library for raster and vector geospatial data formats." \
        "--label" "org.opencontainers.image.title=GDAL ${TARGET_IMAGE}" \
@@ -298,20 +299,20 @@ if test "${RELEASE}" = "yes"; then
     IMAGE_NAME_WITH_ARCH="${REPO_IMAGE_NAME}-${ARCH_PLATFORM_ARCH}"
     if test "${DOCKER_BUILDX}" = "buildx"; then
       if test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
-        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --push "${SCRIPT_DIR}"
+        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --push --file "${SCRIPT_DIR}/Dockerfile" .
       else
-        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --load "${SCRIPT_DIR}"
+        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --load --file "${SCRIPT_DIR}/Dockerfile" .
       fi
     else
 
-        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" "${SCRIPT_DIR}"
+        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --file "${SCRIPT_DIR}/Dockerfile" .
         check_image "${IMAGE_NAME_WITH_ARCH}"
 
         if test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
             docker push "${IMAGE_NAME_WITH_ARCH}"
         fi
     fi
-
+    cd -
 else
     BUILD_ARGS+=("--build-arg" "BUILDKIT_INLINE_CACHE=1")
     BUILD_ARGS+=("--build-arg" "WITH_CCACHE=1")
@@ -417,24 +418,24 @@ EOF
       fi
     fi
 
-
+    cd "${SCRIPT_DIR}/../.."
     if test "${DOCKER_BUILDX}" != "buildx"; then
-        docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" "${SCRIPT_DIR}"
+        docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --file "${SCRIPT_DIR}/Dockerfile" .
         check_image "${IMAGE_NAME_WITH_ARCH}"
     else
-        docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" "${SCRIPT_DIR}" --load
+        docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --file "${SCRIPT_DIR}/Dockerfile" --load .
     fi
 
     if test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
         if test "${DOCKER_BUILDX}" = "buildx"; then
-            docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --push "${SCRIPT_DIR}"
+            docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${IMAGE_NAME_WITH_ARCH}" --push --file "${SCRIPT_DIR}/Dockerfile" .
         else
             docker push "${IMAGE_NAME_WITH_ARCH}"
         fi
 
         if test "${IMAGE_NAME}" = "osgeo/gdal:ubuntu-full-latest"; then
             if test "${DOCKER_BUILDX}" = "buildx"; then
-                docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${DOCKER_REPO}/osgeo/gdal:latest" --push "${SCRIPT_DIR}"
+                docker $(build_cmd) "${BUILD_ARGS[@]}" -t "${DOCKER_REPO}/osgeo/gdal:latest" --push --file "${SCRIPT_DIR}/Dockerfile" .
             else
                 if test "${ARCH_PLATFORMS}" = "linux/amd64"; then
                     docker image tag "${IMAGE_NAME}" "${DOCKER_REPO}/osgeo/gdal:latest"
@@ -443,6 +444,7 @@ EOF
             fi
         fi
     fi
+    cd -
 
     # Cleanup previous images
     NEW_IMAGE_ID=$(docker image ls "${IMAGE_NAME_WITH_ARCH}" -q)
