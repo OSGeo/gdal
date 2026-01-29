@@ -20,7 +20,7 @@ import threading
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.skipif(
     not gdaltest.vrt_has_open_support(),
@@ -1437,6 +1437,134 @@ def test_vrt_pixelfn_constant_factor(tmp_vsimem, fn):
         np.testing.assert_array_equal(dst, src + k)
     elif fn == "mul":
         np.testing.assert_array_equal(dst, src * k)
+
+
+###############################################################################
+# Test "area" pixel function
+
+
+def test_vrt_pixelfn_area_geographic(tmp_vsimem):
+
+    pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    xml = """
+    <VRTDataset rasterXSize="20" rasterYSize="10">
+      <GeoTransform>-72, 0.1, 0, 44, 0, -0.1</GeoTransform>
+      <SRS>EPSG:4326</SRS>
+      <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>area</PixelFunctionType>
+        <PixelFunctionArguments />
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    ds = gdal.Open(xml)
+    result = ds.ReadAsArray()
+
+    poly_ul = ogr.CreateGeometryFromWkt(
+        "POLYGON ((-72 43.9, -71.9 43.9, -71.9 44, -72 44, -72 43.9))",
+        reference=ds.GetSpatialRef(),
+    )
+    assert result[0, 0] == poly_ul.GeodesicArea()
+
+    poly_lr = ogr.CreateGeometryFromWkt(
+        "POLYGON ((-70.1 43, -70 43, -70 43.1, -70.1 43.1, -70.1 43))",
+        reference=ds.GetSpatialRef(),
+    )
+    assert result[-1, -1] == poly_lr.GeodesicArea()
+
+
+def test_vrt_pixelfn_area_projected(tmp_vsimem):
+
+    pytest.importorskip("numpy")
+    gdaltest.importorskip_gdal_array()
+
+    # the <PixelFunctionArguments crs="3" /> tag is just to test that a user
+    # cannot override a built-in argument. Since "crs" is a pointer, allowing
+    # a user to override it would permit abitrary memory access.
+    xml = """
+    <VRTDataset rasterXSize="20" rasterYSize="10">
+      <GeoTransform>441500, 10, 0, 216600, 0, -10</GeoTransform>
+      <SRS>EPSG:32145</SRS>
+      <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>area</PixelFunctionType>
+        <PixelFunctionArguments crs="3" />
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    ds = gdal.Open(xml)
+    result = ds.ReadAsArray()
+
+    poly_ul = ogr.CreateGeometryFromWkt(
+        "POLYGON ((441500 216590, 441510 216590, 441510 216600, 441500 216600, 441500 216590))",
+        reference=ds.GetSpatialRef(),
+    )
+    assert result[0, 0] == poly_ul.GeodesicArea()
+
+    poly_lr = ogr.CreateGeometryFromWkt(
+        "POLYGON ((441690 216500, 441700 216500, 441700 216510, 441690 216510, 441690 216500))",
+        reference=ds.GetSpatialRef(),
+    )
+    assert result[-1, -1] == poly_lr.GeodesicArea()
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_pixelfn_area_missing_crs():
+
+    xml = """
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <GeoTransform>-72, 0.1, 0, 44, 0, -0.1</GeoTransform>
+      <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>area</PixelFunctionType>
+        <PixelFunctionArguments />
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    ds = gdal.Open(xml)
+
+    with pytest.raises(Exception, match="has no .SRS"):
+        ds.ReadRaster()
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_pixelfn_area_missing_geotransform():
+
+    xml = """
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <SRS>EPSG:4326</SRS>
+      <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>area</PixelFunctionType>
+        <PixelFunctionArguments />
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    ds = gdal.Open(xml)
+
+    with pytest.raises(Exception, match="has no .GeoTransform"):
+        ds.ReadRaster()
+
+
+@gdaltest.enable_exceptions()
+def test_vrt_pixelfn_area_unexpected_source():
+
+    xml = """
+    <VRTDataset rasterXSize="20" rasterYSize="20">
+      <GeoTransform>-72, 0.1, 0, 44, 0, -0.1</GeoTransform>
+      <SRS>EPSG:4326</SRS>
+      <VRTRasterBand dataType="Float64" band="1" subClass="VRTDerivedRasterBand">
+        <PixelFunctionType>area</PixelFunctionType>
+        <PixelFunctionArguments />
+        <SimpleSource>
+           <SourceFilename>data/byte.tif</SourceFilename>
+           <SourceBand>1</SourceBand>
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    ds = gdal.Open(xml)
+
+    with pytest.raises(Exception, match="unexpected source band"):
+        ds.ReadRaster()
 
 
 ###############################################################################

@@ -887,6 +887,22 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                         dfVal = static_cast<double>(nYOff);
                         success = true;
                     }
+                    else if (osArgName == "crs")
+                    {
+                        const auto *crs =
+                            GetDataset()->GetSpatialRefRasterOnly();
+                        if (crs)
+                        {
+                            osVal =
+                                std::to_string(reinterpret_cast<size_t>(crs));
+                            success = true;
+                        }
+                        else
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "VRTDataset has no <SRS>");
+                        }
+                    }
                     else if (osArgName == "geotransform")
                     {
                         GDALGeoTransform gt;
@@ -1460,7 +1476,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         }
     }
 
-    // Collect any pixel function arguments
+    // Collect any pixel function arguments into oAdditionalArgs
     if (poPixelFunc != nullptr && !poPixelFunc->second.empty())
     {
         if (GetPixelFunctionArguments(poPixelFunc->second,
@@ -1608,13 +1624,17 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     {
         CPLStringList aosArgs;
 
-        oAdditionalArgs.insert(oAdditionalArgs.end(),
-                               m_poPrivate->m_oFunctionArgs.begin(),
-                               m_poPrivate->m_oFunctionArgs.end());
-        for (const auto &oArg : oAdditionalArgs)
+        // Apply arguments specified using <PixelFunctionArguments>
+        for (const auto &[pszKey, pszValue] : m_poPrivate->m_oFunctionArgs)
         {
-            const char *pszKey = oArg.first.c_str();
-            const char *pszValue = oArg.second.c_str();
+            aosArgs.SetNameValue(pszKey, pszValue);
+        }
+
+        // Apply built-in arguments, potentially overwriting those in <PixelFunctionArguments>
+        // This is important because some pixel functions rely on built-in arguments being
+        // properly formatted, or even being a valid pointer. If a user can override these, we could have a crash.
+        for (const auto &[pszKey, pszValue] : oAdditionalArgs)
+        {
             aosArgs.SetNameValue(pszKey, pszValue);
         }
 
