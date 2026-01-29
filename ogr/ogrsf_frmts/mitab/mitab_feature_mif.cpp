@@ -706,7 +706,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     }
                     nNumPoints = atoi(pszLine);
                 }
-                if (nNumPoints < 2)
+                if (nNumPoints < 0)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Invalid number of vertices (%d) in PLINE "
@@ -771,7 +771,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         }
         else
         {
-            if (nNumPoints < 2)
+            if (nNumPoints < 0)
             {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Invalid number of vertices (%d) in PLINE "
