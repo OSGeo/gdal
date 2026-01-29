@@ -404,7 +404,6 @@ EOF
           docker pull "${BASE_IMAGE}@${TARGET_BASE_IMAGE_DIGEST}"
           BUILD_ARGS+=("--build-arg" "TARGET_ARCH=${ARCH_PLATFORM_ARCH}")
           BUILD_ARGS+=("--build-arg" "TARGET_BASE_IMAGE=${BASE_IMAGE}@${TARGET_BASE_IMAGE_DIGEST}")
-          echo "${BUILD_ARGS[@]}"
         fi
       elif test "${DOCKER_BUILDX}" != "buildx" && [[ "${IMAGE_NAME}" = "osgeo/gdal:alpine-small-latest" || "${IMAGE_NAME}" = "osgeo/gdal:alpine-normal-latest" ]]; then
         if test "${ARCH_PLATFORMS}" = "linux/arm64"; then
@@ -413,9 +412,7 @@ EOF
           echo "Fetching digest for ${BASE_IMAGE} ${ARCH_PLATFORMS}..."
           ARCH_PLATFORM_ARCH=$(echo "${ARCH_PLATFORMS}" | sed "s/linux\///")
           TARGET_BASE_IMAGE_DIGEST=$(docker manifest inspect "${BASE_IMAGE}" | jq --raw-output '.manifests[] | (if .platform.architecture == "'"${ARCH_PLATFORM_ARCH}"'" then .digest else empty end)')
-          echo "${TARGET_BASE_IMAGE_DIGEST}"
           BUILD_ARGS+=("--build-arg" "ALPINE_VERSION=${ALPINE_VERSION}@${TARGET_BASE_IMAGE_DIGEST}")
-          echo "${BUILD_ARGS[@]}"
         fi
       fi
     fi
