@@ -181,6 +181,8 @@ Standard Options
 Examples
 --------
 
+.. _gdal_vector_rasterize_example_burn:
+
 .. example::
    :title: Burn a shapefile into a raster
 

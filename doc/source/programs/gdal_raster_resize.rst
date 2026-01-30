@@ -88,6 +88,8 @@ Standard Options
 Examples
 --------
 
+.. _gdal_raster_resize_example_resize:
+
 .. example::
    :title: Resize a dataset to 1000 columns and 500 lines using cubic resampling
 

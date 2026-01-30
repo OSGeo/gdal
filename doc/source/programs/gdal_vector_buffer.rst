@@ -175,6 +175,8 @@ Standard Options
     .. include:: gdal_options/upsert.rst
 
 
+.. _gdal_vector_buffer_examples:
+
 Examples
 --------
 
