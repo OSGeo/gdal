@@ -163,11 +163,11 @@ static void crc32c_init_hw(void) {
 /* Compute CRC-32C using the Intel hardware instruction. */
 static uint32_t crc32c_hw(uint32_t crc, void const *buf, size_t len) {
     /* populate shift tables the first time through */
-    static bool bInit = []()
+    static bool bInit = [](bool ret)
     {
         crc32c_init_hw();
-        return true;
-    }();
+        return ret;
+    }(true);
     (void)bInit;
 
     /* pre-process the crc */
@@ -273,7 +273,7 @@ static uint32_t crc32c_hw(uint32_t crc, void const *buf, size_t len) {
    version.  Otherwise, use the software version. */
 void crc32c_init(void) {
 
-    static const bool bInit = [](){
+    static const bool bInit = [](bool ret){
     int sse42;
 
     SSE42(sse42);
@@ -282,8 +282,8 @@ void crc32c_init(void) {
     } else {
         crc32c = crc32c_sw;
     }
-    return true;
-    }();
+    return ret;
+    }(true);
     (void)bInit;
 }
 
@@ -408,11 +408,11 @@ static void crc32c_init_sw_little(void) {
 uint32_t crc32c_sw_little(uint32_t crc, void const *buf, size_t len) {
     unsigned char const *next = static_cast<unsigned char const*>(buf);
 
-    static bool bInit = []()
+    static bool bInit = [](bool ret)
     {
         crc32c_init_sw_little();
-        return true;
-    }();
+        return ret;
+    }(true);
     (void)bInit;
 
     crc = ~crc;

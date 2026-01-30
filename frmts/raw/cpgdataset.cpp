@@ -1295,14 +1295,14 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     /*      Initialize our power table if this is our first time through.   */
     /* -------------------------------------------------------------------- */
     static float afPowTable[256];
-    [[maybe_unused]] static bool bPowTableInitialized = []()
+    [[maybe_unused]] static bool bPowTableInitialized = [](bool ret)
     {
         for (int i = 0; i < 256; i++)
         {
             afPowTable[i] = static_cast<float>(pow(2.0, i - 128));
         }
-        return true;
-    }();
+        return ret;
+    }(true);
 
     /* -------------------------------------------------------------------- */
     /*      Copy the desired band out based on the size of the type, and    */
