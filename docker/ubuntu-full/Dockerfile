@@ -19,7 +19,7 @@ ENV HOME="/root"
 
 ARG TARGET_ARCH=
 RUN echo ${TARGET_ARCH}
-COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
+COPY ./docker/ubuntu-full/bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
@@ -201,10 +201,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libspdlog-dev${APT_ARCH_SUFFIX} libmagic-dev${APT_ARCH_SUFFIX}
 
-COPY ./tiledb-FindLZ4_EP.cmake.patch /buildscripts/tiledb-FindLZ4_EP.cmake.patch
-COPY ./tiledb-FindOpenSSL_EP.cmake.patch /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch
+COPY ./docker/ubuntu-full/tiledb-FindLZ4_EP.cmake.patch /buildscripts/tiledb-FindLZ4_EP.cmake.patch
+COPY ./docker/ubuntu-full/tiledb-FindOpenSSL_EP.cmake.patch /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch
 # Commit from TileDB 2.27.
-COPY ./tiledb-cmake-ccache.patch /buildscripts/tiledb-cmake-ccache.patch
+COPY ./docker/ubuntu-full/tiledb-cmake-ccache.patch /buildscripts/tiledb-cmake-ccache.patch
 RUN --mount=type=cache,id=ubuntu-full-tiledb,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
@@ -478,12 +478,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && cd ../../.. \
     && rm -rf arrow-adbc-apache-arrow-adbc-${ARROW_ADBC_VERSION}
 
+RUN mkdir gdal
+
 ARG WITH_DEBUG_SYMBOLS=no
 
 # Refresh grids
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX=/usr/local/gdal-internal
-COPY ./bh-proj.sh /buildscripts/bh-proj.sh
+COPY ./docker/ubuntu-full/bh-proj.sh /buildscripts/bh-proj.sh
 # We build PROJ a first time, just to build the projsync utility if grids need
 # to be refreshed. We will rebuild just afterwards, but depending on the
 # PROJ_VERSION argument
@@ -518,7 +520,8 @@ ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
-COPY ./bh-gdal.sh /buildscripts/bh-gdal.sh
+COPY ./docker/ubuntu-full/bh-gdal.sh /buildscripts/bh-gdal.sh
+COPY --link . gdal/
 RUN --mount=type=cache,id=ubuntu-full-gdal,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     # Forcefully remove the development files for libproj so GDAL cannot

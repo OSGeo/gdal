@@ -40,6 +40,7 @@ RUN apk add --no-cache \
     expat-dev \
     freexl-dev \
     geos-dev \
+    git \
     giflib-dev \
     gnu-libiconv-dev \
     hdf5-dev \
@@ -141,14 +142,15 @@ RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
     && rm -rf libOpenDRIVE-${OPENDRIVE_VERSION} \
     ); fi
 
+RUN mkdir proj gdal
+
 ARG RSYNC_REMOTE
 ARG WITH_CCACHE
 
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN --mount=type=cache,id=alpine-normal-proj,target=$HOME/.cache \
-    mkdir proj \
-    && curl -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
+    curl -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && if test "${RSYNC_REMOTE}" != ""; then \
@@ -240,10 +242,20 @@ ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
+COPY --link . gdal/
+
 RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
-    if test "${GDAL_VERSION}" = "master"; then \
+    cd gdal \
+    && if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
+    fi \
+    && if test "${GDAL_VERSION}" = "local"; then \
+        export GDAL_VERSION=$(git describe --match=BOGUSTAG --always --abbrev=40 --dirty); \
+    else \
+        rm -rf ./*; \
+        (curl -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
+          | tar xz --strip-components=1) || exit 1; \
     fi \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
@@ -252,10 +264,6 @@ RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
         apk add --no-cache libtirpc-dev \
         && export LDFLAGS="-ltirpc ${LDFLAGS}"; \
     fi \
-    && mkdir gdal \
-    && curl -L -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
-        | tar xz -C gdal --strip-components=1 \
-    && cd gdal \
     && if test "${RSYNC_REMOTE}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/gdal/$(uname -m)/ $HOME/.cache/; \

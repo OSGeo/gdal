@@ -20,7 +20,7 @@ ENV HOME="/root"
 
 ARG TARGET_ARCH=
 RUN echo ${TARGET_ARCH}
-COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
+COPY ./docker/ubuntu-small/bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
@@ -74,6 +74,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libmuparser-dev${APT_ARCH_SUFFIX} \
        autoconf automake sqlite3 bash-completion swig
 
+RUN mkdir proj gdal
+
 ARG PROJ_INSTALL_PREFIX
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
@@ -89,7 +91,6 @@ ARG WITH_CCACHE
 ARG PROJ_VERSION=master
 RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
-    && mkdir proj \
     && curl -Lo - -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
         | tar xz -C proj --strip-components=1 \
     && export PROJ_DB_CACHE_PARAM="" \
@@ -138,15 +139,25 @@ ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
+COPY --link . gdal/
+
 RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     # Forcefully remove the development files for libproj so GDAL cannot
     # include the wrong header. This is the last step of the build container,
     # so we can break things without anything else suffering.
     && dpkg --force depends -r libproj-dev \
+    && cd gdal \
     && if test "${GDAL_VERSION}" = "master"; then \
         export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
+    fi \
+    && if test "${GDAL_VERSION}" = "local"; then \
+        export GDAL_VERSION=$(git describe --match=BOGUSTAG --always --abbrev=40 --dirty); \
+    else \
+        rm -rf ./*; \
+        (curl -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
+          | tar xz --strip-components=1) || exit 1; \
     fi \
     && if test "x${GDAL_BUILD_IS_RELEASE:-}" = "x"; then \
         export GDAL_SHA1SUM=${GDAL_VERSION}; \
@@ -156,10 +167,6 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     else \
         export GDAL_CMAKE_EXTRA_OPTS=""; \
     fi \
-    && mkdir gdal \
-    && curl -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
-        | tar xz -C gdal --strip-components=1 \
-    && cd gdal \
     && if test "${RSYNC_REMOTE:-}" != ""; then \
         echo "Downloading cache..."; \
         rsync -ra ${RSYNC_REMOTE}/gdal/${GCC_ARCH}/ $HOME/.cache/; \
