@@ -235,8 +235,21 @@ build can be installed with the following command:
 
     conda install -c gdal-master -c conda-forge gdal-master::gdal
 
-As with released versions of GDAL, additional drivers can be installed using `gdal-master::libgdal-{driver_name}`.
+As with released versions of GDAL, additional drivers can be installed using ``gdal-master::libgdal-{driver_name}``.
 
+If you already have a GDAL master build installed in an environment, you can update it to the latest master version using the commands below.
+GDAL subpackages may need to be updated individually, because the master version numbers (e.g. ``3.12.99``) do not change with every nightly build.
+
+::
+
+    # check currently installed GDAL components and versions
+    conda list gdal
+    gdal --version
+    # update GDAL
+    conda install -c gdal-master gdal --force-reinstall --yes
+    # update libgdal-core to the latest master build
+    conda install -c gdal-master libgdal-core --force-reinstall --yes
+    gdal --version
 
 .. _pixi:
 
