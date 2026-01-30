@@ -628,7 +628,7 @@ static void GDALInterleave5Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
 // Return    (b00, b10, b20, b30,
 //            b01, b11, b21, b31,
 //            b02, b12, b22, b32,
-//            b03, b13, b22, b33)
+//            b03, b13, b23, b33)
 inline void GDALReorderForTranspose4x4(__m128i &r)
 {
     const __m128i shuffle_mask =
