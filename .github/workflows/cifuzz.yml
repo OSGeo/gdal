@@ -21,12 +21,12 @@ jobs:
     steps:
     - name: Build Fuzzers
       id: build
-      uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@56f58e25299ee6559fa40369bd4af908000c0c36 # master on 2023/12/31
+      uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@45ba562b43a923d7be2bf33c902e26a8f9c24285 # master on 2026/01/30
       with:
         oss-fuzz-project-name: 'gdal'
         dry-run: false
     - name: Run Fuzzers
-      uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@56f58e25299ee6559fa40369bd4af908000c0c36 # master on 2023/12/31
+      uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@45ba562b43a923d7be2bf33c902e26a8f9c24285 # master on 2026/01/30
       with:
         oss-fuzz-project-name: 'gdal'
         fuzz-seconds: 600
