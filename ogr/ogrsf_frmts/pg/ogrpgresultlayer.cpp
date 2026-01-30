@@ -274,8 +274,9 @@ OGRFeature *OGRPGResultLayer::GetNextFeature()
             return nullptr;
 
         if ((m_poFilterGeom == nullptr || poGeomFieldDefn == nullptr ||
-             (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY &&
-              poGeomFieldDefn->nSRSId > 0) ||
+             (poGeomFieldDefn->nSRSId > 0 &&
+              poDS->sPostGISVersion.nMajor >= 0 &&
+              !poDS->IsSpatialFilterIntersectionLocal()) ||
              FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter))) &&
             (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate(poFeature)))
             return poFeature;
@@ -298,21 +299,24 @@ OGRErr OGRPGResultLayer::ISetSpatialFilter(int iGeomField,
         poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter);
     if (InstallFilter(poGeomIn))
     {
-        if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
-            poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY)
+        if (poDS->sPostGISVersion.nMajor >= 0 &&
+            (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
+             poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY))
         {
             poGeomFieldDefn->GetSpatialRef();  // make sure nSRSId is resolved
-            if (m_poFilterGeom != nullptr && poDS->sPostGISVersion.nMajor >= 0)
+            if (m_poFilterGeom != nullptr)
             {
-                if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY &&
-                    poGeomFieldDefn->nSRSId > 0)
+                if (poGeomFieldDefn->nSRSId > 0 &&
+                    !poDS->IsSpatialFilterIntersectionLocal())
                 {
                     char *pszHexEWKB = OGRGeometryToHexEWKB(
                         m_poFilterGeom, poGeomFieldDefn->nSRSId,
                         poDS->sPostGISVersion.nMajor,
                         poDS->sPostGISVersion.nMinor);
+                    // Note that we purposely do ::GEOMETRY intersection even
+                    // on geography case
                     osWHERE.Printf(
-                        "WHERE ST_Intersects(%s, '%s'::GEOMETRY) ",
+                        "WHERE ST_Intersects(%s::GEOMETRY, '%s'::GEOMETRY) ",
                         OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef())
                             .c_str(),
                         pszHexEWKB);
@@ -344,7 +348,8 @@ OGRErr OGRPGResultLayer::ISetSpatialFilter(int iGeomField,
                     sEnvelope.MaxY = std::min(
                         sEnvelope.MaxY, std::numeric_limits<double>::max());
                     osWHERE.Printf(
-                        "WHERE %s && ST_MakeEnvelope(%.17g,%.17g,%.17g,%.17g) ",
+                        "WHERE %s::GEOMETRY && "
+                        "ST_MakeEnvelope(%.17g,%.17g,%.17g,%.17g) ",
                         OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef())
                             .c_str(),
                         sEnvelope.MinX, sEnvelope.MinY, sEnvelope.MaxX,

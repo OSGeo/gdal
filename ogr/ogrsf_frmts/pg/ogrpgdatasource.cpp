@@ -261,6 +261,11 @@ int OGRPGDataSource::Open(const char *pszNewName, int bUpdate, int bTestOpen,
     CPLAssert(nLayers == 0);
     papszOpenOptions = CSLDuplicate(papszOpenOptionsIn);
 
+    m_bSpatialFilterIntersectionIsLocal =
+        EQUAL(CSLFetchNameValueDef(papszOpenOptions,
+                                   "SPATIAL_FILTER_INTERSECTION", "LOCAL"),
+              "LOCAL");
+
     const char *pszPreludeStatements =
         CSLFetchNameValue(papszOpenOptions, "PRELUDE_STATEMENTS");
     if (pszPreludeStatements)

@@ -79,6 +79,12 @@ void OGRPGDriverSetCommonMetadata(GDALDriver *poDriver)
         "  <Option name='SKIP_VIEWS' type='boolean' description='Whether "
         "views should be omitted from the list' "
         "default='NO'/>"
+        "  <Option name='SPATIAL_FILTER_INTERSECTION' type='string-select' "
+        "description='Whether geometry intersection of spatial filter is "
+        "evaluated locally or on the server' default='LOCAL'>"
+        "    <Value>LOCAL</Value>"
+        "    <Value>DATABASE</Value>"
+        "  </Option>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,

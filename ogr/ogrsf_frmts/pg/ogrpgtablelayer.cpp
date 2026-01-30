@@ -1060,13 +1060,15 @@ void OGRPGTableLayer::BuildWhere()
          poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY))
     {
         poGeomFieldDefn->GetSpatialRef();  // make sure nSRSId is resolved
-        if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY)
+        if (!poDS->IsSpatialFilterIntersectionLocal())
         {
             char *pszHexEWKB = OGRGeometryToHexEWKB(
                 m_poFilterGeom, poGeomFieldDefn->nSRSId,
                 poDS->sPostGISVersion.nMajor, poDS->sPostGISVersion.nMinor);
+            // Note that we purposely do ::GEOMETRY intersection even
+            // on geography case
             osWHERE.Printf(
-                "WHERE ST_Intersects(%s, '%s'::GEOMETRY) ",
+                "WHERE ST_Intersects(%s::GEOMETRY, '%s'::GEOMETRY) ",
                 OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
                 pszHexEWKB);
             CPLFree(pszHexEWKB);
@@ -1097,7 +1099,8 @@ void OGRPGTableLayer::BuildWhere()
             sEnvelope.MaxY =
                 std::min(sEnvelope.MaxY, std::numeric_limits<double>::max());
             osWHERE.Printf(
-                "WHERE %s && ST_MakeEnvelope(%.17g,%.17g,%.17g,%.17g) ",
+                "WHERE %s::GEOMETRY && "
+                "ST_MakeEnvelope(%.17g,%.17g,%.17g,%.17g) ",
                 OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef()).c_str(),
                 sEnvelope.MinX, sEnvelope.MinY, sEnvelope.MaxX, sEnvelope.MaxY);
         }
@@ -1188,12 +1191,11 @@ OGRFeature *OGRPGTableLayer::GetNextFeature()
             return nullptr;
 
         /* We just have to look if there is a geometry filter */
-        /* If there's a PostGIS geometry column, the spatial filter */
-        /* is already taken into account in the select request */
         /* The attribute filter is always taken into account by the select
          * request */
         if (m_poFilterGeom == nullptr || poGeomFieldDefn == nullptr ||
-            poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
+            (poDS->sPostGISVersion.nMajor >= 0 &&
+             !poDS->IsSpatialFilterIntersectionLocal()) ||
             FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter)))
         {
             if (iFIDAsRegularColumnIndex >= 0)

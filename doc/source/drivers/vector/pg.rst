@@ -243,6 +243,22 @@ The following open options are supported:
       :oo::`PRELUDE_STATEMENTS`, the appropriate CLOSING_STATEMENTS would be
       "COMMIT".
 
+-  .. oo:: SPATIAL_FILTER_INTERSECTION
+      :choices: LOCAL, SERVER
+      :default: LOCAL
+      :since: 3.13
+
+      Since GDAL 3.13, spatial filters are evaluated using full geometry intersection
+      rather than only bounding box intersection, as in earlier versions.
+      The ``SPATIAL_FILTER_INTERSECTION`` open option controls where this
+      intersection operation is performed. Even when the intersection is evaluated
+      locally (which is the default), the server still applies a bounding
+      box-based spatial filter to efficiently retrieve candidate features.
+
+      Note that for PostGIS geometry columns of type GEOGRAPHY, the current
+      implementation deals with geographies as if they were cartesian geometries.
+
+
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
