@@ -232,6 +232,7 @@ pixels
 polygonize
 position
 position-crs
+position-dataset
 power
 preserve-boundary
 profile

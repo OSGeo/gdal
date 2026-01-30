@@ -14,6 +14,7 @@
 #define GDALALG_RASTER_PIXEL_INFO_INCLUDED
 
 #include "gdalalgorithm.h"
+#include "cpl_vsi_virtual.h"
 
 //! @cond Doxygen_Suppress
 
@@ -31,15 +32,26 @@ class GDALRasterPixelInfoAlgorithm final : public GDALAlgorithm
         "/programs/gdal_raster_pixel_info.html";
 
     GDALRasterPixelInfoAlgorithm();
+    ~GDALRasterPixelInfoAlgorithm() override;
 
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    std::string m_format = "json";
-    GDALArgDatasetValue m_dataset{};
+    GDALArgDatasetValue m_rasterDataset{};
     std::vector<std::string> m_openOptions{};
     std::vector<std::string> m_inputFormats{};
-    std::string m_output{};
+
+    GDALArgDatasetValue m_vectorDataset{};
+    std::string m_inputLayerName{};
+    std::vector<std::string> m_includeFields{"ALL"};
+
+    std::string m_format{};
+    GDALArgDatasetValue m_outputDataset{};
+    std::vector<std::string> m_creationOptions{};
+    std::vector<std::string> m_layerCreationOptions{};
+    bool m_overwrite = false;
+
+    std::string m_outputString{};
     std::vector<int> m_band{};
     int m_overview = -1;
     std::vector<double> m_pos{};
@@ -47,7 +59,8 @@ class GDALRasterPixelInfoAlgorithm final : public GDALAlgorithm
     std::string m_resampling = "nearest";
     bool m_promotePixelValueToZ = false;
 
-    void PrintLine(const std::string &str);
+    VSIVirtualHandleUniquePtr m_outputFile{};
+    std::string m_osTmpFilename{};
 };
 
 //! @endcond
