@@ -28,6 +28,7 @@ markers =
     require_run_on_demand: Skip test(s) if RUN_ON_DEMAND environment variable is not set
     slow: Skip test(s) if GDAL_RUN_SLOW_TESTS environment variable is not set
     xdist_group: Associated test with a named group that will be sent to a single parallel worker
+    network: tests requiring external network access
 
 # Make sure that all markers are declared above
 # --strict-markers causes an error if a test has a marker that is not handled
