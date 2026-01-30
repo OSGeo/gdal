@@ -58,7 +58,6 @@ def gpwv3_wms():
 
 
 @pytest.mark.network
-@pytest.mark.require_curl
 def test_wms_3(gpwv3_wms):
 
     assert (
