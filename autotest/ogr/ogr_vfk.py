@@ -30,6 +30,14 @@ def setup_and_cleanup():
         yield
 
 
+@pytest.fixture(
+    params=["YES", None], scope="module", ids=["with-bud-multi", "without-bud-multi"]
+)
+def bud_multi(request):
+    with gdal.config_option("OGR_VFK_DB_BUD_MULTI", request.param):
+        yield request.param == "YES"
+
+
 @pytest.fixture()
 def vfk_ds(tmp_path):
 
@@ -324,3 +332,23 @@ def test_ogr_vfk_12(vfk_ds):
     ), "did not get expected geometry type."
 
     assert geom.GetPointCount() == 92, "did not get expected number of points."
+
+
+###############################################################################
+# Read the first feature from layer 'BUD', check geometry type
+
+
+@pytest.mark.require_geos
+def test_ogr_vfk_14(vfk_ds, bud_multi):
+
+    vfk_layer_bud = vfk_ds.GetLayerByName("BUD")
+
+    vfk_layer_bud.ResetReading()
+
+    feat = vfk_layer_bud.GetNextFeature()
+
+    geom = feat.GetGeometryRef()
+    exp_geom_type = ogr.wkbMultiPolygon if bud_multi else ogr.wkbPolygon
+    assert (
+        geom.GetGeometryType() == exp_geom_type
+    ), "did not get expected geometry type."

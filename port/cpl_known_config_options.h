@@ -848,6 +848,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR_TILEDB_OPTIMIZED_ATTRIBUTE_FILTER", // from tiledbsparse.cpp
    "OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME", // from tiledbsparse.cpp
    "OGR_TRUNCATE", // from ogrpgtablelayer.cpp
+   "OGR_VFK_DB_BUD_MULTI", // from vfkreadersqlite.cpp
    "OGR_VFK_DB_DELETE", // from vfkreadersqlite.cpp
    "OGR_VFK_DB_NAME", // from vfkreadersqlite.cpp
    "OGR_VFK_DB_OVERWRITE", // from vfkreadersqlite.cpp

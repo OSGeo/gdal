@@ -82,6 +82,14 @@ The following configuration options are available:
       If ``NO``, geometries are not stored in the DB and are resolved when
       reading data from DB on the fly.
 
+-  .. config:: OGR_VFK_DB_BUD_MULTI
+      :choices: YES, NO
+
+      Determines whether the driver should store geometries from the BUD block
+      as MultiPolygons. If ``YES``, the geometries are stored as MultiPolygons
+      and any number of components is supported. If ``NO``, the geometries are
+      stored as Polygons and more than one component is considered invalid.
+
 -  .. config:: OGR_VFK_DB_READ_ALL_BLOCKS
       :choices: YES, NO
 

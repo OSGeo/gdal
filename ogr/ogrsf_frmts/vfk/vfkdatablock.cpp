@@ -370,8 +370,16 @@ OGRwkbGeometryType IVFKDataBlock::SetGeometryType(bool bSuppressGeometry)
              EQUAL(m_pszName, "ZVB"))
         m_nGeometryType = wkbLineString;
 
-    else if (EQUAL(m_pszName, "PAR") || EQUAL(m_pszName, "BUD"))
+    else if (EQUAL(m_pszName, "PAR"))
         m_nGeometryType = wkbPolygon;
+
+    else if (EQUAL(m_pszName, "BUD"))
+    {
+        if (m_poReader->IsBudMulti())
+            m_nGeometryType = wkbMultiPolygon;
+        else
+            m_nGeometryType = wkbPolygon;
+    }
 
     return m_nGeometryType;
 }
