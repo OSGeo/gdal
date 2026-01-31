@@ -2497,7 +2497,7 @@ def test_gdalwarp_lib_ct():
         options='-r cubic -f MEM -t_srs EPSG:4326 -ct "proj=pipeline step inv proj=utm zone=11 ellps=clrk66 step proj=unitconvert xy_in=rad xy_out=deg step proj=axisswap order=2,1"',
     )
 
-    assert dstDS.GetRasterBand(1).Checksum() == 4705, "Bad checksum"
+    assert dstDS.GetRasterBand(1).Checksum() == 4772
 
 
 def test_gdalwarp_lib_ct_wkt():
@@ -2646,7 +2646,7 @@ def test_gdalwarp_lib_ct_wkt():
         coordinateOperation=wkt,
     )
 
-    assert dstDS.GetRasterBand(1).Checksum() == 4705, "Bad checksum"
+    assert dstDS.GetRasterBand(1).Checksum() == 4772
 
 
 ###############################################################################

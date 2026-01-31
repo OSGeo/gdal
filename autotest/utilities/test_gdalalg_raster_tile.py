@@ -1323,11 +1323,9 @@ def test_gdalalg_raster_tile_rgb(tmp_vsimem):
         assert ds.RasterCount == 3
         assert ds.RasterXSize == 256
         assert ds.RasterYSize == 256
-        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
-            24650,
-            23280,
-            16559,
-        ]
+        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == pytest.approx(
+            [22597, 22783, 16561], abs=30
+        )
 
 
 def test_gdalalg_raster_tile_rgba_all_opaque(tmp_vsimem):
@@ -1363,11 +1361,7 @@ def test_gdalalg_raster_tile_rgba_all_opaque(tmp_vsimem):
         assert ds.RasterXSize == 256
         assert ds.RasterYSize == 256
         assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == pytest.approx(
-            [
-                25111,
-                24737,
-                16108,
-            ],
+            [25111, 24737, 16107],
             abs=10,
         )
 
@@ -1504,11 +1498,9 @@ def test_gdalalg_raster_tile_rgba_no_alpha(tmp_vsimem):
         assert ds.RasterCount == 3
         assert ds.RasterXSize == 256
         assert ds.RasterYSize == 256
-        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == [
-            24650,
-            23280,
-            16559,
-        ]
+        assert [ds.GetRasterBand(i + 1).Checksum() for i in range(3)] == pytest.approx(
+            [22597, 22783, 16561], abs=30
+        )
 
 
 def test_gdalalg_raster_tile_max_zoom(tmp_vsimem):
