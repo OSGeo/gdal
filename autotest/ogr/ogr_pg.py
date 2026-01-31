@@ -6376,3 +6376,58 @@ def test_ogr_pg_field_truncation(pg_ds):
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     assert f["field"] == b"abcd\xc3\xa9".decode("UTF-8")
+
+
+###############################################################################
+# Test real geometry intersection in spatial filter
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("GEOM_TYPE", ["geometry", "geography"])
+@pytest.mark.parametrize(
+    "open_options", [None, ["SPATIAL_FILTER_INTERSECTION=DATABASE"]]
+)
+@pytest.mark.require_geos
+def test_ogr_pg_geometry_intersection_spatial_filter(
+    pg_ds, use_postgis, GEOM_TYPE, open_options
+):
+
+    ds = reconnect(pg_ds, open_options=open_options)
+
+    if use_postgis:
+        srs = osr.SpatialReference(epsg=4326)
+        lyr = ds.CreateLayer("test", srs, options=["GEOM_TYPE=" + GEOM_TYPE])
+    else:
+        lyr = ds.CreateLayer("test")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0.5 0.5)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0.9 0.5)"))
+    lyr.CreateFeature(f)
+
+    lyr.ResetReading()
+
+    # Pacman style polygon: almost a square except it doesn't include 0.9, 0.5
+    lyr.SetSpatialFilter(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((0 0,0 1,1 1,1 0.6,0.8 0.6,0.8 0.4,1 0.4,1 0,0 0))"
+        )
+    )
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (0.5 0.5)"
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    lyr.SetSpatialFilter(None)
+
+    with ds.ExecuteSQL("SELECT * FROM test") as sql_lyr:
+        sql_lyr.SetSpatialFilter(
+            ogr.CreateGeometryFromWkt(
+                "POLYGON ((0 0,0 1,1 1,1 0.6,0.8 0.6,0.8 0.4,1 0.4,1 0,0 0))"
+            )
+        )
+        f = sql_lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (0.5 0.5)"
+        f = sql_lyr.GetNextFeature()
+        assert f is None

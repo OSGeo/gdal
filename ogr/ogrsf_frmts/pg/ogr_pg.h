@@ -604,6 +604,8 @@ class OGRPGDataSource final : public GDALDataset
     bool m_bHasWritePermissionsOnMetadataTableRun = false;
     bool m_bHasWritePermissionsOnMetadataTableSuccess = false;
 
+    bool m_bSpatialFilterIntersectionIsLocal = true;
+
     void LoadTables();
 
     CPLString osDebugLastTransactionCommand{};
@@ -714,6 +716,11 @@ class OGRPGDataSource final : public GDALDataset
     bool CreateMetadataTableIfNeeded();
     bool HasOgrSystemTablesMetadataTable();
     bool HasWritePermissionsOnMetadataTable();
+
+    bool IsSpatialFilterIntersectionLocal() const
+    {
+        return m_bSpatialFilterIntersectionIsLocal;
+    }
 };
 
 #endif /* ndef OGR_PG_H_INCLUDED */

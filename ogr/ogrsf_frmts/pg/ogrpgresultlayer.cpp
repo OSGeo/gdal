@@ -14,6 +14,10 @@
 
 #include "cpl_conv.h"
 #include "ogr_pg.h"
+#include "ogr_p.h"
+
+#include <algorithm>
+#include <limits>
 
 #define PQexec this_is_an_error
 
@@ -270,8 +274,9 @@ OGRFeature *OGRPGResultLayer::GetNextFeature()
             return nullptr;
 
         if ((m_poFilterGeom == nullptr || poGeomFieldDefn == nullptr ||
-             poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
-             poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY ||
+             (poGeomFieldDefn->nSRSId > 0 &&
+              poDS->sPostGISVersion.nMajor >= 0 &&
+              !poDS->IsSpatialFilterIntersectionLocal()) ||
              FilterGeometry(poFeature->GetGeomFieldRef(m_iGeomFieldFilter))) &&
             (m_poAttrQuery == nullptr || m_poAttrQuery->Evaluate(poFeature)))
             return poFeature;
@@ -294,38 +299,62 @@ OGRErr OGRPGResultLayer::ISetSpatialFilter(int iGeomField,
         poFeatureDefn->GetGeomFieldDefn(m_iGeomFieldFilter);
     if (InstallFilter(poGeomIn))
     {
-        if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
-            poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY)
+        if (poDS->sPostGISVersion.nMajor >= 0 &&
+            (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOMETRY ||
+             poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY))
         {
+            poGeomFieldDefn->GetSpatialRef();  // make sure nSRSId is resolved
             if (m_poFilterGeom != nullptr)
             {
-                char szBox3D_1[128];
-                char szBox3D_2[128];
-                OGREnvelope sEnvelope;
-
-                m_poFilterGeom->getEnvelope(&sEnvelope);
-                if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY)
+                if (poGeomFieldDefn->nSRSId > 0 &&
+                    !poDS->IsSpatialFilterIntersectionLocal())
                 {
-                    if (sEnvelope.MinX < -180.0)
-                        sEnvelope.MinX = -180.0;
-                    if (sEnvelope.MinY < -90.0)
-                        sEnvelope.MinY = -90.0;
-                    if (sEnvelope.MaxX > 180.0)
-                        sEnvelope.MaxX = 180.0;
-                    if (sEnvelope.MaxY > 90.0)
-                        sEnvelope.MaxY = 90.0;
+                    char *pszHexEWKB = OGRGeometryToHexEWKB(
+                        m_poFilterGeom, poGeomFieldDefn->nSRSId,
+                        poDS->sPostGISVersion.nMajor,
+                        poDS->sPostGISVersion.nMinor);
+                    // Note that we purposely do ::GEOMETRY intersection even
+                    // on geography case
+                    osWHERE.Printf(
+                        "WHERE ST_Intersects(%s::GEOMETRY, '%s'::GEOMETRY) ",
+                        OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef())
+                            .c_str(),
+                        pszHexEWKB);
+                    CPLFree(pszHexEWKB);
                 }
-                CPLsnprintf(szBox3D_1, sizeof(szBox3D_1), "%.17g %.17g",
-                            sEnvelope.MinX, sEnvelope.MinY);
-                CPLsnprintf(szBox3D_2, sizeof(szBox3D_2), "%.17g %.17g",
-                            sEnvelope.MaxX, sEnvelope.MaxY);
-                osWHERE.Printf(
-                    "WHERE %s && %s('BOX3D(%s, %s)'::box3d,%d) ",
-                    OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef())
-                        .c_str(),
-                    (poDS->sPostGISVersion.nMajor >= 2) ? "ST_SetSRID"
-                                                        : "SetSRID",
-                    szBox3D_1, szBox3D_2, poGeomFieldDefn->nSRSId);
+                else
+                {
+                    OGREnvelope sEnvelope;
+
+                    m_poFilterGeom->getEnvelope(&sEnvelope);
+                    if (poGeomFieldDefn->ePostgisType == GEOM_TYPE_GEOGRAPHY)
+                    {
+                        if (sEnvelope.MinX < -180.0)
+                            sEnvelope.MinX = -180.0;
+                        if (sEnvelope.MinY < -90.0)
+                            sEnvelope.MinY = -90.0;
+                        if (sEnvelope.MaxX > 180.0)
+                            sEnvelope.MaxX = 180.0;
+                        if (sEnvelope.MaxY > 90.0)
+                            sEnvelope.MaxY = 90.0;
+                    }
+                    // Avoid +/- infinity
+                    sEnvelope.MinX = std::max(
+                        sEnvelope.MinX, -std::numeric_limits<double>::max());
+                    sEnvelope.MinY = std::max(
+                        sEnvelope.MinY, -std::numeric_limits<double>::max());
+                    sEnvelope.MaxX = std::min(
+                        sEnvelope.MaxX, std::numeric_limits<double>::max());
+                    sEnvelope.MaxY = std::min(
+                        sEnvelope.MaxY, std::numeric_limits<double>::max());
+                    osWHERE.Printf(
+                        "WHERE %s::GEOMETRY && "
+                        "ST_MakeEnvelope(%.17g,%.17g,%.17g,%.17g) ",
+                        OGRPGEscapeColumnName(poGeomFieldDefn->GetNameRef())
+                            .c_str(),
+                        sEnvelope.MinX, sEnvelope.MinY, sEnvelope.MaxX,
+                        sEnvelope.MaxY);
+                }
             }
             else
             {
