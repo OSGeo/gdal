@@ -3078,3 +3078,61 @@ def test_ogr_mitab_creation_illegal_layer_name(tmp_vsimem):
     ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(tmp_vsimem / "out")
     with pytest.raises(Exception, match="Illegal character"):
         ds.CreateLayer("illegal/with/slash")
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mitab_mif_linestring_one_point(tmp_vsimem):
+
+    with gdal.GetDriverByName("MapInfo File").CreateVector(
+        tmp_vsimem / "out.mif"
+    ) as ds:
+        lyr = ds.CreateLayer("out")
+        lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (1 2)"))
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(tmp_vsimem / "out.mif", "rb") as f:
+        data = f.read()
+
+    assert (
+        data
+        == b'Version 300\nCharset "Neutral"\nDelimiter ","\nColumns 1\n  ID Integer\nData\n\nPline 1\n1 2\n    Pen (1,2,0)\n'
+    )
+
+    with ogr.Open(tmp_vsimem / "out.mif") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 2)"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mitab_mif_multilinestring_one_point(tmp_vsimem):
+
+    with gdal.GetDriverByName("MapInfo File").CreateVector(
+        tmp_vsimem / "out.mif"
+    ) as ds:
+        lyr = ds.CreateLayer("out")
+        lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("MULTILINESTRING ((1 2))"))
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(tmp_vsimem / "out.mif", "rb") as f:
+        data = f.read()
+
+    assert (
+        data
+        == b'Version 300\nCharset "Neutral"\nDelimiter ","\nColumns 1\n  ID Integer\nData\n\nPLINE MULTIPLE 1\n  1\n1 2\n    Pen (1,2,0)\n'
+    )
+
+    with ogr.Open(tmp_vsimem / "out.mif") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "MULTILINESTRING ((1 2))"
