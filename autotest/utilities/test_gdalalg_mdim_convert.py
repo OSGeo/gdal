@@ -10,6 +10,7 @@
 #
 # SPDX-License-Identifier: MIT
 ###############################################################################
+import tempfile
 
 import gdaltest
 import pytest
@@ -382,20 +383,27 @@ def test_gdalalg_mdim_convert_scaleaxes(tmp_vsimem):
 
 
 @pytest.mark.require_driver("netCDF")
-def test_gdalalg_mdim_convert_creation_option(tmp_path):
+def test_gdalalg_mdim_convert_creation_option(tmp_path, monkeypatch):
 
-    tmpfile = tmp_path / "out.nc"
+    with tempfile.TemporaryDirectory() as tmp_sqlite:
+        monkeypatch.setenv("SQLITE_TMPDIR", tmp_sqlite)
 
-    alg = get_mdim_convert_alg()
-    alg["input"] = "../gcore/data/byte.tif"
-    alg["output"] = tmpfile
-    alg["creation-option"] = ["COMPRESS=DEFLATE"]
-    with gdal.quiet_errors():
-        assert alg.Run()
-    assert alg.Finalize()
+        tmpfile = tmp_path / "out.nc"
 
-    j = gdal.MultiDimInfo(tmpfile)
-    assert j["arrays"]["Band1"]["structural_info"] == {"COMPRESS": "DEFLATE"}
+        alg = get_mdim_convert_alg()
+        alg["input"] = "../gcore/data/byte.tif"
+        alg["output"] = tmpfile
+        alg["creation-option"] = ["COMPRESS=DEFLATE"]
+
+        with gdal.quiet_errors():
+            assert alg.Run()
+        assert alg.Finalize()
+
+        j = gdal.MultiDimInfo(tmpfile)
+        assert j["arrays"]["Band1"]["structural_info"] == {
+            "COMPRESS": "DEFLATE"
+        }
+
 
 
 ###############################################################################
