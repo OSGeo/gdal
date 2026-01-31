@@ -39,7 +39,6 @@ if test "${CIFUZZ:-}" = "True"; then
   PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
           libgif-dev${ARCH_SUFFIX} \
           libjpeg-dev${ARCH_SUFFIX} \
-          libwebp-dev${ARCH_SUFFIX} \
           libzstd-dev${ARCH_SUFFIX} \
           libsqlite3-dev${ARCH_SUFFIX}"
   apt-get install -y $PACKAGES sqlite3
@@ -88,7 +87,7 @@ if test "${CIFUZZ:-}" = "True"; then
             $LIB_FUZZING_ENGINE \
             -L$SRC_DIR/build -lgdal \
             -lproj \
-            -Wl,-Bstatic -lzstd -lwebp -lsharpyuv -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
+            -Wl,-Bstatic -lzstd -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
             -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins
 
   echo "Building ogr_fuzzer"
@@ -102,7 +101,7 @@ if test "${CIFUZZ:-}" = "True"; then
             $LIB_FUZZING_ENGINE \
             -L$SRC_DIR/build -lgdal \
             -L$SRC/install/lib -lproj \
-            -Wl,-Bstatic -lzstd -lwebp -lsharpyuv -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
+            -Wl,-Bstatic -lzstd -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
             -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins
 
   echo "Building gdal_fuzzer_seed_corpus.zip"
