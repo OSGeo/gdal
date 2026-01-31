@@ -641,6 +641,12 @@ The following configuration options are specific to the /vsis3/ handler:
 
       Determines whether to allow :cpp:func:`VSIMkdir` to create an empty object to model an empty directory.
 
+-  .. config:: VSIS3_COPYFILE_USE_STREAMING_SOURCE
+      :choices: YES, NO
+      :default: YES
+
+      If ``YES``, attempt to use a /vsis3_streaming/ path in the :cpp:func:`VSICopyFile` implementation, but retry without streaming in case that fails.
+
 Several authentication methods are possible, and are attempted in the following order:
 
 1. If :config:`AWS_NO_SIGN_REQUEST=YES` configuration option is set, request signing is disabled. This option might be used for buckets with public access rights.
