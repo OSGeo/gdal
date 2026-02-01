@@ -264,7 +264,11 @@ bool GDALRasterContourAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             poDstDS->MarkSuppressOnClose();
             if (bRet)
                 bRet = poDstDS->FlushCache() == CE_None;
+#if !defined(__APPLE__)
+            // For some unknown reason, unlinking the file on MacOSX
+            // leads to later "disk I/O error". See https://github.com/OSGeo/gdal/issues/13794
             VSIUnlink(outputFilename.c_str());
+#endif
         }
         m_outputDataset.Set(std::unique_ptr<GDALDataset>(poDstDS));
     }
