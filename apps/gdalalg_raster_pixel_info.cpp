@@ -16,6 +16,7 @@
 #include "cpl_json.h"
 #include "cpl_minixml.h"
 #include "gdal_priv.h"
+#include "ogrsf_frmts.h"
 #include "ogr_spatialref.h"
 
 #include <algorithm>
@@ -35,16 +36,39 @@
 GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()
     : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
 {
-    AddOutputFormatArg(&m_format)
-        .SetDefault("geojson")
-        .SetChoices("geojson", "csv")
-        .SetHiddenChoices("json")
-        .SetDefault(m_format);
+    AddOutputFormatArg(&m_format, false, false,
+                       _("Output format (default is 'GeoJSON' if "
+                         "'coordinate-dataset' not specified)"))
+        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
+                         {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
     AddOpenOptionsArg(&m_openOptions);
     AddInputFormatsArg(&m_inputFormats)
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_dataset, GDAL_OF_RASTER).AddAlias("dataset");
-    AddOutputStringArg(&m_output);
+    AddInputDatasetArg(&m_rasterDataset, GDAL_OF_RASTER).AddAlias("dataset");
+
+    {
+        auto &coordinateDatasetArg =
+            AddArg("coordinate-dataset", '\0',
+                   _("Vector dataset with coordinates"), &m_vectorDataset,
+                   GDAL_OF_VECTOR)
+                .SetMutualExclusionGroup("coordinate-dataset-pos");
+
+        SetAutoCompleteFunctionForFilename(coordinateDatasetArg,
+                                           GDAL_OF_VECTOR);
+
+        auto &layerArg = AddArg(GDAL_ARG_NAME_INPUT_LAYER, 'l',
+                                _("Input layer name"), &m_inputLayerName)
+                             .AddAlias("layer");
+        SetAutoCompleteFunctionForLayerName(layerArg, coordinateDatasetArg);
+    }
+
+    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR,
+                        /* positionalAndRequired = */ false);
+    AddCreationOptionsArg(&m_creationOptions);
+    AddLayerCreationOptionsArg(&m_layerCreationOptions);
+    AddOverwriteArg(&m_overwrite);
+
+    AddOutputStringArg(&m_outputString);
 
     AddBandArg(&m_band);
     AddArg("overview", 0, _("Which overview level of source file must be used"),
@@ -55,6 +79,7 @@ GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()
         .AddAlias("pos")
         .SetMetaVar("<column,line> or <X,Y>")
         .SetPositional()
+        .SetMutualExclusionGroup("coordinate-dataset-pos")
         .AddValidationAction(
             [this]
             {
@@ -67,9 +92,11 @@ GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()
                 }
                 return true;
             });
-    AddArg("position-crs", 0, _("CRS of position"), &m_posCrs)
+    AddArg("position-crs", 0,
+           _("CRS of position (default is 'pixel' if 'coordinate-dataset' not "
+             "specified)"),
+           &m_posCrs)
         .SetIsCRSArg(false, {"pixel", "dataset"})
-        .SetDefault("pixel")
         .AddHiddenAlias("l_srs");
 
     AddArg("resampling", 'r', _("Resampling algorithm for interpolation"),
@@ -86,7 +113,7 @@ GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()
     AddValidationAction(
         [this]
         {
-            if (auto poSrcDS = m_dataset.GetDatasetRef())
+            if (auto poSrcDS = m_rasterDataset.GetDatasetRef())
             {
                 const int nOvrCount =
                     poSrcDS->GetRasterBand(1)->GetOverviewCount();
@@ -117,19 +144,15 @@ GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()
 }
 
 /************************************************************************/
-/*              GDALRasterPixelInfoAlgorithm::PrintLine()               */
+/*    GDALRasterPixelInfoAlgorithm::~GDALRasterPixelInfoAlgorithm()     */
 /************************************************************************/
 
-void GDALRasterPixelInfoAlgorithm::PrintLine(const std::string &str)
+GDALRasterPixelInfoAlgorithm::~GDALRasterPixelInfoAlgorithm()
 {
-    if (IsCalledFromCommandLine())
+    if (!m_osTmpFilename.empty())
     {
-        printf("%s\n", str.c_str());
-    }
-    else
-    {
-        m_output += str;
-        m_output += '\n';
+        VSIRmdir(CPLGetPathSafe(m_osTmpFilename.c_str()).c_str());
+        VSIUnlink(m_osTmpFilename.c_str());
     }
 }
 
@@ -139,15 +162,104 @@ void GDALRasterPixelInfoAlgorithm::PrintLine(const std::string &str)
 
 bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 {
-    auto poSrcDS = m_dataset.GetDatasetRef();
+    auto poSrcDS = m_rasterDataset.GetDatasetRef();
     CPLAssert(poSrcDS);
 
-    if (m_pos.empty() && !IsCalledFromCommandLine())
+    auto poVectorSrcDS = m_vectorDataset.GetDatasetRef();
+
+    if (m_pos.empty() && !poVectorSrcDS && !IsCalledFromCommandLine())
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Argument 'position' must be specified.");
+        ReportError(
+            CE_Failure, CPLE_AppDefined,
+            "Argument 'position' or 'coordinate-dataset' must be specified.");
         return false;
     }
+
+    if (m_outputDataset.GetName().empty())
+    {
+        if (m_format.empty())
+        {
+            m_format = "GeoJSON";
+        }
+        else if (!EQUAL(m_format.c_str(), "CSV") &&
+                 !EQUAL(m_format.c_str(), "GeoJSON"))
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Only CSV or GeoJSON output format is allowed when "
+                        "'output' dataset is not specified.");
+            return false;
+        }
+    }
+    else if (m_format.empty())
+    {
+        const std::string osExt =
+            CPLGetExtensionSafe(m_outputDataset.GetName().c_str());
+        if (EQUAL(osExt.c_str(), "csv"))
+            m_format = "CSV";
+        else if (EQUAL(osExt.c_str(), "json"))
+            m_format = "GeoJSON";
+    }
+
+    const bool bIsCSV = EQUAL(m_format.c_str(), "CSV");
+    const bool bIsGeoJSON = EQUAL(m_format.c_str(), "GeoJSON");
+
+    OGRLayer *poSrcLayer = nullptr;
+    if (poVectorSrcDS)
+    {
+        if (m_inputLayerName.empty())
+        {
+            const int nLayerCount = poVectorSrcDS->GetLayerCount();
+            if (nLayerCount == 0)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Dataset '%s' has no vector layer",
+                            poVectorSrcDS->GetDescription());
+                return false;
+            }
+            else if (nLayerCount > 1)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Dataset '%s' has more than one vector layer. "
+                            "Please specify the 'input-layer' argument",
+                            poVectorSrcDS->GetDescription());
+                return false;
+            }
+            poSrcLayer = poVectorSrcDS->GetLayer(0);
+        }
+        else
+        {
+            poSrcLayer =
+                poVectorSrcDS->GetLayerByName(m_inputLayerName.c_str());
+        }
+        if (!poSrcLayer)
+        {
+            ReportError(
+                CE_Failure, CPLE_AppDefined, "Cannot find layer '%s' in '%s'",
+                m_inputLayerName.c_str(), poVectorSrcDS->GetDescription());
+            return false;
+        }
+        if (poSrcLayer->GetGeomType() == wkbNone)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Layer '%s' of '%s' has no geometry column",
+                        m_inputLayerName.c_str(),
+                        poVectorSrcDS->GetDescription());
+            return false;
+        }
+
+        if (m_posCrs.empty())
+        {
+            const auto poVectorLayerSRS = poSrcLayer->GetSpatialRef();
+            if (poVectorLayerSRS)
+            {
+                const char *const apszOptions[] = {"FORMAT=WKT2", nullptr};
+                m_posCrs = poVectorLayerSRS->exportToWkt(apszOptions);
+            }
+        }
+    }
+
+    if (m_posCrs.empty())
+        m_posCrs = "pixel";
 
     const GDALRIOResampleAlg eInterpolation =
         GDALRasterIOGetResampleAlg(m_resampling.c_str());
@@ -182,9 +294,9 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     }
 
     std::unique_ptr<OGRCoordinateTransformation> poCT;
+    OGRSpatialReference oUserCRS;
     if (m_posCrs != "pixel" && m_posCrs != "dataset")
     {
-        OGRSpatialReference oUserCRS;
         oUserCRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         // Already validated due SetIsCRSArg()
         CPL_IGNORE_RET_VAL(oUserCRS.SetFromUserInput(m_posCrs.c_str()));
@@ -199,9 +311,132 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
             m_band.push_back(i);
     }
 
-    if (m_format == "csv")
+    std::unique_ptr<GDALDataset> poOutDS;
+    OGRLayer *poOutLayer = nullptr;
+    std::unique_ptr<OGRCoordinateTransformation> poCTSrcCRSToOutCRS;
+
+    const bool isInteractive =
+        m_pos.empty() && m_outputDataset.GetName().empty() &&
+        IsCalledFromCommandLine() && CPLIsInteractive(stdin);
+
+    std::string osOutFilename = m_outputDataset.GetName();
+    if (osOutFilename.empty() && bIsCSV)
     {
-        std::string line = "input_x,input_y,extra_input,column,line";
+        if (isInteractive)
+        {
+            osOutFilename = "/vsistdout/";
+        }
+        else
+        {
+            osOutFilename = VSIMemGenerateHiddenFilename("subdir");
+            osOutFilename += "/out.csv";
+            VSIMkdir(CPLGetPathSafe(osOutFilename.c_str()).c_str(), 0755);
+            m_osTmpFilename = osOutFilename;
+        }
+    }
+
+    if (!osOutFilename.empty())
+    {
+        if (bIsGeoJSON)
+        {
+            m_outputFile.reset(VSIFOpenL(osOutFilename.c_str(), "wb"));
+            if (!m_outputFile)
+            {
+                ReportError(CE_Failure, CPLE_FileIO, "Cannot create '%s'",
+                            osOutFilename.c_str());
+                return false;
+            }
+        }
+        else
+        {
+            if (m_format.empty())
+            {
+                const auto aosFormats =
+                    CPLStringList(GDALGetOutputDriversForDatasetName(
+                        osOutFilename.c_str(), GDAL_OF_VECTOR,
+                        /* bSingleMatch = */ true,
+                        /* bWarn = */ true));
+                if (aosFormats.size() != 1)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Cannot guess driver for %s",
+                                osOutFilename.c_str());
+                    return false;
+                }
+                m_format = aosFormats[0];
+            }
+
+            auto poOutDrv =
+                GetGDALDriverManager()->GetDriverByName(m_format.c_str());
+            if (!poOutDrv)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Cannot find driver %s", m_format.c_str());
+                return false;
+            }
+            poOutDS.reset(
+                poOutDrv->Create(osOutFilename.c_str(), 0, 0, 0, GDT_Unknown,
+                                 CPLStringList(m_creationOptions).List()));
+            if (!poOutDS)
+                return false;
+
+            std::string osOutLayerName;
+            if (EQUAL(m_format.c_str(), "ESRI Shapefile") || bIsCSV ||
+                !poSrcLayer)
+            {
+                osOutLayerName = CPLGetBasenameSafe(osOutFilename.c_str());
+            }
+            else
+                osOutLayerName = poSrcLayer->GetName();
+
+            const OGRSpatialReference *poOutCRS = nullptr;
+            if (!oUserCRS.IsEmpty())
+                poOutCRS = &oUserCRS;
+            else if (poSrcLayer)
+            {
+                poOutCRS = poSrcLayer->GetSpatialRef();
+                if (!poOutCRS)
+                    poOutCRS = poSrcCRS;
+            }
+            poOutLayer = poOutDS->CreateLayer(
+                osOutLayerName.c_str(), poOutCRS, wkbPoint,
+                CPLStringList(m_layerCreationOptions).List());
+            if (!poOutLayer)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Cannot create layer '%s' in '%s'",
+                            osOutLayerName.c_str(), osOutFilename.c_str());
+                return false;
+            }
+            if (poSrcCRS && poOutCRS)
+            {
+                poCTSrcCRSToOutCRS.reset(
+                    OGRCreateCoordinateTransformation(poSrcCRS, poOutCRS));
+                if (!poCTSrcCRSToOutCRS)
+                    return false;
+            }
+        }
+    }
+
+    if (poOutLayer)
+    {
+        bool bOK = true;
+
+        if (bIsCSV)
+        {
+            OGRFieldDefn oFieldLine("geom_x", OFTReal);
+            bOK &= poOutLayer->CreateField(&oFieldLine) == OGRERR_NONE;
+
+            OGRFieldDefn oFieldColumn("geom_y", OFTReal);
+            bOK &= poOutLayer->CreateField(&oFieldColumn) == OGRERR_NONE;
+        }
+
+        OGRFieldDefn oFieldColumn("column", OFTReal);
+        bOK &= poOutLayer->CreateField(&oFieldColumn) == OGRERR_NONE;
+
+        OGRFieldDefn oFieldLine("line", OFTReal);
+        bOK &= poOutLayer->CreateField(&oFieldLine) == OGRERR_NONE;
+
         for (int nBand : m_band)
         {
             auto hBand =
@@ -209,20 +444,49 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
             const bool bIsComplex = CPL_TO_BOOL(
                 GDALDataTypeIsComplex(GDALGetRasterDataType(hBand)));
             if (bIsComplex)
-                line +=
-                    CPLSPrintf(",band_%d_real_value,band_%d_imaginary_value",
-                               nBand, nBand);
+            {
+                OGRFieldDefn oFieldReal(CPLSPrintf("band_%d_real_value", nBand),
+                                        OFTReal);
+                bOK &= poOutLayer->CreateField(&oFieldReal) == OGRERR_NONE;
+
+                OGRFieldDefn oFieldImag(
+                    CPLSPrintf("band_%d_imaginary_value", nBand), OFTReal);
+                bOK &= poOutLayer->CreateField(&oFieldImag) == OGRERR_NONE;
+            }
             else
             {
-                line += CPLSPrintf(",band_%d_raw_value,band_%d_unscaled_value",
-                                   nBand, nBand);
+                OGRFieldDefn oFieldRaw(CPLSPrintf("band_%d_raw_value", nBand),
+                                       OFTReal);
+                bOK &= poOutLayer->CreateField(&oFieldRaw) == OGRERR_NONE;
+
+                OGRFieldDefn oFieldUnscaled(
+                    CPLSPrintf("band_%d_unscaled_value", nBand), OFTReal);
+                bOK &= poOutLayer->CreateField(&oFieldUnscaled) == OGRERR_NONE;
             }
         }
-        PrintLine(line);
-    }
 
-    const bool isInteractive =
-        m_pos.empty() && IsCalledFromCommandLine() && CPLIsInteractive(stdin);
+        if (poSrcLayer)
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            for (const OGRFieldDefn *poFieldDefn :
+                 poSrcLayer->GetLayerDefn()->GetFields())
+            {
+                CPL_IGNORE_RET_VAL(poOutLayer->CreateField(poFieldDefn));
+            }
+        }
+        else
+        {
+            OGRFieldDefn oFieldExtraInput("extra_content", OFTString);
+            bOK &= poOutLayer->CreateField(&oFieldExtraInput) == OGRERR_NONE;
+        }
+
+        if (!bOK)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Cannot create fields in output layer");
+            return false;
+        }
+    }
 
     CPLJSONObject oCollection;
     oCollection.Add("type", "FeatureCollection");
@@ -276,7 +540,30 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     {
         double x = 0, y = 0;
         std::string osExtraContent;
-        if (iVal + 1 < m_pos.size())
+        std::unique_ptr<OGRFeature> poSrcFeature;
+        if (poSrcLayer)
+        {
+            poSrcFeature.reset(poSrcLayer->GetNextFeature());
+            if (!poSrcFeature)
+                break;
+            const auto poGeom = poSrcFeature->GetGeometryRef();
+            if (!poGeom || poGeom->IsEmpty())
+                continue;
+            if (wkbFlatten(poGeom->getGeometryType()) == wkbPoint)
+            {
+                x = poGeom->toPoint()->getX();
+                y = poGeom->toPoint()->getY();
+            }
+            else
+            {
+                OGRPoint oPoint;
+                if (poGeom->Centroid(&oPoint) != OGRERR_NONE)
+                    return false;
+                x = oPoint.getX();
+                y = oPoint.getY();
+            }
+        }
+        else if (iVal + 1 < m_pos.size())
         {
             x = m_pos[iVal++];
             y = m_pos[iVal++];
@@ -359,18 +646,10 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
             std::clamp(std::floor(dfLine), static_cast<double>(INT_MIN),
                        static_cast<double>(INT_MAX)));
 
-        std::string line;
         CPLJSONObject oFeature;
         CPLJSONObject oProperties;
-        if (m_format == "csv")
-        {
-            line = CPLSPrintf("%.17g,%.17g", xOri, yOri);
-            line += ",\"";
-            line += CPLString(osExtraContent).replaceAll('"', "\"\"");
-            line += '"';
-            line += CPLSPrintf(",%.17g,%.17g", dfPixel, dfLine);
-        }
-        else
+        std::unique_ptr<OGRFeature> poFeature;
+        if (bIsGeoJSON)
         {
             oFeature.Add("type", "Feature");
             oFeature.Add("properties", oProperties);
@@ -384,6 +663,119 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
                 oProperties.Add("extra_content", osExtraContent);
             oProperties.Add("column", dfPixel);
             oProperties.Add("line", dfLine);
+
+            if (poSrcFeature)
+            {
+                const int nSrcFieldCount = poSrcFeature->GetFieldCount();
+                for (int i = 0; i < nSrcFieldCount; ++i)
+                {
+                    const auto *poFieldDefn = poSrcFeature->GetFieldDefnRef(i);
+                    const char *pszName = poFieldDefn->GetNameRef();
+                    const auto eType = poFieldDefn->GetType();
+                    switch (eType)
+                    {
+                        case OFTInteger:
+                        case OFTInteger64:
+                        {
+                            if (poFieldDefn->GetSubType() == OFSTBoolean)
+                            {
+                                oProperties.Add(
+                                    pszName,
+                                    poSrcFeature->GetFieldAsInteger(i) != 0);
+                            }
+                            else
+                            {
+                                oProperties.Add(
+                                    pszName,
+                                    poSrcFeature->GetFieldAsInteger64(i));
+                            }
+                            break;
+                        }
+
+                        case OFTReal:
+                        {
+                            oProperties.Add(pszName,
+                                            poSrcFeature->GetFieldAsDouble(i));
+                            break;
+                        }
+
+                        case OFTString:
+                        {
+                            if (poFieldDefn->GetSubType() != OFSTJSON)
+                            {
+                                oProperties.Add(
+                                    pszName, poSrcFeature->GetFieldAsString(i));
+                                break;
+                            }
+                            else
+                            {
+                                [[fallthrough]];
+                            }
+                        }
+
+                        default:
+                        {
+                            char *pszJSON =
+                                poSrcFeature->GetFieldAsSerializedJSon(i);
+                            CPLJSONDocument oDoc;
+                            if (oDoc.LoadMemory(pszJSON))
+                                oProperties.Add(pszName, oDoc.GetRoot());
+                            CPLFree(pszJSON);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            CPLAssert(poOutLayer);
+            poFeature =
+                std::make_unique<OGRFeature>(poOutLayer->GetLayerDefn());
+
+            if (poSrcFeature)
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                poFeature->SetFrom(poSrcFeature.get());
+            }
+            else if (!osExtraContent.empty())
+            {
+                poFeature->SetField("extra_content", osExtraContent.c_str());
+            }
+
+            if (poOutLayer->GetSpatialRef() == nullptr)
+            {
+                if (bIsCSV)
+                {
+                    poFeature->SetField("geom_x", xOri);
+                    poFeature->SetField("geom_y", yOri);
+                }
+                else
+                {
+                    poFeature->SetGeometry(
+                        std::make_unique<OGRPoint>(xOri, yOri));
+                }
+            }
+            else if (bHasGT && poCTSrcCRSToOutCRS)
+            {
+                gt.Apply(dfPixel, dfLine, &x, &y);
+                if (poCTSrcCRSToOutCRS->Transform(1, &x, &y))
+                {
+                    if (bIsCSV)
+                    {
+                        poFeature->SetField("geom_x", x);
+                        poFeature->SetField("geom_y", y);
+                    }
+                    else
+                    {
+                        poFeature->SetGeometry(
+                            std::make_unique<OGRPoint>(x, y));
+                    }
+                }
+            }
+
+            poFeature->SetField("column", dfPixel);
+            poFeature->SetField("line", dfLine);
         }
 
         CPLJSONArray oBands;
@@ -451,12 +843,7 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
                         adfPixel[0] * dfScale + dfOffset;
                     if (m_band.size() == 1 && m_promotePixelValueToZ)
                         zValue = dfUnscaledVal;
-                    if (m_format == "csv")
-                    {
-                        line += CPLSPrintf(",%.17g", adfPixel[0]);
-                        line += CPLSPrintf(",%.17g", dfUnscaledVal);
-                    }
-                    else
+                    if (bIsGeoJSON)
                     {
                         if (GDALDataTypeIsInteger(GDALGetRasterDataType(hBand)))
                         {
@@ -470,26 +857,35 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
                         oBand.Add("unscaled_value", dfUnscaledVal);
                     }
+                    else
+                    {
+                        poFeature->SetField(
+                            CPLSPrintf("band_%d_raw_value", nBand),
+                            adfPixel[0]);
+                        poFeature->SetField(
+                            CPLSPrintf("band_%d_unscaled_value", nBand),
+                            dfUnscaledVal);
+                    }
                 }
                 else
                 {
-                    if (m_format == "csv")
-                    {
-                        line += CPLSPrintf(",%.17g,%.17g", adfPixel[0],
-                                           adfPixel[1]);
-                    }
-                    else
+                    if (bIsGeoJSON)
                     {
                         CPLJSONObject oValue;
                         oValue.Add("real", adfPixel[0]);
                         oValue.Add("imaginary", adfPixel[1]);
                         oBand.Add("value", oValue);
                     }
+                    else
+                    {
+                        poFeature->SetField(
+                            CPLSPrintf("band_%d_real_value", nBand),
+                            adfPixel[0]);
+                        poFeature->SetField(
+                            CPLSPrintf("band_%d_imaginary_value", nBand),
+                            adfPixel[1]);
+                    }
                 }
-            }
-            else if (m_format == "csv")
-            {
-                line += ",,";
             }
 
             // Request location info for this location (just a few drivers,
@@ -533,11 +929,7 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
             oBands.Add(oBand);
         }
 
-        if (m_format == "csv")
-        {
-            PrintLine(line);
-        }
-        else
+        if (bIsGeoJSON)
         {
             oProperties.Add("bands", oBands);
 
@@ -577,17 +969,61 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
                 oFeatures.Add(oFeature);
             }
         }
+        else
+        {
+            if (poOutLayer->CreateFeature(std::move(poFeature)) != OGRERR_NONE)
+            {
+                return false;
+            }
+        }
 
     } while (m_pos.empty() || iVal + 1 < m_pos.size());
 
-    if (m_format != "csv" && !isInteractive)
+    if (bIsGeoJSON && !isInteractive)
     {
         CPLJSONDocument oDoc;
         oDoc.SetRoot(oCollection);
-        m_output = oDoc.SaveAsString();
+        std::string osRet = oDoc.SaveAsString();
+        if (m_outputFile)
+            m_outputFile->Write(osRet.data(), osRet.size());
+        else
+            m_outputString = std::move(osRet);
+    }
+    else if (poOutDS)
+    {
+        if (m_outputDataset.GetName().empty())
+        {
+            poOutDS.reset();
+            if (!isInteractive)
+            {
+                CPLAssert(!m_osTmpFilename.empty());
+                const GByte *pabyData =
+                    VSIGetMemFileBuffer(m_osTmpFilename.c_str(), nullptr,
+                                        /* bUnlinkAndSeize = */ false);
+                m_outputString = reinterpret_cast<const char *>(pabyData);
+            }
+        }
+        else
+        {
+            m_outputDataset.Set(std::move(poOutDS));
+        }
     }
 
-    return true;
+    bool bRet = true;
+    if (m_outputFile)
+    {
+        bRet = m_outputFile->Close() == 0;
+        if (bRet)
+        {
+            poOutDS.reset(
+                GDALDataset::Open(m_outputDataset.GetName().c_str(),
+                                  GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR));
+            bRet = poOutDS != nullptr;
+            m_outputDataset.Set(std::move(poOutDS));
+        }
+    }
+
+    return bRet;
 }
 
 //! @endcond

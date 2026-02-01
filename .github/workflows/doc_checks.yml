@@ -54,6 +54,7 @@ jobs:
             -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
             -DOGR_BUILD_OPTIONAL_DRIVERS=OFF \
             -DGDAL_ENABLE_DRIVER_GTI=ON \
+            -DOGR_ENABLE_DRIVER_CSV=ON \
             -DOGR_ENABLE_DRIVER_GPKG=ON \
             -DOGR_ENABLE_DRIVER_OPENFILEGDB=ON
           cmake --build . -j$(nproc)

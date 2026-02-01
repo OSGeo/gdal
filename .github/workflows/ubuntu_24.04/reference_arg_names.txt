@@ -43,6 +43,7 @@ connect-diagonal-pixels
 content-type
 convention
 convex-hull
+coordinate-dataset
 coordinate-system
 copy-metadata
 copy-overviews
