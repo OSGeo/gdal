@@ -109,7 +109,7 @@ jobs:
     # We do that after running CMake to avoid CodeQL to trigger during CMake time,
     # in particular during HDF5 detection which is terribly slow (https://github.com/OSGeo/gdal/issues/9549)
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # v3.29.5
+      uses: github/codeql-action/init@b20883b0cd1f46c72ae0ba6d1090936928f9fa30 # v3.29.5
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -129,6 +129,6 @@ jobs:
         cmake --build build -j$(nproc)
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@5d4e8d1aca955e8d8589aabd499c5cae939e33c7 # v3.29.5
+      uses: github/codeql-action/analyze@b20883b0cd1f46c72ae0ba6d1090936928f9fa30 # v3.29.5
       with:
         category: "/language:${{matrix.language}}"
