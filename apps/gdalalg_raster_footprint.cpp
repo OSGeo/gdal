@@ -347,7 +347,11 @@ bool GDALRasterFootprintAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             if (poRetDS && !m_standaloneStep && !outputFilename.empty())
             {
                 bOK = poRetDS->FlushCache() == CE_None;
+#if !defined(__APPLE__)
+                // For some unknown reason, unlinking the file on MacOSX
+                // leads to later "disk I/O error". See https://github.com/OSGeo/gdal/issues/13794
                 VSIUnlink(outputFilename.c_str());
+#endif
                 poRetDS->MarkSuppressOnClose();
             }
             m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
