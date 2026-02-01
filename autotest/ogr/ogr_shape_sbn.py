@@ -19,6 +19,8 @@ import pytest
 
 from osgeo import ogr
 
+pytestmark = pytest.mark.network
+
 ###############################################################################
 #
 

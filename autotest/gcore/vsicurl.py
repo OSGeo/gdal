@@ -34,7 +34,7 @@ def curl_version():
     return actual_version
 
 
-pytestmark = pytest.mark.require_curl()
+pytestmark = pytest.mark.require_curl() | pytest.mark.network
 
 ###############################################################################
 #

@@ -25,6 +25,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = [
     pytest.mark.require_driver("SQLite"),
+    pytest.mark.network,
 ]
 
 

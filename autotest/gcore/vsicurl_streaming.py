@@ -21,7 +21,7 @@ import webserver
 
 from osgeo import gdal
 
-pytestmark = pytest.mark.require_curl()
+pytestmark = pytest.mark.require_curl() | pytest.mark.network
 
 ###############################################################################
 #
