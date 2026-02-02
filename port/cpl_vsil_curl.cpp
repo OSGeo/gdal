@@ -1136,15 +1136,36 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
     UpdateQueryString();
 
     std::string osURL(m_pszURL + m_osQueryString);
+    int nTryCount = 0;
     bool bRetryWithGet = false;
     bool bS3LikeRedirect = false;
     CPLHTTPRetryContext oRetryContext(m_oRetryParameters);
 
 retry:
+    ++nTryCount;
     CURL *hCurlHandle = curl_easy_init();
 
-    struct curl_slist *headers =
-        VSICurlSetOptions(hCurlHandle, osURL.c_str(), m_aosHTTPOptions.List());
+    struct curl_slist *headers = nullptr;
+    if (bS3LikeRedirect)
+    {
+        // Do not propagate authentication sent to the original URL to a S3-like
+        // redirect.
+        CPLStringList aosHTTPOptions{};
+        for (const auto &pszOption : m_aosHTTPOptions)
+        {
+            if (STARTS_WITH_CI(pszOption, "HTTPAUTH") ||
+                STARTS_WITH_CI(pszOption, "HTTP_BEARER"))
+                continue;
+            aosHTTPOptions.AddString(pszOption);
+        }
+        headers = VSICurlSetOptions(hCurlHandle, osURL.c_str(),
+                                    aosHTTPOptions.List());
+    }
+    else
+    {
+        headers = VSICurlSetOptions(hCurlHandle, osURL.c_str(),
+                                    m_aosHTTPOptions.List());
+    }
 
     WriteFuncStruct sWriteFuncHeaderData;
     VSICURLInitWriteFuncStruct(&sWriteFuncHeaderData, nullptr, nullptr,
@@ -1336,6 +1357,23 @@ retry:
                     curl_easy_cleanup(hCurlHandle);
                     goto retry;
                 }
+            }
+            else if (oFileProp.osRedirectURL.empty() && nTryCount == 1 &&
+                     ((response_code >= 300 && response_code < 400) ||
+                      (osVerb == "HEAD" && response_code == 403)))
+            {
+                if (response_code == 403)
+                {
+                    CPLDebug(
+                        poFS->GetDebugKey(),
+                        "Retrying redirected URL with GET instead of HEAD");
+                    bRetryWithGet = true;
+                }
+                osURL = std::move(osEffectiveURL);
+                CPLFree(sWriteFuncData.pBuffer);
+                CPLFree(sWriteFuncHeaderData.pBuffer);
+                curl_easy_cleanup(hCurlHandle);
+                goto retry;
             }
         }
 
