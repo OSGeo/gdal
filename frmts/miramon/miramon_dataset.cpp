@@ -254,30 +254,35 @@ void MMRDataset::AssignBandsToSubdataSets()
     if (!m_pMMRRel.get())
         return;
 
-    m_nNSubdataSets = 1;
     int nIBand = 0;
-    MMRBand *pBand = m_pMMRRel->GetBand(nIBand);
-    if (!pBand)
-        return;
+    int nIBand2 = 0;
 
-    pBand->AssignSubDataSet(m_nNSubdataSets);
-    MMRBand *pNextBand;
-    for (; nIBand < m_pMMRRel->GetNBands() - 1; nIBand++)
+    MMRBand *pBand;
+    MMRBand *pOtherBand;
+    for (; nIBand < m_pMMRRel->GetNBands(); nIBand++)
     {
-        if (IsNextBandInANewDataSet(nIBand))
+        pBand = m_pMMRRel->GetBand(nIBand);
+        if (!pBand)
+            continue;
+
+        if (pBand->GetAssignedSubDataSet() != 0)
+            continue;
+
+        m_nNSubdataSets++;
+        pBand->AssignSubDataSet(m_nNSubdataSets);
+
+        // Let's put all suitable bands in the same subdataset
+        for (nIBand2 = nIBand + 1; nIBand2 < m_pMMRRel->GetNBands(); nIBand2++)
         {
-            m_nNSubdataSets++;
-            pNextBand = m_pMMRRel->GetBand(nIBand + 1);
-            if (!pNextBand)
-                return;
-            pNextBand->AssignSubDataSet(m_nNSubdataSets);
-        }
-        else
-        {
-            pNextBand = m_pMMRRel->GetBand(nIBand + 1);
-            if (!pNextBand)
-                return;
-            pNextBand->AssignSubDataSet(m_nNSubdataSets);
+            pOtherBand = m_pMMRRel->GetBand(nIBand2);
+            if (!pOtherBand)
+                continue;
+
+            if (pOtherBand->GetAssignedSubDataSet() != 0)
+                continue;
+
+            if (BandInTheSameDataset(nIBand, nIBand2))
+                pOtherBand->AssignSubDataSet(m_nNSubdataSets);
         }
     }
 
@@ -357,47 +362,51 @@ void MMRDataset::CreateSubdatasetsFromBands()
     }
 }
 
-bool MMRDataset::IsNextBandInANewDataSet(int nIBand) const
+bool MMRDataset::BandInTheSameDataset(int nIBand1, int nIBand2) const
 {
-    if (nIBand < 0)
-        return false;
+    if (nIBand1 < 0 || nIBand2 < 0)
+        return true;
 
-    if (nIBand + 1 >= m_pMMRRel->GetNBands())
-        return false;
+    if (nIBand1 >= m_pMMRRel->GetNBands() || nIBand2 >= m_pMMRRel->GetNBands())
+        return true;
 
-    MMRBand *pThisBand = m_pMMRRel->GetBand(nIBand);
-    MMRBand *pNextBand = m_pMMRRel->GetBand(nIBand + 1);
-    if (!pThisBand || !pNextBand)
-        return false;
+    MMRBand *pThisBand = m_pMMRRel->GetBand(nIBand1);
+    MMRBand *pOtherBand = m_pMMRRel->GetBand(nIBand2);
+    if (!pThisBand || !pOtherBand)
+        return true;
 
     // Two images with different numbers of columns are assigned to different subdatasets
-    if (pThisBand->GetWidth() != pNextBand->GetWidth())
-        return true;
+    if (pThisBand->GetWidth() != pOtherBand->GetWidth())
+        return false;
 
     // Two images with different numbers of rows are assigned to different subdatasets
-    if (pThisBand->GetHeight() != pNextBand->GetHeight())
-        return true;
+    if (pThisBand->GetHeight() != pOtherBand->GetHeight())
+        return false;
+
+    // Two images with different data type are assigned to different subdatasets
+    if (pThisBand->GeteMMNCDataType() != pOtherBand->GeteMMNCDataType())
+        return false;
 
     // Two images with different bounding box are assigned to different subdatasets
-    if (pThisBand->GetBoundingBoxMinX() != pNextBand->GetBoundingBoxMinX())
-        return true;
-    if (pThisBand->GetBoundingBoxMaxX() != pNextBand->GetBoundingBoxMaxX())
-        return true;
-    if (pThisBand->GetBoundingBoxMinY() != pNextBand->GetBoundingBoxMinY())
-        return true;
-    if (pThisBand->GetBoundingBoxMaxY() != pNextBand->GetBoundingBoxMaxY())
-        return true;
+    if (pThisBand->GetBoundingBoxMinX() != pOtherBand->GetBoundingBoxMinX())
+        return false;
+    if (pThisBand->GetBoundingBoxMaxX() != pOtherBand->GetBoundingBoxMaxX())
+        return false;
+    if (pThisBand->GetBoundingBoxMinY() != pOtherBand->GetBoundingBoxMinY())
+        return false;
+    if (pThisBand->GetBoundingBoxMaxY() != pOtherBand->GetBoundingBoxMaxY())
+        return false;
 
     // One image has NoData values and the other does not;
     // they are assigned to different subdatasets
-    if (pThisBand->BandHasNoData() != pNextBand->BandHasNoData())
-        return true;
+    if (pThisBand->BandHasNoData() != pOtherBand->BandHasNoData())
+        return false;
 
     // Two images with different NoData values are assigned to different subdatasets
-    if (pThisBand->GetNoDataValue() != pNextBand->GetNoDataValue())
-        return true;
+    if (pThisBand->GetNoDataValue() != pOtherBand->GetNoDataValue())
+        return false;
 
-    return false;
+    return true;
 }
 
 /************************************************************************/

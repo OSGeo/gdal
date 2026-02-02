@@ -750,7 +750,8 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinuousMode()
         return CE_Failure;
 
     // TODO: more types of scaling
-    if (m_Palette->GetColorScaling() != ColorTreatment::LINEAR_SCALING)
+    if (m_Palette->GetColorScaling() != ColorTreatment::LINEAR_SCALING &&
+        m_Palette->GetColorScaling() != ColorTreatment::DIRECT_ASSIGNATION)
         return CE_Failure;
 
     MMRBand *poBand = m_pfRel->GetBand(nBand - 1);
@@ -802,7 +803,8 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinuousMode()
         nFirstValidPaletteIndex = 0;
 
     int nIPaletteColorNoData = 0;
-    if (static_cast<int>(m_eMMBytesPerPixel) == 2)
+    if (static_cast<int>(m_eMMBytesPerPixel) == 2 ||
+        m_Palette->GetColorScaling() != ColorTreatment::DIRECT_ASSIGNATION)
     {
         // A scaling is applied between the minimum and maximum display values.
         dfSlope = (static_cast<double>(m_Palette->GetNumberOfColors()) - 1) /
@@ -841,7 +843,9 @@ CPLErr MMRRasterBand::FromPaletteToColorTableContinuousMode()
             {
                 // Between the minimum and maximum, we apply the value
                 // read from the table.
-                if (static_cast<int>(m_eMMBytesPerPixel) < 2)
+                if (static_cast<int>(m_eMMBytesPerPixel) < 2 ||
+                    m_Palette->GetColorScaling() ==
+                        ColorTreatment::DIRECT_ASSIGNATION)
                 {
                     // The value is applied directly.
                     AssignRGBColor(nIPaletteColor, nFirstValidPaletteIndex);

@@ -451,7 +451,7 @@ def test_miramon_test_fails(name, message_substring):
 init_list_subdatasets = [
     (
         "data/miramon/multiband/byte_2x3_6_multibandI.rel",
-        3,
+        4,
         0,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -462,7 +462,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_6_categs.img",
-        3,
+        4,
         0,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -473,7 +473,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_6_multibandI.rel",
-        3,
+        4,
         1,
         1,
         [0, 1, 2, 3, 4, 255],
@@ -484,7 +484,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_0_to_4_categs_NoData_255.img",
-        3,
+        4,
         1,
         1,
         [0, 1, 2, 3, 4, 255],
@@ -495,7 +495,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_6_multibandI.rel",
-        3,
+        4,
         2,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -506,7 +506,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_1_to_5_categs_NoData_0.img",
-        3,
+        4,
         2,
         1,
         [0, 1, 2, 3, 4, 5],
