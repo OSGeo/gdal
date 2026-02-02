@@ -1518,6 +1518,10 @@ def test_jpeg_dji_thermal_raw():
 
 def test_jpeg_flir_embedded_image_metadata(tmp_vsimem):
 
+    # data/jpeg/flir/flir_embedded.jpg has been generated from autotest/gdrivers/data/jpeg/flir/FLIR.jpg
+    # by hacking record 2 of type 32 (FLIR_REC_CAMERA_INFO) with data at offset 0xC7E + 1352
+    # and replacing it by type 14 (FLIR_REC_EMBEDDEDIMAGE)
+
     gdal.FileFromMemBuffer(
         tmp_vsimem / "test.jpg", open("data/jpeg/flir/flir_embedded.jpg", "rb").read()
     )
@@ -1529,47 +1533,40 @@ def test_jpeg_flir_embedded_image_metadata(tmp_vsimem):
             "FLIR",
             "IMAGE_STRUCTURE",
             "SUBDATASETS",
-            "xml:XMP",
         ]
         metadata = ds.GetMetadata("FLIR")
         assert "EmbeddedImageHeight" in metadata
-        assert metadata.get("EmbeddedImageHeight") == "2448"
-        assert metadata.get("EmbeddedImageWidth") == "3264"
+        assert metadata.get("EmbeddedImageHeight") == "1"
+        assert metadata.get("EmbeddedImageWidth") == "2"
 
         assert ds.RasterCount == 3
-        assert ds.GetRasterBand(1).Checksum() == 17599
-        assert ds.GetRasterBand(2).Checksum() == 51528
-        assert ds.GetRasterBand(3).Checksum() == 44063
+        assert ds.GetRasterBand(1).Checksum() == 761
         subds = ds.GetSubDatasets()
         assert len(subds) == 2
 
     assert gdal.VSIStatL(tmp_vsimem / "test.jpg.aux.xml") is None
 
-    assert "FLIR_EMBEDDED_IMAGE" in subds[1][0]
-    assert "FLIR embedded image" == subds[1][1]
-    ds = gdal.Open(subds[1][0])
+    assert "FLIR_EMBEDDED_IMAGE" in subds[0][0]
+    assert "FLIR embedded image" == subds[0][1]
+    ds = gdal.Open(subds[0][0])
     assert ds is not None
-    assert ds.RasterCount == 3
-    assert ds.RasterXSize == 3264
-    assert ds.RasterYSize == 2448
+    assert ds.RasterCount == 1
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 1
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
     # this image is different than the "main" image
-    assert ds.GetRasterBand(1).Checksum() == 6407
-    assert ds.GetRasterBand(2).Checksum() == 60056
-    assert ds.GetRasterBand(3).Checksum() == 31999
+    assert ds.GetRasterBand(1).Checksum() == 7
 
 
 def test_jpeg_flir_embedded_image():
 
     ds = gdal.Open('JPEG:"data/jpeg/flir/flir_embedded.jpg":FLIR_EMBEDDED_IMAGE')
     assert ds is not None
-    assert ds.RasterCount == 3
-    assert ds.RasterXSize == 3264
-    assert ds.RasterYSize == 2448
+    assert ds.RasterCount == 1
+    assert ds.RasterXSize == 2
+    assert ds.RasterYSize == 1
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
-    assert ds.GetRasterBand(1).Checksum() == 6407
-    assert ds.GetRasterBand(2).Checksum() == 60056
-    assert ds.GetRasterBand(3).Checksum() == 31999
+    assert ds.GetRasterBand(1).Checksum() == 7
 
 
 ###############################################################################
