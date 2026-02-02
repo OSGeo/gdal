@@ -1513,6 +1513,66 @@ def test_jpeg_dji_thermal_raw():
 
 
 ###############################################################################
+# Open JPEG image with FLIR embedded jpeg image
+
+
+def test_jpeg_flir_embedded_image_metadata(tmp_vsimem):
+
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.jpg", open("data/jpeg/flir/flir_embedded.jpg", "rb").read()
+    )
+
+    with gdal.Open(tmp_vsimem / "test.jpg") as ds:
+        assert sorted(ds.GetMetadataDomainList()) == [
+            "",
+            "DERIVED_SUBDATASETS",
+            "FLIR",
+            "IMAGE_STRUCTURE",
+            "SUBDATASETS",
+            "xml:XMP",
+        ]
+        metadata = ds.GetMetadata("FLIR")
+        assert "EmbeddedImageHeight" in metadata
+        assert metadata.get("EmbeddedImageHeight") == "2448"
+        assert metadata.get("EmbeddedImageWidth") == "3264"
+
+        assert ds.RasterCount == 3
+        assert ds.GetRasterBand(1).Checksum() == 17599
+        assert ds.GetRasterBand(2).Checksum() == 51528
+        assert ds.GetRasterBand(3).Checksum() == 44063
+        subds = ds.GetSubDatasets()
+        assert len(subds) == 2
+
+    assert gdal.VSIStatL(tmp_vsimem / "test.jpg.aux.xml") is None
+
+    assert "FLIR_EMBEDDED_IMAGE" in subds[1][0]
+    assert "FLIR embedded image" == subds[1][1]
+    ds = gdal.Open(subds[1][0])
+    assert ds is not None
+    assert ds.RasterCount == 3
+    assert ds.RasterXSize == 3264
+    assert ds.RasterYSize == 2448
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    # this image is different than the "main" image
+    assert ds.GetRasterBand(1).Checksum() == 6407
+    assert ds.GetRasterBand(2).Checksum() == 60056
+    assert ds.GetRasterBand(3).Checksum() == 31999
+
+
+def test_jpeg_flir_embedded_image():
+
+    ds = gdal.Open('JPEG:"data/jpeg/flir/flir_embedded.jpg":FLIR_EMBEDDED_IMAGE')
+    assert ds is not None
+    assert ds.RasterCount == 3
+    assert ds.RasterXSize == 3264
+    assert ds.RasterYSize == 2448
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+    assert ds.GetRasterBand(1).Checksum() == 6407
+    assert ds.GetRasterBand(2).Checksum() == 60056
+    assert ds.GetRasterBand(3).Checksum() == 31999
+
+
+###############################################################################
 # Write a CMYK image
 
 
