@@ -284,7 +284,11 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         if (bTemporaryFile)
         {
             ret = poRetDS->FlushCache() == CE_None;
+#if !defined(__APPLE__)
+            // For some unknown reason, unlinking the file on MacOSX
+            // leads to later "disk I/O error". See https://github.com/OSGeo/gdal/issues/13794
             VSIUnlink(outputFilename.c_str());
+#endif
         }
 
         m_outputDataset.Set(std::move(poRetDS));
