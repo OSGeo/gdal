@@ -2302,3 +2302,19 @@ def test_warp_zero_sized_target_extent():
     )
     assert out_ds.RasterXSize == 1
     assert out_ds.RasterYSize == 1
+
+
+@gdaltest.enable_exceptions()
+def test_warp_geolocation_array_with_rotation(tmp_path):
+    """Test that computed XSCALE/YSCALE are reasonable when a geolocation array
+    causes a ~ 90 degree rotation. Our input image is a checker of black and
+    white, and the expected output is also a non-blurred checker.
+    """
+    gdal.Warp(
+        tmp_path / "out.tif",
+        "data/input_for_geoloc_array_with_rotation.tif",
+        options="-r cubic -t_srs EPSG:32640 -to METHOD=GEOLOC_ARRAY -to GEOLOC_ARRAY=data/geoloc_array_with_rotation.tif -tr 30 30",
+    )
+    ds = gdal.Open(tmp_path / "out.tif")
+    ref_ds = gdal.Open("data/expected_output_for_geoloc_array_with_rotation.tif")
+    assert ds.GetRasterBand(1).Checksum() == ref_ds.GetRasterBand(1).Checksum()
