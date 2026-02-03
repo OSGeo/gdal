@@ -19,7 +19,7 @@ ENV HOME="/root"
 
 ARG TARGET_ARCH=
 RUN echo ${TARGET_ARCH}
-COPY ./docker/ubuntu-full/bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
+COPY --link ./docker/ubuntu-full/bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
@@ -201,10 +201,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
         libspdlog-dev${APT_ARCH_SUFFIX} libmagic-dev${APT_ARCH_SUFFIX}
 
-COPY ./docker/ubuntu-full/tiledb-FindLZ4_EP.cmake.patch /buildscripts/tiledb-FindLZ4_EP.cmake.patch
-COPY ./docker/ubuntu-full/tiledb-FindOpenSSL_EP.cmake.patch /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch
+COPY --link ./docker/ubuntu-full/tiledb-FindLZ4_EP.cmake.patch /buildscripts/tiledb-FindLZ4_EP.cmake.patch
+COPY --link ./docker/ubuntu-full/tiledb-FindOpenSSL_EP.cmake.patch /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch
 # Commit from TileDB 2.27.
-COPY ./docker/ubuntu-full/tiledb-cmake-ccache.patch /buildscripts/tiledb-cmake-ccache.patch
+COPY --link ./docker/ubuntu-full/tiledb-cmake-ccache.patch /buildscripts/tiledb-cmake-ccache.patch
 RUN --mount=type=cache,id=ubuntu-full-tiledb,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
@@ -485,7 +485,7 @@ ARG WITH_DEBUG_SYMBOLS=no
 # Refresh grids
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX=/usr/local/gdal-internal
-COPY ./docker/ubuntu-full/bh-proj.sh /buildscripts/bh-proj.sh
+COPY --link ./docker/ubuntu-full/bh-proj.sh /buildscripts/bh-proj.sh
 # We build PROJ a first time, just to build the projsync utility if grids need
 # to be refreshed. We will rebuild just afterwards, but depending on the
 # PROJ_VERSION argument
@@ -520,7 +520,7 @@ ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
-COPY ./docker/ubuntu-full/bh-gdal.sh /buildscripts/bh-gdal.sh
+COPY --link ./docker/ubuntu-full/bh-gdal.sh /buildscripts/bh-gdal.sh
 COPY --link . gdal/
 RUN --mount=type=cache,id=ubuntu-full-gdal,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
@@ -621,23 +621,23 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 
 # Attempt to order layers starting with less frequently varying ones
 
-COPY --from=builder  /build_thirdparty/usr/ /usr/
-COPY --from=builder  /build_thirdparty/opt/ /opt/
+COPY --from=builder --link  /build_thirdparty/usr/ /usr/
+COPY --from=builder --link  /build_thirdparty/opt/ /opt/
 
 ARG PROJ_INSTALL_PREFIX=/usr/local/gdal-internal
-COPY --from=builder  /tmp/proj_grids/* ${PROJ_INSTALL_PREFIX}/share/proj/
+COPY --from=builder --link  /tmp/proj_grids/* ${PROJ_INSTALL_PREFIX}/share/proj/
 
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
-COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
-COPY --from=builder  /build/usr/share/java /usr/share/java
-COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
-COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build_gdal_python/usr/ /usr/
-COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+COPY --from=builder --link  /build/usr/share/bash-completion/ /usr/share/bash-completion/
+COPY --from=builder --link  /build/usr/share/java /usr/share/java
+COPY --from=builder --link  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder --link  /build/usr/include/ /usr/include/
+COPY --from=builder --link  /build_gdal_python/usr/ /usr/
+COPY --from=builder --link  /build_gdal_version_changing/usr/ /usr/
 
 RUN ldconfig
 

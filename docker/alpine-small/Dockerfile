@@ -192,19 +192,19 @@ RUN apk add --no-cache \
     && rm -f /usr/lib/libwebpmux.so* /usr/lib/libwebpdemux.so* /usr/lib/libwebpdecoder.so*
 
 # Order layers starting with less frequently varying ones
-#COPY --from=builder  /build_thirdparty/usr/ /usr/
+#COPY --from=builder --link  /build_thirdparty/usr/ /usr/
 
-COPY --from=builder  /build_projgrids/usr/ /usr/
+COPY --from=builder --link  /build_projgrids/usr/ /usr/
 
-COPY --from=builder  /build_proj/usr/share/proj/ /usr/share/proj/
-COPY --from=builder  /build_proj/usr/include/ /usr/include/
-COPY --from=builder  /build_proj/usr/bin/ /usr/bin/
-COPY --from=builder  /build_proj/usr/lib/ /usr/lib/
+COPY --from=builder --link  /build_proj/usr/share/proj/ /usr/share/proj/
+COPY --from=builder --link  /build_proj/usr/include/ /usr/include/
+COPY --from=builder --link  /build_proj/usr/bin/ /usr/bin/
+COPY --from=builder --link  /build_proj/usr/lib/ /usr/lib/
 
-COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
-COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
-COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+COPY --from=builder --link  /build/usr/share/bash-completion/ /usr/share/bash-completion/
+COPY --from=builder --link  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder --link  /build/usr/include/ /usr/include/
+COPY --from=builder --link  /build_gdal_version_changing/usr/ /usr/
 
 # Use mimalloc allocator to improve multi-threaded performance
 ENV LD_PRELOAD=libmimalloc.so.2
