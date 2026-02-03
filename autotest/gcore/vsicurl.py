@@ -293,7 +293,10 @@ def test_vsicurl_test_redirect(server, authorization_header_allowed):
 @pytest.mark.parametrize(
     "authorization_header_allowed", [None, "YES", "NO", "IF_SAME_HOST"]
 )
-def test_vsicurl_test_redirect_different_server(server, authorization_header_allowed):
+@pytest.mark.parametrize("redirect_code", [301, 302])
+def test_vsicurl_test_redirect_different_server(
+    server, authorization_header_allowed, redirect_code
+):
 
     gdal.VSICurlClearCache()
 
@@ -309,18 +312,42 @@ def test_vsicurl_test_redirect_different_server(server, authorization_header_all
     handler.add(
         "HEAD",
         "/test_redirect/test.bin",
-        301,
+        redirect_code,
         {"Location": "http://127.0.0.1:%d/redirected/test.bin" % server.port},
         expected_headers={"Authorization": "Bearer xxx"},
     )
-    handler.add(
-        "HEAD",
-        "/redirected/test.bin",
-        200,
-        {"Content-Length": "3"},
-        expected_headers=expected_headers,
-        unexpected_headers=unexpected_headers,
-    )
+    if redirect_code == 302 and authorization_header_allowed is None:
+        handler.add(
+            "HEAD",
+            "/redirected/test.bin",
+            403,
+            expected_headers=expected_headers,
+            unexpected_headers=unexpected_headers,
+        )
+        handler.add(
+            "GET",
+            "/redirected/test.bin",
+            200,
+            {"Content-Length": "3"},
+            b"xyz",
+        )
+    else:
+        handler.add(
+            "HEAD",
+            "/redirected/test.bin",
+            200,
+            {"Content-Length": "3"},
+            expected_headers=expected_headers,
+            unexpected_headers=unexpected_headers,
+        )
+    if redirect_code == 302:
+        handler.add(
+            "GET",
+            "/test_redirect/test.bin",
+            redirect_code,
+            {"Location": "http://127.0.0.1:%d/redirected/test.bin" % server.port},
+            expected_headers={"Authorization": "Bearer xxx"},
+        )
     handler.add(
         "GET",
         "/redirected/test.bin",
@@ -590,6 +617,9 @@ def test_vsicurl_test_redirect_x_amz(server):
     current_time = 1500
 
     def method(request):
+
+        assert request.headers["Authorization"] == "Bearer xxx"
+
         response = "HTTP/1.1 302 Found\r\n"
         response += "Server: foo\r\n"
         response += (
@@ -598,7 +628,7 @@ def test_vsicurl_test_redirect_x_amz(server):
             + "\r\n"
         )
         response += "Location: %s\r\n" % (
-            "http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s"
+            "http://127.0.0.1:%d/foo.s3.amazonaws.com/test_redirected/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s"
             % (
                 server.port,
                 time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(current_time)),
@@ -615,9 +645,13 @@ def test_vsicurl_test_redirect_x_amz(server):
         403,
         {"Server": "foo"},
         "",
+        unexpected_headers=["Authorization"],
     )
 
     def method(request):
+
+        assert "Authorization" not in request.headers
+
         if "Range" in request.headers:
             if request.headers["Range"] == "bytes=0-16383":
                 request.protocol_version = "HTTP/1.1"
@@ -660,10 +694,25 @@ def test_vsicurl_test_redirect_x_amz(server):
         custom_method=method,
     )
 
-    with webserver.install_http_handler(handler):
-        f = gdal.VSIFOpenL(
-            "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
-            "rb",
+    gdal.SetPathSpecificOption(
+        "/vsicurl/http://localhost:%d/test_redirect" % server.port,
+        "GDAL_HTTP_AUTH",
+        "BEARER",
+    )
+    gdal.SetPathSpecificOption(
+        "/vsicurl/http://localhost:%d/test_redirect" % server.port,
+        "GDAL_HTTP_BEARER",
+        "xxx",
+    )
+    try:
+        with webserver.install_http_handler(handler):
+            f = gdal.VSIFOpenL(
+                "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
+                "rb",
+            )
+    finally:
+        gdal.ClearPathSpecificOptions(
+            "/vsicurl/http://localhost:%d/test_redirect" % server.port
         )
     assert f is not None
 
