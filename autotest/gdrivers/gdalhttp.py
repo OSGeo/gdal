@@ -30,7 +30,10 @@ except ImportError:
     import gdaltest
 
 
-pytestmark = pytest.mark.require_driver("HTTP") | pytest.mark.network
+pytestmark = [
+    pytest.mark.require_curl(),
+    pytest.mark.network,
+]
 
 
 ###############################################################################
