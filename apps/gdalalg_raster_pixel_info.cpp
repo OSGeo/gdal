@@ -35,18 +35,36 @@
 /*     GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()     */
 /************************************************************************/
 
-GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm(bool standaloneStep)
+    : GDALPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetAddAppendLayerArgument(false)
+              .SetAddOverwriteLayerArgument(false)
+              .SetAddUpdateArgument(false)
+              .SetAddUpsertArgument(false)
+              .SetAddSkipErrorsArgument(false)
+              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
-    AddOutputFormatArg(&m_format, false, false,
-                       _("Output format (default is 'GeoJSON' if "
-                         "'position-dataset' not specified)"))
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_rasterDataset, GDAL_OF_RASTER).AddAlias("dataset");
+    if (standaloneStep)
+    {
+        AddOutputFormatArg(&m_format, false, false,
+                           _("Output format (default is 'GeoJSON' if "
+                             "'position-dataset' not specified)"))
+            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
+                             {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
+        AddOpenOptionsArg(&m_openOptions);
+        AddInputFormatsArg(&m_inputFormats)
+            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
+    }
+
+    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER,
+                       /* positionalAndRequired = */ standaloneStep)
+        .AddAlias("dataset")
+        .SetMinCount(1)
+        .SetMaxCount(1)
+        .SetHiddenForCLI(!standaloneStep);
 
     {
         auto &coordinateDatasetArg =
@@ -54,46 +72,57 @@ GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()
                    _("Vector dataset with coordinates"), &m_vectorDataset,
                    GDAL_OF_VECTOR)
                 .SetMutualExclusionGroup("position-dataset-pos");
+        if (!standaloneStep)
+            coordinateDatasetArg.SetPositional().SetRequired();
 
         SetAutoCompleteFunctionForFilename(coordinateDatasetArg,
                                            GDAL_OF_VECTOR);
 
         auto &layerArg = AddArg(GDAL_ARG_NAME_INPUT_LAYER, 'l',
-                                _("Input layer name"), &m_inputLayerName)
+                                _("Input layer name"), &m_inputLayerNames)
+                             .SetMaxCount(1)
                              .AddAlias("layer");
         SetAutoCompleteFunctionForLayerName(layerArg, coordinateDatasetArg);
     }
 
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR,
-                        /* positionalAndRequired = */ false);
-    AddCreationOptionsArg(&m_creationOptions);
-    AddLayerCreationOptionsArg(&m_layerCreationOptions);
-    AddOverwriteArg(&m_overwrite);
-
-    AddOutputStringArg(&m_outputString);
+                        /* positionalAndRequired = */ false)
+        .SetHiddenForCLI(!standaloneStep);
+    if (standaloneStep)
+    {
+        AddCreationOptionsArg(&m_creationOptions);
+        AddLayerCreationOptionsArg(&m_layerCreationOptions);
+        AddOverwriteArg(&m_overwrite);
+        AddOutputStringArg(&m_output).SetHiddenForCLI();
+    }
 
     AddBandArg(&m_band);
     AddArg("overview", 0, _("Which overview level of source file must be used"),
            &m_overview)
         .SetMinValueIncluded(0);
 
-    AddArg("position", 'p', _("Pixel position"), &m_pos)
-        .AddAlias("pos")
-        .SetMetaVar("<column,line> or <X,Y>")
-        .SetPositional()
-        .SetMutualExclusionGroup("position-dataset-pos")
-        .AddValidationAction(
-            [this]
-            {
-                if ((m_pos.size() % 2) != 0)
+    if (standaloneStep)
+    {
+        AddArg("position", 'p', _("Pixel position"), &m_pos)
+            .AddAlias("pos")
+            .SetMetaVar("<column,line> or <X,Y>")
+            .SetPositional()
+            .SetMutualExclusionGroup("position-dataset-pos")
+            .AddValidationAction(
+                [this]
                 {
-                    ReportError(CE_Failure, CPLE_IllegalArg,
-                                "An even number of values must be specified "
-                                "for 'position' argument");
-                    return false;
-                }
-                return true;
-            });
+                    if ((m_pos.size() % 2) != 0)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_IllegalArg,
+                            "An even number of values must be specified "
+                            "for 'position' argument");
+                        return false;
+                    }
+                    return true;
+                });
+    }
+
     AddArg("position-crs", 0,
            _("CRS of position (default is 'pixel' if 'position-dataset' not "
              "specified)"),
@@ -121,30 +150,34 @@ GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm()
     AddValidationAction(
         [this]
         {
-            if (auto poSrcDS = m_rasterDataset.GetDatasetRef())
+            if (m_inputDataset.size() == 1)
             {
-                const int nOvrCount =
-                    poSrcDS->GetRasterBand(1)->GetOverviewCount();
-                if (m_overview >= 0 && poSrcDS->GetRasterCount() > 0 &&
-                    m_overview >= nOvrCount)
+                if (auto poSrcDS = m_inputDataset[0].GetDatasetRef())
                 {
-                    if (nOvrCount == 0)
+                    const int nOvrCount =
+                        poSrcDS->GetRasterBand(1)->GetOverviewCount();
+                    if (m_overview >= 0 && poSrcDS->GetRasterCount() > 0 &&
+                        m_overview >= nOvrCount)
                     {
-                        ReportError(
-                            CE_Failure, CPLE_IllegalArg,
-                            "Source dataset has no overviews. "
-                            "Argument 'overview' must not be specified.");
+                        if (nOvrCount == 0)
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_IllegalArg,
+                                "Source dataset has no overviews. "
+                                "Argument 'overview' must not be specified.");
+                        }
+                        else
+                        {
+                            ReportError(
+                                CE_Failure, CPLE_IllegalArg,
+                                "Source dataset has only %d overview level%s. "
+                                "'overview' "
+                                "value must be strictly lower than this "
+                                "number.",
+                                nOvrCount, nOvrCount > 1 ? "s" : "");
+                        }
+                        return false;
                     }
-                    else
-                    {
-                        ReportError(
-                            CE_Failure, CPLE_IllegalArg,
-                            "Source dataset has only %d overview level%s. "
-                            "'overview' "
-                            "value must be strictly lower than this number.",
-                            nOvrCount, nOvrCount > 1 ? "s" : "");
-                    }
-                    return false;
                 }
             }
             return true;
@@ -168,9 +201,22 @@ GDALRasterPixelInfoAlgorithm::~GDALRasterPixelInfoAlgorithm()
 /*               GDALRasterPixelInfoAlgorithm::RunImpl()                */
 /************************************************************************/
 
-bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
+bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
+                                           void *pProgressData)
 {
-    auto poSrcDS = m_rasterDataset.GetDatasetRef();
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
+}
+
+/************************************************************************/
+/*               GDALRasterPixelInfoAlgorithm::RunStep()                */
+/************************************************************************/
+
+bool GDALRasterPixelInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
+{
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
 
     auto poVectorSrcDS = m_vectorDataset.GetDatasetRef();
@@ -183,7 +229,11 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
         return false;
     }
 
-    if (m_outputDataset.GetName().empty())
+    if (!m_standaloneStep)
+    {
+        m_format = "MEM";
+    }
+    else if (m_outputDataset.GetName().empty())
     {
         if (m_format.empty())
         {
@@ -217,7 +267,7 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
     if (poVectorSrcDS)
     {
-        if (m_inputLayerName.empty())
+        if (m_inputLayerNames.empty())
         {
             const int nLayerCount = poVectorSrcDS->GetLayerCount();
             if (nLayerCount == 0)
@@ -240,20 +290,20 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
         else
         {
             poSrcLayer =
-                poVectorSrcDS->GetLayerByName(m_inputLayerName.c_str());
+                poVectorSrcDS->GetLayerByName(m_inputLayerNames[0].c_str());
         }
         if (!poSrcLayer)
         {
             ReportError(
                 CE_Failure, CPLE_AppDefined, "Cannot find layer '%s' in '%s'",
-                m_inputLayerName.c_str(), poVectorSrcDS->GetDescription());
+                m_inputLayerNames[0].c_str(), poVectorSrcDS->GetDescription());
             return false;
         }
         if (poSrcLayer->GetGeomType() == wkbNone)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Layer '%s' of '%s' has no geometry column",
-                        m_inputLayerName.c_str(),
+                        m_inputLayerNames[0].c_str(),
                         poVectorSrcDS->GetDescription());
             return false;
         }
@@ -370,7 +420,7 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
         }
     }
 
-    if (!osOutFilename.empty())
+    if (!osOutFilename.empty() || !m_standaloneStep)
     {
         if (bIsGeoJSON)
         {
@@ -1034,11 +1084,11 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
         if (m_outputFile)
             m_outputFile->Write(osRet.data(), osRet.size());
         else
-            m_outputString = std::move(osRet);
+            m_output = std::move(osRet);
     }
     else if (poOutDS)
     {
-        if (m_outputDataset.GetName().empty())
+        if (m_outputDataset.GetName().empty() && m_standaloneStep)
         {
             poOutDS.reset();
             if (!isInteractive)
@@ -1047,7 +1097,7 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
                 const GByte *pabyData =
                     VSIGetMemFileBuffer(m_osTmpFilename.c_str(), nullptr,
                                         /* bUnlinkAndSeize = */ false);
-                m_outputString = reinterpret_cast<const char *>(pabyData);
+                m_output = reinterpret_cast<const char *>(pabyData);
             }
         }
         else
@@ -1072,5 +1122,8 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
     return bRet;
 }
+
+GDALRasterPixelInfoAlgorithmStandalone::
+    ~GDALRasterPixelInfoAlgorithmStandalone() = default;
 
 //! @endcond

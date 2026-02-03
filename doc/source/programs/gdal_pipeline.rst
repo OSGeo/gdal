@@ -60,6 +60,12 @@ Details for options can be found in :ref:`gdal_raster_contour`.
 
 Details for options can be found in :ref:`gdal_raster_footprint`.
 
+* pixel-info
+
+.. program-output:: gdal pipeline --help-doc=pixel-info
+
+Details for options can be found in :ref:`gdal_raster_pixel_info`.
+
 * polygonize
 
 .. program-output:: gdal pipeline --help-doc=polygonize
