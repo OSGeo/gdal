@@ -163,6 +163,7 @@ def test_vsigs_1(gs_test_config):
 ###############################################################################
 # Test GS_NO_SIGN_REQUEST=YES
 
+
 @pytest.mark.network
 def test_vsigs_no_sign_request(gs_test_config):
 

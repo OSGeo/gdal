@@ -61,6 +61,7 @@ def skip_if_unreachable(url, try_read=False):
 ###############################################################################
 # Verify we have the driver.
 
+
 @pytest.mark.network
 def test_http_1():
     # Regularly fails on Travis graviton2 configuration
@@ -82,6 +83,7 @@ def test_http_1():
 ###############################################################################
 # Verify /vsicurl (subversion file listing)
 
+
 @pytest.mark.network
 def test_http_2():
     url = "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif"
@@ -97,6 +99,7 @@ def test_http_2():
 ###############################################################################
 # Verify /vsicurl (apache file listing)
 
+
 @pytest.mark.network
 def test_http_3():
     url = "http://download.osgeo.org/gdal/data/ehdr/elggll.bil"
@@ -108,6 +111,7 @@ def test_http_3():
 
 ###############################################################################
 # Verify /vsicurl (ftp)
+
 
 @pytest.mark.network
 @pytest.mark.skip(reason="remove server does not work")
@@ -133,6 +137,7 @@ def test_http_4():
 ###############################################################################
 # Test HTTP driver with OGR driver
 
+
 @pytest.mark.network
 def test_http_6():
     url = "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf"
@@ -144,6 +149,7 @@ def test_http_6():
 
 
 ###############################################################################
+
 
 @pytest.mark.network
 def test_http_ssl_verifystatus():
@@ -175,6 +181,7 @@ def test_http_ssl_verifystatus():
 
 ###############################################################################
 
+
 @pytest.mark.network
 def test_http_use_capi_store():
     if sys.platform != "win32":
@@ -197,6 +204,7 @@ def test_http_use_capi_store_sub():
 
 
 ###############################################################################
+
 
 @pytest.mark.network
 def test_http_keep_alive():

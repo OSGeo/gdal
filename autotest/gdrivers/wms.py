@@ -514,6 +514,7 @@ def wms_11():
 ###############################################################################
 # Test getting subdatasets from a TMS server
 
+
 @pytest.mark.network
 @pytest.mark.usefixtures("metacarta_tms")
 def test_wms_12():
@@ -632,6 +633,7 @@ def test_wms_14():
 
 ###############################################################################
 # Test reading ArcGIS MapServer JSon definition and CreateCopy()
+
 
 @pytest.mark.network
 def test_wms_15():
