@@ -1,3 +1,158 @@
+# GDAL/OGR 3.12.2 Release Notes
+
+GDAL 3.12.2 is a bugfix release.
+
+## Build
+
+* Arrow/Parquet: fix build issue with libarrow 23.0 with precompiled headers
+* PDF: add compatibility with Poppler 26.01.0 (#13668)
+* LIBKML: workaround build issue with boost 1.90, clang 21 and c++23 (#13709)
+* Add explicit include for std::strtoull
+
+## Miscellaneous
+
+* gdal-bash-completion.sh: do not put '.py' in function identifiers (#13570)
+* gdal-bash-completion.sh: add completion for .py scripts invoked without the
+  .py suffix (#13570)
+
+## GDAL 3.12.2
+
+### Port
+
+* VSIMkdirRecursive(): avoid stack call overflow on huge strings
+  (ossfuzz#471096341)
+* /vsicurl_streaming/: fix setting the file size
+* /vsicurl/: handle HTTP 302 response to HEAD requests
+* /vsicurl/ GetFileSizeOrHeaders(): do not propagate authentication sent to the
+  original URL to a S3-like redirect
+
+### Algorithms
+
+* Warp: fix inappropriate dst nodata avoidance with UNIFIED_SRC_NODATA=YES
+  (#13677)
+* GDALWarpOperation::WarpRegionToBuffer(): avoid integer overflow
+  (ossfuzz#476973663)
+* GDALWarpOperation::ComputeSourceWindowTransformPoints(): avoid integer
+  overflow (ossfuzz#476810001)
+* contour: do not emit error when raster is all nodata, but return an empty layer
+  (#13735)
+* GDALTransformer(): ignore MAX_GCP_ORDER when METHOD=GCP_TPS, and sanitize
+  negative values of MAX_GCP_ORDER when METHOD=GCP_POLYNOMIAL
+* TPS transformer: check RAM available to avoid crashes / system freeze
+
+### Raster core
+
+* GDALBufferHasOnlyNoData(): fix potential unsigned integer overflow on very
+  large buffers on 32-bit builds
+* GDALGetJPEG2000Structure(): avoid unsigned integer overflow on corrupted
+  files (ossfuzz #474176152)
+* gdalrescaledalphaband.cpp: avoid potential int overflow
+
+### Utilities
+
+* gdal CLI: remove static registration of top-level algorithms that did not
+  work on static builds (firelab/gdalraster#826)
+* gdal raster mosaic: when specifying --target-aligned-pixels, check that
+  --resolution is also specified (#13651)
+* gdal raster color-map: make it work better with pipelines (#13740)
+* gdal raster contour/footprint/polygon: fix issue with temporary gpkg file on
+  MacOS (#13794)
+
+### Raster drivers
+
+BMP driver:
+ * fix bug in decoding of RLE4 encoded mode
+
+ENVI driver:
+ * avoid unsigned integer overflow on corrupted datasets (ossfuzz#474923693)
+
+GRIB driver:
+ * fix stack-buffer-overflow read of ossfuzz#474605327
+
+GTiff driver:
+ * make GetMetadataItem(<top-level-key>, json:ISIS3) return a subset of the
+   whole JSON
+ * avoid int overflow when reading 1-bit images with strip of width in
+   [2147483641,2147483647] range
+ * Internal libtiff: TIFFReadDirectory(): re-set TIFF_LAZYSTRILELOAD if file
+   opened in 'O' mode (ossfuzz #470691578)
+ * Internal libtiff: _TIFFGetStrileOffsetOrByteCountValue(): fix potential crash
+   on corrupted files when file opened in 'O' mode (ossfuzz #471328917)
+ * Internal libtiff: resync with upstream to fix ossfuzz #471472003
+ * Internal libtiff: JPEGDecode(): fix memory leak in error code path
+   (ossfuzz #471945501)
+
+HF2 driver:
+ * fix reading negative elevations
+
+ISIS3 driver:
+ * PVL<-->JSON: fix/improve parsing of arrays with values with unit
+ * PVL<-->JSON: deal with repeated keywords
+
+LIBERTIFF driver:
+ * avoid int overflow when reading 1-bit images with strip of width in
+   [2147483641,2147483647] range
+ * avoid integer overflows when reading huge rasters (such that
+   dt_size * block_width > INT_MAX)
+
+MiraMonRaster driver:
+ * fix dataset geotransform when several bands (#13595)
+
+NITF driver:
+ * nitf_spec.xml: fix inverted latitude and longitude in RPFIMG
+   CoverageSectionSubheader
+
+SENTINEL2 driver:
+ * geoloc-enabled subdatasets: deal with (expected) missing granules
+
+VRT driver:
+ * Pansharpen: avoid potential int overflow
+ * Pansharpen: fix serializing the VRT pansharpen dataset to disk when
+   panchromatic and multispectral bands have not the same extent
+ * Pansharpen: fix wrong test regarding vertical orientation of input datasets
+ * Pansharpen: Add sanity check to avoid double->int overflow
+
+XYZ driver:
+ * avoid potential write heap-buffer-overflow on corrupted files
+   (ossfuzz#478009737)
+
+## OGR 3.12.2
+
+### Vector drivers
+
+JML driver:
+ * fix memleak when GetLayerDefn() is called after ResetReading()
+   (ossfuzz#477312378)
+
+LIBKML driver:
+ * if a simple field has the same name as a core attribute, add a 2 suffix to
+   its name (#13590)
+
+MITAB driver:
+ * .mif reader: accepts linestring and multilinestring of 1 point (even zero)
+   (#13796)
+
+NAS driver:
+ * fix updates with unqualified properties (ie. lebenszeitintervall
+   /AA_Lebenszeitintervall/endet vs. adv:lebenszeitintervall/
+   adv:AA_Lebenszeitintervall/adv:endet)
+
+ODS driver:
+ * fix reading field name when the first data line has less columns than the
+   title line (#13687)
+
+OSM driver:
+ * fix reading complex multipolygons (3.11.5 regression) (#13610)
+
+Parquet driver:
+ * fix so that Hive partitionned datasets are filtered properly
+ * avoid conflicts with geoarrow.pyarrow Python module when opening GeoArrow
+   encoded files that have no GeoParquet metadata
+
+WFS driver:
+ * really skip EPSG:404000 fake GeoServer SRS (#13611)
+ * disable VSI_CACHE when getting streamed results, as useless
+
 # GDAL/OGR 3.12.1 Release Notes
 
 GDAL 3.12.1 is a bugfix release.
