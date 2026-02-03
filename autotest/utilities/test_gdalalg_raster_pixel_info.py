@@ -12,12 +12,13 @@
 ###############################################################################
 
 import json
+import sys
 
 import gdaltest
 import pytest
 import test_cli_utilities
 
-from osgeo import gdal, osr
+from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.skipif(
     test_cli_utilities.get_gdal_path() is None, reason="gdal binary not available"
@@ -32,7 +33,9 @@ def test_gdalalg_raster_pixel_info_missing_position():
 
     alg = get_alg()
     alg["dataset"] = "../gcore/data/byte.tif"
-    with pytest.raises(Exception, match="Argument 'position' must be specified"):
+    with pytest.raises(
+        Exception, match="Argument 'position' or 'position-dataset' must be specified"
+    ):
         alg.Run()
 
 
@@ -127,6 +130,7 @@ def test_gdalalg_raster_pixel_info_complex_json():
     }
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_raster_pixel_info_byte_csv():
 
     alg = get_alg()
@@ -135,11 +139,12 @@ def test_gdalalg_raster_pixel_info_byte_csv():
     alg["format"] = "csv"
     assert alg.Run()
     assert (
-        alg["output-string"]
-        == 'input_x,input_y,extra_input,column,line,band_1_raw_value,band_1_unscaled_value\n5,10,"",5,10,132,132\n'
+        alg["output-string"].replace("\r\n", "\n")
+        == "geom_x,geom_y,extra_content,column,line,band_1_raw_value,band_1_unscaled_value\n5,10,,5,10,132,132\n"
     )
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_raster_pixel_info_out_of_raster_csv():
 
     alg = get_alg()
@@ -148,11 +153,12 @@ def test_gdalalg_raster_pixel_info_out_of_raster_csv():
     alg["format"] = "csv"
     assert alg.Run()
     assert (
-        alg["output-string"]
-        == 'input_x,input_y,extra_input,column,line,band_1_raw_value,band_1_unscaled_value\n-5,10,"",-5,10,,\n'
+        alg["output-string"].replace("\r\n", "\n")
+        == "geom_x,geom_y,extra_content,column,line,band_1_raw_value,band_1_unscaled_value\n-5,10,,-5,10,,\n"
     )
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_raster_pixel_info_complex_csv():
 
     alg = get_alg()
@@ -161,11 +167,12 @@ def test_gdalalg_raster_pixel_info_complex_csv():
     alg["format"] = "csv"
     assert alg.Run()
     assert (
-        alg["output-string"]
-        == 'input_x,input_y,extra_input,column,line,band_1_real_value,band_1_imaginary_value\n5,10,"",5,10,132,0\n'
+        alg["output-string"].replace("\r\n", "\n")
+        == "geom_x,geom_y,extra_content,column,line,band_1_real_value,band_1_imaginary_value\n5,10,,5,10,132,0\n"
     )
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_raster_pixel_info_complex_out_of_raster_csv():
 
     alg = get_alg()
@@ -174,8 +181,8 @@ def test_gdalalg_raster_pixel_info_complex_out_of_raster_csv():
     alg["format"] = "csv"
     assert alg.Run()
     assert (
-        alg["output-string"]
-        == 'input_x,input_y,extra_input,column,line,band_1_real_value,band_1_imaginary_value\n-5,10,"",-5,10,,\n'
+        alg["output-string"].replace("\r\n", "\n")
+        == "geom_x,geom_y,extra_content,column,line,band_1_real_value,band_1_imaginary_value\n-5,10,,-5,10,,\n"
     )
 
 
@@ -268,6 +275,7 @@ def test_gdalalg_raster_pixel_info_unscaled():
     }
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_raster_pixel_info_unscaled_csv():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float32)
@@ -281,11 +289,12 @@ def test_gdalalg_raster_pixel_info_unscaled_csv():
     alg["format"] = "csv"
     assert alg.Run()
     assert (
-        alg["output-string"]
-        == 'input_x,input_y,extra_input,column,line,band_1_raw_value,band_1_unscaled_value\n0,0,"",0,0,1.5,6.5\n'
+        alg["output-string"].replace("\r\n", "\n")
+        == "geom_x,geom_y,extra_content,column,line,band_1_raw_value,band_1_unscaled_value\n0,0,,0,0,1.5,6.5\n"
     )
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_raster_pixel_info_missing_crs():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
@@ -302,6 +311,7 @@ def test_gdalalg_raster_pixel_info_missing_crs():
         alg.Run()
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_raster_pixel_info_missing_gt():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
@@ -317,6 +327,7 @@ def test_gdalalg_raster_pixel_info_missing_gt():
         alg.Run()
 
 
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_raster_pixel_info_wrong_gt():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
@@ -515,13 +526,364 @@ def test_gdalalg_raster_pixel_info_from_command_line(gdal_path):
     }
 
 
+@pytest.mark.skipif(
+    # Some weird issue about end of line characters I don't understand
+    sys.platform == "win32",
+    reason="Windows not supported for this test",
+)
+@pytest.mark.require_driver("CSV")
 def test_gdalalg_raster_pixel_info_from_command_line_csv(gdal_path):
 
-    ret = gdaltest.runexternal(
-        f"{gdal_path} raster pixel-info --of=csv ../gcore/data/byte.tif",
-        strin="5.5 10.5 foo bar",
-    ).replace("\r\n", "\n")
+    ret = "\n".join(
+        gdaltest.runexternal(
+            f"{gdal_path} raster pixel-info --of=csv ../gcore/data/byte.tif",
+            strin="5.5 10.5 foo bar",
+        ).splitlines()
+    )
     assert (
         ret
-        == 'input_x,input_y,extra_input,column,line,band_1_raw_value,band_1_unscaled_value\n5.5,10.5,"foo bar",5.5,10.5,132,132\n'
+        == "geom_x,geom_y,extra_content,column,line,band_1_raw_value,band_1_unscaled_value\n5.5,10.5,foo bar,5.5,10.5,132,132"
     )
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalalg_raster_pixel_info_from_command_line_to_named_output_csv(
+    gdal_path, tmp_path
+):
+
+    gdaltest.runexternal(
+        f"{gdal_path} raster pixel-info --of=csv --output={tmp_path}/out.csv ../gcore/data/byte.tif",
+        strin="5.5 10.5 foo bar",
+    )
+
+    with gdal.VSIFile(tmp_path / "out.csv", "rb") as f:
+        data = f.read().decode("ascii").replace("\r\n", "\n")
+    assert (
+        data
+        == "geom_x,geom_y,extra_content,column,line,band_1_raw_value,band_1_unscaled_value\n5.5,10.5,foo bar,5.5,10.5,132,132\n"
+    )
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalalg_raster_pixel_info_named_output_csv(tmp_vsimem):
+
+    alg = gdal.alg.raster.pixel_info(
+        input="../gcore/data/byte.tif",
+        position=[5.5, 10.5],
+        output=tmp_vsimem / "out.csv",
+    )
+    assert alg.Output().GetDescription() == str(tmp_vsimem / "out.csv")
+
+    with gdal.VSIFile(tmp_vsimem / "out.csv", "rb") as f:
+        data = f.read().decode("ascii").replace("\r\n", "\n")
+    assert (
+        data
+        == "geom_x,geom_y,extra_content,column,line,band_1_raw_value,band_1_unscaled_value\n5.5,10.5,,5.5,10.5,132,132\n"
+    )
+
+
+def test_gdalalg_raster_pixel_info_named_output_geojson(tmp_vsimem):
+
+    alg = gdal.alg.raster.pixel_info(
+        input="../gcore/data/byte.tif",
+        position=[5.5, 10.5],
+        output=tmp_vsimem / "out.json",
+    )
+    assert alg.Output().GetDescription() == str(tmp_vsimem / "out.json")
+
+    with gdal.VSIFile(tmp_vsimem / "out.json", "rb") as f:
+        data = f.read()
+    assert json.loads(data) == {
+        "crs": {"properties": {"name": "urn:ogc:def:crs:EPSG::26711"}, "type": "name"},
+        "features": [
+            {
+                "geometry": {"coordinates": [441050.0, 3750690.0], "type": "Point"},
+                "properties": {
+                    "bands": [
+                        {"band_number": 1, "raw_value": 132, "unscaled_value": 132.0}
+                    ],
+                    "column": 5.5,
+                    "input_coordinate": [5.5, 10.5],
+                    "line": 10.5,
+                },
+                "type": "Feature",
+            }
+        ],
+        "type": "FeatureCollection",
+    }
+
+
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.parametrize("include_field", [None, "ALL", "NONE", "foo", "non_existing"])
+def test_gdalalg_raster_pixel_info_from_to_vector_dataset(tmp_vsimem, include_field):
+
+    position_dataset = gdal.GetDriverByName("MEM").CreateVector("")
+    srs = osr.SpatialReference(epsg=4267)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    coordinate_lyr = position_dataset.CreateLayer("coords", srs=srs)
+    coordinate_lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(coordinate_lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt("POINT (-117.634316882504 33.8972472661961)")
+    )
+    f["foo"] = "bar"
+    coordinate_lyr.CreateFeature(f)
+
+    kwargs = {}
+    if include_field:
+        kwargs["include_field"] = include_field
+
+    if include_field == "non_existing":
+        with pytest.raises(
+            Exception, match="Field 'non_existing' does not exist in layer 'coords'"
+        ):
+            gdal.alg.raster.pixel_info(
+                input="../gcore/data/byte.tif",
+                position_dataset=position_dataset,
+                output=tmp_vsimem / "out.gpkg",
+                **kwargs,
+            )
+        return
+    else:
+        assert gdal.alg.raster.pixel_info(
+            input="../gcore/data/byte.tif",
+            position_dataset=position_dataset,
+            output=tmp_vsimem / "out.gpkg",
+            **kwargs,
+        )
+
+    with ogr.Open(tmp_vsimem / "out.gpkg") as out_ds:
+        out_lyr = out_ds.GetLayer(0)
+        assert out_lyr.GetGeomType() == ogr.wkbPoint
+        assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "4267"
+        f = out_lyr.GetNextFeature()
+        assert f["line"] == pytest.approx(9.5)
+        assert f["column"] == pytest.approx(10.5)
+        assert f["band_1_raw_value"] == 115
+        assert f["band_1_unscaled_value"] == 115
+        if include_field is None or include_field in ("ALL", "foo"):
+            assert f["foo"] == "bar"
+        else:
+            assert out_lyr.GetLayerDefn().GetFieldIndex("foo") < 0
+        assert f.GetGeometryRef().GetX(0) == pytest.approx(-117.634316882504)
+        assert f.GetGeometryRef().GetY(0) == pytest.approx(33.8972472661961)
+
+        assert out_lyr.GetNextFeature() is None
+
+
+def test_gdalalg_raster_pixel_info_from_vector_dataset_to_geojson(tmp_vsimem):
+
+    position_dataset = gdal.GetDriverByName("MEM").CreateVector("")
+    coordinate_lyr = position_dataset.CreateLayer("coords")
+    coordinate_lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    coordinate_lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+    coordinate_lyr.CreateField(ogr.FieldDefn("int64", ogr.OFTInteger64))
+    coordinate_lyr.CreateField(ogr.FieldDefn("double", ogr.OFTReal))
+    coordinate_lyr.CreateField(ogr.FieldDefn("strarray", ogr.OFTStringList))
+    fld_defn = ogr.FieldDefn("bool", ogr.OFTInteger)
+    fld_defn.SetSubType(ogr.OFSTBoolean)
+    coordinate_lyr.CreateField(fld_defn)
+    fld_defn = ogr.FieldDefn("json", ogr.OFTString)
+    fld_defn.SetSubType(ogr.OFSTJSON)
+    coordinate_lyr.CreateField(fld_defn)
+    f = ogr.Feature(coordinate_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (10.5 9.5)"))
+    f["str"] = "bar"
+    f["int"] = 1
+    f["int64"] = 1234567890123
+    f["double"] = 1.5
+    f["bool"] = True
+    f["strarray"] = ["foo", "bar"]
+    f["json"] = '{"foo":"bar"}'
+    coordinate_lyr.CreateFeature(f)
+
+    alg = gdal.alg.raster.pixel_info(
+        input="../gcore/data/byte.tif",
+        position_dataset=position_dataset,
+        position_crs="pixel",
+    )
+    assert json.loads(alg["output-string"]) == {
+        "type": "FeatureCollection",
+        "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::26711"}},
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {
+                    "input_coordinate": [10.5, 9.5],
+                    "column": 10.5,
+                    "line": 9.5,
+                    "str": "bar",
+                    "int": 1,
+                    "int64": 1234567890123,
+                    "double": 1.5,
+                    "strarray": ["foo", "bar"],
+                    "bool": True,
+                    "json": {"foo": "bar"},
+                    "bands": [
+                        {"band_number": 1, "raw_value": 115, "unscaled_value": 115.0}
+                    ],
+                },
+                "geometry": {"type": "Point", "coordinates": [441350.0, 3750750.0]},
+            }
+        ],
+    }
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_pixel_info_from_to_vector_dataset_with_pos_crs_user_crs(
+    tmp_vsimem,
+):
+
+    position_dataset = gdal.GetDriverByName("MEM").CreateVector("")
+    coordinate_lyr = position_dataset.CreateLayer("coords")
+    f = ogr.Feature(coordinate_lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt("POINT (-117.634316882504 33.8972472661961)")
+    )
+    coordinate_lyr.CreateFeature(f)
+
+    assert gdal.alg.raster.pixel_info(
+        input="../gcore/data/byte.tif",
+        position_dataset=position_dataset,
+        output=tmp_vsimem / "out.gpkg",
+        position_crs="EPSG:4267",
+    )
+
+    with ogr.Open(tmp_vsimem / "out.gpkg") as out_ds:
+        out_lyr = out_ds.GetLayer(0)
+        assert out_lyr.GetGeomType() == ogr.wkbPoint
+        assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "4267"
+        f = out_lyr.GetNextFeature()
+        assert f["line"] == pytest.approx(9.5)
+        assert f["column"] == pytest.approx(10.5)
+        assert f["band_1_raw_value"] == 115
+        assert f["band_1_unscaled_value"] == 115
+        assert f.GetGeometryRef().GetX(0) == pytest.approx(-117.634316882504)
+        assert f.GetGeometryRef().GetY(0) == pytest.approx(33.8972472661961)
+
+        assert out_lyr.GetNextFeature() is None
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_pixel_info_from_to_vector_dataset_with_pos_crs_pixel(
+    tmp_vsimem,
+):
+
+    position_dataset = gdal.GetDriverByName("MEM").CreateVector("")
+    coordinate_lyr = position_dataset.CreateLayer("coords")
+    f = ogr.Feature(coordinate_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (10.5 9.5)"))
+    coordinate_lyr.CreateFeature(f)
+
+    assert gdal.alg.raster.pixel_info(
+        input="../gcore/data/byte.tif",
+        position_dataset=position_dataset,
+        output=tmp_vsimem / "out.gpkg",
+        position_crs="pixel",
+    )
+
+    with ogr.Open(tmp_vsimem / "out.gpkg") as out_ds:
+        out_lyr = out_ds.GetLayer(0)
+        assert out_lyr.GetGeomType() == ogr.wkbPoint
+        assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+        f = out_lyr.GetNextFeature()
+        assert f["line"] == pytest.approx(9.5)
+        assert f["column"] == pytest.approx(10.5)
+        assert f["band_1_raw_value"] == 115
+        assert f["band_1_unscaled_value"] == 115
+        assert f.GetGeometryRef().GetX(0) == pytest.approx(441350.0)
+        assert f.GetGeometryRef().GetY(0) == pytest.approx(3750750.0)
+
+        assert out_lyr.GetNextFeature() is None
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_pixel_info_from_to_vector_dataset_complex(tmp_vsimem):
+
+    position_dataset = gdal.GetDriverByName("MEM").CreateVector("")
+    coordinate_lyr = position_dataset.CreateLayer("coords")
+    f = ogr.Feature(coordinate_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (5 10)"))
+    coordinate_lyr.CreateFeature(f)
+
+    assert gdal.alg.raster.pixel_info(
+        input="../gcore/data/cfloat32.tif",
+        position_dataset=position_dataset,
+        output=tmp_vsimem / "out.gpkg",
+    )
+
+    with ogr.Open(tmp_vsimem / "out.gpkg") as out_ds:
+        out_lyr = out_ds.GetLayer(0)
+        assert out_lyr.GetGeomType() == ogr.wkbPoint
+        assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+        f = out_lyr.GetNextFeature()
+        assert f["line"] == pytest.approx(10)
+        assert f["column"] == pytest.approx(5)
+        assert f["band_1_real_value"] == 132
+        assert f["band_1_imaginary_value"] == 0
+        assert f.GetGeometryRef().GetX(0) == pytest.approx(441020.0)
+        assert f.GetGeometryRef().GetY(0) == pytest.approx(3750720.0)
+
+        assert out_lyr.GetNextFeature() is None
+
+
+def test_gdalalg_raster_pixel_info_coordinate_from_vector_dataset_errors():
+
+    with pytest.raises(Exception, match="/i/do_not_exist"):
+        gdal.alg.raster.pixel_info(
+            input="../gcore/data/byte.tif", position_dataset="/i/do_not_exist"
+        )
+
+    with pytest.raises(Exception, match="has no vector layer"):
+        gdal.alg.raster.pixel_info(
+            input="../gcore/data/byte.tif",
+            position_dataset=gdal.GetDriverByName("MEM").CreateVector(""),
+        )
+
+    two_layers_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    two_layers_ds.CreateLayer("a", geom_type=ogr.wkbNone)
+    two_layers_ds.CreateLayer("b")
+
+    with pytest.raises(Exception, match="has more than one vector layer"):
+        gdal.alg.raster.pixel_info(
+            input="../gcore/data/byte.tif", position_dataset=two_layers_ds
+        )
+
+    with pytest.raises(Exception, match="Cannot find layer 'i_do_not_exist'"):
+        gdal.alg.raster.pixel_info(
+            input="../gcore/data/byte.tif",
+            position_dataset=two_layers_ds,
+            input_layer="i_do_not_exist",
+        )
+
+    with pytest.raises(Exception, match="has no geometry column"):
+        gdal.alg.raster.pixel_info(
+            input="../gcore/data/byte.tif",
+            position_dataset=two_layers_ds,
+            input_layer="a",
+        )
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_pixel_info_coordinate_to_vector_dataset_errors():
+
+    with pytest.raises(Exception, match="Cannot guess driver for /i/do_not_exist"):
+        gdal.alg.raster.pixel_info(
+            input="../gcore/data/byte.tif", position=[0, 0], output="/i/do_not_exist"
+        )
+
+    with pytest.raises(
+        Exception, match=r"sqlite3_open\(/i/do_not_exist/out.gpkg\) failed"
+    ):
+        gdal.alg.raster.pixel_info(
+            input="../gcore/data/byte.tif",
+            position=[0, 0],
+            output="/i/do_not_exist/out.gpkg",
+        )
+
+    with pytest.raises(Exception, match="Cannot create layer 'out'"):
+        gdal.alg.raster.pixel_info(
+            input="../gcore/data/byte.tif",
+            position=[0, 0],
+            output="/i/do_not_exist/out.shp",
+        )
