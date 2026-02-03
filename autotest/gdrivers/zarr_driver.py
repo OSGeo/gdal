@@ -22,6 +22,7 @@ import sys
 
 import gdaltest
 import pytest
+import webserver
 
 from osgeo import gdal, osr
 
@@ -6161,6 +6162,117 @@ def test_zarr_read_simple_sharding_read_errors(tmp_vsimem):
     assert "DecodePartial(): cannot decode chunk 0" in error_msgs
     assert "cannot read data for chunk" in error_msgs
     assert "invalid chunk location for chunk" in error_msgs
+
+
+###############################################################################
+# Test accessing a sharded dataset via /vsicurl/
+
+
+@pytest.mark.require_curl()
+@gdaltest.enable_exceptions()
+def test_zarr_read_simple_sharding_network():
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    if "zstd" not in compressors:
+        pytest.skip("compressor zstd not available")
+
+    webserver_process = None
+    webserver_port = 0
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip()
+
+    try:
+
+        handler = webserver.SequentialHandler()
+        handler.add("GET", "/test.zarr/", 404)
+        handler.add("HEAD", "/test.zarr/.zmetadata", 404)
+        handler.add("HEAD", "/test.zarr/.zarray", 404)
+        handler.add("HEAD", "/test.zarr/.zgroup", 404)
+        zarr_json = json.dumps(
+            {
+                "shape": [2, 2],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [2, 2]},
+                },
+                "chunk_key_encoding": {
+                    "name": "default",
+                    "configuration": {"separator": "/"},
+                },
+                "fill_value": 0,
+                "codecs": [
+                    {
+                        "name": "sharding_indexed",
+                        "configuration": {
+                            "chunk_shape": [2, 2],
+                            "codecs": [
+                                {"name": "bytes", "configuration": {"endian": "little"}}
+                            ],
+                            "index_codecs": [
+                                {"name": "bytes", "configuration": {"endian": "little"}}
+                            ],
+                        },
+                    }
+                ],
+                "attributes": {},
+                "zarr_format": 3,
+                "node_type": "array",
+                "storage_transformers": [],
+            }
+        )
+        handler.add(
+            "HEAD",
+            "/test.zarr/zarr.json",
+            200,
+            {"Content-Length": "%d" % len(zarr_json)},
+        )
+        handler.add(
+            "GET",
+            "/test.zarr/zarr.json",
+            200,
+            {"Content-Length": "%d" % len(zarr_json)},
+            zarr_json,
+        )
+        handler.add("HEAD", "/test.zarr/zarr.json.aux.xml", 404)
+        handler.add("HEAD", "/test.zarr/zarr.aux", 404)
+        handler.add("HEAD", "/test.zarr/zarr.AUX", 404)
+        handler.add("HEAD", "/test.zarr/zarr.json.aux", 404)
+        handler.add("HEAD", "/test.zarr/zarr.json.AUX", 404)
+        handler.add("HEAD", "/test.zarr/zarr.json.gmac", 404)
+        handler.add("HEAD", "/test.zarr/c/0/0", 200, {"Content-Length": "65536"})
+        data = struct.pack("<Q", 0) + struct.pack("<Q", 4)
+        data = b"\x00" * (16384 - len(data)) + data
+        handler.add(
+            "GET",
+            "/test.zarr/c/0/0",
+            206,
+            {"Content-Length": "16384", "Content-Range": "bytes 49152-65535/65536"},
+            data,
+            expected_headers={"Range": "bytes=49152-65535"},
+        )
+        handler.add(
+            "GET",
+            "/test.zarr/c/0/0",
+            206,
+            {"Content-Length": "16384", "Content-Range": "bytes 0-16383/65536"},
+            b"\x01\x02\x03\x04" + (16384 - 4) * b"\x00",
+            expected_headers={"Range": "bytes=0-16383"},
+        )
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open(
+                'ZARR:"/vsicurl/http://localhost:%d/test.zarr"' % webserver_port
+            )
+            assert ds.GetRasterBand(1).ReadBlock(0, 0) == b"\x01\x02\x03\x04"
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
 
 
 ###############################################################################
