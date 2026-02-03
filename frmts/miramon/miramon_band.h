@@ -105,6 +105,24 @@ class MMRBand final
         return m_osFriendlyDescription;
     }
 
+    MMDataType GeteMMNCDataType() const
+    {
+        // Gets not compressed data type
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_BYTE_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_BYTE;
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_INTEGER_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_INTEGER;
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_UINTEGER;
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_LONG_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_LONG;
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_REAL_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_REAL;
+        if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_DOUBLE_RLE)
+            return MMDataType::DATATYPE_AND_COMPR_DOUBLE;
+        return m_eMMDataType;
+    }
+
     MMDataType GeteMMDataType() const
     {
         return m_eMMDataType;
