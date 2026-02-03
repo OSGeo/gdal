@@ -918,6 +918,40 @@ void JPGDatasetCommon::ReadFLIRMetadata()
         }
     };
 
+    // Read the Embedded Image record
+    const auto ReadEmbeddedImage =
+        [&](std::uint32_t nRecOffset, std::uint32_t nRecLength)
+    {
+        if (!(nRecLength >= 32 && nRecOffset + nRecLength <= abyFLIR.size()))
+            return;
+
+        const int nByteOrder = ReadUInt16(nRecOffset);
+        if (nByteOrder >= 4)
+            bLittleEndian = !bLittleEndian;
+        const auto nImageWidth = ReadUInt16(nRecOffset + 2);
+        SetMetadataItem("EmbeddedImageWidth", CPLSPrintf("%d", nImageWidth),
+                        "FLIR");
+        const auto nImageHeight = ReadUInt16(nRecOffset + 4);
+        SetMetadataItem("EmbeddedImageHeight", CPLSPrintf("%d", nImageHeight),
+                        "FLIR");
+        m_abyEmbeddedImage.clear();
+        m_abyEmbeddedImage.insert(m_abyEmbeddedImage.end(),
+                                  abyFLIR.begin() + nRecOffset + 32,
+                                  abyFLIR.begin() + nRecOffset + nRecLength);
+
+        if (!STARTS_WITH(GetDescription(), "JPEG:"))
+        {
+            m_nSubdatasetCount++;
+            SetMetadataItem(
+                CPLSPrintf("SUBDATASET_%d_NAME", m_nSubdatasetCount),
+                CPLSPrintf("JPEG:\"%s\":FLIR_EMBEDDED_IMAGE", GetDescription()),
+                "SUBDATASETS");
+            SetMetadataItem(
+                CPLSPrintf("SUBDATASET_%d_DESC", m_nSubdatasetCount),
+                "FLIR embedded image", "SUBDATASETS");
+        }
+    };
+
     // Read the Camera Info record
     const auto ReadCameraInfo =
         [&](std::uint32_t nRecOffset, std::uint32_t nRecLength)
@@ -1159,6 +1193,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
     {
         FLIR_REC_FREE = 0,
         FLIR_REC_RAWDATA = 1,
+        FLIR_REC_EMBEDDEDIMAGE = 14,
         FLIR_REC_CAMERA_INFO = 32,
         FLIR_REC_PALETTE_INFO = 34,
         FLIR_REC_GPS_INFO = 43,
@@ -1191,6 +1226,13 @@ void JPGDatasetCommon::ReadFLIRMetadata()
             {
                 const auto bLittleEndianBackup = bLittleEndian;
                 ReadRawData(nRecOffset, nRecLength);
+                bLittleEndian = bLittleEndianBackup;
+                break;
+            }
+            case FLIR_REC_EMBEDDEDIMAGE:
+            {
+                const auto bLittleEndianBackup = bLittleEndian;
+                ReadEmbeddedImage(nRecOffset, nRecLength);
                 bLittleEndian = bLittleEndianBackup;
                 break;
             }
@@ -3069,6 +3111,7 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
     CPLString osFilename(poOpenInfo->pszFilename);
     bool bFLIRRawThermalImage = false;
     bool bDJIRawThermalImage = false;
+    bool bFLIREmbeddedImage = false;
     if (STARTS_WITH(poOpenInfo->pszFilename, "JPEG:"))
     {
         CPLStringList aosTokens(CSLTokenizeString2(poOpenInfo->pszFilename, ":",
@@ -3081,6 +3124,8 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
             bFLIRRawThermalImage = true;
         else if (std::string(aosTokens[2]) == "DJI_RAW_THERMAL_IMAGE")
             bDJIRawThermalImage = true;
+        else if (std::string(aosTokens[2]) == "FLIR_EMBEDDED_IMAGE")
+            bFLIREmbeddedImage = true;
         else
             return nullptr;
     }
@@ -3117,6 +3162,10 @@ GDALDataset *JPGDatasetCommon::Open(GDALOpenInfo *poOpenInfo)
     if (bFLIRRawThermalImage || bDJIRawThermalImage)
     {
         poDS.reset(poJPG_DS->OpenRawThermalImage(poOpenInfo->pszFilename));
+    }
+    if (bFLIREmbeddedImage)
+    {
+        poDS.reset(poJPG_DS->OpenEmbeddedImage(poOpenInfo->pszFilename));
     }
 
     if (poDS &&
@@ -3252,6 +3301,42 @@ JPGDatasetCommon::OpenRawThermalImage(const char *pszConnectionString)
              "Unrecognized format for raw thermal image");
     VSIUnlink(osTmpFilename.c_str());
     return nullptr;
+}
+
+/************************************************************************/
+/*                         OpenEmbeddedImage()                          */
+/************************************************************************/
+
+GDALDataset *
+JPGDatasetCommon::OpenEmbeddedImage(const char *pszConnectionString)
+{
+    ReadThermalMetadata();
+    if (m_abyEmbeddedImage.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot find embedded image");
+        return nullptr;
+    }
+
+    GByte *pabyData =
+        static_cast<GByte *>(CPLMalloc(m_abyEmbeddedImage.size()));
+    const std::string osTmpFilename(
+        VSIMemGenerateHiddenFilename("jpeg_embedded"));
+    memcpy(pabyData, m_abyEmbeddedImage.data(), m_abyEmbeddedImage.size());
+    VSILFILE *fpRaw = VSIFileFromMemBuffer(osTmpFilename.c_str(), pabyData,
+                                           m_abyEmbeddedImage.size(), true);
+
+    VSIFCloseL(fpRaw);
+
+    auto poEmbeddedDS = GDALDataset::Open(osTmpFilename.c_str(), GDAL_OF_RASTER,
+                                          nullptr, nullptr, nullptr);
+    VSIUnlink(osTmpFilename.c_str());
+    if (poEmbeddedDS == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid embedded image");
+        return nullptr;
+    }
+    poEmbeddedDS->SetDescription(pszConnectionString);
+    return poEmbeddedDS;
 }
 
 #endif  // !defined(JPGDataset)
