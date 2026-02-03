@@ -170,7 +170,8 @@ void basis(int c, double t, int npts, double x[], double N[])
         {
             double d = 0.0;
             double e = 0.0;
-            if (N[i] != 0) /* if the lower order basis function is zero skip the
+            if (N[i] !=
+                0) /* if the lower order basis function is zero skip the
                               calculation */
             {
                 double denom = x[i + k - 1] - x[i];
@@ -180,7 +181,8 @@ void basis(int c, double t, int npts, double x[], double N[])
             // else
             //    d = 0.0 ;
 
-            if (N[i + 1] != 0) /* if the lower order basis function is zero skip
+            if (N[i + 1] !=
+                0) /* if the lower order basis function is zero skip
                                   the calculation */
             {
                 double denom = x[i + k] - x[i + 1];
