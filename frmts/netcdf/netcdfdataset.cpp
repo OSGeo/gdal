@@ -4155,6 +4155,8 @@ void netCDFDataset::SetProjectionFromVar(
                 CSLTokenizeString2(pszGeoTransform, " ", CSLT_HONOURSTRINGS));
             if (aosGeoTransform.size() == 6)
             {
+                bool bUseGeoTransformFromAttribute = true;
+
                 GDALGeoTransform gtFromAttribute;
                 for (int i = 0; i < 6; i++)
                 {
@@ -4180,17 +4182,21 @@ void netCDFDataset::SetProjectionFromVar(
 
                     if (dfMaxAbsoluteError > 0)
                     {
+                        bUseGeoTransformFromAttribute = false;
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "GeoTransform read from attribute of %s "
                                  "variable differs from value calculated from "
                                  "dimension variables (max diff = %g). Using "
-                                 "value from attribute.",
+                                 "value calculated from dimension variables.",
                                  pszGridMappingValue, dfMaxAbsoluteError);
                     }
                 }
 
-                tmpGT = std::move(gtFromAttribute);
-                bGotGdalGT = true;
+                if (bUseGeoTransformFromAttribute)
+                {
+                    tmpGT = gtFromAttribute;
+                    bGotGdalGT = true;
+                }
             }
         }
         else
