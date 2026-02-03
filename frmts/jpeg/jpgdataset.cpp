@@ -3304,7 +3304,7 @@ JPGDatasetCommon::OpenRawThermalImage(const char *pszConnectionString)
 }
 
 /************************************************************************/
-/*                       OpenEmbeddedImage()                            */
+/*                         OpenEmbeddedImage()                          */
 /************************************************************************/
 
 GDALDataset *
