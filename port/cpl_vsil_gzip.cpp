@@ -159,10 +159,10 @@ class VSIGZipHandle final : public VSIVirtualHandle
 
     /* Fields from gz_stream structure */
     z_stream stream;
-    int z_err = Z_OK; /* error code for last stream operation */
-    int z_eof = 0;    /* set if end of input file (but not necessarily of the
+    int z_err = Z_OK;    /* error code for last stream operation */
+    int z_eof = 0;       /* set if end of input file (but not necessarily of the
                          uncompressed stream !) */
-    bool m_bEOF = false;    /* EOF flag for uncompressed stream */
+    bool m_bEOF = false; /* EOF flag for uncompressed stream */
     Byte *inbuf = nullptr;  /* input buffer */
     Byte *outbuf = nullptr; /* output buffer */
     uLong crc = 0;          /* crc32 of uncompressed data */
@@ -272,10 +272,10 @@ class VSIDeflate64Handle final : public VSIVirtualHandle
 
     /* Fields from gz_stream structure */
     z_stream stream;
-    int z_err = Z_OK; /* error code for last stream operation */
-    int z_eof = 0;    /* set if end of input file (but not necessarily of the
+    int z_err = Z_OK;    /* error code for last stream operation */
+    int z_eof = 0;       /* set if end of input file (but not necessarily of the
                          uncompressed stream ! ) */
-    bool m_bEOF = false;    /* EOF flag for uncompressed stream */
+    bool m_bEOF = false; /* EOF flag for uncompressed stream */
     Byte *inbuf = nullptr;  /* input buffer */
     Byte *outbuf = nullptr; /* output buffer */
     std::vector<GByte> extraOutput{};

@@ -30,10 +30,7 @@ except ImportError:
     import gdaltest
 
 
-pytestmark = [
-    pytest.mark.require_curl(),
-    pytest.mark.network,
-]
+pytestmark = pytest.mark.require_driver("HTTP")
 
 
 ###############################################################################
@@ -64,7 +61,7 @@ def skip_if_unreachable(url, try_read=False):
 ###############################################################################
 # Verify we have the driver.
 
-
+@pytest.mark.network
 def test_http_1():
     # Regularly fails on Travis graviton2 configuration
     gdaltest.skip_on_travis()
@@ -85,7 +82,7 @@ def test_http_1():
 ###############################################################################
 # Verify /vsicurl (subversion file listing)
 
-
+@pytest.mark.network
 def test_http_2():
     url = "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif"
     tst = gdaltest.GDALTest("GTiff", "/vsicurl/" + url, 1, 4672, filename_absolute=1)
@@ -100,7 +97,7 @@ def test_http_2():
 ###############################################################################
 # Verify /vsicurl (apache file listing)
 
-
+@pytest.mark.network
 def test_http_3():
     url = "http://download.osgeo.org/gdal/data/ehdr/elggll.bil"
     ds = gdal.Open("/vsicurl/" + url)
@@ -112,7 +109,7 @@ def test_http_3():
 ###############################################################################
 # Verify /vsicurl (ftp)
 
-
+@pytest.mark.network
 @pytest.mark.skip(reason="remove server does not work")
 def test_http_4():
     # Too unreliable
@@ -136,7 +133,7 @@ def test_http_4():
 ###############################################################################
 # Test HTTP driver with OGR driver
 
-
+@pytest.mark.network
 def test_http_6():
     url = "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/ogr/data/poly.dbf"
     ds = ogr.Open(url)
@@ -148,7 +145,7 @@ def test_http_6():
 
 ###############################################################################
 
-
+@pytest.mark.network
 def test_http_ssl_verifystatus():
     with gdaltest.config_option("GDAL_HTTP_SSL_VERIFYSTATUS", "YES"):
         with gdal.quiet_errors():
@@ -178,7 +175,7 @@ def test_http_ssl_verifystatus():
 
 ###############################################################################
 
-
+@pytest.mark.network
 def test_http_use_capi_store():
     if sys.platform != "win32":
         with gdal.quiet_errors():
@@ -201,7 +198,7 @@ def test_http_use_capi_store_sub():
 
 ###############################################################################
 
-
+@pytest.mark.network
 def test_http_keep_alive():
 
     # Rather dummy test. Just trigger the code path

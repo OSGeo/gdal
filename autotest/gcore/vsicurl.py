@@ -34,10 +34,7 @@ def curl_version():
     return actual_version
 
 
-pytestmark = [
-    pytest.mark.require_curl(),
-    pytest.mark.network,
-]
+pytestmark = pytest.mark.require_curl()
 
 ###############################################################################
 #
@@ -87,6 +84,7 @@ def test_vsicurl_3():
 
 @pytest.mark.slow()
 @gdaltest.disable_exceptions()
+@pytest.mark.network
 def test_vsicurl_4():
 
     ds = ogr.Open(
@@ -157,6 +155,7 @@ def test_vsicurl_8():
 
 
 @pytest.mark.slow()
+@pytest.mark.network
 def test_vsicurl_9():
 
     ds = gdal.Open(
@@ -171,6 +170,7 @@ def test_vsicurl_9():
 
 
 @pytest.mark.slow()
+@pytest.mark.network
 def test_vsicurl_10():
 
     ds = gdal.Open(
@@ -184,6 +184,7 @@ def test_vsicurl_10():
 
 
 @pytest.mark.slow()
+@pytest.mark.network
 def test_vsicurl_11():
 
     f = gdal.VSIFOpenL(

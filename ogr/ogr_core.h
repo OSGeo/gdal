@@ -438,8 +438,7 @@ typedef enum
 
     wkbCircularString = 8, /**< one or more circular arc segments connected end
                             * to end, ISO SQL/MM Part 3. */
-    wkbCompoundCurve =
-        9, /**< sequence of contiguous curves, ISO SQL/MM Part 3.
+    wkbCompoundCurve = 9, /**< sequence of contiguous curves, ISO SQL/MM Part 3.
                              */
     wkbCurvePolygon = 10, /**< planar surface, defined by 1 exterior boundary
                            *   and zero or more interior boundaries, that are
@@ -462,14 +461,13 @@ typedef enum
 
     wkbCircularStringZ = 1008, /**< wkbCircularString with Z component. ISO
                                   SQL/MM Part 3. */
-    wkbCompoundCurveZ =
-        1009,                /**< wkbCompoundCurve with Z component. ISO SQL/MM
+    wkbCompoundCurveZ = 1009, /**< wkbCompoundCurve with Z component. ISO SQL/MM
                                  Part 3. */
-    wkbCurvePolygonZ = 1010, /**< wkbCurvePolygon with Z component. ISO SQL/MM
+    wkbCurvePolygonZ = 1010,  /**< wkbCurvePolygon with Z component. ISO SQL/MM
                                  Part 3. */
-    wkbMultiCurveZ = 1011,   /**< wkbMultiCurve with Z component. ISO SQL/MM
+    wkbMultiCurveZ = 1011,    /**< wkbMultiCurve with Z component. ISO SQL/MM
                                  Part 3. */
-    wkbMultiSurfaceZ = 1012, /**< wkbMultiSurface with Z component. ISO SQL/MM
+    wkbMultiSurfaceZ = 1012,  /**< wkbMultiSurface with Z component. ISO SQL/MM
                                  Part 3. */
     wkbCurveZ = 1013,   /**< wkbCurve with Z component. ISO SQL/MM Part 3.*/
     wkbSurfaceZ = 1014, /**< wkbSurface with Z component. ISO SQL/MM Part 3.
@@ -957,8 +955,7 @@ typedef union
         GByte TZFlag;   /* 0=unknown, 1=localtime(ambiguous),
                            100=GMT, 104=GMT+1, 80=GMT-5, etc */
         GByte Reserved; /* must be set to 0 */
-        float
-            Second; /* with millisecond accuracy. at the end of the structure,
+        float Second; /* with millisecond accuracy. at the end of the structure,
                          so as to keep it 12 bytes on 32 bit */
     } Date;
 

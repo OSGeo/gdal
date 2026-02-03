@@ -20,10 +20,7 @@ import webserver
 
 from osgeo import gdal
 
-pytestmark = [
-    pytest.mark.require_curl(),
-    pytest.mark.network,
-]
+pytestmark = pytest.mark.require_curl()
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
@@ -166,7 +163,7 @@ def test_vsigs_1(gs_test_config):
 ###############################################################################
 # Test GS_NO_SIGN_REQUEST=YES
 
-
+@pytest.mark.network
 def test_vsigs_no_sign_request(gs_test_config):
 
     with gdaltest.config_options({"CPL_GS_ENDPOINT": ""}, thread_local=False):
