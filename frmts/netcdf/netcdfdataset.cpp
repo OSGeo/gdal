@@ -3071,7 +3071,7 @@ const OGRSpatialReference *netCDFDataset::GetSpatialRef() const
 
 double netCDFDataset::FetchCopyParam(const char *pszGridMappingValue,
                                      const char *pszParam, double dfDefault,
-                                     bool *pbFound)
+                                     bool *pbFound) const
 
 {
     char *pszTemp =
@@ -3097,7 +3097,7 @@ double netCDFDataset::FetchCopyParam(const char *pszGridMappingValue,
 /************************************************************************/
 
 std::vector<std::string>
-netCDFDataset::FetchStandardParallels(const char *pszGridMappingValue)
+netCDFDataset::FetchStandardParallels(const char *pszGridMappingValue) const
 {
     // cf-1.0 tags
     const char *pszValue = FetchAttr(pszGridMappingValue, CF_PP_STD_PARALLEL);
@@ -3146,7 +3146,7 @@ netCDFDataset::FetchStandardParallels(const char *pszGridMappingValue)
 /************************************************************************/
 
 const char *netCDFDataset::FetchAttr(const char *pszVarFullName,
-                                     const char *pszAttr)
+                                     const char *pszAttr) const
 
 {
     char *pszKey = CPLStrdup(CPLSPrintf("%s#%s", pszVarFullName, pszAttr));
@@ -3156,7 +3156,7 @@ const char *netCDFDataset::FetchAttr(const char *pszVarFullName,
 }
 
 const char *netCDFDataset::FetchAttr(int nGroupId, int nVarId,
-                                     const char *pszAttr)
+                                     const char *pszAttr) const
 
 {
     char *pszVarFullName = nullptr;
@@ -10201,7 +10201,7 @@ void netCDFDataset::ProcessCreationOptions()
              eFormat, eCompress, nZLevel);
 }
 
-int netCDFDataset::DefVarDeflate(int nVarId, bool bChunkingArg)
+int netCDFDataset::DefVarDeflate(int nVarId, bool bChunkingArg) const
 {
     if (eCompress == NCDF_COMPRESS_DEFLATE)
     {
