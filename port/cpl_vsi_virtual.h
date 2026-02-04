@@ -698,10 +698,9 @@ class VSIArchiveFilesystemHandler /* non final */ : public VSIFilesystemHandler
     virtual const VSIArchiveContent *
     GetContentOfArchive(const char *archiveFilename,
                         VSIArchiveReader *poReader = nullptr);
-    virtual char *SplitFilename(const char *pszFilename,
-                                CPLString &osFileInArchive,
-                                bool bCheckMainFileExists,
-                                bool bSetError) const;
+    virtual std::unique_ptr<char, VSIFreeReleaser>
+    SplitFilename(const char *pszFilename, CPLString &osFileInArchive,
+                  bool bCheckMainFileExists, bool bSetError) const;
     virtual std::unique_ptr<VSIArchiveReader>
     OpenArchiveFile(const char *archiveFilename, const char *fileInArchiveName);
 

@@ -4043,8 +4043,8 @@ bool VSIZipFilesystemHandler::GetFileInfo(const char *pszFilename,
 {
 
     CPLString osZipInFileName;
-    std::unique_ptr<char, VSIFreeReleaser> zipFilename(
-        SplitFilename(pszFilename, osZipInFileName, true, bSetError));
+    auto zipFilename =
+        SplitFilename(pszFilename, osZipInFileName, true, bSetError);
     if (zipFilename == nullptr)
         return false;
 
@@ -4493,23 +4493,21 @@ int VSIZipFilesystemHandler::Mkdir(const char *pszDirname, long /* nMode */)
 char **VSIZipFilesystemHandler::ReadDirEx(const char *pszDirname, int nMaxFiles)
 {
     CPLString osInArchiveSubDir;
-    char *zipFilename =
-        SplitFilename(pszDirname, osInArchiveSubDir, true, true);
+    auto zipFilename = SplitFilename(pszDirname, osInArchiveSubDir, true, true);
     if (zipFilename == nullptr)
         return nullptr;
 
     {
         std::unique_lock oLock(oMutex);
 
-        if (oMapZipWriteHandles.find(zipFilename) != oMapZipWriteHandles.end())
+        if (oMapZipWriteHandles.find(zipFilename.get()) !=
+            oMapZipWriteHandles.end())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot read a zip file being written");
-            CPLFree(zipFilename);
             return nullptr;
         }
     }
-    CPLFree(zipFilename);
 
     return VSIArchiveFilesystemHandler::ReadDirEx(pszDirname, nMaxFiles);
 }
@@ -4525,23 +4523,22 @@ int VSIZipFilesystemHandler::Stat(const char *pszFilename,
 
     memset(pStatBuf, 0, sizeof(VSIStatBufL));
 
-    char *zipFilename = SplitFilename(pszFilename, osInArchiveSubDir, true,
-                                      (nFlags & VSI_STAT_SET_ERROR_FLAG) != 0);
+    auto zipFilename = SplitFilename(pszFilename, osInArchiveSubDir, true,
+                                     (nFlags & VSI_STAT_SET_ERROR_FLAG) != 0);
     if (zipFilename == nullptr)
         return -1;
 
     {
         std::unique_lock oLock(oMutex);
 
-        if (oMapZipWriteHandles.find(zipFilename) != oMapZipWriteHandles.end())
+        if (oMapZipWriteHandles.find(zipFilename.get()) !=
+            oMapZipWriteHandles.end())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot read a zip file being written");
-            CPLFree(zipFilename);
             return -1;
         }
     }
-    CPLFree(zipFilename);
 
     return VSIArchiveFilesystemHandler::Stat(pszFilename, pStatBuf, nFlags);
 }
@@ -4584,13 +4581,11 @@ VSIZipFilesystemHandler::OpenForWrite_unlocked(const char *pszFilename,
 {
     CPLString osZipInFileName;
 
-    char *zipFilename =
+    auto zipFilename =
         SplitFilename(pszFilename, osZipInFileName, false, false);
     if (zipFilename == nullptr)
         return nullptr;
-    CPLString osZipFilename = zipFilename;
-    CPLFree(zipFilename);
-    zipFilename = nullptr;
+    const CPLString osZipFilename = zipFilename.get();
 
     // Invalidate cached file list.
     auto iter = oFileList.find(osZipFilename);
@@ -4709,12 +4704,10 @@ int VSIZipFilesystemHandler::CopyFile(const char *pszSource,
 {
     CPLString osZipInFileName;
 
-    char *zipFilename = SplitFilename(pszTarget, osZipInFileName, false, false);
+    auto zipFilename = SplitFilename(pszTarget, osZipInFileName, false, false);
     if (zipFilename == nullptr)
         return -1;
-    CPLString osZipFilename = zipFilename;
-    CPLFree(zipFilename);
-    zipFilename = nullptr;
+    const CPLString osZipFilename = zipFilename.get();
     if (osZipInFileName.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
