@@ -948,6 +948,34 @@ CPLStringList &CPLStringList::InsertStringDirectly(int nInsertAtLineNo,
 }
 
 /************************************************************************/
+/*                           RemoveStrings()                            */
+/************************************************************************/
+
+/**
+ * Remove strings inside a CPLStringList.
+ *
+ * @param nFirstLineToDelete the 0-based index of the first string to
+ * remove. If this value is -1 or is larger than the actual
+ * number of strings in list then the nNumToRemove last strings are
+ * removed.
+ * @param nNumToRemove the number of strings to remove
+ *
+ * @return a reference to the CPLStringList on which it was invoked.
+ * @since 3.13
+ */
+CPLStringList &CPLStringList::RemoveStrings(int nFirstLineToDelete,
+                                            int nNumToRemove)
+{
+    if (!MakeOurOwnCopy())
+        return *this;
+
+    papszList =
+        CSLRemoveStrings(papszList, nFirstLineToDelete, nNumToRemove, nullptr);
+    nCount = -1;
+    return *this;
+}
+
+/************************************************************************/
 /*                      FindSortedInsertionPoint()                      */
 /*                                                                      */
 /*      Find the location at which the indicated line should be         */

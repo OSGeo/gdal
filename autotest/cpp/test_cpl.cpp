@@ -650,6 +650,10 @@ TEST_F(test_cpl, CPLStringList_Base)
     ASSERT_TRUE(oCSL[-1] == nullptr);
     ASSERT_EQ(oCSL.FindString("abc"), 1);
 
+    oCSL.RemoveStrings(0, 1);
+    ASSERT_EQ(oCSL.Count(), 1);
+    ASSERT_EQ(oCSL.FindString("abc"), 0);
+
     CSLDestroy(oCSL.StealList());
     ASSERT_EQ(oCSL.Count(), 0);
     ASSERT_TRUE(oCSL.List() == nullptr);
