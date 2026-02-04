@@ -37,7 +37,6 @@ if test "${CIFUZZ:-}" = "True"; then
   echo "Running under CI fuzz"
 
   PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
-          libgif-dev${ARCH_SUFFIX} \
           libjpeg-dev${ARCH_SUFFIX} \
           libzstd-dev${ARCH_SUFFIX} \
           libsqlite3-dev${ARCH_SUFFIX}"
@@ -69,6 +68,7 @@ if test "${CIFUZZ:-}" = "True"; then
         -DOGR_ENABLE_DRIVER_SQLITE:BOOL=ON \
         -DGDAL_ENABLE_DRIVER_ZARR:BOOL=ON \
         -DGDAL_USE_PNG_INTERNAL=ON \
+        -DGDAL_USE_GIF_INTERNAL=ON \
         -DGDAL_USE_TIFF_INTERNAL=ON \
         -DGDAL_USE_GEOTIFF_INTERNAL=ON
   make -j$(nproc) GDAL
@@ -87,7 +87,7 @@ if test "${CIFUZZ:-}" = "True"; then
             $LIB_FUZZING_ENGINE \
             -L$SRC_DIR/build -lgdal \
             -lproj \
-            -Wl,-Bstatic -lzstd -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
+            -Wl,-Bstatic -lzstd -llzma -lexpat -lsqlite3 -ljpeg -lz \
             -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins
 
   echo "Building ogr_fuzzer"
@@ -101,7 +101,7 @@ if test "${CIFUZZ:-}" = "True"; then
             $LIB_FUZZING_ENGINE \
             -L$SRC_DIR/build -lgdal \
             -L$SRC/install/lib -lproj \
-            -Wl,-Bstatic -lzstd -llzma -lexpat -lsqlite3 -lgif -ljpeg -lz \
+            -Wl,-Bstatic -lzstd -llzma -lexpat -lsqlite3 -ljpeg -lz \
             -Wl,-Bdynamic -ldl -lpthread -lclang_rt.builtins
 
   echo "Building gdal_fuzzer_seed_corpus.zip"
@@ -181,7 +181,7 @@ git clone --depth 1 --branch fix_ossfuzz_478301093 https://github.com/rouault/li
 # libxerces-c-dev${ARCH_SUFFIX}
 # libsqlite3-dev${ARCH_SUFFIX}
 PACKAGES="zlib1g-dev${ARCH_SUFFIX} libexpat-dev${ARCH_SUFFIX} liblzma-dev${ARCH_SUFFIX} \
-          libpng-dev${ARCH_SUFFIX} libgif-dev${ARCH_SUFFIX} \
+          libpng-dev${ARCH_SUFFIX} \
           libjpeg-dev${ARCH_SUFFIX} \
           libwebp-dev${ARCH_SUFFIX} \
           libzstd-dev${ARCH_SUFFIX} \
@@ -377,6 +377,7 @@ cmake .. \
     -DGDAL_USE_GEOTIFF_INTERNAL=ON \
     -DGDAL_USE_HDF5=OFF \
     -DGDAL_USE_PNG_INTERNAL=ON \
+    -DGDAL_USE_GIF_INTERNAL=ON \
     -DBUILD_APPS:BOOL=OFF  \
     -DBUILD_CSHARP_BINDINGS:BOOL=OFF  \
     -DBUILD_JAVA_BINDINGS:BOOL=OFF  \
@@ -394,7 +395,7 @@ export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lcurl -lssl -lcrypto -lz -lbr
 export EXTRA_LIBS="$EXTRA_LIBS -lmuparser "
 # PROJ
 export EXTRA_LIBS="$EXTRA_LIBS -lproj -ltiff "
-export EXTRA_LIBS="$EXTRA_LIBS -ldeflate -lzstd -lwebp -lsharpyuv -llzma -lexpat -L$SRC/install/lib -lsqlite3 -lgif -ljpeg -lpng -lz"
+export EXTRA_LIBS="$EXTRA_LIBS -ldeflate -lzstd -lwebp -lsharpyuv -llzma -lexpat -L$SRC/install/lib -lsqlite3 -ljpeg -lpng -lz"
 # Xerces-C related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lxerces-c"
 if [ "$ARCHITECTURE" = "x86_64" ]; then
