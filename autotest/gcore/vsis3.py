@@ -127,6 +127,7 @@ def test_vsis3_init(aws_test_config):
 # Test AWS_NO_SIGN_REQUEST=YES
 
 
+@pytest.mark.network
 def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials):
 
     options = {
@@ -165,6 +166,7 @@ def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials)
 # Test Sync() and multithreaded download
 
 
+@pytest.mark.network
 def test_vsis3_sync_multithreaded_download(
     tmp_vsimem,
     aws_test_config_as_config_options_or_credentials,
@@ -212,6 +214,7 @@ def test_vsis3_sync_multithreaded_download(
 # Test Sync() and multithreaded download and CHUNK_SIZE
 
 
+@pytest.mark.network
 def test_vsis3_sync_multithreaded_download_chunk_size(tmp_vsimem, aws_test_config):
     def cbk(pct, _, tab):
         assert pct >= tab[0]
