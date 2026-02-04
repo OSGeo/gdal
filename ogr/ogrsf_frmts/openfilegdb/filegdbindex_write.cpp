@@ -424,17 +424,17 @@ void FileGDBTable::ComputeOptimalSpatialIndexGridResolution()
 /*                    SortByAscendingValuesAndOID()                     */
 /************************************************************************/
 
-// recent libc++ std::sort() involve unsigned integer overflow in some
-// situation
 template <class ValueOIDPair>
-CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW static void
-SortByAscendingValuesAndOID(std::vector<ValueOIDPair> &asValues)
+static void SortByAscendingValuesAndOID(std::vector<ValueOIDPair> &asValues)
 {
-    std::sort(asValues.begin(), asValues.end(),
-              [](const ValueOIDPair &a, const ValueOIDPair &b) {
-                  return a.first < b.first ||
-                         (a.first == b.first && a.second < b.second);
-              });
+    if (!asValues.empty())
+    {
+        std::sort(asValues.begin(), asValues.end(),
+                  [](const ValueOIDPair &a, const ValueOIDPair &b) {
+                      return a.first < b.first ||
+                             (a.first == b.first && a.second < b.second);
+                  });
+    }
 }
 
 /************************************************************************/

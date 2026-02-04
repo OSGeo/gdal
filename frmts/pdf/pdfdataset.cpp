@@ -3561,21 +3561,21 @@ void PDFDataset::AddLayer(const std::string &osName, int iPage)
 /*                           SortLayerList()                            */
 /************************************************************************/
 
-// recent libc++ std::sort() involve unsigned integer overflow in some
-// situation
-CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 void PDFDataset::SortLayerList()
 {
-    // Sort layers by prioritizing page number and then insertion index
-    std::sort(m_oLayerNameSet.begin(), m_oLayerNameSet.end(),
-              [](const LayerStruct &a, const LayerStruct &b)
-              {
-                  if (a.iPage < b.iPage)
-                      return true;
-                  if (a.iPage > b.iPage)
-                      return false;
-                  return a.nInsertIdx < b.nInsertIdx;
-              });
+    if (!m_oLayerNameSet.empty())
+    {
+        // Sort layers by prioritizing page number and then insertion index
+        std::sort(m_oLayerNameSet.begin(), m_oLayerNameSet.end(),
+                  [](const LayerStruct &a, const LayerStruct &b)
+                  {
+                      if (a.iPage < b.iPage)
+                          return true;
+                      if (a.iPage > b.iPage)
+                          return false;
+                      return a.nInsertIdx < b.nInsertIdx;
+                  });
+    }
 }
 
 /************************************************************************/

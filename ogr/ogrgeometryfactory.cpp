@@ -1556,17 +1556,6 @@ struct sPolyExtended
         pBounds->maxx = poPolyEx->sEnvelope.MaxX;
         pBounds->maxy = poPolyEx->sEnvelope.MaxY;
     }
-
-    // recent libc++ std::sort() involve unsigned integer overflow in some
-    // situation
-    CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-    static void SortByIncreasingArea(const sPolyExtended **pStart,
-                                     const sPolyExtended **pEnd)
-    {
-        std::sort(pStart, pEnd,
-                  [](const sPolyExtended *psPoly1, const sPolyExtended *psPoly2)
-                  { return psPoly1->dfArea < psPoly2->dfArea; });
-    }
 };
 
 static bool OGRGeometryFactoryCompareAreaDescending(const sPolyExtended &sPoly1,
@@ -2119,8 +2108,14 @@ std::unique_ptr<OGRGeometry> OGRGeometryFactory::organizePolygons(
                 CPLFree);
 
         // Sort candidate outer rings by increasing area
-        sPolyExtended::SortByIncreasingArea(
-            aphCandidateShells.get(), aphCandidateShells.get() + nCandidates);
+        if (nCandidates)
+        {
+            std::sort(
+                aphCandidateShells.get(),
+                aphCandidateShells.get() + nCandidates,
+                [](const sPolyExtended *psPoly1, const sPolyExtended *psPoly2)
+                { return psPoly1->dfArea < psPoly2->dfArea; });
+        }
 
         int j = 0;
         for (; bValidTopology && j < nCandidates; j++)

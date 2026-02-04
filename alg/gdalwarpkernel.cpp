@@ -1218,13 +1218,13 @@ CPLErr GDALWarpKernel::PerformWarp()
             }
         }
 
-        // Sort by increasing xscale * yscale
-        std::sort(adfXYScales.begin(), adfXYScales.end(),
-                  [](const XYPair &a, const XYPair &b)
-                  { return a.first * a.second < b.first * b.second; });
-
         if (!adfXYScales.empty())
         {
+            // Sort by increasing xscale * yscale
+            std::sort(adfXYScales.begin(), adfXYScales.end(),
+                      [](const XYPair &a, const XYPair &b)
+                      { return a.first * a.second < b.first * b.second; });
+
             // Compute the per-axis maximum of scale
             double dfXMax = 0;
             double dfYMax = 0;
