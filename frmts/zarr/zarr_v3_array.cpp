@@ -414,8 +414,13 @@ bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
 
     // For network file systems, get the streaming version of the filename,
     // as we don't need arbitrary seeking in the file
-    osFilename = VSIFileManager::GetHandler(osFilename.c_str())
-                     ->GetStreamingFilename(osFilename);
+    // ... unless we do partial decoding, in which case range requests within
+    // a shard are much more efficient
+    if (!(poCodecs && poCodecs->SupportsPartialDecoding()))
+    {
+        osFilename = VSIFileManager::GetHandler(osFilename.c_str())
+                         ->GetStreamingFilename(osFilename);
+    }
 
     // First if we have a tile presence cache, check tile presence from it
     bool bEarlyRet;
