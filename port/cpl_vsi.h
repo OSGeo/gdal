@@ -321,7 +321,7 @@ void CPL_DLL VSIFree(void *);
 void CPL_DLL *VSIRealloc(void *, size_t) CPL_WARN_UNUSED_RESULT;
 char CPL_DLL *VSIStrdup(const char *) CPL_WARN_UNUSED_RESULT;
 
-#if defined(__cplusplus) && defined(GDAL_COMPILATION)
+#if defined(__cplusplus)
 extern "C++"
 {
     /*! @cond Doxygen_Suppress */
