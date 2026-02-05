@@ -38,6 +38,7 @@
 #include "pdfdrivercore.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <limits>
@@ -94,8 +95,13 @@ class GDALPDFOutputDev final : public SplashOutputDev
 
   public:
     GDALPDFOutputDev(SplashColorMode colorModeA, int bitmapRowPadA,
-                     bool reverseVideoA, SplashColorPtr paperColorA)
-        : SplashOutputDev(colorModeA, bitmapRowPadA, reverseVideoA,
+                     [[maybe_unused]] bool reverseVideoA,
+                     SplashColorPtr paperColorA)
+        : SplashOutputDev(colorModeA, bitmapRowPadA,
+#if POPPLER_MAJOR_VERSION < 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION < 2)
+                          reverseVideoA,
+#endif
                           paperColorA),
           bEnableVector(TRUE), bEnableText(TRUE), bEnableBitmap(TRUE)
     {
@@ -176,10 +182,17 @@ class GDALPDFOutputDev final : public SplashOutputDev
         }
     }
 
-    virtual void setSoftMaskFromImageMask(GfxState *state, Object *ref,
-                                          Stream *str, int width, int height,
-                                          bool invert, bool inlineImg,
-                                          double *baseMatrix) override
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION >= 2)
+    void setSoftMaskFromImageMask(GfxState *state, Object *ref, Stream *str,
+                                  int width, int height, bool invert,
+                                  bool inlineImg,
+                                  std::array<double, 6> &baseMatrix) override
+#else
+    void setSoftMaskFromImageMask(GfxState *state, Object *ref, Stream *str,
+                                  int width, int height, bool invert,
+                                  bool inlineImg, double *baseMatrix) override
+#endif
     {
         if (bEnableBitmap)
             SplashOutputDev::setSoftMaskFromImageMask(
@@ -188,8 +201,14 @@ class GDALPDFOutputDev final : public SplashOutputDev
             str->close();
     }
 
-    virtual void unsetSoftMaskFromImageMask(GfxState *state,
-                                            double *baseMatrix) override
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION >= 2)
+    void unsetSoftMaskFromImageMask(GfxState *state,
+                                    std::array<double, 6> &baseMatrix) override
+#else
+    void unsetSoftMaskFromImageMask(GfxState *state,
+                                    double *baseMatrix) override
+#endif
     {
         if (bEnableBitmap)
             SplashOutputDev::unsetSoftMaskFromImageMask(state, baseMatrix);
@@ -2469,6 +2488,8 @@ static void PDFFreeDoc(PDFDoc *poDoc)
 {
     if (poDoc)
     {
+#if POPPLER_MAJOR_VERSION < 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION < 2)
         /* hack to avoid potential cross heap issues on Win32 */
         /* str is the VSIPDFFileStream object passed in the constructor of
          * PDFDoc */
@@ -2476,6 +2497,7 @@ static void PDFFreeDoc(PDFDoc *poDoc)
         // VSIPDFFileStream::FillBuffer() */
         delete poDoc->str;
         poDoc->str = nullptr;
+#endif
 
         delete poDoc;
     }
@@ -4630,8 +4652,9 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             if (globalParamsCreatedByGDAL)
                 registerErrorCallback();
             Object oObj;
-            auto poStream =
-                new VSIPDFFileStream(fp.get(), pszFilename, std::move(oObj));
+            auto poStream = std::make_unique<VSIPDFFileStream>(
+                fp.get(), pszFilename, std::move(oObj));
+            const bool bFoundLinearizedHint = poStream->FoundLinearizedHint();
 #if POPPLER_MAJOR_VERSION > 22 ||                                              \
     (POPPLER_MAJOR_VERSION == 22 && POPPLER_MINOR_VERSION > 2)
             std::optional<GooString> osUserPwd;
@@ -4639,8 +4662,14 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 osUserPwd = std::optional<GooString>(pszUserPwd);
             try
             {
-                poDocPoppler =
-                    new PDFDoc(poStream, std::optional<GooString>(), osUserPwd);
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION >= 2)
+                poDocPoppler = new PDFDoc(
+                    std::move(poStream), std::optional<GooString>(), osUserPwd);
+#else
+                poDocPoppler = new PDFDoc(
+                    poStream.release(), std::optional<GooString>(), osUserPwd);
+#endif
             }
             catch (const std::exception &e)
             {
@@ -4652,7 +4681,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             GooString *poUserPwd = nullptr;
             if (pszUserPwd)
                 poUserPwd = new GooString(pszUserPwd);
-            poDocPoppler = new PDFDoc(poStream, nullptr, poUserPwd);
+            poDocPoppler = new PDFDoc(poStream.release(), nullptr, poUserPwd);
             delete poUserPwd;
 #endif
             if (globalParamsCreatedByGDAL)
@@ -4702,8 +4731,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 PDFFreeDoc(poDocPoppler);
                 return nullptr;
             }
-            else if (poDocPoppler->isLinearized() &&
-                     !poStream->FoundLinearizedHint())
+            else if (poDocPoppler->isLinearized() && !bFoundLinearizedHint)
             {
                 // This is a likely defect of poppler Linearization.cc file that
                 // recognizes a file as linearized if the /Linearized hint is
