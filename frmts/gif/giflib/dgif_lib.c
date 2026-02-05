@@ -727,6 +727,8 @@ DGifSetupDecompress(GifFileType * GifFile) {
         return GIF_ERROR;    /* Failed to read Code size. */
     }
     BitsPerPixel = CodeSize;
+    if (BitsPerPixel > 8)
+        return GIF_ERROR;
 
     Private->Buf[0] = 0;    /* Input Buffer empty. */
     Private->BitsPerPixel = BitsPerPixel;
