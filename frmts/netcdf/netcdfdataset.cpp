@@ -8108,65 +8108,39 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
         if (STARTS_WITH_CI(poOpenInfo->pszFilename, "NETCDF:"))
     {
-        char **papszName =
-            CSLTokenizeString2(poOpenInfo->pszFilename, ":",
-                               CSLT_HONOURSTRINGS | CSLT_PRESERVEESCAPES);
+        GDALSubdatasetInfoH hInfo =
+            GDALGetSubdatasetInfo(poOpenInfo->pszFilename);
+        if (hInfo)
+        {
+            char *pszPath = GDALSubdatasetInfoGetPathComponent(hInfo);
+            poDS->osFilename = pszPath;
+            CPLFree(pszPath);
 
-        if (CSLCount(papszName) >= 3 &&
-            ((strlen(papszName[1]) == 1 && /* D:\\bla */
-              (papszName[2][0] == '/' || papszName[2][0] == '\\')) ||
-             EQUAL(papszName[1], "http") || EQUAL(papszName[1], "https") ||
-             EQUAL(papszName[1], "/vsicurl/http") ||
-             EQUAL(papszName[1], "/vsicurl/https") ||
-             EQUAL(papszName[1], "/vsicurl_streaming/http") ||
-             EQUAL(papszName[1], "/vsicurl_streaming/https")))
-        {
-            const int nCountBefore = CSLCount(papszName);
-            CPLString osTmp = papszName[1];
-            osTmp += ':';
-            osTmp += papszName[2];
-            CPLFree(papszName[1]);
-            CPLFree(papszName[2]);
-            papszName[1] = CPLStrdup(osTmp);
-            memmove(papszName + 2, papszName + 3,
-                    (nCountBefore - 2) * sizeof(char *));
-        }
+            char *pszSubdataset =
+                GDALSubdatasetInfoGetSubdatasetComponent(hInfo);
+            if (pszSubdataset && pszSubdataset[0] != '\0')
+            {
+                osSubdatasetName = pszSubdataset;
+                bTreatAsSubdataset = true;
+                CPLFree(pszSubdataset);
+            }
+            else
+            {
+                osSubdatasetName = "";
+                bTreatAsSubdataset = false;
+            }
 
-        if (CSLCount(papszName) == 3)
-        {
-            poDS->osFilename = papszName[1];
-            osSubdatasetName = papszName[2];
-            bTreatAsSubdataset = true;
-        }
-        else if (CSLCount(papszName) == 2)
-        {
-            poDS->osFilename = papszName[1];
-            osSubdatasetName = "";
-            bTreatAsSubdataset = false;
-            CSLDestroy(papszName);
-        }
-        else
-        {
-            CSLDestroy(papszName);
-            CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                // deadlock with GDALDataset own mutex.
-            delete poDS;
-            CPLAcquireMutex(hNCMutex, 1000.0);
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to parse NETCDF: prefix string into expected 2, 3 "
-                     "or 4 fields.");
-            return nullptr;
+            GDALDestroySubdatasetInfo(hInfo);
         }
 
         if (!STARTS_WITH(poDS->osFilename, "http://") &&
             !STARTS_WITH(poDS->osFilename, "https://"))
         {
             // Identify Format from real file, with bCheckExt=FALSE.
-            GDALOpenInfo *poOpenInfo2 =
-                new GDALOpenInfo(poDS->osFilename.c_str(), GA_ReadOnly);
-            poDS->eFormat =
-                netCDFIdentifyFormat(poOpenInfo2, /* bCheckExt = */ false);
-            delete poOpenInfo2;
+            auto poOpenInfo2 = std::make_unique<GDALOpenInfo>(
+                poDS->osFilename.c_str(), GA_ReadOnly);
+            poDS->eFormat = netCDFIdentifyFormat(poOpenInfo2.get(),
+                                                 /* bCheckExt = */ false);
             if (NCDF_FORMAT_NONE == poDS->eFormat ||
                 NCDF_FORMAT_UNKNOWN == poDS->eFormat)
             {
