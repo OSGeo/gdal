@@ -568,6 +568,10 @@ extern "C++"
         CPLStringList &AddNameValue(const char *pszKey, const char *pszValue);
         CPLStringList &SetNameValue(const char *pszKey, const char *pszValue);
 
+        CPLStringList &SetString(int pos, const char *pszString);
+        CPLStringList &SetString(int pos, const std::string &osString);
+        CPLStringList &SetStringDirectly(int pos, char *pszString);
+
         CPLStringList &Assign(char **papszListIn, int bTakeOwnership = TRUE);
 
         /** Assignment operator */

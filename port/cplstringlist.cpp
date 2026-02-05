@@ -26,6 +26,8 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
+static int CPLCompareKeyValueString(const char *pszKVa, const char *pszKVb);
+
 /************************************************************************/
 /*                           CPLStringList()                            */
 /************************************************************************/
@@ -586,6 +588,69 @@ CPLStringList &CPLStringList::SetNameValue(const char *pszKey,
         snprintf(pszLine, nLen, "%s=%s", pszKey, pszValue);
 
         papszList[iKey] = pszLine;
+    }
+
+    return *this;
+}
+
+/************************************************************************/
+/*                             SetString()                              */
+/************************************************************************/
+
+/**
+ * Replace a string within the list.
+ *
+ * @param pos 0-index position of the string to replace
+ * @param pszString value to be used (will be copied)
+ * @return a reference to the CPLStringList on which it was invoked.
+ * @since 3.13
+ */
+CPLStringList &CPLStringList::SetString(int pos, const char *pszString)
+{
+    return SetStringDirectly(pos, VSI_STRDUP_VERBOSE(pszString));
+}
+
+/**
+ * Replace a string within the list.
+ *
+ * @param pos 0-index position of the string to replace
+ * @param osString value to be used (will be copied)
+ * @return a reference to the CPLStringList on which it was invoked.
+ * @since 3.13
+ */
+CPLStringList &CPLStringList::SetString(int pos, const std::string &osString)
+{
+    return SetString(pos, osString.c_str());
+}
+
+/**
+ * Replace a string within the list.
+ *
+ * @param pos 0-index position of the string to replace
+ * @param pszString value to be used (ownership is taken)
+ * @return a reference to the CPLStringList on which it was invoked.
+ * @since 3.13
+ */
+CPLStringList &CPLStringList::SetStringDirectly(int pos, char *pszString)
+{
+    if (!MakeOurOwnCopy())
+        return *this;
+
+    CPLFree(papszList[pos]);
+    papszList[pos] = pszString;
+
+    if (bIsSorted)
+    {
+        if (pos > 0 &&
+            CPLCompareKeyValueString(papszList[pos], papszList[pos - 1]) == -1)
+        {
+            bIsSorted = false;
+        }
+        if (pos < Count() - 1 &&
+            CPLCompareKeyValueString(papszList[pos], papszList[pos + 1]) == 1)
+        {
+            bIsSorted = false;
+        }
     }
 
     return *this;

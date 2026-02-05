@@ -676,6 +676,38 @@ TEST_F(test_cpl, CPLStringList_Base)
     ASSERT_TRUE(EQUAL(oCopy[2], "xyz"));
 }
 
+TEST_F(test_cpl, CPLStringList_SetString)
+{
+    CPLStringList oCSL;
+
+    oCSL.AddString("abc");
+    oCSL.AddString("def");
+    oCSL.AddString("ghi");
+
+    oCSL.Sort();
+
+    CPLStringList oCSL2(oCSL.List(), false);
+    oCSL2.Sort();
+
+    oCSL2.SetString(0, "bcd");
+    ASSERT_TRUE(EQUAL(oCSL[0], "abc"));
+    ASSERT_TRUE(EQUAL(oCSL2[0], "bcd"));
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    oCSL2.SetString(1, std::string("efg"));
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    oCSL2.SetString(2, "hij");
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    for (int i = 0; i < oCSL.size(); i++)
+    {
+        CPLStringList oCopy(oCSL);
+        oCopy.SetString(0, "xyz");
+        ASSERT_FALSE(oCopy.IsSorted());
+    }
+}
+
 TEST_F(test_cpl, CPLStringList_NameValue)
 {
     // Test some name=value handling stuff.
