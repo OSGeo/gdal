@@ -62,11 +62,8 @@ GDALPipelineStepAlgorithm::GDALPipelineStepAlgorithm(
 
 void GDALPipelineStepAlgorithm::AddRasterHiddenInputDatasetArg()
 {
-    // Added so that "band" argument validation works, because
-    // GDALAlgorithm must be able to retrieve the input dataset
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER,
-                       /* positionalAndRequired = */ false)
-        .SetMinCount(1)
+    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER, false)
+        .SetMinCount(0)
         .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
         .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
         .SetMetaVar(m_constructorOptions.inputDatasetMetaVar)
@@ -93,13 +90,16 @@ void GDALPipelineStepAlgorithm::AddRasterInputArgs(
             &m_inputDataset,
             openForMixedRasterVector ? (GDAL_OF_RASTER | GDAL_OF_VECTOR)
                                      : GDAL_OF_RASTER,
-            m_constructorOptions.inputDatasetRequired && !hiddenForCLI,
-            m_constructorOptions.inputDatasetHelpMsg.c_str())
-            .SetMinCount(1)
+            false, m_constructorOptions.inputDatasetHelpMsg.c_str())
+            .SetMinCount(m_constructorOptions.inputDatasetRequired ? 1 : 0)
             .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
             .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
             .SetMetaVar(m_constructorOptions.inputDatasetMetaVar)
             .SetHiddenForCLI(hiddenForCLI);
+    if (m_constructorOptions.inputDatasetPositional && !hiddenForCLI)
+        arg.SetPositional();
+    if (m_constructorOptions.inputDatasetRequired && !hiddenForCLI)
+        arg.SetRequired();
     if (!m_constructorOptions.inputDatasetAlias.empty())
         arg.AddAlias(m_constructorOptions.inputDatasetAlias);
 }
@@ -137,6 +137,20 @@ void GDALPipelineStepAlgorithm::AddRasterOutputArgs(bool hiddenForCLI)
 }
 
 /************************************************************************/
+/*     GDALPipelineStepAlgorithm::AddVectorHiddenInputDatasetArg()      */
+/************************************************************************/
+
+void GDALPipelineStepAlgorithm::AddVectorHiddenInputDatasetArg()
+{
+    AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR, false)
+        .SetMinCount(0)
+        .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
+        .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
+        .SetMetaVar(m_constructorOptions.inputDatasetMetaVar)
+        .SetHidden();
+}
+
+/************************************************************************/
 /*           GDALPipelineStepAlgorithm::AddVectorInputArgs()            */
 /************************************************************************/
 
@@ -147,12 +161,15 @@ void GDALPipelineStepAlgorithm::AddVectorInputArgs(bool hiddenForCLI)
         .SetHiddenForCLI(hiddenForCLI);
     AddOpenOptionsArg(&m_openOptions).SetHiddenForCLI(hiddenForCLI);
     auto &datasetArg =
-        AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR,
-                           /* positionalAndRequired = */ !hiddenForCLI)
-            .SetMinCount(1)
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR, false)
+            .SetMinCount(m_constructorOptions.inputDatasetRequired ? 1 : 0)
             .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
             .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
             .SetHiddenForCLI(hiddenForCLI);
+    if (m_constructorOptions.inputDatasetPositional && !hiddenForCLI)
+        datasetArg.SetPositional();
+    if (m_constructorOptions.inputDatasetRequired && !hiddenForCLI)
+        datasetArg.SetRequired();
     if (m_constructorOptions.addInputLayerNameArgument)
     {
         auto &layerArg = AddArg(GDAL_ARG_NAME_INPUT_LAYER, 'l',
@@ -363,10 +380,13 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 else
                 {
                     writeAlg->m_outputVRTCompatible = m_outputVRTCompatible;
-                    writeAlg->m_inputDataset.clear();
-                    writeAlg->m_inputDataset.resize(1);
-                    writeAlg->m_inputDataset[0].Set(
-                        m_outputDataset.GetDatasetRef());
+
+                    std::vector<GDALArgDatasetValue> inputDataset(1);
+                    inputDataset[0].Set(m_outputDataset.GetDatasetRef());
+                    auto inputArg = writeAlg->GetArg(GDAL_ARG_NAME_INPUT);
+                    CPLAssert(inputArg);
+                    inputArg->Set(std::move(inputDataset));
+
                     if (pfnProgress)
                     {
                         pScaledData.reset(GDALCreateScaledProgress(

@@ -59,12 +59,10 @@ GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm(bool standaloneStep)
             .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
     }
 
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER,
-                       /* positionalAndRequired = */ standaloneStep)
+    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER)
         .AddAlias("dataset")
         .SetMinCount(1)
-        .SetMaxCount(1)
-        .SetHiddenForCLI(!standaloneStep);
+        .SetMaxCount(1);
 
     {
         auto &coordinateDatasetArg =
@@ -154,28 +152,38 @@ GDALRasterPixelInfoAlgorithm::GDALRasterPixelInfoAlgorithm(bool standaloneStep)
             {
                 if (auto poSrcDS = m_inputDataset[0].GetDatasetRef())
                 {
-                    const int nOvrCount =
-                        poSrcDS->GetRasterBand(1)->GetOverviewCount();
-                    if (m_overview >= 0 && poSrcDS->GetRasterCount() > 0 &&
-                        m_overview >= nOvrCount)
+                    if (poSrcDS->GetRasterCount() > 0)
                     {
-                        if (nOvrCount == 0)
+                        const int nOvrCount =
+                            poSrcDS->GetRasterBand(1)->GetOverviewCount();
+                        if (m_overview >= 0 && poSrcDS->GetRasterCount() > 0 &&
+                            m_overview >= nOvrCount)
                         {
-                            ReportError(
-                                CE_Failure, CPLE_IllegalArg,
-                                "Source dataset has no overviews. "
-                                "Argument 'overview' must not be specified.");
+                            if (nOvrCount == 0)
+                            {
+                                ReportError(CE_Failure, CPLE_IllegalArg,
+                                            "Source dataset has no overviews. "
+                                            "Argument 'overview' must not be "
+                                            "specified.");
+                            }
+                            else
+                            {
+                                ReportError(
+                                    CE_Failure, CPLE_IllegalArg,
+                                    "Source dataset has only %d overview "
+                                    "level%s. "
+                                    "'overview' "
+                                    "value must be strictly lower than this "
+                                    "number.",
+                                    nOvrCount, nOvrCount > 1 ? "s" : "");
+                            }
+                            return false;
                         }
-                        else
-                        {
-                            ReportError(
-                                CE_Failure, CPLE_IllegalArg,
-                                "Source dataset has only %d overview level%s. "
-                                "'overview' "
-                                "value must be strictly lower than this "
-                                "number.",
-                                nOvrCount, nOvrCount > 1 ? "s" : "");
-                        }
+                    }
+                    else
+                    {
+                        ReportError(CE_Failure, CPLE_IllegalArg,
+                                    "Source dataset has no raster band.");
                         return false;
                     }
                 }

@@ -121,6 +121,10 @@ GDALVectorGridAbstractAlgorithm::GDALVectorGridAbstractAlgorithm(
         AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
         AddCreationOptionsArg(&m_creationOptions);
     }
+    else
+    {
+        AddVectorHiddenInputDatasetArg();
+    }
     AddArg("extent", 0, _("Set the target georeferenced extent"),
            &m_targetExtent)
         .SetMinCount(4)

@@ -135,6 +135,11 @@ constexpr const char *GDAL_ARG_NAME_QUIET = "quiet";
 constexpr const char *GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER =
     "raster-or-multidim-raster";
 
+/** Placeholder value that can be set as a dataset name in a pipeline step
+ * to express the dataset computed by the previous step.
+ */
+constexpr const char *GDAL_DATASET_PIPELINE_PLACEHOLDER_VALUE = "_";
+
 /************************************************************************/
 /*                         GDALArgDatasetValue                          */
 /************************************************************************/
@@ -2610,6 +2615,11 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Whether ValidateArguments() should be skipped during ParseCommandLineArguments() */
     bool m_skipValidationInParseCommandLine = false;
 
+    /** Whether the implicit input dataset of non-initial steps in a pipeline
+     * can be omitted.
+     */
+    bool m_inputDatasetCanBeOmitted = false;
+
     friend class GDALAlgorithmRegistry;  // to set m_aliases
     /** Algorithm alias names */
     std::vector<std::string> m_aliases{};
@@ -2620,7 +2630,7 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Whether this algorithm is run to generated a streamed output dataset. */
     bool m_executionForStreamOutput = false;
 
-    /** Whether this algorithm should be hidden (but can be instantiate if name known) */
+    /** Whether this algorithm should be hidden (but can be instantiated if name known) */
     bool m_hidden = false;
 
     /** Map a dataset name to its object (used for nested pipelines) */
