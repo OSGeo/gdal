@@ -6418,6 +6418,16 @@ def test_netcdf_NASA_EMIT_L2B_MIN():
             "",
         ),
         (
+            r"NETCDF:https://localhost:8080/data/sample.nc",
+            r"https://localhost:8080/data/sample.nc",
+            "",
+        ),
+        (
+            r"NETCDF:/vsicurl/https://www.ncei.noaa.gov:443/data/sample.nc:t2m",
+            r"/vsicurl/https://www.ncei.noaa.gov:443/data/sample.nc",
+            "t2m",
+        ),
+        (
             r'NETCDF:"data/netcdf/var_with_column.nc":"VAR:NAME"',
             r"data/netcdf/var_with_column.nc",
             "VAR:NAME",
