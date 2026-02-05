@@ -153,7 +153,6 @@ build_fuzzer(
   gdal_filesystem_fuzzer
   SOURCES
   gdal_fuzzer.cpp
-  fuzzingengine.cpp
   DEFINITIONS
   -DUSE_FILESYSTEM)
 build_fuzzer(
@@ -161,7 +160,6 @@ build_fuzzer(
   ogr_filesystem_fuzzer
   SOURCES
   ogr_fuzzer.cpp
-  fuzzingengine.cpp
   DEFINITIONS
   -DUSE_FILESYSTEM)
 
