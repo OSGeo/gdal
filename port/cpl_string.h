@@ -540,8 +540,10 @@ extern "C++"
                                             char *pszNewLine);
 
         // CPLStringList &InsertStrings( int nInsertAtLineNo, char
-        // **papszNewLines ); CPLStringList &RemoveStrings( int
-        // nFirstLineToDelete, int nNumToRemove=1 );
+        // **papszNewLines );
+
+        CPLStringList &RemoveStrings(int nFirstLineToDelete,
+                                     int nNumToRemove = 1);
 
         /** Return index of pszTarget in the list, or -1 */
         int FindString(const char *pszTarget) const
@@ -565,6 +567,10 @@ extern "C++"
                                       const char *pszDefault) const;
         CPLStringList &AddNameValue(const char *pszKey, const char *pszValue);
         CPLStringList &SetNameValue(const char *pszKey, const char *pszValue);
+
+        CPLStringList &SetString(int pos, const char *pszString);
+        CPLStringList &SetString(int pos, const std::string &osString);
+        CPLStringList &SetStringDirectly(int pos, char *pszString);
 
         CPLStringList &Assign(char **papszListIn, int bTakeOwnership = TRUE);
 

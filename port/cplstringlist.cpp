@@ -26,6 +26,8 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
+static int CPLCompareKeyValueString(const char *pszKVa, const char *pszKVb);
+
 /************************************************************************/
 /*                           CPLStringList()                            */
 /************************************************************************/
@@ -592,6 +594,69 @@ CPLStringList &CPLStringList::SetNameValue(const char *pszKey,
 }
 
 /************************************************************************/
+/*                             SetString()                              */
+/************************************************************************/
+
+/**
+ * Replace a string within the list.
+ *
+ * @param pos 0-index position of the string to replace
+ * @param pszString value to be used (will be copied)
+ * @return a reference to the CPLStringList on which it was invoked.
+ * @since 3.13
+ */
+CPLStringList &CPLStringList::SetString(int pos, const char *pszString)
+{
+    return SetStringDirectly(pos, VSI_STRDUP_VERBOSE(pszString));
+}
+
+/**
+ * Replace a string within the list.
+ *
+ * @param pos 0-index position of the string to replace
+ * @param osString value to be used (will be copied)
+ * @return a reference to the CPLStringList on which it was invoked.
+ * @since 3.13
+ */
+CPLStringList &CPLStringList::SetString(int pos, const std::string &osString)
+{
+    return SetString(pos, osString.c_str());
+}
+
+/**
+ * Replace a string within the list.
+ *
+ * @param pos 0-index position of the string to replace
+ * @param pszString value to be used (ownership is taken)
+ * @return a reference to the CPLStringList on which it was invoked.
+ * @since 3.13
+ */
+CPLStringList &CPLStringList::SetStringDirectly(int pos, char *pszString)
+{
+    if (!MakeOurOwnCopy())
+        return *this;
+
+    CPLFree(papszList[pos]);
+    papszList[pos] = pszString;
+
+    if (bIsSorted)
+    {
+        if (pos > 0 &&
+            CPLCompareKeyValueString(papszList[pos], papszList[pos - 1]) == -1)
+        {
+            bIsSorted = false;
+        }
+        if (pos < Count() - 1 &&
+            CPLCompareKeyValueString(papszList[pos], papszList[pos + 1]) == 1)
+        {
+            bIsSorted = false;
+        }
+    }
+
+    return *this;
+}
+
+/************************************************************************/
 /*                              operator[]                              */
 /************************************************************************/
 
@@ -944,6 +1009,34 @@ CPLStringList &CPLStringList::InsertStringDirectly(int nInsertAtLineNo,
     papszList[nInsertAtLineNo] = pszNewLine;
     papszList[++nCount] = nullptr;
 
+    return *this;
+}
+
+/************************************************************************/
+/*                           RemoveStrings()                            */
+/************************************************************************/
+
+/**
+ * Remove strings inside a CPLStringList.
+ *
+ * @param nFirstLineToDelete the 0-based index of the first string to
+ * remove. If this value is -1 or is larger than the actual
+ * number of strings in list then the nNumToRemove last strings are
+ * removed.
+ * @param nNumToRemove the number of strings to remove
+ *
+ * @return a reference to the CPLStringList on which it was invoked.
+ * @since 3.13
+ */
+CPLStringList &CPLStringList::RemoveStrings(int nFirstLineToDelete,
+                                            int nNumToRemove)
+{
+    if (!MakeOurOwnCopy())
+        return *this;
+
+    papszList =
+        CSLRemoveStrings(papszList, nFirstLineToDelete, nNumToRemove, nullptr);
+    nCount = -1;
     return *this;
 }
 

@@ -650,6 +650,10 @@ TEST_F(test_cpl, CPLStringList_Base)
     ASSERT_TRUE(oCSL[-1] == nullptr);
     ASSERT_EQ(oCSL.FindString("abc"), 1);
 
+    oCSL.RemoveStrings(0, 1);
+    ASSERT_EQ(oCSL.Count(), 1);
+    ASSERT_EQ(oCSL.FindString("abc"), 0);
+
     CSLDestroy(oCSL.StealList());
     ASSERT_EQ(oCSL.Count(), 0);
     ASSERT_TRUE(oCSL.List() == nullptr);
@@ -670,6 +674,38 @@ TEST_F(test_cpl, CPLStringList_Base)
     ASSERT_EQ(oCopy.Count(), 3);
     ASSERT_EQ(oCSL.Count(), 2);
     ASSERT_TRUE(EQUAL(oCopy[2], "xyz"));
+}
+
+TEST_F(test_cpl, CPLStringList_SetString)
+{
+    CPLStringList oCSL;
+
+    oCSL.AddString("abc");
+    oCSL.AddString("def");
+    oCSL.AddString("ghi");
+
+    oCSL.Sort();
+
+    CPLStringList oCSL2(oCSL.List(), false);
+    oCSL2.Sort();
+
+    oCSL2.SetString(0, "bcd");
+    ASSERT_TRUE(EQUAL(oCSL[0], "abc"));
+    ASSERT_TRUE(EQUAL(oCSL2[0], "bcd"));
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    oCSL2.SetString(1, std::string("efg"));
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    oCSL2.SetString(2, "hij");
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    for (int i = 0; i < oCSL.size(); i++)
+    {
+        CPLStringList oCopy(oCSL);
+        oCopy.SetString(0, "xyz");
+        ASSERT_FALSE(oCopy.IsSorted());
+    }
 }
 
 TEST_F(test_cpl, CPLStringList_NameValue)
