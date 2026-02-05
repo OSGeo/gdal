@@ -138,7 +138,7 @@ constexpr const char *GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER =
 /** Placeholder value that can be set as a dataset name in a pipeline step
  * to express the dataset computed by the previous step.
  */
-constexpr const char *GDAL_DATASET_PIPELINE_PLACEHOLDER_VALUE = "_";
+constexpr const char *GDAL_DATASET_PIPELINE_PLACEHOLDER_VALUE = "_PIPE_";
 
 /************************************************************************/
 /*                         GDALArgDatasetValue                          */

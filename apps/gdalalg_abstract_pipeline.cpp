@@ -411,8 +411,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                         algName.c_str());
             return false;
         }
-        // We don't want to accept '_' dataset placeholder for the first step
-        // of a pipeline.
+        // We don't want to accept '_PIPE_' dataset placeholder for the first
+        // step of a pipeline.
         curStep.alg->m_inputDatasetCanBeOmitted =
             !firstStep || !m_bExpectReadStep;
         curStep.alg->SetCallPath({algName});

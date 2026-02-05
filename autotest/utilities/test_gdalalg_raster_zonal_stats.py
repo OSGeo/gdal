@@ -1127,7 +1127,7 @@ def test_gdalalg_raster_zonal_stats_pipeline_piped_is_zones(
             "--input",
             src_fname,
             "--zones",
-            "_",
+            "_PIPE_",
             "--stat",
             "sum",
             "!",
