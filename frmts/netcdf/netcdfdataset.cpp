@@ -842,7 +842,7 @@ void netCDFRasterBand::SetBlockSize()
     }
 
     // Deal with bottom-up datasets and nBlockYSize != 1.
-    auto poGDS = static_cast<netCDFDataset *>(poDS);
+    auto poGDS = cpl::down_cast<netCDFDataset *>(poDS);
     if (poGDS->bBottomUp && nBlockYSize != 1 && poGDS->poChunkCache == nullptr)
     {
         if (poGDS->eAccess == GA_ReadOnly)
@@ -1008,7 +1008,7 @@ netCDFRasterBand::netCDFRasterBand(
         bDefineVar = true;
 
         // Make sure we are in define mode.
-        static_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+        cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         char szTempPrivate[256 + 1];
         const char *pszTemp = nullptr;
@@ -1228,7 +1228,7 @@ CPLErr netCDFRasterBand::SetOffset(double dfNewOffset)
     if (poDS->GetAccess() == GA_Update)
     {
         // Make sure we are in define mode.
-        static_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+        cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         const int status = nc_put_att_double(cdfid, nZId, CF_ADD_OFFSET,
                                              NC_DOUBLE, 1, &dfNewOffset);
@@ -1278,7 +1278,7 @@ CPLErr netCDFRasterBand::SetScale(double dfNewScale)
     if (poDS->GetAccess() == GA_Update)
     {
         // Make sure we are in define mode.
-        static_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
+        cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(true);
 
         const int status = nc_put_att_double(cdfid, nZId, CF_SCALE_FACTOR,
                                              NC_DOUBLE, 1, &dfNewScale);
@@ -1336,7 +1336,7 @@ CPLErr netCDFRasterBand::SetUnitType(const char *pszNewValue)
         if (poDS->GetAccess() == GA_Update)
         {
             // Make sure we are in define mode.
-            static_cast<netCDFDataset *>(poDS)->SetDefineMode(TRUE);
+            cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(TRUE);
 
             const int status = nc_put_att_text(
                 cdfid, nZId, CF_UNITS, osUnitType.size(), osUnitType.c_str());
@@ -2340,7 +2340,7 @@ bool netCDFRasterBand::FetchNetcdfChunk(size_t xstart, size_t ystart,
     }
 
     // Make sure we are in data mode.
-    static_cast<netCDFDataset *>(poDS)->SetDefineMode(false);
+    cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(false);
 
     // If this block is not a full block in the x axis, we need to
     // re-arrange the data because partial blocks are not arranged the
@@ -2527,7 +2527,7 @@ CPLErr netCDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     // Check y order.
     if (nBandYPos >= 0)
     {
-        auto poGDS = static_cast<netCDFDataset *>(poDS);
+        auto poGDS = cpl::down_cast<netCDFDataset *>(poDS);
         if (poGDS->bBottomUp)
         {
             if (nBlockYSize == 1)
@@ -2652,7 +2652,7 @@ CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     start[nBandXPos] = static_cast<size_t>(nBlockXOff) * nBlockXSize;
 
     // check y order.
-    if (static_cast<netCDFDataset *>(poDS)->bBottomUp)
+    if (cpl::down_cast<netCDFDataset *>(poDS)->bBottomUp)
     {
         if (nBlockYSize == 1)
         {
@@ -2721,7 +2721,7 @@ CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     }
 
     // Make sure we are in data mode.
-    static_cast<netCDFDataset *>(poDS)->SetDefineMode(false);
+    cpl::down_cast<netCDFDataset *>(poDS)->SetDefineMode(false);
 
     // Copy data according to type.
     int status = 0;
@@ -2760,26 +2760,26 @@ CPLErr netCDFRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                     static_cast<double *>(pImage));
     }
     else if (eDataType == GDT_UInt16 &&
-             static_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
+             cpl::down_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
     {
         status = nc_put_vara_ushort(cdfid, nZId, start, edge,
                                     static_cast<unsigned short *>(pImage));
     }
     else if (eDataType == GDT_UInt32 &&
-             static_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
+             cpl::down_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
     {
         status = nc_put_vara_uint(cdfid, nZId, start, edge,
                                   static_cast<unsigned int *>(pImage));
     }
     else if (eDataType == GDT_UInt64 &&
-             static_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
+             cpl::down_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
     {
         status =
             nc_put_vara_ulonglong(cdfid, nZId, start, edge,
                                   static_cast<unsigned long long *>(pImage));
     }
     else if (eDataType == GDT_Int64 &&
-             static_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
+             cpl::down_cast<netCDFDataset *>(poDS)->eFormat == NCDF_FORMAT_NC4)
     {
         status = nc_put_vara_longlong(cdfid, nZId, start, edge,
                                       static_cast<long long *>(pImage));
@@ -6248,7 +6248,7 @@ bool netCDFDataset::AddGridMappingRef()
         for (int i = 1; i <= nBands; i++)
         {
             const int nVarId =
-                static_cast<netCDFRasterBand *>(GetRasterBand(i))->nZId;
+                cpl::down_cast<netCDFRasterBand *>(GetRasterBand(i))->nZId;
 
             if (pszCFProjection != nullptr && !EQUAL(pszCFProjection, ""))
             {
@@ -8921,14 +8921,12 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     size_t nTotLevCount = 1;
     nc_type nType = NC_NAT;
 
-    CPLString osExtraDimNames;
-
     if (nd > 2)
     {
         nDim = 2;
         panBandZLev = static_cast<int *>(CPLCalloc(nd - 2, sizeof(int)));
 
-        osExtraDimNames = "{";
+        CPLString osExtraDimNames = "{";
 
         char szDimName[NC_MAX_NAME + 1] = {};
 
@@ -9824,7 +9822,7 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     if (nDim > 2)
     {
         // Make sure we are in data mode.
-        static_cast<netCDFDataset *>(poDS)->SetDefineMode(false);
+        poDS->SetDefineMode(false);
         for (int i = CSLCount(papszExtraDimNames) - 1; i >= 0; i--)
         {
             char szTemp[NC_MAX_NAME + 32 + 1];
@@ -10058,13 +10056,11 @@ void netCDFDataset::ProcessCreationOptions()
         if (oWriterConfig.Parse(pszConfig))
         {
             // Override dataset creation options from the config file
-            std::map<CPLString, CPLString>::iterator oIter;
-            for (oIter = oWriterConfig.m_oDatasetCreationOptions.begin();
-                 oIter != oWriterConfig.m_oDatasetCreationOptions.end();
-                 ++oIter)
+            for (const auto &[osName, osValue] :
+                 oWriterConfig.m_oDatasetCreationOptions)
             {
-                papszCreationOptions = CSLSetNameValue(
-                    papszCreationOptions, oIter->first, oIter->second);
+                papszCreationOptions =
+                    CSLSetNameValue(papszCreationOptions, osName, osValue);
             }
         }
     }
@@ -10704,8 +10700,7 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
         }
         case NC_USHORT:
         {
-            unsigned short *pusTemp;
-            pusTemp = static_cast<unsigned short *>(
+            unsigned short *pusTemp = static_cast<unsigned short *>(
                 CPLCalloc(nAttrLen, sizeof(unsigned short)));
             nc_get_att_ushort(nCdfId, nVarId, pszAttrName, pusTemp);
             dfValue = static_cast<double>(pusTemp[0]);
@@ -11155,8 +11150,7 @@ static CPLErr NCDFGet1DVar(int nCdfId, int nVarId, char **pszValue)
         }
         case NC_UBYTE:
         {
-            unsigned char *pucTemp;
-            pucTemp = static_cast<unsigned char *>(
+            unsigned char *pucTemp = static_cast<unsigned char *>(
                 CPLCalloc(nVarLen, sizeof(unsigned char)));
             nc_get_vara_uchar(nCdfId, nVarId, start, count, pucTemp);
             char szTemp[256];
@@ -11173,8 +11167,7 @@ static CPLErr NCDFGet1DVar(int nCdfId, int nVarId, char **pszValue)
         }
         case NC_USHORT:
         {
-            unsigned short *pusTemp;
-            pusTemp = static_cast<unsigned short *>(
+            unsigned short *pusTemp = static_cast<unsigned short *>(
                 CPLCalloc(nVarLen, sizeof(unsigned short)));
             nc_get_vara_ushort(nCdfId, nVarId, start, count, pusTemp);
             char szTemp[256];
@@ -11191,8 +11184,7 @@ static CPLErr NCDFGet1DVar(int nCdfId, int nVarId, char **pszValue)
         }
         case NC_UINT:
         {
-            unsigned int *punTemp;
-            punTemp = static_cast<unsigned int *>(
+            unsigned int *punTemp = static_cast<unsigned int *>(
                 CPLCalloc(nVarLen, sizeof(unsigned int)));
             nc_get_vara_uint(nCdfId, nVarId, start, count, punTemp);
             char szTemp[256];
