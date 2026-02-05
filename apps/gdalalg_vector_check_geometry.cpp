@@ -247,7 +247,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                                 auto poMultiPoint =
                                     std::make_unique<OGRMultiPoint>();
                                 poMultiPoint->addGeometry(
-                                    poErrorGeom.release());
+                                    std::move(poErrorGeom));
                                 poErrorGeom = std::move(poMultiPoint);
                             }
 
