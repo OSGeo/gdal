@@ -212,7 +212,7 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     const bool bIsGeoJSON = EQUAL(m_format.c_str(), "GeoJSON");
 
     OGRLayer *poSrcLayer = nullptr;
-    std::set<int> anSrcFieldIndicesToInclude;
+    std::vector<int> anSrcFieldIndicesToInclude;
     std::vector<int> anMapSrcToDstFields;
 
     if (poVectorSrcDS)
@@ -257,29 +257,11 @@ bool GDALRasterPixelInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
                         poVectorSrcDS->GetDescription());
             return false;
         }
-        if (m_includeFields.size() == 1 && m_includeFields[0] == "ALL")
+
+        if (!GetFieldIndices(m_includeFields, OGRLayer::ToHandle(poSrcLayer),
+                             anSrcFieldIndicesToInclude))
         {
-            const int nSrcFieldCount =
-                poSrcLayer->GetLayerDefn()->GetFieldCount();
-            for (int i = 0; i < nSrcFieldCount; ++i)
-                anSrcFieldIndicesToInclude.insert(i);
-        }
-        else if (!m_includeFields.empty() &&
-                 !(m_includeFields.size() == 1 && m_includeFields[0] == "NONE"))
-        {
-            for (const std::string &osFieldName : m_includeFields)
-            {
-                const int nIdx = poSrcLayer->GetLayerDefn()->GetFieldIndex(
-                    osFieldName.c_str());
-                if (nIdx < 0)
-                {
-                    ReportError(CE_Failure, CPLE_AppDefined,
-                                "Field '%s' does not exist in layer '%s'",
-                                osFieldName.c_str(), poSrcLayer->GetName());
-                    return false;
-                }
-                anSrcFieldIndicesToInclude.insert(nIdx);
-            }
+            return false;
         }
 
         if (m_posCrs.empty())

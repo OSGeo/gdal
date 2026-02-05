@@ -6799,6 +6799,52 @@ GDALAlgorithm::GetAutoComplete(std::vector<std::string> &args,
 }
 
 /************************************************************************/
+/*                   GDALAlgorithm::GetFieldIndices()                   */
+/************************************************************************/
+
+bool GDALAlgorithm::GetFieldIndices(const std::vector<std::string> &names,
+                                    OGRLayerH hLayer, std::vector<int> &indices)
+{
+    VALIDATE_POINTER1(hLayer, __func__, false);
+
+    const OGRLayer &layer = *OGRLayer::FromHandle(hLayer);
+
+    if (names.size() == 1 && names[0] == "ALL")
+    {
+        const int nSrcFieldCount = layer.GetLayerDefn()->GetFieldCount();
+        for (int i = 0; i < nSrcFieldCount; ++i)
+        {
+            indices.push_back(i);
+        }
+    }
+    else if (!names.empty() && !(names.size() == 1 && names[0] == "NONE"))
+    {
+        std::set<int> fieldsAdded;
+        for (const std::string &osFieldName : names)
+        {
+
+            const int nIdx =
+                layer.GetLayerDefn()->GetFieldIndex(osFieldName.c_str());
+
+            if (nIdx < 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field '%s' does not exist in layer '%s'",
+                         osFieldName.c_str(), layer.GetName());
+                return false;
+            }
+
+            if (fieldsAdded.insert(nIdx).second)
+            {
+                indices.push_back(nIdx);
+            }
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*              GDALAlgorithm::ExtractLastOptionAndValue()              */
 /************************************************************************/
 

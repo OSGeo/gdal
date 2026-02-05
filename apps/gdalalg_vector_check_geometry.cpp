@@ -348,19 +348,11 @@ bool GDALVectorCheckGeometryAlgorithm::RunStep(GDALPipelineStepRunContext &)
             }
 
             std::vector<int> includeFieldIndices;
-            for (const auto &fieldName : m_includeFields)
+            if (!GetFieldIndices(m_includeFields,
+                                 OGRLayer::ToHandle(poSrcLayer),
+                                 includeFieldIndices))
             {
-                auto iSrcField =
-                    poSrcLayerDefn->GetFieldIndex(fieldName.c_str());
-                if (iSrcField == -1)
-                {
-                    ReportError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Specified field '%s' does not exist in layer '%s'",
-                        fieldName.c_str(), poSrcLayer->GetDescription());
-                    return false;
-                }
-                includeFieldIndices.push_back(iSrcField);
+                return false;
             }
 
             outDS->AddLayer(*poSrcLayer,
