@@ -1085,7 +1085,7 @@ def test_gdalalg_raster_blend_in_pipeline(tmp_vsimem):
                 assert struct.unpack("B" * 1, out_ds.ReadRaster(x, y, 1, 1)) == (5,)
 
     with gdal.alg.pipeline(
-        pipeline=f"read {tmp_vsimem}/overlay.tif ! blend --operator multiply --input {tmp_vsimem}/grayscale.tif --overlay _ "
+        pipeline=f"read {tmp_vsimem}/overlay.tif ! blend --operator multiply --input {tmp_vsimem}/grayscale.tif --overlay _PIPE_"
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1
@@ -1094,7 +1094,7 @@ def test_gdalalg_raster_blend_in_pipeline(tmp_vsimem):
                 assert struct.unpack("B" * 1, out_ds.ReadRaster(x, y, 1, 1)) == (5,)
 
     with gdal.alg.pipeline(
-        pipeline=f"read {tmp_vsimem}/grayscale.tif ! blend --operator multiply --input _ --overlay _ "
+        pipeline=f"read {tmp_vsimem}/grayscale.tif ! blend --operator multiply --input _PIPE_ --overlay _PIPE_"
     ) as alg:
         out_ds = alg.Output()
         assert out_ds.RasterCount == 1

@@ -924,14 +924,14 @@ def test_gdalalg_raster_pixel_info_in_pipeline(tmp_vsimem):
         assert out_lyr.GetFeatureCount() == 1
 
     with gdal.alg.pipeline(
-        pipeline=f"read ../gcore/data/byte.tif ! pixel-info --input _ --position-dataset {tmp_vsimem}/coords.shp"
+        pipeline=f"read ../gcore/data/byte.tif ! pixel-info --input _PIPE_ --position-dataset {tmp_vsimem}/coords.shp"
     ) as alg:
         out_ds = alg.Output()
         out_lyr = out_ds.GetLayer(0)
         assert out_lyr.GetFeatureCount() == 1
 
     with gdal.alg.pipeline(
-        pipeline=f"read {tmp_vsimem}/coords.shp ! pixel-info --input ../gcore/data/byte.tif --position-dataset _"
+        pipeline=f"read {tmp_vsimem}/coords.shp ! pixel-info --input ../gcore/data/byte.tif --position-dataset _PIPE_"
     ) as alg:
         out_ds = alg.Output()
         out_lyr = out_ds.GetLayer(0)
@@ -953,5 +953,5 @@ def test_gdalalg_raster_pixel_info_in_pipeline(tmp_vsimem):
 
     with pytest.raises(Exception, match="has no raster band"):
         gdal.alg.pipeline(
-            pipeline=f"read {tmp_vsimem}/coords.shp ! pixel-info --input _ --position-dataset _"
+            pipeline=f"read {tmp_vsimem}/coords.shp ! pixel-info --input _PIPE_ --position-dataset _PIPE_"
         )
