@@ -40,6 +40,7 @@ GDALVectorConcatAlgorithm::GDALVectorConcatAlgorithm(bool bStandalone)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       ConstructorOptions()
                                           .SetStandaloneStep(bStandalone)
+                                          .SetAddDefaultArguments(bStandalone)
                                           .SetInputDatasetMaxCount(INT_MAX)
                                           .SetAddOutputLayerNameArgument(false)
                                           .SetAutoOpenInputDatasets(false))

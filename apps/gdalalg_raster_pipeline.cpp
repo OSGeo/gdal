@@ -133,6 +133,8 @@ GDALRasterPipelineAlgorithm::GDALRasterPipelineAlgorithm(
     : GDALAbstractPipelineAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                     ConstructorOptions()
                                         .SetAddDefaultArguments(false)
+                                        .SetInputDatasetRequired(false)
+                                        .SetInputDatasetPositional(false)
                                         .SetInputDatasetMaxCount(INT_MAX))
 {
     m_supportsStreamedOutput = true;

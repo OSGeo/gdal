@@ -26,8 +26,9 @@
 /************************************************************************/
 
 GDALVectorReadAlgorithm::GDALVectorReadAlgorithm()
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      /* standaloneStep =*/false)
+    : GDALVectorPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions().SetAddDefaultArguments(false))
 {
     AddVectorInputArgs(/* hiddenForCLI = */ false);
 }

@@ -193,6 +193,44 @@ Execution of pipelines and argument substitutions can also be done in Python wit
 
     gdal.Run("pipeline", pipeline="raster_reproject.gdalg.json", output="out.tif", arguments={"edit[0].metadata": "before=modified"})
 
+Placeholder dataset name ``_``
+------------------------------
+
+.. versionadded:: 3.13
+
+By default, in a pipeline step that accepts multiple input dataset arguments,
+the first positional argument, ``input``, is implicitly set to the output
+dataset from the previous step. In some cases, it might be desirable to pipe
+the output dataset from the previous step into one of the other input dataset
+arguments instead.
+
+This can be achieved by using the placeholder dataset name ``_`` (underscore) as
+the value for the alternate dataset argument, while explicitly specifying the
+input positional dataset argument.
+
+.. example::
+   :title: Summarize mean elevation within 200m of points of interest
+
+   .. code-block:: bash
+
+      gdal pipeline read points.geojson ! buffer 200 ! \
+          zonal-stats \
+            --input dem.tif
+            --zones _ \
+            --stat mean ! \
+          write \
+            --output-format CSV \
+            --output /vsistdout/
+
+
+It is also possible to achieve the same result by using a input nested pipeline
+as described below.
+
+.. warning::
+
+    Be careful to use the underscore character ``_``, and not the dash character ``-``.
+    The later tries to read the dataset from the standard input stream.
+
 
 .. _gdal_nested_pipeline:
 

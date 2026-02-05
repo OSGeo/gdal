@@ -140,6 +140,7 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         bool addDefaultArguments = true;
         bool autoOpenInputDatasets = true;
         bool inputDatasetRequired = true;
+        bool inputDatasetPositional = true;
         bool outputDatasetRequired = true;
         bool addInputLayerNameArgument = true;   // only for vector input
         bool addUpdateArgument = true;           // only for vector output
@@ -176,6 +177,12 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         inline ConstructorOptions &SetInputDatasetRequired(bool b)
         {
             inputDatasetRequired = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetPositional(bool b)
+        {
+            inputDatasetPositional = b;
             return *this;
         }
 
@@ -363,6 +370,7 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     void AddVectorInputArgs(bool hiddenForCLI);
     void AddVectorOutputArgs(bool hiddenForCLI,
                              bool shortNameOutputLayerAllowed);
+    void AddVectorHiddenInputDatasetArg();
 
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;

@@ -120,6 +120,8 @@ GDALTeeStepAlgorithmBase<BaseStepAlgorithm,
                         GDALPipelineStepAlgorithm::ConstructorOptions()
                             .SetAddDefaultArguments(false))
 {
+    this->AddInputDatasetArg(&this->m_inputDataset, 0, true).SetHidden();
+
     this->AddArg("tee-pipeline", 0, _("Nested pipeline"), &m_pipelines,
                  nDatasetType)
         .SetPositional()

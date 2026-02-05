@@ -59,6 +59,10 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
             .AddHiddenAlias("ro")
             .AddHiddenAlias(GDAL_ARG_NAME_READ_ONLY);
     }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
 
     AddArg("crs", 0, _("Override CRS (without reprojection)"), &m_overrideCrs)
         .AddHiddenAlias("a_srs")

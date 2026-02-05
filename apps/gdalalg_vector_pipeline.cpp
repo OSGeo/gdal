@@ -90,6 +90,13 @@ GDALVectorPipelineStepAlgorithm::GDALVectorPipelineStepAlgorithm(
             AddVectorOutputArgs(false, false);
         }
     }
+    else
+    {
+        if (m_constructorOptions.addDefaultArguments)
+        {
+            AddVectorHiddenInputDatasetArg();
+        }
+    }
 }
 
 GDALVectorPipelineStepAlgorithm::~GDALVectorPipelineStepAlgorithm() = default;

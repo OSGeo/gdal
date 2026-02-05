@@ -52,6 +52,11 @@ GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
 {
     AddProgressArg();
 
+    if (!standaloneStep)
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
+
     auto &referenceDatasetArg = AddArg("reference", 0, _("Reference dataset"),
                                        &m_referenceDataset, GDAL_OF_RASTER)
                                     .SetPositional()
@@ -63,10 +68,6 @@ GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
     {
         AddRasterInputArgs(/* openForMixedRasterVector = */ false,
                            /* hiddenForCLI = */ false);
-    }
-    else
-    {
-        AddRasterHiddenInputDatasetArg();
     }
 
     AddArg("skip-all-optional", 0, _("Skip all optional comparisons"),

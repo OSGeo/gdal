@@ -47,11 +47,18 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd(
     AddProgressArg();
 
     AddOpenOptionsArg(&m_openOptions);
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER | GDAL_OF_UPDATE,
-                       /* positionalAndRequired = */ standaloneStep,
-                       _("Dataset (to be updated in-place, unless --external)"))
-        .AddAlias("dataset")
-        .SetMaxCount(1);
+    auto &datasetArg =
+        AddInputDatasetArg(
+            &m_inputDataset, GDAL_OF_RASTER | GDAL_OF_UPDATE,
+            /* positionalAndRequired = */ standaloneStep,
+            _("Dataset (to be updated in-place, unless --external)"))
+            .AddAlias("dataset")
+            .SetMaxCount(1);
+    if (!standaloneStep)
+    {
+        datasetArg.SetPositional();
+        datasetArg.SetHidden();
+    }
 
     constexpr const char *OVERVIEW_SRC_LEVELS_MUTEX = "overview-src-levels";
 
