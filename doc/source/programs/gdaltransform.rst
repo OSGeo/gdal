@@ -235,8 +235,10 @@ Where is the address "370 S. 300 E."?
 
 .. code-block:: bash
 
-    echo 300 -370 370 S. 300 E. | gdaltransform --optfile optfile.txt
-    -111.8825697384 40.761338402 370 S. 300 E.
+    echo 300 -370 Address 370 S. 300 E. | gdaltransform --optfile optfile.txt
+    -111.8825697384 40.761338402 Address 370 S. 300 E.
+
+(The 370 is protected from being consumed as an elevation by placing a word before it.)
 
 Nearby, a newly constructed building needs an address assigned. We use :option:`-i`:
 
