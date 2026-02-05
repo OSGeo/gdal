@@ -324,3 +324,22 @@ def test_ogr_vfk_12(vfk_ds):
     ), "did not get expected geometry type."
 
     assert geom.GetPointCount() == 92, "did not get expected number of points."
+
+
+###############################################################################
+# Read the first feature from layer 'BUD', check geometry type
+
+
+@pytest.mark.require_geos
+def test_ogr_vfk_14(vfk_ds):
+
+    vfk_layer_bud = vfk_ds.GetLayerByName("BUD")
+
+    vfk_layer_bud.ResetReading()
+
+    feat = vfk_layer_bud.GetNextFeature()
+
+    geom = feat.GetGeometryRef()
+    assert (
+        geom.GetGeometryType() == ogr.wkbMultiPolygon
+    ), "did not get expected geometry type."
