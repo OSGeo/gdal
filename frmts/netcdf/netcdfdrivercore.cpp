@@ -270,6 +270,23 @@ void NCDFDriverSubdatasetInfo::parseFileName()
             m_pathComponent.append(":");
             m_pathComponent.append(aosParts[2]);
             subdatasetIndex++;
+
+            // Check for a port number and add it to the path component.
+            if (hasProtocol && aosParts.size() > 3)
+            {
+                const auto nChars = strlen(aosParts[3]);
+                size_t i = 0;
+                while (i < nChars && std::isdigit(aosParts[3][i]))
+                {
+                    i++;
+                }
+                if (i > 0 && aosParts[3][i] == '/')
+                {
+                    m_pathComponent.append(":");
+                    m_pathComponent.append(aosParts[3]);
+                    subdatasetIndex++;
+                }
+            }
         }
 
         // Check for bogus paths
