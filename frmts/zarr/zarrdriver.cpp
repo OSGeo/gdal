@@ -751,6 +751,15 @@ static CPLErr ZarrDatasetCopyFiles(const char *pszNewName,
 }
 
 /************************************************************************/
+/*                       ZarrDriverClearCaches()                        */
+/************************************************************************/
+
+static void ZarrDriverClearCaches(GDALDriver *)
+{
+    ZarrClearCoordinateCache();
+}
+
+/************************************************************************/
 /*                             ZarrDriver()                             */
 /************************************************************************/
 
@@ -2052,6 +2061,7 @@ void GDALRegister_Zarr()
     poDriver->pfnDelete = ZarrDatasetDelete;
     poDriver->pfnRename = ZarrDatasetRename;
     poDriver->pfnCopyFiles = ZarrDatasetCopyFiles;
+    poDriver->pfnClearCaches = ZarrDriverClearCaches;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

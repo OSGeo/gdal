@@ -3329,3 +3329,36 @@ GDALGetMessageAboutMissingPluginDriver(GDALDriver *poMissingPluginDriver)
     }
     return osMsg;
 }
+
+/************************************************************************/
+/*                       GDALClearMemoryCaches()                        */
+/************************************************************************/
+
+/**
+ * \brief Clear all GDAL-controlled in-memory caches.
+ *
+ * Iterates registered drivers and calls their pfnClearCaches callback if set,
+ * then calls VSICurlClearCache() to clear /vsicurl/ and related caches.
+ *
+ * Note that neither the global raster block cache or caches specific to open
+ * dataset objects are not cleared by this function (in its current implementation).
+ *
+ * Useful when remote datasets may have changed during the lifetime of a
+ * process.
+ *
+ * @since GDAL 3.13
+ */
+void GDALClearMemoryCaches()
+{
+    auto *poDM = GetGDALDriverManager();
+    if (poDM)
+    {
+        for (int i = 0; i < poDM->GetDriverCount(); i++)
+        {
+            auto *poDriver = poDM->GetDriver(i);
+            if (poDriver && poDriver->pfnClearCaches)
+                poDriver->pfnClearCaches(poDriver);
+        }
+    }
+    VSICurlClearCache();
+}
