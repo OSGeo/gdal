@@ -3329,3 +3329,33 @@ GDALGetMessageAboutMissingPluginDriver(GDALDriver *poMissingPluginDriver)
     }
     return osMsg;
 }
+
+/************************************************************************/
+/*                    GDALClearDriverMemoryCaches()                     */
+/************************************************************************/
+
+/**
+ * \brief Clear all driver-specific in-memory caches and HTTP region caches.
+ *
+ * Iterates registered drivers and calls their pfnClearCaches callback if set,
+ * then calls VSICurlClearCache() to clear /vsicurl/ and related caches.
+ *
+ * Useful when remote datasets may have changed during the lifetime of a
+ * process.
+ *
+ * @since GDAL 3.13
+ */
+void GDALClearDriverMemoryCaches()
+{
+    auto *poDM = GetGDALDriverManager();
+    if (poDM)
+    {
+        for (int i = 0; i < poDM->GetDriverCount(); i++)
+        {
+            auto *poDriver = poDM->GetDriver(i);
+            if (poDriver && poDriver->pfnClearCaches)
+                poDriver->pfnClearCaches(poDriver);
+        }
+    }
+    VSICurlClearCache();
+}

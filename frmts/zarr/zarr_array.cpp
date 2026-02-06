@@ -13,6 +13,7 @@
 #include "zarr.h"
 
 #include "cpl_float.h"
+#include "cpl_mem_cache.h"
 #include "cpl_multiproc.h"
 #include "cpl_vsi_virtual.h"
 #include "ucs4_utf8.hpp"
@@ -3801,4 +3802,57 @@ std::shared_ptr<ZarrGroupBase> ZarrArray::GetParentGroup() const
         }
     }
     return poGroup;
+}
+
+/************************************************************************/
+/*                    ZarrArray::IsRegularlySpaced()                    */
+/************************************************************************/
+
+// Process-level LRU cache for coordinate array regularity results.
+// Keyed by root directory + array full name.
+// Avoids redundant HTTP reads for immutable cloud-hosted coordinate arrays.
+// Thread-safe: lru11::Cache with std::mutex handles locking internally.
+
+struct CoordCacheEntry
+{
+    bool bIsRegular;
+    double dfStart;
+    double dfIncrement;
+};
+
+static lru11::Cache<std::string, CoordCacheEntry, std::mutex> g_oCoordCache{
+    128};
+
+void ZarrClearCoordinateCache()
+{
+    g_oCoordCache.clear();
+}
+
+bool ZarrArray::IsRegularlySpaced(double &dfStart, double &dfIncrement) const
+{
+    // Only cache 1D coordinate arrays (the ones that trigger HTTP reads)
+    if (GetDimensionCount() != 1)
+        return GDALMDArray::IsRegularlySpaced(dfStart, dfIncrement);
+
+    const std::string &osKey = GetFilename();
+
+    CoordCacheEntry entry;
+    if (g_oCoordCache.tryGet(osKey, entry))
+    {
+        CPLDebugOnly("ZARR", "IsRegularlySpaced cache hit for %s",
+                     osKey.c_str());
+        dfStart = entry.dfStart;
+        dfIncrement = entry.dfIncrement;
+        return entry.bIsRegular;
+    }
+
+    // Cache miss: perform the full coordinate read
+    const bool bResult = GDALMDArray::IsRegularlySpaced(dfStart, dfIncrement);
+
+    g_oCoordCache.insert(osKey, {bResult, dfStart, dfIncrement});
+
+    CPLDebugOnly("ZARR", "IsRegularlySpaced cached for %s: %s", osKey.c_str(),
+                 bResult ? "regular" : "irregular");
+
+    return bResult;
 }

@@ -265,6 +265,11 @@ class CPL_DLL GDALDriver : public GDALMajorObject
      */
     void DeclareAlgorithm(const std::vector<std::string> &aosPath);
 
+    /** Callback to clear driver-specific in-memory caches.
+     * Called by GDALClearDriverMemoryCaches().
+     */
+    void (*pfnClearCaches)(GDALDriver *) = nullptr;
+
     //! @endcond
 
     /* -------------------------------------------------------------------- */

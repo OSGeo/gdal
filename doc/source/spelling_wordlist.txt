@@ -2402,6 +2402,7 @@ perl
 Petr
 pFct
 pfnCachePage
+pfnClearCaches
 pfnCopy
 pfnCopyFiles
 pfnCreate
