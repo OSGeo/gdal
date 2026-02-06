@@ -6159,9 +6159,8 @@ def test_zarr_read_simple_sharding_read_errors(tmp_vsimem):
             except Exception as e:
                 error_msgs += str(e) + "\n"
 
-    assert "DecodePartial(): cannot decode chunk 0" in error_msgs
-    assert "cannot read data for chunk" in error_msgs
-    assert "invalid chunk location for chunk" in error_msgs
+    assert "cannot decode chunk 0" in error_msgs
+    assert "cannot decode shard index" in error_msgs
 
 
 ###############################################################################
@@ -6768,6 +6767,52 @@ def test_zarr_read_nested_sharding():
     assert ar.GetBlockSize() == [2, 4]
 
     assert list(struct.unpack("H" * (5 * 10), ar.Read())) == [i for i in range(50)]
+
+
+###############################################################################
+# Test that reading multiple inner chunks from the same shard reuses the
+# cached shard index (no repeated index I/O).  Uses the raster API which
+# calls DecodePartial() per block, one block at a time.
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_sharding_index_cache():
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    if "zstd" not in compressors:
+        pytest.skip("compressor zstd not available")
+
+    # simple_sharding.zarr: 24x26 float32, outer chunk 10x12, inner chunk 5x6
+    # 2x2 inner chunks per shard, 3x3 grid of shards
+    ds = gdal.Open('ZARR:"data/zarr/v3/simple_sharding.zarr":/simple_sharding')
+    assert ds is not None
+    band = ds.GetRasterBand(1)
+
+    # Block size should be the inner chunk size (5 rows x 6 cols)
+    assert band.GetBlockSize() == [6, 5]
+
+    # Read all 4 inner blocks from shard c/0/0 (rows 0-9, cols 0-11).
+    # Second, third, fourth reads should hit the cached shard index.
+    expected = [float(i) for i in range(24 * 26)]
+    for bx in range(2):
+        for by in range(2):
+            data = band.ReadBlock(bx, by)
+            values = list(struct.unpack("f" * 30, data))
+            ref = []
+            for row in range(by * 5, (by + 1) * 5):
+                for col in range(bx * 6, (bx + 1) * 6):
+                    ref.append(expected[row * 26 + col])
+            assert values == ref, f"Block ({bx},{by}) mismatch"
+
+    # Read a block from a different shard c/0/1 (cols 12-17) to exercise
+    # cache invalidation (different shard file).
+    data = band.ReadBlock(2, 0)
+    values = list(struct.unpack("f" * 30, data))
+    ref = []
+    for row in range(5):
+        for col in range(12, 18):
+            ref.append(expected[row * 26 + col])
+    assert values == ref, "Cross-shard block mismatch"
 
 
 ###############################################################################

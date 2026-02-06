@@ -487,6 +487,7 @@ bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
                                     m_anOuterBlockSize[i]));
             anCount.push_back(static_cast<size_t>(m_anInnerBlockSize[i]));
         }
+        poCodecs->SetCurrentShardFilename(osFilename);
         if (!poCodecs->DecodePartial(fp.get(), abyRawBlockData, anStartIdx,
                                      anCount))
             return false;

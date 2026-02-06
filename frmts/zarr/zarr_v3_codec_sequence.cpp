@@ -284,6 +284,21 @@ bool ZarrV3CodecSequence::DecodePartial(VSIVirtualHandle *poFile,
 }
 
 /************************************************************************/
+/*            ZarrV3CodecSequence::SetCurrentShardFilename()            */
+/************************************************************************/
+
+void ZarrV3CodecSequence::SetCurrentShardFilename(const std::string &osFilename)
+{
+    if (!m_apoCodecs.empty())
+    {
+        auto *poSharding = dynamic_cast<ZarrV3CodecShardingIndexed *>(
+            m_apoCodecs.back().get());
+        if (poSharding)
+            poSharding->SetCurrentShardFilename(osFilename);
+    }
+}
+
+/************************************************************************/
 /*             ZarrV3CodecSequence::GetInnerMostBlockSize()             */
 /************************************************************************/
 

@@ -488,6 +488,83 @@ bool ZarrV3CodecShardingIndexed::Decode(const ZarrByteVectorQuickResize &abySrc,
 }
 
 /************************************************************************/
+/*             ZarrV3CodecShardingIndexed::LoadShardIndex()             */
+/************************************************************************/
+
+bool ZarrV3CodecShardingIndexed::LoadShardIndex(VSIVirtualHandle *poFile,
+                                                size_t nInnerChunkCount)
+{
+    const size_t nIndexRawSize = nInnerChunkCount * sizeof(Location);
+    size_t nIndexEncodedSize =
+        nIndexRawSize + (m_bIndexHasCRC32 ? sizeof(uint32_t) : 0);
+
+    vsi_l_offset nIndexOffset = 0;
+    if (m_bIndexLocationAtEnd)
+    {
+        poFile->Seek(0, SEEK_END);
+        const auto nFileSize = poFile->Tell();
+        if (nFileSize < nIndexEncodedSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ZarrV3CodecShardingIndexed::LoadShardIndex(): "
+                     "shard file too small");
+            return false;
+        }
+        nIndexOffset = nFileSize - nIndexEncodedSize;
+    }
+
+    ZarrByteVectorQuickResize abyIndex;
+    try
+    {
+        abyIndex.resize(nIndexEncodedSize);
+    }
+    catch (const std::exception &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Cannot allocate memory for shard index");
+        return false;
+    }
+
+    if (poFile->Seek(nIndexOffset, SEEK_SET) != 0 ||
+        poFile->Read(abyIndex.data(), 1, nIndexEncodedSize) !=
+            nIndexEncodedSize)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ZarrV3CodecShardingIndexed::LoadShardIndex(): "
+                 "cannot read shard index");
+        return false;
+    }
+
+    if (!m_poIndexCodecSequence->Decode(abyIndex) ||
+        abyIndex.size() != nIndexRawSize)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ZarrV3CodecShardingIndexed::LoadShardIndex(): "
+                 "cannot decode shard index");
+        return false;
+    }
+
+    try
+    {
+        m_aCachedIndex.resize(nInnerChunkCount);
+    }
+    catch (const std::exception &)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "Cannot allocate memory for shard index cache");
+        return false;
+    }
+    memcpy(m_aCachedIndex.data(), abyIndex.data(), nIndexRawSize);
+
+    CPLDebugOnly("ZARR",
+                 "Cached shard index: %" PRIu64 " entries (%" PRIu64 " bytes)",
+                 static_cast<uint64_t>(nInnerChunkCount),
+                 static_cast<uint64_t>(nIndexRawSize));
+
+    return true;
+}
+
+/************************************************************************/
 /*             ZarrV3CodecShardingIndexed::DecodePartial()              */
 /************************************************************************/
 
@@ -529,46 +606,17 @@ bool ZarrV3CodecShardingIndexed::DecodePartial(
     const auto nDTSize = m_oInputArrayMetadata.oElt.nativeSize;
     const auto nExpectedDecodedChunkSize = nDTSize * MultiplyElements(anCount);
 
-    vsi_l_offset nLocationOffset =
-        static_cast<vsi_l_offset>(nInnerChunkIdx) * sizeof(Location);
-    if (m_bIndexLocationAtEnd)
+    // --- Shard index: read full index once, reuse for subsequent chunks ---
+    // The cache is invalidated when SetCurrentShardFilename() is called
+    // with a different filename (i.e., a different shard file).
+    if (m_aCachedIndex.empty())
     {
-        poFile->Seek(0, SEEK_END);
-        const auto nFileSize = poFile->Tell();
-        vsi_l_offset nIndexSize =
-            static_cast<vsi_l_offset>(nInnerChunkCount) * sizeof(Location);
-        if (m_bIndexHasCRC32)
-            nIndexSize += sizeof(uint32_t);
-        if (nFileSize < nIndexSize)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "ZarrV3CodecShardingIndexed::DecodePartial(): shard file "
-                     "too small");
+        if (!LoadShardIndex(poFile, nInnerChunkCount))
             return false;
-        }
-        nLocationOffset += nFileSize - nIndexSize;
     }
 
-    Location loc;
-    if (poFile->Seek(nLocationOffset, SEEK_SET) != 0 ||
-        poFile->Read(&loc, 1, sizeof(loc)) != sizeof(loc))
-    {
-
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ZarrV3CodecShardingIndexed::DecodePartial(): "
-                 "cannot read index for chunk %" PRIu64,
-                 static_cast<uint64_t>(nInnerChunkIdx));
-        return false;
-    }
-
-    if (!m_poIndexCodecSequence->GetCodecs().empty() &&
-        m_poIndexCodecSequence->GetCodecs().front()->GetName() ==
-            ZarrV3CodecBytes::NAME &&
-        !m_poIndexCodecSequence->GetCodecs().front()->IsNoOp())
-    {
-        CPL_SWAP64PTR(&(loc.nOffset));
-        CPL_SWAP64PTR(&(loc.nSize));
-    }
+    CPLAssert(nInnerChunkIdx < m_aCachedIndex.size());
+    const Location &loc = m_aCachedIndex[nInnerChunkIdx];
 
     if (loc.nOffset == std::numeric_limits<uint64_t>::max() &&
         loc.nSize == std::numeric_limits<uint64_t>::max())
