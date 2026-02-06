@@ -71,6 +71,11 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
         CPLString osAux = CPLGetPathSafe(m_pfRel->GetRELNameChar());
         m_osBandFileName =
             CPLFormFilenameSafe(osAux.c_str(), m_osRawBandFileName.c_str(), "");
+
+        CPLString osExtension =
+            CPLString(CPLGetExtensionSafe(m_osBandFileName).c_str());
+        if (!EQUAL(osExtension, pszExtRaster + 1))
+            return;
     }
 
     // There is a band file documented?
