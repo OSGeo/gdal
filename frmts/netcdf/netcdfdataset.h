@@ -468,16 +468,17 @@ class netCDFDataset final : public GDALPamDataset
     static double rint(double);
 
     double FetchCopyParam(const char *pszGridMappingValue, const char *pszParam,
-                          double dfDefault, bool *pbFound = nullptr);
+                          double dfDefault, bool *pbFound = nullptr) const;
 
     std::vector<std::string>
-    FetchStandardParallels(const char *pszGridMappingValue);
+    FetchStandardParallels(const char *pszGridMappingValue) const;
 
-    const char *FetchAttr(const char *pszVarFullName, const char *pszAttr);
-    const char *FetchAttr(int nGroupId, int nVarId, const char *pszAttr);
+    const char *FetchAttr(const char *pszVarFullName,
+                          const char *pszAttr) const;
+    const char *FetchAttr(int nGroupId, int nVarId, const char *pszAttr) const;
 
     void ProcessCreationOptions();
-    int DefVarDeflate(int nVarId, bool bChunkingArg = true);
+    int DefVarDeflate(int nVarId, bool bChunkingArg = true) const;
     CPLErr AddProjectionVars(bool bDefsOnly, GDALProgressFunc pfnProgress,
                              void *pProgressData);
     bool AddGridMappingRef();

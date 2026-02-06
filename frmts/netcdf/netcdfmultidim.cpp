@@ -1419,13 +1419,13 @@ netCDFGroup::GetMDArrayNames(CSLConstList papszOptions) const
     {
         for (const auto &varid : anVarIds)
         {
-            char **papszTokens = nullptr;
+            CPLStringList aosTokens;
             if (!bCoordinates)
             {
                 char *pszTemp = nullptr;
                 if (NCDFGetAttr(m_gid, varid, "coordinates", &pszTemp) ==
                     CE_None)
-                    papszTokens = NCDFTokenizeCoordinatesAttribute(pszTemp);
+                    aosTokens = NCDFTokenizeCoordinatesAttribute(pszTemp);
                 CPLFree(pszTemp);
             }
             if (!bBounds)
@@ -1433,12 +1433,11 @@ netCDFGroup::GetMDArrayNames(CSLConstList papszOptions) const
                 char *pszTemp = nullptr;
                 if (NCDFGetAttr(m_gid, varid, "bounds", &pszTemp) == CE_None &&
                     pszTemp != nullptr && !EQUAL(pszTemp, ""))
-                    papszTokens = CSLAddString(papszTokens, pszTemp);
+                    aosTokens.AddString(pszTemp);
                 CPLFree(pszTemp);
             }
-            for (char **iter = papszTokens; iter && iter[0]; ++iter)
-                ignoreList.insert(*iter);
-            CSLDestroy(papszTokens);
+            for (const char *pszToken : aosTokens)
+                ignoreList.insert(pszToken);
         }
     }
 
