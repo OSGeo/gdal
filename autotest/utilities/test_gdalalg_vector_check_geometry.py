@@ -65,17 +65,17 @@ def test_gdalalg_vector_check_geometry(alg, polys):
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
     assert dst_lyr.GetName() == "error_location"
-    assert dst_lyr.GetLayerDefn().GetGeomType() == ogr.wkbPoint
+    assert dst_lyr.GetLayerDefn().GetGeomType() == ogr.wkbMultiPoint
 
     errors = [f for f in dst_lyr]
 
     assert len(errors) == 2
     assert errors[0]["error"] == "Self-intersection"
-    assert errors[0].GetGeometryRef().ExportToWkt() == "POINT (5 5)"
+    assert errors[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (5 5)"
     assert errors[0].GetFID() == 2
 
     assert errors[1]["error"] == "Hole lies outside shell"
-    assert errors[1].GetGeometryRef().ExportToWkt() == "POINT (15 15)"
+    assert errors[1].GetGeometryRef().ExportToWkt() == "MULTIPOINT (15 15)"
     assert errors[1].GetFID() == 3
 
     assert dst_lyr.GetFeatureCount() == 2
@@ -129,7 +129,7 @@ def test_gdalalg_vector_check_geometry_linestring(alg, lines):
         ogr.GetGEOSVersionMajor(),
         ogr.GetGEOSVersionMinor(),
     ) >= (3, 14):
-        assert out[0].GetGeometryRef().ExportToWkt() == "POINT (5 5)"
+        assert out[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (5 5)"
     assert out[0].GetFID() == 2
 
     assert alg.Finalize()
@@ -211,7 +211,7 @@ def test_gdalalg_vector_check_geometry_compoundcurve(alg):
         ogr.GetGEOSVersionMajor(),
         ogr.GetGEOSVersionMinor(),
     ) >= (3, 14):
-        expected = ogr.CreateGeometryFromWkt("POINT (1 1)")
+        expected = ogr.CreateGeometryFromWkt("MULTIPOINT (1 1)")
         assert out[0].GetGeometryRef().Distance(expected) < 1e-3
 
 
@@ -273,7 +273,7 @@ def test_gdalalg_vector_check_geometry_geometry_collection(alg):
         ogr.GetGEOSVersionMajor(),
         ogr.GetGEOSVersionMinor(),
     ) >= (3, 14):
-        assert out[0].GetGeometryRef().ExportToWkt() == "POINT (5 5)"
+        assert out[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (5 5)"
 
 
 def test_gdalalg_vector_check_geometry_non_closed_polygon_ring(alg):
@@ -294,7 +294,7 @@ def test_gdalalg_vector_check_geometry_non_closed_polygon_ring(alg):
         errors[0]["error"].lower()
         == "points of linearring do not form a closed linestring"
     )
-    assert errors[0].GetGeometryRef().ExportToWkt() == "POINT (7 3)"
+    assert errors[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (7 3)"
 
     assert alg.Finalize()
 
@@ -314,7 +314,7 @@ def test_gdalalg_vector_check_geometry_single_point_polygon(alg):
     errors = [f for f in dst_lyr]
 
     assert errors[0]["error"].lower() == "point array must contain 0 or >1 elements"
-    assert errors[0].GetGeometryRef().ExportToWkt() == "POINT (7 3)"
+    assert errors[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (7 3)"
 
     assert alg.Finalize()
 
@@ -334,7 +334,7 @@ def test_gdalalg_vector_check_geometry_two_point_polygon(alg):
     errors = [f for f in dst_lyr]
 
     assert "invalid number of points in linearring" in errors[0]["error"].lower()
-    assert errors[0].GetGeometryRef().ExportToWkt() == "POINT (7 3)"
+    assert errors[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (7 3)"
 
     assert alg.Finalize()
 

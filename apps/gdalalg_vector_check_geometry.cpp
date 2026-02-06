@@ -64,7 +64,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
           m_srcGeomField(srcGeomField), m_skipValid(skipValid)
     {
         m_defn->Reference();
-        m_defn->SetGeomType(wkbPoint);
+        m_defn->SetGeomType(wkbMultiPoint);
 
         if (!srcFieldIndices.empty())
         {
@@ -162,7 +162,11 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                         {
                             auto poPoint = std::make_unique<OGRPoint>();
                             poRing->StartPoint(poPoint.get());
-                            poErrorFeature->SetGeometry(std::move(poPoint));
+                            auto poMultiPoint =
+                                std::make_unique<OGRMultiPoint>();
+                            poMultiPoint->addGeometry(std::move(poPoint));
+                            poErrorFeature->SetGeometry(
+                                std::move(poMultiPoint));
                         }
                         else
                         {
@@ -237,6 +241,15 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                                 OGRGeometryFactory::createFromGEOS(
                                     m_geosContext, location));
                             GEOSGeom_destroy_r(m_geosContext, location);
+
+                            if (poErrorGeom->getGeometryType() == wkbPoint)
+                            {
+                                auto poMultiPoint =
+                                    std::make_unique<OGRMultiPoint>();
+                                poMultiPoint->addGeometry(
+                                    std::move(poErrorGeom));
+                                poErrorGeom = std::move(poMultiPoint);
+                            }
 
                             poErrorGeom->assignSpatialReference(
                                 m_srcLayer.GetLayerDefn()
