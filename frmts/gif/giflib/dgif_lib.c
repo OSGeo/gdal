@@ -494,10 +494,11 @@ int DGifGetLine(GifFileType *GifFile, GifPixelType *Line, int LineLen) {
 		LineLen = GifFile->Image.Width;
 	}
 
-	if ((Private->PixelCount -= LineLen) > 0xffff0000UL) {
+	if (LineLen < 0 || Private->PixelCount < (unsigned long)LineLen) {
 		GifFile->Error = D_GIF_ERR_DATA_TOO_BIG;
 		return GIF_ERROR;
 	}
+	Private->PixelCount -= LineLen;
 
 	if (DGifDecompressLine(GifFile, Line, LineLen) == GIF_OK) {
 		if (Private->PixelCount == 0) {
@@ -531,10 +532,11 @@ int DGifGetPixel(GifFileType *GifFile, GifPixelType Pixel) {
 		GifFile->Error = D_GIF_ERR_NOT_READABLE;
 		return GIF_ERROR;
 	}
-	if (--Private->PixelCount > 0xffff0000UL) {
+	if (Private->PixelCount == 0) {
 		GifFile->Error = D_GIF_ERR_DATA_TOO_BIG;
 		return GIF_ERROR;
 	}
+	Private->PixelCount --;
 
 	if (DGifDecompressLine(GifFile, &Pixel, 1) == GIF_OK) {
 		if (Private->PixelCount == 0) {
