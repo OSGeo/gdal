@@ -39,7 +39,6 @@ MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
 
     // Is this an authomatic palette or has a color table (dbf, pal,...)?
     CPLString os_Color_Paleta = "";
-    ;
     if (m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
                                   "Color_Paleta", os_Color_Paleta))
     {
