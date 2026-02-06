@@ -6248,13 +6248,13 @@ def InterpolateAtPoint(self, *args, **kwargs):
        ----------
        pixel : float
        line : float
-       interpolation : str
+       interpolation : int
            Resampling algorithm to use. One of:
 
-           - ``nearest``
-           - ``bilinear``
-           - ``cubic``
-           - ``cubicspline``
+           - :py:const:`GRIORA_NearestNeighbour`
+           - :py:const:`GRIORA_Bilinear`
+           - :py:const:`GRIORA_Cubic`
+           - :py:const:`GRIORA_CubicSpline`
 
        Returns
        -------
@@ -6310,13 +6310,13 @@ def InterpolateAtGeolocation(self, *args, **kwargs):
            taking into account the data-axis-to-crs-axis mapping
        srs : object
            :py:class:`osr.SpatialReference`. If set, override the natural CRS in which geolocX, geolocY are expressed
-       interpolation : str
+       interpolation : int
            Resampling algorithm to use. One of:
 
-           - ``nearest``
-           - ``bilinear``
-           - ``cubic``
-           - ``cubicspline``
+           - :py:const:`GRIORA_NearestNeighbour`
+           - :py:const:`GRIORA_Bilinear`
+           - :py:const:`GRIORA_Cubic`
+           - :py:const:`GRIORA_CubicSpline`
 
        Returns
        -------
@@ -6331,10 +6331,7 @@ def InterpolateAtGeolocation(self, *args, **kwargs):
        >>> with gdal.Open("byte.tif") as ds:
        ...    wgs84_srs = osr.SpatialReference("WGS84")
        ...    wgs84_srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
-       ...    ds.GetRasterBand(1).InterpolateAtGeolocation(longitude_degree, \
-                                                           latitude_degree, \
-                                                           wgs84_srs, \
-                                                           gdal.GRIORA_Bilinear)
+       ...    ds.GetRasterBand(1).InterpolateAtGeolocation(longitude_degree, latitude_degree, wgs84_srs, gdal.GRIORA_Bilinear)
        135.62  # interpolated value, rtol: 1e-3
     """
 
