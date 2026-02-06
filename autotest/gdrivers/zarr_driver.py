@@ -6816,6 +6816,42 @@ def test_zarr_read_sharding_index_cache():
 
 
 ###############################################################################
+# Test that reading a multi-block region via the multidim API triggers
+# batched ReadMultiRange() for sharded arrays.
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_sharding_batch_decode():
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    if "zstd" not in compressors:
+        pytest.skip("compressor zstd not available")
+
+    # simple_sharding.zarr: 24x26 float32, outer chunk 10x12, inner chunk 5x6
+    ds = gdal.OpenEx(
+        "data/zarr/v3/simple_sharding.zarr",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    ar = ds.GetRootGroup().OpenMDArray("simple_sharding")
+
+    # Read full array - this goes through IRead() with a count spanning all
+    # blocks, triggering PreloadShardedBlocks() -> BatchDecodePartial().
+    data = ar.Read()
+    values = list(struct.unpack("f" * (24 * 26), data))
+    expected = [float(i) for i in range(24 * 26)]
+    assert values == expected, "Full-array batch read mismatch"
+
+    # Read a sub-region spanning 2x2 inner blocks (rows 3-8, cols 5-11)
+    data = ar.Read([3, 5], [6, 7])
+    values = list(struct.unpack("f" * (6 * 7), data))
+    ref = []
+    for row in range(3, 9):
+        for col in range(5, 12):
+            ref.append(float(row * 26 + col))
+    assert values == ref, "Sub-region batch read mismatch"
+
+
+###############################################################################
 # Test reading a dataset with the "multiscales" convention
 
 
