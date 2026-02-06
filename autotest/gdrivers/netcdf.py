@@ -6367,6 +6367,8 @@ def test_netcdf_NASA_EMIT_L2B_MIN():
 @pytest.mark.parametrize(
     "filename,path_component,subdataset_component",
     (
+        ("NETCDF:data/hdf4/hdifftst2.hdf", "data/hdf4/hdifftst2.hdf", ""),
+        ('NETCDF:"data/hdf4/hdifftst2.hdf"', "data/hdf4/hdifftst2.hdf", ""),
         (
             'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
             "data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
@@ -6454,6 +6456,7 @@ def test_gdal_subdataset_get_filename(filename, path_component, subdataset_compo
 @pytest.mark.parametrize(
     "filename",
     (
+        "NETCDF:",
         'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
         "NETCDF:data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
         r'NETCDF:"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
@@ -6463,7 +6466,7 @@ def test_gdal_subdataset_get_filename(filename, path_component, subdataset_compo
 def test_gdal_subdataset_modify_filename(filename):
 
     info = gdal.GetSubdatasetInfo(filename)
-    if filename == "":
+    if filename == "" or filename == "NETCDF:":
         assert info is None
     else:
         assert (
