@@ -195,10 +195,27 @@ Examples
       :cwd: ../../../autotest/gcore/data
 
 .. example::
-   :title: Reporting on point at WGS84 coordinates provided on the standard input with longitude, latitude order.
+   :title: Reporting on point at WGS84 coordinates from a coordinate file with longitude, latitude order.
 
-   .. command-output:: echo -117.6355 33.8970 | gdal raster pixel-info --of=csv --position-crs=WGS84 byte.tif
-      :cwd: ../../../autotest/gcore/data
+   Create a file coords.txt containing:
+
+   .. code-block:: text
+
+      -117.6355 33.8970
+
+   .. note::
+      The command-output directive doesn't support shell pipes. 
+      Use the following command with input from the file:
+
+   .. code-block:: bash
+
+      cat coords.txt | gdal raster pixel-info --of=csv --position-crs=WGS84 byte.tif
+
+   Or with input redirection on Linux/Mac:
+
+   .. code-block:: bash
+
+      gdal raster pixel-info --of=csv --position-crs=WGS84 byte.tif < coords.txt
 
 .. example::
    :title: Reading coordinates to extract from an input GeoPackage file and writing the output to a GeoPackage file
@@ -206,3 +223,4 @@ Examples
    .. code-block:: bash
 
        gdal raster pixel-info --position-dataset input.gpkg --input byte.tif --output output.gpkg
+
