@@ -183,6 +183,7 @@ struct SourceProperties
     int nBands{0};
     int nX{0};
     int nY{0};
+    bool hasGT{false};
     GDALGeoTransform gt{};
     std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> srs{
         nullptr};
@@ -777,7 +778,7 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
         out.nBands = 1;
         out.srs.reset(ds->GetSpatialRef() ? ds->GetSpatialRef()->Clone()
                                           : nullptr);
-        ds->GetGeoTransform(out.gt);
+        out.hasGT = ds->GetGeoTransform(out.gt) == CE_None;
     }
 
     CPLXMLTreeCloser root(CPLCreateXMLNode(nullptr, CXT_Element, "VRTDataset"));
@@ -847,7 +848,10 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
     {
         return nullptr;
     };
-    ds->SetGeoTransform(out.gt);
+    if (out.hasGT)
+    {
+        ds->SetGeoTransform(out.gt);
+    }
     if (out.srs)
     {
         ds->SetSpatialRef(out.srs.get());

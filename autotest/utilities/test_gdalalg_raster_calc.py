@@ -1037,3 +1037,43 @@ def test_gdalalg_raster_calc_input_pipeline(calc):
 
     out_ds = calc["output"].GetDataset()
     assert out_ds.GetRasterBand(1).Checksum() == 4692
+
+
+def test_gdalalg_raster_calc_two_inputs_both_no_geotransform(calc, tmp_vsimem):
+
+    gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "a.tif", 10, 10)
+    gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "b.tif", 10, 10)
+
+    calc["input"] = [f"A={tmp_vsimem}/a.tif", f"B={tmp_vsimem}/b.tif"]
+    calc["calc"] = "A+B"
+    calc["output"] = tmp_vsimem / "out.tif"
+
+    assert calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.GetGeoTransform(True) is None
+
+
+@pytest.mark.parametrize("check_extent", (True, False))
+def test_gdalalg_raster_calc_two_inputs_one_no_geotransform(
+    calc, tmp_vsimem, check_extent
+):
+
+    gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "a.tif", 10, 10)
+    with gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "b.tif", 10, 10) as ds:
+        ds.SetGeoTransform((0, 1, 0, 10, 0, -1))
+
+    calc["input"] = [f"A={tmp_vsimem}/a.tif", f"B={tmp_vsimem}/b.tif"]
+    calc["calc"] = "A+B"
+    calc["no-check-extent"] = not check_extent
+    calc["output"] = tmp_vsimem / "out.tif"
+
+    if check_extent:
+        with pytest.raises(Exception, match="extents are inconsistent"):
+            calc.Run()
+        return
+
+    assert calc.Run()
+
+    out_ds = calc["output"].GetDataset()
+    assert out_ds.GetGeoTransform(True) is None
