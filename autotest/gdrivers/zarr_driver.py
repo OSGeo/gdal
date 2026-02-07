@@ -7035,6 +7035,56 @@ def test_zarr_read_multiscales_cannot_get_root_group(tmp_vsimem):
 
 
 ###############################################################################
+# Test multiscales overview discovery when convention is on a nested group.
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_multiscales_nested_group(tmp_vsimem):
+
+    with gdal.VSIFile("data/zarr/v3/simple_multiscales/zarr.json", "rb") as f:
+        orig = json.loads(f.read())
+
+    nested = {
+        "zarr_format": 3,
+        "node_type": "group",
+        "attributes": {},
+        "consolidated_metadata": {
+            "kind": "inline",
+            "must_understand": False,
+            "metadata": {
+                "container": {
+                    "zarr_format": 3,
+                    "node_type": "group",
+                    "attributes": orig["attributes"],
+                    "consolidated_metadata": {
+                        "kind": "inline",
+                        "must_understand": False,
+                        "metadata": {},
+                    },
+                },
+            },
+        },
+    }
+    for key, val in orig["consolidated_metadata"]["metadata"].items():
+        nested["consolidated_metadata"]["metadata"]["container/" + key] = val
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "zarr.json", json.dumps(nested))
+
+    with gdal.OpenEx(tmp_vsimem / "zarr.json", gdal.OF_MULTIDIM_RASTER) as ds:
+        rg = ds.GetRootGroup()
+        container = rg.OpenGroup("container")
+        level0 = container.OpenGroup("level0")
+        ar0 = level0.OpenMDArray("ar")
+        assert ar0.GetOverviewCount() == 2
+        assert ar0.GetOverview(0).GetFullName() == "/container/level1/ar"
+        assert ar0.GetOverview(1).GetFullName() == "/container/level2/ar"
+
+    zarr_root = str(tmp_vsimem).rstrip("/")
+    with gdal.Open(f'ZARR:"{zarr_root}":/container/level0/ar') as ds:
+        assert ds.GetRasterBand(1).GetOverviewCount() == 2
+
+
+###############################################################################
 #
 
 
