@@ -1157,6 +1157,9 @@ void DGifDecreaseImageCounter(GifFileType *GifFile) {
 	if (GifFile->SavedImages[GifFile->ImageCount].RasterBits != NULL) {
 		free(GifFile->SavedImages[GifFile->ImageCount].RasterBits);
 	}
+	if (GifFile->SavedImages[GifFile->ImageCount].ImageDesc.ColorMap != NULL) {
+		GifFreeMapObject(GifFile->SavedImages[GifFile->ImageCount].ImageDesc.ColorMap);
+	}
 
 	// Realloc array according to the new image counter.
 	SavedImage *correct_saved_images = (SavedImage *)reallocarray(
