@@ -82,6 +82,11 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
         .SetReadFromFileAtSyntaxAllowed()
         .SetMetaVar("<WHERE>|@<filename>")
         .SetRemoveSQLCommentsEnabled();
+    AddArg("fid", 0,
+       _("Select a single feature by its feature ID"),
+       &m_fid)
+    .SetMetaVar("FID")
+    .SetMinValueIncluded(0);
     AddArg("dialect", 0, _("SQL dialect"), &m_dialect);
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
@@ -93,6 +98,18 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
             {
                 ReportError(CE_Failure, CPLE_NotSupported,
                             "Option 'sql' and 'where' are mutually exclusive");
+                return false;
+            }
+            if (m_fid >= 0 && !m_where.empty())
+            {
+                ReportError(CE_Failure, CPLE_NotSupported,
+                            "Option 'fid' and 'where' are mutually exclusive");
+                return false;
+            }
+            if (m_fid >= 0 && !m_sql.empty())
+            {
+                ReportError(CE_Failure, CPLE_NotSupported,
+                            "Option 'fid' and 'sql' are mutually exclusive");
                 return false;
             }
             return true;
@@ -135,11 +152,16 @@ bool GDALVectorInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
         aosOptions.AddString("-sql");
         aosOptions.AddString(m_sql.c_str());
     }
-    if (!m_where.empty())
+    if (m_fid >= 0)
+    {
+        aosOptions.AddString("-where");
+        aosOptions.AddString(CPLSPrintf("FID = %d", m_fid));
+    }
+    else if (!m_where.empty())
     {
         aosOptions.AddString("-where");
         aosOptions.AddString(m_where.c_str());
-    }
+    }   
     if (!m_dialect.empty())
     {
         aosOptions.AddString("-dialect");

@@ -45,6 +45,7 @@ class GDALVectorInfoAlgorithm /* non final */
     bool m_summaryOnly = false;
     std::string m_sql{};
     std::string m_where{};
+    int m_fid = -1;
     std::string m_dialect{};
     int m_limit = 0;
 };
