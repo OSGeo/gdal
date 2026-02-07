@@ -1924,6 +1924,15 @@ void ZarrV3Array::LoadOverviews() const
         }
     }
 
+    // Multiscales convention: asset/derived_from paths are relative to
+    // the group holding the convention metadata, not the store root.
+    const std::string osGroupPrefix = poGroup->GetFullName().back() == '/'
+                                          ? poGroup->GetFullName()
+                                          : poGroup->GetFullName() + '/';
+    const auto resolveAssetPath =
+        [&osGroupPrefix](const std::string &osRelative) -> std::string
+    { return osGroupPrefix + osRelative; };
+
     for (const auto &oLayoutItem : oLayout.ToArray())
     {
         const std::string osAsset = oLayoutItem.GetString("asset");
@@ -1938,7 +1947,8 @@ void ZarrV3Array::LoadOverviews() const
         std::shared_ptr<GDALGroup> poAssetGroup;
         {
             CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-            poAssetGroup = poRG->OpenGroupFromFullname('/' + osAsset);
+            poAssetGroup =
+                poRG->OpenGroupFromFullname(resolveAssetPath(osAsset));
         }
         std::shared_ptr<GDALMDArray> poAssetArray;
         if (poAssetGroup)
@@ -1947,7 +1957,7 @@ void ZarrV3Array::LoadOverviews() const
         }
         else if (osAsset.find('/') == std::string::npos)
         {
-            poAssetArray = poRG->OpenMDArray(osAsset);
+            poAssetArray = poGroup->OpenMDArray(osAsset);
             if (!poAssetArray)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
@@ -1959,7 +1969,8 @@ void ZarrV3Array::LoadOverviews() const
         }
         else
         {
-            poAssetArray = poRG->OpenMDArrayFromFullname('/' + osAsset);
+            poAssetArray =
+                poRG->OpenMDArrayFromFullname(resolveAssetPath(osAsset));
             if (poAssetArray && poAssetArray->GetName() != GetName())
             {
                 continue;
@@ -2031,8 +2042,8 @@ void ZarrV3Array::LoadOverviews() const
             std::shared_ptr<GDALGroup> poDerivedFromGroup;
             {
                 CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-                poDerivedFromGroup =
-                    poRG->OpenGroupFromFullname('/' + osDerivedFrom);
+                poDerivedFromGroup = poRG->OpenGroupFromFullname(
+                    resolveAssetPath(osDerivedFrom));
             }
             std::shared_ptr<GDALMDArray> poDerivedFromArray;
             if (poDerivedFromGroup)
@@ -2041,7 +2052,7 @@ void ZarrV3Array::LoadOverviews() const
             }
             else if (osDerivedFrom.find('/') == std::string::npos)
             {
-                poDerivedFromArray = poRG->OpenMDArray(osDerivedFrom);
+                poDerivedFromArray = poGroup->OpenMDArray(osDerivedFrom);
                 if (!poDerivedFromArray)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -2053,8 +2064,8 @@ void ZarrV3Array::LoadOverviews() const
             }
             else
             {
-                poDerivedFromArray =
-                    poRG->OpenMDArrayFromFullname('/' + osDerivedFrom);
+                poDerivedFromArray = poRG->OpenMDArrayFromFullname(
+                    resolveAssetPath(osDerivedFrom));
             }
             if (poDerivedFromArray && bAssetHasAllSpatialDims)
             {
