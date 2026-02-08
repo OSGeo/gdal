@@ -32,6 +32,11 @@ GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+    if (!standaloneStep)
+    {
+        AddOutputLayerNameArg(/* hiddenForCLI = */ false,
+                              /* shortNameOutputLayerAllowed = */ false);
+    }
     AddActiveLayerArg(&m_activeLayer);
     AddArg("fields", 0, _("Fields to select (or exclude if --exclude)"),
            &m_fields)
@@ -90,11 +95,14 @@ class GDALVectorSelectAlgorithmLayer final
     }
 
   public:
-    explicit GDALVectorSelectAlgorithmLayer(OGRLayer &oSrcLayer)
+    explicit GDALVectorSelectAlgorithmLayer(
+        OGRLayer &oSrcLayer, const std::string &osOutputLayerName)
         : GDALVectorPipelineOutputLayer(oSrcLayer),
-          m_poFeatureDefn(new OGRFeatureDefn(oSrcLayer.GetName()))
+          m_poFeatureDefn(new OGRFeatureDefn(osOutputLayerName.empty()
+                                                 ? oSrcLayer.GetName()
+                                                 : osOutputLayerName.c_str()))
     {
-        SetDescription(oSrcLayer.GetDescription());
+        SetDescription(m_poFeatureDefn->GetName());
         SetMetadata(oSrcLayer.GetMetadata());
         m_poFeatureDefn->SetGeomType(wkbNone);
         m_poFeatureDefn->Reference();
@@ -301,8 +309,8 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)
         if (m_activeLayer.empty() ||
             m_activeLayer == poSrcLayer->GetDescription())
         {
-            auto poLayer =
-                std::make_unique<GDALVectorSelectAlgorithmLayer>(*poSrcLayer);
+            auto poLayer = std::make_unique<GDALVectorSelectAlgorithmLayer>(
+                *poSrcLayer, m_outputLayerName);
             if (m_exclude)
             {
                 poLayer->ExcludeFields(m_fields);
