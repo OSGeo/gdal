@@ -304,3 +304,12 @@ def test_gdalalg_raster_polygonize_no_next_usable_step_in_pipeline(tmp_vsimem):
 
     with ogr.Open(out_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 281
+
+
+def test_gdalalg_raster_polygonize_pipeline_output_layer(tmp_vsimem):
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! polygonize --output-layer foo"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetLayer(0).GetName() == "foo"
