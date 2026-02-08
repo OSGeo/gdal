@@ -45,8 +45,6 @@ RUN apt-get update && \
     libopenjp2-7-dev \
     libpcre3-dev \
     libpng-dev \
-    libpoppler-dev \
-    libpoppler-private-dev \
     libpq-dev \
     libproj-dev \
     librasterlite2-dev \
@@ -72,6 +70,17 @@ RUN apt-get update && \
     unixodbc-dev \
     wget \
     zip
+
+# Removing "libpoppler-dev libpoppler-private-dev" from above list to build from source
+
+# do a build of poppler master because their C++ API is unstable
+RUN git clone --depth 1 https://gitlab.freedesktop.org/poppler/poppler.git poppler && \
+    cd poppler && \
+    mkdir build && \
+    cd build && \
+    cmake -DENABLE_UNSTABLE_API_ABI_HEADER=ON -DENABLE_NSS3=OFF -DENABLE_GPGME=OFF -DENABLE_QT5=OFF -DENABLE_QT6=OFF .. && \
+    make -j$(nproc) && \
+    make install
 
 # libavif development build
 RUN apt-get install -y --allow-unauthenticated libaom-dev libyuv-dev
