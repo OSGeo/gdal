@@ -54,6 +54,10 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
         AddCreationOptionsArg(&m_creationOptions);
         AddOverwriteArg(&m_overwrite);
     }
+    else
+    {
+        AddVectorHiddenInputDatasetArg();
+    }
 
     AddBandArg(&m_bands, _("The band(s) to burn values into (1-based index)"));
     AddArg("invert", 0, _("Invert the rasterization"), &m_invert)

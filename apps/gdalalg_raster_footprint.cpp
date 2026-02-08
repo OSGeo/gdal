@@ -56,6 +56,10 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm(bool standaloneStep)
         AddAppendLayerArg(&m_appendLayer);
         AddOverwriteArg(&m_overwrite);
     }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
 
     m_outputLayerName = "footprint";
     AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, 0, _("Output layer name"),

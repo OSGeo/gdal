@@ -34,9 +34,9 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
               .SetStandaloneStep(bStandalone)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
+    AddRasterInputArgs(false, false);
     if (bStandalone)
     {
-        AddRasterInputArgs(false, false);
         AddVectorOutputArgs(false, false);
     }
 

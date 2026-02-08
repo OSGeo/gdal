@@ -41,6 +41,17 @@ There are 2 possibilities of outputting pixel information:
 - either on the output stream as CSV or GeoJSON (default to GeoJSON)
 - or as a GDAL vector dataset whose name is specified with the :option:`--output` argument.
 
+Since GDAL 3.13, this algorithm can be part of a :ref:`gdal_pipeline`. In that
+case, only reading coordinates from a GDAL vector dataset and outputting results
+to one is supported.
+
+.. GDALG output (on-the-fly / streamed dataset)
+.. --------------------------------------------
+
+.. versionadded:: 3.13
+
+.. include:: gdal_cli_include/gdalg_vector_compatible_non_natively_streamable.rst
+
 The following options are available:
 
 Program-Specific Options
@@ -206,3 +217,17 @@ Examples
    .. code-block:: bash
 
        gdal raster pixel-info --position-dataset input.gpkg --input byte.tif --output output.gpkg
+
+.. example::
+   :title: Getting pixel values from a on-the-fly resized raster dataset from coordinates in :file:`input.gpkg`.
+
+   .. code-block:: bash
+
+       gdal pipeline read byte.tif ! resize --size 50%,50% -r cubic ! pixel-info input.gpkg ! write output.gpkg
+
+.. example::
+   :title: Getting pixel values from coordinates in a piped vector dataset, using the ``_`` placeholder dataset name
+
+   .. code-block:: bash
+
+       gdal pipeline read input.gml ! swap-xy ! pixel-info --input byte.tif --position-dataset _ ! write output.gpkg

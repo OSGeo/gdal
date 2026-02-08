@@ -37,6 +37,11 @@ GDALVectorUpdateAlgorithm::GDALVectorUpdateAlgorithm(bool standaloneStep)
     {
         AddVectorInputArgs(false);
     }
+    else
+    {
+        AddVectorHiddenInputDatasetArg();
+    }
+
     {
         auto &layerArg = AddArg(GDAL_ARG_NAME_INPUT_LAYER, 0,
                                 _("Input layer name"), &m_inputLayerNames)

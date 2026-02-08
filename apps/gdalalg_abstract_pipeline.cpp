@@ -385,7 +385,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     };
 
     const auto SetCurStepAlg =
-        [this, bIsGenericPipeline](Step &curStep, const std::string &algName)
+        [this, bIsGenericPipeline](Step &curStep, const std::string &algName,
+                                   bool firstStep)
     {
         if (bIsGenericPipeline)
         {
@@ -410,6 +411,10 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                         algName.c_str());
             return false;
         }
+        // We don't want to accept '_PIPE_' dataset placeholder for the first
+        // step of a pipeline.
+        curStep.alg->m_inputDatasetCanBeOmitted =
+            !firstStep || !m_bExpectReadStep;
         curStep.alg->SetCallPath({algName});
         curStep.alg->SetReferencePathForRelativePaths(
             GetReferencePathForRelativePaths());
@@ -533,7 +538,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         else if (arg.find("+gdal=") == 0)
         {
             const std::string algName = arg.substr(strlen("+gdal="));
-            if (!SetCurStepAlg(curStep, algName))
+            if (!SetCurStepAlg(curStep, algName, steps.size() == 1))
                 return false;
         }
 #endif
@@ -544,7 +549,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
             if (!algName.empty() && algName[0] == '+')
                 algName = algName.substr(1);
 #endif
-            if (!SetCurStepAlg(curStep, algName))
+            if (!SetCurStepAlg(curStep, algName, steps.size() == 1))
                 return false;
         }
         else
@@ -562,6 +567,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                     return false;
                 }
                 curStep.isSubAlgorithm = true;
+                subAlg->m_inputDatasetCanBeOmitted =
+                    steps.size() > 1 || !m_bExpectReadStep;
                 curStep.alg = std::move(subAlg);
                 continue;
             }
@@ -609,6 +616,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
             steps.back().alg = GetStepAlg(
                 std::string(GDALRasterWriteAlgorithm::NAME)
                     .append(bIsGenericPipeline ? RASTER_SUFFIX : ""));
+            steps.back().alg->m_inputDatasetCanBeOmitted = true;
         }
 
         // Remove "--output-format=stream" and "streamed_dataset" if found
@@ -1047,6 +1055,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                     (nDatasetType == 0 || nDatasetType == GDAL_OF_VECTOR))
                 {
                     step.alg = std::move(algVector);
+                    step.alg->m_inputDatasetCanBeOmitted =
+                        !firstStep || !m_bExpectReadStep;
                     step.alg->m_skipValidationInParseCommandLine = true;
                     ret = step.alg->ParseCommandLineArguments(step.args);
                     if (ret)
@@ -1240,6 +1250,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                     SetWriteArgFromPipeline();
                 }
 
+                steps[i].alg->m_inputDatasetCanBeOmitted =
+                    i > 0 || !m_bExpectReadStep;
                 steps[i].alg->m_skipValidationInParseCommandLine = true;
                 if (!steps[i].alg->ParseCommandLineArguments(steps[i].args))
                     return false;
@@ -1253,21 +1265,68 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
             else if (i > 0 &&
                      steps[i].alg->GetInputType() != nLastStepOutputType)
             {
-                ReportError(
-                    CE_Failure, CPLE_AppDefined,
-                    "Step '%s' expects a %s input dataset, but "
-                    "previous step '%s' "
-                    "generates a %s output dataset",
-                    steps[i].alg->GetName().c_str(),
-                    steps[i].alg->GetInputType() == GDAL_OF_RASTER ? "raster"
-                    : steps[i].alg->GetInputType() == GDAL_OF_VECTOR
-                        ? "vector"
-                        : "unknown",
-                    steps[i - 1].alg->GetName().c_str(),
-                    nLastStepOutputType == GDAL_OF_RASTER   ? "raster"
-                    : nLastStepOutputType == GDAL_OF_VECTOR ? "vector"
-                                                            : "unknown");
-                return false;
+                bool emitError = true;
+
+                // Check if a dataset argument, which has as value the
+                // placeholder value, has the same dataset type as the output
+                // of the last step
+                for (const auto &arg : steps[i].alg->GetArgs())
+                {
+                    if (!arg->IsOutput() &&
+                        (arg->GetType() == GAAT_DATASET ||
+                         arg->GetType() == GAAT_DATASET_LIST))
+                    {
+                        if (arg->GetType() == GAAT_DATASET)
+                        {
+                            if (arg->Get<GDALArgDatasetValue>().GetName() ==
+                                GDAL_DATASET_PIPELINE_PLACEHOLDER_VALUE)
+                            {
+                                if ((arg->GetDatasetType() &
+                                     nLastStepOutputType) != 0)
+                                {
+                                    emitError = false;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            CPLAssert(arg->GetType() == GAAT_DATASET_LIST);
+                            auto &val =
+                                arg->Get<std::vector<GDALArgDatasetValue>>();
+                            if (val.size() == 1 &&
+                                val[0].GetName() ==
+                                    GDAL_DATASET_PIPELINE_PLACEHOLDER_VALUE)
+                            {
+                                if ((arg->GetDatasetType() &
+                                     nLastStepOutputType) != 0)
+                                {
+                                    emitError = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (emitError)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Step '%s' expects a %s input dataset, but "
+                                "previous step '%s' "
+                                "generates a %s output dataset",
+                                steps[i].alg->GetName().c_str(),
+                                steps[i].alg->GetInputType() == GDAL_OF_RASTER
+                                    ? "raster"
+                                : steps[i].alg->GetInputType() == GDAL_OF_VECTOR
+                                    ? "vector"
+                                    : "unknown",
+                                steps[i - 1].alg->GetName().c_str(),
+                                nLastStepOutputType == GDAL_OF_RASTER ? "raster"
+                                : nLastStepOutputType == GDAL_OF_VECTOR
+                                    ? "vector"
+                                    : "unknown");
+                    return false;
+                }
             }
             nLastStepOutputType = steps[i].alg->GetOutputType();
         }
@@ -1953,18 +2012,75 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         auto &step = m_steps[i];
         if (i > 0 || poCurDS)
         {
-            if (!step->m_inputDataset.empty() &&
-                step->m_inputDataset[0].GetDatasetRef())
+            bool prevStepOutputSetToThisStep = false;
+            for (auto &arg : step->GetArgs())
             {
-                // Shouldn't happen
+                if (!arg->IsOutput() && (arg->GetType() == GAAT_DATASET ||
+                                         arg->GetType() == GAAT_DATASET_LIST))
+                {
+                    if (arg->GetType() == GAAT_DATASET)
+                    {
+                        if ((arg->GetName() == GDAL_ARG_NAME_INPUT &&
+                             !arg->IsExplicitlySet()) ||
+                            arg->Get<GDALArgDatasetValue>().GetName() ==
+                                GDAL_DATASET_PIPELINE_PLACEHOLDER_VALUE)
+                        {
+                            auto &val = arg->Get<GDALArgDatasetValue>();
+                            if (val.GetDatasetRef())
+                            {
+                                // Shouldn't happen
+                                ReportError(CE_Failure, CPLE_AppDefined,
+                                            "Step nr %d (%s) has already an "
+                                            "input dataset for argument %s",
+                                            static_cast<int>(i),
+                                            step->GetName().c_str(),
+                                            arg->GetName().c_str());
+                                return false;
+                            }
+                            prevStepOutputSetToThisStep = true;
+                            val.Set(poCurDS);
+                            arg->NotifyValueSet();
+                        }
+                    }
+                    else
+                    {
+                        CPLAssert(arg->GetType() == GAAT_DATASET_LIST);
+                        auto &val =
+                            arg->Get<std::vector<GDALArgDatasetValue>>();
+                        if ((arg->GetName() == GDAL_ARG_NAME_INPUT &&
+                             !arg->IsExplicitlySet()) ||
+                            (val.size() == 1 &&
+                             val[0].GetName() ==
+                                 GDAL_DATASET_PIPELINE_PLACEHOLDER_VALUE))
+                        {
+                            if (val.size() == 1 && val[0].GetDatasetRef())
+                            {
+                                // Shouldn't happen
+                                ReportError(CE_Failure, CPLE_AppDefined,
+                                            "Step nr %d (%s) has already an "
+                                            "input dataset for argument %s",
+                                            static_cast<int>(i),
+                                            step->GetName().c_str(),
+                                            arg->GetName().c_str());
+                                return false;
+                            }
+                            prevStepOutputSetToThisStep = true;
+                            val.clear();
+                            val.resize(1);
+                            val[0].Set(poCurDS);
+                            arg->NotifyValueSet();
+                        }
+                    }
+                }
+            }
+            if (!prevStepOutputSetToThisStep)
+            {
                 ReportError(CE_Failure, CPLE_AppDefined,
-                            "Step nr %d (%s) has already an input dataset",
+                            "Step nr %d (%s) does not use input dataset from "
+                            "previous step",
                             static_cast<int>(i), step->GetName().c_str());
                 return false;
             }
-            step->m_inputDataset.clear();
-            step->m_inputDataset.resize(1);
-            step->m_inputDataset[0].Set(poCurDS);
         }
 
         if (i + 1 < m_steps.size() && step->m_outputDataset.GetDatasetRef() &&
@@ -2007,6 +2123,7 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         {
             step->m_stdout = true;
         }
+        step->m_inputDatasetCanBeOmitted = false;
         if (!step->ValidateArguments() || !step->RunStep(stepCtxt))
         {
             ret = false;

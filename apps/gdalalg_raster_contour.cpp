@@ -50,6 +50,10 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
         AddRasterInputArgs(false, false);
         AddVectorOutputArgs(false, false);
     }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
 
     // gdal_contour specific options
     AddBandArg(&m_band).SetDefault(1);

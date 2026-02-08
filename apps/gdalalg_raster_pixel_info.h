@@ -13,7 +13,8 @@
 #ifndef GDALALG_RASTER_PIXEL_INFO_INCLUDED
 #define GDALALG_RASTER_PIXEL_INFO_INCLUDED
 
-#include "gdalalgorithm.h"
+#include "gdalalg_abstract_pipeline.h"
+
 #include "cpl_vsi_virtual.h"
 
 //! @cond Doxygen_Suppress
@@ -22,7 +23,8 @@
 /*                     GDALRasterPixelInfoAlgorithm                     */
 /************************************************************************/
 
-class GDALRasterPixelInfoAlgorithm final : public GDALAlgorithm
+class GDALRasterPixelInfoAlgorithm /* non final */
+    : public GDALPipelineStepAlgorithm
 {
   public:
     static constexpr const char *NAME = "pixel-info";
@@ -31,27 +33,34 @@ class GDALRasterPixelInfoAlgorithm final : public GDALAlgorithm
     static constexpr const char *HELP_URL =
         "/programs/gdal_raster_pixel_info.html";
 
-    GDALRasterPixelInfoAlgorithm();
+    explicit GDALRasterPixelInfoAlgorithm(bool standaloneStep = false);
     ~GDALRasterPixelInfoAlgorithm() override;
 
+    bool IsNativelyStreamingCompatible() const override
+    {
+        // It could potentially be made fully streamable in pipeline mode since
+        // we read coordinates from an input vector dataset. "Just" needs some
+        // code reorganization.
+        return false;
+    }
+
+    int GetInputType() const override
+    {
+        return GDAL_OF_RASTER;
+    }
+
+    int GetOutputType() const override
+    {
+        return GDAL_OF_VECTOR;
+    }
+
   private:
+    bool RunStep(GDALPipelineStepRunContext &ctxt) override;
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
-    GDALArgDatasetValue m_rasterDataset{};
-    std::vector<std::string> m_openOptions{};
-    std::vector<std::string> m_inputFormats{};
-
     GDALArgDatasetValue m_vectorDataset{};
-    std::string m_inputLayerName{};
     std::vector<std::string> m_includeFields{"ALL"};
 
-    std::string m_format{};
-    GDALArgDatasetValue m_outputDataset{};
-    std::vector<std::string> m_creationOptions{};
-    std::vector<std::string> m_layerCreationOptions{};
-    bool m_overwrite = false;
-
-    std::string m_outputString{};
     std::vector<int> m_band{};
     int m_overview = -1;
     std::vector<double> m_pos{};
@@ -61,6 +70,22 @@ class GDALRasterPixelInfoAlgorithm final : public GDALAlgorithm
 
     VSIVirtualHandleUniquePtr m_outputFile{};
     std::string m_osTmpFilename{};
+};
+
+/************************************************************************/
+/*                GDALRasterPixelInfoAlgorithmStandalone                */
+/************************************************************************/
+
+class GDALRasterPixelInfoAlgorithmStandalone final
+    : public GDALRasterPixelInfoAlgorithm
+{
+  public:
+    GDALRasterPixelInfoAlgorithmStandalone()
+        : GDALRasterPixelInfoAlgorithm(/* standaloneStep = */ true)
+    {
+    }
+
+    ~GDALRasterPixelInfoAlgorithmStandalone() override;
 };
 
 //! @endcond
