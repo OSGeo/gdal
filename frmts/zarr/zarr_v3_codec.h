@@ -417,6 +417,15 @@ class ZarrV3CodecShardingIndexed final : public ZarrV3Codec
         uint64_t nSize;
     };
 
+    // Cached decoded shard index, populated on first DecodePartial() call.
+    // Avoids re-reading the index from the file for every inner chunk.
+    // Invalidated when a different shard filename is set via
+    // SetCurrentShardFilename().
+    std::vector<Location> m_aCachedIndex{};
+    std::string m_osCachedShardFilename{};
+
+    bool LoadShardIndex(VSIVirtualHandle *poFile, size_t nInnerChunkCount);
+
   public:
     static constexpr const char *NAME = "sharding_indexed";
 
@@ -449,6 +458,33 @@ class ZarrV3CodecShardingIndexed final : public ZarrV3Codec
                        ZarrByteVectorQuickResize &abyDst,
                        std::vector<size_t> &anStartIdx,
                        std::vector<size_t> &anCount) override;
+
+    /** Batch-read multiple inner chunks from the same shard using
+     *  ReadMultiRange(), then decode each one.
+     *  Requires the shard index to be cached (via SetCurrentShardFilename()
+     *  + a prior DecodePartial() or LoadShardIndex() call).
+     *
+     *  anRequests: vector of (anStartIdx, anCount) pairs - same semantics
+     *  as DecodePartial()'s anStartIdx/anCount.
+     *  aResults: output vector, one decoded buffer per request.
+     */
+    bool BatchDecodePartial(
+        VSIVirtualHandle *poFile,
+        const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+            &anRequests,
+        std::vector<ZarrByteVectorQuickResize> &aResults);
+
+    /** Notify which shard file the next DecodePartial() will read from.
+     *  Used to cache the shard index across calls with different file handles.
+     */
+    void SetCurrentShardFilename(const std::string &osFilename)
+    {
+        if (osFilename != m_osCachedShardFilename)
+        {
+            m_aCachedIndex.clear();
+            m_osCachedShardFilename = osFilename;
+        }
+    }
 
     std::vector<size_t>
     GetInnerMostBlockSize(const std::vector<size_t> &input) const override;
@@ -507,6 +543,21 @@ class ZarrV3CodecSequence
                        ZarrByteVectorQuickResize &abyBuffer,
                        const std::vector<size_t> &anStartIdx,
                        const std::vector<size_t> &anCount);
+
+    /** Batch-read multiple inner chunks via ReadMultiRange().
+     *  Delegates to the sharding codec if present, otherwise falls back
+     *  to sequential DecodePartial() calls.
+     */
+    bool BatchDecodePartial(
+        VSIVirtualHandle *poFile,
+        const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+            &anRequests,
+        std::vector<ZarrByteVectorQuickResize> &aResults);
+
+    /** Notify the codec chain which shard file the next DecodePartial()
+     *  will read from, so the sharding codec can cache its shard index.
+     */
+    void SetCurrentShardFilename(const std::string &osFilename);
 
     std::vector<size_t>
     GetInnerMostBlockSize(const std::vector<size_t> &anOuterBlockSize) const;
