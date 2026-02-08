@@ -241,3 +241,14 @@ def test_gdalalg_vector_select_active_layer():
 
     out_lyr = out_ds.GetLayer(1)
     assert out_lyr.GetLayerDefn().GetFieldCount() == 2
+
+
+def test_gdalalg_vector_select_pipeline_output_layer():
+
+    with gdal.alg.vector.pipeline(
+        pipeline="read ../ogr/data/poly.shp ! select --output-layer foo --fields EAS_ID"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetDescription() == "foo"
+        assert lyr.GetLayerDefn().GetName() == "foo"
