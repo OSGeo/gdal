@@ -887,3 +887,31 @@ def test_gdalalg_raster_pixel_info_coordinate_to_vector_dataset_errors():
             position=[0, 0],
             output="/i/do_not_exist/out.shp",
         )
+
+
+def test_gdalalg_raster_pixel_info_in_pipeline(tmp_vsimem):
+
+    with gdal.GetDriverByName("ESRI Shapefile").CreateVector(
+        tmp_vsimem / "coords.shp"
+    ) as position_dataset:
+        coordinate_lyr = position_dataset.CreateLayer("coords")
+        f = ogr.Feature(coordinate_lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (10.5 9.5)"))
+        coordinate_lyr.CreateFeature(f)
+
+    with gdal.alg.pipeline(
+        pipeline=f"read ../gcore/data/byte.tif ! pixel-info {tmp_vsimem}/coords.shp"
+    ) as alg:
+        out_ds = alg.Output()
+        out_lyr = out_ds.GetLayer(0)
+        assert out_lyr.GetGeomType() == ogr.wkbPoint
+        assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+        f = out_lyr.GetNextFeature()
+        assert f["line"] == pytest.approx(9.5)
+        assert f["column"] == pytest.approx(10.5)
+        assert f["band_1_raw_value"] == 115
+        assert f["band_1_unscaled_value"] == 115
+        assert f.GetGeometryRef().GetX(0) == pytest.approx(441350.0)
+        assert f.GetGeometryRef().GetY(0) == pytest.approx(3750750.0)
+
+        assert out_lyr.GetNextFeature() is None
