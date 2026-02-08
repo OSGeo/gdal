@@ -221,11 +221,7 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
     }
     if (m_constructorOptions.addOutputLayerNameArgument)
     {
-        AddArg(GDAL_ARG_NAME_OUTPUT_LAYER,
-               shortNameOutputLayerAllowed ? 'l' : 0, _("Output layer name"),
-               &m_outputLayerName)
-            .AddHiddenAlias("nln")  // For ogr2ogr nostalgic people
-            .SetHiddenForCLI(hiddenForCLI);
+        AddOutputLayerNameArg(hiddenForCLI, shortNameOutputLayerAllowed);
     }
     if (m_constructorOptions.addSkipErrorsArgument)
     {
@@ -233,6 +229,20 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
                &m_skipErrors)
             .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
     }
+}
+
+/************************************************************************/
+/*          GDALPipelineStepAlgorithm::AddOutputLayerNameArg()          */
+/************************************************************************/
+
+void GDALPipelineStepAlgorithm::AddOutputLayerNameArg(
+    bool hiddenForCLI, bool shortNameOutputLayerAllowed)
+{
+    AddArg(GDAL_ARG_NAME_OUTPUT_LAYER, shortNameOutputLayerAllowed ? 'l' : 0,
+           _("Output layer name"),
+           &m_outputLayerName)
+        .AddHiddenAlias("nln")  // For ogr2ogr nostalgic people
+        .SetHiddenForCLI(hiddenForCLI);
 }
 
 /************************************************************************/

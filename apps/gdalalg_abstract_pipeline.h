@@ -351,6 +351,9 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     void AddVectorInputArgs(bool hiddenForCLI);
     void AddVectorOutputArgs(bool hiddenForCLI,
                              bool shortNameOutputLayerAllowed);
+    using GDALAlgorithm::AddOutputLayerNameArg;
+    void AddOutputLayerNameArg(bool hiddenForCLI,
+                               bool shortNameOutputLayerAllowed);
 
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
