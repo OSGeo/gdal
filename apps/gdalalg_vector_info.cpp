@@ -82,11 +82,9 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
         .SetReadFromFileAtSyntaxAllowed()
         .SetMetaVar("<WHERE>|@<filename>")
         .SetRemoveSQLCommentsEnabled();
-    AddArg("fid", 0,
-       _("Select a single feature by its feature ID"),
-       &m_fid)
-    .SetMetaVar("FID")
-    .SetMinValueIncluded(0);
+    AddArg("fid", 0, _("Select a single feature by its feature ID"), &m_fid)
+        .SetMetaVar("FID")
+        .SetMinValueIncluded(0);
     AddArg("dialect", 0, _("SQL dialect"), &m_dialect);
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
@@ -161,7 +159,7 @@ bool GDALVectorInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         aosOptions.AddString("-where");
         aosOptions.AddString(m_where.c_str());
-    }   
+    }
     if (!m_dialect.empty())
     {
         aosOptions.AddString("-dialect");
