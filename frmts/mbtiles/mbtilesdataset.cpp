@@ -3063,6 +3063,17 @@ bool MBTilesDataset::CreateInternal(const char *pszFilename, int nXSize,
     sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
     sqlite3_free(pszSQL);
 
+    const std::string osElevationType =
+        CSLFetchNameValueDef(papszOptions, "ELEVATION_TYPE", "");
+    if (!osElevationType.empty())
+    {
+        pszSQL = sqlite3_mprintf("INSERT INTO metadata (name, value) VALUES "
+                                 "('elevation_type', '%q')",
+                                 osElevationType.c_str());
+        sqlite3_exec(hDB, pszSQL, nullptr, nullptr, nullptr);
+        sqlite3_free(pszSQL);
+    }
+
     const char *pszTF = CSLFetchNameValue(papszOptions, "TILE_FORMAT");
     if (pszTF)
         m_eTF = GDALGPKGMBTilesGetTileFormat(pszTF);
@@ -3753,6 +3764,11 @@ void GDALRegister_MBTiles()
         "description='Layer type' default='overlay'>"
         "    <Value>overlay</Value>"
         "    <Value>baselayer</Value>"
+        "  </Option>"
+        "  <Option name='ELEVATION_TYPE' scope='raster' type='string-select' "
+        "description='Type of elevation encoding' default=''>"
+        "    <Value></Value>"
+        "    <Value>terrain-rgb</Value>"
         "  </Option>"
         "  <Option name='VERSION' scope='raster' type='string' "
         "description='The version of the tileset, as a plain number' "
