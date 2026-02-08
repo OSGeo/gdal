@@ -50,6 +50,11 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
         AddRasterInputArgs(false, false);
         AddVectorOutputArgs(false, false);
     }
+    else
+    {
+        AddOutputLayerNameArg(/* hiddenForCLI = */ false,
+                              /* shortNameOutputLayerAllowed = */ false);
+    }
 
     // gdal_contour specific options
     AddBandArg(&m_band).SetDefault(1);
