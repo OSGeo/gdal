@@ -1142,6 +1142,39 @@ def test_stats_float32_check_bugfix_13543(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPT
 ###############################################################################
 
 
+@pytest.mark.parametrize("dt", [gdal.GDT_Byte, gdal.GDT_UInt16])
+@pytest.mark.parametrize("GDAL_NUM_THREADS", [None, "ALL_CPUS"])
+def test_stats_byte_uint16_optim_threads(tmp_vsimem, dt, GDAL_NUM_THREADS):
+
+    gdal.Translate(
+        tmp_vsimem / "test.tif",
+        "data/byte.tif",
+        outputType=dt,
+        width=1000,
+        height=500,
+        creationOptions=["TILED=YES", "COMPRESS=LZW"],
+    )
+
+    with gdal.config_option("GDAL_NUM_THREADS", GDAL_NUM_THREADS):
+        ds = gdal.Open(tmp_vsimem / "test.tif")
+        got_stats = ds.GetRasterBand(1).ComputeStatistics(False)
+        expected_stats = [74.0, 255.0, 126.765, 22.928470838675658]
+        assert got_stats == pytest.approx(expected_stats)
+
+    # Test I/O error
+    f = gdal.VSIFOpenL(tmp_vsimem / "test.tif", "rb+")
+    gdal.VSIFTruncateL(f, 1000)
+    gdal.VSIFCloseL(f)
+
+    with gdal.config_option("GDAL_NUM_THREADS", GDAL_NUM_THREADS):
+        ds = gdal.Open(tmp_vsimem / "test.tif")
+        with pytest.raises(Exception):
+            ds.GetRasterBand(1).ComputeStatistics(False)
+
+
+###############################################################################
+
+
 @pytest.mark.parametrize(
     "dt,struct_fmt",
     [

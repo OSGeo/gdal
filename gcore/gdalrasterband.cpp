@@ -5764,6 +5764,8 @@ template <class T, bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternal
     }
 };
 
+constexpr int ALIGNMENT_AVX2_OPTIM = 32;
+
 #if (defined(__x86_64__) || defined(_M_X64) ||                                 \
      defined(USE_NEON_OPTIMIZATIONS)) &&                                       \
     (defined(__GNUC__) || defined(_MSC_VER))
@@ -5781,23 +5783,28 @@ ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
                               GUIntBig &nSampleCount, GUIntBig &nValidCount)
 {
     // 32-byte alignment may not be enforced by linker, so do it at hand
-    GByte
-        aby32ByteUnaligned[32 + 32 + 32 + (COMPUTE_OTHER_STATS ? 32 + 32 : 0)];
+    GByte aby32ByteUnaligned[ALIGNMENT_AVX2_OPTIM + ALIGNMENT_AVX2_OPTIM +
+                             ALIGNMENT_AVX2_OPTIM +
+                             (COMPUTE_OTHER_STATS
+                                  ? ALIGNMENT_AVX2_OPTIM + ALIGNMENT_AVX2_OPTIM
+                                  : 0)];
     GByte *paby32ByteAligned =
         aby32ByteUnaligned +
-        (32 - (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) % 32));
+        (ALIGNMENT_AVX2_OPTIM -
+         (reinterpret_cast<GUIntptr_t>(aby32ByteUnaligned) %
+          ALIGNMENT_AVX2_OPTIM));
     GByte *pabyMin = paby32ByteAligned;
-    GByte *pabyMax = paby32ByteAligned + 32;
-    GUInt32 *panSum =
-        COMPUTE_OTHER_STATS
-            ? reinterpret_cast<GUInt32 *>(paby32ByteAligned + 32 * 2)
-            : nullptr;
+    GByte *pabyMax = paby32ByteAligned + ALIGNMENT_AVX2_OPTIM;
+    GUInt32 *panSum = COMPUTE_OTHER_STATS
+                          ? reinterpret_cast<GUInt32 *>(
+                                paby32ByteAligned + ALIGNMENT_AVX2_OPTIM * 2)
+                          : nullptr;
     GUInt32 *panSumSquare =
-        COMPUTE_OTHER_STATS
-            ? reinterpret_cast<GUInt32 *>(paby32ByteAligned + 32 * 3)
-            : nullptr;
+        COMPUTE_OTHER_STATS ? reinterpret_cast<GUInt32 *>(
+                                  paby32ByteAligned + ALIGNMENT_AVX2_OPTIM * 3)
+                            : nullptr;
 
-    CPLAssert((reinterpret_cast<uintptr_t>(pData) % 32) == 0);
+    CPLAssert((reinterpret_cast<uintptr_t>(pData) % ALIGNMENT_AVX2_OPTIM) == 0);
 
     GPtrDiff_t i = 0;
     // Make sure that sumSquare can fit on uint32
@@ -7368,25 +7375,115 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                     ? static_cast<GUInt32>(sNoDataValues.dfNoDataValue + 1e-10)
                     : nMaxValueType + 1;
 
+            int nChunkXSize = nBlockXSize;
+            int nChunkYSize = nBlockYSize;
+            int nChunksPerRow = nBlocksPerRow;
+            int nChunksPerCol = nBlocksPerColumn;
+
+            int nThreads = 1;
+            if (nChunkYSize > 1)
+            {
+                const char *pszNumThreads =
+                    CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+                if (pszNumThreads)
+                {
+                    if (EQUAL(pszNumThreads, "ALL_CPUS"))
+                        nThreads = CPLGetNumCPUs();
+                    else
+                        nThreads =
+                            std::clamp(atoi(pszNumThreads), 1, CPLGetNumCPUs());
+                }
+            }
+
+            int nNewChunkXSize = nChunkXSize;
+            const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+            if (!bApproxOK && nThreads > 1 &&
+                MayMultiBlockReadingBeMultiThreaded())
+            {
+                const int64_t nRAMAmount = CPLGetUsablePhysicalRAM() / 10;
+                const size_t nChunkPixels =
+                    static_cast<size_t>(nChunkXSize) * nChunkYSize;
+                if (nRAMAmount > 0 &&
+                    nChunkPixels <=
+                        std::numeric_limits<size_t>::max() / nDTSize)
+                {
+                    const size_t nBlockSize = nDTSize * nChunkPixels;
+                    const int64_t nBlockCount = nRAMAmount / nBlockSize;
+                    if (nBlockCount >= 2)
+                    {
+                        nNewChunkXSize = static_cast<int>(std::min<int64_t>(
+                            nChunkXSize * std::min<int64_t>(
+                                              nBlockCount,
+                                              (std::numeric_limits<int>::max() -
+                                               ALIGNMENT_AVX2_OPTIM) /
+                                                  nChunkPixels),
+                            nRasterXSize));
+
+                        CPLAssert(nChunkXSize <
+                                  std::numeric_limits<int>::max() /
+                                      nChunkYSize);
+                    }
+                }
+            }
+
+            std::unique_ptr<GByte, VSIFreeReleaser> pabyTempUnaligned;
+            GByte *pabyTemp = nullptr;
+            if (nNewChunkXSize != nBlockXSize)
+            {
+                pabyTempUnaligned.reset(static_cast<GByte *>(
+                    VSIMalloc(nDTSize * nNewChunkXSize * nChunkYSize +
+                              ALIGNMENT_AVX2_OPTIM)));
+                if (pabyTempUnaligned)
+                {
+                    pabyTemp = reinterpret_cast<GByte *>(
+                        reinterpret_cast<uintptr_t>(pabyTempUnaligned.get()) +
+                        (ALIGNMENT_AVX2_OPTIM -
+                         (reinterpret_cast<uintptr_t>(pabyTempUnaligned.get()) %
+                          ALIGNMENT_AVX2_OPTIM)));
+                    nChunkXSize = nNewChunkXSize;
+                    nChunksPerRow =
+                        cpl::div_round_up(nRasterXSize, nChunkXSize);
+                }
+            }
+
             for (GIntBig iSampleBlock = 0;
                  iSampleBlock <
-                 static_cast<GIntBig>(nBlocksPerRow) * nBlocksPerColumn;
+                 static_cast<GIntBig>(nChunksPerRow) * nChunksPerCol;
                  iSampleBlock += nSampleRate)
             {
                 const int iYBlock =
-                    static_cast<int>(iSampleBlock / nBlocksPerRow);
+                    static_cast<int>(iSampleBlock / nChunksPerRow);
                 const int iXBlock =
-                    static_cast<int>(iSampleBlock % nBlocksPerRow);
+                    static_cast<int>(iSampleBlock % nChunksPerRow);
 
-                GDALRasterBlock *const poBlock =
-                    GetLockedBlockRef(iXBlock, iYBlock);
-                if (poBlock == nullptr)
-                    return CE_Failure;
+                const int nXCheck =
+                    std::min(nRasterXSize - nChunkXSize * iXBlock, nChunkXSize);
+                const int nYCheck =
+                    std::min(nRasterYSize - nChunkYSize * iYBlock, nChunkYSize);
 
-                void *const pData = poBlock->GetDataRef();
+                GDALRasterBlock *poBlock = nullptr;
+                if (pabyTemp)
+                {
+                    if (RasterIO(GF_Read, iXBlock * nChunkXSize,
+                                 iYBlock * nChunkYSize, nXCheck, nYCheck,
+                                 pabyTemp, nXCheck, nYCheck, eDataType, 0,
+                                 static_cast<GSpacing>(nChunkXSize * nDTSize),
+                                 nullptr) != CE_None)
+                    {
+                        return CE_Failure;
+                    }
+                }
+                else
+                {
+                    poBlock = GetLockedBlockRef(iXBlock, iYBlock);
+                    if (poBlock == nullptr)
+                    {
+                        return CE_Failure;
+                    }
+                }
 
-                int nXCheck = 0, nYCheck = 0;
-                GetActualBlockSize(iXBlock, iYBlock, &nXCheck, &nYCheck);
+                const void *const pData =
+                    poBlock ? poBlock->GetDataRef() : pabyTemp;
 
                 GUIntBig nBlockSum = 0;
                 GUIntBig nBlockSumSquare = 0;
@@ -7404,7 +7501,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 {
                     ComputeStatisticsInternal<
                         GByte, /* COMPUTE_OTHER_STATS = */ true>::
-                        f(nXCheck, nBlockXSize, nYCheck,
+                        f(nXCheck, nChunkXSize, nYCheck,
                           static_cast<const GByte *>(pData),
                           nNoDataValue <= nMaxValueType, nNoDataValue, nMin,
                           nMax, nBlockSumRef, nBlockSumSquareRef,
@@ -7414,14 +7511,15 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 {
                     ComputeStatisticsInternal<
                         GUInt16, /* COMPUTE_OTHER_STATS = */ true>::
-                        f(nXCheck, nBlockXSize, nYCheck,
+                        f(nXCheck, nChunkXSize, nYCheck,
                           static_cast<const GUInt16 *>(pData),
                           nNoDataValue <= nMaxValueType, nNoDataValue, nMin,
                           nMax, nBlockSumRef, nBlockSumSquareRef,
                           nBlockSampleCountRef, nBlockValidCountRef);
                 }
 
-                poBlock->DropLock();
+                if (poBlock)
+                    poBlock->DropLock();
 
                 if (!bIntegerStats)
                 {
@@ -7457,8 +7555,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                 }
 
                 if (!pfnProgress(static_cast<double>(iSampleBlock) /
-                                     (static_cast<double>(nBlocksPerRow) *
-                                      nBlocksPerColumn),
+                                     (static_cast<double>(nChunksPerRow) *
+                                      nChunksPerCol),
                                  "Compute Statistics", pProgressData))
                 {
                     ReportError(CE_Failure, CPLE_UserInterrupt,
