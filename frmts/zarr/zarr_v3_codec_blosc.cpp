@@ -163,6 +163,17 @@ bool ZarrV3CodecBlosc::InitFromConfiguration(
                                             CPLSPrintf("%d", nBlocksize));
     }
 
+    // Allow multi-threaded blosc decompression via config option.
+    // blosc_decompress_ctx() supports a nthreads parameter; by default
+    // GDAL passes 1.  GDAL_BLOSC_NUM_THREADS overrides this.
+    const char *pszNumThreads =
+        CPLGetConfigOption("GDAL_BLOSC_NUM_THREADS", nullptr);
+    if (pszNumThreads)
+    {
+        m_aosDecompressorOptions.SetNameValue("NUM_THREADS", pszNumThreads);
+        m_aosCompressorOptions.SetNameValue("NUM_THREADS", pszNumThreads);
+    }
+
     return true;
 }
 

@@ -62,9 +62,9 @@ bool ZarrV3CodecAbstractCompressor::Decode(
     abyDst.resize(abyDst.capacity());
     void *pOutputData = abyDst.data();
     size_t nOutputSize = abyDst.size();
-    bool bRet = m_pDecompressor->pfnFunc(abySrc.data(), abySrc.size(),
-                                         &pOutputData, &nOutputSize, nullptr,
-                                         m_pDecompressor->user_data);
+    bool bRet = m_pDecompressor->pfnFunc(
+        abySrc.data(), abySrc.size(), &pOutputData, &nOutputSize,
+        m_aosDecompressorOptions.List(), m_pDecompressor->user_data);
     if (bRet)
     {
         abyDst.resize(nOutputSize);

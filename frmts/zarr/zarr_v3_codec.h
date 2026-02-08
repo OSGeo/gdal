@@ -121,6 +121,7 @@ class ZarrV3CodecAbstractCompressor CPL_NON_FINAL : public ZarrV3Codec
 {
   protected:
     CPLStringList m_aosCompressorOptions{};
+    CPLStringList m_aosDecompressorOptions{};
     const CPLCompressor *m_pDecompressor = nullptr;
     const CPLCompressor *m_pCompressor = nullptr;
 
