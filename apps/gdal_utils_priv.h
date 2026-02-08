@@ -55,7 +55,7 @@ typedef enum
     ACCESS_CREATION,
     ACCESS_UPDATE, /* open existing output datasource in update mode rather than
                       trying to create a new one */
-    ACCESS_APPEND, /* append to existing layer instead of creating new */
+    ACCESS_APPEND,   /* append to existing layer instead of creating new */
     ACCESS_OVERWRITE /*  delete the output layer and recreate it empty */
 } GDALVectorTranslateAccessMode;
 
