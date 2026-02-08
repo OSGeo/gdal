@@ -45,6 +45,11 @@ GDALRasterAsFeaturesAlgorithm::GDALRasterAsFeaturesAlgorithm(
         AddRasterInputArgs(false, false);
         AddVectorOutputArgs(false, false);
     }
+    else
+    {
+        AddOutputLayerNameArg(/* hiddenForCLI = */ false,
+                              /* shortNameOutputLayerAllowed = */ false);
+    }
 
     AddBandArg(&m_bands);
     AddArg("geometry-type", 0, _("Geometry type"), &m_geomTypeName)
@@ -70,6 +75,7 @@ struct RasterAsFeaturesOptions
     bool includeRowCol{false};
     bool skipNoData{false};
     std::vector<int> bands{};
+    std::string outputLayerName{};
 };
 
 class GDALRasterAsFeaturesLayer final
@@ -116,7 +122,8 @@ class GDALRasterAsFeaturesLayer final
             }
         }
 
-        m_defn = new OGRFeatureDefn();
+        SetDescription(options.outputLayerName.c_str());
+        m_defn = new OGRFeatureDefn(options.outputLayerName.c_str());
         if (options.geomType == wkbNone)
         {
             m_defn->SetGeomType(wkbNone);
@@ -420,6 +427,7 @@ bool GDALRasterAsFeaturesAlgorithm::RunStep(GDALPipelineStepRunContext &)
     options.includeRowCol = m_includeRowCol;
     options.includeXY = m_includeXY;
     options.skipNoData = m_skipNoData;
+    options.outputLayerName = m_outputLayerName;
 
     if (!m_bands.empty())
     {
