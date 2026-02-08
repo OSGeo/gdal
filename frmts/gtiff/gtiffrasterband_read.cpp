@@ -1096,17 +1096,6 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
                                              const char *pszDomain)
 
 {
-    if (pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
-    {
-        m_poGDS->LoadGeoreferencingAndPamIfNeeded();
-
-        m_poGDS->LoadENVIHdrIfNeeded();
-    }
-    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
-    {
-        m_poGDS->LoadENVIHdrIfNeeded();
-    }
-
     if (pszName != nullptr && pszDomain != nullptr && EQUAL(pszDomain, "TIFF"))
     {
         int nBlockXOff = 0;
@@ -1185,6 +1174,16 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
     {
         if (EQUAL(pszName, "HAS_BLOCK_CACHE"))
             return HasBlockCache() ? "1" : "0";
+    }
+    else if (pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    {
+        m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+
+        m_poGDS->LoadENVIHdrIfNeeded();
+    }
+    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
+    {
+        m_poGDS->LoadENVIHdrIfNeeded();
     }
 
     const char *pszRet = m_oGTiffMDMD.GetMetadataItem(pszName, pszDomain);
