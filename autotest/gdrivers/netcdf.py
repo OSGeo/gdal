@@ -6806,6 +6806,30 @@ def test_netcdf_geotransform_preserved_createcopy(tmp_path):
 
 
 ###############################################################################
+# Test that the GeoTransform attribute is ignored if it does not appear to
+# correspond with the dimension variables.
+# https://github.com/OSGeo/gdal/issues/13823
+
+
+def test_netcdf_geotranform_ignored_if_erroneous(tmp_path):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        "GeoTransform read from attribute of transverse_mercator variable differs from value calculated from dimension variables",
+    ):
+        ds = gdal.Open("data/netcdf/uint.nc")
+
+        assert (
+            ds.GetMetadataItem("transverse_mercator#GeoTransform")
+            == "440720 60 0 3751320 0 -60 "
+        )
+
+        gt = ds.GetGeoTransform()
+
+        assert gt == (440720.0, 60.0, 0.0, 3750240.0, 0.0, -60.0)
+
+
+###############################################################################
 #
 
 
