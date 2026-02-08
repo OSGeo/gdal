@@ -1606,3 +1606,83 @@ def test_gdalwarp_invalid_wm(gdalwarp_path, tmp_vsimem):
     )
     assert "Memory percentage" in err
     assert "Failed to parse value of -wm" in err
+
+def test_gdalwarp_percentile_equivalence(gdalwarp_path, tmp_vsimem):
+    """Test that P50, P25, P75 match med, q1, q3"""
+
+    src = f"{tmp_vsimem}/src.tif"
+    med = f"{tmp_vsimem}/med.tif"
+    p50 = f"{tmp_vsimem}/p50.tif"
+    q1 = f"{tmp_vsimem}/q1.tif"
+    p25 = f"{tmp_vsimem}/p25.tif"
+    q3 = f"{tmp_vsimem}/q3.tif"
+    p75 = f"{tmp_vsimem}/p75.tif"
+
+    # Create a simple raster
+    gdal.Translate(
+        src,
+        "../gcore/data/byte.tif",
+        width=5,
+        height=1,
+        resampleAlg="nearest",
+    )
+
+    ds = gdal.Open(src, gdal.GA_Update)
+    ds.GetRasterBand(1).WriteArray([[1, 2, 3, 4, 100]])
+    ds = None
+
+    gdaltest.runexternal(f"{gdalwarp_path} -r med {src} {med}")
+    gdaltest.runexternal(f"{gdalwarp_path} -r P50 {src} {p50}")
+
+    gdaltest.runexternal(f"{gdalwarp_path} -r q1 {src} {q1}")
+    gdaltest.runexternal(f"{gdalwarp_path} -r P25 {src} {p25}")
+
+    gdaltest.runexternal(f"{gdalwarp_path} -r q3 {src} {q3}")
+    gdaltest.runexternal(f"{gdalwarp_path} -r P75 {src} {p75}")
+
+    def read_val(path):
+        return gdal.Open(path).ReadAsArray()[0][0]
+
+    assert read_val(med) == read_val(p50)
+    assert read_val(q1) == read_val(p25)
+    assert read_val(q3) == read_val(p75)
+
+
+def test_gdalwarp_percentile_outlier(gdalwarp_path, tmp_vsimem):
+    """Test that P95 ignores a strong outlier"""
+
+    src = f"{tmp_vsimem}/src.tif"
+    out = f"{tmp_vsimem}/out.tif"
+
+    gdal.Translate(
+        src,
+        "../gcore/data/byte.tif",
+        width=5,
+        height=1,
+        resampleAlg="nearest",
+    )
+
+    ds = gdal.Open(src, gdal.GA_Update)
+    ds.GetRasterBand(1).WriteArray([[10, 11, 12, 13, 1000]])
+    ds = None
+
+    gdaltest.runexternal(f"{gdalwarp_path} -r P95 {src} {out}")
+
+    val = gdal.Open(out).ReadAsArray()[0][0]
+    assert val < 1000
+
+
+def test_gdalwarp_invalid_percentile(gdalwarp_path, tmp_vsimem):
+    """Test invalid percentile values"""
+
+    ret, err = gdaltest.runexternal_out_and_err(
+        f"{gdalwarp_path} -r P0 ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
+    )
+    assert ret != 0
+    assert "Invalid percentile" in err
+
+    ret, err = gdaltest.runexternal_out_and_err(
+        f"{gdalwarp_path} -r P100 ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
+    )
+    assert ret != 0
+    assert "Invalid percentile" in err

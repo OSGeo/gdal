@@ -63,8 +63,10 @@ typedef enum
     /*! RMS (weighted root mean square (quadratic mean) of all non-NODATA
        contributing pixels) */
     GRA_RMS = 14,
+    /*! Percentile (select arbitrary percentile of all non-NODATA contributing pixels) */
+    GRA_Percentile = 15,
     /*! @cond Doxygen_Suppress */
-    GRA_LAST_VALUE = GRA_RMS
+    GRA_LAST_VALUE = GRA_Percentile
     /*! @endcond */
 } GDALResampleAlg;
 
