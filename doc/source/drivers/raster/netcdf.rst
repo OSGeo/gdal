@@ -255,7 +255,7 @@ spatial reference system using an OGC WKT string. The attribute name ``crs_wkt``
 not specified until version 1.7 of the CF conventions; before that time, GDAL used
 the attribute name ``spatial_ref`` for the same purpose.
 
-When reading a variable from a netCDF file, GDAL first checks the ``grid_mapping`` attribute to find the name of the grid mapping variable. If this variable has a ``spatial_ref`` or ``crs_wkt`` attribute (checked in that order), it will be used to assign a spatial reference system. If not, the spatial reference system will be assigned using using projection parameter attributes (``semi_major_axis``, etc.) If these parameters are not present, GDAL will check the grid mapping variable for a (non-standard) ``srid`` attribute on the grid mapping variable and attempt to interpret it if present.
+When reading a variable from a netCDF file, GDAL first checks the ``grid_mapping`` attribute to find the name of the grid mapping variable. If this variable has a ``spatial_ref`` or ``crs_wkt`` attribute (checked in that order), it will be used to assign a spatial reference system. If not, the spatial reference system will be assigned using using projection parameter attributes (``semi_major_axis``, etc.) If these parameters are not present, GDAL will check the grid mapping variable for a (non-standard) ``srid`` attribute and attempt to interpret it if present.
 
 If no ``grid_mapping`` attribute is present, GDAL will check the data variable for a (non-standard) ``crs`` attribute and read a WKT, EPSG, or PROJ.4 string from it.
 
@@ -268,16 +268,17 @@ NetCDF files store locations for each pixel using coordinate variables
 such as ``latitude`` and ``longitude``. This differs from the GDAL :ref:`raster_data_model`, wherein pixel locations are defined relative to an origin point, with fixed resolutions along two axes. The GDAL model uses a six-parameter geotransform to store the origin point, resolutions, and axis
 rotations (:ref:`geotransforms_tut`). 
 
-By reading the values of the coordinate variables and computing spacing between adjacent pixels, GDAL can derive a geotransform for the dataset. Because of floating-point errors, this
-geotransform may not match the resolution of the original dataset. To allow the geotransform
-to be stored exactly, GDAL writes it as an attribute of the grid mapping variable described above. However, this
-is a GDAL-specific extension and will not typically be present in files not written by GDAL.
+If the netCDF file represents a rectangular grid with equal cell sizes, GDAL can derive a geotransform for the dataset by reading the values of the coordinate variables and computing spacings between adjacent pixels. Because of floating-point errors, this geotransform may not match the resolution of the original dataset. To allow the geotransform to be stored exactly, GDAL writes it as an attribute of the grid mapping variable described above. However, this
+is a GDAL-specific extension and will not typically be present in files not written by GDAL. 
+
+If the grid is rectangular but the cell sizes are not equal, as in the case of Gaussian grids used for weather and climate modelling, GDAL will still report a geotransform if the cell sizes are equal within a 0.1-degree threshold. Whether or not a geotransform is reported, the exact values of the cell centers can be accessed via the ``Y_VALUES`` metadata item in the ``GEOLOCATION2`` domain.
+
+If the file does not represent a rectangular grid, GDAL will not report a geotransform. In this case, the ``GEOLOCATION`` metadata domain provides references to the datasets that can be used to read the coordinates associated with each pixel.
 
 When reading a netCDF, GDAL must first identify the coordinate variables associated with a data variable. The configuration options :config:`GDAL_NETCDF_VERIFY_DIMS` and
 :config:`GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS` control this
 behavior.
-GDAL will then verify that the values of the coordinate variables
-are equally-spaced and calculate a geotransform from their values. Starting with GDAL 3.11,
+If the coordinate variables are one-dimensional, indicating a possibly regular grid, GDAL will then check whether the coordinate variables values are equally-spaced and, if applicable, calculate a geotransform. Starting with GDAL 3.11,
 if the ``GeoTransform`` metadata is also present, the values of the 
 calculated and stored geotransforms will be compared and an warning 
 raised if they do not correspond. In such a case, preference will be 
