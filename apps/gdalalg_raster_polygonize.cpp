@@ -46,6 +46,11 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
         AddRasterInputArgs(false, false);
         AddVectorOutputArgs(false, false);
     }
+    else
+    {
+        AddOutputLayerNameArg(/* hiddenForCLI = */ false,
+                              /* shortNameOutputLayerAllowed = */ false);
+    }
 
     // gdal_polygonize specific options
     AddBandArg(&m_band).SetDefault(m_band);

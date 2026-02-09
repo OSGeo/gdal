@@ -244,3 +244,12 @@ def test_gdalalg_raster_contour_all_nodata(tmp_vsimem):
     ds = alg.Output()
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 0
+
+
+def test_gdalalg_raster_contour_pipeline_output_layer(tmp_vsimem):
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! contour --interval 10 --output-layer foo"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetLayer(0).GetName() == "foo"

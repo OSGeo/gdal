@@ -176,11 +176,10 @@ def test_gdalalg_raster_as_features_geom_type_invalid(alg):
         alg["geometry-type"] = "LineString"
 
 
-@pytest.mark.require_driver("GPKG")
 def test_gdalalg_raster_as_features_layer_name(alg, tmp_vsimem):
 
     alg["input"] = "../gcore/data/byte.tif"
-    alg["output"] = tmp_vsimem / "out.gpkg"
+    alg["output-format"] = "stream"
     alg["output-layer"] = "layer123"
 
     assert alg.Run()
@@ -188,8 +187,19 @@ def test_gdalalg_raster_as_features_layer_name(alg, tmp_vsimem):
     assert alg["output"]
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer("layer123")
-
     assert lyr is not None
+    assert lyr.GetLayerDefn().GetName() == "layer123"
+
+
+def test_gdalalg_raster_as_features_layer_name_pipeline(alg, tmp_vsimem):
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! as-features --output-layer layer123"
+    ) as alg:
+        ds = alg["output"].GetDataset()
+        lyr = ds.GetLayer("layer123")
+        assert lyr is not None
+        assert lyr.GetLayerDefn().GetName() == "layer123"
 
 
 def test_gdalalg_raster_as_features_zero_bands(alg, tmp_vsimem):
