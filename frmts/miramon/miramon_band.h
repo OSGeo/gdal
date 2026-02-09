@@ -66,6 +66,7 @@ class MMRBand final
     MMRBand(MMRRel &pfRel, const CPLString &osSection);
     MMRBand(const MMRBand &) =
         delete;  // I don't want to construct a MMRBand from another MMRBand (effc++)
+    MMRBand(MMRBand &&) = default;
     MMRBand &operator=(const MMRBand &) =
         delete;  // I don't want to assign a MMRBand to another MMRBand (effc++)
     ~MMRBand();
@@ -228,6 +229,66 @@ class MMRBand final
         return m_bIsValid;
     }
 
+    CPLString GetColor_Const() const
+    {
+        return m_osColor_Const;
+    }
+
+    GDALColorEntry GetConstantColorRGB() const
+    {
+        return m_sConstantColorRGB;
+    }
+
+    bool ValidConstantColorRGB() const
+    {
+        return m_osValidColorConst;
+    }
+
+    CPLString GetColor_Paleta() const
+    {
+        return m_osColor_Paleta;
+    }
+
+    CPLString GetColor_TractamentVariable() const
+    {
+        return m_osColor_TractamentVariable;
+    }
+
+    CPLString GetTractamentVariable() const
+    {
+        return m_osTractamentVariable;
+    }
+
+    CPLString GetColor_EscalatColor() const
+    {
+        return m_osColor_EscalatColor;
+    }
+
+    CPLString GetColor_N_SimbolsALaTaula() const
+    {
+        return m_osColor_N_SimbolsALaTaula;
+    }
+
+    CPLString GetShortRATName() const
+    {
+        return m_osShortRATName;
+    }
+
+    CPLString GetAssociateREL() const
+    {
+        return m_osAssociateREL;
+    }
+
+    CPLString GetUnits() const
+    {
+        return m_osBandUnitType;
+    }
+
+    bool IsCategorical() const
+    {
+        return m_bIsCategorical;
+    }
+
     GDALGeoTransform m_gt{};  // Bounding box for this band
 
   private:
@@ -242,8 +303,11 @@ class MMRBand final
     bool UpdateRowsNumberFromREL(const CPLString &osSection);
     void UpdateNoDataValue(const CPLString &osSection);
     void UpdateBoundingBoxFromREL(const CPLString &osSection);
+    void UpdateSimbolizationInfo(const CPLString &osSection);
+    void UpdateRATInfo(const CPLString &osSection);
     void UpdateReferenceSystemFromREL();
     void UpdateMinMaxValuesFromREL(const CPLString &osSection);
+    void UpdateUnitTypeValueFromREL(const CPLString &osSection);
     void UpdateMinMaxVisuValuesFromREL(const CPLString &osSection);
     void UpdateFriendlyDescriptionFromREL(const CPLString &osSection);
 
@@ -293,6 +357,9 @@ class MMRBand final
     int m_nDataTypeSizeBytes = 0;
 
     bool m_bIsCompressed = false;
+    bool m_bIsCategorical = false;
+
+    CPLString m_osBandUnitType = "";
 
     // Min and Max values from metadata:  This value should correspond
     // to the actual minimum and maximum, not to an approximation.
@@ -323,6 +390,22 @@ class MMRBand final
     // Nodata stuff
     bool m_bNoDataSet = false;  // There is nodata?
     double m_dfNoData = 0.0;    // Value of nodata
+
+    // Color table information
+    CPLString m_osColor_Const = "";
+    GDALColorEntry m_sConstantColorRGB = {0, 0, 0, 255};
+    bool m_osValidColorConst = false;
+    CPLString m_osColor_Paleta = "";
+    CPLString m_osColor_TractamentVariable = "";
+    CPLString m_osTractamentVariable = "";
+    CPLString m_osColor_EscalatColor = "";
+    CPLString m_osColor_N_SimbolsALaTaula = "";
+
+    // Attribute table information
+    // Table name
+    CPLString m_osShortRATName = "";
+    // Field in the table that is used as VALUE
+    CPLString m_osAssociateREL = "";
 };
 
 #endif /* ndef MM_BAND_INCLUDED */

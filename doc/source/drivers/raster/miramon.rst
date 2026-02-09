@@ -74,10 +74,32 @@ regardless of whether the original encoding is ANSI, OEM or UTF-8.
 
 REL files are always encoded in ANSI.
 
+Subdataset Generation
+---------------------
+
+The MiraMon format allows datasets to contain bands with heterogeneous characteristics. At present, the only strict restriction imposed by the format itself is that all bands must share the same spatial reference system (although different bounding boxes and/or cell sizes are allowed).
+
+For interoperability with other GDAL formats, the MiraMonRaster driver applies, by default, a compatibility-based criterion when exposing multiband datasets. Bands are grouped into the same GDAL subdataset only when they are fully compatible. When this is not the case, bands are exposed as belonging to different subdatasets.
+
+In practice, bands are separated into different subdatasets when there are differences in raster geometry, including raster dimensions or spatial extent, when the numeric data type differs, when symbolization semantics differ, when associated Raster Attribute Tables differ, or when the presence or value of NoData differs.
+
 Open options
 ------------
 
-None.
+The following open options are available:
+
+-  .. oo:: RAT_OR_CT
+      :choices: ALL, RAT, CT
+      :default: ALL
+
+      Controls whether the Raster Attribute Table (RAT) and/or the Color Table (CT) are exposed.
+      
+      ALL
+            Expose both the attribute table and the color table. Note that in some software this option may cause visualization and/or legend issues.
+      RAT
+            Expose the attribute table only, without the color table.
+      PER_BAND_ONLY
+            Expose the color table only, without the attribute table.
 
 Dataset creation options
 ------------------------

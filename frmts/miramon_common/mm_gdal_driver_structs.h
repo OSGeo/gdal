@@ -38,6 +38,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_MinY "MinY"
 #define KEY_MaxY "MaxY"
 #define KEY_CreationDate "CreationDate"
+#define KEY_CoverageContentType "CoverageContentType"
 #define SECTION_SPATIAL_REFERENCE_SYSTEM "SPATIAL_REFERENCE_SYSTEM"
 #define SECTION_HORIZONTAL "HORIZONTAL"
 #define SECTION_VERTICAL "VERTICAL"
@@ -48,12 +49,14 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_descriptor "descriptor"
 #define KEY_HorizontalSystemDefinition "HorizontalSystemDefinition"
 #define KEY_unitats "unitats"
+#define KEY_MostrarUnitats "MostrarUnitats"
 #define KEY_unitatsY "unitatsY"
 #define KEY_language "language"
 #define KEY_Value_eng "eng"
 #define KEY_MDIdiom "MDIdiom"
 #define KEY_characterSet "characterSet"
 #define KEY_Value_characterSet "006"
+#define KEY_TractamentVariable "TractamentVariable"
 
 // Raster
 #define SECTION_ATTRIBUTE_DATA "ATTRIBUTE_DATA"
@@ -62,6 +65,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define Key_IndexesNomsCamps "IndexsNomsCamps"
 #define KEY_NomCamp "NomCamp"
 #define SECTION_COLOR_TEXT "COLOR_TEXT"
+#define SECTION_VISU_LLEGENDA "VISU_LLEGENDA"
 
 // MiraMon feature field names
 #define szMMNomCampIdGraficDefecte "ID_GRAFIC"

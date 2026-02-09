@@ -13,11 +13,13 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 #include <algorithm>
+#include <limits>
+#include "gdal_rat.h"
 
 #include "miramon_rel.h"
 #include "miramon_band.h"
 
-#include "../miramon_common/mm_gdal_driver_structs.h"  // For SECTION_ATTRIBUTE_DATA
+#include "../miramon_common/mm_gdal_functions.h"  // For MM_CreateDBFHeader
 
 /************************************************************************/
 /*                              MMRBand()                               */
@@ -25,7 +27,6 @@
 MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
     : m_pfRel(&fRel), m_nWidth(0), m_nHeight(0),
       m_osBandSection(osBandSectionIn)
-
 {
     // Getting band and band file name from metadata.
     CPLString osNomFitxer;
@@ -47,8 +48,8 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
             m_osBandFileName = "";
         else
         {
-            m_osBandFileName =
-                m_pfRel->MMRGetFileNameFromRelName(m_pfRel->GetRELName());
+            m_osBandFileName = m_pfRel->MMRGetFileNameFromRelName(
+                m_pfRel->GetRELName(), pszExtRaster);
         }
 
         if (m_osBandFileName.empty())
@@ -132,6 +133,9 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
     // Getting min and max values
     UpdateMinMaxValuesFromREL(m_osBandSection);
 
+    // Getting unit type
+    UpdateUnitTypeValueFromREL(m_osBandSection);
+
     // Getting min and max values for simbolization
     UpdateMinMaxVisuValuesFromREL(m_osBandSection);
     if (!m_bMinVisuSet)
@@ -163,6 +167,12 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
     // Getting the bounding box: coordinates in the terrain
     UpdateBoundingBoxFromREL(m_osBandSection);
 
+    // Getting all information about simbolization
+    UpdateSimbolizationInfo(m_osBandSection);
+
+    // Getting all information about RAT
+    UpdateRATInfo(m_osBandSection);
+
     // MiraMon IMG files are efficient in going to an specified row.
     // So le'ts configurate the blocks as line blocks.
     m_nBlockXSize = m_nWidth;
@@ -189,10 +199,12 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
 /*                              ~MMRBand()                              */
 /************************************************************************/
 MMRBand::~MMRBand()
-
 {
-    if (m_pfIMG != nullptr)
-        CPL_IGNORE_RET_VAL(VSIFCloseL(m_pfIMG));
+    if (m_pfIMG == nullptr)
+        return;
+
+    CPL_IGNORE_RET_VAL(VSIFCloseL(m_pfIMG));
+    m_pfIMG = nullptr;
 }
 
 const CPLString MMRBand::GetRELFileName() const
@@ -501,6 +513,20 @@ void MMRBand::UpdateMinMaxValuesFromREL(const CPLString &osSection)
     }
 }
 
+void MMRBand::UpdateUnitTypeValueFromREL(const CPLString &osSection)
+{
+    CPLString osValue;
+
+    CPLString osAuxSection = SECTION_ATTRIBUTE_DATA;
+    osAuxSection.append(":");
+    osAuxSection.append(osSection);
+    if (m_pfRel->GetMetadataValue(osAuxSection, "unitats", osValue) &&
+        !osValue.empty())
+    {
+        m_osBandUnitType = osValue;
+    }
+}
+
 void MMRBand::UpdateMinMaxVisuValuesFromREL(const CPLString &osSection)
 {
     m_bMinVisuSet = false;
@@ -531,7 +557,7 @@ void MMRBand::UpdateFriendlyDescriptionFromREL(const CPLString &osSection)
 {
     // This "if" is due to CID 1620830 in Coverity Scan
     if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection,
-                                   "descriptor", m_osFriendlyDescription))
+                                   KEY_descriptor, m_osFriendlyDescription))
         m_osFriendlyDescription = "";
 }
 
@@ -603,6 +629,92 @@ void MMRBand::UpdateBoundingBoxFromREL(const CPLString &osSection)
             m_dfBBMaxY = m_nHeight;
         }
     }
+}
+
+void MMRBand::UpdateSimbolizationInfo(const CPLString &osSection)
+{
+    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osSection, "Color_Const",
+                              m_osColor_Const);
+
+    if (EQUAL(m_osColor_Const, "1"))
+    {
+        if (CE_None == m_pfRel->UpdateGDALColorEntryFromBand(
+                           osSection, m_sConstantColorRGB))
+            m_osValidColorConst = true;
+    }
+
+    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osSection, "Color_Paleta",
+                              m_osColor_Paleta);
+
+    // Treatment of the color variable
+    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osSection,
+                              "Color_TractamentVariable",
+                              m_osColor_TractamentVariable);
+
+    m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection,
+                              KEY_TractamentVariable, m_osTractamentVariable);
+
+    // Is categorical?
+    if (m_osTractamentVariable.empty())
+    {
+        m_bIsCategorical = false;
+    }
+    else
+    {
+        if (EQUAL(m_osTractamentVariable, "Categoric"))
+            m_bIsCategorical = true;
+        else
+            m_bIsCategorical = false;
+    }
+
+    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osSection,
+                              "Color_EscalatColor", m_osColor_EscalatColor);
+
+    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osSection,
+                              "Color_N_SimbolsALaTaula",
+                              m_osColor_N_SimbolsALaTaula);
+}
+
+void MMRBand::UpdateRATInfo(const CPLString &osSection)
+{
+    CPLString os_IndexJoin;
+
+    if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection,
+                                   "IndexsJoinTaula", os_IndexJoin) ||
+        os_IndexJoin.empty())
+    {
+        return;
+    }
+
+    // Let's see if there is any table that can ve converted to RAT
+    const CPLStringList aosTokens(CSLTokenizeString2(os_IndexJoin, ",", 0));
+    const int nTokens = CSLCount(aosTokens);
+    if (nTokens < 1)
+        return;
+
+    CPLString os_Join = "JoinTaula";
+    os_Join.append("_");
+    os_Join.append(aosTokens[0]);
+
+    CPLString osTableNameSection_value;
+    if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection, os_Join,
+                                   osTableNameSection_value) ||
+        osTableNameSection_value.empty())
+        return;
+
+    CPLString osTableNameSection = "TAULA_";
+    osTableNameSection.append(osTableNameSection_value);
+
+    if (!m_pfRel->GetMetadataValue(osTableNameSection, KEY_NomFitxer,
+                                   m_osShortRATName) ||
+        m_osShortRATName.empty())
+    {
+        m_osAssociateREL = "";
+        return;
+    }
+
+    m_pfRel->GetMetadataValue(osTableNameSection, "AssociatRel",
+                              m_osAssociateREL);
 }
 
 /************************************************************************/
@@ -814,7 +926,7 @@ int MMRBand::PositionAtStartOfRowOffsetsInFile()
 {
     vsi_l_offset nFileSize, nHeaderOffset;
     char szChain[16];
-    short int nVersion, nSubVersion;
+    GInt16 nVersion, nSubVersion;
     int nOffsetSize, nOffsetsSectionType;
 
     if (VSIFSeekL(m_pfIMG, 0, SEEK_END))

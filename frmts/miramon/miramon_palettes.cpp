@@ -18,18 +18,22 @@
 
 #include "../miramon_common/mm_gdal_functions.h"  // For MMCheck_REL_FILE()
 
-MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
-    : m_pfRel(&fRel), m_osBandSection(osBandSectionIn)
+MMRPalettes::MMRPalettes(MMRRel &fRel, int nIBand) : m_pfRel(&fRel)
 {
     // Is the palette a constant color? Then, which color is it?
-    CPLString os_Color_Const;
-    if (m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
-                                  "Color_Const", os_Color_Const) &&
-        EQUAL(os_Color_Const, "1"))
+    MMRBand *poBand = m_pfRel->GetBand(nIBand - 1);
+    if (poBand == nullptr)
+        return;
+
+    m_osBandSection = poBand->GetBandSection();
+
+    if (EQUAL(poBand->GetColor_Const(), "1"))
     {
         m_bIsConstantColor = true;
-        if (CE_None != UpdateConstantColor())
+        if (!poBand->ValidConstantColorRGB())
             return;  // The constant color indicated is wrong
+
+        SetConstantColorRGB(poBand->GetConstantColorRGB());
         m_nRealNPaletteColors = 1;
         m_bIsValid = true;
         m_ColorScaling = ColorTreatment::DIRECT_ASSIGNATION;
@@ -38,35 +42,21 @@ MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
     }
 
     // Is this an authomatic palette or has a color table (dbf, pal,...)?
-    CPLString os_Color_Paleta = "";
-    if (m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
-                                  "Color_Paleta", os_Color_Paleta))
-    {
-        if (EQUAL(os_Color_Paleta, "<Automatic>"))
-            m_bIsAutomatic = true;
-    }
+    if (EQUAL(poBand->GetColor_Paleta(), "<Automatic>") ||
+        poBand->GetColor_Paleta().empty())
+        m_bIsAutomatic = true;
 
     // Treatment of the color variable
-    CPLString os_Color_TractamentVariable;
-    if (!m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
-                                   "Color_TractamentVariable",
-                                   os_Color_TractamentVariable) ||
-        os_Color_TractamentVariable.empty())
+    if (poBand->GetColor_TractamentVariable().empty())
     {
-        CPLString os_TractamentVariable;
-        if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA,
-                                       "TractamentVariable",
-                                       os_TractamentVariable))
-            os_TractamentVariable = "";
-
-        if (EQUAL(os_TractamentVariable, "Categoric"))
+        if (poBand->IsCategorical())
             SetIsCategorical(true);
         else
             SetIsCategorical(false);
     }
     else
     {
-        if (EQUAL(os_Color_TractamentVariable, "Categoric"))
+        if (EQUAL(poBand->GetColor_TractamentVariable(), "Categoric"))
             SetIsCategorical(true);
         else
             SetIsCategorical(false);
@@ -79,9 +69,7 @@ MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
     {
         // How many "colors" are involved?
         CPLString os_Color_N_SimbolsALaTaula = "";
-        if (m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
-                                      "Color_N_SimbolsALaTaula",
-                                      os_Color_N_SimbolsALaTaula))
+        if (!poBand->GetColor_N_SimbolsALaTaula().empty())
         {
             GIntBig nBigVal = CPLAtoGIntBig(os_Color_N_SimbolsALaTaula);
             if (nBigVal >= INT_MAX)
@@ -113,10 +101,10 @@ MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
     }
 
     // If color is no automatic, from where we got this?
-    CPLString osExtension = CPLGetExtensionSafe(os_Color_Paleta);
+    CPLString osExtension = CPLGetExtensionSafe(poBand->GetColor_Paleta());
     if (osExtension.tolower() == "dbf")
     {
-        if (CE_None != GetPaletteColors_DBF(os_Color_Paleta))
+        if (CE_None != GetPaletteColors_DBF(poBand->GetColor_Paleta()))
             return;
 
         m_bIsValid = true;
@@ -124,7 +112,7 @@ MMRPalettes::MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn)
     else if (osExtension.tolower() == "pal" || osExtension.tolower() == "p25" ||
              osExtension.tolower() == "p65")
     {
-        if (CE_None != GetPaletteColors_PAL_P25_P65(os_Color_Paleta))
+        if (CE_None != GetPaletteColors_PAL_P25_P65(poBand->GetColor_Paleta()))
             return;
 
         m_bIsValid = true;
@@ -563,62 +551,5 @@ CPLErr MMRPalettes::UpdateColorInfo()
 
     if (m_ColorScaling == ColorTreatment::DEFAULT_SCALING)
         return CE_Failure;
-    return CE_None;
-}
-
-CPLErr MMRPalettes::UpdateConstantColor()
-{
-    // Example: Color_Smb=(255,0,255)
-    CPLString os_Color_Smb;
-    if (!m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, m_osBandSection,
-                                   "Color_Smb", os_Color_Smb))
-        return CE_None;
-
-    os_Color_Smb.replaceAll(" ", "");
-    if (!os_Color_Smb.empty() && os_Color_Smb.size() >= 7 &&
-        os_Color_Smb[0] == '(' && os_Color_Smb[os_Color_Smb.size() - 1] == ')')
-    {
-        os_Color_Smb.replaceAll("(", "");
-        os_Color_Smb.replaceAll(")", "");
-        const CPLStringList aosTokens(CSLTokenizeString2(os_Color_Smb, ",", 0));
-        if (CSLCount(aosTokens) != 3)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid constant color: \"%s\"",
-                     m_pfRel->GetRELNameChar());
-            return CE_Failure;
-        }
-
-        int nIColor0;
-        if (1 != sscanf(aosTokens[0], "%d", &nIColor0))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid constant color: \"%s\"",
-                     m_pfRel->GetRELNameChar());
-            return CE_Failure;
-        }
-
-        int nIColor1;
-        if (1 != sscanf(aosTokens[1], "%d", &nIColor1))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid constant color: \"%s\"",
-                     m_pfRel->GetRELNameChar());
-            return CE_Failure;
-        }
-
-        int nIColor2;
-        if (1 != sscanf(aosTokens[2], "%d", &nIColor2))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid constant color: \"%s\"",
-                     m_pfRel->GetRELNameChar());
-            return CE_Failure;
-        }
-
-        SetConstantColorRGB(static_cast<short>(nIColor0),
-                            static_cast<short>(nIColor1),
-                            static_cast<short>(nIColor2));
-    }
     return CE_None;
 }
