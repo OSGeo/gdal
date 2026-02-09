@@ -590,6 +590,175 @@ bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
 }
 
 /************************************************************************/
+/*                         ZarrV3Array::IRead()                         */
+/************************************************************************/
+
+bool ZarrV3Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
+                        const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+                        const GDALExtendedDataType &bufferDataType,
+                        void *pDstBuffer) const
+{
+    // For sharded arrays, pre-populate the block cache via ReadMultiRange()
+    // so that the base-class block-by-block loop hits memory, not HTTP.
+    if (m_poCodecs && m_poCodecs->SupportsPartialDecoding())
+    {
+        PreloadShardedBlocks(arrayStartIdx, count);
+    }
+    return ZarrArray::IRead(arrayStartIdx, count, arrayStep, bufferStride,
+                            bufferDataType, pDstBuffer);
+}
+
+/************************************************************************/
+/*                 ZarrV3Array::PreloadShardedBlocks()                  */
+/************************************************************************/
+
+void ZarrV3Array::PreloadShardedBlocks(const GUInt64 *arrayStartIdx,
+                                       const size_t *count) const
+{
+    const size_t nDims = m_aoDims.size();
+    if (nDims == 0)
+        return;
+
+    // Calculate needed block index range
+    std::vector<uint64_t> anBlockMin(nDims), anBlockMax(nDims);
+    size_t nTotalBlocks = 1;
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        anBlockMin[i] = arrayStartIdx[i] / m_anInnerBlockSize[i];
+        anBlockMax[i] =
+            (arrayStartIdx[i] + count[i] - 1) / m_anInnerBlockSize[i];
+        nTotalBlocks *= static_cast<size_t>(anBlockMax[i] - anBlockMin[i] + 1);
+    }
+
+    if (nTotalBlocks <= 1)
+        return;  // single block — no batching benefit
+
+    CPLDebugOnly("ZARR", "PreloadShardedBlocks: %" PRIu64 " blocks to batch",
+                 static_cast<uint64_t>(nTotalBlocks));
+
+    // Enumerate all needed blocks, grouped by shard filename
+    struct BlockInfo
+    {
+        std::vector<uint64_t> anBlockIndices{};
+        std::vector<size_t> anStartIdx{};
+        std::vector<size_t> anCount{};
+    };
+
+    std::map<std::string, std::vector<BlockInfo>> oShardToBlocks;
+
+    // Iterate over all needed block indices
+    std::vector<uint64_t> anCur(nDims);
+    size_t dimIdx = 0;
+lbl_next:
+    if (dimIdx == nDims)
+    {
+        // Skip blocks already in cache
+        const std::vector<uint64_t> cacheKey(anCur.begin(), anCur.end());
+        if (m_oChunkCache.find(cacheKey) == m_oChunkCache.end())
+        {
+            // Compute shard filename and inner chunk start/count
+            std::vector<uint64_t> outerIdx(nDims);
+            BlockInfo info;
+            info.anBlockIndices = anCur;
+            info.anStartIdx.resize(nDims);
+            info.anCount.resize(nDims);
+            for (size_t i = 0; i < nDims; ++i)
+            {
+                outerIdx[i] =
+                    anCur[i] * m_anInnerBlockSize[i] / m_anOuterBlockSize[i];
+                info.anStartIdx[i] = static_cast<size_t>(
+                    (anCur[i] * m_anInnerBlockSize[i]) % m_anOuterBlockSize[i]);
+                info.anCount[i] = static_cast<size_t>(m_anInnerBlockSize[i]);
+            }
+
+            std::string osFilename = BuildChunkFilename(outerIdx.data());
+            oShardToBlocks[osFilename].push_back(std::move(info));
+        }
+    }
+    else
+    {
+        anCur[dimIdx] = anBlockMin[dimIdx];
+        while (true)
+        {
+            dimIdx++;
+            goto lbl_next;
+        lbl_return:
+            dimIdx--;
+            if (anCur[dimIdx] == anBlockMax[dimIdx])
+                break;
+            ++anCur[dimIdx];
+        }
+    }
+    if (dimIdx > 0)
+        goto lbl_return;
+
+    // For each shard with >1 uncached block, batch-read
+    const char *const apszOpenOptions[] = {"IGNORE_FILENAME_RESTRICTIONS=YES",
+                                           nullptr};
+
+    for (auto &[osFilename, aBlocks] : oShardToBlocks)
+    {
+        if (aBlocks.size() <= 1)
+            continue;
+
+        VSIVirtualHandleUniquePtr fp(
+            VSIFOpenEx2L(osFilename.c_str(), "rb", 0, apszOpenOptions));
+        if (!fp)
+            continue;
+
+        // Build request list
+        std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+            anRequests;
+        anRequests.reserve(aBlocks.size());
+        for (const auto &info : aBlocks)
+        {
+            anRequests.push_back({info.anStartIdx, info.anCount});
+        }
+
+        std::vector<ZarrByteVectorQuickResize> aResults;
+        if (!m_poCodecs->BatchDecodePartial(fp.get(), anRequests, aResults))
+            continue;
+
+        // Store results in block cache
+        const bool bNeedDecode = NeedDecodedBuffer();
+        for (size_t i = 0; i < aBlocks.size(); ++i)
+        {
+            if (aResults[i].empty())
+            {
+                CachedBlock cachedBlock;
+                m_oChunkCache[aBlocks[i].anBlockIndices] =
+                    std::move(cachedBlock);
+                continue;
+            }
+
+            CachedBlock cachedBlock;
+            if (bNeedDecode)
+            {
+                const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                                           m_aoDtypeElts.back().nativeSize;
+                const auto nGDALDTSize = m_oType.GetSize();
+                const size_t nValues = aResults[i].size() / nSourceSize;
+                ZarrByteVectorQuickResize abyDecoded;
+                abyDecoded.resize(nValues * nGDALDTSize);
+                const GByte *pSrc = aResults[i].data();
+                GByte *pDst = abyDecoded.data();
+                for (size_t v = 0; v < nValues;
+                     v++, pSrc += nSourceSize, pDst += nGDALDTSize)
+                {
+                    DecodeSourceElt(m_aoDtypeElts, pSrc, pDst);
+                }
+                std::swap(cachedBlock.abyDecoded, abyDecoded);
+            }
+            else
+            {
+                std::swap(cachedBlock.abyDecoded, aResults[i]);
+            }
+            m_oChunkCache[aBlocks[i].anBlockIndices] = std::move(cachedBlock);
+        }
+    }
+}
+
+/************************************************************************/
 /*                      ZarrV3Array::IAdviseRead()                      */
 /************************************************************************/
 

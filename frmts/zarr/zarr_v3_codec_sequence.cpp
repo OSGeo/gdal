@@ -284,6 +284,40 @@ bool ZarrV3CodecSequence::DecodePartial(VSIVirtualHandle *poFile,
 }
 
 /************************************************************************/
+/*              ZarrV3CodecSequence::BatchDecodePartial()               */
+/************************************************************************/
+
+bool ZarrV3CodecSequence::BatchDecodePartial(
+    VSIVirtualHandle *poFile,
+    const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+        &anRequests,
+    std::vector<ZarrByteVectorQuickResize> &aResults)
+{
+    // Only batch-decode when sharding is the sole codec. If other codecs
+    // (e.g. transpose) precede it, indices and output need codec-specific
+    // transformations that BatchDecodePartial does not handle.
+    if (m_apoCodecs.size() == 1)
+    {
+        auto *poSharding = dynamic_cast<ZarrV3CodecShardingIndexed *>(
+            m_apoCodecs.back().get());
+        if (poSharding)
+        {
+            return poSharding->BatchDecodePartial(poFile, anRequests, aResults);
+        }
+    }
+
+    // Fallback: sequential DecodePartial for non-sharding codec chains
+    aResults.resize(anRequests.size());
+    for (size_t i = 0; i < anRequests.size(); ++i)
+    {
+        if (!DecodePartial(poFile, aResults[i], anRequests[i].first,
+                           anRequests[i].second))
+            return false;
+    }
+    return true;
+}
+
+/************************************************************************/
 /*             ZarrV3CodecSequence::GetInnerMostBlockSize()             */
 /************************************************************************/
 
