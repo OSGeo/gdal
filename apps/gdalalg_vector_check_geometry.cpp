@@ -32,7 +32,10 @@ GDALVectorCheckGeometryAlgorithm::GDALVectorCheckGeometryAlgorithm(
                                       standaloneStep)
 {
     AddArg("include-field", 0,
-           _("Fields from input layer to include in output"), &m_includeFields);
+           _("Fields from input layer to include in output (special values: "
+             "ALL and NONE)"),
+           &m_includeFields)
+        .SetDefault("NONE");
 
     AddArg("include-valid", 0,
            _("Include valid inputs in output, with empty geometry"),

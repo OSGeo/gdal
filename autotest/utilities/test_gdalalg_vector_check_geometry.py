@@ -64,8 +64,15 @@ def test_gdalalg_vector_check_geometry(alg, polys):
 
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
+    dst_defn = dst_lyr.GetLayerDefn()
+
     assert dst_lyr.GetName() == "error_location"
-    assert dst_lyr.GetLayerDefn().GetGeomType() == ogr.wkbMultiPoint
+    assert dst_defn.GetGeomType() == ogr.wkbMultiPoint
+
+    field_names = [
+        dst_defn.GetFieldDefn(i).GetName() for i in range(dst_defn.GetFieldCount())
+    ]
+    assert field_names == ["error"]
 
     errors = [f for f in dst_lyr]
 
