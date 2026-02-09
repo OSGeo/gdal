@@ -347,3 +347,57 @@ def test_empty_bbox(tmp_vsimem):
                 out_filename,
             ],
         )
+
+
+@pytest.mark.parametrize("override_nodata", (False, True))
+def test_like(override_nodata):
+
+    driver = "MEM"  # set to GTiff to test with actual files on disk
+    src_path = "/tmp/src.tif"
+    template_path = "/tmp/template.tif"
+    output_path = "/tmp/out.tif"
+
+    # Create a memory raster with size 4x4, 1 band and resolution 15m
+    src_ds = gdal.GetDriverByName(driver).Create(src_path, 4, 4)
+    # Coordinates of the center: 514979.562E, 5034533.939N
+    src_ds.SetGeoTransform([514979 - 30, 30, 0, 5034533 + 30, 0, -30])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32632)
+    src_ds.SetSpatialRef(srs)
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 4, 4, b"\x00\x01\x02\x03" * 4)
+
+    # Create the template tif with size 4x2, 1 band, resolution 15m in EPSG:3857
+    # Left: 1023163.16E, 5694828.43N
+    # and bbox covering the center strip 2px wide of the source raster
+    template_ds = gdal.GetDriverByName(driver).Create(template_path, 4, 2)
+    template_ds.SetGeoTransform([1023163, 30, 0, 5694828, 0, -30])
+    # Set nodata to 255
+    template_ds.GetRasterBand(1).SetNoDataValue(255)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    template_ds.SetSpatialRef(srs)
+    template_ds.GetRasterBand(1).Fill(0)
+    template_ds.FlushCache()
+
+    alg = get_reproject_alg()
+    alg["input"] = src_ds
+    alg["output"] = output_path
+    alg["output-format"] = driver
+    alg["like"] = template_ds
+    if override_nodata:
+        alg["dst-nodata"] = 128
+    assert alg.Run()
+
+    out_ds = alg["output"].GetDataset()
+    assert out_ds.RasterXSize == 4
+    assert out_ds.RasterYSize == 2
+    out_ds.GetRasterBand(1).ReadRaster(0, 0, 4, 2)
+    assert (
+        out_ds.GetRasterBand(1).ReadRaster(0, 0, 4, 2)
+        == b"\x00\x01\x01\x02\x00\x01\x01\x02"
+    )
+
+    if override_nodata:
+        assert out_ds.GetRasterBand(1).GetNoDataValue() == 128
+    else:
+        assert out_ds.GetRasterBand(1).GetNoDataValue() == 255

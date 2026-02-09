@@ -34,9 +34,17 @@ GDALRasterReprojectAlgorithm::GDALRasterReprojectAlgorithm(bool standaloneStep)
     : GDALRasterPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
+
     AddArg("src-crs", 's', _("Source CRS"), &m_srsCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("s_srs");
+
+    AddArg("like", 0,
+           _("Dataset to use as a template for target bounds, CRS, size and "
+             "nodata"),
+           &m_likeDataset, GDAL_OF_RASTER)
+        .SetMetaVar("DATASET");
+
     AddArg("dst-crs", 'd', _("Destination CRS"), &m_dstCrs)
         .SetIsCRSArg()
         .AddHiddenAlias("t_srs");
@@ -207,6 +215,55 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     CPLStringList aosOptions;
     std::string outputFilename;
+
+    // --like provide defaults: override if not explicitly set
+    if (auto poLikeDS = m_likeDataset.GetDatasetRef())
+    {
+        const auto poSpatialRef = poLikeDS->GetSpatialRef();
+        if (poSpatialRef)
+        {
+            char *pszWKT = nullptr;
+            poSpatialRef->exportToWkt(&pszWKT);
+            m_dstCrs = pszWKT;
+            CPLFree(pszWKT);
+            GDALGeoTransform gt;
+            if (poLikeDS->GetGeoTransform(gt) == CE_None)
+            {
+                if (m_resolution.empty())
+                {
+                    m_resolution = {std::abs(gt[1]), std::abs(gt[5])};
+                }
+                const int nXSize = poLikeDS->GetRasterXSize();
+                const int nYSize = poLikeDS->GetRasterYSize();
+                if (m_size.empty())
+                {
+                    m_size = {nXSize, nYSize};
+                }
+                if (m_bbox.empty())
+                {
+                    m_bbox = {gt[0], gt[3] + nYSize * gt[5],
+                              gt[0] + nXSize * gt[1], gt[3]};
+                    m_bboxCrs = m_dstCrs;
+                }
+            }
+        }
+
+        // Copy nodata if not set by the user
+        if (m_srcNoData.empty())
+        {
+            m_srcNoData.resize(poLikeDS->GetRasterCount());
+            for (int i = 0; i < poLikeDS->GetRasterCount(); i++)
+            {
+                auto poBand = poLikeDS->GetRasterBand(i + 1);
+                int bSuccess = FALSE;
+                const double dfNoDataValue = poBand->GetNoDataValue(&bSuccess);
+                if (bSuccess)
+                    m_srcNoData[i] = CPLSPrintf("%.17g", dfNoDataValue);
+                else
+                    m_srcNoData[i] = "None";
+            }
+        }
+    }
 
     if (ctxt.m_poNextUsableStep)
     {
