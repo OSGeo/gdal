@@ -5581,7 +5581,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             // Optional GDAL custom projection tags.
             if (bWriteGDALTags)
             {
-                std::string osGeoTransform = m_gt.ToString(" ") + " ";
+                std::string osGeoTransform = m_gt.ToString(" ");
                 CPLDebug("GDAL_netCDF", "szGeoTransform = %s",
                          osGeoTransform.c_str());
 
