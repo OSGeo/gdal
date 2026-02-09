@@ -68,6 +68,8 @@ def netcdf_cf_check_file(ifile, version="auto"):
 
     # There should be a ERRORS detected summary
     if "ERRORS detected" not in ret:
+        if "urlopen error" in err:
+            pytest.skip("cfchecks network failure: " + err.strip()[:200])
         print(err)
         pytest.fail("ERROR with command - " + command)
 
