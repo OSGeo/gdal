@@ -252,4 +252,23 @@ TEST_F(test_gdal_gtiff, set_nodata_value_on_int64)
     VSIUnlink(osTmpFile.c_str());
 }
 
+// Test interaction between PAM and IMAGE_STRUCTURE metadata domain
+TEST_F(test_gdal_gtiff, image_structure_pam)
+{
+    GDALDatasetUniquePtr poDS(GDALDataset::FromHandle(GDALDataset::Open(
+        (tut::common::data_basedir +
+         "/../../gcore/data/gtiff/byte_with_pam_image_structure.tif")
+            .c_str())));
+    ASSERT_TRUE(poDS);
+
+    const char *pszInterleave =
+        poDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+    EXPECT_STREQ(pszInterleave, "BAND");
+    EXPECT_EQ(poDS->GetMetadataItem("foo", "IMAGE_STRUCTURE"), nullptr);
+    EXPECT_STREQ(poDS->GetRasterBand(1)->GetMetadataItem("IFD_OFFSET", "TIFF"),
+                 "408");
+    EXPECT_STREQ(pszInterleave, "BAND");
+    EXPECT_EQ(poDS->GetMetadataItem("foo", "IMAGE_STRUCTURE"), nullptr);
+}
+
 }  // namespace
