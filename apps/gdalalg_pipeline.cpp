@@ -31,6 +31,7 @@
 #include "gdalalg_raster_footprint.h"
 #include "gdalalg_raster_polygonize.h"
 #include "gdalalg_raster_info.h"
+#include "gdalalg_raster_pixel_info.h"
 #include "gdalalg_raster_tile.h"
 #include "gdalalg_vector_grid.h"
 #include "gdalalg_vector_info.h"
@@ -498,6 +499,7 @@ GDALPipelineAlgorithm::GDALPipelineAlgorithm()
     m_stepRegistry.Register<GDALRasterAsFeaturesAlgorithm>();
     m_stepRegistry.Register<GDALRasterContourAlgorithm>();
     m_stepRegistry.Register<GDALRasterFootprintAlgorithm>();
+    m_stepRegistry.Register<GDALRasterPixelInfoAlgorithm>();
     m_stepRegistry.Register<GDALRasterPolygonizeAlgorithm>();
     m_stepRegistry.Register<GDALRasterZonalStatsAlgorithm>();
     m_stepRegistry.Register<GDALVectorGridAlgorithm>();

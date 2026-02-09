@@ -96,7 +96,7 @@ GDALRasterAlgorithm::GDALRasterAlgorithm()
     RegisterSubAlgorithm<GDALRasterNeighborsAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterOverviewAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterPipelineAlgorithm>();
-    RegisterSubAlgorithm<GDALRasterPixelInfoAlgorithm>();
+    RegisterSubAlgorithm<GDALRasterPixelInfoAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterProximityAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterRGBToPaletteAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALRasterReclassifyAlgorithmStandalone>();
