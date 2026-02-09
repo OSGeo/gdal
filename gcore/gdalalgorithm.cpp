@@ -2647,11 +2647,37 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         }
 
         auto oIter = m_oMapDatasetNameToDataset.find(osDatasetName.c_str());
-        auto poDS = oIter != m_oMapDatasetNameToDataset.end()
-                        ? oIter->second
-                        : GDALDataset::Open(osDatasetName.c_str(), flags,
-                                            aosAllowedDrivers.List(),
-                                            aosOpenOptions.List());
+        GDALDataset *poDS;
+        {
+            // The PostGISRaster may emit an error message, that is not
+            // relevant, if it is the vector driver that was intended
+            std::unique_ptr<CPLErrorStateBackuper> poBackuper;
+            if (cpl::starts_with(osDatasetName, "PG:") &&
+                (flags & (GDAL_OF_RASTER | GDAL_OF_VECTOR)) != 0)
+            {
+                poBackuper = std::make_unique<CPLErrorStateBackuper>(
+                    CPLQuietErrorHandler);
+            }
+
+            CPL_IGNORE_RET_VAL(poBackuper);
+            poDS = oIter != m_oMapDatasetNameToDataset.end()
+                       ? oIter->second
+                       : GDALDataset::Open(osDatasetName.c_str(), flags,
+                                           aosAllowedDrivers.List(),
+                                           aosOpenOptions.List());
+
+            // Retry with PostGIS vector driver
+            if (!poDS && poBackuper &&
+                GetGDALDriverManager()->GetDriverByName("PostGISRaster") &&
+                aosAllowedDrivers.empty() && aosOpenOptions.empty())
+            {
+                poBackuper.reset();
+                poDS = GDALDataset::Open(
+                    osDatasetName.c_str(), flags & ~GDAL_OF_RASTER,
+                    aosAllowedDrivers.List(), aosOpenOptions.List());
+            }
+        }
+
         if (poDS)
         {
             if (oIter != m_oMapDatasetNameToDataset.end())
