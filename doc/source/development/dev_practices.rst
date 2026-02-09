@@ -14,6 +14,8 @@ of a RFC (request for comment) document.
 
 GDAL's policy on substantial code additions is documented at :ref:`rfc-85`.
 
+Please also consult our policy regarding :ref:`AI/LLM tool use <ai_tool_policy>`.
+
 .. _cpl:
 
 Portability

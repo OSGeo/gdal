@@ -117,3 +117,4 @@ RFC list
     rfc108_driver_removal_3_11
     rfc109_gdal_cpp_api
     rfc110_jit_compilation
+    rfc111_ai_tool_policy

@@ -14,9 +14,7 @@ body:
     attributes:
       value: |
 
-        - [ ] I'm using LLM/AI-suggested procedures
-
-        Using GDAL still requires thinking. While LLMs can sometimes provide useful guidance about how to use GDAL, the most precise documentation is the source code itself, with the test suite being the next most useful place for discovering how to use a feature. Please tell us in the ticket if you are using LLM-suggested procedures.
+        - [ ] I'm using LLM/AI-suggested procedures. See our [policy about AI tool use](https://gdal.org/community/ai_tool_policy.html). Use of AI tools *must* be indicated.
 
   - type: textarea
     id: what
