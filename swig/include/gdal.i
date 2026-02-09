@@ -748,6 +748,8 @@ const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
 void GDALAllRegister();
 
 void GDALDestroyDriverManager();
+%rename (ClearMemoryCaches) GDALClearMemoryCaches;
+void GDALClearMemoryCaches();
 
 #if defined(SWIGPYTHON)
 %inline {
