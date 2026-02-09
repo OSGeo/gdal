@@ -259,12 +259,12 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 poGDS->nDataLineNum++;
 
                 const int nX = static_cast<int>(
-                    (dfX - 0.5 * poGDS->m_gt[1] - poGDS->m_gt[0]) /
-                        poGDS->m_gt[1] +
+                    (dfX - 0.5 * poGDS->m_gt.xscale - poGDS->m_gt.xorig) /
+                        poGDS->m_gt.xscale +
                     0.5);
                 const int nY = static_cast<int>(
-                    (dfY - 0.5 * poGDS->m_gt[5] - poGDS->m_gt[3]) /
-                        poGDS->m_gt[5] +
+                    (dfY - 0.5 * poGDS->m_gt.yscale - poGDS->m_gt.yorig) /
+                        poGDS->m_gt.yscale +
                     0.5);
                 if (nX < 0 || nX >= nRasterXSize)
                 {
@@ -417,7 +417,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     }
 
     const double dfExpectedY =
-        poGDS->m_gt[3] + (0.5 + nBlockYOff) * poGDS->m_gt[5];
+        poGDS->m_gt.yorig + (0.5 + nBlockYOff) * poGDS->m_gt.yscale;
 
     int idx = -1;
     while (true)
@@ -504,17 +504,19 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 }
                 else
                 {
-                    if (fabs((dfY - dfExpectedY) / poGDS->m_gt[5]) >
+                    if (fabs((dfY - dfExpectedY) / poGDS->m_gt.yscale) >
                         RELATIVE_ERROR)
                     {
                         if (idx < 0)
                         {
                             const double dfYDeltaOrigin =
-                                dfY + 0.5 * poGDS->m_gt[5] - poGDS->m_gt[3];
-                            if (!(fabs(dfYDeltaOrigin) > fabs(poGDS->m_gt[5]) &&
+                                dfY + 0.5 * poGDS->m_gt.yscale -
+                                poGDS->m_gt.yorig;
+                            if (!(fabs(dfYDeltaOrigin) >
+                                      fabs(poGDS->m_gt.yscale) &&
                                   fabs(std::round(dfYDeltaOrigin /
-                                                  poGDS->m_gt[5]) -
-                                       (dfYDeltaOrigin / poGDS->m_gt[5])) <=
+                                                  poGDS->m_gt.yscale) -
+                                       (dfYDeltaOrigin / poGDS->m_gt.yscale)) <=
                                       RELATIVE_ERROR))
                             {
                                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -533,8 +535,8 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                     }
 
                     idx = static_cast<int>(
-                        (dfX - 0.5 * poGDS->m_gt[1] - poGDS->m_gt[0]) /
-                            poGDS->m_gt[1] +
+                        (dfX - 0.5 * poGDS->m_gt.xscale - poGDS->m_gt.xorig) /
+                            poGDS->m_gt.xscale +
                         0.5);
                 }
                 CPLAssert(idx >= 0 && idx < nRasterXSize);
@@ -1537,10 +1539,11 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nMinTokens = nMinTokens;
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
-    poDS->m_gt[0] = dfMinX - dfStepX / 2;
-    poDS->m_gt[1] = dfStepX;
-    poDS->m_gt[3] = (dfStepY < 0) ? dfMaxY - dfStepY / 2 : dfMinY - dfStepY / 2;
-    poDS->m_gt[5] = dfStepY;
+    poDS->m_gt.xorig = dfMinX - dfStepX / 2;
+    poDS->m_gt.xscale = dfStepX;
+    poDS->m_gt.yorig =
+        (dfStepY < 0) ? dfMaxY - dfStepY / 2 : dfMinY - dfStepY / 2;
+    poDS->m_gt.yscale = dfStepY;
     poDS->bSameNumberOfValuesPerLine = bSameNumberOfValuesPerLine;
     poDS->dfMinZ = dfMinZ;
     poDS->dfMaxZ = dfMaxZ;
@@ -1617,7 +1620,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
     int nYSize = poSrcDS->GetRasterYSize();
     GDALGeoTransform gt;
     poSrcDS->GetGeoTransform(gt);
-    if (gt[2] != 0 || gt[4] != 0)
+    if (gt.xrot != 0 || gt.yrot != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "XYZ driver does not support CreateCopy() from skewed or "
@@ -1729,11 +1732,11 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
                                                    eReqDT, 0, 0, nullptr);
         if (eErr != CE_None)
             break;
-        const double dfY = gt[3] + (j + 0.5) * gt[5];
+        const double dfY = gt.yorig + (j + 0.5) * gt.yscale;
         CPLString osBuf;
         for (int i = 0; i < nXSize; i++)
         {
-            const double dfX = gt[0] + (i + 0.5) * gt[1];
+            const double dfX = gt.xorig + (i + 0.5) * gt.xscale;
             char szBuf[256];
             if (eReqDT == GDT_Int32)
                 CPLsnprintf(szBuf, sizeof(szBuf), szFormat, dfX, pszColSep[0],

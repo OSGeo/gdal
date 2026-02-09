@@ -692,12 +692,12 @@ GDALDataset *IdrisiDataset::Open(GDALOpenInfo *poOpenInfo)
         dfYPixSz = (dfMinY - dfMaxY) / poDS->nRasterYSize;
         dfXPixSz = (dfMaxX - dfMinX) / poDS->nRasterXSize;
 
-        poDS->m_gt[0] = dfMinX;
-        poDS->m_gt[1] = dfXPixSz;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = dfMaxY;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = dfYPixSz;
+        poDS->m_gt.xorig = dfMinX;
+        poDS->m_gt.xscale = dfXPixSz;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = dfMaxY;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = dfYPixSz;
     }
 
     // --------------------------------------------------------------------
@@ -1278,7 +1278,7 @@ CPLErr IdrisiDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 CPLErr IdrisiDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to set rotated geotransform on Idrisi Raster file.\n"
@@ -1290,21 +1290,21 @@ CPLErr IdrisiDataset::SetGeoTransform(const GDALGeoTransform &gt)
     // Update the .rdc file
     // --------------------------------------------------------------------
 
-    double dfXPixSz = gt[1];
-    double dfYPixSz = gt[5];
-    double dfMinX = gt[0];
+    double dfXPixSz = gt.xscale;
+    double dfYPixSz = gt.yscale;
+    double dfMinX = gt.xorig;
     double dfMaxX = (dfXPixSz * nRasterXSize) + dfMinX;
 
     double dfMinY, dfMaxY;
     if (dfYPixSz < 0)
     {
-        dfMaxY = gt[3];
-        dfMinY = (dfYPixSz * nRasterYSize) + gt[3];
+        dfMaxY = gt.yorig;
+        dfMinY = (dfYPixSz * nRasterYSize) + gt.yorig;
     }
     else
     {
-        dfMaxY = (dfYPixSz * nRasterYSize) + gt[3];
-        dfMinY = gt[3];
+        dfMaxY = (dfYPixSz * nRasterYSize) + gt.yorig;
+        dfMinY = gt.yorig;
     }
 
     papszRDC = CSLSetNameValue(papszRDC, rdcMIN_X, CPLSPrintf("%.7f", dfMinX));

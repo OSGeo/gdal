@@ -1560,7 +1560,7 @@ CPLErr ZarrDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 CPLErr ZarrDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    const bool bHasRotatedTerms = (gt[2] != 0 || gt[4] != 0);
+    const bool bHasRotatedTerms = (gt.xrot != 0 || gt.yrot != 0);
 
     if (bHasRotatedTerms)
     {
@@ -1627,7 +1627,7 @@ CPLErr ZarrDataset::SetGeoTransform(const GDALGeoTransform &gt)
             {
                 adfX.reserve(nRasterXSize);
                 for (int i = 0; i < nRasterXSize; ++i)
-                    adfX.emplace_back(m_gt[0] + m_gt[1] * (i + 0.5));
+                    adfX.emplace_back(m_gt.xorig + m_gt.xscale * (i + 0.5));
             }
             catch (const std::exception &)
             {
@@ -1658,7 +1658,7 @@ CPLErr ZarrDataset::SetGeoTransform(const GDALGeoTransform &gt)
         {
             adfY.reserve(nRasterYSize);
             for (int i = 0; i < nRasterYSize; ++i)
-                adfY.emplace_back(m_gt[3] + m_gt[5] * (i + 0.5));
+                adfY.emplace_back(m_gt.yorig + m_gt.yscale * (i + 0.5));
         }
         catch (const std::exception &)
         {

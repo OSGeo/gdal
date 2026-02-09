@@ -270,12 +270,12 @@ CPLErr MMRBand::GetRasterBlock(int /*nXBlock*/, int nYBlock, void *pData,
 
 void MMRBand::UpdateGeoTransform()
 {
-    m_gt[0] = GetBoundingBoxMinX();
-    m_gt[1] = (GetBoundingBoxMaxX() - m_gt[0]) / GetWidth();
-    m_gt[2] = 0.0;  // No rotation in MiraMon rasters
-    m_gt[3] = GetBoundingBoxMaxY();
-    m_gt[4] = 0.0;
-    m_gt[5] = (GetBoundingBoxMinY() - m_gt[3]) / GetHeight();
+    m_gt.xorig = GetBoundingBoxMinX();
+    m_gt.xscale = (GetBoundingBoxMaxX() - m_gt.xorig) / GetWidth();
+    m_gt.xrot = 0.0;  // No rotation in MiraMon rasters
+    m_gt.yorig = GetBoundingBoxMaxY();
+    m_gt.yrot = 0.0;
+    m_gt.yscale = (GetBoundingBoxMinY() - m_gt.yorig) / GetHeight();
 }
 
 /************************************************************************/

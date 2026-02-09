@@ -407,13 +407,13 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
     {
         m_bGeoTransformSet = true;
         m_gt = poParentDS->m_gt;
-        m_gt[1] *=
+        m_gt.xscale *=
             static_cast<double>(poParentDS->GetRasterXSize()) / nRasterXSize;
-        m_gt[2] *=
+        m_gt.xrot *=
             static_cast<double>(poParentDS->GetRasterYSize()) / nRasterYSize;
-        m_gt[4] *=
+        m_gt.yrot *=
             static_cast<double>(poParentDS->GetRasterXSize()) / nRasterXSize;
-        m_gt[5] *=
+        m_gt.yscale *=
             static_cast<double>(poParentDS->GetRasterYSize()) / nRasterYSize;
     }
 

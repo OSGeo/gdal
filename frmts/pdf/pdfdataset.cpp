@@ -5310,38 +5310,40 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 if (dfRotation == 90)
                 {
-                    poDS->m_gt[0] = poDS->m_adfCTM[4];
-                    poDS->m_gt[1] = poDS->m_adfCTM[2] / dfUserUnit;
-                    poDS->m_gt[2] = poDS->m_adfCTM[0] / dfUserUnit;
-                    poDS->m_gt[3] = poDS->m_adfCTM[5];
-                    poDS->m_gt[4] = poDS->m_adfCTM[3] / dfUserUnit;
-                    poDS->m_gt[5] = poDS->m_adfCTM[1] / dfUserUnit;
+                    poDS->m_gt.xorig = poDS->m_adfCTM[4];
+                    poDS->m_gt.xscale = poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_gt.xrot = poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_gt.yorig = poDS->m_adfCTM[5];
+                    poDS->m_gt.yrot = poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_gt.yscale = poDS->m_adfCTM[1] / dfUserUnit;
                 }
                 else if (dfRotation == -90 || dfRotation == 270)
                 {
-                    poDS->m_gt[0] = poDS->m_adfCTM[4] +
-                                    poDS->m_adfCTM[2] * poDS->m_dfPageHeight +
-                                    poDS->m_adfCTM[0] * poDS->m_dfPageWidth;
-                    poDS->m_gt[1] = -poDS->m_adfCTM[2] / dfUserUnit;
-                    poDS->m_gt[2] = -poDS->m_adfCTM[0] / dfUserUnit;
-                    poDS->m_gt[3] = poDS->m_adfCTM[5] +
-                                    poDS->m_adfCTM[3] * poDS->m_dfPageHeight +
-                                    poDS->m_adfCTM[1] * poDS->m_dfPageWidth;
-                    poDS->m_gt[4] = -poDS->m_adfCTM[3] / dfUserUnit;
-                    poDS->m_gt[5] = -poDS->m_adfCTM[1] / dfUserUnit;
+                    poDS->m_gt.xorig =
+                        poDS->m_adfCTM[4] +
+                        poDS->m_adfCTM[2] * poDS->m_dfPageHeight +
+                        poDS->m_adfCTM[0] * poDS->m_dfPageWidth;
+                    poDS->m_gt.xscale = -poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_gt.xrot = -poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_gt.yorig =
+                        poDS->m_adfCTM[5] +
+                        poDS->m_adfCTM[3] * poDS->m_dfPageHeight +
+                        poDS->m_adfCTM[1] * poDS->m_dfPageWidth;
+                    poDS->m_gt.yrot = -poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_gt.yscale = -poDS->m_adfCTM[1] / dfUserUnit;
                 }
                 else
                 {
-                    poDS->m_gt[0] = poDS->m_adfCTM[4] +
-                                    poDS->m_adfCTM[2] * dfY2 +
-                                    poDS->m_adfCTM[0] * dfX1;
-                    poDS->m_gt[1] = poDS->m_adfCTM[0] / dfUserUnit;
-                    poDS->m_gt[2] = -poDS->m_adfCTM[2] / dfUserUnit;
-                    poDS->m_gt[3] = poDS->m_adfCTM[5] +
-                                    poDS->m_adfCTM[3] * dfY2 +
-                                    poDS->m_adfCTM[1] * dfX1;
-                    poDS->m_gt[4] = poDS->m_adfCTM[1] / dfUserUnit;
-                    poDS->m_gt[5] = -poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_gt.xorig = poDS->m_adfCTM[4] +
+                                       poDS->m_adfCTM[2] * dfY2 +
+                                       poDS->m_adfCTM[0] * dfX1;
+                    poDS->m_gt.xscale = poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_gt.xrot = -poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_gt.yorig = poDS->m_adfCTM[5] +
+                                       poDS->m_adfCTM[3] * dfY2 +
+                                       poDS->m_adfCTM[1] * dfX1;
+                    poDS->m_gt.yrot = poDS->m_adfCTM[1] / dfUserUnit;
+                    poDS->m_gt.yscale = -poDS->m_adfCTM[3] / dfUserUnit;
                 }
 
                 poDS->m_bGeoTransformValid = true;
@@ -5498,25 +5500,26 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* If pixel size or top left coordinates are very close to an int, round
      * them to the int */
     double dfEps =
-        (fabs(poDS->m_gt[0]) > 1e5 && fabs(poDS->m_gt[3]) > 1e5) ? 1e-5 : 1e-8;
-    poDS->m_gt[0] = ROUND_IF_CLOSE(poDS->m_gt[0], dfEps);
-    poDS->m_gt[1] = ROUND_IF_CLOSE(poDS->m_gt[1]);
-    poDS->m_gt[3] = ROUND_IF_CLOSE(poDS->m_gt[3], dfEps);
-    poDS->m_gt[5] = ROUND_IF_CLOSE(poDS->m_gt[5]);
+        (fabs(poDS->m_gt.xorig) > 1e5 && fabs(poDS->m_gt.yorig) > 1e5) ? 1e-5
+                                                                       : 1e-8;
+    poDS->m_gt.xorig = ROUND_IF_CLOSE(poDS->m_gt.xorig, dfEps);
+    poDS->m_gt.xscale = ROUND_IF_CLOSE(poDS->m_gt.xscale);
+    poDS->m_gt.yorig = ROUND_IF_CLOSE(poDS->m_gt.yorig, dfEps);
+    poDS->m_gt.yscale = ROUND_IF_CLOSE(poDS->m_gt.yscale);
 
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
         // Attempt to "fix" the loss of precision due to the use of float32 for
         // numbers by pdfium
-        if ((fabs(poDS->m_gt[0]) > 1e5 || fabs(poDS->m_gt[3]) > 1e5) &&
-            fabs(poDS->m_gt[0] - std::round(poDS->m_gt[0])) <
-                1e-6 * fabs(poDS->m_gt[0]) &&
-            fabs(poDS->m_gt[1] - std::round(poDS->m_gt[1])) <
-                1e-3 * fabs(poDS->m_gt[1]) &&
-            fabs(poDS->m_gt[3] - std::round(poDS->m_gt[3])) <
-                1e-6 * fabs(poDS->m_gt[3]) &&
-            fabs(poDS->m_gt[5] - std::round(poDS->m_gt[5])) <
-                1e-3 * fabs(poDS->m_gt[5]))
+        if ((fabs(poDS->m_gt.xorig) > 1e5 || fabs(poDS->m_gt.yorig) > 1e5) &&
+            fabs(poDS->m_gt.xorig - std::round(poDS->m_gt.xorig)) <
+                1e-6 * fabs(poDS->m_gt.xorig) &&
+            fabs(poDS->m_gt.xscale - std::round(poDS->m_gt.xscale)) <
+                1e-3 * fabs(poDS->m_gt.xscale) &&
+            fabs(poDS->m_gt.yorig - std::round(poDS->m_gt.yorig)) <
+                1e-6 * fabs(poDS->m_gt.yorig) &&
+            fabs(poDS->m_gt.yscale - std::round(poDS->m_gt.yscale)) <
+                1e-3 * fabs(poDS->m_gt.yscale))
         {
             for (int i = 0; i < 6; i++)
             {
@@ -5553,10 +5556,10 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                     x = (-dfX1 + poRing->getX(i)) * dfUserUnit;
                     y = (dfY2 - poRing->getY(i)) * dfUserUnit;
                 }
-                double X =
-                    poDS->m_gt[0] + x * poDS->m_gt[1] + y * poDS->m_gt[2];
-                double Y =
-                    poDS->m_gt[3] + x * poDS->m_gt[4] + y * poDS->m_gt[5];
+                double X = poDS->m_gt.xorig + x * poDS->m_gt.xscale +
+                           y * poDS->m_gt.xrot;
+                double Y = poDS->m_gt.yorig + x * poDS->m_gt.yrot +
+                           y * poDS->m_gt.yscale;
                 poRing->setPoint(i, X, Y);
             }
         }
@@ -7283,17 +7286,20 @@ int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
     // If the non scaling terms of the geotransform are significantly smaller
     // than the pixel size, then nullify them as being just artifacts of
     //  reprojection and GDALGCPsToGeoTransform() numerical imprecisions.
-    const double dfPixelSize = std::min(fabs(m_gt[1]), fabs(m_gt[5]));
-    const double dfRotationShearTerm = std::max(fabs(m_gt[2]), fabs(m_gt[4]));
+    const double dfPixelSize = std::min(fabs(m_gt.xscale), fabs(m_gt.yscale));
+    const double dfRotationShearTerm =
+        std::max(fabs(m_gt.xrot), fabs(m_gt.yrot));
     if (dfRotationShearTerm < 1e-5 * dfPixelSize ||
         (m_bUseLib.test(PDFLIB_PDFIUM) &&
-         std::min(fabs(m_gt[2]), fabs(m_gt[4])) < 1e-5 * dfPixelSize))
+         std::min(fabs(m_gt.xrot), fabs(m_gt.yrot)) < 1e-5 * dfPixelSize))
     {
-        dfLRX = m_gt[0] + nRasterXSize * m_gt[1] + nRasterYSize * m_gt[2];
-        dfLRY = m_gt[3] + nRasterXSize * m_gt[4] + nRasterYSize * m_gt[5];
-        m_gt[1] = (dfLRX - m_gt[0]) / nRasterXSize;
-        m_gt[5] = (dfLRY - m_gt[3]) / nRasterYSize;
-        m_gt[2] = m_gt[4] = 0;
+        dfLRX =
+            m_gt.xorig + nRasterXSize * m_gt.xscale + nRasterYSize * m_gt.xrot;
+        dfLRY =
+            m_gt.yorig + nRasterXSize * m_gt.yrot + nRasterYSize * m_gt.yscale;
+        m_gt.xscale = (dfLRX - m_gt.xorig) / nRasterXSize;
+        m_gt.yscale = (dfLRY - m_gt.yorig) / nRasterYSize;
+        m_gt.xrot = m_gt.yrot = 0;
     }
 
     return TRUE;

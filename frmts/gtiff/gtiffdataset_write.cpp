@@ -3895,7 +3895,7 @@ void GTiffDataset::WriteGeoTIFFInfo()
         /*      use the tiepoint plus pixelscale otherwise we use a matrix. */
         /* --------------------------------------------------------------------
          */
-        if (m_gt[2] == 0.0 && m_gt[4] == 0.0 && m_gt[5] < 0.0)
+        if (m_gt.xrot == 0.0 && m_gt.yrot == 0.0 && m_gt.yscale < 0.0)
         {
             double dfOffset = 0.0;
             if (m_eProfile != GTiffProfile::BASELINE)
@@ -3912,18 +3912,19 @@ void GTiffDataset::WriteGeoTIFFInfo()
                     dfScale = 1.0;
                 if (!bApplyScaleOffset || !bHasOffset)
                     dfOffset = 0.0;
-                const double adfPixelScale[3] = {
-                    m_gt[1], fabs(m_gt[5]), bApplyScaleOffset ? dfScale : 0.0};
+                const double adfPixelScale[3] = {m_gt.xscale, fabs(m_gt.yscale),
+                                                 bApplyScaleOffset ? dfScale
+                                                                   : 0.0};
                 TIFFSetField(m_hTIFF, TIFFTAG_GEOPIXELSCALE, 3, adfPixelScale);
             }
 
-            double adfTiePoints[6] = {0.0,     0.0,     0.0,
-                                      m_gt[0], m_gt[3], dfOffset};
+            double adfTiePoints[6] = {0.0,        0.0,        0.0,
+                                      m_gt.xorig, m_gt.yorig, dfOffset};
 
             if (bPixelIsPoint && !bPointGeoIgnore)
             {
-                adfTiePoints[3] += m_gt[1] * 0.5 + m_gt[2] * 0.5;
-                adfTiePoints[4] += m_gt[4] * 0.5 + m_gt[5] * 0.5;
+                adfTiePoints[3] += m_gt.xscale * 0.5 + m_gt.xrot * 0.5;
+                adfTiePoints[4] += m_gt.yrot * 0.5 + m_gt.yscale * 0.5;
             }
 
             if (m_eProfile != GTiffProfile::BASELINE)
@@ -3933,18 +3934,18 @@ void GTiffDataset::WriteGeoTIFFInfo()
         {
             double adfMatrix[16] = {};
 
-            adfMatrix[0] = m_gt[1];
-            adfMatrix[1] = m_gt[2];
-            adfMatrix[3] = m_gt[0];
-            adfMatrix[4] = m_gt[4];
-            adfMatrix[5] = m_gt[5];
-            adfMatrix[7] = m_gt[3];
+            adfMatrix[0] = m_gt.xscale;
+            adfMatrix[1] = m_gt.xrot;
+            adfMatrix[3] = m_gt.xorig;
+            adfMatrix[4] = m_gt.yrot;
+            adfMatrix[5] = m_gt.yscale;
+            adfMatrix[7] = m_gt.yorig;
             adfMatrix[15] = 1.0;
 
             if (bPixelIsPoint && !bPointGeoIgnore)
             {
-                adfMatrix[3] += m_gt[1] * 0.5 + m_gt[2] * 0.5;
-                adfMatrix[7] += m_gt[4] * 0.5 + m_gt[5] * 0.5;
+                adfMatrix[3] += m_gt.xscale * 0.5 + m_gt.xrot * 0.5;
+                adfMatrix[7] += m_gt.yrot * 0.5 + m_gt.yscale * 0.5;
             }
 
             if (m_eProfile != GTiffProfile::BASELINE)
@@ -4515,8 +4516,8 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         bool bGeoTIFFScaleOffsetInZ = false;
         GDALGeoTransform gt;
         // Check if we have already encoded scale/offset in the GeoTIFF tags
-        if (poSrcDS->GetGeoTransform(gt) == CE_None && gt[2] == 0.0 &&
-            gt[4] == 0.0 && gt[5] < 0.0 && poSrcDS->GetSpatialRef() &&
+        if (poSrcDS->GetGeoTransform(gt) == CE_None && gt.xrot == 0.0 &&
+            gt.yrot == 0.0 && gt.yscale < 0.0 && poSrcDS->GetSpatialRef() &&
             poSrcDS->GetSpatialRef()->IsVertical() &&
             poSrcDS->GetRasterCount() == 1)
         {
@@ -7944,7 +7945,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
         {
             l_poSRS = poSrcDS->GetSpatialRef();
 
-            if (l_gt[2] == 0.0 && l_gt[4] == 0.0 && l_gt[5] < 0.0)
+            if (l_gt.xrot == 0.0 && l_gt.yrot == 0.0 && l_gt.yscale < 0.0)
             {
                 double dfOffset = 0.0;
                 {
@@ -7964,21 +7965,21 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
                         dfScale = 1.0;
                     if (!bApplyScaleOffset || !bHasOffset)
                         dfOffset = 0.0;
-                    const double adfPixelScale[3] = {l_gt[1], fabs(l_gt[5]),
-                                                     bApplyScaleOffset ? dfScale
-                                                                       : 0.0};
+                    const double adfPixelScale[3] = {
+                        l_gt.xscale, fabs(l_gt.yscale),
+                        bApplyScaleOffset ? dfScale : 0.0};
 
                     TIFFSetField(l_hTIFF, TIFFTAG_GEOPIXELSCALE, 3,
                                  adfPixelScale);
                 }
 
-                double adfTiePoints[6] = {0.0,     0.0,     0.0,
-                                          l_gt[0], l_gt[3], dfOffset};
+                double adfTiePoints[6] = {0.0,        0.0,        0.0,
+                                          l_gt.xorig, l_gt.yorig, dfOffset};
 
                 if (bPixelIsPoint && !bPointGeoIgnore)
                 {
-                    adfTiePoints[3] += l_gt[1] * 0.5 + l_gt[2] * 0.5;
-                    adfTiePoints[4] += l_gt[4] * 0.5 + l_gt[5] * 0.5;
+                    adfTiePoints[3] += l_gt.xscale * 0.5 + l_gt.xrot * 0.5;
+                    adfTiePoints[4] += l_gt.yrot * 0.5 + l_gt.yscale * 0.5;
                 }
 
                 TIFFSetField(l_hTIFF, TIFFTAG_GEOTIEPOINTS, 6, adfTiePoints);
@@ -7987,18 +7988,18 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             {
                 double adfMatrix[16] = {0.0};
 
-                adfMatrix[0] = l_gt[1];
-                adfMatrix[1] = l_gt[2];
-                adfMatrix[3] = l_gt[0];
-                adfMatrix[4] = l_gt[4];
-                adfMatrix[5] = l_gt[5];
-                adfMatrix[7] = l_gt[3];
+                adfMatrix[0] = l_gt.xscale;
+                adfMatrix[1] = l_gt.xrot;
+                adfMatrix[3] = l_gt.xorig;
+                adfMatrix[4] = l_gt.yrot;
+                adfMatrix[5] = l_gt.yscale;
+                adfMatrix[7] = l_gt.yorig;
                 adfMatrix[15] = 1.0;
 
                 if (bPixelIsPoint && !bPointGeoIgnore)
                 {
-                    adfMatrix[3] += l_gt[1] * 0.5 + l_gt[2] * 0.5;
-                    adfMatrix[7] += l_gt[4] * 0.5 + l_gt[5] * 0.5;
+                    adfMatrix[3] += l_gt.xscale * 0.5 + l_gt.xrot * 0.5;
+                    adfMatrix[7] += l_gt.yrot * 0.5 + l_gt.yscale * 0.5;
                 }
 
                 TIFFSetField(l_hTIFF, TIFFTAG_GEOTRANSMATRIX, 16, adfMatrix);
@@ -9061,8 +9062,8 @@ CPLErr GTiffDataset::SetGeoTransform(const GDALGeoTransform &gt)
             m_bForceUnsetGTOrGCPs = true;
             m_aoGCPs.clear();
         }
-        else if (gt[0] == 0.0 && gt[1] == 0.0 && gt[2] == 0.0 && gt[3] == 0.0 &&
-                 gt[4] == 0.0 && gt[5] == 0.0)
+        else if (gt.xorig == 0.0 && gt.xscale == 0.0 && gt.xrot == 0.0 &&
+                 gt.yorig == 0.0 && gt.yrot == 0.0 && gt.yscale == 0.0)
         {
             if (m_bGeoTransformValid)
             {

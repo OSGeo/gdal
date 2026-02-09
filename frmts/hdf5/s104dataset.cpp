@@ -1556,7 +1556,7 @@ bool S104Creator::CopyValues(GDALDataset *poSrcDS, GDALProgressFunc pfnProgress,
     std::vector<GByte> abyValues(
         static_cast<size_t>(nBlockYSize) * nBlockXSize *
         (sizeof(float) + sizeof(GByte) + sizeof(float)));
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     float fMinHeight = std::numeric_limits<float>::infinity();
     float fMaxHeight = -std::numeric_limits<float>::infinity();

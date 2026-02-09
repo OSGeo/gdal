@@ -742,27 +742,29 @@ bool HDF5EOSParser::GridMetadata::GetGeoTransform(GDALGeoTransform &gt) const
             return false;
         if (nProjCode == 0)  // GEO
         {
-            gt[0] = CPLPackedDMSToDec(adfUpperLeftPointMeters[0]);
-            gt[1] = (CPLPackedDMSToDec(adfLowerRightPointMeters[0]) -
-                     CPLPackedDMSToDec(adfUpperLeftPointMeters[0])) /
-                    nRasterXSize;
-            gt[2] = 0;
-            gt[3] = CPLPackedDMSToDec(adfUpperLeftPointMeters[1]);
-            gt[4] = 0;
-            gt[5] = (CPLPackedDMSToDec(adfLowerRightPointMeters[1]) -
-                     CPLPackedDMSToDec(adfUpperLeftPointMeters[1])) /
-                    nRasterYSize;
+            gt.xorig = CPLPackedDMSToDec(adfUpperLeftPointMeters[0]);
+            gt.xscale = (CPLPackedDMSToDec(adfLowerRightPointMeters[0]) -
+                         CPLPackedDMSToDec(adfUpperLeftPointMeters[0])) /
+                        nRasterXSize;
+            gt.xrot = 0;
+            gt.yorig = CPLPackedDMSToDec(adfUpperLeftPointMeters[1]);
+            gt.yrot = 0;
+            gt.yscale = (CPLPackedDMSToDec(adfLowerRightPointMeters[1]) -
+                         CPLPackedDMSToDec(adfUpperLeftPointMeters[1])) /
+                        nRasterYSize;
         }
         else
         {
-            gt[0] = adfUpperLeftPointMeters[0];
-            gt[1] = (adfLowerRightPointMeters[0] - adfUpperLeftPointMeters[0]) /
-                    nRasterXSize;
-            gt[2] = 0;
-            gt[3] = adfUpperLeftPointMeters[1];
-            gt[4] = 0;
-            gt[5] = (adfLowerRightPointMeters[1] - adfUpperLeftPointMeters[1]) /
-                    nRasterYSize;
+            gt.xorig = adfUpperLeftPointMeters[0];
+            gt.xscale =
+                (adfLowerRightPointMeters[0] - adfUpperLeftPointMeters[0]) /
+                nRasterXSize;
+            gt.xrot = 0;
+            gt.yorig = adfUpperLeftPointMeters[1];
+            gt.yrot = 0;
+            gt.yscale =
+                (adfLowerRightPointMeters[1] - adfUpperLeftPointMeters[1]) /
+                nRasterYSize;
         }
         return true;
     }

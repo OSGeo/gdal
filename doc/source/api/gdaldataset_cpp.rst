@@ -54,4 +54,7 @@ GDALRelationship class
      CREATIONOPTIONLIST
      nDeltaDegreeOfFreedom
      padfCovMatrix
-
+     xscale
+     xorig
+     yscale
+     yorig

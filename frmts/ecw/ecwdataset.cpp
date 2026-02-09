@@ -1642,10 +1642,10 @@ void ECWDataset::WriteHeader()
 
     if (bGeoTransformChanged)
     {
-        psEditInfo->fOriginX = m_gt[0];
-        psEditInfo->fCellIncrementX = m_gt[1];
-        psEditInfo->fOriginY = m_gt[3];
-        psEditInfo->fCellIncrementY = m_gt[5];
+        psEditInfo->fOriginX = m_gt.xorig;
+        psEditInfo->fCellIncrementX = m_gt.xscale;
+        psEditInfo->fOriginY = m_gt.yorig;
+        psEditInfo->fCellIncrementY = m_gt.yscale;
         CPLDebug("ECW", "Rewrite Geotransform");
     }
 
@@ -3414,12 +3414,12 @@ void ECWDataset::ECW2WKTProjection()
     {
         bGeoTransformValid = TRUE;
 
-        m_gt[0] = psFileInfo->fOriginX;
-        m_gt[1] = psFileInfo->fCellIncrementX;
-        m_gt[2] = 0.0;
+        m_gt.xorig = psFileInfo->fOriginX;
+        m_gt.xscale = psFileInfo->fCellIncrementX;
+        m_gt.xrot = 0.0;
 
-        m_gt[3] = psFileInfo->fOriginY;
-        m_gt[4] = 0.0;
+        m_gt.yorig = psFileInfo->fOriginY;
+        m_gt.yrot = 0.0;
 
         /* By default, set Y-resolution negative assuming images always */
         /* have "Upward" orientation (Y coordinates increase "Upward"). */
@@ -3429,9 +3429,9 @@ void ECWDataset::ECW2WKTProjection()
         /* rare images with "Downward" orientation, where Y coordinates */
         /* increase "Downward" and Y-resolution is positive.            */
         if (CPLTestBool(CPLGetConfigOption("ECW_ALWAYS_UPWARD", "TRUE")))
-            m_gt[5] = -fabs(psFileInfo->fCellIncrementY);
+            m_gt.yscale = -fabs(psFileInfo->fCellIncrementY);
         else
-            m_gt[5] = psFileInfo->fCellIncrementY;
+            m_gt.yscale = psFileInfo->fCellIncrementY;
     }
 
     /* -------------------------------------------------------------------- */

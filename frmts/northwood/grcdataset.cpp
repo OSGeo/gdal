@@ -261,13 +261,13 @@ NWT_GRCDataset::~NWT_GRCDataset()
 /************************************************************************/
 CPLErr NWT_GRCDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    gt[0] = pGrd->dfMinX - (pGrd->dfStepSize * 0.5);
-    gt[3] = pGrd->dfMaxY + (pGrd->dfStepSize * 0.5);
-    gt[1] = pGrd->dfStepSize;
-    gt[2] = 0.0;
+    gt.xorig = pGrd->dfMinX - (pGrd->dfStepSize * 0.5);
+    gt.yorig = pGrd->dfMaxY + (pGrd->dfStepSize * 0.5);
+    gt.xscale = pGrd->dfStepSize;
+    gt.xrot = 0.0;
 
-    gt[4] = 0.0;
-    gt[5] = -1 * pGrd->dfStepSize;
+    gt.yrot = 0.0;
+    gt.yscale = -1 * pGrd->dfStepSize;
 
     return CE_None;
 }

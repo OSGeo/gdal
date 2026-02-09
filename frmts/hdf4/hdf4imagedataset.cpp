@@ -908,8 +908,8 @@ CPLErr HDF4ImageDataset::FlushCache(bool bAtClosing)
 
     // Write out transformation matrix.
     const char *pszValue =
-        CPLSPrintf("%f, %f, %f, %f, %f, %f", m_gt[0], m_gt[1], m_gt[2], m_gt[3],
-                   m_gt[4], m_gt[5]);
+        CPLSPrintf("%f, %f, %f, %f, %f, %f", m_gt.xorig, m_gt.xscale, m_gt.xrot,
+                   m_gt.yorig, m_gt.yrot, m_gt.yscale);
     if ((SDsetattr(hSD, "TransformationMatrix", DFNT_CHAR8,
                    static_cast<int>(strlen(pszValue)) + 1, pszValue)) < 0)
     {
@@ -1327,12 +1327,12 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
         adfXY[0 * 2 + 1] == adfXY[1 * 2 + 1] && bLLPossible)
     {
         bHasGeoTransform = true;
-        m_gt[0] = adfXY[0 * 2 + 0];
-        m_gt[1] = (adfXY[1 * 2 + 0] - adfXY[0 * 2 + 0]) / nRasterXSize;
-        m_gt[2] = 0.0;
-        m_gt[3] = adfXY[0 * 2 + 1];
-        m_gt[4] = 0.0;
-        m_gt[5] = (adfXY[2 * 2 + 1] - adfXY[0 * 2 + 1]) / nRasterYSize;
+        m_gt.xorig = adfXY[0 * 2 + 0];
+        m_gt.xscale = (adfXY[1 * 2 + 0] - adfXY[0 * 2 + 0]) / nRasterXSize;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = adfXY[0 * 2 + 1];
+        m_gt.yrot = 0.0;
+        m_gt.yscale = (adfXY[2 * 2 + 1] - adfXY[0 * 2 + 1]) / nRasterYSize;
 
         m_oSRS.SetWellKnownGeogCS("WGS84");
     }
@@ -1418,12 +1418,12 @@ void HDF4ImageDataset::CaptureNRLGeoTransform()
             poCT->Transform(1, &dfLRX, &dfLRY))
         {
             bHasGeoTransform = true;
-            m_gt[0] = dfULX;
-            m_gt[1] = (dfLRX - dfULX) / nRasterXSize;
-            m_gt[2] = 0.0;
-            m_gt[3] = dfULY;
-            m_gt[4] = 0.0;
-            m_gt[5] = (dfLRY - dfULY) / nRasterYSize;
+            m_gt.xorig = dfULX;
+            m_gt.xscale = (dfLRX - dfULX) / nRasterXSize;
+            m_gt.xrot = 0.0;
+            m_gt.yorig = dfULY;
+            m_gt.yrot = 0.0;
+            m_gt.yscale = (dfLRY - dfULY) / nRasterYSize;
         }
 
         delete poCT;
@@ -1543,16 +1543,16 @@ void HDF4ImageDataset::CaptureCoastwatchGCTPInfo()
     }
 
     bHasGeoTransform = true;
-    m_gt[0] = CPLAtof(papszTokens[4]);
-    m_gt[1] = CPLAtof(papszTokens[2]);
-    m_gt[2] = 0.0;
-    m_gt[3] = CPLAtof(papszTokens[5]);
-    m_gt[4] = 0.0;
-    m_gt[5] = CPLAtof(papszTokens[1]);
+    m_gt.xorig = CPLAtof(papszTokens[4]);
+    m_gt.xscale = CPLAtof(papszTokens[2]);
+    m_gt.xrot = 0.0;
+    m_gt.yorig = CPLAtof(papszTokens[5]);
+    m_gt.yrot = 0.0;
+    m_gt.yscale = CPLAtof(papszTokens[1]);
 
     // Middle of pixel adjustment.
-    m_gt[0] -= m_gt[1] * 0.5;
-    m_gt[3] -= m_gt[5] * 0.5;
+    m_gt.xorig -= m_gt.xscale * 0.5;
+    m_gt.yorig -= m_gt.yscale * 0.5;
 
     CSLDestroy(papszTokens);
 }
@@ -3106,27 +3106,29 @@ GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                         if (iProjCode)
                         {
                             // For projected systems coordinates are in meters.
-                            poDS->m_gt[1] =
+                            poDS->m_gt.xscale =
                                 (adfLowRight[0] - adfUpLeft[0]) / nXSize;
-                            poDS->m_gt[5] =
+                            poDS->m_gt.yscale =
                                 (adfLowRight[1] - adfUpLeft[1]) / nYSize;
-                            poDS->m_gt[0] = adfUpLeft[0];
-                            poDS->m_gt[3] = adfUpLeft[1];
+                            poDS->m_gt.xorig = adfUpLeft[0];
+                            poDS->m_gt.yorig = adfUpLeft[1];
                         }
                         else
                         {
                             // Handle angular geographic coordinates here.
-                            poDS->m_gt[1] = (CPLPackedDMSToDec(adfLowRight[0]) -
-                                             CPLPackedDMSToDec(adfUpLeft[0])) /
-                                            nXSize;
-                            poDS->m_gt[5] = (CPLPackedDMSToDec(adfLowRight[1]) -
-                                             CPLPackedDMSToDec(adfUpLeft[1])) /
-                                            nYSize;
-                            poDS->m_gt[0] = CPLPackedDMSToDec(adfUpLeft[0]);
-                            poDS->m_gt[3] = CPLPackedDMSToDec(adfUpLeft[1]);
+                            poDS->m_gt.xscale =
+                                (CPLPackedDMSToDec(adfLowRight[0]) -
+                                 CPLPackedDMSToDec(adfUpLeft[0])) /
+                                nXSize;
+                            poDS->m_gt.yscale =
+                                (CPLPackedDMSToDec(adfLowRight[1]) -
+                                 CPLPackedDMSToDec(adfUpLeft[1])) /
+                                nYSize;
+                            poDS->m_gt.xorig = CPLPackedDMSToDec(adfUpLeft[0]);
+                            poDS->m_gt.yorig = CPLPackedDMSToDec(adfUpLeft[1]);
                         }
-                        poDS->m_gt[2] = 0.0;
-                        poDS->m_gt[4] = 0.0;
+                        poDS->m_gt.xrot = 0.0;
+                        poDS->m_gt.yrot = 0.0;
                         poDS->bHasGeoTransform = true;
                     }
 
@@ -3646,14 +3648,14 @@ GDALDataset *HDF4ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                                                      "Southernmost Latitude"));
             poDS->ToGeoref(&dfULX, &dfULY);
             poDS->ToGeoref(&dfLRX, &dfLRY);
-            poDS->m_gt[0] = dfULX;
-            poDS->m_gt[3] = dfULY;
-            poDS->m_gt[1] = (dfLRX - dfULX) / poDS->nRasterXSize;
-            poDS->m_gt[5] = (dfULY - dfLRY) / poDS->nRasterYSize;
+            poDS->m_gt.xorig = dfULX;
+            poDS->m_gt.yorig = dfULY;
+            poDS->m_gt.xscale = (dfLRX - dfULX) / poDS->nRasterXSize;
+            poDS->m_gt.yscale = (dfULY - dfLRY) / poDS->nRasterYSize;
             if (dfULY > 0)  // Northern hemisphere.
-                poDS->m_gt[5] = -poDS->m_gt[5];
-            poDS->m_gt[2] = 0.0;
-            poDS->m_gt[4] = 0.0;
+                poDS->m_gt.yscale = -poDS->m_gt.yscale;
+            poDS->m_gt.xrot = 0.0;
+            poDS->m_gt.yrot = 0.0;
             poDS->bHasGeoTransform = true;
         }
         break;

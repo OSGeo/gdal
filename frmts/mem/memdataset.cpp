@@ -559,7 +559,7 @@ bool MEMRasterBand::IsMaskBand() const
 MEMDataset::MEMDataset()
     : GDALDataset(FALSE), bGeoTransformSet(FALSE), m_poPrivate(new Private())
 {
-    m_gt[5] = -1;
+    m_gt.yscale = -1;
     DisableReadWriteMutex();
 }
 

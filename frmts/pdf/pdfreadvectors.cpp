@@ -439,8 +439,8 @@ void PDFDataset::PDFCoordsToSRSCoords(double x, double y, double &X, double &Y)
     else
         y = (y / m_dfPageHeight) * nRasterYSize;
 
-    X = m_gt[0] + x * m_gt[1] + y * m_gt[2];
-    Y = m_gt[3] + x * m_gt[4] + y * m_gt[5];
+    X = m_gt.xorig + x * m_gt.xscale + y * m_gt.xrot;
+    Y = m_gt.yorig + x * m_gt.yrot + y * m_gt.yscale;
 
     if (fabs(X - std::round(X)) < 1e-8)
         X = std::round(X);

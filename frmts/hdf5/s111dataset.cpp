@@ -1739,7 +1739,7 @@ bool S111Creator::CopyValues(GDALDataset *poSrcDS, GDALProgressFunc pfnProgress,
     const int nXBlocks = static_cast<int>(DIV_ROUND_UP(nXSize, nBlockXSize));
     std::vector<float> afValues(static_cast<size_t>(nBlockYSize) * nBlockXSize *
                                 nComponents);
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     constexpr std::array<float, 4> afNoDataValue{NODATA_SPEED, NODATA_DIR,
                                                  NODATA_UNCT, NODATA_UNCT};

@@ -1138,17 +1138,17 @@ static GDALDataset *BSBCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         if (BSBIsSRSOK(pszProjection))
         {
             VSIFPrintfL(psBSB->fp, "REF/%d,%d,%d,%f,%f\n", 1, 0, 0,
-                        gt[3] + 0 * gt[4] + 0 * gt[5],
-                        gt[0] + 0 * gt[1] + 0 * gt[2]);
+                        gt.yorig + 0 * gt.yrot + 0 * gt.yscale,
+                        gt.xorig + 0 * gt.xscale + 0 * gt.xrot);
             VSIFPrintfL(psBSB->fp, "REF/%d,%d,%d,%f,%f\n", 2, nXSize, 0,
-                        gt[3] + nXSize * gt[4] + 0 * gt[5],
-                        gt[0] + nXSize * gt[1] + 0 * gt[2]);
+                        gt.yorig + nXSize * gt.yrot + 0 * gt.yscale,
+                        gt.xorig + nXSize * gt.xscale + 0 * gt.xrot);
             VSIFPrintfL(psBSB->fp, "REF/%d,%d,%d,%f,%f\n", 3, nXSize, nYSize,
-                        gt[3] + nXSize * gt[4] + nYSize * gt[5],
-                        gt[0] + nXSize * gt[1] + nYSize * gt[2]);
+                        gt.yorig + nXSize * gt.yrot + nYSize * gt.yscale,
+                        gt.xorig + nXSize * gt.xscale + nYSize * gt.xrot);
             VSIFPrintfL(psBSB->fp, "REF/%d,%d,%d,%f,%f\n", 4, 0, nYSize,
-                        gt[3] + 0 * gt[4] + nYSize * gt[5],
-                        gt[0] + 0 * gt[1] + nYSize * gt[2]);
+                        gt.yorig + 0 * gt.yrot + nYSize * gt.yscale,
+                        gt.xorig + 0 * gt.xscale + nYSize * gt.xrot);
         }
     }
 

@@ -755,10 +755,10 @@ bool OGCAPIDataset::ProcessScale(const CPLJSONObject &oScaleDenominator,
 
     nRasterXSize = std::max(1, static_cast<int>(0.5 + dfXSize));
     nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
-    m_gt[0] = dfXMin;
-    m_gt[1] = (dfXMax - dfXMin) / nRasterXSize;
-    m_gt[3] = dfYMax;
-    m_gt[5] = -(dfYMax - dfYMin) / nRasterYSize;
+    m_gt.xorig = dfXMin;
+    m_gt.xscale = (dfXMax - dfXMin) / nRasterXSize;
+    m_gt.yorig = dfYMax;
+    m_gt.yscale = -(dfYMax - dfYMin) / nRasterYSize;
 
     return true;
 }
@@ -1405,10 +1405,10 @@ bool OGCAPIDataset::InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
 
             nRasterXSize = std::max(1, static_cast<int>(0.5 + dfXSize));
             nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
-            m_gt[0] = dfXMin;
-            m_gt[1] = (dfXMax - dfXMin) / nRasterXSize;
-            m_gt[3] = dfYMax;
-            m_gt[5] = -(dfYMax - dfYMin) / nRasterYSize;
+            m_gt.xorig = dfXMin;
+            m_gt.xscale = (dfXMax - dfXMin) / nRasterXSize;
+            m_gt.yorig = dfYMax;
+            m_gt.yscale = -(dfYMax - dfYMin) / nRasterYSize;
         }
 
         OGRSpatialReference oSRS;
@@ -2229,7 +2229,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
             m_apoDatasetsCropped.emplace_back(
                 GDALDataset::FromHandle(hCroppedDS));
 
-            if (tileMatrix.mResX <= m_gt[1])
+            if (tileMatrix.mResX <= m_gt.xscale)
                 break;
         }
         if (!m_apoDatasetsCropped.empty())

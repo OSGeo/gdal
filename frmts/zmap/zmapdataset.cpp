@@ -452,20 +452,20 @@ GDALDataset *ZMapDataset::Open(GDALOpenInfo *poOpenInfo)
         const double dfStepX = (dfMaxX - dfMinX) / (nCols - 1);
         const double dfStepY = (dfMaxY - dfMinY) / (nRows - 1);
 
-        poDS->m_gt[0] = dfMinX - dfStepX / 2;
-        poDS->m_gt[1] = dfStepX;
-        poDS->m_gt[3] = dfMaxY + dfStepY / 2;
-        poDS->m_gt[5] = -dfStepY;
+        poDS->m_gt.xorig = dfMinX - dfStepX / 2;
+        poDS->m_gt.xscale = dfStepX;
+        poDS->m_gt.yorig = dfMaxY + dfStepY / 2;
+        poDS->m_gt.yscale = -dfStepY;
     }
     else
     {
         const double dfStepX = (dfMaxX - dfMinX) / nCols;
         const double dfStepY = (dfMaxY - dfMinY) / nRows;
 
-        poDS->m_gt[0] = dfMinX;
-        poDS->m_gt[1] = dfStepX;
-        poDS->m_gt[3] = dfMaxY;
-        poDS->m_gt[5] = -dfStepY;
+        poDS->m_gt.xorig = dfMinX;
+        poDS->m_gt.xscale = dfStepX;
+        poDS->m_gt.yorig = dfMaxY;
+        poDS->m_gt.yscale = -dfStepY;
     }
 
     /* -------------------------------------------------------------------- */
@@ -581,7 +581,7 @@ GDALDataset *ZMapDataset::CreateCopy(const char *pszFilename,
 
     GDALGeoTransform gt;
     poSrcDS->GetGeoTransform(gt);
-    if (gt[2] != 0 || gt[4] != 0)
+    if (gt.xrot != 0 || gt.yrot != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ZMap driver does not support CreateCopy() from skewed or "
@@ -633,23 +633,25 @@ GDALDataset *ZMapDataset::CreateCopy(const char *pszFilename,
 
     if (CPLTestBool(CPLGetConfigOption("ZMAP_PIXEL_IS_POINT", "FALSE")))
     {
-        WriteRightJustified(fp, gt[0] + gt[1] / 2, 14, 7);
+        WriteRightJustified(fp, gt.xorig + gt.xscale / 2, 14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[0] + gt[1] * nXSize - gt[1] / 2, 14, 7);
+        WriteRightJustified(fp, gt.xorig + gt.xscale * nXSize - gt.xscale / 2,
+                            14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[3] + gt[5] * nYSize - gt[5] / 2, 14, 7);
+        WriteRightJustified(fp, gt.yorig + gt.yscale * nYSize - gt.yscale / 2,
+                            14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[3] + gt[5] / 2, 14, 7);
+        WriteRightJustified(fp, gt.yorig + gt.yscale / 2, 14, 7);
     }
     else
     {
-        WriteRightJustified(fp, gt[0], 14, 7);
+        WriteRightJustified(fp, gt.xorig, 14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[0] + gt[1] * nXSize, 14, 7);
+        WriteRightJustified(fp, gt.xorig + gt.xscale * nXSize, 14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[3] + gt[5] * nYSize, 14, 7);
+        WriteRightJustified(fp, gt.yorig + gt.yscale * nYSize, 14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[3], 14, 7);
+        WriteRightJustified(fp, gt.yorig, 14, 7);
     }
 
     fp->Printf("\n");

@@ -2687,8 +2687,8 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     // cppcheck-suppress knownConditionTrueFalse
     if (bIsJP2 &&
         ((poSrcDS->GetGeoTransform(gt) == CE_None &&
-          (gt[0] != 0.0 || gt[1] != 1.0 || gt[2] != 0.0 || gt[3] != 0.0 ||
-           gt[4] != 0.0 || std::abs(gt[5]) != 1.0)) ||
+          (gt.xorig != 0.0 || gt.xscale != 1.0 || gt.xrot != 0.0 ||
+           gt.yorig != 0.0 || gt.yrot != 0.0 || std::abs(gt.yscale) != 1.0)) ||
          poSrcDS->GetGCPCount() > 0 || poSrcDS->GetMetadata("RPC") != nullptr))
     {
         GDALJP2Metadata oJP2MD;

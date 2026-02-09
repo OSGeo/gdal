@@ -1347,10 +1347,10 @@ bool GDALPDFWriter::WriteClippedImagery(
     poDS->GetGeoTransform(gt);
     int nWidth = poDS->GetRasterXSize();
     int nHeight = poDS->GetRasterYSize();
-    double dfRasterMinX = gt[0];
-    // double dfRasterMaxX = dfRasterMinX + nWidth * gt[1];
-    double dfRasterMaxY = gt[3];
-    double dfRasterMinY = dfRasterMaxY + nHeight * gt[5];
+    double dfRasterMinX = gt.xorig;
+    // double dfRasterMaxX = dfRasterMinX + nWidth * gt.xscale;
+    double dfRasterMaxY = gt.yorig;
+    double dfRasterMinY = dfRasterMaxY + nHeight * gt.yscale;
 
     if (dfRasterMaxY < dfRasterMinY)
     {
@@ -1387,10 +1387,10 @@ bool GDALPDFWriter::WriteClippedImagery(
             int nY = nBlockYOff * nBlockYSize;
 
             /* Compute extent of block to write */
-            double dfBlockMinX = gt[0] + nX * gt[1];
-            double dfBlockMaxX = gt[0] + (nX + nReqWidth) * gt[1];
-            double dfBlockMinY = gt[3] + (nY + nReqHeight) * gt[5];
-            double dfBlockMaxY = gt[3] + nY * gt[5];
+            double dfBlockMinX = gt.xorig + nX * gt.xscale;
+            double dfBlockMaxX = gt.xorig + (nX + nReqWidth) * gt.xscale;
+            double dfBlockMinY = gt.yorig + (nY + nReqHeight) * gt.yscale;
+            double dfBlockMaxY = gt.yorig + nY * gt.yscale;
 
             if (dfBlockMaxY < dfBlockMinY)
             {
@@ -1413,27 +1413,29 @@ bool GDALPDFWriter::WriteClippedImagery(
                 /* Re-compute (x,y,width,height) subwindow of current raster
                  * from */
                 /* the extent of the clipped block */
-                nX = static_cast<int>((dfIntersectMinX - dfRasterMinX) / gt[1] +
-                                      0.5);
-                if (gt[5] < 0)
+                nX = static_cast<int>(
+                    (dfIntersectMinX - dfRasterMinX) / gt.xscale + 0.5);
+                if (gt.yscale < 0)
                     nY = static_cast<int>(
-                        (dfRasterMaxY - dfIntersectMaxY) / (-gt[5]) + 0.5);
+                        (dfRasterMaxY - dfIntersectMaxY) / (-gt.yscale) + 0.5);
                 else
                     nY = static_cast<int>(
-                        (dfIntersectMinY - dfRasterMinY) / gt[5] + 0.5);
+                        (dfIntersectMinY - dfRasterMinY) / gt.yscale + 0.5);
                 nReqWidth =
-                    static_cast<int>((dfIntersectMaxX - dfRasterMinX) / gt[1] +
-                                     0.5) -
+                    static_cast<int>(
+                        (dfIntersectMaxX - dfRasterMinX) / gt.xscale + 0.5) -
                     nX;
-                if (gt[5] < 0)
+                if (gt.yscale < 0)
                     nReqHeight =
-                        static_cast<int>(
-                            (dfRasterMaxY - dfIntersectMinY) / (-gt[5]) + 0.5) -
+                        static_cast<int>((dfRasterMaxY - dfIntersectMinY) /
+                                             (-gt.yscale) +
+                                         0.5) -
                         nY;
                 else
                     nReqHeight =
-                        static_cast<int>(
-                            (dfIntersectMaxY - dfRasterMinY) / gt[5] + 0.5) -
+                        static_cast<int>((dfIntersectMaxY - dfRasterMinY) /
+                                             gt.yscale +
+                                         0.5) -
                         nY;
 
                 if (nReqWidth > 0 && nReqHeight > 0)
@@ -1665,10 +1667,10 @@ int GDALPDFWriter::WriteOGRLayer(GDALDatasetH hDS, int iLayer,
 
     if (hCT == nullptr)
     {
-        double dfXMin = gt[0];
-        double dfYMin = gt[3] + poClippingDS->GetRasterYSize() * gt[5];
-        double dfXMax = gt[0] + poClippingDS->GetRasterXSize() * gt[1];
-        double dfYMax = gt[3];
+        double dfXMin = gt.xorig;
+        double dfYMin = gt.yorig + poClippingDS->GetRasterYSize() * gt.yscale;
+        double dfXMax = gt.xorig + poClippingDS->GetRasterXSize() * gt.xscale;
+        double dfYMax = gt.yorig;
         OGR_L_SetSpatialFilterRect(hLyr, dfXMin, dfYMin, dfXMax, dfYMax);
     }
 
@@ -2684,11 +2686,13 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc &osVectorDesc,
     poClippingDS->GetGeoTransform(gt);
 
     double adfMatrix[4];
-    adfMatrix[0] = -gt[0] / (gt[1] * dfUserUnit) + oPageContext.sMargins.nLeft;
-    adfMatrix[1] = 1.0 / (gt[1] * dfUserUnit);
-    adfMatrix[2] = -(gt[3] + gt[5] * nHeight) / (-gt[5] * dfUserUnit) +
-                   oPageContext.sMargins.nBottom;
-    adfMatrix[3] = 1.0 / (-gt[5] * dfUserUnit);
+    adfMatrix[0] =
+        -gt.xorig / (gt.xscale * dfUserUnit) + oPageContext.sMargins.nLeft;
+    adfMatrix[1] = 1.0 / (gt.xscale * dfUserUnit);
+    adfMatrix[2] =
+        -(gt.yorig + gt.yscale * nHeight) / (-gt.yscale * dfUserUnit) +
+        oPageContext.sMargins.nBottom;
+    adfMatrix[3] = 1.0 / (-gt.yscale * dfUserUnit);
 
     OGRGeometryH hGeom = OGR_F_GetGeometryRef(hFeat);
     if (hGeom == nullptr)
@@ -2707,10 +2711,12 @@ int GDALPDFWriter::WriteOGRFeature(GDALPDFLayerDesc &osVectorDesc,
         }
 
         OGREnvelope sRasterEnvelope;
-        sRasterEnvelope.MinX = gt[0];
-        sRasterEnvelope.MinY = gt[3] + poClippingDS->GetRasterYSize() * gt[5];
-        sRasterEnvelope.MaxX = gt[0] + poClippingDS->GetRasterXSize() * gt[1];
-        sRasterEnvelope.MaxY = gt[3];
+        sRasterEnvelope.MinX = gt.xorig;
+        sRasterEnvelope.MinY =
+            gt.yorig + poClippingDS->GetRasterYSize() * gt.yscale;
+        sRasterEnvelope.MaxX =
+            gt.xorig + poClippingDS->GetRasterXSize() * gt.xscale;
+        sRasterEnvelope.MaxY = gt.yorig;
 
         // Check that the reprojected geometry intersects the raster envelope.
         OGR_G_GetEnvelope(hGeom, &sEnvelope);
@@ -4092,12 +4098,12 @@ class GDALPDFClippingDataset final : public GDALDataset
     {
         GDALGeoTransform srcGT;
         poSrcDS->GetGeoTransform(srcGT);
-        m_gt[0] = adfClippingExtent[0];
-        m_gt[1] = srcGT[1];
-        m_gt[2] = 0.0;
-        m_gt[3] = srcGT[5] < 0 ? adfClippingExtent[3] : adfClippingExtent[1];
-        m_gt[4] = 0.0;
-        m_gt[5] = srcGT[5];
+        m_gt.xorig = adfClippingExtent[0];
+        m_gt.xscale = srcGT[1];
+        m_gt.xrot = 0.0;
+        m_gt.yorig = srcGT[5] < 0 ? adfClippingExtent[3] : adfClippingExtent[1];
+        m_gt.yrot = 0.0;
+        m_gt.yscale = srcGT[5];
         nRasterXSize = static_cast<int>(
             (adfClippingExtent[2] - adfClippingExtent[0]) / srcGT[1]);
         nRasterYSize = static_cast<int>(
@@ -4419,7 +4425,7 @@ GDALDataset *GDALPDFCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                 GDALGeoTransform gt;
                 if (poSrcDS->GetGeoTransform(gt) == CE_None)
                 {
-                    if (gt[2] != 0.0 || gt[4] != 0.0)
+                    if (gt.xrot != 0.0 || gt.yrot != 0.0)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Cannot use CLIPPING_EXTENT because main "
@@ -4531,7 +4537,7 @@ GDALDataset *GDALPDFCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         GDALGeoTransform gt;
         if (poSrcDS->GetGeoTransform(gt) == CE_None)
         {
-            if (gt[2] != 0.0 || gt[4] != 0.0)
+            if (gt.xrot != 0.0 || gt.yrot != 0.0)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Cannot use EXTRA_RASTERS because main raster has a "
@@ -4568,7 +4574,7 @@ GDALDataset *GDALPDFCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             int bUseRaster = TRUE;
             if (poDS->GetGeoTransform(gt) == CE_None)
             {
-                if (gt[2] != 0.0 || gt[4] != 0.0)
+                if (gt.xrot != 0.0 || gt.yrot != 0.0)
                 {
                     CPLError(
                         CE_Warning, CPLE_AppDefined,

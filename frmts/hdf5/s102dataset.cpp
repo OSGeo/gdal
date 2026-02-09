@@ -1651,7 +1651,7 @@ bool S102Creator::CopyValues(GDALProgressFunc pfnProgress, void *pProgressData)
     const int nXBlocks = static_cast<int>(DIV_ROUND_UP(nXSize, nBlockXSize));
     std::vector<float> afValues(static_cast<size_t>(nBlockYSize) * nBlockXSize *
                                 nComponents);
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     float fMinDepth = std::numeric_limits<float>::infinity();
     float fMaxDepth = -std::numeric_limits<float>::infinity();
@@ -1854,7 +1854,7 @@ bool S102Creator::CopyQualityValues(GDALDataset *poQualityDS,
     const int nXBlocks = static_cast<int>(DIV_ROUND_UP(nXSize, nBlockXSize));
     std::vector<uint32_t> anValues(static_cast<size_t>(nBlockYSize) *
                                    nBlockXSize);
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     int bHasSrcNoData = FALSE;
     const double dfSrcNoData =

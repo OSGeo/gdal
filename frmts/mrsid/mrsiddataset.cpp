@@ -1267,10 +1267,11 @@ CPLErr MrSIDDataset::OpenZoomLevel(lt_int32 iZoom)
     if (!poImageReader->isGeoCoordImplicit())
     {
         const LTIGeoCoord &oGeo = poImageReader->getGeoCoord();
-        oGeo.get(m_gt[0], m_gt[3], m_gt[1], m_gt[5], m_gt[2], m_gt[4]);
+        oGeo.get(m_gt.xorig, m_gt.yorig, m_gt.xscale, m_gt.yscale, m_gt.xrot,
+                 m_gt.yrot);
 
-        m_gt[0] = m_gt[0] - m_gt[1] / 2;
-        m_gt[3] = m_gt[3] - m_gt[5] / 2;
+        m_gt.xorig = m_gt.xorig - m_gt.xscale / 2;
+        m_gt.yorig = m_gt.yorig - m_gt.yscale / 2;
         bGeoTransformValid = TRUE;
     }
     else if (iZoom == 0)
@@ -3095,12 +3096,14 @@ LT_STATUS MrSIDDummyImageReader::initialize()
     if (poDS->GetGeoTransform(m_gt) == CE_None)
     {
 #ifdef MRSID_SDK_40
-        LTIGeoCoord oGeo(m_gt[0] + m_gt[1] / 2, m_gt[3] + m_gt[5] / 2, m_gt[1],
-                         m_gt[5], m_gt[2], m_gt[4], nullptr,
+        LTIGeoCoord oGeo(m_gt.xorig + m_gt.xscale / 2,
+                         m_gt.yorig + m_gt.yscale / 2, m_gt.xscale, m_gt.yscale,
+                         m_gt.xrot, m_gt.yrot, nullptr,
                          poDS->GetProjectionRef());
 #else
-        LTIGeoCoord oGeo(m_gt[0] + m_gt[1] / 2, m_gt[3] + m_gt[5] / 2, m_gt[1],
-                         m_gt[5], m_gt[2], m_gt[4], poDS->GetProjectionRef());
+        LTIGeoCoord oGeo(m_gt.xorig + m_gt.xscale / 2,
+                         m_gt.yorig + m_gt.yscale / 2, m_gt.xscale, m_gt.yscale,
+                         m_gt.xrot, m_gt.yrot, poDS->GetProjectionRef());
 #endif
         if (!LT_SUCCESS(setGeoCoord(oGeo)))
             return LT_STS_Failure;

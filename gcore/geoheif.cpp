@@ -91,21 +91,21 @@ CPLErr GeoHEIF::GetGeoTransform(GDALGeoTransform &gt) const
 
     if (axes.size() && axes[0] != 1)
     {
-        gt[1] = modelTransform[4];
-        gt[2] = modelTransform[5];
-        gt[0] = modelTransform[3];
-        gt[4] = modelTransform[1];
-        gt[5] = modelTransform[2];
-        gt[3] = modelTransform[0];
+        gt.xscale = modelTransform[4];
+        gt.xrot = modelTransform[5];
+        gt.xorig = modelTransform[3];
+        gt.yrot = modelTransform[1];
+        gt.yscale = modelTransform[2];
+        gt.yorig = modelTransform[0];
     }
     else
     {
-        gt[1] = modelTransform[1];
-        gt[2] = modelTransform[2];
-        gt[0] = modelTransform[0];
-        gt[4] = modelTransform[4];
-        gt[5] = modelTransform[5];
-        gt[3] = modelTransform[3];
+        gt.xscale = modelTransform[1];
+        gt.xrot = modelTransform[2];
+        gt.xorig = modelTransform[0];
+        gt.yrot = modelTransform[4];
+        gt.yscale = modelTransform[5];
+        gt.yorig = modelTransform[3];
     }
     return CE_None;
 }

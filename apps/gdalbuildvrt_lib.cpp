@@ -1431,9 +1431,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
 
         if (bCanCollectOverviewFactors)
         {
-            if (std::abs(psDatasetProperties->gt[1] - we_res) >
+            if (std::abs(psDatasetProperties->gt.xscale - we_res) >
                     1e-8 * std::abs(we_res) ||
-                std::abs(psDatasetProperties->gt[5] - ns_res) >
+                std::abs(psDatasetProperties->gt.yscale - ns_res) >
                     1e-8 * std::abs(ns_res))
             {
                 bCanCollectOverviewFactors = false;

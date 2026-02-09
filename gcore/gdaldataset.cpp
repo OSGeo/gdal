@@ -1602,13 +1602,13 @@ CPLErr CPL_STDCALL GDALSetProjection(GDALDatasetH hDS,
  * space, and projection coordinates (Xp,Yp) space.
  *
  * \code
- *   Xp = gt[0] + P*gt[1] + L*gt[2];
- *   Yp = gt[3] + P*padfTransform[4] + L*gt[5];
+ *   Xp = gt.xorig + P*gt.xscale + L*gt.xrot;
+ *   Yp = gt.yorig + P*padfTransform[4] + L*gt.yscale;
  * \endcode
  *
- * In a north up image, gt[1] is the pixel width, and
- * gt[5] is the pixel height.  The upper left corner of the
- * upper left pixel is at position (gt[0],gt[3]).
+ * In a north up image, gt.xscale is the pixel width, and
+ * gt.yscale is the pixel height.  The upper left corner of the
+ * upper left pixel is at position (gt.xorig,gt.yorig).
  *
  * The default transform is (0,1,0,0,0,1) and should be returned even when
  * a CE_Failure error is returned, such as for formats that don't support
@@ -11415,8 +11415,8 @@ CPLErr GDALDataset::GetExtent(OGREnvelope *psExtent,
         }
 
         constexpr int DENSIFY_POINT_COUNT = 21;
-        double dfULX = gt[0];
-        double dfULY = gt[3];
+        double dfULX = gt.xorig;
+        double dfULY = gt.yorig;
         double dfURX = 0, dfURY = 0;
         gt.Apply(nRasterXSize, 0, &dfURX, &dfURY);
         double dfLLX = 0, dfLLY = 0;
@@ -12014,14 +12014,14 @@ class GDALMDArrayFromDataset final : public GDALMDArray
         }
 
         GDALGeoTransform gt;
-        if (m_poDS->GetGeoTransform(gt) == CE_None && gt[2] == 0 && gt[4] == 0)
+        if (m_poDS->GetGeoTransform(gt) == CE_None && gt.IsAxisAligned())
         {
             m_varX = GDALMDArrayRegularlySpaced::Create(
-                "/", poBandDim->GetName(), poXDim, gt[0], gt[1], 0.5);
+                "/", poBandDim->GetName(), poXDim, gt.xorig, gt.xscale, 0.5);
             poXDim->SetIndexingVariable(m_varX);
 
             m_varY = GDALMDArrayRegularlySpaced::Create(
-                "/", poYDim->GetName(), poYDim, gt[3], gt[5], 0.5);
+                "/", poYDim->GetName(), poYDim, gt.yorig, gt.yscale, 0.5);
             poYDim->SetIndexingVariable(m_varY);
         }
         if (bBandYX)

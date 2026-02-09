@@ -717,15 +717,15 @@ CPLErr SAGADataset::GetGeoTransform(GDALGeoTransform &gt) const
     if (eErr == CE_None)
         return CE_None;
 
-    gt[1] = poGRB->m_Cellsize;
-    gt[5] = poGRB->m_Cellsize * -1.0;
-    gt[0] = poGRB->m_Xmin - poGRB->m_Cellsize / 2;
-    gt[3] = poGRB->m_Ymin + (nRasterYSize - 1) * poGRB->m_Cellsize +
-            poGRB->m_Cellsize / 2;
+    gt.xscale = poGRB->m_Cellsize;
+    gt.yscale = poGRB->m_Cellsize * -1.0;
+    gt.xorig = poGRB->m_Xmin - poGRB->m_Cellsize / 2;
+    gt.yorig = poGRB->m_Ymin + (nRasterYSize - 1) * poGRB->m_Cellsize +
+               poGRB->m_Cellsize / 2;
 
     /* tilt/rotation is not supported by SAGA grids */
-    gt[4] = 0.0;
-    gt[2] = 0.0;
+    gt.yrot = 0.0;
+    gt.xrot = 0.0;
 
     return CE_None;
 }
@@ -749,7 +749,7 @@ CPLErr SAGADataset::SetGeoTransform(const GDALGeoTransform &gt)
     if (poGRB == nullptr)
         return CE_Failure;
 
-    if (gt[1] != gt[5] * -1.0)
+    if (gt.xscale != gt.yscale * -1.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unable to set GeoTransform, SAGA binary grids only support "
@@ -757,12 +757,12 @@ CPLErr SAGADataset::SetGeoTransform(const GDALGeoTransform &gt)
         return CE_Failure;
     }
 
-    const double dfMinX = gt[0] + gt[1] / 2;
-    const double dfMinY = gt[5] * (nRasterYSize - 0.5) + gt[3];
+    const double dfMinX = gt.xorig + gt.xscale / 2;
+    const double dfMinY = gt.yscale * (nRasterYSize - 0.5) + gt.yorig;
 
     poGRB->m_Xmin = dfMinX;
     poGRB->m_Ymin = dfMinY;
-    poGRB->m_Cellsize = gt[1];
+    poGRB->m_Cellsize = gt.xscale;
     headerDirty = true;
 
     return CE_None;

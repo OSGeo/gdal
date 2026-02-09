@@ -42,36 +42,36 @@ std::vector<double> WCSDataset110::GetNativeExtent(int nXOff, int nYOff,
     std::vector<double> extent;
 
     // outer edges of outer pixels.
-    extent.push_back(m_gt[0] + (nXOff)*m_gt[1]);
-    extent.push_back(m_gt[3] + (nYOff + nYSize) * m_gt[5]);
-    extent.push_back(m_gt[0] + (nXOff + nXSize) * m_gt[1]);
-    extent.push_back(m_gt[3] + (nYOff)*m_gt[5]);
+    extent.push_back(m_gt.xorig + (nXOff)*m_gt.xscale);
+    extent.push_back(m_gt.yorig + (nYOff + nYSize) * m_gt.yscale);
+    extent.push_back(m_gt.xorig + (nXOff + nXSize) * m_gt.xscale);
+    extent.push_back(m_gt.yorig + (nYOff)*m_gt.yscale);
 
     bool no_shrink = CPLGetXMLBoolean(psService, "OuterExtents");
 
     // WCS 1.1 extents are centers of outer pixels.
     if (!no_shrink)
     {
-        extent[2] -= m_gt[1] * 0.5;
-        extent[0] += m_gt[1] * 0.5;
-        extent[1] -= m_gt[5] * 0.5;
-        extent[3] += m_gt[5] * 0.5;
+        extent[2] -= m_gt.xscale * 0.5;
+        extent[0] += m_gt.xscale * 0.5;
+        extent[1] -= m_gt.yscale * 0.5;
+        extent[3] += m_gt.yscale * 0.5;
     }
 
     double dfXStep, dfYStep;
 
     if (!no_shrink)
     {
-        dfXStep = (nXSize / (double)nBufXSize) * m_gt[1];
-        dfYStep = (nYSize / (double)nBufYSize) * m_gt[5];
+        dfXStep = (nXSize / (double)nBufXSize) * m_gt.xscale;
+        dfYStep = (nYSize / (double)nBufYSize) * m_gt.yscale;
         // Carefully adjust bounds for pixel centered values at new
         // sampling density.
         if (nBufXSize != nXSize || nBufYSize != nYSize)
         {
-            extent[0] = nXOff * m_gt[1] + m_gt[0] + dfXStep * 0.5;
+            extent[0] = nXOff * m_gt.xscale + m_gt.xorig + dfXStep * 0.5;
             extent[2] = extent[0] + (nBufXSize - 1) * dfXStep;
 
-            extent[3] = nYOff * m_gt[5] + m_gt[3] + dfYStep * 0.5;
+            extent[3] = nYOff * m_gt.yscale + m_gt.yorig + dfYStep * 0.5;
             extent[1] = extent[3] + (nBufYSize - 1) * dfYStep;
         }
     }
@@ -79,8 +79,8 @@ std::vector<double> WCSDataset110::GetNativeExtent(int nXOff, int nYOff,
     {
         double adjust =
             CPLAtof(CPLGetXMLValue(psService, "BufSizeAdjust", "0.0"));
-        dfXStep = (nXSize / ((double)nBufXSize + adjust)) * m_gt[1];
-        dfYStep = (nYSize / ((double)nBufYSize + adjust)) * m_gt[5];
+        dfXStep = (nXSize / ((double)nBufXSize + adjust)) * m_gt.xscale;
+        dfYStep = (nYSize / ((double)nBufYSize + adjust)) * m_gt.yscale;
     }
 
     extent.push_back(dfXStep);

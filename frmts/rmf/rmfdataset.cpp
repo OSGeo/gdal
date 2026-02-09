@@ -786,11 +786,11 @@ CPLErr RMFDataset::GetGeoTransform(GDALGeoTransform &gt) const
 CPLErr RMFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     m_gt = gt;
-    sHeader.dfPixelSize = m_gt[1];
+    sHeader.dfPixelSize = m_gt.xscale;
     if (sHeader.dfPixelSize != 0.0)
         sHeader.dfResolution = sHeader.dfScale / sHeader.dfPixelSize;
-    sHeader.dfLLX = m_gt[0];
-    sHeader.dfLLY = m_gt[3] - nRasterYSize * sHeader.dfPixelSize;
+    sHeader.dfLLX = m_gt.xorig;
+    sHeader.dfLLY = m_gt.yorig - nRasterYSize * sHeader.dfPixelSize;
     sHeader.iGeorefFlag = 1;
 
     bHeaderDirty = true;
@@ -1894,13 +1894,13 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
     if ((poDS->eRMFType == RMFT_RSW && poDS->sHeader.iGeorefFlag) ||
         (poDS->eRMFType == RMFT_MTW && poDS->sHeader.dfPixelSize != 0.0))
     {
-        poDS->m_gt[0] = poDS->sHeader.dfLLX;
-        poDS->m_gt[3] = poDS->sHeader.dfLLY +
-                        poDS->nRasterYSize * poDS->sHeader.dfPixelSize;
-        poDS->m_gt[1] = poDS->sHeader.dfPixelSize;
-        poDS->m_gt[5] = -poDS->sHeader.dfPixelSize;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[4] = 0.0;
+        poDS->m_gt.xorig = poDS->sHeader.dfLLX;
+        poDS->m_gt.yorig = poDS->sHeader.dfLLY +
+                           poDS->nRasterYSize * poDS->sHeader.dfPixelSize;
+        poDS->m_gt.xscale = poDS->sHeader.dfPixelSize;
+        poDS->m_gt.yscale = -poDS->sHeader.dfPixelSize;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yrot = 0.0;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1983,10 +1983,10 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
 
                 CPLDebug("RMF", "X: %d, Y: %d", nX, nY);
 
-                double dfX =
-                    poDS->m_gt[0] + nX * poDS->m_gt[1] + nY * poDS->m_gt[2];
-                double dfY =
-                    poDS->m_gt[3] + nX * poDS->m_gt[4] + nY * poDS->m_gt[5];
+                double dfX = poDS->m_gt.xorig + nX * poDS->m_gt.xscale +
+                             nY * poDS->m_gt.xrot;
+                double dfY = poDS->m_gt.yorig + nX * poDS->m_gt.yrot +
+                             nY * poDS->m_gt.yscale;
 
                 if (bFirst)
                 {

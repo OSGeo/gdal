@@ -106,19 +106,19 @@ void WCSDataset::SetGeometry(const std::vector<int> &size,
     nRasterXSize = size[0];
     nRasterYSize = size[1];
 
-    m_gt[0] = origin[0];
-    m_gt[1] = offsets[0][0];
-    m_gt[2] = offsets[0].size() == 1 ? 0.0 : offsets[0][1];
-    m_gt[3] = origin[1];
-    m_gt[4] = offsets[1].size() == 1 ? 0.0 : offsets[1][0];
-    m_gt[5] = offsets[1].size() == 1 ? offsets[1][0] : offsets[1][1];
+    m_gt.xorig = origin[0];
+    m_gt.xscale = offsets[0][0];
+    m_gt.xrot = offsets[0].size() == 1 ? 0.0 : offsets[0][1];
+    m_gt.yorig = origin[1];
+    m_gt.yrot = offsets[1].size() == 1 ? 0.0 : offsets[1][0];
+    m_gt.yscale = offsets[1].size() == 1 ? offsets[1][0] : offsets[1][1];
 
     if (!CPLGetXMLBoolean(psService, "OriginAtBoundary"))
     {
-        m_gt[0] -= m_gt[1] * 0.5;
-        m_gt[0] -= m_gt[2] * 0.5;
-        m_gt[3] -= m_gt[4] * 0.5;
-        m_gt[3] -= m_gt[5] * 0.5;
+        m_gt.xorig -= m_gt.xscale * 0.5;
+        m_gt.xorig -= m_gt.xrot * 0.5;
+        m_gt.yorig -= m_gt.yrot * 0.5;
+        m_gt.yorig -= m_gt.yscale * 0.5;
     }
 }
 

@@ -1300,17 +1300,19 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            const double dfMinX = m_gt[0];
-            const double dfMaxX = m_gt[0] + GetRasterXSize() * m_gt[1];
-            const double dfMaxY = m_gt[3];
-            const double dfMinY = m_gt[3] + GetRasterYSize() * m_gt[5];
+            const double dfMinX = m_gt.xorig;
+            const double dfMaxX = m_gt.xorig + GetRasterXSize() * m_gt.xscale;
+            const double dfMaxY = m_gt.yorig;
+            const double dfMinY = m_gt.yorig + GetRasterYSize() * m_gt.yscale;
 
-            const double dfOvrMinX = poRawDS->m_gt[0];
+            const double dfOvrMinX = poRawDS->m_gt.xorig;
             const double dfOvrMaxX =
-                poRawDS->m_gt[0] + poRawDS->GetRasterXSize() * poRawDS->m_gt[1];
-            const double dfOvrMaxY = poRawDS->m_gt[3];
+                poRawDS->m_gt.xorig +
+                poRawDS->GetRasterXSize() * poRawDS->m_gt.xscale;
+            const double dfOvrMaxY = poRawDS->m_gt.yorig;
             const double dfOvrMinY =
-                poRawDS->m_gt[3] + poRawDS->GetRasterYSize() * poRawDS->m_gt[5];
+                poRawDS->m_gt.yorig +
+                poRawDS->GetRasterYSize() * poRawDS->m_gt.yscale;
 
             if (fabs(dfMinX - dfOvrMinX) < 1e-10 * fabs(dfMinX) &&
                 fabs(dfMinY - dfOvrMinY) < 1e-10 * fabs(dfMinY) &&
@@ -1529,10 +1531,12 @@ bool STACTARawDataset::InitRaster(GDALDataset *poProtoDS,
         return false;
     }
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    m_gt[0] = oTM.mTopLeftX + m_nMinMetaTileCol * m_nMetaTileWidth * oTM.mResX;
-    m_gt[1] = oTM.mResX;
-    m_gt[3] = oTM.mTopLeftY - m_nMinMetaTileRow * m_nMetaTileHeight * oTM.mResY;
-    m_gt[5] = -oTM.mResY;
+    m_gt.xorig =
+        oTM.mTopLeftX + m_nMinMetaTileCol * m_nMetaTileWidth * oTM.mResX;
+    m_gt.xscale = oTM.mResX;
+    m_gt.yorig =
+        oTM.mTopLeftY - m_nMinMetaTileRow * m_nMetaTileHeight * oTM.mResY;
+    m_gt.yscale = -oTM.mResY;
     SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
 
     return true;

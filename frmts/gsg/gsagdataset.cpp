@@ -1080,16 +1080,16 @@ CPLErr GSAGDataset::GetGeoTransform(GDALGeoTransform &gt) const
         return CE_Failure;
 
     /* calculate pixel size first */
-    gt[1] = (poGRB->dfMaxX - poGRB->dfMinX) / (nRasterXSize - 1);
-    gt[5] = (poGRB->dfMinY - poGRB->dfMaxY) / (nRasterYSize - 1);
+    gt.xscale = (poGRB->dfMaxX - poGRB->dfMinX) / (nRasterXSize - 1);
+    gt.yscale = (poGRB->dfMinY - poGRB->dfMaxY) / (nRasterYSize - 1);
 
     /* then calculate image origin */
-    gt[0] = poGRB->dfMinX - gt[1] / 2;
-    gt[3] = poGRB->dfMaxY - gt[5] / 2;
+    gt.xorig = poGRB->dfMinX - gt.xscale / 2;
+    gt.yorig = poGRB->dfMaxY - gt.yscale / 2;
 
     /* tilt/rotation does not supported by the GS grids */
-    gt[4] = 0.0;
-    gt[2] = 0.0;
+    gt.yrot = 0.0;
+    gt.xrot = 0.0;
 
     return CE_None;
 }
@@ -1110,8 +1110,8 @@ CPLErr GSAGDataset::SetGeoTransform(const GDALGeoTransform &gt)
     GSAGRasterBand *poGRB = cpl::down_cast<GSAGRasterBand *>(GetRasterBand(1));
 
     /* non-zero transform 2 or 4 or negative 1 or 5 not supported natively */
-    /*if( gt[2] != 0.0 || gt[4] != 0.0
-        || gt[1] < 0.0 || gt[5] < 0.0 )
+    /*if( gt.xrot != 0.0 || gt.yrot != 0.0
+        || gt.xscale < 0.0 || gt.yscale < 0.0 )
         eErr = GDALPamDataset::SetGeoTransform( gt );*/
     // if( eErr != CE_None )
     //     return eErr;
@@ -1121,10 +1121,10 @@ CPLErr GSAGDataset::SetGeoTransform(const GDALGeoTransform &gt)
     const double dfOldMinY = poGRB->dfMinY;
     const double dfOldMaxY = poGRB->dfMaxY;
 
-    poGRB->dfMinX = gt[0] + gt[1] / 2;
-    poGRB->dfMaxX = gt[1] * (nRasterXSize - 0.5) + gt[0];
-    poGRB->dfMinY = gt[5] * (nRasterYSize - 0.5) + gt[3];
-    poGRB->dfMaxY = gt[3] + gt[5] / 2;
+    poGRB->dfMinX = gt.xorig + gt.xscale / 2;
+    poGRB->dfMaxX = gt.xscale * (nRasterXSize - 0.5) + gt.xorig;
+    poGRB->dfMinY = gt.yscale * (nRasterYSize - 0.5) + gt.yorig;
+    poGRB->dfMaxY = gt.yorig + gt.yscale / 2;
 
     CPLErr eErr = UpdateHeader();
 
@@ -1499,11 +1499,11 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
 
     ssHeader << nXSize << " " << nYSize << "\x0D\x0A";
 
-    ssHeader << gt[0] + gt[1] / 2 << " " << gt[1] * (nXSize - 0.5) + gt[0]
-             << "\x0D\x0A";
+    ssHeader << gt.xorig + gt.xscale / 2 << " "
+             << gt.xscale * (nXSize - 0.5) + gt.xorig << "\x0D\x0A";
 
-    ssHeader << gt[5] * (nYSize - 0.5) + gt[3] << " " << gt[3] + gt[5] / 2
-             << "\x0D\x0A";
+    ssHeader << gt.yscale * (nYSize - 0.5) + gt.yorig << " "
+             << gt.yorig + gt.yscale / 2 << "\x0D\x0A";
 
     if (VSIFWriteL((void *)ssHeader.str().c_str(), 1, ssHeader.str().length(),
                    fp) != ssHeader.str().length())

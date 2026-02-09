@@ -1214,11 +1214,11 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
     // Compute extent of block in georeferenced coordinates
     double dfBlockMinX =
-        poGDS->m_gt[0] + nBlockXOff * nBlockXSize * poGDS->m_gt[1];
-    double dfBlockMaxX = dfBlockMinX + nReqCountX * poGDS->m_gt[1];
+        poGDS->m_gt.xorig + nBlockXOff * nBlockXSize * poGDS->m_gt.xscale;
+    double dfBlockMaxX = dfBlockMinX + nReqCountX * poGDS->m_gt.xscale;
     double dfBlockMaxY =
-        poGDS->m_gt[3] + nBlockYOff * nBlockYSize * poGDS->m_gt[5];
-    double dfBlockMinY = dfBlockMaxY + nReqCountY * poGDS->m_gt[5];
+        poGDS->m_gt.yorig + nBlockYOff * nBlockYSize * poGDS->m_gt.yscale;
+    double dfBlockMinY = dfBlockMaxY + nReqCountY * poGDS->m_gt.yscale;
 
     // Compute min/max indices of intersecting supergrids (origin bottom-left)
     const double dfLowResResX =
@@ -1330,15 +1330,15 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 "y = %d, x = %d, minx = %d, miny = %d, maxx = %d, maxy = %d", y,
                 x, nMinSrcX, nMinSrcY, nMaxSrcX, nMaxSrcY);
 #endif
-            const double dfCstX = (dfMinX - dfBlockMinX) / poGDS->m_gt[1];
-            const double dfMulX = rgrid.fResX / poGDS->m_gt[1];
+            const double dfCstX = (dfMinX - dfBlockMinX) / poGDS->m_gt.xscale;
+            const double dfMulX = rgrid.fResX / poGDS->m_gt.xscale;
 
             for (int super_y = nMinSrcY; super_y <= nMaxSrcY; super_y++)
             {
                 const double dfSrcY =
                     dfMinY + super_y * static_cast<double>(rgrid.fResY);
                 const int nTargetY = static_cast<int>(
-                    std::floor((dfBlockMaxY - dfSrcY) / -poGDS->m_gt[5]));
+                    std::floor((dfBlockMaxY - dfSrcY) / -poGDS->m_gt.yscale));
                 if (!(nTargetY >= 0 && nTargetY < nReqCountY))
                 {
                     continue;
@@ -1353,7 +1353,7 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                     /*
                     const double dfSrcX = dfMinX + super_x * rgrid.fResX;
                     const int nTargetX = static_cast<int>(std::floor(
-                        (dfSrcX - dfBlockMinX) / poGDS->m_gt[1]));
+                        (dfSrcX - dfBlockMinX) / poGDS->m_gt.xscale));
                     */
                     const int nTargetX =
                         static_cast<int>(std::floor(dfCstX + super_x * dfMulX));
@@ -1646,11 +1646,11 @@ CPLErr BAGInterpolatedBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         std::min(nBlockYSize, nRasterYSize - nBlockYOff * nBlockYSize);
     // Compute extent of block in georeferenced coordinates
     const double dfBlockMinX =
-        poGDS->m_gt[0] + nBlockXOff * nBlockXSize * poGDS->m_gt[1];
-    const double dfBlockMaxX = dfBlockMinX + nReqCountX * poGDS->m_gt[1];
+        poGDS->m_gt.xorig + nBlockXOff * nBlockXSize * poGDS->m_gt.xscale;
+    const double dfBlockMaxX = dfBlockMinX + nReqCountX * poGDS->m_gt.xscale;
     const double dfBlockMaxY =
-        poGDS->m_gt[3] + nBlockYOff * nBlockYSize * poGDS->m_gt[5];
-    const double dfBlockMinY = dfBlockMaxY + nReqCountY * poGDS->m_gt[5];
+        poGDS->m_gt.yorig + nBlockYOff * nBlockYSize * poGDS->m_gt.yscale;
+    const double dfBlockMinY = dfBlockMaxY + nReqCountY * poGDS->m_gt.yscale;
 
     // Compute min/max indices of intersecting supergrids (origin bottom-left)
     // We add a margin of (dfLowResResX, dfLowResResY) to be able to
@@ -1742,7 +1742,7 @@ CPLErr BAGInterpolatedBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     for (int y = 0; y < nReqCountY; ++y)
     {
         // Y georeference ordinate of the center of the cell to interpolate
-        const double dfY = dfBlockMaxY + (y + 0.5) * poGDS->m_gt[5];
+        const double dfY = dfBlockMaxY + (y + 0.5) * poGDS->m_gt.yscale;
         // Y index of the corresponding refinement grid
         const int iYRefinedGrid =
             static_cast<int>(floor((dfY - dfLowResMinY) / dfLowResResY));
@@ -1751,7 +1751,7 @@ CPLErr BAGInterpolatedBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         for (int x = 0; x < nReqCountX; ++x)
         {
             // X georeference ordinate of the center of the cell to interpolate
-            const double dfX = dfBlockMinX + (x + 0.5) * poGDS->m_gt[1];
+            const double dfX = dfBlockMinX + (x + 0.5) * poGDS->m_gt.xscale;
             // X index of the corresponding refinement grid
             const int iXRefinedGrid =
                 static_cast<int>((dfX - dfLowResMinX) / dfLowResResX);
@@ -2041,8 +2041,8 @@ CPLErr BAGInterpolatedBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                     // Epsilon value to add to weights to avoid potential
                     // divergence to infinity if a source node is too close
                     // to the target point
-                    const double EPS =
-                        SQ(std::min(poGDS->m_gt[1], -poGDS->m_gt[5]) / 10);
+                    const double EPS = SQ(
+                        std::min(poGDS->m_gt.xscale, -poGDS->m_gt.yscale) / 10);
                     for (size_t i = 0; i < adfX.size(); ++i)
                     {
                         if (afDepth[i] != m_fNoDataValue)
@@ -2456,12 +2456,14 @@ void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nXSize, int nYSize)
     m_oSRS = poParentDS->m_oSRS;
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
-    m_gt[0] = poParentDS->m_gt[0];
-    m_gt[1] = poParentDS->m_gt[1] * poParentDS->nRasterXSize / nRasterXSize;
-    m_gt[2] = poParentDS->m_gt[2];
-    m_gt[3] = poParentDS->m_gt[3];
-    m_gt[4] = poParentDS->m_gt[4];
-    m_gt[5] = poParentDS->m_gt[5] * poParentDS->nRasterYSize / nRasterYSize;
+    m_gt.xorig = poParentDS->m_gt.xorig;
+    m_gt.xscale =
+        poParentDS->m_gt.xscale * poParentDS->nRasterXSize / nRasterXSize;
+    m_gt.xrot = poParentDS->m_gt.xrot;
+    m_gt.yorig = poParentDS->m_gt.yorig;
+    m_gt.yrot = poParentDS->m_gt.yrot;
+    m_gt.yscale =
+        poParentDS->m_gt.yscale * poParentDS->nRasterYSize / nRasterYSize;
     m_nLowResWidth = poParentDS->m_nLowResWidth;
     m_nLowResHeight = poParentDS->m_nLowResHeight;
     m_dfLowResMinX = poParentDS->m_dfLowResMinX;
@@ -3240,16 +3242,16 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
         }
         nRasterXSize = static_cast<int>(dfRasterXSize + 0.5);
         nRasterYSize = static_cast<int>(dfRasterYSize + 0.5);
-        m_gt[0] = dfMinX;
-        m_gt[1] = dfResX;
-        m_gt[3] = dfMaxY;
-        m_gt[5] = -dfResY;
+        m_gt.xorig = dfMinX;
+        m_gt.xscale = dfResX;
+        m_gt.yorig = dfMaxY;
+        m_gt.yscale = -dfResY;
         if (pszMaxY == nullptr || pszMinY != nullptr)
         {
             // if the constraint is not given by MAXY, we may need to tweak
-            // m_gt[3] / maxy, so that we get the requested MINY
+            // m_gt.yorig / maxy, so that we get the requested MINY
             // value
-            m_gt[3] += dfMinY - (dfMaxY - nRasterYSize * dfResY);
+            m_gt.yorig += dfMinY - (dfMaxY - nRasterYSize * dfResY);
         }
 
         const double dfMinRes = std::min(dfMinResX, dfMinResY);
@@ -3374,18 +3376,18 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
         nRasterYSize = static_cast<int>(pSuperGrid.nHeight);
 
         // Convert from pixel-center convention to corner-pixel convention
-        const double dfMinX =
-            m_gt[0] + nX * m_gt[1] + pSuperGrid.fSWX - pSuperGrid.fResX / 2;
-        const double dfMinY = m_gt[3] + m_nLowResHeight * m_gt[5] +
-                              nY * -m_gt[5] + pSuperGrid.fSWY -
+        const double dfMinX = m_gt.xorig + nX * m_gt.xscale + pSuperGrid.fSWX -
+                              pSuperGrid.fResX / 2;
+        const double dfMinY = m_gt.yorig + m_nLowResHeight * m_gt.yscale +
+                              nY * -m_gt.yscale + pSuperGrid.fSWY -
                               pSuperGrid.fResY / 2;
         const double dfMaxY =
             dfMinY + pSuperGrid.nHeight * static_cast<double>(pSuperGrid.fResY);
 
-        m_gt[0] = dfMinX;
-        m_gt[1] = pSuperGrid.fResX;
-        m_gt[3] = dfMaxY;
-        m_gt[5] = -pSuperGrid.fResY;
+        m_gt.xorig = dfMinX;
+        m_gt.xscale = pSuperGrid.fResX;
+        m_gt.yorig = dfMaxY;
+        m_gt.yscale = -pSuperGrid.fResY;
         m_nSuperGridRefinementStartIndex = pSuperGrid.nIndex;
 
         if (!osGeorefMetadataLayer.empty())
@@ -4277,19 +4279,21 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
         dfFilterMaxX = CPLAtof(pszMaxX);
         dfFilterMaxY = CPLAtof(pszMaxY);
 
-        nMinX = std::max(nMinX,
-                         static_cast<int>((dfFilterMinX - m_gt[0]) / m_gt[1]));
-        nMaxX = std::min(nMaxX,
-                         static_cast<int>((dfFilterMaxX - m_gt[0]) / m_gt[1]));
+        nMinX = std::max(
+            nMinX, static_cast<int>((dfFilterMinX - m_gt.xorig) / m_gt.xscale));
+        nMaxX = std::min(
+            nMaxX, static_cast<int>((dfFilterMaxX - m_gt.xorig) / m_gt.xscale));
 
         nMinY = std::max(
-            nMinY, static_cast<int>(
-                       (dfFilterMinY - (m_gt[3] + m_nLowResHeight * m_gt[5])) /
-                       -m_gt[5]));
+            nMinY,
+            static_cast<int>(
+                (dfFilterMinY - (m_gt.yorig + m_nLowResHeight * m_gt.yscale)) /
+                -m_gt.yscale));
         nMaxY = std::min(
-            nMaxY, static_cast<int>(
-                       (dfFilterMaxY - (m_gt[3] + m_nLowResHeight * m_gt[5])) /
-                       -m_gt[5]));
+            nMaxY,
+            static_cast<int>(
+                (dfFilterMaxY - (m_gt.yorig + m_nLowResHeight * m_gt.yscale)) /
+                -m_gt.yscale));
     }
     else if (nCountBBoxElts > 0)
     {
@@ -4399,10 +4403,10 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                             // 0.1 is to deal with numeric imprecisions
                             rgrid.fSWX +
                                     (rgrid.nWidth - 1 - 0.1) * rgrid.fResX >
-                                m_gt[1] ||
+                                m_gt.xscale ||
                             rgrid.fSWY +
                                     (rgrid.nHeight - 1 - 0.1) * rgrid.fResY >
-                                -m_gt[5])
+                                -m_gt.yscale)
                         {
                             CPLError(
                                 CE_Failure, CPLE_NotSupported,
@@ -4453,14 +4457,14 @@ bool BAGDataset::LookForRefinementGrids(CSLConstList l_papszOpenOptions,
                             return false;
                         }
 
-                        const double dfMinX = m_gt[0] + x * m_gt[1] +
+                        const double dfMinX = m_gt.xorig + x * m_gt.xscale +
                                               rgrid.fSWX - rgrid.fResX / 2;
                         const double dfMaxX =
                             dfMinX +
                             rgrid.nWidth * static_cast<double>(rgrid.fResX);
                         const double dfMinY =
-                            m_gt[3] + m_nLowResHeight * m_gt[5] + y * -m_gt[5] +
-                            rgrid.fSWY - rgrid.fResY / 2;
+                            m_gt.yorig + m_nLowResHeight * m_gt.yscale +
+                            y * -m_gt.yscale + rgrid.fSWY - rgrid.fResY / 2;
                         const double dfMaxY =
                             dfMinY +
                             static_cast<double>(rgrid.nHeight) * rgrid.fResY;
@@ -4678,19 +4682,19 @@ void BAGDataset::LoadMetadata()
                 }
             }
 
-            m_gt[0] = dfLLX;
-            m_gt[1] = dfResWidth;
-            m_gt[3] = dfLLY + dfResHeight * (m_nLowResHeight - 1);
-            m_gt[5] = dfResHeight * (-1);
+            m_gt.xorig = dfLLX;
+            m_gt.xscale = dfResWidth;
+            m_gt.yorig = dfLLY + dfResHeight * (m_nLowResHeight - 1);
+            m_gt.yscale = dfResHeight * (-1);
 
             // shift to pixel corner convention
-            m_gt[0] -= m_gt[1] * 0.5;
-            m_gt[3] -= m_gt[5] * 0.5;
+            m_gt.xorig -= m_gt.xscale * 0.5;
+            m_gt.yorig -= m_gt.yscale * 0.5;
 
-            m_dfLowResMinX = m_gt[0];
-            m_dfLowResMaxX = m_dfLowResMinX + m_nLowResWidth * m_gt[1];
-            m_dfLowResMaxY = m_gt[3];
-            m_dfLowResMinY = m_dfLowResMaxY + m_nLowResHeight * m_gt[5];
+            m_dfLowResMinX = m_gt.xorig;
+            m_dfLowResMaxX = m_dfLowResMinX + m_nLowResWidth * m_gt.xscale;
+            m_dfLowResMaxY = m_gt.yorig;
+            m_dfLowResMinY = m_dfLowResMaxY + m_nLowResHeight * m_gt.yscale;
         }
         CSLDestroy(papszCornerTokens);
     }
@@ -4872,7 +4876,7 @@ OGRErr BAGDataset::ParseWKTFromXML(const char *pszISOXML)
 CPLErr BAGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    if (m_gt[0] != 0.0 || m_gt[3] != 0.0)
+    if (m_gt.xorig != 0.0 || m_gt.yorig != 0.0)
     {
         gt = m_gt;
         return CE_None;
@@ -4901,7 +4905,7 @@ CPLErr BAGDataset::SetGeoTransform(const GDALGeoTransform &gt)
     if (eAccess == GA_ReadOnly)
         return GDALPamDataset::SetGeoTransform(gt);
 
-    if (gt[2] != 0 || gt[4] != 0)
+    if (gt.xrot != 0 || gt.yrot != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "BAG driver requires a non-rotated geotransform");
@@ -5255,10 +5259,10 @@ CPLString BAGCreator::GenerateMetadata(int nXSize, int nYSize,
                        brokenDown.tm_min, brokenDown.tm_sec));
     }
 
-    osOptions.SetNameValue("VAR_RESX", CPLSPrintf("%.17g", gt[1]));
-    osOptions.SetNameValue("VAR_RESY", CPLSPrintf("%.17g", fabs(gt[5])));
-    osOptions.SetNameValue("VAR_RES",
-                           CPLSPrintf("%.17g", std::max(gt[1], fabs(gt[5]))));
+    osOptions.SetNameValue("VAR_RESX", CPLSPrintf("%.17g", gt.xscale));
+    osOptions.SetNameValue("VAR_RESY", CPLSPrintf("%.17g", fabs(gt.yscale)));
+    osOptions.SetNameValue(
+        "VAR_RES", CPLSPrintf("%.17g", std::max(gt.xscale, fabs(gt.yscale))));
 
     char *pszProjection = nullptr;
     if (poSRS)
@@ -5310,12 +5314,12 @@ CPLString BAGCreator::GenerateMetadata(int nXSize, int nYSize,
     osOptions.SetNameValue("VAR_RES_UNIT", pszUnits);
 
     // get bounds as pixel center
-    double dfMinX = gt[0] + gt[1] / 2;
-    double dfMaxX = dfMinX + (nXSize - 1) * gt[1];
-    double dfMaxY = gt[3] + gt[5] / 2;
-    double dfMinY = dfMaxY + (nYSize - 1) * gt[5];
+    double dfMinX = gt.xorig + gt.xscale / 2;
+    double dfMaxX = dfMinX + (nXSize - 1) * gt.xscale;
+    double dfMaxY = gt.yorig + gt.yscale / 2;
+    double dfMinY = dfMaxY + (nYSize - 1) * gt.yscale;
 
-    if (gt[5] > 0)
+    if (gt.yscale > 0)
     {
         std::swap(dfMinY, dfMaxY);
     }
@@ -5627,7 +5631,7 @@ bool BAGCreator::CreateElevationOrUncertainty(GDALDataset *poSrcDS, int nBand,
         std::vector<float> afValues(static_cast<size_t>(nBlockYSize) *
                                     nBlockXSize);
         ret = true;
-        const bool bReverseY = gt[5] < 0;
+        const bool bReverseY = gt.yscale < 0;
 
         float fMin = std::numeric_limits<float>::infinity();
         float fMax = -std::numeric_limits<float>::infinity();
@@ -5813,7 +5817,7 @@ bool BAGCreator::Create(const char *pszFilename, GDALDataset *poSrcDS,
                  "BAG driver requires a source dataset with a geotransform");
         return false;
     }
-    if (gt[2] != 0 || gt[4] != 0)
+    if (gt.xrot != 0 || gt.yrot != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "BAG driver requires a source dataset with a non-rotated "

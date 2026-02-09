@@ -719,16 +719,16 @@ CPLErr GDALECWCompressor::Initialize(
     psClient->fCellIncrementY = -1.0;
     psClient->fCWRotationDegrees = 0.0;
 
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
         CPLError(CE_Warning, CPLE_NotSupported,
                  "Rotational coefficients ignored, georeferencing of\n"
                  "output ECW file will be incorrect.\n");
     else
     {
-        psClient->fOriginX = gt[0];
-        psClient->fOriginY = gt[3];
-        psClient->fCellIncrementX = gt[1];
-        psClient->fCellIncrementY = gt[5];
+        psClient->fOriginX = gt.xorig;
+        psClient->fOriginY = gt.yorig;
+        psClient->fCellIncrementX = gt.xscale;
+        psClient->fCellIncrementY = gt.yscale;
     }
 
     /* -------------------------------------------------------------------- */

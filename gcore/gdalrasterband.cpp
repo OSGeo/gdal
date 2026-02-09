@@ -11119,14 +11119,14 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
                       "/", "X", osTypeX, osDirectionX, nXSize)};
 
         GDALGeoTransform gt;
-        if (m_poDS->GetGeoTransform(gt) == CE_None && gt[2] == 0 && gt[4] == 0)
+        if (m_poDS->GetGeoTransform(gt) == CE_None && gt.IsAxisAligned())
         {
-            m_varX = GDALMDArrayRegularlySpaced::Create("/", "X", m_dims[1],
-                                                        gt[0], gt[1], 0.5);
+            m_varX = GDALMDArrayRegularlySpaced::Create(
+                "/", "X", m_dims[1], gt.xorig, gt.xscale, 0.5);
             m_dims[1]->SetIndexingVariable(m_varX);
 
-            m_varY = GDALMDArrayRegularlySpaced::Create("/", "Y", m_dims[0],
-                                                        gt[3], gt[5], 0.5);
+            m_varY = GDALMDArrayRegularlySpaced::Create(
+                "/", "Y", m_dims[0], gt.yorig, gt.yscale, 0.5);
             m_dims[0]->SetIndexingVariable(m_varY);
         }
     }

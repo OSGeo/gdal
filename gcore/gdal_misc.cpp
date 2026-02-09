@@ -3453,11 +3453,11 @@ void GDALComposeGeoTransforms(const double *padfGT1, const double *padfGT2,
     // We need to think of the geotransform in a more normal form to do
     // the matrix multiple:
     //
-    //  __                     __
-    //  | gt[1]   gt[2]   gt[0] |
-    //  | gt[4]   gt[5]   gt[3] |
-    //  |  0.0     0.0     1.0  |
-    //  --                     --
+    //  __                                __
+    //  | gt.xscale   gt.xrot     gt.xorig |
+    //  | gt.yrot     gt.yscale   gt.yorig |
+    //  |  0.0        0.0         1.0      |
+    //  --                                --
     //
     // Then we can use normal matrix multiplication to produce the
     // composed transformation.  I don't actually reform the matrix

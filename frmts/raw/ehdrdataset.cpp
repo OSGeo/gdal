@@ -605,7 +605,7 @@ CPLErr EHdrDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
     // We only support non-rotated images with info in the .HDR file.
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
     {
         return GDALPamDataset::SetGeoTransform(gt);
     }
@@ -629,16 +629,16 @@ CPLErr EHdrDataset::SetGeoTransform(const GDALGeoTransform &gt)
     // Set the transformation information.
     CPLString oValue;
 
-    oValue.Printf("%.15g", m_gt[0] + m_gt[1] * 0.5);
+    oValue.Printf("%.15g", m_gt.xorig + m_gt.xscale * 0.5);
     ResetKeyValue("ULXMAP", oValue);
 
-    oValue.Printf("%.15g", m_gt[3] + m_gt[5] * 0.5);
+    oValue.Printf("%.15g", m_gt.yorig + m_gt.yscale * 0.5);
     ResetKeyValue("ULYMAP", oValue);
 
-    oValue.Printf("%.15g", m_gt[1]);
+    oValue.Printf("%.15g", m_gt.xscale);
     ResetKeyValue("XDIM", oValue);
 
-    oValue.Printf("%.15g", fabs(m_gt[5]));
+    oValue.Printf("%.15g", fabs(m_gt.yscale));
     ResetKeyValue("YDIM", oValue);
 
     return CE_None;
@@ -1332,21 +1332,21 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
         if (bCenter)
         {
-            poDS->m_gt[0] = dfULXMap - dfXDim * 0.5;
-            poDS->m_gt[1] = dfXDim;
-            poDS->m_gt[2] = 0.0;
-            poDS->m_gt[3] = dfULYMap + dfYDim * 0.5;
-            poDS->m_gt[4] = 0.0;
-            poDS->m_gt[5] = -dfYDim;
+            poDS->m_gt.xorig = dfULXMap - dfXDim * 0.5;
+            poDS->m_gt.xscale = dfXDim;
+            poDS->m_gt.xrot = 0.0;
+            poDS->m_gt.yorig = dfULYMap + dfYDim * 0.5;
+            poDS->m_gt.yrot = 0.0;
+            poDS->m_gt.yscale = -dfYDim;
         }
         else
         {
-            poDS->m_gt[0] = dfULXMap;
-            poDS->m_gt[1] = dfXDim;
-            poDS->m_gt[2] = 0.0;
-            poDS->m_gt[3] = dfULYMap;
-            poDS->m_gt[4] = 0.0;
-            poDS->m_gt[5] = -dfYDim;
+            poDS->m_gt.xorig = dfULXMap;
+            poDS->m_gt.xscale = dfXDim;
+            poDS->m_gt.xrot = 0.0;
+            poDS->m_gt.yorig = dfULYMap;
+            poDS->m_gt.yrot = 0.0;
+            poDS->m_gt.yscale = -dfYDim;
         }
     }
 
@@ -1388,12 +1388,12 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                               ""),
                       "DS"))
             {
-                poDS->m_gt[0] /= 3600.0;
-                poDS->m_gt[1] /= 3600.0;
-                poDS->m_gt[2] /= 3600.0;
-                poDS->m_gt[3] /= 3600.0;
-                poDS->m_gt[4] /= 3600.0;
-                poDS->m_gt[5] /= 3600.0;
+                poDS->m_gt.xorig /= 3600.0;
+                poDS->m_gt.xscale /= 3600.0;
+                poDS->m_gt.xrot /= 3600.0;
+                poDS->m_gt.yorig /= 3600.0;
+                poDS->m_gt.yrot /= 3600.0;
+                poDS->m_gt.yscale /= 3600.0;
             }
         }
         else

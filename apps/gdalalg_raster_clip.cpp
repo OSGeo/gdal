@@ -155,7 +155,7 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
             "Clipping is not supported on a raster without a geotransform");
         return false;
     }
-    if (gt[2] != 0 && gt[4] != 0)
+    if (!gt.IsAxisAligned())
     {
         ReportError(CE_Failure, CPLE_NotSupported,
                     "Clipping is not supported on a raster whose geotransform "
@@ -194,7 +194,7 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
         poClipGeom = std::move(poPoly);
     }
 
-    const bool bBottomUpRaster = gt[5] > 0;
+    const bool bBottomUpRaster = gt.yscale > 0;
 
     if (poClipGeom->IsRectangle() && !m_addAlpha && !bBottomUpRaster)
     {
@@ -244,8 +244,8 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         if (bBottomUpRaster)
         {
-            gt[3] += gt[5] * poSrcDS->GetRasterYSize();
-            gt[5] = -gt[5];
+            gt.yorig += gt.yscale * poSrcDS->GetRasterYSize();
+            gt.yscale = -gt.yscale;
         }
 
         {
@@ -289,13 +289,19 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
         constexpr double REL_EPS_PIXEL = 1e-3;
         const double dfMinX =
-            gt[0] + floor((env.MinX - gt[0]) / gt[1] + REL_EPS_PIXEL) * gt[1];
+            gt.xorig +
+            floor((env.MinX - gt.xorig) / gt.xscale + REL_EPS_PIXEL) *
+                gt.xscale;
         const double dfMinY =
-            gt[3] + ceil((env.MinY - gt[3]) / gt[5] - REL_EPS_PIXEL) * gt[5];
+            gt.yorig +
+            ceil((env.MinY - gt.yorig) / gt.yscale - REL_EPS_PIXEL) * gt.yscale;
         const double dfMaxX =
-            gt[0] + ceil((env.MaxX - gt[0]) / gt[1] - REL_EPS_PIXEL) * gt[1];
+            gt.xorig +
+            ceil((env.MaxX - gt.xorig) / gt.xscale - REL_EPS_PIXEL) * gt.xscale;
         const double dfMaxY =
-            gt[3] + floor((env.MaxY - gt[3]) / gt[5] + REL_EPS_PIXEL) * gt[5];
+            gt.yorig +
+            floor((env.MaxY - gt.yorig) / gt.yscale + REL_EPS_PIXEL) *
+                gt.yscale;
 
         aosOptions.AddString("-te");
         aosOptions.AddString(CPLSPrintf("%.17g", dfMinX));
@@ -306,8 +312,8 @@ bool GDALRasterClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
             CPLSPrintf("%.17g", bBottomUpRaster ? dfMinY : dfMaxY));
 
         aosOptions.AddString("-tr");
-        aosOptions.AddString(CPLSPrintf("%.17g", gt[1]));
-        aosOptions.AddString(CPLSPrintf("%.17g", std::fabs(gt[5])));
+        aosOptions.AddString(CPLSPrintf("%.17g", gt.xscale));
+        aosOptions.AddString(CPLSPrintf("%.17g", std::fabs(gt.yscale)));
 
         GDALWarpAppOptions *psOptions =
             GDALWarpAppOptionsNew(aosOptions.List(), nullptr);

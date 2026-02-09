@@ -382,12 +382,12 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
                 else if (!std::isnan(dfXOff) && !std::isnan(dfXRes) &&
                          !std::isnan(dfYOff) && !std::isnan(dfYRes))
                 {
-                    gt[0] = dfXOff;
-                    gt[1] = dfXRes;
-                    gt[2] = 0;  // xrot
-                    gt[3] = dfYOff;
-                    gt[4] = 0;  // yrot
-                    gt[5] = dfYRes;
+                    gt.xorig = dfXOff;
+                    gt.xscale = dfXRes;
+                    gt.xrot = 0;  // xrot
+                    gt.yorig = dfYOff;
+                    gt.yrot = 0;  // yrot
+                    gt.yscale = dfYRes;
                     bAddSpatialProjConvention = true;
                 }
             }
@@ -407,19 +407,19 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
                     oAttrs.Delete(GDALMD_AREA_OR_POINT);
 
                     // Going from GDAL's corner convention to pixel center
-                    gt[0] += 0.5 * gt[1] + 0.5 * gt[2];
-                    gt[3] += 0.5 * gt[4] + 0.5 * gt[5];
+                    gt.xorig += 0.5 * gt.xscale + 0.5 * gt.xrot;
+                    gt.yorig += 0.5 * gt.yrot + 0.5 * gt.yscale;
                     dfWidth -= 1.0;
                     dfHeight -= 1.0;
                 }
 
                 CPLJSONArray oAttrSpatialTransform;
-                oAttrSpatialTransform.Add(gt[1]);  // xres
-                oAttrSpatialTransform.Add(gt[2]);  // xrot
-                oAttrSpatialTransform.Add(gt[0]);  // xoff
-                oAttrSpatialTransform.Add(gt[4]);  // yrot
-                oAttrSpatialTransform.Add(gt[5]);  // yres
-                oAttrSpatialTransform.Add(gt[3]);  // yoff
+                oAttrSpatialTransform.Add(gt.xscale);  // xres
+                oAttrSpatialTransform.Add(gt.xrot);    // xrot
+                oAttrSpatialTransform.Add(gt.xorig);   // xoff
+                oAttrSpatialTransform.Add(gt.yrot);    // yrot
+                oAttrSpatialTransform.Add(gt.yscale);  // yres
+                oAttrSpatialTransform.Add(gt.yorig);   // yoff
 
                 oAttrs.Add("spatial:transform_type", "affine");
                 oAttrs.Add("spatial:transform", oAttrSpatialTransform);

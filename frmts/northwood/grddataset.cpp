@@ -485,13 +485,13 @@ CPLErr NWT_GRDDataset::FlushCache(bool bAtClosing)
 
 CPLErr NWT_GRDDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    gt[0] = pGrd->dfMinX - (pGrd->dfStepSize * 0.5);
-    gt[3] = pGrd->dfMaxY + (pGrd->dfStepSize * 0.5);
-    gt[1] = pGrd->dfStepSize;
-    gt[2] = 0.0;
+    gt.xorig = pGrd->dfMinX - (pGrd->dfStepSize * 0.5);
+    gt.yorig = pGrd->dfMaxY + (pGrd->dfStepSize * 0.5);
+    gt.xscale = pGrd->dfStepSize;
+    gt.xrot = 0.0;
 
-    gt[4] = 0.0;
-    gt[5] = -1 * pGrd->dfStepSize;
+    gt.yrot = 0.0;
+    gt.yscale = -1 * pGrd->dfStepSize;
 
     return CE_None;
 }
@@ -502,20 +502,20 @@ CPLErr NWT_GRDDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 CPLErr NWT_GRDDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
     {
 
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GRD datasets do not support skew/rotation");
         return CE_Failure;
     }
-    pGrd->dfStepSize = gt[1];
+    pGrd->dfStepSize = gt.xscale;
 
     // GRD format sets the min/max coordinates to the centre of the
     // cell; We must account for this when copying the GDAL geotransform
     // which references the top left corner
-    pGrd->dfMinX = gt[0] + (pGrd->dfStepSize * 0.5);
-    pGrd->dfMaxY = gt[3] - (pGrd->dfStepSize * 0.5);
+    pGrd->dfMinX = gt.xorig + (pGrd->dfStepSize * 0.5);
+    pGrd->dfMaxY = gt.yorig - (pGrd->dfStepSize * 0.5);
 
     // Now set the miny and maxx
     pGrd->dfMaxX = pGrd->dfMinX + (pGrd->dfStepSize * (nRasterXSize - 1));

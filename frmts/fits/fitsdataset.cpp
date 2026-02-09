@@ -3029,8 +3029,8 @@ void FITSDataset::WriteFITSInfo()
             }
         }
 
-        UpperLeftCornerX = m_gt[0] - falseEast;
-        UpperLeftCornerY = m_gt[3] - falseNorth;
+        UpperLeftCornerX = m_gt.xorig - falseEast;
+        UpperLeftCornerY = m_gt.yorig - falseNorth;
 
         if (centlon > 180.)
         {
@@ -3039,8 +3039,8 @@ void FITSDataset::WriteFITSInfo()
         if (strstr(unit, "metre"))
         {
             // convert degrees/pixel to m/pixel
-            mapres = 1. / m_gt[1];     // mapres is pixel/meters
-            mres = m_gt[1] / cfactor;  // mres is deg/pixel
+            mapres = 1. / m_gt.xscale;     // mapres is pixel/meters
+            mres = m_gt.xscale / cfactor;  // mres is deg/pixel
             crpix1 = -(UpperLeftCornerX * mapres) + centlon / mres + 0.5;
             // assuming that center latitude is also the origin of the
             // coordinate system: this is not always true. More generic
@@ -3050,8 +3050,8 @@ void FITSDataset::WriteFITSInfo()
         else if (strstr(unit, "degree"))
         {
             // convert m/pixel to pixel/degree
-            mapres = 1. / m_gt[1] / cfactor;  // mapres is pixel/deg
-            mres = m_gt[1];                   // mres is meters/pixel
+            mapres = 1. / m_gt.xscale / cfactor;  // mapres is pixel/deg
+            mres = m_gt.xscale;                   // mres is meters/pixel
             crpix1 = -(UpperLeftCornerX * mres) + centlon / mapres + 0.5;
             // assuming that center latitude is also the origin of the
             // coordinate system: this is not always true. More generic
@@ -3119,10 +3119,10 @@ void FITSDataset::WriteFITSInfo()
             /// Write WCS CDELTia and PCi_ja here
 
             double cd[4];
-            cd[0] = m_gt[1] / cfactor;
-            cd[1] = m_gt[2] / cfactor;
-            cd[2] = m_gt[4] / cfactor;
-            cd[3] = m_gt[5] / cfactor;
+            cd[0] = m_gt.xscale / cfactor;
+            cd[1] = m_gt.xrot / cfactor;
+            cd[2] = m_gt.yrot / cfactor;
+            cd[3] = m_gt.yscale / cfactor;
 
             double pc[4];
             pc[0] = 1.;
@@ -3508,10 +3508,10 @@ void FITSDataset::LoadGeoreferencing()
 
                 double radfac = DEG2RAD * aRadius;
 
-                m_gt[1] = cd[0] * radfac;
-                m_gt[2] = cd[1] * radfac;
-                m_gt[4] = cd[2] * radfac;
-                m_gt[5] = -cd[3] * radfac;
+                m_gt.xscale = cd[0] * radfac;
+                m_gt.xrot = cd[1] * radfac;
+                m_gt.yrot = cd[2] * radfac;
+                m_gt.yscale = -cd[3] * radfac;
                 if (crval1 > 180.)
                 {
                     crval1 = crval1 - 180.;
@@ -3520,11 +3520,11 @@ void FITSDataset::LoadGeoreferencing()
                 /* NOTA BENE: FITS standard define pixel integers at the center
                    of the pixel, 0.5 must be subtract to have UpperLeft corner
                  */
-                m_gt[0] = crval1 * radfac - m_gt[1] * (crpix1 - 0.5);
+                m_gt.xorig = crval1 * radfac - m_gt.xscale * (crpix1 - 0.5);
                 // assuming that center latitude is also the origin of the
                 // coordinate system: this is not always true. More generic
                 // implementation coming soon
-                m_gt[3] = -m_gt[5] * (crpix2 - 0.5);
+                m_gt.yorig = -m_gt.yscale * (crpix2 - 0.5);
                 //+ crval2 * radfac;
                 m_bGeoTransformValid = true;
             }

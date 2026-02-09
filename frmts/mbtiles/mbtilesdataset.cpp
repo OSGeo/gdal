@@ -477,9 +477,9 @@ char *MBTilesDataset::FindKey(int iPixel, int iLine)
     // Caution this is in GeoPackage / WMTS convention ! That is upper-left
     // corner
     const int nShiftXPixels =
-        (int)floor(0.5 + (m_gt[0] - TMS_ORIGIN_X) / m_gt[1]);
+        (int)floor(0.5 + (m_gt.xorig - TMS_ORIGIN_X) / m_gt.xscale);
     const int nShiftYPixelsFromGPKGOrigin =
-        (int)floor(0.5 + (m_gt[3] - TMS_ORIGIN_Y) / m_gt[5]);
+        (int)floor(0.5 + (m_gt.yorig - TMS_ORIGIN_Y) / m_gt.yscale);
 
     const int iLineFromGPKGOrigin = iLine + nShiftYPixelsFromGPKGOrigin;
     const int iLineFromMBTilesOrigin =
@@ -1060,7 +1060,7 @@ CPLErr MBTilesDataset::SetGeoTransform(const GDALGeoTransform &gt)
                  "Cannot modify geotransform once set");
         return CE_Failure;
     }
-    if (gt[2] != 0.0 || gt[4] != 0 || gt[5] > 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0 || gt.yscale > 0.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Only north-up non rotated geotransform supported");
@@ -1072,10 +1072,10 @@ CPLErr MBTilesDataset::SetGeoTransform(const GDALGeoTransform &gt)
         CPLString osBounds(m_osBounds);
         if (osBounds.empty())
         {
-            double minx = gt[0];
-            double miny = gt[3] + nRasterYSize * gt[5];
-            double maxx = gt[0] + nRasterXSize * gt[1];
-            double maxy = gt[3];
+            double minx = gt.xorig;
+            double miny = gt.yorig + nRasterYSize * gt.yscale;
+            double maxx = gt.xorig + nRasterXSize * gt.xscale;
+            double maxy = gt.yorig;
 
             SphericalMercatorToLongLat(&minx, &miny);
             SphericalMercatorToLongLat(&maxx, &maxy);
@@ -1128,8 +1128,9 @@ CPLErr MBTilesDataset::SetGeoTransform(const GDALGeoTransform &gt)
             dfPixelXSizeZoomLevel0 / (1 << m_nZoomLevel);
         double dfExpectedPixelYSize =
             dfPixelYSizeZoomLevel0 / (1 << m_nZoomLevel);
-        if (fabs(gt[1] - dfExpectedPixelXSize) < 1e-8 * dfExpectedPixelXSize &&
-            fabs(fabs(gt[5]) - dfExpectedPixelYSize) <
+        if (fabs(gt.xscale - dfExpectedPixelXSize) <
+                1e-8 * dfExpectedPixelXSize &&
+            fabs(fabs(gt.yscale) - dfExpectedPixelYSize) <
                 1e-8 * dfExpectedPixelYSize)
         {
             break;
@@ -1162,11 +1163,13 @@ void MBTilesDataset::ComputeTileAndPixelShifts()
     // Compute shift between GDAL origin and TileMatrixSet origin
     // Caution this is in GeoPackage / WMTS convention ! That is upper-left
     // corner
-    int nShiftXPixels = (int)floor(0.5 + (m_gt[0] - TMS_ORIGIN_X) / m_gt[1]);
+    int nShiftXPixels =
+        (int)floor(0.5 + (m_gt.xorig - TMS_ORIGIN_X) / m_gt.xscale);
     m_nShiftXTiles = (int)floor(1.0 * nShiftXPixels / nTileWidth);
     m_nShiftXPixelsMod =
         ((nShiftXPixels % nTileWidth) + nTileWidth) % nTileWidth;
-    int nShiftYPixels = (int)floor(0.5 + (m_gt[3] - TMS_ORIGIN_Y) / m_gt[5]);
+    int nShiftYPixels =
+        (int)floor(0.5 + (m_gt.yorig - TMS_ORIGIN_Y) / m_gt.yscale);
     m_nShiftYTiles = (int)floor(1.0 * nShiftYPixels / nTileHeight);
     m_nShiftYPixelsMod =
         ((nShiftYPixels % nTileHeight) + nTileHeight) % nTileHeight;
@@ -1183,10 +1186,10 @@ CPLErr MBTilesDataset::FinalizeRasterRegistration()
 
     ComputeTileAndPixelShifts();
 
-    double dfGDALMinX = m_gt[0];
-    double dfGDALMinY = m_gt[3] + nRasterYSize * m_gt[5];
-    double dfGDALMaxX = m_gt[0] + nRasterXSize * m_gt[1];
-    double dfGDALMaxY = m_gt[3];
+    double dfGDALMinX = m_gt.xorig;
+    double dfGDALMinY = m_gt.yorig + nRasterYSize * m_gt.yscale;
+    double dfGDALMaxX = m_gt.xorig + nRasterXSize * m_gt.xscale;
+    double dfGDALMaxY = m_gt.yorig;
 
     m_nOverviewCount = m_nZoomLevel;
     m_papoOverviewDS = (MBTilesDataset **)CPLCalloc(sizeof(MBTilesDataset *),
@@ -1240,10 +1243,10 @@ bool MBTilesDataset::InitRaster(MBTilesDataset *poParentDS, int nZoomLevel,
     const double dfPixelYSize = 2 * MAX_GM / nTileHeight / (1 << nZoomLevel);
 
     m_bGeoTransformValid = true;
-    m_gt[0] = dfGDALMinX;
-    m_gt[1] = dfPixelXSize;
-    m_gt[3] = dfGDALMaxY;
-    m_gt[5] = -dfPixelYSize;
+    m_gt.xorig = dfGDALMinX;
+    m_gt.xscale = dfPixelXSize;
+    m_gt.yorig = dfGDALMaxY;
+    m_gt.yscale = -dfPixelYSize;
     double dfRasterXSize = 0.5 + (dfGDALMaxX - dfGDALMinX) / dfPixelXSize;
     double dfRasterYSize = 0.5 + (dfGDALMaxY - dfGDALMinY) / dfPixelYSize;
     if (dfRasterXSize > INT_MAX || dfRasterYSize > INT_MAX)
@@ -3241,7 +3244,7 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
         if (bModifiedMaxLat)
         {
             const double maxNorthing = MAX_GM;
-            gt[3] = maxNorthing;
+            gt.yorig = maxNorthing;
             adfExtent[3] = maxNorthing;
         }
         if (bModifiedMinLat)
@@ -3260,7 +3263,7 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
     }
 
     int nZoomLevel;
-    double dfComputedRes = gt[1];
+    double dfComputedRes = gt.xscale;
     double dfPrevRes = 0.0;
     double dfRes = 0.0;
     int nBlockSize = std::max(
@@ -3312,8 +3315,8 @@ GDALDataset *MBTilesDataset::CreateCopy(const char *pszFilename,
 
     nXSize = (int)(0.5 + (dfMaxX - dfMinX) / dfRes);
     nYSize = (int)(0.5 + (dfMaxY - dfMinY) / dfRes);
-    gt[1] = dfRes;
-    gt[5] = -dfRes;
+    gt.xscale = dfRes;
+    gt.yscale = -dfRes;
 
     int nTargetBands = nBands;
     /* For grey level or RGB, if there's reprojection involved, add an alpha */

@@ -255,8 +255,8 @@ static bool ParseGeoref(const CPLXMLNode *psGeorefElt, GDALGeoTransform &gt)
         }
         if (k == 5)
         {
-            gt[3] -= PH_GEOREF_SHIFT_Y * gt[4];
-            gt[3] -= PH_GEOREF_SHIFT_Y * gt[5];
+            gt.yorig -= PH_GEOREF_SHIFT_Y * gt.yrot;
+            gt.yorig -= PH_GEOREF_SHIFT_Y * gt.yscale;
             return true;
         }
     }
@@ -571,20 +571,20 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
         if (abDemMetadataOk[0] && abDemMetadataOk[1] && abDemMetadataOk[2] &&
             abDemMetadataOk[3] && nSizeX > 1 && nSizeY > 1)
         {
-            gt[0] = adfDemMetadata[0];
-            gt[1] = (adfDemMetadata[1] - adfDemMetadata[0]) / (nSizeX - 1);
-            gt[2] = 0;
-            gt[3] = adfDemMetadata[3];
-            gt[4] = 0;
-            gt[5] = (adfDemMetadata[2] - adfDemMetadata[3]) / (nSizeY - 1);
+            gt.xorig = adfDemMetadata[0];
+            gt.xscale = (adfDemMetadata[1] - adfDemMetadata[0]) / (nSizeX - 1);
+            gt.xrot = 0;
+            gt.yorig = adfDemMetadata[3];
+            gt.yrot = 0;
+            gt.yscale = (adfDemMetadata[2] - adfDemMetadata[3]) / (nSizeY - 1);
 
-            gt[0] -= 0.5 * gt[1];
-            gt[3] -= 0.5 * gt[5];
+            gt.xorig -= 0.5 * gt.xscale;
+            gt.yorig -= 0.5 * gt.yscale;
 
             if (bDemShiftOk)
             {
-                gt[0] += adfDemShift[0];
-                gt[3] += adfDemShift[1];
+                gt.xorig += adfDemShift[0];
+                gt.yorig += adfDemShift[1];
             }
 
             poDataset->SetGeoTransform(gt);

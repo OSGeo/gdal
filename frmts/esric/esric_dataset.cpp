@@ -321,10 +321,10 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo, bool ignoreOversizedLods)
         // resolution is the smallest figure
         res = resolutions[0];
         m_gt = GDALGeoTransform();
-        m_gt[0] = minx;
-        m_gt[3] = maxy;
-        m_gt[1] = res;
-        m_gt[5] = -res;
+        m_gt.xorig = minx;
+        m_gt.yorig = maxy;
+        m_gt.xscale = res;
+        m_gt.yscale = -res;
 
         double dxsz = (maxx - minx) / res;
         double dysz = (maxy - miny) / res;
@@ -490,10 +490,10 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot,
         // resolution is the smallest figure
         res = resolutions[0];
         m_gt = GDALGeoTransform();
-        m_gt[0] = minx;
-        m_gt[3] = maxy;
-        m_gt[1] = res;
-        m_gt[5] = -res;
+        m_gt.xorig = minx;
+        m_gt.yorig = maxy;
+        m_gt.xscale = res;
+        m_gt.yscale = -res;
 
         double dxsz = (maxx - minx) / res;
         double dysz = (maxy - miny) / res;

@@ -425,8 +425,8 @@ int MMRDataset::UpdateGeoTransform()
         osMinX.empty())
         return 1;
 
-    if (1 != CPLsscanf(osMinX, "%lf", &(m_gt[0])))
-        m_gt[0] = 0.0;
+    if (1 != CPLsscanf(osMinX, "%lf", &(m_gt.xorig)))
+        m_gt.xorig = 0.0;
 
     int nNCols = m_pMMRRel->GetColumnsNumberFromREL();
     if (nNCols <= 0)
@@ -441,8 +441,8 @@ int MMRDataset::UpdateGeoTransform()
     if (1 != CPLsscanf(osMaxX, "%lf", &dfMaxX))
         dfMaxX = 1.0;
 
-    m_gt[1] = (dfMaxX - m_gt[0]) / nNCols;
-    m_gt[2] = 0.0;  // No rotation in MiraMon rasters
+    m_gt.xscale = (dfMaxX - m_gt.xorig) / nNCols;
+    m_gt.xrot = 0.0;  // No rotation in MiraMon rasters
 
     CPLString osMinY;
     if (!m_pMMRRel->GetMetadataValue(SECTION_EXTENT, "MinY", osMinY) ||
@@ -462,13 +462,13 @@ int MMRDataset::UpdateGeoTransform()
     if (1 != CPLsscanf(osMaxY, "%lf", &dfMaxY))
         dfMaxY = 1.0;
 
-    m_gt[3] = dfMaxY;
-    m_gt[4] = 0.0;
+    m_gt.yorig = dfMaxY;
+    m_gt.yrot = 0.0;
 
     double dfMinY;
     if (1 != CPLsscanf(osMinY, "%lf", &dfMinY))
         dfMinY = 0.0;
-    m_gt[5] = (dfMinY - m_gt[3]) / nNRows;
+    m_gt.yscale = (dfMinY - m_gt.yorig) / nNRows;
 
     return 0;
 }
@@ -480,8 +480,8 @@ const OGRSpatialReference *MMRDataset::GetSpatialRef() const
 
 CPLErr MMRDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
-    if (m_gt[0] != 0.0 || m_gt[1] != 1.0 || m_gt[2] != 0.0 || m_gt[3] != 0.0 ||
-        m_gt[4] != 0.0 || m_gt[5] != 1.0)
+    if (m_gt.xorig != 0.0 || m_gt.xscale != 1.0 || m_gt.xrot != 0.0 ||
+        m_gt.yorig != 0.0 || m_gt.yrot != 0.0 || m_gt.yscale != 1.0)
     {
         gt = m_gt;
         return CE_None;

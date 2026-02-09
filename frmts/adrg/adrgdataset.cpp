@@ -762,13 +762,14 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
     if (ZNA == 9)
     {
         // North Polar Case
-        poDS->m_gt[0] = 111319.4907933 * (90.0 - PSO) * sin(LSO * M_PI / 180.0);
-        poDS->m_gt[1] = 40075016.68558 / ARV;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] =
+        poDS->m_gt.xorig =
+            111319.4907933 * (90.0 - PSO) * sin(LSO * M_PI / 180.0);
+        poDS->m_gt.xscale = 40075016.68558 / ARV;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig =
             -111319.4907933 * (90.0 - PSO) * cos(LSO * M_PI / 180.0);
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -40075016.68558 / ARV;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -40075016.68558 / ARV;
         poDS->m_oSRS.importFromWkt(
             "PROJCS[\"ARC_System_Zone_09\",GEOGCS[\"GCS_Sphere\","
             "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
@@ -783,12 +784,14 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
     else if (ZNA == 18)
     {
         // South Polar Case
-        poDS->m_gt[0] = 111319.4907933 * (90.0 + PSO) * sin(LSO * M_PI / 180.0);
-        poDS->m_gt[1] = 40075016.68558 / ARV;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = 111319.4907933 * (90.0 + PSO) * cos(LSO * M_PI / 180.0);
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -40075016.68558 / ARV;
+        poDS->m_gt.xorig =
+            111319.4907933 * (90.0 + PSO) * sin(LSO * M_PI / 180.0);
+        poDS->m_gt.xscale = 40075016.68558 / ARV;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig =
+            111319.4907933 * (90.0 + PSO) * cos(LSO * M_PI / 180.0);
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -40075016.68558 / ARV;
         poDS->m_oSRS.importFromWkt(
             "PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\","
             "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
@@ -802,12 +805,12 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
     }
     else
     {
-        poDS->m_gt[0] = LSO;
-        poDS->m_gt[1] = 360. / ARV;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = PSO;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -360. / BRV;
+        poDS->m_gt.xorig = LSO;
+        poDS->m_gt.xscale = 360. / ARV;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = PSO;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -360. / BRV;
         poDS->m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
     }
 
