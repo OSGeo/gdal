@@ -14,6 +14,7 @@
 
 #include "cpl_vsi_virtual.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <limits>
 
@@ -665,6 +666,254 @@ bool ZarrV3CodecShardingIndexed::DecodePartial(
             static_cast<uint64_t>(abyDst.size()),
             static_cast<uint64_t>(nExpectedDecodedChunkSize));
         return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*           ZarrV3CodecShardingIndexed::BatchDecodePartial()           */
+/************************************************************************/
+
+bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
+    VSIVirtualHandle *poFile,
+    const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+        &anRequests,
+    std::vector<ZarrByteVectorQuickResize> &aResults)
+{
+    if (anRequests.empty())
+        return true;
+
+    const auto nDTSize = m_oInputArrayMetadata.oElt.nativeSize;
+
+    // --- Compute inner chunk count and per-request inner chunk indices ---
+    size_t nInnerChunkCount = 1;
+    for (size_t i = 0; i < m_oInputArrayMetadata.anBlockSizes.size(); ++i)
+    {
+        nInnerChunkCount *=
+            m_oInputArrayMetadata.anBlockSizes[i] / m_anInnerBlockSize[i];
+    }
+
+    // Determine whether index codec requires byte-swapping
+    const bool bSwapIndex =
+        !m_poIndexCodecSequence->GetCodecs().empty() &&
+        m_poIndexCodecSequence->GetCodecs().front()->GetName() ==
+            ZarrV3CodecBytes::NAME &&
+        !m_poIndexCodecSequence->GetCodecs().front()->IsNoOp();
+
+    // Compute index base offset. For index-at-end, we need the file size.
+    vsi_l_offset nIndexBaseOffset = 0;
+    if (m_bIndexLocationAtEnd)
+    {
+        poFile->Seek(0, SEEK_END);
+        const auto nFileSize = poFile->Tell();
+        vsi_l_offset nIndexSize =
+            static_cast<vsi_l_offset>(nInnerChunkCount) * sizeof(Location);
+        if (m_bIndexHasCRC32)
+            nIndexSize += sizeof(uint32_t);
+        if (nFileSize < nIndexSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "BatchDecodePartial: shard file too small");
+            return false;
+        }
+        nIndexBaseOffset = nFileSize - nIndexSize;
+    }
+
+    // Build per-request inner chunk indices
+    std::vector<size_t> anInnerChunkIndices(anRequests.size());
+    for (size_t iReq = 0; iReq < anRequests.size(); ++iReq)
+    {
+        const auto &anStartIdx = anRequests[iReq].first;
+        CPLAssert(anStartIdx.size() ==
+                  m_oInputArrayMetadata.anBlockSizes.size());
+
+        size_t nInnerChunkIdx = 0;
+        size_t nInnerChunkCountPrevDim = 1;
+        for (size_t i = 0; i < anStartIdx.size(); ++i)
+        {
+            nInnerChunkIdx *= nInnerChunkCountPrevDim;
+            nInnerChunkIdx += anStartIdx[i] / m_anInnerBlockSize[i];
+            nInnerChunkCountPrevDim =
+                m_oInputArrayMetadata.anBlockSizes[i] / m_anInnerBlockSize[i];
+        }
+        anInnerChunkIndices[iReq] = nInnerChunkIdx;
+    }
+
+    // --- Pass 1: ReadMultiRange for index entries (16 bytes each) ---
+    std::vector<vsi_l_offset> anIdxOffsets(anRequests.size());
+    std::vector<size_t> anIdxSizes(anRequests.size(), sizeof(Location));
+    std::vector<Location> aLocations(anRequests.size());
+    std::vector<void *> ppIdxData(anRequests.size());
+
+    for (size_t i = 0; i < anRequests.size(); ++i)
+    {
+        anIdxOffsets[i] = nIndexBaseOffset +
+                          static_cast<vsi_l_offset>(anInnerChunkIndices[i]) *
+                              sizeof(Location);
+        ppIdxData[i] = &aLocations[i];
+    }
+
+    if (poFile->ReadMultiRange(static_cast<int>(anRequests.size()),
+                               ppIdxData.data(), anIdxOffsets.data(),
+                               anIdxSizes.data()) != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "BatchDecodePartial: ReadMultiRange() failed for index");
+        return false;
+    }
+
+    // Byte-swap if needed
+    if (bSwapIndex)
+    {
+        for (auto &loc : aLocations)
+        {
+            CPL_SWAP64PTR(&(loc.nOffset));
+            CPL_SWAP64PTR(&(loc.nSize));
+        }
+    }
+
+    // --- Classify requests: empty chunks vs data chunks ---
+    aResults.resize(anRequests.size());
+
+    struct DataRange
+    {
+        size_t nReqIdx;
+    };
+
+    std::vector<DataRange> aDataRanges;
+    std::vector<vsi_l_offset> anDataOffsets;
+    std::vector<size_t> anDataSizes;
+
+    for (size_t iReq = 0; iReq < anRequests.size(); ++iReq)
+    {
+        const auto &anCount = anRequests[iReq].second;
+        const auto nExpectedDecodedChunkSize =
+            nDTSize * MultiplyElements(anCount);
+        const Location &loc = aLocations[iReq];
+
+        if (loc.nOffset == std::numeric_limits<uint64_t>::max() &&
+            loc.nSize == std::numeric_limits<uint64_t>::max())
+        {
+            // Empty chunk — fill with nodata
+            try
+            {
+                aResults[iReq].resize(nExpectedDecodedChunkSize);
+            }
+            catch (const std::exception &)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate memory for decoded chunk");
+                return false;
+            }
+            FillWithNoData(aResults[iReq], MultiplyElements(anCount),
+                           m_oInputArrayMetadata);
+            continue;
+        }
+
+        if constexpr (sizeof(size_t) < sizeof(uint64_t))
+        {
+            if (loc.nSize > std::numeric_limits<size_t>::max())
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "BatchDecodePartial: too large chunk size");
+                return false;
+            }
+        }
+
+        aDataRanges.push_back({iReq});
+        anDataOffsets.push_back(loc.nOffset);
+        anDataSizes.push_back(static_cast<size_t>(loc.nSize));
+    }
+
+    if (aDataRanges.empty())
+        return true;
+
+    // Validate against file size (same threshold as DecodePartial)
+    constexpr size_t THRESHOLD = 10 * 1024 * 1024;
+    {
+        size_t nMaxSize = 0;
+        for (const auto &s : anDataSizes)
+            nMaxSize = std::max(nMaxSize, s);
+        if (nMaxSize > THRESHOLD)
+        {
+            poFile->Seek(0, SEEK_END);
+            const auto nFileSize = poFile->Tell();
+            for (size_t i = 0; i < aDataRanges.size(); ++i)
+            {
+                if (anDataOffsets[i] >= nFileSize ||
+                    anDataSizes[i] > nFileSize - anDataOffsets[i])
+                {
+                    CPLError(CE_Failure, CPLE_NotSupported,
+                             "BatchDecodePartial: invalid chunk location: "
+                             "offset=%" PRIu64 ", size=%" PRIu64,
+                             static_cast<uint64_t>(anDataOffsets[i]),
+                             static_cast<uint64_t>(anDataSizes[i]));
+                    return false;
+                }
+            }
+        }
+    }
+
+    // --- Pass 2: ReadMultiRange for data chunks ---
+    std::vector<ZarrByteVectorQuickResize> aCompressed(aDataRanges.size());
+    std::vector<void *> ppData(aDataRanges.size());
+
+    for (size_t i = 0; i < aDataRanges.size(); ++i)
+    {
+        try
+        {
+            aCompressed[i].resize(anDataSizes[i]);
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate memory for compressed chunk");
+            return false;
+        }
+        ppData[i] = aCompressed[i].data();
+    }
+
+    CPLDebugOnly("ZARR",
+                 "BatchDecodePartial: ReadMultiRange() with %d data ranges",
+                 static_cast<int>(aDataRanges.size()));
+
+    if (poFile->ReadMultiRange(static_cast<int>(aDataRanges.size()),
+                               ppData.data(), anDataOffsets.data(),
+                               anDataSizes.data()) != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "BatchDecodePartial: ReadMultiRange() failed for data");
+        return false;
+    }
+
+    // --- Decompress each chunk ---
+    for (size_t i = 0; i < aDataRanges.size(); ++i)
+    {
+        const size_t iReq = aDataRanges[i].nReqIdx;
+        const auto &anCount = anRequests[iReq].second;
+        const auto nExpectedDecodedChunkSize =
+            nDTSize * MultiplyElements(anCount);
+
+        if (!m_poCodecSequence->Decode(aCompressed[i]))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "BatchDecodePartial: cannot decode chunk %" PRIu64,
+                     static_cast<uint64_t>(anInnerChunkIndices[iReq]));
+            return false;
+        }
+
+        if (aCompressed[i].size() != nExpectedDecodedChunkSize)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "BatchDecodePartial: decoded size %" PRIu64
+                     " != expected %" PRIu64,
+                     static_cast<uint64_t>(aCompressed[i].size()),
+                     static_cast<uint64_t>(nExpectedDecodedChunkSize));
+            return false;
+        }
+
+        aResults[iReq] = std::move(aCompressed[i]);
     }
 
     return true;

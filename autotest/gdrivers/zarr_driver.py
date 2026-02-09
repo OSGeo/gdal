@@ -6276,6 +6276,39 @@ def test_zarr_read_simple_sharding_network():
 
 
 ###############################################################################
+# Test batch reads: full-array read via multidim API on a sharded dataset
+# uses BatchDecodePartial (ReadMultiRange) and produces correct data.
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_batch_reads_sharding():
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    if "zstd" not in compressors:
+        pytest.skip("compressor zstd not available")
+
+    ds = gdal.OpenEx(
+        "data/zarr/v3/simple_sharding.zarr",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    ar = ds.GetRootGroup().OpenMDArray("simple_sharding")
+    assert ar.GetBlockSize() == [5, 6]
+
+    expected = [i for i in range(24 * 26)]
+
+    # Full-extent read triggers PreloadShardedBlocks → BatchDecodePartial.
+    # Verify data matches single-block reads.
+    data = list(struct.unpack("f" * (24 * 26), ar.Read()))
+    assert data == expected
+
+    # Partial read spanning multiple inner chunks within a shard
+    partial = list(struct.unpack("f" * (10 * 12), ar.Read([0, 0], [10, 12])))
+    for row in range(10):
+        for col in range(12):
+            assert partial[row * 12 + col] == expected[row * 26 + col]
+
+
+###############################################################################
 # Test a sharded dataset, where sharding happens after a transpose codec.
 
 
