@@ -6877,3 +6877,17 @@ def test_netcdf_open_bad_x_y_actual_range():
     assert [x for x in ds.GetGeoTransform()] == pytest.approx(
         [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
     )
+
+
+###############################################################################
+# Cf https://github.com/qgis/QGIS/issues/64873
+
+
+def test_netcdf_open_geotransform_gt5_positive():
+
+    with gdaltest.error_raised(gdal.CE_None):
+        ds = gdal.Open("data/netcdf/byte_geotransform_gt5_positive.nc")
+    assert [x for x in ds.GetGeoTransform()] == pytest.approx(
+        [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+    )
+    assert ds.GetRasterBand(1).Checksum() == 4672
