@@ -422,8 +422,8 @@ struct GDALVectorTranslateOptions
     /*! set to true to prevent overwriting existing dataset */
     bool bNoOverwrite = false;
 
-    /*! set to true to prevent if called from "gdal vector convert" */
-    bool bInvokedFromGdalVectorConvert = false;
+    /*! set to true to customize error messages when called from gdal CLI */
+    bool bInvokedFromGdalAlgorithm = false;
 };
 
 struct TargetLayerInfo
@@ -2636,10 +2636,21 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         }
         if (bError)
         {
-            CPLError(CE_Failure, CPLE_IllegalArg,
-                     "-nln name must be specified combined with "
-                     "a single source layer name,\nor a -sql statement, and "
-                     "name must be different from an existing layer.");
+            if (psOptions->bInvokedFromGdalAlgorithm)
+            {
+                CPLError(CE_Failure, CPLE_IllegalArg,
+                         "--output-layer name must be specified combined with "
+                         "a single source layer name and it "
+                         "must be different from an existing layer.");
+            }
+            else
+            {
+                CPLError(
+                    CE_Failure, CPLE_IllegalArg,
+                    "-nln name must be specified combined with "
+                    "a single source layer name,\nor a -sql statement, and "
+                    "name must be different from an existing layer.");
+            }
             return nullptr;
         }
     }
@@ -2753,7 +2764,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             if (aoDrivers.empty())
             {
                 if (CPLGetExtensionSafe(pszDest).empty() &&
-                    !psOptions->bInvokedFromGdalVectorConvert)
+                    !psOptions->bInvokedFromGdalAlgorithm)
                 {
                     psOptions->osFormat = "ESRI Shapefile";
                 }
@@ -2902,7 +2913,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         }
         bNewDataSource = true;
 
-        if (psOptions->bInvokedFromGdalVectorConvert && !bSingleLayer &&
+        if (psOptions->bInvokedFromGdalAlgorithm && !bSingleLayer &&
             !bOutputDirectory &&
             (!poODS->TestCapability(ODsCCreateLayer) ||
              !poDriver->GetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS)))
@@ -3198,7 +3209,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 }
                 else if (!poResultSet->TestCapability(OLCFastFeatureCount))
                 {
-                    if (!psOptions->bInvokedFromGdalVectorConvert)
+                    if (!psOptions->bInvokedFromGdalAlgorithm)
                     {
                         CPLError(
                             CE_Warning, CPLE_AppDefined,
@@ -3488,7 +3499,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                                             nullptr, psOptions.get())) &&
                     !psOptions->bSkipFailures)
                 {
-                    if (psOptions->bInvokedFromGdalVectorConvert)
+                    if (psOptions->bInvokedFromGdalAlgorithm)
                     {
                         CPLError(
                             CE_Failure, CPLE_AppDefined,
@@ -3664,7 +3675,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             {
                 if (!poLayer->TestCapability(OLCFastFeatureCount))
                 {
-                    if (!psOptions->bInvokedFromGdalVectorConvert)
+                    if (!psOptions->bInvokedFromGdalAlgorithm)
                     {
                         CPLError(
                             CE_Warning, CPLE_NotSupported,
@@ -3773,7 +3784,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                                         pProgressArg.get(), psOptions.get())) &&
                 !psOptions->bSkipFailures)
             {
-                if (psOptions->bInvokedFromGdalVectorConvert)
+                if (psOptions->bInvokedFromGdalAlgorithm)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Failed to write layer '%s'. Use --skip-errors to "
@@ -5228,7 +5239,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     /* -------------------------------------------------------------------- */
     else if (!bAppend && !m_bNewDataSource)
     {
-        if (psOptions->bInvokedFromGdalVectorConvert)
+        if (psOptions->bInvokedFromGdalAlgorithm)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Layer %s already exists, and --append not specified. "
@@ -8460,9 +8471,9 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorTranslateOptionsGetParser(
         .store_into(psOptions->bNoOverwrite)
         .hidden();
 
-    // Undocumented option used by gdal vector convert
-    argParser->add_argument("--invoked-from-gdal-vector-convert")
-        .store_into(psOptions->bInvokedFromGdalVectorConvert)
+    // Undocumented option used by gdal vector * algorithms
+    argParser->add_argument("--invoked-from-gdal-algorithm")
+        .store_into(psOptions->bInvokedFromGdalAlgorithm)
         .hidden();
 
     if (psOptionsForBinary)

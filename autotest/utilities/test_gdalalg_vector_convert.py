@@ -438,3 +438,33 @@ def test_gdalalg_vector_convert_upsert(tmp_vsimem, output_format):
         assert f["other"] == "foo"
         assert f.GetGeometryRef().ExportToWkt() == "POINT (10 10)"
         ds = None
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_error_message_leak(tmp_vsimem):
+    """Test issue GH #13662"""
+
+    json_path = tmp_vsimem / "test_error_message_leak_in.json"
+    out_path = tmp_vsimem / "test_error_message_leak_out.shp"
+
+    src_ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(json_path)
+    lyr = src_ds.CreateLayer("test")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(1 2, 3 4)"))
+    lyr.CreateFeature(f)
+    src_ds = None
+
+    alg = get_convert_alg()
+    with pytest.raises(
+        Exception,
+        match="Failed to write layer 'test'. Use --skip-errors to ignore errors",
+    ):
+        alg.ParseRunAndFinalize(
+            [
+                json_path,
+                out_path,
+            ],
+        )
