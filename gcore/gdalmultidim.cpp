@@ -4362,6 +4362,13 @@ GDALMDArray::GetCacheRootGroup(bool bCanCreate,
     if (pszProxy != nullptr)
         osCacheFilenameOut = pszProxy;
 
+    // .gmac sidecars are local-only; skip stat for non-local filesystems.
+    if (!bCanCreate && pszProxy == nullptr &&
+        !VSIIsLocal(osCacheFilenameOut.c_str()))
+    {
+        return nullptr;
+    }
+
     std::unique_ptr<GDALDataset> poDS;
     VSIStatBufL sStat;
     if (VSIStatL(osCacheFilenameOut.c_str(), &sStat) == 0)

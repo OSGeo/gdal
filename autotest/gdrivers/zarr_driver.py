@@ -6249,7 +6249,6 @@ def test_zarr_read_simple_sharding_network():
             handler.add("HEAD", "/test.zarr/zarr.AUX", 404)
             handler.add("HEAD", "/test.zarr/zarr.json.aux", 404)
             handler.add("HEAD", "/test.zarr/zarr.json.AUX", 404)
-            handler.add("HEAD", "/test.zarr/zarr.json.gmac", 404)
             handler.add("HEAD", "/test.zarr/c/0/0", 200, {"Content-Length": "65536"})
             handler.add(
                 "GET",
