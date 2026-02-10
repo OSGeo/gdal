@@ -21,4 +21,19 @@ CPLWorkerThreadPool CPL_DLL *GDALGetGlobalThreadPool(int nThreads);
 
 void GDALDestroyGlobalThreadPool();
 
+int CPL_DLL GDALGetNumThreads(int nMaxVal = -1, bool bDefaultAllCPUs = false,
+                              const char **ppszValue = nullptr,
+                              bool *pbOK = nullptr);
+
+int CPL_DLL GDALGetNumThreads(const char *pszNumThreads, int nMaxVal = -1,
+                              bool bDefaultAllCPUs = false,
+                              const char **ppszValue = nullptr,
+                              bool *pbOK = nullptr);
+
+int CPL_DLL GDALGetNumThreads(CSLConstList papszOptions,
+                              const char *pszItemName = "NUM_THREADS",
+                              int nMaxVal = -1, bool bDefaultAllCPUs = false,
+                              const char **ppszValue = nullptr,
+                              bool *pbOK = nullptr);
+
 #endif  // GDAL_THREAD_POOL_H
