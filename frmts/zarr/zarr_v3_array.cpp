@@ -2034,36 +2034,47 @@ void ZarrV3Array::LoadOverviews() const
         return;
     const auto oMultiscales = oDoc.GetRoot();
 
-    if (!oZarrConventions.IsValid() ||
-        oZarrConventions.GetType() != CPLJSONObject::Type::Array ||
-        !oMultiscales.IsValid() ||
+    if (!oZarrConventions.IsValid() || !oMultiscales.IsValid() ||
         oMultiscales.GetType() != CPLJSONObject::Type::Object)
     {
         return;
     }
 
-    const auto oZarrConventionsArray = oZarrConventions.ToArray();
-    const auto hasMultiscalesUUIDLambda = [](const CPLJSONObject &obj)
+    constexpr const char *MULTISCALES_UUID =
+        "d35379db-88df-4056-af3a-620245f8e347";
+    constexpr const char *SPATIAL_UUID = "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4";
+
+    bool bFoundMultiScalesUUID = false;
+    bool bFoundSpatialUUID = false;
+
+    if (oZarrConventions.GetType() == CPLJSONObject::Type::Array)
     {
-        constexpr const char *MULTISCALES_UUID =
-            "d35379db-88df-4056-af3a-620245f8e347";
-        return obj.GetString("uuid") == MULTISCALES_UUID;
-    };
-    const bool bFoundMultiScalesUUID =
-        std::find_if(oZarrConventionsArray.begin(), oZarrConventionsArray.end(),
-                     hasMultiscalesUUIDLambda) != oZarrConventionsArray.end();
+        // v1 format: [{"uuid": "d35379db-...", ...}, ...]
+        const auto oArr = oZarrConventions.ToArray();
+        for (const auto &obj : oArr)
+        {
+            const std::string osUUID = obj.GetString("uuid");
+            if (osUUID == MULTISCALES_UUID)
+                bFoundMultiScalesUUID = true;
+            else if (osUUID == SPATIAL_UUID)
+                bFoundSpatialUUID = true;
+        }
+    }
+    else if (oZarrConventions.GetType() == CPLJSONObject::Type::Object)
+    {
+        // v0.1.0 format: {"d35379db-...": {...}, ...}
+        for (const auto &obj : oZarrConventions.GetChildren())
+        {
+            const std::string osKey = obj.GetName();
+            if (osKey == MULTISCALES_UUID)
+                bFoundMultiScalesUUID = true;
+            else if (osKey == SPATIAL_UUID)
+                bFoundSpatialUUID = true;
+        }
+    }
+
     if (!bFoundMultiScalesUUID)
         return;
-
-    const auto hasSpatialUUIDLambda = [](const CPLJSONObject &obj)
-    {
-        constexpr const char *SPATIAL_UUID =
-            "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4";
-        return obj.GetString("uuid") == SPATIAL_UUID;
-    };
-    const bool bFoundSpatialUUID =
-        std::find_if(oZarrConventionsArray.begin(), oZarrConventionsArray.end(),
-                     hasSpatialUUIDLambda) != oZarrConventionsArray.end();
 
     const auto oLayout = oMultiscales["layout"];
     if (!oLayout.IsValid() && oLayout.GetType() != CPLJSONObject::Type::Array)

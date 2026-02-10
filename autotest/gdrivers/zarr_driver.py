@@ -6821,6 +6821,7 @@ def test_zarr_read_nested_sharding():
     "filename",
     [
         "data/zarr/v3/simple_multiscales/zarr.json",
+        "data/zarr/v3/simple_multiscales_v010/zarr.json",
         "data/zarr/v3/simple_multiscales_ref_array/zarr.json",
         "data/zarr/v3/simple_multiscales_spatial/zarr.json",
     ],
