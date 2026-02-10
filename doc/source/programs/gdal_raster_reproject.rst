@@ -104,12 +104,14 @@ Program-Specific Options
     Note that a number of output formats, including GeoTIFF, do not support
     different per-band nodata values, but a single one for all bands.
 
-.. option:: --like, --like <DATASET>
+.. option:: --like <DATASET>
 
     Name of GDAL input dataset that serves as a template for default values of
     options :option:`--size`, :option:`--resolution`
-    :option:`--dst-crs`, :option:`--bbox` and :option:`--dst-nodata`.
-    Note that the pixel values will *not* be copied.
+    :option:`--dst-crs` and :option:`--bbox`
+    Note that the pixel values will *not* be copied, and that spatial registration of the
+    template dataset through mechanisms such as GCP, RPC or geolocation array is
+    ignred
 
 .. option:: --et, --error-threshold <ERROR-THRESHOLD>
 
