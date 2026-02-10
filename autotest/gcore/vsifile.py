@@ -1908,3 +1908,12 @@ def test_vsifile_buffering(tmp_path):
         assert f.tell() == BUFFER_SIZE - 2 + 3 + 3 + BUFFER_SIZE + 3
         f.seek(-5, os.SEEK_CUR)
         assert f.read() == b"xxghi"
+
+
+###############################################################################
+def test_vsifile_mkdir_recursive_huge_filename(tmp_vsimem):
+
+    filename = str(tmp_vsimem)
+    filename += "a/" * ((4096 - len(filename)) // len("a/"))
+    assert gdal.MkdirRecursive(filename, 0o755) == 0
+    assert gdal.MkdirRecursive(filename + "a/", 0o755) < 0
