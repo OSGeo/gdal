@@ -8,9 +8,8 @@
 #endif
 CPL_C_START  // Necessary for compiling in GDAL project
 
-    int
-    MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer,
-                      VSILFILE *m_fp, const char *pszFilename);
+    int MMInitLayerToRead(struct MiraMonVectLayerInfo *hMiraMonLayer,
+                          VSILFILE *m_fp, const char *pszFilename);
 
 int MMGetGeoFeatureFromVector(struct MiraMonVectLayerInfo *hMiraMonLayer,
                               MM_INTERNAL_FID i_elem);

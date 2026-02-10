@@ -50,7 +50,7 @@ bool GDALThreadLocalDatasetCacheIsInDestruction();
 // Exists since 8.0.1
 #ifndef PROJ_AT_LEAST_VERSION
 #define PROJ_COMPUTE_VERSION(maj, min, patch)                                  \
-    ((maj)*10000 + (min)*100 + (patch))
+    ((maj) * 10000 + (min) * 100 + (patch))
 #define PROJ_VERSION_NUMBER                                                    \
     PROJ_COMPUTE_VERSION(PROJ_VERSION_MAJOR, PROJ_VERSION_MINOR,               \
                          PROJ_VERSION_PATCH)
@@ -369,8 +369,7 @@ void OGRSpatialReference::Private::refreshProjObj()
 #if PROJ_AT_LEAST_VERSION(9, 1, 0)
             "UNSET_IDENTIFIERS_IF_INCOMPATIBLE_DEF=NO",
 #endif
-            nullptr
-        };
+            nullptr};
         PROJ_STRING_LIST warnings = nullptr;
         PROJ_STRING_LIST errors = nullptr;
         setPjCRS(proj_create_from_wkt(getPROJContext(), pszWKT, options,

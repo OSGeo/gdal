@@ -35,7 +35,7 @@ elev_src_ds = gdal.OpenEx(
 
 gdal.SetConfigOption("CREATE_METADATA_TABLES", "NO")
 
-for (out_filename, options) in [
+for out_filename, options in [
     ("gdal_sample_v1.2_no_extensions.gpkg", {}),
     (
         "gdal_sample_v1.2_no_extensions_with_gpkg_ogr_contents.gpkg",

@@ -1377,8 +1377,7 @@ End""",
     content = gdal.VSIFReadL(1, 10000, f).decode("ASCII")
     gdal.VSIFCloseL(f)
 
-    assert (
-        """Object = Table
+    assert """Object = Table
   Name = first_table
 End_Object
 
@@ -1397,9 +1396,7 @@ End_Object
 Object = foo
   x = C
 End_Object
-"""
-        in content
-    )
+""" in content
 
     gdal.Unlink("/vsimem/in.lbl")
     gdal.GetDriverByName("ISIS3").Delete("/vsimem/out.lbl")
@@ -1918,8 +1915,7 @@ End""",
     lbl = ds.GetMetadata_List("json:ISIS3")[0]
     lbl = json.loads(lbl)
 
-    assert lbl["IsisCube"]["BandBin"] == json.loads(
-        """{
+    assert lbl["IsisCube"]["BandBin"] == json.loads("""{
       "_type":"group",
       "BandBinUnit":"MICROMETER",
       "Width":{
@@ -1937,12 +1933,10 @@ End""",
       "BandBinCenter":[
         2.000000
       ]
-    }"""
-    )
+    }""")
 
     assert "OriginalBandBin" in lbl["IsisCube"]
-    assert lbl["IsisCube"]["OriginalBandBin"] == json.loads(
-        """{
+    assert lbl["IsisCube"]["OriginalBandBin"] == json.loads("""{
       "_type":"group",
       "BandSuffixName":[
         "first band",
@@ -1964,8 +1958,7 @@ End""",
         ],
         "unit":"um"
       }
-    }"""
-    )
+    }""")
 
     ds = None
     gdal.GetDriverByName("GTiff").Delete("/vsimem/out.tif")

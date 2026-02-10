@@ -40,7 +40,7 @@ def gdallocationinfo_path():
 
 def test_gdallocationinfo_1(gdallocationinfo_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         gdallocationinfo_path + " ../gcore/data/byte.tif 0 0"
     )
     assert err is None or err == "", "got error/warning"
@@ -410,7 +410,7 @@ def test_gdallocationinfo_value_interpolate_bilinear_near_border(gdallocationinf
 
 def test_gdallocationinfo_value_interpolate_invalid_method(gdallocationinfo_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdallocationinfo_path + " -valonly -r mode ../gcore/data/byte.tif 10 12"
     )
     assert "-r can only be used with values" in err

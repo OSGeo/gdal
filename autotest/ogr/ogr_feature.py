@@ -86,7 +86,7 @@ def mk_src_feature():
     src_feature.SetField("field_string", "abc def")
     src_feature.SetFieldBinary("field_binary", b"\x00")
     assert src_feature.GetFieldAsBinary("field_binary") == b"\x00"
-    src_feature.SetField("field_binary", b"\x01\x23\x46\x57\x89\xAB\xCD\xEF")
+    src_feature.SetField("field_binary", b"\x01\x23\x46\x57\x89\xab\xcd\xef")
     src_feature.SetField("field_date", "2011/11/11")
     src_feature.SetField("field_time", "14:10:35")
     src_feature.SetField("field_datetime", 2011, 11, 11, 14, 10, 35.123, 0)
@@ -242,7 +242,7 @@ def test_ogr_feature_cp_binary():
     assert dst_feature.GetField("field_string") is None
     assert dst_feature.GetField("field_binary") == "0123465789ABCDEF"
 
-    expected = b"\x01\x23\x46\x57\x89\xAB\xCD\xEF"
+    expected = b"\x01\x23\x46\x57\x89\xab\xcd\xef"
     assert dst_feature.GetFieldAsBinary("field_binary") == expected
     assert (
         dst_feature.GetFieldAsBinary(
@@ -755,7 +755,7 @@ def test_ogr_feature_null_field():
     feat_def.AddFieldDefn(field_def)
 
     f = ogr.Feature(feat_def)
-    f.field_binary = b"\x01\x23\x46\x57\x89\xAB\xCD\xEF"
+    f.field_binary = b"\x01\x23\x46\x57\x89\xab\xcd\xef"
     f.field_integerlist = "(3:10,20,30)"
     f.field_integer64list = [9876543210]
     f.field_reallist = [123.5, 567.0]

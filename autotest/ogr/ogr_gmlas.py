@@ -29,6 +29,7 @@ from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("GMLAS")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -842,8 +843,7 @@ def test_ogr_gmlas_conf_ignored_xpath():
                             <WarnIfIgnoredXPathFoundInDocInstance>true</WarnIfIgnoredXPathFoundInDocInstance>
                             <XPath>%s</XPath>
                         </IgnoredXPaths>
-                    </Configuration>"""
-                    % xpath,
+                    </Configuration>""" % xpath,
                 ],
             )
         assert gdal.GetLastErrorMsg().find("XPath syntax") >= 0, xpath
@@ -869,14 +869,12 @@ def test_ogr_gmlas_conf_ignored_xpath():
     # Test XPath with implicit namespace, and warning
     ds = gdal.OpenEx(
         "GMLAS:data/gmlas/gmlas_test1.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
+        open_options=["""CONFIG_FILE=<Configuration>
                 <IgnoredXPaths>
                     <WarnIfIgnoredXPathFoundInDocInstance>true</WarnIfIgnoredXPathFoundInDocInstance>
                     <XPath>@otherns:id</XPath>
                 </IgnoredXPaths>
-            </Configuration>"""
-        ],
+            </Configuration>"""],
     )
     assert ds is not None
     lyr = ds.GetLayerByName("main_elt")
@@ -893,16 +891,14 @@ def test_ogr_gmlas_conf_ignored_xpath():
     # Test XPath with explicit namespace, and warning suppression
     ds = gdal.OpenEx(
         "GMLAS:data/gmlas/gmlas_test1.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
+        open_options=["""CONFIG_FILE=<Configuration>
                 <IgnoredXPaths>
                     <Namespaces>
                         <Namespace prefix="other_ns" uri="http://other_ns"/>
                     </Namespaces>
                     <XPath warnIfIgnoredXPathFoundInDocInstance="false">@other_ns:id</XPath>
                 </IgnoredXPaths>
-            </Configuration>"""
-        ],
+            </Configuration>"""],
     )
     assert ds is not None
     lyr = ds.GetLayerByName("main_elt")
@@ -999,7 +995,7 @@ class GMLASHTTPHandler(BaseHTTPRequestHandler):
 @pytest.mark.require_curl()
 def test_ogr_gmlas_cache():
 
-    (webserver_process, webserver_port) = webserver.launch(handler=GMLASHTTPHandler)
+    webserver_process, webserver_port = webserver.launch(handler=GMLASHTTPHandler)
     if webserver_port == 0:
         pytest.skip()
 
@@ -1009,8 +1005,7 @@ def test_ogr_gmlas_cache():
                   xsi:noNamespaceSchemaLocation="http://localhost:%d/vsimem/ogr_gmlas_cache.xsd">
     <foo>bar</foo>
 </main_elt>
-"""
-        % webserver_port,
+""" % webserver_port,
     )
 
     gdal.FileFromMemBuffer(
@@ -1483,7 +1478,7 @@ def test_ogr_gmlas_remove_unused_layers_and_fields():
 @pytest.mark.require_curl()
 def test_ogr_gmlas_xlink_resolver():
 
-    (webserver_process, webserver_port) = webserver.launch(handler=GMLASHTTPHandler)
+    webserver_process, webserver_port = webserver.launch(handler=GMLASHTTPHandler)
     if webserver_port == 0:
         pytest.skip()
 
@@ -1547,8 +1542,7 @@ def test_ogr_gmlas_xlink_resolver():
   <main_elt>
     <my_link xlink:href="http://localhost:%d/vsimem/resource2.xml"/>
   </main_elt>
-</FeatureCollection>"""
-        % (webserver_port, webserver_port),
+</FeatureCollection>""" % (webserver_port, webserver_port),
     )
 
     # By default, no resolution
@@ -1562,15 +1556,13 @@ def test_ogr_gmlas_xlink_resolver():
     # Enable resolution, but only from local cache
     ds = gdal.OpenEx(
         "GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
+        open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
             <DefaultResolution enabled="true">
                 <AllowRemoteDownload>false</AllowRemoteDownload>
             </DefaultResolution>
-        </XLinkResolution></Configuration>"""
-        ],
+        </XLinkResolution></Configuration>"""],
     )
     lyr = ds.GetLayer(0)
     if lyr.GetLayerDefn().GetFieldIndex("my_link_rawcontent") < 0:
@@ -1600,15 +1592,13 @@ def test_ogr_gmlas_xlink_resolver():
     with gdal.config_option("GMLAS_XLINK_RAM_CACHE_SIZE", "5"):
         ds = gdal.OpenEx(
             "GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml",
-            open_options=[
-                """CONFIG_FILE=<Configuration>
+            open_options=["""CONFIG_FILE=<Configuration>
             <XLinkResolution>
                 <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
                 <DefaultResolution enabled="true">
                     <AllowRemoteDownload>true</AllowRemoteDownload>
                 </DefaultResolution>
-            </XLinkResolution></Configuration>"""
-            ],
+            </XLinkResolution></Configuration>"""],
         )
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1653,16 +1643,14 @@ def test_ogr_gmlas_xlink_resolver():
     gdal.FileFromMemBuffer("/vsimem/resource.xml", "bar")
     ds = gdal.OpenEx(
         "GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
+        open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
             <DefaultResolution enabled="true">
                 <AllowRemoteDownload>true</AllowRemoteDownload>
                 <CacheResults>true</CacheResults>
             </DefaultResolution>
-        </XLinkResolution></Configuration>"""
-        ],
+        </XLinkResolution></Configuration>"""],
     )
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1710,20 +1698,17 @@ def test_ogr_gmlas_xlink_resolver():
           xmlns:xlink="http://fake_xlink"
           xsi:noNamespaceSchemaLocation="ogr_gmlas_xlink_resolver.xsd">
     <my_link xlink:href="http://localhost:%d/vsimem/resource_not_existing.xml"/>
-</main_elt>"""
-        % webserver_port,
+</main_elt>""" % webserver_port,
     )
     ds = gdal.OpenEx(
         "GMLAS:/vsimem/ogr_gmlas_xlink_resolver_absent_resource.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
+        open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
             <DefaultResolution enabled="true">
                 <AllowRemoteDownload>true</AllowRemoteDownload>
             </DefaultResolution>
-        </XLinkResolution></Configuration>"""
-        ],
+        </XLinkResolution></Configuration>"""],
     )
     lyr = ds.GetLayer(0)
     with gdal.quiet_errors():
@@ -1738,8 +1723,7 @@ def test_ogr_gmlas_xlink_resolver():
     gdal.Unlink(cached_file)
     ds = gdal.OpenEx(
         "GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
+        open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <MaxFileSize>1</MaxFileSize>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
@@ -1747,8 +1731,7 @@ def test_ogr_gmlas_xlink_resolver():
                 <AllowRemoteDownload>true</AllowRemoteDownload>
                 <CacheResults>true</CacheResults>
             </DefaultResolution>
-        </XLinkResolution></Configuration>"""
-        ],
+        </XLinkResolution></Configuration>"""],
     )
     lyr = ds.GetLayer(0)
     with gdal.quiet_errors():
@@ -1766,8 +1749,7 @@ def test_ogr_gmlas_xlink_resolver():
     gdal.FileFromMemBuffer("/vsimem/resource.xml", "bar")
     ds = gdal.OpenEx(
         "GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
+        open_options=["""CONFIG_FILE=<Configuration>
         <XLinkResolution>
             <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
             <URLSpecificResolution>
@@ -1776,9 +1758,7 @@ def test_ogr_gmlas_xlink_resolver():
                 <ResolutionMode>RawContent</ResolutionMode>
                 <CacheResults>true</CacheResults>
             </URLSpecificResolution>
-        </XLinkResolution></Configuration>"""
-            % webserver_port
-        ],
+        </XLinkResolution></Configuration>""" % webserver_port],
     )
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -1929,8 +1909,7 @@ def test_ogr_gmlas_xlink_resolver():
         % webserver_port
         or f["my_link2_foo"] != "fooVal2 fooVal3"
         or f["my_link2_baz"] != 345
-        or f["my_link2_xml_blob"]
-        != """foo<blob />
+        or f["my_link2_xml_blob"] != """foo<blob />
 bar"""
         or f["my_link2_long"] != 1234567890123
         or f["my_link2_double"] != 1.25
@@ -2829,8 +2808,7 @@ def test_ogr_gmlas_typing_constraints():
     # One substitution, no repetition
     ds = gdal.OpenEx(
         "GMLAS:data/gmlas/gmlas_typing_constraints_one_subst_no_repetition.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
+        open_options=["""CONFIG_FILE=<Configuration>
 <TypingConstraints>
         <Namespaces>
             <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
@@ -2842,8 +2820,7 @@ def test_ogr_gmlas_typing_constraints():
             </ChildrenElements>
         </ChildConstraint>
     </TypingConstraints>
-</Configuration>"""
-        ],
+</Configuration>"""],
     )
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -2861,8 +2838,7 @@ def test_ogr_gmlas_typing_constraints():
 
     ds = gdal.OpenEx(
         "GMLAS:data/gmlas/gmlas_typing_constraints_one_subst_with_repetition.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
+        open_options=["""CONFIG_FILE=<Configuration>
 <TypingConstraints>
         <Namespaces>
             <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
@@ -2874,8 +2850,7 @@ def test_ogr_gmlas_typing_constraints():
             </ChildrenElements>
         </ChildConstraint>
     </TypingConstraints>
-</Configuration>"""
-        ],
+</Configuration>"""],
     )
     lyr = ds.GetLayer("main_elt_foo_bar")
     assert lyr.GetFeatureCount() == 2
@@ -2893,8 +2868,7 @@ def test_ogr_gmlas_typing_constraints():
     # 2 substitutions
     ds = gdal.OpenEx(
         "GMLAS:data/gmlas/gmlas_typing_constraints_two_subst.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
+        open_options=["""CONFIG_FILE=<Configuration>
 <TypingConstraints>
         <Namespaces>
             <Namespace prefix="myns_modified_for_fun" uri="http://myns"/>
@@ -2907,8 +2881,7 @@ def test_ogr_gmlas_typing_constraints():
             </ChildrenElements>
         </ChildConstraint>
     </TypingConstraints>
-</Configuration>"""
-        ],
+</Configuration>"""],
     )
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()

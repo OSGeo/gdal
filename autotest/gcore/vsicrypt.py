@@ -25,6 +25,7 @@ from osgeo import gdal
 testnonboundtoswig_setup
 # to please pyflakes
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def setup_and_cleanup():

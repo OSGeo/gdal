@@ -230,11 +230,11 @@ void GDALDeinterleave4Byte_SSSE3(const GByte *CPL_RESTRICT pabySrc,
 // GCC autovectorizer does an excellent job
 __attribute__((optimize("tree-vectorize")))
 #endif
-void GDALDeinterleave3UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
-                                  GUInt16* CPL_RESTRICT panDest0,
-                                  GUInt16* CPL_RESTRICT panDest1,
-                                  GUInt16* CPL_RESTRICT panDest2,
-                                  size_t nIters)
+void GDALDeinterleave3UInt16_SSSE3(const GUInt16 *CPL_RESTRICT panSrc,
+                                   GUInt16 *CPL_RESTRICT panDest0,
+                                   GUInt16 *CPL_RESTRICT panDest1,
+                                   GUInt16 *CPL_RESTRICT panDest2,
+                                   size_t nIters)
 {
     for (size_t i = 0; i < nIters; ++i)
     {
@@ -255,12 +255,12 @@ void GDALDeinterleave3UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
 // GCC autovectorizer does an excellent job
 __attribute__((optimize("tree-vectorize")))
 #endif
-void GDALDeinterleave4UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
-                                  GUInt16* CPL_RESTRICT panDest0,
-                                  GUInt16* CPL_RESTRICT panDest1,
-                                  GUInt16* CPL_RESTRICT panDest2,
-                                  GUInt16* CPL_RESTRICT panDest3,
-                                  size_t nIters)
+void GDALDeinterleave4UInt16_SSSE3(const GUInt16 *CPL_RESTRICT panSrc,
+                                   GUInt16 *CPL_RESTRICT panDest0,
+                                   GUInt16 *CPL_RESTRICT panDest1,
+                                   GUInt16 *CPL_RESTRICT panDest2,
+                                   GUInt16 *CPL_RESTRICT panDest3,
+                                   size_t nIters)
 {
     for (size_t i = 0; i < nIters; ++i)
     {
@@ -307,9 +307,8 @@ inline __m128i GDAL_mm_or_3_si128(__m128i r0, __m128i r1, __m128i r2)
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-static void
-GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
-                          uint8_t *CPL_RESTRICT pDst, size_t nIters)
+static void GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
+                                      uint8_t *CPL_RESTRICT pDst, size_t nIters)
 {
     size_t i = 0;
     constexpr size_t VALS_PER_ITER = 16;
@@ -425,9 +424,8 @@ __attribute__((noinline))
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpass-failed"
 #endif
-static void
-GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
-                          uint8_t *CPL_RESTRICT pDst, size_t nIters)
+static void GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
+                                      uint8_t *CPL_RESTRICT pDst, size_t nIters)
 {
 #if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
 #pragma clang loop vectorize(enable)

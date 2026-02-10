@@ -750,8 +750,7 @@ def generate_kml(
         else:
             url = ""
 
-    s = (
-        """<?xml version="1.0" encoding="utf-8"?>
+    s = """<?xml version="1.0" encoding="utf-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document>
     <name>%(xml_escaped_title)s</name>
@@ -760,12 +759,9 @@ def generate_kml(
       <ListStyle id="hideChildren">
         <listItemType>checkHideChildren</listItemType>
       </ListStyle>
-    </Style>"""
-        % args
-    )
+    </Style>""" % args
     if tilekml:
-        s += (
-            """
+        s += """
     <Region>
       <LatLonAltBox>
         <north>%(north).14f</north>
@@ -790,9 +786,7 @@ def generate_kml(
         <west>%(west).14f</west>
       </LatLonBox>
     </GroundOverlay>
-"""
-            % args
-        )
+""" % args
 
     for cx, cy, cz in children:
         csouth, cwest, cnorth, ceast = tileswne(cx, cy, cz)
@@ -3033,8 +3027,7 @@ class GDAL2Tiles:
         else:
             args["srs"] = ""
 
-        s = (
-            """<?xml version="1.0" encoding="utf-8"?>
+        s = """<?xml version="1.0" encoding="utf-8"?>
     <TileMap version="1.0.0" tilemapservice="http://tms.osgeo.org/1.0.0">
       <Title>%(xml_escaped_title)s</Title>
       <Abstract></Abstract>
@@ -3043,9 +3036,7 @@ class GDAL2Tiles:
       <Origin x="%(west).14f" y="%(south).14f"/>
       <TileFormat width="%(tile_size)d" height="%(tile_size)d" mime-type="image/%(tileformat)s" extension="%(tileformat)s"/>
       <TileSets profile="%(profile)s">
-"""
-            % args
-        )  # noqa
+""" % args  # noqa
         for z in range(self.tminz, self.tmaxz + 1):
             if self.options.profile == "raster":
                 s += (
@@ -3088,9 +3079,9 @@ class GDAL2Tiles:
             args["googlemapsurl"] += "?key=" + self.options.googlekey
             args["googlemapsurl_hint"] = ""
         else:
-            args[
-                "googlemapsurl_hint"
-            ] = "<!-- Replace URL below with https://maps.googleapis.com/maps/api/js?key=INSERT_YOUR_KEY_HERE -->"
+            args["googlemapsurl_hint"] = (
+                "<!-- Replace URL below with https://maps.googleapis.com/maps/api/js?key=INSERT_YOUR_KEY_HERE -->"
+            )
         args["south"], args["west"], args["north"], args["east"] = self.swne
         args["minzoom"] = self.tminz
         args["maxzoom"] = self.tmaxz
@@ -3102,9 +3093,7 @@ class GDAL2Tiles:
         # Logic below inspired from https://www.gavinharriss.com/code/opacity-control
         # which borrowed on gdal2tiles itself to migrate from Google Maps V2 to V3
 
-        args[
-            "custom_tile_overlay_js"
-        ] = """
+        args["custom_tile_overlay_js"] = """
 // Beginning of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/CustomTileOverlay.js
 // with CustomTileOverlay.prototype.getTileUrl() method customized for gdal2tiles needs.
 
@@ -3288,9 +3277,7 @@ CustomTileOverlay.prototype.setObjectOpacity = function (obj) {
 // End of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/CustomTileOverlay.js
 """
 
-        args[
-            "ext_draggable_object_js"
-        ] = """
+        args["ext_draggable_object_js"] = """
 // Beginning of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/ExtDraggableObject.js
 
 /**
@@ -3611,8 +3598,7 @@ function ExtDraggableObject(src, opt_drag) {
  // End of https://github.com/gavinharriss/google-maps-v3-opacity-control/blob/master/ExtDraggableObject.js
 """
 
-        s = (
-            r"""<!DOCTYPE html>
+        s = r"""<!DOCTYPE html>
             <html>
               <head>
                 <title>%(xml_escaped_title)s</title>
@@ -3853,9 +3839,7 @@ function ExtDraggableObject(src, opt_drag) {
                    <div id="map"></div>
               </body>
             </html>
-        """
-            % args
-        )  # noqa
+        """ % args  # noqa
 
         # TODO? when there is self.kml, before the transition to GoogleMapsV3 API,
         # we used to offer a way to display the KML file in Google Earth
@@ -3891,8 +3875,7 @@ function ExtDraggableObject(src, opt_drag) {
         else:
             args["tms"] = 1
 
-        s = (
-            """<!DOCTYPE html>
+        s = """<!DOCTYPE html>
         <html lang="en">
           <head>
             <meta charset="utf-8">
@@ -3995,9 +3978,7 @@ function ExtDraggableObject(src, opt_drag) {
         </body>
         </html>
 
-        """
-            % args
-        )  # noqa
+        """ % args  # noqa
 
         return s
 
@@ -4031,8 +4012,7 @@ function ExtDraggableObject(src, opt_drag) {
         args["center_x"] = (self.ominx + self.omaxx) / 2
         args["center_y"] = (self.ominy + self.omaxy) / 2
 
-        s = (
-            r"""<!DOCTYPE html>
+        s = r"""<!DOCTYPE html>
 <html>
     <head>
     <title>%(xml_escaped_title)s</title>
@@ -4065,13 +4045,10 @@ function ExtDraggableObject(src, opt_drag) {
         var map = new ol.Map({
             controls: ol.control.defaults.defaults().extend([mousePositionControl]),
             target: 'map',
-"""
-            % args
-        )
+""" % args
 
         if self.options.profile == "mercator" or self.options.profile == "geodetic":
-            s += (
-                """
+            s += """
             layers: [
                 new ol.layer.Group({
                         title: 'Base maps',
@@ -4110,13 +4087,10 @@ function ExtDraggableObject(src, opt_drag) {
                                 })
                             }),
                         ]
-                }),"""
-                % args
-            )  # noqa
+                }),""" % args  # noqa
 
         if self.options.profile == "mercator":
-            s += (
-                """
+            s += """
                 new ol.layer.Group({
                     title: 'Overlay',
                     layers: [
@@ -4133,9 +4107,7 @@ function ExtDraggableObject(src, opt_drag) {
                             })
                         }),
                     ]
-                }),"""
-                % args
-            )  # noqa
+                }),""" % args  # noqa
 
         elif self.options.profile == "geodetic":
 
@@ -4158,8 +4130,7 @@ function ExtDraggableObject(src, opt_drag) {
                 args["origin"] = "[-180,-90]"
                 args["y_formula"] = "- 1 - tileCoord[2]"
 
-            s += (
-                """
+            s += """
                 new ol.layer.Group({
                     title: 'Overlay',
                     layers: [
@@ -4187,9 +4158,7 @@ function ExtDraggableObject(src, opt_drag) {
                             })
                         }),
                     ]
-                }),"""
-                % args
-            )  # noqa
+                }),""" % args  # noqa
 
         elif self.options.profile == "raster":
 
@@ -4213,8 +4182,7 @@ function ExtDraggableObject(src, opt_drag) {
                 args["origin"] = "[%.18g,%.18g]" % (self.ominx, self.ominy)
                 args["y_formula"] = "- 1 - tileCoord[2]"
 
-            s += (
-                """
+            s += """
             layers: [
                 new ol.layer.Group({
                     title: 'Overlay',
@@ -4239,9 +4207,7 @@ function ExtDraggableObject(src, opt_drag) {
                             })
                         }),
                     ]
-                }),"""
-                % args
-            )  # noqa
+                }),""" % args  # noqa
 
         else:
 
@@ -4278,8 +4244,7 @@ function ExtDraggableObject(src, opt_drag) {
                 tms.topleft_y,
             )
 
-            s += (
-                """
+            s += """
             layers: [
                 new ol.layer.Group({
                     title: 'Overlay',
@@ -4308,33 +4273,22 @@ function ExtDraggableObject(src, opt_drag) {
                             })
                         }),
                     ]
-                }),"""
-                % args
-            )  # noqa
+                }),""" % args  # noqa
 
-        s += (
-            """
+        s += """
             ],
             view: new ol.View({
-                center: [%(center_x)f, %(center_y)f],"""
-            % args
-        )  # noqa
+                center: [%(center_x)f, %(center_y)f],""" % args  # noqa
 
         if self.options.profile in ("mercator", "geodetic"):
             args["view_zoom"] = args["minzoom"]
             if self.options.profile == "geodetic" and self.options.tmscompatible:
                 args["view_zoom"] += 1
-            s += (
-                """
-                zoom: %(view_zoom)d,"""
-                % args
-            )  # noqa
+            s += """
+                zoom: %(view_zoom)d,""" % args  # noqa
         else:
-            s += (
-                """
-                resolution: %(maxres)f,"""
-                % args
-            )  # noqa
+            s += """
+                resolution: %(maxres)f,""" % args  # noqa
 
         if self.options.profile == "geodetic":
             s += """

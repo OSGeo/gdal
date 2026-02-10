@@ -25,6 +25,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("JP2OpenJPEG")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -1223,7 +1224,7 @@ def test_jp2openjpeg_28():
         (["CODEBLOCK_WIDTH=32", "CODEBLOCK_HEIGHT=32"], 32, 32, False),
     ]
 
-    for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
+    for options, expected_cbkw, expected_cbkh, warning_expected in tests:
         gdal.ErrorReset()
         with gdal.quiet_errors():
             out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
@@ -1259,7 +1260,7 @@ def test_jp2openjpeg_29():
         (["TILEPARTS=ILLEGAL"], True),
     ]
 
-    for (options, warning_expected) in tests:
+    for options, warning_expected in tests:
         gdal.ErrorReset()
         with gdal.quiet_errors():
             options.append("BLOCKXSIZE=64")
@@ -1298,7 +1299,7 @@ def test_jp2openjpeg_30():
         (["REVERSIBLE=NO"], True),
     ]
 
-    for (options, warning_expected) in tests:
+    for options, warning_expected in tests:
         gdal.ErrorReset()
         with gdal.quiet_errors():
             out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
@@ -1439,12 +1440,10 @@ def test_jp2openjpeg_32():
 )
 def test_jp2openjpeg_33():
 
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="100000" rasterYSize="100000">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="100000" rasterYSize="100000">
   <VRTRasterBand dataType="Byte" band="1">
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     with gdal.quiet_errors():
         # Limit number of resolutions, because of
         # https://github.com/uclouvain/openjpeg/issues/493
@@ -2867,12 +2866,9 @@ def test_jp2openjpeg_46():
 
     ds = gdal.Open("/vsimem/jp2openjpeg_46.jp2")
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
-    if (
-        """<gmljp2:metadata>1 str trueX
+    if """<gmljp2:metadata>1 str trueX
         <B>my_value</B>
-yeah: """
-        not in gmljp2
-    ):
+yeah: """ not in gmljp2:
         if """<gmljp2:metadata>1 str true""" in gmljp2:
             pytest.skip()
         pytest.fail(gmljp2)
@@ -3018,15 +3014,12 @@ def test_jp2openjpeg_gmljp2v2_axis_swap():
     gdal.Unlink("/vsimem/test_jp2openjpeg_gmljp2v2_axis_swap.jp2")
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
     # print(gmljp2)
-    assert (
-        """<gml:boundedBy>
+    assert """<gml:boundedBy>
        <gml:Envelope srsDimension="2" srsName="http://www.opengis.net/def/crs/EPSG/0/4267">
          <gml:lowerCorner>33.8916535473944 -117.641168620797</gml:lowerCorner>
          <gml:upperCorner>33.9024195619211 -117.628010158598</gml:upperCorner>
        </gml:Envelope>
-     </gml:boundedBy>"""
-        in gmljp2
-    )
+     </gml:boundedBy>""" in gmljp2
 
 
 ###############################################################################
@@ -3054,7 +3047,7 @@ def test_jp2openjpeg_47():
 def test_jp2openjpeg_48():
 
     ds = gdal.Open("data/jpeg2000/byte_tile_2048.jp2")
-    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     assert (blockxsize, blockysize) == (20, 20)
     assert ds.GetRasterBand(1).Checksum() == 4610
     ds = None
@@ -3818,7 +3811,7 @@ def test_jp2openjpeg_mosaic():
 )
 def test_jp2openjpeg_vrt_protocol():
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:

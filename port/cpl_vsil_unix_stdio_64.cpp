@@ -299,7 +299,7 @@ VSIUnixStdioHandle::VSIUnixStdioHandle(
 #ifndef VSI_COUNT_BYTES_READ
     CPL_UNUSED
 #endif
-        VSIUnixStdioFilesystemHandler *poFSIn,
+    VSIUnixStdioFilesystemHandler *poFSIn,
     int fdIn, AccessMode eAccessModeIn)
     : fd(fdIn), eAccessMode(eAccessModeIn)
 #ifdef VSI_COUNT_BYTES_READ

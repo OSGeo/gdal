@@ -98,7 +98,7 @@ def test_gdal_contour_1(gdal_contour_path, testdata_tif, tmp_path):
 
     contour_shp = str(tmp_path / "contour.shp")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_contour_path + f" -a elev -i 10 {testdata_tif} {contour_shp}"
     )
 

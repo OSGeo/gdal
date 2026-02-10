@@ -1375,8 +1375,8 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
         if (isAllVal(eDataType, pabyThisImage, blockSizeBytes(), val))
             empties |= bandbit(iBand);
 
-            // Copy the data into the dataset buffer here
-            // Just the right mix of templates and macros make this real tidy
+        // Copy the data into the dataset buffer here
+        // Just the right mix of templates and macros make this real tidy
 #define CpySO(T)                                                               \
     cpy_stride_out<T>((reinterpret_cast<T *>(tbuffer)) + iBand, pabyThisImage, \
                       blockSizeBytes() / sizeof(T), cstride)

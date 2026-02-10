@@ -305,7 +305,7 @@ def test_hdf4_read_online_6():
     )
 
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        blockx, blocky = ds.GetRasterBand(1).GetBlockSize()
         assert blockx == 4800 and blocky == 4800, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -344,7 +344,7 @@ def test_hdf4_read_online_7():
     )
 
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        blockx, blocky = ds.GetRasterBand(1).GetBlockSize()
         assert blockx == 2400 and blocky == 32, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -387,7 +387,7 @@ def test_hdf4_read_online_8():
     assert cs == 45111, "did not get expected checksum"
 
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        blockx, blocky = ds.GetRasterBand(1).GetBlockSize()
         if blockx != 4800 or blocky == 1:
             print("blockx=%d, blocky=%d" % (blockx, blocky))
             pytest.fail("Did not get expected block size")
@@ -443,7 +443,7 @@ def test_hdf4_read_online_10():
     )
 
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, blocky) = ds.GetRasterBand(1).GetBlockSize()
+        blockx, blocky = ds.GetRasterBand(1).GetBlockSize()
         assert blockx == 1200 and blocky == 833, "Did not get expected block size"
 
     cs = ds.GetRasterBand(1).Checksum()

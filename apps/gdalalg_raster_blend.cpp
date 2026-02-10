@@ -539,13 +539,12 @@ static
 #ifdef __GNUC__
     __attribute__((__noinline__))
 #endif
-    void
-    patch_value_line(int nCount, const GByte *CPL_RESTRICT pInR,
-                     const GByte *CPL_RESTRICT pInG,
-                     const GByte *CPL_RESTRICT pInB,
-                     const GByte *CPL_RESTRICT pInGray,
-                     GByte *CPL_RESTRICT pOutR, GByte *CPL_RESTRICT pOutG,
-                     GByte *CPL_RESTRICT pOutB)
+    void patch_value_line(int nCount, const GByte *CPL_RESTRICT pInR,
+                          const GByte *CPL_RESTRICT pInG,
+                          const GByte *CPL_RESTRICT pInB,
+                          const GByte *CPL_RESTRICT pInGray,
+                          GByte *CPL_RESTRICT pOutR, GByte *CPL_RESTRICT pOutG,
+                          GByte *CPL_RESTRICT pOutB)
 {
     int i = 0;
 #ifdef HAVE_SSE2
@@ -1393,7 +1392,8 @@ static void BlendColorDodge_Generic(
 
         auto branchingCondition = [&alphaMul255](GByte C, GByte A,
                                                  GByte OverlayC,
-                                                 GByte OverlayA) -> bool {
+                                                 GByte OverlayA) -> bool
+        {
             return MulScale255(OverlayC, A) + MulScale255(C, OverlayA) >=
                    alphaMul255;
         };
@@ -1523,7 +1523,8 @@ static void BlendColorBurn_Generic(
 
         auto branchingCondition = [&alphaMul255](GByte C, GByte A,
                                                  GByte OverlayC,
-                                                 GByte OverlayA) -> bool {
+                                                 GByte OverlayA) -> bool
+        {
             return MulScale255(OverlayC, A) + MulScale255(C, OverlayA) <=
                    alphaMul255;
         };
@@ -1592,17 +1593,16 @@ static void BlendColorBurn_Generic(
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-static int
-BlendSrcOverRGBA_SSE2(const GByte *CPL_RESTRICT pabyR,
-                      const GByte *CPL_RESTRICT pabyG,
-                      const GByte *CPL_RESTRICT pabyB,
-                      const GByte *CPL_RESTRICT pabyA,
-                      const GByte *CPL_RESTRICT pabyOverlayR,
-                      const GByte *CPL_RESTRICT pabyOverlayG,
-                      const GByte *CPL_RESTRICT pabyOverlayB,
-                      const GByte *CPL_RESTRICT pabyOverlayA,
-                      GByte *CPL_RESTRICT pabyDst, GSpacing nBandSpace, int N,
-                      GByte nOpacity)
+static int BlendSrcOverRGBA_SSE2(const GByte *CPL_RESTRICT pabyR,
+                                 const GByte *CPL_RESTRICT pabyG,
+                                 const GByte *CPL_RESTRICT pabyB,
+                                 const GByte *CPL_RESTRICT pabyA,
+                                 const GByte *CPL_RESTRICT pabyOverlayR,
+                                 const GByte *CPL_RESTRICT pabyOverlayG,
+                                 const GByte *CPL_RESTRICT pabyOverlayB,
+                                 const GByte *CPL_RESTRICT pabyOverlayA,
+                                 GByte *CPL_RESTRICT pabyDst,
+                                 GSpacing nBandSpace, int N, GByte nOpacity)
 {
     // See scalar code after call to BlendSrcOverRGBA_SSE2() below for the
     // non-obfuscated formulas...
@@ -1615,7 +1615,8 @@ BlendSrcOverRGBA_SSE2(const GByte *CPL_RESTRICT pabyR,
                               _mm_unpackhi_epi8(overlayA, zero));
     };
 
-    const auto pack_and_store = [](void *p, __m128i lo, __m128i hi) {
+    const auto pack_and_store = [](void *p, __m128i lo, __m128i hi)
+    {
         _mm_storeu_si128(reinterpret_cast<__m128i *>(p),
                          _mm_packus_epi16(lo, hi));
     };
@@ -1692,7 +1693,7 @@ BlendSrcOverRGBA_SSE2(const GByte *CPL_RESTRICT pabyR,
             8);                                                                \
         dst_lo = mul16bit_8bit_result(dst_lo, invDstA_lo);                     \
         dst_hi = mul16bit_8bit_result(dst_hi, invDstA_hi);                     \
-        pack_and_store(pabyDst + i + (iBand)*nBandSpace, dst_lo, dst_hi);      \
+        pack_and_store(pabyDst + i + (iBand) * nBandSpace, dst_lo, dst_hi);    \
     } while (0)
 
         PROCESS_COMPONENT(pabyR, pabyOverlayR, 0);
@@ -1707,18 +1708,15 @@ template <bool bPixelSpaceIsOne>
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-static void
-BlendSrcOverRGBA_Generic(const GByte *CPL_RESTRICT pabyR,
-                         const GByte *CPL_RESTRICT pabyG,
-                         const GByte *CPL_RESTRICT pabyB,
-                         const GByte *CPL_RESTRICT pabyA,
-                         const GByte *CPL_RESTRICT pabyOverlayR,
-                         const GByte *CPL_RESTRICT pabyOverlayG,
-                         const GByte *CPL_RESTRICT pabyOverlayB,
-                         const GByte *CPL_RESTRICT pabyOverlayA,
-                         GByte *CPL_RESTRICT pabyDst,
-                         [[maybe_unused]] GSpacing nPixelSpace,
-                         GSpacing nBandSpace, int i, int N, GByte nOpacity)
+static void BlendSrcOverRGBA_Generic(
+    const GByte *CPL_RESTRICT pabyR, const GByte *CPL_RESTRICT pabyG,
+    const GByte *CPL_RESTRICT pabyB, const GByte *CPL_RESTRICT pabyA,
+    const GByte *CPL_RESTRICT pabyOverlayR,
+    const GByte *CPL_RESTRICT pabyOverlayG,
+    const GByte *CPL_RESTRICT pabyOverlayB,
+    const GByte *CPL_RESTRICT pabyOverlayA, GByte *CPL_RESTRICT pabyDst,
+    [[maybe_unused]] GSpacing nPixelSpace, GSpacing nBandSpace, int i, int N,
+    GByte nOpacity)
 {
 #if !(defined(HAVE_SSE2) && defined(__GNUC__))
     if constexpr (!bPixelSpaceIsOne)
@@ -2124,11 +2122,10 @@ CPLErr BlendDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 #if defined(__GNUC__) && !defined(__clang__)
 __attribute__((optimize("tree-vectorize")))
 #endif
-static void
-SrcOverRGB(const uint8_t *const __restrict pabyOverlay,
-           const uint8_t *const __restrict pabySrc,
-           uint8_t *const __restrict pabyDst, const size_t N,
-           const uint8_t nOpacity)
+static void SrcOverRGB(const uint8_t *const __restrict pabyOverlay,
+                       const uint8_t *const __restrict pabySrc,
+                       uint8_t *const __restrict pabyDst, const size_t N,
+                       const uint8_t nOpacity)
 {
     for (size_t i = 0; i < N; ++i)
     {

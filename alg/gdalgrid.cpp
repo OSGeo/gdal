@@ -245,8 +245,8 @@ CPLErr GDALGridInverseDistanceToAPowerNearestNeighbor(
 {
     CPL_IGNORE_RET_VAL(nPoints);
 
-    const GDALGridInverseDistanceToAPowerNearestNeighborOptions
-        *const poOptions = static_cast<
+    const GDALGridInverseDistanceToAPowerNearestNeighborOptions *const
+        poOptions = static_cast<
             const GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
             poOptionsIn);
     const double dfRadius = poOptions->dfRadius;
@@ -352,8 +352,8 @@ static CPLErr GDALGridInverseDistanceToAPowerNearestNeighborPerQuadrant(
     const double *padfY, const double *padfZ, double dfXPoint, double dfYPoint,
     double *pdfValue, void *hExtraParamsIn)
 {
-    const GDALGridInverseDistanceToAPowerNearestNeighborOptions
-        *const poOptions = static_cast<
+    const GDALGridInverseDistanceToAPowerNearestNeighborOptions *const
+        poOptions = static_cast<
             const GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
             poOptionsIn);
     const double dfRadius = poOptions->dfRadius;
@@ -2609,7 +2609,7 @@ static int GDALGridProgressMonoThread(GDALGridJob *psJob)
 static void GDALGridJobProcess(void *user_data)
 {
     GDALGridJob *const psJob = static_cast<GDALGridJob *>(user_data);
-    int (*pfnProgress)(GDALGridJob * psJob) = psJob->pfnProgress;
+    int (*pfnProgress)(GDALGridJob *psJob) = psJob->pfnProgress;
     const GUInt32 nXSize = psJob->nXSize;
 
     /* -------------------------------------------------------------------- */
@@ -3862,8 +3862,8 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
             *ppOptions = CPLMalloc(
                 sizeof(GDALGridInverseDistanceToAPowerNearestNeighborOptions));
 
-            GDALGridInverseDistanceToAPowerNearestNeighborOptions
-                *const poPowerOpts = static_cast<
+            GDALGridInverseDistanceToAPowerNearestNeighborOptions *const
+                poPowerOpts = static_cast<
                     GDALGridInverseDistanceToAPowerNearestNeighborOptions *>(
                     *ppOptions);
 

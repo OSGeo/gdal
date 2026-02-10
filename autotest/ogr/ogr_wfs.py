@@ -29,6 +29,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("WFS")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -498,7 +499,7 @@ class WFSHTTPHandler(BaseHTTPRequestHandler):
 @pytest.mark.parametrize("using_wfs_prefix", [True, False])
 def test_ogr_wfs_fake_wfs_server(using_wfs_prefix):
 
-    (process, port) = webserver.launch(handler=WFSHTTPHandler)
+    process, port = webserver.launch(handler=WFSHTTPHandler)
     if port == 0:
         pytest.skip()
 
@@ -1394,9 +1395,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
         f = gdal.VSIFOpenL("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rb")
         data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
         gdal.VSIFCloseL(f)
-        assert (
-            data
-            == """<OGRWFSDataSource>
+        assert data == """<OGRWFSDataSource>
   <URL>/vsimem/wfs_endpoint</URL>
   <WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
@@ -1408,7 +1407,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
   </WFS_Capabilities>
 </OGRWFSDataSource>
 """
-        )
 
         ds = ogr.Open("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
         lyr = ds.GetLayer(0)
@@ -1418,9 +1416,7 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
         f = gdal.VSIFOpenL("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml", "rb")
         data = gdal.VSIFReadL(1, 100000, f).decode("ascii")
         gdal.VSIFCloseL(f)
-        assert (
-            data
-            == """<OGRWFSDataSource>
+        assert data == """<OGRWFSDataSource>
   <URL>/vsimem/wfs_endpoint</URL>
   <WFS_Capabilities version="1.1.0">
     <FeatureTypeList>
@@ -1454,7 +1450,6 @@ def test_ogr_wfs_vsimem_wfs110_one_layer_xmldescriptionfile_to_be_updated(
   </OGRWFSLayer>
 </OGRWFSDataSource>
 """
-        )
 
         ds = ogr.Open("/vsimem/ogr_wfs_xmldescriptionfile_to_be_updated.xml")
         lyr = ds.GetLayer(0)
@@ -2492,7 +2487,10 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         f = lyr.GetNextFeature()
         assert f is not None
 
-    with gdaltest.tempfile(three_intersects_request, content,), ds.ExecuteSQL(
+    with gdaltest.tempfile(
+        three_intersects_request,
+        content,
+    ), ds.ExecuteSQL(
         "SELECT * FROM my_layer WHERE ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))')) OR "
         + "ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))', 4326)) OR "
         + "ST_Intersects(shape, ST_GeomFromText('POLYGON((1.5 48.5,2.5 49.5,2.5 49.5,2.5 48.5,1.5 48.5)))', 'EPSG:4326'))"

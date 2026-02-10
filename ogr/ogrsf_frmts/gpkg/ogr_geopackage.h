@@ -95,9 +95,7 @@ struct OGRGPKGTableLayerFillArrowArray
     OGRFeatureDefn *poFeatureDefn = nullptr;
     OGRGeoPackageLayer *poLayer = nullptr;
 
-    struct tm brokenDown
-    {
-    };
+    struct tm brokenDown{};
 
     sqlite3 *hDB = nullptr;
     std::mutex oMutex{};

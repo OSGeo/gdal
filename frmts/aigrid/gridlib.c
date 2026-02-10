@@ -196,7 +196,7 @@ static CPLErr AIGProcessRaw4BitBlock(GByte *pabyCur, int nDataSize, int nMin,
     for (i = 0; i < nBlockXSize * nBlockYSize; i++)
     {
         if (i % 2 == 0)
-            panData[i] = AIGRolloverSignedAdd((*(pabyCur)&0xf0) >> 4, nMin);
+            panData[i] = AIGRolloverSignedAdd((*(pabyCur) & 0xf0) >> 4, nMin);
         else
             panData[i] = AIGRolloverSignedAdd(*(pabyCur++) & 0xf, nMin);
     }

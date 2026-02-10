@@ -157,7 +157,7 @@ def test_gdal_footprint_lib_alpha_band():
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 3, 4)
     src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
     for i in range(4):
-        src_ds.GetRasterBand(i + 1).WriteRaster(1, 1, 1, 1, b"\xFF")
+        src_ds.GetRasterBand(i + 1).WriteRaster(1, 1, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -181,8 +181,8 @@ def test_gdal_footprint_lib_splitPolys():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 1)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xFF")
-    src_ds.GetRasterBand(1).WriteRaster(2, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xff")
+    src_ds.GetRasterBand(1).WriteRaster(2, 0, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -210,8 +210,8 @@ def test_gdal_footprint_lib_convexHull():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 1)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xFF")
-    src_ds.GetRasterBand(1).WriteRaster(2, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xff")
+    src_ds.GetRasterBand(1).WriteRaster(2, 0, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -233,7 +233,7 @@ def test_gdal_footprint_lib_densify():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 1)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -257,9 +257,9 @@ def test_gdal_footprint_lib_simplify():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 2, 1)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, b"\xFF")
-    src_ds.GetRasterBand(1).WriteRaster(1, 1, 1, 1, b"\xFF")
-    src_ds.GetRasterBand(1).WriteRaster(2, 1, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, b"\xff")
+    src_ds.GetRasterBand(1).WriteRaster(1, 1, 1, 1, b"\xff")
+    src_ds.GetRasterBand(1).WriteRaster(2, 1, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -281,9 +281,9 @@ def test_gdal_footprint_lib_maxPoints():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 2, 1)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, b"\xFF")
-    src_ds.GetRasterBand(1).WriteRaster(1, 1, 1, 1, b"\xFF")
-    src_ds.GetRasterBand(1).WriteRaster(2, 1, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, b"\xff")
+    src_ds.GetRasterBand(1).WriteRaster(1, 1, 1, 1, b"\xff")
+    src_ds.GetRasterBand(1).WriteRaster(2, 1, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -305,11 +305,11 @@ def test_gdal_footprint_lib_ovr():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 2, 1)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, b"\xFF")
-    src_ds.GetRasterBand(1).WriteRaster(1, 1, 1, 1, b"\xFF")
-    src_ds.GetRasterBand(1).WriteRaster(2, 1, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, b"\xff")
+    src_ds.GetRasterBand(1).WriteRaster(1, 1, 1, 1, b"\xff")
+    src_ds.GetRasterBand(1).WriteRaster(2, 1, 1, 1, b"\xff")
     src_ds.BuildOverviews("NONE", [2])
-    src_ds.GetRasterBand(1).GetOverview(0).WriteRaster(0, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).GetOverview(0).WriteRaster(0, 0, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -332,11 +332,11 @@ def test_gdal_footprint_lib_ovr_georef():
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 2, 1)
     src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, b"\xFF")
-    src_ds.GetRasterBand(1).WriteRaster(1, 1, 1, 1, b"\xFF")
-    src_ds.GetRasterBand(1).WriteRaster(2, 1, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(1, 0, 1, 1, b"\xff")
+    src_ds.GetRasterBand(1).WriteRaster(1, 1, 1, 1, b"\xff")
+    src_ds.GetRasterBand(1).WriteRaster(2, 1, 1, 1, b"\xff")
     src_ds.BuildOverviews("NONE", [2])
-    src_ds.GetRasterBand(1).GetOverview(0).WriteRaster(0, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).GetOverview(0).WriteRaster(0, 0, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -426,7 +426,7 @@ def test_gdal_footprint_footprint_rgba_overviews():
     for i in range(4):
         src_ds.GetRasterBand(i + 1).SetColorInterpretation(gdal.GCI_RedBand + i)
     src_ds.BuildOverviews("NONE", [2])
-    src_ds.GetRasterBand(4).GetOverview(0).WriteRaster(1, 1, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(4).GetOverview(0).WriteRaster(1, 1, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -445,9 +445,9 @@ def test_gdal_footprint_lib_union():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 2)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xff")
     src_ds.GetRasterBand(2).SetNoDataValue(0)
-    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -465,9 +465,9 @@ def test_gdal_footprint_lib_intersection_none():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, b"\xff")
     src_ds.GetRasterBand(2).SetNoDataValue(0)
-    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,
@@ -486,9 +486,9 @@ def test_gdal_footprint_lib_intersection_partial():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1, 2)
     src_ds.GetRasterBand(1).SetNoDataValue(0)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\xFF\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\xff\xff")
     src_ds.GetRasterBand(2).SetNoDataValue(0)
-    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xFF")
+    src_ds.GetRasterBand(2).WriteRaster(1, 0, 1, 1, b"\xff")
     out_ds = gdal.Footprint(
         "",
         src_ds,

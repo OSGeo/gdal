@@ -25,6 +25,7 @@ pytestmark = pytest.mark.require_driver("PostGISRaster")
 # To initialize the required PostGISRaster DB instance, run data/load_postgisraster_test_data.sh
 #
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():

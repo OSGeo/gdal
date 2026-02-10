@@ -3224,7 +3224,7 @@ CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static inline bool hasZeroByte(uint32_t v)
 {
     // Cf https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord
-    return (((v)-0x01010101U) & ~(v)&0x80808080U) != 0;
+    return (((v)-0x01010101U) & ~(v) & 0x80808080U) != 0;
 }
 
 /************************************************************************/

@@ -56,7 +56,7 @@ GeoJSONObject::Type OGRGeoJSONGetType(json_object *poObj)
 
 #define ASSOC(x)                                                               \
     {                                                                          \
-#x, GeoJSONObject::e##x                                                \
+        #x, GeoJSONObject::e##x                                                \
     }
 
     static const struct
@@ -112,10 +112,7 @@ bool OGRJSONFGHasMeasure(json_object *poObj, bool bUpperLevelMValue)
 /*                        asAssocGeometryTypes[]                        */
 /************************************************************************/
 
-#define ASSOC(x)                                                               \
-    {                                                                          \
-#x, wkb##x                                                             \
-    }
+#define ASSOC(x) {#x, wkb##x}
 
 static const struct
 {

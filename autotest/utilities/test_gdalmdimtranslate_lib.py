@@ -151,9 +151,7 @@ def test_gdalmdimtranslate_classic_to_multidim(tmp_vsimem):
     gdal.Unlink(tmpfile)
     gdal.Unlink(tmpgtifffile)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="X" size="20" indexingVariable="X" />
     <Dimension name="Y" size="20" indexingVariable="Y" />
@@ -184,7 +182,6 @@ def test_gdalmdimtranslate_classic_to_multidim(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
 
 
 ###############################################################################
@@ -217,9 +214,7 @@ def test_gdalmdimtranslate_array(tmp_vsimem):
 
     gdal.Unlink(tmpfile)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
@@ -269,7 +264,6 @@ def test_gdalmdimtranslate_array(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
 
 
 ###############################################################################
@@ -297,9 +291,7 @@ def test_gdalmdimtranslate_array_with_transpose_and_view(tmp_vsimem):
 
     gdal.Unlink(tmpfile)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="subset_latitude_9_-1_10" type="HORIZONTAL_Y" size="10" indexingVariable="subset_latitude_9_-1_10" />
     <Dimension name="time_increasing" type="TEMPORAL" size="4" indexingVariable="time_increasing" />
@@ -348,7 +340,6 @@ def test_gdalmdimtranslate_array_with_transpose_and_view(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
 
 
 ###############################################################################
@@ -377,9 +368,7 @@ def test_gdalmdimtranslate_group(tmp_vsimem):
 
     gdal.Unlink(tmpfile)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
@@ -417,7 +406,6 @@ def test_gdalmdimtranslate_group(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
 
 
 ###############################################################################
@@ -443,9 +431,7 @@ def test_gdalmdimtranslate_two_groups(tmp_vsimem):
 
     gdal.Unlink(tmpfile)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Group name="my_subgroup">
       <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
@@ -491,7 +477,6 @@ def test_gdalmdimtranslate_two_groups(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
 
 
 ###############################################################################
@@ -640,9 +625,7 @@ def test_gdalmdimtranslate_subset(tmp_vsimem):
     # print(got_data)
 
     gdal.Unlink(tmpfile)
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="8" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="10" indexingVariable="longitude" />
@@ -750,7 +733,6 @@ def test_gdalmdimtranslate_subset(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
 
 
 ###############################################################################
@@ -777,9 +759,7 @@ def test_gdalmdimtranslate_scaleaxes(tmp_vsimem):
 
     gdal.Unlink(tmpfile)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="latitude" type="HORIZONTAL_Y" direction="NORTH" size="10" indexingVariable="latitude" />
     <Dimension name="longitude" type="HORIZONTAL_X" direction="EAST" size="5" indexingVariable="longitude" />
@@ -831,7 +811,6 @@ def test_gdalmdimtranslate_scaleaxes(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
 
 
 @pytest.mark.skipif(
@@ -865,9 +844,7 @@ def test_gdalmdimtranslate_dims_with_same_name_different_size(tmp_vsimem):
     gdal.VSIFCloseL(f)
     # print(got_data)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="dim0" size="2" />
     <Dimension name="dim0_2" size="3" />
@@ -894,7 +871,6 @@ def test_gdalmdimtranslate_dims_with_same_name_different_size(tmp_vsimem):
   </Group>
 </VRTDataset>
 """
-    )
     gdal.Unlink(tmpfile)
     gdal.Unlink(srcfile)
 

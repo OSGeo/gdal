@@ -310,17 +310,11 @@ class JPGDataset final : public JPGDatasetCommon
     static void EmitMessage(j_common_ptr cinfo, int msg_level);
     static void ProgressMonitor(j_common_ptr cinfo);
 
-    struct jpeg_decompress_struct sDInfo
-    {
-    };
+    struct jpeg_decompress_struct sDInfo{};
 
-    struct jpeg_error_mgr sJErr
-    {
-    };
+    struct jpeg_error_mgr sJErr{};
 
-    struct jpeg_progress_mgr sJProgress
-    {
-    };
+    struct jpeg_progress_mgr sJProgress{};
 
     CPLErr LoadScanline(int, GByte *outBuffer) override;
     CPLErr StartDecompress();

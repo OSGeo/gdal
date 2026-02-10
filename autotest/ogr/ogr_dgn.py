@@ -33,6 +33,7 @@ from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("DGN")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def startup_and_cleanup():

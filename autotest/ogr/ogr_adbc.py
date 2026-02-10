@@ -298,11 +298,13 @@ def test_ogr_adbc_duckdb_parquet_with_spatial(OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL)
             "data/parquet/poly.parquet",
             gdal.OF_VECTOR,
             allowed_drivers=["ADBC"],
-            open_options=[
-                "PRELUDE_STATEMENTS=INSTALL spatial",
-            ]
-            if OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL == "ON"
-            else [],
+            open_options=(
+                [
+                    "PRELUDE_STATEMENTS=INSTALL spatial",
+                ]
+                if OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL == "ON"
+                else []
+            ),
         ) as ds:
             lyr = ds.GetLayer(0)
             assert lyr.GetGeomType() == ogr.wkbPolygon

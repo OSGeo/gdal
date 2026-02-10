@@ -101,7 +101,6 @@ class GeoParquetValidator:
                     raise Exception(f"Cannot retrieve {uri}")
                 import urllib.request
 
-                global map_remote_resources
                 if uri not in map_remote_resources:
                     response = urllib.request.urlopen(
                         urllib.request.Request(uri, headers={"User-Agent": "GDAL"})
@@ -120,8 +119,6 @@ class GeoParquetValidator:
             jsonschema.validate(instance=instance, schema=schema)
 
     def _check(self):
-
-        global geoparquet_schemas
 
         if gdal.GetDriverByName("Parquet") is None:
             return self._error("Parquet driver not available")

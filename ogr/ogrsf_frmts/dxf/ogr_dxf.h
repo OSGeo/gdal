@@ -218,7 +218,8 @@ class OGRDXFAffineTransform
     }
 
     double adfData[12];  // Column-major: adfMatrix[5] is column 2, row 3
-                         // Last 3 elements are translation
+
+    // Last 3 elements are translation
 
     // Left composition (composes oOther o this), modifying this
     void ComposeWith(const OGRDXFInsertTransformer &oCT)

@@ -26,6 +26,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("GML")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -2141,7 +2142,7 @@ def test_ogr_gml_58(tmp_path):
         ("administrativeUnit_href", "#AU.1"),
         ("zoning_href", "#CZ.1"),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert (
         feat.GetGeomFieldRef(0).ExportToWkt()
@@ -2166,7 +2167,7 @@ def test_ogr_gml_58(tmp_path):
         ("administrativeUnit_href", None),
         ("zoning_href", None),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert (
         feat.GetGeomFieldRef(0).ExportToWkt()
@@ -2201,7 +2202,7 @@ def test_ogr_gml_58a(tmp_path):
         ("endLifespanVersion", "2003-01-01T00:00:00.0Z"),
         ("administrativeUnit_href", "#AU.1"),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
 
     feat = lyr.GetNextFeature()
@@ -2218,7 +2219,7 @@ def test_ogr_gml_58a(tmp_path):
         ("endLifespanVersion", None),
         ("administrativeUnit_href", None),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     feat = None
     lyr = None
@@ -2249,7 +2250,7 @@ def test_ogr_gml_58b(tmp_path):
         ("validTo", "2003-01-01T00:00:00.0Z"),
         ("parcel_href", ["#Parcel.1", "#Parcel.2"]),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert feat.GetGeomFieldRef(0).ExportToWkt() == "LINESTRING (2 49,3 50)"
 
@@ -2266,7 +2267,7 @@ def test_ogr_gml_58b(tmp_path):
         ("validTo", None),
         ("parcel_href", None),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert feat.GetGeomFieldRef(0).ExportToWkt() == "LINESTRING (2 49,3 50)"
     feat = None
@@ -2311,7 +2312,7 @@ def test_ogr_gml_58c(tmp_path):
         ("validTo", "2003-01-01T00:00:00.0Z"),
         ("upperLevelUnit_href", "#ulu.1"),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert (
         feat.GetGeomFieldRef(0).ExportToWkt()
@@ -2343,7 +2344,7 @@ def test_ogr_gml_58c(tmp_path):
         ("validTo", None),
         ("upperLevelUnit_href", None),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     assert (
         feat.GetGeomFieldRef(0).ExportToWkt()
@@ -2385,7 +2386,7 @@ def test_ogr_gml_59():
         ("name_others_lang", ["de"]),
         ("name_others", ["Deutsche name"]),
     ]
-    for (key, val) in expected:
+    for key, val in expected:
         assert feat.GetField(key) == val
     feat = None
     lyr = None
@@ -3652,7 +3653,7 @@ def test_ogr_gml_79(tmp_vsimem):
         ["OGC_URN", "urn:ogc:def:crs:EPSG::4326", "49 2"],
         ["OGC_URL", "http://www.opengis.net/def/crs/EPSG/0/4326", "49 2"],
     ]
-    for (srsname_format, expected_srsname, expected_coords) in tests:
+    for srsname_format, expected_srsname, expected_coords in tests:
 
         ds = ogr.GetDriverByName("GML").CreateDataSource(
             tmp_vsimem / "ogr_gml_79.xml",

@@ -56,8 +56,7 @@ def get_schema_openoptionslist():
 
     from lxml import etree
 
-    return etree.XML(
-        r"""
+    return etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="Value">
     <xs:complexType>
@@ -122,16 +121,14 @@ def get_schema_openoptionslist():
     </xs:complexType>
   </xs:element>
 </xs:schema>
-"""
-    )
+""")
 
 
 def get_schema_creationoptionslist_xml(root_element="CreationOptionList"):
 
     from lxml import etree
 
-    return etree.XML(
-        rf"""
+    return etree.XML(rf"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="Value">
     <xs:complexType>
@@ -197,16 +194,14 @@ def get_schema_creationoptionslist_xml(root_element="CreationOptionList"):
     </xs:complexType>
   </xs:element>
 </xs:schema>
-"""
-    )
+""")
 
 
 def get_schema_layer_creationoptionslist_xml():
 
     from lxml import etree
 
-    return etree.XML(
-        r"""
+    return etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="Value">
     <xs:complexType>
@@ -271,16 +266,14 @@ def get_schema_layer_creationoptionslist_xml():
     </xs:complexType>
   </xs:element>
 </xs:schema>
-"""
-    )
+""")
 
 
 def get_schema_multidim_array_creationoptionslist_xml():
 
     from lxml import etree
 
-    return etree.XML(
-        r"""
+    return etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="Value">
     <xs:complexType>
@@ -313,16 +306,14 @@ def get_schema_multidim_array_creationoptionslist_xml():
     </xs:complexType>
   </xs:element>
 </xs:schema>
-"""
-    )
+""")
 
 
 def get_schema_multidim_attribute_creationoptionslist_xml():
 
     from lxml import etree
 
-    return etree.XML(
-        r"""
+    return etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:element name="Value" type="xs:string"/>
   <xs:element name="Option">
@@ -342,16 +333,14 @@ def get_schema_multidim_attribute_creationoptionslist_xml():
       </xs:sequence>
     </xs:complexType>
   </xs:element>
-</xs:schema>"""
-    )
+</xs:schema>""")
 
 
 def get_schema_multidim_dataset_creationoptionslist_xml():
 
     from lxml import etree
 
-    return etree.XML(
-        r"""
+    return etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:element name="Value" type="xs:string"/>
   <xs:element name="Option">
@@ -373,16 +362,14 @@ def get_schema_multidim_dataset_creationoptionslist_xml():
       </xs:sequence>
     </xs:complexType>
   </xs:element>
-</xs:schema>"""
-    )
+</xs:schema>""")
 
 
 def get_schema_multidim_dimension_creationoptionslist_xml():
 
     from lxml import etree
 
-    return etree.XML(
-        r"""
+    return etree.XML(r"""
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:element name="Option">
     <xs:complexType>
@@ -403,8 +390,7 @@ def get_schema_multidim_dimension_creationoptionslist_xml():
       </xs:sequence>
     </xs:complexType>
   </xs:element>
-</xs:schema>"""
-    )
+</xs:schema>""")
 
 
 @pytest.mark.parametrize("driver_name", all_driver_names)

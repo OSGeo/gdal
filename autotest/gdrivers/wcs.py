@@ -450,7 +450,7 @@ def setupFct():
 
 @pytest.fixture(scope="module")
 def wcs_server():
-    (process, port) = webserver.launch(handler=WCSHTTPHandler)
+    process, port = webserver.launch(handler=WCSHTTPHandler)
 
     url = "http://127.0.0.1:" + str(port)
 

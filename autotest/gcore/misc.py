@@ -693,6 +693,7 @@ def test_misc_11():
 ###############################################################################
 # Test CreateCopy() with a target filename in a non-existing dir
 
+
 # Started to fail suddenly on May 14th 2025 on this config
 @pytest.mark.skipif(
     gdaltest.is_travis_branch("build-windows-conda"), reason="fails for unknown reason"
@@ -749,7 +750,7 @@ def test_misc_12():
             if gdal_translate_path is not None:
                 # Test to detect memleaks
                 ds = gdal.GetDriverByName("VRT").CreateCopy("tmp/misc_12.vrt", src_ds)
-                (out, _) = gdaltest.runexternal_out_and_err(
+                out, _ = gdaltest.runexternal_out_and_err(
                     gdal_translate_path
                     + " -of "
                     + drv.ShortName

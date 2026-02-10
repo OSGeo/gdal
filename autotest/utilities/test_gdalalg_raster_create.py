@@ -205,10 +205,10 @@ def test_gdalalg_raster_create_full():
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt16
     assert ds.GetRasterBand(1).GetNoDataValue() == 255
     assert (
-        ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\xFD"
+        ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\xfd"
     )
     assert (
-        ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\xFE"
+        ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1, buf_type=gdal.GDT_UInt8) == b"\xfe"
     )
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
     assert ds.GetGeoTransform() == (2.0, 0.5, 0.0, 50.0, 0.0, -0.25)

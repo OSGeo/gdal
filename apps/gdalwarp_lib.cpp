@@ -6214,7 +6214,8 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
     argParser->add_argument("-cblend")
         .metavar("<distance>")
         .action(
-            [psOptions](const std::string &s) {
+            [psOptions](const std::string &s)
+            {
                 psOptions->aosWarpOptions.SetNameValue("CUTLINE_BLEND_DIST",
                                                        s.c_str());
             })

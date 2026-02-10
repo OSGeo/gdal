@@ -3905,9 +3905,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             size_t j =
                 (nSrcLineStart - nChunkYOff) * static_cast<size_t>(nDstXSize);
 #ifdef USE_SSE2
-            if constexpr ((!bNeedRescale ||
-                           !std::is_same_v<T, float>)&&eWrkDataType ==
-                          GDT_Float32)
+            if constexpr ((!bNeedRescale || !std::is_same_v<T, float>) &&
+                          eWrkDataType == GDT_Float32)
             {
 #ifdef __AVX__
                 for (; iFilteredPixelOff < nDstXSize - 15;
@@ -6065,7 +6064,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     apoDstBand[iBand]->FlushCache(false);
 
                 continue;  // Next overview
-            }              // chunking via temporary dataset
+            }  // chunking via temporary dataset
 
             std::unique_ptr<GDALDataset> poTmpDS;
             // Config option mostly/only for autotest purposes

@@ -1077,7 +1077,7 @@ def validate(
             if res:
                 count_boxes = get_count_and_indices_of_jp2boxes(res)
                 for key in count_boxes:
-                    (val, _) = count_boxes[key]
+                    val, _ = count_boxes[key]
                     if val > 1:
                         error_report.EmitError(
                             "GENERAL",
@@ -1092,7 +1092,7 @@ def validate(
             # Check number of sub-boxes
             count_boxes = get_count_and_indices_of_jp2boxes(jp2h)
             for key in count_boxes:
-                (val, _) = count_boxes[key]
+                val, _ = count_boxes[key]
                 if val > 1:
                     error_report.EmitError(
                         "GENERAL",
@@ -1106,7 +1106,7 @@ def validate(
             last_idx = -1
             for box_name in ["ihdr", "bpcc", "colr", "pclr", "cmap", "cdef", "res "]:
                 if box_name in count_boxes:
-                    (_, idx) = count_boxes[box_name]
+                    _, idx = count_boxes[box_name]
                     if idx < last_idx:
                         error_report.EmitWarning(
                             "GENERAL", '"%s" box not at expected index' % box_name
@@ -1126,7 +1126,7 @@ def validate(
         # Check number of boxes
         count_boxes = get_count_and_indices_of_jp2boxes(ar)
         for key in count_boxes:
-            (val, _) = count_boxes[key]
+            val, _ = count_boxes[key]
             if key in ("jP  ", "ftyp", "rreq", "jp2h", "jp2c"):
                 if key == "jp2c":
                     if inspire_tg and val > 1:
@@ -1150,7 +1150,7 @@ def validate(
         last_idx = -1
         for box_name in ["jP  ", "ftyp", "rreq", "jp2h", "jp2c", "jp2i"]:
             if box_name in count_boxes:
-                (_, idx) = count_boxes[box_name]
+                _, idx = count_boxes[box_name]
                 if idx < last_idx:
                     error_report.EmitWarning(
                         "GENERAL", '"%s" box not at expected index' % box_name
@@ -1159,7 +1159,7 @@ def validate(
         if inspire_tg:
             for box_name in ["asoc", "xml ", "uuid", "uinf"]:
                 if box_name in count_boxes:
-                    (_, idx) = count_boxes[box_name]
+                    _, idx = count_boxes[box_name]
                     if idx < last_idx:
                         error_report.EmitWarning(
                             "INSPIRE_TG", '"%s" box not at expected index' % box_name
@@ -1334,7 +1334,7 @@ def validate(
                 high = find_xml_node(rg, "gml:high")
             if low and high:
                 low = get_element_val(low)
-                (low_x, low_y) = low.split(" ")[0:2]
+                low_x, low_y = low.split(" ")[0:2]
                 low_x = int(low_x)
                 low_y = int(low_y)
 
@@ -1348,7 +1348,7 @@ def validate(
                     )
 
                 high = get_element_val(high)
-                (high_x, high_y) = high.split(" ")[0:2]
+                high_x, high_y = high.split(" ")[0:2]
                 high_x = int(high_x)
                 high_y = int(high_y)
 
@@ -1401,7 +1401,7 @@ def validate(
                         high = find_xml_node(rg, "gml:high")
                     if low and high:
                         low = get_element_val(low)
-                        (low_x, low_y) = low.split(" ")[0:2]
+                        low_x, low_y = low.split(" ")[0:2]
                         low_x = int(low_x)
                         low_y = int(low_y)
 
@@ -1421,7 +1421,7 @@ def validate(
                             )
 
                         high = get_element_val(high)
-                        (high_x, high_y) = high.split(" ")[0:2]
+                        high_x, high_y = high.split(" ")[0:2]
                         high_x = int(high_x)
                         high_y = int(high_y)
 
@@ -1508,7 +1508,7 @@ def validate(
                                     min_vals.append(None)
                                     max_vals.append(None)
                                 else:
-                                    (min_val, max_val) = interval.split(" ")
+                                    min_val, max_val = interval.split(" ")
                                     min_val = int(min_val)
                                     max_val = int(max_val)
                                     min_vals.append(min_val)

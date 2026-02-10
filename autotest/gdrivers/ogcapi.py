@@ -183,7 +183,7 @@ pytestmark = pytest.mark.require_driver("OGCAPI")
 @pytest.fixture(scope="module", autouse=True)
 def init():
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
+    gdaltest.webserver_process, gdaltest.webserver_port = webserver.launch(
         handler=OGCAPIHTTPHandler
     )
     if gdaltest.webserver_port == 0:

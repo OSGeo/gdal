@@ -23,6 +23,7 @@ from osgeo import gdal
 
 pytestmark = [pytest.mark.require_driver("WMTS"), pytest.mark.require_driver("WMS")]
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -628,9 +629,7 @@ def test_wmts_14():
     f = gdal.VSIFOpenL("/vsimem/gdal_nominal.xml", "rb")
     data = gdal.VSIFReadL(1, 10000, f).decode("ascii")
     gdal.VSIFCloseL(f)
-    assert (
-        data
-        == """<GDAL_WMTS>
+    assert data == """<GDAL_WMTS>
   <GetCapabilitiesUrl>/vsimem/nominal.xml</GetCapabilitiesUrl>
   <Layer>lyr1</Layer>
   <Style>style=auto</Style>
@@ -649,7 +648,6 @@ def test_wmts_14():
   <ZeroBlockOnServerException>true</ZeroBlockOnServerException>
 </GDAL_WMTS>
 """
-    )
 
     ds = gdal.Open("/vsimem/gdal_nominal.xml")
     gdal.FileFromMemBuffer("/vsimem/2011-10-04/style=auto/tms/tm_18/0/0/2/1.txt", "foo")
@@ -688,11 +686,8 @@ def test_wmts_14():
         '<?xml version="1.0" encoding="UTF-8"?><xml_content/>',
     )
     res = ds.GetRasterBand(1).GetMetadataItem("Pixel_1_2", "LocationInfo")
-    assert (
-        res
-        == """<LocationInfo><xml_content />
+    assert res == """<LocationInfo><xml_content />
 </LocationInfo>"""
-    )
 
     ds = gdal.Open("WMTS:/vsimem/gdal_nominal.xml,tilematrix=tm_0")
     assert ds is not None

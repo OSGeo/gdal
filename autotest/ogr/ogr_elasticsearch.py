@@ -23,6 +23,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("Elasticsearch")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -246,7 +247,7 @@ def test_ogr_elasticsearch_1(
     feat["date_field"] = "2015/08/12"
     feat["datetime_field"] = "2015/08/12 12:34:56.789"
     feat["time_field"] = "12:34:56.789"
-    feat["binary_field"] = b"\x01\x23\x46\x57\x89\xAB\xCD\xEF"
+    feat["binary_field"] = b"\x01\x23\x46\x57\x89\xab\xcd\xef"
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
 
     # Simulate server error
@@ -1301,8 +1302,7 @@ def test_ogr_elasticsearch_5(es_url, handle_get, handle_put, handle_post):
             }
         },
         {
-            "_source": {"""
-        +
+            "_source": {""" +
         # "this is the geohash format",
         """                "another_geopoint": "u09qv80meqh16ve02equ"
             }

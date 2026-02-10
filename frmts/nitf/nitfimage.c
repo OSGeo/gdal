@@ -1278,7 +1278,7 @@ static void NITFUncompressVQTile(NITFImage *psImage, GByte *pabyVQBuf,
                 memcpy(pabyTarget + 4, psImage->apanVQLUT[t] + val2, 4);
             }
         } /* for j */
-    }     /* for i */
+    } /* for i */
 }
 
 /************************************************************************/

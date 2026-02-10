@@ -1319,7 +1319,7 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
 
 
 def reregister_all_jpeg2000_drivers():
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv
+
     global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered
 
     if jp2kak_drv_unregistered:
@@ -1362,7 +1362,7 @@ def filesystem_supports_sparse_files(path):
         return False
 
     try:
-        (ret, err) = runexternal_out_and_err(f'stat -f -c "%T" {path}')
+        ret, err = runexternal_out_and_err(f'stat -f -c "%T" {path}')
     except OSError:
         return False
 
@@ -1839,7 +1839,7 @@ credential_keys = set()
 
 @contextlib.contextmanager
 def credentials(prefix, options):
-    global credential_keys
+
     # Special processing for nested with credentials() call on the same key
     clear_credentials = prefix not in credential_keys
     credential_keys.add(prefix)

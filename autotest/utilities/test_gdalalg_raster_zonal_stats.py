@@ -423,9 +423,9 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_all_stats(zonal, strategy, sta
     zonal["output-format"] = "MEM"
     zonal["pixels"] = "fractional"
     zonal["strategy"] = strategy
-    zonal[
-        "stat"
-    ] = stat  # process stats individually to ensure RasterStatsOptions set correctly
+    zonal["stat"] = (
+        stat  # process stats individually to ensure RasterStatsOptions set correctly
+    )
 
     assert zonal.Run()
 
@@ -1164,8 +1164,7 @@ def test_gdalalg_raster_zonal_stats_polygon_huge_extent(zonal, strategy):
 @pytest.mark.slow()
 def test_gdalalg_raster_zonal_stats_polygon_huge_extent_huge_raster(zonal):
 
-    huge_raster = gdal.Open(
-        """<VRTDataset rasterXSize="2147483647" rasterYSize="1">
+    huge_raster = gdal.Open("""<VRTDataset rasterXSize="2147483647" rasterYSize="1">
   <GeoTransform>0,1,0,0,0,1</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
@@ -1176,8 +1175,7 @@ def test_gdalalg_raster_zonal_stats_polygon_huge_extent_huge_raster(zonal):
       <DstRect xOff="0" yOff="0" xSize="20" ySize="1" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     zonal["input"] = huge_raster
     v = 1e11

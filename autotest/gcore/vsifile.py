@@ -1265,13 +1265,13 @@ def test_vsifile_vsizip_non_latin1_char(tmp_vsimem):
 
     gdal.ErrorReset()
     with gdal.VSIFile(
-        f"/vsizip/{tmp_vsimem}/test.zip/" + b"\xE5\xAE\x89.txt".decode("UTF-8"), "wb"
+        f"/vsizip/{tmp_vsimem}/test.zip/" + b"\xe5\xae\x89.txt".decode("UTF-8"), "wb"
     ) as f:
         f.close()
         assert gdal.GetLastErrorMsg() == ""
 
     assert gdal.ReadDir(f"/vsizip/{tmp_vsimem}/test.zip") == [
-        b"\xE5\xAE\x89.txt".decode("UTF-8")
+        b"\xe5\xae\x89.txt".decode("UTF-8")
     ]
 
     with gdal.VSIFile(f"{tmp_vsimem}/test.zip", "rb") as f:
@@ -1286,7 +1286,7 @@ def test_vsifile_vsimem_truncate_zeroize():
 
     filename = "/vsimem/test.bin"
     f = gdal.VSIFOpenL(filename, "wb+")
-    data = b"\xFF" * 10000
+    data = b"\xff" * 10000
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFTruncateL(f, 0)
     gdal.VSIFSeekL(f, 10000, 0)

@@ -46,30 +46,13 @@ static const CeosStringType_t CeosInterleaveType[] = {{"BSQ", CEOS_IL_BAND},
                                                       {" BIL", CEOS_IL_LINE},
                                                       {NULL, 0}};
 
-#define IMAGE_OPT                                                              \
-    {                                                                          \
-        63, 192, 18, 18                                                        \
-    }
+#define IMAGE_OPT {63, 192, 18, 18}
 #define IMAGE_JERS_OPT                                                         \
-    {                                                                          \
-        50, 192, 18, 18                                                        \
-    } /* Some JERS data uses this instead of IMAGE_OPT */
-#define PROC_DATA_REC                                                          \
-    {                                                                          \
-        50, 11, 18, 20                                                         \
-    }
-#define PROC_DATA_REC_ALT                                                      \
-    {                                                                          \
-        50, 11, 31, 20                                                         \
-    }
-#define PROC_DATA_REC_ALT2                                                     \
-    {                                                                          \
-        50, 11, 31, 50                                                         \
-    } /* Some cases of ERS 1, 2 */
-#define DATA_SET_SUMMARY                                                       \
-    {                                                                          \
-        18, 10, 18, 20                                                         \
-    }
+    {50, 192, 18, 18} /* Some JERS data uses this instead of IMAGE_OPT */
+#define PROC_DATA_REC {50, 11, 18, 20}
+#define PROC_DATA_REC_ALT {50, 11, 31, 20}
+#define PROC_DATA_REC_ALT2 {50, 11, 31, 50} /* Some cases of ERS 1, 2 */
+#define DATA_SET_SUMMARY {18, 10, 18, 20}
 
 /* NOTE: This seems to be the generic recipe used for most things */
 static const CeosRecipeType_t RadarSatRecipe[] = {
@@ -669,7 +652,7 @@ void GetCeosSARImageDesc(CeosSARVolume_t *volume)
 {
     Link_t *l_link;
     RecipeFunctionData_t *rec_data;
-    int (*function)(CeosSARVolume_t * volume, const void *token);
+    int (*function)(CeosSARVolume_t *volume, const void *token);
 
     if (RecipeFunctions == NULL)
     {

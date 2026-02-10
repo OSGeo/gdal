@@ -1049,8 +1049,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header("Content-type", "application/xml")
                     self.end_headers()
-                    self.wfile.write(
-                        """<?xml version="1.0" encoding="UTF-8"?>
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?>
 <searchresults>
   <place lat="48.8566177374844" lon="2.34288146739775" display_name="Paris, Ile-de-France, France metropolitaine">
     <county>Paris</county>
@@ -1058,10 +1057,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
     <country>France metropolitaine</country>
     <country_code>fr</country_code>
   </place>
-</searchresults>""".encode(
-                            "ascii"
-                        )
-                    )
+</searchresults>""".encode("ascii"))
                     return
                 if (
                     self.path
@@ -1128,9 +1124,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 <fcl>P</fcl>
 <fcode>PPLC</fcode>
 </geoname>
-</geonames>""".encode(
-                            "ascii"
-                        )
+</geonames>""".encode("ascii")
                     )
                     return
                 if self.path == "/geonamesgeocoding?q=NonExistingPlace&username=demo":
@@ -1141,9 +1135,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
                         """<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <geonames style="MEDIUM">
 <totalResultsCount>0</totalResultsCount>
-</geonames>""".encode(
-                            "ascii"
-                        )
+</geonames>""".encode("ascii")
                     )
                     return
 
@@ -1155,8 +1147,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header("Content-type", "application/xml")
                     self.end_headers()
-                    self.wfile.write(
-                        """<Response>
+                    self.wfile.write("""<Response>
   <ResourceSets>
     <ResourceSet>
       <EstimatedTotal>1</EstimatedTotal>
@@ -1190,27 +1181,20 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
       </Resources>
     </ResourceSet>
   </ResourceSets>
-</Response>""".encode(
-                            "ascii"
-                        )
-                    )
+</Response>""".encode("ascii"))
                     return
                 if self.path == "/binggeocoding?q=NonExistingPlace&key=fakekey":
                     self.send_response(200)
                     self.send_header("Content-type", "application/xml")
                     self.end_headers()
-                    self.wfile.write(
-                        """<Response>
+                    self.wfile.write("""<Response>
   <ResourceSets>
     <ResourceSet>
       <EstimatedTotal>0</EstimatedTotal>
       <Resources/>
     </ResourceSet>
   </ResourceSets>
-</Response>""".encode(
-                            "ascii"
-                        )
-                    )
+</Response>""".encode("ascii"))
                     return
 
                 self.send_error(404, "File Not Found: %s" % self.path)
@@ -1227,8 +1211,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header("Content-type", "application/xml")
                     self.end_headers()
-                    self.wfile.write(
-                        """<?xml version="1.0" encoding="UTF-8"?>
+                    self.wfile.write("""<?xml version="1.0" encoding="UTF-8"?>
 <reversegeocode>
   <result place_id="46754274" osm_type="way" osm_id="38621743" ref="Chemin du Cordon" lat="49.0002726061675" lon="1.99514157818059">Chemin du Cordon, Foret de l'Hautil, Triel-sur-Seine, Saint-Germain-en-Laye, Yvelines, Ile-de-France, 78510, France metropolitaine</result>
   <addressparts>
@@ -1241,10 +1224,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
     <country>France metropolitaine</country>
     <country_code>fr</country_code>
   </addressparts>
-</reversegeocode>""".encode(
-                            "ascii"
-                        )
-                    )
+</reversegeocode>""".encode("ascii"))
                     return
                 self.send_error(404, "File Not Found: %s" % self.path)
                 return
@@ -1291,9 +1271,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
 <fcode>DPR</fcode>
 <distance>0</distance>
 </geoname>
-</geonames>""".encode(
-                            "ascii"
-                        )
+</geonames>""".encode("ascii")
                     )
                     return
                 self.send_error(404, "File Not Found: %s" % self.path)
@@ -1307,8 +1285,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.send_header("Content-type", "application/xml")
                     self.end_headers()
-                    self.wfile.write(
-                        """<Response>
+                    self.wfile.write("""<Response>
   <ResourceSets>
     <ResourceSet>
       <EstimatedTotal>1</EstimatedTotal>
@@ -1342,10 +1319,7 @@ class GeocodingHTTPHandler(BaseHTTPRequestHandler):
       </Resources>
     </ResourceSet>
   </ResourceSets>
-</Response>""".encode(
-                            "ascii"
-                        )
-                    )
+</Response>""".encode("ascii"))
                     return
                 self.send_error(404, "File Not Found: %s" % self.path)
                 return
@@ -1366,7 +1340,7 @@ def with_webserver():
     ogrtest.webserver_process = None
     ogrtest.webserver_port = 0
 
-    (ogrtest.webserver_process, ogrtest.webserver_port) = webserver.launch(
+    ogrtest.webserver_process, ogrtest.webserver_port = webserver.launch(
         handler=GeocodingHTTPHandler
     )
     if ogrtest.webserver_port == 0:
@@ -1858,7 +1832,7 @@ def test_ogr_sql_sqlite_26():
         "Contains",
         "Overlaps",
     ]:
-        for (geomA_wkt, geomB_wkt) in [
+        for geomA_wkt, geomB_wkt in [
             (geom1_wkt, geom1_wkt),
             (geom1_wkt, geom2_wkt),
             (geom1_wkt, geom3_wkt),
@@ -1881,7 +1855,7 @@ def test_ogr_sql_sqlite_26():
             assert b_sql == b_geos, "fail with %s" % op_str
 
     for op_str in ["Intersection", "Difference", "Union", "SymDifference"]:
-        for (geomA_wkt, geomB_wkt) in [
+        for geomA_wkt, geomB_wkt in [
             (geom1_wkt, geom1_wkt),
             (geom1_wkt, geom2_wkt),
             (geom1_wkt, geom3_wkt),
@@ -2018,7 +1992,7 @@ def test_ogr_sql_sqlite_28():
         ds.ReleaseResultSet(sql_lyr)
 
     # Valid hstore syntax
-    for (sql, expected) in [
+    for sql, expected in [
         ("SELECT hstore_get_value('a=>b', 'a')", "b"),
     ]:
         sql_lyr = ds.ExecuteSQL(sql, dialect="SQLite")

@@ -238,7 +238,7 @@ def test_gdal_completion(gdal_path):
     )
     assert (
         out
-        == "** \xC2\xA0description:\\ Target\\ resolution\\ (in\\ destination\\ CRS\\ units)"
+        == "** \xc2\xa0description:\\ Target\\ resolution\\ (in\\ destination\\ CRS\\ units)"
     )
 
     out = gdaltest.runexternal(

@@ -58,6 +58,7 @@ pytestmark = [
     ),
 ]
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():

@@ -86,7 +86,7 @@ def main(argv=sys.argv):
 
     srsLatLong = srs.CloneGeogCS()
     ct = osr.CoordinateTransformation(srs, srsLatLong)
-    (lon, lat, height) = ct.TransformPoint(X, Y)
+    lon, lat, height = ct.TransformPoint(X, Y)
 
     # Report results
     print("pixel: %g\t\t\tline: %g" % (pixel, line))

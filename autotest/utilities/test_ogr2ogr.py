@@ -40,7 +40,7 @@ def test_ogr2ogr_1(ogr2ogr_path, tmp_path):
 
     output_shp = str(tmp_path / "poly.shp")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + f" {output_shp} ../ogr/data/poly.shp"
     )
     assert err is None or err == "", "got error/warning"
@@ -1331,8 +1331,7 @@ def test_ogr2ogr_47(ogr2ogr_path, tmp_path):
     dst_gml = str(tmp_path / "test_ogr2ogr_47_dst.gml")
 
     f = open(src_gml, "wt")
-    f.write(
-        """<foo xmlns:gml="http://www.opengis.net/gml">
+    f.write("""<foo xmlns:gml="http://www.opengis.net/gml">
    <gml:featureMember>
       <features>
          <geometry>
@@ -1351,8 +1350,7 @@ def test_ogr2ogr_47(ogr2ogr_path, tmp_path):
          </geometry>
       </features>
    </gml:featureMember>
-</foo>"""
-    )
+</foo>""")
     f.close()
 
     gdaltest.runexternal(
@@ -1730,8 +1728,7 @@ def ogr2ogr_54_vrt(tmp_path):
     f.close()
 
     f = open(src_vrt, "wt")
-    f.write(
-        """<OGRVRTDataSource>
+    f.write("""<OGRVRTDataSource>
   <OGRVRTLayer name="test_ogr2ogr_54">
     <SrcDataSource relativeToVRT="1" shared="1">test_ogr2ogr_54.csv</SrcDataSource>
     <SrcLayer>test_ogr2ogr_54</SrcLayer>
@@ -1741,8 +1738,7 @@ def ogr2ogr_54_vrt(tmp_path):
     <Field name="fld2" type="String" src="fld2"/>
   </OGRVRTLayer>
 </OGRVRTDataSource>
-"""
-    )
+""")
     f.close()
 
     return src_vrt
@@ -1808,8 +1804,7 @@ def ogr2ogr_55_vrt(tmp_path):
         f.write("Integer,Integer,String\n")
 
     with open(f"{tmp_path}/test_ogr2ogr_55.vrt", "wt") as f:
-        f.write(
-            """<OGRVRTDataSource>
+        f.write("""<OGRVRTDataSource>
       <OGRVRTLayer name="test_ogr2ogr_55">
         <SrcDataSource relativeToVRT="1" shared="1">test_ogr2ogr_55.csv</SrcDataSource>
         <SrcLayer>test_ogr2ogr_55</SrcLayer>
@@ -1819,8 +1814,7 @@ def ogr2ogr_55_vrt(tmp_path):
         <Field name="fld2" type="Integer" src="fld2" nullable="false" default="2"/>
       </OGRVRTLayer>
     </OGRVRTDataSource>
-    """
-        )
+    """)
 
     return f"{tmp_path}/test_ogr2ogr_55.vrt"
 
@@ -1909,8 +1903,7 @@ def ogr2ogr_57_vrt(tmp_path):
         f.write("Integer,String,String\n")
 
     with open(f"{tmp_path}/test_ogr2ogr_57.vrt", "wt") as f:
-        f.write(
-            """<OGRVRTDataSource>
+        f.write("""<OGRVRTDataSource>
       <OGRVRTLayer name="test_ogr2ogr_57">
         <SrcDataSource relativeToVRT="1" shared="1">test_ogr2ogr_57.csv</SrcDataSource>
         <SrcLayer>test_ogr2ogr_57</SrcLayer>
@@ -1920,8 +1913,7 @@ def ogr2ogr_57_vrt(tmp_path):
         <Field name="str"/>
       </OGRVRTLayer>
     </OGRVRTDataSource>
-    """
-        )
+    """)
 
     return f"{tmp_path}/test_ogr2ogr_57.vrt"
 
@@ -2149,7 +2141,7 @@ def test_ogr2ogr_62bis(ogr2ogr_path, ogr2ogr_62_json, tmp_path):
 
 def test_ogr2ogr_63(ogr2ogr_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(ogr2ogr_path + " --formats")
+    ret, err = gdaltest.runexternal_out_and_err(ogr2ogr_path + " --formats")
     assert "Supported Formats" in ret, err
     assert "ERROR" not in err, ret
 
@@ -2196,7 +2188,7 @@ def test_ogr2ogr_65(ogr2ogr_path, tmp_path):
     assert ds.GetDriver().ShortName == "CSV"
     ds = None
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + " /vsimem/out.xxx ../ogr/data/poly.shp"
     )
     if "Cannot guess" not in err:
@@ -2210,7 +2202,7 @@ def test_ogr2ogr_65(ogr2ogr_path, tmp_path):
 
 def test_ogr2ogr_66(ogr2ogr_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + " ../ogr/data/poly.shp ../ogr/data/poly.shp"
     )
     assert (
@@ -2226,6 +2218,7 @@ def hexify_double(val):
 
 ###############################################################################
 # Test coordinates values are preserved for identity transformations
+
 
 # The x value is such that x * k * (1/k) != x with k the common factor used in degrees unit definition
 # If the coordinates are converted to radians and back to degrees the value of x will be altered
@@ -2278,7 +2271,7 @@ def test_ogr2ogr_check_identity_transformation(ogr2ogr_path, tmp_path, x, y, sri
 @pytest.mark.require_driver("GPKG")
 def test_ogr2ogr_if_ok(ogr2ogr_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + " -if GPKG /vsimem/out.gpkg ../ogr/data/gpkg/2d_envelope.gpkg"
     )
     assert ret == ""
@@ -2293,7 +2286,7 @@ def test_ogr2ogr_if_ok(ogr2ogr_path):
 @pytest.mark.require_driver("GeoJSON")
 def test_ogr2ogr_if_ko(ogr2ogr_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path + " -if GeoJSON /vsimem/out.gpkg ../ogr/data/gpkg/2d_envelope.gpkg"
     )
     assert "Unable to open datasource" in err

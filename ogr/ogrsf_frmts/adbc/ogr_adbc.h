@@ -118,9 +118,7 @@ class OGRADBCLayer /* non final */ : public OGRLayer,
     bool m_bInternalUse = false;
     bool m_bLayerDefinitionError = false;
 
-    struct ArrowSchema m_schema
-    {
-    };
+    struct ArrowSchema m_schema{};
 
     bool m_bEOF = false;
     size_t m_nIdx = 0;

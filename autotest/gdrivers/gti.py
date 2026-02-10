@@ -1074,15 +1074,15 @@ def test_gti_rgb_left_right(tmp_vsimem):
     )
 
     if ogrtest.have_geos():
-        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
+        flags, pct = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
             0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize
         )
         assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
 
-        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(1, 2, 3, 4)
+        flags, pct = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(1, 2, 3, 4)
         assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
 
-        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
+        flags, pct = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
             vrt_ds.RasterXSize // 2 - 1, 2, 2, 4
         )
         assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
@@ -1117,7 +1117,7 @@ def test_gti_overlapping_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 2
 
     if ogrtest.have_geos():
-        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
+        flags, pct = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
             0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize
         )
         assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
@@ -1387,7 +1387,7 @@ def test_gti_gap_between_sources(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).Checksum() == 3
 
     if ogrtest.have_geos():
-        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
+        flags, pct = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
             0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize
         )
         assert (
@@ -1414,7 +1414,7 @@ def test_gti_no_source(tmp_vsimem):
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
-    assert vrt_ds.ReadRaster() == (b"\xFF" * 6) + (b"\xFE" * 6)
+    assert vrt_ds.ReadRaster() == (b"\xff" * 6) + (b"\xfe" * 6)
 
     assert (
         vrt_ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
@@ -1443,7 +1443,7 @@ def test_gti_no_source(tmp_vsimem):
     )
 
     if ogrtest.have_geos():
-        (flags, pct) = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
+        flags, pct = vrt_ds.GetRasterBand(1).GetDataCoverageStatus(
             0, 0, vrt_ds.RasterXSize, vrt_ds.RasterYSize
         )
         assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
@@ -1506,7 +1506,7 @@ def test_gti_source_relative_location(tmp_vsimem):
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
-    assert vrt_ds.ReadRaster() == b"\xFF"
+    assert vrt_ds.ReadRaster() == b"\xff"
 
 
 def test_gti_source_lacks_bands(tmp_vsimem):
@@ -1653,7 +1653,7 @@ def test_gti_overlapping_sources_nodata(tmp_vsimem):
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
-    assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x04\x02\xFF"
+    assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x04\x02\xff"
 
     assert (
         vrt_ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
@@ -1703,7 +1703,7 @@ def test_gti_on_the_fly_rgba_color_table_expansion(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x01"
     assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\x02"
     assert vrt_ds.GetRasterBand(3).ReadRaster() == b"\x03"
-    assert vrt_ds.GetRasterBand(4).ReadRaster() == b"\xFF"
+    assert vrt_ds.GetRasterBand(4).ReadRaster() == b"\xff"
 
 
 def test_gti_on_the_fly_warping(tmp_vsimem):
@@ -1755,7 +1755,7 @@ def test_gti_on_the_fly_warping(tmp_vsimem):
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
-    assert vrt_ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1) == b"\xFE"
+    assert vrt_ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1) == b"\xfe"
 
 
 def test_gti_single_source_alpha_no_dest_nodata(tmp_vsimem):
@@ -1765,7 +1765,7 @@ def test_gti_single_source_alpha_no_dest_nodata(tmp_vsimem):
     ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\xFF\x00")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\xff\x00")
     del ds
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -1779,7 +1779,7 @@ def test_gti_single_source_alpha_no_dest_nodata(tmp_vsimem):
     )
     assert vrt_ds.GetRasterBand(1).GetMaskBand().GetBand() == 2
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x01\x02"
-    assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\xFF\x00"
+    assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\xff\x00"
 
 
 def test_gti_overlapping_opaque_sources(tmp_vsimem):
@@ -1824,7 +1824,7 @@ def test_gti_overlapping_sources_alpha_2x1(tmp_vsimem):
     ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\xFF\x00")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\xff\x00")
     del ds
 
     filename2 = str(tmp_vsimem / "two.tif")
@@ -1832,7 +1832,7 @@ def test_gti_overlapping_sources_alpha_2x1(tmp_vsimem):
     ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x03\x04")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x00\xFE")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x00\xfe")
     del ds
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -1853,7 +1853,7 @@ def test_gti_overlapping_sources_alpha_2x1(tmp_vsimem):
     )
     assert vrt_ds.GetRasterBand(1).GetMaskBand().GetBand() == 2
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x01\x04"
-    assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\xFF\xFE"
+    assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\xff\xfe"
 
     assert struct.unpack(
         "H" * 2, vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt16)
@@ -1861,10 +1861,10 @@ def test_gti_overlapping_sources_alpha_2x1(tmp_vsimem):
 
     assert vrt_ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1) == b"\x01"
     assert vrt_ds.GetRasterBand(1).ReadRaster(1, 0, 1, 1) == b"\x04"
-    assert vrt_ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1) == b"\xFF"
-    assert vrt_ds.GetRasterBand(2).ReadRaster(1, 0, 1, 1) == b"\xFE"
+    assert vrt_ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1) == b"\xff"
+    assert vrt_ds.GetRasterBand(2).ReadRaster(1, 0, 1, 1) == b"\xfe"
 
-    assert vrt_ds.ReadRaster() == b"\x01\x04\xFF\xFE"
+    assert vrt_ds.ReadRaster() == b"\x01\x04\xff\xfe"
     assert struct.unpack("H" * 4, vrt_ds.ReadRaster(buf_type=gdal.GDT_UInt16)) == (
         1,
         4,
@@ -1880,7 +1880,7 @@ def test_gti_overlapping_sources_alpha_1x2(tmp_vsimem):
     ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, b"\x01\x02")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 1, 2, b"\xFF\x00")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 1, 2, b"\xff\x00")
     del ds
 
     filename2 = str(tmp_vsimem / "two.tif")
@@ -1888,7 +1888,7 @@ def test_gti_overlapping_sources_alpha_1x2(tmp_vsimem):
     ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 2, b"\x03\x04")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 1, 2, b"\x00\xFE")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 1, 2, b"\x00\xfe")
     del ds
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -1905,7 +1905,7 @@ def test_gti_overlapping_sources_alpha_1x2(tmp_vsimem):
     vrt_ds = gdal.Open(index_filename)
     assert vrt_ds.RasterCount == 2
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x01\x04"
-    assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\xFF\xFE"
+    assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\xff\xfe"
 
     assert struct.unpack(
         "H" * 2, vrt_ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt16)
@@ -1913,10 +1913,10 @@ def test_gti_overlapping_sources_alpha_1x2(tmp_vsimem):
 
     assert vrt_ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1) == b"\x01"
     assert vrt_ds.GetRasterBand(1).ReadRaster(0, 1, 1, 1) == b"\x04"
-    assert vrt_ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1) == b"\xFF"
-    assert vrt_ds.GetRasterBand(2).ReadRaster(0, 1, 1, 1) == b"\xFE"
+    assert vrt_ds.GetRasterBand(2).ReadRaster(0, 0, 1, 1) == b"\xff"
+    assert vrt_ds.GetRasterBand(2).ReadRaster(0, 1, 1, 1) == b"\xfe"
 
-    assert vrt_ds.ReadRaster() == b"\x01\x04\xFF\xFE"
+    assert vrt_ds.ReadRaster() == b"\x01\x04\xff\xfe"
     assert struct.unpack("H" * 4, vrt_ds.ReadRaster(buf_type=gdal.GDT_UInt16)) == (
         1,
         4,
@@ -1936,14 +1936,14 @@ def test_gti_overlapping_sources_alpha_sse2_optim(tmp_vsimem):
         0,
         17,
         1,
-        b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x00\x01",
+        b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x00\x01",
     )
     ds.GetRasterBand(2).WriteRaster(
         0,
         0,
         17,
         1,
-        b"\xFF\x00\xFF\x00\xFF\x00\xFF\x00\xFF\x00\xFF\x00\xFF\x00\xFF\x00\xFF",
+        b"\xff\x00\xff\x00\xff\x00\xff\x00\xff\x00\xff\x00\xff\x00\xff\x00\xff",
     )
     del ds
 
@@ -1956,14 +1956,14 @@ def test_gti_overlapping_sources_alpha_sse2_optim(tmp_vsimem):
         0,
         17,
         1,
-        b"\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x01\x02\x03\x04\x05\x06\x07\x08",
+        b"\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x01\x02\x03\x04\x05\x06\x07\x08",
     )
     ds.GetRasterBand(2).WriteRaster(
         0,
         0,
         17,
         1,
-        b"\x00\xFE\x00\xFE\x00\xFE\x00\xFE\x00\xFE\x00\xFE\x00\xFE\x00\xFE\x00",
+        b"\x00\xfe\x00\xfe\x00\xfe\x00\xfe\x00\xfe\x00\xfe\x00\xfe\x00\xfe\x00",
     )
     del ds
 
@@ -1982,11 +1982,11 @@ def test_gti_overlapping_sources_alpha_sse2_optim(tmp_vsimem):
     assert vrt_ds.RasterCount == 2
     assert (
         vrt_ds.GetRasterBand(1).ReadRaster()
-        == b"\x01\x08\x03\x0A\x05\x0C\x07\x0E\x09\x01\x0B\x03\x0D\x05\x0F\x07\x01"
+        == b"\x01\x08\x03\x0a\x05\x0c\x07\x0e\x09\x01\x0b\x03\x0d\x05\x0f\x07\x01"
     )
     assert (
         vrt_ds.GetRasterBand(2).ReadRaster()
-        == b"\xFF\xFE\xFF\xFE\xFF\xFE\xFF\xFE\xFF\xFE\xFF\xFE\xFF\xFE\xFF\xFE\xFF"
+        == b"\xff\xfe\xff\xfe\xff\xfe\xff\xfe\xff\xfe\xff\xfe\xff\xfe\xff\xfe\xff"
     )
 
 
@@ -1999,15 +1999,15 @@ def test_gti_mix_rgb_rgba(tmp_vsimem):
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02")
     ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x03\x04")
     ds.GetRasterBand(3).WriteRaster(0, 0, 2, 1, b"\x05\x06")
-    ds.GetRasterBand(4).WriteRaster(0, 0, 2, 1, b"\xFE\x00")
+    ds.GetRasterBand(4).WriteRaster(0, 0, 2, 1, b"\xfe\x00")
     del ds
 
     filename2 = str(tmp_vsimem / "rgb.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename2, 2, 1, 3)
     ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x07\x08")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x0A\x0B")
-    ds.GetRasterBand(3).WriteRaster(0, 0, 2, 1, b"\x0C\x0D")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\x0a\x0b")
+    ds.GetRasterBand(3).WriteRaster(0, 0, 2, 1, b"\x0c\x0d")
     del ds
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -2024,10 +2024,10 @@ def test_gti_mix_rgb_rgba(tmp_vsimem):
     vrt_ds = gdal.Open(index_filename)
     assert vrt_ds.RasterCount == 4
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x07\x08"
-    assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\x0A\x0B"
-    assert vrt_ds.GetRasterBand(3).ReadRaster() == b"\x0C\x0D"
-    assert vrt_ds.GetRasterBand(4).ReadRaster() == b"\xFF\xFF"
-    assert vrt_ds.ReadRaster() == b"\x07\x08" + b"\x0A\x0B" + b"\x0C\x0D" + b"\xFF\xFF"
+    assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\x0a\x0b"
+    assert vrt_ds.GetRasterBand(3).ReadRaster() == b"\x0c\x0d"
+    assert vrt_ds.GetRasterBand(4).ReadRaster() == b"\xff\xff"
+    assert vrt_ds.ReadRaster() == b"\x07\x08" + b"\x0a\x0b" + b"\x0c\x0d" + b"\xff\xff"
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
     sort_values = [2, 1]
@@ -2043,10 +2043,10 @@ def test_gti_mix_rgb_rgba(tmp_vsimem):
     vrt_ds = gdal.Open(index_filename)
     assert vrt_ds.RasterCount == 4
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x01\x08"
-    assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\x03\x0B"
-    assert vrt_ds.GetRasterBand(3).ReadRaster() == b"\x05\x0D"
-    assert vrt_ds.GetRasterBand(4).ReadRaster() == b"\xFE\xFF"
-    assert vrt_ds.ReadRaster() == b"\x01\x08" + b"\x03\x0B" + b"\x05\x0D" + b"\xFE\xFF"
+    assert vrt_ds.GetRasterBand(2).ReadRaster() == b"\x03\x0b"
+    assert vrt_ds.GetRasterBand(3).ReadRaster() == b"\x05\x0d"
+    assert vrt_ds.GetRasterBand(4).ReadRaster() == b"\xfe\xff"
+    assert vrt_ds.ReadRaster() == b"\x01\x08" + b"\x03\x0b" + b"\x05\x0d" + b"\xfe\xff"
 
 
 def test_gti_overlapping_sources_mask_band(tmp_vsimem):
@@ -2057,7 +2057,7 @@ def test_gti_overlapping_sources_mask_band(tmp_vsimem):
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\x02")
     with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\xFF\x00")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\xff\x00")
     del ds
 
     filename2 = str(tmp_vsimem / "two.tif")
@@ -2066,7 +2066,7 @@ def test_gti_overlapping_sources_mask_band(tmp_vsimem):
     ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x03\x04")
     with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xFE")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 2, 1, b"\x00\xfe")
     del ds
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
@@ -2084,12 +2084,12 @@ def test_gti_overlapping_sources_mask_band(tmp_vsimem):
     assert vrt_ds.RasterCount == 1
     assert vrt_ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
     assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\x01\x04"
-    assert vrt_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\xFF\xFE"
+    assert vrt_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\xff\xfe"
 
     # Test the mask band of the mask band...
     assert vrt_ds.GetRasterBand(1).GetMaskBand().GetMaskFlags() == gdal.GMF_ALL_VALID
     assert (
-        vrt_ds.GetRasterBand(1).GetMaskBand().GetMaskBand().ReadRaster() == b"\xFF\xFF"
+        vrt_ds.GetRasterBand(1).GetMaskBand().GetMaskBand().ReadRaster() == b"\xff\xff"
     )
 
     assert struct.unpack(
@@ -2157,7 +2157,7 @@ def test_gti_mask_band_explicit(tmp_vsimem):
     assert vrt_ds.RasterCount == 1
     assert vrt_ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
     assert vrt_ds.GetRasterBand(1).ReadRaster() == src_ds.GetRasterBand(1).ReadRaster()
-    assert vrt_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\xFF" * (20 * 20)
+    assert vrt_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\xff" * (20 * 20)
 
 
 def test_gti_flushcache(tmp_vsimem):
@@ -3149,7 +3149,7 @@ def test_gti_sql(tmp_vsimem):
 
     gti_ds = gdal.Open(xml_content)
     if ogrtest.have_geos():
-        (flags, pct) = gti_ds.GetRasterBand(1).GetDataCoverageStatus(
+        flags, pct = gti_ds.GetRasterBand(1).GetDataCoverageStatus(
             0, 0, gti_ds.RasterXSize, gti_ds.RasterYSize
         )
         assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
@@ -3169,7 +3169,7 @@ def test_gti_sql(tmp_vsimem):
 
     gti_ds = gdal.Open(xml_content)
     if ogrtest.have_geos():
-        (flags, pct) = gti_ds.GetRasterBand(1).GetDataCoverageStatus(
+        flags, pct = gti_ds.GetRasterBand(1).GetDataCoverageStatus(
             0, 0, gti_ds.RasterXSize, gti_ds.RasterYSize
         )
         assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0

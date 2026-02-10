@@ -577,7 +577,7 @@ def test_tiff_g4_split():
 
     ds = gdal.Open("data/slim_g4.tif")
 
-    (_, blocky) = ds.GetRasterBand(1).GetBlockSize()
+    _, blocky = ds.GetRasterBand(1).GetBlockSize()
 
     assert blocky == 1, "Did not get scanline sized blocks."
 
@@ -783,8 +783,7 @@ def test_tiff_read_from_tab(tmp_path):
     ds = None
 
     f = open(tmp_path / "tiff_read_from_tab.tab", "wt")
-    f.write(
-        """!table
+    f.write("""!table
 !version 300
 !charset WindowsLatin1
 
@@ -797,8 +796,7 @@ Definition Table
   (400000,1300000) (0,0) Label "Pt 4"
   CoordSys Earth Projection 8, 79, "m", -2, 49, 0.9996012717, 400000, -100000
   Units "m"
-"""
-    )
+""")
     f.close()
 
     ds = gdal.Open(tmp_path / "tiff_read_from_tab.tif")
@@ -1011,7 +1009,7 @@ def test_tiff_read_rpc_tif():
 
 def test_tiff_small(tmp_vsimem):
 
-    content = "\x49\x49\x2A\x00\x08\x00\x00\x00\x04\x00\x00\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x11\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x17\x01\x04\x00\x01\x00\x00\x00\x01\x00\x00\x00"
+    content = "\x49\x49\x2a\x00\x08\x00\x00\x00\x04\x00\x00\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01\x01\x03\x00\x01\x00\x00\x00\x01\x00\x00\x00\x11\x01\x04\x00\x01\x00\x00\x00\x00\x00\x00\x00\x17\x01\x04\x00\x01\x00\x00\x00\x01\x00\x00\x00"
 
     # Create in-memory file
     gdal.FileFromMemBuffer(tmp_vsimem / "small.tif", content)
@@ -1138,7 +1136,7 @@ def test_tiff_read_vsicurl_multirange():
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -1343,7 +1341,7 @@ def test_tiff_direct_and_virtual_mem_io():
                         ("GTIFF_VIRTUAL_MEM_IO", "/vsimem"),
                         ("GTIFF_VIRTUAL_MEM_IO", "tmp"),
                     ]
-                for (option, prefix) in options:
+                for option, prefix in options:
                     if dt == gdal.GDT_CInt16:
                         niter = 3
                     elif prefix == "tmp":
@@ -1467,7 +1465,7 @@ def test_tiff_direct_and_virtual_mem_io():
                             nbands = ds.RasterCount
                             nxsize = ds.RasterXSize
                             nysize = ds.RasterYSize
-                            (nblockxsize, nblockysize) = ds.GetRasterBand(
+                            nblockxsize, nblockysize = ds.GetRasterBand(
                                 1
                             ).GetBlockSize()
                             band_interleaved = (
@@ -2626,7 +2624,7 @@ def test_tiff_read_strace_check():
         ' " '
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+        _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
 
@@ -4209,7 +4207,7 @@ def test_tiff_read_cog_vsicurl(tmp_path):
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -4348,7 +4346,7 @@ def test_tiff_read_cog_with_mask_vsicurl(tmp_path):
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -4487,7 +4485,7 @@ def test_tiff_read_vsicurl_multi_threaded_beyond_advise_read_limit(tmp_path):
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -5027,7 +5025,7 @@ def test_tiff_read_multi_threaded_vsicurl(
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -5123,7 +5121,7 @@ def test_tiff_read_multi_threaded_vsicurl_window_not_aligned_on_blocks():
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -5204,7 +5202,7 @@ def test_tiff_read_multi_threaded_vsicurl_error_in_IsBlocksAvailable(
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -5401,7 +5399,7 @@ def test_tiff_read_overview_level_open_option_honor_GDAL_DISABLE_READDIR_ON_OPEN
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:

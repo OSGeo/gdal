@@ -749,7 +749,7 @@ static void unzlocal_DosDateToTmuDate(uLong64 ulDosDate, tm_unz *ptm)
     uLong64 uDate;
     uDate = static_cast<uLong64>(ulDosDate >> 16);
     ptm->tm_mday = static_cast<uInt>(uDate & 0x1f);
-    ptm->tm_mon = static_cast<uInt>(((uDate)&0x1E0) / 0x20);
+    ptm->tm_mon = static_cast<uInt>(((uDate) & 0x1E0) / 0x20);
     if (ptm->tm_mon)
         ptm->tm_mon--;
     ptm->tm_year = static_cast<uInt>(((uDate & 0x0FE00) / 0x0200) + 1980);

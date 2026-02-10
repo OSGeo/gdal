@@ -293,9 +293,9 @@ class OpenDS:
                         "please update your gdal version to gdal >= 3.3 or do not ask to hide overviews"
                     )
         else:  # if ovr_idx > 0:
-            open_options[
-                "OVERVIEW_LEVEL"
-            ] = f'{ovr_idx - 1}{"only" if ovr_only else ""}'
+            open_options["OVERVIEW_LEVEL"] = (
+                f'{ovr_idx - 1}{"only" if ovr_only else ""}'
+            )
         if logger is not None:
             s = 'opening file: "{}"'.format(filename)
             if open_options:
@@ -393,9 +393,11 @@ def get_bigtiff_creation_option_value(big_tiff: OptionalBoolStr):
     return (
         "IF_SAFER"
         if big_tiff is None
-        else big_tiff
-        if bool(big_tiff) and isinstance(big_tiff, str)
-        else str(is_true(big_tiff))
+        else (
+            big_tiff
+            if bool(big_tiff) and isinstance(big_tiff, str)
+            else str(is_true(big_tiff))
+        )
     )
 
 
@@ -447,7 +449,7 @@ def get_bands(
 
 
 def get_scales_and_offsets(
-    bands: Union[PathOrDS, MaybeSequence[gdal.Band]]
+    bands: Union[PathOrDS, MaybeSequence[gdal.Band]],
 ) -> Tuple[bool, MaybeSequence[Real], MaybeSequence[Real]]:
     if isinstance(bands, PathOrDS.__args__):
         bands = get_bands(bands)

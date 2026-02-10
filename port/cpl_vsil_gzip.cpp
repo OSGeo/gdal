@@ -1804,7 +1804,7 @@ size_t VSIDeflate64Handle::Read(void *const buf, size_t const nBytes)
             std::vector<GByte> *pExtraOutput = nullptr;
             z_stream *pStream = nullptr;
 
-            static unsigned inCbk(void FAR *, z_const unsigned char FAR *FAR *)
+            static unsigned inCbk(void FAR *, z_const unsigned char FAR * FAR *)
             {
                 return 0;
             }

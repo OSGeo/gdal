@@ -1115,10 +1115,10 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     if (poSrcDS->GetGCPCount() > 0)
         poSRS = poSrcDS->GetGCPSpatialRef();
 
-        /* --------------------------------------------------------------------
+    /* --------------------------------------------------------------------
          */
-        /*      For ECW, confirm the datatype is 8bit (or uint16 for ECW v3) */
-        /* --------------------------------------------------------------------
+    /*      For ECW, confirm the datatype is 8bit (or uint16 for ECW v3) */
+    /* --------------------------------------------------------------------
          */
 #if ECWSDK_VERSION >= 50
     bool bECWV3 = false;

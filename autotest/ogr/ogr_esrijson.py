@@ -173,8 +173,7 @@ def test_ogr_esrijson_read_linestring():
     ds = None
 
     # MultiLineString
-    ds = ogr.Open(
-        """{
+    ds = ogr.Open("""{
   "geometryType": "esriGeometryPolyline",
   "fields": [],
   "features": [
@@ -187,8 +186,7 @@ def test_ogr_esrijson_read_linestring():
    }
   }
  ]
-}"""
-    )
+}""")
     lyr = ds.GetLayer(0)
     feature = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(

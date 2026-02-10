@@ -1437,7 +1437,7 @@ latex_elements = {
     + substitutefont_package
     + "}",
     "babel": "\\usepackage[russian,main=english]{babel}\n\\selectlanguage{english}",
-    "fontenc": "\\usepackage[LGR,X2,T1]{fontenc}"
+    "fontenc": "\\usepackage[LGR,X2,T1]{fontenc}",
     # Latex figure (float) alignment
     #'figure_align': 'htbp',
 }

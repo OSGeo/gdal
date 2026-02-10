@@ -31,7 +31,7 @@ pytestmark = pytest.mark.require_driver("OAPIF")
 @pytest.fixture(scope="module", autouse=True)
 def init():
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
+    gdaltest.webserver_process, gdaltest.webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if gdaltest.webserver_port == 0:
@@ -1192,8 +1192,7 @@ def test_ogr_oapif_schema_from_xml_schema():
                           "href": "http://localhost:%d/oapif/collections/foo/xmlschema"
                         }
                     ]
-                 } ] }"""
-        % gdaltest.webserver_port,
+                 } ] }""" % gdaltest.webserver_port,
     )
 
     with webserver.install_http_handler(handler):
@@ -1272,8 +1271,7 @@ def test_ogr_oapif_schema_from_json_schema():
                           "href": "http://localhost:%d/oapif/collections/foo/jsonschema"
                         }
                     ]
-                 } ] }"""
-        % gdaltest.webserver_port,
+                 } ] }""" % gdaltest.webserver_port,
     )
 
     with webserver.install_http_handler(handler):
@@ -1868,9 +1866,7 @@ def test_ogr_oapif_collection_items_page_size():
         }
       }
     }
-    """ % {
-        b"port": gdaltest.webserver_port
-    }
+    """ % {b"port": gdaltest.webserver_port}
 
     itemsdata = b"""
     { "type":"FeatureCollection",
@@ -1905,9 +1901,7 @@ def test_ogr_oapif_collection_items_page_size():
         }
       ]
     }
-    """ % {
-        b"port": gdaltest.webserver_port
-    }
+    """ % {b"port": gdaltest.webserver_port}
 
     filedata = {
         "/oapif": b"""

@@ -1417,7 +1417,7 @@ def test_ogr_geom_getlineargeometry():
         ("MULTISURFACE", "MULTIPOLYGON"),
     ]:
         try:
-            (geom_in, geom_out) = geom
+            geom_in, geom_out = geom
         except Exception:
             geom_in = geom_out = geom
         in_wkt = geom_in + " EMPTY"

@@ -9,6 +9,7 @@ which actually does something.  For astropy, all of the testing is
 centrally managed from py.test and Sphinx is not used for running
 tests.
 """
+
 import re
 
 from docutils.nodes import literal_block

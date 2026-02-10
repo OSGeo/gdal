@@ -337,8 +337,7 @@ def test_osr_basic_9():
 def test_osr_basic_10():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
+    srs.SetFromUserInput("""PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
     GEOGCS["NAD83(CSRS98)",
         DATUM["NAD83_Canadian_Spatial_Reference_System",
             SPHEROID["GRS 1980",6378137,298.257222101,
@@ -360,8 +359,7 @@ def test_osr_basic_10():
         AUTHORITY["EPSG","9001"]],
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH],
-    AUTHORITY["EPSG","2038"]]"""
-    )
+    AUTHORITY["EPSG","2038"]]""")
 
     assert srs.Validate() == 0
 
@@ -373,8 +371,7 @@ def test_osr_basic_10():
 def test_osr_basic_11():
 
     srs1 = osr.SpatialReference()
-    srs1.SetFromUserInput(
-        """PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
+    srs1.SetFromUserInput("""PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
     GEOGCS["NAD83(CSRS98)",
         DATUM["NAD83_Canadian_Spatial_Reference_System",
             SPHEROID["GRS 1980",6378137,298.257222101,
@@ -396,12 +393,10 @@ def test_osr_basic_11():
         AUTHORITY["EPSG","9001"]],
     AUTHORITY["EPSG","2038"],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
 
     srs2 = osr.SpatialReference()
-    srs2.SetFromUserInput(
-        """PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
+    srs2.SetFromUserInput("""PROJCS["NAD83(CSRS98) / UTM zone 20N (deprecated)",
     GEOGCS["NAD83(CSRS98)",
         DATUM["NAD83_Canadian_Spatial_Reference_System",
             SPHEROID["GRS 1980",6378137,298.257222101,
@@ -422,8 +417,7 @@ def test_osr_basic_11():
         AUTHORITY["EPSG","9001"]],
     AUTHORITY["EPSG","2038"],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
 
     assert srs1.IsSame(srs2)
 
@@ -522,8 +516,7 @@ def test_osr_basic_16():
 
     # Nominal test : change citation of a GEOCCS
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """GEOCCS["WGS 84 (geocentric)",
+    srs.SetFromUserInput("""GEOCCS["WGS 84 (geocentric)",
     PRIMEM["Greenwich",0,
         AUTHORITY["EPSG","8901"]],
     DATUM["WGS_1984",
@@ -534,8 +527,7 @@ def test_osr_basic_16():
     AXIS["Geocentric X",OTHER],
     AXIS["Geocentric Y",OTHER],
     AXIS["Geocentric Z",OTHER],
-    AUTHORITY["EPSG","4328"]]"""
-    )
+    AUTHORITY["EPSG","4328"]]""")
     srs.SetGeocCS("a")
     expect_wkt = """GEOCCS["a",
     DATUM["WGS_1984",
@@ -761,8 +753,7 @@ def test_osr_basic_21():
 def test_osr_basic_22():
 
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101,
@@ -785,8 +776,7 @@ def test_osr_basic_22():
         AUTHORITY["EPSG","9001"]],
     AXIS["X",EAST],
     AXIS["Y",NORTH],
-    AUTHORITY["EPSG","2154"]]"""
-    )
+    AUTHORITY["EPSG","2154"]]""")
 
     sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
     expected_sr2_wkt = """PROJCS["unnamed",
@@ -820,8 +810,7 @@ def test_osr_basic_22():
     assert sr3.IsSame(sr) != 0
 
     # Particular case of LCC_2SP with phi0=phi1=phi2
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101,
@@ -842,8 +831,7 @@ def test_osr_basic_22():
     PARAMETER["false_northing",6600000],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
 
     sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
     expected_sr2_wkt = """PROJCS["unnamed",
@@ -876,8 +864,7 @@ def test_osr_basic_22():
     assert sr3.IsSame(sr) != 0
 
     # Particular case of LCC_2SP with phi0 != phi1 and phi1=phi2
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101,
@@ -898,8 +885,7 @@ def test_osr_basic_22():
     PARAMETER["false_northing",6600000],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
 
     sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_1SP)
     expected_sr2_wkt = """PROJCS["unnamed",
@@ -963,8 +949,7 @@ def test_osr_basic_22():
 def test_osr_basic_23():
 
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["NTF (Paris)",
         DATUM["Nouvelle_Triangulation_Francaise_Paris",
             SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269,
@@ -986,8 +971,7 @@ def test_osr_basic_23():
         AUTHORITY["EPSG","9001"]],
     AXIS["X",EAST],
     AXIS["Y",NORTH],
-    AUTHORITY["EPSG","27584"]]"""
-    )
+    AUTHORITY["EPSG","27584"]]""")
 
     sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_LAMBERT_CONFORMAL_CONIC_2SP)
     expected_sr2_wkt = """PROJCS["unnamed",
@@ -1029,8 +1013,7 @@ def test_osr_basic_23():
 def test_osr_basic_24():
 
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
         GEOGCS["WGS 84",
             DATUM["WGS_1984",
                 SPHEROID["WGS 84",6378137,298.257223563,
@@ -1048,8 +1031,7 @@ def test_osr_basic_24():
         PARAMETER["false_northing",0],
         UNIT["metre",1],
         AXIS["Easting",EAST],
-        AXIS["Northing",NORTH]]"""
-    )
+        AXIS["Northing",NORTH]]""")
 
     sr2 = sr.ConvertToOtherProjection(osr.SRS_PT_MERCATOR_2SP)
     expected_sr2_wkt = """PROJCS["unnamed",
@@ -1088,19 +1070,16 @@ def test_osr_basic_24():
 def test_osr_basic_25():
 
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """GEOGCS["WGS 84",
+    sr.SetFromUserInput("""GEOGCS["WGS 84",
             DATUM["WGS_1984",
                 SPHEROID["WGS 84",6378137,298.257223563]],
             PRIMEM["Greenwich",0,
                 AUTHORITY["EPSG","8901"]],
-            UNIT["degree",0.0174532925199433]]"""
-    )
+            UNIT["degree",0.0174532925199433]]""")
     sr2 = sr.ConvertToOtherProjection("Mercator_1SP")
     assert sr2 is None
 
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
         GEOGCS["WGS 84",
             DATUM["WGS_1984",
                 SPHEROID["WGS 84",6378137,298.257223563]],
@@ -1114,8 +1093,7 @@ def test_osr_basic_25():
         PARAMETER["false_northing",0],
         UNIT["metre",1],
         AXIS["Easting",EAST],
-        AXIS["Northing",NORTH]]"""
-    )
+        AXIS["Northing",NORTH]]""")
 
     sr2 = sr.ConvertToOtherProjection(None)
     assert sr2 is None
@@ -1128,8 +1106,7 @@ def test_osr_basic_25():
 
     # Mercator_1SP -> Mercator_2SP: Negative scale factor
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
         GEOGCS["WGS 84",
             DATUM["WGS_1984",
                 SPHEROID["WGS 84",6378137,298.257223563]],
@@ -1143,16 +1120,14 @@ def test_osr_basic_25():
         PARAMETER["false_northing",0],
         UNIT["metre",1],
         AXIS["Easting",EAST],
-        AXIS["Northing",NORTH]]"""
-    )
+        AXIS["Northing",NORTH]]""")
     with gdaltest.disable_exceptions():
         assert sr.ConvertToOtherProjection("Mercator_2SP") is None
 
     # Mercator_1SP -> Mercator_2SP: Invalid eccentricity
     sr = osr.SpatialReference()
     with gdaltest.disable_exceptions():
-        sr.SetFromUserInput(
-            """PROJCS["unnamed",
+        sr.SetFromUserInput("""PROJCS["unnamed",
             GEOGCS["WGS 84",
                 DATUM["WGS_1984",
                     SPHEROID["WGS 84",6378137,0.1]],
@@ -1166,14 +1141,12 @@ def test_osr_basic_25():
             PARAMETER["false_northing",0],
             UNIT["metre",1],
             AXIS["Easting",EAST],
-            AXIS["Northing",NORTH]]"""
-        )
+            AXIS["Northing",NORTH]]""")
         assert sr.ConvertToOtherProjection("Mercator_2SP") is None
 
     # Mercator_2SP -> Mercator_1SP: Invalid standard_parallel_1
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563]],
@@ -1187,16 +1160,14 @@ def test_osr_basic_25():
     PARAMETER["false_northing",0],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
     with gdaltest.disable_exceptions():
         assert sr.ConvertToOtherProjection("Mercator_1SP") is None
 
     # Mercator_2SP -> Mercator_1SP: Invalid eccentricity
     sr = osr.SpatialReference()
     with gdaltest.disable_exceptions():
-        sr.SetFromUserInput(
-            """PROJCS["unnamed",
+        sr.SetFromUserInput("""PROJCS["unnamed",
         GEOGCS["WGS 84",
             DATUM["WGS_1984",
                 SPHEROID["WGS 84",6378137,0.1]],
@@ -1210,14 +1181,12 @@ def test_osr_basic_25():
         PARAMETER["false_northing",0],
         UNIT["metre",1],
         AXIS["Easting",EAST],
-        AXIS["Northing",NORTH]]"""
-        )
+        AXIS["Northing",NORTH]]""")
         assert sr.ConvertToOtherProjection("Mercator_1SP") is None
 
     # LCC_1SP -> LCC_2SP: Negative scale factor
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["NTF (Paris)",
         DATUM["Nouvelle_Triangulation_Francaise_Paris",
             SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269]],
@@ -1231,16 +1200,14 @@ def test_osr_basic_25():
     PARAMETER["false_northing",4185861.369],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
     with gdaltest.disable_exceptions():
         assert sr.ConvertToOtherProjection("Lambert_Conformal_Conic_2SP") is None
 
     # LCC_1SP -> LCC_2SP: Invalid eccentricity
     sr = osr.SpatialReference()
     with gdaltest.disable_exceptions():
-        sr.SetFromUserInput(
-            """PROJCS["unnamed",
+        sr.SetFromUserInput("""PROJCS["unnamed",
         GEOGCS["NTF (Paris)",
             DATUM["Nouvelle_Triangulation_Francaise_Paris",
                 SPHEROID["Clarke 1880 (IGN)",6378249.2,0.1]],
@@ -1254,14 +1221,12 @@ def test_osr_basic_25():
         PARAMETER["false_northing",4185861.369],
         UNIT["metre",1],
         AXIS["Easting",EAST],
-        AXIS["Northing",NORTH]]"""
-        )
+        AXIS["Northing",NORTH]]""")
         assert sr.ConvertToOtherProjection("Lambert_Conformal_Conic_2SP") is None
 
     # LCC_1SP -> LCC_2SP: Invalid latitude_of_origin
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["NTF (Paris)",
         DATUM["Nouvelle_Triangulation_Francaise_Paris",
             SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269]],
@@ -1275,15 +1240,13 @@ def test_osr_basic_25():
     PARAMETER["false_northing",4185861.369],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
     with gdaltest.disable_exceptions():
         assert sr.ConvertToOtherProjection("Lambert_Conformal_Conic_2SP") is None
 
     # LCC_1SP -> LCC_2SP: latitude_of_origin == 0
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["NTF (Paris)",
         DATUM["Nouvelle_Triangulation_Francaise_Paris",
             SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269]],
@@ -1297,14 +1260,12 @@ def test_osr_basic_25():
     PARAMETER["false_northing",4185861.369],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
     with gdaltest.disable_exceptions():
         assert sr.ConvertToOtherProjection("Lambert_Conformal_Conic_2SP") is None
 
     # LCC_2SP -> LCC_1SP : Invalid standard_parallel_1
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101]],
@@ -1320,14 +1281,12 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
     with gdaltest.disable_exceptions():
         assert sr.ConvertToOtherProjection("Lambert_Conformal_Conic_1SP") is None
 
     # LCC_2SP -> LCC_1SP : Invalid standard_parallel_2
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101]],
@@ -1343,14 +1302,12 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
     with gdaltest.disable_exceptions():
         assert sr.ConvertToOtherProjection("Lambert_Conformal_Conic_1SP") is None
 
     # LCC_2SP -> LCC_1SP : Invalid latitude_of_origin
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101]],
@@ -1366,14 +1323,12 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
     with gdaltest.disable_exceptions():
         assert sr.ConvertToOtherProjection("Lambert_Conformal_Conic_1SP") is None
 
     # LCC_2SP -> LCC_1SP : abs(stdp1) == abs(stdp2)
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101]],
@@ -1389,14 +1344,12 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
     with gdaltest.disable_exceptions():
         assert sr.ConvertToOtherProjection("Lambert_Conformal_Conic_1SP") is None
 
     # LCC_2SP -> LCC_1SP : stdp1 ~= stdp2 ~= 0
-    sr.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 1980",6378137,298.257222101]],
@@ -1412,15 +1365,13 @@ def test_osr_basic_25():
     PARAMETER["false_northing",6600000],
     UNIT["metre",1],
     AXIS["Easting",EAST],
-    AXIS["Northing",NORTH]]"""
-    )
+    AXIS["Northing",NORTH]]""")
     with gdaltest.disable_exceptions():
         assert sr.ConvertToOtherProjection("Lambert_Conformal_Conic_1SP") is None
 
     # LCC_2SP -> LCC_1SP : Invalid eccentricity
     with gdaltest.disable_exceptions():
-        sr.SetFromUserInput(
-            """PROJCS["unnamed",
+        sr.SetFromUserInput("""PROJCS["unnamed",
         GEOGCS["RGF93",
             DATUM["Reseau_Geodesique_Francais_1993",
                 SPHEROID["GRS 1980",6378137,0.1]],
@@ -1436,8 +1387,7 @@ def test_osr_basic_25():
         PARAMETER["false_northing",6600000],
         UNIT["metre",1],
         AXIS["Easting",EAST],
-        AXIS["Northing",NORTH]]"""
-        )
+        AXIS["Northing",NORTH]]""")
         assert sr.ConvertToOtherProjection("Lambert_Conformal_Conic_1SP") is None
 
 
@@ -1533,9 +1483,7 @@ def test_osr_basic_set_from_user_input_IAU():
 def test_osr_basic_set_from_user_input_GEODCRS():
 
     srs = osr.SpatialReference()
-    assert (
-        srs.SetFromUserInput(
-            """GEODCRS["WGS 84",
+    assert srs.SetFromUserInput("""GEODCRS["WGS 84",
     DATUM["World Geodetic System 1984",
         ELLIPSOID["WGS 84",6378137,298.257223563,
             LENGTHUNIT["metre",1]]],
@@ -1550,19 +1498,14 @@ def test_osr_basic_set_from_user_input_GEODCRS():
             ANGLEUNIT["degree",0.0174532925199433]],
     AREA["World"],
     BBOX[-90,-180,90,180],
-    ID["EPSG",4326]]"""
-        )
-        == 0
-    )
+    ID["EPSG",4326]]""") == 0
     assert srs.Validate() == 0
 
 
 def test_osr_basic_set_from_user_input_GEOGCRS():
 
     srs = osr.SpatialReference()
-    assert (
-        srs.SetFromUserInput(
-            """GEOGCRS["WGS 84",
+    assert srs.SetFromUserInput("""GEOGCRS["WGS 84",
     DATUM["World Geodetic System 1984",
         ELLIPSOID["WGS 84",6378137,298.257223563,
             LENGTHUNIT["metre",1]]],
@@ -1579,19 +1522,14 @@ def test_osr_basic_set_from_user_input_GEOGCRS():
         SCOPE["unknown"],
         AREA["World"],
         BBOX[-90,-180,90,180]],
-    ID["EPSG",4326]]"""
-        )
-        == 0
-    )
+    ID["EPSG",4326]]""") == 0
     assert srs.Validate() == 0
 
 
 def test_osr_basic_set_from_user_input_PROJCRS():
 
     srs = osr.SpatialReference()
-    assert (
-        srs.SetFromUserInput(
-            """PROJCRS["WGS 84 / UTM zone 31N",
+    assert srs.SetFromUserInput("""PROJCRS["WGS 84 / UTM zone 31N",
     BASEGEODCRS["WGS 84",
         DATUM["World Geodetic System 1984",
             ELLIPSOID["WGS 84",6378137,298.257223563,
@@ -1625,10 +1563,7 @@ def test_osr_basic_set_from_user_input_PROJCRS():
             LENGTHUNIT["metre",1]],
     AREA["World - N hemisphere - 0°E to 6°E - by country"],
     BBOX[0,0,84,6],
-    ID["EPSG",32631]]"""
-        )
-        == 0
-    )
+    ID["EPSG",32631]]""") == 0
     assert srs.Validate() == 0
 
 
@@ -2028,8 +1963,7 @@ def test_osr_basic_is_dynamic():
     srs.IsDynamic()
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """GEOGCS["WGS 84",
+    srs.SetFromUserInput("""GEOGCS["WGS 84",
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
             AUTHORITY["EPSG","7030"]],
@@ -2040,8 +1974,7 @@ def test_osr_basic_is_dynamic():
         AUTHORITY["EPSG","9122"]],
     AXIS["Latitude",NORTH],
     AXIS["Longitude",EAST],
-    AUTHORITY["EPSG","4326"]]"""
-    )
+    AUTHORITY["EPSG","4326"]]""")
     assert srs.IsDynamic()
 
     srs = osr.SpatialReference()
@@ -2132,8 +2065,7 @@ def test_osr_basic_get_axes_count():
 def test_osr_basic_export_derived_projected_crs_to_wkt():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """DERIVEDPROJCRS["unnamed",
+    srs.SetFromUserInput("""DERIVEDPROJCRS["unnamed",
     BASEPROJCRS["unnamed",
         BASEGEOGCRS["WGS 84",
             DATUM["World Geodetic System 1984",
@@ -2198,8 +2130,7 @@ def test_osr_basic_export_derived_projected_crs_to_wkt():
         AXIS["ellipsoidal height (h)",up,
             ORDER[3],
             LENGTHUNIT["metre",1,
-                ID["EPSG",9001]]]]"""
-    )
+                ID["EPSG",9001]]]]""")
     wkt = srs.ExportToWkt()
     assert wkt
     assert wkt == srs.ExportToWkt(["FORMAT=WKT2"])
@@ -2229,8 +2160,7 @@ def test_osr_basic_proj_network():
 def test_osr_basic_get_linear_units_compound_engineering_crs():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """COMPOUNDCRS["None",
+    srs.SetFromUserInput("""COMPOUNDCRS["None",
     ENGCRS["None",
         EDATUM[""],
         CS[Cartesian,2],
@@ -2247,8 +2177,7 @@ def test_osr_basic_get_linear_units_compound_engineering_crs():
         CS[vertical,1],
             AXIS["up",up,
                 LENGTHUNIT["metre",1,
-                    ID["EPSG",9001]]]]]"""
-    )
+                    ID["EPSG",9001]]]]]""")
 
     assert srs.GetLinearUnits() == pytest.approx(0.304800609601219)
     assert srs.GetLinearUnitsName() == "US survey foot"
@@ -2299,9 +2228,7 @@ def test_osr_exceptions():
 def test_osr_basic_set_from_user_input_COORDINATEMETADATA_with_epoch():
 
     srs = osr.SpatialReference()
-    assert (
-        srs.SetFromUserInput(
-            """COORDINATEMETADATA[
+    assert srs.SetFromUserInput("""COORDINATEMETADATA[
     GEOGCRS["WGS 84 (G1762)",
         DYNAMIC[
             FRAMEEPOCH[2005]],
@@ -2322,10 +2249,7 @@ def test_osr_basic_set_from_user_input_COORDINATEMETADATA_with_epoch():
             AREA["World."],
             BBOX[-90,-180,90,180]],
         ID["EPSG",9057]],
-    EPOCH[2025]]"""
-        )
-        == ogr.OGRERR_NONE
-    )
+    EPOCH[2025]]""") == ogr.OGRERR_NONE
     assert srs.GetName() == "WGS 84 (G1762)"
     assert srs.GetCoordinateEpoch() == 2025.0
 
@@ -2338,9 +2262,7 @@ def test_osr_basic_set_from_user_input_COORDINATEMETADATA_with_epoch():
 def test_osr_basic_set_from_user_input_COORDINATEMETADATA_without_epoch():
 
     srs = osr.SpatialReference()
-    assert (
-        srs.SetFromUserInput(
-            """COORDINATEMETADATA[
+    assert srs.SetFromUserInput("""COORDINATEMETADATA[
     GEOGCRS["WGS 84",
         DATUM["World Geodetic System 1984",
             ELLIPSOID["WGS 84",6378137,298.257223563,
@@ -2358,10 +2280,7 @@ def test_osr_basic_set_from_user_input_COORDINATEMETADATA_without_epoch():
             SCOPE["Geodesy. Navigation and positioning using GPS satellite system."],
             AREA["World."],
             BBOX[-90,-180,90,180]],
-        ID["EPSG",9057]]]"""
-        )
-        == ogr.OGRERR_NONE
-    )
+        ID["EPSG",9057]]]""") == ogr.OGRERR_NONE
     assert srs.GetName() == "WGS 84"
     assert srs.GetCoordinateEpoch() == 0.0
 
@@ -2390,7 +2309,7 @@ def test_osr_basic_warning_exceptions():
         "osr.SpatialReference();" ' " '
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+        _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
     assert "FutureWarning: Neither osr.UseExceptions()" in err

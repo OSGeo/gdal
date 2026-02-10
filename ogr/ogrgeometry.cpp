@@ -40,7 +40,7 @@
 #include "ogr_wkb.h"
 
 #define SFCGAL_MAKE_VERSION(major, minor, patch)                               \
-    ((major)*10000 + (minor)*100 + (patch))
+    ((major) * 10000 + (minor) * 100 + (patch))
 #define SFCGAL_VERSION                                                         \
     SFCGAL_MAKE_VERSION(SFCGAL_VERSION_MAJOR, SFCGAL_VERSION_MINOR,            \
                         SFCGAL_VERSION_PATCH)
@@ -1586,6 +1586,7 @@ OGRErr OGR_G_ImportFromWkb(OGRGeometryH hGeom, const void *pabyData, int nSize)
  * @return Currently OGRERR_NONE is always returned.
  */
 /* clang-format on */
+
 OGRErr OGRGeometry::exportToWkb(OGRwkbByteOrder eByteOrder,
                                 unsigned char *pabyData,
                                 OGRwkbVariant eWkbVariant) const

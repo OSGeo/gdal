@@ -939,9 +939,7 @@ static void GDALDeregister_GTiff(GDALDriver *)
 }
 
 #define COMPRESSION_ENTRY(x, bWriteSupported)                                  \
-    {                                                                          \
-        COMPRESSION_##x, STRINGIFY(x), bWriteSupported                         \
-    }
+    {COMPRESSION_##x, STRINGIFY(x), bWriteSupported}
 
 static const struct
 {

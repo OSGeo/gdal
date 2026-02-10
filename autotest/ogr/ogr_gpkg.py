@@ -29,6 +29,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("GPKG")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -151,7 +152,7 @@ def tbl_linestring(gpkg_ds):
         feat.SetField("fld_string", "test string %d test" % i)
         feat.SetField("fld_date", "2014/05/17 ")
         feat.SetField("fld_datetime", "2014/12/31  23:59:59.999Z")
-        feat.SetField("fld_binary", b"\xFF\xFE")
+        feat.SetField("fld_binary", b"\xff\xfe")
         feat.SetField("fld_boolean", 1)
         feat.SetField("fld_smallint", -32768)
         feat.SetField("fld_float", 1.23)
@@ -1117,7 +1118,7 @@ def test_ogr_gpkg_15(gpkg_ds):
         assert feat.IsFieldNull(5)
         assert feat.IsFieldNull(6)
 
-    for (expected_type, actual_type, expected_result) in [
+    for expected_type, actual_type, expected_result in [
         ("POINT", "POINT", 1),
         ("LINESTRING", "POINT", 0),
         ("GEOMETRY", "POINT", 1),
@@ -1144,7 +1145,7 @@ def test_ogr_gpkg_15(gpkg_ds):
     feat = ogr.Feature(lyr.GetLayerDefn())
     lyr.CreateFeature(feat)
 
-    for (sql, expected_result) in [
+    for sql, expected_result in [
         ("SELECT HasSpatialIndex('point-with-spi-and-dashes', 'geom')", 1),
         ("SELECT DisableSpatialIndex('point-with-spi-and-dashes', 'geom')", 1),
         ("SELECT HasSpatialIndex('point-with-spi-and-dashes', 'geom')", 0),
@@ -1869,12 +1870,10 @@ def test_ogr_gpkg_20(tmp_vsimem, tmp_path):
 
     # "Conflict" with EPSG:4326
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """GEOGCS["my geogcs",
+    srs.SetFromUserInput("""GEOGCS["my geogcs",
     DATUM["my datum",
         SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],
-    AUTHORITY["my_org","4326"]]"""
-    )
+    AUTHORITY["my_org","4326"]]""")
     lyr = ds.CreateLayer("my_org_4326", srs=srs)
 
     # No authority node
@@ -2004,8 +2003,7 @@ def test_ogr_gpkg_srs_non_duplication_custom_crs(tmp_vsimem):
 
     # Test now transitionning to definition_12_063 / WKT2 database structure...
     srs_3d = osr.SpatialReference()
-    srs_3d.SetFromUserInput(
-        """GEOGCRS["srs 3d",
+    srs_3d.SetFromUserInput("""GEOGCRS["srs 3d",
     DATUM["some datum",
         ELLIPSOID["some ellipsoid",6378137,298.257223563,
             LENGTHUNIT["metre",1]]],
@@ -2020,8 +2018,7 @@ def test_ogr_gpkg_srs_non_duplication_custom_crs(tmp_vsimem):
             ANGLEUNIT["degree",0.0174532925199433]],
         AXIS["ellipsoidal height (h)",up,
             ORDER[3],
-            LENGTHUNIT["metre",1]]]"""
-    )
+            LENGTHUNIT["metre",1]]]""")
     lyr = ds.CreateLayer("test_3d", srs=srs_3d)
     assert lyr
     lyr = ds.CreateLayer("test_3d_bis", srs=srs_3d)
@@ -2050,12 +2047,10 @@ def test_ogr_gpkg_srs_non_consistent_with_official_definition(tmp_vsimem):
 
     ds = gdaltest.gpkg_dr.CreateDataSource(fname)
     test_fake_4267 = osr.SpatialReference()
-    test_fake_4267.SetFromUserInput(
-        """GEOGCS["my geogcs 4267",
+    test_fake_4267.SetFromUserInput("""GEOGCS["my geogcs 4267",
     DATUM["WGS_1984",
         SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],
-    AUTHORITY["EPSG","4267"]]"""
-    )
+    AUTHORITY["EPSG","4267"]]""")
     gdal.ErrorReset()
     with gdal.quiet_errors():
         lyr = ds.CreateLayer("test_fake_4267", srs=test_fake_4267)
@@ -2067,12 +2062,10 @@ def test_ogr_gpkg_srs_non_consistent_with_official_definition(tmp_vsimem):
 
     # EPSG:4326 already in the database
     test_fake_4326 = osr.SpatialReference()
-    test_fake_4326.SetFromUserInput(
-        """GEOGCS["my geogcs 4326",
+    test_fake_4326.SetFromUserInput("""GEOGCS["my geogcs 4326",
     DATUM["WGS_1984",
         SPHEROID["my spheroid",1000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],
-    AUTHORITY["EPSG","4326"]]"""
-    )
+    AUTHORITY["EPSG","4326"]]""")
     gdal.ErrorReset()
     with gdal.quiet_errors():
         lyr = ds.CreateLayer("test_fake_4326", srs=test_fake_4326)
@@ -3389,8 +3382,7 @@ def test_ogr_gpkg_34(tmp_vsimem):
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("CURVEPOLYGON ((0 0,0 1,1 1,0 0))"))
     lyr.CreateFeature(f)
     lyr.SetMetadataItem("FOO", "BAR")
-    ds.ExecuteSQL(
-        """CREATE TABLE gpkg_data_columns (
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
   name TEXT,
@@ -3400,8 +3392,7 @@ def test_ogr_gpkg_34(tmp_vsimem):
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
   CONSTRAINT gdc_tn UNIQUE (table_name, name)
-)"""
-    )
+)""")
     ds.ExecuteSQL(
         "INSERT INTO gpkg_data_columns VALUES('weird''layer\"name', 'foo', 'foo_constraints', NULL, NULL, NULL, NULL)"
     )
@@ -3554,8 +3545,7 @@ def test_ogr_gpkg_35(tmp_vsimem, tmp_path):
     f.SetField("baz", "bazval")
     lyr_nonspatial.CreateFeature(f)
 
-    ds.ExecuteSQL(
-        """CREATE TABLE gpkg_data_columns (
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
   name TEXT,
@@ -3565,10 +3555,8 @@ def test_ogr_gpkg_35(tmp_vsimem, tmp_path):
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
   CONSTRAINT gdc_tn UNIQUE (table_name, name)
-)"""
-    )
-    ds.ExecuteSQL(
-        """CREATE TABLE gpkg_data_column_constraints (
+)""")
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_column_constraints (
             constraint_name TEXT NOT NULL,
             constraint_type TEXT NOT NULL,
             value TEXT,
@@ -3578,8 +3566,7 @@ def test_ogr_gpkg_35(tmp_vsimem, tmp_path):
             max_is_inclusive BOOLEAN,
             description TEXT,
             CONSTRAINT gdcc_ntv UNIQUE (constraint_name,
-            constraint_type, value))"""
-    )
+            constraint_type, value))""")
     ds.ExecuteSQL(
         "INSERT INTO gpkg_data_columns VALUES('test', 'bar_i_will_disappear', 'bar_constraints', NULL, NULL, NULL, NULL)"
     )
@@ -3680,8 +3667,7 @@ def test_ogr_gpkg_36(tmp_vsimem, tmp_path):
     lyr.CreateFeature(f)
     f = None
 
-    ds.ExecuteSQL(
-        """CREATE TABLE gpkg_data_column_constraints (
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_column_constraints (
             constraint_name TEXT NOT NULL,
             constraint_type TEXT NOT NULL,
             value TEXT,
@@ -3691,8 +3677,7 @@ def test_ogr_gpkg_36(tmp_vsimem, tmp_path):
             max_is_inclusive BOOLEAN,
             description TEXT,
             CONSTRAINT gdcc_ntv UNIQUE (constraint_name,
-            constraint_type, value))"""
-    )
+            constraint_type, value))""")
     ds.ExecuteSQL(
         "INSERT INTO gpkg_extensions VALUES('test', 'foo', 'extension_name', 'definition', 'read-write')"
     )
@@ -3947,8 +3932,7 @@ def test_ogr_gpkg_37(tmp_vsimem):
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,0 0))"))
     lyr.CreateFeature(f)
 
-    ds.ExecuteSQL(
-        """CREATE TABLE gpkg_data_columns (
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
   name TEXT,
@@ -3958,8 +3942,7 @@ def test_ogr_gpkg_37(tmp_vsimem):
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
   CONSTRAINT gdc_tn UNIQUE (table_name, name)
-)"""
-    )
+)""")
     ds.ExecuteSQL(
         "INSERT INTO gpkg_data_columns VALUES('test', 'foo', 'constraint', NULL, NULL, NULL, NULL)"
     )
@@ -7280,8 +7263,7 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
     ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
     assert ds.GetRelationshipNames() is None
 
-    ds.ExecuteSQL(
-        """CREATE TABLE 'gpkgext_relations' (
+    ds.ExecuteSQL("""CREATE TABLE 'gpkgext_relations' (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           base_table_name TEXT NOT NULL,
           base_primary_column TEXT NOT NULL DEFAULT 'id',
@@ -7289,8 +7271,7 @@ def test_ogr_gpkg_relations(tmp_vsimem, tmp_path):
           related_primary_column TEXT NOT NULL DEFAULT 'id',
           relation_name TEXT NOT NULL,
           mapping_table_name TEXT NOT NULL UNIQUE
-         );"""
-    )
+         );""")
 
     # not yet valid...
     ds = gdal.OpenEx(filename, gdal.OF_VECTOR | gdal.OF_UPDATE)
@@ -8301,7 +8282,7 @@ def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
     f.SetField("str", "abc")
     f.SetField("date", "2022-05-31")
     f.SetField("datetime", "2022-05-31T12:34:56.789Z")
-    f.SetField("binary", b"\xDE\xAD")
+    f.SetField("binary", b"\xde\xad")
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     lyr.CreateFeature(f)
 
@@ -8380,7 +8361,7 @@ def test_ogr_gpkg_arrow_stream_numpy(tmp_vsimem):
             assert batch["str"][0] == f.GetField("str").encode("utf-8")
             assert batch["date"][0] == numpy.datetime64("2022-05-31")
             assert batch["datetime"][0] == numpy.datetime64("2022-05-31T12:34:56.789")
-            assert bytes(batch["binary"][0]) == b"\xDE\xAD"
+            assert bytes(batch["binary"][0]) == b"\xde\xad"
             assert len(bytes(batch["geom"][0])) == 21
 
             assert batch["fid"][1] == 2
@@ -9788,8 +9769,7 @@ def test_ogr_gpkg_field_alternative_names_comment(tmp_vsimem):
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetComment() == ""
 
-    ds.ExecuteSQL(
-        """CREATE TABLE gpkg_data_columns (
+    ds.ExecuteSQL("""CREATE TABLE gpkg_data_columns (
   table_name TEXT NOT NULL,
   column_name TEXT NOT NULL,
   name TEXT,
@@ -9799,8 +9779,7 @@ def test_ogr_gpkg_field_alternative_names_comment(tmp_vsimem):
   constraint_name TEXT,
   CONSTRAINT pk_gdc PRIMARY KEY (table_name, column_name),
   CONSTRAINT gdc_tn UNIQUE (table_name, name)
-)"""
-    )
+)""")
     # name same as column name, won't be used as alternative name
     ds.ExecuteSQL(
         "INSERT INTO gpkg_data_columns('table_name', 'column_name', 'name', 'description') VALUES ('test', 'foo', 'foo', 'my description')"
@@ -10167,7 +10146,7 @@ def test_ogr_gpkg_write_arrow_fallback_types(tmp_vsimem):
     f["date"] = "2023/10/06"
     f["time"] = "12:34:56"
     f["datetime"] = "2023/10/06 19:43:00"
-    f.SetField("binary", b"\x01\x23\x46\x57\x89\xAB\xCD\xEF")
+    f.SetField("binary", b"\x01\x23\x46\x57\x89\xab\xcd\xef")
     f["stringlist"] = ["foo", "bar"]
     f["intlist"] = [1, 2]
     f["int64list"] = [12345678901234, 2]
