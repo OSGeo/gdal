@@ -33,6 +33,7 @@
 #include "../frmts/vrt/vrtdataset.h"
 #include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
+#include "gdal_thread_pool.h"
 // #include "gdalsse_priv.h"
 
 // Limit types to practical use cases.
@@ -461,15 +462,8 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
         nThreads = CPLGetNumCPUs();
     else if (nThreads == 0)
     {
-        const char *pszNumThreads =
-            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        if (pszNumThreads)
-        {
-            if (EQUAL(pszNumThreads, "ALL_CPUS"))
-                nThreads = CPLGetNumCPUs();
-            else
-                nThreads = std::max(0, std::min(128, atoi(pszNumThreads)));
-        }
+        nThreads = GDALGetNumThreads(/* nMaxVal = */ 128,
+                                     /* bDefaulAllCPUs = */ false);
     }
     if (nThreads > 1)
     {

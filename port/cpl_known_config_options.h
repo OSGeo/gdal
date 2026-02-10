@@ -252,7 +252,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_DAAS_X_FORWARDED_USER", // from daasdataset.cpp
    "GDAL_DATA", // from cpl_csv.cpp, cpl_findfile.cpp, gdaldrivermanager.cpp
    "GDAL_DEBUG_BLOCK_CACHE", // from gdalrasterblock.cpp
-   "GDAL_DEBUG_CPU_COUNT", // from gdalalgorithm.cpp
    "GDAL_DEBUG_PROCESS_DYNAMIC_METADATA", // from gdaljp2metadata.cpp
    "GDAL_DEFAULT_CREATE_COPY", // from gdaldriver.cpp
    "GDAL_DEFAULT_WMS_CACHE_PATH", // from gdalwmscache.cpp
@@ -350,7 +349,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES", // from netcdfdataset.cpp
    "GDAL_NETCDF_VERIFY_DIMS", // from netcdfdataset.cpp
    "GDAL_NO_COSTLY_OVERVIEW", // from rasterio.cpp
-   "GDAL_NUM_THREADS", // from avifdataset.cpp, common.cpp, cpl_vsil_gzip.cpp, gdal_tps.cpp, gdalalgorithm.cpp, gdaldataset.cpp, gdalgrid.cpp, gdalpansharpen.cpp, gdalrasterband.cpp, gdaltileindexdataset.cpp, gdalwarpkernel.cpp, gtiffdataset_write.cpp, jpegxl.cpp, libertiffdataset.cpp, ogr2ogr_lib.cpp, ogrmvtdataset.cpp, ogrparquetlayer.cpp, osm_parser.cpp, overview.cpp, rmfdataset.cpp, vrtdataset.cpp, zarr_array.cpp
+   "GDAL_NUM_THREADS", // from gdal_thread_pool.cpp, gdalalgorithm.cpp
    "GDAL_OGCAPI_TILEMATRIXSET_LIMITS", // from gdalogcapidataset.cpp
    "GDAL_ONE_BIG_READ", // from jp2kakdataset.cpp, jpipkakdataset.cpp, mrsiddataset.cpp, rawdataset.cpp, wcsdataset.cpp
    "GDAL_OPEN_AFTER_COPY", // from jpgdataset.cpp, pngdataset.cpp

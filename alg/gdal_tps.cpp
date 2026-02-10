@@ -33,6 +33,7 @@
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #include "gdalgenericinverse.h"
+#include "gdal_thread_pool.h"
 
 CPL_C_START
 CPLXMLNode *GDALSerializeTPSTransformer(void *pTransformArg);
@@ -243,15 +244,9 @@ void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
     // and checking memory usage too...
     if (nGCPCount > 100)
     {
-        const char *pszWarpThreads =
-            CSLFetchNameValue(papszOptions, "NUM_THREADS");
-        if (pszWarpThreads == nullptr)
-            pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
-        if (EQUAL(pszWarpThreads, "ALL_CPUS"))
-            nThreads = CPLGetNumCPUs();
-        else
-            nThreads = atoi(pszWarpThreads);
-        nThreads = std::clamp(nThreads, 1, 2);
+        nThreads = GDALGetNumThreads(papszOptions, "NUM_THREADS",
+                                     /* nMaxVal = */ 2,
+                                     /* bDefaultAllCPUs = */ false);
 
         // Do sanity checks w.r.t. available RAM
 

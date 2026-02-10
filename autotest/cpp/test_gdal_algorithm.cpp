@@ -4863,6 +4863,13 @@ TEST_F(test_gdal_algorithm, AddNumThreadsArg)
     }
 
     {
+        CPLConfigOptionSetter oSetter("GDAL_NUM_THREADS", "ALL_CPUS", false);
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({}));
+        EXPECT_EQ(alg.m_numThreads, CPLGetNumCPUs());
+    }
+
+    {
         MyAlgorithm alg;
         EXPECT_TRUE(alg.ParseCommandLineArguments({"--num-threads=1"}));
         EXPECT_EQ(alg.m_numThreads, 1);

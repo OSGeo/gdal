@@ -48,6 +48,7 @@
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
+#include "gdal_thread_pool.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
 #include "ogr_feature.h"
@@ -6240,26 +6241,13 @@ bool LayerTranslator::TranslateArrow(
     std::vector<GByte> abyModifiedWKB;
     const int nNumReprojectionThreads = []()
     {
-        const int nNumCPUs = CPLGetNumCPUs();
-        if (nNumCPUs <= 1)
-        {
-            return 1;
-        }
-        else
-        {
-            const char *pszNumThreads =
-                CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-            if (pszNumThreads)
-            {
-                if (EQUAL(pszNumThreads, "ALL_CPUS"))
-                    return CPLGetNumCPUs();
-                return std::min(atoi(pszNumThreads), 1024);
-            }
-            else
-            {
-                return std::max(2, nNumCPUs / 2);
-            }
-        }
+        const char *pszNumThreads = nullptr;
+        int nVal =
+            GDALGetNumThreads(/* nMaxVal = */ 1024,
+                              /* bDefaultToAllCPUs = */ false, &pszNumThreads);
+        if (!pszNumThreads)
+            nVal = std::max(1, CPLGetNumCPUs() / 2);
+        return nVal;
     }();
 
     // Somewhat arbitrary threshold (config option only/mostly for autotest purposes)

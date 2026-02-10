@@ -97,6 +97,7 @@
 #include "cpl_time.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
+#include "../gcore/gdal_thread_pool.h"
 
 constexpr int Z_BUFSIZE = 65536;           // Original size is 16384
 constexpr int gz_magic[2] = {0x1f, 0x8b};  // gzip magic header
@@ -2744,24 +2745,16 @@ VSIVirtualHandle *VSICreateGZipWritable(VSIVirtualHandle *poBaseHandle,
                                         size_t nSOZIPIndexEltSize,
                                         std::vector<uint8_t> *panSOZIPIndex)
 {
-    const char *pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    if (pszThreads || nThreads > 0 || nChunkSize > 0)
+    nThreads = nThreads > 0
+                   ? nThreads
+                   : GDALGetNumThreads(/* nMaxVal = */ 128,
+                                       /* bDefaultToAllCPUs = */ false);
+    if (nThreads > 1 || nChunkSize > 0)
     {
-        if (nThreads == 0)
-        {
-            if (!pszThreads || EQUAL(pszThreads, "ALL_CPUS"))
-                nThreads = CPLGetNumCPUs();
-            else
-                nThreads = atoi(pszThreads);
-            nThreads = std::max(1, std::min(128, nThreads));
-        }
-        if (nThreads > 1 || nChunkSize > 0)
-        {
-            // coverity[tainted_data]
-            return new VSIGZipWriteHandleMT(
-                poBaseHandle, nDeflateTypeIn, bAutoCloseBaseHandle, nThreads,
-                nChunkSize, nSOZIPIndexEltSize, panSOZIPIndex);
-        }
+        // coverity[tainted_data]
+        return new VSIGZipWriteHandleMT(
+            poBaseHandle, nDeflateTypeIn, bAutoCloseBaseHandle, nThreads,
+            nChunkSize, nSOZIPIndexEltSize, panSOZIPIndex);
     }
     return new VSIGZipWriteHandle(poBaseHandle, nDeflateTypeIn,
                                   bAutoCloseBaseHandle);

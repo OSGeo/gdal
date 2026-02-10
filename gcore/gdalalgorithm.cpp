@@ -21,6 +21,7 @@
 #include "gdalalgorithm.h"
 #include "gdalalg_abstract_pipeline.h"
 #include "gdal_priv.h"
+#include "gdal_thread_pool.h"
 #include "ogrsf_frmts.h"
 #include "ogr_spatialref.h"
 #include "vrtdataset.h"
@@ -5595,40 +5596,25 @@ GDALAlgorithm::AddNumThreadsArg(int *pValue, std::string *pStrValue,
 
     auto lambda = [this, &arg, pValue, pStrValue]
     {
-#ifdef DEBUG
-        const int nCPUCount = std::max(
-            1, atoi(CPLGetConfigOption("GDAL_DEBUG_CPU_COUNT",
-                                       CPLSPrintf("%d", CPLGetNumCPUs()))));
-#else
-        const int nCPUCount = std::max(1, CPLGetNumCPUs());
-#endif
-        int nNumThreads = nCPUCount;
-        const char *pszThreads =
-            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        if (pszThreads && !EQUAL(pszThreads, "ALL_CPUS"))
-        {
-            nNumThreads = std::clamp(atoi(pszThreads), 1, nNumThreads);
-        }
-        if (EQUAL(pStrValue->c_str(), "ALL_CPUS"))
+        bool bOK = false;
+        const char *pszVal = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+        const int nLimit = std::clamp(
+            pszVal && !EQUAL(pszVal, "ALL_CPUS") ? atoi(pszVal) : INT_MAX, 1,
+            CPLGetNumCPUs());
+        const int nNumThreads =
+            GDALGetNumThreads(pStrValue->c_str(), nLimit,
+                              /* bDefaultToAllCPUs = */ false, nullptr, &bOK);
+        if (bOK)
         {
             *pValue = nNumThreads;
-            return true;
         }
         else
         {
-            char *endptr = nullptr;
-            const auto res = std::strtol(pStrValue->c_str(), &endptr, 10);
-            if (endptr == pStrValue->c_str() + pStrValue->size() && res >= 0 &&
-                res <= INT_MAX)
-            {
-                *pValue = std::min(static_cast<int>(res), nNumThreads);
-                return true;
-            }
             ReportError(CE_Failure, CPLE_IllegalArg,
                         "Invalid value for '%s' argument",
                         arg.GetName().c_str());
-            return false;
         }
+        return bOK;
     };
     if (!pStrValue->empty())
     {

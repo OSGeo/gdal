@@ -309,25 +309,13 @@ void *GWKThreadsCreate(char **papszWarpOptions,
                        GDALTransformerFunc /* pfnTransformer */,
                        void *pTransformerArg)
 {
-    const char *pszWarpThreads =
-        CSLFetchNameValue(papszWarpOptions, "NUM_THREADS");
-    if (pszWarpThreads == nullptr)
-        pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
-
-    int nThreads = 0;
-    if (EQUAL(pszWarpThreads, "ALL_CPUS"))
-        nThreads = CPLGetNumCPUs();
-    else
-        nThreads = atoi(pszWarpThreads);
-    if (nThreads <= 1)
-        nThreads = 0;
-    if (nThreads > 128)
-        nThreads = 128;
-
+    const int nThreads = GDALGetNumThreads(papszWarpOptions, "NUM_THREADS",
+                                           /* nMaxVal = */ 128,
+                                           /* bDefaultAllCPUs = */ false);
     GWKThreadData *psThreadData = new GWKThreadData();
     auto poThreadPool =
-        nThreads > 0 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
-    if (nThreads && poThreadPool)
+        nThreads > 1 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
+    if (poThreadPool)
     {
         psThreadData->nMaxThreads = nThreads;
         psThreadData->threadJobs.reset(new std::vector<GWKJobStruct>(

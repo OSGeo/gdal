@@ -53,6 +53,7 @@
 #endif
 
 #include "gdalsubdatasetinfo.h"
+#include "gdal_thread_pool.h"
 #include "gdal_typetraits.h"
 
 #include "ogr_api.h"
@@ -13097,14 +13098,9 @@ ComputeInterBandCovarianceMatrixInternal(GDALDataset *poDS,
 #ifdef HAVE_OPENMP
     if (nBandCount >= 100)
     {
-        const int nNumCPUs = CPLGetNumCPUs();
-        nNumThreads = std::max(1, nNumCPUs / 2);
-        const char *pszThreads =
-            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        if (pszThreads && !EQUAL(pszThreads, "ALL_CPUS"))
-        {
-            nNumThreads = std::clamp(atoi(pszThreads), 1, nNumCPUs);
-        }
+        const int nMaxNumThreads = std::max(1, CPLGetNumCPUs() / 2);
+        nNumThreads =
+            GDALGetNumThreads(nMaxNumThreads, /* bDefaultToAllCPUs= */ false);
     }
 #endif
 

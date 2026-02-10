@@ -5175,10 +5175,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
     GByte *pabyChunkNodataMask = nullptr;
     void *pChunk = nullptr;
 
-    const char *pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
-    const int nThreads = std::max(1, std::min(128, EQUAL(pszThreads, "ALL_CPUS")
-                                                       ? CPLGetNumCPUs()
-                                                       : atoi(pszThreads)));
+    const int nThreads =
+        GDALGetNumThreads(/* nMaxVal = */ 128, /* bDefaultToAllCPUs=*/false);
     auto poThreadPool =
         nThreads > 1 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
     auto poJobQueue = poThreadPool ? poThreadPool->CreateJobQueue()
@@ -5713,10 +5711,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
     const bool bPropagateNoData =
         CPLTestBool(CPLGetConfigOption("GDAL_OVR_PROPAGATE_NODATA", "NO"));
 
-    const char *pszThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
-    const int nThreads = std::max(1, std::min(128, EQUAL(pszThreads, "ALL_CPUS")
-                                                       ? CPLGetNumCPUs()
-                                                       : atoi(pszThreads)));
+    const int nThreads =
+        GDALGetNumThreads(/* nMaxVal = */ 128, /* bDefaultToAllCPUs=*/false);
     auto poThreadPool =
         nThreads > 1 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
     auto poJobQueue = poThreadPool ? poThreadPool->CreateJobQueue()
