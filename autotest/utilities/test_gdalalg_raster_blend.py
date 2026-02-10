@@ -1063,6 +1063,46 @@ def test_gdalalg_raster_blend_multiply_1band_over_1band(
                 )
 
 
+def test_gdalalg_raster_blend_in_pipeline(tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "grayscale.tif", 2, 2, 1
+    ) as ds:
+        ds.GetRasterBand(1).Fill(128)
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "overlay.tif", 2, 2, 1
+    ) as ds:
+        ds.GetRasterBand(1).Fill(10)
+
+    with gdal.alg.pipeline(
+        pipeline=f"read {tmp_vsimem}/grayscale.tif ! blend --operator multiply --overlay {tmp_vsimem}/overlay.tif"
+    ) as alg:
+        out_ds = alg.Output()
+        assert out_ds.RasterCount == 1
+        for y in range(2):
+            for x in range(2):
+                assert struct.unpack("B" * 1, out_ds.ReadRaster(x, y, 1, 1)) == (5,)
+
+    with gdal.alg.pipeline(
+        pipeline=f"read {tmp_vsimem}/overlay.tif ! blend --operator multiply --input {tmp_vsimem}/grayscale.tif --overlay _PIPE_"
+    ) as alg:
+        out_ds = alg.Output()
+        assert out_ds.RasterCount == 1
+        for y in range(2):
+            for x in range(2):
+                assert struct.unpack("B" * 1, out_ds.ReadRaster(x, y, 1, 1)) == (5,)
+
+    with gdal.alg.pipeline(
+        pipeline=f"read {tmp_vsimem}/grayscale.tif ! blend --operator multiply --input _PIPE_ --overlay _PIPE_"
+    ) as alg:
+        out_ds = alg.Output()
+        assert out_ds.RasterCount == 1
+        for y in range(2):
+            for x in range(2):
+                assert struct.unpack("B" * 1, out_ds.ReadRaster(x, y, 1, 1)) == (64,)
+
+
 @pytest.mark.parametrize("swap_inputs", [False, True])
 @pytest.mark.parametrize(
     "opacity,paletted_value,overlay_value,expected_rgba",

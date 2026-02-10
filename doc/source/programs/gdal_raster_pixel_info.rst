@@ -219,8 +219,15 @@ Examples
        gdal raster pixel-info --position-dataset input.gpkg --input byte.tif --output output.gpkg
 
 .. example::
-   :title: Getting pixel values from a on-the-fly resized dataset from coordinates in :file:`input.gpkg`.
+   :title: Getting pixel values from a on-the-fly resized raster dataset from coordinates in :file:`input.gpkg`.
 
    .. code-block:: bash
 
        gdal pipeline read byte.tif ! resize --size 50%,50% -r cubic ! pixel-info input.gpkg ! write output.gpkg
+
+.. example::
+   :title: Getting pixel values from coordinates in a piped vector dataset, using the ``_`` placeholder dataset name
+
+   .. code-block:: bash
+
+       gdal pipeline read input.gml ! swap-xy ! pixel-info --input byte.tif --position-dataset _ ! write output.gpkg

@@ -52,6 +52,7 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
     }
     else
     {
+        AddRasterHiddenInputDatasetArg();
         AddOutputLayerNameArg(/* hiddenForCLI = */ false,
                               /* shortNameOutputLayerAllowed = */ false);
     }

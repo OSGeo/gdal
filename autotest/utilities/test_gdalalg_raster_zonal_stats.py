@@ -1082,7 +1082,7 @@ def test_gdalalg_raster_zonal_stats_pipeline_usage(zonal, tmp_vsimem, polyrast):
 
     pipeline = gdal.Algorithm("pipeline")
 
-    src_fname = tmp_vsimem / "polyrast.shp"
+    src_fname = tmp_vsimem / "polyrast.tif"
     out_fname = tmp_vsimem / "out.csv"
 
     gdal.GetDriverByName("GTiff").CreateCopy(src_fname, polyrast)
@@ -1095,6 +1095,39 @@ def test_gdalalg_raster_zonal_stats_pipeline_usage(zonal, tmp_vsimem, polyrast):
             "zonal-stats",
             "--zones",
             "../ogr/data/poly.shp",
+            "--stat",
+            "sum",
+            "!",
+            "write",
+            out_fname,
+        ]
+    )
+
+    with gdal.OpenEx(out_fname) as dst:
+        assert dst.GetLayer(0).GetFeatureCount() == 10
+
+
+def test_gdalalg_raster_zonal_stats_pipeline_piped_is_zones(
+    zonal, tmp_vsimem, polyrast
+):
+
+    pipeline = gdal.Algorithm("pipeline")
+
+    src_fname = tmp_vsimem / "polyrast.tif"
+    out_fname = tmp_vsimem / "out.csv"
+
+    gdal.GetDriverByName("GTiff").CreateCopy(src_fname, polyrast)
+
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../ogr/data/poly.shp",
+            "!",
+            "zonal-stats",
+            "--input",
+            src_fname,
+            "--zones",
+            "_PIPE_",
             "--stat",
             "sum",
             "!",

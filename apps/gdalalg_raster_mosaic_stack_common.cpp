@@ -309,9 +309,11 @@ bool GDALRasterMosaicStackCommonAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             }
             else
             {
-                writeAlg.m_inputDataset.clear();
-                writeAlg.m_inputDataset.resize(1);
-                writeAlg.m_inputDataset[0].Set(m_outputDataset.GetDatasetRef());
+                std::vector<GDALArgDatasetValue> inputDataset(1);
+                inputDataset[0].Set(m_outputDataset.GetDatasetRef());
+                auto inputArg = writeAlg.GetArg(GDAL_ARG_NAME_INPUT);
+                CPLAssert(inputArg);
+                inputArg->Set(std::move(inputDataset));
                 if (writeAlg.Run(pfnProgress, pProgressData))
                 {
                     m_outputDataset.Set(

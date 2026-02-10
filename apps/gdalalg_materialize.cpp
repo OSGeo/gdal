@@ -29,6 +29,8 @@ GDALMaterializeRasterAlgorithm::GDALMaterializeRasterAlgorithm()
     : GDALMaterializeStepAlgorithm<GDALRasterPipelineStepAlgorithm,
                                    GDAL_OF_RASTER>(HELP_URL)
 {
+    AddRasterHiddenInputDatasetArg();
+
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER,
                         /* positionalAndRequired = */ false,
                         _("Materialized dataset name"))
@@ -159,6 +161,8 @@ GDALMaterializeVectorAlgorithm::GDALMaterializeVectorAlgorithm()
     : GDALMaterializeStepAlgorithm<GDALVectorPipelineStepAlgorithm,
                                    GDAL_OF_VECTOR>(HELP_URL)
 {
+    AddVectorHiddenInputDatasetArg();
+
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR,
                         /* positionalAndRequired = */ false,
                         _("Materialized dataset name"))

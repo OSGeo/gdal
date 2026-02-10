@@ -47,6 +47,7 @@ GDALRasterAsFeaturesAlgorithm::GDALRasterAsFeaturesAlgorithm(
     }
     else
     {
+        AddRasterHiddenInputDatasetArg();
         AddOutputLayerNameArg(/* hiddenForCLI = */ false,
                               /* shortNameOutputLayerAllowed = */ false);
     }

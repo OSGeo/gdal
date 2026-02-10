@@ -48,6 +48,7 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
     }
     else
     {
+        AddRasterHiddenInputDatasetArg();
         AddOutputLayerNameArg(/* hiddenForCLI = */ false,
                               /* shortNameOutputLayerAllowed = */ false);
     }
