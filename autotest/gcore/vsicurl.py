@@ -956,6 +956,83 @@ def test_vsicurl_retry_codes_no_match(server):
 
 
 ###############################################################################
+# Test that ReadMultiRange retries on 429
+
+
+def test_vsicurl_readmultirange_retry(server):
+
+    gdal.VSICurlClearCache()
+
+    filesize = 262976
+
+    def serve_range(request):
+        if "Range" not in request.headers:
+            request.send_response(404)
+            request.end_headers()
+            return
+        rng = request.headers["Range"][len("bytes=") :]
+        start = int(rng.split("-")[0])
+        end = int(rng.split("-")[1])
+        request.protocol_version = "HTTP/1.1"
+        request.send_response(206)
+        request.send_header("Content-type", "application/octet-stream")
+        request.send_header("Content-Range", "bytes %d-%d/%d" % (start, end, filesize))
+        request.send_header("Content-Length", end - start + 1)
+        request.send_header("Connection", "close")
+        request.end_headers()
+        with open("../gdrivers/data/utm.tif", "rb") as f:
+            f.seek(start, 0)
+            request.wfile.write(f.read(end - start + 1))
+
+    def serve_429(request):
+        request.protocol_version = "HTTP/1.1"
+        request.send_response(429)
+        request.send_header("Connection", "close")
+        request.end_headers()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/readmultirange_retry.tif",
+        200,
+        {"Content-Length": "%d" % filesize},
+    )
+    # GETs 1-3: header/IFD reads + first tile strip (all succeed)
+    for i in range(3):
+        handler.add("GET", "/readmultirange_retry.tif", custom_method=serve_range)
+    # GET 4: second tile strip -> 429
+    handler.add("GET", "/readmultirange_retry.tif", custom_method=serve_429)
+    # GETs 5-6: remaining tile strips succeed
+    for i in range(2):
+        handler.add("GET", "/readmultirange_retry.tif", custom_method=serve_range)
+    # GET 7: retry of the failed tile strip
+    handler.add("GET", "/readmultirange_retry.tif", custom_method=serve_range)
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {
+                "GTIFF_DIRECT_IO": "YES",
+                "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
+                "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+                "GDAL_HTTP_MAX_RETRY": "2",
+                "GDAL_HTTP_RETRY_DELAY": "0.01",
+            }
+        ):
+            ds = gdal.Open(
+                "/vsicurl/http://localhost:%d/readmultirange_retry.tif" % server.port
+            )
+            assert ds is not None
+            subsampled_data = ds.ReadRaster(0, 0, 512, 32, 128, 4)
+            ds = None
+            assert subsampled_data is not None
+            ds = gdal.GetDriverByName("MEM").Create("", 128, 4)
+            ds.WriteRaster(0, 0, 128, 4, subsampled_data)
+            cs = ds.GetRasterBand(1).Checksum()
+            ds = None
+            assert cs == 6429
+
+
+###############################################################################
 
 
 def test_vsicurl_test_fallback_from_head_to_get(server):
