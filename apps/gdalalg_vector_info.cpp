@@ -76,6 +76,9 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
         .SetReadFromFileAtSyntaxAllowed()
         .SetMetaVar("<WHERE>|@<filename>")
         .SetRemoveSQLCommentsEnabled();
+    AddArg("fid", 0, _("Feature identifier"), &m_fid)
+        .SetMetaVar("FID")
+        .SetMutualExclusionGroup("layer-sql");
     AddArg("dialect", 0, _("SQL dialect"), &m_dialect);
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
@@ -133,6 +136,11 @@ bool GDALVectorInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         aosOptions.AddString("-where");
         aosOptions.AddString(m_where.c_str());
+    }
+    if (m_fid >= 0)
+    {
+        aosOptions.AddString("-fid");
+        aosOptions.AddString(CPLSPrintf("%d", m_fid));
     }
     if (!m_dialect.empty())
     {
