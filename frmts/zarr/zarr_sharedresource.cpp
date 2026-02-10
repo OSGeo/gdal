@@ -89,6 +89,14 @@ ZarrSharedResource::~ZarrSharedResource()
 
 std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 {
+    // Probe zarr.json first so v3 datasets skip the v2 stat cascade.
+    const std::string osZarrJsonFilename(CPLFormFilenameSafe(
+        m_osRootDirectoryName.c_str(), "zarr.json", nullptr));
+    VSIStatBufL sStat;
+    const bool bHasZarrJson =
+        (VSIStatL(osZarrJsonFilename.c_str(), &sStat) == 0);
+
+    if (!bHasZarrJson)
     {
         auto poRG = ZarrV2Group::Create(shared_from_this(), std::string(), "/");
         // Prevents potential recursion
@@ -98,7 +106,6 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 
         const std::string osZarrayFilename(CPLFormFilenameSafe(
             m_osRootDirectoryName.c_str(), ".zarray", nullptr));
-        VSIStatBufL sStat;
         const auto nErrorCount = CPLGetErrorCounter();
         if (VSIStatL(osZarrayFilename.c_str(), &sStat) == 0)
         {
@@ -184,10 +191,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
     m_poWeakRootGroup = poRG_V3;
     poRG_V3->SetUpdatable(m_bUpdatable);
 
-    const std::string osZarrJsonFilename(CPLFormFilenameSafe(
-        m_osRootDirectoryName.c_str(), "zarr.json", nullptr));
-    VSIStatBufL sStat;
-    if (VSIStatL(osZarrJsonFilename.c_str(), &sStat) == 0)
+    if (bHasZarrJson)
     {
         CPLJSONDocument oDoc;
         if (!oDoc.Load(osZarrJsonFilename))
