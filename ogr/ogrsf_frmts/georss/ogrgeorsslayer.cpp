@@ -958,7 +958,7 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
 
     CPLFree(ppoFeatureTab);
     ppoFeatureTab = nullptr;
-    nFeatureTabLength = 0;
+    this->nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
 
     int nDone = 0;
@@ -978,9 +978,10 @@ OGRFeature *OGRGeoRSSLayer::GetNextFeature()
                      static_cast<int>(XML_GetCurrentColumnNumber(oParser)));
             bStopParsing = true;
         }
-    } while (!nDone && !bStopParsing && nFeatureTabLength == 0);
+    } while (!nDone && !bStopParsing && this->nFeatureTabLength == 0);
 
-    return nFeatureTabLength ? ppoFeatureTab[nFeatureTabIndex++] : nullptr;
+    return this->nFeatureTabLength ? ppoFeatureTab[nFeatureTabIndex++]
+                                   : nullptr;
 #else
     return nullptr;
 #endif
@@ -1758,11 +1759,11 @@ void OGRGeoRSSLayer::LoadSchema()
     pszSubElementName = nullptr;
     pszSubElementValue = nullptr;
     nSubElementValueLen = 0;
-    bSameSRS = true;
-    CPLFree(pszGMLSRSName);
-    pszGMLSRSName = nullptr;
-    eGeomType = wkbUnknown;
-    bFoundGeom = false;
+    this->bSameSRS = true;
+    CPLFree(this->pszGMLSRSName);
+    this->pszGMLSRSName = nullptr;
+    this->eGeomType = wkbUnknown;
+    this->bFoundGeom = false;
     bInTagWithSubTag = false;
     pszTagWithSubTag = nullptr;
     bStopParsing = false;
@@ -1802,9 +1803,9 @@ void OGRGeoRSSLayer::LoadSchema()
     }
 
     CPLAssert(poSRS == nullptr);
-    if (bSameSRS && bFoundGeom)
+    if (this->bSameSRS && this->bFoundGeom)
     {
-        if (pszGMLSRSName == nullptr)
+        if (this->pszGMLSRSName == nullptr)
         {
             poSRS = new OGRSpatialReference();
             poSRS->SetWellKnownGeogCS("WGS84");
@@ -1817,7 +1818,7 @@ void OGRGeoRSSLayer::LoadSchema()
         }
     }
 
-    if (eGeomType != wkbUnknown)
+    if (this->eGeomType != wkbUnknown)
         poFeatureDefn->SetGeomType(eGeomType);
     if (poFeatureDefn->GetGeomFieldCount() != 0)
         poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);

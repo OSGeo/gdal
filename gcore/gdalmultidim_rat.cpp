@@ -120,6 +120,7 @@ class GDALRasterAttributeTableFromMDArrays final
                 arrayStartIdx, count, arrayStep, bufferStride,
                 GDALExtendedDataType::CreateString(), pDstBuffer))
             return nullptr;
+        // cppcheck-suppress knownConditionTrueFalse
         if (!pszStr)
             return nullptr;
         m_osTmp = pszStr;

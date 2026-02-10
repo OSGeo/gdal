@@ -759,10 +759,7 @@ std::string CPLFormFilenameSafe(const char *pszPath, const char *pszBasename,
                     pszBasename = pszBasenameOri;
                     nLenPath = nLenPathOri;
                     if (pszAddedPathSep[0] == 0)
-                        pszAddedPathSep =
-                            pszPath[0] == '/'
-                                ? "/"
-                                : VSIGetDirectorySeparator(pszPath);
+                        pszAddedPathSep = "/";
                 }
                 break;
             }

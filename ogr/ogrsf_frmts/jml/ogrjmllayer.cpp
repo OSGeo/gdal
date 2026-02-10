@@ -419,7 +419,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
 
     std::vector<char> aBuf(PARSER_BUF_SIZE);
 
-    nFeatureTabLength = 0;
+    this->nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
 
     nWithoutEventCounter = 0;
@@ -443,7 +443,7 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
             bStopParsing = true;
         }
         nWithoutEventCounter++;
-    } while (!nDone && !bStopParsing && nFeatureTabLength == 0 &&
+    } while (!nDone && !bStopParsing && this->nFeatureTabLength == 0 &&
              nWithoutEventCounter < 10);
 
     if (nWithoutEventCounter == 10)
@@ -453,7 +453,8 @@ OGRFeature *OGRJMLLayer::GetNextFeature()
         bStopParsing = true;
     }
 
-    return (nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++] : nullptr;
+    return (this->nFeatureTabLength) ? ppoFeatureTab[nFeatureTabIndex++]
+                                     : nullptr;
 }
 
 static void XMLCALL startElementLoadSchemaCbk(void *pUserData,

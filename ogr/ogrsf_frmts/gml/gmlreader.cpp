@@ -479,7 +479,7 @@ GMLFeature *GMLReader::NextFeatureExpat()
         VSIFErrorL(fpGML))
         return nullptr;
 
-    nFeatureTabLength = 0;
+    this->nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
 
     int nDone = 0;
@@ -515,9 +515,9 @@ GMLFeature *GMLReader::NextFeatureExpat()
         if (!m_bStopParsing)
             m_bStopParsing = static_cast<GMLExpatHandler *>(m_poGMLHandler)
                                  ->HasStoppedParsing();
-    } while (!nDone && !m_bStopParsing && nFeatureTabLength == 0);
+    } while (!nDone && !m_bStopParsing && this->nFeatureTabLength == 0);
 
-    if (nFeatureTabLength)
+    if (this->nFeatureTabLength)
         return ppoFeatureTab[nFeatureTabIndex++];
 
     if (!m_osErrorMessage.empty())
