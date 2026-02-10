@@ -6223,62 +6223,59 @@ def test_zarr_read_simple_sharding_network():
     chunk_block = b"\x01\x02\x03\x04" + (16384 - 4) * b"\x00"
 
     try:
-        # Loop twice: second iteration proves ClearMemoryCaches() lets the
-        # driver re-fetch everything cleanly.
-        for _ in range(2):
-            handler = webserver.SequentialHandler()
-            handler.add("GET", "/test.zarr/", 404)
-            handler.add("HEAD", "/test.zarr/.zmetadata", 404)
-            handler.add("HEAD", "/test.zarr/.zarray", 404)
-            handler.add("HEAD", "/test.zarr/.zgroup", 404)
-            handler.add(
-                "HEAD",
-                "/test.zarr/zarr.json",
-                200,
-                {"Content-Length": "%d" % len(zarr_json)},
-            )
-            handler.add(
-                "GET",
-                "/test.zarr/zarr.json",
-                200,
-                {"Content-Length": "%d" % len(zarr_json)},
-                zarr_json,
-            )
-            handler.add("HEAD", "/test.zarr/zarr.json.aux.xml", 404)
-            handler.add("HEAD", "/test.zarr/zarr.aux", 404)
-            handler.add("HEAD", "/test.zarr/zarr.AUX", 404)
-            handler.add("HEAD", "/test.zarr/zarr.json.aux", 404)
-            handler.add("HEAD", "/test.zarr/zarr.json.AUX", 404)
-            handler.add("HEAD", "/test.zarr/c/0/0", 200, {"Content-Length": "65536"})
-            handler.add(
-                "GET",
-                "/test.zarr/c/0/0",
-                206,
-                {
-                    "Content-Length": "16384",
-                    "Content-Range": "bytes 49152-65535/65536",
-                },
-                shard_tail,
-                expected_headers={"Range": "bytes=49152-65535"},
-            )
-            handler.add(
-                "GET",
-                "/test.zarr/c/0/0",
-                206,
-                {
-                    "Content-Length": "16384",
-                    "Content-Range": "bytes 0-16383/65536",
-                },
-                chunk_block,
-                expected_headers={"Range": "bytes=0-16383"},
-            )
-            with webserver.install_http_handler(handler):
-                ds = gdal.Open(
-                    'ZARR:"/vsicurl/http://localhost:%d/test.zarr"' % webserver_port
+        with gdaltest.config_options({"GDAL_PAM_ENABLED": "NO"}):
+            # Loop twice: second iteration proves ClearMemoryCaches() lets the
+            # driver re-fetch everything cleanly.
+            for _ in range(2):
+                handler = webserver.SequentialHandler()
+                handler.add("GET", "/test.zarr/", 404)
+                handler.add("HEAD", "/test.zarr/.zmetadata", 404)
+                # Probe zarr.json first; v2 probes (.zarray, .zgroup) skipped.
+                handler.add(
+                    "HEAD",
+                    "/test.zarr/zarr.json",
+                    200,
+                    {"Content-Length": "%d" % len(zarr_json)},
                 )
-                assert ds.GetRasterBand(1).ReadBlock(0, 0) == b"\x01\x02\x03\x04"
-            ds = None
-            gdal.ClearMemoryCaches()
+                handler.add(
+                    "GET",
+                    "/test.zarr/zarr.json",
+                    200,
+                    {"Content-Length": "%d" % len(zarr_json)},
+                    zarr_json,
+                )
+                handler.add(
+                    "HEAD", "/test.zarr/c/0/0", 200, {"Content-Length": "65536"}
+                )
+                handler.add(
+                    "GET",
+                    "/test.zarr/c/0/0",
+                    206,
+                    {
+                        "Content-Length": "16384",
+                        "Content-Range": "bytes 49152-65535/65536",
+                    },
+                    shard_tail,
+                    expected_headers={"Range": "bytes=49152-65535"},
+                )
+                handler.add(
+                    "GET",
+                    "/test.zarr/c/0/0",
+                    206,
+                    {
+                        "Content-Length": "16384",
+                        "Content-Range": "bytes 0-16383/65536",
+                    },
+                    chunk_block,
+                    expected_headers={"Range": "bytes=0-16383"},
+                )
+                with webserver.install_http_handler(handler):
+                    ds = gdal.Open(
+                        'ZARR:"/vsicurl/http://localhost:%d/test.zarr"' % webserver_port
+                    )
+                    assert ds.GetRasterBand(1).ReadBlock(0, 0) == b"\x01\x02\x03\x04"
+                ds = None
+                gdal.ClearMemoryCaches()
 
     finally:
         webserver.server_stop(webserver_process, webserver_port)
