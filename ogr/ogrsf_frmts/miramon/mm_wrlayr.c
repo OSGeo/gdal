@@ -5238,33 +5238,6 @@ int MMResizeStringToOperateIfNeeded(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
 #define LineReturn "\r\n"
 
-// Generates an identifier that REL 4 MiraMon metadata needs.
-static void MMGenerateFileIdentifierFromMetadataFileName(char *pMMFN,
-                                                         char *aFileIdentifier)
-{
-    char aCharRand[8];
-    static const char aCharset[] =
-        "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    int i, len_charset;
-
-    memset(aFileIdentifier, '\0', MM_MAX_LEN_LAYER_IDENTIFIER);
-
-    aCharRand[0] = '_';
-    len_charset = (int)strlen(aCharset);
-    for (i = 1; i < 7; i++)
-    {
-#ifndef __COVERITY__
-        aCharRand[i] = aCharset[rand() % (len_charset - 1)];
-#else
-        aCharRand[i] = aCharset[i % (len_charset - 1)];
-#endif
-    }
-    aCharRand[7] = '\0';
-    CPLStrlcpy(aFileIdentifier, pMMFN, MM_MAX_LEN_LAYER_IDENTIFIER - 7);
-    strcat(aFileIdentifier, aCharRand);
-    return;
-}
-
 // Converts a string from UTF-8 to ANSI to be written in a REL 4 file
 static void MMWrite_ANSI_MetadataKeyDescriptor(
     struct MiraMonVectorMetaData *hMMMD, VSILFILE *pF, const char *pszEng,
@@ -6162,7 +6135,7 @@ MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (nNewWidth > camp->BytesPerField)
     {
-        if (MM_WriteNRecordsMMBD_XPFile(pMMAdmDB))
+        if (MM_WriteNRecordsMMBD_XPFile(pMMAdmDB->pMMBDXP))
             return 1;
 
         // Flushing all to be flushed
@@ -6991,7 +6964,7 @@ static int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
             }
         }
 
-        if (MM_WriteNRecordsMMBD_XPFile(MMAdmDB))
+        if (MM_WriteNRecordsMMBD_XPFile(MMAdmDB->pMMBDXP))
             goto end_label;
 
         // Flushing all to be flushed

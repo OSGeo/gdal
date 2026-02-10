@@ -39,7 +39,7 @@ enum class ColorTreatment
 class MMRPalettes
 {
   public:
-    MMRPalettes(MMRRel &fRel, const CPLString &osBandSectionIn);
+    MMRPalettes(MMRRel &fRel, int nIBand);
     MMRPalettes(const MMRPalettes &) =
         delete;  // I don't want to construct a MMRPalettes from another MMRBand (effc++)
     MMRPalettes &operator=(const MMRPalettes &) =
@@ -172,7 +172,6 @@ class MMRPalettes
                             MM_EXT_DBF_N_FIELDS &nRIndex,
                             MM_EXT_DBF_N_FIELDS &nGIndex,
                             MM_EXT_DBF_N_FIELDS &nBIndex, int nIPaletteIndex);
-    CPLErr UpdateConstantColor();
 
     std::array<std::vector<double>, 4> m_aadfPaletteColors{};
     bool m_bIsCategorical = false;
@@ -196,7 +195,7 @@ class MMRPalettes
     int m_nRealNPaletteColors = 0;  // Without nodata
 
     MMRRel *m_pfRel = nullptr;  // Rel where metadata is read from
-    CPLString m_osBandSection;
+    CPLString m_osBandSection = "";
 
     bool m_bIsValid =
         false;  // Determines if the created object is valid or not.

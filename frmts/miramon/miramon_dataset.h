@@ -32,6 +32,24 @@
 class MMRRasterBand;
 class MMRRel;
 
+/*
+    * -oo  RAT_OR_CT
+    Controls whether the Raster Attribute Table (RAT) and/or the Color Table (CT) are exposed.
+
+      ALL
+            Expose both the attribute table and the color table. Note that in some software this option may cause visualization and/or legend issues.
+      RAT
+            Expose the attribute table only, without the color table.
+      PER_BAND_ONLY
+            Expose the color table only, without the attribute table.
+    */
+enum class RAT_OR_CT
+{
+    ALL,
+    RAT,
+    CT
+};
+
 class MMRDataset final : public GDALPamDataset
 {
   public:
@@ -48,6 +66,11 @@ class MMRDataset final : public GDALPamDataset
     MMRRel *GetRel()
     {
         return m_pMMRRel.get();
+    }
+
+    RAT_OR_CT GetRatOrCT() const
+    {
+        return nRatOrCT;
     }
 
   private:
@@ -77,6 +100,9 @@ class MMRDataset final : public GDALPamDataset
 
     // Numbers of subdatasets (if any) in this dataset.
     int m_nNSubdataSets = 0;
+
+    // To expose CT, RAT or both
+    RAT_OR_CT nRatOrCT = RAT_OR_CT::ALL;
 };
 
 #endif  // MMRDATASET_H_INCLUDED

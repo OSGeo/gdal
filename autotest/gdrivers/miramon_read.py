@@ -451,7 +451,7 @@ def test_miramon_test_fails(name, message_substring):
 init_list_subdatasets = [
     (
         "data/miramon/multiband/byte_2x3_6_multibandI.rel",
-        4,
+        5,
         0,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -462,7 +462,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_6_categs.img",
-        4,
+        5,
         0,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -473,7 +473,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_6_multibandI.rel",
-        4,
+        5,
         1,
         1,
         [0, 1, 2, 3, 4, 255],
@@ -484,7 +484,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_0_to_4_categs_NoData_255.img",
-        4,
+        5,
         1,
         1,
         [0, 1, 2, 3, 4, 255],
@@ -495,7 +495,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_6_multibandI.rel",
-        4,
+        5,
         2,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -506,7 +506,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_1_to_5_categs_NoData_0.img",
-        4,
+        5,
         2,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -558,6 +558,30 @@ def test_miramon_subdatasets_detection(
         ), f"Unexpected nodata value : got {nodata}, expected {expected_nodata}"
 
     check_raster(subds, idx_bnd, expected, checksum, exp_min, exp_max, None)
+
+
+###### Testing number of subdatasets for a multiband file
+###### that has diferent characteristics.
+# Tested characteristics:
+# data type
+# compression
+# extension (minx and maxx)
+# extension amplidude
+# Categorical vs continuous
+# nodata value
+# existance of nodata value
+# existance of color table
+
+
+def test_miramon_subdatasets_number():
+    ds = gdal.OpenEx(
+        "data/miramon/subdatasets/byteI.rel", allowed_drivers=["MiraMonRaster"]
+    )
+    assert ds is not None, "Could not open file: data/miramon/subdatasets/byteI.rel"
+
+    subdatasets = ds.GetSubDatasets()
+    assert subdatasets is not None, "GetSubDatasets() returned None"
+    assert len(subdatasets) == 10, f"Expected 10 subdatasets, got {len(subdatasets)}"
 
 
 ###### Testing color table
@@ -935,82 +959,6 @@ init_list_attribute_tables = [
             (2, "CAMPEXTRA2"): 3,
             (2, "CAMPEXTRA3"): "20250710",
             (2, "CAMPEXTRA4"): "F",
-        },
-    ),
-    (
-        "data/miramon/palettes/Constant/byte_2x3_6_categsI.rel",
-        1,  # band index
-        {
-            (0, "MIN"): 5,
-            (0, "MAX"): 5,
-            (0, "Red"): 0,
-            (0, "Green"): 0,
-            (0, "Blue"): 0,
-            (1, "MIN"): 0,
-            (1, "MAX"): 4,
-            (1, "Red"): 255,
-            (1, "Green"): 0,
-            (1, "Blue"): 255,
-        },
-    ),
-    (
-        "data/miramon/palettes/Categorical/Assigned/byte_2x3_6_categsI.rel",
-        1,  # band index
-        {
-            (0, "MIN_MAX"): 0,
-            (0, "Red"): 0,
-            (0, "Green"): 0,
-            (0, "Blue"): 125,
-            (1, "MIN_MAX"): 1,
-            (1, "Red"): 0,
-            (1, "Green"): 134,
-            (1, "Blue"): 255,
-            (2, "MIN_MAX"): 2,
-            (2, "Red"): 0,
-            (2, "Green"): 255,
-            (2, "Blue"): 0,
-            (3, "MIN_MAX"): 3,
-            (3, "Red"): 255,
-            (3, "Green"): 255,
-            (3, "Blue"): 78,
-            (4, "MIN_MAX"): 4,
-            (4, "Red"): 255,
-            (4, "Green"): 0,
-            (4, "Blue"): 0,
-            (5, "MIN_MAX"): 5,
-            (5, "Red"): 255,
-            (5, "Green"): 0,
-            (5, "Blue"): 133,
-        },
-    ),
-    (
-        "data/miramon/palettes/Categorical/Assigned/real_2x3_6_categsI.rel",
-        1,  # band index
-        {
-            (0, "MIN_MAX"): 0,
-            (0, "Red"): 0,
-            (0, "Green"): 0,
-            (0, "Blue"): 125,
-            (1, "MIN_MAX"): 1,
-            (1, "Red"): 0,
-            (1, "Green"): 134,
-            (1, "Blue"): 255,
-            (2, "MIN_MAX"): 2,
-            (2, "Red"): 0,
-            (2, "Green"): 255,
-            (2, "Blue"): 0,
-            (3, "MIN_MAX"): 3,
-            (3, "Red"): 255,
-            (3, "Green"): 255,
-            (3, "Blue"): 78,
-            (4, "MIN_MAX"): 4,
-            (4, "Red"): 255,
-            (4, "Green"): 0,
-            (4, "Blue"): 0,
-            (5, "MIN_MAX"): 5,
-            (5, "Red"): 255,
-            (5, "Green"): 0,
-            (5, "Blue"): 133,
         },
     ),
     (

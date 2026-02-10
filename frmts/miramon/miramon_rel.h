@@ -19,6 +19,8 @@
 #include "gdal_priv.h"
 #include "miramon_band.h"  // For MMRBand
 
+#include "../miramon_common/mm_gdal_driver_structs.h"  // For SECTION_VERSIO
+
 constexpr auto pszExtRaster = ".img";
 constexpr auto pszExtRasterREL = "I.rel";
 constexpr auto pszExtREL = ".rel";
@@ -77,11 +79,17 @@ class MMRRel
                                          CPLString &osValue);
     void RELToGDALMetadata(GDALDataset *poDS);
 
-    static CPLString MMRGetFileNameFromRelName(const CPLString &osRELFile);
+    static CPLString MMRGetFileNameWithOutI(const CPLString &osRELFile);
+    static CPLString MMRGetFileNameFromRelName(const CPLString &osRELFile,
+                                               const CPLString osExtension);
     int GetColumnsNumberFromREL();
     int GetRowsNumberFromREL();
     static int IdentifySubdataSetFile(const CPLString &osFileName);
     static int IdentifyFile(const GDALOpenInfo *poOpenInfo);
+    CPLString GetColor_TractamentVariable(int nIBand);
+    CPLString GetColor_Paleta(int nIBand);
+    CPLErr UpdateGDALColorEntryFromBand(CPLString m_osBandSection,
+                                        GDALColorEntry &m_sConstantColorRGB);
 
     bool IsValid() const
     {
@@ -96,6 +104,17 @@ class MMRRel
     VSILFILE *GetRELFile() const
     {
         return m_pRELFile;
+    }
+
+    bool OpenRELFile(const char *pszAccess)
+    {
+        if (m_osRelFileName.empty())
+            return false;
+
+        m_pRELFile = VSIFOpenL(m_osRelFileName, pszAccess);
+        if (m_pRELFile)
+            return true;
+        return false;
     }
 
     bool OpenRELFile()
@@ -133,12 +152,12 @@ class MMRRel
         return m_nBands;
     }
 
-    MMRBand *GetBand(int nIBand) const
+    MMRBand *GetBand(int nIBand)
     {
         if (nIBand < 0 || nIBand >= m_nBands)
             return nullptr;
 
-        return m_oBands[nIBand].get();
+        return &m_oBands[nIBand];
     }
 
     int isAMiraMonFile() const
@@ -185,7 +204,7 @@ class MMRRel
     std::vector<CPLString> m_papoSDSBands{};
 
     int m_nBands = 0;
-    std::vector<std::unique_ptr<MMRBand>> m_oBands{};
+    std::vector<MMRBand> m_oBands{};
 
     // Preserving metadata
 
