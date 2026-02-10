@@ -2260,3 +2260,39 @@ def test_vrt_derived_virtual_overviews(tmp_vsimem):
     with gdaltest.error_raised(gdal.CE_None):
         got = mask_band.ReadRaster(0, 0, width, height, 1, 1)
     assert got == b"\x02"
+
+
+def test_vrt_derived_zero_initialization(tmp_vsimem):
+
+    vrt_w = 20
+    vrt_h = 10
+    tile_w = vrt_w // 2
+    tile_h = vrt_h
+    tile_offset = vrt_w - tile_w
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src1.tif", tile_w, tile_h, 1, gdal.GDT_Byte
+    ) as src:
+        src.WriteRaster(0, 0, tile_w, tile_h, b"\x01" * (tile_w * tile_h))
+
+    xml = f"""
+    <VRTDataset rasterXSize="{vrt_w}" rasterYSize="{vrt_h}">
+      <VRTRasterBand dataType="Byte" band="1" subclass="VRTDerivedRasterBand">
+        <PixelFunctionType>sum</PixelFunctionType>
+        <SimpleSource>
+          <SourceFilename>{tmp_vsimem / "src1.tif"}</SourceFilename>
+          <SourceBand>1</SourceBand>
+          <SrcRect xOff="0" yOff="0" xSize="{tile_w}" ySize="{tile_h}" />
+          <DstRect xOff="{tile_offset}" yOff="0" xSize="{tile_w}" ySize="{tile_h}" />
+        </SimpleSource>
+      </VRTRasterBand>
+    </VRTDataset>"""
+
+    buf_obj = bytearray(b"\xFF" * ((vrt_h - 1) * vrt_w + tile_offset))
+    got = gdal.Open(xml).ReadRaster(
+        0, 0, tile_offset, vrt_h, buf_obj=buf_obj, buf_line_space=vrt_w
+    )
+    assert (
+        got
+        == (b"\x00" * tile_offset + b"\xFF" * tile_w) * (vrt_h - 1)
+        + b"\x00" * tile_offset
+    )
