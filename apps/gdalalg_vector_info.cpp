@@ -82,6 +82,7 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
         .SetReadFromFileAtSyntaxAllowed()
         .SetMetaVar("<WHERE>|@<filename>")
         .SetRemoveSQLCommentsEnabled();
+    AddArg("fid", 0, _("Feature identifier"), &m_fid).SetMetaVar("FID");
     AddArg("dialect", 0, _("SQL dialect"), &m_dialect);
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
@@ -94,6 +95,36 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
                 ReportError(CE_Failure, CPLE_NotSupported,
                             "Option 'sql' and 'where' are mutually exclusive");
                 return false;
+            }
+            if (!m_fid.empty())
+            {
+                const bool bOGRSQL =
+                    m_dialect.empty() || EQUAL(m_dialect.c_str(), "OGRSQL");
+
+                const bool bSQLite =
+                    EQUAL(m_dialect.c_str(), "SQLITE");
+
+                const char *pszDriverName =
+                    m_inputDataset[0].GetDatasetRef()->GetDriver()
+                        ? m_inputDataset[0].GetDatasetRef()
+                              ->GetDriver()
+                              ->GetDescription()
+                        : "";
+
+                const bool bSQLiteWithFIDCapableDriver =
+                    bSQLite &&
+                    (EQUAL(pszDriverName, "GPKG") ||
+                     EQUAL(pszDriverName, "SQLite") ||
+                     EQUAL(pszDriverName, "SpatiaLite"));
+
+                if (!bOGRSQL && !bSQLiteWithFIDCapableDriver)
+                {
+                    ReportError(
+                        CE_Failure, CPLE_NotSupported,
+                        "--fid can only be used with the OGR SQL dialect, "
+                        "or with SQLite dialect on GeoPackage or SpatiaLite datasources");
+                    return false;
+                }
             }
             return true;
         });
@@ -139,6 +170,11 @@ bool GDALVectorInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
     {
         aosOptions.AddString("-where");
         aosOptions.AddString(m_where.c_str());
+    }
+    if (!m_fid.empty())
+    {
+        aosOptions.AddString("-where");
+        aosOptions.AddString(CPLSPrintf("fid = %s", m_fid.c_str()));
     }
     if (!m_dialect.empty())
     {
