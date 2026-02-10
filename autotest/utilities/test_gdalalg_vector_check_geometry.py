@@ -64,8 +64,15 @@ def test_gdalalg_vector_check_geometry(alg, polys):
 
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
+    dst_defn = dst_lyr.GetLayerDefn()
+
     assert dst_lyr.GetName() == "error_location"
-    assert dst_lyr.GetLayerDefn().GetGeomType() == ogr.wkbMultiPoint
+    assert dst_defn.GetGeomType() == ogr.wkbMultiPoint
+
+    field_names = [
+        dst_defn.GetFieldDefn(i).GetName() for i in range(dst_defn.GetFieldCount())
+    ]
+    assert field_names == ["error"]
 
     errors = [f for f in dst_lyr]
 
@@ -498,10 +505,22 @@ def test_gdalalg_vector_check_geometry_no_geometry_field(alg):
         alg.Run()
 
 
-def test_gdalalg_vector_check_geometry_include_field(alg):
+@pytest.mark.parametrize(
+    "include_field",
+    (
+        ["EAS_ID", "AREA"],
+        ["AREA", "EAS_ID"],
+        ["AREA", "AREA", "EAS_ID"],
+        "ALL",
+        None,
+        "NONE",
+    ),
+)
+def test_gdalalg_vector_check_geometry_include_field(alg, include_field):
 
     alg["input"] = "../ogr/data/poly.shp"
-    alg["include-field"] = ["EAS_ID", "AREA"]
+    if include_field is not None:
+        alg["include-field"] = include_field
     alg["output-format"] = "stream"
     alg["include-valid"] = True
 
@@ -509,12 +528,23 @@ def test_gdalalg_vector_check_geometry_include_field(alg):
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
     dst_defn = dst_lyr.GetLayerDefn()
-    assert dst_defn.GetFieldDefn(0).GetName() == "EAS_ID"
-    assert dst_defn.GetFieldDefn(1).GetName() == "AREA"
+    dst_fields = [
+        dst_defn.GetFieldDefn(i).GetName() for i in range(dst_defn.GetFieldCount())
+    ]
 
-    f = dst_lyr.GetNextFeature()
-    assert f["EAS_ID"] == 168
-    assert f["AREA"] == 215229.266
+    if include_field in (None, "NONE"):
+        assert dst_fields == ["error"]
+    else:
+        unique_include_fields = list({f: True for f in include_field}.keys())
+
+        if include_field == "ALL":
+            assert dst_fields == ["AREA", "EAS_ID", "PRFEDEA", "error"]
+        else:
+            assert dst_fields == unique_include_fields + ["error"]
+
+        f = dst_lyr.GetNextFeature()
+        assert f["EAS_ID"] == 168
+        assert f["AREA"] == 215229.266
 
 
 def test_gdalalg_vector_check_geometry_include_field_error(alg):
@@ -523,5 +553,5 @@ def test_gdalalg_vector_check_geometry_include_field_error(alg):
     alg["include-field"] = "does_not_exist"
     alg["output-format"] = "stream"
 
-    with pytest.raises(Exception, match="Specified field .* does not exist"):
+    with pytest.raises(Exception, match="Field .* does not exist"):
         alg.Run()

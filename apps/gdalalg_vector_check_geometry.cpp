@@ -32,7 +32,10 @@ GDALVectorCheckGeometryAlgorithm::GDALVectorCheckGeometryAlgorithm(
                                       standaloneStep)
 {
     AddArg("include-field", 0,
-           _("Fields from input layer to include in output"), &m_includeFields);
+           _("Fields from input layer to include in output (special values: "
+             "ALL and NONE)"),
+           &m_includeFields)
+        .SetDefault("NONE");
 
     AddArg("include-valid", 0,
            _("Include valid inputs in output, with empty geometry"),
@@ -348,19 +351,11 @@ bool GDALVectorCheckGeometryAlgorithm::RunStep(GDALPipelineStepRunContext &)
             }
 
             std::vector<int> includeFieldIndices;
-            for (const auto &fieldName : m_includeFields)
+            if (!GetFieldIndices(m_includeFields,
+                                 OGRLayer::ToHandle(poSrcLayer),
+                                 includeFieldIndices))
             {
-                auto iSrcField =
-                    poSrcLayerDefn->GetFieldIndex(fieldName.c_str());
-                if (iSrcField == -1)
-                {
-                    ReportError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Specified field '%s' does not exist in layer '%s'",
-                        fieldName.c_str(), poSrcLayer->GetDescription());
-                    return false;
-                }
-                includeFieldIndices.push_back(iSrcField);
+                return false;
             }
 
             outDS->AddLayer(*poSrcLayer,

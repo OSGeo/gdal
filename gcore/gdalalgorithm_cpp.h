@@ -2995,6 +2995,10 @@ class CPL_DLL GDALAlgorithmRegistry
     std::pair<std::vector<std::pair<GDALAlgorithmArg *, std::string>>, size_t>
     GetArgNamesForCLI() const;
 
+    /** Get the indices of fields to be included, recognizing the special values "ALL" and "NONE" */
+    static bool GetFieldIndices(const std::vector<std::string> &osFieldNames,
+                                OGRLayerH hLayer, std::vector<int> &anIndices);
+
     //! @cond Doxygen_Suppress
     std::string GetUsageForCLIEnd() const;
     //! @endcond
