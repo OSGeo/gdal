@@ -1202,6 +1202,42 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
             elts.emplace_back(elt);
             return GDALExtendedDataType::Create(eDT);
         }
+        else if (obj.GetType() == CPLJSONObject::Type::Object)
+        {
+            const auto osName = obj["name"].ToString();
+            const auto oConfig = obj["configuration"];
+            DtypeElt elt;
+
+            if (osName == "null_terminated_bytes" && oConfig.IsValid())
+            {
+                const int nBytes = oConfig["length_bytes"].ToInteger();
+                if (nBytes <= 0 || nBytes > 10 * 1024 * 1024)
+                    break;
+                elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
+                elt.nativeSize = static_cast<size_t>(nBytes);
+                elt.gdalType = GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nBytes));
+                elt.gdalSize = elt.gdalType.GetSize();
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nBytes));
+            }
+            else if (osName == "fixed_length_utf32" && oConfig.IsValid())
+            {
+                const int nBytes = oConfig["length_bytes"].ToInteger();
+                if (nBytes <= 0 || nBytes % 4 != 0 || nBytes > 10 * 1024 * 1024)
+                    break;
+                elt.nativeType = DtypeElt::NativeType::STRING_UNICODE;
+                elt.nativeSize = static_cast<size_t>(nBytes);
+                elt.needByteSwapping = (CPL_IS_LSB == 0);
+                elt.gdalType = GDALExtendedDataType::CreateString();
+                elt.gdalSize = elt.gdalType.GetSize();
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::CreateString();
+            }
+            else
+                break;
+        }
     } while (false);
     CPLError(CE_Failure, CPLE_AppDefined,
              "Invalid or unsupported format for data_type: %s",
@@ -1594,7 +1630,14 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     else if (eFillValueType == CPLJSONObject::Type::String)
     {
         const auto osFillValue = oFillValue.ToString();
-        if (STARTS_WITH(osFillValue.c_str(), "0x"))
+        if (oType.GetClass() == GEDTC_STRING)
+        {
+            abyNoData.resize(oType.GetSize());
+            char *pDstStr = CPLStrdup(osFillValue.c_str());
+            char **pDstPtr = reinterpret_cast<char **>(&abyNoData[0]);
+            memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
+        }
+        else if (STARTS_WITH(osFillValue.c_str(), "0x"))
         {
             if (osFillValue.size() > 2 + 2 * oType.GetSize())
             {
