@@ -232,6 +232,9 @@ static int _TIFFPrettyPrintField(TIFF *tif, const TIFFField *fip, FILE *fd,
                 return 1;
             }
             return 0;
+
+        default:
+            break;
     }
 
     return 0;

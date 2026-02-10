@@ -1487,6 +1487,8 @@ static void Fax3PrintDir(TIFF *tif, FILE *fd, long flags)
             case CLEANFAXDATA_UNCLEAN:
                 fprintf(fd, " uncorrected errors");
                 break;
+            default:
+                break;
         }
         fprintf(fd, " (%" PRIu16 " = 0x%" PRIx16 ")\n", sp->cleanfaxdata,
                 sp->cleanfaxdata);

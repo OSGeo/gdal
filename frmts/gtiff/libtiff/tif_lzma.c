@@ -95,6 +95,17 @@ static const char *LZMAStrerror(lzma_ret ret)
             return "no progress is possible (stream is truncated or corrupt)";
         case LZMA_PROG_ERROR:
             return "programming error";
+#if LZMA_VERSION >= 50040000 /* 5.4.0 */
+        case LZMA_SEEK_NEEDED:
+        case LZMA_RET_INTERNAL1:
+        case LZMA_RET_INTERNAL2:
+        case LZMA_RET_INTERNAL3:
+        case LZMA_RET_INTERNAL4:
+        case LZMA_RET_INTERNAL5:
+        case LZMA_RET_INTERNAL6:
+        case LZMA_RET_INTERNAL7:
+        case LZMA_RET_INTERNAL8:
+#endif
         default:
             return "unidentified liblzma error";
     }
@@ -376,6 +387,27 @@ static int LZMAPostEncode(TIFF *tif)
                                                      ZIPPreEncode */
                 }
                 break;
+            case LZMA_NO_CHECK:
+            case LZMA_UNSUPPORTED_CHECK:
+            case LZMA_GET_CHECK:
+            case LZMA_MEM_ERROR:
+            case LZMA_MEMLIMIT_ERROR:
+            case LZMA_FORMAT_ERROR:
+            case LZMA_OPTIONS_ERROR:
+            case LZMA_DATA_ERROR:
+            case LZMA_BUF_ERROR:
+            case LZMA_PROG_ERROR:
+#if LZMA_VERSION >= 50040000 /* 5.4.0 */
+            case LZMA_SEEK_NEEDED:
+            case LZMA_RET_INTERNAL1:
+            case LZMA_RET_INTERNAL2:
+            case LZMA_RET_INTERNAL3:
+            case LZMA_RET_INTERNAL4:
+            case LZMA_RET_INTERNAL5:
+            case LZMA_RET_INTERNAL6:
+            case LZMA_RET_INTERNAL7:
+            case LZMA_RET_INTERNAL8:
+#endif
             default:
                 TIFFErrorExtR(tif, module, "Liblzma error: %s",
                               LZMAStrerror(ret));

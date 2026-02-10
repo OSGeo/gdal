@@ -952,6 +952,54 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                                     goto bad;
                             }
                             break;
+                            case TIFF_SETGET_UNDEFINED:
+                            case TIFF_SETGET_SINT8:
+                            case TIFF_SETGET_SINT16:
+                            case TIFF_SETGET_SINT32:
+                            case TIFF_SETGET_UINT64:
+                            case TIFF_SETGET_SINT64:
+                            case TIFF_SETGET_FLOAT:
+                            case TIFF_SETGET_DOUBLE:
+                            case TIFF_SETGET_IFD8:
+                            case TIFF_SETGET_INT:
+                            case TIFF_SETGET_UINT16_PAIR:
+                            case TIFF_SETGET_C0_ASCII:
+                            case TIFF_SETGET_C0_UINT8:
+                            case TIFF_SETGET_C0_SINT8:
+                            case TIFF_SETGET_C0_UINT16:
+                            case TIFF_SETGET_C0_SINT16:
+                            case TIFF_SETGET_C0_UINT32:
+                            case TIFF_SETGET_C0_SINT32:
+                            case TIFF_SETGET_C0_UINT64:
+                            case TIFF_SETGET_C0_SINT64:
+                            case TIFF_SETGET_C0_FLOAT:
+                            case TIFF_SETGET_C0_DOUBLE:
+                            case TIFF_SETGET_C0_IFD8:
+                            case TIFF_SETGET_C16_ASCII:
+                            case TIFF_SETGET_C16_UINT8:
+                            case TIFF_SETGET_C16_SINT8:
+                            case TIFF_SETGET_C16_UINT16:
+                            case TIFF_SETGET_C16_SINT16:
+                            case TIFF_SETGET_C16_UINT32:
+                            case TIFF_SETGET_C16_SINT32:
+                            case TIFF_SETGET_C16_UINT64:
+                            case TIFF_SETGET_C16_SINT64:
+                            case TIFF_SETGET_C16_FLOAT:
+                            case TIFF_SETGET_C16_DOUBLE:
+                            case TIFF_SETGET_C16_IFD8:
+                            case TIFF_SETGET_C32_ASCII:
+                            case TIFF_SETGET_C32_SINT8:
+                            case TIFF_SETGET_C32_UINT16:
+                            case TIFF_SETGET_C32_SINT16:
+                            case TIFF_SETGET_C32_UINT32:
+                            case TIFF_SETGET_C32_SINT32:
+                            case TIFF_SETGET_C32_UINT64:
+                            case TIFF_SETGET_C32_SINT64:
+                            case TIFF_SETGET_C32_FLOAT:
+                            case TIFF_SETGET_C32_DOUBLE:
+                            case TIFF_SETGET_C32_IFD8:
+                            case TIFF_SETGET_UINT8:
+                            case TIFF_SETGET_OTHER:
                             default:
                                 TIFFErrorExtR(
                                     tif, module,
@@ -1127,6 +1175,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
                             (uint64_t *)tif->tif_dir.td_customValues[m].value))
                         goto bad;
                     break;
+                case TIFF_NOTYPE:
                 default:
                     assert(0); /* we should never get here */
                     break;
@@ -1680,14 +1729,6 @@ static int TIFFWriteDirectoryTagLong8Array(TIFF *tif, uint32_t *ndir,
     uint32_t *q;
     int o;
 
-    /* is this just a counting pass? */
-    if (dir == NULL)
-    {
-        /* only evaluate IFD data size and inc. ndir */
-        return (TIFFWriteDirectoryTagCheckedLong8Array(tif, ndir, dir, tag,
-                                                       count, value));
-    }
-
     /* We always write Long8 for BigTIFF, no checking needed. */
     if (tif->tif_flags & TIFF_BIGTIFF)
         return (TIFFWriteDirectoryTagCheckedLong8Array(tif, ndir, dir, tag,
@@ -1741,13 +1782,6 @@ static int TIFFWriteDirectoryTagSlong8Array(TIFF *tif, uint32_t *ndir,
     int32_t *q;
     int o;
 
-    /* is this just a counting pass? */
-    if (dir == NULL)
-    {
-        /* only evaluate IFD data size and inc. ndir */
-        return (TIFFWriteDirectoryTagCheckedSlong8Array(tif, ndir, dir, tag,
-                                                        count, value));
-    }
     /* We always write SLong8 for BigTIFF, no checking needed. */
     if (tif->tif_flags & TIFF_BIGTIFF)
         return (TIFFWriteDirectoryTagCheckedSlong8Array(tif, ndir, dir, tag,

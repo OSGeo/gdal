@@ -1345,6 +1345,8 @@ static int LogL16GuessDataFmt(TIFFDirectory *td)
         case PACK(1, 8, SAMPLEFORMAT_VOID):
         case PACK(1, 8, SAMPLEFORMAT_UINT):
             return (SGILOGDATAFMT_8BIT);
+        default:
+            break;
     }
 #undef PACK
     return (SGILOGDATAFMT_UNKNOWN);
@@ -1546,6 +1548,8 @@ static int LogLuvSetupDecode(TIFF *tif)
                     case SGILOGDATAFMT_8BIT:
                         sp->tfunc = Luv24toRGB;
                         break;
+                    default:
+                        break;
                 }
             }
             else
@@ -1562,6 +1566,8 @@ static int LogLuvSetupDecode(TIFF *tif)
                     case SGILOGDATAFMT_8BIT:
                         sp->tfunc = Luv32toRGB;
                         break;
+                    default:
+                        break;
                 }
             }
             return (1);
@@ -1576,6 +1582,8 @@ static int LogLuvSetupDecode(TIFF *tif)
                     break;
                 case SGILOGDATAFMT_8BIT:
                     sp->tfunc = L16toGry;
+                    break;
+                default:
                     break;
             }
             return (1);

@@ -47,6 +47,8 @@
                 *op++ |= (v);                                                  \
                 op_offset++;                                                   \
                 break;                                                         \
+            default:                                                           \
+                break;                                                         \
         }                                                                      \
     }
 

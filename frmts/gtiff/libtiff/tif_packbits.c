@@ -200,6 +200,8 @@ static int PackBitsEncode(TIFF *tif, uint8_t *buf, tmsize_t cc, uint16_t s)
                 else
                     state = RUN;
                 goto again;
+            default:
+                break;
         }
     }
     tif->tif_rawcc += (tmsize_t)(op - tif->tif_rawcp);

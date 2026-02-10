@@ -369,6 +369,8 @@ int TIFFVGetFieldDefaulted(TIFF *tif, uint32_t tag, va_list ap)
                 return (0);
             *va_arg(ap, const float **) = td->td_refblackwhite;
             return (1);
+        default:
+            break;
     }
     return 0;
 }

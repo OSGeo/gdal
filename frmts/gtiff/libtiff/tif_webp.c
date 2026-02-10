@@ -708,6 +708,8 @@ static int TWebPPostEncode(TIFF *tif)
             case VP8_ENC_ERROR_USER_ABORT:
                 pszErrorMsg = "User interrupted";
                 break;
+            case VP8_ENC_OK:
+            case VP8_ENC_ERROR_LAST:
             default:
                 TIFFErrorExtR(tif, module,
                               "WebPEncode returned an unknown error code: %u",

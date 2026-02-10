@@ -2286,6 +2286,7 @@ static int OJPEGReadBufferFill(OJPEGState *sp)
                     sp->in_buffer_next_strile++;
                 }
                 break;
+            case osibsEof:
             default:
                 return (0);
         }
@@ -2462,6 +2463,8 @@ static int OJPEGWriteStream(TIFF *tif, void **mem, uint32_t *len)
             case ososEoi:
                 OJPEGWriteStreamEoi(tif, mem, len);
                 break;
+            default:
+                break;
         }
     } while (*len == 0);
     return (1);
@@ -2626,6 +2629,8 @@ static int OJPEGWriteStreamCompressed(TIFF *tif, void **mem, uint32_t *len)
             case osibsEof:
                 sp->out_state = ososEoi;
                 break;
+            case osibsNotSetYet:
+            case osibsJpegInterchangeFormat:
             default:
                 break;
         }

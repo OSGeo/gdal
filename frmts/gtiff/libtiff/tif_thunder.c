@@ -150,6 +150,8 @@ static int ThunderDecode(TIFF *tif, uint8_t *op0, tmsize_t maxpixels)
             case THUNDER_RAW: /* raw data */
                 SETPIXEL(op, n);
                 break;
+            default:
+                break;
         }
     }
     tif->tif_rawcp = (uint8_t *)bp;

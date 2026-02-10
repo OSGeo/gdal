@@ -708,6 +708,8 @@ static int PixarLogGuessDataFmt(TIFFDirectory *td)
             if (format == SAMPLEFORMAT_VOID || format == SAMPLEFORMAT_UINT)
                 guess = PIXARLOGDATAFMT_8BIT;
             break;
+        default:
+            break;
     }
 
     return guess;
@@ -1561,6 +1563,8 @@ static int PixarLogVSetField(TIFF *tif, uint32_t tag, va_list ap)
                     TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, 32);
                     TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT,
                                  SAMPLEFORMAT_IEEEFP);
+                    break;
+                default:
                     break;
             }
             /*

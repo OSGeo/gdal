@@ -539,6 +539,8 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
                     tif->tif_flags |=
                         (TIFF_LAZYSTRILELOAD_ASKED | TIFF_DEFERSTRILELOAD);
                 break;
+            default:
+                break;
         }
 
 #ifdef DEFER_STRILE_LOAD
@@ -781,6 +783,8 @@ TIFF *TIFFClientOpenExt(const char *name, const char *mode,
             if (!TIFFDefaultDirectory(tif))
                 goto bad;
             return (tif);
+        default:
+            break;
     }
 bad:
     tif->tif_mode = O_RDONLY; /* XXX avoid flush */
