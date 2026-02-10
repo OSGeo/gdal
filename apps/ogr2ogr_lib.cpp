@@ -422,7 +422,7 @@ struct GDALVectorTranslateOptions
     /*! set to true to prevent overwriting existing dataset */
     bool bNoOverwrite = false;
 
-    /*! set to true to customize error messages when called from gdal CLI */
+    /*! set to true to customize error messages when called from "new" (GDAL 3.11) CLI or Algorithm API */
     bool bInvokedFromGdalAlgorithm = false;
 };
 
