@@ -241,26 +241,15 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 }
                 if (m_bbox.empty())
                 {
-                    m_bbox = {gt[0], gt[3] + nYSize * gt[5],
-                              gt[0] + nXSize * gt[1], gt[3]};
+                    double minX = gt[0];
+                    double maxY = gt[3];
+                    double maxX = gt[0] + nXSize * gt[1] + nYSize * gt[2];
+                    double minY = gt[3] + nXSize * gt[4] + nYSize * gt[5];
+                    if (minY > maxY)
+                        std::swap(minY, maxY);
+                    m_bbox = {minX, minY, maxX, maxY};
                     m_bboxCrs = m_dstCrs;
                 }
-            }
-        }
-
-        // Copy nodata if not set by the user
-        if (m_srcNoData.empty())
-        {
-            m_srcNoData.resize(poLikeDS->GetRasterCount());
-            for (int i = 0; i < poLikeDS->GetRasterCount(); i++)
-            {
-                auto poBand = poLikeDS->GetRasterBand(i + 1);
-                int bSuccess = FALSE;
-                const double dfNoDataValue = poBand->GetNoDataValue(&bSuccess);
-                if (bSuccess)
-                    m_srcNoData[i] = CPLSPrintf("%.17g", dfNoDataValue);
-                else
-                    m_srcNoData[i] = "None";
             }
         }
     }

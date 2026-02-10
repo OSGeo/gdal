@@ -111,7 +111,7 @@ Program-Specific Options
     :option:`--dst-crs` and :option:`--bbox`
     Note that the pixel values will *not* be copied, and that spatial registration of the
     template dataset through mechanisms such as GCP, RPC or geolocation array is
-    ignred
+    ignored.
 
 .. option:: --et, --error-threshold <ERROR-THRESHOLD>
 
