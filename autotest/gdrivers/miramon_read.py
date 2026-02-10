@@ -561,7 +561,7 @@ def test_miramon_subdatasets_detection(
 
 
 ###### Testing number of subdatasets for a multiband file
-###### that has diferent characteristics.
+###### that has different characteristics.
 # Tested characteristics:
 # data type
 # compression
@@ -569,8 +569,8 @@ def test_miramon_subdatasets_detection(
 # extension amplidude
 # Categorical vs continuous
 # nodata value
-# existance of nodata value
-# existance of color table
+# existence of nodata value
+# existence of color table
 
 
 def test_miramon_subdatasets_number():
