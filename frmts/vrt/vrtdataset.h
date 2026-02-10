@@ -955,6 +955,10 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
   protected:
     bool SkipBufferInitialization();
 
+    void InitializeOutputBuffer(void *pData, int nBufXSize, int nBufYSize,
+                                GDALDataType eBufType, GSpacing nPixelSpace,
+                                GSpacing nLineSpace) const;
+
   public:
     std::vector<std::unique_ptr<VRTSource>> m_papoSources{};
 

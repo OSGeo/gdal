@@ -1300,26 +1300,10 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
     /*      Initialize the buffer to some background value. Use the         */
     /*      nodata value if available.                                      */
     /* -------------------------------------------------------------------- */
-    if (bSkipOutputBufferInitialization)
+    if (!bSkipOutputBufferInitialization)
     {
-        // Do nothing
-    }
-    else if (nPixelSpace == nBufTypeSize &&
-             (!m_bNoDataValueSet || m_dfNoDataValue == 0))
-    {
-        memset(pData, 0,
-               static_cast<size_t>(nBufXSize) * nBufYSize * nBufTypeSize);
-    }
-    else if (m_bNoDataValueSet)
-    {
-        double dfWriteValue = m_dfNoDataValue;
-
-        for (int iLine = 0; iLine < nBufYSize; iLine++)
-        {
-            GDALCopyWords64(&dfWriteValue, GDT_Float64, 0,
-                            static_cast<GByte *>(pData) + nLineSpace * iLine,
-                            eBufType, static_cast<int>(nPixelSpace), nBufXSize);
-        }
+        InitializeOutputBuffer(pData, nBufXSize, nBufYSize, eBufType,
+                               nPixelSpace, nLineSpace);
     }
 
     // No contributing sources and SkipNonContributingSources mode ?
