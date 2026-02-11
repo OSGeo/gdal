@@ -3971,8 +3971,6 @@ void netCDFDataset::SetProjectionFromVar(
             if (!bSwitchedXY)
             {
                 poDS->bBottomUp = (yMinMax[0] <= yMinMax[1]);
-                CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
-                         static_cast<int>(poDS->bBottomUp));
                 if (!poDS->bBottomUp)
                 {
                     std::swap(yMinMax[0], yMinMax[1]);
@@ -4163,6 +4161,27 @@ void netCDFDataset::SetProjectionFromVar(
                     gtFromAttribute[i] = CPLAtof(aosGeoTransform[i]);
                 }
 
+                // When GDAL writes a raster that is north-up oriented, it
+                // writes the "GeoTransform" attribute unmodified, that is with
+                // gt.yscale < 0, but the first line is actually the southern-most
+                // one, consistently with the values of the "y" coordinate
+                // variable. This is wrong... but we have always done that, so
+                // this is hard to fix now.
+                // However there are datasets like
+                // https://public.hub.geosphere.at/datahub/resources/spartacus-v2-1d-1km/filelisting/TN/SPARTACUS2-DAILY_TN_2026.nc
+                // that correctly use a positive gt.yscale value. So make sure to not emit
+                // a warning when comparing against the geotransform derived from
+                // the x/y coordinates.
+                GDALGeoTransform gtFromAttributeNorthUp = gtFromAttribute;
+                if (gtFromAttributeNorthUp.yscale > 0 &&
+                    gtFromAttributeNorthUp.IsAxisAligned())
+                {
+                    gtFromAttributeNorthUp.yorig +=
+                        poDS->nRasterYSize * gtFromAttributeNorthUp.yscale;
+                    gtFromAttributeNorthUp.yscale =
+                        -gtFromAttributeNorthUp.yscale;
+                }
+
                 if (bGotCfGT)
                 {
                     constexpr double GT_RELERROR_WARN_THRESHOLD = 1e-6;
@@ -4170,9 +4189,9 @@ void netCDFDataset::SetProjectionFromVar(
                     for (int i = 0; i < 6; i++)
                     {
                         double dfAbsoluteError =
-                            std::abs(tmpGT[i] - gtFromAttribute[i]);
+                            std::abs(tmpGT[i] - gtFromAttributeNorthUp[i]);
                         if (dfAbsoluteError >
-                            std::abs(gtFromAttribute[i] *
+                            std::abs(gtFromAttributeNorthUp[i] *
                                      GT_RELERROR_WARN_THRESHOLD))
                         {
                             dfMaxAbsoluteError =
@@ -4194,7 +4213,18 @@ void netCDFDataset::SetProjectionFromVar(
 
                 if (bUseGeoTransformFromAttribute)
                 {
-                    tmpGT = gtFromAttribute;
+                    if (bGotCfGT)
+                    {
+                        tmpGT = gtFromAttributeNorthUp;
+                        if (gtFromAttributeNorthUp.IsAxisAligned())
+                        {
+                            poDS->bBottomUp = true;
+                        }
+                    }
+                    else
+                    {
+                        tmpGT = gtFromAttribute;
+                    }
                     bGotGdalGT = true;
                 }
             }
@@ -4239,6 +4269,12 @@ void netCDFDataset::SetProjectionFromVar(
 
         if (bGotGdalSRS && !bGotGdalGT)
             CPLDebug("GDAL_netCDF", "Got SRS but no geotransform from GDAL!");
+    }
+
+    if (bGotCfGT || bGotGdalGT)
+    {
+        CPLDebug("GDAL_netCDF", "set bBottomUp = %d from Y axis",
+                 static_cast<int>(poDS->bBottomUp));
     }
 
     if (!pszWKT && !bGotCfSRS)
