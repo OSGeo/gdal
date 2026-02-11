@@ -2531,12 +2531,12 @@ def test_vrt_derived_zero_initialization(tmp_vsimem):
       </VRTRasterBand>
     </VRTDataset>"""
 
-    buf_obj = bytearray(b"\xFF" * ((vrt_h - 1) * vrt_w + tile_offset))
+    buf_obj = bytearray(b"\xff" * ((vrt_h - 1) * vrt_w + tile_offset))
     got = gdal.Open(xml).ReadRaster(
         0, 0, tile_offset, vrt_h, buf_obj=buf_obj, buf_line_space=vrt_w
     )
     assert (
         got
-        == (b"\x00" * tile_offset + b"\xFF" * tile_w) * (vrt_h - 1)
+        == (b"\x00" * tile_offset + b"\xff" * tile_w) * (vrt_h - 1)
         + b"\x00" * tile_offset
     )
