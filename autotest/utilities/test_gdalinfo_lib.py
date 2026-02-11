@@ -377,3 +377,22 @@ def test_gdalinfo_lib_no_driver():
     assert ds2.GetDriver() is None
     gdal.Info(ds2)
     gdal.Info(ds2, format="json")
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/13906
+
+
+@pytest.mark.parametrize(
+    "wkt_format,expected",
+    [
+        ("WKT1", """PROJCS["NAD27 / UTM zone 11N","""),
+        ("WKT1_ESRI", """PROJCS["NAD_1927_UTM_Zone_11N","""),
+        ("WKT2", """PROJCRS["NAD27 / UTM zone 11N","""),
+    ],
+)
+def test_gdalinfo_lib_wkt_format(wkt_format, expected):
+
+    ds = gdal.Open("../gcore/data/byte.tif")
+    ret = gdal.Info(ds, options="-json -wkt_format " + wkt_format)
+    assert ret["coordinateSystem"]["wkt"].startswith(expected)

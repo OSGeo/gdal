@@ -298,8 +298,9 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
                 "system."));
 
     argParser->add_argument("-wkt_format")
-        .metavar("<WKT1|WKT2|WKT2_2015|WKT2_2018|WKT2_2019>")
-        .choices("WKT1", "WKT2", "WKT2_2015", "WKT2_2018", "WKT2_2019")
+        .metavar("<WKT1|WKT1_ESRI|WKT2|WKT2_2015|WKT2_2018|WKT2_2019>")
+        .choices("WKT1", "WKT1_ESRI", "WKT2", "WKT2_2015", "WKT2_2018",
+                 "WKT2_2019")
         .store_into(psOptions->osWKTFormat)
         .help(_("WKT format used for SRS."));
 
