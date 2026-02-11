@@ -1842,7 +1842,7 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
                 size_t nCount = 1;
                 double dfVal = 0;
                 poVar->Read(&nStart, &nCount, nullptr, nullptr, m_dt, &dfVal);
-                if (std::fabs(dfVal - (gt[0] + 0.5 * gt[1])) >
+                if (std::fabs(dfVal - (gt.xorig + 0.5 * gt.xscale)) >
                     EPSILON * std::fabs(dfVal))
                 {
                     bOK = false;
@@ -1858,8 +1858,9 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
                     double dfVal = 0;
                     poVar->Read(&nStart, &nCount, nullptr, nullptr, m_dt,
                                 &dfVal);
-                    if (std::fabs(dfVal - (gt[3] + poDS->nRasterYSize * gt[5] -
-                                           0.5 * gt[5])) >
+                    if (std::fabs(dfVal -
+                                  (gt.yorig + poDS->nRasterYSize * gt.yscale -
+                                   0.5 * gt.yscale)) >
                         EPSILON * std::fabs(dfVal))
                     {
                         bOK = false;
@@ -1893,7 +1894,7 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
 
             auto var = GDALMDArrayRegularlySpaced::Create(
                 "/", poDimY->GetName(), poDimY,
-                gt[3] + poDS->GetRasterYSize() * gt[5], -gt[5], 0.5);
+                gt.yorig + poDS->GetRasterYSize() * gt.yscale, -gt.yscale, 0.5);
             poDimY->SetIndexingVariable(var);
             poGroup->AddArray(var);
         }
@@ -1912,7 +1913,7 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
             poGroup->m_dims.emplace_back(poDimX);
 
             auto var = GDALMDArrayRegularlySpaced::Create(
-                "/", poDimX->GetName(), poDimX, gt[0], gt[1], 0.5);
+                "/", poDimX->GetName(), poDimX, gt.xorig, gt.xscale, 0.5);
             poDimX->SetIndexingVariable(var);
             poGroup->AddArray(var);
         }
@@ -2852,10 +2853,10 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     rMinX -= rPixelSizeX / 2;
     rMaxY += rPixelSizeY / 2;
 
-    m_gt[0] = rMinX;
-    m_gt[3] = rMaxY;
-    m_gt[1] = rPixelSizeX;
-    m_gt[5] = -rPixelSizeY;
+    m_gt.xorig = rMinX;
+    m_gt.yorig = rMaxY;
+    m_gt.xscale = rPixelSizeX;
+    m_gt.yscale = -rPixelSizeY;
 
     if (bError)
         m_poSRS.reset();

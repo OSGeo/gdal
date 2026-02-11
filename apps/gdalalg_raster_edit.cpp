@@ -302,12 +302,12 @@ bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 return false;
             }
             GDALGeoTransform gt;
-            gt[0] = m_bbox[0];
-            gt[1] = (m_bbox[2] - m_bbox[0]) / poDS->GetRasterXSize();
-            gt[2] = 0;
-            gt[3] = m_bbox[3];
-            gt[4] = 0;
-            gt[5] = -(m_bbox[3] - m_bbox[1]) / poDS->GetRasterYSize();
+            gt.xorig = m_bbox[0];
+            gt.xscale = (m_bbox[2] - m_bbox[0]) / poDS->GetRasterXSize();
+            gt.xrot = 0;
+            gt.yorig = m_bbox[3];
+            gt.yrot = 0;
+            gt.yscale = -(m_bbox[3] - m_bbox[1]) / poDS->GetRasterYSize();
             if (poDS->SetGeoTransform(gt) != CE_None)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,

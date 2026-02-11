@@ -2106,8 +2106,8 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     CPLJSONObject oStepTargetModel;
     if (poGDS->m_bRequestInGeoreferencedCoordinates)
     {
-        oStepTargetModel.Add("x", poGDS->m_gt[1]);
-        oStepTargetModel.Add("y", fabs(poGDS->m_gt[5]));
+        oStepTargetModel.Add("x", poGDS->m_gt.xscale);
+        oStepTargetModel.Add("y", fabs(poGDS->m_gt.yscale));
     }
     else
     {

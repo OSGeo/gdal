@@ -730,8 +730,8 @@ class GeoTransformCoordinateTransformation final
     {
         for (size_t i = 0; i < nCount; ++i)
         {
-            const double X = m_gt[0] + x[i] * m_gt[1] + y[i] * m_gt[2];
-            const double Y = m_gt[3] + x[i] * m_gt[4] + y[i] * m_gt[5];
+            const double X = m_gt.xorig + x[i] * m_gt.xscale + y[i] * m_gt.xrot;
+            const double Y = m_gt.yorig + x[i] * m_gt.yrot + y[i] * m_gt.yscale;
             x[i] = X;
             y[i] = Y;
             if (pabSuccess)
@@ -997,10 +997,10 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
         // Transform from overview pixel coordinates to full resolution
         // pixel coordinates
         auto poMaskBand = apoSrcMaskBands[0];
-        gt[1] = double(poSrcDS->GetRasterXSize()) / poMaskBand->GetXSize();
-        gt[2] = 0;
-        gt[4] = 0;
-        gt[5] = double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize();
+        gt.xscale = double(poSrcDS->GetRasterXSize()) / poMaskBand->GetXSize();
+        gt.xrot = 0;
+        gt.yrot = 0;
+        gt.yscale = double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize();
         poCT_GT = std::make_unique<GeoTransformCoordinateTransformation>(gt);
     }
 

@@ -5105,8 +5105,8 @@ CPLErr netCDFDataset::SetGeoTransform(const GDALGeoTransform &gt)
         return CE_Failure;
     }
 
-    CPLDebug("GDAL_netCDF", "SetGeoTransform(%f,%f,%f,%f,%f,%f)", gt[0], gt[1],
-             gt[2], gt[3], gt[4], gt[5]);
+    CPLDebug("GDAL_netCDF", "SetGeoTransform(%f,%f,%f,%f,%f,%f)", gt.xorig,
+             gt.xscale, gt.xrot, gt.yorig, gt.yrot, gt.yscale);
 
     SetGeoTransformNoUpdate(gt);
 
@@ -5874,10 +5874,10 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             }
 
             // Get Y values.
-            const double dfY0 = (!bBottomUp) ? m_gt[3] :
+            const double dfY0 = (!bBottomUp) ? m_gt.yorig :
                                              // Invert latitude values.
-                                    m_gt[3] + (m_gt[5] * nRasterYSize);
-            const double dfDY = m_gt[5];
+                                    m_gt.yorig + (m_gt.yscale * nRasterYSize);
+            const double dfDY = m_gt.yscale;
 
             for (int j = 0; j < nRasterYSize; j++)
             {
@@ -5891,8 +5891,8 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             countX[0] = nRasterXSize;
 
             // Get X values.
-            const double dfX0 = m_gt[0];
-            const double dfDX = m_gt[1];
+            const double dfX0 = m_gt.xorig;
+            const double dfDX = m_gt.xscale;
 
             for (int i = 0; i < nRasterXSize; i++)
             {
@@ -6162,10 +6162,10 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
         else if (bWriteLonLat)
         {
             // Get latitude values.
-            const double dfY0 = (!bBottomUp) ? m_gt[3] :
+            const double dfY0 = (!bBottomUp) ? m_gt.yorig :
                                              // Invert latitude values.
-                                    m_gt[3] + (m_gt[5] * nRasterYSize);
-            const double dfDY = m_gt[5];
+                                    m_gt.yorig + (m_gt.yscale * nRasterYSize);
+            const double dfDY = m_gt.yscale;
 
             std::unique_ptr<double, decltype(&VSIFree)> adLatValKeeper(nullptr,
                                                                        VSIFree);
@@ -6218,8 +6218,8 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
             size_t countLat[1] = {static_cast<size_t>(nRasterYSize)};
 
             // Get longitude values.
-            const double dfX0 = m_gt[0];
-            const double dfDX = m_gt[1];
+            const double dfX0 = m_gt.xorig;
+            const double dfDX = m_gt.xscale;
 
             std::unique_ptr<double, decltype(&VSIFree)> adLonValKeeper(
                 static_cast<double *>(

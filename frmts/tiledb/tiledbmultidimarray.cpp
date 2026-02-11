@@ -384,7 +384,7 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
         int nXSize = 0;
         int nYSize = 0;
         std::shared_ptr<OGRSpatialReference> poSRS;
-        double adfGeoTransform[6] = {0};
+        GDALGeoTransform gt;
         bool bHasGeoTransform = false;
         {
             tiledb_datatype_t value_type = TILEDB_ANY;
@@ -462,7 +462,7 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
                             {
                                 bHasGeoTransform = true;
                                 for (int i = 0; i < 6; ++i)
-                                    adfGeoTransform[i] = CPLAtof(aosTokens[i]);
+                                    gt[i] = CPLAtof(aosTokens[i]);
                             }
                         }
                     }
@@ -592,8 +592,7 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
                 }
             }
             if (bHasGeoTransform && !poDim->GetIndexingVariable() &&
-                i + 2 >= dims.size() && adfGeoTransform[2] == 0 &&
-                adfGeoTransform[4] == 0)
+                i + 2 >= dims.size() && gt.IsAxisAligned())
             {
                 // Recreate dimension with type and/or direction info
                 if (i + 2 == dims.size())
@@ -614,13 +613,11 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
                 auto poDimTmp = std::make_shared<GDALDimension>(
                     std::string(), dim.name(), /* osType = */ std::string(),
                     /* osDirection = */ std::string(), nSize);
-                const double dfStart =
-                    (i + 2 == dims.size())
-                        ? adfGeoTransform[3] + adfGeoTransform[5] / 2
-                        : adfGeoTransform[0] + adfGeoTransform[1] / 2;
-                const double dfStep = (i + 2 == dims.size())
-                                          ? adfGeoTransform[5]
-                                          : adfGeoTransform[1];
+                const double dfStart = (i + 2 == dims.size())
+                                           ? gt.yorig + gt.yscale / 2
+                                           : gt.xorig + gt.xscale / 2;
+                const double dfStep =
+                    (i + 2 == dims.size()) ? gt.yscale : gt.xscale;
                 poDim->SetIndexingVariableOneTime(
                     GDALMDArrayRegularlySpaced::Create(
                         osArrayFullName, poDim->GetName(), poDimTmp, dfStart,

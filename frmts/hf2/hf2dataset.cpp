@@ -596,15 +596,15 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
              nTileSize);
     if (bHasExtent)
     {
-        poDS->m_gt[0] = dfMinX;
-        poDS->m_gt[3] = dfMaxY;
-        poDS->m_gt[1] = (dfMaxX - dfMinX) / nXSize;
-        poDS->m_gt[5] = -(dfMaxY - dfMinY) / nYSize;
+        poDS->m_gt.xorig = dfMinX;
+        poDS->m_gt.yorig = dfMaxY;
+        poDS->m_gt.xscale = (dfMaxX - dfMinX) / nXSize;
+        poDS->m_gt.yscale = -(dfMaxY - dfMinY) / nYSize;
     }
     else
     {
-        poDS->m_gt[1] = fHorizScale;
-        poDS->m_gt[5] = fHorizScale;
+        poDS->m_gt.xscale = fHorizScale;
+        poDS->m_gt.yscale = fHorizScale;
     }
 
     if (bHasEPSGCode)
@@ -751,10 +751,11 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
     const int nXSize = poSrcDS->GetRasterXSize();
     const int nYSize = poSrcDS->GetRasterYSize();
     GDALGeoTransform gt;
-    const bool bHasGeoTransform = poSrcDS->GetGeoTransform(gt) == CE_None &&
-                                  !(gt[0] == 0 && gt[1] == 1 && gt[2] == 0 &&
-                                    gt[3] == 0 && gt[4] == 0 && gt[5] == 1);
-    if (gt[2] != 0 || gt[4] != 0)
+    const bool bHasGeoTransform =
+        poSrcDS->GetGeoTransform(gt) == CE_None &&
+        !(gt.xorig == 0 && gt.xscale == 1 && gt.xrot == 0 && gt.yorig == 0 &&
+          gt.yrot == 0 && gt.yscale == 1);
+    if (gt.xrot != 0 || gt.yrot != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "HF2 driver does not support CreateCopy() from skewed or "
@@ -897,7 +898,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
     WriteInt(fp, nYSize);
     WriteShort(fp, (GInt16)nTileSize);
     WriteFloat(fp, fVertPres);
-    const float fHorizScale = (float)((fabs(gt[1]) + fabs(gt[5])) / 2);
+    const float fHorizScale = (float)((fabs(gt.xscale) + fabs(gt.yscale)) / 2);
     WriteFloat(fp, fHorizScale);
     WriteInt(fp, nExtendedHeaderLen);
 
@@ -914,10 +915,10 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 34);
         WriteShort(fp, (GInt16)nExtentUnits);
-        WriteDouble(fp, gt[0]);
-        WriteDouble(fp, gt[0] + nXSize * gt[1]);
-        WriteDouble(fp, gt[3] + nYSize * gt[5]);
-        WriteDouble(fp, gt[3]);
+        WriteDouble(fp, gt.xorig);
+        WriteDouble(fp, gt.xorig + nXSize * gt.xscale);
+        WriteDouble(fp, gt.yorig + nYSize * gt.yscale);
+        WriteDouble(fp, gt.yorig);
     }
     if (nUTMZone != 0)
     {

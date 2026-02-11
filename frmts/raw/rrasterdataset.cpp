@@ -751,10 +751,10 @@ void RRASTERDataset::RewriteHeader()
     VSIFPrintfL(fp, "nrows=%d\n", nRasterYSize);
     VSIFPrintfL(fp, "ncols=%d\n", nRasterXSize);
 
-    VSIFPrintfL(fp, "xmin=%.17g\n", m_gt[0]);
-    VSIFPrintfL(fp, "ymin=%.17g\n", m_gt[3] + nRasterYSize * m_gt[5]);
-    VSIFPrintfL(fp, "xmax=%.17g\n", m_gt[0] + nRasterXSize * m_gt[1]);
-    VSIFPrintfL(fp, "ymax=%.17g\n", m_gt[3]);
+    VSIFPrintfL(fp, "xmin=%.17g\n", m_gt.xorig);
+    VSIFPrintfL(fp, "ymin=%.17g\n", m_gt.yorig + nRasterYSize * m_gt.yscale);
+    VSIFPrintfL(fp, "xmax=%.17g\n", m_gt.xorig + nRasterXSize * m_gt.xscale);
+    VSIFPrintfL(fp, "ymax=%.17g\n", m_gt.yorig);
 
     if (!m_oSRS.IsEmpty())
     {
@@ -821,7 +821,7 @@ CPLErr RRASTERDataset::SetGeoTransform(const GDALGeoTransform &gt)
     }
 
     // We only support non-rotated images with info in the .HDR file.
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "Rotated / skewed images not supported");
@@ -1215,12 +1215,12 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
     poDS->m_bGeoTransformValid = true;
-    poDS->m_gt[0] = dfXMin;
-    poDS->m_gt[1] = (dfXMax - dfXMin) / nCols;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = dfYMax;
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -(dfYMax - dfYMin) / nRows;
+    poDS->m_gt.xorig = dfXMin;
+    poDS->m_gt.xscale = (dfXMax - dfXMin) / nCols;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = dfYMax;
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -(dfYMax - dfYMin) / nRows;
     poDS->m_fpImage = fpImage;
     poDS->m_bNativeOrder = bNativeOrder;
 

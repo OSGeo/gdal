@@ -220,12 +220,12 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
 
     if (poGRW->bIsReferenced)
     {
-        poGRD->m_gt[1] = poGRW->dfXCoefficient[0];
-        poGRD->m_gt[2] = poGRW->dfXCoefficient[1];
-        poGRD->m_gt[0] = poGRW->dfXCoefficient[2];
-        poGRD->m_gt[4] = poGRW->dfYCoefficient[0];
-        poGRD->m_gt[5] = poGRW->dfYCoefficient[1];
-        poGRD->m_gt[3] = poGRW->dfYCoefficient[2];
+        poGRD->m_gt.xscale = poGRW->dfXCoefficient[0];
+        poGRD->m_gt.xrot = poGRW->dfXCoefficient[1];
+        poGRD->m_gt.xorig = poGRW->dfXCoefficient[2];
+        poGRD->m_gt.yrot = poGRW->dfYCoefficient[0];
+        poGRD->m_gt.yscale = poGRW->dfYCoefficient[1];
+        poGRD->m_gt.yorig = poGRW->dfYCoefficient[2];
     }
 
     //  -------------------------------------------------------------------
@@ -2160,12 +2160,12 @@ CPLErr GeoRasterDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     m_gt = gt;
 
-    poGeoRaster->dfXCoefficient[0] = m_gt[1];
-    poGeoRaster->dfXCoefficient[1] = m_gt[2];
-    poGeoRaster->dfXCoefficient[2] = m_gt[0];
-    poGeoRaster->dfYCoefficient[0] = m_gt[4];
-    poGeoRaster->dfYCoefficient[1] = m_gt[5];
-    poGeoRaster->dfYCoefficient[2] = m_gt[3];
+    poGeoRaster->dfXCoefficient[0] = m_gt.xscale;
+    poGeoRaster->dfXCoefficient[1] = m_gt.xrot;
+    poGeoRaster->dfXCoefficient[2] = m_gt.xorig;
+    poGeoRaster->dfYCoefficient[0] = m_gt.yrot;
+    poGeoRaster->dfYCoefficient[1] = m_gt.yscale;
+    poGeoRaster->dfYCoefficient[2] = m_gt.yorig;
 
     bGeoTransform = true;
 

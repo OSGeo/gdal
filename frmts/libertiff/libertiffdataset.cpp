@@ -3222,10 +3222,10 @@ void LIBERTIFFDataset::ReadGeoTransform()
             return;
 
         m_geotransformValid = true;
-        m_gt[1] = pixelScale[GCP_PIXEL];
-        m_gt[5] = -pixelScale[GCP_LINE];
-        m_gt[0] = tiepoints[GCP_X] - tiepoints[GCP_PIXEL] * m_gt[1];
-        m_gt[3] = tiepoints[GCP_Y] - tiepoints[GCP_LINE] * m_gt[5];
+        m_gt.xscale = pixelScale[GCP_PIXEL];
+        m_gt.yscale = -pixelScale[GCP_LINE];
+        m_gt.xorig = tiepoints[GCP_X] - tiepoints[GCP_PIXEL] * m_gt.xscale;
+        m_gt.yorig = tiepoints[GCP_Y] - tiepoints[GCP_LINE] * m_gt.yscale;
     }
     else if (psTagGeoTransMatrix &&
              psTagGeoTransMatrix->type == LIBERTIFF_NS::TagType::Double &&
@@ -3238,12 +3238,12 @@ void LIBERTIFFDataset::ReadGeoTransform()
         if (ok)
         {
             m_geotransformValid = true;
-            m_gt[0] = matrix[3];
-            m_gt[1] = matrix[0];
-            m_gt[2] = matrix[1];
-            m_gt[3] = matrix[7];
-            m_gt[4] = matrix[4];
-            m_gt[5] = matrix[5];
+            m_gt.xorig = matrix[3];
+            m_gt.xscale = matrix[0];
+            m_gt.xrot = matrix[1];
+            m_gt.yorig = matrix[7];
+            m_gt.yrot = matrix[4];
+            m_gt.yscale = matrix[5];
         }
     }
     else if (psTagTiePoints &&
@@ -3291,8 +3291,8 @@ void LIBERTIFFDataset::ReadGeoTransform()
         {
             if (EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT))
             {
-                m_gt[0] -= (m_gt[1] * 0.5 + m_gt[2] * 0.5);
-                m_gt[3] -= (m_gt[4] * 0.5 + m_gt[5] * 0.5);
+                m_gt.xorig -= (m_gt.xscale * 0.5 + m_gt.xrot * 0.5);
+                m_gt.yorig -= (m_gt.yrot * 0.5 + m_gt.yscale * 0.5);
             }
         }
     }

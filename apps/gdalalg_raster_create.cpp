@@ -257,12 +257,12 @@ bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
             return false;
         }
         bGTValid = true;
-        gt[0] = m_bbox[0];
-        gt[1] = (m_bbox[2] - m_bbox[0]) / poRetDS->GetRasterXSize();
-        gt[2] = 0;
-        gt[3] = m_bbox[3];
-        gt[4] = 0;
-        gt[5] = -(m_bbox[3] - m_bbox[1]) / poRetDS->GetRasterYSize();
+        gt.xorig = m_bbox[0];
+        gt.xscale = (m_bbox[2] - m_bbox[0]) / poRetDS->GetRasterXSize();
+        gt.xrot = 0;
+        gt.yorig = m_bbox[3];
+        gt.yrot = 0;
+        gt.yscale = -(m_bbox[3] - m_bbox[1]) / poRetDS->GetRasterYSize();
     }
     if (bGTValid)
     {

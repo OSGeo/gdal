@@ -1198,7 +1198,7 @@ static bool TranslateArray(
                 {
                     GDALGeoTransform gt;
                     if (poSrcDS->GetGeoTransform(gt) == CE_None &&
-                        gt[2] == 0.0 && gt[4] == 0.0)
+                        gt.IsAxisAligned())
                     {
                         auto var = poDstGroup->CreateVRTMDArray(
                             newDimName, {dstDim},
@@ -1207,11 +1207,13 @@ static bool TranslateArray(
                         {
                             const double dfStart =
                                 srcIndexVar->GetName() == "X"
-                                    ? gt[0] + (range.m_nStartIdx + 0.5) * gt[1]
-                                    : gt[3] + (range.m_nStartIdx + 0.5) * gt[5];
+                                    ? gt.xorig +
+                                          (range.m_nStartIdx + 0.5) * gt.xscale
+                                    : gt.yorig +
+                                          (range.m_nStartIdx + 0.5) * gt.yscale;
                             const double dfIncr =
-                                (srcIndexVar->GetName() == "X" ? gt[1]
-                                                               : gt[5]) *
+                                (srcIndexVar->GetName() == "X" ? gt.xscale
+                                                               : gt.yscale) *
                                 range.m_nIncr;
                             auto poSource = std::make_unique<
                                 VRTMDArraySourceRegularlySpaced>(dfStart,

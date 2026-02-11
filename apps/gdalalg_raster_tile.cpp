@@ -1404,14 +1404,14 @@ static bool GenerateTile(
     }
 
     GDALGeoTransform gt;
-    gt[0] =
+    gt.xorig =
         tileMatrix.mTopLeftX + iX * tileMatrix.mResX * tileMatrix.mTileWidth;
-    gt[1] = tileMatrix.mResX;
-    gt[2] = 0;
-    gt[3] =
+    gt.xscale = tileMatrix.mResX;
+    gt.xrot = 0;
+    gt.yorig =
         tileMatrix.mTopLeftY - iY * tileMatrix.mResY * tileMatrix.mTileHeight;
-    gt[4] = 0;
-    gt[5] = -tileMatrix.mResY;
+    gt.yrot = 0;
+    gt.yscale = -tileMatrix.mResY;
     memDS->SetGeoTransform(gt);
 
     memDS->SetSpatialRef(&oSRS_TMS);
@@ -2026,12 +2026,12 @@ class MosaicDataset : public GDALDataset
     {
         nRasterXSize = (nTileMaxX - nTileMinX + 1) * oTM.mTileWidth;
         nRasterYSize = (nTileMaxY - nTileMinY + 1) * oTM.mTileHeight;
-        m_gt[0] = oTM.mTopLeftX + nTileMinX * oTM.mResX * oTM.mTileWidth;
-        m_gt[1] = oTM.mResX;
-        m_gt[2] = 0;
-        m_gt[3] = oTM.mTopLeftY - nTileMinY * oTM.mResY * oTM.mTileHeight;
-        m_gt[4] = 0;
-        m_gt[5] = -oTM.mResY;
+        m_gt.xorig = oTM.mTopLeftX + nTileMinX * oTM.mResX * oTM.mTileWidth;
+        m_gt.xscale = oTM.mResX;
+        m_gt.xrot = 0;
+        m_gt.yorig = oTM.mTopLeftY - nTileMinY * oTM.mResY * oTM.mTileHeight;
+        m_gt.yrot = 0;
+        m_gt.yscale = -oTM.mResY;
         for (int i = 1; i <= nBandsIn; ++i)
         {
             const GDALColorInterp eColorInterp =

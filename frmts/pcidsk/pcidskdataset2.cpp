@@ -1247,8 +1247,8 @@ CPLErr PCIDSK2Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 
     try
     {
-        poGeoref->WriteSimple(poGeoref->GetGeosys(), gt[0], gt[1], gt[2], gt[3],
-                              gt[4], gt[5]);
+        poGeoref->WriteSimple(poGeoref->GetGeosys(), gt.xorig, gt.xscale,
+                              gt.xrot, gt.yorig, gt.yrot, gt.yscale);
     }
     catch (const PCIDSKException &ex)
     {
@@ -1280,7 +1280,8 @@ CPLErr PCIDSK2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
     {
         try
         {
-            poGeoref->GetTransform(gt[0], gt[1], gt[2], gt[3], gt[4], gt[5]);
+            poGeoref->GetTransform(gt.xorig, gt.xscale, gt.xrot, gt.yorig,
+                                   gt.yrot, gt.yscale);
         }
         catch (const PCIDSKException &ex)
         {
@@ -1348,12 +1349,12 @@ CPLErr PCIDSK2Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 
     try
     {
-        double adfGT[6];
-        poGeoref->GetTransform(adfGT[0], adfGT[1], adfGT[2], adfGT[3], adfGT[4],
-                               adfGT[5]);
+        GDALGeoTransform gt;
+        poGeoref->GetTransform(gt.xorig, gt.xscale, gt.xrot, gt.yorig, gt.yrot,
+                               gt.yscale);
 
-        poGeoref->WriteSimple(pszGeosys, adfGT[0], adfGT[1], adfGT[2], adfGT[3],
-                              adfGT[4], adfGT[5]);
+        poGeoref->WriteSimple(pszGeosys, gt.xorig, gt.xscale, gt.xrot, gt.yorig,
+                              gt.yrot, gt.yscale);
 
         std::vector<double> adfPCIParameters;
         for (unsigned int i = 0; i < 17; i++)

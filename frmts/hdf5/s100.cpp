@@ -726,15 +726,15 @@ bool S100GetGeoTransform(const GDALGroup *poGroup, GDALGeoTransform &gt,
         const double dfSpacingX = poSpacingX->ReadAsDouble();
         const double dfSpacingY = poSpacingY->ReadAsDouble();
 
-        gt[0] = poOriginX->ReadAsDouble();
-        gt[3] = poOriginY->ReadAsDouble() +
-                (bNorthUp ? dfSpacingY * (nNumPointsLatitudinal - 1) : 0);
-        gt[1] = dfSpacingX;
-        gt[5] = bNorthUp ? -dfSpacingY : dfSpacingY;
+        gt.xorig = poOriginX->ReadAsDouble();
+        gt.yorig = poOriginY->ReadAsDouble() +
+                   (bNorthUp ? dfSpacingY * (nNumPointsLatitudinal - 1) : 0);
+        gt.xscale = dfSpacingX;
+        gt.yscale = bNorthUp ? -dfSpacingY : dfSpacingY;
 
         // From pixel-center convention to pixel-corner convention
-        gt[0] -= gt[1] / 2;
-        gt[3] -= gt[5] / 2;
+        gt.xorig -= gt.xscale / 2;
+        gt.yorig -= gt.yscale / 2;
 
         return true;
     }
@@ -1285,7 +1285,7 @@ bool S100BaseWriter::BaseChecks(const char *pszDriverName, bool crsMustBeEPSG,
                  pszDriverName);
         return false;
     }
-    if (m_gt[2] != 0 || m_gt[4] != 0)
+    if (m_gt.xrot != 0 || m_gt.yrot != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "%s driver requires a source dataset with a non-rotated "
@@ -2247,14 +2247,16 @@ bool S100BaseWriter::CreateFeatureInstanceGroup(const char *name)
 bool S100BaseWriter::WriteFIGGridRelatedParameters(hid_t hGroup)
 {
     // From pixel-corner convention to pixel-center convention
-    const double dfMinX = m_gt[0] + m_gt[1] / 2;
-    const double dfMinY =
-        m_gt[5] < 0
-            ? m_gt[3] + m_gt[5] * m_poSrcDS->GetRasterYSize() - m_gt[5] / 2
-            : m_gt[3] + m_gt[5] / 2;
-    const double dfMaxX = dfMinX + (m_poSrcDS->GetRasterXSize() - 1) * m_gt[1];
+    const double dfMinX = m_gt.xorig + m_gt.xscale / 2;
+    const double dfMinY = m_gt.yscale < 0
+                              ? m_gt.yorig +
+                                    m_gt.yscale * m_poSrcDS->GetRasterYSize() -
+                                    m_gt.yscale / 2
+                              : m_gt.yorig + m_gt.yscale / 2;
+    const double dfMaxX =
+        dfMinX + (m_poSrcDS->GetRasterXSize() - 1) * m_gt.xscale;
     const double dfMaxY =
-        dfMinY + (m_poSrcDS->GetRasterYSize() - 1) * std::fabs(m_gt[5]);
+        dfMinY + (m_poSrcDS->GetRasterYSize() - 1) * std::fabs(m_gt.yscale);
 
     return WriteFloat32Value(hGroup, "westBoundLongitude", dfMinX) &&
            WriteFloat32Value(hGroup, "southBoundLatitude", dfMinY) &&
@@ -2262,9 +2264,9 @@ bool S100BaseWriter::WriteFIGGridRelatedParameters(hid_t hGroup)
            WriteFloat32Value(hGroup, "northBoundLatitude", dfMaxY) &&
            WriteFloat64Value(hGroup, "gridOriginLongitude", dfMinX) &&
            WriteFloat64Value(hGroup, "gridOriginLatitude", dfMinY) &&
-           WriteFloat64Value(hGroup, "gridSpacingLongitudinal", m_gt[1]) &&
+           WriteFloat64Value(hGroup, "gridSpacingLongitudinal", m_gt.xscale) &&
            WriteFloat64Value(hGroup, "gridSpacingLatitudinal",
-                             std::fabs(m_gt[5])) &&
+                             std::fabs(m_gt.yscale)) &&
            WriteUInt32Value(hGroup, "numPointsLongitudinal",
                             m_poSrcDS->GetRasterXSize()) &&
            WriteUInt32Value(hGroup, "numPointsLatitudinal",

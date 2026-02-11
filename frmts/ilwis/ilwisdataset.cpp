@@ -522,19 +522,19 @@ void ILWISDataset::CollectTransformCoef(std::string &osRefname)
 
             if (EQUAL(IsCorner.c_str(), "Yes"))
             {
-                m_gt[0] = CPLAtof(sMinX.c_str());
-                m_gt[3] = CPLAtof(sMaxY.c_str());
+                m_gt.xorig = CPLAtof(sMinX.c_str());
+                m_gt.yorig = CPLAtof(sMaxY.c_str());
             }
             else
             {
-                m_gt[0] = CPLAtof(sMinX.c_str()) - PixelSizeX / 2.0;
-                m_gt[3] = CPLAtof(sMaxY.c_str()) + PixelSizeY / 2.0;
+                m_gt.xorig = CPLAtof(sMinX.c_str()) - PixelSizeX / 2.0;
+                m_gt.yorig = CPLAtof(sMaxY.c_str()) + PixelSizeY / 2.0;
             }
 
-            m_gt[1] = PixelSizeX;
-            m_gt[2] = 0.0;
-            m_gt[4] = 0.0;
-            m_gt[5] = -PixelSizeY;
+            m_gt.xscale = PixelSizeX;
+            m_gt.xrot = 0.0;
+            m_gt.yrot = 0.0;
+            m_gt.yscale = -PixelSizeY;
         }
     }
 }
@@ -549,18 +549,18 @@ void ILWISDataset::WriteGeoReference()
 {
     // Check whether we should write out a georeference file.
     // Dataset must be north up.
-    if (m_gt[0] != 0.0 || m_gt[1] != 1.0 || m_gt[2] != 0.0 || m_gt[3] != 0.0 ||
-        m_gt[4] != 0.0 || fabs(m_gt[5]) != 1.0)
+    if (m_gt.xorig != 0.0 || m_gt.xscale != 1.0 || m_gt.xrot != 0.0 ||
+        m_gt.yorig != 0.0 || m_gt.yrot != 0.0 || fabs(m_gt.yscale) != 1.0)
     {
         SetGeoTransform(m_gt);  // is this needed?
-        if (m_gt[2] == 0.0 && m_gt[4] == 0.0)
+        if (m_gt.xrot == 0.0 && m_gt.yrot == 0.0)
         {
             int nXSize = GetRasterXSize();
             int nYSize = GetRasterYSize();
-            double dLLLat = (m_gt[3] + nYSize * m_gt[5]);
-            double dLLLong = (m_gt[0]);
-            double dURLat = (m_gt[3]);
-            double dURLong = (m_gt[0] + nXSize * m_gt[1]);
+            double dLLLat = (m_gt.yorig + nYSize * m_gt.yscale);
+            double dLLLong = (m_gt.xorig);
+            double dURLat = (m_gt.yorig);
+            double dURLong = (m_gt.xorig + nXSize * m_gt.xscale);
 
             std::string grFileName = CPLResetExtensionSafe(osFileName, "grf");
             WriteElement("Ilwis", "Type", grFileName, "GeoRef");
@@ -647,7 +647,7 @@ CPLErr ILWISDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
     m_gt = gt;
 
-    if (m_gt[2] == 0.0 && m_gt[4] == 0.0)
+    if (m_gt.xrot == 0.0 && m_gt.yrot == 0.0)
         bGeoDirty = TRUE;
 
     return CE_None;
@@ -1100,11 +1100,11 @@ GDALDataset *ILWISDataset::CreateCopy(const char *pszFilename,
     // Check whether we should create georeference file.
     // Source dataset must be north up.
     if (poSrcDS->GetGeoTransform(gt) == CE_None &&
-        (gt[0] != 0.0 || gt[1] != 1.0 || gt[2] != 0.0 || gt[3] != 0.0 ||
-         gt[4] != 0.0 || fabs(gt[5]) != 1.0))
+        (gt.xorig != 0.0 || gt.xscale != 1.0 || gt.xrot != 0.0 ||
+         gt.yorig != 0.0 || gt.yrot != 0.0 || fabs(gt.yscale) != 1.0))
     {
         poDS->SetGeoTransform(gt);
-        if (gt[2] == 0.0 && gt[4] == 0.0)
+        if (gt.xrot == 0.0 && gt.yrot == 0.0)
             georef = osBaseName + ".grf";
     }
 

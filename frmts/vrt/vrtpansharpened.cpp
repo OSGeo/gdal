@@ -724,13 +724,15 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                 continue;
 
             // Check if this dataset needs adjustments
-            dfPixelSize = std::max(gt[1], std::abs(gt[5]));
+            dfPixelSize = std::max(gt.xscale, std::abs(gt.yscale));
             dfPixelSize = std::max(panGT[1], dfPixelSize);
             dfPixelSize = std::max(std::abs(panGT[5]), dfPixelSize);
-            double dfThisMinX = gt[0];
-            double dfThisMaxX = gt[0] + poSrcDS->GetRasterXSize() * gt[1];
-            double dfThisMaxY = gt[3];
-            double dfThisMinY = gt[3] + poSrcDS->GetRasterYSize() * gt[5];
+            double dfThisMinX = gt.xorig;
+            double dfThisMaxX =
+                gt.xorig + poSrcDS->GetRasterXSize() * gt.xscale;
+            double dfThisMaxY = gt.yorig;
+            double dfThisMinY =
+                gt.yorig + poSrcDS->GetRasterYSize() * gt.yscale;
             if (dfThisMinY > dfThisMaxY)
                 std::swap(dfThisMinY, dfThisMaxY);
             if (std::abs(dfThisMinX - dfMinX) <= dfPixelSize &&
@@ -743,11 +745,11 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
 
             GDALGeoTransform adjustedGT;
             adjustedGT[0] = dfMinX;
-            adjustedGT[1] = gt[1];
+            adjustedGT[1] = gt.xscale;
             adjustedGT[2] = 0;
-            adjustedGT[3] = gt[5] > 0 ? dfMinY : dfMaxY;
+            adjustedGT[3] = gt.yscale > 0 ? dfMinY : dfMaxY;
             adjustedGT[4] = 0;
-            adjustedGT[5] = gt[5];
+            adjustedGT[5] = gt.yscale;
             const double dfAdjustedRasterXSize =
                 0.5 + (dfMaxX - dfMinX) / adjustedGT[1];
             const double dfAdjustedRasterYSize =
@@ -792,13 +794,15 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
                 poVRTBand->ConfigureSource(
                     poSimpleSource, poSrcBand, FALSE,
                     static_cast<int>(
-                        std::floor((dfMinX - gt[0]) / gt[1] + 0.001)),
-                    gt[5] < 0 ? static_cast<int>(std::floor(
-                                    (dfMaxY - dfThisMaxY) / gt[5] + 0.001))
-                              : static_cast<int>(std::floor(
-                                    (dfMinY - dfThisMinY) / gt[5] + 0.001)),
-                    static_cast<int>(0.5 + (dfMaxX - dfMinX) / gt[1]),
-                    static_cast<int>(0.5 + (dfMaxY - dfMinY) / std::abs(gt[5])),
+                        std::floor((dfMinX - gt.xorig) / gt.xscale + 0.001)),
+                    gt.yscale < 0
+                        ? static_cast<int>(std::floor(
+                              (dfMaxY - dfThisMaxY) / gt.yscale + 0.001))
+                        : static_cast<int>(std::floor(
+                              (dfMinY - dfThisMinY) / gt.yscale + 0.001)),
+                    static_cast<int>(0.5 + (dfMaxX - dfMinX) / gt.xscale),
+                    static_cast<int>(0.5 +
+                                     (dfMaxY - dfMinY) / std::abs(gt.yscale)),
                     0, 0, nAdjustRasterXSize, nAdjustRasterYSize);
 
                 poVRTBand->AddSource(poSimpleSource);

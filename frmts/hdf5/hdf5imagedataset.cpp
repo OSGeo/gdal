@@ -1473,12 +1473,12 @@ CPLErr HDF5ImageDataset::CreateODIMH5Projection()
     const double dfPixelY = (dfURY - dfLLY) / nRasterYSize;
 
     bHasGeoTransform = true;
-    m_gt[0] = dfLLX;
-    m_gt[1] = dfPixelX;
-    m_gt[2] = 0;
-    m_gt[3] = dfURY;
-    m_gt[4] = 0;
-    m_gt[5] = -dfPixelY;
+    m_gt.xorig = dfLLX;
+    m_gt.xscale = dfPixelX;
+    m_gt.xrot = 0;
+    m_gt.yorig = dfURY;
+    m_gt.yrot = 0;
+    m_gt.yscale = -dfPixelY;
 
     return CE_None;
 }
@@ -1962,12 +1962,12 @@ void HDF5ImageDataset::CaptureCSKGeoTransform(int iProductType)
                 // images.
                 // geotransform[5] : height of pixel (but negative)
 
-                m_gt[0] = pdOutUL[0];
-                m_gt[1] = pdLineSpacing[0];
-                m_gt[2] = 0;
-                m_gt[3] = pdOutUL[1];
-                m_gt[4] = 0;
-                m_gt[5] = -pdColumnSpacing[0];
+                m_gt.xorig = pdOutUL[0];
+                m_gt.xscale = pdLineSpacing[0];
+                m_gt.xrot = 0;
+                m_gt.yorig = pdOutUL[1];
+                m_gt.yrot = 0;
+                m_gt.yscale = -pdColumnSpacing[0];
 
                 CPLFree(pdOutUL);
                 CPLFree(pdLineSpacing);

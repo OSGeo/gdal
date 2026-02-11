@@ -306,12 +306,12 @@ GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
     /* Build GeoTransform matrix */
     /*****************************/
 
-    poDS->m_gt[0] = (dfWest - (dfDLon / 2.0)) / 3600.0;
-    poDS->m_gt[1] = dfDLon / 3600.0;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = (dfNorth + (dfDLat / 2.0)) / 3600.0;
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -1 * dfDLat / 3600.0;
+    poDS->m_gt.xorig = (dfWest - (dfDLon / 2.0)) / 3600.0;
+    poDS->m_gt.xscale = dfDLon / 3600.0;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = (dfNorth + (dfDLat / 2.0)) / 3600.0;
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -1 * dfDLat / 3600.0;
 
     /*********************/
     /* Set data type     */

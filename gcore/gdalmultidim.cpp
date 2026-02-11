@@ -7690,12 +7690,12 @@ bool GDALMDArray::GuessGeoTransform(size_t nDimX, size_t nDimY,
         poVarX->IsRegularlySpaced(dfXStart, dfXSpacing) &&
         poVarY->IsRegularlySpaced(dfYStart, dfYSpacing))
     {
-        gt[0] = dfXStart - (bPixelIsPoint ? 0 : dfXSpacing / 2);
-        gt[1] = dfXSpacing;
-        gt[2] = 0;
-        gt[3] = dfYStart - (bPixelIsPoint ? 0 : dfYSpacing / 2);
-        gt[4] = 0;
-        gt[5] = dfYSpacing;
+        gt.xorig = dfXStart - (bPixelIsPoint ? 0 : dfXSpacing / 2);
+        gt.xscale = dfXSpacing;
+        gt.xrot = 0;
+        gt.yorig = dfYStart - (bPixelIsPoint ? 0 : dfYSpacing / 2);
+        gt.yrot = 0;
+        gt.yscale = dfYSpacing;
         return true;
     }
     return false;
@@ -8441,14 +8441,16 @@ std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
         std::string(), "dimY", GDAL_DIM_TYPE_HORIZONTAL_Y, "NORTH",
         poReprojectedDS->GetRasterYSize());
     auto varY = GDALMDArrayRegularlySpaced::Create(
-        std::string(), poDimY->GetName(), poDimY, gt[3] + gt[5] / 2, gt[5], 0);
+        std::string(), poDimY->GetName(), poDimY, gt.yorig + gt.yscale / 2,
+        gt.yscale, 0);
     poDimY->SetIndexingVariable(varY);
 
     auto poDimX = std::make_shared<GDALDimensionWeakIndexingVar>(
         std::string(), "dimX", GDAL_DIM_TYPE_HORIZONTAL_X, "EAST",
         poReprojectedDS->GetRasterXSize());
     auto varX = GDALMDArrayRegularlySpaced::Create(
-        std::string(), poDimX->GetName(), poDimX, gt[0] + gt[1] / 2, gt[1], 0);
+        std::string(), poDimX->GetName(), poDimX, gt.xorig + gt.xscale / 2,
+        gt.xscale, 0);
     poDimX->SetIndexingVariable(varX);
 
     apoNewDims.emplace_back(poDimY);

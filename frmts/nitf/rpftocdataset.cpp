@@ -634,8 +634,8 @@ int RPFTOCProxyRasterDataSet::SanityCheckOK(GDALDataset *sourceDS)
     checkDone = TRUE;
 
     sourceDS->GetGeoTransform(l_gt);
-    WARN_ON_FAIL(fabs(l_gt[GEOTRSFRM_TOPLEFT_X] - nwLong) < l_gt[1]);
-    WARN_ON_FAIL(fabs(l_gt[GEOTRSFRM_TOPLEFT_Y] - nwLat) < fabs(l_gt[5]));
+    WARN_ON_FAIL(fabs(l_gt[GEOTRSFRM_TOPLEFT_X] - nwLong) < l_gt.xscale);
+    WARN_ON_FAIL(fabs(l_gt[GEOTRSFRM_TOPLEFT_Y] - nwLat) < fabs(l_gt.yscale));
     WARN_ON_FAIL(l_gt[GEOTRSFRM_ROTATION_PARAM1] == 0 &&
                  l_gt[GEOTRSFRM_ROTATION_PARAM2] == 0); /* No rotation */
     ERROR_ON_FAIL(sourceDS->GetRasterCount() == 1);     /* Just 1 band */

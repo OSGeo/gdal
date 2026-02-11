@@ -143,13 +143,13 @@ CPLErr LCPDataset::GetGeoTransform(GDALGeoTransform &gt) const
     CPL_LSBPTR64(&dfCellX);
     CPL_LSBPTR64(&dfCellY);
 
-    gt[0] = dfWest;
-    gt[3] = dfNorth;
-    gt[1] = dfCellX;
-    gt[2] = 0.0;
+    gt.xorig = dfWest;
+    gt.yorig = dfNorth;
+    gt.xscale = dfCellX;
+    gt.xrot = 0.0;
 
-    gt[4] = 0.0;
-    gt[5] = -1 * dfCellY;
+    gt.yrot = 0.0;
+    gt.yscale = -1 * dfCellY;
 
     return CE_None;
 }

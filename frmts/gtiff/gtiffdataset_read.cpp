@@ -5936,7 +5936,7 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                     nCountScale >= 2 && padfScale[0] != 0.0 &&
                     padfScale[1] != 0.0)
                 {
-                    m_gt[1] = padfScale[0];
+                    m_gt.xscale = padfScale[0];
                     if (padfScale[1] < 0)
                     {
                         const char *pszOptionVal = CPLGetConfigOption(
@@ -5954,33 +5954,35 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                                 "positive. You may override this behavior "
                                 "by setting the GTIFF_HONOUR_NEGATIVE_SCALEY "
                                 "configuration option to YES");
-                            m_gt[5] = padfScale[1];
+                            m_gt.yscale = padfScale[1];
                         }
                         else if (CPLTestBool(pszOptionVal))
                         {
-                            m_gt[5] = -padfScale[1];
+                            m_gt.yscale = -padfScale[1];
                         }
                         else
                         {
-                            m_gt[5] = padfScale[1];
+                            m_gt.yscale = padfScale[1];
                         }
                     }
                     else
                     {
-                        m_gt[5] = -padfScale[1];
+                        m_gt.yscale = -padfScale[1];
                     }
 
                     if (TIFFGetField(m_hTIFF, TIFFTAG_GEOTIEPOINTS, &nCount,
                                      &padfTiePoints) &&
                         nCount >= 6)
                     {
-                        m_gt[0] = padfTiePoints[3] - padfTiePoints[0] * m_gt[1];
-                        m_gt[3] = padfTiePoints[4] - padfTiePoints[1] * m_gt[5];
+                        m_gt.xorig =
+                            padfTiePoints[3] - padfTiePoints[0] * m_gt.xscale;
+                        m_gt.yorig =
+                            padfTiePoints[4] - padfTiePoints[1] * m_gt.yscale;
 
                         if (bPixelIsPoint && !bPointGeoIgnore)
                         {
-                            m_gt[0] -= (m_gt[1] * 0.5 + m_gt[2] * 0.5);
-                            m_gt[3] -= (m_gt[4] * 0.5 + m_gt[5] * 0.5);
+                            m_gt.xorig -= (m_gt.xscale * 0.5 + m_gt.xrot * 0.5);
+                            m_gt.yorig -= (m_gt.yrot * 0.5 + m_gt.yscale * 0.5);
                         }
 
                         m_bGeoTransformValid = true;
@@ -6019,17 +6021,17 @@ void GTiffDataset::LoadGeoreferencingAndPamIfNeeded()
                                       &padfMatrix) &&
                          nCount == 16)
                 {
-                    m_gt[0] = padfMatrix[3];
-                    m_gt[1] = padfMatrix[0];
-                    m_gt[2] = padfMatrix[1];
-                    m_gt[3] = padfMatrix[7];
-                    m_gt[4] = padfMatrix[4];
-                    m_gt[5] = padfMatrix[5];
+                    m_gt.xorig = padfMatrix[3];
+                    m_gt.xscale = padfMatrix[0];
+                    m_gt.xrot = padfMatrix[1];
+                    m_gt.yorig = padfMatrix[7];
+                    m_gt.yrot = padfMatrix[4];
+                    m_gt.yscale = padfMatrix[5];
 
                     if (bPixelIsPoint && !bPointGeoIgnore)
                     {
-                        m_gt[0] -= m_gt[1] * 0.5 + m_gt[2] * 0.5;
-                        m_gt[3] -= m_gt[4] * 0.5 + m_gt[5] * 0.5;
+                        m_gt.xorig -= m_gt.xscale * 0.5 + m_gt.xrot * 0.5;
+                        m_gt.yorig -= m_gt.yrot * 0.5 + m_gt.yscale * 0.5;
                     }
 
                     m_bGeoTransformValid = true;
@@ -6226,10 +6228,10 @@ CPLErr GTiffDataset::GetGeoTransform(GDALGeoTransform &gt) const
     if (CPLFetchBool(papszOpenOptions, "SHIFT_ORIGIN_IN_MINUS_180_PLUS_180",
                      false))
     {
-        if (gt[0] < -180.0 - gt[1])
-            gt[0] += 360.0;
-        else if (gt[0] > 180.0)
-            gt[0] -= 360.0;
+        if (gt.xorig < -180.0 - gt.xscale)
+            gt.xorig += 360.0;
+        else if (gt.xorig > 180.0)
+            gt.xorig -= 360.0;
     }
 
     return CE_None;

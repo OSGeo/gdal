@@ -226,12 +226,12 @@ GDALDataset *MSGDataset::Open(GDALOpenInfo *poOpenInfo)
                  iCentralPixelVIS_IR +
                  0.5);  // The y scan direction is always south -> north
     }
-    poDS->m_gt[0] = rMinX;
-    poDS->m_gt[3] = rMaxY;
-    poDS->m_gt[1] = rPixelSizeX;
-    poDS->m_gt[5] = -rPixelSizeY;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[4] = 0.0;
+    poDS->m_gt.xorig = rMinX;
+    poDS->m_gt.yorig = rMaxY;
+    poDS->m_gt.xscale = rPixelSizeX;
+    poDS->m_gt.yscale = -rPixelSizeY;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yrot = 0.0;
 
     /* -------------------------------------------------------------------- */
     /*      Set Projection Information                                      */
@@ -823,10 +823,10 @@ double MSGRasterBand::rRadiometricCorrection(unsigned int iDN, int iChannel,
         }
         else  // Channels 1,2,3 and 12 (visual): Reflectance
         {
-            double rLon =
-                poGDS->m_gt[0] + iCol * poGDS->m_gt[1];  // X, in "geos" meters
-            double rLat =
-                poGDS->m_gt[3] + iRow * poGDS->m_gt[5];  // Y, in "geos" meters
+            double rLon = poGDS->m_gt.xorig +
+                          iCol * poGDS->m_gt.xscale;  // X, in "geos" meters
+            double rLat = poGDS->m_gt.yorig +
+                          iRow * poGDS->m_gt.yscale;  // Y, in "geos" meters
             if ((poGDS->poTransform != nullptr) &&
                 poGDS->poTransform->Transform(1, &rLon,
                                               &rLat))  // transform it to latlon

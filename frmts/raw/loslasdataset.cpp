@@ -261,12 +261,12 @@ GDALDataset *LOSLASDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Setup georeferencing.                                           */
     /* -------------------------------------------------------------------- */
-    poDS->m_gt[0] = min_lon - delta_lon * 0.5;
-    poDS->m_gt[1] = delta_lon;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = min_lat + (poDS->nRasterYSize - 0.5) * delta_lat;
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -1.0 * delta_lat;
+    poDS->m_gt.xorig = min_lon - delta_lon * 0.5;
+    poDS->m_gt.xscale = delta_lon;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = min_lat + (poDS->nRasterYSize - 0.5) * delta_lat;
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -1.0 * delta_lat;
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */

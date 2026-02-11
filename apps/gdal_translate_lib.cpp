@@ -909,14 +909,14 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         GDALGeoTransform gt;
         poSrcDS->GetGeoTransform(gt);
 
-        if (gt[1] == 0.0 || gt[5] == 0.0)
+        if (gt.xscale == 0.0 || gt.yscale == 0.0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The -projwin option was used, but the geotransform is "
                      "invalid.");
             return nullptr;
         }
-        if (gt[2] != 0.0 || gt[4] != 0.0)
+        if (!gt.IsAxisAligned())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The -projwin option was used, but the geotransform is\n"
@@ -971,8 +971,8 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         double dfULX = psOptions->dfULX;
         double dfULY = psOptions->dfULY;
 
-        psOptions->srcWin.dfXOff = (dfULX - gt[0]) / gt[1];
-        psOptions->srcWin.dfYOff = (dfULY - gt[3]) / gt[5];
+        psOptions->srcWin.dfXOff = (dfULX - gt.xorig) / gt.xscale;
+        psOptions->srcWin.dfYOff = (dfULY - gt.yorig) / gt.yscale;
 
         // In case of nearest resampling, round to integer pixels (#6610)
         if (bAlignToInputPixels)
@@ -982,15 +982,15 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             psOptions->srcWin.dfYOff =
                 std::floor(psOptions->srcWin.dfYOff + 0.001);  // yoff
 
-            dfULX = psOptions->srcWin.dfXOff * gt[1] + gt[0];
-            dfULY = psOptions->srcWin.dfYOff * gt[5] + gt[3];
+            dfULX = psOptions->srcWin.dfXOff * gt.xscale + gt.xorig;
+            dfULY = psOptions->srcWin.dfYOff * gt.yscale + gt.yorig;
         }
 
         // Calculate xsize and ysize based on the (possibly snapped) ULX, ULY
         psOptions->srcWin.dfXSize =
-            (psOptions->dfLRX - dfULX) / gt[1];  // xsize
+            (psOptions->dfLRX - dfULX) / gt.xscale;  // xsize
         psOptions->srcWin.dfYSize =
-            (psOptions->dfLRY - dfULY) / gt[5];  // ysize
+            (psOptions->dfLRY - dfULY) / gt.yscale;  // ysize
 
         if (bAlignToInputPixels)
         {

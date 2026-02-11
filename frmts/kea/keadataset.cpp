@@ -535,12 +535,12 @@ CPLErr KEADataset::GetGeoTransform(GDALGeoTransform &gt) const
         kealib::KEAImageSpatialInfo *pSpatialInfo =
             m_pImageIO->getSpatialInfo();
         // GDAL uses an array format
-        gt[0] = pSpatialInfo->tlX;
-        gt[1] = pSpatialInfo->xRes;
-        gt[2] = pSpatialInfo->xRot;
-        gt[3] = pSpatialInfo->tlY;
-        gt[4] = pSpatialInfo->yRot;
-        gt[5] = pSpatialInfo->yRes;
+        gt.xorig = pSpatialInfo->tlX;
+        gt.xscale = pSpatialInfo->xRes;
+        gt.xrot = pSpatialInfo->xRot;
+        gt.yorig = pSpatialInfo->tlY;
+        gt.yrot = pSpatialInfo->yRot;
+        gt.yscale = pSpatialInfo->yRes;
 
         return CE_None;
     }
@@ -581,12 +581,12 @@ CPLErr KEADataset::SetGeoTransform(const GDALGeoTransform &gt)
         kealib::KEAImageSpatialInfo *pSpatialInfo =
             m_pImageIO->getSpatialInfo();
         // convert back from GDAL's array format
-        pSpatialInfo->tlX = gt[0];
-        pSpatialInfo->xRes = gt[1];
-        pSpatialInfo->xRot = gt[2];
-        pSpatialInfo->tlY = gt[3];
-        pSpatialInfo->yRot = gt[4];
-        pSpatialInfo->yRes = gt[5];
+        pSpatialInfo->tlX = gt.xorig;
+        pSpatialInfo->xRes = gt.xscale;
+        pSpatialInfo->xRot = gt.xrot;
+        pSpatialInfo->tlY = gt.yorig;
+        pSpatialInfo->yRot = gt.yrot;
+        pSpatialInfo->yRes = gt.yscale;
 
         m_pImageIO->setSpatialInfo(pSpatialInfo);
         return CE_None;

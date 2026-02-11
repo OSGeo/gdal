@@ -289,13 +289,12 @@ static bool COGGetWarpingCharacteristics(
 
     GDALTransformerInfo *psInfo =
         static_cast<GDALTransformerInfo *>(hTransformArg);
-    double adfGeoTransform[6];
+    GDALGeoTransform gt;
     double adfExtent[4];
 
     if (GDALSuggestedWarpOutput2(poTmpDS ? poTmpDS.get() : poSrcDS,
-                                 psInfo->pfnTransform, hTransformArg,
-                                 adfGeoTransform, &nXSize, &nYSize, adfExtent,
-                                 0) != CE_None)
+                                 psInfo->pfnTransform, hTransformArg, gt.data(),
+                                 &nXSize, &nYSize, adfExtent, 0) != CE_None)
     {
         GDALDestroyGenImgProjTransformer(hTransformArg);
         return false;
@@ -309,7 +308,7 @@ static bool COGGetWarpingCharacteristics(
     dfMinY = adfExtent[1];
     dfMaxX = adfExtent[2];
     dfMaxY = adfExtent[3];
-    dfRes = adfGeoTransform[1];
+    dfRes = gt.xscale;
 
     const CPLString osExtent(CSLFetchNameValueDef(papszOptions, "EXTENT", ""));
     const CPLString osRes(CSLFetchNameValueDef(papszOptions, "RES", ""));
@@ -366,7 +365,7 @@ static bool COGGetWarpingCharacteristics(
         }
         else
         {
-            double dfComputedRes = adfGeoTransform[1];
+            double dfComputedRes = gt.xscale;
             double dfPrevRes = 0.0;
             for (; nZoomLevel < static_cast<int>(tmList.size()); nZoomLevel++)
             {

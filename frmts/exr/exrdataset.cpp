@@ -764,12 +764,12 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                          strcmp(iter.name(), "gdal:geoTransform") == 0)
                 {
                     poDS->m_bHasGT = true;
-                    poDS->m_gt[0] = m33DAttr->value()[0][2];
-                    poDS->m_gt[1] = m33DAttr->value()[0][0];
-                    poDS->m_gt[2] = m33DAttr->value()[0][1];
-                    poDS->m_gt[3] = m33DAttr->value()[1][2];
-                    poDS->m_gt[4] = m33DAttr->value()[1][0];
-                    poDS->m_gt[5] = m33DAttr->value()[1][1];
+                    poDS->m_gt.xorig = m33DAttr->value()[0][2];
+                    poDS->m_gt.xscale = m33DAttr->value()[0][0];
+                    poDS->m_gt.xrot = m33DAttr->value()[0][1];
+                    poDS->m_gt.yorig = m33DAttr->value()[1][2];
+                    poDS->m_gt.yrot = m33DAttr->value()[1][0];
+                    poDS->m_gt.yscale = m33DAttr->value()[1][1];
                 }
                 else if (stringAttr && STARTS_WITH(iter.name(), "gdal:"))
                 {
@@ -876,17 +876,17 @@ static void WriteSRSInHeader(Header &header, const OGRSpatialReference *poSRS)
 static void WriteGeoTransformInHeader(Header &header,
                                       const GDALGeoTransform &gtIn)
 {
-    M33d gt;
-    gt[0][0] = gtIn[1];
-    gt[0][1] = gtIn[2];
-    gt[0][2] = gtIn[0];
-    gt[1][0] = gtIn[4];
-    gt[1][1] = gtIn[5];
-    gt[1][2] = gtIn[3];
-    gt[2][0] = 0;
-    gt[2][1] = 0;
-    gt[2][2] = 1;
-    header.insert("gdal:geoTransform", M33dAttribute(gt));
+    M33d gt_33;
+    gt_33[0][0] = gtIn.xscale;
+    gt_33[0][1] = gtIn.xrot;
+    gt_33[0][2] = gtIn.xorig;
+    gt_33[1][0] = gtIn.yrot;
+    gt_33[1][1] = gtIn.yscale;
+    gt_33[1][2] = gtIn.yorig;
+    gt_33[2][0] = 0;
+    gt_33[2][1] = 0;
+    gt_33[2][2] = 1;
+    header.insert("gdal:geoTransform", M33dAttribute(gt_33));
 }
 
 static void WriteMetadataInHeader(Header &header, CSLConstList papszMD)

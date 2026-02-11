@@ -705,10 +705,10 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
      */
     if (iUTMParamsFound == 7)
     {
-        poDS->m_gt[1] = 0.0;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = 0.0;
+        poDS->m_gt.xscale = 0.0;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = 0.0;
 
         double dfnorth_center;
         if (itransposed == 1)
@@ -718,18 +718,18 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
                      "with transposed=1 for testing.  Georeferencing may be "
                      "wrong.\n");
             dfnorth_center = dfnorth - nSamples * dfsample_size / 2.0;
-            poDS->m_gt[0] = dfeast;
-            poDS->m_gt[2] = dfsample_size_az;
-            poDS->m_gt[3] = dfnorth;
-            poDS->m_gt[4] = -1 * dfsample_size;
+            poDS->m_gt.xorig = dfeast;
+            poDS->m_gt.xrot = dfsample_size_az;
+            poDS->m_gt.yorig = dfnorth;
+            poDS->m_gt.yrot = -1 * dfsample_size;
         }
         else
         {
             dfnorth_center = dfnorth - nLines * dfsample_size / 2.0;
-            poDS->m_gt[0] = dfeast;
-            poDS->m_gt[1] = dfsample_size_az;
-            poDS->m_gt[3] = dfnorth;
-            poDS->m_gt[5] = -1 * dfsample_size;
+            poDS->m_gt.xorig = dfeast;
+            poDS->m_gt.xscale = dfsample_size_az;
+            poDS->m_gt.yorig = dfnorth;
+            poDS->m_gt.yscale = -1 * dfsample_size;
         }
 
         if (dfnorth_center < 0)
@@ -1050,12 +1050,12 @@ GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
     if (iUTMParamsFound == 8)
     {
         double dfnorth_center = dfnorth - nLines * dfysize / 2.0;
-        poDS->m_gt[0] = dfeast + dfOffsetX;
-        poDS->m_gt[1] = dfxsize;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = dfnorth + dfOffsetY;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -1 * dfysize;
+        poDS->m_gt.xorig = dfeast + dfOffsetX;
+        poDS->m_gt.xscale = dfxsize;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = dfnorth + dfOffsetY;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -1 * dfysize;
 
         OGRSpatialReference oUTM;
         if (dfnorth_center < 0)

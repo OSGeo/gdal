@@ -858,12 +858,12 @@ int PLMosaicDataset::OpenMosaic()
         }
 
         bHasGeoTransform = TRUE;
-        m_gt[0] = GM_ORIGIN;
-        m_gt[1] = dfResolution;
-        m_gt[2] = 0;
-        m_gt[3] = -GM_ORIGIN;
-        m_gt[4] = 0;
-        m_gt[5] = -dfResolution;
+        m_gt.xorig = GM_ORIGIN;
+        m_gt.xscale = dfResolution;
+        m_gt.xrot = 0;
+        m_gt.yorig = -GM_ORIGIN;
+        m_gt.yrot = 0;
+        m_gt.yscale = -dfResolution;
         nRasterXSize = static_cast<int>(2 * -GM_ORIGIN / dfResolution + 0.5);
         nRasterYSize = nRasterXSize;
 
@@ -891,8 +891,8 @@ int PLMosaicDataset::OpenMosaic()
             ymin = floor(ymin / dfTileSize) * dfTileSize;
             xmax = ceil(xmax / dfTileSize) * dfTileSize;
             ymax = ceil(ymax / dfTileSize) * dfTileSize;
-            m_gt[0] = xmin;
-            m_gt[3] = ymax;
+            m_gt.xorig = xmin;
+            m_gt.yorig = ymax;
             nRasterXSize = static_cast<int>((xmax - xmin) / dfResolution + 0.5);
             nRasterYSize = static_cast<int>((ymax - ymin) / dfResolution + 0.5);
             nMetaTileXShift =
@@ -984,12 +984,12 @@ int PLMosaicDataset::OpenMosaic()
 
                     int nSrcXOff, nSrcYOff, nDstXOff, nDstYOff;
 
-                    nSrcXOff = static_cast<int>(0.5 + (m_gt[0] - GM_ORIGIN) /
+                    nSrcXOff = static_cast<int>(0.5 + (m_gt.xorig - GM_ORIGIN) /
                                                           dfThisResolution);
                     nDstXOff = 0;
 
-                    nSrcYOff = static_cast<int>(0.5 + (-GM_ORIGIN - m_gt[3]) /
-                                                          dfThisResolution);
+                    nSrcYOff = static_cast<int>(
+                        0.5 + (-GM_ORIGIN - m_gt.yorig) / dfThisResolution);
                     nDstYOff = 0;
 
                     for (int iBand = 1; iBand <= 4; iBand++)

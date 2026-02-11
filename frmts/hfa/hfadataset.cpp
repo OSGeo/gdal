@@ -4153,14 +4153,16 @@ CPLErr HFADataset::WriteProjection()
     else
         sMapInfo.proName = const_cast<char *>("Unknown");
 
-    sMapInfo.upperLeftCenter.x = m_gt[0] + m_gt[1] * 0.5;
-    sMapInfo.upperLeftCenter.y = m_gt[3] + m_gt[5] * 0.5;
+    sMapInfo.upperLeftCenter.x = m_gt.xorig + m_gt.xscale * 0.5;
+    sMapInfo.upperLeftCenter.y = m_gt.yorig + m_gt.yscale * 0.5;
 
-    sMapInfo.lowerRightCenter.x = m_gt[0] + m_gt[1] * (GetRasterXSize() - 0.5);
-    sMapInfo.lowerRightCenter.y = m_gt[3] + m_gt[5] * (GetRasterYSize() - 0.5);
+    sMapInfo.lowerRightCenter.x =
+        m_gt.xorig + m_gt.xscale * (GetRasterXSize() - 0.5);
+    sMapInfo.lowerRightCenter.y =
+        m_gt.yorig + m_gt.yscale * (GetRasterYSize() - 0.5);
 
-    sMapInfo.pixelSize.width = std::abs(m_gt[1]);
-    sMapInfo.pixelSize.height = std::abs(m_gt[5]);
+    sMapInfo.pixelSize.width = std::abs(m_gt.xscale);
+    sMapInfo.pixelSize.height = std::abs(m_gt.yscale);
 
     // Handle units.  Try to match up with a known name.
     sMapInfo.units = const_cast<char *>("meters");
@@ -4204,7 +4206,7 @@ CPLErr HFADataset::WriteProjection()
     }
 
     // Write out definitions.
-    if (m_gt[2] == 0.0 && m_gt[4] == 0.0)
+    if (m_gt.xrot == 0.0 && m_gt.yrot == 0.0)
     {
         HFASetMapInfo(hHFA, &sMapInfo);
     }
@@ -4794,8 +4796,8 @@ CPLErr HFADataset::SetMetadataItem(const char *pszTag, const char *pszValue,
 CPLErr HFADataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    if (m_gt[0] != 0.0 || m_gt[1] != 1.0 || m_gt[2] != 0.0 || m_gt[3] != 0.0 ||
-        m_gt[4] != 0.0 || m_gt[5] != 1.0)
+    if (m_gt.xorig != 0.0 || m_gt.xscale != 1.0 || m_gt.xrot != 0.0 ||
+        m_gt.yorig != 0.0 || m_gt.yrot != 0.0 || m_gt.yscale != 1.0)
     {
         gt = m_gt;
         return CE_None;

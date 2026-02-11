@@ -479,12 +479,12 @@ GDALPamDataset *SRTMHGTDataset::OpenPAM(GDALOpenInfo *poOpenInfo)
     poDS->nRasterYSize = numPixels_y;
     poDS->nBands = 1;
 
-    poDS->m_gt[0] = southWestLon - 0.5 / (numPixels_x - 1);
-    poDS->m_gt[1] = 1.0 / (numPixels_x - 1);
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = southWestLat + 1 + 0.5 / (numPixels_y - 1);
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -1.0 / (numPixels_y - 1);
+    poDS->m_gt.xorig = southWestLon - 0.5 / (numPixels_x - 1);
+    poDS->m_gt.xscale = 1.0 / (numPixels_x - 1);
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = southWestLat + 1 + 0.5 / (numPixels_y - 1);
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -1.0 / (numPixels_y - 1);
 
     poDS->SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 
@@ -567,13 +567,13 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
     }
 
     const int nLLOriginLat = static_cast<int>(
-        std::floor(gt[3] + poSrcDS->GetRasterYSize() * gt[5] + 0.5));
+        std::floor(gt.yorig + poSrcDS->GetRasterYSize() * gt.yscale + 0.5));
 
-    int nLLOriginLong = static_cast<int>(std::floor(gt[0] + 0.5));
+    int nLLOriginLong = static_cast<int>(std::floor(gt.xorig + 0.5));
 
-    if (std::abs(nLLOriginLat -
-                 (gt[3] + (poSrcDS->GetRasterYSize() - 0.5) * gt[5])) > 1e-10 ||
-        std::abs(nLLOriginLong - (gt[0] + 0.5 * gt[1])) > 1e-10)
+    if (std::abs(nLLOriginLat - (gt.yorig + (poSrcDS->GetRasterYSize() - 0.5) *
+                                                gt.yscale)) > 1e-10 ||
+        std::abs(nLLOriginLong - (gt.xorig + 0.5 * gt.xscale)) > 1e-10)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "The corner coordinates of the source are not properly "

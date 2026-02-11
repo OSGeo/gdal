@@ -1012,10 +1012,10 @@ CPLErr BMPDataset::GetGeoTransform(GDALGeoTransform &gt) const
     // See http://trac.osgeo.org/gdal/ticket/3578
     if (sInfoHeader.iXPelsPerMeter > 0 && sInfoHeader.iYPelsPerMeter > 0)
     {
-        gt[1] = sInfoHeader.iXPelsPerMeter;
-        gt[5] = -sInfoHeader.iYPelsPerMeter;
-        gt[0] = -0.5 * gt[1];
-        gt[3] = -0.5 * gt[5];
+        gt.xscale = sInfoHeader.iXPelsPerMeter;
+        gt.yscale = -sInfoHeader.iYPelsPerMeter;
+        gt.xorig = -0.5 * gt.xscale;
+        gt.yorig = -0.5 * gt.yscale;
         return CE_None;
     }
 #endif

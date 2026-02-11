@@ -1151,13 +1151,13 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                     poDS->m_oSRS = std::move(oSRS_AEQD);
 
                     poDS->bGotGeoTransform = TRUE;
-                    poDS->m_gt[0] = dfULX_AEQD;
-                    poDS->m_gt[1] =
+                    poDS->m_gt.xorig = dfULX_AEQD;
+                    poDS->m_gt.xscale =
                         (dfURX_AEQD - dfULX_AEQD) / poDS->nRasterXSize;
-                    poDS->m_gt[2] = 0;
-                    poDS->m_gt[3] = dfULY_AEQD;
-                    poDS->m_gt[4] = 0;
-                    poDS->m_gt[5] =
+                    poDS->m_gt.xrot = 0;
+                    poDS->m_gt.yorig = dfULY_AEQD;
+                    poDS->m_gt.yrot = 0;
+                    poDS->m_gt.yscale =
                         (dfLLY_AEQD - dfULY_AEQD) / poDS->nRasterYSize;
                 }
             }
@@ -2203,12 +2203,14 @@ void NITFDataset::CheckGeoSDEInfo()
                  pszMAPLOB + 0);
     }
 
-    m_gt[0] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 13, 15));
-    m_gt[1] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 3, 5)) * dfMeterPerUnit;
-    m_gt[2] = 0.0;
-    m_gt[3] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 28, 15));
-    m_gt[4] = 0.0;
-    m_gt[5] = -CPLAtof(NITFGetField(szParam, pszMAPLOB, 8, 5)) * dfMeterPerUnit;
+    m_gt.xorig = CPLAtof(NITFGetField(szParam, pszMAPLOB, 13, 15));
+    m_gt.xscale =
+        CPLAtof(NITFGetField(szParam, pszMAPLOB, 3, 5)) * dfMeterPerUnit;
+    m_gt.xrot = 0.0;
+    m_gt.yorig = CPLAtof(NITFGetField(szParam, pszMAPLOB, 28, 15));
+    m_gt.yrot = 0.0;
+    m_gt.yscale =
+        -CPLAtof(NITFGetField(szParam, pszMAPLOB, 8, 5)) * dfMeterPerUnit;
 
     m_oSRS = std::move(oSRS);
 
@@ -2296,16 +2298,16 @@ CPLErr NITFDataset::SetGeoTransform(const GDALGeoTransform &gt)
     bGotGeoTransform = TRUE;
     m_gt = gt;
 
-    double dfIGEOLOULX = m_gt[0] + 0.5 * m_gt[1] + 0.5 * m_gt[2];
-    double dfIGEOLOULY = m_gt[3] + 0.5 * m_gt[4] + 0.5 * m_gt[5];
-    double dfIGEOLOURX = dfIGEOLOULX + m_gt[1] * (nRasterXSize - 1);
-    double dfIGEOLOURY = dfIGEOLOULY + m_gt[4] * (nRasterXSize - 1);
-    double dfIGEOLOLRX = dfIGEOLOULX + m_gt[1] * (nRasterXSize - 1) +
-                         m_gt[2] * (nRasterYSize - 1);
-    double dfIGEOLOLRY = dfIGEOLOULY + m_gt[4] * (nRasterXSize - 1) +
-                         m_gt[5] * (nRasterYSize - 1);
-    double dfIGEOLOLLX = dfIGEOLOULX + m_gt[2] * (nRasterYSize - 1);
-    double dfIGEOLOLLY = dfIGEOLOULY + m_gt[5] * (nRasterYSize - 1);
+    double dfIGEOLOULX = m_gt.xorig + 0.5 * m_gt.xscale + 0.5 * m_gt.xrot;
+    double dfIGEOLOULY = m_gt.yorig + 0.5 * m_gt.yrot + 0.5 * m_gt.yscale;
+    double dfIGEOLOURX = dfIGEOLOULX + m_gt.xscale * (nRasterXSize - 1);
+    double dfIGEOLOURY = dfIGEOLOULY + m_gt.yrot * (nRasterXSize - 1);
+    double dfIGEOLOLRX = dfIGEOLOULX + m_gt.xscale * (nRasterXSize - 1) +
+                         m_gt.xrot * (nRasterYSize - 1);
+    double dfIGEOLOLRY = dfIGEOLOULY + m_gt.yrot * (nRasterXSize - 1) +
+                         m_gt.yscale * (nRasterYSize - 1);
+    double dfIGEOLOLLX = dfIGEOLOULX + m_gt.xrot * (nRasterYSize - 1);
+    double dfIGEOLOLLY = dfIGEOLOULY + m_gt.yscale * (nRasterYSize - 1);
 
     if (psImage != nullptr &&
         NITFWriteIGEOLO(psImage, psImage->chICORDS, psImage->nZone, dfIGEOLOULX,
@@ -4899,8 +4901,8 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         if (bSDE_TRE)
         {
             if (oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 &&
-                poSrcDS->GetGeoTransform(gt) == CE_None && gt[2] == 0.0 &&
-                gt[4] == 0.0 && gt[5] < 0.0)
+                poSrcDS->GetGeoTransform(gt) == CE_None && gt.xrot == 0.0 &&
+                gt.yrot == 0.0 && gt.yscale < 0.0)
             {
                 /* Override ICORDS to G if necessary */
                 if (pszICORDS != nullptr && EQUAL(pszICORDS, "D"))
@@ -4933,10 +4935,10 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                 // Extra (useless) bytes to avoid CLang 18 erroneous -Wformat-truncation
                 constexpr int MARGIN_FOR_CLANG_18 = 2;
                 char szGEOLOB[48 + 1 + MARGIN_FOR_CLANG_18];
-                const double dfARV = 360.0 / gt[1];
-                const double dfBRV = 360.0 / -gt[5];
-                const double dfLSO = gt[0];
-                const double dfPSO = gt[3];
+                const double dfARV = 360.0 / gt.xscale;
+                const double dfBRV = 360.0 / -gt.yscale;
+                const double dfLSO = gt.xorig;
+                const double dfPSO = gt.yorig;
                 CPLsnprintf(szGEOLOB, sizeof(szGEOLOB),
                             "%09d%09d%#+015.10f%#+015.10f",
                             static_cast<int>(dfARV + 0.5),
@@ -5098,16 +5100,16 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                 const int nXSize = poSrcDS->GetRasterXSize();
                 const int nYSize = poSrcDS->GetRasterYSize();
 
-                dfIGEOLOULX = gt[0] + 0.5 * gt[1] + 0.5 * gt[2];
-                dfIGEOLOULY = gt[3] + 0.5 * gt[4] + 0.5 * gt[5];
-                dfIGEOLOURX = dfIGEOLOULX + gt[1] * (nXSize - 1);
-                dfIGEOLOURY = dfIGEOLOULY + gt[4] * (nXSize - 1);
-                dfIGEOLOLRX =
-                    dfIGEOLOULX + gt[1] * (nXSize - 1) + gt[2] * (nYSize - 1);
-                dfIGEOLOLRY =
-                    dfIGEOLOULY + gt[4] * (nXSize - 1) + gt[5] * (nYSize - 1);
-                dfIGEOLOLLX = dfIGEOLOULX + gt[2] * (nYSize - 1);
-                dfIGEOLOLLY = dfIGEOLOULY + gt[5] * (nYSize - 1);
+                dfIGEOLOULX = gt.xorig + 0.5 * gt.xscale + 0.5 * gt.xrot;
+                dfIGEOLOULY = gt.yorig + 0.5 * gt.yrot + 0.5 * gt.yscale;
+                dfIGEOLOURX = dfIGEOLOULX + gt.xscale * (nXSize - 1);
+                dfIGEOLOURY = dfIGEOLOULY + gt.yrot * (nXSize - 1);
+                dfIGEOLOLRX = dfIGEOLOULX + gt.xscale * (nXSize - 1) +
+                              gt.xrot * (nYSize - 1);
+                dfIGEOLOLRY = dfIGEOLOULY + gt.yrot * (nXSize - 1) +
+                              gt.yscale * (nYSize - 1);
+                dfIGEOLOLLX = dfIGEOLOULX + gt.xrot * (nYSize - 1);
+                dfIGEOLOLLY = dfIGEOLOULY + gt.yscale * (nYSize - 1);
 
                 oSRS_WGS84.SetWellKnownGeogCS("WGS84");
                 oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);

@@ -770,8 +770,8 @@ CPLErr MRFDataset::LevelInit(const int l)
     bGeoTransformValid = (CE_None == cds->GetGeoTransform(m_gt));
     for (int i = 0; i < l + 1; i++)
     {
-        m_gt[1] *= scale;
-        m_gt[5] *= scale;
+        m_gt.xscale *= scale;
+        m_gt.yscale *= scale;
     }
 
     nRasterXSize = current.size.x;
@@ -1366,13 +1366,13 @@ CPLXMLNode *MRFDataset::BuildConfig()
     // Do we have an affine transform different from identity?
     GDALGeoTransform gt;
     if ((MRFDataset::GetGeoTransform(gt) == CE_None) &&
-        (gt[0] != 0 || gt[1] != 1 || gt[2] != 0 || gt[3] != 0 || gt[4] != 0 ||
-         gt[5] != 1))
+        (gt.xorig != 0 || gt.xscale != 1 || gt.xrot != 0 || gt.yorig != 0 ||
+         gt.yrot != 0 || gt.yscale != 1))
     {
-        double minx = gt[0];
-        double maxx = gt[1] * full.size.x + minx;
-        double maxy = gt[3];
-        double miny = gt[5] * full.size.y + maxy;
+        double minx = gt.xorig;
+        double maxx = gt.xscale * full.size.x + minx;
+        double maxy = gt.yorig;
+        double miny = gt.yscale * full.size.y + maxy;
         CPLXMLNode *bbox = CPLCreateXMLNode(gtags, CXT_Element, "BoundingBox");
         XMLSetAttributeVal(bbox, "minx", minx);
         XMLSetAttributeVal(bbox, "miny", miny);
@@ -1438,12 +1438,12 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
         y1 = atof(CPLGetXMLValue(bbox, "maxy", "1"));
         y0 = atof(CPLGetXMLValue(bbox, "miny", "0"));
 
-        m_gt[0] = x0;
-        m_gt[1] = (x1 - x0) / full.size.x;
-        m_gt[2] = 0;
-        m_gt[3] = y1;
-        m_gt[4] = 0;
-        m_gt[5] = (y0 - y1) / full.size.y;
+        m_gt.xorig = x0;
+        m_gt.xscale = (x1 - x0) / full.size.x;
+        m_gt.xrot = 0;
+        m_gt.yorig = y1;
+        m_gt.yrot = 0;
+        m_gt.yscale = (y0 - y1) / full.size.y;
         bGeoTransformValid = TRUE;
     }
 

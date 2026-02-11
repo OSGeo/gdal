@@ -1912,20 +1912,20 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
 
         double adfX[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
         double adfY[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
-        adfX[0] = gt[0] + 0 * gt[1] + 0 * gt[2];
-        adfY[0] = gt[3] + 0 * gt[4] + 0 * gt[5];
+        adfX[0] = gt.xorig + 0 * gt.xscale + 0 * gt.xrot;
+        adfY[0] = gt.yorig + 0 * gt.yrot + 0 * gt.yscale;
 
-        adfX[1] = gt[0] + nXSize * gt[1] + 0 * gt[2];
-        adfY[1] = gt[3] + nXSize * gt[4] + 0 * gt[5];
+        adfX[1] = gt.xorig + nXSize * gt.xscale + 0 * gt.xrot;
+        adfY[1] = gt.yorig + nXSize * gt.yrot + 0 * gt.yscale;
 
-        adfX[2] = gt[0] + nXSize * gt[1] + nYSize * gt[2];
-        adfY[2] = gt[3] + nXSize * gt[4] + nYSize * gt[5];
+        adfX[2] = gt.xorig + nXSize * gt.xscale + nYSize * gt.xrot;
+        adfY[2] = gt.yorig + nXSize * gt.yrot + nYSize * gt.yscale;
 
-        adfX[3] = gt[0] + 0 * gt[1] + nYSize * gt[2];
-        adfY[3] = gt[3] + 0 * gt[4] + nYSize * gt[5];
+        adfX[3] = gt.xorig + 0 * gt.xscale + nYSize * gt.xrot;
+        adfY[3] = gt.yorig + 0 * gt.yrot + nYSize * gt.yscale;
 
-        adfX[4] = gt[0] + 0 * gt[1] + 0 * gt[2];
-        adfY[4] = gt[3] + 0 * gt[4] + 0 * gt[5];
+        adfX[4] = gt.xorig + 0 * gt.xscale + 0 * gt.xrot;
+        adfY[4] = gt.yorig + 0 * gt.yrot + 0 * gt.yscale;
 
         const double dfMinXBeforeReproj =
             std::min(std::min(adfX[0], adfX[1]), std::min(adfX[2], adfX[3]));
@@ -2635,12 +2635,12 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                 double *values = static_cast<double *>(const_cast<void *>(
                     projTransformItems->buffers[ARROW_BUF_DATA]));
                 auto ptr = values + nBatchSize * NUM_ITEMS_PROJ_TRANSFORM;
-                ptr[0] = gt[1];
-                ptr[1] = gt[2];
-                ptr[2] = gt[0];
-                ptr[3] = gt[4];
-                ptr[4] = gt[5];
-                ptr[5] = gt[3];
+                ptr[0] = gt.xscale;
+                ptr[1] = gt.xrot;
+                ptr[2] = gt.xorig;
+                ptr[3] = gt.yrot;
+                ptr[4] = gt.yscale;
+                ptr[5] = gt.yorig;
                 ptr[6] = 0;
                 ptr[7] = 0;
                 ptr[8] = 1;
