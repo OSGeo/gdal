@@ -1186,6 +1186,25 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
                 elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
                 eDT = GDT_CFloat64;
             }
+            else if (str == "string")
+            {
+                // Variable-length UTF-8 strings (zarr-extensions).
+                // nativeSize determines the fixed slot size used by the
+                // vlen-utf8 codec; strings exceeding (nativeSize-1) are
+                // truncated.  Increase via ZARR_VLEN_STRING_MAX_LENGTH.
+                const int nMaxLen = std::max(
+                    2,
+                    atoi(CPLGetConfigOption(
+                        "ZARR_VLEN_STRING_MAX_LENGTH", "256")));
+                elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
+                elt.nativeSize = static_cast<size_t>(nMaxLen);
+                elt.gdalType = GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nMaxLen));
+                elt.gdalSize = elt.gdalType.GetSize();
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nMaxLen));
+            }
             else
                 break;
 
@@ -1590,6 +1609,17 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
         return nullptr;
+    }
+    else if (eFillValueType == CPLJSONObject::Type::String &&
+             oType.GetClass() == GEDTC_STRING)
+    {
+        // String fill value: store as null-padded bytes in abyNoData
+        const auto osFillValue = oFillValue.ToString();
+        const size_t nSlotSize = aoDtypeElts.back().nativeSize;
+        abyNoData.resize(nSlotSize, 0);
+        const size_t nCopy =
+            std::min(osFillValue.size(), nSlotSize > 0 ? nSlotSize - 1 : 0);
+        memcpy(abyNoData.data(), osFillValue.c_str(), nCopy);
     }
     else if (eFillValueType == CPLJSONObject::Type::String)
     {

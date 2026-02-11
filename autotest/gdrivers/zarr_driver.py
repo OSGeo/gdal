@@ -7612,3 +7612,25 @@ def test_zarr_read_srs_eopf_sample_service(tmp_vsimem, filename, j):
 
     ds = gdal.Open(tmp_vsimem / filename)
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "32632"
+
+
+@pytest.mark.parametrize(
+    "dirname, expected_values",
+    [
+        ("vlen_utf8.zarr", ["hello", "world", "!"]),
+        ("vlen_utf8_zstd.zarr", ["hello", "world", "!"]),
+    ],
+)
+def test_zarr_v3_read_vlen_utf8(dirname, expected_values):
+    ds = gdal.OpenEx(
+        "data/zarr/v3/" + dirname,
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("ar")
+    assert ar is not None
+    dt = ar.GetDataType()
+    assert dt.GetClass() == gdal.GEDTC_STRING
+    assert dt.GetMaxStringLength() == 256
+    assert ar.Read() == expected_values

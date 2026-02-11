@@ -269,6 +269,49 @@ class ZarrV3CodecBytes final : public ZarrV3Codec
 };
 
 /************************************************************************/
+/*                        ZarrV3CodecVLenUTF8                           */
+/************************************************************************/
+
+/** Implements the vlen-utf8 array-to-bytes codec for variable-length
+ *  UTF-8 strings (zarr-extensions).
+ *
+ *  Binary format (little-endian):
+ *    [u32 item_count] [u32 len_0][bytes_0] [u32 len_1][bytes_1] ...
+ *
+ *  Decode produces a flat buffer of nElements * nativeSize bytes where
+ *  each slot is a null-padded string. Read-only for now.
+ */
+class ZarrV3CodecVLenUTF8 final : public ZarrV3Codec
+{
+  public:
+    static constexpr const char *NAME = "vlen-utf8";
+
+    ZarrV3CodecVLenUTF8();
+
+    IOType GetInputType() const override
+    {
+        return IOType::ARRAY;
+    }
+
+    IOType GetOutputType() const override
+    {
+        return IOType::BYTES;
+    }
+
+    bool InitFromConfiguration(const CPLJSONObject &configuration,
+                               const ZarrArrayMetadata &oInputArrayMetadata,
+                               ZarrArrayMetadata &oOutputArrayMetadata,
+                               bool bEmitWarnings) override;
+
+    std::unique_ptr<ZarrV3Codec> Clone() const override;
+
+    bool Encode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+    bool Decode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+};
+
+/************************************************************************/
 /*                         ZarrV3CodecTranspose                         */
 /************************************************************************/
 

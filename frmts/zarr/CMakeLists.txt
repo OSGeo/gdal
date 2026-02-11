@@ -15,6 +15,7 @@ add_gdal_driver(
           zarr_v3_codec_sequence.cpp
           zarr_v3_codec_sharding.cpp
           zarr_v3_codec_transpose.cpp
+          zarr_v3_codec_vlen_utf8.cpp
           zarr_v3_codec_zstd.cpp
           zarr_dimension.cpp
           zarr_group.cpp
