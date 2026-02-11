@@ -481,6 +481,71 @@ bool VRTSourcedRasterBand::MayMultiBlockReadingBeMultiThreaded() const
 }
 
 /************************************************************************/
+/*            VRTSourcedRasterBand::InitializeOutputBuffer()            */
+/************************************************************************/
+
+void VRTSourcedRasterBand::InitializeOutputBuffer(void *pData, int nBufXSize,
+                                                  int nBufYSize,
+                                                  GDALDataType eBufType,
+                                                  GSpacing nPixelSpace,
+                                                  GSpacing nLineSpace) const
+{
+    if (nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
+        !(m_bNoDataValueSet && m_dfNoDataValue != 0.0) &&
+        !(m_bNoDataSetAsInt64 && m_nNoDataValueInt64 != 0) &&
+        !(m_bNoDataSetAsUInt64 && m_nNoDataValueUInt64 != 0))
+    {
+        if (nLineSpace == nBufXSize * nPixelSpace)
+        {
+            memset(pData, 0, static_cast<size_t>(nBufYSize * nLineSpace));
+        }
+        else
+        {
+            for (int iLine = 0; iLine < nBufYSize; iLine++)
+            {
+                memset(static_cast<GByte *>(pData) +
+                           static_cast<GIntBig>(iLine) * nLineSpace,
+                       0, static_cast<size_t>(nBufXSize * nPixelSpace));
+            }
+        }
+    }
+    else if (m_bNoDataSetAsInt64)
+    {
+        for (int iLine = 0; iLine < nBufYSize; iLine++)
+        {
+            GDALCopyWords(&m_nNoDataValueInt64, GDT_Int64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GIntBig>(nLineSpace) * iLine,
+                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+        }
+    }
+    else if (m_bNoDataSetAsUInt64)
+    {
+        for (int iLine = 0; iLine < nBufYSize; iLine++)
+        {
+            GDALCopyWords(&m_nNoDataValueUInt64, GDT_UInt64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GIntBig>(nLineSpace) * iLine,
+                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+        }
+    }
+    else
+    {
+        double dfWriteValue = 0.0;
+        if (m_bNoDataValueSet)
+            dfWriteValue = m_dfNoDataValue;
+
+        for (int iLine = 0; iLine < nBufYSize; iLine++)
+        {
+            GDALCopyWords(&dfWriteValue, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GIntBig>(nLineSpace) * iLine,
+                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
+        }
+    }
+}
+
+/************************************************************************/
 /*                             IRasterIO()                              */
 /************************************************************************/
 
@@ -587,62 +652,10 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
     /*      Initialize the buffer to some background value. Use the         */
     /*      nodata value if available.                                      */
     /* -------------------------------------------------------------------- */
-    if (SkipBufferInitialization())
+    if (!SkipBufferInitialization())
     {
-        // Do nothing
-    }
-    else if (nPixelSpace == GDALGetDataTypeSizeBytes(eBufType) &&
-             !(m_bNoDataValueSet && m_dfNoDataValue != 0.0) &&
-             !(m_bNoDataSetAsInt64 && m_nNoDataValueInt64 != 0) &&
-             !(m_bNoDataSetAsUInt64 && m_nNoDataValueUInt64 != 0))
-    {
-        if (nLineSpace == nBufXSize * nPixelSpace)
-        {
-            memset(pData, 0, static_cast<size_t>(nBufYSize * nLineSpace));
-        }
-        else
-        {
-            for (int iLine = 0; iLine < nBufYSize; iLine++)
-            {
-                memset(static_cast<GByte *>(pData) +
-                           static_cast<GIntBig>(iLine) * nLineSpace,
-                       0, static_cast<size_t>(nBufXSize * nPixelSpace));
-            }
-        }
-    }
-    else if (m_bNoDataSetAsInt64)
-    {
-        for (int iLine = 0; iLine < nBufYSize; iLine++)
-        {
-            GDALCopyWords(&m_nNoDataValueInt64, GDT_Int64, 0,
-                          static_cast<GByte *>(pData) +
-                              static_cast<GIntBig>(nLineSpace) * iLine,
-                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
-        }
-    }
-    else if (m_bNoDataSetAsUInt64)
-    {
-        for (int iLine = 0; iLine < nBufYSize; iLine++)
-        {
-            GDALCopyWords(&m_nNoDataValueUInt64, GDT_UInt64, 0,
-                          static_cast<GByte *>(pData) +
-                              static_cast<GIntBig>(nLineSpace) * iLine,
-                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
-        }
-    }
-    else
-    {
-        double dfWriteValue = 0.0;
-        if (m_bNoDataValueSet)
-            dfWriteValue = m_dfNoDataValue;
-
-        for (int iLine = 0; iLine < nBufYSize; iLine++)
-        {
-            GDALCopyWords(&dfWriteValue, GDT_Float64, 0,
-                          static_cast<GByte *>(pData) +
-                              static_cast<GIntBig>(nLineSpace) * iLine,
-                          eBufType, static_cast<int>(nPixelSpace), nBufXSize);
-        }
+        InitializeOutputBuffer(pData, nBufXSize, nBufYSize, eBufType,
+                               nPixelSpace, nLineSpace);
     }
 
     /* -------------------------------------------------------------------- */
