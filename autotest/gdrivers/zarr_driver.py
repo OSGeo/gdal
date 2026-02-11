@@ -7641,3 +7641,22 @@ def test_zarr_v3_read_fixed_length_string_dtypes(
     assert ar.GetDimensionCount() == 1
     assert ar.GetDimensions()[0].GetSize() == 2
     assert ar.Read() == expected_values
+
+
+###############################################################################
+# Test Zarr v3 sharded fixed-length string array
+
+
+def test_zarr_v3_read_sharded_null_terminated_bytes():
+
+    filename = "data/zarr/v3/sharded_null_terminated_bytes.zarr"
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert rg is not None
+    ar = rg.OpenMDArray("ar")
+    assert ar is not None
+    assert ar.GetDataType().GetClass() == 1  # GEDTC_STRING
+    assert ar.GetDimensionCount() == 1
+    assert ar.GetDimensions()[0].GetSize() == 4
+    assert ar.Read() == ["hi", "bye", "foo", "bar"]
