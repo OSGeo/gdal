@@ -199,3 +199,24 @@ def test_gdalalg_vector_edit_unset_fid():
         assert lyr.GetFIDColumn() == ""
         f = lyr.GetNextFeature()
         assert f.GetFID() == 0
+
+
+@pytest.mark.require_driver("GPKG")
+def test_error_message_leak():
+    """Test issue GH #13662"""
+
+    alg = get_edit_alg()
+    in_filename = "../gdrivers/data/gpkg/byte.gpkg"
+    out_filename = in_filename
+    with pytest.raises(
+        Exception,
+        match="--output-layer name must be specified combined with a single source layer name and it must be different from an existing layer.",
+    ):
+        alg.ParseRunAndFinalize(
+            [
+                in_filename,
+                "--crs=EPSG:4326",
+                "--overwrite-layer",
+                out_filename,
+            ],
+        )

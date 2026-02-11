@@ -11,7 +11,6 @@
  ****************************************************************************/
 
 #include "gdalalg_vector_write.h"
-
 #include "cpl_string.h"
 #include "gdal_utils.h"
 #include "gdal_priv.h"
@@ -52,7 +51,7 @@ bool GDALVectorWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     CPLStringList aosOptions;
-    aosOptions.AddString("--invoked-from-gdal-vector-convert");
+    aosOptions.AddString("--invoked-from-gdal-algorithm");
     if (!m_overwrite)
     {
         aosOptions.AddString("--no-overwrite");
@@ -114,8 +113,11 @@ bool GDALVectorWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                                 &hSrcDS, psOptions, nullptr));
         GDALVectorTranslateOptionsFree(psOptions);
     }
+
     if (!poRetDS)
+    {
         return false;
+    }
 
     if (!hOutDS)
     {

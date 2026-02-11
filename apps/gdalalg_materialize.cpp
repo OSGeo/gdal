@@ -244,7 +244,7 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     CPLStringList aosOptions;
-    aosOptions.AddString("--invoked-from-gdal-vector-convert");
+    aosOptions.AddString("--invoked-from-gdal-algorithm");
     if (!m_overwrite)
     {
         aosOptions.AddString("--no-overwrite");
