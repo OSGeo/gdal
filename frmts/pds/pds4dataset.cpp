@@ -2182,8 +2182,9 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
             {
                 if (dimSemantics[i] == 'S')
                 {
-                    if (nSpacing >
-                        static_cast<vsi_l_offset>(INT_MAX / nCountPreviousDim))
+                    if (nCountPreviousDim > 0 &&
+                        nSpacing > static_cast<vsi_l_offset>(INT_MAX /
+                                                             nCountPreviousDim))
                     {
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "Integer overflow");
@@ -2195,8 +2196,9 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::OpenInternal(GDALOpenInfo *poOpenInfo)
                 }
                 else if (dimSemantics[i] == 'L')
                 {
-                    if (nSpacing >
-                        static_cast<vsi_l_offset>(INT_MAX / nCountPreviousDim))
+                    if (nCountPreviousDim > 0 &&
+                        nSpacing > static_cast<vsi_l_offset>(INT_MAX /
+                                                             nCountPreviousDim))
                     {
                         CPLError(CE_Failure, CPLE_NotSupported,
                                  "Integer overflow");
