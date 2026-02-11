@@ -38,6 +38,7 @@
 #include "cpl_string.h"
 #include "cpl_virtualmem.h"
 #include "cpl_vsi.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal.h"
 #include "gdal_abstractbandblockcache.h"
 #include "gdalantirecursion.h"

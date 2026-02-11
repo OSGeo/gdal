@@ -13,7 +13,9 @@
 #ifndef GDAL_THREAD_POOL_H
 #define GDAL_THREAD_POOL_H
 
-#include "cpl_worker_thread_pool.h"
+#include "cpl_port.h"
+
+class CPLWorkerThreadPool;
 
 CPLWorkerThreadPool CPL_DLL *GDALGetGlobalThreadPool(int nThreads);
 

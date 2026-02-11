@@ -33,6 +33,7 @@
 #include "cpl_float.h"
 #include "cpl_progress.h"
 #include "cpl_vsi.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal.h"
 #include "gdal_thread_pool.h"
 #include "gdalwarper.h"

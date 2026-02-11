@@ -16,6 +16,7 @@
 #include "cpl_error_internal.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "gdal_thread_pool.h"

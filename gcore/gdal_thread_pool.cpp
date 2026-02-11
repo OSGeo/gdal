@@ -10,6 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_worker_thread_pool.h"
 #include "gdal_thread_pool.h"
 
 #include <mutex>

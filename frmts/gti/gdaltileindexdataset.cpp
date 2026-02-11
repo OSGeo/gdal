@@ -29,6 +29,7 @@
 #include "cpl_mem_cache.h"
 #include "cpl_minixml.h"
 #include "cpl_quad_tree.h"
+#include "cpl_worker_thread_pool.h"
 #include "vrtdataset.h"
 #include "vrt_priv.h"
 #include "ogrsf_frmts.h"

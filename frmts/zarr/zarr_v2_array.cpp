@@ -12,6 +12,7 @@
 
 #include "cpl_float.h"
 #include "cpl_vsi_virtual.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal_thread_pool.h"
 #include "zarr.h"
 #include "vsikerchunk.h"
