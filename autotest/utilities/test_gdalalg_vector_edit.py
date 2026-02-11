@@ -201,6 +201,7 @@ def test_gdalalg_vector_edit_unset_fid():
         assert f.GetFID() == 0
 
 
+@pytest.mark.require_driver("GPKG")
 def test_error_message_leak():
     """Test issue GH #13662"""
 
