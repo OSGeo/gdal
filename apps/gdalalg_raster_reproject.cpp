@@ -229,26 +229,38 @@ bool GDALRasterReprojectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             GDALGeoTransform gt;
             if (poLikeDS->GetGeoTransform(gt) == CE_None)
             {
-                if (m_resolution.empty())
+                if (gt.IsAxisAligned())
                 {
-                    m_resolution = {std::abs(gt[1]), std::abs(gt[5])};
+                    if (m_resolution.empty())
+                    {
+                        m_resolution = {std::abs(gt[1]), std::abs(gt[5])};
+                    }
+                    const int nXSize = poLikeDS->GetRasterXSize();
+                    const int nYSize = poLikeDS->GetRasterYSize();
+                    if (m_size.empty())
+                    {
+                        m_size = {nXSize, nYSize};
+                    }
+                    if (m_bbox.empty())
+                    {
+                        double minX = gt.xorig;
+                        double maxY = gt.yorig;
+                        double maxX =
+                            gt.xorig + nXSize * gt.xscale + nYSize * gt.xrot;
+                        double minY =
+                            gt.yorig + nXSize * gt.yrot + nYSize * gt.yscale;
+                        if (minY > maxY)
+                            std::swap(minY, maxY);
+                        m_bbox = {minX, minY, maxX, maxY};
+                        m_bboxCrs = m_dstCrs;
+                    }
                 }
-                const int nXSize = poLikeDS->GetRasterXSize();
-                const int nYSize = poLikeDS->GetRasterYSize();
-                if (m_size.empty())
+                else
                 {
-                    m_size = {nXSize, nYSize};
-                }
-                if (m_bbox.empty())
-                {
-                    double minX = gt[0];
-                    double maxY = gt[3];
-                    double maxX = gt[0] + nXSize * gt[1] + nYSize * gt[2];
-                    double minY = gt[3] + nXSize * gt[4] + nYSize * gt[5];
-                    if (minY > maxY)
-                        std::swap(minY, maxY);
-                    m_bbox = {minX, minY, maxX, maxY};
-                    m_bboxCrs = m_dstCrs;
+                    ReportError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Dataset provided with --like has a geotransform "
+                        "with rotation. Ignoring it");
                 }
             }
         }

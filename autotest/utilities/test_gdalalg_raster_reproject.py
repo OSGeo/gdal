@@ -11,6 +11,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import math
+
+import gdaltest
 import pytest
 
 from osgeo import gdal, osr
@@ -393,35 +396,56 @@ def test_like(tmp_vsimem):
     )
 
 
-def test_identity_rotated_south_up(tmp_vsimem):
-    """Test that identity reprojection with rotated south-up geotransform is a no-op"""
+def test_rotated(tmp_vsimem):
+    """Test a rotate raster"""
 
     driver = "GTiff"
-    src_path = str(tmp_vsimem / "test_identity_rotated_south_up_src.tif")
-    output_path = str(tmp_vsimem / "test_identity_rotated_south_up_out.tif")
+    src_path = str(tmp_vsimem / "test_like_rotated_src.tif")
+    template_path = str(tmp_vsimem / "test_like_rotated_template.tif")
+    output_path = str(tmp_vsimem / "test_like_rotated_out.tif")
 
     # Create a memory raster with size 4x4, 1 band and resolution 15m
     src_ds = gdal.GetDriverByName(driver).Create(src_path, 4, 4)
     # Coordinates of the center: 514979.562E, 5034533.939N
-    # with a rotation of 45 degrees and south-up orientation
-    src_ds.SetGeoTransform(
-        [
-            514979 - 30,
-            30 / 2**0.5,
-            -30 / 2**0.5,
-            5034533 + 30,
-            -30 / 2**0.5,
-            -30 / 2**0.5,
-        ]
-    )
+    src_ds.SetGeoTransform([514979 - 30, 30, 0, 5034533 + 30, 0, -30])
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32632)
     src_ds.SetSpatialRef(srs)
     src_ds.GetRasterBand(1).WriteRaster(0, 0, 4, 4, b"\x00\x01\x02\x03" * 4)
 
+    # Create the template with same size and resolution, but rotated 10 degrees clockwise
+    template_ds = gdal.GetDriverByName(driver).Create(template_path, 4, 4)
+    template_ds.SetGeoTransform(
+        [
+            514979 - 30,
+            30 * math.cos(math.radians(10)),
+            30 * math.sin(math.radians(10)),
+            5034533 + 30,
+            -30 * math.sin(math.radians(10)),
+            -30 * math.cos(math.radians(10)),
+        ]
+    )
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32632)
+    template_ds.SetSpatialRef(srs)
+    template_ds.GetRasterBand(1).Fill(0)
+    template_ds.FlushCache()
+
     alg = get_reproject_alg()
     alg["input"] = src_ds
     alg["output"] = output_path
-    alg["output-format"] = driver
-    alg["dst-crs"] = srs
-    assert alg.Run()
+    alg["like"] = template_ds
+
+    # Check that a warning is emitted about the rotation, but that the algorithm
+    # doesn't fail.
+    msgs = []
+
+    def error_handler(type, code, msg):
+        msgs.append(msg)
+
+    with gdaltest.error_handler(error_handler):
+        assert alg.Run()
+        assert (
+            "Dataset provided with --like has a geotransform with rotation. Ignoring it"
+            in msgs[0]
+        )
