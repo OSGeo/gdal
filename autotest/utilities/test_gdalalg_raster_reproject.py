@@ -397,7 +397,7 @@ def test_like(tmp_vsimem):
 
 
 def test_rotated(tmp_vsimem):
-    """Test a rotate raster"""
+    """Test a rotated raster"""
 
     driver = "GTiff"
     src_path = str(tmp_vsimem / "test_like_rotated_src.tif")
