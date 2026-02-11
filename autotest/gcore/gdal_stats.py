@@ -1123,7 +1123,7 @@ def test_stats_float32_check_bugfix_13543(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPT
     )
 
     # A ramp array
-    (x, y) = np.mgrid[:nRows, :nCols]
+    x, y = np.mgrid[:nRows, :nCols]
     ramp = ((x + y) * 100.0 / (nRows - 1 + nCols - 1)).astype(np.float32)
 
     band = ds.GetRasterBand(1)
@@ -1132,7 +1132,7 @@ def test_stats_float32_check_bugfix_13543(tmp_vsimem, GDAL_STATS_USE_FLOAT32_OPT
     with gdal.config_option(
         "GDAL_STATS_USE_FLOAT32_OPTIM", GDAL_STATS_USE_FLOAT32_OPTIM
     ):
-        (minVal, maxVal, mean, stddev) = band.ComputeStatistics(approx_ok=False)
+        minVal, maxVal, mean, stddev = band.ComputeStatistics(approx_ok=False)
     npStd = ramp.std(dtype=np.float64)
 
     assert npStd == pytest.approx(20.45328026221, rel=1e-12)
@@ -1306,7 +1306,7 @@ def test_stats_float64_check_bugfix_13543(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPT
     )
 
     # A ramp array
-    (x, y) = np.mgrid[:nRows, :nCols]
+    x, y = np.mgrid[:nRows, :nCols]
     ramp = ((x + y) * 100.0 / (nRows - 1 + nCols - 1)).astype(np.float64)
 
     band = ds.GetRasterBand(1)
@@ -1315,7 +1315,7 @@ def test_stats_float64_check_bugfix_13543(tmp_vsimem, GDAL_STATS_USE_FLOAT64_OPT
     with gdal.config_option(
         "GDAL_STATS_USE_FLOAT64_OPTIM", GDAL_STATS_USE_FLOAT64_OPTIM
     ):
-        (minVal, maxVal, mean, stddev) = band.ComputeStatistics(approx_ok=False)
+        minVal, maxVal, mean, stddev = band.ComputeStatistics(approx_ok=False)
     npStd = ramp.std()
 
     assert npStd == pytest.approx(20.453280258841, rel=1e-14)
@@ -1621,9 +1621,9 @@ def test_stats_ComputeInterBandCovarianceMatrix_errors_on_band_list():
 def test_stats_ComputeInterBandCovarianceMatrix_nodata():
 
     ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xFF")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xff")
     ds.GetRasterBand(1).SetNoDataValue(255)
-    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xFE\x03")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xfe\x03")
     ds.GetRasterBand(2).SetNoDataValue(254)
 
     expected_cov_matrix = [[1, 0], [0, 1]]
@@ -1716,12 +1716,12 @@ def test_stats_ComputeInterBandCovarianceMatrix_failed_to_compute_stats():
 def test_stats_ComputeInterBandCovarianceMatrix_mask_band():
 
     ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xFF")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xff")
     ds.GetRasterBand(1).CreateMaskBand(0)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xFF\xFF\xFF\x00")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xFE\x03")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xff\xff\xff\x00")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xfe\x03")
     ds.GetRasterBand(2).CreateMaskBand(0)
-    ds.GetRasterBand(2).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xFF\xFF\x00\xFF")
+    ds.GetRasterBand(2).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xff\xff\x00\xff")
 
     expected_cov_matrix = [[1, 0], [0, 1]]
 
@@ -1738,9 +1738,9 @@ def test_stats_ComputeInterBandCovarianceMatrix_all_bands_same_mask():
 
     ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2)
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xFF")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xFE\x03")
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xFF\xFF\x00\x00")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x01\x02\x03\xff")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x02\x01\xfe\x03")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 4, 1, b"\xff\xff\x00\x00")
 
     expected_cov_matrix = [[0.5, -0.5], [-0.5, 0.5]]
 

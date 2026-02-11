@@ -21,6 +21,7 @@ EXEC_PREFIX = os.path.normpath(sys.exec_prefix)
 BASE_PREFIX = os.path.normpath(sys.base_prefix)
 BASE_EXEC_PREFIX = os.path.normpath(sys.base_exec_prefix)
 
+
 # Added by GDAL
 def _is_debian():
     for p in sys.path:

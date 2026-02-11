@@ -305,7 +305,7 @@ netcdf_cfproj_format_fnames = {
 
 def netcdf_cfproj_test_cf(proj, projNc) -> None:
     command = "ncdump -h " + projNc
-    (dumpStr, err) = gdaltest.runexternal_out_and_err(command)
+    dumpStr, err = gdaltest.runexternal_out_and_err(command)
 
     assert err == ""
 
@@ -329,6 +329,7 @@ def netcdf_cfproj_test_cf(proj, projNc) -> None:
 ###############################################################################
 # Netcdf CF Tests
 ###############################################################################
+
 
 ###############################################################################
 # test copy and CF compliance for lat/lon (no datum, no GEOGCS) file, tif->nc->tif
@@ -382,7 +383,7 @@ def test_netcdf_cf_4(proj_key):
 
     # Test if ncdump is available
     try:
-        (_, err) = gdaltest.runexternal_out_and_err("ncdump -h")
+        _, err = gdaltest.runexternal_out_and_err("ncdump -h")
 
         if "netcdf library version " not in err:
             pytest.skip("NOTICE: netcdf version not found")

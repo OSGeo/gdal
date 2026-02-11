@@ -33,11 +33,10 @@
 
 OGRLayer::OGRLayer()
     : m_poPrivate(new Private()), m_bFilterIsEnvelope(FALSE),
-      m_poFilterGeom(nullptr),
-      m_pPreparedFilterGeom(nullptr), m_sFilterEnvelope{},
-      m_iGeomFieldFilter(0), m_poStyleTable(nullptr), m_poAttrQuery(nullptr),
-      m_pszAttrQueryString(nullptr), m_poAttrIndex(nullptr), m_nRefCount(0),
-      m_nFeaturesRead(0)
+      m_poFilterGeom(nullptr), m_pPreparedFilterGeom(nullptr),
+      m_sFilterEnvelope{}, m_iGeomFieldFilter(0), m_poStyleTable(nullptr),
+      m_poAttrQuery(nullptr), m_pszAttrQueryString(nullptr),
+      m_poAttrIndex(nullptr), m_nRefCount(0), m_nFeaturesRead(0)
 {
 }
 

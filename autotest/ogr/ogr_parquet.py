@@ -2631,7 +2631,7 @@ def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
         )
     table = pa.Table.from_batches(batches)
     table.validate(full=True)
-    for (col, full_col) in zip(table, full_table):
+    for col, full_col in zip(table, full_table):
         assert col[0] == full_col[1]
         assert col[1] == full_col[3]
 

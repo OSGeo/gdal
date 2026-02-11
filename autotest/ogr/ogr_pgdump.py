@@ -20,6 +20,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("PGDump")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -1583,7 +1584,7 @@ def test_ogr_pgdump_long_identifiers(
 
 def test_ogr_pgdump_LAUNDER_YES(tmp_vsimem):
 
-    eacute = b"\xC3\xA9".decode("utf-8")
+    eacute = b"\xc3\xa9".decode("utf-8")
     filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_YES.sql")
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
     lyr = ds.CreateLayer("a" + eacute + "#", options=["LAUNDER=YES"])
@@ -1603,7 +1604,7 @@ def test_ogr_pgdump_LAUNDER_YES(tmp_vsimem):
 
 def test_ogr_pgdump_LAUNDER_NO(tmp_vsimem):
 
-    eacute = b"\xC3\xA9".decode("utf-8")
+    eacute = b"\xc3\xa9".decode("utf-8")
     filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_NO.sql")
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
     lyr = ds.CreateLayer("a" + eacute + "#", options=["LAUNDER=NO"])
@@ -1623,7 +1624,7 @@ def test_ogr_pgdump_LAUNDER_NO(tmp_vsimem):
 
 def test_ogr_pgdump_LAUNDER_ASCII(tmp_vsimem):
 
-    eacute = b"\xC3\xA9".decode("utf-8")
+    eacute = b"\xc3\xa9".decode("utf-8")
     filename = str(tmp_vsimem / "test_ogr_pgdump_LAUNDER_ASCII.sql")
     ds = ogr.GetDriverByName("PGDump").CreateDataSource(filename)
     lyr = ds.CreateLayer("a" + eacute, options=["LAUNDER_ASCII=YES"])

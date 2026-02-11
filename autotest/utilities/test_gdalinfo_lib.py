@@ -288,8 +288,7 @@ def test_gdalinfo_lib_json_engineering_crs():
 
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """ENGCRS["Arbitrary (m)",
+    srs.SetFromUserInput("""ENGCRS["Arbitrary (m)",
     EDATUM["Unknown engineering datum"],
     CS[Cartesian,2],
         AXIS["(E)",east,
@@ -299,8 +298,7 @@ def test_gdalinfo_lib_json_engineering_crs():
         AXIS["(N)",north,
             ORDER[2],
             LENGTHUNIT["metre",1,
-                ID["EPSG",9001]]]]"""
-    )
+                ID["EPSG",9001]]]]""")
     ds.SetSpatialRef(srs)
     ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     ret = gdal.Info(ds, format="json")

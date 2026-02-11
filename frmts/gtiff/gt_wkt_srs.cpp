@@ -87,7 +87,7 @@ constexpr geokey_t CoordinateEpochGeoKey = static_cast<geokey_t>(5120);
 // Exists since 8.0.1
 #ifndef PROJ_AT_LEAST_VERSION
 #define PROJ_COMPUTE_VERSION(maj, min, patch)                                  \
-    ((maj)*10000 + (min)*100 + (patch))
+    ((maj) * 10000 + (min) * 100 + (patch))
 #define PROJ_VERSION_NUMBER                                                    \
     PROJ_COMPUTE_VERSION(PROJ_VERSION_MAJOR, PROJ_VERSION_MINOR,               \
                          PROJ_VERSION_PATCH)
@@ -1886,8 +1886,7 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
 #if PROJ_AT_LEAST_VERSION(9, 1, 0)
                 "UNSET_IDENTIFIERS_IF_INCOMPATIBLE_DEF=NO",
 #endif
-                nullptr
-            };
+                nullptr};
             oSRS.importFromWkt(pszWKT, apszOptionsImport);
         }
         CPLFree(pszWKT);

@@ -2062,8 +2062,8 @@ OGRErr OGRSQLiteTableLayer::DeleteField(int iFieldToDelete)
     if (m_poDS->SoftStartTransaction() != OGRERR_NONE)
         return OGRERR_FAILURE;
 
-        // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
-        // there was bug fixes related to it until 3.35.5
+    // ALTER TABLE ... DROP COLUMN ... was first implemented in 3.35.0 but
+    // there was bug fixes related to it until 3.35.5
 #if SQLITE_VERSION_NUMBER >= 3035005L
     const char *pszFieldName =
         m_poFeatureDefn->GetFieldDefn(iFieldToDelete)->GetNameRef();

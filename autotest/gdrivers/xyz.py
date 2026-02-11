@@ -585,11 +585,8 @@ def test_xyz_column_order_basic_yxz():
 
 def test_xyz_column_order_overrides_header():
 
-    content = (
-        """x y z
-"""
-        + yxzContent()
-    )
+    content = """x y z
+""" + yxzContent()
 
     gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
     ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=YXZ"])
@@ -606,11 +603,8 @@ def test_xyz_column_order_overrides_header():
 
 def test_xyz_column_order_auto():
 
-    content = (
-        """y x z
-"""
-        + yxzContent()
-    )
+    content = """y x z
+""" + yxzContent()
 
     gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
     ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=AUTO"])
@@ -627,11 +621,8 @@ def test_xyz_column_order_auto():
 
 def test_xyz_column_order_wrong_option():
 
-    content = (
-        """y x z
-"""
-        + yxzContent()
-    )
+    content = """y x z
+""" + yxzContent()
 
     gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
     with pytest.raises(Exception):
@@ -645,11 +636,8 @@ def test_xyz_column_order_wrong_option():
 
 def test_xyz_column_order_xyz():
 
-    content = (
-        """y x z
-"""
-        + yxzContent()
-    )
+    content = """y x z
+""" + yxzContent()
 
     gdal.FileFromMemBuffer("/vsimem/grid.xyz", content)
     ds = gdal.OpenEx("/vsimem/grid.xyz", open_options=["COLUMN_ORDER=XYZ"])

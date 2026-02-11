@@ -4446,7 +4446,8 @@ GDALAlgorithm::AddOutputFormatArg(std::string *pValue, bool bStreamAllowed,
         [this, &arg, bStreamAllowed, bGDALGAllowed]()
         { return ValidateFormat(arg, bStreamAllowed, bGDALGAllowed); });
     arg.SetAutoCompleteFunction(
-        [&arg, bStreamAllowed, bGDALGAllowed](const std::string &) {
+        [&arg, bStreamAllowed, bGDALGAllowed](const std::string &)
+        {
             return FormatAutoCompleteFunction(arg, bStreamAllowed,
                                               bGDALGAllowed);
         });

@@ -1530,14 +1530,16 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 READ_MARKER_FIELD_UINT8("SPcod_NumDecompositions");
                 READ_MARKER_FIELD_UINT8(
                     "SPcod_xcb_minus_2",
-                    [](GByte v) {
+                    [](GByte v)
+                    {
                         return std::string(v <= 8
                                                ? CPLSPrintf("%d", 1 << (2 + v))
                                                : "invalid");
                     });
                 READ_MARKER_FIELD_UINT8(
                     "SPcod_ycb_minus_2",
-                    [](GByte v) {
+                    [](GByte v)
+                    {
                         return std::string(v <= 8
                                                ? CPLSPrintf("%d", 1 << (2 + v))
                                                : "invalid");
@@ -1616,14 +1618,16 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 READ_MARKER_FIELD_UINT8("SPcoc_NumDecompositions");
                 READ_MARKER_FIELD_UINT8(
                     "SPcoc_xcb_minus_2",
-                    [](GByte v) {
+                    [](GByte v)
+                    {
                         return std::string(v <= 8
                                                ? CPLSPrintf("%d", 1 << (2 + v))
                                                : "invalid");
                     });
                 READ_MARKER_FIELD_UINT8(
                     "SPcoc_ycb_minus_2",
-                    [](GByte v) {
+                    [](GByte v)
+                    {
                         return std::string(v <= 8
                                                ? CPLSPrintf("%d", 1 << (2 + v))
                                                : "invalid");
@@ -1675,7 +1679,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 READ_MARKER_FIELD_UINT8("Ztlm");
                 auto Stlm = READ_MARKER_FIELD_UINT8(
                     "Stlm",
-                    [](GByte v) {
+                    [](GByte v)
+                    {
                         return std::string(CPLSPrintf(
                             "ST=%d SP=%d", (v >> 4) & 3, (v >> 6) & 1));
                     });
@@ -1806,7 +1811,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                     {
                         READ_MARKER_FIELD_UINT8(
                             CPLSPrintf("SPqcd%d", i),
-                            [](GByte v) {
+                            [](GByte v)
+                            {
                                 return std::string(
                                     CPLSPrintf("epsilon_b = %d", v >> 3));
                             });
@@ -1867,7 +1873,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                     {
                         READ_MARKER_FIELD_UINT8(
                             CPLSPrintf("SPqcc%d", i),
-                            [](GByte v) {
+                            [](GByte v)
+                            {
                                 return std::string(
                                     CPLSPrintf("epsilon_b = %d", v >> 3));
                             });
@@ -1988,7 +1995,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                     break;
                 auto RCom = READ_MARKER_FIELD_UINT16(
                     "Rcom",
-                    [](GUInt16 v) {
+                    [](GUInt16 v)
+                    {
                         return std::string((v == 0)   ? "Binary"
                                            : (v == 1) ? "LATIN1"
                                                       : "");

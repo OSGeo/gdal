@@ -431,6 +431,7 @@ def test_wms_8(tmp_path):
 ###############################################################################
 # Test OnEarth Tiled WMS minidriver
 
+
 # Permanently down
 def wms_9():
 
@@ -582,13 +583,11 @@ def test_wms_13():
 
 def test_wms_14():
 
-    ds = gdal.Open(
-        """<GDAL_WMS>
+    ds = gdal.Open("""<GDAL_WMS>
   <Service name="VirtualEarth">
     <ServerUrl>http://a${server_num}.ortho.tiles.virtualearth.net/tiles/a${quadkey}.jpeg?g=90</ServerUrl>
   </Service>
-</GDAL_WMS>"""
-    )
+</GDAL_WMS>""")
     if ds is None:
         return "fail"
 
@@ -625,7 +624,7 @@ def test_wms_14():
 
     assert ds.GetRasterBand(1).GetOverviewCount() == 20, "bad overview count"
 
-    (block_xsize, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
+    block_xsize, block_ysize = ds.GetRasterBand(1).GetBlockSize()
     if block_xsize != 256 or block_ysize != 256:
         print("(%d, %d)" % (block_xsize, block_ysize))
         pytest.fail("bad block size")
@@ -674,6 +673,7 @@ def test_wms_15():
 
 ###############################################################################
 # Test getting subdatasets from WMS-C Capabilities
+
 
 # server often returns a 504 after ages; this test can take minutes
 @pytest.mark.network
@@ -767,6 +767,7 @@ def test_wms_16():
 
 ###############################################################################
 # Test a TiledWMS dataset with a color table (#4613)
+
 
 # Permanently down
 def wms_17():
@@ -1310,11 +1311,11 @@ def test_wms_iiif_fake_nominal(tmp_vsimem, webserver_port):
             assert ds.RasterYSize == 5238
             assert ds.GetRasterBand(1).GetOverviewCount() == 6
 
-            assert ds.ReadRaster(1024, 2048, 256, 256) == b"\x7F" * (256 * 256 * 3)
+            assert ds.ReadRaster(1024, 2048, 256, 256) == b"\x7f" * (256 * 256 * 3)
 
             assert ds.ReadRaster(
                 1024, 2048, 256, 256, buf_xsize=128, buf_ysize=128
-            ) == b"\x3F" * (128 * 128 * 3)
+            ) == b"\x3f" * (128 * 128 * 3)
 
 
 @pytest.mark.require_curl

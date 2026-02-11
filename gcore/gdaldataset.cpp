@@ -265,7 +265,7 @@ GDALDataset::GDALDataset()
 
 GDALDataset::GDALDataset(int bForceCachedIOIn)
     : bForceCachedIO(CPL_TO_BOOL(bForceCachedIOIn)),
-      m_poPrivate(new(std::nothrow) GDALDataset::Private)
+      m_poPrivate(new (std::nothrow) GDALDataset::Private)
 {
 }
 

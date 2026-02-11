@@ -862,7 +862,7 @@ def test_libertiff_corrupted(tmp_vsimem):
             gdal.VSIFSeekL(f, i, 0)
             ori_val = gdal.VSIFReadL(1, 1, f)
 
-            for new_val in (b"\x00", b"\x01", b"\x7F", b"\xFE", b"\xFF"):
+            for new_val in (b"\x00", b"\x01", b"\x7f", b"\xfe", b"\xff"):
                 gdal.VSIFSeekL(f, i, 0)
                 gdal.VSIFWriteL(new_val, 1, 1, f)
                 try:

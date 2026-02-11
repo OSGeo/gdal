@@ -1996,18 +1996,18 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
               "Planetocentric"))
         bIsGeographic = false;
 
-        // Set oSRS projection and parameters
-        // ############################################################
-        // ISIS3 Projection types
-        //   Equirectangular
-        //   LambertConformal
-        //   Mercator
-        //   ObliqueCylindrical
-        //   Orthographic
-        //   PolarStereographic
-        //   SimpleCylindrical
-        //   Sinusoidal
-        //   TransverseMercator
+    // Set oSRS projection and parameters
+    // ############################################################
+    // ISIS3 Projection types
+    //   Equirectangular
+    //   LambertConformal
+    //   Mercator
+    //   ObliqueCylindrical
+    //   Orthographic
+    //   PolarStereographic
+    //   SimpleCylindrical
+    //   Sinusoidal
+    //   TransverseMercator
 
 #ifdef DEBUG
     CPLDebug("ISIS3", "using projection %s", map_proj_name);

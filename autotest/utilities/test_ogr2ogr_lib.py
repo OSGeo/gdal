@@ -81,7 +81,7 @@ def test_ogr2ogr_lib_2b(tmp_vsimem):
 
     # Test @filename syntax with a UTF-8 BOM
     gdal.FileFromMemBuffer(
-        tmp_vsimem / "sql.txt", "\xEF\xBB\xBFselect * from poly".encode("LATIN1")
+        tmp_vsimem / "sql.txt", "\xef\xbb\xbfselect * from poly".encode("LATIN1")
     )
     ds = gdal.VectorTranslate(
         "", srcDS, format="MEM", SQLStatement=f"@{tmp_vsimem}/sql.txt"
@@ -415,7 +415,7 @@ def test_ogr2ogr_lib_16():
         ["POINT ZM (1 2 3 4)", "XYZM", "POINT ZM (1 2 3 4)"],
         ["POINT ZM (1 2 3 4)", "layer_dim", "POINT ZM (1 2 3 4)"],
     ]
-    for (wkt_before, dim, wkt_after) in tests:
+    for wkt_before, dim, wkt_after in tests:
         srcDS = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)
         geom = ogr.CreateGeometryFromWkt(wkt_before)
         lyr = srcDS.CreateLayer("test", geom_type=geom.GetGeometryType())

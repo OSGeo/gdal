@@ -30,6 +30,7 @@ pytestmark = [
     pytest.mark.random_order(disabled=True),
 ]
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -1191,9 +1192,9 @@ def test_ogr_hana_38():
         assert feat.GetFieldAsBinary("EMB2") == expected
 
     # '[0.1,0.2,0.3]'
-    vec0 = b"\x03\x00\x00\x00\xCD\xCC\xCC\x3D\xCD\xCC\x4C\x3E\x9A\x99\x99\x3E"
+    vec0 = b"\x03\x00\x00\x00\xcd\xcc\xcc\x3d\xcd\xcc\x4c\x3e\x9a\x99\x99\x3e"
     # '[0.1,0.2,0.1]'
-    vec1 = b"\x03\x00\x00\x00\xCD\xCC\xCC\x3D\xCD\xCC\x4C\x3E\xCD\xCC\xCC\x3D"
+    vec1 = b"\x03\x00\x00\x00\xcd\xcc\xcc\x3d\xcd\xcc\x4c\x3e\xcd\xcc\xcc\x3d"
 
     check_value(vec0)
 

@@ -967,7 +967,7 @@ def test_mem_md_array_slice():
     ar = rg.CreateMDArray(
         "array_1", [dim_1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
-    data = b"\xFE"
+    data = b"\xfe"
     assert ar.Write(data) == gdal.CE_None
     assert ar[:].Read() == data
     assert ar[0:1].Read() == data

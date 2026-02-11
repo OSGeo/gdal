@@ -835,7 +835,7 @@ CPLErr JPEG_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     if (!isbrunsli(src))
         return codec.DecompressJPEG(dst, src);
 
-        // Need conversion to JFIF first
+    // Need conversion to JFIF first
 #if !defined(BRUNSLI)
     CPLError(CE_Failure, CPLE_NotSupported,
              "MRF: JPEG-XL content, yet this GDAL was not compiled with "
@@ -868,7 +868,7 @@ CPLErr JPEG_Band::Compress(buf_mgr &dst, buf_mgr &src)
 #if !defined(BRUNSLI)
     return codec.CompressJPEG(dst, src);
 #else
-    auto dst_size = dst.size;          // Save the original size
+    auto dst_size = dst.size;  // Save the original size
     auto err_code = codec.CompressJPEG(dst, src);
     if (codec.JFIF || err_code != CE_None)
         return err_code;

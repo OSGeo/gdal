@@ -907,7 +907,7 @@ def test_ogr_mem_arrow_stream_numpy():
     f.SetField("float32list", "[-1.25,1.25]")
     f.SetField("float64list", "[-1.250123,1.250123]")
     f.SetField("strlist", '["abc","defghi"]')
-    f.SetField("binary", b"\xDE\xAD")
+    f.SetField("binary", b"\xde\xad")
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     lyr.CreateFeature(f)
 
@@ -957,7 +957,7 @@ def test_ogr_mem_arrow_stream_numpy():
     assert numpy.array_equal(
         batch["strlist"][1], numpy.array([b"abc", b"defghi"], dtype="|S6")
     )
-    assert batch["binary"][1] == b"\xDE\xAD"
+    assert batch["binary"][1] == b"\xde\xad"
     assert len(batch["wkb_geometry"][1]) == 21
 
     # Test fast FID filtering
@@ -1180,9 +1180,9 @@ def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
     f.SetField("float32list", "[-1.25,1.25]")
     f.SetField("float64list", "[-1.250123,1.250123]")
     f.SetField("strlist", '["abc","defghi"]')
-    f.SetField("binary", b"\xDE\xAD")
+    f.SetField("binary", b"\xde\xad")
     if limited_field == "binary_fixed_width":
-        f.SetField("binary_fixed_width", b"\xDE\xAD" * 25)
+        f.SetField("binary_fixed_width", b"\xde\xad" * 25)
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     lyr.CreateFeature(f)
 
@@ -1205,7 +1205,7 @@ def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
     elif limited_field == "binary":
         f["binary"] = b"x" * 100
     elif limited_field == "binary_fixed_width":
-        f.SetField("binary_fixed_width", b"\xDE\xAD" * 25)
+        f.SetField("binary_fixed_width", b"\xde\xad" * 25)
     elif limited_field == "geometry":
         g = ogr.Geometry(ogr.wkbLineString)
         sizeof_first_point = 21
@@ -1578,7 +1578,7 @@ def test_ogr_mem_write_arrow():
     src_feature.SetField("field_real", 18.4)
     src_feature.SetField("field_string", "abc def")
     src_feature.SetFieldBinary("field_binary", b"\x00\x01")
-    src_feature.SetField("field_binary", b"\x01\x23\x46\x57\x89\xAB\xCD\xEF")
+    src_feature.SetField("field_binary", b"\x01\x23\x46\x57\x89\xab\xcd\xef")
     src_feature.SetField("field_date", "2011/11/11")
     src_feature.SetField("field_time", "14:10:35")
     src_feature.SetField("field_datetime", 2011, 11, 11, 14, 10, 35.123, 0)
@@ -1883,132 +1883,165 @@ def test_ogr_mem_write_pyarrow():
 
     list_boolean = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else True if (j % 2) == 0 else False for j in range(i)]
+            (
+                None
+                if i == 2
+                else [
+                    None if j == 0 else True if (j % 2) == 0 else False
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.bool_()),
     )
     list_uint8 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.uint8()),
     )
     list_int8 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.int8()),
     )
     list_uint16 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.uint16()),
     )
     list_int16 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.int16()),
     )
     list_uint32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.uint32()),
     )
     list_int32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.int32()),
     )
     list_uint64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.uint64()),
     )
     list_int64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.int64()),
     )
     list_float16 = pa.array(
         [
-            None
-            if i == 2
-            else [
-                None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
-                for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.float16()),
     )
     list_float32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.float32()),
     )
     list_float64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.float64()),
     )
     list_string = pa.array(
         [
-            None
-            if i == 2
-            else [
-                "".join(["%c" % (65 + j + k) for k in range(1 + j)]) for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    "".join(["%c" % (65 + j + k) for k in range(1 + j)])
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ]
     )
     list_large_string = pa.array(
         [
-            None
-            if i == 2
-            else [
-                "".join(["%c" % (65 + j + k) for k in range(1 + j)]) for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    "".join(["%c" % (65 + j + k) for k in range(1 + j)])
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.large_string()),
@@ -2016,133 +2049,166 @@ def test_ogr_mem_write_pyarrow():
 
     large_list_boolean = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else True if (j % 2) == 0 else False for j in range(i)]
+            (
+                None
+                if i == 2
+                else [
+                    None if j == 0 else True if (j % 2) == 0 else False
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.bool_()),
     )
     large_list_uint8 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.uint8()),
     )
     large_list_int8 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.int8()),
     )
     large_list_uint16 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.uint16()),
     )
     large_list_int16 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.int16()),
     )
     large_list_uint32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.uint32()),
     )
     large_list_int32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.int32()),
     )
     large_list_uint64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.uint64()),
     )
     large_list_int64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.int64()),
     )
     large_list_float16 = pa.array(
         [
-            None
-            if i == 2
-            else [
-                None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
-                for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.float16()),
     )
     large_list_float32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.float32()),
     )
     large_list_float64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.float64()),
     )
     large_list_string = pa.array(
         [
-            None
-            if i == 2
-            else [
-                "".join(["%c" % (65 + j + k) for k in range(1 + j)]) for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    "".join(["%c" % (65 + j + k) for k in range(1 + j)])
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.string()),
     )
     large_list_large_string = pa.array(
         [
-            None
-            if i == 2
-            else [
-                "".join(["%c" % (65 + j + k) for k in range(1 + j)]) for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    "".join(["%c" % (65 + j + k) for k in range(1 + j)])
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.large_string()),
@@ -2757,9 +2823,7 @@ def test_ogr_mem_write_pyarrow():
     assert f["map_uint8"] == "{}"
 
     f = lyr.GetFeature(4)
-    assert (
-        str(f)
-        == """OGRFeature(test):4
+    assert str(f) == """OGRFeature(test):4
   boolean (Integer(Boolean)) = 1
   int8 (Integer(Int16)) = 2
   uint8 (Integer(Int16)) = 5
@@ -2881,7 +2945,6 @@ def test_ogr_mem_write_pyarrow():
   POINT (4 2)
 
 """
-    )
 
 
 ###############################################################################
@@ -2915,13 +2978,10 @@ def test_ogr_mem_write_pyarrow_geometry_in_large_binary():
     assert lyr.WritePyArrow(table) == ogr.OGRERR_NONE
 
     f = lyr.GetFeature(4)
-    assert (
-        str(f)
-        == """OGRFeature(test):4
+    assert str(f) == """OGRFeature(test):4
   POINT (4 2)
 
 """
-    )
 
 
 ###############################################################################

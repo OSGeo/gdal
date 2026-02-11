@@ -258,9 +258,9 @@ int main(int argc, char *argv[])
     padfBuffer = (double *)CPLMalloc(nXSize * sizeof(double));
 
 #define GET_X(j, i)                                                            \
-    adfGeotransform[0] + (j)*adfGeotransform[1] + (i)*adfGeotransform[2]
+    adfGeotransform[0] + (j) * adfGeotransform[1] + (i) * adfGeotransform[2]
 #define GET_Y(j, i)                                                            \
-    adfGeotransform[3] + (j)*adfGeotransform[4] + (i)*adfGeotransform[5]
+    adfGeotransform[3] + (j) * adfGeotransform[4] + (i) * adfGeotransform[5]
 #define GET_XY(j, i) GET_X(j, i), GET_Y(j, i)
 
     /* -------------------------------------------------------------------- */

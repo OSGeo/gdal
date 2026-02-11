@@ -34,8 +34,8 @@ pytestmark = pytest.mark.require_driver("DXF")
 ###############################################################################
 
 # Setup the utf-8 string.
-sample_text = 'Text Sample1\u00BF\u03BB\n"abc"'
-sample_style = 'Text Sample1\u00BF\u03BB\n\\"abc\\"'
+sample_text = 'Text Sample1\u00bf\u03bb\n"abc"'
+sample_style = 'Text Sample1\u00bf\u03bb\n\\"abc\\"'
 
 ###############################################################################
 # Check some general things to see if they meet expectations.
@@ -745,7 +745,7 @@ def test_ogr_dxf_ENCODING_open_option():
     with gdal.OpenEx("data/dxf/utf-8.dxf", open_options={"ENCODING": "UTF-8"}) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
-        assert f["Layer"] == "\u00E9ven"
+        assert f["Layer"] == "\u00e9ven"
 
 
 ###############################################################################
@@ -1195,7 +1195,7 @@ def test_ogr_dxf_22(tmp_vsimem):
     ds = ogr.Open("data/dxf/text.dxf")
     lyr = ds.GetLayer(0)
 
-    test_text = "test\ttext ab/c~d\u00B1ef^g.h#i jklm"
+    test_text = "test\ttext ab/c~d\u00b1ef^g.h#i jklm"
 
     feat = lyr.GetNextFeature()
     assert feat.GetFieldAsString("Text") == test_text, "bad attribute"
@@ -3260,7 +3260,7 @@ def test_ogr_dxf_44():
         "POLYGON ((-40.7553616986189 -14.3661762772835,-44.6945927106677 -15.0607689879512,-44 -19,-40.0607689879512 -18.3054072893323,-40.7553616986189 -14.3661762772835),(-41.9142984770378 -17.0075519687798,-41.126452274628 -16.8686334266463,-40.9875337324945 -17.6564796290561,-41.7753799349043 -17.7953981711896,-41.9142984770378 -17.0075519687798),(-42.0532170191713 -16.2197057663701,-42.1921355613049 -15.4318595639603,-41.4042893588951 -15.2929410218268,-41.2653708167616 -16.0807872242365,-42.0532170191713 -16.2197057663701),(-42.7021446794476 -17.1464705109134,-42.563226137314 -17.9343167133231,-43.3510723397238 -18.0732352554567,-43.4899908818573 -17.2853890530469,-42.7021446794476 -17.1464705109134),(-42.8410632215811 -16.3586243085036,-43.6289094239909 -16.4975428506372,-43.7678279661244 -15.7096966482274,-42.9799817637146 -15.5707781060938,-42.8410632215811 -16.3586243085036))",
     )
 
-    test_text = "Apples\u00B1"
+    test_text = "Apples\u00b1"
 
     f = lyr.GetNextFeature()
     assert (

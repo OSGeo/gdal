@@ -964,9 +964,9 @@ struct TintermediateS<
     Tsrc, Tdest,
     std::enable_if_t<
         (std::is_same_v<Tsrc, uint8_t> || std::is_same_v<Tsrc, int16_t> ||
-         std::is_same_v<Tsrc, uint16_t>)&&(std::is_same_v<Tdest, uint8_t> ||
-                                           std::is_same_v<Tdest, int16_t> ||
-                                           std::is_same_v<Tdest, uint16_t>),
+         std::is_same_v<Tsrc, uint16_t>) &&
+            (std::is_same_v<Tdest, uint8_t> || std::is_same_v<Tdest, int16_t> ||
+             std::is_same_v<Tdest, uint16_t>),
         bool>>
 {
     using type = int32_t;

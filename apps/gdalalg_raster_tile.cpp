@@ -6036,9 +6036,9 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     const auto IsWebViewerEnabled = [this](const char *name)
     {
         return std::find_if(m_webviewers.begin(), m_webviewers.end(),
-                            [name](const std::string &s) {
-                                return s == "all" || s == name;
-                            }) != m_webviewers.end();
+                            [name](const std::string &s)
+                            { return s == "all" || s == name; }) !=
+               m_webviewers.end();
     };
 
     if (m_ovrZoomLevel < 0 && bRet &&

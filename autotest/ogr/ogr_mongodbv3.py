@@ -23,6 +23,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("MongoDBv3")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -268,12 +269,12 @@ def test_ogr_mongodbv3_2():
     f["location.name"] = "Paris"
     f["bool"] = 1
     f["int"] = 1
-    f[
-        "int64"
-    ] = 1234567890123456  # put a number larger than 1 << 40 so that fromjson() doesn't pick double
+    f["int64"] = (
+        1234567890123456  # put a number larger than 1 << 40 so that fromjson() doesn't pick double
+    )
     f["real"] = 1.23
     f["dt"] = "1234/12/31 23:59:59.123+00"
-    f["binary"] = b"\x00\xFF"
+    f["binary"] = b"\x00\xff"
     f["strlist"] = ["a", "b"]
     f["intlist"] = [1, 2]
     f["int64list"] = [1234567890123456, 1234567890123456]
@@ -712,7 +713,7 @@ def test_ogr_mongodbv3_2():
         ("mixedlist", ogr.OFTRealList),
         ("mixedlist2", ogr.OFTStringList),
     ]
-    for (fieldname, fieldtype) in expected_fields:
+    for fieldname, fieldtype in expected_fields:
         fld_defn = lyr.GetLayerDefn().GetFieldDefn(
             lyr.GetLayerDefn().GetFieldIndex(fieldname)
         )

@@ -85,7 +85,7 @@ def test_gdalalg_raster_clean_collar_update_output(tmp_vsimem):
 def test_gdalalg_raster_clean_collar_update_input_as_object():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x02\xFF")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x02\xff")
 
     alg = get_alg()
     alg["input"] = ds
@@ -99,14 +99,14 @@ def test_gdalalg_raster_clean_collar_update_input_as_object():
     alg["input"] = ds
     alg["update"] = True
     assert alg.Run()
-    assert ds.GetRasterBand(1).ReadRaster() == b"\x00\xFF"
+    assert ds.GetRasterBand(1).ReadRaster() == b"\x00\xff"
 
 
 def test_gdalalg_raster_clean_collar_update_input_as_name(tmp_vsimem):
 
     filename = tmp_vsimem / "test.tif"
     ds = gdal.GetDriverByName("GTiff").Create(filename, 2, 1)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x02\xFF")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x02\xff")
     ds.Close()
 
     alg = get_alg()
@@ -122,13 +122,13 @@ def test_gdalalg_raster_clean_collar_update_input_as_name(tmp_vsimem):
     alg["update"] = True
     assert alg.Run()
     ds = alg["output"].GetDataset()
-    assert ds.GetRasterBand(1).ReadRaster() == b"\x00\xFF"
+    assert ds.GetRasterBand(1).ReadRaster() == b"\x00\xff"
 
 
 def test_gdalalg_raster_clean_collar_color_and_pixel_distance():
 
     ds = gdal.GetDriverByName("MEM").Create("", 4, 1)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\x7F\xD0\xFF")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\x7f\xd0\xff")
 
     alg = get_alg()
     alg["input"] = ds
@@ -136,7 +136,7 @@ def test_gdalalg_raster_clean_collar_color_and_pixel_distance():
     alg["color"] = ["black", "white", 0xD0]
     alg["pixel-distance"] = 0
     assert alg.Run()
-    assert ds.GetRasterBand(1).ReadRaster() == b"\x00\x7F\x00\x00"
+    assert ds.GetRasterBand(1).ReadRaster() == b"\x00\x7f\x00\x00"
 
     alg = get_alg()
     with pytest.raises(Exception, match="Value for 'color' should be"):
@@ -146,8 +146,8 @@ def test_gdalalg_raster_clean_collar_color_and_pixel_distance():
 def test_gdalalg_raster_clean_collar_color_tuple():
 
     ds = gdal.GetDriverByName("MEM").Create("", 4, 1, 2)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\x00\x01\xFF")
-    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x01\x00\x01\xFE")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\x00\x01\xff")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 4, 1, b"\x01\x00\x01\xfe")
 
     alg = get_alg()
     alg["input"] = ds
@@ -156,8 +156,8 @@ def test_gdalalg_raster_clean_collar_color_tuple():
     alg["pixel-distance"] = 0
     alg["color-threshold"] = 0
     assert alg.Run()
-    assert ds.GetRasterBand(1).ReadRaster() == b"\x00\x00\x01\xFF"
-    assert ds.GetRasterBand(2).ReadRaster() == b"\x00\x00\x01\xFE"
+    assert ds.GetRasterBand(1).ReadRaster() == b"\x00\x00\x01\xff"
+    assert ds.GetRasterBand(2).ReadRaster() == b"\x00\x00\x01\xfe"
 
 
 def test_gdalalg_raster_clean_collar_color_threshold():
@@ -178,7 +178,7 @@ def test_gdalalg_raster_clean_collar_color_threshold():
 def test_gdalalg_raster_clean_collar_add_alpha():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\xFE")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\xfe")
 
     alg = get_alg()
     alg["input"] = ds
@@ -188,8 +188,8 @@ def test_gdalalg_raster_clean_collar_add_alpha():
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.RasterCount == 2
-    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\xFE"
-    assert out_ds.GetRasterBand(2).ReadRaster() == b"\x00\xFF"
+    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\xfe"
+    assert out_ds.GetRasterBand(2).ReadRaster() == b"\x00\xff"
     assert out_ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_AlphaBand
 
     out_ds.GetRasterBand(2).Fill(0x7F)
@@ -199,14 +199,14 @@ def test_gdalalg_raster_clean_collar_add_alpha():
     alg["output"] = out_ds
     alg["update"] = True
     assert alg.Run()
-    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\xFE"
-    assert out_ds.GetRasterBand(2).ReadRaster() == b"\x00\xFF"
+    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\xfe"
+    assert out_ds.GetRasterBand(2).ReadRaster() == b"\x00\xff"
 
 
 def test_gdalalg_raster_clean_collar_add_mask():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\xFE")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\xfe")
 
     alg = get_alg()
     alg["input"] = ds
@@ -216,8 +216,8 @@ def test_gdalalg_raster_clean_collar_add_mask():
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.RasterCount == 1
-    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\xFE"
-    assert out_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\x00\xFF"
+    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\xfe"
+    assert out_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\x00\xff"
 
     out_ds.GetRasterBand(1).GetMaskBand().Fill(0x7F)
 
@@ -226,16 +226,16 @@ def test_gdalalg_raster_clean_collar_add_mask():
     alg["output"] = out_ds
     alg["update"] = True
     assert alg.Run()
-    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\xFE"
-    assert out_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\x00\xFF"
+    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\xfe"
+    assert out_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\x00\xff"
 
 
 def test_gdalalg_raster_clean_collar_add_mask_from_alpha():
 
     ds = gdal.GetDriverByName("MEM").Create("", 2, 1, 2)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\xFE")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 2, 1, b"\x01\xfe")
     ds.GetRasterBand(2).SetColorInterpretation(gdal.GCI_AlphaBand)
-    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\xFF\xFF")
+    ds.GetRasterBand(2).WriteRaster(0, 0, 2, 1, b"\xff\xff")
 
     alg = get_alg()
     alg["input"] = ds
@@ -245,17 +245,17 @@ def test_gdalalg_raster_clean_collar_add_mask_from_alpha():
     assert alg.Run()
     out_ds = alg["output"].GetDataset()
     assert out_ds.RasterCount == 1
-    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\xFE"
-    assert out_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\x00\xFF"
+    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\xfe"
+    assert out_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\x00\xff"
 
 
 def test_gdalalg_raster_clean_collar_algorithm_default_is_floodfill():
 
     ds = gdal.GetDriverByName("MEM").Create("", 4, 4)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\xFF\xFF\xFF")
-    ds.GetRasterBand(1).WriteRaster(0, 1, 4, 1, b"\x00\xFF\x01\xFF")
-    ds.GetRasterBand(1).WriteRaster(0, 2, 4, 1, b"\x00\x00\x01\xFF")
-    ds.GetRasterBand(1).WriteRaster(0, 3, 4, 1, b"\x00\xFF\xFF\xFF")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\xff\xff\xff")
+    ds.GetRasterBand(1).WriteRaster(0, 1, 4, 1, b"\x00\xff\x01\xff")
+    ds.GetRasterBand(1).WriteRaster(0, 2, 4, 1, b"\x00\x00\x01\xff")
+    ds.GetRasterBand(1).WriteRaster(0, 3, 4, 1, b"\x00\xff\xff\xff")
 
     alg = get_alg()
     alg["input"] = ds
@@ -263,19 +263,19 @@ def test_gdalalg_raster_clean_collar_algorithm_default_is_floodfill():
     alg["pixel-distance"] = 0
     assert alg.Run()
 
-    assert ds.ReadRaster(0, 0, 4, 1) == b"\x00\xFF\xFF\xFF"
-    assert ds.ReadRaster(0, 1, 4, 1) == b"\x00\xFF\x00\xFF"
-    assert ds.ReadRaster(0, 2, 4, 1) == b"\x00\x00\x00\xFF"
-    assert ds.ReadRaster(0, 3, 4, 1) == b"\x00\xFF\xFF\xFF"
+    assert ds.ReadRaster(0, 0, 4, 1) == b"\x00\xff\xff\xff"
+    assert ds.ReadRaster(0, 1, 4, 1) == b"\x00\xff\x00\xff"
+    assert ds.ReadRaster(0, 2, 4, 1) == b"\x00\x00\x00\xff"
+    assert ds.ReadRaster(0, 3, 4, 1) == b"\x00\xff\xff\xff"
 
 
 def test_gdalalg_raster_clean_collar_algorithm_twopasses():
 
     ds = gdal.GetDriverByName("MEM").Create("", 4, 4)
-    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\xFF\xFF\xFF")
-    ds.GetRasterBand(1).WriteRaster(0, 1, 4, 1, b"\x00\xFF\x01\xFF")
-    ds.GetRasterBand(1).WriteRaster(0, 2, 4, 1, b"\x00\x00\x01\xFF")
-    ds.GetRasterBand(1).WriteRaster(0, 3, 4, 1, b"\x00\xFF\xFF\xFF")
+    ds.GetRasterBand(1).WriteRaster(0, 0, 4, 1, b"\x00\xff\xff\xff")
+    ds.GetRasterBand(1).WriteRaster(0, 1, 4, 1, b"\x00\xff\x01\xff")
+    ds.GetRasterBand(1).WriteRaster(0, 2, 4, 1, b"\x00\x00\x01\xff")
+    ds.GetRasterBand(1).WriteRaster(0, 3, 4, 1, b"\x00\xff\xff\xff")
 
     alg = get_alg()
     alg["input"] = ds
@@ -284,7 +284,7 @@ def test_gdalalg_raster_clean_collar_algorithm_twopasses():
     alg["algorithm"] = "twopasses"
     assert alg.Run()
 
-    assert ds.ReadRaster(0, 0, 4, 1) == b"\x00\xFF\xFF\xFF"
-    assert ds.ReadRaster(0, 1, 4, 1) == b"\x00\xFF\x01\xFF"
-    assert ds.ReadRaster(0, 2, 4, 1) == b"\x00\x00\x00\xFF"
-    assert ds.ReadRaster(0, 3, 4, 1) == b"\x00\xFF\xFF\xFF"
+    assert ds.ReadRaster(0, 0, 4, 1) == b"\x00\xff\xff\xff"
+    assert ds.ReadRaster(0, 1, 4, 1) == b"\x00\xff\x01\xff"
+    assert ds.ReadRaster(0, 2, 4, 1) == b"\x00\x00\x00\xff"
+    assert ds.ReadRaster(0, 3, 4, 1) == b"\x00\xff\xff\xff"

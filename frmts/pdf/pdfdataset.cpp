@@ -3752,7 +3752,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
                 }
                 else
                     osCurLayer = std::move(osName);
-                    // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
+                // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
     (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 2)

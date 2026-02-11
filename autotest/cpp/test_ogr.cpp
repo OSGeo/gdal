@@ -2731,8 +2731,7 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
     ASSERT_EQ(OGRERR_NONE, err);
 
     auto insertEntry = std::find_if(
-        queryLog.cbegin(), queryLog.cend(),
-        [](const QueryLogEntry &e)
+        queryLog.cbegin(), queryLog.cend(), [](const QueryLogEntry &e)
         { return e.sql.find(R"sql(INSERT INTO "poly")sql", 0) == 0; });
 
     ASSERT_TRUE(insertEntry != queryLog.end());

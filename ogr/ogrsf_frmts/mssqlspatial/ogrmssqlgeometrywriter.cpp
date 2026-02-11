@@ -100,13 +100,13 @@ SegmentType (1 byte)
 #define WriteDouble(nPos, value)                                               \
     (*(reinterpret_cast<double *>(pszData + (nPos))) = value)
 
-#define ParentOffset(iShape) (nShapePos + (iShape)*9)
-#define FigureOffset(iShape) (nShapePos + (iShape)*9 + 4)
-#define ShapeType(iShape) (nShapePos + (iShape)*9 + 8)
+#define ParentOffset(iShape) (nShapePos + (iShape) * 9)
+#define FigureOffset(iShape) (nShapePos + (iShape) * 9 + 4)
+#define ShapeType(iShape) (nShapePos + (iShape) * 9 + 8)
 #define SegmentType(iSegment) (nSegmentPos + (iSegment))
 
-#define FigureAttribute(iFigure) (nFigurePos + (iFigure)*5)
-#define PointOffset(iFigure) (nFigurePos + (iFigure)*5 + 1)
+#define FigureAttribute(iFigure) (nFigurePos + (iFigure) * 5)
+#define PointOffset(iFigure) (nFigurePos + (iFigure) * 5 + 1)
 
 #define WriteX(iPoint, value) (WriteDouble(nPointPos + 16 * (iPoint), value))
 #define WriteY(iPoint, value)                                                  \

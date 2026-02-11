@@ -2869,9 +2869,7 @@ inline bool OGRArrowWriterLayer::WriteArrowBatchInternal(
     // but make sure the original release() callback sees the original children
     struct ArrayReleaser
     {
-        struct ArrowArray ori_array
-        {
-        };
+        struct ArrowArray ori_array{};
 
         explicit ArrayReleaser(struct ArrowArray *array)
         {

@@ -2845,7 +2845,7 @@ extern "C++"
 #ifdef __cplusplus
         CPL_DLL
 #endif
-            GDALMDArrayRawBlockInfo
+        GDALMDArrayRawBlockInfo
     {
         /** Filename into which the raw block is found */
         char *pszFilename;

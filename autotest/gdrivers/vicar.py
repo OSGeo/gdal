@@ -22,6 +22,7 @@ from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("VICAR")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():

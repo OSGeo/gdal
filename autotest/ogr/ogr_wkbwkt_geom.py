@@ -765,12 +765,10 @@ def test_ogr_wkt_multipolygon_corrupted():
 
 
 def test_ogr_wkt_multiline():
-    g = ogr.CreateGeometryFromWkt(
-        """GEOMETRYCOLLECTION(
+    g = ogr.CreateGeometryFromWkt("""GEOMETRYCOLLECTION(
     POINT (1 2),
     LINESTRING (3 3, 4 4))
-    """
-    )
+    """)
     assert g is not None
 
 

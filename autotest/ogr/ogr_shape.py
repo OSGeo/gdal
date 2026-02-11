@@ -577,7 +577,7 @@ def test_ogr_shape_21(f):
 
     # Test fix for #3665
     lyr.ResetReading()
-    (minx, maxx, miny, maxy) = lyr.GetExtent()
+    minx, maxx, miny, maxy = lyr.GetExtent()
     with ogrtest.spatial_filter(
         lyr, minx + 1e-9, miny + 1e-9, maxx - 1e-9, maxy - 1e-9
     ), gdaltest.error_handler():
@@ -1978,7 +1978,7 @@ def test_ogr_shape_49():
     name = feat.GetField("NAME")
 
     # Setup the utf-8 string.
-    gdaltest.exp_name = "OSEBERG S\u00D8R"
+    gdaltest.exp_name = "OSEBERG S\u00d8R"
 
     assert name == gdaltest.exp_name, "Did not get expected name, encoding problems?"
 
@@ -2352,9 +2352,14 @@ def ogr_shape_54_test_layer(ds, layer_index):
         "failed for layer %d" % layer_index
     )
     if (layer_index % 2) == 0:
-        assert feat.GetGeometryRef() is not None and feat.GetGeometryRef().ExportToWkt() == "POINT (%d %d)" % (
-            layer_index,
-            layer_index + 1,
+        assert (
+            feat.GetGeometryRef() is not None
+            and feat.GetGeometryRef().ExportToWkt()
+            == "POINT (%d %d)"
+            % (
+                layer_index,
+                layer_index + 1,
+            )
         ), (
             "failed for layer %d" % layer_index
         )
@@ -4517,7 +4522,7 @@ def check_EOF(filename, expected=True):
     size = gdal.VSIStatL(filename).size
     content = gdal.VSIFReadL(1, size, f)
     gdal.VSIFCloseL(f)
-    pos = content.find("\x1A".encode("LATIN1"))
+    pos = content.find("\x1a".encode("LATIN1"))
     if expected:
         if pos < 0:
             print("Did not find EOF char")
@@ -5821,7 +5826,7 @@ def test_ogr_shape_write_arrow_fallback_types(tmp_vsimem):
     f["date"] = "2023/10/06"
     f["time"] = "12:34:56"
     f["datetime"] = "2023/10/06 19:43:00"
-    f.SetField("binary", b"\x01\x23\x46\x57\x89\xAB\xCD\xEF")
+    f.SetField("binary", b"\x01\x23\x46\x57\x89\xab\xcd\xef")
     f["stringlist"] = ["foo", "bar"]
     f["intlist"] = [1, 2]
     f["int64list"] = [12345678901234, 2]

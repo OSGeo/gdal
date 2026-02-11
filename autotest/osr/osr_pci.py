@@ -94,8 +94,7 @@ def test_osr_pci_1():
 def test_osr_pci_2():
 
     srs = osr.SpatialReference()
-    srs.ImportFromWkt(
-        """PROJCS["unnamed",GEOGCS["NAD27",\
+    srs.ImportFromWkt("""PROJCS["unnamed",GEOGCS["NAD27",\
     DATUM["North_American_Datum_1927",\
     SPHEROID["Clarke 1866",6378206.4,294.9786982139006,\
     AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],\
@@ -106,10 +105,9 @@ def test_osr_pci_2():
     PARAMETER["latitude_of_origin",33.76446202777777],\
     PARAMETER["central_meridian",-117.4745428888889],\
     PARAMETER["false_easting",0],PARAMETER["false_northing",0],\
-    UNIT["metre",1,AUTHORITY["EPSG","9001"]]]"""
-    )
+    UNIT["metre",1,AUTHORITY["EPSG","9001"]]]""")
 
-    (proj, units, params) = srs.ExportToPCI()
+    proj, units, params = srs.ExportToPCI()
 
     assert (
         proj == "LCC         D-01"

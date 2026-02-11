@@ -363,7 +363,7 @@ def test_cog_creation_of_overviews_with_mask():
     src_ds = gdal.Translate("", "data/byte.tif", options="-of MEM -outsize 2048 300")
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
-        0, 0, 1024, 300, b"\xFF", buf_xsize=1, buf_ysize=1
+        0, 0, 1024, 300, b"\xff", buf_xsize=1, buf_ysize=1
     )
 
     check_filename = "/vsimem/tmp.tif"
@@ -1914,7 +1914,6 @@ def test_cog_stats(tmp_vsimem, nbands, co, src_has_stats, expected_val):
 
 
 def test_cog_mask_band_overviews(tmp_vsimem):
-
     """Test bugfix for https://github.com/OSGeo/gdal/issues/10536"""
 
     filename = str(tmp_vsimem / "out.tif")
@@ -2140,7 +2139,7 @@ def test_cog_interleave_tile_or_band_vsicurl(tmp_vsimem, INTERLEAVE):
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:

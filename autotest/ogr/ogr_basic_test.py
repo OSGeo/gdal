@@ -941,7 +941,7 @@ def test_ogr_basic_test_future_warning_exceptions():
         "ogr.Open('data/poly.shp');" ' " '
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+        _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
     assert "FutureWarning: Neither ogr.UseExceptions()" in err

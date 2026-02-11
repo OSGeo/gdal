@@ -34,7 +34,7 @@
 
 #define IS_OPENJPEG_OR_LATER(major, minor, patch)                              \
     ((OPJ_VERSION_MAJOR * 10000 + OPJ_VERSION_MINOR * 100 +                    \
-      OPJ_VERSION_BUILD) >= ((major)*10000 + (minor)*100 + (patch)))
+      OPJ_VERSION_BUILD) >= ((major) * 10000 + (minor) * 100 + (patch)))
 
 /************************************************************************/
 /*                              Identify()                              */

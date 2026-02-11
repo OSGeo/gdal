@@ -30,6 +30,7 @@ pytestmark = pytest.mark.skipif(
     reason="VRT driver open missing",
 )
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -510,8 +511,7 @@ def test_vrt_read_14(tmp_vsimem):
         tmp_vsimem / "vrt_read_14.tif", src_ds
     )
     mem_ds.FlushCache()  # hum this should not be necessary ideally
-    vrt_ds = gdal.Open(
-        f"""<VRTDataset rasterXSize="4" rasterYSize="4">
+    vrt_ds = gdal.Open(f"""<VRTDataset rasterXSize="4" rasterYSize="4">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="0">{tmp_vsimem}/vrt_read_14.tif</SourceFilename>
@@ -521,8 +521,7 @@ def test_vrt_read_14(tmp_vsimem):
       <DstRect xOff="0" yOff="0" xSize="4" ySize="4" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
 
@@ -538,8 +537,7 @@ def test_vrt_read_14(tmp_vsimem):
 
 def test_vrt_read_15():
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="9" rasterYSize="9">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -556,8 +554,7 @@ def test_vrt_read_15():
       <DstRect xOff="0" yOff="0" xSize="9" ySize="9" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     cs = vrt_ds.GetRasterBand(1).Checksum()
     assert cs == 1044
@@ -569,8 +566,7 @@ def test_vrt_read_15():
 
 def test_vrt_read_16():
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="9" rasterYSize="9">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
   <VRTRasterBand dataType="Byte" band="1">
     <ComplexSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -587,8 +583,7 @@ def test_vrt_read_16():
       <DstRect xOff="0" yOff="0" xSize="9" ySize="9" />
     </ComplexSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     cs = vrt_ds.GetRasterBand(1).Checksum()
     assert cs == 1044
@@ -600,8 +595,7 @@ def test_vrt_read_16():
 
 def test_vrt_read_17():
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="9" rasterYSize="9">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="9" rasterYSize="9">
   <VRTRasterBand dataType="Byte" band="1">
     <AveragedSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -611,8 +605,7 @@ def test_vrt_read_17():
       <DstRect xOff="0" yOff="0" xSize="9" ySize="9" />
     </AveragedSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     # Note: AveragedSource with resampling does not give consistent results
     # depending on the RasterIO() request
@@ -638,8 +631,7 @@ def test_vrt_read_18():
 
 def test_vrt_read_19():
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <AveragedSource>
       <SourceFilename relativeToVRT="0" shared="0">data/byte.tif</SourceFilename>
@@ -647,19 +639,16 @@ def test_vrt_read_19():
       <SourceProperties RasterXSize="20" RasterYSize="20" DataType="Byte" BlockXSize="20" BlockYSize="20" />
     </AveragedSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
-    vrt2_ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    vrt2_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <AveragedSource>
       <SourceFilename relativeToVRT="0" shared="0">data/byte.tif</SourceFilename>
       <SourceBand>1</SourceBand>
     </AveragedSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     cs = vrt_ds.GetRasterBand(1).Checksum()
     assert cs == 4672
@@ -835,16 +824,14 @@ def test_vrt_read_virtual_overview_no_srcrect_dstrect(tmp_vsimem):
     ref_cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     ds = None
 
-    ds = gdal.Open(
-        f"""<VRTDataset rasterXSize="400" rasterYSize="400">
+    ds = gdal.Open(f"""<VRTDataset rasterXSize="400" rasterYSize="400">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename>{tmp_tif}</SourceFilename>
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     assert ds.GetRasterBand(1).GetOverviewCount() == 1
     assert ds.GetRasterBand(1).GetOverview(0).Checksum() == ref_cs
 
@@ -863,8 +850,7 @@ def test_vrt_read_22(tmp_vsimem):
     ds.GetRasterBand(1).ComputeStatistics(False)
     ds = None
 
-    ds = gdal.Open(
-        f"""<VRTDataset rasterXSize="20" rasterYSize="20">
+    ds = gdal.Open(f"""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <Metadata domain="IMAGE_STRUCTURE">
         <MDI key="NBITS">6</MDI>
@@ -874,8 +860,7 @@ def test_vrt_read_22(tmp_vsimem):
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     assert ds.GetRasterBand(1).GetMinimum() == 63
 
     assert ds.GetRasterBand(1).GetMaximum() == 63
@@ -888,8 +873,7 @@ def test_vrt_read_22(tmp_vsimem):
     got = struct.unpack("B" * 20 * 20, data)
     assert got[0] == 63
 
-    ds = gdal.Open(
-        f"""<VRTDataset rasterXSize="20" rasterYSize="20">
+    ds = gdal.Open(f"""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <Metadata domain="IMAGE_STRUCTURE">
         <MDI key="NBITS">6</MDI>
@@ -899,8 +883,7 @@ def test_vrt_read_22(tmp_vsimem):
       <SourceBand>1</SourceBand>
     </ComplexSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     assert ds.GetRasterBand(1).GetMinimum() == 63
 
     assert ds.GetRasterBand(1).GetMaximum() == 63
@@ -909,8 +892,7 @@ def test_vrt_read_22(tmp_vsimem):
 
     assert ds.GetRasterBand(1).ComputeStatistics(False) == [63.0, 63.0, 63.0, 0.0]
 
-    ds = gdal.Open(
-        f"""<VRTDataset rasterXSize="20" rasterYSize="20">
+    ds = gdal.Open(f"""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <Metadata domain="IMAGE_STRUCTURE">
         <MDI key="NBITS">6</MDI>
@@ -921,8 +903,7 @@ def test_vrt_read_22(tmp_vsimem):
       <ScaleOffset>10</ScaleOffset>
     </ComplexSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     assert ds.GetRasterBand(1).GetMinimum() is None
 
     assert ds.GetRasterBand(1).GetMaximum() is None
@@ -945,16 +926,14 @@ def test_vrt_read_23(tmp_vsimem):
     mem_ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "vrt_read_23.tif", 2, 1)
     mem_ds.GetRasterBand(1).WriteArray(numpy.array([[0, 10]]))
     mem_ds = None
-    ds = gdal.Open(
-        f"""<VRTDataset rasterXSize="2" rasterYSize="1">
+    ds = gdal.Open(f"""<VRTDataset rasterXSize="2" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
     <NoDataValue>0</NoDataValue>
     <SimpleSource>
       <SourceFilename>{tmp_vsimem}/vrt_read_23.tif</SourceFilename>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     got_ar = ds.GetRasterBand(1).ReadAsArray(
         0, 0, 2, 1, 4, 1, resample_alg=gdal.GRIORA_Bilinear
     )
@@ -977,16 +956,14 @@ def test_vrt_read_23a(tmp_vsimem):
     mem_ds.GetRasterBand(1).SetNoDataValue(0)
     mem_ds.GetRasterBand(1).WriteArray(numpy.array([[0, 10]]))
     mem_ds = None
-    ds = gdal.Open(
-        f"""<VRTDataset rasterXSize="2" rasterYSize="1">
+    ds = gdal.Open(f"""<VRTDataset rasterXSize="2" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
     <NoDataValue>0</NoDataValue>
     <SimpleSource>
       <SourceFilename>{tmp_vsimem}/vrt_read_23.tif</SourceFilename>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     got_ar = ds.GetRasterBand(1).ReadAsArray(
         0, 0, 2, 1, 4, 1, resample_alg=gdal.GRIORA_Bilinear
     )
@@ -1027,8 +1004,7 @@ def test_vrt_read_24():
 @pytest.mark.require_geos
 def test_vrt_read_25():
 
-    ds = gdal.Open(
-        """<VRTDataset rasterXSize="2000" rasterYSize="200">
+    ds = gdal.Open("""<VRTDataset rasterXSize="2000" rasterYSize="200">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -1049,19 +1025,18 @@ def test_vrt_read_25():
       <DstRect xOff="1010" yOff="30" xSize="10" ySize="20" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 20, 20)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 20, 20)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(1005, 35, 10, 10)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(1005, 35, 10, 10)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(100, 100, 20, 20)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(100, 100, 20, 20)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(10, 10, 20, 20)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(10, 10, 20, 20)
     assert (
         flags
         == gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY
@@ -1090,20 +1065,20 @@ def test_vrt_read_get_data_coverage_status_single_source(tmp_vsimem):
     gdal.Translate(tmp_vrt, tmp_gtiff, format="VRT")
     ds = gdal.Open(tmp_vrt)
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 512, 512)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 512, 512)
     assert (
         flags
         == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
         and pct == 25.0
     )
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 256, 256)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 256, 256)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(256, 256, 256, 256)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(256, 256, 256, 256)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 256, 512, 256)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(0, 256, 512, 256)
     assert (
         flags
         == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
@@ -1118,8 +1093,7 @@ def test_vrt_read_get_data_coverage_status_single_source(tmp_vsimem):
 
 def test_vrt_read_26():
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset rasterXSize="22" rasterYSize="22">
+    vrt_ds = gdal.Open("""<VRTDataset rasterXSize="22" rasterYSize="22">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -1129,8 +1103,7 @@ def test_vrt_read_26():
       <DstRect xOff="0" yOff="0" xSize="22" ySize="22" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     full_data = vrt_ds.GetRasterBand(1).ReadRaster(0, 0, 22, 22)
     full_data = struct.unpack("B" * 22 * 22, full_data)
@@ -1234,16 +1207,14 @@ def test_vrt_read_29(tmp_path):
 
 def test_vrt_read_30():
 
-    ds = gdal.Open(
-        """<VRTDataset rasterXSize="2" rasterYSize="2">
+    ds = gdal.Open("""<VRTDataset rasterXSize="2" rasterYSize="2">
   <VRTRasterBand dataType="Byte" band="1">
   </VRTRasterBand>
   <VRTRasterBand dataType="Byte" band="2">
   </VRTRasterBand>
   <VRTRasterBand dataType="Byte" band="3">
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     data = ds.ReadRaster(
         0, 0, 2, 2, 2, 2, buf_pixel_space=3, buf_line_space=2 * 3, buf_band_space=1
@@ -2280,7 +2251,6 @@ def test_vrt_check_dont_open_unneeded_source_with_complex_source_nodata(tmp_vsim
 
 
 def test_vrt_nodata_and_implicit_ovr_recursion_issue(tmp_vsimem):
-
     """Tests scenario https://github.com/OSGeo/gdal/issues/4620#issuecomment-938636360"""
 
     vrt = """<VRTDataset rasterXSize="20" rasterYSize="20">
@@ -2303,7 +2273,6 @@ def test_vrt_nodata_and_implicit_ovr_recursion_issue(tmp_vsimem):
 
 
 def test_vrt_statistics_and_implicit_ovr_recursion_issue(tmp_vsimem):
-
     """Tests scenario https://github.com/OSGeo/gdal/issues/4661"""
 
     gdal.Translate(tmp_vsimem / "test.tif", "data/uint16.tif", width=2048)
@@ -3062,10 +3031,10 @@ def test_vrt_resampling_with_mask_and_overviews(tmp_vsimem):
     filename1 = str(tmp_vsimem / "in1.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename1, 100, 10)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    ds.GetRasterBand(1).WriteRaster(0, 0, 48, 10, b"\xFF" * (48 * 10))
-    ds.GetRasterBand(1).WriteRaster(48, 0, 2, 10, b"\xF0" * (2 * 10))
+    ds.GetRasterBand(1).WriteRaster(0, 0, 48, 10, b"\xff" * (48 * 10))
+    ds.GetRasterBand(1).WriteRaster(48, 0, 2, 10, b"\xf0" * (2 * 10))
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 52, 10, b"\xFF" * (52 * 10))
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 52, 10, b"\xff" * (52 * 10))
     ds.BuildOverviews("NEAR", [2])
     ds.GetRasterBand(1).GetOverview(0).Fill(
         127
@@ -3075,9 +3044,9 @@ def test_vrt_resampling_with_mask_and_overviews(tmp_vsimem):
     filename2 = str(tmp_vsimem / "in2.tif")
     ds = gdal.GetDriverByName("GTiff").Create(filename2, 100, 10)
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    ds.GetRasterBand(1).WriteRaster(48, 0, 52, 10, b"\xF0" * (52 * 10))
+    ds.GetRasterBand(1).WriteRaster(48, 0, 52, 10, b"\xf0" * (52 * 10))
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(48, 0, 52, 10, b"\xFF" * (52 * 10))
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(48, 0, 52, 10, b"\xff" * (52 * 10))
     ds.BuildOverviews("NEAR", [2])
     ds.GetRasterBand(1).GetOverview(0).Fill(
         127
@@ -3090,11 +3059,11 @@ def test_vrt_resampling_with_mask_and_overviews(tmp_vsimem):
     ds = gdal.Open(vrt_filename)
     assert (
         ds.ReadRaster(buf_xsize=10, buf_ysize=1)
-        == b"\xFF\xFF\xFF\xFF\xFC\xF0\xF0\xF0\xF0\xF0"
+        == b"\xff\xff\xff\xff\xfc\xf0\xf0\xf0\xf0\xf0"
     )
     assert (
         ds.GetRasterBand(1).GetMaskBand().ReadRaster(buf_xsize=10, buf_ysize=1)
-        == b"\xFF" * 10
+        == b"\xff" * 10
     )
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
@@ -3105,11 +3074,11 @@ def test_vrt_resampling_with_mask_and_overviews(tmp_vsimem):
     ds = gdal.Open(vrt_filename)
     assert (
         ds.ReadRaster(buf_xsize=10, buf_ysize=1)
-        == b"\xFF\xFF\xFF\xFF\xFB\xF1\xF0\xF0\xF0\xF0"
+        == b"\xff\xff\xff\xff\xfb\xf1\xf0\xf0\xf0\xf0"
     )
     assert (
         ds.GetRasterBand(1).GetMaskBand().ReadRaster(buf_xsize=10, buf_ysize=1)
-        == b"\xFF" * 10
+        == b"\xff" * 10
     )
 
 
@@ -3123,9 +3092,9 @@ def test_vrt_resampling_with_alpha_and_overviews(tmp_vsimem):
         filename1, 100, 10, 2, options=["ALPHA=YES"]
     )
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    ds.GetRasterBand(1).WriteRaster(0, 0, 48, 10, b"\xFF" * (48 * 10))
-    ds.GetRasterBand(1).WriteRaster(48, 0, 2, 10, b"\xF0" * (2 * 10))
-    ds.GetRasterBand(2).WriteRaster(0, 0, 52, 10, b"\xFF" * (52 * 10))
+    ds.GetRasterBand(1).WriteRaster(0, 0, 48, 10, b"\xff" * (48 * 10))
+    ds.GetRasterBand(1).WriteRaster(48, 0, 2, 10, b"\xf0" * (2 * 10))
+    ds.GetRasterBand(2).WriteRaster(0, 0, 52, 10, b"\xff" * (52 * 10))
     ds.BuildOverviews("NEAR", [2])
     ds.GetRasterBand(1).GetOverview(0).Fill(
         127
@@ -3137,8 +3106,8 @@ def test_vrt_resampling_with_alpha_and_overviews(tmp_vsimem):
         filename2, 100, 10, 2, options=["ALPHA=YES"]
     )
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
-    ds.GetRasterBand(1).WriteRaster(48, 0, 52, 10, b"\xF0" * (52 * 10))
-    ds.GetRasterBand(2).WriteRaster(48, 0, 52, 10, b"\xFF" * (52 * 10))
+    ds.GetRasterBand(1).WriteRaster(48, 0, 52, 10, b"\xf0" * (52 * 10))
+    ds.GetRasterBand(2).WriteRaster(48, 0, 52, 10, b"\xff" * (52 * 10))
     ds.BuildOverviews("NEAR", [2])
     ds.GetRasterBand(1).GetOverview(0).Fill(
         127
@@ -3151,7 +3120,7 @@ def test_vrt_resampling_with_alpha_and_overviews(tmp_vsimem):
     ds = gdal.Open(vrt_filename)
     assert ds.ReadRaster(
         buf_xsize=10, buf_ysize=1
-    ) == b"\xFF\xFF\xFF\xFF\xFC\xF0\xF0\xF0\xF0\xF0" + (b"\xFF" * 10)
+    ) == b"\xff\xff\xff\xff\xfc\xf0\xf0\xf0\xf0\xf0" + (b"\xff" * 10)
 
     vrt_filename = str(tmp_vsimem / "test.vrt")
     gdal.BuildVRT(
@@ -3161,7 +3130,7 @@ def test_vrt_resampling_with_alpha_and_overviews(tmp_vsimem):
     ds = gdal.Open(vrt_filename)
     assert ds.ReadRaster(
         buf_xsize=10, buf_ysize=1
-    ) == b"\xFF\xFF\xFF\xFF\xFB\xF1\xF0\xF0\xF0\xF0" + (b"\xFF" * 10)
+    ) == b"\xff\xff\xff\xff\xfb\xf1\xf0\xf0\xf0\xf0" + (b"\xff" * 10)
 
 
 ###############################################################################

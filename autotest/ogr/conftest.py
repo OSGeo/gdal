@@ -22,7 +22,7 @@ def poly_feat():
 @pytest.fixture(scope="module")
 def server():
 
-    (process, port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
 
     if port == 0:
         pytest.skip()

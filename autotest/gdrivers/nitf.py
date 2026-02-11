@@ -292,8 +292,8 @@ def test_nitf_9(tmp_path):
 
     ds = gdal.Open(tmp_path / "nitf9.ntf")
 
-    (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    exp_mean, exp_stddev = (65.9532, 46.9026375565)
+    mean, stddev = ds.GetRasterBand(1).ComputeBandStats()
 
     assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(
         stddev, abs=0.1
@@ -1429,8 +1429,8 @@ def test_nitf_36(tmp_path):
 
     assert ds.GetRasterBand(1).GetStatistics(False, False) is None
 
-    (exp_mean, exp_stddev) = (65.4208, 47.254550335)
-    (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, True)
+    exp_mean, exp_stddev = (65.4208, 47.254550335)
+    _, _, mean, stddev = ds.GetRasterBand(1).GetStatistics(False, True)
 
     assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(
         stddev, abs=0.1
@@ -1448,7 +1448,7 @@ def test_nitf_36(tmp_path):
         ds.GetRasterBand(1).GetMinimum() is not None
     ), "Should have minimum value at that point."
 
-    (_, _, mean, stddev) = ds.GetRasterBand(1).GetStatistics(False, False)
+    _, _, mean, stddev = ds.GetRasterBand(1).GetStatistics(False, False)
     assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(
         stddev, abs=0.1
     ), "Should have statistics at that point."
@@ -1568,8 +1568,8 @@ def test_nitf_39(tmp_path):
 
     ds = gdal.Open(tmp_path / "nitf39.ntf")
 
-    (exp_mean, exp_stddev) = (65.4208, 47.254550335)
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    exp_mean, exp_stddev = (65.4208, 47.254550335)
+    mean, stddev = ds.GetRasterBand(1).ComputeBandStats()
 
     assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(
         stddev, abs=0.1
@@ -1778,7 +1778,7 @@ def test_nitf_44(tmp_path):
     ds = gdal.Open(tmp_path / "nitf44.ntf")
 
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, _) = ds.GetRasterBand(1).GetBlockSize()
+        blockx, _ = ds.GetRasterBand(1).GetBlockSize()
         assert blockx == 10000
 
     assert ds.GetRasterBand(1).Checksum() == 57182
@@ -2541,7 +2541,7 @@ def test_nitf_65(tmp_vsimem):
     ds = None
 
     ds = gdal.Open(tmp_vsimem / "nitf_65.ntf")
-    (block_xsize, _) = ds.GetRasterBand(1).GetBlockSize()
+    block_xsize, _ = ds.GetRasterBand(1).GetBlockSize()
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -2563,7 +2563,7 @@ def test_nitf_66(tmp_vsimem):
     ds = None
 
     ds = gdal.Open(tmp_vsimem / "nitf_66.ntf")
-    (_, block_ysize) = ds.GetRasterBand(1).GetBlockSize()
+    _, block_ysize = ds.GetRasterBand(1).GetBlockSize()
     ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -3019,9 +3019,9 @@ def test_nitf_72(tmp_vsimem):
     # Test loss of precision on coefficient lines
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_md = copy.copy(src_md_max_precision)
-    src_md[
-        "LINE_NUM_COEFF"
-    ] = "0 9.876543e-10 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9"
+    src_md["LINE_NUM_COEFF"] = (
+        "0 9.876543e-10 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9"
+    )
     src_ds.SetMetadata(src_md, "RPC")
 
     with gdal.quiet_errors():
@@ -3102,9 +3102,9 @@ def test_nitf_72(tmp_vsimem):
     # Test out of rangeon coefficient lines
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_md = copy.copy(src_md_max_precision)
-    src_md[
-        "LINE_NUM_COEFF"
-    ] = "0 9.876543e10 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9"
+    src_md["LINE_NUM_COEFF"] = (
+        "0 9.876543e10 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9 0 9.876543e+9 9.876543e-9 -9.876543e+9 -9.876543e-9"
+    )
     src_ds.SetMetadata(src_md, "RPC")
 
     with gdal.quiet_errors():
@@ -5041,11 +5041,7 @@ def test_nitf_des_CSSHPA(tmp_vsimem):
     <field name="DESDATA" value="%s" />
   </des>
 </des_list>
-""" % base64.b64encode(
-        shp_shx_dbf
-    ).decode(
-        "ascii"
-    )
+""" % base64.b64encode(shp_shx_dbf).decode("ascii")
 
     assert data == expected_data
 
@@ -5096,8 +5092,7 @@ def test_nitf_tre_overflow_des(tmp_vsimem):
     expected_des_data_b64_encoded = base64.b64encode(bytes(des_data, "ascii")).decode(
         "ascii"
     )
-    expected_data = (
-        """<des_list>
+    expected_data = """<des_list>
   <des name="TRE_OVERFLOW">
     <field name="DESVER" value="02" />
     <field name="DECLAS" value="U" />
@@ -5122,9 +5117,7 @@ def test_nitf_tre_overflow_des(tmp_vsimem):
     <field name="DESDATA" value="%s" />
   </des>
 </des_list>
-"""
-        % expected_des_data_b64_encoded
-    )
+""" % expected_des_data_b64_encoded
 
     assert data == expected_data
 
@@ -5216,9 +5209,7 @@ def test_nitf_des_XML_DATA_CONTENT(tmp_vsimem):
     data = ds.GetMetadata("xml:DES")[0]
     ds = None
 
-    assert (
-        data
-        == """<des_list>
+    assert data == """<des_list>
   <des name="XML_DATA_CONTENT">
     <field name="DESVER" value="02" />
     <field name="DECLAS" value="U" />
@@ -5246,7 +5237,6 @@ def test_nitf_des_XML_DATA_CONTENT(tmp_vsimem):
   </des>
 </des_list>
 """
-    )
 
 
 ###############################################################################
@@ -5270,9 +5260,7 @@ def test_nitf_des_XML_DATA_CONTENT_invalid(tmp_vsimem):
         data = ds.GetMetadata("xml:DES")[0]
     ds = None
 
-    assert (
-        data
-        == """<des_list>
+    assert data == """<des_list>
   <des name="XML_DATA_CONTENT">
     <field name="DESVER" value="02" />
     <field name="DECLAS" value="U" />
@@ -5296,7 +5284,6 @@ def test_nitf_des_XML_DATA_CONTENT_invalid(tmp_vsimem):
   </des>
 </des_list>
 """
-    )
 
 
 ###############################################################################
@@ -5582,8 +5569,8 @@ def test_nitf_create_two_images_final_with_C3_compression(tmp_vsimem):
     assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
 
     ds = gdal.Open(f"NITF_IM:1:{tmp_vsimem}/out.ntf")
-    (exp_mean, exp_stddev) = (65.9532, 46.9026375565)
-    (mean, stddev) = ds.GetRasterBand(1).ComputeBandStats()
+    exp_mean, exp_stddev = (65.9532, 46.9026375565)
+    mean, stddev = ds.GetRasterBand(1).ComputeBandStats()
 
     assert exp_mean == pytest.approx(mean, abs=0.1) and exp_stddev == pytest.approx(
         stddev, abs=0.1
@@ -5799,8 +5786,7 @@ def test_nitf_pam_metadata_single_image(tmp_path):
 
     # Try to read the variant of PAM serialization that was used from
     # GDAL 3.4.0 to 3.5.0
-    open(out_filename + ".aux.xml", "wb").write(
-        b"""<PAMDataset>
+    open(out_filename + ".aux.xml", "wb").write(b"""<PAMDataset>
   <Subdataset name="0">
     <PAMDataset>
       <Metadata>
@@ -5808,8 +5794,7 @@ def test_nitf_pam_metadata_single_image(tmp_path):
       </Metadata>
     </PAMDataset>
   </Subdataset>
-</PAMDataset>"""
-    )
+</PAMDataset>""")
 
     ds = gdal.Open(out_filename)
     assert ds.GetMetadataItem("FOO") == "BAR"
@@ -5906,9 +5891,7 @@ def test_nitf_metadata_validation_tre(tmp_vsimem):
         ds = gdal.OpenEx(filename, open_options=["VALIDATE=YES"])
     assert gdal.GetLastErrorMsg() != ""
     md = ds.GetMetadata("xml:TRE")[0]
-    assert (
-        md
-        == """<tres>
+    assert md == """<tres>
   <tre name="BLOCKA" location="image">
     <error>BLOCKA TRE wrong size (118). Expected 123.</error>
     <field name="BLOCK_INSTANCE" value="01" />
@@ -5927,7 +5910,6 @@ def test_nitf_metadata_validation_tre(tmp_vsimem):
   </tre>
 </tres>
 """
-    )
 
     with gdal.quiet_errors():
         ds = gdal.OpenEx(
@@ -5954,9 +5936,7 @@ def test_nitf_metadata_validation_des(tmp_vsimem):
         ds = gdal.OpenEx(filename, open_options=["VALIDATE=YES"])
     assert gdal.GetLastErrorMsg() != ""
     md = ds.GetMetadata("xml:DES")[0]
-    assert (
-        md
-        == """<des_list>
+    assert md == """<des_list>
   <des name="CSATTA DES">
     <field name="DESVER" value="02" />
     <field name="DECLAS" value="U" />
@@ -5985,7 +5965,6 @@ def test_nitf_metadata_validation_des(tmp_vsimem):
   </des>
 </des_list>
 """
-    )
 
     with gdal.quiet_errors():
         ds = gdal.OpenEx(
@@ -6839,8 +6818,7 @@ def test_nitf_read_rpfhdr_rpfimg():
 
     ds = gdal.Open("data/nitf/RPFTOC01.ON2")
     md = ds.GetMetadata("xml:TRE")[0]
-    assert (
-        """<tre name="RPFHDR" location="file">
+    assert """<tre name="RPFHDR" location="file">
     <field name="LITTLE_BIG_ENDIAN_INDICATOR" value="0" />
     <field name="HEADER_SECTION_LENGTH" value="48" />
     <field name="FILENAME" value="RPFTOC01.ON2" />
@@ -6851,29 +6829,20 @@ def test_nitf_read_rpfhdr_rpfimg():
     <field name="SECURITY_COUNTRY_INTERNATIONAL_CODE" value="" />
     <field name="SECURITY_RELEASE_MARKING" value="" />
     <field name="LOCATION_SECTION_LOCATION" value="1644" />
-  </tre>"""
-        in md
-    )
-    assert (
-        """<tre name="RPFIMG" location="image">
+  </tre>""" in md
+    assert """<tre name="RPFIMG" location="image">
     <field name="LOCATION_SECTION_LENGTH" value="164" />
     <field name="COMPONENT_LOCATION_OFFSET" value="14" />
     <field name="NUMBER_OF_COMPONENT_LOCATION_RECORDS" value="10" />
     <field name="COMPONENT_LOCATION_RECORD_LENGTH" value="10" />
-    <field name="COMPONENT_AGGREGATE_LENGTH" value="69998" />"""
-        in md
-    )
-    assert (
-        """<group index="0">
+    <field name="COMPONENT_AGGREGATE_LENGTH" value="69998" />""" in md
+    assert """<group index="0">
         <field name="COMPONENT_ID" value="130" />
         <field name="COMPONENT_LENGTH" value="96" />
         <field name="COMPONENT_LOCATION" value="1808" />
         <content ComponentName="CoverageSectionSubheader">
-          <field name="NORTHWEST_LATITUDE" value="36.0001175"""
-        in md
-    )
-    assert (
-        """<group index="1">
+          <field name="NORTHWEST_LATITUDE" value="36.0001175""" in md
+    assert """<group index="1">
         <field name="COMPONENT_ID" value="131" />
         <field name="COMPONENT_LENGTH" value="6" />
         <field name="COMPONENT_LOCATION" value="6055" />
@@ -6882,11 +6851,8 @@ def test_nitf_read_rpfhdr_rpfimg():
           <field name="NUMBER_OF_COMPRESSION_LOOKUP_OFFSET_RECORDS" value="4" />
           <field name="NUMBER_OF_COMPRESSION_PARAMETER_OFFSET_RECORDS" value="0" />
         </content>
-      </group>"""
-        in md
-    )
-    assert (
-        """<group index="3">
+      </group>""" in md
+    assert """<group index="3">
         <field name="COMPONENT_ID" value="134" />
         <field name="COMPONENT_LENGTH" value="14" />
         <field name="COMPONENT_LOCATION" value="1904" />
@@ -6895,11 +6861,8 @@ def test_nitf_read_rpfhdr_rpfimg():
           <field name="NUMBER_OF_COLOR_CONVERTER_OFFSET_RECORDS" value="2" />
           <field name="EXTERNAL_COLOR_GRAYSCALE_FILENAME" value="" />
         </content>
-      </group>"""
-        in md
-    )
-    assert (
-        """<group index="4">
+      </group>""" in md
+    assert """<group index="4">
         <field name="COMPONENT_ID" value="135" />
         <field name="COMPONENT_LENGTH" value="2169" />
         <field name="COMPONENT_LOCATION" value="1918" />
@@ -6933,11 +6896,8 @@ def test_nitf_read_rpfhdr_rpfimg():
             </group>
           </repeated>
         </content>
-      </group>"""
-        in md
-    )
-    assert (
-        """<group index="5">
+      </group>""" in md
+    assert """<group index="5">
         <field name="COMPONENT_ID" value="136" />
         <field name="COMPONENT_LENGTH" value="28" />
         <field name="COMPONENT_LOCATION" value="5859" />
@@ -6953,11 +6913,8 @@ def test_nitf_read_rpfhdr_rpfimg():
           <field name="SUBFRAME_MASK_TABLE_OFFSET" value="6" />
           <field name="TRANSPARENCY_MASK_TABLE_OFFSET" value="4294967295" />
         </content>
-      </group>"""
-        in md
-    )
-    assert (
-        """<group index="6">
+      </group>""" in md
+    assert """<group index="6">
         <field name="COMPONENT_ID" value="137" />
         <field name="COMPONENT_LENGTH" value="9" />
         <field name="COMPONENT_LOCATION" value="6046" />
@@ -6966,9 +6923,7 @@ def test_nitf_read_rpfhdr_rpfimg():
           <field name="NUMBER_OF_CODES_PER_ROW" value="64" />
           <field name="IMAGE_CODE_BIT_LENGTH" value="12" />
         </content>
-      </group>"""
-        in md
-    )
+      </group>""" in md
 
 
 ###############################################################################

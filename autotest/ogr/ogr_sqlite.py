@@ -713,7 +713,7 @@ def test_ogr_sqlite_14(sqlite_test_db):
     dst_feat.SetField("INTEGER", 1)
     dst_feat.SetField("FLOAT", 1.2)
     dst_feat.SetField("STRING", "myString'a")
-    dst_feat.SetField("BLOB", b"\x00\x01\xFF")
+    dst_feat.SetField("BLOB", b"\x00\x01\xff")
 
     sl_lyr.CreateFeature(dst_feat)
 
@@ -4157,9 +4157,7 @@ def test_ogr_sqlite_median(input_values, expected_res):
             % (
                 "NULL"
                 if v is None
-                else ("'" + v + "'")
-                if isinstance(v, str)
-                else str(v)
+                else ("'" + v + "'") if isinstance(v, str) else str(v)
             )
         )
     if expected_res is None and input_values:
@@ -4238,9 +4236,7 @@ def test_ogr_sqlite_mode(input_values, expected_res):
             % (
                 "NULL"
                 if v is None
-                else ("'" + v + "'")
-                if isinstance(v, str)
-                else str(v)
+                else ("'" + v + "'") if isinstance(v, str) else str(v)
             )
         )
     if expected_res is None and input_values:

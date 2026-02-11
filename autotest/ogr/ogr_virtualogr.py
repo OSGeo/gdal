@@ -31,6 +31,7 @@ require_ogr_sql_sqlite
 
 pytestmark = pytest.mark.usefixtures("require_ogr_sql_sqlite")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():

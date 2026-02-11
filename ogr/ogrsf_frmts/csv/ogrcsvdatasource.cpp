@@ -757,8 +757,7 @@ bool OGRCSVDataSource::DealWithOgrSchemaOpenOption(
         }
 
         if (!oSchemaOverride.DefaultApply(
-                this, "CSV",
-                [this](OGRLayer *, int iField)
+                this, "CSV", [this](OGRLayer *, int iField)
                 { m_oDeletedFieldIndexes.push_back(iField); }))
         {
             return false;

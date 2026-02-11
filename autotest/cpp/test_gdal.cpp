@@ -5238,8 +5238,10 @@ TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
     GDALDatasetUniquePtr poDS(
         MEMDataset::Create("", 2, 2, 1, GDT_Byte, nullptr));
     std::array<uint8_t, 6> buffer = {
-        2, 10,  //////////////////////////////////////////////////////////
-        4, 20,  //////////////////////////////////////////////////////////
+        2,
+        10,  //////////////////////////////////////////////////////////
+        4,
+        20,  //////////////////////////////////////////////////////////
     };
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -5250,8 +5252,10 @@ TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
 
     poDS->GetRasterBand(1)->CreateMaskBand(0);
     std::array<uint8_t, 6> buffer_mask = {
-        0, 255,  //////////////////////////////////////////////////////////
-        255, 0,  //////////////////////////////////////////////////////////
+        0,
+        255,  //////////////////////////////////////////////////////////
+        255,
+        0,  //////////////////////////////////////////////////////////
     };
     EXPECT_EQ(poDS->GetRasterBand(1)->GetMaskBand()->RasterIO(
                   GF_Write, 0, 0, 2, 2, buffer_mask.data(), 2, 2, GDT_Byte,

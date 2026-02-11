@@ -55,9 +55,9 @@ bool GDALAbstractPipelineAlgorithm::IsReadSpecificArgument(
 {
     return std::find_if(std::begin(apszReadParametersPrefixOmitted),
                         std::end(apszReadParametersPrefixOmitted),
-                        [pszArgName](const char *pszStr) {
-                            return strcmp(pszStr, pszArgName) == 0;
-                        }) != std::end(apszReadParametersPrefixOmitted);
+                        [pszArgName](const char *pszStr)
+                        { return strcmp(pszStr, pszArgName) == 0; }) !=
+           std::end(apszReadParametersPrefixOmitted);
 }
 
 /************************************************************************/
@@ -70,9 +70,9 @@ bool GDALAbstractPipelineAlgorithm::IsWriteSpecificArgument(
 {
     return std::find_if(std::begin(apszWriteParametersPrefixOmitted),
                         std::end(apszWriteParametersPrefixOmitted),
-                        [pszArgName](const char *pszStr) {
-                            return strcmp(pszStr, pszArgName) == 0;
-                        }) != std::end(apszWriteParametersPrefixOmitted);
+                        [pszArgName](const char *pszStr)
+                        { return strcmp(pszStr, pszArgName) == 0; }) !=
+           std::end(apszWriteParametersPrefixOmitted);
 }
 
 /************************************************************************/

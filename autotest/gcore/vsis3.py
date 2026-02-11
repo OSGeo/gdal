@@ -28,6 +28,7 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_curl()
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -67,9 +68,11 @@ general_s3_options = {
 def aws_test_config_as_config_options_or_credentials(request):
     options = general_s3_options
 
-    with gdaltest.config_options(
-        options, thread_local=False
-    ) if request.param else gdaltest.credentials("/vsis3/", options):
+    with (
+        gdaltest.config_options(options, thread_local=False)
+        if request.param
+        else gdaltest.credentials("/vsis3/", options)
+    ):
         yield request.param
 
 
@@ -141,10 +144,10 @@ def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials)
     vsis3_path = "/vsis3/" + bucket + "/" + obj
     url = "https://" + bucket + ".s3.us-east-1.amazonaws.com/" + obj
 
-    with gdaltest.config_options(
-        options, thread_local=False
-    ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
-        "/vsis3/" + bucket, options
+    with (
+        gdaltest.config_options(options, thread_local=False)
+        if aws_test_config_as_config_options_or_credentials
+        else gdaltest.credentials("/vsis3/" + bucket, options)
     ):
         actual_url = gdal.GetActualURL(vsis3_path)
         assert actual_url == url
@@ -183,10 +186,10 @@ def test_vsis3_sync_multithreaded_download(
         "AWS_VIRTUAL_HOSTING": "FALSE",
     }
     # Use a public bucket with /test_dummy/foo and /test_dummy/bar files
-    with gdaltest.config_options(
-        options, thread_local=False
-    ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
-        "/vsis3/cdn.proj.org", options
+    with (
+        gdaltest.config_options(options, thread_local=False)
+        if aws_test_config_as_config_options_or_credentials
+        else gdaltest.credentials("/vsis3/cdn.proj.org", options)
     ):
         assert gdal.Sync(
             "/vsis3/cdn.proj.org/test_dummy",
@@ -511,11 +514,15 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
     )
 
     # Test with temporary credentials
-    with gdaltest.config_option(
-        "AWS_SESSION_TOKEN", "AWS_SESSION_TOKEN", thread_local=False
-    ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
-        "/vsis3/s3_fake_bucket_with_session_token",
-        {"AWS_SESSION_TOKEN": "AWS_SESSION_TOKEN"},
+    with (
+        gdaltest.config_option(
+            "AWS_SESSION_TOKEN", "AWS_SESSION_TOKEN", thread_local=False
+        )
+        if aws_test_config_as_config_options_or_credentials
+        else gdaltest.credentials(
+            "/vsis3/s3_fake_bucket_with_session_token",
+            {"AWS_SESSION_TOKEN": "AWS_SESSION_TOKEN"},
+        )
     ):
         with webserver.install_http_handler(handler):
             f = open_for_read("/vsis3/s3_fake_bucket_with_session_token/resource")
@@ -613,15 +620,12 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
 
         if includes_us_west_2 and host_is_127_0_0_1:
             request.send_response(301)
-            response = (
-                """<?xml version="1.0" encoding="UTF-8"?>
+            response = """<?xml version="1.0" encoding="UTF-8"?>
             <Error>
             <Message>bla</Message>
             <Code>PermanentRedirect</Code>
             <Endpoint>localhost:%d</Endpoint>
-            </Error>"""
-                % request.server.port
-            )
+            </Error>""" % request.server.port
             response = "%x\r\n%s\r\n0\r\n\r\n" % (len(response), response)
             request.send_header("Content-type", "application/xml")
             request.send_header("Transfer-Encoding", "chunked")
@@ -875,10 +879,13 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
         "GET", "/s3_fake_bucket_with_requester_pays/resource", custom_method=method
     )
 
-    with gdaltest.config_option(
-        "AWS_REQUEST_PAYER", "requester", thread_local=False
-    ) if aws_test_config_as_config_options_or_credentials else gdaltest.credentials(
-        "/vsis3/s3_fake_bucket_with_requester_pays", {"AWS_REQUEST_PAYER": "requester"}
+    with (
+        gdaltest.config_option("AWS_REQUEST_PAYER", "requester", thread_local=False)
+        if aws_test_config_as_config_options_or_credentials
+        else gdaltest.credentials(
+            "/vsis3/s3_fake_bucket_with_requester_pays",
+            {"AWS_REQUEST_PAYER": "requester"},
+        )
     ):
         with webserver.install_http_handler(handler):
             with gdal.quiet_errors():
@@ -905,15 +912,12 @@ def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_por
             self.old_authorization = request.headers["Authorization"]
             request.protocol_version = "HTTP/1.1"
             request.send_response(307)
-            response = (
-                """<?xml version="1.0" encoding="UTF-8"?>
+            response = """<?xml version="1.0" encoding="UTF-8"?>
             <Error>
             <Message>bla</Message>
             <Code>TemporaryRedirect</Code>
             <Endpoint>localhost:%d</Endpoint>
-            </Error>"""
-                % request.server.port
-            )
+            </Error>""" % request.server.port
             response = "%x\r\n%s\r\n0\r\n\r\n" % (len(response), response)
             request.send_header("Content-type", "application/xml")
             request.send_header("Transfer-Encoding", "chunked")
@@ -1053,15 +1057,12 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
         elif request.headers["Authorization"].find("us-west-2") >= 0:
             if request.headers["Host"].startswith("127.0.0.1"):
                 request.send_response(301)
-                response = (
-                    """<?xml version="1.0" encoding="UTF-8"?>
+                response = """<?xml version="1.0" encoding="UTF-8"?>
                 <Error>
                 <Message>bla</Message>
                 <Code>PermanentRedirect</Code>
                 <Endpoint>localhost:%d</Endpoint>
-                </Error>"""
-                    % request.server.port
-                )
+                </Error>""" % request.server.port
                 response = "%x\r\n%s\r\n0\r\n\r\n" % (len(response), response)
                 request.send_header("Content-type", "application/xml")
                 request.send_header("Transfer-Encoding", "chunked")
@@ -1538,15 +1539,12 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
             self.old_authorization = request.headers["Authorization"]
             request.protocol_version = "HTTP/1.1"
             request.send_response(307)
-            response = (
-                """<?xml version="1.0" encoding="UTF-8"?>
+            response = """<?xml version="1.0" encoding="UTF-8"?>
             <Error>
             <Message>bla</Message>
             <Code>TemporaryRedirect</Code>
             <Endpoint>localhost:%d</Endpoint>
-            </Error>"""
-                % request.server.port
-            )
+            </Error>""" % request.server.port
             response = "%x\r\n%s\r\n0\r\n\r\n" % (len(response), response)
             request.send_header("Content-type", "application/xml")
             request.send_header("Transfer-Encoding", "chunked")
@@ -1573,16 +1571,14 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
             request.end_headers()
             request.wfile.write(response.encode("ascii"))
 
-    h = HandlerClass(
-        """<?xml version="1.0" encoding="UTF-8"?>
+    h = HandlerClass("""<?xml version="1.0" encoding="UTF-8"?>
                 <ListBucketResult>
                     <Prefix></Prefix>
                     <CommonPrefixes>
                         <Prefix>test</Prefix>
                     </CommonPrefixes>
                 </ListBucketResult>
-            """
-    )
+            """)
     handler.add(
         "GET",
         "/s3_test_temporary_redirect_read_dir/?delimiter=%2F&list-type=2",
@@ -1602,16 +1598,14 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     # temporary
     handler = webserver.SequentialHandler()
 
-    h = HandlerClass(
-        """<?xml version="1.0" encoding="UTF-8"?>
+    h = HandlerClass("""<?xml version="1.0" encoding="UTF-8"?>
             <ListBucketResult>
                 <Prefix>test/</Prefix>
                 <CommonPrefixes>
                     <Prefix>test/test2</Prefix>
                 </CommonPrefixes>
             </ListBucketResult>
-        """
-    )
+        """)
     handler.add(
         "GET",
         "/s3_test_temporary_redirect_read_dir/?delimiter=%2F&list-type=2&prefix=test%2F",
@@ -5169,8 +5163,7 @@ def test_vsis3_read_credentials_config_file_non_default_profile(
 
     gdal.VSICurlClearCache()
 
-    os_aws.join("credentials").write(
-        """
+    os_aws.join("credentials").write("""
 [unrelated]
 aws_access_key_id = foo
 aws_secret_access_key = bar
@@ -5180,11 +5173,9 @@ aws_secret_access_key = AWS_SECRET_ACCESS_KEY
 [default]
 aws_access_key_id = foo
 aws_secret_access_key = bar
-"""
-    )
+""")
 
-    os_aws.join("config").write(
-        """
+    os_aws.join("config").write("""
 [unrelated]
 aws_access_key_id = foo
 aws_secret_access_key = bar
@@ -5193,8 +5184,7 @@ region = us-east-1
 [default]
 aws_access_key_id = foo
 aws_secret_access_key = bar
-"""
-    )
+""")
 
     handler = webserver.SequentialHandler()
     handler.add(

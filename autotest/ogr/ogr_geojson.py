@@ -592,8 +592,7 @@ def test_ogr_geojson_21():
 
 def test_ogr_geojson_22():
 
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features":[
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature",
  "geometry": {"type":"Point","coordinates":[1,2]},
  "properties": {"_id":"aid", "_rev":"arev", "type":"Feature",
@@ -601,8 +600,7 @@ def test_ogr_geojson_22():
 {"type": "Feature",
  "geometry": {"type":"Point","coordinates":[3,4]},
  "properties": {"_id":"aid2", "_rev":"arev2", "type":"Feature",
-                "properties":{"intvalue" : 3.5, "str2value" : "bar"}}}]}"""
-    )
+                "properties":{"intvalue" : 3.5, "str2value" : "bar"}}}]}""")
     assert ds is not None, "Failed to open datasource"
 
     lyr = ds.GetLayerByName("OGRGeoJSON")
@@ -726,16 +724,14 @@ def test_ogr_geojson_24(tmp_vsimem):
 
 def test_ogr_geojson_26(tmp_vsimem):
 
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features":[
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature", "id": 1,
  "geometry": {"type":"Point","coordinates":[1,2]},
  "properties": { "intvalue" : 1, "int64" : 1234567890123, "intlist" : [1] }},
 {"type": "Feature", "id": 1234567890123,
  "geometry": {"type":"Point","coordinates":[3,4]},
  "properties": { "intvalue" : 1234567890123, "intlist" : [1, 1234567890123] }},
- ]}"""
-    )
+ ]}""")
     assert ds is not None, "Failed to open datasource"
 
     lyr = ds.GetLayerByName("OGRGeoJSON")
@@ -798,16 +794,14 @@ def test_ogr_geojson_27():
     with gdal.quiet_errors():
         # Warning 1: Integer values probably ranging out of 64bit integer range
         # have been found. Will be clamped to INT64_MIN/INT64_MAX
-        ds = ogr.Open(
-            """{"type": "FeatureCollection", "features":[
+        ds = ogr.Open("""{"type": "FeatureCollection", "features":[
     {"type": "Feature",
      "geometry": {"type":"Point","coordinates":[1,2]},
      "properties": { "intvalue" : 1 }},
     {"type": "Feature",
      "geometry": {"type":"Point","coordinates":[3,4]},
      "properties": { "intvalue" : 12345678901231234567890123 }},
-     ]}"""
-        )
+     ]}""")
     assert ds is not None, "Failed to open datasource"
 
     lyr = ds.GetLayerByName("OGRGeoJSON")
@@ -937,12 +931,10 @@ def test_ogr_geojson_36():
 def test_ogr_geojson_37(tmp_vsimem):
 
     # Test read support
-    ds = ogr.Open(
-        """{"type": "FeatureCollection","features": [
+    ds = ogr.Open("""{"type": "FeatureCollection","features": [
 { "type": "Feature", "properties": { "bool" : false, "not_bool": false, "bool_list" : [false, true], "notbool_list" : [false, 3]}, "geometry": null  },
 { "type": "Feature", "properties": { "bool" : true, "not_bool": 2, "bool_list" : [true] }, "geometry": null },
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -999,12 +991,10 @@ def test_ogr_geojson_37(tmp_vsimem):
 def test_ogr_geojson_38(tmp_vsimem):
 
     # Test read support
-    ds = gdal.OpenEx(
-        """{"type": "FeatureCollection", "features": [
+    ds = gdal.OpenEx("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "properties": { "dt": "2014-11-20 12:34:56+0100", "dt2": "2014\\/11\\/20", "date":"2014\\/11\\/20", "time":"12:34:56", "no_dt": "2014-11-20 12:34:56+0100", "no_dt2": "2014-11-20 12:34:56+0100", "no_date": "2022/05/12 blah" }, "geometry": null },
 { "type": "Feature", "properties": { "dt": "2014\\/11\\/20", "dt2": "2014\\/11\\/20T12:34:56Z", "date":"2014-11-20", "time":"12:34:56", "no_dt": "foo", "no_dt2": 1 }, "geometry": null }
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1084,11 +1074,9 @@ def test_ogr_geojson_38(tmp_vsimem):
 @gdaltest.disable_exceptions()
 def test_ogr_geojson_39():
 
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features": [
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : "foo", "properties": { "bar" : "baz" }, "geometry": null },
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1101,11 +1089,9 @@ def test_ogr_geojson_39():
         pytest.fail()
 
     # Crazy case: properties.id has the precedence because we arbitrarily decided that...
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features": [
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : "foo", "properties": { "id" : 6 }, "geometry": null },
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1118,12 +1104,10 @@ def test_ogr_geojson_39():
         pytest.fail()
 
     # Same with 2 features
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features": [
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : "foo", "properties": { "id" : 6 }, "geometry": null },
 { "type": "Feature", "id" : "bar", "properties": { "id" : 7 }, "geometry": null }
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1136,11 +1120,9 @@ def test_ogr_geojson_39():
         pytest.fail()
 
     # Crazy case: properties.id has the precedence because we arbitrarily decided that...
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features": [
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : "foo", "properties": { "id" : "baz" }, "geometry": null },
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1153,11 +1135,9 @@ def test_ogr_geojson_39():
         pytest.fail()
 
     # id and properties.ID (#6538)
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features": [
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : 1, "properties": { "ID": 2 }, "geometry": null },
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1172,13 +1152,11 @@ def test_ogr_geojson_39():
     # Test handling of duplicated id
     gdal.ErrorReset()
     with gdal.quiet_errors():
-        ds = ogr.Open(
-            """{"type": "FeatureCollection", "features": [
+        ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : 1, "properties": { "foo": "bar" }, "geometry": null },
 { "type": "Feature", "id" : 1, "properties": { "foo": "baz" }, "geometry": null },
 { "type": "Feature", "id" : 2, "properties": { "foo": "baw" }, "geometry": null }
-] }"""
-        )
+] }""")
     assert gdal.GetLastErrorMsg() != "", "expected warning"
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
@@ -1196,11 +1174,9 @@ def test_ogr_geojson_39():
         pytest.fail()
 
     # negative id
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features": [
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : -1, "properties": { "foo": "bar" }, "geometry": null },
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1213,12 +1189,10 @@ def test_ogr_geojson_39():
         pytest.fail()
 
     # negative id 64bit
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features": [
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : -1234567890123, "properties": { "foo": "bar" }, "geometry": null },
 { "type": "Feature", "id" : -2, "properties": { "foo": "baz" }, "geometry": null },
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1231,12 +1205,10 @@ def test_ogr_geojson_39():
         pytest.fail()
 
     # negative id
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features": [
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : -2, "properties": { "foo": "baz" }, "geometry": null },
 { "type": "Feature", "id" : -1234567890123, "properties": { "foo": "bar" }, "geometry": null },
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1249,12 +1221,10 @@ def test_ogr_geojson_39():
         pytest.fail()
 
     # positive and then negative id
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features": [
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : 1, "properties": { "foo": "baz" }, "geometry": null },
 { "type": "Feature", "id" : -1, "properties": { "foo": "bar" }, "geometry": null },
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1267,13 +1237,11 @@ def test_ogr_geojson_39():
         pytest.fail()
 
     # mix of int and string id
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features": [
+    ds = ogr.Open("""{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : -2, "properties": { "foo": "baz" }, "geometry": null },
 { "type": "Feature", "id" : "str", "properties": { "foo": "bar" }, "geometry": null },
 { "type": "Feature", "id" : -3, "properties": { "foo": "baz" }, "geometry": null },
-] }"""
-    )
+] }""")
     lyr = ds.GetLayer(0)
     feat_defn = lyr.GetLayerDefn()
     assert (
@@ -1377,10 +1345,8 @@ def test_ogr_geojson_41():
 
 def test_ogr_geojson_43():
 
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features":[
-{"type": "Feature", "properties": {"foo": "bar"}}]}"""
-    )
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
+{"type": "Feature", "properties": {"foo": "bar"}}]}""")
     assert ds is not None, "Failed to open datasource"
 
     lyr = ds.GetLayerByName("OGRGeoJSON")
@@ -2032,8 +1998,7 @@ def test_ogr_geojson_53(tmp_vsimem):
 
 def test_ogr_geojson_54():
 
-    ds = ogr.Open(
-        """{
+    ds = ogr.Open("""{
    "type": "FeatureCollection",
 
   "features": [
@@ -2041,8 +2006,7 @@ def test_ogr_geojson_54():
       { "type": "Feature", "properties": { "int": 168, "string": "string", "double": 1.23, "dt" : "2016-05-18T12:34:56Z", "boolean": true }, "geometry": null }
   ]
 }
-"""
-    )
+""")
     lyr = ds.GetLayer(0)
 
     fld = lyr.GetLayerDefn().GetFieldDefn(0)
@@ -2910,12 +2874,10 @@ def test_ogr_geojson_59(tmp_vsimem):
 
 def test_ogr_geojson_60(tmp_vsimem):
 
-    ds = gdal.OpenEx(
-        """{ "type": "FeatureCollection", "features": [
+    ds = gdal.OpenEx("""{ "type": "FeatureCollection", "features": [
 { "type": "Feature", "properties" : { "foo" : "bar" } },
 { "type": "Feature", "properties" : { "foo": null } },
-{ "type": "Feature", "properties" : {  } } ] }"""
-    )
+{ "type": "Feature", "properties" : {  } } ] }""")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f["foo"] != "bar":
@@ -3171,8 +3133,7 @@ def test_ogr_geojson_64():
 
 def test_ogr_geojson_65():
 
-    ds = ogr.Open(
-        """{
+    ds = ogr.Open("""{
 "type": "FeatureCollection",
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32631" } },
 "features": [{
@@ -3181,8 +3142,7 @@ def test_ogr_geojson_65():
 "type": "Point",
 "coordinates": [500000,4500000]},
 "properties": {
-}}]}"""
-    )
+}}]}""")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     srs = f.GetGeometryRef().GetSpatialReference()
@@ -3196,8 +3156,7 @@ def test_ogr_geojson_65():
 
 def test_ogr_geojson_66():
 
-    ds = ogr.Open(
-        """{
+    ds = ogr.Open("""{
 "type": "FeatureCollection",
 "features": [
 {
@@ -3210,8 +3169,7 @@ def test_ogr_geojson_66():
     "geometry": null,
     "properties": []
 }
-]}"""
-    )
+]}""")
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 0
 
@@ -3448,8 +3406,7 @@ def test_ogr_geojson_geom_export_failure():
 
 def test_ogr_geojson_starting_with_crs():
 
-    ds = ogr.Open(
-        """{
+    ds = ogr.Open("""{
 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32631" } },
 "type": "FeatureCollection",
 "features": [{
@@ -3458,8 +3415,7 @@ def test_ogr_geojson_starting_with_crs():
 "type": "Point",
 "coordinates": [500000,4500000]},
 "properties": {
-}}]}"""
-    )
+}}]}""")
     assert ds is not None
 
 
@@ -3509,14 +3465,12 @@ def test_ogr_geojson_empty_geometrycollection():
 
 def test_ogr_geojson_read_fields_with_different_case():
 
-    ds = ogr.Open(
-        """{
+    ds = ogr.Open("""{
 "type": "FeatureCollection",
 "features": [
 { "type": "Feature", "id": "my_id", "geometry": null, "properties":
                                 { "ID": "MY_ID", "x": "foo", "X": "FOO"} }
-]}"""
-    )
+]}""")
 
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
@@ -3758,30 +3712,24 @@ def test_ogr_geojson_single_feature_random_reading_with_id(tmp_vsimem):
 
 def test_ogr_geojson_3D_geom_type():
 
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features":[
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,3]}, "properties": null},
 {"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,4]}, "properties": null}
-]}"""
-    )
+]}""")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPoint25D
 
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features":[
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,3]}, "properties": null},
 {"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2]}, "properties": null}
-]}"""
-    )
+]}""")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPoint25D
 
-    ds = ogr.Open(
-        """{"type": "FeatureCollection", "features":[
+    ds = ogr.Open("""{"type": "FeatureCollection", "features":[
 {"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2]}, "properties": null},
 {"type": "Feature", "geometry": {"type":"Point","coordinates":[1,2,4]}, "properties": null}
-]}"""
-    )
+]}""")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPoint25D
 
@@ -4148,7 +4096,7 @@ def test_ogr_geojson_read_from_http():
 
     import webserver
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -4186,7 +4134,7 @@ def test_ogr_geojson_read_from_http_with_GDAL_HTTP_HEADERS():
 
     import webserver
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -4229,7 +4177,7 @@ def test_ogr_geojson_read_from_http_with_GDAL_HTTP_HEADERS_Accept():
 
     import webserver
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -4270,7 +4218,7 @@ def test_ogr_geojson_read_from_http_with_GDAL_HTTP_HEADERS_overriding_Accept():
 
     import webserver
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:

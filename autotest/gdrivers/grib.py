@@ -937,13 +937,11 @@ def test_grib_grib2_write_projections():
     # Test writing GRS80
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 1, gdal.GDT_Float32)
     src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
-    src_ds.SetProjection(
-        """GEOGCS["GRS 1980(IUGG, 1980)",
+    src_ds.SetProjection("""GEOGCS["GRS 1980(IUGG, 1980)",
     DATUM["unknown",
         SPHEROID["GRS80",6378137,298.257222101]],
     PRIMEM["Greenwich",0],
-    UNIT["degree",0.0174532925199433]]"""
-    )
+    UNIT["degree",0.0174532925199433]]""")
     tmpfilename = "/vsimem/out.grb2"
     out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds)
     wkt = out_ds.GetProjectionRef()
@@ -1077,8 +1075,7 @@ def test_grib_grib2_write_rotated_lat_lon_from_grib_convention(tmp_vsimem):
     )
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """GEOGCRS["Coordinate System imported from GRIB file",
+    srs.SetFromUserInput("""GEOGCRS["Coordinate System imported from GRIB file",
     BASEGEOGCRS["Coordinate System imported from GRIB file",
         DATUM["unnamed",
             ELLIPSOID["Spheroid imported from GRIB file",6367470,594.313048347956,
@@ -1106,8 +1103,7 @@ def test_grib_grib2_write_rotated_lat_lon_from_grib_convention(tmp_vsimem):
         AXIS["longitude",east,
             ORDER[2],
             ANGLEUNIT["degree",0.0174532925199433,
-                ID["EPSG",9122]]]]"""
-    )
+                ID["EPSG",9122]]]]""")
     src_ds.SetSpatialRef(srs)
     src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     gdal.Translate(filename, src_ds, format="GRIB")
@@ -1131,8 +1127,7 @@ def test_grib_grib2_write_rotated_lat_lon_from_netcdf_convention(tmp_vsimem):
     )
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """GEOGCRS["Rotated_pole",
+    srs.SetFromUserInput("""GEOGCRS["Rotated_pole",
     BASEGEOGCRS["unknown",
         DATUM["unnamed",
             ELLIPSOID["Spheroid",6367470,594.313048347956,
@@ -1160,8 +1155,7 @@ def test_grib_grib2_write_rotated_lat_lon_from_netcdf_convention(tmp_vsimem):
         AXIS["longitude",east,
             ORDER[2],
             ANGLEUNIT["degree",0.0174532925199433,
-                ID["EPSG",9122]]]]"""
-    )
+                ID["EPSG",9122]]]]""")
     src_ds.SetSpatialRef(srs)
     src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
     gdal.Translate(filename, src_ds, format="GRIB")
@@ -1464,7 +1458,7 @@ def test_grib_grib2_write_data_encodings():
 
     tests += [[all_nodata_ds, ["DATA_ENCODING=COMPLEX_PACKING"], 0, GS5_CMPLX]]
 
-    for (filename, options, expected_cs, expected_section5_template_number) in tests:
+    for filename, options, expected_cs, expected_section5_template_number in tests:
         tmpfilename = "/vsimem/out.grb2"
         gdal.ErrorReset()
         gdal.Translate(tmpfilename, filename, format="GRIB", creationOptions=options)
@@ -1674,7 +1668,7 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
             4672,
         ]
     ]
-    for (filename, options, expected_cs) in tests:
+    for filename, options, expected_cs in tests:
         tmpfilename = "/vsimem/out.grb2"
         src_ds = gdal.Open(filename)
         gdal.ErrorReset()
@@ -1758,7 +1752,7 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
 
 def test_grib_grib2_write_temperatures():
 
-    for (src_type, data_encoding, input_unit) in [
+    for src_type, data_encoding, input_unit in [
         (gdal.GDT_Float32, "IEEE_FLOATING_POINT", None),
         (gdal.GDT_Float32, "IEEE_FLOATING_POINT", "C"),
         (gdal.GDT_Float32, "IEEE_FLOATING_POINT", "K"),

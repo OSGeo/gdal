@@ -109,9 +109,9 @@ int CPL_DLL VSIStat(const char *, VSIStatBuf *) CPL_WARN_UNUSED_RESULT;
 
 #ifdef _WIN32
 #define VSI_ISLNK(x) (0) /* N/A on Windows */
-#define VSI_ISREG(x) ((x)&S_IFREG)
-#define VSI_ISDIR(x) ((x)&S_IFDIR)
-#define VSI_ISCHR(x) ((x)&S_IFCHR)
+#define VSI_ISREG(x) ((x) & S_IFREG)
+#define VSI_ISDIR(x) ((x) & S_IFDIR)
+#define VSI_ISCHR(x) ((x) & S_IFCHR)
 #define VSI_ISBLK(x) (0) /* N/A on Windows */
 #else
 /** Test if the file is a symbolic link */

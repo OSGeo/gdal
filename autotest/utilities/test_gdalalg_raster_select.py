@@ -51,7 +51,7 @@ def test_gdalalg_raster_select(tmp_vsimem):
 def test_gdalalg_raster_select_mask():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1)
-    src_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, b"\x00\x7F\xFF")
+    src_ds.GetRasterBand(1).WriteRaster(0, 0, 3, 1, b"\x00\x7f\xff")
 
     alg = get_select_alg()
     alg["input"] = src_ds
@@ -62,9 +62,9 @@ def test_gdalalg_raster_select_mask():
     assert alg.Run()
 
     out_ds = alg["output"].GetDataset()
-    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\x7F\xFF"
+    assert out_ds.GetRasterBand(1).ReadRaster() == b"\x00\x7f\xff"
     assert out_ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
-    assert out_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\x00\x7F\xFF"
+    assert out_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\x00\x7f\xff"
 
 
 def test_gdalalg_raster_select_error(tmp_vsimem):

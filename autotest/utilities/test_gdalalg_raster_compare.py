@@ -241,7 +241,7 @@ def test_gdalalg_raster_compare_binary_comparison(tmp_vsimem):
         f.seek(0, os.SEEK_END)
         pos = f.tell()
         f.seek(pos - 1, os.SEEK_SET)
-        f.write(b"\xFF")
+        f.write(b"\xff")
 
     with gdal.Run(
         "raster",

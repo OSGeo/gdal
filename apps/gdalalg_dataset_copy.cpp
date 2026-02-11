@@ -57,7 +57,8 @@ GDALDatasetCopyRenameCommonAlgorithm::GDALDatasetCopyRenameCommonAlgorithm(
         arg.AddValidationAction([this, &arg]()
                                 { return ValidateFormat(arg, false, false); });
         arg.SetAutoCompleteFunction(
-            [&arg](const std::string &) {
+            [&arg](const std::string &)
+            {
                 return GDALAlgorithm::FormatAutoCompleteFunction(arg, false,
                                                                  false);
             });

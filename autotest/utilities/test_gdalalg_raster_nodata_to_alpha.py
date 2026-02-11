@@ -45,7 +45,7 @@ def test_gdalalg_raster_nodata_to_alpha_nominal():
             out_ds.GetRasterBand(1).GetMaskFlags()
             == gdal.GMF_ALPHA | gdal.GMF_PER_DATASET
         )
-        assert out_ds.GetRasterBand(2).ReadRaster() == b"\x00\xFF"
+        assert out_ds.GetRasterBand(2).ReadRaster() == b"\x00\xff"
         assert out_ds.GetRasterBand(2).GetMaskFlags() == gdal.GMF_ALL_VALID
 
 
@@ -66,7 +66,7 @@ def test_gdalalg_raster_nodata_override_nodata_single_value():
             out_ds.GetRasterBand(1).GetMaskFlags()
             == gdal.GMF_ALPHA | gdal.GMF_PER_DATASET
         )
-        assert out_ds.GetRasterBand(2).ReadRaster() == b"\x00\xFF"
+        assert out_ds.GetRasterBand(2).ReadRaster() == b"\x00\xff"
         assert out_ds.GetRasterBand(2).GetMaskFlags() == gdal.GMF_ALL_VALID
 
 
@@ -103,7 +103,7 @@ def test_gdalalg_raster_nodata_override_nodata_several_values():
             out_ds.GetRasterBand(3).GetMaskFlags()
             == gdal.GMF_ALPHA | gdal.GMF_PER_DATASET
         )
-        assert out_ds.GetRasterBand(4).ReadRaster() == b"\xFF\xFF\x00"
+        assert out_ds.GetRasterBand(4).ReadRaster() == b"\xff\xff\x00"
         assert out_ds.GetRasterBand(4).GetMaskFlags() == gdal.GMF_ALL_VALID
 
     with pytest.raises(

@@ -654,11 +654,11 @@ struct MiraMonFeature
     // Number of reserved elements in *flag_VFG
     MM_INTERNAL_FID nMaxVFG;
     char *flag_VFG;  // In case of multipolygons, for each ring:
-        // if flag_VFG[i]|MM_EXTERIOR_ARC_SIDE: outer ring if set
-        // if flag_VFG[i]|MM_END_ARC_IN_RING: always set (every ring has only
-        //                                    one arc)
-        // if flag_VFG[i]|MM_ROTATE_ARC: coordinates are in the inverse order
-        //                               of the read ones
+    // if flag_VFG[i]|MM_EXTERIOR_ARC_SIDE: outer ring if set
+    // if flag_VFG[i]|MM_END_ARC_IN_RING: always set (every ring has only
+    //                                    one arc)
+    // if flag_VFG[i]|MM_ROTATE_ARC: coordinates are in the inverse order
+    //                               of the read ones
 
     // List of the Z-coordinates (as many as pCoord)
     // Number of reserved elements in *pZCoord

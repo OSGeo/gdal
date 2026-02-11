@@ -1292,8 +1292,7 @@ def test_ogr_sql_hstore_get_value_valid(data_ds, sql, expected):
 @pytest.mark.require_driver("OGR_VRT")
 def test_ogr_sql_45():
 
-    ds = ogr.Open(
-        """<OGRVRTDataSource>
+    ds = ogr.Open("""<OGRVRTDataSource>
   <OGRVRTLayer name="poly">
     <SrcDataSource relativeToVRT="0" shared="1">data/poly.shp</SrcDataSource>
     <SrcLayer>poly</SrcLayer>
@@ -1303,8 +1302,7 @@ def test_ogr_sql_45():
     <Field name="PRFEDEA" type="Integer" src="PRFEDEA"/>
     <FeatureCount>1000000000000</FeatureCount>
   </OGRVRTLayer>
-</OGRVRTDataSource>"""
-    )
+</OGRVRTDataSource>""")
     lyr = ds.GetLayer(0)
 
     assert lyr.GetFeatureCount() == 1000000000000
@@ -1600,6 +1598,7 @@ def test_ogr_sql_min_max_string_field():
 ##############################################################################
 # Test SELECT * EXCEPT
 
+
 # Test some error cases. Some of these could potentially be tolerated
 # in the future.
 @pytest.mark.parametrize(
@@ -1793,15 +1792,15 @@ def test_ogr_sql_like_utf8():
     assert lyr.GetFeatureCount() == 1
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'\xC3' LIKE '_'")
+    lyr.SetAttributeFilter("'\xc3' LIKE '_'")
     lyr.GetFeatureCount()  # we return 1 currently, we could as well return 0...
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'\xC3' LIKE 'é'")
+    lyr.SetAttributeFilter("'\xc3' LIKE 'é'")
     assert lyr.GetFeatureCount() == 0
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'é' LIKE '\xC3'")
+    lyr.SetAttributeFilter("'é' LIKE '\xc3'")
     assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("'éven' LIKE '_ven'")
@@ -1851,15 +1850,15 @@ def test_ogr_sql_ilike_utf8():
     assert lyr.GetFeatureCount() == 1
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'\xC3' ILIKE '_'")
+    lyr.SetAttributeFilter("'\xc3' ILIKE '_'")
     lyr.GetFeatureCount()  # we return 1 currently, we could as well return 0...
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'\xC3' ILIKE 'é'")
+    lyr.SetAttributeFilter("'\xc3' ILIKE 'é'")
     assert lyr.GetFeatureCount() == 0
 
     # Truncated UTF8 character
-    lyr.SetAttributeFilter("'é' ILIKE '\xC3'")
+    lyr.SetAttributeFilter("'é' ILIKE '\xc3'")
     assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("'éven' ILIKE '_ven'")

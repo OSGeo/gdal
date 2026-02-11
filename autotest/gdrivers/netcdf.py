@@ -29,6 +29,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("netCDF")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -82,7 +83,7 @@ def netcdf_setup():
 
     # find out if we have ncdump
     try:
-        (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h")
+        ret, err = gdaltest.runexternal_out_and_err("ncdump -h")
     except OSError:
         err = None
 
@@ -243,7 +244,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
 
 def netcdf_ncdump(fname):
 
-    (out, err) = gdaltest.runexternal_out_and_err(f"ncdump -h {fname}")
+    out, err = gdaltest.runexternal_out_and_err(f"ncdump -h {fname}")
 
     return out
 
@@ -834,7 +835,7 @@ def test_netcdf_21():
         )
 
         try:
-            (ret, err) = gdaltest.runexternal_out_and_err(warp_cmd)
+            ret, err = gdaltest.runexternal_out_and_err(warp_cmd)
         except OSError:
             pytest.fail("gdalwarp execution failed")
 
@@ -1128,7 +1129,7 @@ def netcdf_test_4dfile(ofile):
     if not gdaltest.netcdf_have_ncdump:
         return
 
-    (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h " + ofile)
+    ret, err = gdaltest.runexternal_out_and_err("ncdump -h " + ofile)
     assert ret != "" and err == "", "ncdump failed"
 
     # simple dimension tests using ncdump output
@@ -1195,7 +1196,7 @@ def test_netcdf_29(tmp_path):
         ofile1,
     )
     try:
-        (ret, err) = gdaltest.runexternal_out_and_err(warp_cmd)
+        ret, err = gdaltest.runexternal_out_and_err(warp_cmd)
     except OSError:
         pytest.fail("gdalwarp execution failed")
 
@@ -3653,6 +3654,7 @@ def test_netcdf_functions_2(filename, checksum, options, testfunction):
 
 ###############################################################################
 #  simple geometry tests
+
 
 #  basic tests
 def test_bad_cf1_8():
@@ -6693,7 +6695,7 @@ def test_netcdf_var_extra_dim_unlimited_network():
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:

@@ -945,9 +945,7 @@ def test_rasterize_bugfix_gh8437(wkt, options, nbands):
     expected_checksum = (
         519
         if wkt.startswith("LINESTRING")
-        else 1727
-        if "ALL_TOUCHED=YES" in options
-        else 1435
+        else 1727 if "ALL_TOUCHED=YES" in options else 1435
     )
     for i in range(nbands):
         _, maxval = target_ds.GetRasterBand(i + 1).ComputeRasterMinMax()

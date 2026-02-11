@@ -781,9 +781,9 @@ def test_gdalalg_vector_pipeline_reproject_missing_layer_crs(tmp_vsimem):
     mem_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     mem_ds.CreateLayer("layer")
     pipeline["input"] = mem_ds
-    pipeline[
-        "pipeline"
-    ] = f"read ! reproject --dst-crs=EPSG:4326 ! write {out_filename}"
+    pipeline["pipeline"] = (
+        f"read ! reproject --dst-crs=EPSG:4326 ! write {out_filename}"
+    )
     with pytest.raises(
         Exception, match="reproject: Layer 'layer' has no spatial reference system"
     ):

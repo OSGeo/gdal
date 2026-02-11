@@ -269,7 +269,7 @@ def test_vrtmask_9(tmp_path):
     )
     del src_ds
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         test_cli_utilities.get_gdal_translate_path()
         + f" {tmp_path}/vrtmask_9_src.tif {tmp_path}/vrtmask_9_dst.tif -b 1 -b 2 -b 3"
     )

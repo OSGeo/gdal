@@ -43,6 +43,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("CSV")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -721,12 +722,9 @@ def test_ogr_csv_write_to_stdout():
         python_exe = python_exe.replace("\\", "/")
 
     ret = gdaltest.runexternal(python_exe + " ogr_csv.py ogr_csv_write_to_stdout")
-    assert (
-        ret.replace("\r\n", "\n")
-        == """my_geom,foo,bar
+    assert ret.replace("\r\n", "\n") == """my_geom,foo,bar
 "POINT (0 1)",bar,baz
 """
-    )
 
 
 def ogr_csv_write_to_stdout():

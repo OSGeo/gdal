@@ -25,6 +25,7 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("PLMosaic")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -42,7 +43,7 @@ def setup_and_cleanup(tmp_path):
 @pytest.fixture(scope="module")
 def server():
 
-    (process, port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
 
     if port == 0:
         pytest.skip()
@@ -720,11 +721,8 @@ def test_plmosaic_18(valid_mosaic, valid_mosaic_handler):
         )
 
     ret = ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
-    assert (
-        ret
-        == """<LocationInfo />
+    assert ret == """<LocationInfo />
 """
-    )
     old_ret = ret
     ret = ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
     assert ret == old_ret
@@ -741,9 +739,7 @@ def test_plmosaic_18(valid_mosaic, valid_mosaic_handler):
     ds.FlushCache()
 
     ret = ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
-    assert (
-        ret
-        == """<LocationInfo>
+    assert ret == """<LocationInfo>
   <Scenes>
     <Scene>
       <link>foo</link>
@@ -751,7 +747,6 @@ def test_plmosaic_18(valid_mosaic, valid_mosaic_handler):
   </Scenes>
 </LocationInfo>
 """
-    )
     ds = None
 
 
@@ -1036,9 +1031,7 @@ def test_plmosaic_with_bbox(tmp_vsimem):
     )
 
     ret = ds.GetRasterBand(1).GetMetadataItem("Pixel_0_0", "LocationInfo")
-    assert (
-        ret
-        == """<LocationInfo>
+    assert ret == """<LocationInfo>
   <Scenes>
     <Scene>
       <link>bar</link>
@@ -1046,4 +1039,3 @@ def test_plmosaic_with_bbox(tmp_vsimem):
   </Scenes>
 </LocationInfo>
 """
-    )

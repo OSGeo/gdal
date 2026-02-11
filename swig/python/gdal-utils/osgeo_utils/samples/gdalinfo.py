@@ -344,7 +344,7 @@ def main(argv=None):
         #    print( "Got %d samples.\n", nCount );
         # }
 
-        (nBlockXSize, nBlockYSize) = hBand.GetBlockSize()
+        nBlockXSize, nBlockYSize = hBand.GetBlockSize()
         print(
             "Band %d Block=%dx%d Type=%s, ColorInterp=%s"
             % (

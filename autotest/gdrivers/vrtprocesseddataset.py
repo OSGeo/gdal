@@ -35,41 +35,33 @@ gdal_array = gdaltest.importorskip_gdal_array()
 def test_vrtprocesseddataset_errors(tmp_vsimem):
 
     with pytest.raises(Exception, match="Input element missing"):
-        gdal.Open(
-            """<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open("""<VRTDataset subclass='VRTProcessedDataset'>
                     </VRTDataset>
-                    """
-        )
+                    """)
 
     with pytest.raises(
         Exception,
         match="Input element should have a SourceFilename or VRTDataset element",
     ):
-        gdal.Open(
-            """<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open("""<VRTDataset subclass='VRTProcessedDataset'>
                     <Input/>
                     </VRTDataset>
-                    """
-        )
+                    """)
 
     with pytest.raises(Exception):  # "No such file or directory'", but O/S dependent
-        gdal.Open(
-            """<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open("""<VRTDataset subclass='VRTProcessedDataset'>
                     <Input><SourceFilename/></Input>
                     </VRTDataset>
-                    """
-        )
+                    """)
 
     with pytest.raises(
         Exception,
         match="Missing one of rasterXSize, rasterYSize or bands on VRTDataset",
     ):
-        gdal.Open(
-            """<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open("""<VRTDataset subclass='VRTProcessedDataset'>
                     <Input><VRTDataset/></Input>
                     </VRTDataset>
-                    """
-        )
+                    """)
 
     src_filename = str(tmp_vsimem / "src.tif")
     src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 10, 5, 3)
@@ -79,59 +71,49 @@ def test_vrtprocesseddataset_errors(tmp_vsimem):
     src_ds.Close()
 
     with pytest.raises(Exception, match="Invalid value of 'unscale'"):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input unscale="maybe">
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(Exception, match="ProcessingSteps element missing"):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(
         Exception, match="Inconsistent declared VRT dimensions with input dataset"
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset' rasterXSize='1'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset' rasterXSize='1'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(
         Exception, match="Inconsistent declared VRT dimensions with input dataset"
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset' rasterYSize='1'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset' rasterYSize='1'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(Exception, match="At least one step should be defined"):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
         <ProcessingSteps/>
         </VRTDataset>
-            """
-        )
+            """)
 
 
 ###############################################################################
@@ -150,8 +132,7 @@ def test_vrtprocesseddataset_affine_combination_nominal(tmp_vsimem, INTERLEAVE):
     src_ds.GetRasterBand(3).WriteArray(np.array([[3, 3]]))
     src_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -166,8 +147,7 @@ def test_vrtprocesseddataset_affine_combination_nominal(tmp_vsimem, INTERLEAVE):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     assert ds.RasterXSize == 2
     assert ds.RasterYSize == 1
     assert ds.RasterCount == 3
@@ -194,8 +174,7 @@ def test_vrtprocesseddataset_several_steps(tmp_vsimem):
     src_ds.GetRasterBand(3).Fill(3)
     src_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -220,8 +199,7 @@ def test_vrtprocesseddataset_several_steps(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     assert ds.RasterXSize == 10
     assert ds.RasterYSize == 5
     assert ds.RasterCount == 3
@@ -247,8 +225,7 @@ def test_vrtprocesseddataset_affine_combination_nodata(tmp_vsimem):
     src_ds.GetRasterBand(2).SetNoDataValue(1)
     src_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -260,8 +237,7 @@ def test_vrtprocesseddataset_affine_combination_nodata(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[1, 5]]))
     # 0 should actually be 3-2=1, but this is the nodata value hence the replacement value
@@ -276,8 +252,7 @@ def test_vrtprocesseddataset_affine_combination_nodata_as_parameter(tmp_vsimem):
     src_ds.GetRasterBand(2).WriteArray(np.array([[3, 3]]))
     src_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -292,8 +267,7 @@ def test_vrtprocesseddataset_affine_combination_nodata_as_parameter(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[255, 5]]))
     # 254 should actually be 256+1*2+(-1)*3=255, but this is the nodata value hence the replacement value
@@ -312,8 +286,7 @@ def test_vrtprocesseddataset_affine_combination_replacement_nodata(tmp_vsimem):
     src_ds.GetRasterBand(2).WriteArray(np.array([[3, 3]]))
     src_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -328,8 +301,7 @@ def test_vrtprocesseddataset_affine_combination_replacement_nodata(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
     np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[255, 5]]))
     # 254 should actually be 256+1*2+(-1)*3=255, but this is the nodata value hence the replacement value
@@ -353,8 +325,7 @@ def test_vrtprocesseddataset_affine_combination_errors(tmp_vsimem):
         Exception,
         match="Step 'Affine combination of band values' lacks required Argument 'coefficients_{band}'",
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -364,14 +335,12 @@ def test_vrtprocesseddataset_affine_combination_errors(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(
         Exception, match="Argument coefficients_1 has 3 values, whereas 4 are expected"
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -382,12 +351,10 @@ def test_vrtprocesseddataset_affine_combination_errors(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(Exception, match="Argument coefficients_3 is missing"):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -400,15 +367,13 @@ def test_vrtprocesseddataset_affine_combination_errors(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(
         Exception,
         match="Final step expect 3 bands, but only 1 coefficient_XX are provided",
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -419,8 +384,7 @@ def test_vrtprocesseddataset_affine_combination_errors(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
 
 ###############################################################################
@@ -435,8 +399,7 @@ def test_vrtprocesseddataset_lut_nominal(tmp_vsimem):
     src_ds.GetRasterBand(2).WriteArray(np.array([[1, 2, 3]]))
     src_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -448,8 +411,7 @@ def test_vrtprocesseddataset_lut_nominal(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     np.testing.assert_equal(ds.GetRasterBand(1).ReadAsArray(), np.array([[10, 15, 20]]))
     np.testing.assert_equal(
         ds.GetRasterBand(2).ReadAsArray(), np.array([[100, 150, 200]])
@@ -470,8 +432,7 @@ def test_vrtprocesseddataset_lut_nodata(tmp_vsimem):
     src_ds.GetRasterBand(2).SetNoDataValue(0)
     src_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -483,8 +444,7 @@ def test_vrtprocesseddataset_lut_nodata(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     np.testing.assert_equal(
         ds.GetRasterBand(1).ReadAsArray(), np.array([[0, 10, 15, 20]])
     )
@@ -505,8 +465,7 @@ def test_vrtprocesseddataset_lut_nodata_as_parameter(tmp_vsimem):
     src_ds.GetRasterBand(2).WriteArray(np.array([[0, 1, 2, 3]]))
     src_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -520,8 +479,7 @@ def test_vrtprocesseddataset_lut_nodata_as_parameter(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     np.testing.assert_equal(
         ds.GetRasterBand(1).ReadAsArray(), np.array([[1, 10, 15, 20]])
     )
@@ -543,8 +501,7 @@ def test_vrtprocesseddataset_lut_errors(tmp_vsimem):
     src_ds.Close()
 
     with pytest.raises(Exception, match="Step 'nr 1' lacks required Argument"):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -554,12 +511,10 @@ def test_vrtprocesseddataset_lut_errors(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(Exception, match="Invalid value for argument 'lut_1'"):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -570,12 +525,10 @@ def test_vrtprocesseddataset_lut_errors(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(Exception, match="Invalid band in argument 'lut_3'"):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -587,12 +540,10 @@ def test_vrtprocesseddataset_lut_errors(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(Exception, match="Missing lut_XX element"):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -603,8 +554,7 @@ def test_vrtprocesseddataset_lut_errors(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
 
 ###############################################################################
@@ -640,8 +590,7 @@ def test_vrtprocesseddataset_dehazing_nominal(tmp_vsimem):
     offset_ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     offset_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -661,8 +610,7 @@ def test_vrtprocesseddataset_dehazing_nominal(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     np.testing.assert_equal(
         ds.GetRasterBand(1).ReadAsArray(), np.array([[2, 6, 15, 255, 255, 255]])
     )
@@ -699,8 +647,7 @@ def test_vrtprocesseddataset_dehazing_different_resolution(tmp_vsimem):
     offset_ds.SetGeoTransform([0, 1 * 10, 0, 0, 0, 1 * 10])
     offset_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -714,8 +661,7 @@ def test_vrtprocesseddataset_dehazing_different_resolution(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     np.testing.assert_equal(
         ds.GetRasterBand(1).ReadAsArray(),
         np.array([[1, 2, 6, 8, 15, 15], [1, 2, 6, 8, 15, 15]]),
@@ -758,8 +704,7 @@ def test_vrtprocesseddataset_dehazing_edge_effects(tmp_vsimem):
     offset_ds.SetGeoTransform([0, 257, 0, 0, 0, -257])
     offset_ds.Close()
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -773,8 +718,7 @@ def test_vrtprocesseddataset_dehazing_edge_effects(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (17, 17)
 
 
@@ -794,8 +738,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
         Exception,
         match="Step 'nr 1' lacks required Argument 'offset_dataset_band_{band}'",
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -807,15 +750,13 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(
         Exception,
         match="Invalid band in argument 'gain_dataset_filename_2'",
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -829,15 +770,13 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(
         Exception,
         match="Invalid band in argument 'gain_dataset_band_2'",
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -851,15 +790,13 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(
         Exception,
         match="Invalid band in argument 'offset_dataset_filename_2'",
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -873,15 +810,13 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(
         Exception,
         match="Invalid band in argument 'offset_dataset_band_2'",
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -895,15 +830,13 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(
         Exception,
         match=r"Invalid band number \(2\) for a gain dataset",
     ):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -917,12 +850,10 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     with pytest.raises(Exception):  # "No such file or directory'", but O/S dependent
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -936,16 +867,14 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     nogt_filename = str(tmp_vsimem / "nogt.tif")
     ds = gdal.GetDriverByName("GTiff").Create(nogt_filename, 1, 1, 1)
     ds.Close()
 
     with pytest.raises(Exception, match="lacks a geotransform"):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -959,8 +888,7 @@ def test_vrtprocesseddataset_dehazing_error(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
 
 ###############################################################################
@@ -999,8 +927,7 @@ def test_vrtprocesseddataset_trimming_nominal(tmp_vsimem):
     tone_ceil = 190.0
     top_margin = 0.1
 
-    ds = gdal.Open(
-        f"""<VRTDataset subclass='VRTProcessedDataset'>
+    ds = gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
     <Input>
         <SourceFilename>{src_filename}</SourceFilename>
     </Input>
@@ -1014,8 +941,7 @@ def test_vrtprocesseddataset_trimming_nominal(tmp_vsimem):
         </Step>
     </ProcessingSteps>
     </VRTDataset>
-        """
-    )
+        """)
 
     # Do algorithm at hand
 
@@ -1089,8 +1015,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
     trimming_ds.Close()
 
     with pytest.raises(Exception):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -1104,13 +1029,11 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
     for val in (0, 5):
         with pytest.raises(Exception, match="Invalid band in argument 'red_band'"):
-            gdal.Open(
-                f"""<VRTDataset subclass='VRTProcessedDataset'>
+            gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
             <Input>
                 <SourceFilename>{src_filename}</SourceFilename>
             </Input>
@@ -1125,13 +1048,11 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
                 </Step>
             </ProcessingSteps>
             </VRTDataset>
-                """
-            )
+                """)
 
     for val in (0, 5):
         with pytest.raises(Exception, match="Invalid band in argument 'green_band'"):
-            gdal.Open(
-                f"""<VRTDataset subclass='VRTProcessedDataset'>
+            gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
             <Input>
                 <SourceFilename>{src_filename}</SourceFilename>
             </Input>
@@ -1146,13 +1067,11 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
                 </Step>
             </ProcessingSteps>
             </VRTDataset>
-                """
-            )
+                """)
 
     for val in (0, 5):
         with pytest.raises(Exception, match="Invalid band in argument 'blue_band'"):
-            gdal.Open(
-                f"""<VRTDataset subclass='VRTProcessedDataset'>
+            gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
             <Input>
                 <SourceFilename>{src_filename}</SourceFilename>
             </Input>
@@ -1167,16 +1086,14 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
                 </Step>
             </ProcessingSteps>
             </VRTDataset>
-                """
-            )
+                """)
 
-    for (red_band, green_band, blue_band) in [(1, 1, 3), (3, 2, 3), (1, 3, 3)]:
+    for red_band, green_band, blue_band in [(1, 1, 3), (3, 2, 3), (1, 3, 3)]:
         with pytest.raises(
             Exception,
             match="red_band, green_band and blue_band must have distinct values",
         ):
-            gdal.Open(
-                f"""<VRTDataset subclass='VRTProcessedDataset'>
+            gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
             <Input>
                 <SourceFilename>{src_filename}</SourceFilename>
             </Input>
@@ -1193,12 +1110,10 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
                 </Step>
             </ProcessingSteps>
             </VRTDataset>
-                """
-            )
+                """)
 
     with pytest.raises(Exception, match="Trimming dataset should have a single band"):
-        gdal.Open(
-            f"""<VRTDataset subclass='VRTProcessedDataset'>
+        gdal.Open(f"""<VRTDataset subclass='VRTProcessedDataset'>
         <Input>
             <SourceFilename>{src_filename}</SourceFilename>
         </Input>
@@ -1212,8 +1127,7 @@ def test_vrtprocesseddataset_trimming_errors(tmp_vsimem):
             </Step>
         </ProcessingSteps>
         </VRTDataset>
-            """
-        )
+            """)
 
 
 ###############################################################################
@@ -1882,8 +1796,7 @@ def test_vrtprocesseddataset_scaled_inputs(tmp_vsimem, input_scaled, dtype, unsc
             bnd.SetScale(scales[i])
             bnd.SetNoDataValue(nodata)
 
-    ds = gdal.Open(
-        f"""
+    ds = gdal.Open(f"""
     <VRTDataset subclass='VRTProcessedDataset'>
     <Input unscale="{unscale}">
         <SourceFilename>{src_filename}</SourceFilename>
@@ -1895,8 +1808,7 @@ def test_vrtprocesseddataset_scaled_inputs(tmp_vsimem, input_scaled, dtype, unsc
             <Argument name="coefficients_2">0,0,1</Argument>
         </Step>
     </ProcessingSteps>
-    </VRTDataset>"""
-    )
+    </VRTDataset>""")
 
     assert ds.RasterCount == nz
 

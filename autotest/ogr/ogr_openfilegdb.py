@@ -240,7 +240,7 @@ def ogr_openfilegdb_make_test_data():
             feat.SetField("real", 4.56)
             feat.SetField("adate", "2013/12/26 12:34:56")
             feat.SetField("guid", "{12345678-9abc-DEF0-1234-567890ABCDEF}")
-            feat.SetField("binary", b"\x00\xFF\x7F")
+            feat.SetField("binary", b"\x00\xff\x7f")
             feat.SetField("xml", "<foo></foo>")
             feat.SetField("binary2", b"\x12\x34\x56")
             lyr.CreateFeature(feat)
@@ -681,10 +681,10 @@ def test_ogr_openfilegdb_4():
     for test in tests:
 
         if len(test) == 2:
-            (where_clause, fids) = test
+            where_clause, fids = test
             expected_attr_index_use = 2
         else:
-            (where_clause, fids, expected_attr_index_use) = test
+            where_clause, fids, expected_attr_index_use = test
 
         lyr.SetAttributeFilter(where_clause)
         sql_lyr = ds.ExecuteSQL("GetLayerAttrIndexUse %s" % lyr.GetName())
@@ -714,10 +714,10 @@ def test_ogr_openfilegdb_4():
     for test in tests:
 
         if len(test) == 2:
-            (where_clause, fids) = test
+            where_clause, fids = test
             expected_attr_index_use = 2
         else:
-            (where_clause, fids, expected_attr_index_use) = test
+            where_clause, fids, expected_attr_index_use = test
 
         lyr.SetAttributeFilter(where_clause)
         sql_lyr = ds.ExecuteSQL("GetLayerAttrIndexUse %s" % lyr.GetName())
@@ -746,7 +746,7 @@ def test_ogr_openfilegdb_4():
         ("real > 1 AND real < 2", 0, None),
         ("real < 0", 0, None),
     ]
-    for (where_clause, count, start) in tests:
+    for where_clause, count, start in tests:
 
         lyr.SetAttributeFilter(where_clause)
         assert lyr.GetFeatureCount() == count, (where_clause, count)
@@ -956,7 +956,7 @@ def test_ogr_openfilegdb_7():
         ("select * from point where float > 0 order by id", None, None, 0),
     ]
 
-    for (sql, feat_count, first_fid, expected_optimized) in tests:
+    for sql, feat_count, first_fid, expected_optimized in tests:
         if expected_optimized is None:
             gdal.PushErrorHandler("CPLQuietErrorHandler")
         sql_lyr = ds.ExecuteSQL(sql)
@@ -1081,7 +1081,7 @@ def fuzz(filename, offset):
 
 
 def unfuzz(backup):
-    (filename, offset, v) = backup
+    filename, offset, v = backup
     with open(filename, "rb+") as f:
         f.seek(offset, 0)
         f.write(chr(v).encode("ISO-8859-1"))
@@ -1175,7 +1175,7 @@ def test_ogr_openfilegdb_10(testopenfilegdb, tmp_path):
 
     else:
 
-        for (filename, offsets) in [
+        for filename, offsets in [
             (
                 tmp_path / "testopenfilegdb_fuzzed.gdb/a00000001.gdbtable",
                 [
@@ -1237,7 +1237,7 @@ def test_ogr_openfilegdb_10(testopenfilegdb, tmp_path):
                     ds = None
                 unfuzz(backup)
 
-        for (filename, offsets) in [
+        for filename, offsets in [
             (
                 tmp_path / "testopenfilegdb_fuzzed.gdb/a00000004.gdbindexes",
                 [
@@ -2865,7 +2865,7 @@ def test_ogr_openfilegdb_read_from_http():
 
     import webserver
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:

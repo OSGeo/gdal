@@ -2355,7 +2355,8 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
         .choices("YES", "NO")
         .metavar("YES|NO")
         .action(
-            [psOptions](const std::string &s) {
+            [psOptions](const std::string &s)
+            {
                 psOptions->aosOptions.SetNameValue("DISPLAY_FIELDS", s.c_str());
             })
         .help(
@@ -2365,7 +2366,8 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
         .choices("YES", "NO", "SUMMARY", "WKT", "ISO_WKT")
         .metavar("YES|NO|SUMMARY|WKT|ISO_WKT")
         .action(
-            [psOptions](const std::string &s) {
+            [psOptions](const std::string &s)
+            {
                 psOptions->aosOptions.SetNameValue("DISPLAY_GEOMETRY",
                                                    s.c_str());
             })

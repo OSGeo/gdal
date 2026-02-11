@@ -327,9 +327,9 @@ def test_ehdr_rat():
     assert rat is not None
     assert rat.GetColumnCount() == 4
     assert rat.GetRowCount() == 25
-    for (idx, val) in [(0, -500), (1, 127), (2, 40), (3, 65)]:
+    for idx, val in [(0, -500), (1, 127), (2, 40), (3, 65)]:
         assert rat.GetValueAsInt(0, idx) == val
-    for (idx, val) in [(0, 2000), (1, 145), (2, 97), (3, 47)]:
+    for idx, val in [(0, 2000), (1, 145), (2, 97), (3, 47)]:
         assert rat.GetValueAsInt(24, idx) == val
     assert ds.GetRasterBand(1).GetColorTable() is not None
     ds = None

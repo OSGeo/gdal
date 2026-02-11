@@ -62,8 +62,7 @@ def test_vrtmisc_2():
 
 def test_vrtmisc_3():
 
-    ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <VRTRasterBand dataType="Byte" band="1">
     <ComplexSource>
       <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
@@ -73,8 +72,7 @@ def test_vrtmisc_3():
       <DstMax>255</DstMax>
     </ComplexSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -255,8 +253,7 @@ def test_vrtmisc_10(tmp_vsimem):
 def test_vrtmisc_11():
 
     f = open("tmp/vrtmisc_11.vrt", "wt")
-    f.write(
-        """<VRTDataset rasterXSize="1" rasterYSize="1">
+    f.write("""<VRTDataset rasterXSize="1" rasterYSize="1">
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
       <SourceFilename relativeToVRT="1">../data/byte.tif</SourceFilename>
@@ -267,8 +264,7 @@ def test_vrtmisc_11():
     </SimpleSource>
   </VRTRasterBand>
 </VRTDataset>
-"""
-    )
+""")
     f.close()
 
     ds = gdal.Open("tmp/vrtmisc_11.vrt", gdal.GA_Update)

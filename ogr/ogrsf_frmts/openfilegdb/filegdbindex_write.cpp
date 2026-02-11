@@ -430,7 +430,8 @@ static void SortByAscendingValuesAndOID(std::vector<ValueOIDPair> &asValues)
     if (!asValues.empty())
     {
         std::sort(asValues.begin(), asValues.end(),
-                  [](const ValueOIDPair &a, const ValueOIDPair &b) {
+                  [](const ValueOIDPair &a, const ValueOIDPair &b)
+                  {
                       return a.first < b.first ||
                              (a.first == b.first && a.second < b.second);
                   });

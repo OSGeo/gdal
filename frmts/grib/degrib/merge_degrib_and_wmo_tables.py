@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2021 Even Rouault
 
-""" This scripts merges the GRIB2 tables from DEGRIB, which are in the
-    frmts/grib/degrib/data directory with the ones from WMO.
+"""This scripts merges the GRIB2 tables from DEGRIB, which are in the
+frmts/grib/degrib/data directory with the ones from WMO.
 """
 
 import csv

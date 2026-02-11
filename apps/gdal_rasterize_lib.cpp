@@ -105,7 +105,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
     argParser->add_argument("-at")
         .flag()
         .action(
-            [psOptions](const std::string &) {
+            [psOptions](const std::string &)
+            {
                 psOptions->aosRasterizeOptions.SetNameValue("ALL_TOUCHED",
                                                             "TRUE");
             })
@@ -135,7 +136,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
             .flag()
             .store_into(psOptions->b3D)
             .action(
-                [psOptions](const std::string &) {
+                [psOptions](const std::string &)
+                {
                     psOptions->aosRasterizeOptions.SetNameValue(
                         "BURN_VALUE_FROM", "Z");
                 })
@@ -146,7 +148,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
     argParser->add_argument("-add")
         .flag()
         .action(
-            [psOptions](const std::string &) {
+            [psOptions](const std::string &)
+            {
                 psOptions->aosRasterizeOptions.SetNameValue("MERGE_ALG", "ADD");
             })
         .help(_("Instead of burning a new value, this adds the new value to "
@@ -157,7 +160,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
         .flag()
         .hidden()
         .action(
-            [psOptions](const std::string &s) {
+            [psOptions](const std::string &s)
+            {
                 psOptions->aosRasterizeOptions.SetNameValue("CHUNKYSIZE",
                                                             s.c_str());
             });
@@ -286,7 +290,8 @@ GDALRasterizeOptionsGetParser(GDALRasterizeOptions *psOptions,
     argParser->add_argument("-optim")
         .metavar("AUTO|VECTOR|RASTER")
         .action(
-            [psOptions](const std::string &s) {
+            [psOptions](const std::string &s)
+            {
                 psOptions->aosRasterizeOptions.SetNameValue("OPTIM", s.c_str());
             })
         .help(_("Force the algorithm used."));

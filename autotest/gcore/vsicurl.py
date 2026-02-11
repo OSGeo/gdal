@@ -160,7 +160,7 @@ def test_vsicurl_9():
 
     ds = gdal.Open(
         "/vsicurl/http://download.osgeo.org/gdal/data/gtiff/"
-        "xx\u4E2D\u6587.\u4E2D\u6587"
+        "xx\u4e2d\u6587.\u4e2d\u6587"
     )
     assert ds is not None
 
@@ -275,9 +275,9 @@ def test_vsicurl_test_redirect(server, authorization_header_allowed):
 
     options = {"GDAL_HTTP_HEADERS": "Authorization: Bearer xxx"}
     if authorization_header_allowed:
-        options[
-            "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"
-        ] = authorization_header_allowed
+        options["CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"] = (
+            authorization_header_allowed
+        )
     with webserver.install_http_handler(handler), gdal.config_options(options):
         f = gdal.VSIFOpenL(
             "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
@@ -364,9 +364,9 @@ def test_vsicurl_test_redirect_different_server(
 
     options = {"GDAL_HTTP_HEADERS": "Authorization: Bearer xxx"}
     if authorization_header_allowed:
-        options[
-            "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"
-        ] = authorization_header_allowed
+        options["CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"] = (
+            authorization_header_allowed
+        )
     with webserver.install_http_handler(handler), gdal.config_options(options):
         f = gdal.VSIFOpenL(
             "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
@@ -429,9 +429,9 @@ def test_vsicurl_test_redirect_different_server_with_bearer(
 
     options = {"GDAL_HTTP_AUTH": "BEARER", "GDAL_HTTP_BEARER": "xxx"}
     if authorization_header_allowed:
-        options[
-            "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"
-        ] = authorization_header_allowed
+        options["CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"] = (
+            authorization_header_allowed
+        )
     with webserver.install_http_handler(handler), gdal.config_options(options):
         f = gdal.VSIFOpenL(
             "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
@@ -1587,7 +1587,7 @@ def test_vsicurl_NETRC_FILE():
         + '"'
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+        _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
 

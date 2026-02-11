@@ -303,7 +303,7 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:

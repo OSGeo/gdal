@@ -32,6 +32,7 @@ gdal_to_struct = {
     gdal.GDT_Float64: ("d", 8),
 }
 
+
 ###### Testing IMG/REL normal files
 def check_raster(ds, band_idx, expected, checksum, exp_min, exp_max, exp_gt):
     band = ds.GetRasterBand(band_idx)

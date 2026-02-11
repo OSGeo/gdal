@@ -1248,6 +1248,7 @@ int CPLHTTPPopFetchCallback(void)
  * CPLHTTPDestroyResult(), or NULL if libcurl support is disabled
  */
 // clang-format on
+
 CPLHTTPResult *CPLHTTPFetch(const char *pszURL, CSLConstList papszOptions)
 {
     return CPLHTTPFetchEx(pszURL, papszOptions, nullptr, nullptr, nullptr,

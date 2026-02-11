@@ -1315,7 +1315,7 @@ GInt32 TABINDNode::FindFirst(const GByte *pKeyValue,
 
                 return nRetValue;
             }  // else
-        }      // while numEntries
+        }  // while numEntries
 
         // No node was found that contains the key value.
         // We should never get here... only leaf nodes should return 0

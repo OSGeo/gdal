@@ -304,16 +304,14 @@ def test_ogrinfo_lib_json_relationships():
 @pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_OFSTJSON():
 
-    ds = gdal.OpenEx(
-        """{"type":"FeatureCollection","features":[
+    ds = gdal.OpenEx("""{"type":"FeatureCollection","features":[
             { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": true }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": null }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": "astring" }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": { "nested": 75 } }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": { "a": "b" } }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
-        ]}"""
-    )
+        ]}""")
 
     ret = gdal.VectorInfo(ds, format="json", dumpFeatures=True)
     assert ret["layers"][0]["features"] == [
@@ -363,11 +361,9 @@ def test_ogrinfo_lib_json_OFSTJSON():
 @pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_fields_NO():
 
-    ds = gdal.OpenEx(
-        """{"type":"FeatureCollection","features":[
+    ds = gdal.OpenEx("""{"type":"FeatureCollection","features":[
             { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
-        ]}"""
-    )
+        ]}""")
 
     ret = gdal.VectorInfo(ds, options="-json -features -fields=NO")
     assert ret["layers"][0]["features"] == [
@@ -387,11 +383,9 @@ def test_ogrinfo_lib_json_fields_NO():
 @pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_geom_NO():
 
-    ds = gdal.OpenEx(
-        """{"type":"FeatureCollection","features":[
+    ds = gdal.OpenEx("""{"type":"FeatureCollection","features":[
             { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
-        ]}"""
-    )
+        ]}""")
 
     ret = gdal.VectorInfo(ds, options="-json -features -geom=NO")
     assert ret["layers"][0]["features"] == [

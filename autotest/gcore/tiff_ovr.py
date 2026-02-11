@@ -1738,7 +1738,7 @@ def test_tiff_ovr_44(tmp_path, both_endian):
     ds = gdal.Open(tif_fname)
     ovr_band = ds.GetRasterBand(1).GetOverview(0)
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, blocky) = ovr_band.GetBlockSize()
+        blockx, blocky = ovr_band.GetBlockSize()
         assert blockx == 256 and blocky == 256, "did not get expected block size"
     cs = ovr_band.Checksum()
     ds = None
@@ -1763,7 +1763,7 @@ def test_tiff_ovr_45(tmp_path, both_endian):
     ds = gdal.Open(f"{tif_fname}.ovr")
     ovr_band = ds.GetRasterBand(1)
     if "GetBlockSize" in dir(gdal.Band):
-        (blockx, blocky) = ovr_band.GetBlockSize()
+        blockx, blocky = ovr_band.GetBlockSize()
         assert blockx == 256 and blocky == 256, "did not get expected block size"
     cs = ovr_band.Checksum()
     ds = None
@@ -2073,7 +2073,7 @@ def test_tiff_ovr_49(both_endian):
 
     ds = gdal.GetDriverByName("GTiff").Create("/vsimem/tiff_ovr_49.tif", 1023, 1023, 1)
     ds.GetRasterBand(1).Fill(0)
-    c = "\xFF"
+    c = "\xff"
     # Fails on 1.11.1 with col = 255 or col = 1019
     col = 1019
     ds.GetRasterBand(1).WriteRaster(col, 0, 1, 1023, c, 1, 1)
@@ -3039,11 +3039,11 @@ def test_tiff_ovr_internal_mask_issue_11555(tmp_vsimem):
     ds = gdal.Open(tmpfilename)
 
     # Check that we have non-zero data when mask = 255
-    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 5270, 1, 1) == b"\x7F"
-    assert ds.GetRasterBand(2).GetOverview(0).ReadRaster(0, 5270, 1, 1) == b"\x7F"
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster(0, 5270, 1, 1) == b"\x7f"
+    assert ds.GetRasterBand(2).GetOverview(0).ReadRaster(0, 5270, 1, 1) == b"\x7f"
     assert (
         ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster(0, 5270, 1, 1)
-        == b"\xFF"
+        == b"\xff"
     )
 
     # Check that we have zero data when mask = 0
@@ -3087,7 +3087,7 @@ def test_tiff_ovr_huge_reduction_factor_nodata(tmp_vsimem):
     ds.GetRasterBand(1).SetNoDataValue(0)
     ds.GetRasterBand(2).SetNoDataValue(0)
     ds.GetRasterBand(3).SetNoDataValue(0)
-    ds.WriteRaster(511, 511, 1, 1, b"\xFF" * 3)
+    ds.WriteRaster(511, 511, 1, 1, b"\xff" * 3)
     with gdaltest.config_options(
         {
             "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
@@ -3095,7 +3095,7 @@ def test_tiff_ovr_huge_reduction_factor_nodata(tmp_vsimem):
         }
     ):
         ds.BuildOverviews("AVERAGE", [1024])
-    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster() == b"\xFF"
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster() == b"\xff"
 
 
 ###############################################################################
@@ -3111,9 +3111,9 @@ def test_tiff_ovr_huge_reduction_factor_mask(tmp_vsimem):
         3,
         options=["BLOCKYSIZE=1024", "COMPRESS=LZW"],
     )
-    ds.WriteRaster(511, 511, 1, 1, b"\xFF" * 3)
+    ds.WriteRaster(511, 511, 1, 1, b"\xff" * 3)
     ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    ds.GetRasterBand(1).GetMaskBand().WriteRaster(511, 511, 1, 1, b"\xFF")
+    ds.GetRasterBand(1).GetMaskBand().WriteRaster(511, 511, 1, 1, b"\xff")
     with gdaltest.config_options(
         {
             "GDAL_OVR_CHUNK_MAX_SIZE": "1000",
@@ -3121,7 +3121,7 @@ def test_tiff_ovr_huge_reduction_factor_mask(tmp_vsimem):
         }
     ):
         ds.BuildOverviews("AVERAGE", [1024])
-    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster() == b"\xFF"
+    assert ds.GetRasterBand(1).GetOverview(0).ReadRaster() == b"\xff"
 
 
 ###############################################################################

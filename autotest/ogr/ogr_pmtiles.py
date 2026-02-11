@@ -74,14 +74,11 @@ def test_ogr_pmtiles_read_JSON_FIELD():
     ds = gdal.OpenEx("data/pmtiles/poly.pmtiles", open_options=["JSON_FIELD=YES"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    assert (
-        f["json"]
-        == """{
+    assert f["json"] == """{
   "AREA":215229.266,
   "EAS_ID":168,
   "PRFEDEA":"35043411"
 }"""
-    )
 
 
 ###############################################################################
@@ -586,6 +583,7 @@ def test_ogr_pmtiles_read_corrupted_min_zoom_larger_than_max_zoom():
 
 
 ###############################################################################
+
 
 # Test started to fail on Travis s390x starting with https://github.com/OSGeo/gdal/pull/10274
 # which is totally unrelated...

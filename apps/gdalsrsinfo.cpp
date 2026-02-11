@@ -242,20 +242,13 @@ MAIN_START(argc, argv)
                 if (bFindEPSG)
                     printf("\n%s\n", osIdentifiedCode.c_str());
                 const char *papszOutputTypes[] = {
-                    "proj4",
-                    "wkt1",
-                    "wkt2_2015",
-                    "wkt2_2019",
-                    "wkt_simple",
-                    "wkt_noct",
-                    "wkt_esri",
-                    "mapinfo",
-                    "xml",
+                    "proj4",     "wkt1",       "wkt2_2015",
+                    "wkt2_2019", "wkt_simple", "wkt_noct",
+                    "wkt_esri",  "mapinfo",    "xml",
 #if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 2
                     "PROJJSON",
 #endif
-                    nullptr
-                };
+                    nullptr};
                 PrintSRSOutputTypes(oSRS, papszOutputTypes, bPretty);
             }
             else if (EQUAL("wkt_all", pszOutputType))

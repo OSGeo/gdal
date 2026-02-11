@@ -71,8 +71,7 @@ def test_osr_usgs_1():
 def test_osr_usgs_2():
 
     srs = osr.SpatialReference()
-    srs.ImportFromWkt(
-        """PROJCS["unnamed",GEOGCS["NAD27",\
+    srs.ImportFromWkt("""PROJCS["unnamed",GEOGCS["NAD27",\
     DATUM["North_American_Datum_1927",\
     SPHEROID["Clarke 1866",6378206.4,294.9786982139006,\
     AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],\
@@ -83,10 +82,9 @@ def test_osr_usgs_2():
     PARAMETER["latitude_of_origin",33.76446202777777],\
     PARAMETER["central_meridian",-117.4745428888889],\
     PARAMETER["false_easting",0],PARAMETER["false_northing",0],\
-    UNIT["metre",1,AUTHORITY["EPSG","9001"]]]"""
-    )
+    UNIT["metre",1,AUTHORITY["EPSG","9001"]]]""")
 
-    (proj_code, _, params, datum_code) = srs.ExportToUSGS()
+    proj_code, _, params, datum_code = srs.ExportToUSGS()
 
     assert (
         proj_code == 4
@@ -107,7 +105,7 @@ def test_osr_usgs_wgs84():
 
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32631)
-    (proj_code, zone, params, datum_code) = srs.ExportToUSGS()
+    proj_code, zone, params, datum_code = srs.ExportToUSGS()
 
     srs2 = osr.SpatialReference()
     srs2.ImportFromUSGS(proj_code, zone, params, datum_code)

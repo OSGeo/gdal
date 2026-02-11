@@ -388,8 +388,7 @@ def test_pam_11():
 def test_pam_12():
 
     shutil.copy("data/byte.tif", "tmp")
-    open("tmp/byte.tif.aux.xml", "wt").write(
-        """<PAMDataset>
+    open("tmp/byte.tif.aux.xml", "wt").write("""<PAMDataset>
   <PAMRasterBand band="1">
     <Histograms>
       <HistItem>
@@ -402,11 +401,10 @@ def test_pam_12():
       </HistItem>
     </Histograms>
   </PAMRasterBand>
-</PAMDataset>"""
-    )
+</PAMDataset>""")
 
     ds = gdal.Open("tmp/byte.tif")
-    (mini, maxi, _, hist1) = ds.GetRasterBand(1).GetDefaultHistogram()
+    mini, maxi, _, hist1 = ds.GetRasterBand(1).GetDefaultHistogram()
     hist2 = ds.GetRasterBand(1).GetHistogram(include_out_of_range=1, approx_ok=0)
     ds.SetMetadataItem("FOO", "BAR")
     ds.GetRasterBand(1).SetDefaultHistogram(mini, maxi, hist1)

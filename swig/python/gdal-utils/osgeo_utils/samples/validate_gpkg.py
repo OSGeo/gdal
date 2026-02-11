@@ -146,7 +146,7 @@ class GPKGChecker:
             expected_pk,
         ) in expected_columns:
             found = False
-            for (_, name, typ, notnull, default, pk) in columns:
+            for _, name, typ, notnull, default, pk in columns:
                 if name != expected_name:
                     continue
 
@@ -216,7 +216,7 @@ class GPKGChecker:
         columns = c.fetchall()
         has_definition_12_063 = False
         has_epoch = False
-        for (_, name, _, _, _, _) in columns:
+        for _, name, _, _, _, _ in columns:
             if name == "definition_12_063":
                 has_definition_12_063 = True
             if name == "epoch":
@@ -451,7 +451,7 @@ class GPKGChecker:
 
         c.execute("SELECT table_name, last_change, srs_id FROM gpkg_contents")
         rows = c.fetchall()
-        for (table_name, last_change, srs_id) in rows:
+        for table_name, last_change, srs_id in rows:
             c.execute(
                 "SELECT 1 FROM sqlite_master WHERE "
                 "lower(name) = lower(?) AND type IN ('table', 'view')",
@@ -732,7 +732,7 @@ class GPKGChecker:
         found_geom = False
         count_pkid = 0
         pkid_column_name = None
-        for (_, name, typ, notnull, default, pk) in cols:
+        for _, name, typ, notnull, default, pk in cols:
             if name.lower() == geom_column_name.lower():
                 found_geom = True
                 if not is_spatialite_computed_column:
@@ -844,7 +844,7 @@ class GPKGChecker:
         )
         found_geom_types = set()
         warning_messages = set()
-        for (rowid, blob) in c.fetchall():
+        for rowid, blob in c.fetchall():
             if blob is None:
                 continue
 
@@ -1146,7 +1146,7 @@ class GPKGChecker:
 
         c.execute("SELECT table_name, srs_id FROM gpkg_geometry_columns")
         rows = c.fetchall()
-        for (table_name, srs_id) in rows:
+        for table_name, srs_id in rows:
             c.execute(
                 "SELECT 1 FROM gpkg_contents WHERE table_name = ? "
                 + "AND data_type='features'",
@@ -1183,7 +1183,7 @@ class GPKGChecker:
             + "WHERE a.table_name = b.table_name AND a.srs_id != b.srs_id"
         )
         rows = c.fetchall()
-        for (table_name, a_srs_id, b_srs_id) in rows:
+        for table_name, a_srs_id, b_srs_id in rows:
             self._assert(
                 False,
                 146,
@@ -1198,7 +1198,7 @@ class GPKGChecker:
         c.execute("PRAGMA table_info(%s)" % _esc_id(table_name))
         cols = c.fetchall()
         count_pkid = 0
-        for (_, name, typ, _, _, pk) in cols:
+        for _, name, typ, _, _, pk in cols:
             if pk == 1:
                 count_pkid += 1
                 self._assert(
@@ -1319,7 +1319,7 @@ class GPKGChecker:
         prev_zoom_level = None
         prev_pixel_x_size = None
         prev_pixel_y_size = None
-        for (zoom_level, pixel_x_size, pixel_y_size) in rows:
+        for zoom_level, pixel_x_size, pixel_y_size in rows:
             if prev_pixel_x_size is not None:
                 self._assert(
                     pixel_x_size < prev_pixel_x_size
@@ -1365,7 +1365,7 @@ class GPKGChecker:
         )
         rows = c.fetchall()
         if rows:
-            (dx, min_dx, max_dx, dy, min_dy, max_dy) = rows[0]
+            dx, min_dx, max_dx, dy, min_dy, max_dy = rows[0]
             self._assert(
                 abs((min_dx - dx) / dx) < 1e-3
                 and abs((max_dx - dx) / dx) < 1e-3
@@ -1496,7 +1496,7 @@ class GPKGChecker:
 
         c.execute("SELECT table_name, srs_id FROM gpkg_tile_matrix_set")
         rows = c.fetchall()
-        for (table_name, srs_id) in rows:
+        for table_name, srs_id in rows:
             c.execute(
                 "SELECT 1 FROM gpkg_contents WHERE table_name = ? "
                 + "AND data_type IN ('tiles', '2d-gridded-coverage')",
@@ -1615,7 +1615,7 @@ class GPKGChecker:
             "data_type IN ('tiles', '2d-gridded-coverage')"
         )
         rows = c.fetchall()
-        for (table_name, data_type) in rows:
+        for table_name, data_type in rows:
             self._check_tile_user_table(c, table_name, data_type)
 
     def _check_tiled_gridded_coverage_data(self, c):
@@ -1740,7 +1740,7 @@ class GPKGChecker:
         found_gpkg_2d_gridded_coverage_ancillary = False
         found_gpkg_2d_gridded_tile_ancillary = False
         expected_def = "http://docs.opengeospatial.org/is/17-066r1/17-066r1.html"
-        for (table_name, column_name, definition, scope) in rows:
+        for table_name, column_name, definition, scope in rows:
             if table_name == "gpkg_2d_gridded_coverage_ancillary":
                 found_gpkg_2d_gridded_coverage_ancillary = True
                 self._assert(
@@ -1833,7 +1833,7 @@ class GPKGChecker:
             "gpkg_2d_gridded_coverage#7",
             "Wrong number of entries in " "gpkg_2d_gridded_coverage_ancillary",
         )
-        for (tile_matrix_set_name, datatype) in rows:
+        for tile_matrix_set_name, datatype in rows:
             self._assert(
                 tile_matrix_set_name in tables,
                 "gpkg_2d_gridded_coverage#7",
@@ -1926,9 +1926,9 @@ class GPKGChecker:
         )
         rows = c.fetchall()
         warn_gdal_not_available = False
-        for (table_name, datatype) in rows:
+        for table_name, datatype in rows:
             c.execute("SELECT id, tile_data FROM %s" % _esc_id(table_name))
-            for (ident, blob) in c.fetchall():
+            for ident, blob in c.fetchall():
                 self._assert(blob is not None and len(blob) >= 12, 19, "Invalid blob")
                 max_size_needed = 12
                 blob_ar = struct.unpack("B" * max_size_needed, blob[0:max_size_needed])
@@ -2014,7 +2014,7 @@ class GPKGChecker:
                                 "gpkg_2d_gridded_coverage#19",
                                 "Invalid tile %d in %s" % (ident, table_name),
                             )
-                            (blockxsize, _) = ds.GetRasterBand(1).GetBlockSize()
+                            blockxsize, _ = ds.GetRasterBand(1).GetBlockSize()
                             self._assert(
                                 blockxsize == ds.RasterXSize,
                                 "gpkg_2d_gridded_coverage#20",
@@ -2067,7 +2067,7 @@ class GPKGChecker:
             "table_name IS NOT NULL"
         )
         rows = c.fetchall()
-        for (table_name, column_name) in rows:
+        for table_name, column_name in rows:
 
             # Doesn't work for gpkg_2d_gridded_coverage_ancillary
             # c.execute("SELECT 1 FROM gpkg_contents WHERE table_name = ?", \
@@ -2158,7 +2158,7 @@ class GPKGChecker:
             "WHERE scope NOT IN ('read-write', 'write-only')"
         )
         rows = c.fetchall()
-        for (extension_name, scope) in rows:
+        for extension_name, scope in rows:
             self._assert(
                 False,
                 64,
@@ -2170,7 +2170,7 @@ class GPKGChecker:
             "WHERE extension_name = 'gpkg_rtree_index' "
         )
         rows = c.fetchall()
-        for (table_name, scope) in rows:
+        for table_name, scope in rows:
             c.execute(
                 "SELECT 1 FROM gpkg_contents WHERE lower(table_name) = lower(?) "
                 "AND data_type = 'features'",
@@ -2331,7 +2331,7 @@ class GPKGChecker:
             "reference_scope NOT IN ('geopackage', 'table', 'row')"
         )
         rows = c.fetchall()
-        for (table_name, column_name) in rows:
+        for table_name, column_name in rows:
             self._assert(
                 column_name is not None,
                 98,
@@ -2365,7 +2365,7 @@ class GPKGChecker:
             "reference_scope NOT IN ('geopackage', 'table', 'column')"
         )
         rows = c.fetchall()
-        for (table_name, row_id_value) in rows:
+        for table_name, row_id_value in rows:
             self._assert(
                 row_id_value is not None,
                 99,
@@ -2507,7 +2507,7 @@ class GPKGChecker:
 
         c.execute("SELECT table_name, column_name FROM gpkg_data_columns")
         rows = c.fetchall()
-        for (table_name, column_name) in rows:
+        for table_name, column_name in rows:
             c.execute("SELECT 1 FROM gpkg_contents WHERE table_name = ?", (table_name,))
             if c.fetchone() is None:
                 c.execute(
@@ -3017,7 +3017,7 @@ def main(argv=sys.argv):
         if not ret:
             return 0
         else:
-            for (req, msg) in ret:
+            for req, msg in ret:
                 if req:
                     print("Req %s: %s" % (str(req), msg))
                 else:

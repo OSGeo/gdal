@@ -73,9 +73,9 @@ static CPLString GDALPDFGetPDFString(const char *pszStr)
             int nHeadSurrogate = ((pwszDest[i] - 0x10000) >> 10) | 0xd800;
             int nTrailSurrogate = ((pwszDest[i] - 0x10000) & 0x3ff) | 0xdc00;
             osStr += CPLSPrintf("%02X", (nHeadSurrogate >> 8) & 0xff);
-            osStr += CPLSPrintf("%02X", (nHeadSurrogate)&0xff);
+            osStr += CPLSPrintf("%02X", (nHeadSurrogate) & 0xff);
             osStr += CPLSPrintf("%02X", (nTrailSurrogate >> 8) & 0xff);
-            osStr += CPLSPrintf("%02X", (nTrailSurrogate)&0xff);
+            osStr += CPLSPrintf("%02X", (nTrailSurrogate) & 0xff);
         }
         else
 #endif

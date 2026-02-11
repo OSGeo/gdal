@@ -302,7 +302,7 @@ def test_gdal_retile_4(script_path, tmp_path):
         [f"{out_dir}/byte_5_4.tif", 5, 4],
     ]
 
-    for (filename, width, height) in expected_results:
+    for filename, width, height in expected_results:
         ds = gdal.Open(filename)
         assert ds.RasterXSize == width, filename
         assert ds.RasterYSize == height, filename
@@ -339,7 +339,7 @@ def test_gdal_retile_4(script_path, tmp_path):
         [f"{out_dir}/1/byte_2_2.tif", 6, 6],
     ]
 
-    for (filename, width, height) in expected_results:
+    for filename, width, height in expected_results:
         ds = gdal.Open(filename)
         assert ds.RasterXSize == width, filename
         assert ds.RasterYSize == height, filename

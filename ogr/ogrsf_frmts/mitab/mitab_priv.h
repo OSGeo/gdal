@@ -74,7 +74,8 @@ typedef enum
  */
 #define TAB_REGION_PLINE_REQUIRES_V800(numSegments, numVerticesTotal)          \
     ((numSegments) > TAB_REGION_PLINE_450_MAX_SEGMENTS ||                      \
-     ((numSegments)*3 + numVerticesTotal) > TAB_REGION_PLINE_450_MAX_VERTICES)
+     ((numSegments) * 3 + numVerticesTotal) >                                  \
+         TAB_REGION_PLINE_450_MAX_VERTICES)
 
 /*---------------------------------------------------------------------
  * Codes for the known MapInfo Geometry types
@@ -253,10 +254,7 @@ typedef struct TABPenDef_t
 } TABPenDef;
 
 /* MI Default = PEN(1,2,0) */
-#define MITAB_PEN_DEFAULT                                                      \
-    {                                                                          \
-        0, 1, 2, 0, 0x000000                                                   \
-    }
+#define MITAB_PEN_DEFAULT {0, 1, 2, 0, 0x000000}
 
 /*---------------------------------------------------------------------
  * TABBrushDef - Brush definition information
@@ -271,10 +269,7 @@ typedef struct TABBrushDef_t
 } TABBrushDef;
 
 /* MI Default = BRUSH(1,0,16777215) */
-#define MITAB_BRUSH_DEFAULT                                                    \
-    {                                                                          \
-        0, 1, 0, 0, 0xffffff                                                   \
-    }
+#define MITAB_BRUSH_DEFAULT {0, 1, 0, 0, 0xffffff}
 
 /*---------------------------------------------------------------------
  * TABFontDef - Font Name information
@@ -286,10 +281,7 @@ typedef struct TABFontDef_t
 } TABFontDef;
 
 /* MI Default = FONT("Arial",0,0,0) */
-#define MITAB_FONT_DEFAULT                                                     \
-    {                                                                          \
-        0, "Arial"                                                             \
-    }
+#define MITAB_FONT_DEFAULT {0, "Arial"}
 
 /*---------------------------------------------------------------------
  * TABSymbolDef - Symbol definition information
@@ -304,10 +296,7 @@ typedef struct TABSymbolDef_t
 } TABSymbolDef;
 
 /* MI Default = SYMBOL(35,0,12) */
-#define MITAB_SYMBOL_DEFAULT                                                   \
-    {                                                                          \
-        0, 35, 12, 0, 0x000000                                                 \
-    }
+#define MITAB_SYMBOL_DEFAULT {0, 35, 12, 0, 0x000000}
 
 /*---------------------------------------------------------------------
  *                      class TABToolDefTable

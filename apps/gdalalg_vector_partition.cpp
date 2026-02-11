@@ -882,10 +882,9 @@ bool GDALVectorPartitionAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                         if (VSI_ISDIR(psEntry->nMode))
                         {
                             std::string_view v(psEntry->pszName);
-                            if (std::count_if(v.begin(), v.end(),
-                                              [](char c) {
-                                                  return c == '/' || c == '\\';
-                                              }) == 1)
+                            if (std::count_if(
+                                    v.begin(), v.end(), [](char c)
+                                    { return c == '/' || c == '\\'; }) == 1)
                             {
                                 const auto nPosDirSep = v.find_first_of("/\\");
                                 const auto nPosEqual = v.find('=', nPosDirSep);

@@ -80,6 +80,7 @@ libraries = ["gdal"]
 # Helper Functions
 # ---------------------------------------------------------------------------
 
+
 # Function to find numpy's include directory
 def get_numpy_include():
     if HAVE_NUMPY:
@@ -138,13 +139,11 @@ def fetch_config(option, gdal_config="gdal-config"):
 def supports_cxx11(compiler, compiler_flag=None):
     ret = False
     with open("gdal_python_cxx11_test.cpp", "wt") as f:
-        f.write(
-            """
+        f.write("""
 #if __cplusplus < 201103L
 #error "C++11 required"
 #endif
-int main () { return 0; }"""
-        )
+int main () { return 0; }""")
         f.close()
         extra_postargs = None
         if compiler_flag:
@@ -263,7 +262,6 @@ class gdal_ext(build_ext):
         build_ext.build_extensions(self)
 
     def finalize_options(self):
-        global include_dirs, library_dirs
 
         if self.include_dirs is None:
             self.include_dirs = include_dirs

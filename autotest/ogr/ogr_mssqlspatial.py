@@ -21,6 +21,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("MSSQLSpatial")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -419,7 +420,7 @@ def test_ogr_mssqlspatial_datatypes(mssql_ds):
         f["time"] = "12:34:56"
         f["datetime"] = "2021/12/11 12:34:56"
         f["uid"] = "6F9619FF-8B86-D011-B42D-00C04FC964FF"
-        f["binary"] = b"\x01\x23\x46\x57\x89\xAB\xCD\xEF"
+        f["binary"] = b"\x01\x23\x46\x57\x89\xab\xcd\xef"
         lyr.CreateFeature(f)
         lyr.CommitTransaction()
 
@@ -626,7 +627,7 @@ def test_binary_field_bcp(mssql_ds):
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
-    f["binfield"] = b"\x00\x7F\xFF\x00\x7F\xFF"
+    f["binfield"] = b"\x00\x7f\xff\x00\x7f\xff"
     f["strfield"] = "some text"
     f["intfield"] = 1
     src_lyr.CreateFeature(f)
@@ -640,14 +641,14 @@ def test_binary_field_bcp(mssql_ds):
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
-    f["binfield"] = b"\xFF\x00\x7F\xFF\x00\x7F"
+    f["binfield"] = b"\xff\x00\x7f\xff\x00\x7f"
     f["strfield"] = "some text"
     f["intfield"] = 3
     src_lyr.CreateFeature(f)
 
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(4 5)"))
-    f["binfield"] = b"\x00\x7F\xFF\x00\x7F\xFF"
+    f["binfield"] = b"\x00\x7f\xff\x00\x7f\xff"
     # leave str undefined
     f["intfield"] = 4
     src_lyr.CreateFeature(f)

@@ -6644,12 +6644,12 @@ template <bool HAS_NAN, bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-static int
-ComputeStatisticsFloat32_SSE2(const float *const pafData,
-                              [[maybe_unused]] float fNoDataValue, int iX,
-                              int nCount, float &fMin, float &fMax,
-                              double &dfBlockMean, double &dfBlockM2,
-                              double &dfBlockValidCount)
+static int ComputeStatisticsFloat32_SSE2(const float *const pafData,
+                                         [[maybe_unused]] float fNoDataValue,
+                                         int iX, int nCount, float &fMin,
+                                         float &fMax, double &dfBlockMean,
+                                         double &dfBlockM2,
+                                         double &dfBlockValidCount)
 {
     auto vValidCount = setzero_pd();
     const auto vOne = set1_pd(1);
@@ -6778,12 +6778,12 @@ template <bool CHECK_MIN_NOT_SAME_AS_MAX, bool HAS_NODATA>
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-static int
-ComputeStatisticsFloat64_SSE2(const double *padfData,
-                              [[maybe_unused]] double dfNoDataValue, int iX,
-                              int nCount, double &dfMin, double &dfMax,
-                              double &dfBlockMean, double &dfBlockM2,
-                              double &dfBlockValidCount)
+static int ComputeStatisticsFloat64_SSE2(const double *padfData,
+                                         [[maybe_unused]] double dfNoDataValue,
+                                         int iX, int nCount, double &dfMin,
+                                         double &dfMax, double &dfBlockMean,
+                                         double &dfBlockM2,
+                                         double &dfBlockValidCount)
 {
     auto vValidCount = setzero_pd();
     const auto vOne = set1_pd(1);

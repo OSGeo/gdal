@@ -106,9 +106,9 @@ typedef byte cryptopp_byte;
 static CryptoPP::PNew s_pNew = nullptr;
 static CryptoPP::PDelete s_pDelete = nullptr;
 
-extern "C" __declspec(dllexport) void __cdecl SetNewAndDeleteFromCryptoPP(
-    CryptoPP::PNew pNew, CryptoPP::PDelete pDelete,
-    CryptoPP::PSetNewHandler pSetNewHandler)
+extern "C" __declspec(dllexport) void __cdecl
+SetNewAndDeleteFromCryptoPP(CryptoPP::PNew pNew, CryptoPP::PDelete pDelete,
+                            CryptoPP::PSetNewHandler pSetNewHandler)
 {
     s_pNew = pNew;
     s_pDelete = pDelete;
