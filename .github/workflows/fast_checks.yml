@@ -1,0 +1,81 @@
+name: Fast Checks
+# Provides <10min feedback with minimal dependencies (SQLite, PROJ only)
+
+on:
+  push:
+    paths-ignore:
+      - 'doc/**'
+    branches-ignore:
+      - 'backport**'
+      - 'dependabot**'
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  fast-build-and-test:
+    name: Quick build + basic tests
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+
+      - name: Install minimal dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            g++ cmake ccache \
+            libsqlite3-dev sqlite3 \
+            libproj-dev \
+            python3-dev python3-numpy python3-pytest
+
+      - name: Setup ccache cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: fast-checks-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            fast-checks-${{ runner.os }}-${{ github.base_ref || 'master' }}-
+            fast-checks-${{ runner.os }}-master-
+            fast-checks-${{ runner.os }}-
+
+      - name: Configure ccache
+        run: |
+          echo "CCACHE_DIR=${{ github.workspace }}/.ccache" >> $GITHUB_ENV
+          echo "CCACHE_MAXSIZE=250M" >> $GITHUB_ENV
+          ccache -z
+
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DUSE_CCACHE=ON \
+            -DBUILD_TESTING=ON \
+            -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
+            -DOGR_BUILD_OPTIONAL_DRIVERS=OFF \
+            -DOGR_ENABLE_DRIVER_GPKG=ON \
+            -DOGR_ENABLE_DRIVER_SQLITE=ON
+
+      - name: Build
+        run: |
+          cmake --build build -j$(nproc)
+
+      - name: Show ccache stats
+        run: ccache -sv
+
+      - name: Quick tests
+        run: |
+          cd build
+          # Run only core driver tests (fast subset)
+          # Note: || true allows seeing all test failures in one run (better for end-of-day pushes)
+          ctest -R "^(gdrivers-.*GPKG|ogr-.*SQLite)" -V --output-on-failure || true

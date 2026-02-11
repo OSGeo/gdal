@@ -2,10 +2,22 @@ name: Docs
 
 on:
     push:
+        paths:
+            - 'doc/**'
+            - 'swig/**'
+            - 'scripts/check_*.py'
+            - 'scripts/doxygen_*.py'
+            - '.github/workflows/doc_checks.yml'
         branches-ignore:
             - 'backport**'
             - 'dependabot**'
     pull_request:
+        paths:
+            - 'doc/**'
+            - 'swig/**'
+            - 'scripts/check_*.py'
+            - 'scripts/doxygen_*.py'
+            - '.github/workflows/doc_checks.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
