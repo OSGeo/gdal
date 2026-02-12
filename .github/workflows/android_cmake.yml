@@ -34,7 +34,7 @@ jobs:
         with:
           path: |
                 ${{ github.workspace }}/ccache.tar.gz
-          key: ${{ runner.os }}-cache-android-cmake-${{ github.sha }}
+          key: ${{ runner.os }}-cache-android-cmake-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-cache-android-cmake-${{ github.base_ref || 'master' }}-
             ${{ runner.os }}-cache-android-cmake-master-
