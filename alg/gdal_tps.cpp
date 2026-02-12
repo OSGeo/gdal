@@ -244,6 +244,8 @@ void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
     // and checking memory usage too...
     if (nGCPCount > 100)
     {
+        // We don't need more than 2 threads: one for forward transformation,
+        // and another one for reverse transformation.
         nThreads = GDALGetNumThreads(papszOptions, "NUM_THREADS",
                                      /* nMaxVal = */ 2,
                                      /* bDefaultAllCPUs = */ false);

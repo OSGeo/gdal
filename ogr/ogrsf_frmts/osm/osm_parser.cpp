@@ -2774,7 +2774,7 @@ OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
         OSM_Close(psCtxt);
         return nullptr;
     }
-    const int nNumThreads = GDALGetNumThreads(/* nMaxVal = */ 128,
+    const int nNumThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
                                               /* bDefaultToAllCPUs = */ true);
     if (nNumThreads > 1)
     {

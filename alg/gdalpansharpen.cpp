@@ -462,7 +462,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
         nThreads = CPLGetNumCPUs();
     else if (nThreads == 0)
     {
-        nThreads = GDALGetNumThreads(/* nMaxVal = */ 128,
+        nThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
                                      /* bDefaulAllCPUs = */ false);
     }
     if (nThreads > 1)

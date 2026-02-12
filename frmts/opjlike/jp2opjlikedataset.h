@@ -59,7 +59,8 @@ struct JP2DatasetBase
     int GetNumThreads()
     {
         if (nThreads < 0)
-            nThreads = GDALGetNumThreads(128, /* bDefaultAllCPUs = */ true);
+            nThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                         /* bDefaultAllCPUs = */ true);
         return nThreads;
     }
 

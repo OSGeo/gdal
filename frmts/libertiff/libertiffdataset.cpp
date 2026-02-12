@@ -3000,7 +3000,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     const int nThreads =
         GDALGetNumThreads(poOpenInfo->papszOpenOptions, "NUM_THREADS",
-                          /* nMaxThreads = */ 1024,
+                          GDAL_DEFAULT_MAX_THREAD_COUNT,
                           /* bDefaultAllCPUs = */ false);
     if (nThreads > 1)
     {

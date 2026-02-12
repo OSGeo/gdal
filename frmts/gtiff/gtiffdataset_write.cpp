@@ -909,10 +909,9 @@ void GTiffDataset::InitCompressionThreads(bool bUpdateMode,
 
     const char *pszNumThreads = "";
     bool bOK = false;
-    const int nThreads =
-        GDALGetNumThreads(papszOptions, "NUM_THREADS",
-                          /* nMaxVals = */ 1024,
-                          /* bDefaultToAllCPUs=*/false, &pszNumThreads, &bOK);
+    const int nThreads = GDALGetNumThreads(
+        papszOptions, "NUM_THREADS", GDAL_DEFAULT_MAX_THREAD_COUNT,
+        /* bDefaultToAllCPUs=*/false, &pszNumThreads, &bOK);
     if (nThreads > 1)
     {
         if ((bUpdateMode && m_nCompression != COMPRESSION_NONE) ||

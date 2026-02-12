@@ -814,7 +814,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 
 #ifdef HAVE_JXL_THREADS
     const uint32_t nMaxThreads =
-        GDALGetNumThreads(/* nMaxThreads = */ 1024,
+        GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
                           /* bDefaultAllCPUs = */ true);
     const uint32_t nThreads = std::min(
         nMaxThreads,
@@ -2293,10 +2293,9 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    const uint32_t nMaxThreads =
-        GDALGetNumThreads(papszOptions, "NUM_THREADS",
-                          /* nMaxThreads = */ 1024,
-                          /* bDefaultAllCPUs = */ true);
+    const uint32_t nMaxThreads = GDALGetNumThreads(
+        papszOptions, "NUM_THREADS", GDAL_DEFAULT_MAX_THREAD_COUNT,
+        /* bDefaultAllCPUs = */ true);
     const uint32_t nThreads =
         std::min(nMaxThreads, JxlResizableParallelRunnerSuggestThreads(
                                   basic_info.xsize, basic_info.ysize));

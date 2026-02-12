@@ -265,7 +265,7 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         params.m_mip_srgb = params.m_perceptual;
     }
 
-    const int nNumThreads = GDALGetNumThreads(/* nMaxVal = */ -1,
+    const int nNumThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
                                               /* bDefaultAllCPUs = */ true);
     CPLDebug("KTX2", "Using %d threads", nNumThreads);
     if (params.m_uastc)

@@ -3267,8 +3267,8 @@ GDALGridContext *GDALGridContextCreate(GDALGridAlgorithm eAlgorithm,
     /* -------------------------------------------------------------------- */
     /*  Start thread pool.                                                  */
     /* -------------------------------------------------------------------- */
-    const int nThreads =
-        GDALGetNumThreads(/* nMaxVal = */ 128, /* bDefaultToAllCPUs = */ true);
+    const int nThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                           /* bDefaultToAllCPUs = */ true);
     if (nThreads > 1)
     {
         psContext->poWorkerThreadPool = new CPLWorkerThreadPool();

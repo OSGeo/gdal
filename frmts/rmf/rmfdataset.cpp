@@ -2893,7 +2893,7 @@ void RMFDataset::WriteTileJobFunc(void *pData)
 CPLErr RMFDataset::InitCompressorData(CSLConstList papszParamList)
 {
     const int nThreads = GDALGetNumThreads(papszParamList, "NUM_THREADS",
-                                           /* nMaxThreads = */ 1024,
+                                           GDAL_DEFAULT_MAX_THREAD_COUNT,
                                            /* bDefaultAllCPUs = */ false);
 
     poCompressData = std::make_shared<RMFCompressData>();

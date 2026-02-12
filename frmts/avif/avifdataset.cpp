@@ -930,7 +930,8 @@ GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             avifCodecChoiceFromName(CPLString(pszCodec).tolower().c_str());
     }
 
-    encoder->maxThreads = GDALGetNumThreads(papszOptions, "NUM_THREADS", -1,
+    encoder->maxThreads = GDALGetNumThreads(papszOptions, "NUM_THREADS",
+                                            GDAL_DEFAULT_MAX_THREAD_COUNT,
                                             /* bDefaultToAllCPUs = */ true);
 
 #if AVIF_VERSION_MAJOR >= 1

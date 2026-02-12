@@ -1071,9 +1071,9 @@ bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
         return false;
     }
 
-    nThreadsMax =
-        GDALGetNumThreads(papszOptions, "NUM_THREADS", /* nMaxThreads = */ 1024,
-                          /* bDefaultAllCPUs=*/true);
+    nThreadsMax = GDALGetNumThreads(papszOptions, "NUM_THREADS",
+                                    GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                    /* bDefaultAllCPUs=*/true);
     if (nThreadsMax <= 1)
         return true;
     CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using up to %d threads",

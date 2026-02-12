@@ -6243,7 +6243,7 @@ bool LayerTranslator::TranslateArrow(
     {
         const char *pszNumThreads = nullptr;
         int nVal =
-            GDALGetNumThreads(/* nMaxVal = */ 1024,
+            GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
                               /* bDefaultToAllCPUs = */ false, &pszNumThreads);
         if (!pszNumThreads)
             nVal = std::max(1, CPLGetNumCPUs() / 2);

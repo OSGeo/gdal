@@ -310,7 +310,7 @@ void *GWKThreadsCreate(char **papszWarpOptions,
                        void *pTransformerArg)
 {
     const int nThreads = GDALGetNumThreads(papszWarpOptions, "NUM_THREADS",
-                                           /* nMaxVal = */ 128,
+                                           GDAL_DEFAULT_MAX_THREAD_COUNT,
                                            /* bDefaultAllCPUs = */ false);
     GWKThreadData *psThreadData = new GWKThreadData();
     auto poThreadPool =

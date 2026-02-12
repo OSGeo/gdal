@@ -15,6 +15,9 @@
 
 #include "cpl_port.h"
 
+/** Somewhat arbitrary threshold to bound the number of threads */
+const int GDAL_DEFAULT_MAX_THREAD_COUNT = 1024;
+
 class CPLWorkerThreadPool;
 
 CPLWorkerThreadPool CPL_DLL *GDALGetGlobalThreadPool(int nThreads);
