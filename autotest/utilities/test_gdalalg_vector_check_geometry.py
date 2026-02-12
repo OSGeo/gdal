@@ -462,22 +462,30 @@ def test_gdalalg_vector_check_geometry_multiple_geometry_fields(alg):
     assert alg.Finalize()
 
 
-def test_gdalalg_vector_check_geometry_multiple_layers(alg):
+@pytest.mark.parametrize("skip_empty", (True, False))
+def test_gdalalg_vector_check_geometry_multiple_layers(alg, polys, skip_empty):
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
-
-    ds.CreateLayer("source1")
-    ds.CreateLayer("source2")
+    with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+        ds.CopyLayer(poly_ds.GetLayer(0), "poly1")
+    ds.CopyLayer(polys.GetLayer(0), "poly2")
 
     alg["input"] = ds
+    alg["skip-empty-layers"] = skip_empty
     alg["output"] = ""
     alg["output-format"] = "stream"
 
     assert alg.Run()
 
     dst_ds = alg["output"].GetDataset()
-    assert dst_ds.GetLayer(0).GetName() == "error_location_source1"
-    assert dst_ds.GetLayer(1).GetName() == "error_location_source2"
+
+    if skip_empty:
+        assert dst_ds.GetLayerCount() == 1
+        assert dst_ds.GetLayer(0).GetName() == "error_location_poly2"
+    else:
+        assert dst_ds.GetLayerCount() == 2
+        assert dst_ds.GetLayer(0).GetName() == "error_location_poly1"
+        assert dst_ds.GetLayer(1).GetName() == "error_location_poly2"
 
 
 def test_gdalalg_vector_check_geometry_no_geometry_field(alg):
@@ -555,3 +563,33 @@ def test_gdalalg_vector_check_geometry_include_field_error(alg):
 
     with pytest.raises(Exception, match="Field .* does not exist"):
         alg.Run()
+
+
+@pytest.mark.require_driver("GDALG")
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_check_geometry_test_ogrsf(tmp_path, polys):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    with gdal.GetDriverByName("GPKG").CreateVector(tmp_path / "src.gpkg") as ds:
+        with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+            ds.CopyLayer(poly_ds.GetLayer(0), "poly1")
+        ds.CopyLayer(polys.GetLayer(0), "poly2")
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+    open(gdalg_filename, "wb").write(
+        b'{"type": "gdal_streamed_alg","command_line": "gdal vector check-geometry '
+        + bytes(tmp_path)
+        + b'/src.gpkg --skip-empty-layers --output-format=stream dummy_dataset_name","relative_paths_relative_to_this_file":false}'
+    )
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret

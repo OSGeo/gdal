@@ -335,6 +335,28 @@ def test_gdalalg_vector_convert_output_format_multiple_layers(tmp_vsimem, driver
         assert convert.Run()
 
 
+@pytest.mark.parametrize("output_format", ("stream", "MEM"))
+def test_gdalalg_vector_convert_skip_empty_layers(output_format):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    with gdal.OpenEx("../ogr/data/poly.shp") as poly_ds:
+        src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_1")
+        src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_2")
+
+    src_ds.GetLayer(0).SetAttributeFilter("EAS_ID=1234567")  # does not exist
+
+    convert = get_convert_alg()
+    convert["input"] = src_ds
+    convert["skip-empty-layers"] = True
+    convert["output-format"] = output_format
+
+    assert convert.Run()
+
+    dst_ds = convert.Output()
+
+    assert dst_ds.GetLayerCount() == 1
+
+
 @pytest.mark.require_driver("GeoJSON")
 def test_gdalalg_vector_convert_to_stdout():
 

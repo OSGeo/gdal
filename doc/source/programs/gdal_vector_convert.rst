@@ -50,6 +50,8 @@ Standard Options
 
     .. include:: gdal_options/overwrite_layer.rst
 
+    .. include:: gdal_options/skip_empty_layers.rst
+
     .. include:: gdal_options/skip_errors.rst
 
     .. include:: gdal_options/update.rst
