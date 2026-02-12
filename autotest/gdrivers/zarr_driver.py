@@ -2731,6 +2731,59 @@ def test_zarr_read_data_type_fallback_zarr_v3(tmp_vsimem):
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
 
 
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "extension_name",
+    ["numpy.datetime64", "numpy.timedelta64"],
+)
+def test_zarr_read_numpy_datetime64_extension_zarr_v3(tmp_vsimem, extension_name):
+    """Test that numpy.datetime64 and numpy.timedelta64 extension types
+    written by zarr-python 3.x (without a fallback key) are mapped to Int64."""
+
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [3],
+        "data_type": {
+            "name": extension_name,
+            "configuration": {"unit": "ns", "scale_factor": 1},
+        },
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [3]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": 0,
+    }
+
+    dirname = tmp_vsimem / "test_np_datetime.zarr"
+    gdal.Mkdir(dirname, 0)
+    gdal.FileFromMemBuffer(dirname / "zarr.json", json.dumps(j))
+    ds = gdal.Open(dirname)
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_numpy_datetime64_unsupported_extension_zarr_v3(tmp_vsimem):
+    """Test that an unrecognized extension type (without fallback) raises an error."""
+
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [1],
+        "data_type": {
+            "name": "some.unknown.extension",
+            "configuration": {},
+        },
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [1]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": 0,
+    }
+
+    dirname = tmp_vsimem / "test_unknown_ext.zarr"
+    gdal.Mkdir(dirname, 0)
+    gdal.FileFromMemBuffer(dirname / "zarr.json", json.dumps(j))
+    with pytest.raises(Exception, match="Invalid or unsupported format"):
+        gdal.Open(dirname)
+
+
 @pytest.mark.parametrize(
     "data_type,fill_value,nodata",
     [

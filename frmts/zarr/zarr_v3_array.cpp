@@ -1242,8 +1242,17 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
                 elts.emplace_back(elt);
                 return GDALExtendedDataType::CreateString();
             }
-            else
-                break;
+            else if (osName == "numpy.datetime64" || osName == "numpy.timedelta64")
+            {
+                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
+                elt.gdalType = GDALExtendedDataType::Create(GDT_Int64);
+                elt.gdalSize = elt.gdalType.GetSize();
+                elt.nativeSize = elt.gdalSize;
+                if (elt.nativeSize > 1)
+                    elt.needByteSwapping = (CPL_IS_LSB == 0);
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::Create(GDT_Int64);
+            }
         }
     } while (false);
     CPLError(CE_Failure, CPLE_AppDefined,
