@@ -1,0 +1,28 @@
+name: Cleanup stale caches
+description: Prune old cache entries matching a prefix, keeping only the current key
+
+inputs:
+  key:
+    description: Cache key to preserve (will not be deleted)
+    required: true
+  prefix:
+    description: Cache key prefix to match for deletion
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        KEEP_KEY: ${{ inputs.key }}
+        PREFIX: ${{ inputs.prefix }}
+        REF: ${{ github.ref }}
+      run: |
+        KEYS=$(gh cache list --ref "$REF" --key "$PREFIX" --limit 100 --json key -q '.[].key' 2>/dev/null) || exit 0
+        [ -z "$KEYS" ] && exit 0
+        echo "$KEYS" | while read -r key; do
+          [ -z "$key" ] && continue
+          [ "$key" = "$KEEP_KEY" ] && continue
+          gh cache delete "$key" 2>/dev/null && echo "Deleted: $key" || true
+        done

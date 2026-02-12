@@ -19,6 +19,7 @@ concurrency:
 
 permissions:
   contents: read  #  to fetch code (actions/checkout)
+  actions: write  #  to delete old caches
 
 jobs:
 
@@ -53,3 +54,10 @@ jobs:
             TRAVIS: true
             TRAVIS_OS_NAME: osx
             BUILD_NAME: macos_build_conda
+
+      - name: Cleanup old caches
+        if: always()
+        uses: ./.github/actions/cleanup-cache
+        with:
+          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          prefix: ${{ runner.os }}-ccache-

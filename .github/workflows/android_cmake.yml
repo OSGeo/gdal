@@ -19,6 +19,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
 
@@ -42,3 +43,10 @@ jobs:
 
       - name: Build
         run: docker run -e WORK_DIR="$PWD" -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/android_cmake/start.sh
+
+      - name: Cleanup old caches
+        if: always()
+        uses: ./.github/actions/cleanup-cache
+        with:
+          key: ${{ runner.os }}-cache-android-cmake-${{ github.ref_name }}-${{ github.sha }}
+          prefix: ${{ runner.os }}-cache-android-cmake-

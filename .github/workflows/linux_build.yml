@@ -19,6 +19,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
 
@@ -324,6 +325,13 @@ jobs:
         with:
           path: ${{ github.workspace }}/.ccache
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+
+      - name: Cleanup old caches
+        if: always()
+        uses: ./.github/actions/cleanup-cache
+        with:
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+          prefix: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-
 
       - name: Start test services
         if: matrix.before_test_script

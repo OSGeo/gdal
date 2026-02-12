@@ -25,6 +25,7 @@ env:
 
 permissions:
   contents: read  #  to fetch code (actions/checkout)
+  actions: write  #  to delete old caches
 
 jobs:
 
@@ -397,6 +398,12 @@ jobs:
         working-directory: ${{ github.workspace }}
       - name: ccache statistics
         run: ccache -s
+      - name: Cleanup old caches
+        if: always()
+        uses: ./.github/actions/cleanup-cache
+        with:
+          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.sha }}
+          prefix: ${{ runner.os }}-${{ env.cache-name }}-
 
   build-windows-conda:
     runs-on: windows-2022
@@ -689,6 +696,12 @@ jobs:
         ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal --dynamic --disable-odbc
     - name: ccache statistics
       run: ccache -s
+    - name: Cleanup old caches
+      if: always()
+      uses: ./.github/actions/cleanup-cache
+      with:
+        key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.sha }}
+        prefix: ${{ runner.os }}-${{ env.cache-name }}-
 
   # Disabled for now since bindings in master use GDALDatasetGetFieldDomainNames
   # but libgdal from Conda has not it yet.

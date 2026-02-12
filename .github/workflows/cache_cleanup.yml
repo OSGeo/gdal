@@ -1,0 +1,27 @@
+name: Cache Cleanup
+
+on:
+  delete:
+    branches-ignore:
+      - 'master'
+      - 'release/**'
+
+permissions:
+  actions: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete branch caches
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          REF: refs/heads/${{ github.event.ref }}
+        run: |
+          echo "Cleaning caches for deleted branch: $REF"
+          gh cache list --repo "$REPO" --ref "$REF" --json key -q '.[].key' | \
+            while read key; do
+              echo "Deleting cache: $key"
+              gh cache delete "$key" --repo "$REPO" 2>/dev/null || true
+            done
