@@ -1200,12 +1200,7 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
             elt.gdalSize = elt.gdalType.GetSize();
             if (!elt.gdalTypeIsApproxOfNative)
                 elt.nativeSize = elt.gdalSize;
-
-            if (elt.nativeSize > 1)
-            {
-                elt.needByteSwapping = (CPL_IS_LSB == 0);
-            }
-
+            elt.needByteSwapping = (CPL_IS_LSB == 0);
             elts.emplace_back(elt);
             return GDALExtendedDataType::Create(eDT);
         }
@@ -1248,8 +1243,7 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
                 elt.gdalType = GDALExtendedDataType::Create(GDT_Int64);
                 elt.gdalSize = elt.gdalType.GetSize();
                 elt.nativeSize = elt.gdalSize;
-                if (elt.nativeSize > 1)
-                    elt.needByteSwapping = (CPL_IS_LSB == 0);
+                elt.needByteSwapping = (CPL_IS_LSB == 0);
                 elts.emplace_back(elt);
                 return GDALExtendedDataType::Create(GDT_Int64);
             }
@@ -1612,6 +1606,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         CPLError(CE_Failure, CPLE_NotSupported, "data_type missing");
         return nullptr;
     }
+    const auto oOrigDtype = oDtype;
     if (oDtype["fallback"].IsValid())
         oDtype = oDtype["fallback"];
     std::vector<DtypeElt> aoDtypeElts;
@@ -1731,36 +1726,51 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         }
         else
         {
-            bool bOK = true;
-            double dfNoDataValue = ParseNoDataStringAsDouble(osFillValue, bOK);
-            if (!bOK)
+            // Handle "NaT" fill_value for numpy.datetime64/timedelta64
+            // NaT is equivalent to INT64_MIN per the zarr extension spec
+            if (osFillValue == "NaT" && oType.GetNumericDataType() == GDT_Int64)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
-                return nullptr;
-            }
-            else if (oType.GetNumericDataType() == GDT_Float16)
-            {
-                const GFloat16 hfNoDataValue =
-                    static_cast<GFloat16>(dfNoDataValue);
-                abyNoData.resize(sizeof(hfNoDataValue));
-                memcpy(&abyNoData[0], &hfNoDataValue, sizeof(hfNoDataValue));
-            }
-            else if (oType.GetNumericDataType() == GDT_Float32)
-            {
-                const float fNoDataValue = static_cast<float>(dfNoDataValue);
-                abyNoData.resize(sizeof(fNoDataValue));
-                memcpy(&abyNoData[0], &fNoDataValue, sizeof(fNoDataValue));
-            }
-            else if (oType.GetNumericDataType() == GDT_Float64)
-            {
-                abyNoData.resize(sizeof(dfNoDataValue));
-                memcpy(&abyNoData[0], &dfNoDataValue, sizeof(dfNoDataValue));
+                const int64_t nNaT = std::numeric_limits<int64_t>::min();
+                abyNoData.resize(oType.GetSize());
+                memcpy(&abyNoData[0], &nNaT, sizeof(nNaT));
             }
             else
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid fill_value for this data type");
-                return nullptr;
+                bool bOK = true;
+                double dfNoDataValue =
+                    ParseNoDataStringAsDouble(osFillValue, bOK);
+                if (!bOK)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
+                    return nullptr;
+                }
+                else if (oType.GetNumericDataType() == GDT_Float16)
+                {
+                    const GFloat16 hfNoDataValue =
+                        static_cast<GFloat16>(dfNoDataValue);
+                    abyNoData.resize(sizeof(hfNoDataValue));
+                    memcpy(&abyNoData[0], &hfNoDataValue,
+                           sizeof(hfNoDataValue));
+                }
+                else if (oType.GetNumericDataType() == GDT_Float32)
+                {
+                    const float fNoDataValue =
+                        static_cast<float>(dfNoDataValue);
+                    abyNoData.resize(sizeof(fNoDataValue));
+                    memcpy(&abyNoData[0], &fNoDataValue, sizeof(fNoDataValue));
+                }
+                else if (oType.GetNumericDataType() == GDT_Float64)
+                {
+                    abyNoData.resize(sizeof(dfNoDataValue));
+                    memcpy(&abyNoData[0], &dfNoDataValue,
+                           sizeof(dfNoDataValue));
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid fill_value for this data type");
+                    return nullptr;
+                }
             }
         }
     }
@@ -1882,6 +1892,31 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     }
     poArray->SetAttributes(Self(), oAttributes);
     poArray->SetDtype(oDtype);
+    // Expose extension data type configuration as structural info
+    if (oOrigDtype.GetType() == CPLJSONObject::Type::Object)
+    {
+        const auto osName = oOrigDtype.GetString("name");
+        if (!osName.empty())
+        {
+            poArray->SetStructuralInfo("data_type.name", osName.c_str());
+        }
+        const auto oConfig = oOrigDtype["configuration"];
+        if (oConfig.IsValid() &&
+            oConfig.GetType() == CPLJSONObject::Type::Object)
+        {
+            const auto osUnit = oConfig.GetString("unit");
+            if (!osUnit.empty())
+            {
+                poArray->SetStructuralInfo("data_type.unit", osUnit.c_str());
+            }
+            const auto nScaleFactor = oConfig.GetInteger("scale_factor", -1);
+            if (nScaleFactor > 0)
+            {
+                poArray->SetStructuralInfo("data_type.scale_factor",
+                                           CPLSPrintf("%d", nScaleFactor));
+            }
+        }
+    }
     if (oCodecs.Size() > 0 &&
         oCodecs[oCodecs.Size() - 1].GetString("name") != "bytes")
     {
