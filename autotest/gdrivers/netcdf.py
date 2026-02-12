@@ -6893,3 +6893,78 @@ def test_netcdf_open_geotransform_gt5_positive():
         [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
     )
     assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+#
+
+
+@pytest.mark.parametrize(
+    "options,expected_gt,expected_cs,expected_warp_gt,expected_warp_cs",
+    [
+        (
+            [],
+            (1841001.75, 1.5, -5.0, 1144003.25, -5.0, -1.5),
+            4672,
+            (1840901.75, 5.2201532544552744, 0.0, 1144003.25, 0.0, -5.2201532544552744),
+            4454,
+        ),
+        (
+            ["WRITE_LONLAT=YES"],
+            (1841001.75, 1.5, -5.0, 1144003.25, -5.0, -1.5),
+            4672,
+            (
+                1840898.6923189342,
+                5.245503735406323,
+                0.0,
+                1144003.2801153609,
+                0.0,
+                -5.245503735406323,
+            ),
+            4512,
+        ),
+        (
+            ["WRITE_BOTTOMUP=NO"],
+            (1840901.75, 1.5, 5.0, 1143973.25, -5.0, 1.5),
+            4855,
+            (1840901.75, 5.2201532544552744, 0.0, 1144003.25, 0.0, -5.2201532544552744),
+            4454,
+        ),
+        (
+            ["WRITE_LONLAT=YES", "WRITE_BOTTOMUP=NO"],
+            (1840901.75, 1.5, 5.0, 1143973.25, -5.0, 1.5),
+            4855,
+            (
+                1840901.2295569642,
+                5.249091373447578,
+                0.0,
+                1144004.0234124723,
+                0.0,
+                -5.249091373447578,
+            ),
+            4443,
+        ),
+    ],
+)
+def test_netcdf_write_non_axis_aligned_geotransform(
+    tmp_path, options, expected_gt, expected_cs, expected_warp_gt, expected_warp_cs
+):
+
+    src_ds = gdal.Open("../gcore/data/geomatrix.tif")
+    gdal.GetDriverByName("netCDF").CreateCopy(
+        tmp_path / "out.nc", src_ds, options=options
+    )
+    ds = gdal.Open(tmp_path / "out.nc")
+    assert ds.GetGeoTransform() == pytest.approx(expected_gt)
+    assert ds.GetRasterBand(1).Checksum() == expected_cs
+
+    if "WRITE_LONLAT=YES" in options:
+        warped_ds = gdal.Warp(
+            "", ds, options="-of MEM -to METHOD=GEOLOC_ARRAY -t_srs EPSG:32611"
+        )
+    else:
+        warped_ds = gdal.Warp(
+            "", ds, options="-of MEM -to METHOD=GEOTRANSFORM -t_srs EPSG:32611"
+        )
+    assert warped_ds.GetGeoTransform() == pytest.approx(expected_warp_gt)
+    assert warped_ds.GetRasterBand(1).Checksum() == expected_warp_cs
