@@ -463,7 +463,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
     else if (nThreads == 0)
     {
         nThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
-                                     /* bDefaulAllCPUs = */ false);
+                                     /* bDefaultAllCPUs = */ false);
     }
     if (nThreads > 1)
     {
