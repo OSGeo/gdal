@@ -17,6 +17,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi_virtual.h"
 #include "ucs4_utf8.hpp"
+#include "gdal_thread_pool.h"
 
 #include "netcdf_cf_constants.h"  // for CF_UNITS, etc
 
@@ -1070,15 +1071,9 @@ bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
         return false;
     }
 
-    const char *pszNumThreads = CSLFetchNameValueDef(
-        papszOptions, "NUM_THREADS",
-        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
-    if (EQUAL(pszNumThreads, "ALL_CPUS"))
-        nThreadsMax = CPLGetNumCPUs();
-    else
-        nThreadsMax = std::max(1, atoi(pszNumThreads));
-    if (nThreadsMax > 1024)
-        nThreadsMax = 1024;
+    nThreadsMax = GDALGetNumThreads(papszOptions, "NUM_THREADS",
+                                    GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                    /* bDefaultAllCPUs=*/true);
     if (nThreadsMax <= 1)
         return true;
     CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using up to %d threads",

@@ -17,6 +17,7 @@
 #include "gdaljp2metadata.h"
 #include "gdaljp2abstractdataset.h"
 #include "gdalorienteddataset.h"
+#include "gdal_thread_pool.h"
 
 #include <algorithm>
 #include <cassert>
@@ -812,14 +813,9 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
 
 #ifdef HAVE_JXL_THREADS
-    const char *pszNumThreads =
-        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    uint32_t nMaxThreads = static_cast<uint32_t>(
-        EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                         : atoi(pszNumThreads));
-    if (nMaxThreads > 1024)
-        nMaxThreads = 1024;  // to please Coverity
-
+    const uint32_t nMaxThreads =
+        GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                          /* bDefaultAllCPUs = */ true);
     const uint32_t nThreads = std::min(
         nMaxThreads,
         JxlResizableParallelRunnerSuggestThreads(info.xsize, info.ysize));
@@ -2297,15 +2293,9 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    const char *pszNumThreads = CSLFetchNameValue(papszOptions, "NUM_THREADS");
-    if (pszNumThreads == nullptr)
-        pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    uint32_t nMaxThreads = static_cast<uint32_t>(
-        EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                         : atoi(pszNumThreads));
-    if (nMaxThreads > 1024)
-        nMaxThreads = 1024;  // to please Coverity
-
+    const uint32_t nMaxThreads = GDALGetNumThreads(
+        papszOptions, "NUM_THREADS", GDAL_DEFAULT_MAX_THREAD_COUNT,
+        /* bDefaultAllCPUs = */ true);
     const uint32_t nThreads =
         std::min(nMaxThreads, JxlResizableParallelRunnerSuggestThreads(
                                   basic_info.xsize, basic_info.ysize));

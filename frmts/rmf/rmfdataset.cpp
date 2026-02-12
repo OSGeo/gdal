@@ -19,6 +19,7 @@
 #include "cpl_string.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
+#include "gdal_thread_pool.h"
 
 #include "rmfdataset.h"
 
@@ -2891,29 +2892,12 @@ void RMFDataset::WriteTileJobFunc(void *pData)
 
 CPLErr RMFDataset::InitCompressorData(CSLConstList papszParamList)
 {
-    const char *pszNumThreads =
-        CSLFetchNameValue(papszParamList, "NUM_THREADS");
-    if (pszNumThreads == nullptr)
-        pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-
-    int nThreads = 0;
-    if (pszNumThreads != nullptr)
-    {
-        nThreads = EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                                    : atoi(pszNumThreads);
-    }
-
-    if (nThreads < 0)
-    {
-        nThreads = 0;
-    }
-    if (nThreads > 1024)
-    {
-        nThreads = 1024;
-    }
+    const int nThreads = GDALGetNumThreads(papszParamList, "NUM_THREADS",
+                                           GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                           /* bDefaultAllCPUs = */ false);
 
     poCompressData = std::make_shared<RMFCompressData>();
-    if (nThreads > 0)
+    if (nThreads > 1)
     {
         if (!poCompressData->oThreadPool.Setup(nThreads, nullptr, nullptr))
         {
@@ -2942,7 +2926,7 @@ CPLErr RMFDataset::InitCompressorData(CSLConstList papszParamList)
         return CE_Failure;
     }
 
-    for (size_t i = 0; i != poCompressData->asJobs.size(); ++i)
+    for (size_t i = 0; i < poCompressData->asJobs.size(); ++i)
     {
         RMFCompressionJob &sJob(poCompressData->asJobs[i]);
         sJob.pabyCompressedData =
@@ -2951,7 +2935,7 @@ CPLErr RMFDataset::InitCompressorData(CSLConstList papszParamList)
         poCompressData->asReadyJobs.push_back(&sJob);
     }
 
-    if (nThreads > 0)
+    if (nThreads > 1)
     {
         poCompressData->hReadyJobMutex = CPLCreateMutex();
         CPLReleaseMutex(poCompressData->hReadyJobMutex);

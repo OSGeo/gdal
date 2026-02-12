@@ -18,6 +18,7 @@
 #include "avifdrivercore.h"
 #include "gdalexif.h"
 #include "memdataset.h"
+#include "gdal_thread_pool.h"
 
 #include <avif/avif.h>
 
@@ -929,13 +930,9 @@ GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             avifCodecChoiceFromName(CPLString(pszCodec).tolower().c_str());
     }
 
-    const char *pszThreads = CSLFetchNameValueDef(
-        papszOptions, "NUM_THREADS",
-        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
-    if (pszThreads && !EQUAL(pszThreads, "ALL_CPUS"))
-        encoder->maxThreads = atoi(pszThreads);
-    else
-        encoder->maxThreads = CPLGetNumCPUs();
+    encoder->maxThreads = GDALGetNumThreads(papszOptions, "NUM_THREADS",
+                                            GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                            /* bDefaultToAllCPUs = */ true);
 
 #if AVIF_VERSION_MAJOR >= 1
     encoder->quality = nQuality;

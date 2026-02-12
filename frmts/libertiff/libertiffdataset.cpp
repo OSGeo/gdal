@@ -2998,20 +2998,13 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
         poOpenInfo->fpL = nullptr;
     }
 
-    const char *pszValue =
-        CSLFetchNameValue(poOpenInfo->papszOpenOptions, "NUM_THREADS");
-    if (pszValue == nullptr)
-        pszValue = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    if (pszValue)
+    const int nThreads =
+        GDALGetNumThreads(poOpenInfo->papszOpenOptions, "NUM_THREADS",
+                          GDAL_DEFAULT_MAX_THREAD_COUNT,
+                          /* bDefaultAllCPUs = */ false);
+    if (nThreads > 1)
     {
-        int nThreads =
-            EQUAL(pszValue, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszValue);
-        if (nThreads > 1024)
-            nThreads = 1024;  // to please Coverity
-        if (nThreads > 1)
-        {
-            m_poThreadPool = GDALGetGlobalThreadPool(nThreads);
-        }
+        m_poThreadPool = GDALGetGlobalThreadPool(nThreads);
     }
 
     return true;

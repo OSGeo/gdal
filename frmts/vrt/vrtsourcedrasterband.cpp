@@ -36,6 +36,7 @@
 #include "cpl_quad_tree.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal.h"
 #include "gdalantirecursion.h"
 #include "gdal_priv.h"

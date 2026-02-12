@@ -20,6 +20,7 @@
 #include "cpl_json.h"
 #include "cpl_http.h"
 #include "ogr_p.h"
+#include "gdal_thread_pool.h"
 
 #include "mvt_tile.h"
 #include "mvtutils.h"
@@ -6403,12 +6404,8 @@ GDALDataset *OGRMVTWriterDataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
-    int nThreads = CPLGetNumCPUs();
-    const char *pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    if (pszNumThreads && CPLGetValueType(pszNumThreads) == CPL_VALUE_INTEGER)
-    {
-        nThreads = atoi(pszNumThreads);
-    }
+    const int nThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                           /* bDefaultToAllCPUs = */ true);
     if (nThreads > 1)
     {
         poDS->m_bThreadPoolOK =

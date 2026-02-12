@@ -29,6 +29,7 @@
 #include "cpl_mem_cache.h"
 #include "cpl_minixml.h"
 #include "cpl_quad_tree.h"
+#include "cpl_worker_thread_pool.h"
 #include "vrtdataset.h"
 #include "vrt_priv.h"
 #include "ogrsf_frmts.h"
@@ -3753,15 +3754,8 @@ int GDALTileIndexDataset::GetNumThreads() const
         CSLFetchNameValueDef(GetOpenOptions(), "NUM_THREADS", nullptr);
     if (!pszNumThreads)
         pszNumThreads = CPLGetConfigOption("GTI_NUM_THREADS", nullptr);
-    if (!pszNumThreads)
-        pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    if (EQUAL(pszNumThreads, "0") || EQUAL(pszNumThreads, "1"))
-        return atoi(pszNumThreads);
-    const int nMaxPoolSize = GDALGetMaxDatasetPoolSize();
-    const int nLimit = std::min(CPLGetNumCPUs(), nMaxPoolSize);
-    if (EQUAL(pszNumThreads, "ALL_CPUS"))
-        return nLimit;
-    return std::min(atoi(pszNumThreads), nLimit);
+    return GDALGetNumThreads(pszNumThreads, GDALGetMaxDatasetPoolSize(),
+                             /* bDefaultAllCPUs = */ true);
 }
 
 /************************************************************************/

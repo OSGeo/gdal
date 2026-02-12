@@ -16,6 +16,7 @@
 #include "cpl_error_internal.h"
 #include "cpl_minixml.h"
 #include "cpl_string.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal_frmts.h"
 #include "ogr_spatialref.h"
 #include "gdal_thread_pool.h"
@@ -2540,15 +2541,8 @@ CPLErr VRTDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                                              "NUM_THREADS", nullptr);
     if (!pszNumThreads)
         pszNumThreads = CPLGetConfigOption("VRT_NUM_THREADS", nullptr);
-    if (!pszNumThreads)
-        pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    if (EQUAL(pszNumThreads, "0") || EQUAL(pszNumThreads, "1"))
-        return atoi(pszNumThreads);
-    const int nMaxPoolSize = GDALGetMaxDatasetPoolSize();
-    const int nLimit = std::min(CPLGetNumCPUs(), nMaxPoolSize);
-    if (EQUAL(pszNumThreads, "ALL_CPUS"))
-        return nLimit;
-    return std::min(atoi(pszNumThreads), nLimit);
+    return GDALGetNumThreads(pszNumThreads, GDALGetMaxDatasetPoolSize(),
+                             /* bDefaultAllCPUs = */ true);
 }
 
 /************************************************************************/

@@ -30,6 +30,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_worker_thread_pool.h"
+#include "gdal_thread_pool.h"
 
 #ifdef HAVE_EXPAT
 #include "ogr_expat.h"
@@ -2773,16 +2774,13 @@ OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
         OSM_Close(psCtxt);
         return nullptr;
     }
-    const char *pszNumThreads =
-        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    int nNumCPUs = CPLGetNumCPUs();
-    if (pszNumThreads && !EQUAL(pszNumThreads, "ALL_CPUS"))
-        nNumCPUs = std::max(0, std::min(2 * nNumCPUs, atoi(pszNumThreads)));
-    if (nNumCPUs > 1)
+    const int nNumThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                              /* bDefaultToAllCPUs = */ true);
+    if (nNumThreads > 1)
     {
         psCtxt->poWTP = new CPLWorkerThreadPool();
         // coverity[tainted_data]
-        if (!psCtxt->poWTP->Setup(nNumCPUs, nullptr, nullptr))
+        if (!psCtxt->poWTP->Setup(nNumThreads, nullptr, nullptr))
         {
             delete psCtxt->poWTP;
             psCtxt->poWTP = nullptr;

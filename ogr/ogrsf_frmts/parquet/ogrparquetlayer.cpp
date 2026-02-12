@@ -16,6 +16,7 @@
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
+#include "gdal_thread_pool.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -873,13 +874,13 @@ int OGRParquetLayerBase::TestCapability(const char *pszCap) const
 /* static */
 int OGRParquetLayerBase::GetNumCPUs()
 {
-    const char *pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    int nNumThreads = 0;
+    const char *pszNumThreads = nullptr;
+    int nNumThreads =
+        GDALGetNumThreads(pszNumThreads,
+                          /* nMaxVal = */ -1,
+                          /* bDefaultToAllCPUs = */ false, &pszNumThreads);
     if (pszNumThreads == nullptr)
         nNumThreads = std::min(4, CPLGetNumCPUs());
-    else
-        nNumThreads = EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                                       : atoi(pszNumThreads);
     if (nNumThreads > 1)
     {
         CPL_IGNORE_RET_VAL(arrow::SetCpuThreadPoolCapacity(nNumThreads));

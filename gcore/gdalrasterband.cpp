@@ -38,6 +38,7 @@
 #include "cpl_string.h"
 #include "cpl_virtualmem.h"
 #include "cpl_vsi.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal.h"
 #include "gdal_abstractbandblockcache.h"
 #include "gdalantirecursion.h"
@@ -7383,16 +7384,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             int nThreads = 1;
             if (nChunkYSize > 1)
             {
-                const char *pszNumThreads =
-                    CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-                if (pszNumThreads)
-                {
-                    if (EQUAL(pszNumThreads, "ALL_CPUS"))
-                        nThreads = CPLGetNumCPUs();
-                    else
-                        nThreads =
-                            std::clamp(atoi(pszNumThreads), 1, CPLGetNumCPUs());
-                }
+                nThreads = GDALGetNumThreads(CPLGetNumCPUs(),
+                                             /* bDefaultToAllCPUs = */ false);
             }
 
             int nNewChunkXSize = nChunkXSize;
@@ -7672,18 +7665,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
         {
             if (nChunkYSize > 1)
             {
-                const char *pszNumThreads =
-                    CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-                if (pszNumThreads)
-                {
-                    if (EQUAL(pszNumThreads, "ALL_CPUS"))
-                        nThreads = CPLGetNumCPUs();
-                    else
-                        nThreads =
-                            std::clamp(atoi(pszNumThreads), 1, CPLGetNumCPUs());
-                    if (nThreads > 1)
-                        psThreadPool = GDALGetGlobalThreadPool(nThreads);
-                }
+                nThreads = GDALGetNumThreads(CPLGetNumCPUs(),
+                                             /* bDefaultToAllCPUs = */ false);
             }
 
             int nNewChunkXSize = nChunkXSize;

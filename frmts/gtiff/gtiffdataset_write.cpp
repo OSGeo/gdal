@@ -907,65 +907,57 @@ void GTiffDataset::InitCompressionThreads(bool bUpdateMode,
     if (m_nBlockXSize == nRasterXSize && m_nBlockYSize == nRasterYSize)
         return;
 
-    const char *pszValue = CSLFetchNameValue(papszOptions, "NUM_THREADS");
-    if (pszValue == nullptr)
-        pszValue = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    if (pszValue)
+    const char *pszNumThreads = "";
+    bool bOK = false;
+    const int nThreads = GDALGetNumThreads(
+        papszOptions, "NUM_THREADS", GDAL_DEFAULT_MAX_THREAD_COUNT,
+        /* bDefaultToAllCPUs=*/false, &pszNumThreads, &bOK);
+    if (nThreads > 1)
     {
-        int nThreads =
-            EQUAL(pszValue, "ALL_CPUS") ? CPLGetNumCPUs() : atoi(pszValue);
-        if (nThreads > 1024)
-            nThreads = 1024;  // to please Coverity
-        if (nThreads > 1)
+        if ((bUpdateMode && m_nCompression != COMPRESSION_NONE) ||
+            (nBands >= 1 && IsMultiThreadedReadCompatible()))
         {
-            if ((bUpdateMode && m_nCompression != COMPRESSION_NONE) ||
-                (nBands >= 1 && IsMultiThreadedReadCompatible()))
+            CPLDebug("GTiff",
+                     "Using up to %d threads for compression/decompression",
+                     nThreads);
+
+            m_poThreadPool = GDALGetGlobalThreadPool(nThreads);
+            if (bUpdateMode && m_poThreadPool)
+                m_poCompressQueue = m_poThreadPool->CreateJobQueue();
+
+            if (m_poCompressQueue != nullptr)
             {
-                CPLDebug("GTiff",
-                         "Using up to %d threads for compression/decompression",
-                         nThreads);
-
-                m_poThreadPool = GDALGetGlobalThreadPool(nThreads);
-                if (bUpdateMode && m_poThreadPool)
-                    m_poCompressQueue = m_poThreadPool->CreateJobQueue();
-
-                if (m_poCompressQueue != nullptr)
+                // Add a margin of an extra job w.r.t thread number
+                // so as to optimize compression time (enables the main
+                // thread to do boring I/O while all CPUs are working).
+                m_asCompressionJobs.resize(nThreads + 1);
+                memset(&m_asCompressionJobs[0], 0,
+                       m_asCompressionJobs.size() *
+                           sizeof(GTiffCompressionJob));
+                for (int i = 0;
+                     i < static_cast<int>(m_asCompressionJobs.size()); ++i)
                 {
-                    // Add a margin of an extra job w.r.t thread number
-                    // so as to optimize compression time (enables the main
-                    // thread to do boring I/O while all CPUs are working).
-                    m_asCompressionJobs.resize(nThreads + 1);
-                    memset(&m_asCompressionJobs[0], 0,
-                           m_asCompressionJobs.size() *
-                               sizeof(GTiffCompressionJob));
-                    for (int i = 0;
-                         i < static_cast<int>(m_asCompressionJobs.size()); ++i)
-                    {
-                        m_asCompressionJobs[i].pszTmpFilename =
-                            CPLStrdup(VSIMemGenerateHiddenFilename(
-                                CPLSPrintf("thread_job_%d.tif", i)));
-                        m_asCompressionJobs[i].nStripOrTile = -1;
-                    }
-
-                    // This is kind of a hack, but basically using
-                    // TIFFWriteRawStrip/Tile and then TIFFReadEncodedStrip/Tile
-                    // does not work on a newly created file, because
-                    // TIFF_MYBUFFER is not set in tif_flags
-                    // (if using TIFFWriteEncodedStrip/Tile first,
-                    // TIFFWriteBufferSetup() is automatically called).
-                    // This should likely rather fixed in libtiff itself.
-                    CPL_IGNORE_RET_VAL(
-                        TIFFWriteBufferSetup(m_hTIFF, nullptr, -1));
+                    m_asCompressionJobs[i].pszTmpFilename =
+                        CPLStrdup(VSIMemGenerateHiddenFilename(
+                            CPLSPrintf("thread_job_%d.tif", i)));
+                    m_asCompressionJobs[i].nStripOrTile = -1;
                 }
+
+                // This is kind of a hack, but basically using
+                // TIFFWriteRawStrip/Tile and then TIFFReadEncodedStrip/Tile
+                // does not work on a newly created file, because
+                // TIFF_MYBUFFER is not set in tif_flags
+                // (if using TIFFWriteEncodedStrip/Tile first,
+                // TIFFWriteBufferSetup() is automatically called).
+                // This should likely rather fixed in libtiff itself.
+                CPL_IGNORE_RET_VAL(TIFFWriteBufferSetup(m_hTIFF, nullptr, -1));
             }
         }
-        else if (nThreads < 0 ||
-                 (!EQUAL(pszValue, "0") && !EQUAL(pszValue, "1") &&
-                  !EQUAL(pszValue, "ALL_CPUS")))
-        {
-            ReportError(CE_Warning, CPLE_AppDefined,
-                        "Invalid value for NUM_THREADS: %s", pszValue);
-        }
+    }
+    else if (!bOK)
+    {
+        ReportError(CE_Warning, CPLE_AppDefined,
+                    "Invalid value for NUM_THREADS: %s", pszNumThreads);
     }
 }
 

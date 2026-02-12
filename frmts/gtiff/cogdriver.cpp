@@ -677,11 +677,12 @@ static std::unique_ptr<GDALDataset> CreateReprojectedDS(
     std::unique_ptr<CPLConfigOptionSetter> poWarpThreadSetter;
     if (pszNumThreads)
     {
-        poWarpThreadSetter.reset(new CPLConfigOptionSetter(
-            "GDAL_NUM_THREADS", pszNumThreads, false));
+        poWarpThreadSetter = std::make_unique<CPLConfigOptionSetter>(
+            "GDAL_NUM_THREADS", pszNumThreads, false);
     }
 
     auto hRet = GDALWarp(osTmpFile, nullptr, 1, &hSrcDS, psOptions, nullptr);
+    CPL_IGNORE_RET_VAL(poWarpThreadSetter);
     GDALWarpAppOptionsFree(psOptions);
     CPLDebug("COG", "Reprojecting source dataset: end");
 
