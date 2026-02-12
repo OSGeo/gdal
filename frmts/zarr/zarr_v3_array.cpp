@@ -1999,8 +1999,7 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
     }
     else if (!abyNoData.empty() &&
              (zarrDataType.nativeType == DtypeElt::NativeType::STRING_ASCII ||
-              zarrDataType.nativeType ==
-                  DtypeElt::NativeType::STRING_UNICODE))
+              zarrDataType.nativeType == DtypeElt::NativeType::STRING_UNICODE))
     {
         // Convert from GDAL representation (char* pointer) to native
         // format (fixed-size null-padded buffer) for FillWithNoData()
@@ -2010,10 +2009,10 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
         if (pStr &&
             zarrDataType.nativeType == DtypeElt::NativeType::STRING_ASCII)
         {
-            const size_t nCopy = std::min(
-                strlen(pStr),
-                zarrDataType.nativeSize > 0 ? zarrDataType.nativeSize - 1
-                                            : static_cast<size_t>(0));
+            const size_t nCopy =
+                std::min(strlen(pStr), zarrDataType.nativeSize > 0
+                                           ? zarrDataType.nativeSize - 1
+                                           : static_cast<size_t>(0));
             memcpy(oInputArrayMetadata.abyNoData.data(), pStr, nCopy);
         }
         // STRING_UNICODE non-empty fill would need UTF-8 to UCS4

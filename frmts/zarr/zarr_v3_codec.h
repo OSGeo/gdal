@@ -254,6 +254,10 @@ class ZarrV3CodecBytes final : public ZarrV3Codec
 
     bool IsNoOp() const override
     {
+        // Byte-oriented string types have no endianness concept
+        if (m_oInputArrayMetadata.oElt.nativeType ==
+            DtypeElt::NativeType::STRING_ASCII)
+            return true;
         if constexpr (CPL_IS_LSB)
             return m_oInputArrayMetadata.oElt.nativeSize == 1 || m_bLittle;
         else
