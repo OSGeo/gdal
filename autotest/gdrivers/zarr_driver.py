@@ -6116,6 +6116,34 @@ def test_zarr_read_simple_sharding(tmp_path):
 
 
 ###############################################################################
+# Test parallel decode of sharded inner chunks with GDAL_NUM_THREADS
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_simple_sharding_parallel():
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    if "zstd" not in compressors:
+        pytest.skip("compressor zstd not available")
+
+    ds = gdal.OpenEx("data/zarr/v3/simple_sharding.zarr", gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("simple_sharding")
+
+    # Read sequentially first
+    expected = list(struct.unpack("f" * (24 * 26), ar.Read()))
+    ds = None
+
+    # Read with parallel decode
+    with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
+        ds = gdal.OpenEx("data/zarr/v3/simple_sharding.zarr", gdal.OF_MULTIDIM_RASTER)
+        ar = ds.GetRootGroup().OpenMDArray("simple_sharding")
+        result = list(struct.unpack("f" * (24 * 26), ar.Read()))
+        ds = None
+
+    assert result == expected
+
+
+###############################################################################
 # Test various errors in the shard data file
 
 
