@@ -58,6 +58,7 @@ Raster drivers
    ehdr
    eir
    envi
+   erdas_imagine_ige
    esat
    esric
    ers
