@@ -3,7 +3,7 @@
 set -e
 
 conda update -n base -c defaults conda
-conda install -y compilers automake pkgconfig cmake
+conda install -y compilers automake pkgconfig cmake ccache
 
 conda config --set channel_priority strict
 conda install --yes --quiet proj python=3.12 swig lxml jsonschema numpy setuptools
