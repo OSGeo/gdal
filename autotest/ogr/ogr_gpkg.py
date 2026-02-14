@@ -6127,6 +6127,26 @@ def test_ogr_gpkg_deferred_spi_creation(tmp_vsimem):
 
 
 ###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/13919
+
+
+def test_ogr_gpkg_deferred_spi_creation_get_feature_count(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(tmp_vsimem / "test.gpkg")
+    lyr = ds.CreateLayer("test")
+    ds.FlushCache()  # or ExecuteSQL()
+    ds.StartTransaction()
+    # 101 is just above OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD=100
+    for i in range(101):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt(f"POINT({i} 0)"))
+        lyr.CreateFeature(f)
+    ds.CommitTransaction()
+    lyr.SetSpatialFilterRect(-0.5, -0.5, 100.5, 0.5)
+    assert lyr.GetFeatureCount() == 101
+
+
+###############################################################################
 # Test deferred spatial index update
 
 

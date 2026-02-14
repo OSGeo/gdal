@@ -4097,6 +4097,14 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
 
     CancelAsyncNextArrowArray();
 
+    if (m_poFilterGeom != nullptr)
+    {
+        // Both are exclusive
+        CreateSpatialIndexIfNecessary();
+        if (!RunDeferredSpatialIndexUpdate())
+            return -1;
+    }
+
     /* Ignore bForce, because we always do a full count on the database */
     OGRErr err;
     CPLString soSQL;
