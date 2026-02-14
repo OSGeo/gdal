@@ -8924,6 +8924,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
     const auto &dims(poArray->GetDimensions());
     const auto nDimCount(dims.size());
     const auto blockSize(poArray->GetBlockSize());
+
     nBlockYSize = (nDimCount >= 2 && blockSize[poDSIn->m_iYDim])
                       ? static_cast<int>(std::min(static_cast<GUInt64>(INT_MAX),
                                                   blockSize[poDSIn->m_iYDim]))
@@ -8932,7 +8933,19 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                       ? static_cast<int>(std::min(static_cast<GUInt64>(INT_MAX),
                                                   blockSize[poDSIn->m_iXDim]))
                       : poDSIn->GetRasterXSize();
+
     eDataType = poArray->GetDataType().GetNumericDataType();
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+    while (nDTSize > 0 && (nBlockXSize >= 2 || nBlockYSize >= 2) &&
+           (nBlockXSize > INT_MAX / nBlockYSize / nDTSize ||
+            (nBlockXSize > GDALGetCacheMax64() / 100 / nBlockYSize / nDTSize)))
+    {
+        if (nBlockXSize > nBlockYSize)
+            nBlockXSize /= 2;
+        else
+            nBlockYSize /= 2;
+    }
+
     eAccess = poDSIn->eAccess;
     m_anOffset.resize(nDimCount);
     m_anCount.resize(nDimCount, 1);
@@ -9317,9 +9330,15 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
     auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));
     const auto &poArray(l_poDS->m_poArray);
     const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));
+    // If reading/writing at full resolution and with proper stride, go
+    // directly to the array, but, for performance reasons,
+    // only if exactly on chunk boundaries, otherwise go through the block cache.
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBufferDTSize > 0 &&
         (nPixelSpaceBuf % nBufferDTSize) == 0 &&
-        (nLineSpaceBuf % nBufferDTSize) == 0)
+        (nLineSpaceBuf % nBufferDTSize) == 0 && (nXOff % nBlockXSize) == 0 &&
+        (nYOff % nBlockYSize) == 0 &&
+        ((nXSize % nBlockXSize) == 0 || nXOff + nXSize == nRasterXSize) &&
+        ((nYSize % nBlockYSize) == 0 || nYOff + nYSize == nRasterYSize))
     {
         m_anOffset[l_poDS->m_iXDim] = static_cast<GUInt64>(nXOff);
         m_anCount[l_poDS->m_iXDim] = static_cast<size_t>(nXSize);
@@ -10061,17 +10080,24 @@ std::unique_ptr<GDALDatasetFromArray> GDALDatasetFromArray::Create(
         }
     }
 
+    if ((nDimCount >= 2 &&
+         dims[iYDim]->GetSize() > static_cast<uint64_t>(INT_MAX)) ||
+        dims[iXDim]->GetSize() > static_cast<uint64_t>(INT_MAX))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Too large array to be exposed as a GDAL dataset");
+        return nullptr;
+    }
+
     auto poDS = std::make_unique<GDALDatasetFromArray>(
         array, iXDim, iYDim, CPLStringList(papszOptions));
 
     poDS->eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
 
     poDS->nRasterYSize =
-        nDimCount < 2 ? 1
-                      : static_cast<int>(std::min(static_cast<GUInt64>(INT_MAX),
-                                                  dims[iYDim]->GetSize()));
-    poDS->nRasterXSize = static_cast<int>(
-        std::min(static_cast<GUInt64>(INT_MAX), dims[iXDim]->GetSize()));
+        nDimCount < 2 ? 1 : static_cast<int>(dims[iYDim]->GetSize());
+
+    poDS->nRasterXSize = static_cast<int>(dims[iXDim]->GetSize());
 
     std::vector<GUInt64> anOtherDimCoord(nNewDimCount);
     std::vector<GUInt64> anStackIters(nDimCount);
@@ -10165,7 +10191,7 @@ lbl_next_depth:
     else
     {
         poDS->SetBand(nCurBand,
-                      new GDALRasterBandFromArray(
+                      std::make_unique<GDALRasterBandFromArray>(
                           poDS.get(), anOtherDimCoord,
                           aoBandParameterMetadataItems, aoBandImageryMetadata,
                           dfDelay, nStartTime, bHasWarned));
