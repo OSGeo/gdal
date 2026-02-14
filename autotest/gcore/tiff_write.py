@@ -12166,6 +12166,31 @@ def test_tiff_write_multi_band_interleaved_predictor_3(tmp_vsimem):
 #
 
 
+def test_tiff_write_float16_predictor_3(tmp_vsimem):
+
+    ref_values = (1.5, -3.5, 4.5, -2.5)
+    ref_content = struct.pack("e" * len(ref_values), *ref_values)
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "test.tif",
+        len(ref_values),
+        1,
+        1,
+        gdal.GDT_Float16,
+        options=["PREDICTOR=3", "COMPRESS=LZW"],
+    ) as ds:
+        ds.WriteRaster(0, 0, len(ref_values), 1, ref_content, buf_type=gdal.GDT_Float16)
+    with gdal.Open(tmp_vsimem / "test.tif") as ds:
+        assert ds.GetMetadataItem("PREDICTOR", "IMAGE_STRUCTURE") == "3"
+        content = struct.unpack(
+            "e" * len(ref_values), ds.ReadRaster(buf_type=gdal.GDT_Float16)
+        )
+        assert content == pytest.approx(ref_values, abs=1e-6)
+
+
+###############################################################################
+#
+
+
 def test_tiff_write_5_bands_interleaved_predictor_2(tmp_vsimem):
 
     ref_content = struct.pack("B" * 10, 1, 5, 3, 2, 4, 9, 6, 8, 0, 7)
