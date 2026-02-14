@@ -123,28 +123,4 @@ Examples
 
    .. command-output:: echo -117.6355 33.8970 | gdal raster pixel-info --of=csv --position-crs=WGS84 byte.tif
       :cwd: ../../../autotest/gcore/data
-<<<<<<< HEAD
-=======
       :shell:
-
-.. example::
-   :title: Reading coordinates to extract from an input GeoPackage file and writing the output to a GeoPackage file
-
-   .. code-block:: bash
-
-       gdal raster pixel-info --position-dataset input.gpkg --input byte.tif --output output.gpkg
-
-.. example::
-   :title: Getting pixel values from a on-the-fly resized raster dataset from coordinates in :file:`input.gpkg`.
-
-   .. code-block:: bash
-
-       gdal pipeline read byte.tif ! resize --size 50%,50% -r cubic ! pixel-info input.gpkg ! write output.gpkg
-
-.. example::
-   :title: Getting pixel values from coordinates in a piped vector dataset, using the ``_`` placeholder dataset name
-
-   .. code-block:: bash
-
-       gdal pipeline read input.gml ! swap-xy ! pixel-info --input byte.tif --position-dataset _ ! write output.gpkg
->>>>>>> 1537853112 (Doc: Fix output of gdal raster pixel-info example)
