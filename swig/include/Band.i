@@ -625,6 +625,9 @@ CPLErr SetDefaultHistogram( double min, double max,
     %clear (double *);
 #endif
 
+#ifdef SWIGPYTHON
+%feature("kwargs") AdviseRead;
+#endif
 %apply (int *optional_int) { (GDALDataType *buf_type) };
 CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
                     int *buf_xsize = 0, int *buf_ysize = 0,
