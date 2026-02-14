@@ -2173,9 +2173,18 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
         m_image->height() == 0 ||
         m_image->height() > static_cast<uint32_t>(INT_MAX) ||
         m_image->samplesPerPixel() == 0 ||
-        m_image->samplesPerPixel() > static_cast<uint32_t>(INT_MAX))
+        m_image->samplesPerPixel() > static_cast<uint32_t>(INT_MAX) ||
+        // Consistency check to avoid issues in code that assume that the 2
+        // valid values are the only possibles ones and misbehave otherwise
+        // (e.g. Lerc codec)
+        (m_image->planarConfiguration() !=
+             LIBERTIFF_NS::PlanarConfiguration::Separate &&
+         m_image->planarConfiguration() !=
+             LIBERTIFF_NS::PlanarConfiguration::Contiguous))
     {
-        CPLDebug("LIBERTIFF", "Invalid width, height, or samplesPerPixel");
+        CPLDebug(
+            "LIBERTIFF",
+            "Invalid width, height, samplesPerPixel or planarConfiguration");
         return false;
     }
 
