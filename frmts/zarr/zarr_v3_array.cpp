@@ -1032,6 +1032,12 @@ bool ZarrV3Array::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                  "Writing to sharded dataset is not supported");
         return false;
     }
+    if (m_oType.GetClass() == GEDTC_STRING)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Writing Zarr V3 string data types is not yet supported");
+        return false;
+    }
     return ZarrArray::IWrite(arrayStartIdx, count, arrayStep, bufferStride,
                              bufferDataType, pSrcBuffer);
 }

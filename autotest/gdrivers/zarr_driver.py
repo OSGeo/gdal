@@ -7660,3 +7660,17 @@ def test_zarr_v3_read_sharded_null_terminated_bytes():
     assert ar.GetDimensionCount() == 1
     assert ar.GetDimensions()[0].GetSize() == 4
     assert ar.Read() == ["hi", "bye", "foo", "bar"]
+
+
+###############################################################################
+# Test that writing Zarr v3 string data types is rejected
+
+
+def test_zarr_v3_write_string_dtype_not_supported():
+
+    filename = "data/zarr/v3/null_terminated_bytes.zarr"
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("ar")
+    with gdal.quiet_errors():
+        assert ar.Write(["x", "y"]) == gdal.CE_Failure
