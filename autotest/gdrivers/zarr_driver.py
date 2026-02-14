@@ -6346,6 +6346,50 @@ def test_zarr_batch_reads_sharding():
 
 
 ###############################################################################
+# Test reading a 3D sharded dataset with asymmetric inner chunk counts.
+# Regression test for inner chunk index linearization in DecodePartial and
+# BatchDecodePartial. The existing simple_sharding.zarr fixture has symmetric
+# inner chunk counts [2,2] which masks this bug.
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_sharded_3d():
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    if "zstd" not in compressors:
+        pytest.skip("compressor zstd not available")
+
+    # Fixture: 3D float32 (3,12,14), shard (3,6,8), inner chunk (1,6,4)
+    # Inner chunk counts per shard: [3,1,2] (asymmetric - triggers bug)
+    ds = gdal.OpenEx(
+        "data/zarr/v3/sharded_3d.zarr",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    ar = ds.GetRootGroup().OpenMDArray("sharded_3d")
+    assert ar is not None
+    assert ar.GetBlockSize() == [1, 6, 4]
+
+    nbands, nrows, ncols = 3, 12, 14
+    expected = list(range(nbands * nrows * ncols))
+
+    # Full-extent read exercises BatchDecodePartial (via PreloadShardedBlocks).
+    data = list(struct.unpack("f" * len(expected), ar.Read()))
+    assert data == expected
+
+    # Per-band reads exercise DecodePartial. Band indices 1 and 2 produce
+    # out-of-bounds shard index without the fix.
+    for b in range(nbands):
+        band_data = list(
+            struct.unpack(
+                "f" * (nrows * ncols),
+                ar.Read(array_start_idx=[b, 0, 0], count=[1, nrows, ncols]),
+            )
+        )
+        band_expected = expected[b * nrows * ncols : (b + 1) * nrows * ncols]
+        assert band_data == band_expected
+
+
+###############################################################################
 # Test a sharded dataset, where sharding happens after a transpose codec.
 
 

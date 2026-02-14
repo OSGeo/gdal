@@ -504,7 +504,6 @@ bool ZarrV3CodecShardingIndexed::DecodePartial(
 
     size_t nInnerChunkCount = 1;
     size_t nInnerChunkIdx = 0;
-    size_t nInnerChunkCountPrevDim = 1;
     for (size_t i = 0; i < anStartIdx.size(); ++i)
     {
         CPLAssert(anStartIdx[i] + anCount[i] <=
@@ -521,10 +520,9 @@ bool ZarrV3CodecShardingIndexed::DecodePartial(
 
         const size_t nCountInnerChunksThisDim =
             m_oInputArrayMetadata.anBlockSizes[i] / m_anInnerBlockSize[i];
-        nInnerChunkIdx *= nInnerChunkCountPrevDim;
-        nInnerChunkIdx += anStartIdx[i] / m_anInnerBlockSize[i];
+        nInnerChunkIdx = nInnerChunkIdx * nCountInnerChunksThisDim +
+                         anStartIdx[i] / m_anInnerBlockSize[i];
         nInnerChunkCount *= nCountInnerChunksThisDim;
-        nInnerChunkCountPrevDim = nCountInnerChunksThisDim;
     }
 
     abyDst.clear();
@@ -731,13 +729,12 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
                   m_oInputArrayMetadata.anBlockSizes.size());
 
         size_t nInnerChunkIdx = 0;
-        size_t nInnerChunkCountPrevDim = 1;
         for (size_t i = 0; i < anStartIdx.size(); ++i)
         {
-            nInnerChunkIdx *= nInnerChunkCountPrevDim;
-            nInnerChunkIdx += anStartIdx[i] / m_anInnerBlockSize[i];
-            nInnerChunkCountPrevDim =
+            const size_t nCountInnerChunksThisDim =
                 m_oInputArrayMetadata.anBlockSizes[i] / m_anInnerBlockSize[i];
+            nInnerChunkIdx = nInnerChunkIdx * nCountInnerChunksThisDim +
+                             anStartIdx[i] / m_anInnerBlockSize[i];
         }
         anInnerChunkIndices[iReq] = nInnerChunkIdx;
     }
