@@ -5620,31 +5620,26 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                 return CE_Failure;
 
             // Optional GDAL custom projection tags.
-            if (bWriteGDALTags)
+            if (bWriteGDALTags && bWriteGeoTransform && m_bHasGeoTransform)
             {
-                std::string osGeoTransform = m_gt.ToString(" ");
+                GDALGeoTransform gt(m_gt);
+                if (!bBottomUp)
+                {
+                    // Change origin from top to bottom and sign of coefficients
+                    // indexed by row
+                    gt.yorig += nRasterYSize * gt.yscale;
+                    gt.xorig += nRasterYSize * gt.xrot;
+                    gt.xrot = -gt.xrot;
+                    gt.yscale = -gt.yscale;
+                }
+                std::string osGeoTransform = gt.ToString(" ");
                 CPLDebug("GDAL_netCDF", "szGeoTransform = %s",
                          osGeoTransform.c_str());
 
-                // if( strlen(pszProj4Defn) > 0 ) {
-                //     nc_put_att_text(cdfid, NCDFVarID, "proj4",
-                //                      strlen(pszProj4Defn), pszProj4Defn);
-                // }
-
-                // For now, write the geotransform for back-compat or else
-                // the old (1.8.1) driver overrides the CF geotransform with
-                // empty values from dfNN, dfSN, dfEE, dfWE;
-
-                // TODO: fix this in 1.8 branch, and then remove this here.
-                if (bWriteGeoTransform && m_bHasGeoTransform)
-                {
-                    {
-                        const int status = nc_put_att_text(
-                            cdfid, NCDFVarID, NCDF_GEOTRANSFORM,
-                            osGeoTransform.size(), osGeoTransform.c_str());
-                        NCDF_ERR(status);
-                    }
-                }
+                const int status = nc_put_att_text(
+                    cdfid, NCDFVarID, NCDF_GEOTRANSFORM, osGeoTransform.size(),
+                    osGeoTransform.c_str());
+                NCDF_ERR(status);
             }
 
             // Write projection variable to band variable.
@@ -5657,7 +5652,13 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
         const bool bIsRotatedPole =
             pszCFProjection != nullptr &&
             EQUAL(pszCFProjection, ROTATED_POLE_VAR_NAME);
-        if (bIsRotatedPole)
+
+        if (m_bHasGeoTransform && !m_gt.IsAxisAligned())
+        {
+            // Do not write X/Y coordinate arrays
+        }
+
+        else if (bIsRotatedPole)
         {
             // Rename dims to rlat/rlon.
             papszDimName
@@ -5873,49 +5874,55 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                 return CE_Failure;
             }
 
-            // Get Y values.
-            const double dfY0 = (!bBottomUp) ? m_gt.yorig :
-                                             // Invert latitude values.
-                                    m_gt.yorig + (m_gt.yscale * nRasterYSize);
-            const double dfDY = m_gt.yscale;
-
-            for (int j = 0; j < nRasterYSize; j++)
-            {
-                // The data point is centered inside the pixel.
-                if (!bBottomUp)
-                    padYVal[j] = dfY0 + (j + 0.5) * dfDY;
-                else  // Invert latitude values.
-                    padYVal[j] = dfY0 - (j + 0.5) * dfDY;
-            }
-            startX[0] = 0;
-            countX[0] = nRasterXSize;
-
-            // Get X values.
-            const double dfX0 = m_gt.xorig;
-            const double dfDX = m_gt.xscale;
-
-            for (int i = 0; i < nRasterXSize; i++)
-            {
-                // The data point is centered inside the pixel.
-                padXVal[i] = dfX0 + (i + 0.5) * dfDX;
-            }
-            startY[0] = 0;
-            countY[0] = nRasterYSize;
-
-            // Write X/Y values.
-
             // Make sure we are in data mode.
             SetDefineMode(false);
 
-            CPLDebug("GDAL_netCDF", "Writing X values");
-            int status =
-                nc_put_vara_double(cdfid, nVarXID, startX, countX, padXVal);
-            NCDF_ERR(status);
+            int status = NC_NOERR;
 
-            CPLDebug("GDAL_netCDF", "Writing Y values");
-            status =
-                nc_put_vara_double(cdfid, nVarYID, startY, countY, padYVal);
-            NCDF_ERR(status);
+            if (m_gt.IsAxisAligned())
+            {
+                // Get Y values.
+                const double dfY0 =
+                    (!bBottomUp) ? m_gt.yorig :
+                                 // Invert latitude values.
+                        m_gt.yorig + (m_gt.yscale * nRasterYSize);
+                const double dfDY = m_gt.yscale;
+
+                for (int j = 0; j < nRasterYSize; j++)
+                {
+                    // The data point is centered inside the pixel.
+                    if (!bBottomUp)
+                        padYVal[j] = dfY0 + (j + 0.5) * dfDY;
+                    else  // Invert latitude values.
+                        padYVal[j] = dfY0 - (j + 0.5) * dfDY;
+                }
+                startX[0] = 0;
+                countX[0] = nRasterXSize;
+
+                // Get X values.
+                const double dfX0 = m_gt.xorig;
+                const double dfDX = m_gt.xscale;
+
+                for (int i = 0; i < nRasterXSize; i++)
+                {
+                    // The data point is centered inside the pixel.
+                    padXVal[i] = dfX0 + (i + 0.5) * dfDX;
+                }
+                startY[0] = 0;
+                countY[0] = nRasterYSize;
+
+                // Write X/Y values.
+
+                CPLDebug("GDAL_netCDF", "Writing X values");
+                status =
+                    nc_put_vara_double(cdfid, nVarXID, startX, countX, padXVal);
+                NCDF_ERR(status);
+
+                CPLDebug("GDAL_netCDF", "Writing Y values");
+                status =
+                    nc_put_vara_double(cdfid, nVarYID, startY, countY, padYVal);
+                NCDF_ERR(status);
+            }
 
             if (pfnProgress)
                 pfnProgress(0.20, nullptr, pProgressData);
@@ -5979,10 +5986,37 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
                     if (!bHasGeoloc)
                     {
                         // Fill values to transform.
-                        for (int i = 0; i < nRasterXSize; i++)
+                        if (m_gt.IsAxisAligned())
                         {
-                            padLatVal[i] = padYVal[j];
-                            padLonVal[i] = padXVal[i];
+                            for (int i = 0; i < nRasterXSize; i++)
+                            {
+                                padLatVal[i] = padYVal[j];
+                                padLonVal[i] = padXVal[i];
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < nRasterXSize; i++)
+                            {
+                                if (!bBottomUp)
+                                {
+                                    padLatVal[i] = m_gt.yorig +
+                                                   (i + 0.5) * m_gt.yrot +
+                                                   (j + 0.5) * m_gt.yscale;
+                                    padLonVal[i] = m_gt.xorig +
+                                                   (i + 0.5) * m_gt.xscale +
+                                                   (j + 0.5) * m_gt.xrot;
+                                }
+                                else
+                                {
+                                    padLatVal[i] =
+                                        m_gt.yorig + (i + 0.5) * m_gt.yrot +
+                                        (nRasterYSize - j - 0.5) * m_gt.yscale;
+                                    padLonVal[i] =
+                                        m_gt.xorig + (i + 0.5) * m_gt.xscale +
+                                        (nRasterYSize - j - 0.5) * m_gt.xrot;
+                                }
+                            }
                         }
 
                         // Do the transform.
@@ -6041,7 +6075,7 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
         }  // Projected
 
         // If not projected/geographic and has geoloc
-        else if (!bIsGeographic && bHasGeoloc)
+        else if (!bIsGeographic && bHasGeoloc && m_gt.IsAxisAligned())
         {
             // Use
             // https://cfconventions.org/Data/cf-conventions/cf-conventions-1.9/cf-conventions.html#_two_dimensional_latitude_longitude_coordinate_variables
