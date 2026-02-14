@@ -1275,9 +1275,6 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject &obj,
             }
             else if (chType == 'f' && nBytes == 2)
             {
-                // elt.nativeType = DtypeElt::NativeType::IEEEFP;
-                // elt.gdalTypeIsApproxOfNative = true;
-                // eDT = GDT_Float32;
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
                 eDT = GDT_Float16;
             }

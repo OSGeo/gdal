@@ -672,26 +672,9 @@ void ZarrArray::EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
         {
             if (elt.nativeSize == 2)
             {
-                if (elt.gdalTypeIsApproxOfNative)
-                {
-                    CPLAssert(elt.nativeType == DtypeElt::NativeType::IEEEFP);
-                    CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
-                    const uint32_t uint32Val =
-                        *reinterpret_cast<const uint32_t *>(pSrc +
-                                                            elt.gdalOffset);
-                    bool bHasWarned = false;
-                    uint16_t uint16Val =
-                        CPL_SWAP16(CPLFloatToHalf(uint32Val, bHasWarned));
-                    memcpy(pDst + elt.nativeOffset, &uint16Val,
-                           sizeof(uint16Val));
-                }
-                else
-                {
-                    const uint16_t val =
-                        CPL_SWAP16(*reinterpret_cast<const uint16_t *>(
-                            pSrc + elt.gdalOffset));
-                    memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
-                }
+                const uint16_t val = CPL_SWAP16(
+                    *reinterpret_cast<const uint16_t *>(pSrc + elt.gdalOffset));
+                memcpy(pDst + elt.nativeOffset, &val, sizeof(val));
             }
             else if (elt.nativeSize == 4)
             {
@@ -735,21 +718,7 @@ void ZarrArray::EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
         }
         else if (elt.gdalTypeIsApproxOfNative)
         {
-            if (elt.nativeType == DtypeElt::NativeType::IEEEFP &&
-                elt.nativeSize == 2)
-            {
-                CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
-                const uint32_t uint32Val =
-                    *reinterpret_cast<const uint32_t *>(pSrc + elt.gdalOffset);
-                bool bHasWarned = false;
-                const uint16_t uint16Val =
-                    CPLFloatToHalf(uint32Val, bHasWarned);
-                memcpy(pDst + elt.nativeOffset, &uint16Val, sizeof(uint16Val));
-            }
-            else
-            {
-                CPLAssert(false);
-            }
+            CPLAssert(false);
         }
         else if (elt.nativeType == DtypeElt::NativeType::STRING_ASCII)
         {
@@ -899,19 +868,8 @@ void ZarrArray::DecodeSourceElt(const std::vector<DtypeElt> &elts,
             {
                 uint16_t val;
                 memcpy(&val, pSrc + elt.nativeOffset, sizeof(val));
-                if (elt.gdalTypeIsApproxOfNative)
-                {
-                    CPLAssert(elt.nativeType == DtypeElt::NativeType::IEEEFP);
-                    CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
-                    uint32_t uint32Val = CPLHalfToFloat(CPL_SWAP16(val));
-                    memcpy(pDst + elt.gdalOffset, &uint32Val,
-                           sizeof(uint32Val));
-                }
-                else
-                {
-                    *reinterpret_cast<uint16_t *>(pDst + elt.gdalOffset) =
-                        CPL_SWAP16(val);
-                }
+                *reinterpret_cast<uint16_t *>(pDst + elt.gdalOffset) =
+                    CPL_SWAP16(val);
             }
             else if (elt.nativeSize == 4)
             {
@@ -957,19 +915,7 @@ void ZarrArray::DecodeSourceElt(const std::vector<DtypeElt> &elts,
         }
         else if (elt.gdalTypeIsApproxOfNative)
         {
-            if (elt.nativeType == DtypeElt::NativeType::IEEEFP &&
-                elt.nativeSize == 2)
-            {
-                CPLAssert(elt.gdalType.GetNumericDataType() == GDT_Float32);
-                uint16_t uint16Val;
-                memcpy(&uint16Val, pSrc + elt.nativeOffset, sizeof(uint16Val));
-                uint32_t uint32Val = CPLHalfToFloat(uint16Val);
-                memcpy(pDst + elt.gdalOffset, &uint32Val, sizeof(uint32Val));
-            }
-            else
-            {
-                CPLAssert(false);
-            }
+            CPLAssert(false);
         }
         else if (elt.nativeType == DtypeElt::NativeType::STRING_ASCII)
         {

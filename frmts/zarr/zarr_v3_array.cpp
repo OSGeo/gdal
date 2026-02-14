@@ -260,7 +260,7 @@ bool ZarrV3Array::NeedDecodedBuffer() const
 {
     for (const auto &elt : m_aoDtypeElts)
     {
-        if (elt.needByteSwapping || elt.gdalTypeIsApproxOfNative)
+        if (elt.needByteSwapping)
         {
             return true;
         }
