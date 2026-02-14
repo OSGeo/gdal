@@ -1033,6 +1033,12 @@ bool ZarrV3Array::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                  "Writing to sharded dataset is not supported");
         return false;
     }
+    if (m_oType.GetClass() == GEDTC_STRING)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Writing Zarr V3 string data types is not yet supported");
+        return false;
+    }
     return ZarrArray::IWrite(arrayStartIdx, count, arrayStep, bufferStride,
                              bufferDataType, pSrcBuffer);
 }
@@ -1202,6 +1208,42 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
 
             elts.emplace_back(elt);
             return GDALExtendedDataType::Create(eDT);
+        }
+        else if (obj.GetType() == CPLJSONObject::Type::Object)
+        {
+            const auto osName = obj["name"].ToString();
+            const auto oConfig = obj["configuration"];
+            DtypeElt elt;
+
+            if (osName == "null_terminated_bytes" && oConfig.IsValid())
+            {
+                const int nBytes = oConfig["length_bytes"].ToInteger();
+                if (nBytes <= 0 || nBytes > 10 * 1024 * 1024)
+                    break;
+                elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
+                elt.nativeSize = static_cast<size_t>(nBytes);
+                elt.gdalType = GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nBytes));
+                elt.gdalSize = elt.gdalType.GetSize();
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nBytes));
+            }
+            else if (osName == "fixed_length_utf32" && oConfig.IsValid())
+            {
+                const int nBytes = oConfig["length_bytes"].ToInteger();
+                if (nBytes <= 0 || nBytes % 4 != 0 || nBytes > 10 * 1024 * 1024)
+                    break;
+                elt.nativeType = DtypeElt::NativeType::STRING_UNICODE;
+                elt.nativeSize = static_cast<size_t>(nBytes);
+                // Endianness handled by the bytes codec in v3
+                elt.gdalType = GDALExtendedDataType::CreateString();
+                elt.gdalSize = elt.gdalType.GetSize();
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::CreateString();
+            }
+            else
+                break;
         }
     } while (false);
     CPLError(CE_Failure, CPLE_AppDefined,
@@ -1575,6 +1617,26 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
 
     std::vector<GByte> abyNoData;
 
+    struct NoDataFreer
+    {
+        std::vector<GByte> &m_abyNodata;
+        const GDALExtendedDataType &m_oType;
+
+        NoDataFreer(std::vector<GByte> &abyNoDataIn,
+                    const GDALExtendedDataType &oTypeIn)
+            : m_abyNodata(abyNoDataIn), m_oType(oTypeIn)
+        {
+        }
+
+        ~NoDataFreer()
+        {
+            if (!m_abyNodata.empty())
+                m_oType.FreeDynamicMemory(&m_abyNodata[0]);
+        }
+    };
+
+    NoDataFreer noDataFreer(abyNoData, oType);
+
     auto oFillValue = oRoot["fill_value"];
     auto eFillValueType = oFillValue.GetType();
 
@@ -1595,7 +1657,14 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     else if (eFillValueType == CPLJSONObject::Type::String)
     {
         const auto osFillValue = oFillValue.ToString();
-        if (STARTS_WITH(osFillValue.c_str(), "0x"))
+        if (oType.GetClass() == GEDTC_STRING)
+        {
+            abyNoData.resize(oType.GetSize());
+            char *pDstStr = CPLStrdup(osFillValue.c_str());
+            char **pDstPtr = reinterpret_cast<char **>(&abyNoData[0]);
+            memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
+        }
+        else if (STARTS_WITH(osFillValue.c_str(), "0x"))
         {
             if (osFillValue.size() > 2 + 2 * oType.GetSize())
             {
@@ -1934,6 +2003,27 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
                  "Zarr driver issue: gdalTypeIsApproxOfNative is not taken "
                  "into account by codecs. Nodata will be assumed to be zero by "
                  "sharding codec");
+    }
+    else if (!abyNoData.empty() &&
+             (zarrDataType.nativeType == DtypeElt::NativeType::STRING_ASCII ||
+              zarrDataType.nativeType == DtypeElt::NativeType::STRING_UNICODE))
+    {
+        // Convert from GDAL representation (char* pointer) to native
+        // format (fixed-size null-padded buffer) for FillWithNoData()
+        char *pStr = nullptr;
+        memcpy(&pStr, abyNoData.data(), sizeof(pStr));
+        oInputArrayMetadata.abyNoData.resize(zarrDataType.nativeSize, 0);
+        if (pStr &&
+            zarrDataType.nativeType == DtypeElt::NativeType::STRING_ASCII)
+        {
+            const size_t nCopy =
+                std::min(strlen(pStr), zarrDataType.nativeSize > 0
+                                           ? zarrDataType.nativeSize - 1
+                                           : static_cast<size_t>(0));
+            memcpy(oInputArrayMetadata.abyNoData.data(), pStr, nCopy);
+        }
+        // STRING_UNICODE non-empty fill would need UTF-8 to UCS4
+        // conversion; zero-fill is correct for the common "" case
     }
     else
     {

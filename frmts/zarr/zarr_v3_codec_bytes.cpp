@@ -131,6 +131,19 @@ bool ZarrV3CodecBytes::Encode(const ZarrByteVectorQuickResize &abySrc,
     GByte *pabyDst = abyDst.data();
 
     if (m_oInputArrayMetadata.oElt.nativeType ==
+        DtypeElt::NativeType::STRING_UNICODE)
+    {
+        // Swap each 4-byte UCS-4 character individually
+        const size_t nTotalBytes = nEltCount * nNativeSize;
+        for (size_t i = 0; i < nTotalBytes; i += 4)
+        {
+            const uint32_t val =
+                CPL_SWAP32(*reinterpret_cast<const uint32_t *>(pabySrc + i));
+            memcpy(pabyDst + i, &val, sizeof(val));
+        }
+        return true;
+    }
+    if (m_oInputArrayMetadata.oElt.nativeType ==
         DtypeElt::NativeType::COMPLEX_IEEEFP)
     {
         nEltCount *= 2;

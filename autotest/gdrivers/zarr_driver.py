@@ -7643,3 +7643,65 @@ def test_zarr_read_srs_eopf_sample_service(tmp_vsimem, filename, j):
 
     ds = gdal.Open(tmp_vsimem / filename)
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "32632"
+
+
+###############################################################################
+# Test Zarr v3 fixed-length string data types
+
+
+@pytest.mark.parametrize(
+    "dirname,expected_class,expected_max_len,expected_values",
+    [
+        ("null_terminated_bytes.zarr", 1, 5, ["hi", "bye"]),  # GEDTC_STRING=1
+        ("fixed_length_utf32.zarr", 1, 0, ["AB", "CD"]),  # variable-length GDAL string
+    ],
+)
+def test_zarr_v3_read_fixed_length_string_dtypes(
+    dirname, expected_class, expected_max_len, expected_values
+):
+
+    filename = "data/zarr/v3/" + dirname
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert rg is not None
+    ar = rg.OpenMDArray("ar")
+    assert ar is not None
+    assert ar.GetDataType().GetClass() == expected_class
+    assert ar.GetDataType().GetMaxStringLength() == expected_max_len
+    assert ar.GetDimensionCount() == 1
+    assert ar.GetDimensions()[0].GetSize() == 2
+    assert ar.Read() == expected_values
+
+
+###############################################################################
+# Test Zarr v3 sharded fixed-length string array
+
+
+def test_zarr_v3_read_sharded_null_terminated_bytes():
+
+    filename = "data/zarr/v3/sharded_null_terminated_bytes.zarr"
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    assert ds is not None
+    rg = ds.GetRootGroup()
+    assert rg is not None
+    ar = rg.OpenMDArray("ar")
+    assert ar is not None
+    assert ar.GetDataType().GetClass() == 1  # GEDTC_STRING
+    assert ar.GetDimensionCount() == 1
+    assert ar.GetDimensions()[0].GetSize() == 4
+    assert ar.Read() == ["hi", "bye", "foo", "bar"]
+
+
+###############################################################################
+# Test that writing Zarr v3 string data types is rejected
+
+
+def test_zarr_v3_write_string_dtype_not_supported():
+
+    filename = "data/zarr/v3/null_terminated_bytes.zarr"
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("ar")
+    with gdal.quiet_errors():
+        assert ar.Write(["x", "y"]) == gdal.CE_Failure
