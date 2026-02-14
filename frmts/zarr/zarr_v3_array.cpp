@@ -1200,7 +1200,10 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
             elt.gdalSize = elt.gdalType.GetSize();
             if (!elt.gdalTypeIsApproxOfNative)
                 elt.nativeSize = elt.gdalSize;
-            elt.needByteSwapping = (CPL_IS_LSB == 0);
+            if (elt.nativeSize > 1)
+            {
+                elt.needByteSwapping = (CPL_IS_LSB == 0);
+            }
             elts.emplace_back(elt);
             return GDALExtendedDataType::Create(eDT);
         }
