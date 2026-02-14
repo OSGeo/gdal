@@ -5729,11 +5729,12 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         }
         else if (nPredictor == 3)
         {
-            if (eType != GDT_Float32 && eType != GDT_Float64)
+            if (eType != GDT_Float16 && eType != GDT_Float32 &&
+                eType != GDT_Float64)
             {
-                ReportError(
-                    pszFilename, CE_Failure, CPLE_AppDefined,
-                    "PREDICTOR=3 is only supported with Float32 or Float64.");
+                ReportError(pszFilename, CE_Failure, CPLE_AppDefined,
+                            "PREDICTOR=3 is only supported with Float16, "
+                            "Float32 or Float64.");
                 return nullptr;
             }
         }
