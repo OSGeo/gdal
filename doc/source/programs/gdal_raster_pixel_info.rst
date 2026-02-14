@@ -210,6 +210,7 @@ Examples
 
    .. command-output:: echo -117.6355 33.8970 | gdal raster pixel-info --of=csv --position-crs=WGS84 byte.tif
       :cwd: ../../../autotest/gcore/data
+      :shell:
 
 .. example::
    :title: Reading coordinates to extract from an input GeoPackage file and writing the output to a GeoPackage file
