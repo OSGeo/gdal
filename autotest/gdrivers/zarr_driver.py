@@ -2762,7 +2762,7 @@ def test_zarr_read_numpy_datetime64_extension_zarr_v3(tmp_vsimem, extension_name
     gdal.FileFromMemBuffer(dirname / "zarr.json", json.dumps(j))
 
     # Write chunk with known values: two timestamps and NaT
-    chunk_data = struct.pack("<qqq", 1000000000, 2000000000, NAT)
+    chunk_data = struct.pack("qqq", 1000000000, 2000000000, NAT)
     gdal.Mkdir(dirname / "c", 0)
     gdal.FileFromMemBuffer(dirname / "c/0", chunk_data)
 
@@ -2783,7 +2783,7 @@ def test_zarr_read_numpy_datetime64_extension_zarr_v3(tmp_vsimem, extension_name
     assert si["data_type.scale_factor"] == "1"
 
     # Check actual values read back correctly (endianness test)
-    data = struct.unpack("<qqq", ar.Read())
+    data = struct.unpack("qqq", ar.Read())
     assert data == (1000000000, 2000000000, NAT)
 
     # Check NaT is registered as nodata
