@@ -8742,6 +8742,9 @@ class GDALRasterBandFromArray final : public GDALPamRasterBand
     GDALColorInterp GetColorInterpretation() override;
     int GetOverviewCount() override;
     GDALRasterBand *GetOverview(int idx) override;
+    CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
+                      int nBufXSize, int nBufYSize, GDALDataType eBufType,
+                      CSLConstList papszOptions) override;
 };
 
 class GDALDatasetFromArray final : public GDALPamDataset
@@ -9263,6 +9266,40 @@ CPLErr GDALRasterBandFromArray::IWriteBlock(int nBlockXOff, int nBlockYOff,
     return IRasterIO(GF_Write, nXOff, nYOff, nReqXSize, nReqYSize, pImage,
                      nReqXSize, nReqYSize, eDataType, nDTSize,
                      static_cast<GSpacing>(nDTSize) * nBlockXSize, &sExtraArg);
+}
+
+/************************************************************************/
+/*                             AdviseRead()                             */
+/************************************************************************/
+
+CPLErr GDALRasterBandFromArray::AdviseRead(int nXOff, int nYOff, int nXSize,
+                                           int nYSize, int nBufXSize,
+                                           int nBufYSize,
+                                           GDALDataType /*eBufType*/,
+                                           CSLConstList papszOptions)
+{
+    auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));
+    int bStopProcessing = FALSE;
+    CPLErr eErr = l_poDS->ValidateRasterIOOrAdviseReadParameters(
+        "AdviseRead()", &bStopProcessing, nXOff, nYOff, nXSize, nYSize,
+        nBufXSize, nBufYSize, 1, &nBand);
+    if (eErr != CE_None || bStopProcessing)
+        return eErr;
+
+    const auto &poArray(l_poDS->m_poArray);
+    std::vector<GUInt64> anArrayStartIdx = m_anOffset;
+    std::vector<size_t> anCount = m_anCount;
+    anArrayStartIdx[l_poDS->m_iXDim] = nXOff;
+    anCount[l_poDS->m_iXDim] = nXSize;
+    if (poArray->GetDimensionCount() >= 2)
+    {
+        anArrayStartIdx[l_poDS->m_iYDim] = nYOff;
+        anCount[l_poDS->m_iYDim] = nYSize;
+    }
+    return poArray->AdviseRead(anArrayStartIdx.data(), anCount.data(),
+                               papszOptions)
+               ? CE_None
+               : CE_Failure;
 }
 
 /************************************************************************/

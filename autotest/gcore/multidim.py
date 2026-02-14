@@ -686,6 +686,8 @@ def test_multidim_asclassicdataset_single_dim():
 
     assert ar.AsClassicDataset(0, 0).ReadRaster() == array.array("d", [10.5, 20])
 
+    assert ar.AsClassicDataset(0, 0).AdviseRead(0, 0, 2, 1) == gdal.CE_None
+
     with pytest.raises(Exception, match="Invalid iXDim and/or iYDim"):
         ar.AsClassicDataset(0, 1)
 
@@ -729,6 +731,8 @@ def test_multidim_asclassicdataset_band_metadata():
         "aux_var", [dimOther], gdal.ExtendedDataType.CreateString()
     )
     aux_var.Write(["foo", "bar"])
+
+    assert ar.AsClassicDataset(2, 1).AdviseRead(0, 0, 2, 2) == gdal.CE_None
 
     with pytest.raises(
         Exception, match="Root group should be provided when BAND_METADATA is set"
