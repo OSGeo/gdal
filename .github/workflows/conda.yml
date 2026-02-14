@@ -48,7 +48,10 @@ jobs:
       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ~/conda_pkgs_dir
-        key: ${{ runner.os }}-${{ steps.get-date.outputs.today }}-conda-${{ env.CACHE_NUMBER }}
+        key: ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles('ci/travis/conda/**') }}
+        restore-keys: |
+          ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-
+          ${{ runner.os }}-conda-
 
     - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
       with:

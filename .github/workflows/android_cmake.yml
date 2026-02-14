@@ -34,8 +34,10 @@ jobs:
         with:
           path: |
                 ${{ github.workspace }}/ccache.tar.gz
-          key: ${{ runner.os }}-cache-android-cmake-${{ github.run_id }}
-          restore-keys: ${{ runner.os }}-cache-android-cmake-
+          key: ${{ runner.os }}-cache-android-cmake-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-cache-android-cmake-${{ github.ref_name }}-
+            ${{ runner.os }}-cache-android-cmake-
 
       - name: Build
         run: docker run -e WORK_DIR="$PWD" -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/android_cmake/start.sh

@@ -261,10 +261,10 @@ jobs:
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.run_id }}
+          key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}
-            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}
+            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-
+            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-
 
       - name: Prepare ccache
         run: |
