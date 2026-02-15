@@ -25,7 +25,7 @@ either a virtual mosaic in the :ref:`VRT (Virtual Dataset) <raster.vrt>` format,
 or in a more conventional raster format such as GeoTIFF.
 
 Wildcards '*', '?' or '['] of :cpp:func:`VSIGlob` can be used for input dataset
-names, even on files located on network file systems such as /vsis3/, /vsigs/, /vsiaz/, etc.
+names, even on files located on network file systems such as ``/vsigs/``, etc.
 Alternatively if a input dataset name is prefixed by the `@` character, it will
 be assumed to contain the list of actual dataset names (one per line) to use
 as input datasets.

@@ -109,6 +109,6 @@ Examples of completion
 
    .. code-block:: console
 
-        $ gdal raster info /vsis3/my_bucket/b<TAB><TAB>
+        $ gdal raster info /vsigs/my_bucket/b<TAB><TAB>
         ==>
-        /vsis3/my_bucket/byte.tif      /vsis3/my_bucket/byte2.tif
+        /vsigs/my_bucket/byte.tif      /vsigs/my_bucket/byte2.tif

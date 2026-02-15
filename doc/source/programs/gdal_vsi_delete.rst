@@ -41,8 +41,8 @@ Examples
 --------
 
 .. example::
-   :title: Delete recursively files from /vsis3/bucket/my_dir
+   :title: Delete recursively files from /vsigs/bucket/my_dir
 
    .. code-block:: console
 
-       $ gdal vsi delete -r /vsis3/bucket/my_dir
+       $ gdal vsi delete -r /vsigs/bucket/my_dir
