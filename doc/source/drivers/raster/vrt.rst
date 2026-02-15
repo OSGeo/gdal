@@ -606,7 +606,7 @@ ArraySource
 .. versionadded:: 3.8
 
 The ArraySource_ indicates that raster data should be read from a 2D array using
-the multidimensional API. If the original array is not a 3D array, a DerivedArray
+the multidimensional API. If the original array is not a 2D array, a DerivedArray
 with a View step must be typically used to create a 2D slice.
 
 ArraySource can have the following child elements:
