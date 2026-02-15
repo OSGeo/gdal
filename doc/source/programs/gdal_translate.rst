@@ -134,6 +134,15 @@ resampling, and rescaling pixels in the process.
 
     ``mode`` selects the value which appears most often of all the sampled points.
 
+    For example, to resample a raster using bilinear interpolation:
+
+    .. code-block:: console
+
+       gdal_translate -r bilinear -outsize 50% 50% input.tif resampled.tif
+
+    This is suitable for continuous data such as elevation or temperature when
+    changing resolution.
+
 .. option:: -scale [<src_min> <src_max> [<dst_min> <dst_max>]]
 
     Rescale the input pixels values from the range **src_min** to **src_max**
@@ -211,6 +220,9 @@ resampling, and rescaling pixels in the process.
     of zero, unless a NoData value is defined either in the source dataset or
     by :option:`-a_nodata`. Alternatively, :program:`gdal_translate` can issue
     an error in this case if so directed by options :option:`-epo` or :option:`-eco`.
+
+    For an example of extracting a spatial subset using projected coordinates,
+    see the Examples section below.
 
     .. note::
 
