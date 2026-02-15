@@ -1240,7 +1240,8 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
                 elts.emplace_back(elt);
                 return GDALExtendedDataType::CreateString();
             }
-            else if (osName == "numpy.datetime64" || osName == "numpy.timedelta64")
+            else if (osName == "numpy.datetime64" ||
+                     osName == "numpy.timedelta64")
             {
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
                 elt.gdalType = GDALExtendedDataType::Create(GDT_Int64);
