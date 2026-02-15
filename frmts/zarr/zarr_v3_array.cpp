@@ -693,70 +693,124 @@ lbl_next:
     if (dimIdx > 0)
         goto lbl_return;
 
-    // For each shard with >1 uncached block, batch-read
-    const char *const apszOpenOptions[] = {"IGNORE_FILENAME_RESTRICTIONS=YES",
-                                           nullptr};
+    // Collect shards that qualify for batching (>1 block)
+    struct ShardWork
+    {
+        const std::string *posFilename;
+        std::vector<BlockInfo> *paBlocks;
+    };
 
+    std::vector<ShardWork> aShardWork;
     for (auto &[osFilename, aBlocks] : oShardToBlocks)
     {
-        if (aBlocks.size() <= 1)
-            continue;
+        if (aBlocks.size() > 1)
+            aShardWork.push_back({&osFilename, &aBlocks});
+    }
 
+    if (aShardWork.empty())
+        return;
+
+    const char *const apszOpenOptions[] = {"IGNORE_FILENAME_RESTRICTIONS=YES",
+                                           nullptr};
+    const bool bNeedDecode = NeedDecodedBuffer();
+
+    // Process one shard: open file, batch-decode, type-convert, cache.
+    // poCodecs: per-thread clone (parallel) or m_poCodecs (sequential).
+    // oMutex: guards cache writes (uncontended in sequential path).
+    const auto ProcessOneShard =
+        [this, &apszOpenOptions, bNeedDecode](const ShardWork &work,
+                                              ZarrV3CodecSequence *poCodecs,
+                                              std::mutex &oMutex)
+    {
         VSIVirtualHandleUniquePtr fp(
-            VSIFOpenEx2L(osFilename.c_str(), "rb", 0, apszOpenOptions));
+            VSIFOpenEx2L(work.posFilename->c_str(), "rb", 0, apszOpenOptions));
         if (!fp)
-            continue;
+            return;
 
-        // Build request list
+        const auto &aBlocks = *work.paBlocks;
         std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
             anRequests;
         anRequests.reserve(aBlocks.size());
         for (const auto &info : aBlocks)
-        {
             anRequests.push_back({info.anStartIdx, info.anCount});
-        }
 
         std::vector<ZarrByteVectorQuickResize> aResults;
-        if (!m_poCodecs->BatchDecodePartial(fp.get(), anRequests, aResults))
-            continue;
+        if (!poCodecs->BatchDecodePartial(fp.get(), anRequests, aResults))
+            return;
 
-        // Store results in block cache
-        const bool bNeedDecode = NeedDecodedBuffer();
-        for (size_t i = 0; i < aBlocks.size(); ++i)
+        // Type-convert outside mutex (CPU-bound, thread-local data)
+        std::vector<ZarrByteVectorQuickResize> aDecoded;
+        if (bNeedDecode)
         {
-            if (aResults[i].empty())
+            const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                                       m_aoDtypeElts.back().nativeSize;
+            const auto nGDALDTSize = m_oType.GetSize();
+            aDecoded.resize(aBlocks.size());
+            for (size_t i = 0; i < aBlocks.size(); ++i)
             {
-                CachedBlock cachedBlock;
-                m_oChunkCache[aBlocks[i].anBlockIndices] =
-                    std::move(cachedBlock);
-                continue;
-            }
-
-            CachedBlock cachedBlock;
-            if (bNeedDecode)
-            {
-                const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
-                                           m_aoDtypeElts.back().nativeSize;
-                const auto nGDALDTSize = m_oType.GetSize();
+                if (aResults[i].empty())
+                    continue;
                 const size_t nValues = aResults[i].size() / nSourceSize;
-                ZarrByteVectorQuickResize abyDecoded;
-                abyDecoded.resize(nValues * nGDALDTSize);
+                aDecoded[i].resize(nValues * nGDALDTSize);
                 const GByte *pSrc = aResults[i].data();
-                GByte *pDst = abyDecoded.data();
+                GByte *pDst = aDecoded[i].data();
                 for (size_t v = 0; v < nValues;
                      v++, pSrc += nSourceSize, pDst += nGDALDTSize)
                 {
                     DecodeSourceElt(m_aoDtypeElts, pSrc, pDst);
                 }
-                std::swap(cachedBlock.abyDecoded, abyDecoded);
             }
-            else
+        }
+
+        // Store in cache under mutex
+        std::lock_guard<std::mutex> oLock(oMutex);
+        for (size_t i = 0; i < aBlocks.size(); ++i)
+        {
+            CachedBlock cachedBlock;
+            if (!aResults[i].empty())
             {
-                std::swap(cachedBlock.abyDecoded, aResults[i]);
+                if (bNeedDecode)
+                    std::swap(cachedBlock.abyDecoded, aDecoded[i]);
+                else
+                    std::swap(cachedBlock.abyDecoded, aResults[i]);
             }
             m_oChunkCache[aBlocks[i].anBlockIndices] = std::move(cachedBlock);
         }
+    };
+
+    const int nMaxThreads = GDALGetNumThreads();
+
+    const int nShards = static_cast<int>(aShardWork.size());
+    std::mutex oMutex;
+
+    // Sequential: single thread, single shard, or no thread pool
+    CPLWorkerThreadPool *wtp = (nMaxThreads > 1 && nShards > 1)
+                                   ? GDALGetGlobalThreadPool(nMaxThreads)
+                                   : nullptr;
+    if (!wtp)
+    {
+        for (const auto &work : aShardWork)
+            ProcessOneShard(work, m_poCodecs.get(), oMutex);
+        return;
     }
+
+    CPLDebugOnly("ZARR",
+                 "PreloadShardedBlocks: parallel across %d shards (%d threads)",
+                 nShards, std::min(nMaxThreads, nShards));
+
+    // Clone codecs upfront on main thread (Clone is not thread-safe)
+    std::vector<std::unique_ptr<ZarrV3CodecSequence>> apoCodecs(nShards);
+    for (int i = 0; i < nShards; ++i)
+        apoCodecs[i] = m_poCodecs->Clone();
+
+    auto poQueue = wtp->CreateJobQueue();
+    for (int i = 0; i < nShards; ++i)
+    {
+        poQueue->SubmitJob([&work = aShardWork[i], pCodecs = apoCodecs[i].get(),
+                            &oMutex, &ProcessOneShard]()
+                           { ProcessOneShard(work, pCodecs, oMutex); });
+    }
+    poQueue->WaitCompletion();
 }
 
 /************************************************************************/
