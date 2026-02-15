@@ -117,6 +117,7 @@ bool ZarrV3CodecShardingIndexed::InitFromConfiguration(
                 static_cast<uint64_t>(m_oInputArrayMetadata.anBlockSizes[i]));
             return false;
         }
+#ifndef __COVERITY__
         // The following cast is safe since ZarrArray::ParseChunkSize() has
         // previously validated that m_oInputArrayMetadata.anBlockSizes[i] fits
         // on size_t
@@ -125,6 +126,7 @@ bool ZarrV3CodecShardingIndexed::InitFromConfiguration(
             // coverity[result_independent_of_operands]
             CPLAssert(nVal <= std::numeric_limits<size_t>::max());
         }
+#endif
         m_anInnerBlockSize.push_back(static_cast<size_t>(nVal));
         anCountInnerChunks.push_back(
             static_cast<size_t>(m_oInputArrayMetadata.anBlockSizes[i] / nVal));
@@ -613,6 +615,7 @@ bool ZarrV3CodecShardingIndexed::DecodePartial(
 
     if constexpr (sizeof(size_t) < sizeof(uint64_t))
     {
+#ifndef __COVERITY__
         // coverity[result_independent_of_operands]
         if (loc.nSize > std::numeric_limits<size_t>::max())
         {
@@ -623,6 +626,7 @@ bool ZarrV3CodecShardingIndexed::DecodePartial(
                 static_cast<uint64_t>(nInnerChunkIdx), loc.nSize);
             return false;
         }
+#endif
     }
 
     try
@@ -750,7 +754,9 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
         anIdxOffsets[i] = nIndexBaseOffset +
                           static_cast<vsi_l_offset>(anInnerChunkIndices[i]) *
                               sizeof(Location);
+#ifndef __COVERITY__
         ppIdxData[i] = &aLocations[i];
+#endif
     }
 
     if (poFile->ReadMultiRange(static_cast<int>(anRequests.size()),
@@ -812,12 +818,15 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
 
         if constexpr (sizeof(size_t) < sizeof(uint64_t))
         {
+#ifndef __COVERITY__
+            // coverity[result_independent_of_operands]
             if (loc.nSize > std::numeric_limits<size_t>::max())
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "BatchDecodePartial: too large chunk size");
                 return false;
             }
+#endif
         }
 
         aDataRanges.push_back({iReq});

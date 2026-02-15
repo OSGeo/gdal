@@ -8194,13 +8194,13 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 osSubdatasetName = pszSubdataset;
                 bTreatAsSubdataset = true;
-                CPLFree(pszSubdataset);
             }
             else
             {
                 osSubdatasetName = "";
                 bTreatAsSubdataset = false;
             }
+            CPLFree(pszSubdataset);
 
             GDALDestroySubdatasetInfo(hInfo);
         }

@@ -4700,7 +4700,14 @@ struct PointerHolder
 {
     void *ptr = nullptr;
 
-    explicit PointerHolder(void *ptrIn) : ptr(ptrIn)
+    template <class T> explicit PointerHolder(T *&ptrIn) : ptr(ptrIn)
+    {
+        ptrIn = nullptr;
+    }
+
+    template <class T>
+    explicit PointerHolder(std::unique_ptr<T, VSIFreeReleaser> ptrIn)
+        : ptr(ptrIn.release())
     {
     }
 
@@ -5137,8 +5144,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
                 poJob->args.pszResampling);
         }
 
-        poJob->oDstBufferHolder =
-            std::make_unique<PointerHolder>(poJob->pDstBuffer);
+        auto pDstBuffer = poJob->pDstBuffer;
+        poJob->oDstBufferHolder = std::make_unique<PointerHolder>(pDstBuffer);
 
         poJob->NotifyFinished();
     };
@@ -5372,10 +5379,16 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             }
         }
 
-        auto oSrcBufferHolder =
-            std::make_shared<PointerHolder>(poJobQueue ? pChunk : nullptr);
-        auto oSrcMaskBufferHolder = std::make_shared<PointerHolder>(
-            poJobQueue ? pabyChunkNodataMask : nullptr);
+        auto pChunkRaw = pChunk;
+        auto pabyChunkNodataMaskRaw = pabyChunkNodataMask;
+        std::shared_ptr<PointerHolder> oSrcBufferHolder;
+        std::shared_ptr<PointerHolder> oSrcMaskBufferHolder;
+        if (poJobQueue)
+        {
+            oSrcBufferHolder = std::make_shared<PointerHolder>(pChunk);
+            oSrcMaskBufferHolder =
+                std::make_shared<PointerHolder>(pabyChunkNodataMask);
+        }
 
         for (int iOverview = 0; iOverview < nOverviewCount && eErr == CE_None;
              ++iOverview)
@@ -5427,8 +5440,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             poJob->args.dfXRatioDstToSrc = dfXRatioDstToSrc;
             poJob->args.dfYRatioDstToSrc = dfYRatioDstToSrc;
             poJob->args.eWrkDataType = eWrkDataType;
-            poJob->pChunk = pChunk;
-            poJob->args.pabyChunkNodataMask = pabyChunkNodataMask;
+            poJob->pChunk = pChunkRaw;
+            poJob->args.pabyChunkNodataMask = pabyChunkNodataMaskRaw;
             poJob->nSrcWidth = nWidth;
             poJob->nSrcHeight = nHeight;
             poJob->args.nChunkXOff = 0;
@@ -5464,12 +5477,6 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
                     eErr = WriteJobData(poJob.get());
                 }
             }
-        }
-
-        if (poJobQueue)
-        {
-            pChunk = nullptr;
-            pabyChunkNodataMask = nullptr;
         }
     }
 
@@ -6307,7 +6314,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                                                &(poJob->pDstBuffer),
                                                &(poJob->eDstBufferDataType));
 
-            poJob->oDstBufferHolder.reset(new PointerHolder(poJob->pDstBuffer));
+            auto pDstBuffer = poJob->pDstBuffer;
+            poJob->oDstBufferHolder =
+                std::make_unique<PointerHolder>(pDstBuffer);
 
             poJob->NotifyFinished();
         };
@@ -6542,11 +6551,13 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
                     if (poJobQueue)
                     {
-                        poJob->oSrcMaskBufferHolder.reset(new PointerHolder(
-                            apabyChunkNoDataMask[iBand].release()));
+                        poJob->oSrcMaskBufferHolder =
+                            std::make_unique<PointerHolder>(
+                                std::move(apabyChunkNoDataMask[iBand]));
 
-                        poJob->oSrcBufferHolder.reset(
-                            new PointerHolder(apaChunk[iBand].release()));
+                        poJob->oSrcBufferHolder =
+                            std::make_unique<PointerHolder>(
+                                std::move(apaChunk[iBand]));
 
                         poJobQueue->SubmitJob(JobResampleFunc, poJob.get());
                         jobList.emplace_back(std::move(poJob));

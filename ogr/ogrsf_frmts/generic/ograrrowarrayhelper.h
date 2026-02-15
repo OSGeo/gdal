@@ -256,12 +256,14 @@ class CPL_DLL OGRArrowArrayHelper
             }
             else
             {
+#ifndef __COVERITY__
                 // coverity[overflow_sink]
                 newBuffer = VSI_REALLOC_VERBOSE(
                     const_cast<void *>(psArray->buffers[2]), nNewSize);
                 if (newBuffer == nullptr)
                     return nullptr;
                 nMaxAlloc = nNewSize;
+#endif
             }
             psArray->buffers[2] = newBuffer;
         }

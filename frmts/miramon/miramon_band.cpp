@@ -523,7 +523,7 @@ void MMRBand::UpdateUnitTypeValueFromREL(const CPLString &osSection)
     if (m_pfRel->GetMetadataValue(osAuxSection, "unitats", osValue) &&
         !osValue.empty())
     {
-        m_osBandUnitType = osValue;
+        m_osBandUnitType = std::move(osValue);
     }
 }
 
@@ -713,8 +713,8 @@ void MMRBand::UpdateRATInfo(const CPLString &osSection)
         return;
     }
 
-    m_pfRel->GetMetadataValue(osTableNameSection, "AssociatRel",
-                              m_osAssociateREL);
+    CPL_IGNORE_RET_VAL(m_pfRel->GetMetadataValue(
+        osTableNameSection, "AssociatRel", m_osAssociateREL));
 }
 
 /************************************************************************/

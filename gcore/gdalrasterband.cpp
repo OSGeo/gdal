@@ -7460,7 +7460,7 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
                     if (RasterIO(GF_Read, iXBlock * nChunkXSize,
                                  iYBlock * nChunkYSize, nXCheck, nYCheck,
                                  pabyTemp, nXCheck, nYCheck, eDataType, 0,
-                                 static_cast<GSpacing>(nChunkXSize * nDTSize),
+                                 static_cast<GSpacing>(nChunkXSize) * nDTSize,
                                  nullptr) != CE_None)
                     {
                         return CE_Failure;
