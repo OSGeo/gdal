@@ -98,7 +98,11 @@ bool GDALMdimInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
     if (m_stdout)
         aosOptions.AddString("-stdout");
     if (m_detailed)
-        aosOptions.AddString("-detailed");
+    aosOptions.AddString("-detailed");
+    if (m_detailed && m_limit <= 0)
+    {
+        m_limit = 5; 
+    }
     if (m_stats)
         aosOptions.AddString("-stats");
     if (m_limit > 0)
