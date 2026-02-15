@@ -2732,6 +2732,89 @@ def test_zarr_read_data_type_fallback_zarr_v3(tmp_vsimem):
 
 
 @pytest.mark.parametrize(
+    "extension_name",
+    ["numpy.datetime64", "numpy.timedelta64"],
+)
+def test_zarr_read_numpy_datetime64_extension_zarr_v3(tmp_vsimem, extension_name):
+    """Test that numpy.datetime64 and numpy.timedelta64 extension types
+    written by zarr-python 3.x (without a fallback key) are mapped to Int64,
+    that configuration attributes are exposed, and that actual values
+    (including endianness) are correctly read."""
+
+    NAT = -(1 << 63)  # INT64_MIN
+
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [3],
+        "data_type": {
+            "name": extension_name,
+            "configuration": {"unit": "ns", "scale_factor": 1},
+        },
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [3]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": "NaT",
+        "codecs": [{"name": "bytes", "configuration": {"endian": "little"}}],
+    }
+
+    dirname = tmp_vsimem / "test_np_datetime.zarr"
+    gdal.Mkdir(dirname, 0)
+    gdal.FileFromMemBuffer(dirname / "zarr.json", json.dumps(j))
+
+    # Write chunk with known values: two timestamps and NaT
+    chunk_data = struct.pack("qqq", 1000000000, 2000000000, NAT)
+    gdal.Mkdir(dirname / "c", 0)
+    gdal.FileFromMemBuffer(dirname / "c/0", chunk_data)
+
+    # Check via classic raster API
+    ds = gdal.Open(dirname)
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+
+    # Check via multidim API for structural info and values
+    ds = gdal.OpenEx(dirname, gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+    assert ar.GetDataType().GetNumericDataType() == gdal.GDT_Int64
+
+    # Check configuration is exposed as structural info
+    si = ar.GetStructuralInfo()
+    assert si["data_type.name"] == extension_name
+    assert si["data_type.unit"] == "ns"
+    assert si["data_type.scale_factor"] == "1"
+
+    # Check actual values read back correctly (endianness test)
+    data = struct.unpack("qqq", ar.Read())
+    assert data == (1000000000, 2000000000, NAT)
+
+    # Check NaT is registered as nodata
+    assert ar.GetNoDataValueAsInt64() == NAT
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_numpy_datetime64_unsupported_extension_zarr_v3(tmp_vsimem):
+    """Test that an unrecognized extension type (without fallback) raises an error."""
+
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [1],
+        "data_type": {
+            "name": "some.unknown.extension",
+            "configuration": {},
+        },
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [1]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": 0,
+    }
+
+    dirname = tmp_vsimem / "test_unknown_ext.zarr"
+    gdal.Mkdir(dirname, 0)
+    gdal.FileFromMemBuffer(dirname / "zarr.json", json.dumps(j))
+    with pytest.raises(Exception, match="Invalid or unsupported format"):
+        gdal.Open(dirname)
+
+
+@pytest.mark.parametrize(
     "data_type,fill_value,nodata",
     [
         # JSON NoDataValues cannot be Float16
