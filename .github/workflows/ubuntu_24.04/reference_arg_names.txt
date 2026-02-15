@@ -83,6 +83,7 @@ feature-limit
 feature-only
 features
 fetch-metadata
+fid
 field
 field-name
 field-strategy

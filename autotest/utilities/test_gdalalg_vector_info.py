@@ -264,3 +264,20 @@ def test_gdalalg_vector_info_in_pipeline():
         j = alg.Output()
         assert j["layers"][0]["name"] == "path"
         assert "features" not in j["layers"][0]
+
+
+def test_gdal_vector_info_fid():
+
+    src_ds = "../ogr/data/poly.shp"
+
+    j = gdal.Run(
+        "vector",
+        "info",
+        dataset=src_ds,
+        format="json",
+        features=True,
+        fid=0,
+    ).Output()
+
+    assert len(j["layers"][0]["features"]) == 1
+    assert j["layers"][0]["features"][0]["fid"] == 0

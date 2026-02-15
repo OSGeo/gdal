@@ -1445,7 +1445,7 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
     /*      Read, and dump features.                                        */
     /* -------------------------------------------------------------------- */
 
-    if (psOptions->nFetchFID == OGRNullFID && !bForceSummary &&
+    if ((psOptions->nFetchFID == OGRNullFID || bJson) && !bForceSummary &&
         ((psOptions->bIsCli && psOptions->bFeaturesUserRequested) ||
          (!psOptions->bIsCli && !psOptions->bSummaryOnly)))
     {
@@ -1465,203 +1465,219 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                                  : 0;
             if (bJson)
                 oLayer.Add("features", oFeatures);
-            GIntBig nFeatureCount = 0;
-            for (auto &poFeature : poLayer)
+
+            const auto EmitFeatureJSON =
+                [poLayer, nFields, nGeomFields,
+                 &oFeatures](const OGRFeature *poFeature)
             {
-                if (psOptions->nLimit >= 0 &&
-                    nFeatureCount >= psOptions->nLimit)
+                CPLJSONObject oFeature;
+                CPLJSONObject oProperties;
+                oFeatures.Add(oFeature);
+                oFeature.Add("type", "Feature");
+                oFeature.Add("properties", oProperties);
+                oFeature.Add("fid", poFeature->GetFID());
+                for (int i = 0; i < nFields; ++i)
                 {
-                    break;
-                }
-                ++nFeatureCount;
-
-                if (bJson)
-                {
-                    CPLJSONObject oFeature;
-                    CPLJSONObject oProperties;
-                    oFeatures.Add(oFeature);
-                    oFeature.Add("type", "Feature");
-                    oFeature.Add("properties", oProperties);
-                    oFeature.Add("fid", poFeature->GetFID());
-                    for (int i = 0; i < nFields; ++i)
+                    const auto poFDefn = poFeature->GetFieldDefnRef(i);
+                    const auto eType = poFDefn->GetType();
+                    if (!poFeature->IsFieldSet(i))
+                        continue;
+                    if (poFeature->IsFieldNull(i))
                     {
-                        const auto poFDefn = poFeature->GetFieldDefnRef(i);
-                        const auto eType = poFDefn->GetType();
-                        if (!poFeature->IsFieldSet(i))
-                            continue;
-                        if (poFeature->IsFieldNull(i))
-                        {
-                            oProperties.SetNull(poFDefn->GetNameRef());
-                        }
-                        else if (eType == OFTInteger)
-                        {
-                            if (poFDefn->GetSubType() == OFSTBoolean)
-                                oProperties.Add(
-                                    poFDefn->GetNameRef(),
-                                    CPL_TO_BOOL(
-                                        poFeature->GetFieldAsInteger(i)));
-                            else
-                                oProperties.Add(
-                                    poFDefn->GetNameRef(),
-                                    poFeature->GetFieldAsInteger(i));
-                        }
-                        else if (eType == OFTInteger64)
-                        {
-                            oProperties.Add(poFDefn->GetNameRef(),
-                                            poFeature->GetFieldAsInteger64(i));
-                        }
-                        else if (eType == OFTReal)
-                        {
-                            oProperties.Add(poFDefn->GetNameRef(),
-                                            poFeature->GetFieldAsDouble(i));
-                        }
-                        else if ((eType == OFTString &&
-                                  poFDefn->GetSubType() != OFSTJSON) ||
-                                 eType == OFTDate || eType == OFTTime ||
-                                 eType == OFTDateTime)
-                        {
-                            oProperties.Add(poFDefn->GetNameRef(),
-                                            poFeature->GetFieldAsString(i));
-                        }
-                        else
-                        {
-                            char *pszSerialized =
-                                poFeature->GetFieldAsSerializedJSon(i);
-                            if (pszSerialized)
-                            {
-                                const auto eStrType =
-                                    CPLGetValueType(pszSerialized);
-                                if (eStrType == CPL_VALUE_INTEGER)
-                                {
-                                    oProperties.Add(
-                                        poFDefn->GetNameRef(),
-                                        CPLAtoGIntBig(pszSerialized));
-                                }
-                                else if (eStrType == CPL_VALUE_REAL)
-                                {
-                                    oProperties.Add(poFDefn->GetNameRef(),
-                                                    CPLAtof(pszSerialized));
-                                }
-                                else
-                                {
-                                    CPLJSONDocument oDoc;
-                                    if (oDoc.LoadMemory(pszSerialized))
-                                        oProperties.Add(poFDefn->GetNameRef(),
-                                                        oDoc.GetRoot());
-                                }
-                                CPLFree(pszSerialized);
-                            }
-                        }
+                        oProperties.SetNull(poFDefn->GetNameRef());
                     }
-
-                    const auto GetGeoJSONOptions = [poLayer](int iGeomField)
+                    else if (eType == OFTInteger)
                     {
-                        CPLStringList aosGeoJSONOptions;
-                        const auto &oCoordPrec =
-                            poLayer->GetLayerDefn()
-                                ->GetGeomFieldDefn(iGeomField)
-                                ->GetCoordinatePrecision();
-                        if (oCoordPrec.dfXYResolution !=
-                            OGRGeomCoordinatePrecision::UNKNOWN)
-                        {
-                            aosGeoJSONOptions.SetNameValue(
-                                "XY_COORD_PRECISION",
-                                CPLSPrintf("%d",
-                                           OGRGeomCoordinatePrecision::
-                                               ResolutionToPrecision(
-                                                   oCoordPrec.dfXYResolution)));
-                        }
-                        if (oCoordPrec.dfZResolution !=
-                            OGRGeomCoordinatePrecision::UNKNOWN)
-                        {
-                            aosGeoJSONOptions.SetNameValue(
-                                "Z_COORD_PRECISION",
-                                CPLSPrintf("%d",
-                                           OGRGeomCoordinatePrecision::
-                                               ResolutionToPrecision(
-                                                   oCoordPrec.dfZResolution)));
-                        }
-                        return aosGeoJSONOptions;
-                    };
-
-                    if (nGeomFields == 0)
-                        oFeature.SetNull("geometry");
+                        if (poFDefn->GetSubType() == OFSTBoolean)
+                            oProperties.Add(
+                                poFDefn->GetNameRef(),
+                                CPL_TO_BOOL(poFeature->GetFieldAsInteger(i)));
+                        else
+                            oProperties.Add(poFDefn->GetNameRef(),
+                                            poFeature->GetFieldAsInteger(i));
+                    }
+                    else if (eType == OFTInteger64)
+                    {
+                        oProperties.Add(poFDefn->GetNameRef(),
+                                        poFeature->GetFieldAsInteger64(i));
+                    }
+                    else if (eType == OFTReal)
+                    {
+                        oProperties.Add(poFDefn->GetNameRef(),
+                                        poFeature->GetFieldAsDouble(i));
+                    }
+                    else if ((eType == OFTString &&
+                              poFDefn->GetSubType() != OFSTJSON) ||
+                             eType == OFTDate || eType == OFTTime ||
+                             eType == OFTDateTime)
+                    {
+                        oProperties.Add(poFDefn->GetNameRef(),
+                                        poFeature->GetFieldAsString(i));
+                    }
                     else
                     {
-                        if (const auto poGeom = poFeature->GetGeometryRef())
+                        char *pszSerialized =
+                            poFeature->GetFieldAsSerializedJSon(i);
+                        if (pszSerialized)
                         {
-                            char *pszSerialized =
-                                wkbFlatten(poGeom->getGeometryType()) <=
-                                        wkbGeometryCollection
-                                    ? poGeom->exportToJson(
-                                          GetGeoJSONOptions(0).List())
-                                    : nullptr;
-                            if (pszSerialized)
+                            const auto eStrType =
+                                CPLGetValueType(pszSerialized);
+                            if (eStrType == CPL_VALUE_INTEGER)
+                            {
+                                oProperties.Add(poFDefn->GetNameRef(),
+                                                CPLAtoGIntBig(pszSerialized));
+                            }
+                            else if (eStrType == CPL_VALUE_REAL)
+                            {
+                                oProperties.Add(poFDefn->GetNameRef(),
+                                                CPLAtof(pszSerialized));
+                            }
+                            else
                             {
                                 CPLJSONDocument oDoc;
                                 if (oDoc.LoadMemory(pszSerialized))
-                                    oFeature.Add("geometry", oDoc.GetRoot());
-                                CPLFree(pszSerialized);
+                                    oProperties.Add(poFDefn->GetNameRef(),
+                                                    oDoc.GetRoot());
                             }
-                            else
-                            {
-                                CPLJSONObject oGeometry;
-                                oFeature.SetNull("geometry");
-                                oFeature.Add("wkt_geometry",
-                                             poGeom->exportToWkt());
-                            }
-                        }
-                        else
-                            oFeature.SetNull("geometry");
-
-                        if (nGeomFields > 1)
-                        {
-                            CPLJSONArray oGeometries;
-                            oFeature.Add("geometries", oGeometries);
-                            for (int i = 0; i < nGeomFields; ++i)
-                            {
-                                auto poGeom = poFeature->GetGeomFieldRef(i);
-                                if (poGeom)
-                                {
-                                    char *pszSerialized =
-                                        wkbFlatten(poGeom->getGeometryType()) <=
-                                                wkbGeometryCollection
-                                            ? poGeom->exportToJson(
-                                                  GetGeoJSONOptions(i).List())
-                                            : nullptr;
-                                    if (pszSerialized)
-                                    {
-                                        CPLJSONDocument oDoc;
-                                        if (oDoc.LoadMemory(pszSerialized))
-                                            oGeometries.Add(oDoc.GetRoot());
-                                        CPLFree(pszSerialized);
-                                    }
-                                    else
-                                    {
-                                        CPLJSONObject oGeometry;
-                                        oGeometries.Add(poGeom->exportToWkt());
-                                    }
-                                }
-                                else
-                                    oGeometries.AddNull();
-                            }
+                            CPLFree(pszSerialized);
                         }
                     }
                 }
+
+                const auto GetGeoJSONOptions = [poLayer](int iGeomField)
+                {
+                    CPLStringList aosGeoJSONOptions;
+                    const auto &oCoordPrec = poLayer->GetLayerDefn()
+                                                 ->GetGeomFieldDefn(iGeomField)
+                                                 ->GetCoordinatePrecision();
+                    if (oCoordPrec.dfXYResolution !=
+                        OGRGeomCoordinatePrecision::UNKNOWN)
+                    {
+                        aosGeoJSONOptions.SetNameValue(
+                            "XY_COORD_PRECISION",
+                            CPLSPrintf("%d",
+                                       OGRGeomCoordinatePrecision::
+                                           ResolutionToPrecision(
+                                               oCoordPrec.dfXYResolution)));
+                    }
+                    if (oCoordPrec.dfZResolution !=
+                        OGRGeomCoordinatePrecision::UNKNOWN)
+                    {
+                        aosGeoJSONOptions.SetNameValue(
+                            "Z_COORD_PRECISION",
+                            CPLSPrintf("%d",
+                                       OGRGeomCoordinatePrecision::
+                                           ResolutionToPrecision(
+                                               oCoordPrec.dfZResolution)));
+                    }
+                    return aosGeoJSONOptions;
+                };
+
+                if (nGeomFields == 0)
+                    oFeature.SetNull("geometry");
                 else
                 {
-                    ConcatStr(
-                        osRet, psOptions->bStdoutOutput,
-                        poFeature
-                            ->DumpReadableAsString(psOptions->aosOptions.List())
-                            .c_str());
+                    if (const auto poGeom = poFeature->GetGeometryRef())
+                    {
+                        char *pszSerialized =
+                            wkbFlatten(poGeom->getGeometryType()) <=
+                                    wkbGeometryCollection
+                                ? poGeom->exportToJson(
+                                      GetGeoJSONOptions(0).List())
+                                : nullptr;
+                        if (pszSerialized)
+                        {
+                            CPLJSONDocument oDoc;
+                            if (oDoc.LoadMemory(pszSerialized))
+                                oFeature.Add("geometry", oDoc.GetRoot());
+                            CPLFree(pszSerialized);
+                        }
+                        else
+                        {
+                            CPLJSONObject oGeometry;
+                            oFeature.SetNull("geometry");
+                            oFeature.Add("wkt_geometry", poGeom->exportToWkt());
+                        }
+                    }
+                    else
+                        oFeature.SetNull("geometry");
+
+                    if (nGeomFields > 1)
+                    {
+                        CPLJSONArray oGeometries;
+                        oFeature.Add("geometries", oGeometries);
+                        for (int i = 0; i < nGeomFields; ++i)
+                        {
+                            auto poGeom = poFeature->GetGeomFieldRef(i);
+                            if (poGeom)
+                            {
+                                char *pszSerialized =
+                                    wkbFlatten(poGeom->getGeometryType()) <=
+                                            wkbGeometryCollection
+                                        ? poGeom->exportToJson(
+                                              GetGeoJSONOptions(i).List())
+                                        : nullptr;
+                                if (pszSerialized)
+                                {
+                                    CPLJSONDocument oDoc;
+                                    if (oDoc.LoadMemory(pszSerialized))
+                                        oGeometries.Add(oDoc.GetRoot());
+                                    CPLFree(pszSerialized);
+                                }
+                                else
+                                {
+                                    CPLJSONObject oGeometry;
+                                    oGeometries.Add(poGeom->exportToWkt());
+                                }
+                            }
+                            else
+                                oGeometries.AddNull();
+                        }
+                    }
+                }
+            };
+
+            if (psOptions->nFetchFID != OGRNullFID)
+            {
+                auto poFeature = std::unique_ptr<OGRFeature>(
+                    poLayer->GetFeature(psOptions->nFetchFID));
+                if (poFeature)
+                {
+                    EmitFeatureJSON(poFeature.get());
+                }
+            }
+            else
+            {
+                GIntBig nFeatureCount = 0;
+                for (auto &poFeature : poLayer)
+                {
+                    if (psOptions->nLimit >= 0 &&
+                        nFeatureCount >= psOptions->nLimit)
+                    {
+                        break;
+                    }
+                    ++nFeatureCount;
+
+                    if (bJson)
+                    {
+                        EmitFeatureJSON(poFeature.get());
+                    }
+                    else
+                    {
+                        ConcatStr(osRet, psOptions->bStdoutOutput,
+                                  poFeature
+                                      ->DumpReadableAsString(
+                                          psOptions->aosOptions.List())
+                                      .c_str());
+                    }
                 }
             }
         }
     }
     else if (!bJson && psOptions->nFetchFID != OGRNullFID)
     {
-        OGRFeature *poFeature = poLayer->GetFeature(psOptions->nFetchFID);
+        auto poFeature = std::unique_ptr<OGRFeature>(
+            poLayer->GetFeature(psOptions->nFetchFID));
         if (poFeature == nullptr)
         {
             Concat(osRet, psOptions->bStdoutOutput,
@@ -1675,7 +1691,6 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                 osRet, psOptions->bStdoutOutput,
                 poFeature->DumpReadableAsString(psOptions->aosOptions.List())
                     .c_str());
-            OGRFeature::DestroyFeature(poFeature);
         }
     }
 }

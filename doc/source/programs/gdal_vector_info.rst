@@ -93,6 +93,13 @@ Program-Specific Options
 
     This option is mutually exclusive with the :option:`--sql` option.
 
+.. option:: --fid <FID>
+
+    .. versionadded:: 3.13
+
+    Feature identifier. Only the feature with the specified FID
+    will be reported.
+
 Standard Options
 ----------------
 
