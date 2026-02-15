@@ -27,7 +27,9 @@
 
 GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      /* standaloneStep =*/false)
+                                      ConstructorOptions()
+                                          .SetStandaloneStep(false)
+                                          .SetAddSkipEmptyLayersArgument(true))
 {
     AddVectorOutputArgs(/* hiddenForCLI = */ false,
                         /* shortNameOutputLayerAllowed=*/true);
@@ -37,12 +39,163 @@ GDALVectorWriteAlgorithm::GDALVectorWriteAlgorithm()
 /*                 GDALVectorWriteAlgorithm::RunStep()                  */
 /************************************************************************/
 
+namespace
+{
+class OGRReadBufferedLayer
+    : public OGRLayer,
+      public OGRGetNextFeatureThroughRaw<OGRReadBufferedLayer>
+{
+  public:
+    explicit OGRReadBufferedLayer(OGRLayer &srcLayer)
+        : m_srcLayer(srcLayer), m_poFeature(nullptr)
+    {
+        m_poFeature.reset(m_srcLayer.GetNextFeature());
+    }
+
+    ~OGRReadBufferedLayer() override;
+
+    const char *GetDescription() const override
+    {
+        return m_srcLayer.GetDescription();
+    }
+
+    GIntBig GetFeatureCount(int bForce) override
+    {
+        if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
+        {
+            return m_srcLayer.GetFeatureCount(bForce);
+        }
+
+        return OGRLayer::GetFeatureCount(bForce);
+    }
+
+    const OGRFeatureDefn *GetLayerDefn() const override
+    {
+        return m_srcLayer.GetLayerDefn();
+    }
+
+    OGRFeature *GetNextRawFeature()
+    {
+        auto ret = m_poFeature.release();
+        m_poFeature.reset(m_srcLayer.GetNextFeature());
+        return ret;
+    }
+
+    DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRReadBufferedLayer)
+
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override
+    {
+        return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
+    }
+
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent,
+                        bool bForce) override
+    {
+        return m_srcLayer.GetExtent3D(iGeomField, psExtent, bForce);
+    }
+
+    const OGRFeature *PeekNextFeature() const
+    {
+        return m_poFeature.get();
+    }
+
+    int TestCapability(const char *pszCap) const override
+    {
+        if (EQUAL(pszCap, OLCFastFeatureCount) ||
+            EQUAL(pszCap, OLCFastGetExtent) ||
+            EQUAL(pszCap, OLCFastGetExtent3D) ||
+            EQUAL(pszCap, OLCZGeometries) ||
+            EQUAL(pszCap, OLCMeasuredGeometries) ||
+            EQUAL(pszCap, OLCCurveGeometries))
+        {
+            return m_srcLayer.TestCapability(pszCap);
+        }
+
+        return false;
+    }
+
+    void ResetReading() override
+    {
+        m_srcLayer.ResetReading();
+        m_poFeature.reset(m_srcLayer.GetNextFeature());
+    }
+
+  private:
+    OGRLayer &m_srcLayer;
+    std::unique_ptr<OGRFeature> m_poFeature;
+};
+
+OGRReadBufferedLayer::~OGRReadBufferedLayer() = default;
+
+class GDALReadBufferedDataset final : public GDALDataset
+{
+  public:
+    explicit GDALReadBufferedDataset(GDALDataset &srcDS) : m_srcDS(srcDS)
+    {
+        m_srcDS.Reference();
+
+        for (int i = 0; i < srcDS.GetLayerCount(); i++)
+        {
+            auto poLayer =
+                std::make_unique<OGRReadBufferedLayer>(*srcDS.GetLayer(i));
+            if (poLayer->PeekNextFeature())
+            {
+                m_layers.push_back(std::move(poLayer));
+            }
+        }
+    }
+
+    ~GDALReadBufferedDataset() override;
+
+    int GetLayerCount() const override
+    {
+        return static_cast<int>(m_layers.size());
+    }
+
+    const OGRLayer *GetLayer(int nLayer) const override
+    {
+        if (nLayer < 0 || nLayer >= static_cast<int>(m_layers.size()))
+        {
+            return nullptr;
+        }
+        return m_layers[nLayer].get();
+    }
+
+  private:
+    GDALDataset &m_srcDS;
+    std::vector<std::unique_ptr<OGRReadBufferedLayer>> m_layers{};
+};
+
+GDALReadBufferedDataset::~GDALReadBufferedDataset()
+{
+    m_srcDS.Dereference();
+}
+
+}  // namespace
+
 bool GDALVectorWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto pfnProgress = ctxt.m_pfnProgress;
     auto pProgressData = ctxt.m_pProgressData;
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
+
+    std::unique_ptr<GDALDataset> poReadBufferedDataset;
+
+    if (m_skipEmptyLayers)
+    {
+        poReadBufferedDataset =
+            std::make_unique<GDALReadBufferedDataset>(*poSrcDS);
+
+        if (m_format == "stream")
+        {
+            m_outputDataset.Set(std::move(poReadBufferedDataset));
+            return true;
+        }
+
+        poSrcDS = poReadBufferedDataset.get();
+    }
 
     if (m_format == "stream")
     {

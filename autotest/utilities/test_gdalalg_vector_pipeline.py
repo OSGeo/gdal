@@ -999,3 +999,38 @@ def test_gdalalg_vector_pipeline_read_limit(tmp_vsimem):
     with gdal.OpenEx(dst_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 3
         assert ds.GetLayer(1).GetFeatureCount() == 3
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_pipeline_skip_empty_layers(tmp_vsimem):
+
+    src_filename = tmp_vsimem / "src.gpkg"
+    dst_filename = tmp_vsimem / "dst.gpkg"
+
+    with gdal.GetDriverByName("GPKG").CreateVector(src_filename) as src_ds:
+        with gdal.OpenEx("../ogr/data/poly.shp") as poly_ds:
+            src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_1")
+            src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_2")
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            src_filename,
+            "!",
+            "filter",
+            "--active-layer",
+            "poly_1",
+            "--where",
+            "EAS_ID=1234567",
+            "!",
+            "write",
+            dst_filename,
+            "--skip-empty-layers",
+        ]
+    )
+
+    with gdal.OpenEx(dst_filename) as ds:
+        assert ds.GetLayerCount() == 1
+        assert ds.GetLayer(0).GetName() == "poly_2"
+        assert ds.GetLayer(0).GetFeatureCount() == 10

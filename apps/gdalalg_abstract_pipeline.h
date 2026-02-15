@@ -142,13 +142,14 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         bool inputDatasetRequired = true;
         bool inputDatasetPositional = true;
         bool outputDatasetRequired = true;
-        bool addInputLayerNameArgument = true;   // only for vector input
-        bool addUpdateArgument = true;           // only for vector output
-        bool addAppendLayerArgument = true;      // only for vector output
-        bool addOverwriteLayerArgument = true;   // only for vector output
-        bool addUpsertArgument = true;           // only for vector output
-        bool addSkipErrorsArgument = true;       // only for vector output
-        bool addOutputLayerNameArgument = true;  // only for vector output
+        bool addInputLayerNameArgument = true;    // only for vector input
+        bool addUpdateArgument = true;            // only for vector output
+        bool addAppendLayerArgument = true;       // only for vector output
+        bool addOverwriteLayerArgument = true;    // only for vector output
+        bool addUpsertArgument = true;            // only for vector output
+        bool addSkipEmptyLayersArgument = false;  // only for vector output
+        bool addSkipErrorsArgument = true;        // only for vector output
+        bool addOutputLayerNameArgument = true;   // only for vector output
         int inputDatasetMaxCount = 1;
         std::string inputDatasetHelpMsg{};
         std::string inputDatasetAlias{};
@@ -259,6 +260,12 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
             return *this;
         }
 
+        inline ConstructorOptions &SetAddSkipEmptyLayersArgument(bool b)
+        {
+            addSkipEmptyLayersArgument = b;
+            return *this;
+        }
+
         inline ConstructorOptions &SetAddSkipErrorsArgument(bool b)
         {
             addSkipErrorsArgument = b;
@@ -362,6 +369,7 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     bool m_appendLayer = false;
     bool m_upsert = false;
     bool m_skipErrors = false;
+    bool m_skipEmptyLayers = false;
 
     void AddRasterInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
     void AddRasterOutputArgs(bool hiddenForCLI);

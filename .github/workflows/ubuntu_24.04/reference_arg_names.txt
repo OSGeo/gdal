@@ -262,6 +262,7 @@ skip-all-optional
 skip-binary
 skip-blank
 skip-crs
+skip-empty-layers
 skip-errors
 skip-geolocation
 skip-geotransform
