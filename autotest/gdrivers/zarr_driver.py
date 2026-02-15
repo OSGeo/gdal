@@ -4168,8 +4168,16 @@ def test_zarr_advise_read(tmp_path, compression, format):
         rg = ds.GetRootGroup()
         ar = rg.OpenMDArray("test")
 
-        with gdal.quiet_errors():
-            assert ar.AdviseRead(options=["CACHE_SIZE=1"]) == gdal.CE_Failure
+        with gdaltest.error_raised(
+            gdal.CE_Failure,
+            match="CACHE_SIZE=1 is not big enough to cache all needed tiles. At least 3199200 bytes would be needed",
+        ):
+            assert (
+                ar.AsClassicDataset(1, 0).AdviseRead(
+                    0, 0, dim1_size, dim0_size, options=["CACHE_SIZE=1"]
+                )
+                == gdal.CE_Failure
+            )
 
         got_data_before_advise_read = ar.Read(
             array_start_idx=[40, 51], count=[2 * dim0_blocksize, 2 * dim1_blocksize]

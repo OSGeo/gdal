@@ -686,6 +686,8 @@ def test_multidim_asclassicdataset_single_dim():
 
     assert ar.AsClassicDataset(0, 0).ReadRaster() == array.array("d", [10.5, 20])
 
+    assert ar.AsClassicDataset(0, 0).AdviseRead(0, 0, 2, 1) == gdal.CE_None
+
     with pytest.raises(Exception, match="Invalid iXDim and/or iYDim"):
         ar.AsClassicDataset(0, 1)
 
@@ -729,6 +731,8 @@ def test_multidim_asclassicdataset_band_metadata():
         "aux_var", [dimOther], gdal.ExtendedDataType.CreateString()
     )
     aux_var.Write(["foo", "bar"])
+
+    assert ar.AsClassicDataset(2, 1).AdviseRead(0, 0, 2, 2) == gdal.CE_None
 
     with pytest.raises(
         Exception, match="Root group should be provided when BAND_METADATA is set"
@@ -1956,3 +1960,41 @@ def test_multidim_dataset_as_mdarray_errors():
     with pytest.raises(Exception, match="Illegal value for DIM_ORDER option"):
         with gdal.GetDriverByName("MEM").Create("", 1, 1, 1) as ds:
             ds.AsMDArray(["DIM_ORDER=invalid"])
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_array_as_dataset():
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="1">
+  <VRTRasterBand dataType="Float64" band="1">
+    <ArraySource>
+        <Array name="test">
+            <DataType>Float64</DataType>
+            <Dimension name="Y" size="1"/>
+            <Dimension name="X" size="2147483647"/>
+            <ConstantValue>10</ConstantValue>
+        </Array>
+    </ArraySource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    assert ds.GetRasterBand(1).Checksum() == 186
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_array_as_dataset_error():
+
+    with pytest.raises(
+        Exception, match="Too large array to be exposed as a GDAL dataset"
+    ):
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="1">
+  <VRTRasterBand dataType="Float64" band="1">
+    <ArraySource>
+        <Array name="test">
+            <DataType>Float64</DataType>
+            <Dimension name="Y" size="1"/>
+            <Dimension name="X" size="2147483648"/>
+            <ConstantValue>10</ConstantValue>
+        </Array>
+    </ArraySource>
+  </VRTRasterBand>
+</VRTDataset>""")
