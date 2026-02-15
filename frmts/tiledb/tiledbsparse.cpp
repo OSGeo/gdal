@@ -4960,7 +4960,7 @@ void OGRTileDBLayer::FillTimeOrDateArray(
             }
         }
     }
-    psChild->buffers[1] = newValuesPtr->data();
+    psChild->buffers[1] = newValues.data();
 
     SetNullBuffer(psChild, iField, abyValidityFromFilters);
 }
