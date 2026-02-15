@@ -2762,7 +2762,7 @@ def test_zarr_read_numpy_datetime64_extension_zarr_v3(tmp_vsimem, extension_name
     gdal.FileFromMemBuffer(dirname / "zarr.json", json.dumps(j))
 
     # Write chunk with known values: two timestamps and NaT
-    chunk_data = struct.pack("qqq", 1000000000, 2000000000, NAT)
+    chunk_data = struct.pack("<qqq", 1000000000, 2000000000, NAT)
     gdal.Mkdir(dirname / "c", 0)
     gdal.FileFromMemBuffer(dirname / "c/0", chunk_data)
 
