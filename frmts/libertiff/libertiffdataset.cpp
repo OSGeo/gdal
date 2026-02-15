@@ -135,6 +135,8 @@ class LIBERTIFFDataset final : public GDALPamDataset
         return gdal::GCP::c_ptr(m_aoGCPs);
     }
 
+    static GDALDataType ComputeGDALDataType(const LIBERTIFF_NS::Image &image);
+
   protected:
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
@@ -1910,69 +1912,69 @@ bool LIBERTIFFDataset::ReadBlock(GByte *pabyBlockData, int nBlockXOff,
 /*                        ComputeGDALDataType()                         */
 /************************************************************************/
 
-GDALDataType LIBERTIFFDataset::ComputeGDALDataType() const
+/* static */ GDALDataType
+LIBERTIFFDataset::ComputeGDALDataType(const LIBERTIFF_NS::Image &image)
 {
-
     GDALDataType eDT = GDT_Unknown;
 
-    switch (m_image->sampleFormat())
+    switch (image.sampleFormat())
     {
         case LIBERTIFF_NS::SampleFormat::UnsignedInt:
         {
-            if (m_image->bitsPerSample() == 1 &&
-                (m_image->samplesPerPixel() == 1 ||
-                 m_image->planarConfiguration() ==
+            if (image.bitsPerSample() == 1 &&
+                (image.samplesPerPixel() == 1 ||
+                 image.planarConfiguration() ==
                      LIBERTIFF_NS::PlanarConfiguration::Separate))
             {
                 eDT = GDT_UInt8;
             }
-            else if (m_image->bitsPerSample() == 8)
+            else if (image.bitsPerSample() == 8)
                 eDT = GDT_UInt8;
-            else if (m_image->bitsPerSample() == 16)
+            else if (image.bitsPerSample() == 16)
                 eDT = GDT_UInt16;
-            else if (m_image->bitsPerSample() == 32)
+            else if (image.bitsPerSample() == 32)
                 eDT = GDT_UInt32;
-            else if (m_image->bitsPerSample() == 64)
+            else if (image.bitsPerSample() == 64)
                 eDT = GDT_UInt64;
             break;
         }
 
         case LIBERTIFF_NS::SampleFormat::SignedInt:
         {
-            if (m_image->bitsPerSample() == 8)
+            if (image.bitsPerSample() == 8)
                 eDT = GDT_Int8;
-            else if (m_image->bitsPerSample() == 16)
+            else if (image.bitsPerSample() == 16)
                 eDT = GDT_Int16;
-            else if (m_image->bitsPerSample() == 32)
+            else if (image.bitsPerSample() == 32)
                 eDT = GDT_Int32;
-            else if (m_image->bitsPerSample() == 64)
+            else if (image.bitsPerSample() == 64)
                 eDT = GDT_Int64;
             break;
         }
 
         case LIBERTIFF_NS::SampleFormat::IEEEFP:
         {
-            if (m_image->bitsPerSample() == 32)
+            if (image.bitsPerSample() == 32)
                 eDT = GDT_Float32;
-            else if (m_image->bitsPerSample() == 64)
+            else if (image.bitsPerSample() == 64)
                 eDT = GDT_Float64;
             break;
         }
 
         case LIBERTIFF_NS::SampleFormat::ComplexInt:
         {
-            if (m_image->bitsPerSample() == 32)
+            if (image.bitsPerSample() == 32)
                 eDT = GDT_CInt16;
-            else if (m_image->bitsPerSample() == 64)
+            else if (image.bitsPerSample() == 64)
                 eDT = GDT_CInt32;
             break;
         }
 
         case LIBERTIFF_NS::SampleFormat::ComplexIEEEFP:
         {
-            if (m_image->bitsPerSample() == 64)
+            if (image.bitsPerSample() == 64)
                 eDT = GDT_CFloat32;
-            else if (m_image->bitsPerSample() == 128)
+            else if (image.bitsPerSample() == 128)
                 eDT = GDT_CFloat64;
             break;
         }
@@ -1981,8 +1983,8 @@ GDALDataType LIBERTIFFDataset::ComputeGDALDataType() const
             break;
     }
 
-    if (m_image->bitsPerSample() == 12 &&
-        m_image->compression() == LIBERTIFF_NS::Compression::JPEG)
+    if (image.bitsPerSample() == 12 &&
+        image.compression() == LIBERTIFF_NS::Compression::JPEG)
     {
         auto poJPEGDrv = GetGDALDriverManager()->GetDriverByName("JPEG");
         if (poJPEGDrv)
@@ -1995,6 +1997,11 @@ GDALDataType LIBERTIFFDataset::ComputeGDALDataType() const
     }
 
     return eDT;
+}
+
+GDALDataType LIBERTIFFDataset::ComputeGDALDataType() const
+{
+    return ComputeGDALDataType(*(m_image.get()));
 }
 
 /************************************************************************/
@@ -2644,19 +2651,21 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
             if (curImage->subFileType() ==
                 LIBERTIFF_NS::SubFileTypeFlags::ReducedImage)
             {
-                // Overview IFD
-                auto poOvrDS = std::make_unique<LIBERTIFFDataset>();
-                if (poOvrDS->Open(std::move(curImage)) &&
-                    poOvrDS->GetRasterCount() == nBands &&
-                    poOvrDS->GetRasterXSize() <= nRasterXSize &&
-                    poOvrDS->GetRasterYSize() <= nRasterYSize &&
-                    poOvrDS->GetRasterBand(1)->GetRasterDataType() ==
+                if (curImage->samplesPerPixel() ==
+                        static_cast<unsigned>(nBands) &&
+                    curImage->width() <= static_cast<unsigned>(nRasterXSize) &&
+                    curImage->height() <= static_cast<unsigned>(nRasterYSize) &&
+                    LIBERTIFFDataset::ComputeGDALDataType(*(curImage.get())) ==
                         GetRasterBand(1)->GetRasterDataType())
                 {
-                    m_apoOvrDSOwned.push_back(std::move(poOvrDS));
-                    auto poOvrDSRaw = m_apoOvrDSOwned.back().get();
-                    m_apoOvrDS.push_back(poOvrDSRaw);
-                    poLastNonMaskDS = poOvrDSRaw;
+                    auto poOvrDS = std::make_unique<LIBERTIFFDataset>();
+                    if (poOvrDS->Open(std::move(curImage)))
+                    {
+                        m_apoOvrDSOwned.push_back(std::move(poOvrDS));
+                        auto poOvrDSRaw = m_apoOvrDSOwned.back().get();
+                        m_apoOvrDS.push_back(poOvrDSRaw);
+                        poLastNonMaskDS = poOvrDSRaw;
+                    }
                 }
             }
             else if ((curImage->subFileType() &
@@ -2665,24 +2674,26 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
                 // Mask IFD
                 if (!poLastNonMaskDS->m_poMaskDS)
                 {
-                    auto poMaskDS = std::make_unique<LIBERTIFFDataset>();
-                    if (poMaskDS->Open(std::move(curImage)) &&
-                        poMaskDS->GetRasterCount() == 1 &&
-                        poMaskDS->GetRasterXSize() ==
-                            poLastNonMaskDS->nRasterXSize &&
-                        poMaskDS->GetRasterYSize() ==
-                            poLastNonMaskDS->nRasterYSize &&
-                        poMaskDS->GetRasterBand(1)->GetRasterDataType() ==
-                            GDT_UInt8)
+                    if (curImage->samplesPerPixel() == 1 &&
+                        curImage->width() ==
+                            static_cast<unsigned>(nRasterXSize) &&
+                        curImage->height() ==
+                            static_cast<unsigned>(nRasterYSize) &&
+                        LIBERTIFFDataset::ComputeGDALDataType(
+                            *(curImage.get())) == GDT_UInt8)
                     {
-                        poMaskDS->m_bExpand1To255 = true;
-                        poLastNonMaskDS->m_poMaskDS = std::move(poMaskDS);
-                        if (poLastNonMaskDS != this && m_poMaskDS)
+                        auto poMaskDS = std::make_unique<LIBERTIFFDataset>();
+                        if (poMaskDS->Open(std::move(curImage)))
                         {
-                            // Also register the mask as the overview of the main
-                            // mask
-                            m_poMaskDS->m_apoOvrDS.push_back(
-                                poLastNonMaskDS->m_poMaskDS.get());
+                            poMaskDS->m_bExpand1To255 = true;
+                            poLastNonMaskDS->m_poMaskDS = std::move(poMaskDS);
+                            if (poLastNonMaskDS != this && m_poMaskDS)
+                            {
+                                // Also register the mask as the overview of the main
+                                // mask
+                                m_poMaskDS->m_apoOvrDS.push_back(
+                                    poLastNonMaskDS->m_poMaskDS.get());
+                            }
                         }
                     }
                 }
