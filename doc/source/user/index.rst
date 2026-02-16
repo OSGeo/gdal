@@ -11,6 +11,7 @@ User oriented documentation
    band_algebra
    multidim_raster_data_model
    vector_data_model
+   geometry_validity
    gnm_data_model
    multithreading
    ogr_sql_sqlite_dialect

@@ -106,6 +106,7 @@ exclude_patterns = [
     "programs/options/*.rst",
     "api/python/modules.rst",
     "gdal_rtd/README.md",
+    "user/geometry_validity_examples.rst",
 ]
 
 # Prevents double hyphen (--) to be replaced by Unicode long dash character
