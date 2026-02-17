@@ -4,6 +4,14 @@
 AI/LLM tool policy
 ================================================================================
 
+Warning
+-------
+
+It is not currently a settled question within the GDAL community whether code
+created by LLMs is acceptable in the GDAL codebase at all. This document only
+addresses the interaction aspects of LLM content, and should not be viewed as the
+project taking a position on whether or not LLM code contributions are acceptable.
+
 Policy
 ------
 
