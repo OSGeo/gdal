@@ -185,6 +185,15 @@ bool GDALVectorWriteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (m_skipEmptyLayers)
     {
+        if (poSrcDS->TestCapability(ODsCRandomLayerRead))
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Source dataset supports random-layer reading, but this "
+                     "is not compatible with --skip-empty-layers. Attempting "
+                     "to read features by layer, but this may fail if the "
+                     "source dataset is large.");
+        }
+
         poReadBufferedDataset =
             std::make_unique<GDALReadBufferedDataset>(*poSrcDS);
 

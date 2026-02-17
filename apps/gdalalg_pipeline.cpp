@@ -379,8 +379,7 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 stepCtxt.m_poNextUsableStep = writeAlg.get();
             if (RunPreStepPipelineValidations() && RunStep(stepCtxt))
             {
-                if (/*bIsStreaming || */ bCanHandleNextStep ||
-                    !bOutputSpecified)
+                if (bCanHandleNextStep || !bOutputSpecified)
                 {
                     ret = true;
                 }

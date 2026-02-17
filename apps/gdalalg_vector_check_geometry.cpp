@@ -28,10 +28,11 @@
 
 GDALVectorCheckGeometryAlgorithm::GDALVectorCheckGeometryAlgorithm(
     bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      ConstructorOptions()
-                                          .SetStandaloneStep(standaloneStep)
-                                          .SetAddSkipEmptyLayersArgument(true))
+    : GDALVectorPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetAddSkipEmptyLayersArgument(standaloneStep))
 {
     AddArg("include-field", 0,
            _("Fields from input layer to include in output (special values: "

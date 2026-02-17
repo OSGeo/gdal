@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -355,6 +356,20 @@ def test_gdalalg_vector_convert_skip_empty_layers(output_format):
     dst_ds = convert.Output()
 
     assert dst_ds.GetLayerCount() == 1
+
+
+@pytest.mark.require_driver("OSM")
+def test_gdalalg_vector_pipeline_skip_empty_layers_random_layer_read_warning(
+    tmp_vsimem,
+):
+
+    convert = get_convert_alg()
+    convert["input"] = "../ogr/data/osm/test.osm"
+    convert["skip-empty-layers"] = True
+    convert["output-format"] = "stream"
+
+    with gdaltest.error_raised(gdal.CE_Warning, "Attempting to read features by layer"):
+        assert convert.Run()
 
 
 @pytest.mark.require_driver("GeoJSON")
