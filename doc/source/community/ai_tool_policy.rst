@@ -4,6 +4,16 @@
 AI/LLM tool policy
 ================================================================================
 
+Summary
+-------
+
+GDAL's policy is that contributors can use whatever tools they would like to
+craft their contributions, but **there must be a human in the loop**.
+Contributors must read and review all AI (Artificial Intelligence) /
+Large Language Model (LLM)-generated code or text before they ask other project
+members to review it. The contributor is always the author and is fully
+accountable for their contributions.
+
 Warning
 -------
 
