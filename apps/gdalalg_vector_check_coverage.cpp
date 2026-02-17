@@ -32,7 +32,7 @@ GDALVectorCheckCoverageAlgorithm::GDALVectorCheckCoverageAlgorithm(
           NAME, DESCRIPTION, HELP_URL,
           ConstructorOptions()
               .SetStandaloneStep(standaloneStep)
-              .SetAddSkipEmptyLayersArgument(standaloneStep))
+              .SetNoCreateEmptyLayersArgument(standaloneStep))
 {
     AddArg("include-valid", 0,
            _("Include valid inputs in output, with empty geometry"),

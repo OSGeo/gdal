@@ -247,11 +247,11 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
                &m_skipErrors)
             .AddHiddenAlias("skip-failures");  // For ogr2ogr nostalgic people
     }
-    if (m_constructorOptions.addSkipEmptyLayersArgument)
+    if (m_constructorOptions.addNoCreateEmptyLayersArgument)
     {
-        AddArg("skip-empty-layers", 0,
+        AddArg("no-create-empty-layers", 0,
                _("Avoid creating layers to which no features will be written"),
-               &m_skipEmptyLayers);
+               &m_noCreateEmptyLayers);
     }
 }
 

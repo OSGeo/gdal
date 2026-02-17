@@ -1002,7 +1002,7 @@ def test_gdalalg_vector_pipeline_read_limit(tmp_vsimem):
 
 
 @pytest.mark.require_driver("GPKG")
-def test_gdalalg_vector_pipeline_skip_empty_layers(tmp_vsimem):
+def test_gdalalg_vector_pipeline_no_create_empty_layers(tmp_vsimem):
 
     src_filename = tmp_vsimem / "src.gpkg"
     dst_filename = tmp_vsimem / "dst.gpkg"
@@ -1026,7 +1026,7 @@ def test_gdalalg_vector_pipeline_skip_empty_layers(tmp_vsimem):
             "!",
             "write",
             dst_filename,
-            "--skip-empty-layers",
+            "--no-create-empty-layers",
         ]
     )
 

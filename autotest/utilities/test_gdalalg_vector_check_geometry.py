@@ -462,8 +462,8 @@ def test_gdalalg_vector_check_geometry_multiple_geometry_fields(alg):
     assert alg.Finalize()
 
 
-@pytest.mark.parametrize("skip_empty", (True, False))
-def test_gdalalg_vector_check_geometry_multiple_layers(alg, polys, skip_empty):
+@pytest.mark.parametrize("create_empty_layers", (True, False))
+def test_gdalalg_vector_check_geometry_multiple_layers(alg, polys, create_empty_layers):
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
@@ -471,7 +471,7 @@ def test_gdalalg_vector_check_geometry_multiple_layers(alg, polys, skip_empty):
     ds.CopyLayer(polys.GetLayer(0), "poly2")
 
     alg["input"] = ds
-    alg["skip-empty-layers"] = skip_empty
+    alg["no-create-empty-layers"] = not create_empty_layers
     alg["output"] = ""
     alg["output-format"] = "stream"
 
@@ -479,13 +479,13 @@ def test_gdalalg_vector_check_geometry_multiple_layers(alg, polys, skip_empty):
 
     dst_ds = alg["output"].GetDataset()
 
-    if skip_empty:
-        assert dst_ds.GetLayerCount() == 1
-        assert dst_ds.GetLayer(0).GetName() == "error_location_poly2"
-    else:
+    if create_empty_layers:
         assert dst_ds.GetLayerCount() == 2
         assert dst_ds.GetLayer(0).GetName() == "error_location_poly1"
         assert dst_ds.GetLayer(1).GetName() == "error_location_poly2"
+    else:
+        assert dst_ds.GetLayerCount() == 1
+        assert dst_ds.GetLayer(0).GetName() == "error_location_poly2"
 
 
 def test_gdalalg_vector_check_geometry_no_geometry_field(alg):
@@ -583,7 +583,7 @@ def test_gdalalg_vector_check_geometry_test_ogrsf(tmp_path, polys):
     open(gdalg_filename, "wb").write(
         b'{"type": "gdal_streamed_alg","command_line": "gdal vector check-geometry '
         + bytes(tmp_path)
-        + b'/src.gpkg --skip-empty-layers --output-format=stream dummy_dataset_name","relative_paths_relative_to_this_file":false}'
+        + b'/src.gpkg --no-create-empty-layers --output-format=stream dummy_dataset_name","relative_paths_relative_to_this_file":false}'
     )
 
     ret = gdaltest.runexternal(

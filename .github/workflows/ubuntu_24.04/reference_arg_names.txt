@@ -184,6 +184,7 @@ no-check-crs
 no-check-extent
 no-clip
 no-ct
+no-create-empty-layers
 no-dither
 no-edges
 no-fl
@@ -262,7 +263,6 @@ skip-all-optional
 skip-binary
 skip-blank
 skip-crs
-skip-empty-layers
 skip-errors
 skip-geolocation
 skip-geotransform

@@ -23,7 +23,7 @@ GDALVectorConvertAlgorithm::GDALVectorConvertAlgorithm(
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       ConstructorOptions()
                                           .SetStandaloneStep(true)
-                                          .SetAddSkipEmptyLayersArgument(true))
+                                          .SetNoCreateEmptyLayersArgument(true))
 {
 }
 

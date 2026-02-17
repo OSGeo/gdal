@@ -32,7 +32,7 @@ GDALVectorCheckGeometryAlgorithm::GDALVectorCheckGeometryAlgorithm(
           NAME, DESCRIPTION, HELP_URL,
           ConstructorOptions()
               .SetStandaloneStep(standaloneStep)
-              .SetAddSkipEmptyLayersArgument(standaloneStep))
+              .SetNoCreateEmptyLayersArgument(standaloneStep))
 {
     AddArg("include-field", 0,
            _("Fields from input layer to include in output (special values: "

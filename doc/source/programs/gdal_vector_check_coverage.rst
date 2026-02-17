@@ -84,6 +84,8 @@ Standard Options
 
     .. include:: gdal_options/lco.rst
 
+    .. include:: gdal_options/no_create_empty_layers.rst
+
     .. include:: gdal_options/oo.rst
 
     .. include:: gdal_options/of_vector.rst
@@ -93,8 +95,6 @@ Standard Options
     .. include:: gdal_options/overwrite.rst
 
     .. include:: gdal_options/overwrite_layer.rst
-
-    .. include:: gdal_options/skip_empty_layers.rst
 
     .. include:: gdal_options/skip_errors.rst
 

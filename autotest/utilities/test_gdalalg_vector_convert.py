@@ -337,7 +337,7 @@ def test_gdalalg_vector_convert_output_format_multiple_layers(tmp_vsimem, driver
 
 
 @pytest.mark.parametrize("output_format", ("stream", "MEM"))
-def test_gdalalg_vector_convert_skip_empty_layers(output_format):
+def test_gdalalg_vector_convert_no_create_empty_layers(output_format):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     with gdal.OpenEx("../ogr/data/poly.shp") as poly_ds:
@@ -348,7 +348,7 @@ def test_gdalalg_vector_convert_skip_empty_layers(output_format):
 
     convert = get_convert_alg()
     convert["input"] = src_ds
-    convert["skip-empty-layers"] = True
+    convert["no-create-empty-layers"] = True
     convert["output-format"] = output_format
 
     assert convert.Run()
@@ -359,13 +359,13 @@ def test_gdalalg_vector_convert_skip_empty_layers(output_format):
 
 
 @pytest.mark.require_driver("OSM")
-def test_gdalalg_vector_pipeline_skip_empty_layers_random_layer_read_warning(
+def test_gdalalg_vector_pipeline_no_create_empty_layers_random_layer_read_warning(
     tmp_vsimem,
 ):
 
     convert = get_convert_alg()
     convert["input"] = "../ogr/data/osm/test.osm"
-    convert["skip-empty-layers"] = True
+    convert["no-create-empty-layers"] = True
     convert["output-format"] = "stream"
 
     with gdaltest.error_raised(gdal.CE_Warning, "Attempting to read features by layer"):
