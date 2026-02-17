@@ -463,8 +463,19 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(
     /*      if there is one.                                                */
     /* -------------------------------------------------------------------- */
     if (poSpatFilter)
-        OGRGenSQLResultsLayer::SetSpatialFilter(
-            0, const_cast<OGRGeometry *>(poSpatFilter));
+    {
+        if (m_poDefn->GetGeomFieldCount() > 0)
+        {
+            OGRGenSQLResultsLayer::SetSpatialFilter(
+                0, const_cast<OGRGeometry *>(poSpatFilter));
+        }
+        else
+        {
+            m_bSpatialFilterSetOnSourceLayer = true;
+            m_poSrcLayer->SetSpatialFilter(
+                0, const_cast<OGRGeometry *>(poSpatFilter));
+        }
+    }
 
     OGRGenSQLResultsLayer::ResetReading();
 
@@ -509,12 +520,10 @@ void OGRGenSQLResultsLayer::ClearFilters()
     /* -------------------------------------------------------------------- */
     /*      Clear any filters installed on the target layer.                */
     /* -------------------------------------------------------------------- */
-    if (m_poSrcLayer != nullptr)
-    {
-        m_poSrcLayer->ResetReading();
-        m_poSrcLayer->SetAttributeFilter("");
+    m_poSrcLayer->ResetReading();
+    m_poSrcLayer->SetAttributeFilter("");
+    if (GetLayerDefn()->GetGeomFieldCount() > 0)
         m_poSrcLayer->SetSpatialFilter(nullptr);
-    }
 
     /* -------------------------------------------------------------------- */
     /*      Clear any attribute filter installed on the joined layers.      */
@@ -896,7 +905,7 @@ bool OGRGenSQLResultsLayer::PrepareSummary() const
     auto poSrcLayerDefn = m_poSrcLayer->GetLayerDefn();
     std::unique_ptr<TempGeomIgnoredSetter> oTempGeomIgnoredSetter;
 
-    if (m_poFilterGeom == nullptr &&
+    if (!m_bSpatialFilterSetOnSourceLayer && m_poFilterGeom == nullptr &&
         (psSelectInfo->where_expr == nullptr ||
          !ContainGeomSpecialField(psSelectInfo->where_expr)))
     {
@@ -2706,17 +2715,21 @@ void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
                 //          poFDefn->GetNameRef(), poLayer->GetName());
             }
         }
-        const int nSrcGeomFieldCount = poSrcFDefn->GetGeomFieldCount();
-        for (int iSrcField = 0; iSrcField < nSrcGeomFieldCount; iSrcField++)
+        if (!m_bSpatialFilterSetOnSourceLayer)
         {
-            OGRGeomFieldDefn *poFDefn = poSrcFDefn->GetGeomFieldDefn(iSrcField);
-            if (CPLHashSetLookup(hSet, poFDefn) == nullptr)
+            const int nSrcGeomFieldCount = poSrcFDefn->GetGeomFieldCount();
+            for (int iSrcField = 0; iSrcField < nSrcGeomFieldCount; iSrcField++)
             {
-                papszIgnoredFields =
-                    CSLAddString(papszIgnoredFields, poFDefn->GetNameRef());
-                // CPLDebug("OGR", "Adding %s to the list of ignored fields of
-                // layer %s",
-                //          poFDefn->GetNameRef(), poLayer->GetName());
+                OGRGeomFieldDefn *poFDefn =
+                    poSrcFDefn->GetGeomFieldDefn(iSrcField);
+                if (CPLHashSetLookup(hSet, poFDefn) == nullptr)
+                {
+                    papszIgnoredFields =
+                        CSLAddString(papszIgnoredFields, poFDefn->GetNameRef());
+                    // CPLDebug("OGR", "Adding %s to the list of ignored fields of
+                    // layer %s",
+                    //          poFDefn->GetNameRef(), poLayer->GetName());
+                }
             }
         }
         poLayer->SetIgnoredFields(

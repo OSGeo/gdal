@@ -2234,3 +2234,27 @@ def test_ogr_sql_union_layer_feature_count_add_overflow():
             "select * from test union all select * from test2", dialect="OGRSQL"
         ) as sql_lyr:
             assert sql_lyr.GetFeatureCount() == 0
+
+
+def test_ogr_sql_test_spatial_filter_on_summary_result_set():
+
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("x", ogr.OFTReal))
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["x"] = 1
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 1)"))
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat["x"] = 2
+    feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT (2 2)"))
+    lyr.CreateFeature(feat)
+
+    with ds.ExecuteSQL(
+        "SELECT SUM(x) FROM test",
+        spatialFilter=ogr.CreateGeometryFromWkt(
+            "POLYGON((1.5 1.5,1.5 2.5,2.5 2.5,2.5 1.5,1.5 1.5))"
+        ),
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f.GetField(0) == 2
