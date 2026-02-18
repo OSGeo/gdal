@@ -2941,7 +2941,7 @@ GDALTranslateOptionsGetParser(GDALTranslateOptions *psOptions,
         .help(_("Set the size of the output file."));
 
     argParser->add_argument("-tr")
-        .metavar("<xres> <yes>")
+        .metavar("<xres> <yres>")
         .nargs(2)
         .scan<'g', double>()
         .help(_("Set target resolution."));
