@@ -20,7 +20,7 @@ Synopsis
                  [[-strict]|[-non_strict]]
                  [-tile_index <field_name>]
                  [-resolution user|average|common|highest|lowest|same]
-                 [-tr <xres> <yes>] [-input_file_list <filename>]
+                 [-tr <xres> <yres>] [-input_file_list <filename>]
                  [[-separate]|[-pixel-function <function>]]
                  [-pixel-function-arg <NAME>=<VALUE>]...
                  [-allow_projection_difference] [-sd <n>] [-tap]
