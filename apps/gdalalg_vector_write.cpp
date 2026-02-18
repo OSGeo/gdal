@@ -169,7 +169,7 @@ class GDALReadBufferedDataset final : public GDALDataset
 
 GDALReadBufferedDataset::~GDALReadBufferedDataset()
 {
-    m_srcDS.Dereference();
+    m_srcDS.Release();
 }
 
 }  // namespace
