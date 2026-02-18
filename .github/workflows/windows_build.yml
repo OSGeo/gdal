@@ -35,7 +35,7 @@ jobs:
             PROJ_BRANCH: "9.3"
             LIBZSTD_URL: "https://github.com/facebook/zstd/releases/download/v1.4.5/zstd-v1.4.5-win32.zip"
             LIBDEFLATE_URL: "https://github.com/ebiggers/libdeflate/releases/download/v1.6/libdeflate-1.6-windows-i686-bin.zip"
-            SWIG_URL: "https://freefr.dl.sourceforge.net/project/swig/swigwin/swigwin-4.1.1/swigwin-4.1.1.zip"
+            SWIG_URL: "https://unlimited.dl.sourceforge.net/project/swig/swigwin/swigwin-4.4.1/swigwin-4.4.1.zip?viasf=1"
 
     env:
         VS_VERSION: ${{ matrix.VS_VERSION }}
@@ -133,7 +133,7 @@ jobs:
             if(-Not (Test-Path -Path $env:SDK_ZIP )) { Invoke-WebRequest "$env:SDK_URL" -OutFile "$env:SDK_ZIP" }
             $env:LIBZSTD_ZIP="libzstd.zip"
             if(-Not (Test-Path -Path $env:LIBZSTD_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBZSTD_URL" -OutFile "$env:LIBZSTD_ZIP" }
-            $env:SWIG_ZIP="swigwin-4.1.1.zip"
+            $env:SWIG_ZIP="swigwin-4.4.1.zip"
             if(-Not (Test-Path -Path $env:SWIG_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:SWIG_URL" -OutFile "$env:SWIG_ZIP" }
             # $env:LIBDEFLATE_ZIP="libdeflate.zip"
             # if(-Not (Test-Path -Path $env:LIBDEFLATE_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBDEFLATE_URL" -OutFile "$env:LIBDEFLATE_ZIP" }
@@ -167,7 +167,7 @@ jobs:
             mkdir build
             cd build
             $env:SDK_BIN="$env:SDK_PREFIX\bin"
-            $env:PATH="$env:SDK_BIN;$env:SDK\swigwin-4.1.1;$env:PATH"
+            $env:PATH="$env:SDK_BIN;$env:SDK\swigwin-4.4.1;$env:PATH"
             $env:GDAL_INSTALL_DIR="$env:GITHUB_WORKSPACE"+"\install-gdal"
             $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:GDAL_INSTALL_DIR
             $env:PROJ_ROOT="-DPROJ_ROOT=" + $env:PROJ_INSTALL_DIR
