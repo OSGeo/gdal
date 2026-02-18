@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
+
 import pytest
 
 from osgeo import gdal, ogr
@@ -228,11 +230,15 @@ def test_gdalalg_vector_check_coverage_test_ogrsf(tmp_path, three_rectangles):
         ds.CopyLayer(three_rectangles.GetLayer(0), "poly2")
 
     gdalg_filename = tmp_path / "tmp.gdalg.json"
-    open(gdalg_filename, "wb").write(
-        b'{"type": "gdal_streamed_alg","command_line": "gdal vector check-coverage '
-        + bytes(tmp_path)
-        + b'/src.gpkg --no-create-empty-layers --output-format=stream dummy_dataset_name","relative_paths_relative_to_this_file":false}'
-    )
+
+    gdalg_contents = {
+        "type": "gdal_streamed_alg",
+        "command_line": f"gdal vector check-coverage {tmp_path}/src.gpkg --no-create-empty-layers --output-format=stream dummy_dataset_name",
+        "relative_paths_relative_to_this_file": False,
+    }
+
+    with open(gdalg_filename, "w") as gdalg_file:
+        json.dump(gdalg_contents, gdalg_file)
 
     ret = gdaltest.runexternal(
         test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
