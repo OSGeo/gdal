@@ -145,7 +145,7 @@ It can be used as in the following:
     whileUnsealing(poFieldDefn)->SetType(eNewType);
 
 
-For OGRFeatureDefn, similar changes are done but with an extra subtelty.
+For OGRFeatureDefn, similar changes are done but with an extra subtlety.
 For convenience of drivers, we want a driver to be able to call GetTemporaryUnsealer()
 in a nested way, where only the first/most external call does something, and
 next/nested ones are a no-operation. This is similar to using a recursive mutex

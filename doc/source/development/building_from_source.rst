@@ -2261,7 +2261,7 @@ Example of build with all potential drivers as plugins, except the JP2OpenJPEG o
              -DGDAL_ENABLE_PLUGINS:BOOL=ON \
              -DGDAL_ENABLE_DRIVER_JP2OPENJPEG_PLUGIN:BOOL=OFF
 
-There is a subtelty regarding ``GDAL_ENABLE_PLUGINS:BOOL=ON``. It only controls
+There is a subtlety regarding ``GDAL_ENABLE_PLUGINS:BOOL=ON``. It only controls
 the plugin status of plugin-capable drivers that have external dependencies,
 that are not part of GDAL core dependencies (e.g. are netCDF, HDF4, Oracle, PDF, etc.).
 

@@ -2970,7 +2970,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
     // method.
     GDALDatasetUniquePtr poODSUniquePtr(hDstDS == nullptr ? poODS : nullptr);
 
-    // Some syntaxic sugar to make "ogr2ogr [-f PostgreSQL] PG:dbname=....
+    // Some syntactic sugar to make "ogr2ogr [-f PostgreSQL] PG:dbname=....
     // source [srclayer] -lco OVERWRITE=YES" work like "ogr2ogr -overwrite
     // PG:dbname=.... source [srclayer]" The former syntax used to work at
     // GDAL 1.1.8 time when it was documented in the PG driver, but was broken

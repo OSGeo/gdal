@@ -816,7 +816,7 @@ GUInt64 GDALGroup::GetTotalCopyCost() const
  * @param nCurCost  Should be provided as a variable initially set to 0.
  * @param nTotalCost Total cost from GetTotalCopyCost().
  * @param pfnProgress Progress callback, or nullptr.
- * @param pProgressData Progress user data, or nulptr.
+ * @param pProgressData Progress user data, or nullptr.
  * @param papszOptions Creation options. Currently, only array creation
  *                     options are supported. They must be prefixed with
  * "ARRAY:" . The scope may be further restricted to arrays of a certain
@@ -1889,7 +1889,7 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
 /*                             CopyValues()                             */
 /************************************************************************/
 
-/** Convert severals value from a source type to a destination type.
+/** Convert several values from a source type to a destination type.
  *
  * If dstType is GEDTC_STRING, the written value will be a pointer to a char*,
  * that must be freed with CPLFree().
@@ -4034,7 +4034,7 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray *poSrcArray,
  * @param nCurCost  Should be provided as a variable initially set to 0.
  * @param nTotalCost Total cost from GetTotalCopyCost().
  * @param pfnProgress Progress callback, or nullptr.
- * @param pProgressData Progress user data, or nulptr.
+ * @param pProgressData Progress user data, or nullptr.
  *
  * @return true in case of success (or partial success if bStrict == false).
  */

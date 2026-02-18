@@ -78,7 +78,7 @@
  *      GDALReleaseDataset(warped_ds); // or GDALClose(warped_ds);
  * \endcode
  *
- * Traditonal nested calls are also possible of course:
+ * Traditional nested calls are also possible of course:
  *
  * \code{.c}
  *      GDALDatasetH src_ds = GDALOpen("source.tif");
@@ -339,7 +339,7 @@ GDALDatasetH CPL_STDCALL GDALAutoCreateWarpedVRTEx(
  *      GDALReleaseDataset(warped_ds); // or GDALClose(warped_ds);
  * \endcode
  *
- * Traditonal nested calls are also possible of course:
+ * Traditional nested calls are also possible of course:
  *
  * \code{.c}
  *      GDALDatasetH src_ds = GDALOpen("source.tif");

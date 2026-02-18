@@ -992,7 +992,7 @@ A GDALAlgorithm has the following main methods:
   our existing CLI utilities. I have come to this conclusion because some of
   the behavior I needed to implement would have been to complicate to integrate
   within argparser, some behavior being very GDAL specific (dealing with dataset
-  objects, various syntaxic sugar), with a very low chance of being candidates
+  objects, various syntactic sugar), with a very low chance of being candidates
   for argparser upstream inclusion (or accepted by upstream).
   Extending argparser was felt more difficult to actually re-implement the
   functionality we needed.

@@ -15,7 +15,7 @@ Implementation version: 2.3.0
 Summary
 -------
 
-This proposal is to add syntaxic sugar to make GDAL and OGR command line
+This proposal is to add syntactic sugar to make GDAL and OGR command line
 utilities, so they take into account the extension of the output
 filename to guess which output driver to use, when it is not explicitly
 specified with -f / -of switch.

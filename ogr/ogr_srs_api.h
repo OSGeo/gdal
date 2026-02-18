@@ -713,7 +713,7 @@ OGRErr CPL_DLL OSRSetEquirectangular2(OGRSpatialReferenceH hSRS,
                                       double dfFalseEasting,
                                       double dfFalseNorthing);
 
-/** Gall Stereograpic */
+/** Gall Stereographic */
 OGRErr CPL_DLL OSRSetGS(OGRSpatialReferenceH hSRS, double dfCentralMeridian,
                         double dfFalseEasting, double dfFalseNorthing);
 
