@@ -3366,6 +3366,7 @@ unary
 uncached
 uncalibrated
 unclamped
+unclosed
 uncoded
 uncomment
 Uncompress

@@ -506,8 +506,8 @@ class CPL_DLL OGRGeometry
     static GEOSContextHandle_t createGEOSContext();
     static void freeGEOSContext(GEOSContextHandle_t hGEOSCtxt);
     GEOSGeom
-    exportToGEOS(GEOSContextHandle_t hGEOSCtxt,
-                 bool bRemoveEmptyParts = false) const CPL_WARN_UNUSED_RESULT;
+    exportToGEOS(GEOSContextHandle_t hGEOSCtxt, bool bRemoveEmptyParts = false,
+                 bool bAddPointsIfNeeded = false) const CPL_WARN_UNUSED_RESULT;
     virtual OGRBoolean hasCurveGeometry(int bLookForNonLinear = FALSE) const;
     virtual OGRGeometry *getCurveGeometry(
         const char *const *papszOptions = nullptr) const CPL_WARN_UNUSED_RESULT;

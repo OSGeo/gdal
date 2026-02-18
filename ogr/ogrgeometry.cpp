@@ -22,6 +22,7 @@
 #include <cstring>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
@@ -3246,15 +3247,163 @@ void OGRGeometry::freeGEOSContext(GEOSContextHandle_t hGEOSCtxt)
     }
 #endif
 }
-
 #ifdef HAVE_GEOS
+
+/************************************************************************/
+/*                      canConvertToMultiPolygon()                      */
+/************************************************************************/
+
+static bool CanConvertToMultiPolygon(const OGRGeometryCollection *poGC)
+{
+    for (const auto *poSubGeom : *poGC)
+    {
+        const OGRwkbGeometryType eSubGeomType =
+            wkbFlatten(poSubGeom->getGeometryType());
+        if (eSubGeomType != wkbPolyhedralSurface && eSubGeomType != wkbTIN &&
+            eSubGeomType != wkbMultiPolygon && eSubGeomType != wkbPolygon)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                         GEOSWarningSilencer                          */
+/************************************************************************/
+
+/** Class that can be used to silence GEOS messages while in-scope. */
+class GEOSWarningSilencer
+{
+  public:
+    explicit GEOSWarningSilencer(GEOSContextHandle_t poContext)
+        : m_poContext(poContext)
+    {
+        GEOSContext_setErrorHandler_r(m_poContext, nullptr);
+        GEOSContext_setNoticeHandler_r(m_poContext, nullptr);
+    }
+
+    ~GEOSWarningSilencer()
+    {
+        GEOSContext_setErrorHandler_r(m_poContext, OGRGEOSErrorHandler);
+        GEOSContext_setNoticeHandler_r(m_poContext, OGRGEOSWarningHandler);
+    }
+
+    CPL_DISALLOW_COPY_ASSIGN(GEOSWarningSilencer)
+
+  private:
+    GEOSContextHandle_t m_poContext{nullptr};
+};
+
+/************************************************************************/
+/*                           repairForGEOS()                            */
+/************************************************************************/
+
+/** Modify an OGRGeometry so that it can be converted into GEOS.
+ *  Modifications include closing unclosed rings and adding redundant vertices
+ *  to reach minimum point limits in GEOS.
+ *
+ *  It is assumed that the input is a non-curved type that can be
+ *  represented in GEOS.
+ *
+ * @param poGeom the geometry to modify
+ * @return an OGRGeometry that can be converted to GEOS using WKB
+ */
+static std::unique_ptr<OGRGeometry> repairForGEOS(const OGRGeometry *poGeom)
+{
+#if GEOS_VERSION_MAJOR >= 3 ||                                                 \
+    (GEOS_VERSION_MINOR == 3 && GEOS_VERSION_MINOR >= 10)
+    static constexpr int MIN_RING_POINTS = 3;
+#else
+    static constexpr int MIN_RING_POINTS = 4;
+#endif
+
+    const auto eType = wkbFlatten(poGeom->getGeometryType());
+
+    if (OGR_GT_IsSubClassOf(eType, wkbGeometryCollection))
+    {
+        std::unique_ptr<OGRGeometryCollection> poRet;
+        if (eType == wkbGeometryCollection)
+        {
+            poRet = std::make_unique<OGRGeometryCollection>();
+        }
+        else if (eType == wkbMultiPolygon)
+        {
+            poRet = std::make_unique<OGRMultiPolygon>();
+        }
+        else if (eType == wkbMultiLineString)
+        {
+            poRet = std::make_unique<OGRMultiLineString>();
+        }
+        else if (eType == wkbMultiPoint)
+        {
+            poRet = std::make_unique<OGRMultiPoint>();
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unexpected geometry type: %s",
+                     OGRGeometryTypeToName(eType));
+            return nullptr;
+        }
+
+        const OGRGeometryCollection *poColl = poGeom->toGeometryCollection();
+        for (const auto *poSubGeomIn : *poColl)
+        {
+            std::unique_ptr<OGRGeometry> poSubGeom = repairForGEOS(poSubGeomIn);
+            poRet->addGeometry(std::move(poSubGeom));
+        }
+
+        return poRet;
+    }
+
+    if (eType == wkbPoint)
+    {
+        return std::unique_ptr<OGRGeometry>(poGeom->clone());
+    }
+    if (eType == wkbLineString)
+    {
+        std::unique_ptr<OGRLineString> poLineString(
+            poGeom->toLineString()->clone());
+        if (poLineString->getNumPoints() == 1)
+        {
+            OGRPoint oPoint;
+            poLineString->getPoint(0, &oPoint);
+            poLineString->addPoint(&oPoint);
+        }
+        return poLineString;
+    }
+    if (eType == wkbPolygon)
+    {
+        std::unique_ptr<OGRPolygon> poPolygon(poGeom->toPolygon()->clone());
+        poPolygon->closeRings();
+
+        // make sure rings have enough points
+        for (auto *poRing : *poPolygon)
+        {
+            while (poRing->getNumPoints() < MIN_RING_POINTS)
+            {
+                OGRPoint oPoint;
+                poRing->getPoint(0, &oPoint);
+                poRing->addPoint(&oPoint);
+            }
+        }
+
+        return poPolygon;
+    }
+
+    CPLError(CE_Failure, CPLE_AppDefined, "Unexpected geometry type: %s",
+             OGRGeometryTypeToName(eType));
+    return nullptr;
+}
 
 /************************************************************************/
 /*                         convertToGEOSGeom()                          */
 /************************************************************************/
 
 static GEOSGeom convertToGEOSGeom(GEOSContextHandle_t hGEOSCtxt,
-                                  OGRGeometry *poGeom)
+                                  const OGRGeometry *poGeom)
 {
     GEOSGeom hGeom = nullptr;
     const size_t nDataSize = poGeom->WkbSize();
@@ -3267,8 +3416,11 @@ static GEOSGeom convertToGEOSGeom(GEOSContextHandle_t hGEOSCtxt,
     OGRwkbVariant eWkbVariant = wkbVariantOldOgc;
 #endif
     if (poGeom->exportToWkb(wkbNDR, pabyData, eWkbVariant) == OGRERR_NONE)
+    {
         hGeom = GEOSGeomFromWKB_buf_r(hGEOSCtxt, pabyData, nDataSize);
+    }
     CPLFree(pabyData);
+
     return hGeom;
 }
 #endif
@@ -3282,15 +3434,20 @@ static GEOSGeom convertToGEOSGeom(GEOSContextHandle_t hGEOSCtxt,
  * @param hGEOSCtxt GEOS context
  * @param bRemoveEmptyParts Whether empty parts of the geometry should be
  * removed before exporting to GEOS (GDAL >= 3.10)
+ * @param bAddPointsIfNeeded Whether to add vertices if needed for the geometry to
+ * be read by GEOS. Unclosed rings will be closed and duplicate endpoint vertices
+ * added if needed to satisfy GEOS minimum vertex counts. (GDAL >= 3.13)
  * @return a GEOSGeom object corresponding to the geometry (to be freed with
  * GEOSGeom_destroy_r()), or NULL in case of error
  */
 GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt,
-                                   bool bRemoveEmptyParts) const
-
+                                   bool bRemoveEmptyParts,
+                                   bool bAddPointsIfNeeded) const
 {
     (void)hGEOSCtxt;
     (void)bRemoveEmptyParts;
+    (void)bAddPointsIfNeeded;
+
 #ifndef HAVE_GEOS
 
     CPLError(CE_Failure, CPLE_NotSupported, "GEOS support not enabled.");
@@ -3313,99 +3470,102 @@ GEOSGeom OGRGeometry::exportToGEOS(GEOSContextHandle_t hGEOSCtxt,
 
     GEOSGeom hGeom = nullptr;
 
-    OGRGeometry *poLinearGeom = nullptr;
-    if (hasCurveGeometry())
+    std::unique_ptr<OGRGeometry> poModifiedInput = nullptr;
+    const OGRGeometry *poGeosInput = this;
+
+    const bool bHasZ = poGeosInput->Is3D();
+    bool bHasM = poGeosInput->IsMeasured();
+
+    if (poGeosInput->hasCurveGeometry())
     {
-        poLinearGeom = getLinearGeometry();
-        if (bRemoveEmptyParts)
-            poLinearGeom->removeEmptyParts();
-#if (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 12)
-        // GEOS < 3.12 doesn't support M dimension
-        if (poLinearGeom->IsMeasured())
-            poLinearGeom->setMeasured(FALSE);
-#endif
+        poModifiedInput.reset(poGeosInput->getLinearGeometry());
+        poGeosInput = poModifiedInput.get();
     }
-    else
+
+    if (bRemoveEmptyParts && poGeosInput->hasEmptyParts())
     {
-        poLinearGeom = const_cast<OGRGeometry *>(this);
-#if (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 12)
-        // GEOS < 3.12 doesn't support M dimension
-        if (IsMeasured())
+        if (!poModifiedInput)
         {
-            poLinearGeom = clone();
-            if (bRemoveEmptyParts)
-                poLinearGeom->removeEmptyParts();
-            poLinearGeom->setMeasured(FALSE);
+            poModifiedInput.reset(poGeosInput->clone());
+            poGeosInput = poModifiedInput.get();
         }
-        else
-#endif
-            if (bRemoveEmptyParts && hasEmptyParts())
-        {
-            poLinearGeom = clone();
-            poLinearGeom->removeEmptyParts();
-        }
+        poModifiedInput->removeEmptyParts();
     }
+
+#if (GEOS_VERSION_MAJOR == 3 && GEOS_VERSION_MINOR < 12)
+    // GEOS < 3.12 doesn't support M dimension
+    if (bHasM)
+    {
+        if (!poModifiedInput)
+        {
+            poModifiedInput.reset(poGeosInput->clone());
+            poGeosInput = poModifiedInput.get();
+        }
+        poModifiedInput->setMeasured(false);
+        bHasM = false;
+    }
+#endif
+
     if (eType == wkbTriangle)
     {
-        OGRPolygon oPolygon(*(poLinearGeom->toPolygon()));
-        hGeom = convertToGEOSGeom(hGEOSCtxt, &oPolygon);
+        poModifiedInput =
+            std::make_unique<OGRPolygon>(*poGeosInput->toPolygon());
+        poGeosInput = poModifiedInput.get();
     }
     else if (eType == wkbPolyhedralSurface || eType == wkbTIN)
     {
-        auto poGC = OGRGeometryFactory::forceTo(
-            std::unique_ptr<OGRGeometry>(poLinearGeom->clone()),
-            OGR_GT_SetModifier(wkbGeometryCollection, poLinearGeom->Is3D(),
-                               poLinearGeom->IsMeasured()),
-            nullptr);
-        hGeom = convertToGEOSGeom(hGEOSCtxt, poGC.get());
+        if (!poModifiedInput)
+        {
+            poModifiedInput.reset(poGeosInput->clone());
+        }
+
+        poModifiedInput = OGRGeometryFactory::forceTo(
+            std::move(poModifiedInput),
+            OGR_GT_SetModifier(wkbGeometryCollection, bHasZ, bHasM));
+        poGeosInput = poModifiedInput.get();
     }
-    else if (eType == wkbGeometryCollection)
+    else if (eType == wkbGeometryCollection &&
+             CanConvertToMultiPolygon(poGeosInput->toGeometryCollection()))
     {
-        bool bCanConvertToMultiPoly = true;
-        // bool bMustConvertToMultiPoly = true;
-        const OGRGeometryCollection *poGC =
-            poLinearGeom->toGeometryCollection();
-        for (int iGeom = 0; iGeom < poGC->getNumGeometries(); iGeom++)
+        if (!poModifiedInput)
         {
-            const OGRwkbGeometryType eSubGeomType =
-                wkbFlatten(poGC->getGeometryRef(iGeom)->getGeometryType());
-            if (eSubGeomType == wkbPolyhedralSurface || eSubGeomType == wkbTIN)
-            {
-                // bMustConvertToMultiPoly = true;
-            }
-            else if (eSubGeomType != wkbMultiPolygon &&
-                     eSubGeomType != wkbPolygon)
-            {
-                bCanConvertToMultiPoly = false;
-                break;
-            }
+            poModifiedInput.reset(poGeosInput->clone());
         }
-        if (bCanConvertToMultiPoly /* && bMustConvertToMultiPoly */)
-        {
-            auto poMultiPolygon = OGRGeometryFactory::forceTo(
-                std::unique_ptr<OGRGeometry>(poLinearGeom->clone()),
-                OGR_GT_SetModifier(wkbMultiPolygon, poLinearGeom->Is3D(),
-                                   poLinearGeom->IsMeasured()),
-                nullptr);
-            auto poGCDest = OGRGeometryFactory::forceTo(
-                std::move(poMultiPolygon),
-                OGR_GT_SetModifier(wkbGeometryCollection, poLinearGeom->Is3D(),
-                                   poLinearGeom->IsMeasured()),
-                nullptr);
-            hGeom = convertToGEOSGeom(hGEOSCtxt, poGCDest.get());
-        }
-        else
-        {
-            hGeom = convertToGEOSGeom(hGEOSCtxt, poLinearGeom);
-        }
-    }
-    else
-    {
-        hGeom = convertToGEOSGeom(hGEOSCtxt, poLinearGeom);
+
+        // Force into a MultiPolygon, then back to a GeometryCollection.
+        // This gets rid of fancy types like TIN and PolyhedralSurface that
+        // GEOS doesn't understand and flattens nested collections.
+        poModifiedInput = OGRGeometryFactory::forceTo(
+            std::move(poModifiedInput),
+            OGR_GT_SetModifier(wkbMultiPolygon, bHasZ, bHasM), nullptr);
+        poModifiedInput = OGRGeometryFactory::forceTo(
+            std::move(poModifiedInput),
+            OGR_GT_SetModifier(wkbGeometryCollection, bHasZ, bHasM), nullptr);
+
+        poGeosInput = poModifiedInput.get();
     }
 
-    if (poLinearGeom != this)
-        delete poLinearGeom;
+    {
+        // Rather than check for conditions that would prevent conversion to
+        // GEOS (1-point LineStrings, unclosed rings, etc.) we attempt the
+        // conversion as-is. If the conversion fails, we don't want any
+        // warnings emitted; we'll repair the input and try again.
+        std::optional<GEOSWarningSilencer> oSilencer;
+        if (bAddPointsIfNeeded)
+        {
+            oSilencer.emplace(hGEOSCtxt);
+        }
+
+        hGeom = convertToGEOSGeom(hGEOSCtxt, poGeosInput);
+    }
+
+    if (hGeom == nullptr && bAddPointsIfNeeded)
+    {
+        poModifiedInput = repairForGEOS(poGeosInput);
+        poGeosInput = poModifiedInput.get();
+
+        hGeom = convertToGEOSGeom(hGEOSCtxt, poGeosInput);
+    }
 
     return hGeom;
 
@@ -3938,7 +4098,7 @@ OGRGeometry *OGRGeometry::MakeValid(CSLConstList papszOptions) const
     OGRGeometry *poOGRProduct = nullptr;
 
     GEOSContextHandle_t hGEOSCtxt = createGEOSContext();
-    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt);
+    GEOSGeom hGeosGeom = exportToGEOS(hGEOSCtxt, false, true);
     if (hGeosGeom != nullptr)
     {
         GEOSGeom hGEOSRet;
