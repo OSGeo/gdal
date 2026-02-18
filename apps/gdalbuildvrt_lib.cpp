@@ -2202,7 +2202,7 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
         .help(_("Control the way the output resolution is computed."));
 
     argParser->add_argument("-tr")
-        .metavar("<xres> <yes>")
+        .metavar("<xres> <yres>")
         .nargs(2)
         .scan<'g', double>()
         .help(_("Set target resolution."));
