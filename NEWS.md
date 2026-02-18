@@ -3,7 +3,7 @@
 up to commit cbee63f3bf227e4f49534f97cea521cfc4ada250 (Feb 18th 2026)
 
 GDAL 3.13.0 is a feature release
-Those notes include changes since GDAL 3.12.0, but not already included in a
+These notes include changes since GDAL 3.12.0, but not already included in a
 GDAL 3.12.x bugfix release.
 
 ## In a nutshell...
@@ -29,7 +29,7 @@ GDAL 3.12.x bugfix release.
 ### Port
 
 * VSI Unix I/O: switch from FILE to raw file descriptors (#13672, #4438)
-* VSIVirtualHandle: make Read() and Write() method accepts a single size_t
+* VSIVirtualHandle: make Read() and Write() methods accept a single size_t
   instead of (nSize, nMemb)
 * Add CPLString::SQLQuotedIdentifier() and SQLQuotedLiteral()
 * CPLStringList: Add RemoveStrings and SetString() methods
