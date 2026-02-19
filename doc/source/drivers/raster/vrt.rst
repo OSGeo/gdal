@@ -11,11 +11,13 @@ VRT -- GDAL Virtual Format
 Introduction
 ------------
 
-The VRT driver is a format driver for GDAL that allows a virtual GDAL dataset
+GDAL Virtual Format is a raster driver that allows a virtual GDAL dataset
 to be composed from other GDAL datasets with repositioning, and algorithms
 potentially applied as well as various kinds of metadata altered or added.
 VRT descriptions of datasets can be saved in an XML format normally given the
-extension .vrt.
+extension .vrt.  The :ref:`gdalbuildvrt` program can build a VRT from a list of datasets.
+
+
 
 Note .vrt files starting with
 
