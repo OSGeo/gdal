@@ -6,7 +6,7 @@ gdalbuildvrt
 
 .. only:: html
 
-    Builds a VRT from a list of datasets.
+    Builds a VRT from a list of raster datasets.
 
 .. Index:: gdalbuildvrt
 
@@ -38,7 +38,7 @@ Synopsis
 Description
 -----------
 
-This program builds a :ref:`VRT (Virtual Dataset) <raster.vrt>` that is a mosaic of a list of
+This program builds a raster :ref:`VRT (Virtual Dataset) <raster.vrt>` that is a mosaic of a list of
 input GDAL datasets. The list of input GDAL datasets can be specified at the end
 of the command line, put in a text file (one filename per line) for very long lists,
 or it can be a MapServer tileindex (see the :ref:`gdaltindex` utility). If using a tile index, all
