@@ -17,6 +17,11 @@ an anchor file for access to non-file oriented datasources.
 
 The virtual files are currently normally prepared by hand.
 
+Note .vrt files starting with
+
+- <OGRVRTDataSource> open with :ref:`ogrinfo`, etc.
+- <VRTDataset> open with :ref:`gdalinfo`, etc.
+
 Driver capabilities
 -------------------
 
