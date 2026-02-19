@@ -15,7 +15,7 @@ GDAL Virtual Format is a raster driver that allows a virtual GDAL dataset
 to be composed from other GDAL datasets with repositioning, and algorithms
 potentially applied as well as various kinds of metadata altered or added.
 VRT descriptions of datasets can be saved in an XML format normally given the
-extension .vrt.  The :ref:`gdalbuildvrt` program can build a VRT from a list of datasets.
+extension .vrt.  The :ref:`gdal_raster_mosaic` or :ref:`gdal_raster_stack` programs can build a VRT from a list of datasets.
 
 
 
