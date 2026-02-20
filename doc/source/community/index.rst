@@ -27,6 +27,17 @@ Code of Conduct
 
    code_of_conduct
 
+
+AI Tool Use Policy
+------------------
+
+See :ref:`ai_tool_policy`.
+
+.. toctree::
+   :hidden:
+
+   ai_tool_policy
+
 .. _mailing_list:
 
 Mailing List

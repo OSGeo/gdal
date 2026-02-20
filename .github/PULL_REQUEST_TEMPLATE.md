@@ -26,9 +26,12 @@ More generally, consult [development practices](https://gdal.org/development/dev
 
 ## What are related issues/pull requests?
 
+## AI tool usage
+
+ - [ ] AI (Copilot or something similar) supported my development of this PR. See our [policy about AI tool use](https://gdal.org/community/ai_tool_policy.html). Use of AI tools *must* be indicated.
+
 ## Tasklist
 
- - [ ] AI (Copilot or something similar) supported my development of this PR
  - [ ] Make sure code is correctly formatted (cf [pre-commit configuration](https://gdal.org/development/dev_practices.html#commit-hooks))
  - [ ] Add test case(s)
  - [ ] Add documentation
