@@ -20,6 +20,11 @@ from osgeo import gdal, ogr
 
 #############################################################################
 
+def Usage():
+    print("Usage: ogr2vrt.py [-relative] [-schema] [-feature_count] [-extent]")
+    print("                  in_datasource out_vrtfile [layers]")
+    print("")
+    return 2
 
 def GeomType2Name(typ):
     flat_type = ogr.GT_Flatten(typ)
@@ -65,13 +70,6 @@ def Esc(x):
 
 
 #############################################################################
-
-
-def Usage():
-    print("Usage: ogr2vrt.py [-relative] [-schema] [-feature_count] [-extent]")
-    print("                  in_datasource out_vrtfile [layers]")
-    print("")
-    return 2
 
 
 def main(argv=sys.argv):
