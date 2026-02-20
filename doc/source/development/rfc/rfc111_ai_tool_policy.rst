@@ -11,7 +11,7 @@ Author:        Even Rouault (for bringing it to GDAL)
                "maflcko"
 Contact:       even.rouault @ spatialys.com
 Started:       2026-02-09
-Status:        Draft
+Status:        Adopted
 ============== =============================================
 
 Summary
@@ -43,7 +43,7 @@ Similar moves in other projects
 Voting history
 --------------
 
-TBD
++1 from PSC members EvenR, JukkaR, MikeS, DanB, DanielM, JavierJS, KurtS, FrankW, HowardB and NormanB
 
 .. below is an allow-list for spelling checker.
 
