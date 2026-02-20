@@ -3269,3 +3269,26 @@ def test_gti_non_rewriting_of_url(server, tmp_vsimem):
     with webserver.install_http_handler(handler), gdal.quiet_errors():
         ds = gdal.Open(f"GTI:{tmp_vsimem}/test.csv")
         assert ds.GetRasterBand(1).Checksum() == 1
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "index_filename",
+    [
+        "data/gti/issue_13944/tiles_utm49s_old.gti.gpkg",
+        "data/gti/issue_13944/tiles_utm49s_new.gti.gpkg",
+    ],
+)
+def test_gti_reprojected_no_out_of_sync_warning(index_filename):
+    """When indexing tiles with --dst-crs different from the source CRS,
+    the stored bounding box must fully contain the warped tile extent
+    (within 1-pixel tolerance) so that no 'out of sync' warning is emitted.
+    Uses two adjacent tiles so the VRT origin differs from individual tile
+    origins, amplifying the floor/ceil grid-snap that triggers the mismatch.
+    Regression test for https://github.com/OSGeo/gdal/issues/13944."""
+
+    gti_ds = gdal.Open(index_filename)
+    with gdaltest.error_raised(gdal.CE_None):
+        gti_ds.ReadRaster(0, 0, 500, 500)
