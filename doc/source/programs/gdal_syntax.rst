@@ -24,7 +24,7 @@ Syntax for commands of ``gdal`` program
 
   e.g. ``-f, --of, --format, --output-format <OUTPUT-FORMAT>``
 
-  Boolean arguments (also called flags) are specified by just specifying the argument name.
+  Boolean arguments (also called flags) are enabled by specifying the argument name without a value.
 
   e.g. ``--overwrite``
 
