@@ -1126,19 +1126,44 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
         adfX[4] = gt[0] + 0 * gt[1] + 0 * gt[2];
         adfY[4] = gt[3] + 0 * gt[4] + 0 * gt[5];
 
-        // If set target srs, do the forward transformation of all points.
+        // If set target srs, compute the reprojected extent.
+        // Use GDALWarp() with VRT output so the stored bounding box matches
+        // what the GTI reader computes in its Pass 1 (GetSourceDesc).
+        // A plain 4-corner transform or standalone GDALSuggestedWarpOutput2()
+        // can underestimate the extent because GDALWarp() may adjust the
+        // resolution after calling GDALSuggestedWarpOutput2(), producing a
+        // different pixel count and thus a different extent.
         if (!oTargetSRS.IsEmpty() && poSrcSRS)
         {
             if (!poSrcSRS->IsSame(&oTargetSRS))
             {
-                auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
-                    OGRCreateCoordinateTransformation(poSrcSRS, &oTargetSRS));
-                if (!poCT || !poCT->Transform(5, adfX, adfY, nullptr))
+                char *pszDstWKT = nullptr;
+                oTargetSRS.exportToWkt(&pszDstWKT);
+
+                CPLStringList aosWarpArgs;
+                aosWarpArgs.AddString("-of");
+                aosWarpArgs.AddString("VRT");
+                aosWarpArgs.AddString("-t_srs");
+                aosWarpArgs.AddString(pszDstWKT);
+                CPLFree(pszDstWKT);
+
+                GDALWarpAppOptions *psWarpOptions =
+                    GDALWarpAppOptionsNew(aosWarpArgs.List(), nullptr);
+                GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS.get());
+                GDALDatasetH ahSrcDS[] = {hSrcDS};
+                int bUsageError = false;
+                auto poWarpDS = std::unique_ptr<GDALDataset>(
+                    GDALDataset::FromHandle(GDALWarp(
+                        "", nullptr, 1, ahSrcDS, psWarpOptions, &bUsageError)));
+                GDALWarpAppOptionsFree(psWarpOptions);
+
+                if (!poWarpDS)
                 {
                     CPLError(bFailOnErrors ? CE_Failure : CE_Warning,
                              CPLE_AppDefined,
-                             "unable to transform points from source "
-                             "SRS `%s' to target SRS `%s' for file `%s'%s",
+                             "unable to compute reprojected extent from "
+                             "source SRS `%s' to target SRS `%s' for "
+                             "file `%s'%s",
                              poSrcDS->GetProjectionRef(),
                              psOptions->osTargetSRS.c_str(),
                              osFileNameToWrite.c_str(),
@@ -1147,6 +1172,29 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                         return nullptr;
                     continue;
                 }
+
+                GDALGeoTransform warpGT;
+                poWarpDS->GetGeoTransform(warpGT);
+                const int nDstPixels = poWarpDS->GetRasterXSize();
+                const int nDstLines = poWarpDS->GetRasterYSize();
+
+                const double dfDstMinX = warpGT.xorig;
+                const double dfDstMaxY = warpGT.yorig;
+                const double dfDstMaxX =
+                    warpGT.xorig + nDstPixels * warpGT.xscale;
+                const double dfDstMinY =
+                    warpGT.yorig + nDstLines * warpGT.yscale;
+
+                adfX[0] = dfDstMinX;
+                adfY[0] = dfDstMaxY;
+                adfX[1] = dfDstMaxX;
+                adfY[1] = dfDstMaxY;
+                adfX[2] = dfDstMaxX;
+                adfY[2] = dfDstMinY;
+                adfX[3] = dfDstMinX;
+                adfY[3] = dfDstMinY;
+                adfX[4] = dfDstMinX;
+                adfY[4] = dfDstMaxY;
             }
         }
         else if (bIsGTIContext && !oAlreadyExistingSRS.IsEmpty() &&

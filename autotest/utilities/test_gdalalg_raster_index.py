@@ -229,10 +229,14 @@ def test_gdalalg_raster_index_crs():
     assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4267"
     f = lyr.GetNextFeature()
     assert f["source_crs"] == "EPSG:26711"
-    assert (
-        f.GetGeometryRef().ExportToWkt()
-        == "POLYGON ((-117.641168620797 33.9023526904272,-117.628190189534 33.9024195619211,-117.628110837847 33.8915970129623,-117.641087629972 33.8915301685907,-117.641168620797 33.9023526904272))"
-    )
+    # The polygon is an axis-aligned rectangle computed via GDALWarp(),
+    # not the 4-corner transform quadrilateral.
+    geom = f.GetGeometryRef()
+    env = geom.GetEnvelope()  # (minX, maxX, minY, maxY)
+    assert env[0] == pytest.approx(-117.641168620797, abs=1e-6)
+    assert env[1] == pytest.approx(-117.628010158598, abs=1e-6)
+    assert env[2] == pytest.approx(33.8916535473944, abs=1e-6)
+    assert env[3] == pytest.approx(33.9024195619211, abs=1e-6)
 
 
 def test_gdalalg_raster_error():
