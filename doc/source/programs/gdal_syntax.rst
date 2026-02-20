@@ -83,7 +83,7 @@ Suggestions for argument values
 +++++++++++++++++++++++++++++++
 
 As an alternative to :ref:`gdal_bash_completion`, it is possible to ask for
-potential enumerated values for an argument by appending ``=?`` to the argument name.
+potential enumerated values for certain arguments by appending ``=?`` to the argument name.
 This feature is available in all shells and on all operating systems.
 
 .. example::
