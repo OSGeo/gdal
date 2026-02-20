@@ -3025,6 +3025,7 @@ class CPL_DLL OGRGeometryCollection : public OGRGeometry
     virtual OGRErr addGeometry(const OGRGeometry *);
     virtual OGRErr addGeometryDirectly(OGRGeometry *);
     OGRErr addGeometry(std::unique_ptr<OGRGeometry> geom);
+    OGRErr addGeometryComponents(std::unique_ptr<OGRGeometryCollection> geom);
     virtual OGRErr removeGeometry(int iIndex, int bDelete = TRUE);
     std::unique_ptr<OGRGeometry> stealGeometry(int iIndex);
 
