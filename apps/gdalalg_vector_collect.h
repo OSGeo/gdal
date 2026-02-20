@@ -39,6 +39,7 @@ class GDALVectorCollectAlgorithm : public GDALVectorPipelineStepAlgorithm
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::vector<std::string> m_groupBy{};
+    bool m_keepNested{false};
 };
 
 /************************************************************************/

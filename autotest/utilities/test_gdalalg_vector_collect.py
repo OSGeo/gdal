@@ -293,7 +293,7 @@ def test_gdalalg_vector_collect_group_by_invalid(alg):
 
 
 @pytest.mark.parametrize(
-    "wkt_in,type_in,expected_type",
+    "wkt_in,type_in,expected_type,expected_nested_type",
     [
         (
             (
@@ -301,27 +301,45 @@ def test_gdalalg_vector_collect_group_by_invalid(alg):
                 "MULTIPOLYGON (((1 1, 2 1, 2 2, 1 2, 1 1)), ((2 2, 3 2, 3 3, 2 3, 2 2)))",
             ),
             ogr.wkbPolygon,
+            ogr.wkbMultiPolygon,
             ogr.wkbGeometryCollection,
         ),  # lie about geometry type, like the Shapefile driver does
         (
+            ("MULTILINESTRING ((1 1, 2 2)), POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))"),
+            ogr.wkbUnknown,
+            ogr.wkbGeometryCollection,
+            ogr.wkbGeometryCollection,
+        ),
+        (
             ("POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0))", "POINT M (2 4 6)"),
             ogr.wkbUnknown,
+            ogr.wkbGeometryCollectionM,
             ogr.wkbGeometryCollectionM,
         ),
         (
             ("POINT (2 4)", "POINT M (6 4 4)", "POINT Z (3 4 9)"),
             ogr.wkbPoint,
             ogr.wkbMultiPointZM,
+            ogr.wkbMultiPointZM,
+        ),
+        (
+            ("POINT (2 4)", "MULTIPOINT M (6 4 4)", "POINT Z (3 4 9)"),
+            ogr.wkbPoint,
+            ogr.wkbMultiPointZM,
+            ogr.wkbGeometryCollectionZM,
         ),
     ],
 )
-def test_gdalalg_vector_collect_mixed_geometry_types(
-    alg, wkt_in, type_in, expected_type
+@pytest.mark.parametrize("keep_nested", (True, False))
+def test_gdalalg_vector_collect_keep_nested_mixed_geometry_types(
+    alg, wkt_in, type_in, expected_type, expected_nested_type, keep_nested
 ):
 
     src_ds = gdaltest.wkt_ds(wkt_in, geom_type=type_in)
 
     alg["input"] = src_ds
+    if keep_nested:
+        alg["keep-nested"] = True
     alg["output"] = ""
     alg["output-format"] = "stream"
 
@@ -330,14 +348,19 @@ def test_gdalalg_vector_collect_mixed_geometry_types(
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
 
-    assert dst_lyr.GetLayerDefn().GetGeomType() == expected_type
+    assert (
+        dst_lyr.GetLayerDefn().GetGeomType() == expected_nested_type
+        if keep_nested
+        else expected_type
+    )
 
     f = dst_lyr.GetNextFeature()
     g = f.GetGeometryRef()
 
-    assert g.GetGeometryType() == expected_type
+    assert g.GetGeometryType() == expected_nested_type if keep_nested else expected_type
 
 
+@pytest.mark.require_driver("GDALG")
 def test_gdalalg_vector_collect_test_ogrsf(tmp_path):
     import test_cli_utilities
 

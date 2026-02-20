@@ -5,7 +5,7 @@
  * Author:   Daniel Baston
  *
  ******************************************************************************
- * Copyright (c) 2025, ISciences LLC
+ * Copyright (c) 2025-2026, ISciences LLC
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
@@ -17,6 +17,7 @@
 #include "gdalalg_vector_geom.h"
 #include "ogr_geometry.h"
 
+#include <algorithm>
 #include <cinttypes>
 #include <optional>
 
@@ -48,6 +49,10 @@ GDALVectorCollectAlgorithm::GDALVectorCollectAlgorithm(bool standaloneStep)
                 }
                 return true;
             });
+
+    AddArg("keep-nested", 0,
+           _("Avoid combining the components of multipart geometries"),
+           &m_keepNested);
 }
 
 namespace
@@ -58,15 +63,18 @@ class GDALVectorCollectOutputLayer final
   public:
     explicit GDALVectorCollectOutputLayer(
         OGRLayer &srcLayer, int geomFieldIndex,
-        const std::vector<std::string> &groupBy)
+        const std::vector<std::string> &groupBy, bool keepNested)
         : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
           m_groupBy(groupBy), m_defn(OGRFeatureDefn::CreateFeatureDefn(
-                                  srcLayer.GetLayerDefn()->GetName()))
+                                  srcLayer.GetLayerDefn()->GetName())),
+          m_keepNested(keepNested)
     {
         m_defn->Reference();
 
         const OGRFeatureDefn *srcDefn = m_srcLayer.GetLayerDefn();
 
+        // Copy field definitions for attribute fields used in
+        // --group-by. All other attributes are discarded.
         for (const auto &fieldName : m_groupBy)
         {
             // RunStep already checked that the field exists
@@ -76,15 +84,16 @@ class GDALVectorCollectOutputLayer final
             m_defn->AddFieldDefn(srcDefn->GetFieldDefn(nField));
         }
 
-        // Copy all geometry fields, upgrading the type to the corresponding
-        // collection type.
+        // Create a new geometry field corresponding to each input geometry
+        // field. An appropriate type is worked out below.
+        m_defn->SetGeomType(wkbNone);  // Remove default geometry field
         for (int iGeomField = 0; iGeomField < srcDefn->GetGeomFieldCount();
              iGeomField++)
         {
             const OGRGeomFieldDefn *srcGeomDefn =
                 srcDefn->GetGeomFieldDefn(iGeomField);
 
-            auto eSrcGeomType = srcGeomDefn->GetType();
+            const auto eSrcGeomType = srcGeomDefn->GetType();
             const bool bHasZ = OGR_GT_HasZ(eSrcGeomType);
             const bool bHasM = OGR_GT_HasM(eSrcGeomType);
 
@@ -93,16 +102,11 @@ class GDALVectorCollectOutputLayer final
 
             // If the layer claims to have single-part geometries, choose a more
             // specific output type like "MultiPoint" rather than "GeometryCollection"
-            if (eSrcGeomType != wkbUnknown &&
+            if (wkbFlatten(eSrcGeomType) != wkbUnknown &&
                 !OGR_GT_IsSubClassOf(wkbFlatten(eSrcGeomType),
                                      wkbGeometryCollection))
             {
                 eDstGeomType = OGR_GT_GetCollection(eSrcGeomType);
-            }
-
-            if (iGeomField == 0)
-            {
-                m_defn->DeleteGeomFieldDefn(0);
             }
 
             auto dstGeomDefn = std::make_unique<OGRGeomFieldDefn>(
@@ -227,6 +231,11 @@ class GDALVectorCollectOutputLayer final
                 if (poSrcGeom != nullptr && !poSrcGeom->IsEmpty())
                 {
                     const auto eSrcType = poSrcGeom->getGeometryType();
+                    const auto bSrcIsCollection = OGR_GT_IsSubClassOf(
+                        wkbFlatten(eSrcType), wkbGeometryCollection);
+                    const auto bDstIsUntypedCollection =
+                        wkbFlatten(poGeomFieldDefn->GetType()) ==
+                        wkbGeometryCollection;
 
                     // Did this geometry unexpectedly have Z?
                     if (OGR_GT_HasZ(eSrcType) !=
@@ -234,6 +243,7 @@ class GDALVectorCollectOutputLayer final
                     {
                         AddZ(iGeomField);
                     }
+
                     // Did this geometry unexpectedly have M?
                     if (OGR_GT_HasM(eSrcType) !=
                         OGR_GT_HasM(poGeomFieldDefn->GetType()))
@@ -241,10 +251,10 @@ class GDALVectorCollectOutputLayer final
                         AddM(iGeomField);
                     }
 
-                    if (OGR_GT_IsSubClassOf(wkbFlatten(eSrcType),
-                                            wkbGeometryCollection) &&
-                        wkbFlatten(poGeomFieldDefn->GetType()) !=
-                            wkbGeometryCollection)
+                    // Do we need to change the output from a typed collection
+                    // like MultiPolygon to a generic GeometryCollection?
+                    if (m_keepNested && bSrcIsCollection &&
+                        !bDstIsUntypedCollection)
                     {
                         SetTypeGeometryCollection(iGeomField);
                     }
@@ -253,16 +263,38 @@ class GDALVectorCollectOutputLayer final
                         cpl::down_cast<OGRGeometryCollection *>(
                             dstFeature->GetGeomFieldRef(iGeomField));
 
-                    if (poDstGeom->addGeometry(std::move(poSrcGeom)) !=
-                        OGRERR_NONE)
+                    if (m_keepNested || !bSrcIsCollection)
                     {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Failed to add geometry of type %s to output "
-                                 "feature of type %s",
-                                 OGRGeometryTypeToName(eSrcType),
-                                 OGRGeometryTypeToName(
-                                     poDstGeom->getGeometryType()));
-                        return false;
+                        if (poDstGeom->addGeometry(std::move(poSrcGeom)) !=
+                            OGRERR_NONE)
+                        {
+                            CPLError(
+                                CE_Failure, CPLE_AppDefined,
+                                "Failed to add geometry of type %s to output "
+                                "feature of type %s",
+                                OGRGeometryTypeToName(eSrcType),
+                                OGRGeometryTypeToName(
+                                    poDstGeom->getGeometryType()));
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        std::unique_ptr<OGRGeometryCollection>
+                            poSrcGeomCollection(
+                                poSrcGeom.release()->toGeometryCollection());
+                        if (poDstGeom->addGeometryComponents(
+                                std::move(poSrcGeomCollection)) != OGRERR_NONE)
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Failed to add components from geometry "
+                                     "of type %s to output "
+                                     "feature of type %s",
+                                     OGRGeometryTypeToName(eSrcType),
+                                     OGRGeometryTypeToName(
+                                         poDstGeom->getGeometryType()));
+                            return false;
+                        }
                     }
                 }
             }
@@ -367,6 +399,7 @@ class GDALVectorCollectOutputLayer final
     std::optional<decltype(m_features)::const_iterator> m_itFeature{};
     OGRFeatureDefn *m_defn;
     GIntBig m_nProcessedFeaturesRead = 0;
+    const bool m_keepNested;
 };
 }  // namespace
 
@@ -418,7 +451,7 @@ bool GDALVectorCollectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                                 layerProgressData] : progressHelper)
     {
         auto poLayer = std::make_unique<GDALVectorCollectOutputLayer>(
-            *poSrcLayer, -1, m_groupBy);
+            *poSrcLayer, -1, m_groupBy, m_keepNested);
 
         if (!poDstDS->AddProcessedLayer(std::move(poLayer), layerProgressFunc,
                                         layerProgressData.get()))
