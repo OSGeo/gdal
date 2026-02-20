@@ -24,7 +24,9 @@ Syntax for commands of ``gdal`` program
 
   e.g. ``-f, --of, --format, --output-format <OUTPUT-FORMAT>``
 
-  Boolean arguments are specified by just specifying the argument name.
+  Boolean arguments (also called flags) are specified by just specifying the argument name.
+
+  e.g. ``--overwrite``
 
   Arguments that require a value are specified like:
 
@@ -33,12 +35,12 @@ Syntax for commands of ``gdal`` program
   - ``--format VALUE`` or ``--format=VALUE`` for long names.
 
   Some arguments can be multi-valued. Some of them require all values to be
-  packed together and separate with comma. This is for example the case of
+  packed together and separated by commas. This is, for example, the case of
   ``--bbox <BBOX>   Clipping bounding box as xmin,ymin,xmax,ymax``.
   e.g. ``--bbox=2.1,49.1,2.9,49.9``
 
   Others accept each value to be preceded by a new mention of the argument name.
-  e.g ``--co COMPRESS=LZW --co TILED=YES``. For that one, if the value of the
+  e.g ``--co COMPRESS=LZW --co TILED=YES``. In this example, if the value of the
   argument does not contain commas, the packed form is also accepted:
   ``--co COMPRESS=LZW,TILED=YES``.
 
@@ -69,11 +71,12 @@ The following command lines are valid:
 
 .. code-block::
 
+    gdal raster convert input.tif output.tif
     gdal raster convert -i input.tif -o output.tif
     gdal raster convert --input=input.tif --output=output.tif
     gdal raster convert --input input.tif --output output.tif
     gdal raster convert --creation-option COMPRESS=LZW --creation-option TILED=YES --overwrite input.tif output.tif
-    gdal raster convert input.tif output.tif--co COMPRESS=LZW,TILED=YES --overwrite
+    gdal raster convert input.tif output.tif --co COMPRESS=LZW,TILED=YES --overwrite
 
 
 Suggestions for argument values
@@ -81,6 +84,7 @@ Suggestions for argument values
 
 As an alternative to :ref:`gdal_bash_completion`, it is possible to ask for
 potential enumerated values for an argument by appending ``=?`` to the argument name.
+This feature is available in all shells and on all operating systems.
 
 .. example::
    :title: Asking for the layer names of a vector dataset
