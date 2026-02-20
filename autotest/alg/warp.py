@@ -2302,3 +2302,22 @@ def test_warp_zero_sized_target_extent():
     )
     assert out_ds.RasterXSize == 1
     assert out_ds.RasterYSize == 1
+
+
+@gdaltest.enable_exceptions()
+def test_warp_homography_overview():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    src_ds.GetRasterBand(1).Fill(255)
+    gcp_ul = gdal.GCP(2, 49, 0.0, -0.5, -0.5)
+    gcp_ll = gdal.GCP(2, 48, 0.0, -0.5, 10.5)
+    gcp_lr = gdal.GCP(3, 48, 0.0, 10.5, 10.5)
+    gcp_ur = gdal.GCP(3, 49, 0.0, 10.5, -0.5)
+    src_ds.SetGCPs([gcp_ul, gcp_ll, gcp_lr, gcp_ur], None)
+    src_ds.BuildOverviews("NEAR", [2])
+
+    warped_vrt = gdal.Warp("", src_ds, format="VRT")
+    assert warped_vrt.GetRasterBand(1).GetOverview(0).ComputeRasterMinMax() == (
+        255,
+        255,
+    )
