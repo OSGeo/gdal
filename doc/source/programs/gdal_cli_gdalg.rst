@@ -1,7 +1,7 @@
 .. _gdal_cli_gdalg:
 
 ================================================================================
-.gdalg files to replay serialized "gdal" commands
+.gdalg files to replay serialized ``gdal`` commands
 ================================================================================
 
 A subset of subcommands of :program:`gdal` support generating

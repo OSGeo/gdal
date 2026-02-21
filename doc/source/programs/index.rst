@@ -47,13 +47,13 @@ General
 .. only:: html
 
     - :ref:`gdal_program`: Main ``gdal`` entry point
-    - :ref:`gdal_syntax`: Syntax for commands of ``gdal`` program
-    - :ref:`migration_guide_to_gdal_cli`: Migration guide to ``gdal`` command line interface
-    - :ref:`gdal_bash_completion`: Bash completion for ``gdal``
-    - :ref:`gdal_cli_from_c`: How to use ``gdal`` CLI algorithms from C
-    - :ref:`gdal_cli_from_cpp`: How to use ``gdal`` CLI algorithms from C++
-    - :ref:`gdal_cli_from_python`: How to use ``gdal`` CLI algorithms from Python
-    - :ref:`gdal_cli_gdalg`: .gdalg files to replay serialized ``gdal`` commands
+    - :ref:`gdal_syntax`
+    - :ref:`migration_guide_to_gdal_cli`
+    - :ref:`gdal_bash_completion`
+    - :ref:`gdal_cli_from_c`
+    - :ref:`gdal_cli_from_cpp`
+    - :ref:`gdal_cli_from_python`
+    - :ref:`gdal_cli_gdalg`
 
 Commands working with raster or vector inputs
 +++++++++++++++++++++++++++++++++++++++++++++

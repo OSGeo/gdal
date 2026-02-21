@@ -1,11 +1,11 @@
 .. _migration_guide_to_gdal_cli:
 
 ================================================================================
-Migration guide to "gdal" command line interface
+Migration guide to ``gdal`` command line interface
 ================================================================================
 
-This page documents through examples how to migrate from the traditional GDAL
-command line utilities to the unified "gdal" command line interface added in
+This page documents, through examples, how to migrate from the traditional GDAL
+command line utilities to the unified ``gdal`` command line interface added in
 GDAL 3.11.
 
 Raster commands

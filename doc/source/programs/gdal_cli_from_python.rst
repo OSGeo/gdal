@@ -1,13 +1,13 @@
 .. _gdal_cli_from_python:
 
 ================================================================================
-How to use "gdal" CLI algorithms from Python
+How to use ``gdal`` CLI algorithms from Python
 ================================================================================
 
 Principles
 ----------
 
-"gdal" CLI algorithms are available as :py:class:`osgeo.gdal.Algorithm` instances.
+``gdal`` CLI algorithms are available as :py:class:`osgeo.gdal.Algorithm` instances.
 
 A convenient way to access an algorithm and run it is to use the :py:func:`osgeo.gdal.Run`
 function.
