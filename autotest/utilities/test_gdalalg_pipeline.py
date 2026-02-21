@@ -1102,3 +1102,10 @@ def test_gdalalg_pipeline_tee_output_to_stdout(tmp_vsimem):
 
     with gdal.Open(tmp_vsimem / "test.xyz") as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_gdalalg_pipeline_ossfuzz_485952614():
+
+    # Used to segfault
+    with pytest.raises(Exception):
+        gdal.alg.pipeline(pipeline="read -h")

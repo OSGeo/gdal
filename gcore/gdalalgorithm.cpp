@@ -1710,19 +1710,27 @@ GDALAlgorithm::GDALAlgorithm(const std::string &name,
                         ? "https://gdal.org" + m_helpURL
                         : m_helpURL)
 {
-    AddArg("help", 'h', _("Display help message and exit"), &m_helpRequested)
-        .SetHiddenForAPI()
-        .SetCategory(GAAC_COMMON)
-        .AddAction([this]() { m_specialActionRequested = true; });
-    AddArg("help-doc", 0, _("Display help message for use by documentation"),
-           &m_helpDocRequested)
-        .SetHidden()
-        .AddAction([this]() { m_specialActionRequested = true; });
-    AddArg("json-usage", 0, _("Display usage as JSON document and exit"),
-           &m_JSONUsageRequested)
-        .SetHiddenForAPI()
-        .SetCategory(GAAC_COMMON)
-        .AddAction([this]() { m_specialActionRequested = true; });
+    auto &helpArg =
+        AddArg("help", 'h', _("Display help message and exit"),
+               &m_helpRequested)
+            .SetHiddenForAPI()
+            .SetCategory(GAAC_COMMON)
+            .AddAction([this]()
+                       { m_specialActionRequested = m_calledFromCommandLine; });
+    auto &helpDocArg =
+        AddArg("help-doc", 0,
+               _("Display help message for use by documentation"),
+               &m_helpDocRequested)
+            .SetHidden()
+            .AddAction([this]()
+                       { m_specialActionRequested = m_calledFromCommandLine; });
+    auto &jsonUsageArg =
+        AddArg("json-usage", 0, _("Display usage as JSON document and exit"),
+               &m_JSONUsageRequested)
+            .SetHiddenForAPI()
+            .SetCategory(GAAC_COMMON)
+            .AddAction([this]()
+                       { m_specialActionRequested = m_calledFromCommandLine; });
     AddArg("config", 0, _("Configuration option"), &m_dummyConfigOptions)
         .SetMetaVar("<KEY>=<VALUE>")
         .SetHiddenForAPI()
@@ -1735,6 +1743,26 @@ GDALAlgorithm::GDALAlgorithm(const std::string &name,
                     "Configuration options passed with the 'config' argument "
                     "are ignored");
             });
+
+    AddValidationAction(
+        [this, &helpArg, &helpDocArg, &jsonUsageArg]()
+        {
+            if (!m_calledFromCommandLine && m_specialActionRequested)
+            {
+                for (auto &arg : {&helpArg, &helpDocArg, &jsonUsageArg})
+                {
+                    if (arg->IsExplicitlySet())
+                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "'%s' argument only available when called "
+                                    "from command line",
+                                    arg->GetName().c_str());
+                        return false;
+                    }
+                }
+            }
+            return true;
+        });
 }
 
 /************************************************************************/
