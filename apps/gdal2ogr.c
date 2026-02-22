@@ -172,9 +172,8 @@ int main(int argc, char *argv[])
         }
         fprintf(fOut, "x,y,z\n");
 
-        pszDstFilenameCSVT = CPLMalloc(strlen(pszDstFilename) + 2);
-        strcpy(pszDstFilenameCSVT, pszDstFilename);
-        strcat(pszDstFilenameCSVT, "t");
+        pszDstFilenameCSVT = (char*) CPLMalloc(strlen(pszDstFilename) + 2);
+        snprintf(pszDstFilenameCSVT, strlen(pszDstFilename) + 2, "%st", pszDstFilename);
         fOutCSVT = fopen(pszDstFilenameCSVT, "wt");
         if (fOutCSVT == NULL)
         {
@@ -187,7 +186,8 @@ int main(int argc, char *argv[])
         fOutCSVT = NULL;
 
         pszDstFilenameVRT = CPLStrdup(pszDstFilename);
-        strcpy(pszDstFilenameVRT + strlen(pszDstFilename) - 3, "vrt");
+        if (strlen(pszDstFilenameVRT) >= 3)
+            snprintf(pszDstFilenameVRT + strlen(pszDstFilenameVRT) - 3, 4, "vrt");
         fOutVRT = fopen(pszDstFilenameVRT, "wt");
         if (fOutVRT == NULL)
         {
