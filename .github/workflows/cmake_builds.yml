@@ -663,12 +663,11 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/build
         export PKG_CONFIG_PATH=/opt/homebrew/Cellar/libxml2/lib/pkgconfig
         # FIXME: remove -DBUILD_PYTHON_BINDINGS=OFF. Python tests fail with "ModuleNotFoundError: No module named '_gdal'" with macos-12
-        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" -DBUILD_PYTHON_BINDINGS=OFF  "-DUSE_PRECOMPILED_HEADERS=ON"
+        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" -DBUILD_PYTHON_BINDINGS=OFF  "-DUSE_PRECOMPILED_HEADERS=ON" -DGDAL_ENABLE_MACOSX_FRAMEWORK=ON
         #PYTHON_CMD=$(cat $GITHUB_WORKSPACE/build/python_executable.txt) && $PYTHON_CMD -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j 3
-        otool -L $GITHUB_WORKSPACE/build/libgdal.dylib
     - name: test
       run: cmake --build $GITHUB_WORKSPACE/build --target quicktest
     - name: test (with ctest)
@@ -678,15 +677,9 @@ jobs:
         BUILD_NAME: "macos_build_brew"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
-    - name: Test post-install usage (with pkg-config)
+    - name: Test post-install usage (with macOSX Framework)
       run: |
-        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
-    - name: Test post-install usage (with gdal-config)
-      run: |
-        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
-    - name: Test post-install usage (with CMake)
-      run: |
-        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal --dynamic --disable-odbc
+        ./autotest/postinstall/test_framework.sh $GITHUB_WORKSPACE/install-gdal
     - name: ccache statistics
       run: ccache -s
 
