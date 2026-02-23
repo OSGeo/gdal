@@ -28,6 +28,8 @@ Description
 
 For linear geometries, the union step is followed by a line-merging step, where lines are merged at points that form an endpoint of exactly two lines.
 
+To dissolve the geometries of multiple features together, first combine them into single features with :ref:`gdal_vector_combine`.
+
 ``dissolve`` can be used as a step of :ref:`gdal_vector_pipeline`.
 
 Standard Options
@@ -62,4 +64,18 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+
+Examples
+--------
+
+.. example::
+   :title: Dissolve country boundaries into continent boundaries
+
+   .. code-block:: bash
+
+      gdal vector pipeline read countries.shp !
+          combine --group-by CONTINENT ! \
+          dissolve ! \
+          write continents.shp
 
