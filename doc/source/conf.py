@@ -903,7 +903,7 @@ man_pages = [
     (
         "programs/gdal_vector_dissolve",
         "gdal-vector-dissolve",
-        "Unions the elmeents of each feature's geometry.",
+        "Unions the elements of each feature's geometry.",
         [author_dbaston],
         1,
     ),
