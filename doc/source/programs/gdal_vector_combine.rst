@@ -1,7 +1,7 @@
-.. _gdal_vector_collect:
+.. _gdal_vector_combine:
 
 ================================================================================
-``gdal vector collect``
+``gdal vector combine``
 ================================================================================
 
 .. versionadded:: 3.13
@@ -10,17 +10,17 @@
 
     Combine geometries into collections
 
-.. Index:: gdal vector collect
+.. Index:: gdal vector combine
 
 Synopsis
 --------
 
-.. program-output:: gdal vector collect --help-doc
+.. program-output:: gdal vector combine --help-doc
 
 Description
 -----------
 
-:program:`gdal vector collect` combines geometries into geometry collections.
+:program:`gdal vector combine` combines geometries into geometry collections.
 
 The :option:`--group-by` argument can be used to determine which features are combined.
 
@@ -34,7 +34,7 @@ PostGIS' ``ST_Collect`` is preferred (a two-component GeometryCollection
 containing the Polygon and MultiPolygon), then :option:`--keep-nested` can be
 used.
 
-``collect`` can be used as a step of :ref:`gdal_vector_pipeline`.
+``combine`` can be used as a step of :ref:`gdal_vector_pipeline`.
 
 Program-Specific Options
 ------------------------

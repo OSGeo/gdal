@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 ###############################################################################
 # Project:  GDAL/OGR Test Suite
-# Purpose:  'gdal vector collect' testing
+# Purpose:  'gdal vector combine' testing
 # Author:   Daniel Baston
 #
 ###############################################################################
-# Copyright (c) 2025, ISciences LLC
+# Copyright (c) 2025-2026, ISciences LLC
 #
 # SPDX-License-Identifier: MIT
 ###############################################################################
@@ -22,10 +22,10 @@ from osgeo import gdal, ogr, osr
 
 @pytest.fixture()
 def alg():
-    return gdal.GetGlobalAlgorithmRegistry()["vector"]["collect"]
+    return gdal.GetGlobalAlgorithmRegistry()["vector"]["combine"]
 
 
-def test_gdalalg_vector_collect(alg):
+def test_gdalalg_vector_combine(alg):
 
     src_ds = gdal.OpenEx("../ogr/data/poly.shp")
 
@@ -61,7 +61,7 @@ def test_gdalalg_vector_collect(alg):
 @pytest.mark.parametrize(
     "group_by", ["int_field", "str_field", ["str_field", "int_field"]]
 )
-def test_gdalalg_vector_collect_group_by(alg, group_by):
+def test_gdalalg_vector_combine_group_by(alg, group_by):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     src_lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbPoint)
@@ -196,7 +196,7 @@ def test_gdalalg_vector_collect_group_by(alg, group_by):
 
 
 @pytest.mark.parametrize("geoms", [["POINT (3 7)", None], [None, "POINT (3 7)"]])
-def test_gdalalg_vector_collect_null_geometry(alg, geoms):
+def test_gdalalg_vector_combine_null_geometry(alg, geoms):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     src_lyr = src_ds.CreateLayer("layer", geom_type=ogr.wkbPoint)
@@ -230,7 +230,7 @@ def test_gdalalg_vector_collect_null_geometry(alg, geoms):
         assert geom.Equals(ogr.CreateGeometryFromWkt("MULTIPOINT ((3 7))"))
 
 
-def test_gdalalg_vector_collect_multiple_geom_fields(alg):
+def test_gdalalg_vector_combine_multiple_geom_fields(alg):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
     src_lyr = src_ds.CreateLayer(
@@ -278,7 +278,7 @@ def test_gdalalg_vector_collect_multiple_geom_fields(alg):
     )
 
 
-def test_gdalalg_vector_collect_group_by_invalid(alg):
+def test_gdalalg_vector_combine_group_by_invalid(alg):
 
     alg["input"] = "../ogr/data/poly.shp"
     alg["group-by"] = "does_not_exist"
@@ -331,7 +331,7 @@ def test_gdalalg_vector_collect_group_by_invalid(alg):
     ],
 )
 @pytest.mark.parametrize("keep_nested", (True, False))
-def test_gdalalg_vector_collect_keep_nested_mixed_geometry_types(
+def test_gdalalg_vector_combine_keep_nested_mixed_geometry_types(
     alg, wkt_in, type_in, expected_type, expected_nested_type, keep_nested
 ):
 
@@ -361,7 +361,7 @@ def test_gdalalg_vector_collect_keep_nested_mixed_geometry_types(
 
 
 @pytest.mark.require_driver("GDALG")
-def test_gdalalg_vector_collect_test_ogrsf(tmp_path):
+def test_gdalalg_vector_combine_test_ogrsf(tmp_path):
     import test_cli_utilities
 
     if test_cli_utilities.get_test_ogrsf_path() is None:
@@ -385,7 +385,7 @@ def test_gdalalg_vector_collect_test_ogrsf(tmp_path):
 
     gdalg_contents = {
         "type": "gdal_streamed_alg",
-        "command_line": f"gdal vector collect {tmp_path}/src.shp --group-by GRP --output-format=stream dummy_dataset_name",
+        "command_line": f"gdal vector combine {tmp_path}/src.shp --group-by GRP --output-format=stream dummy_dataset_name",
         "relative_paths_relative_to_this_file": False,
     }
 

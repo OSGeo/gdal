@@ -1,7 +1,7 @@
 /******************************************************************************
 *
  * Project:  GDAL
- * Purpose:  "gdal vector collect" subcommand
+ * Purpose:  "gdal vector combine" subcommand
  * Author:   Daniel Baston
  *
  ******************************************************************************
@@ -10,7 +10,7 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#include "gdalalg_vector_collect.h"
+#include "gdalalg_vector_combine.h"
 
 #include "cpl_error.h"
 #include "gdal_priv.h"
@@ -27,7 +27,7 @@
 
 //! @cond Doxygen_Suppress
 
-GDALVectorCollectAlgorithm::GDALVectorCollectAlgorithm(bool standaloneStep)
+GDALVectorCombineAlgorithm::GDALVectorCombineAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
@@ -57,11 +57,11 @@ GDALVectorCollectAlgorithm::GDALVectorCollectAlgorithm(bool standaloneStep)
 
 namespace
 {
-class GDALVectorCollectOutputLayer final
+class GDALVectorCombineOutputLayer final
     : public GDALVectorNonStreamingAlgorithmLayer
 {
   public:
-    explicit GDALVectorCollectOutputLayer(
+    explicit GDALVectorCombineOutputLayer(
         OGRLayer &srcLayer, int geomFieldIndex,
         const std::vector<std::string> &groupBy, bool keepNested)
         : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
@@ -116,7 +116,7 @@ class GDALVectorCollectOutputLayer final
         }
     }
 
-    ~GDALVectorCollectOutputLayer() override
+    ~GDALVectorCombineOutputLayer() override
     {
         m_defn->Release();
     }
@@ -342,7 +342,7 @@ class GDALVectorCollectOutputLayer final
         m_nProcessedFeaturesRead = 0;
     }
 
-    CPL_DISALLOW_COPY_ASSIGN(GDALVectorCollectOutputLayer)
+    CPL_DISALLOW_COPY_ASSIGN(GDALVectorCombineOutputLayer)
 
   private:
     void AddM(int iGeomField)
@@ -403,7 +403,7 @@ class GDALVectorCollectOutputLayer final
 };
 }  // namespace
 
-bool GDALVectorCollectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
+bool GDALVectorCombineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
@@ -450,7 +450,7 @@ bool GDALVectorCollectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     for ([[maybe_unused]] auto [poSrcLayer, bProcessed, layerProgressFunc,
                                 layerProgressData] : progressHelper)
     {
-        auto poLayer = std::make_unique<GDALVectorCollectOutputLayer>(
+        auto poLayer = std::make_unique<GDALVectorCombineOutputLayer>(
             *poSrcLayer, -1, m_groupBy, m_keepNested);
 
         if (!poDstDS->AddProcessedLayer(std::move(poLayer), layerProgressFunc,
@@ -465,7 +465,7 @@ bool GDALVectorCollectAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     return true;
 }
 
-GDALVectorCollectAlgorithmStandalone::~GDALVectorCollectAlgorithmStandalone() =
+GDALVectorCombineAlgorithmStandalone::~GDALVectorCombineAlgorithmStandalone() =
     default;
 
 //! @endcond

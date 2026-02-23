@@ -198,7 +198,7 @@ Vector commands
    gdal_vector_check_geometry
    gdal_vector_clean_coverage
    gdal_vector_clip
-   gdal_vector_collect
+   gdal_vector_combine
    gdal_vector_concat
    gdal_vector_convert
    gdal_vector_dissolve
@@ -237,6 +237,7 @@ Vector commands
     - :ref:`gdal_vector_check_geometry`: Check a dataset for invalid or non-simple geometries
     - :ref:`gdal_vector_clean_coverage`: Remove gaps and overlaps in a polygon dataset
     - :ref:`gdal_vector_clip`: Clip a vector dataset
+    - :ref:`gdal_vector_combine`: Combine geometries into collections
     - :ref:`gdal_vector_concat`: Concatenate vector datasets
     - :ref:`gdal_vector_convert`: Convert a vector dataset
     - :ref:`gdal_vector_edit`: Edit metadata of a vector dataset

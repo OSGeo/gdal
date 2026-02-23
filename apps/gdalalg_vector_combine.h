@@ -1,17 +1,17 @@
 /******************************************************************************
 *
  * Project:  GDAL
- * Purpose:  "gdal vector collect"
+ * Purpose:  "gdal vector combine"
  * Author:   Daniel Baston
  *
  ******************************************************************************
- * Copyright (c) 2025, ISciences LLC
+ * Copyright (c) 2025-2026, ISciences LLC
  *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
-#ifndef GDALALG_VECTOR_COLLECT_INCLUDED
-#define GDALALG_VECTOR_COLLECT_INCLUDED
+#ifndef GDALALG_VECTOR_COMBINE_INCLUDED
+#define GDALALG_VECTOR_COMBINE_INCLUDED
 
 #include "gdalalg_vector_pipeline.h"
 #include "cpl_progress.h"
@@ -21,19 +21,19 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                      GDALVectorCollectAlgorithm                      */
+/*                      GDALVectorCombineAlgorithm                      */
 /************************************************************************/
 
-class GDALVectorCollectAlgorithm : public GDALVectorPipelineStepAlgorithm
+class GDALVectorCombineAlgorithm : public GDALVectorPipelineStepAlgorithm
 {
   public:
-    static constexpr const char *NAME = "collect";
+    static constexpr const char *NAME = "combine";
     static constexpr const char *DESCRIPTION =
         "Combine features into collections";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_vector_collect.html";
+        "/programs/gdal_vector_combine.html";
 
-    explicit GDALVectorCollectAlgorithm(bool standaloneStep = false);
+    explicit GDALVectorCombineAlgorithm(bool standaloneStep = false);
 
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
@@ -43,21 +43,21 @@ class GDALVectorCollectAlgorithm : public GDALVectorPipelineStepAlgorithm
 };
 
 /************************************************************************/
-/*                 GDALVectorCollectAlgorithmStandalone                 */
+/*                 GDALVectorCombineAlgorithmStandalone                 */
 /************************************************************************/
 
-class GDALVectorCollectAlgorithmStandalone final
-    : public GDALVectorCollectAlgorithm
+class GDALVectorCombineAlgorithmStandalone final
+    : public GDALVectorCombineAlgorithm
 {
   public:
-    GDALVectorCollectAlgorithmStandalone()
-        : GDALVectorCollectAlgorithm(/* standaloneStep = */ true)
+    GDALVectorCombineAlgorithmStandalone()
+        : GDALVectorCombineAlgorithm(/* standaloneStep = */ true)
     {
     }
 
-    ~GDALVectorCollectAlgorithmStandalone() override;
+    ~GDALVectorCombineAlgorithmStandalone() override;
 };
 
 //! @endcond
 
-#endif /* GDALALG_VECTOR_COLLECT_INCLUDED */
+#endif /* GDALALG_VECTOR_COMBINE_INCLUDED */

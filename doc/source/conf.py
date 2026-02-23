@@ -880,8 +880,8 @@ man_pages = [
         1,
     ),
     (
-        "programs/gdal_vector_collect",
-        "gdal-vector-collect",
+        "programs/gdal_vector_combine",
+        "gdal-vector-combine",
         "Combine geometries into geometry collections",
         [author_dbaston],
         1,
