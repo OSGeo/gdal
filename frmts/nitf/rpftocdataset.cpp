@@ -213,8 +213,8 @@ class RPFTOCProxyRasterDataSet final : public GDALProxyPoolDataset
     /* The following parameters are only for sanity checking */
     bool checkDone = false;
     bool checkOK = false;
-    const double nwLong;
-    const double nwLat;
+    const double xOrig;
+    const double yOrig;
     GDALColorTable *colorTableRef = nullptr;
     int bHasNoDataValue = false;
     double noDataValue = 0;
@@ -226,8 +226,8 @@ class RPFTOCProxyRasterDataSet final : public GDALProxyPoolDataset
     RPFTOCProxyRasterDataSet(RPFTOCSubDataset *subdataset, const char *fileName,
                              int nRasterXSize, int nRasterYSize,
                              int nBlockXSize, int nBlockYSize,
-                             const char *projectionRef, double nwLong,
-                             double nwLat, int nBands);
+                             const char *projectionRef, double xOrig,
+                             double yOrig, int nBands);
 
     void SetNoDataValue(double noDataValueIn)
     {
@@ -573,12 +573,12 @@ CPLErr RPFTOCProxyRasterBandPalette::IReadBlock(int nBlockXOff, int nBlockYOff,
 RPFTOCProxyRasterDataSet::RPFTOCProxyRasterDataSet(
     RPFTOCSubDataset *subdatasetIn, const char *fileNameIn, int nRasterXSizeIn,
     int nRasterYSizeIn, int nBlockXSizeIn, int nBlockYSizeIn,
-    const char *projectionRefIn, double nwLongIn, double nwLatIn, int nBandsIn)
+    const char *projectionRefIn, double xOrigIn, double yOrigIn, int nBandsIn)
     :  // Mark as shared since the VRT will take several references if we are in
        // RGBA mode (4 bands for this dataset).
       GDALProxyPoolDataset(fileNameIn, nRasterXSizeIn, nRasterYSizeIn,
                            GA_ReadOnly, TRUE, projectionRefIn),
-      nwLong(nwLongIn), nwLat(nwLatIn), subdataset(subdatasetIn)
+      xOrig(xOrigIn), yOrig(yOrigIn), subdataset(subdatasetIn)
 {
     if (nBandsIn == 4)
     {
@@ -634,8 +634,8 @@ int RPFTOCProxyRasterDataSet::SanityCheckOK(GDALDataset *sourceDS)
     checkDone = TRUE;
 
     sourceDS->GetGeoTransform(l_gt);
-    WARN_ON_FAIL(fabs(l_gt[GEOTRSFRM_TOPLEFT_X] - nwLong) < l_gt[1]);
-    WARN_ON_FAIL(fabs(l_gt[GEOTRSFRM_TOPLEFT_Y] - nwLat) < fabs(l_gt[5]));
+    WARN_ON_FAIL(fabs(l_gt[GEOTRSFRM_TOPLEFT_X] - xOrig) < l_gt.xscale);
+    WARN_ON_FAIL(fabs(l_gt[GEOTRSFRM_TOPLEFT_Y] - yOrig) < fabs(l_gt.yscale));
     WARN_ON_FAIL(l_gt[GEOTRSFRM_ROTATION_PARAM1] == 0 &&
                  l_gt[GEOTRSFRM_ROTATION_PARAM2] == 0); /* No rotation */
     ERROR_ON_FAIL(sourceDS->GetRasterCount() == 1);     /* Just 1 band */
@@ -735,9 +735,6 @@ char **RPFTOCDataset::GetMetadata(const char *pszDomain)
             CPLError(CE_Failure, CPLE_AppDefined,                              \
                      "For %s, assert '" #x "' failed",                         \
                      entry->frameEntries[i].fullFilePath);                     \
-            if (poSrcDS)                                                       \
-                GDALClose(poSrcDS);                                            \
-            CPLFree(projectionRef);                                            \
             return nullptr;                                                    \
         }                                                                      \
     } while (false)
@@ -778,7 +775,7 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
     int nBlockXSize = 0;
     int nBlockYSize = 0;
     GDALGeoTransform gt;
-    char *projectionRef = nullptr;
+    OGRSpatialReference oSRS;
     int index = 0;
 
     for (int i = 0; i < N; i++)
@@ -796,54 +793,63 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
             /* for large datasets. So these sanity checks will be done at the
              * time we really need */
             /* to access the file (see SanityCheckOK method) */
-            GDALDataset *poSrcDS = GDALDataset::FromHandle(GDALOpenShared(
-                entry->frameEntries[i].fullFilePath, GA_ReadOnly));
+            auto poSrcDS = std::unique_ptr<GDALDataset>(
+                GDALDataset::FromHandle(GDALOpenShared(
+                    entry->frameEntries[i].fullFilePath, GA_ReadOnly)));
             ASSERT_CREATE_VRT(poSrcDS);
             poSrcDS->GetGeoTransform(gt);
-            projectionRef = CPLStrdup(poSrcDS->GetProjectionRef());
+            auto poSrcSRS = poSrcDS->GetSpatialRef();
+            ASSERT_CREATE_VRT(poSrcSRS);
+            oSRS = *poSrcSRS;
             ASSERT_CREATE_VRT(gt[GEOTRSFRM_ROTATION_PARAM1] == 0 &&
                               gt[GEOTRSFRM_ROTATION_PARAM2] ==
                                   0);                          /* No rotation */
             ASSERT_CREATE_VRT(poSrcDS->GetRasterCount() == 1); /* Just 1 band */
 
-            /* Tolerance of 1%... This is necessary for CADRG_L22/RPF/A.TOC for
-             * example */
-            ASSERT_CREATE_VRT((entry->horizInterval - gt[GEOTRSFRM_WE_RES]) /
-                                  entry->horizInterval <
-                              0.01); /* X interval same as in TOC */
-            ASSERT_CREATE_VRT((entry->vertInterval - (-gt[GEOTRSFRM_NS_RES])) /
-                                  entry->vertInterval <
-                              0.01); /* Y interval same as in TOC */
+            if (oSRS.IsGeographic())
+            {
+                /* Tolerance of 1%... This is necessary for CADRG_L22/RPF/A.TOC for
+                 * example */
+                ASSERT_CREATE_VRT(
+                    (entry->horizInterval - gt[GEOTRSFRM_WE_RES]) /
+                        entry->horizInterval <
+                    0.01); /* X interval same as in TOC */
+                ASSERT_CREATE_VRT(
+                    (entry->vertInterval - (-gt[GEOTRSFRM_NS_RES])) /
+                        entry->vertInterval <
+                    0.01); /* Y interval same as in TOC */
+            }
 
             const int ds_sizeX = poSrcDS->GetRasterXSize();
             const int ds_sizeY = poSrcDS->GetRasterYSize();
             /* for polar zone use the sizes from the dataset */
-            if ((entry->zone[0] == '9') || (entry->zone[0] == 'J'))
+            if (!oSRS.IsGeographic())
             {
                 sizeX = ds_sizeX;
                 sizeY = ds_sizeY;
             }
-
-            /* In the case the east longitude is 180, there's a great chance
-             * that it is in fact */
-            /* truncated in the A.TOC. Thus, the only reliable way to find out
-             * the tile width, is to */
-            /* read it from the tile dataset itself... */
-            /* This is the case for the GNCJNCN dataset that has world coverage
-             */
-            if (entry->seLong == 180.00)
-                sizeX = ds_sizeX;
             else
-                ASSERT_CREATE_VRT(sizeX == ds_sizeX);
+            {
+                /* In the case the east longitude is 180, there's a great chance
+                 * that it is in fact */
+                /* truncated in the A.TOC. Thus, the only reliable way to find out
+                 * the tile width, is to */
+                /* read it from the tile dataset itself... */
+                /* This is the case for the GNCJNCN dataset that has world coverage
+                 */
+                if (entry->seLong == 180.00)
+                    sizeX = ds_sizeX;
+                else
+                    ASSERT_CREATE_VRT(sizeX == ds_sizeX);
+                ASSERT_CREATE_VRT(sizeY == ds_sizeY);
+            }
 
-            ASSERT_CREATE_VRT(sizeY == ds_sizeY);
             poSrcDS->GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
             ASSERT_CREATE_VRT(
                 poSrcDS->GetRasterBand(1)->GetColorInterpretation() ==
                 GCI_PaletteIndex);
             ASSERT_CREATE_VRT(poSrcDS->GetRasterBand(1)->GetRasterDataType() ==
                               GDT_Byte);
-            GDALClose(poSrcDS);
         }
 
         index++;
@@ -861,10 +867,23 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
     if (papszMetadataRPFTOCFile)
         poVirtualDS->SetMetadata(papszMetadataRPFTOCFile);
 
-    poVirtualDS->SetProjection(projectionRef);
+    poVirtualDS->SetSpatialRef(&oSRS);
 
     gt[GEOTRSFRM_TOPLEFT_X] = entry->nwLong;
     gt[GEOTRSFRM_TOPLEFT_Y] = entry->nwLat;
+
+    if (!oSRS.IsGeographic())
+    {
+        OGRSpatialReference oSRS_WGS84;
+        oSRS_WGS84.SetWellKnownGeogCS("WGS84");
+        oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+            OGRCreateCoordinateTransformation(&oSRS_WGS84, &oSRS));
+        if (poCT)
+            poCT->Transform(1, &(gt[GEOTRSFRM_TOPLEFT_X]),
+                            &(gt[GEOTRSFRM_TOPLEFT_Y]));
+    }
+
     poVirtualDS->SetGeoTransform(gt);
 
     int nBands;
@@ -960,9 +979,6 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
         nBands = 4;
     }
 
-    CPLFree(projectionRef);
-    projectionRef = nullptr;
-
     /* -------------------------------------------------------------------- */
     /*      Check for overviews.                                            */
     /* -------------------------------------------------------------------- */
@@ -1001,10 +1017,16 @@ GDALDataset *RPFTOCSubDataset::CreateDataSetFromTocEntry(
             cpl::down_cast<RPFTOCSubDataset *>(poVirtualDS),
             entry->frameEntries[i].fullFilePath, sizeX, sizeY, nBlockXSize,
             nBlockYSize, poVirtualDS->GetProjectionRef(),
-            entry->nwLong +
-                entry->frameEntries[i].frameCol * entry->horizInterval * sizeX,
-            entry->nwLat -
-                entry->frameEntries[i].frameRow * entry->vertInterval * sizeY,
+            oSRS.IsGeographic()
+                ? entry->nwLong + entry->frameEntries[i].frameCol *
+                                      entry->horizInterval * sizeX
+                : gt.xorig +
+                      entry->frameEntries[i].frameCol * gt.xscale * sizeX,
+            oSRS.IsGeographic()
+                ? entry->nwLat - entry->frameEntries[i].frameRow *
+                                     entry->vertInterval * sizeY
+                : gt.yorig +
+                      entry->frameEntries[i].frameRow * gt.yscale * sizeY,
             nBands);
 
         if (nBands == 1)

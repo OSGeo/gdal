@@ -83,6 +83,18 @@ def test_rpftoc_3():
 
 
 ###############################################################################
+# Test reading polar zone
+
+
+def test_rpftoc_zone9():
+    ds = gdal.Open("NITF_TOC_ENTRY:CADRG_ONC_1M_9_0:data/rpftoc/zone9/RPF/A.TOC")
+    ref_ds = gdal.Open("data/rpftoc/zone9/RPF/ZONE9/00027010.ON9")
+    assert ds.GetSpatialRef().IsSame(ref_ds.GetSpatialRef())
+    assert ds.GetGeoTransform() == pytest.approx(ref_ds.GetGeoTransform())
+    assert ds.GetRasterBand(1).Checksum() == ref_ds.GetRasterBand(1).Checksum()
+
+
+###############################################################################
 # Add an overview
 
 
