@@ -1611,6 +1611,24 @@ CPLXMLNode *GMLHandler::ParseAIXMElevationPoint(CPLXMLNode *psGML)
 }
 
 /************************************************************************/
+/*                            nodeHasChild()                            */
+/************************************************************************/
+
+static bool nodeHasChild(const CPLXMLNode *psHaystack,
+                         const CPLXMLNode *psNeedle)
+{
+    if (psHaystack == psNeedle)
+        return true;
+    for (const CPLXMLNode *psChild = psHaystack->psChild; psChild;
+         psChild = psChild->psNext)
+    {
+        if (nodeHasChild(psChild, psNeedle))
+            return true;
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                         endElementGeometry()                         */
 /************************************************************************/
 OGRErr GMLHandler::endElementGeometry()
@@ -1651,34 +1669,37 @@ OGRErr GMLHandler::endElementGeometry()
             m_oMapElementToSubstitute.find(psThisNodeChild->psChild->pszValue);
         if (oIter != m_oMapElementToSubstitute.end())
         {
-            auto psLastChild = oIter->second->psChild;
-            if (psLastChild)
+            const auto psElementToSubstitude = oIter->second;
+            if (nodeHasChild(psElementToSubstitude, psThisNode))
             {
-                // CPLDebug("GML", "Substitution of xlink:href=\"#%s\" with actual content", psThisNodeChild->psChild->pszValue);
-                CPLXMLNode *psAfter = psThisNode->psNext;
-                psThisNode->psNext = nullptr;
-                // We can patch oIter->second as it stored as it in the current
-                // GMLFeature.
-                // Of course that would no longer be the case in case of
-                // cross-references between different GMLFeature, hence we clear
-                // m_oMapElementToSubstitute at the end of the current feature.
-                while (psLastChild->psNext)
-                    psLastChild = psLastChild->psNext;
-                if (psLastChild == psThisNode)
+                CPLDebug("GML", "href #%s referencing one of its subnodes",
+                         psThisNodeChild->psChild->pszValue);
+                /* Can happen in situations like:
+                 <foo xlink:href="#X">
+                    <bar gml:id="X"/>
+                 </foo>
+                 Do not attempt substitution as that would cause a memory
+                 leak.
+                */
+            }
+            else
+            {
+                auto psLastChild = oIter->second->psChild;
+                if (psLastChild)
                 {
-                    /* Can happen in situations like:
-                     <foo xlink:href="#X">
-                        <bar gml:id="X"/>
-                     </foo>
-                     Do not attempt substitution as that would cause a memory
-                     leak.
-                    */
-                }
-                else
-                {
+                    // CPLDebug("GML", "Substitution of xlink:href=\"#%s\" with actual content", psThisNodeChild->psChild->pszValue);
+                    CPLXMLNode *psAfter = psThisNode->psNext;
+                    psThisNode->psNext = nullptr;
+                    // We can patch oIter->second as it stored as it in the current
+                    // GMLFeature.
+                    // Of course that would no longer be the case in case of
+                    // cross-references between different GMLFeature, hence we clear
+                    // m_oMapElementToSubstitute at the end of the current feature.
+                    while (psLastChild->psNext)
+                        psLastChild = psLastChild->psNext;
                     psLastChild->psNext = CPLCloneXMLTree(psThisNode);
+                    psThisNode->psNext = psAfter;
                 }
-                psThisNode->psNext = psAfter;
             }
         }
     }
