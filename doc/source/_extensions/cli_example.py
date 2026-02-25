@@ -4,6 +4,23 @@ from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective, SphinxRole
 
 
+class Example:
+    # class to store properties of an example and where it was
+    # defined
+
+    def __init__(self, *, example_id, example_num, docname, lineno):
+        self.example_id = example_id
+        self.example_num = example_num
+        self.docname = docname
+        self.lineno = lineno
+
+    def __eq__(self, other):
+        if not isinstance(other, Example):
+            return NotImplemented
+
+        return self.__dict__ == other.__dict__
+
+
 class ExampleRole(SphinxRole):
     def run(self):
         return [
@@ -57,15 +74,20 @@ class ExampleDirective(SphinxDirective):
             if example_id in self.env.gdal_examples:
                 logger = logging.getLogger(__name__)
 
-                example_docname, _ = self.env.gdal_examples[example_id]
+                prev_example = self.env.gdal_examples[example_id]
 
                 logger.warning(
-                    f"Example id '{example_id}' has already been used in {docname}",
+                    f"Example id '{example_id}' has already been defined at {prev_example.docname}:{prev_example.lineno}",
                     location=(self.env.docname, self.lineno),
                 )
                 example_id = None
             else:
-                self.env.gdal_examples[example_id] = (docname, example_num)
+                self.env.gdal_examples[example_id] = Example(
+                    example_id=example_id,
+                    docname=docname,
+                    lineno=self.lineno,
+                    example_num=example_num,
+                )
 
         if example_id is None:
             # nodes.section must always have an id
@@ -108,21 +130,21 @@ def link_example_refs(app, env, node, contnode):
 
         return contnode
 
-    example_doc, example_num = examples[example_id]
+    example = examples[example_id]
 
     ref_node = nodes.reference("", "", refid=node["reftarget"], internal=True)
 
     # Set the link text to the example number (e.g, "Example 5") if the example
     # body is in the same document as the reference. Otherwise, set the link
     # text to the program/driver name and example number ("gdalwarp example 5").
-    if node["refdoc"] == example_doc:
-        link_text = f"Example {example_num}"
+    if node["refdoc"] == example.docname:
+        link_text = f"Example {example.example_num}"
     else:
-        example_doc = str(env.titles[example_doc].children[0])
+        example_doc_title = str(env.titles[example.docname].children[0])
 
         # TODO: trim the example_doc name, if it's a really long one like
         # WMO General Regularly-distributed Information in Binary form ?
-        link_text = f"{example_doc} example {example_num}"
+        link_text = f"{example_doc_title} example {example.example_num}"
 
     ref_node.append(nodes.Text(link_text))
 
@@ -142,7 +164,7 @@ def purge_example_defs(app, env, docname):
     for example_id in env.gdal_examples_for_doc[docname]:
         if (
             example_id in env.gdal_examples
-            and env.gdal_examples[example_id][0] == docname
+            and env.gdal_examples[example_id].docname == docname
         ):
             del env.gdal_examples[example_id]
 
@@ -154,7 +176,20 @@ def merge_example_defs(app, env, docnames, other):
         env.gdal_examples = {}
 
     if hasattr(other, "gdal_examples"):
-        env.gdal_examples.update(other.gdal_examples)
+        for example_id, example_props in other.gdal_examples.items():
+            if example_id in env.gdal_examples:
+                logger = logging.getLogger(__name__)
+
+                orig_example = env.gdal_examples[example_id]
+                new_example = other.gdal_examples[example_id]
+
+                if new_example != orig_example:
+                    logger.warning(
+                        f"Example id '{example_id}' has already been defined at {orig_example.docname}:{orig_example.lineno}",
+                        location=(new_example.docname, new_example.lineno),
+                    )
+            else:
+                env.gdal_examples[example_id] = example_props
 
     if not hasattr(env, "gdal_examples_for_doc"):
         env.gdal_examples_for_doc = {}

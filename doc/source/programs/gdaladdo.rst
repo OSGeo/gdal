@@ -98,7 +98,7 @@ most supported file formats with one of several downsampling algorithms.
     and regenerate the overview for areas corresponding to sources whose
     timestamp is more recent than the external overview of the VRT.
     By default all existing overview levels will be refreshed, unless explicit
-    levels are specified. See :example:`refresh-vrt`.
+    levels are specified. See :example:`gdaladdo-refresh-vrt`.
 
 .. option:: --partial-refresh-from-projwin <ulx> <uly> <lrx> <lry>
 
@@ -121,7 +121,7 @@ most supported file formats with one of several downsampling algorithms.
     Note that the filenames are only used to determine the regions of interest
     to refresh. The reference source pixels are the one of the main dataset.
     By default all existing overview levels will be refreshed, unless explicit
-    levels are specified. See :example:`refresh-tiff`.
+    levels are specified. See :example:`gdaladdo-refresh-tiff`.
 
 .. option:: <filename>
 
@@ -161,7 +161,7 @@ in TIFF format.  By default, the GeoTIFF driver stores overviews internally to t
 operated on (if it is writable), unless the -ro flag is specified.
 
 Most drivers also support an alternate overview format using Erdas Imagine
-format.  To trigger this use the :config:`USE_RRD=YES` configuration option (:example:`use-rrd`).  This will
+format.  To trigger this use the :config:`USE_RRD=YES` configuration option (:example:`gdaladdo-use-rrd`).  This will
 place the overviews in an associated .aux file suitable for direct use with
 Imagine or ArcGIS as well as GDAL applications.  (e.g. --config USE_RRD YES)
 
@@ -307,7 +307,7 @@ Examples
 
 .. example::
    :title: Create Erdas Imagine format overviews for the indicated JPEG file
-   :id: use-rrd
+   :id: gdaladdo-use-rrd
 
    .. code-block:: bash
 
@@ -325,7 +325,7 @@ Examples
 
 .. example::
    :title: Refresh overviews of a VRT file
-   :id: refresh-vrt
+   :id: gdaladdo-refresh-vrt
 
    This is needed when for sources have been modified after the .vrt.ovr generation:
 
@@ -339,7 +339,7 @@ Examples
 
 .. example::
    :title: Refresh overviews of a TIFF file
-   :id: refresh-tiff
+   :id: gdaladdo-refresh-tiff
 
    .. code-block:: bash
 
