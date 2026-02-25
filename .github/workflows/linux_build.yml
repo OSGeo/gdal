@@ -377,6 +377,7 @@ jobs:
         with:
           format: lcov
           file: build-coverage/gdal_filtered.info
+          fail-on-error: false
 
       - name: Push build environment
         if: github.event_name == 'push'
