@@ -884,6 +884,29 @@ OGRErr OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszQuery)
 }
 
 /************************************************************************/
+/*                      OGR_L_GetAttributeFilter()                      */
+/************************************************************************/
+
+/**
+ * @brief Fetch the current attribute query string.
+ *
+ * This function is the same as the C++ method OGRLayer::GetAttrQueryString().
+ *
+ * @return the current attribute query string, or NULL if no attribute query is
+ * currently installed. The returned string is short lived and owned by the layer
+ * and should not be modified or freed by the caller.
+ *
+ * @see OGR_L_SetAttributeFilter() to set a new attribute query string.
+ * @since GDAL 3.13
+ */
+const char *OGR_L_GetAttributeFilter(OGRLayerH hLayer)
+{
+    VALIDATE_POINTER1(hLayer, "OGR_L_GetAttributeFilter", nullptr);
+
+    return OGRLayer::FromHandle(hLayer)->GetAttrQueryString();
+}
+
+/************************************************************************/
 /*                             GetFeature()                             */
 /************************************************************************/
 
