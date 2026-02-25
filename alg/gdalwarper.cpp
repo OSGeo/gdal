@@ -265,12 +265,14 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
     int nPixels = 0;
     int nLines = 0;
 
-    if (GDALSuggestedWarpOutput(hSrcDS, GDALGenImgProjTransform, hTransformArg,
-                                adfDstGeoTransform, &nPixels,
-                                &nLines) != CE_None)
-        return CE_Failure;
+    CPLErr eErr =
+        GDALSuggestedWarpOutput(hSrcDS, GDALGenImgProjTransform, hTransformArg,
+                                adfDstGeoTransform, &nPixels, &nLines);
 
     GDALDestroyGenImgProjTransformer(hTransformArg);
+
+    if (eErr != CE_None)
+        return eErr;
 
     /* -------------------------------------------------------------------- */
     /*      Create the output file.                                         */
@@ -292,9 +294,9 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
     /* -------------------------------------------------------------------- */
     /*      Perform the reprojection.                                       */
     /* -------------------------------------------------------------------- */
-    CPLErr eErr = GDALReprojectImage(
-        hSrcDS, pszSrcWKT, hDstDS, pszDstWKT, eResampleAlg, dfWarpMemoryLimit,
-        dfMaxError, pfnProgress, pProgressArg, psOptions);
+    eErr = GDALReprojectImage(hSrcDS, pszSrcWKT, hDstDS, pszDstWKT,
+                              eResampleAlg, dfWarpMemoryLimit, dfMaxError,
+                              pfnProgress, pProgressArg, psOptions);
 
     GDALClose(hDstDS);
 
