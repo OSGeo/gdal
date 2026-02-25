@@ -18,6 +18,10 @@ class ExampleRole(SphinxRole):
         ], []
 
 
+# Computes an example number for each use of the directive in a
+# given document.
+# If the example is assigned a reference id (:id:) then store
+# (docname, example_num) under that id in env.gdal_examples.
 class ExampleDirective(SphinxDirective):
 
     required_arguments = 0
@@ -34,12 +38,13 @@ class ExampleDirective(SphinxDirective):
         if not hasattr(self.env, "gdal_examples"):
             self.env.gdal_examples = {}
 
-        if docname not in self.env.gdal_examples:
-            self.env.gdal_examples[docname] = {}
+        if not hasattr(self.env, "gdal_examples_for_doc"):
+            self.env.gdal_examples_for_doc = {}
 
-        examples = self.env.gdal_examples[docname]
+        if docname not in self.env.gdal_examples_for_doc:
+            self.env.gdal_examples_for_doc[docname] = []
 
-        example_num = len(examples) + 1
+        example_num = len(self.env.gdal_examples_for_doc[docname]) + 1
 
         title_content = self.options.get("title", None)
         if title_content:
@@ -47,11 +52,29 @@ class ExampleDirective(SphinxDirective):
         else:
             title_content = f"Example {example_num}"
 
-        id = self.options.get("id", f"{docname}-{example_num}")
-        examples[id] = example_num
+        example_id = self.options.get("id")
+        if example_id is not None:
+            if example_id in self.env.gdal_examples:
+                logger = logging.getLogger(__name__)
+
+                example_docname, _ = self.env.gdal_examples[example_id]
+
+                logger.warning(
+                    f"Example id '{example_id}' has already been used in {docname}",
+                    location=(self.env.docname, self.lineno),
+                )
+                example_id = None
+            else:
+                self.env.gdal_examples[example_id] = (docname, example_num)
+
+        if example_id is None:
+            # nodes.section must always have an id
+            example_id = f"{docname}-{example_num}"
+
+        self.env.gdal_examples_for_doc[docname].append(example_id)
 
         retnodes = []
-        section = nodes.section(ids=[id])
+        section = nodes.section(ids=[example_id])
         section.document = self.state.document
 
         title = nodes.title()
@@ -68,27 +91,40 @@ def link_example_refs(app, env, node, contnode):
     if node["reftype"] != "example":
         return
 
-    example_name = node["reftarget"]
+    example_id = node["reftarget"]
 
     if hasattr(env, "gdal_examples"):
-        examples = env.gdal_examples.get(node["refdoc"], {})
+        examples = env.gdal_examples
     else:
         examples = {}
 
-    example_num = examples.get(example_name, None)
-
-    if not example_num:
+    if example_id not in examples:
         logger = logging.getLogger(__name__)
 
         logger.warning(
-            f"Can't find example {example_name}",
+            f"Can't find example {example_id}",
             location=node,
         )
 
         return contnode
 
+    example_doc, example_num = examples[example_id]
+
     ref_node = nodes.reference("", "", refid=node["reftarget"], internal=True)
-    ref_node.append(nodes.Text(f'Example {examples.get(node["reftarget"])}'))
+
+    # Set the link text to the example number (e.g, "Example 5") if the example
+    # body is in the same document as the reference. Otherwise, set the link
+    # text to the program/driver name and example number ("gdalwarp example 5").
+    if node["refdoc"] == example_doc:
+        link_text = f"Example {example_num}"
+    else:
+        example_doc = str(env.titles[example_doc].children[0])
+
+        # TODO: trim the example_doc name, if it's a really long one like
+        # WMO General Regularly-distributed Information in Binary form ?
+        link_text = f"{example_doc} example {example_num}"
+
+    ref_node.append(nodes.Text(link_text))
 
     return ref_node
 
@@ -97,8 +133,20 @@ def purge_example_defs(app, env, docname):
     if not hasattr(env, "gdal_examples"):
         return
 
-    if docname in env.gdal_examples:
-        del env.gdal_examples[docname]
+    if not hasattr(env, "gdal_examples_for_doc"):
+        return
+
+    if docname not in env.gdal_examples_for_doc:
+        return
+
+    for example_id in env.gdal_examples_for_doc[docname]:
+        if (
+            example_id in env.gdal_examples
+            and env.gdal_examples[example_id][0] == docname
+        ):
+            del env.gdal_examples[example_id]
+
+    del env.gdal_examples_for_doc[docname]
 
 
 def merge_example_defs(app, env, docnames, other):
@@ -107,6 +155,12 @@ def merge_example_defs(app, env, docnames, other):
 
     if hasattr(other, "gdal_examples"):
         env.gdal_examples.update(other.gdal_examples)
+
+    if not hasattr(env, "gdal_examples_for_doc"):
+        env.gdal_examples_for_doc = {}
+
+    if hasattr(other, "gdal_examples_for_doc"):
+        env.gdal_examples_for_doc.update(other.gdal_examples_for_doc)
 
 
 def setup(app):

@@ -513,80 +513,98 @@ The following configuration options are available:
 Examples
 ~~~~~~~~
 
--  Simple translation of a shapefile into PostgreSQL. The table 'abc'
+.. example:: 
+   :title: Simple translation of a shapefile into PostgreSQL.
+   :id: pg-from-shapefile
+  
+   The table 'abc' 
    will be created with the features from abc.shp and attributes from
    abc.dbf. The database instance (warmerda) must already exist, and the
    table abc must not already exist.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f PostgreSQL PG:dbname=warmerda abc.shp
 
-- Export a single Postgres table to GeoPackage:
+.. example:: 
+   :title: Export a single Postgres table to GeoPackage:
 
-   ::
+   .. code-block:: bash
 
      ogr2ogr \
        -f GPKG output.gpkg \
        PG:"dbname='my_database'" "my_table"
 
-- Export many Postgres tables to GeoPackage:
+.. example::
+   :title: Export many Postgres tables to GeoPackage:
 
-   ::
+   .. code-block:: bash
 
      ogr2ogr \
        -f GPKG output.gpkg \
        PG:"dbname='my_database' tables='table_1,table_3'"
 
-- Export a whole Postgres database to GeoPackage:
+.. example:: 
+   :title: Export a whole Postgres database to GeoPackage:
 
-   ::
+   .. code-block:: bash
 
      ogr2ogr \
        -f GPKG output.gpkg \
        PG:dbname=my_database
 
+.. example::
+   :title: Load a single layer GeoPackage into Postgres:
 
-- Load a single layer GeoPackage into Postgres:
-
-   ::
+   .. code-block:: bash
 
      ogr2ogr \
        -f "PostgreSQL" PG:"dbname='my_database'" \
        input.gpkg \
        -nln "name_of_new_table"
 
+.. example::
+   :title: Writing multiple datasets to a single table
 
--  In this example we merge tiger line data from two different
+   In this example we merge tiger line data from two different
    directories of tiger files into one table. Note that the second
    invocation uses -append and no :lco:`OVERWRITE=yes`.
 
-   ::
+   .. code-block:: bash 
 
       ogr2ogr -f PostgreSQL PG:dbname=warmerda tiger_michigan \
            -lco OVERWRITE=yes CompleteChain
       ogr2ogr -update -append -f PostgreSQL PG:dbname=warmerda tiger_ohio \
            CompleteChain
 
--  This example shows using ogrinfo to evaluate an SQL query statement
+.. example:: 
+   :title: Evaluating an SQL query
+
+   This example shows using ogrinfo to evaluate an SQL query statement
    within PostgreSQL. More sophisticated PostGIS specific queries may
    also be used via the -sql commandline switch to ogrinfo.
 
-   ::
+   .. code-block:: bash
 
       ogrinfo -ro PG:dbname=warmerda -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
 
--  This example shows using ogrinfo to list PostgreSQL/PostGIS layers on
+.. example::
+   :title: Listing layers on a different host
+
+   This example shows using ogrinfo to list PostgreSQL/PostGIS layers on
    a different host.
 
-   ::
+   .. code-block:: bash
 
       ogrinfo -ro PG:"host='myserver.velocet.ca' user='postgres' dbname='warmerda'"
 
--  This example shows use of :oo:`PRELUDE_STATEMENTS` and :oo:`CLOSING_STATEMENTS`
-   as destination open options of ogr2ogr.
+.. example::
+   :title: Use of `PRELUDE_STATEMENTS` and `CLOSING_STATEMENTS`
 
-   ::
+   This example shows use of :oo:`PRELUDE_STATEMENTS` and :oo:`CLOSING_STATEMENTS`
+   as destination open options of ogr2ogr!
+
+   .. code-block:: bash
 
       ogrinfo PG:"dbname='mydb'" poly -doo "PRELUDE_STATEMENTS=BEGIN; SET LOCAL statement_timeout TO '1h';" -doo CLOSING_STATEMENTS=COMMIT
 

@@ -47,7 +47,7 @@ resampling, and rescaling pixels in the process.
     The exact behavior of this option is driver-dependent. Most raster
     drivers use it to enforce strict preservation of the input data type
     and will report an error if the requested operation cannot be performed
-    without data loss. See :example:`strict`.
+    without data loss. See :example:`gdal-translate-strict`.
 
 .. include:: options/if.rst
 
@@ -484,7 +484,7 @@ Examples
 
 .. example::
    :title: Use of strict mode with unsupported data type
-   :id: strict
+   :id: gdal-translate-strict
 
    .. code-block:: console
 
