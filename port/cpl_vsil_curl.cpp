@@ -19,6 +19,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <numeric>
 #include <set>
 
 #include "cpl_aws.h"
@@ -2565,6 +2566,25 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         std::array<char, CURL_ERROR_SIZE + 1> szCurlErrBuf;
     };
 
+    // Sort ranges by file offset so the merge loop below can coalesce
+    // adjacent ranges regardless of the order the caller passed them.
+    // The ppData buffer pointers travel with their offsets, so the
+    // distribute logic fills the correct caller buffers after reading.
+    std::vector<int> anSortOrder(nRanges);
+    std::iota(anSortOrder.begin(), anSortOrder.end(), 0);
+    std::sort(anSortOrder.begin(), anSortOrder.end(), [panOffsets](int a, int b)
+              { return panOffsets[a] < panOffsets[b]; });
+
+    std::vector<void *> apSortedData(nRanges);
+    std::vector<vsi_l_offset> anSortedOffsets(nRanges);
+    std::vector<size_t> anSortedSizes(nRanges);
+    for (int i = 0; i < nRanges; ++i)
+    {
+        apSortedData[i] = ppData[anSortOrder[i]];
+        anSortedOffsets[i] = panOffsets[anSortOrder[i]];
+        anSortedSizes[i] = panSizes[anSortOrder[i]];
+    }
+
     const bool bMergeConsecutiveRanges = CPLTestBool(
         CPLGetConfigOption("GDAL_HTTP_MERGE_CONSECUTIVE_RANGES", "TRUE"));
 
@@ -2593,12 +2613,13 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         int iNext = i;
         // Identify consecutive ranges
         while (bMergeConsecutiveRanges && iNext + 1 < nRanges &&
-               panOffsets[iNext] + panSizes[iNext] == panOffsets[iNext + 1])
+               anSortedOffsets[iNext] + anSortedSizes[iNext] ==
+                   anSortedOffsets[iNext + 1])
         {
-            nSize += panSizes[iNext];
+            nSize += anSortedSizes[iNext];
             iNext++;
         }
-        nSize += panSizes[iNext];
+        nSize += anSortedSizes[iNext];
 
         if (nSize == 0)
         {
@@ -2606,7 +2627,7 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
             continue;
         }
 
-        asMergedRequests.emplace_back(i, iNext, panOffsets[i], nSize,
+        asMergedRequests.emplace_back(i, iNext, anSortedOffsets[i], nSize,
                                       m_oRetryParameters);
         i = iNext + 1;
     }
@@ -2776,20 +2797,20 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
                 for (int iRange = asMergedRequests[iReq].iFirstRange;
                      iRange <= asMergedRequests[iReq].iLastRange; iRange++)
                 {
-                    if (nRemainingSize < panSizes[iRange])
+                    if (nRemainingSize < anSortedSizes[iRange])
                     {
                         nRet = -1;
                         break;
                     }
 
-                    if (panSizes[iRange] > 0)
+                    if (anSortedSizes[iRange] > 0)
                     {
-                        memcpy(ppData[iRange],
+                        memcpy(apSortedData[iRange],
                                asWriteFuncData[iReq].pBuffer + nOffset,
-                               panSizes[iRange]);
+                               anSortedSizes[iRange]);
                     }
-                    nOffset += panSizes[iRange];
-                    nRemainingSize -= panSizes[iRange];
+                    nOffset += anSortedSizes[iRange];
+                    nRemainingSize -= anSortedSizes[iRange];
                 }
             }
 
