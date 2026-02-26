@@ -4701,8 +4701,21 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     {
         for (int nBand = 1; nBand <= poSrcDS->GetRasterCount(); ++nBand)
         {
-            GDALRasterBand *poBand = poSrcDS->GetRasterBand(nBand);
-            const auto poRAT = poBand->GetDefaultRAT();
+            GDALRasterAttributeTable *poRAT = nullptr;
+            if (poSrcDSGTiff)
+            {
+                auto poBand = cpl::down_cast<GTiffRasterBand *>(
+                    poSrcDSGTiff->GetRasterBand(nBand));
+                // Scenario of https://github.com/OSGeo/gdal/issues/13930
+                // Do not try to fetch the RAT from auxiliary files if creating
+                // a new GeoTIFF file
+                if (poBand->m_bRATSet)
+                    poRAT = poBand->GetDefaultRAT();
+            }
+            else
+            {
+                poRAT = poSrcDS->GetRasterBand(nBand)->GetDefaultRAT();
+            }
             if (poRAT)
             {
                 auto psSerializedRAT = poRAT->Serialize();
@@ -6798,6 +6811,12 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
     poDS->eAccess = GA_Update;
+
+    // This will avoid GTiffDataset::GetSiblingFiles() to trigger a directory
+    // listing, which is potentially costly and only makes sense when opening
+    // new files, not creating new ones. Helps for scenario like
+    // https://github.com/OSGeo/gdal/issues/13930
+    poDS->m_bHasGotSiblingFiles = true;
 
     poDS->m_nColorTableMultiplier = nColorTableMultiplier;
 
