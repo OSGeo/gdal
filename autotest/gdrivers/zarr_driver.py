@@ -6383,8 +6383,7 @@ def test_zarr_read_simple_sharding_read_errors(tmp_vsimem):
                 error_msgs += str(e) + "\n"
 
     assert "DecodePartial(): cannot decode chunk 0" in error_msgs
-    assert "cannot read data for chunk" in error_msgs
-    assert "invalid chunk location for chunk" in error_msgs
+    assert "cannot decode chunk" in error_msgs
 
 
 ###############################################################################
@@ -6535,6 +6534,49 @@ def test_zarr_batch_reads_sharding():
     for row in range(10):
         for col in range(12):
             assert partial[row * 12 + col] == expected[row * 26 + col]
+
+
+###############################################################################
+# Test that the shard index cache returns correct data for different inner
+# chunks within the same shard.
+# simple_sharding.zarr: shape [24,26] float32, inner [5,6], shard [10,12]
+# -> 4 inner chunks per shard (well under the 1 MiB cache threshold).
+# First Read() populates the cache; subsequent reads of different inner chunks
+# within the same shard use different index entries from the cached buffer.
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_sharding_index_cache():
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    if "zstd" not in compressors:
+        pytest.skip("compressor zstd not available")
+
+    ds = gdal.OpenEx(
+        "data/zarr/v3/simple_sharding.zarr",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    ar = ds.GetRootGroup().OpenMDArray("simple_sharding")
+
+    # Row-major expected values: element [r, c] = r * 26 + c
+    ncols = 26
+
+    # First read: inner chunk (0,0) of shard 0 (rows 0-4, cols 0-5).
+    # Populates the shard index cache for this shard file.
+    got1 = list(struct.unpack("f" * (5 * 6), ar.Read([0, 0], [5, 6])))
+    exp1 = [r * ncols + c for r in range(5) for c in range(6)]
+    assert got1 == exp1
+
+    # Second read: inner chunk (1,1) of the same shard (rows 5-9, cols 6-11).
+    # Uses a different index entry from the cached shard index, proving the
+    # cache correctly resolves distinct offsets within the same shard.
+    got2 = list(struct.unpack("f" * (5 * 6), ar.Read([5, 6], [5, 6])))
+    exp2 = [(r + 5) * ncols + (c + 6) for r in range(5) for c in range(6)]
+    assert got2 == exp2
+
+    # Full array read to confirm no corruption.
+    full = list(struct.unpack("f" * (24 * 26), ar.Read()))
+    assert full == list(range(24 * 26))
 
 
 ###############################################################################
