@@ -6540,7 +6540,7 @@ def test_zarr_batch_reads_sharding():
 ###############################################################################
 # Test that an unaligned ReadRaster() window spanning multiple inner chunks
 # returns correct data when AdviseRead pre-populates the chunk cache before
-# the block-cache loop.  GET-count reduction is tested via network tests.
+# the block-cache loop.
 
 
 @gdaltest.enable_exceptions()
