@@ -288,7 +288,7 @@ bool ZarrV3CodecSequence::DecodePartial(VSIVirtualHandle *poFile,
 /************************************************************************/
 
 bool ZarrV3CodecSequence::BatchDecodePartial(
-    VSIVirtualHandle *poFile,
+    VSIVirtualHandle *poFile, const char *pszFilename,
     const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
         &anRequests,
     std::vector<ZarrByteVectorQuickResize> &aResults)
@@ -302,7 +302,8 @@ bool ZarrV3CodecSequence::BatchDecodePartial(
             m_apoCodecs.back().get());
         if (poSharding)
         {
-            return poSharding->BatchDecodePartial(poFile, anRequests, aResults);
+            return poSharding->BatchDecodePartial(poFile, pszFilename,
+                                                  anRequests, aResults);
         }
     }
 

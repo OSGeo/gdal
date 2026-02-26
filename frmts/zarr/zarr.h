@@ -1498,5 +1498,7 @@ class ZarrV3Array final : public ZarrArray
 };
 
 void ZarrClearCoordinateCache();
+void ZarrClearShardIndexCache();
+void ZarrEraseShardIndexFromCache(const std::string &osFilename);
 
 #endif  // ZARR_H

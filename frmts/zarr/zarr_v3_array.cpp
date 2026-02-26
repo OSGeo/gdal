@@ -743,7 +743,8 @@ lbl_next:
             anRequests.push_back({info.anStartIdx, info.anCount});
 
         std::vector<ZarrByteVectorQuickResize> aResults;
-        if (!poCodecs->BatchDecodePartial(fp.get(), anRequests, aResults))
+        if (!poCodecs->BatchDecodePartial(fp.get(), work.posFilename->c_str(),
+                                          anRequests, aResults))
             return;
 
         // Type-convert outside mutex (CPU-bound, thread-local data)
@@ -1395,6 +1396,8 @@ bool ZarrV3Array::FlushSingleShard(const std::string &osFilename,
         bRet = false;
     }
     VSIFCloseL(fp);
+    if (bRet)
+        ZarrEraseShardIndexFromCache(osFilename);
     return bRet;
 }
 

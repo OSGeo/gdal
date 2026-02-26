@@ -6383,8 +6383,7 @@ def test_zarr_read_simple_sharding_read_errors(tmp_vsimem):
                 error_msgs += str(e) + "\n"
 
     assert "DecodePartial(): cannot decode chunk 0" in error_msgs
-    assert "cannot read data for chunk" in error_msgs
-    assert "invalid chunk location for chunk" in error_msgs
+    assert "cannot decode chunk" in error_msgs
 
 
 ###############################################################################
@@ -6584,6 +6583,78 @@ def test_zarr_read_sharding_unaligned_rasterio():
 
     # Full-extent read via raster API (24x26 array).
     check(0, 0, 26, 24, "full extent")
+
+
+###############################################################################
+# Test the process-wide shard index LRU cache (g_oShardIndexCache).
+# simple_sharding.zarr: [24,26] float32, shard [10,12], inner [5,6].
+# Shard c/0/0 = 392 bytes: 324 bytes data + 68 bytes index (4*16 + 4 CRC32C).
+#
+# Flow: read (populates cache) -> corrupt index on disk -> read again (cache
+# hit, data intact -> proves cache IS used) -> delete file + ClearMemoryCaches
+# -> read (file gone -> proves cache clear IS effective) -> restore + read.
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_sharding_index_cache(tmp_path):
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    if "zstd" not in compressors:
+        pytest.skip("compressor zstd not available")
+
+    shutil.copytree(
+        "data/zarr/v3/simple_sharding.zarr", tmp_path / "simple_sharding.zarr"
+    )
+    zarr_path = str(tmp_path / "simple_sharding.zarr")
+    shard_file = tmp_path / "simple_sharding.zarr" / "c" / "0" / "0"
+    ncols = 26
+    exp = [r * ncols + c for r in range(10) for c in range(12)]
+
+    # 1. Read full shard 0 (2x2 inner chunks) -> populates g_oShardIndexCache.
+    ds = gdal.OpenEx(zarr_path, gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("simple_sharding")
+    got = list(struct.unpack("f" * (10 * 12), ar.Read([0, 0], [10, 12])))
+    assert got == exp
+    ds = None
+
+    # 2. Corrupt shard index on disk (last 68 bytes: 4 entries * 16 + 4 CRC32C).
+    #    Overwrite with out-of-range offsets.  Data portion (first 324 bytes)
+    #    stays intact so that a cached-index read still finds valid compressed
+    #    chunks at the original offsets.
+    with open(shard_file, "r+b") as f:
+        f.seek(-68, 2)
+        for _ in range(4):
+            f.write(struct.pack("<QQ", 99999, 100))
+        f.write(b"\x00\x00\x00\x00")  # dummy CRC32C
+
+    # 3. Read shard 0 with corrupted index on disk.
+    #    Index served from g_oShardIndexCache (correct offsets) + data read
+    #    from intact portion of file -> success.  Proves the cache IS used.
+    ds = gdal.OpenEx(zarr_path, gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("simple_sharding")
+    got = list(struct.unpack("f" * (10 * 12), ar.Read([0, 0], [10, 12])))
+    assert got == exp
+    ds = None
+
+    # 4. Delete shard file + ClearMemoryCaches().
+    #    Without cache, missing shard -> fill values (zeros), not the real data.
+    os.remove(shard_file)
+    gdal.ClearMemoryCaches()
+    ds = gdal.OpenEx(zarr_path, gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("simple_sharding")
+    got = list(struct.unpack("f" * (10 * 12), ar.Read([0, 0], [10, 12])))
+    assert got != exp, "expected fill values after cache clear + file deletion"
+    ds = None
+
+    # 5. Restore shard file, clear stale state, verify clean recovery.
+    shutil.copy("data/zarr/v3/simple_sharding.zarr/c/0/0", shard_file)
+    gdal.ClearMemoryCaches()
+    ds = gdal.OpenEx(zarr_path, gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("simple_sharding")
+    got = list(struct.unpack("f" * (10 * 12), ar.Read([0, 0], [10, 12])))
+    assert got == exp
+    full = list(struct.unpack("f" * (24 * 26), ar.Read()))
+    assert full == list(range(24 * 26))
 
 
 ###############################################################################

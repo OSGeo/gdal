@@ -12,6 +12,7 @@
 
 #include "zarr_v3_codec.h"
 
+#include "cpl_mem_cache.h"
 #include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 #include "gdal_thread_pool.h"
@@ -19,8 +20,30 @@
 #include <algorithm>
 #include <cinttypes>
 #include <limits>
+#include <mutex>
+
+// Process-wide LRU cache for shard indices.
+// Key: shard filepath/URL.  Value: flat byte buffer of Location entries
+// (each 16 bytes: uint64_t nOffset + uint64_t nSize, host byte order).
+// Populated lazily by BatchDecodePartial.
+// Shards whose index exceeds GDAL_ZARR_SHARD_INDEX_CACHE_MAX_BYTES
+// (default 1 MiB) fall back to per-entry ReadMultiRange.
+// Thread safety: lru11::Cache<..., std::mutex> serialises all access.
+static constexpr size_t SHARD_INDEX_CACHE_ENTRIES = 64;
+static lru11::Cache<std::string, std::vector<GByte>, std::mutex>
+    g_oShardIndexCache{SHARD_INDEX_CACHE_ENTRIES, 0};
 
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/sharding-indexed/index.html
+
+void ZarrClearShardIndexCache()
+{
+    g_oShardIndexCache.clear();
+}
+
+void ZarrEraseShardIndexFromCache(const std::string &osFilename)
+{
+    g_oShardIndexCache.remove(osFilename);
+}
 
 /************************************************************************/
 /*                     ZarrV3CodecShardingIndexed()                     */
@@ -944,7 +967,7 @@ bool ZarrV3CodecShardingIndexed::DecodePartial(
 /************************************************************************/
 
 bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
-    VSIVirtualHandle *poFile,
+    VSIVirtualHandle *poFile, const char *pszFilename,
     const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
         &anRequests,
     std::vector<ZarrByteVectorQuickResize> &aResults)
@@ -1007,38 +1030,85 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
         anInnerChunkIndices[iReq] = nInnerChunkIdx;
     }
 
-    // --- Pass 1: ReadMultiRange for index entries (16 bytes each) ---
-    std::vector<vsi_l_offset> anIdxOffsets(anRequests.size());
-    std::vector<size_t> anIdxSizes(anRequests.size(), sizeof(Location));
+    // --- Pass 1: read index entries, using per-shard cache when possible ---
     std::vector<Location> aLocations(anRequests.size());
-    std::vector<void *> ppIdxData(anRequests.size());
 
-    for (size_t i = 0; i < anRequests.size(); ++i)
+    const size_t nIndexBytes = nInnerChunkCount * sizeof(Location);
+    const size_t nMaxIndexBytes =
+        static_cast<size_t>(CPLAtoGIntBig(CPLGetConfigOption(
+            "GDAL_ZARR_SHARD_INDEX_CACHE_MAX_BYTES", "1048576")));
+    if (pszFilename != nullptr && nIndexBytes <= nMaxIndexBytes)
     {
-        anIdxOffsets[i] = nIndexBaseOffset +
-                          static_cast<vsi_l_offset>(anInnerChunkIndices[i]) *
-                              sizeof(Location);
-#ifndef __COVERITY__
-        ppIdxData[i] = &aLocations[i];
-#endif
-    }
+        // Try to serve from the in-process index cache.
+        // g_oShardIndexCache serialises its own access via std::mutex.
+        std::vector<GByte> abyIndexBuf;
+        bool bCacheHit = g_oShardIndexCache.tryGet(pszFilename, abyIndexBuf);
+        if (bCacheHit && abyIndexBuf.size() != nIndexBytes)
+            bCacheHit = false;  // stale entry from different layout
 
-    if (poFile->ReadMultiRange(static_cast<int>(anRequests.size()),
-                               ppIdxData.data(), anIdxOffsets.data(),
-                               anIdxSizes.data()) != 0)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "BatchDecodePartial: ReadMultiRange() failed for index");
-        return false;
-    }
-
-    // Byte-swap if needed
-    if (bSwapIndex)
-    {
-        for (auto &loc : aLocations)
+        if (!bCacheHit)
         {
-            CPL_SWAP64PTR(&(loc.nOffset));
-            CPL_SWAP64PTR(&(loc.nSize));
+            // Cache miss: read the full index in one contiguous I/O call.
+            abyIndexBuf.resize(nIndexBytes);
+            poFile->Seek(nIndexBaseOffset, SEEK_SET);
+            if (poFile->Read(abyIndexBuf.data(), nIndexBytes, 1) != 1)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "BatchDecodePartial: failed to read shard index");
+                return false;
+            }
+            if (bSwapIndex)
+            {
+                for (size_t j = 0; j < nInnerChunkCount; ++j)
+                {
+                    GByte *p = abyIndexBuf.data() + j * sizeof(Location);
+                    CPL_SWAP64PTR(p);
+                    CPL_SWAP64PTR(p + sizeof(uint64_t));
+                }
+            }
+            g_oShardIndexCache.insert(pszFilename, abyIndexBuf);
+        }
+
+        for (size_t i = 0; i < anRequests.size(); ++i)
+            memcpy(&aLocations[i],
+                   abyIndexBuf.data() +
+                       anInnerChunkIndices[i] * sizeof(Location),
+                   sizeof(Location));
+    }
+    else
+    {
+        // Shard index too large for cache or no filename: fall back to
+        // per-entry ReadMultiRange.
+        std::vector<vsi_l_offset> anIdxOffsets(anRequests.size());
+        std::vector<size_t> anIdxSizes(anRequests.size(), sizeof(Location));
+        std::vector<void *> ppIdxData(anRequests.size());
+
+        for (size_t i = 0; i < anRequests.size(); ++i)
+        {
+            anIdxOffsets[i] = nIndexBaseOffset + static_cast<vsi_l_offset>(
+                                                     anInnerChunkIndices[i]) *
+                                                     sizeof(Location);
+#ifndef __COVERITY__
+            ppIdxData[i] = &aLocations[i];
+#endif
+        }
+
+        if (poFile->ReadMultiRange(static_cast<int>(anRequests.size()),
+                                   ppIdxData.data(), anIdxOffsets.data(),
+                                   anIdxSizes.data()) != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "BatchDecodePartial: ReadMultiRange() failed for index");
+            return false;
+        }
+
+        if (bSwapIndex)
+        {
+            for (auto &loc : aLocations)
+            {
+                CPL_SWAP64PTR(&(loc.nOffset));
+                CPL_SWAP64PTR(&(loc.nSize));
+            }
         }
     }
 

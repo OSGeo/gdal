@@ -763,6 +763,7 @@ static CPLErr ZarrDatasetCopyFiles(const char *pszNewName,
 static void ZarrDriverClearCaches(GDALDriver *)
 {
     ZarrClearCoordinateCache();
+    ZarrClearShardIndexCache();
 }
 
 /************************************************************************/

@@ -437,6 +437,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_WARP_USE_TRANSLATION_OPTIM", // from gdalwarpoperation.cpp
    "GDAL_WMS_MAX_CONNECTIONS", // from gdalogcapidataset.cpp
    "GDAL_XML_VALIDATION", // from ogrgmlasconf.cpp, ogrvrtdriver.cpp, pdfcreatefromcomposition.cpp
+   "GDAL_ZARR_SHARD_INDEX_CACHE_MAX_BYTES", // from zarr_v3_codec_sharding.cpp
    "GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", // from zarr_array.cpp
    "GDALCUTLINE_SKIP_CONTAINMENT_TEST", // from gdalcutline.cpp
    "GDALWARP_DENSIFY_CUTLINE", // from gdalwarp_lib.cpp
