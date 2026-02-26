@@ -8874,3 +8874,51 @@ def test_zarr_driver_create_copy_v3_multithreaded_error(tmp_vsimem):
                 src_ds,
                 options=["BLOCKSIZE=3,31,33", "COMPRESS=GZIP", "FORMAT=ZARR_V3"],
             )
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_sharding_index_prefetch(tmp_path):
+    """On first IRead(), PrefetchShardIndexes() pre-warms the shard index cache
+    for all shards.  Both windows (same shard, different sub-region) must
+    return identical data regardless of read order.
+
+    Array: 20x24, shard 10x12, inner 5x6 -> 2x2 = 4 shards (within threshold).
+    """
+    nrows, ncols = 20, 24
+    shard = [10, 12]
+    inner = [5, 6]
+    n = nrows * ncols
+    expected = [float(i) for i in range(n)]
+
+    ds, ar = _create_sharded_array(
+        tmp_path / "prefetch.zarr",
+        [("y", nrows), ("x", ncols)],
+        shard,
+        inner,
+    )
+    assert ar.Write(struct.pack(f"{n}f", *expected)) == gdal.CE_None
+    ds = None
+
+    ds = gdal.OpenEx(str(tmp_path / "prefetch.zarr"), gdal.OF_MULTIDIM_RASTER)
+    ar = ds.GetRootGroup().OpenMDArray("data")
+
+    # Window 1: top-left shard (rows 0..9, cols 0..11)
+    raw1 = ar.Read(
+        array_start_idx=[0, 0],
+        count=[10, 12],
+    )
+    got1 = list(struct.unpack(f"{10 * 12}f", raw1))
+    exp1 = [expected[r * ncols + c] for r in range(10) for c in range(12)]
+    assert got1 == exp1, f"window 1 mismatch: {got1[:4]} vs {exp1[:4]}"
+
+    # Window 2: bottom-right shard (rows 10..19, cols 12..23)
+    raw2 = ar.Read(
+        array_start_idx=[10, 12],
+        count=[10, 12],
+    )
+    got2 = list(struct.unpack(f"{10 * 12}f", raw2))
+    exp2 = [expected[(r + 10) * ncols + (c + 12)] for r in range(10) for c in range(12)]
+    assert got2 == exp2, f"window 2 mismatch: {got2[:4]} vs {exp2[:4]}"

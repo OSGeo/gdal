@@ -21,6 +21,7 @@
 
 #include <array>
 #include <iterator>
+#include <atomic>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -1409,6 +1410,12 @@ class ZarrV3Array final : public ZarrArray
 
     void PreloadShardedBlocks(const GUInt64 *arrayStartIdx,
                               const size_t *count) const;
+
+    // Set on the first IRead() call; gates PrefetchShardIndexes().
+    // Atomic compare-exchange prevents duplicate prefetch from concurrent reads.
+    mutable std::atomic<bool> m_bShardIndexesPrefetched{false};
+
+    void PrefetchShardIndexes() const;
 
     bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                 const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,

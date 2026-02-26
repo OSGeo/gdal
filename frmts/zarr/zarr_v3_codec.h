@@ -467,6 +467,12 @@ class ZarrV3CodecShardingIndexed final : public ZarrV3Codec
             &anRequests,
         std::vector<ZarrByteVectorQuickResize> &aResults);
 
+    /** Read and cache the full shard index for pszFilename without decoding
+     *  any chunk data.  No-op (returns true) when the index exceeds the cache
+     *  size threshold or is already cached.
+     */
+    bool CacheShardIndex(const char *pszFilename, VSIVirtualHandle *fp);
+
     std::vector<size_t>
     GetInnerMostBlockSize(const std::vector<size_t> &input) const override;
 };
@@ -535,6 +541,11 @@ class ZarrV3CodecSequence
         const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
             &anRequests,
         std::vector<ZarrByteVectorQuickResize> &aResults);
+
+    /** Pre-populate the shard index cache without decoding any chunk data.
+     *  Delegates to the sharding codec; returns true for non-sharding chains.
+     */
+    bool CacheShardIndex(const char *pszFilename, VSIVirtualHandle *fp);
 
     std::vector<size_t>
     GetInnerMostBlockSize(const std::vector<size_t> &anOuterBlockSize) const;

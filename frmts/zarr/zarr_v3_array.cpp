@@ -598,6 +598,10 @@ bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
 #undef m_poCodecs
 }
 
+// Maximum shard count for index prefetch on the first IRead().
+// Arrays with more shards than this skip prefetch to avoid unnecessary I/O.
+static constexpr size_t SHARD_INDEX_PREFETCH_MAX_SHARDS = 8;
+
 /************************************************************************/
 /*                         ZarrV3Array::IRead()                         */
 /************************************************************************/
@@ -607,6 +611,13 @@ bool ZarrV3Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                         const GDALExtendedDataType &bufferDataType,
                         void *pDstBuffer) const
 {
+    if (m_poCodecs && m_poCodecs->SupportsPartialDecoding())
+    {
+        bool bExpected = false;
+        if (m_bShardIndexesPrefetched.compare_exchange_strong(bExpected, true))
+            PrefetchShardIndexes();
+    }
+
     // For sharded arrays, pre-populate the block cache via ReadMultiRange()
     // so that the base-class block-by-block loop hits memory, not HTTP.
     if (m_poCodecs && m_poCodecs->SupportsPartialDecoding())
@@ -615,6 +626,53 @@ bool ZarrV3Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     }
     return ZarrArray::IRead(arrayStartIdx, count, arrayStep, bufferStride,
                             bufferDataType, pDstBuffer);
+}
+
+/************************************************************************/
+/*                 ZarrV3Array::PrefetchShardIndexes()                  */
+/************************************************************************/
+
+void ZarrV3Array::PrefetchShardIndexes() const
+{
+    const size_t nDims = m_aoDims.size();
+    if (nDims == 0)
+        return;
+
+    // Compute per-dimension shard counts and total
+    std::vector<GUInt64> anShardCount(nDims);
+    size_t nTotalShards = 1;
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        anShardCount[i] = (m_aoDims[i]->GetSize() + m_anOuterBlockSize[i] - 1) /
+                          m_anOuterBlockSize[i];
+        nTotalShards *= static_cast<size_t>(anShardCount[i]);
+    }
+
+    if (nTotalShards > SHARD_INDEX_PREFETCH_MAX_SHARDS)
+        return;
+
+    const char *const apszOpenOptions[] = {"IGNORE_FILENAME_RESTRICTIONS=YES",
+                                           nullptr};
+
+    for (size_t iShard = 0; iShard < nTotalShards; ++iShard)
+    {
+        // Convert linear index to per-dimension outer shard indices
+        std::vector<uint64_t> anOuterIdx(nDims);
+        size_t tmp = iShard;
+        for (int i = static_cast<int>(nDims) - 1; i >= 0; --i)
+        {
+            anOuterIdx[i] = tmp % static_cast<size_t>(anShardCount[i]);
+            tmp /= static_cast<size_t>(anShardCount[i]);
+        }
+
+        const std::string osFilename = BuildChunkFilename(anOuterIdx.data());
+        VSIVirtualHandleUniquePtr fp(
+            VSIFOpenEx2L(osFilename.c_str(), "rb", 0, apszOpenOptions));
+        if (!fp)
+            continue;  // sparse array: shard not yet written
+
+        m_poCodecs->CacheShardIndex(osFilename.c_str(), fp.get());
+    }
 }
 
 /************************************************************************/

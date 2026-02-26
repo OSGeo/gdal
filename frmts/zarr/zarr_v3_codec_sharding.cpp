@@ -1342,6 +1342,64 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
 /*         ZarrV3CodecShardingIndexed::GetInnerMostBlockSize()          */
 /************************************************************************/
 
+/************************************************************************/
+/*            ZarrV3CodecShardingIndexed::CacheShardIndex()             */
+/************************************************************************/
+
+bool ZarrV3CodecShardingIndexed::CacheShardIndex(const char *pszFilename,
+                                                 VSIVirtualHandle *fp)
+{
+    // Compute total inner chunk count and index byte size
+    size_t nInnerChunkCount = 1;
+    for (size_t i = 0; i < m_oInputArrayMetadata.anBlockSizes.size(); ++i)
+        nInnerChunkCount *=
+            m_oInputArrayMetadata.anBlockSizes[i] / m_anInnerBlockSize[i];
+
+    const size_t nIndexBytes = nInnerChunkCount * sizeof(Location);
+    const size_t nMaxIndexBytes =
+        static_cast<size_t>(CPLAtoGIntBig(CPLGetConfigOption(
+            "GDAL_ZARR_SHARD_INDEX_CACHE_MAX_BYTES", "1048576")));
+    if (nIndexBytes > nMaxIndexBytes)
+        return true;  // above threshold - skip, not an error
+
+    const std::string osKey(pszFilename);
+    if (g_oShardIndexCache.contains(osKey))
+        return true;  // already cached
+
+    // Determine index base offset (index-at-end is the only supported layout)
+    fp->Seek(0, SEEK_END);
+    const vsi_l_offset nFileSize = fp->Tell();
+    vsi_l_offset nIndexSizeOnDisk = static_cast<vsi_l_offset>(nIndexBytes);
+    if (m_bIndexHasCRC32)
+        nIndexSizeOnDisk += sizeof(uint32_t);
+    if (nFileSize < nIndexSizeOnDisk)
+        return false;  // file too small
+    const vsi_l_offset nIndexBaseOffset = nFileSize - nIndexSizeOnDisk;
+
+    // Read the full index in one contiguous I/O
+    std::vector<GByte> abyIndex(nIndexBytes);
+    fp->Seek(nIndexBaseOffset, SEEK_SET);
+    if (fp->Read(abyIndex.data(), nIndexBytes, 1) != 1)
+        return false;
+
+    if (IsIndexByteSwapped())
+    {
+        for (size_t i = 0; i < nInnerChunkCount; ++i)
+        {
+            GByte *p = abyIndex.data() + i * sizeof(Location);
+            CPL_SWAP64PTR(p);
+            CPL_SWAP64PTR(p + sizeof(uint64_t));
+        }
+    }
+
+    g_oShardIndexCache.insert(osKey, std::move(abyIndex));
+    return true;
+}
+
+/************************************************************************/
+/*         ZarrV3CodecShardingIndexed::GetInnerMostBlockSize()          */
+/************************************************************************/
+
 std::vector<size_t> ZarrV3CodecShardingIndexed::GetInnerMostBlockSize(
     const std::vector<size_t> &) const
 {

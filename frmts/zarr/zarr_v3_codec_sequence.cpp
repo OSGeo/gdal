@@ -322,6 +322,27 @@ bool ZarrV3CodecSequence::BatchDecodePartial(
 /*             ZarrV3CodecSequence::GetInnerMostBlockSize()             */
 /************************************************************************/
 
+/************************************************************************/
+/*                ZarrV3CodecSequence::CacheShardIndex()                */
+/************************************************************************/
+
+bool ZarrV3CodecSequence::CacheShardIndex(const char *pszFilename,
+                                          VSIVirtualHandle *fp)
+{
+    if (m_apoCodecs.size() == 1)
+    {
+        auto *poSharding = dynamic_cast<ZarrV3CodecShardingIndexed *>(
+            m_apoCodecs.back().get());
+        if (poSharding)
+            return poSharding->CacheShardIndex(pszFilename, fp);
+    }
+    return true;  // non-sharding codec chain - nothing to cache
+}
+
+/************************************************************************/
+/*             ZarrV3CodecSequence::GetInnerMostBlockSize()             */
+/************************************************************************/
+
 std::vector<size_t> ZarrV3CodecSequence::GetInnerMostBlockSize(
     const std::vector<size_t> &anOuterBlockSize) const
 {
