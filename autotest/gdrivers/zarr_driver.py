@@ -6539,8 +6539,8 @@ def test_zarr_batch_reads_sharding():
 
 ###############################################################################
 # Test that an unaligned ReadRaster() window spanning multiple inner chunks
-# goes through PreloadShardedBlocks (batch I/O) instead of the block-cache
-# loop.  Verifies correctness; GET-count reduction is tested via network tests.
+# returns correct data when AdviseRead pre-populates the chunk cache before
+# the block-cache loop.  GET-count reduction is tested via network tests.
 
 
 @gdaltest.enable_exceptions()
@@ -6579,11 +6579,10 @@ def test_zarr_read_sharding_unaligned_rasterio():
     # Single pixel - most restrictive case, exercises single-chunk path.
     check(7, 7, 1, 1, "single pixel")
 
-    # Exactly one inner chunk (6×5) starting at a chunk boundary - should
-    # still work correctly after the alignment guard was relaxed.
+    # Exactly one inner chunk (6x5) starting at a chunk boundary.
     check(6, 5, 6, 5, "aligned single chunk")
 
-    # Full-extent read via raster API (24×26 array).
+    # Full-extent read via raster API (24x26 array).
     check(0, 0, 26, 24, "full extent")
 
 

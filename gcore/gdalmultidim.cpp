@@ -9386,19 +9386,14 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
     const auto &poArray(l_poDS->m_poArray);
     const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));
     // If reading/writing at full resolution and with proper stride, go
-    // directly to the array. For reads, bypass the block cache regardless of
-    // alignment: multi-chunk windows can then be batched inside the array
-    // implementation (e.g. PreloadShardedBlocks for sharded Zarr v3).
-    // For writes, require chunk alignment so the block cache handles the
-    // read-modify-write for partial blocks.
-    const bool bChunkAligned =
-        (nXOff % nBlockXSize) == 0 && (nYOff % nBlockYSize) == 0 &&
-        ((nXSize % nBlockXSize) == 0 || nXOff + nXSize == nRasterXSize) &&
-        ((nYSize % nBlockYSize) == 0 || nYOff + nYSize == nRasterYSize);
+    // directly to the array, but, for performance reasons,
+    // only if exactly on chunk boundaries, otherwise go through the block cache.
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBufferDTSize > 0 &&
         (nPixelSpaceBuf % nBufferDTSize) == 0 &&
-        (nLineSpaceBuf % nBufferDTSize) == 0 &&
-        (eRWFlag == GF_Read || bChunkAligned))
+        (nLineSpaceBuf % nBufferDTSize) == 0 && (nXOff % nBlockXSize) == 0 &&
+        (nYOff % nBlockYSize) == 0 &&
+        ((nXSize % nBlockXSize) == 0 || nXOff + nXSize == nRasterXSize) &&
+        ((nYSize % nBlockYSize) == 0 || nYOff + nYSize == nRasterYSize))
     {
         m_anOffset[l_poDS->m_iXDim] = static_cast<GUInt64>(nXOff);
         m_anCount[l_poDS->m_iXDim] = static_cast<size_t>(nXSize);
@@ -9427,6 +9422,16 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
                        ? CE_None
                        : CE_Failure;
         }
+    }
+    // For unaligned reads, give the array a chance to pre-populate its
+    // internal chunk cache (e.g. Zarr v3 sharded batches I/O via
+    // PreloadShardedBlocks). The block cache loop below then hits the
+    // already-decompressed chunks instead of issuing individual reads.
+    // Backends that don't override AdviseRead() return true (no-op).
+    if (eRWFlag == GF_Read)
+    {
+        AdviseRead(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eBufType,
+                   nullptr);
     }
     return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
