@@ -6538,6 +6538,56 @@ def test_zarr_batch_reads_sharding():
 
 
 ###############################################################################
+# Test that an unaligned ReadRaster() window spanning multiple inner chunks
+# goes through PreloadShardedBlocks (batch I/O) instead of the block-cache
+# loop.  Verifies correctness; GET-count reduction is tested via network tests.
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_read_sharding_unaligned_rasterio():
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    if "zstd" not in compressors:
+        pytest.skip("compressor zstd not available")
+
+    # simple_sharding: shape [24,26] float32, inner chunks [5,6], shard [10,12]
+    # Reference via MDArray API
+    md_ds = gdal.OpenEx(
+        "data/zarr/v3/simple_sharding.zarr",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    ar = md_ds.GetRootGroup().OpenMDArray("simple_sharding")
+
+    # Open same array via classic raster API
+    ds = gdal.Open('ZARR:"data/zarr/v3/simple_sharding.zarr":/simple_sharding')
+    assert ds is not None
+    band = ds.GetRasterBand(1)
+
+    def check(xoff, yoff, xsize, ysize, label=""):
+        raster_data = band.ReadRaster(xoff, yoff, xsize, ysize)
+        assert raster_data is not None, f"ReadRaster returned None ({label})"
+        array_data = ar.Read(array_start_idx=[yoff, xoff], count=[ysize, xsize])
+        assert array_data is not None
+        raster_vals = list(struct.unpack(f"{xsize * ysize}f", raster_data))
+        array_vals = list(struct.unpack(f"{xsize * ysize}f", array_data))
+        assert raster_vals == array_vals, f"mismatch ({label})"
+
+    # Unaligned: offset (1,1), window 20x20 spans 4x4=16 inner chunks
+    # across two shards - primary regression case.
+    check(1, 1, 20, 20, "unaligned multi-shard")
+
+    # Single pixel - most restrictive case, exercises single-chunk path.
+    check(7, 7, 1, 1, "single pixel")
+
+    # Exactly one inner chunk (6×5) starting at a chunk boundary - should
+    # still work correctly after the alignment guard was relaxed.
+    check(6, 5, 6, 5, "aligned single chunk")
+
+    # Full-extent read via raster API (24×26 array).
+    check(0, 0, 26, 24, "full extent")
+
+
+###############################################################################
 # Test reading a 3D sharded dataset with asymmetric inner chunk counts.
 # Regression test for inner chunk index linearization in DecodePartial and
 # BatchDecodePartial. The existing simple_sharding.zarr fixture has symmetric

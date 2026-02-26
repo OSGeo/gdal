@@ -9386,14 +9386,19 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
     const auto &poArray(l_poDS->m_poArray);
     const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));
     // If reading/writing at full resolution and with proper stride, go
-    // directly to the array, but, for performance reasons,
-    // only if exactly on chunk boundaries, otherwise go through the block cache.
+    // directly to the array. For reads, bypass the block cache regardless of
+    // alignment: multi-chunk windows can then be batched inside the array
+    // implementation (e.g. PreloadShardedBlocks for sharded Zarr v3).
+    // For writes, require chunk alignment so the block cache handles the
+    // read-modify-write for partial blocks.
+    const bool bChunkAligned =
+        (nXOff % nBlockXSize) == 0 && (nYOff % nBlockYSize) == 0 &&
+        ((nXSize % nBlockXSize) == 0 || nXOff + nXSize == nRasterXSize) &&
+        ((nYSize % nBlockYSize) == 0 || nYOff + nYSize == nRasterYSize);
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBufferDTSize > 0 &&
         (nPixelSpaceBuf % nBufferDTSize) == 0 &&
-        (nLineSpaceBuf % nBufferDTSize) == 0 && (nXOff % nBlockXSize) == 0 &&
-        (nYOff % nBlockYSize) == 0 &&
-        ((nXSize % nBlockXSize) == 0 || nXOff + nXSize == nRasterXSize) &&
-        ((nYSize % nBlockYSize) == 0 || nYOff + nYSize == nRasterYSize))
+        (nLineSpaceBuf % nBufferDTSize) == 0 &&
+        (eRWFlag == GF_Read || bChunkAligned))
     {
         m_anOffset[l_poDS->m_iXDim] = static_cast<GUInt64>(nXOff);
         m_anCount[l_poDS->m_iXDim] = static_cast<size_t>(nXSize);
