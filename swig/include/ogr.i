@@ -1326,6 +1326,10 @@ public:
   %clear (char* filter_string);
 #endif
 
+  const char * GetAttributeFilter() {
+    return OGR_L_GetAttributeFilter(self);
+  }
+
   void ResetReading() {
     OGR_L_ResetReading(self);
   }
