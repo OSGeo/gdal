@@ -18,6 +18,7 @@
 #include "cpl_vsi_virtual.h"
 #include "commonutils.h"
 #include "gdal_utils_priv.h"
+#include "cpl_conv.h"
 
 /************************************************************************/
 /*                               GDALExit()                             */
@@ -127,6 +128,32 @@ MAIN_START(argc, argv)
             }
         }
         fprintf(stderr, "%s\n", message.c_str());
+
+        if (VSIStat(sOptionsForBinary.osFilename.c_str(), &sStat) == 0)
+        {
+            const char *pszFilename = sOptionsForBinary.osFilename.c_str();
+            const char *pszDot = strrchr(pszFilename, '.');
+            const char *pszExt = pszDot ? pszDot + 1 : nullptr;
+
+            if (pszExt &&
+                !STARTS_WITH(sOptionsForBinary.osFilename.c_str(), "/vsi"))
+            {
+                if (pszExt && EQUAL(pszExt, "zip"))
+                {
+                    fprintf(stderr,
+                            "Hint: this looks like a ZIP archive. Try:\n"
+                            "  gdalinfo /vsizip/%s\n",
+                            sOptionsForBinary.osFilename.c_str());
+                }
+                else if (EQUAL(pszExt, "7z"))
+                {
+                    fprintf(stderr,
+                            "Hint: this looks like a 7z archive. Try:\n"
+                            "  gdalinfo /vsi7z/%s\n",
+                            sOptionsForBinary.osFilename.c_str());
+                }
+            }
+        }
 
         /* --------------------------------------------------------------------
          */
