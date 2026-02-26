@@ -1127,36 +1127,121 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
         }
     }
 
-    // --- Pass 2: ReadMultiRange for data chunks ---
-    std::vector<ZarrByteVectorQuickResize> aCompressed(aDataRanges.size());
-    std::vector<void *> ppData(aDataRanges.size());
+    // --- Pass 2: sort ranges by offset, merge consecutive runs, then read ---
+    //
+    // S3 (and most object stores) do not support HTTP multi-range: each entry
+    // in ReadMultiRange() becomes a separate HTTP request.  Zarr inner chunks
+    // within a shard are stored contiguously (no padding between compressed
+    // blobs), so adjacent chunks in the sorted order can be merged into a
+    // single request.  For EOPF r10m with a 2048x2048 window this reduces
+    // 81 individual requests to ~9 (one per row of inner chunks).
 
+    // Sort indices by file offset so consecutive chunks can be merged.
+    struct RangeInfo
+    {
+        size_t idx;  // position in aDataRanges / anDataOffsets
+        vsi_l_offset offset;
+        size_t size;
+    };
+
+    std::vector<RangeInfo> aRangeInfo;
+    aRangeInfo.reserve(aDataRanges.size());
     for (size_t i = 0; i < aDataRanges.size(); ++i)
+        aRangeInfo.push_back({i, anDataOffsets[i], anDataSizes[i]});
+
+    std::sort(aRangeInfo.begin(), aRangeInfo.end(),
+              [](const RangeInfo &a, const RangeInfo &b)
+              { return a.offset < b.offset; });
+
+    // Merge exactly-consecutive runs into a MergedRange.
+    // "Exactly consecutive" = next chunk starts immediately after current one
+    // (no gap, no overlap).  Zarr sharding spec requires chunks to be written
+    // contiguously within a shard, so this is always safe for conformant data.
+    struct MergedRange
+    {
+        size_t iFirst;  // index into sorted aRangeInfo
+        size_t iLast;
+        vsi_l_offset nOffset;
+        size_t nSize;
+    };
+
+    std::vector<MergedRange> aMerged;
+    for (size_t i = 0; i < aRangeInfo.size();)
+    {
+        MergedRange m{i, i, aRangeInfo[i].offset, aRangeInfo[i].size};
+        while (m.iLast + 1 < aRangeInfo.size() &&
+               aRangeInfo[m.iLast].offset + aRangeInfo[m.iLast].size ==
+                   aRangeInfo[m.iLast + 1].offset)
+        {
+            ++m.iLast;
+            m.nSize += aRangeInfo[m.iLast].size;
+        }
+        aMerged.push_back(m);
+        i = m.iLast + 1;
+    }
+
+    CPLDebug("ZARR",
+             "BatchDecodePartial: ReadMultiRange() with %d data ranges"
+             " (merged from %d)",
+             static_cast<int>(aMerged.size()),
+             static_cast<int>(aDataRanges.size()));
+
+    // Allocate one merged buffer per group; individual chunk views are
+    // carved out below after the read completes.
+    std::vector<ZarrByteVectorQuickResize> aMergedBufs(aMerged.size());
+    std::vector<void *> ppMergedData(aMerged.size());
+    std::vector<vsi_l_offset> anMergedOffsets(aMerged.size());
+    std::vector<size_t> anMergedSizes(aMerged.size());
+
+    for (size_t i = 0; i < aMerged.size(); ++i)
     {
         try
         {
-            aCompressed[i].resize(anDataSizes[i]);
+            aMergedBufs[i].resize(aMerged[i].nSize);
         }
         catch (const std::exception &)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate memory for compressed chunk");
+                     "Cannot allocate memory for merged chunk read");
             return false;
         }
-        ppData[i] = aCompressed[i].data();
+        ppMergedData[i] = aMergedBufs[i].data();
+        anMergedOffsets[i] = aMerged[i].nOffset;
+        anMergedSizes[i] = aMerged[i].nSize;
     }
 
-    CPLDebugOnly("ZARR",
-                 "BatchDecodePartial: ReadMultiRange() with %d data ranges",
-                 static_cast<int>(aDataRanges.size()));
-
-    if (poFile->ReadMultiRange(static_cast<int>(aDataRanges.size()),
-                               ppData.data(), anDataOffsets.data(),
-                               anDataSizes.data()) != 0)
+    if (poFile->ReadMultiRange(static_cast<int>(aMerged.size()),
+                               ppMergedData.data(), anMergedOffsets.data(),
+                               anMergedSizes.data()) != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "BatchDecodePartial: ReadMultiRange() failed for data");
         return false;
+    }
+
+    // Distribute bytes from merged buffers back into per-chunk buffers.
+    std::vector<ZarrByteVectorQuickResize> aCompressed(aDataRanges.size());
+    for (size_t iMerge = 0; iMerge < aMerged.size(); ++iMerge)
+    {
+        const GByte *pSrc = static_cast<const GByte *>(ppMergedData[iMerge]);
+        size_t nOff = 0;
+        for (size_t j = aMerged[iMerge].iFirst; j <= aMerged[iMerge].iLast; ++j)
+        {
+            const size_t idx = aRangeInfo[j].idx;
+            const size_t nChunkSize = aRangeInfo[j].size;
+            try
+            {
+                aCompressed[idx].resize(nChunkSize);
+            }
+            catch (const std::exception &)
+            {
+                CPLError(CE_Failure, CPLE_OutOfMemory,
+                         "Cannot allocate memory for compressed chunk");
+                return false;
+            }
+            memcpy(aCompressed[idx].data(), pSrc + nOff, nChunkSize);
+            nOff += nChunkSize;
+        }
     }
 
     // --- Decode compressed chunks (parallel when GDAL_NUM_THREADS > 1) ---

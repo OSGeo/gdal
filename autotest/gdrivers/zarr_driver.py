@@ -6505,6 +6505,51 @@ def test_zarr_read_simple_sharding_network():
 
 
 ###############################################################################
+# Test that BatchDecodePartial merges consecutive data ranges before calling
+# ReadMultiRange, reducing HTTP request count on object stores.
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_batch_reads_sharding_range_merge():
+
+    compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
+    if "zstd" not in compressors:
+        pytest.skip("compressor zstd not available")
+
+    # simple_sharding.zarr: shape [24,26], inner chunk [5,6], shard [10,12].
+    # Each shard holds 2x2 = 4 inner chunks stored contiguously.  A full-shard
+    # read should merge those 4 ranges into 1 ReadMultiRange call.
+    debug_messages = []
+
+    def error_handler(err_type, err_no, msg):
+        if err_type == gdal.CE_Debug and "merged from" in msg:
+            debug_messages.append(msg)
+
+    gdal.PushErrorHandler(error_handler)
+    try:
+        with gdal.config_options({"CPL_DEBUG": "ZARR"}):
+            ds = gdal.OpenEx(
+                "data/zarr/v3/simple_sharding.zarr",
+                gdal.OF_MULTIDIM_RASTER,
+            )
+            ar = ds.GetRootGroup().OpenMDArray("simple_sharding")
+            # Read one full shard (10x12) - spans 4 contiguous inner chunks.
+            ar.Read(array_start_idx=[0, 0], count=[10, 12])
+    finally:
+        gdal.PopErrorHandler()
+
+    # At least one BatchDecodePartial call should have merged N>1 ranges.
+    merged_msgs = [m for m in debug_messages if "merged from" in m]
+    assert merged_msgs, "no range-merge debug messages emitted"
+    for msg in merged_msgs:
+        # e.g. "ReadMultiRange() with 1 data ranges (merged from 4)"
+        parts = msg.split()
+        n_merged = int(parts[parts.index("with") + 1])
+        n_original = int(parts[-1].rstrip(")"))
+        assert n_merged < n_original, f"expected merge: {msg}"
+
+
+###############################################################################
 # Test batch reads: full-array read via multidim API on a sharded dataset
 # uses BatchDecodePartial (ReadMultiRange) and produces correct data.
 
