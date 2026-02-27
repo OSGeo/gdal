@@ -65,12 +65,14 @@ Commands working with raster or vector inputs
    gdal_info
    gdal_convert
    gdal_pipeline
+   gdal_external
 
 .. only:: html
 
     - :ref:`gdal_info`: Get information on a dataset
     - :ref:`gdal_convert`: Convert a dataset
     - :ref:`gdal_pipeline`: Process a dataset applying several steps
+    - :ref:`gdal_external`: Execute an external program as a step of a pipeline
 
 Raster commands
 +++++++++++++++
