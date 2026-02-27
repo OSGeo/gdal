@@ -1332,6 +1332,7 @@ hSrcBand
 hSrcDataset
 hSrcDS
 hST
+hsv
 HSV
 hsv-value
 hTarget
