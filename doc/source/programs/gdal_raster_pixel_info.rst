@@ -214,6 +214,7 @@ Examples
 
 .. example::
    :title: Reading coordinates to extract from an input GeoPackage file and writing the output to a GeoPackage file
+   :id: gdal-raster-pixel-info-extract
 
    .. code-block:: bash
 

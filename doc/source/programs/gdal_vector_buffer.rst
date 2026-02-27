@@ -180,6 +180,7 @@ Examples
 
 .. example::
    :title: Compute a buffer of one km around input geometries (assuming the CRS is in meters)
+   :id: gdal-vector-buffer-1km
 
    .. code-block:: bash
 
