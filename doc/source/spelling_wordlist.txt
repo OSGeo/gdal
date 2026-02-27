@@ -1332,6 +1332,8 @@ hSrcBand
 hSrcDataset
 hSrcDS
 hST
+HSV
+hsv-value
 hTarget
 hTargetEDT
 hThenBand
@@ -1488,6 +1490,7 @@ jpips
 jportiz
 jpp
 jpx
+jq
 jratike
 js
 json
@@ -2453,6 +2456,7 @@ pkgconfig
 pkid
 Placemark
 plaintext
+planView
 Plessis
 plmosaic
 plscenes
@@ -2859,6 +2863,7 @@ rfc
 rgb
 RGB
 rgba
+RGBA
 rgdal
 rgx
 RHEL

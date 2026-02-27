@@ -450,13 +450,3 @@ Examples
 
     .. image:: ../../images/programs/gdal_raster_blend/color-burn.jpg
         :alt:   Colorized hillshade
-
-
-.. below is an allow-list for spelling checker.
-
-.. spelling:word-list::
-    RGB
-    RGBA
-    HSV
-    hsv-value
-    hillshades
