@@ -19,7 +19,13 @@ class Example:
         if not isinstance(other, Example):
             return NotImplemented
 
-        return self.__dict__ == other.__dict__
+        # ignore title_nodes for comparison
+        return (
+            self.example_id == other.example_id
+            and self.example_num == other.example_num
+            and self.docname == other.docname
+            and self.lineno == other.lineno
+        )
 
 
 class ExampleRole(SphinxRole):
@@ -71,6 +77,7 @@ class ExampleDirective(SphinxDirective):
             link_text = "".join(n.astext() for n in title_nodes)
             title_content = f"Example {example_num}: {link_text}"
         else:
+            title_nodes = None
             title_content = f"Example {example_num}"
 
         example_id = self.options.get("id")
@@ -152,7 +159,7 @@ def link_example_refs(app, env, node, contnode):
             + example_id
         )
         ref_node = nodes.reference("", "", refuri=ref_uri, internal=True)
-        if example.title_nodes:
+        if example.title_nodes is not None:
             # use a title if available
             for child in example.title_nodes:
                 ref_node += child
