@@ -674,8 +674,16 @@ CPLErr GDALGridMovingAverage(const void *poOptionsIn, GUInt32 nPoints,
             for (int k = 0; k < nFeatureCount; k++)
             {
                 const int i = papsPoints[k]->i;
-                const double dfRX = padfX[i] - dfXPoint;
-                const double dfRY = padfY[i] - dfYPoint;
+                double dfRX = padfX[i] - dfXPoint;
+                double dfRY = padfY[i] - dfYPoint;
+
+                if (bRotated)
+                {
+                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    dfRX = dfRXRotated;
+                    dfRY = dfRYRotated;
+                }
 
                 if (dfRadius2Square * dfRX * dfRX +
                         dfRadius1Square * dfRY * dfRY <=
@@ -1077,8 +1085,16 @@ CPLErr GDALGridDataMetricMinimum(const void *poOptionsIn, GUInt32 nPoints,
             for (int k = 0; k < nFeatureCount; k++)
             {
                 const int i = papsPoints[k]->i;
-                const double dfRX = padfX[i] - dfXPoint;
-                const double dfRY = padfY[i] - dfYPoint;
+                double dfRX = padfX[i] - dfXPoint;
+                double dfRY = padfY[i] - dfYPoint;
+
+                if (bRotated)
+                {
+                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    dfRX = dfRXRotated;
+                    dfRY = dfRYRotated;
+                }
 
                 if (dfRadius2Square * dfRX * dfRX +
                         dfRadius1Square * dfRY * dfRY <=
@@ -1371,8 +1387,16 @@ CPLErr GDALGridDataMetricMaximum(const void *poOptionsIn, GUInt32 nPoints,
             for (int k = 0; k < nFeatureCount; k++)
             {
                 const int i = papsPoints[k]->i;
-                const double dfRX = padfX[i] - dfXPoint;
-                const double dfRY = padfY[i] - dfYPoint;
+                double dfRX = padfX[i] - dfXPoint;
+                double dfRY = padfY[i] - dfYPoint;
+
+                if (bRotated)
+                {
+                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    dfRX = dfRXRotated;
+                    dfRY = dfRYRotated;
+                }
 
                 if (dfRadius2Square * dfRX * dfRX +
                         dfRadius1Square * dfRY * dfRY <=
@@ -1528,8 +1552,16 @@ CPLErr GDALGridDataMetricRange(const void *poOptionsIn, GUInt32 nPoints,
             for (int k = 0; k < nFeatureCount; k++)
             {
                 const int i = papsPoints[k]->i;
-                const double dfRX = padfX[i] - dfXPoint;
-                const double dfRY = padfY[i] - dfYPoint;
+                double dfRX = padfX[i] - dfXPoint;
+                double dfRY = padfY[i] - dfYPoint;
+
+                if (bRotated)
+                {
+                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    dfRX = dfRXRotated;
+                    dfRY = dfRYRotated;
+                }
 
                 if (dfRadius2Square * dfRX * dfRX +
                         dfRadius1Square * dfRY * dfRY <=
@@ -1798,8 +1830,16 @@ CPLErr GDALGridDataMetricCount(const void *poOptionsIn, GUInt32 nPoints,
             for (int k = 0; k < nFeatureCount; k++)
             {
                 const int i = papsPoints[k]->i;
-                const double dfRX = padfX[i] - dfXPoint;
-                const double dfRY = padfY[i] - dfYPoint;
+                double dfRX = padfX[i] - dfXPoint;
+                double dfRY = padfY[i] - dfYPoint;
+
+                if (bRotated)
+                {
+                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    dfRX = dfRXRotated;
+                    dfRY = dfRYRotated;
+                }
 
                 if (dfRadius2Square * dfRX * dfRX +
                         dfRadius1Square * dfRY * dfRY <=
@@ -2059,8 +2099,16 @@ CPLErr GDALGridDataMetricAverageDistance(const void *poOptionsIn,
             for (int k = 0; k < nFeatureCount; k++)
             {
                 const int i = papsPoints[k]->i;
-                const double dfRX = padfX[i] - dfXPoint;
-                const double dfRY = padfY[i] - dfYPoint;
+                double dfRX = padfX[i] - dfXPoint;
+                double dfRY = padfY[i] - dfYPoint;
+
+                if (bRotated)
+                {
+                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    dfRX = dfRXRotated;
+                    dfRY = dfRYRotated;
+                }
 
                 if (dfRadius2Square * dfRX * dfRX +
                         dfRadius1Square * dfRY * dfRY <=
