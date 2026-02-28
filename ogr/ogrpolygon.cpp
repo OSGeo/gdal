@@ -420,10 +420,27 @@ OGRErr OGRPolygon::importFromWkb(const unsigned char *pabyData, size_t nSize,
             return eErr;
         }
 
-        CPLAssert(nBytesConsumedRing > 0);
+        if (nBytesConsumedRing == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid WKB: ring parsing consumed 0 bytes");
+            delete oCC.papoCurves[iRing];
+            oCC.nCurveCount = iRing;
+            return OGRERR_CORRUPT_DATA;
+        }
+
         if (nSize != static_cast<size_t>(-1))
         {
-            CPLAssert(nSize >= nBytesConsumedRing);
+            if (nSize < nBytesConsumedRing)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid WKB: ring size %lu exceeds remaining buffer %lu",
+                         static_cast<unsigned long>(nBytesConsumedRing),
+                         static_cast<unsigned long>(nSize));
+                delete oCC.papoCurves[iRing];
+                oCC.nCurveCount = iRing;
+                return OGRERR_CORRUPT_DATA;
+            }
             nSize -= nBytesConsumedRing;
         }
 
