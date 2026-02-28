@@ -67,7 +67,7 @@ cd ..
 
 echo "Testing C++ app"
 cd test_cpp
-${CXX} -Wall test_cpp.cpp -o test_cpp_app ${INCLUDES} ${FRAMEWORK_FLAGS}
+${CXX} -Wall -std=c++11 test_cpp.cpp -o test_cpp_app ${INCLUDES} ${FRAMEWORK_FLAGS}
 if [ $? -ne 0 ]; then
   echo "failed: C++ compilation error"
   ERRORS=$(($ERRORS + 1))
