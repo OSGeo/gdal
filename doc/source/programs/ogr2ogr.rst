@@ -41,6 +41,8 @@ output coordinate system or even reprojecting the features during translation.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. include:: options/if.rst
 
 .. option:: -of <format_name>, -f <format_name>
