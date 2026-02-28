@@ -763,7 +763,7 @@ def test_ogr2ogr_emptyStrAsNull():
 # Verify propagation of field domains
 
 
-def test_ogr2ogr_fielddomain_():
+def test_ogr2ogr_fielddomain():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     src_lyr = src_ds.CreateLayer("layer")
@@ -3420,3 +3420,64 @@ def test_ogr2ogr_lib_wrapdateline_useless():
         f,
         "POLYGON ((273569.876923437 913668.344183491,273568.830352505 913465.374678854,273786.170063323 913461.355034812,273785.056779618 913665.785238482,273569.876923437 913668.344183491))",
     )
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("GPKG")
+def test_ogr2ogr_lib_create_field_failure(tmp_vsimem):
+
+    # Fails because we don't recognize NULL as a geometry content
+    with pytest.raises(
+        Exception,
+        match="Cannot create field geom. It has the same name as the geometry field",
+    ):
+        gdal.VectorTranslate(
+            tmp_vsimem / "out.gpkg",
+            "../ogr/data/poly.shp",
+            options='-dialect SQLITE -nlt POINT -sql "SELECT NULL AS geom FROM poly"',
+        )
+
+    with gdaltest.error_raised(
+        gdal.CE_Failure,
+        match="Cannot create field geom. It has the same name as the geometry field",
+    ):
+        gdal.VectorTranslate(
+            tmp_vsimem / "out.gpkg",
+            "../ogr/data/poly.shp",
+            options='-dialect SQLITE -nlt POINT -sql "SELECT NULL AS geom FROM poly" -skip',
+        )
+
+    with gdal.GetDriverByName("GPKG").CreateVector(tmp_vsimem / "out.gpkg") as ds:
+        ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+        ds.FlushCache()
+
+        with pytest.raises(
+            Exception,
+            match="Cannot create field geom. It has the same name as the geometry field",
+        ):
+            gdal.VectorTranslate(
+                ds,
+                "../ogr/data/poly.shp",
+                accessMode="append",
+                addFields=True,
+                SQLDialect="SQLITE",
+                SQLStatement="SELECT NULL AS geom FROM poly",
+                layerName="test",
+            )
+
+        with gdaltest.error_raised(
+            gdal.CE_Failure,
+            match="Cannot create field geom. It has the same name as the geometry field",
+        ):
+            gdal.VectorTranslate(
+                ds,
+                "../ogr/data/poly.shp",
+                accessMode="append",
+                addFields=True,
+                SQLDialect="SQLITE",
+                SQLStatement="SELECT NULL AS geom FROM poly",
+                layerName="test",
+                skipFailures=True,
+            )
