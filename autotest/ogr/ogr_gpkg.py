@@ -5778,21 +5778,13 @@ def test_ogr_gpkg_z_or_m_geometry_in_non_zm_layer(tmp_vsimem):
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT Z (1 2 3)"))
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, match="Setting the Z=2 hint"):
         lyr.CreateFeature(feat)
-        assert (
-            gdal.GetLastErrorMsg()
-            == "Layer 'foo' has been declared with non-Z geometry type Point, but it does contain geometries with Z. Setting the Z=2 hint into gpkg_geometry_columns"
-        )
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT M (1 2 3)"))
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, match="Setting the M=2 hint"):
         lyr.CreateFeature(feat)
-        assert (
-            gdal.GetLastErrorMsg()
-            == "Layer 'foo' has been declared with non-M geometry type Point, but it does contain geometries with M. Setting the M=2 hint into gpkg_geometry_columns"
-        )
 
     ds = None
 

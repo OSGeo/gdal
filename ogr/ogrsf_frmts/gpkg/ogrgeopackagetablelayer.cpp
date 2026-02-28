@@ -2201,7 +2201,9 @@ void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
                         CE_Warning, CPLE_AppDefined,
                         "Layer '%s' has been declared with non-Z geometry type "
                         "%s, but it does contain geometries with Z. Setting "
-                        "the Z=2 hint into gpkg_geometry_columns",
+                        "the Z=2 hint into gpkg_geometry_columns. "
+                        "If using ogr2ogr, specify the -nlt option to avoid "
+                        "ambiguity.",
                         GetName(),
                         OGRToOGCGeomType(eLayerGeomType, true, true, true));
                 }
@@ -2216,7 +2218,9 @@ void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
                         CE_Warning, CPLE_AppDefined,
                         "Layer '%s' has been declared with non-M geometry type "
                         "%s, but it does contain geometries with M. Setting "
-                        "the M=2 hint into gpkg_geometry_columns",
+                        "the M=2 hint into gpkg_geometry_columns. "
+                        "If using ogr2ogr, specify the -nlt option to avoid "
+                        "ambiguity.",
                         GetName(),
                         OGRToOGCGeomType(eLayerGeomType, true, true, true));
                 }
