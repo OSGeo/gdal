@@ -274,7 +274,7 @@ For all bindings, the above functions are mapped to SWIG with :
    %}
 
 For other utilities, see
-`gdal.i <http://svn.osgeo.org/gdal/trunk/gdal/swig/python/gdal.i>`__
+`gdal.i <https://github.com/OSGeo/gdal/blob/master/swig/include/gdal.i>`__
 
 Python bindings
 ~~~~~~~~~~~~~~~
