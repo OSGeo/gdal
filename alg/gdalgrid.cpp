@@ -1107,8 +1107,10 @@ CPLErr GDALGridDataMetricMinimum(const void *poOptionsIn, GUInt32 nPoints,
 
                 if (bRotated)
                 {
-                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
-                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    const double dfRXRotated =
+                        dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated =
+                        dfRY * dfCoeff1 - dfRX * dfCoeff2;
                     dfRX = dfRXRotated;
                     dfRY = dfRYRotated;
                 }

@@ -1160,45 +1160,37 @@ def test_gdal_grid_lib_moving_average_rotated_ellipse():
     rotation fix."""
 
     # angle=0: ellipse wide along X -> includes A(10) and C(1), not B(100)
-    ds0 = _make_rotated_ellipse_ds(
-        "average:radius1=3:radius2=1:angle=0", 0
-    )
+    ds0 = _make_rotated_ellipse_ds("average:radius1=3:radius2=1:angle=0", 0)
     val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     expected0 = (10 + 1) / 2.0
     expected0 = struct.unpack("f", struct.pack("f", expected0))[0]
-    assert val0 == pytest.approx(expected0, rel=1e-5), (
-        f"angle=0: expected {expected0}, got {val0}"
-    )
+    assert val0 == pytest.approx(
+        expected0, rel=1e-5
+    ), f"angle=0: expected {expected0}, got {val0}"
 
     # angle=90: ellipse wide along Y -> includes B(100) and C(1), not A(10)
-    ds90 = _make_rotated_ellipse_ds(
-        "average:radius1=3:radius2=1:angle=90", 90
-    )
+    ds90 = _make_rotated_ellipse_ds("average:radius1=3:radius2=1:angle=90", 90)
     val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     expected90 = (100 + 1) / 2.0
     expected90 = struct.unpack("f", struct.pack("f", expected90))[0]
-    assert val90 == pytest.approx(expected90, rel=1e-5), (
-        f"angle=90: expected {expected90}, got {val90}"
-    )
+    assert val90 == pytest.approx(
+        expected90, rel=1e-5
+    ), f"angle=90: expected {expected90}, got {val90}"
 
-    assert val0 != pytest.approx(val90, rel=1e-5), (
-        "Rotation should produce different results"
-    )
+    assert val0 != pytest.approx(
+        val90, rel=1e-5
+    ), "Rotation should produce different results"
 
 
 @pytest.mark.require_driver("GeoJSON")
 def test_gdal_grid_lib_data_metric_minimum_rotated_ellipse():
     """Minimum with rotated ellipse."""
 
-    ds0 = _make_rotated_ellipse_ds(
-        "minimum:radius1=3:radius2=1:angle=0", 0
-    )
+    ds0 = _make_rotated_ellipse_ds("minimum:radius1=3:radius2=1:angle=0", 0)
     val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     assert val0 == pytest.approx(1.0, rel=1e-5)  # min(10, 1) = 1
 
-    ds90 = _make_rotated_ellipse_ds(
-        "minimum:radius1=3:radius2=1:angle=90", 90
-    )
+    ds90 = _make_rotated_ellipse_ds("minimum:radius1=3:radius2=1:angle=90", 90)
     val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     assert val90 == pytest.approx(1.0, rel=1e-5)  # min(100, 1) = 1
 
@@ -1207,15 +1199,11 @@ def test_gdal_grid_lib_data_metric_minimum_rotated_ellipse():
 def test_gdal_grid_lib_data_metric_maximum_rotated_ellipse():
     """Maximum with rotated ellipse should pick different max values."""
 
-    ds0 = _make_rotated_ellipse_ds(
-        "maximum:radius1=3:radius2=1:angle=0", 0
-    )
+    ds0 = _make_rotated_ellipse_ds("maximum:radius1=3:radius2=1:angle=0", 0)
     val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     assert val0 == pytest.approx(10.0, rel=1e-5)  # max(10, 1) = 10
 
-    ds90 = _make_rotated_ellipse_ds(
-        "maximum:radius1=3:radius2=1:angle=90", 90
-    )
+    ds90 = _make_rotated_ellipse_ds("maximum:radius1=3:radius2=1:angle=90", 90)
     val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     assert val90 == pytest.approx(100.0, rel=1e-5)  # max(100, 1) = 100
 
@@ -1224,15 +1212,11 @@ def test_gdal_grid_lib_data_metric_maximum_rotated_ellipse():
 def test_gdal_grid_lib_data_metric_range_rotated_ellipse():
     """Range with rotated ellipse."""
 
-    ds0 = _make_rotated_ellipse_ds(
-        "range:radius1=3:radius2=1:angle=0", 0
-    )
+    ds0 = _make_rotated_ellipse_ds("range:radius1=3:radius2=1:angle=0", 0)
     val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     assert val0 == pytest.approx(9.0, rel=1e-5)  # 10 - 1
 
-    ds90 = _make_rotated_ellipse_ds(
-        "range:radius1=3:radius2=1:angle=90", 90
-    )
+    ds90 = _make_rotated_ellipse_ds("range:radius1=3:radius2=1:angle=90", 90)
     val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     assert val90 == pytest.approx(99.0, rel=1e-5)  # 100 - 1
 
@@ -1242,15 +1226,11 @@ def test_gdal_grid_lib_data_metric_count_rotated_ellipse():
     """Count with rotated ellipse should find 2 points regardless
     of rotation (different 2 points, but still 2)."""
 
-    ds0 = _make_rotated_ellipse_ds(
-        "count:radius1=3:radius2=1:angle=0", 0
-    )
+    ds0 = _make_rotated_ellipse_ds("count:radius1=3:radius2=1:angle=0", 0)
     val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     assert val0 == pytest.approx(2.0, rel=1e-5)
 
-    ds90 = _make_rotated_ellipse_ds(
-        "count:radius1=3:radius2=1:angle=90", 90
-    )
+    ds90 = _make_rotated_ellipse_ds("count:radius1=3:radius2=1:angle=90", 90)
     val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     assert val90 == pytest.approx(2.0, rel=1e-5)
 
@@ -1260,18 +1240,14 @@ def test_gdal_grid_lib_data_metric_average_distance_rotated_ellipse():
     """Average distance with rotated ellipse should differ because
     different points are included."""
 
-    ds0 = _make_rotated_ellipse_ds(
-        "average_distance:radius1=3:radius2=1:angle=0", 0
-    )
+    ds0 = _make_rotated_ellipse_ds("average_distance:radius1=3:radius2=1:angle=0", 0)
     val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     # Points A(2,0) and C(0,0): distances are 2 and 0
     expected0 = (2.0 + 0.0) / 2.0
     expected0 = struct.unpack("f", struct.pack("f", expected0))[0]
     assert val0 == pytest.approx(expected0, rel=1e-5)
 
-    ds90 = _make_rotated_ellipse_ds(
-        "average_distance:radius1=3:radius2=1:angle=90", 90
-    )
+    ds90 = _make_rotated_ellipse_ds("average_distance:radius1=3:radius2=1:angle=90", 90)
     val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
     # Points B(0,2) and C(0,0): distances are 2 and 0
     expected90 = (2.0 + 0.0) / 2.0
