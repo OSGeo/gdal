@@ -81,6 +81,7 @@ Raster drivers
    gti
    gtiff
    gxf
+   gtx
    hdf4
    hdf5
    heif
