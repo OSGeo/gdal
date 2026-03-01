@@ -332,6 +332,19 @@ Performance and caching
       :choices: <size in bytes>
       :since: 1.10
 
+      -  .. config:: VSI_FLUSH
+      :choices: YES, NO
+      :default: NO
+
+      If set to YES, forces a flush operation on VSI file handles after write
+      operations. This can help ensure data integrity at the cost of performance.
+
+-  .. config:: WARP_THREAD_CHUNK_SIZE
+      :default: 65536
+
+      Size in bytes of chunks processed by worker threads during GDAL warp
+      operations. Increasing this value may improve performance for large datasets.
+
       Set the size of the VSI cache. Be wary of large values for
       ``VSI_CACHE_SIZE`` when opening VRT datasources containing many source
       rasters, as this is a per-file cache.
@@ -344,6 +357,13 @@ Driver management
 
 -  .. config:: GDAL_SKIP
       :choices: space-separated list
+
+-  .. config:: ZARR_ALLOW_BIG_TILE_SIZE
+      :choices: YES, NO
+      :default: NO
+
+      If set to YES, allows Zarr datasets to use tile sizes larger than normally
+      allowed. This option should be used with caution due to potential memory usage.
 
       Used by :cpp:func:`GDALDriverManager::AutoSkipDrivers`
 
@@ -637,6 +657,11 @@ Networking options
       :choices: <bytes>
       :default: 16 MB
       :since: 2.3
+
+-  .. config:: WMS_INFO_FORMAT
+      :default: text/plain
+
+      MIME type used when requesting GetFeatureInfo responses from WMS servers.
 
       Size of global least-recently-used (LRU) cache shared among all downloaded
       content. Value is assumed to represent bytes unless memory units are
