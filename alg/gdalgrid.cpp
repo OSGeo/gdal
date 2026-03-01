@@ -679,8 +679,10 @@ CPLErr GDALGridMovingAverage(const void *poOptionsIn, GUInt32 nPoints,
 
                 if (bRotated)
                 {
-                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
-                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    const double dfRXRotated =
+                        dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated =
+                        dfRY * dfCoeff1 - dfRX * dfCoeff2;
                     dfRX = dfRXRotated;
                     dfRY = dfRYRotated;
                 }
@@ -1422,8 +1424,10 @@ CPLErr GDALGridDataMetricMaximum(const void *poOptionsIn, GUInt32 nPoints,
 
                 if (bRotated)
                 {
-                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
-                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    const double dfRXRotated =
+                        dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated =
+                        dfRY * dfCoeff1 - dfRX * dfCoeff2;
                     dfRX = dfRXRotated;
                     dfRY = dfRYRotated;
                 }
@@ -1587,8 +1591,10 @@ CPLErr GDALGridDataMetricRange(const void *poOptionsIn, GUInt32 nPoints,
 
                 if (bRotated)
                 {
-                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
-                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    const double dfRXRotated =
+                        dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated =
+                        dfRY * dfCoeff1 - dfRX * dfCoeff2;
                     dfRX = dfRXRotated;
                     dfRY = dfRYRotated;
                 }
@@ -1880,8 +1886,10 @@ CPLErr GDALGridDataMetricCount(const void *poOptionsIn, GUInt32 nPoints,
 
                 if (bRotated)
                 {
-                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
-                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    const double dfRXRotated =
+                        dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated =
+                        dfRY * dfCoeff1 - dfRX * dfCoeff2;
                     dfRX = dfRXRotated;
                     dfRY = dfRYRotated;
                 }
@@ -2164,8 +2172,10 @@ CPLErr GDALGridDataMetricAverageDistance(const void *poOptionsIn,
 
                 if (bRotated)
                 {
-                    const double dfRXRotated = dfRX * dfCoeff1 + dfRY * dfCoeff2;
-                    const double dfRYRotated = dfRY * dfCoeff1 - dfRX * dfCoeff2;
+                    const double dfRXRotated =
+                        dfRX * dfCoeff1 + dfRY * dfCoeff2;
+                    const double dfRYRotated =
+                        dfRY * dfCoeff1 - dfRX * dfCoeff2;
                     dfRX = dfRXRotated;
                     dfRY = dfRYRotated;
                 }
@@ -4092,7 +4102,6 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
                     CSLDestroy(papszParams);
                     return CE_Failure;
                 }
-
             }
             else if (poAverageOpts->nMaxPoints > 0)
             {
@@ -4225,7 +4234,6 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
                     CSLDestroy(papszParams);
                     return CE_Failure;
                 }
-
             }
 
             static const char *const apszKnownOptions[] = {

@@ -1259,7 +1259,6 @@ def test_gdal_grid_lib_data_metric_count_rotated_ellipse():
 def test_gdal_grid_lib_data_metric_average_distance_rotated_ellipse():
     """Average distance with rotated ellipse should differ because
     different points are included."""
-    import math
 
     ds0 = _make_rotated_ellipse_ds(
         "average_distance:radius1=3:radius2=1:angle=0", 0
