@@ -166,7 +166,14 @@ but no projection checking is performed (unless the :option:`--projectionCheck` 
 .. option:: --quiet
 
     Suppress progress messages.
+    
+.. option:: -ot <datatype>
 
+    Output data type. Supported output data types are:
+    
+    ``Byte``, ``Int8``, ``UInt16``, ``Int16``, ``UInt32``, ``Int32``,
+    ``UInt64``, ``Int64``, ``Float32``, ``Float64``,
+    ``CInt16``, ``CInt32``, ``CFloat32``, ``CFloat64``
 
 Python options
 --------------
