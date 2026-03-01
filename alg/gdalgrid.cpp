@@ -4092,14 +4092,7 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
                     CSLDestroy(papszParams);
                     return CE_Failure;
                 }
-                if (poAverageOpts->dfAngle != 0)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "angle != 0 not supported when "
-                             "per quadrant parameters are specified");
-                    CSLDestroy(papszParams);
-                    return CE_Failure;
-                }
+
             }
             else if (poAverageOpts->nMaxPoints > 0)
             {
@@ -4232,14 +4225,7 @@ CPLErr GDALGridParseAlgorithmAndOptions(const char *pszAlgorithm,
                     CSLDestroy(papszParams);
                     return CE_Failure;
                 }
-                if (poMetricsOptions->dfAngle != 0)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "angle != 0 not supported when "
-                             "per quadrant parameters are specified");
-                    CSLDestroy(papszParams);
-                    return CE_Failure;
-                }
+
             }
 
             static const char *const apszKnownOptions[] = {
