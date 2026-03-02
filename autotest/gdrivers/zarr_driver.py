@@ -4302,6 +4302,108 @@ def test_zarr_iread_auto_parallel(tmp_path, format):
         ds = None
 
 
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_multiband_advise_read(tmp_path, format):
+    """Classic API ds.ReadRaster() should get parallel prefetch on all bands."""
+
+    filename = str(tmp_path / "test.zarr")
+    ny, nx, nbands = 60, 80, 3
+    blocksize = 20
+
+    # Create 3-band dataset via multidimensional API (band, y, x)
+    ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        filename, options=["FORMAT=" + format]
+    )
+    rg = ds.GetRootGroup()
+    dim_band = rg.CreateDimension("band", None, None, nbands)
+    dim_y = rg.CreateDimension("Y", None, None, ny)
+    dim_x = rg.CreateDimension("X", None, None, nx)
+    ar = rg.CreateMDArray(
+        "test",
+        [dim_band, dim_y, dim_x],
+        gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
+        [
+            "BLOCKSIZE=1,%d,%d" % (blocksize, blocksize),
+            "MULTIBAND=YES",
+            "DIM_X=X",
+            "DIM_Y=Y",
+        ],
+    )
+    data_ar = [(i % 256) for i in range(nbands * ny * nx)]
+    data = array.array("B", data_ar)
+    assert ar.Write(data) == gdal.CE_None
+    ds = None
+
+    # Reference: read via classic API without threads
+    ds = gdal.Open(filename)
+    assert ds.RasterCount == nbands
+    expected = ds.ReadRaster()
+    assert expected is not None
+    ds = None
+
+    # Read with GDAL_NUM_THREADS: exercises IAdviseRead on every band
+    with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
+        ds = gdal.Open(filename)
+        got = ds.ReadRaster()
+        ds = None
+
+    assert got == expected
+
+
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_advise_read_cache_preserved(tmp_path, format):
+    """Explicit IAdviseRead cache survives auto-IAdviseRead in IRead.
+
+    After AdviseRead populates the cache, chunk files are deleted.
+    ReadRaster must still return correct data from cache, proving
+    auto-IAdviseRead did not clear it.
+    """
+
+    filename = str(tmp_path / "test.zarr")
+    ny, nx = 60, 80
+    blocksize = 20
+
+    ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+        filename, options=["FORMAT=" + format]
+    )
+    rg = ds.GetRootGroup()
+    dim_y = rg.CreateDimension("Y", None, None, ny)
+    dim_x = rg.CreateDimension("X", None, None, nx)
+    ar = rg.CreateMDArray(
+        "test",
+        [dim_y, dim_x],
+        gdal.ExtendedDataType.Create(gdal.GDT_UInt8),
+        ["BLOCKSIZE=%d,%d" % (blocksize, blocksize)],
+    )
+    data = array.array("B", [(i % 256) for i in range(ny * nx)])
+    ar.Write(data)
+    ds = None
+
+    # Reference read without threads
+    ds = gdal.Open(filename)
+    expected = ds.ReadRaster()
+    ds = None
+
+    with gdal.config_option("GDAL_NUM_THREADS", "ALL_CPUS"):
+        ds = gdal.Open(filename)
+        band = ds.GetRasterBand(1)
+        band.AdviseRead(0, 0, nx, ny)
+
+        # Delete chunk files - Read must succeed from cache
+        for p in tmp_path.rglob("*"):
+            if (
+                p.is_file()
+                and p.suffix not in (".json",)
+                and not p.name.startswith(".z")
+            ):
+                p.unlink()
+
+        got = ds.ReadRaster()
+        ds = None
+
+    assert got == expected
+
+
 def test_zarr_read_invalid_nczarr_dim(tmp_vsimem):
 
     gdal.Mkdir(tmp_vsimem / "test.zarr", 0)

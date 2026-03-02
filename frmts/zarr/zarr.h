@@ -978,6 +978,10 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     mutable std::map<std::vector<uint64_t>, CachedBlock> m_oChunkCache{};
 
+    //! Region covered by the last IAdviseRead (for subset check in IRead)
+    mutable std::vector<GUInt64> m_anCachedAdviseReadStart{};
+    mutable std::vector<size_t> m_anCachedAdviseReadCount{};
+
     static uint64_t
     ComputeBlockCount(const std::string &osName,
                       const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
