@@ -947,7 +947,7 @@ generated manually with the :ref:`gdal driver rpftoc create <raster.rpftoc.creat
 
 .. example::
    :title: Create CADRG frames from a VRT mosaic, specifying it is an
-           Operational Navigation Chart (scale 1:5 million), using hard-coded dates
+           Operational Navigation Chart (scale 1:1 million), using hard-coded dates
 
    .. code-block:: bash
 
