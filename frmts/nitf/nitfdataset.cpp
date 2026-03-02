@@ -4408,7 +4408,7 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
     if (pszPVType == nullptr)
         return nullptr;
 
-    const char *pszProduct = CSLFetchNameValue(papszOptions, "PRODUCT");
+    const char *pszProduct = CSLFetchNameValue(papszOptions, "PRODUCT_TYPE");
     if (pszProduct && EQUAL(pszProduct, "CADRG"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
