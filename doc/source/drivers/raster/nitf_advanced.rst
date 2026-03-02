@@ -162,7 +162,7 @@ TREs as xml:TRE
 
 All TREs found in file and matching one of the
 TRE description of the
-`nitf_spec.xml <https://github.com/OSGeo/gdal/blob/master/frmts/nitf/data/nitf_spec.xml>`__
+:source_file:`frmts/nitf/data/nitf_spec.xml`
 in GDAL data directory will be reported as XML content in the xml:TRE
 metadata domain.
 
