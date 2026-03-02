@@ -255,10 +255,16 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
 
     auto oAttrs = m_oAttrGroup.Serialize();
 
-    const bool bUseSpatialProjConventions =
-        EQUAL(m_aosCreationOptions.FetchNameValueDef(
-                  "GEOREFERENCING_CONVENTION", "GDAL"),
-              "SPATIAL_PROJ");
+    // For v3 without an explicit GEOREFERENCING_CONVENTION, dual-write both
+    // conventions so older GDAL reads _CRS and newer GeoZarr tools read
+    // spatial:transform. Explicit GDAL or SPATIAL_PROJ writes only one.
+    const char *pszConvention =
+        m_aosCreationOptions.FetchNameValue("GEOREFERENCING_CONVENTION");
+    const bool bIsV3 = dynamic_cast<const ZarrV3Array *>(this) != nullptr;
+    const bool bWriteSpatialProj =
+        pszConvention ? EQUAL(pszConvention, "SPATIAL_PROJ") : bIsV3;
+    const bool bWriteGDALCRS =
+        pszConvention ? !EQUAL(pszConvention, "SPATIAL_PROJ") : true;
 
     const auto ExportToWkt2AndPROJJSON = [this](CPLJSONObject &oContainer,
                                                 const char *pszWKT2AttrName,
@@ -289,7 +295,7 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
     };
 
     CPLJSONArray oZarrConventionsArray;
-    if (bUseSpatialProjConventions)
+    if (bWriteSpatialProj)
     {
         if (m_poSRS)
         {
@@ -400,12 +406,14 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
                 if (osGDALMD_AREA_OR_POINT == GDALMD_AOP_AREA)
                 {
                     oAttrs.Add("spatial:registration", "pixel");
-                    oAttrs.Delete(GDALMD_AREA_OR_POINT);
+                    if (!bWriteGDALCRS)
+                        oAttrs.Delete(GDALMD_AREA_OR_POINT);
                 }
                 else if (osGDALMD_AREA_OR_POINT == GDALMD_AOP_POINT)
                 {
                     oAttrs.Add("spatial:registration", "node");
-                    oAttrs.Delete(GDALMD_AREA_OR_POINT);
+                    if (!bWriteGDALCRS)
+                        oAttrs.Delete(GDALMD_AREA_OR_POINT);
 
                     // Going from GDAL's corner convention to pixel center
                     gt.xorig += 0.5 * gt.xscale + 0.5 * gt.xrot;
@@ -424,7 +432,8 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
 
                 oAttrs.Add("spatial:transform_type", "affine");
                 oAttrs.Add("spatial:transform", oAttrSpatialTransform);
-                oAttrs.Delete("gdal:geotransform");
+                if (!bWriteGDALCRS)
+                    oAttrs.Delete("gdal:geotransform");
 
                 double dfX0, dfY0;
                 double dfX1, dfY1;
@@ -481,7 +490,7 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
             oAttrs.Add("zarr_conventions", oZarrConventionsArray);
         }
     }
-    else if (m_poSRS)
+    if (bWriteGDALCRS && m_poSRS)
     {
         // GDAL convention
 

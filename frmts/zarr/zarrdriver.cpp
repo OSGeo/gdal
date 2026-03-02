@@ -1033,8 +1033,10 @@ void ZarrDriver::InitMetadata()
                                    "string-select");
         CPLAddXMLAttributeAndValue(psGeoreferencingConvention, "default",
                                    "GDAL");
-        CPLAddXMLAttributeAndValue(psGeoreferencingConvention, "description",
-                                   "Georeferencing convention to use");
+        CPLAddXMLAttributeAndValue(
+            psGeoreferencingConvention, "description",
+            "Georeferencing convention to use. "
+            "Zarr V3 writes both conventions by default");
 
         {
             auto poValueNode = CPLCreateXMLNode(psGeoreferencingConvention,
@@ -1343,9 +1345,14 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
         osDimXType = GDAL_DIM_TYPE_HORIZONTAL_X;
         osDimYType = GDAL_DIM_TYPE_HORIZONTAL_Y;
     }
-    poDS->m_bSpatialProjConvention = EQUAL(
-        CSLFetchNameValueDef(papszOptions, "GEOREFERENCING_CONVENTION", "GDAL"),
-        "SPATIAL_PROJ");
+    // Use SPATIAL_PROJ dimension naming for v3 by default.
+    const char *pszConvention =
+        CSLFetchNameValue(papszOptions, "GEOREFERENCING_CONVENTION");
+    poDS->m_bSpatialProjConvention =
+        pszConvention
+            ? EQUAL(pszConvention, "SPATIAL_PROJ")
+            : EQUAL(CSLFetchNameValueDef(papszOptions, "FORMAT", "ZARR_V2"),
+                    "ZARR_V3");
 
     if (bAppendSubDS)
     {

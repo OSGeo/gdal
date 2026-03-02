@@ -560,6 +560,10 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
       uses the Zarr `spatial <https://github.com/zarr-conventions/spatial>`__
       and `geo-proj <https://github.com/zarr-conventions/geo-proj>`__ conventions.
 
+      .. versionchanged:: 3.14
+         When writing Zarr V3 without an explicit convention, both ``GDAL`` and
+         ``SPATIAL_PROJ`` attributes are written for maximum interoperability.
+
 -  .. co:: COMPRESS
       :choices: NONE, BLOSC, ZLIB, GZIP, LZMA, ZSTD, LZ4
       :default: NONE

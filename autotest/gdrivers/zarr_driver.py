@@ -6151,7 +6151,13 @@ def test_zarr_write_vsizip(tmp_vsimem, format):
     )
 
     ds = gdal.Open(out_filename)
-    assert ds.GetMetadata() == {"AREA_OR_POINT": "Area"}
+    md = ds.GetMetadata()
+    assert md["AREA_OR_POINT"] == "Area"
+    if format == "ZARR_V2":
+        assert md == {"AREA_OR_POINT": "Area"}
+    else:
+        # V3 dual-writes both conventions, which adds spatial:bbox, zarr_conventions
+        assert "spatial:bbox" in md
 
 
 ###############################################################################
@@ -7815,6 +7821,107 @@ def test_zarr_write_spatial_geotransform(tmp_vsimem):
     assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
     assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
     assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+
+###############################################################################
+# Test Zarr V3 georeferencing convention matrix:
+#   None (default) -> dual-write both conventions
+#   GDAL           -> only _CRS
+#   SPATIAL_PROJ   -> only spatial:transform
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "convention,expect_spatial,expect_crs",
+    [
+        (None, True, True),
+        ("GDAL", False, True),
+        ("SPATIAL_PROJ", True, False),
+    ],
+    ids=["dual-write", "explicit-GDAL", "explicit-SPATIAL_PROJ"],
+)
+def test_zarr_v3_georef_convention(tmp_vsimem, convention, expect_spatial, expect_crs):
+
+    src_ds = gdal.Open("data/byte.tif")
+    options = {"FORMAT": "ZARR_V3"}
+    if convention:
+        options["GEOREFERENCING_CONVENTION"] = convention
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "out.zarr", src_ds, options=options
+    )
+
+    with gdal.VSIFile(tmp_vsimem / "out.zarr" / "zarr.json", "rb") as f:
+        j = json.loads(f.read())
+    attrs = j["consolidated_metadata"]["metadata"]["out"]["attributes"]
+    assert ("spatial:transform" in attrs) == expect_spatial
+    assert ("proj:code" in attrs) == expect_spatial
+    assert ("_CRS" in attrs) == expect_crs
+
+    ds = gdal.Open(tmp_vsimem / "out.zarr")
+    assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+
+
+###############################################################################
+# Test that Zarr V2 default convention is unchanged (GDAL only, no dual-write)
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_v2_default_convention_unchanged(tmp_vsimem):
+
+    src_ds = gdal.Open("data/byte.tif")
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "out.zarr",
+        src_ds,
+        options={"FORMAT": "ZARR_V2"},
+    )
+
+    # Verify GDAL convention only in .zattrs
+    with gdal.VSIFile(tmp_vsimem / "out.zarr" / "out" / ".zattrs", "rb") as f:
+        attrs = json.loads(f.read())
+    assert "_CRS" in attrs
+    assert "spatial:transform" not in attrs
+
+    # Verify round-trip via classic API
+    ds = gdal.Open(tmp_vsimem / "out.zarr")
+    assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
+    assert ds.GetGeoTransform() == src_ds.GetGeoTransform()
+
+
+###############################################################################
+# Test dual-write with Point registration preserves AREA_OR_POINT and round-trips
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_v3_dual_write_point_registration(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 2, 3)
+    src_ds.SetGeoTransform([10, 1, 0, 50, 0, -1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetMetadataItem("AREA_OR_POINT", "Point")
+
+    gdal.GetDriverByName("Zarr").CreateCopy(
+        tmp_vsimem / "out.zarr",
+        src_ds,
+        options={"FORMAT": "ZARR_V3"},
+    )
+
+    # Verify both conventions present and AREA_OR_POINT preserved
+    with gdal.VSIFile(tmp_vsimem / "out.zarr" / "zarr.json", "rb") as f:
+        j = json.loads(f.read())
+    array_attrs = j["consolidated_metadata"]["metadata"]["out"]["attributes"]
+    assert "spatial:transform" in array_attrs
+    assert array_attrs["spatial:registration"] == "node"
+    assert array_attrs["AREA_OR_POINT"] == "Point"
+    assert "_CRS" in array_attrs
+
+    # Verify geotransform round-trip
+    ds = gdal.Open(tmp_vsimem / "out.zarr")
+    assert ds.GetGeoTransform() == pytest.approx(src_ds.GetGeoTransform())
+    assert ds.GetSpatialRef().IsSame(src_ds.GetSpatialRef())
 
 
 ###############################################################################
