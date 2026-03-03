@@ -49,34 +49,20 @@ GDALDataset *ZarrDataset::OpenMultidim(const char *pszFilename,
     if (osFilename.back() == '/')
         osFilename.pop_back();
 
-    // Syntaxic sugar to detect Parquet reference files automatically
-    if (!STARTS_WITH(pszFilename, "/vsikerchunk"))
-    {
-        const std::string osZmetadataFilename(
-            CPLFormFilenameSafe(osFilename.c_str(), ".zmetadata", nullptr));
-        CPLJSONDocument oDoc;
-        bool bOK;
-        {
-            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-            bOK = oDoc.Load(osZmetadataFilename);
-        }
-        if (bOK && oDoc.GetRoot().GetObj("record_size").IsValid())
-        {
-            const std::string osKerchunkParquetRefFilename =
-                CPLSPrintf("%s{%s}", PARQUET_REF_FS_PREFIX, osFilename.c_str());
-            CPLDebugOnly("ZARR", "Opening %s",
-                         osKerchunkParquetRefFilename.c_str());
-            return OpenMultidim(osKerchunkParquetRefFilename.c_str(),
-                                bUpdateMode, papszOpenOptionsIn);
-        }
-    }
-
     auto poSharedResource = ZarrSharedResource::Create(osFilename, bUpdateMode);
     poSharedResource->SetOpenOptions(papszOpenOptionsIn);
 
     auto poRG = poSharedResource->GetRootGroup();
     if (!poRG)
+    {
+        // Kerchunk Parquet auto-detection: OpenRootGroup found a
+        // .zmetadata with record_size, signaling a redirect.
+        const auto &osKerchunkPath = poSharedResource->GetKerchunkParquetPath();
+        if (!osKerchunkPath.empty())
+            return OpenMultidim(osKerchunkPath.c_str(), bUpdateMode,
+                                papszOpenOptionsIn);
         return nullptr;
+    }
     return new ZarrDataset(poRG);
 }
 

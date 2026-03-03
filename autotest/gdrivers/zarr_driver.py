@@ -6552,9 +6552,6 @@ def test_zarr_read_simple_sharding_network():
             # driver re-fetch everything cleanly.
             for _ in range(2):
                 handler = webserver.SequentialHandler()
-                handler.add("GET", "/test.zarr/", 404)
-                handler.add("HEAD", "/test.zarr/.zmetadata", 404)
-                # Probe zarr.json first; v2 probes (.zarray, .zgroup) skipped.
                 handler.add(
                     "HEAD",
                     "/test.zarr/zarr.json",
