@@ -22,6 +22,7 @@
 #include <cassert>
 #include <cinttypes>
 #include <limits>
+#include <future>
 #include <mutex>
 
 #ifdef HAVE_BLOSC
@@ -233,6 +234,37 @@ GetExtraDimSampleCount(const std::shared_ptr<GDALMDArray> &poArray,
             nExtraDimSamples *= apoDims[i]->GetSize();
     }
     return nExtraDimSamples;
+}
+
+/************************************************************************/
+/*                        PrefetchCoordArrays()                         */
+/************************************************************************/
+
+// Warm g_oCoordCache by reading X and Y coordinate arrays in parallel.
+// For remote datasets this avoids sequential HTTP round-trips in
+// GuessGeoTransform() (can save ~800 ms).  Each ZarrArray has its own
+// mutex and VSI opens independent handles, so sibling reads are safe.
+static void PrefetchCoordArrays(const std::shared_ptr<GDALMDArray> &poArray,
+                                size_t iXDim, size_t iYDim)
+{
+    const auto nDimCount = poArray->GetDimensionCount();
+    if (nDimCount < 2 || iXDim >= nDimCount || iYDim >= nDimCount)
+        return;
+    const auto &dims = poArray->GetDimensions();
+    auto poVarX = dims[iXDim]->GetIndexingVariable();
+    auto poVarY = dims[iYDim]->GetIndexingVariable();
+    if (!poVarX || poVarX->GetDimensionCount() != 1 || !poVarY ||
+        poVarY->GetDimensionCount() != 1)
+        return;
+    if (VSIIsLocal(poVarX->GetFilename().c_str()))
+        return;
+
+    double dfXStart = 0, dfXSpacing = 0, dfYStart = 0, dfYSpacing = 0;
+    auto futureX =
+        std::async(std::launch::async, [&poVarX, &dfXStart, &dfXSpacing]()
+                   { return poVarX->IsRegularlySpaced(dfXStart, dfXSpacing); });
+    CPL_IGNORE_RET_VAL(poVarY->IsRegularlySpaced(dfYStart, dfYSpacing));
+    CPL_IGNORE_RET_VAL(futureX.get());
 }
 
 /************************************************************************/
@@ -632,6 +664,8 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poMainArray && (bMultiband || poMainArray->GetDimensionCount() <= 2))
     {
+        PrefetchCoordArrays(poMainArray, iXDim, iYDim);
+
         // Pass papszOpenOptions for LOAD_EXTRA_DIM_METADATA_DELAY
         auto poNewDS =
             std::unique_ptr<GDALDataset>(poMainArray->AsClassicDataset(
