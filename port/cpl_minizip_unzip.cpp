@@ -55,6 +55,7 @@ original crypt.c. Code woven in by Terry Thorsen 1/2003.
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -671,8 +672,11 @@ extern unzFile ZEXPORT cpl_unzOpen2(const char *path,
             err = UNZ_ERRNO;
     }
 
-    if ((central_pos < us.offset_central_dir + us.size_central_dir) &&
-        (err == UNZ_OK))
+    if (us.offset_central_dir >
+        std::numeric_limits<uint64_t>::max() - us.size_central_dir)
+        err = UNZ_BADZIPFILE;
+    else if ((central_pos < us.offset_central_dir + us.size_central_dir) &&
+             (err == UNZ_OK))
         err = UNZ_BADZIPFILE;
 
     if (err != UNZ_OK)
