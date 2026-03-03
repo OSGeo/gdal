@@ -573,11 +573,17 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
         CPLAssert(psFilterDecompressor);
 
         CPLStringList aosOptions;
-        for (const auto &obj : oFilter.GetChildren())
+
         {
-            aosOptions.SetNameValue(obj.GetName().c_str(),
-                                    obj.ToString().c_str());
+            // Below obj.ToString() involves dynamic memory allocation
+            std::lock_guard<std::mutex> oLock(m_oMutex);
+            for (const auto &obj : oFilter.GetChildren())
+            {
+                aosOptions.SetNameValue(obj.GetName().c_str(),
+                                        obj.ToString().c_str());
+            }
         }
+
         void *out_buffer = &abyTmpRawTileData[0];
         size_t nOutSize = abyTmpRawTileData.size();
         if (!psFilterDecompressor->pfnFunc(
