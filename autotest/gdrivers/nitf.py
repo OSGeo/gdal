@@ -7432,7 +7432,7 @@ def test_nitf_create_copy_cadrg_color_quantization_bits(
         ],
     )
 
-    ds = gdal.Open(tmp_path / "out" / "RPF" / "ZONE2" / "0000L010.MM2")
+    ds = gdal.Open(tmp_path / "out" / "RPF" / "2" / "0000L010.MM2")
     assert ds.RasterCount == 1
     assert ds.GetRasterBand(1).GetColorTable().GetCount() == 217
     assert ds.GetRasterBand(1).Checksum() == expected_cs
@@ -7465,7 +7465,7 @@ def test_nitf_create_copy_cadrg_color_table_per_frame(
         creationOptions=creationOptions,
     )
 
-    ds = gdal.Open(tmp_path / "out" / "RPF" / "ZONE2" / "0000L010.MM2")
+    ds = gdal.Open(tmp_path / "out" / "RPF" / "2" / "0000L010.MM2")
     assert ds.RasterCount == 1
     assert ds.GetRasterBand(1).GetColorTable().GetCount() == 217
     assert ds.GetRasterBand(1).Checksum() == expected_cs
@@ -7572,24 +7572,24 @@ def test_nitf_create_copy_cadrg_auto_tile_north_hemisphere(tmp_path):
         [
             "RPF/",
             "RPF/A.TOC",
-            "RPF/ZONE2/",
-            "RPF/ZONE2/00003010.MM2",
-            "RPF/ZONE2/0000A010.MM2",
+            "RPF/2/",
+            "RPF/2/00003010.MM2",
+            "RPF/2/0000A010.MM2",
         ]
     )
 
-    with gdal.Open(tmp_path / "RPF/ZONE2/00003010.MM2") as ds:
+    with gdal.Open(tmp_path / "RPF/2/00003010.MM2") as ds:
         assert ds.GetGeoTransform() == pytest.approx(
             (-18.0, 0.03515625, 0.0, 41.53846153846154, 0.0, -0.027043269230769232)
         )
         assert ds.GetRasterBand(1).Checksum() == 42239
 
-    with gdal.Open(tmp_path / "RPF/ZONE2/0000A010.MM2") as ds:
+    with gdal.Open(tmp_path / "RPF/2/0000A010.MM2") as ds:
         assert ds.GetGeoTransform() == pytest.approx(
             (-18.0, 0.03515625, 0.0, 83.07692307692308, 0.0, -0.027043269230769232)
         )
 
-    src_ds = gdal.Open(tmp_path / "RPF/ZONE2/00003010.MM2")
+    src_ds = gdal.Open(tmp_path / "RPF/2/00003010.MM2")
     gdal.Translate(
         tmp_path / "copy",
         src_ds,
@@ -7597,7 +7597,7 @@ def test_nitf_create_copy_cadrg_auto_tile_north_hemisphere(tmp_path):
         format="NITF",
     )
 
-    with gdal.Open(tmp_path / "copy/RPF/ZONE2/00003010.MM2") as ds:
+    with gdal.Open(tmp_path / "copy/RPF/2/00003010.MM2") as ds:
         assert ds.GetGeoTransform() == pytest.approx(
             (-18.0, 0.03515625, 0.0, 41.53846153846154, 0.0, -0.027043269230769232)
         )
@@ -7611,7 +7611,7 @@ def test_nitf_create_copy_cadrg_auto_tile_north_hemisphere(tmp_path):
         format="NITF",
     )
 
-    with gdal.Open(tmp_path / "copy2/RPF/ZONE2/00003010.MM2") as ds:
+    with gdal.Open(tmp_path / "copy2/RPF/2/00003010.MM2") as ds:
         assert ds.GetGeoTransform() == pytest.approx(
             (-18.0, 0.03515625, 0.0, 41.53846153846154, 0.0, -0.027043269230769232)
         )
@@ -7638,17 +7638,17 @@ def test_nitf_create_copy_cadrg_auto_tile_south_hemisphere(tmp_vsimem):
     assert gdal.ReadDirRecursive(tmp_vsimem) == [
         "RPF/",
         "RPF/A.TOC",
-        "RPF/ZONEB/",
-        "RPF/ZONEB/00003010.MMB",
-        "RPF/ZONEB/0000A010.MMB",
+        "RPF/B/",
+        "RPF/B/00003010.MMB",
+        "RPF/B/0000A010.MMB",
     ]
 
-    with gdal.Open(tmp_vsimem / "RPF/ZONEB/00003010.MMB") as ds:
+    with gdal.Open(tmp_vsimem / "RPF/B/00003010.MMB") as ds:
         assert ds.GetGeoTransform() == pytest.approx(
             (-18.0, 0.03515625, 0.0, -41.53846153846154, 0.0, -0.027043269230769232)
         )
 
-    with gdal.Open(tmp_vsimem / "RPF/ZONEB/0000A010.MMB") as ds:
+    with gdal.Open(tmp_vsimem / "RPF/B/0000A010.MMB") as ds:
         assert ds.GetGeoTransform() == pytest.approx(
             (-18.0, 0.03515625, 0.0, 0.0, 0.0, -0.027043269230769232)
         )
@@ -7775,8 +7775,8 @@ def test_nitf_create_copy_cadrg_error_cases(tmp_vsimem, tmp_path):
 
     gdal.Mkdir(tmp_path / "out2", 0o755)
     gdal.Mkdir(tmp_path / "out2" / "RPF", 0o755)
-    gdal.Mkdir(tmp_path / "out2" / "RPF" / "ZONE1", 0o755)
-    gdal.Mkdir(tmp_path / "out2" / "RPF" / "ZONE1" / "0000G010.GN1", 0o755)
+    gdal.Mkdir(tmp_path / "out2" / "RPF" / "1", 0o755)
+    gdal.Mkdir(tmp_path / "out2" / "RPF" / "1" / "0000G010.GN1", 0o755)
     with pytest.raises(Exception, match="Unable to create file"):
         gdal.GetDriverByName("NITF").CreateCopy(
             tmp_path / "out2", src_ds, options=["PRODUCT_TYPE=CADRG", "SERIES_CODE=GN"]
@@ -7930,15 +7930,15 @@ def test_nitf_create_copy_cadrg_reprojection_skip_non_intersecting_tiles(tmp_vsi
     assert gdal.ReadDirRecursive(tmp_vsimem) == [
         "RPF/",
         "RPF/A.TOC",
-        "RPF/ZONE8/",
-        "RPF/ZONE8/00008010.MM8",
-        "RPF/ZONE8/00009010.MM8",
-        "RPF/ZONE8/0000S010.MM8",
-        "RPF/ZONE8/0000T010.MM8",
-        "RPF/ZONE9/",
-        "RPF/ZONE9/00002010.MM9",
-        "RPF/ZONE9/00007010.MM9",
-        "RPF/ZONE9/0000C010.MM9",
+        "RPF/8/",
+        "RPF/8/00008010.MM8",
+        "RPF/8/00009010.MM8",
+        "RPF/8/0000S010.MM8",
+        "RPF/8/0000T010.MM8",
+        "RPF/9/",
+        "RPF/9/00002010.MM9",
+        "RPF/9/00007010.MM9",
+        "RPF/9/0000C010.MM9",
     ]
 
 
@@ -7957,11 +7957,11 @@ def test_nitf_create_copy_cadrg_south_pole(tmp_vsimem):
     assert gdal.ReadDirRecursive(tmp_vsimem) == [
         "RPF/",
         "RPF/A.TOC",
-        "RPF/ZONEJ/",
-        "RPF/ZONEJ/00000010.MMJ",
+        "RPF/J/",
+        "RPF/J/00000010.MMJ",
     ]
 
-    with gdal.Open(tmp_vsimem / "RPF/ZONEJ/00000010.MMJ") as ds:
+    with gdal.Open(tmp_vsimem / "RPF/J/00000010.MMJ") as ds:
         assert ds.GetGeoTransform() == pytest.approx(
             (
                 -1113194.9079327357,
@@ -8010,11 +8010,11 @@ def test_nitf_create_copy_cadrg_resampling(tmp_vsimem, resampling, expected_cs):
     assert gdal.ReadDirRecursive(tmp_vsimem) == [
         "RPF/",
         "RPF/A.TOC",
-        "RPF/ZONE2/",
-        "RPF/ZONE2/00AEH010.MM2",
+        "RPF/2/",
+        "RPF/2/00AEH010.MM2",
     ]
 
-    with gdal.Open(tmp_vsimem / "RPF/ZONE2/00AEH010.MM2") as ds:
+    with gdal.Open(tmp_vsimem / "RPF/2/00AEH010.MM2") as ds:
         assert ds.GetRasterBand(1).Checksum() == expected_cs
 
 

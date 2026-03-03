@@ -3041,8 +3041,7 @@ CADRGCreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int bStrict,
                 VSIMkdir(osRPFDir.c_str(), 0755);
                 const std::string osZoneDir = CPLFormFilenameSafe(
                     osRPFDir.c_str(),
-                    CPLSPrintf("ZONE%c", RPFCADRGZoneNumToChar(nZone)),
-                    nullptr);
+                    CPLSPrintf("%c", RPFCADRGZoneNumToChar(nZone)), nullptr);
                 VSIMkdir(osZoneDir.c_str(), 0755);
                 VSIStatBufL sStat;
                 if (VSIStatL(osZoneDir.c_str(), &sStat) != 0 ||
@@ -3150,7 +3149,7 @@ CADRGCreateCopy(const char *pszFilename, GDALDataset *poSrcDS, int bStrict,
 
                 const std::string osZoneDir = CPLFormFilenameSafe(
                     osRPFDir.c_str(),
-                    CPLSPrintf("ZONE%c", RPFCADRGZoneNumToChar(frameDef.nZone)),
+                    CPLSPrintf("%c", RPFCADRGZoneNumToChar(frameDef.nZone)),
                     nullptr);
                 VSIStatBufL sStat;
                 const bool bDirectoryAlreadyExists =
