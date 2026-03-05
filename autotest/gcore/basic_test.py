@@ -1335,3 +1335,15 @@ def test_basic_config_option_GDAL_CACHEMAX():
     ):
         with gdal.config_options({"GDAL_CACHEMAX": 1}):
             pass
+
+
+@gdaltest.enable_exceptions()
+def test_basic_config_option_null_override():
+
+    os.putenv("MY_ENV_VAR_GDAL_TEST", "123")
+
+    with gdal.config_option("MY_ENV_VAR_GDAL_TEST", None):
+        assert gdal.GetConfigOption("MY_ENV_VAR_GDAL_TEST") is None
+
+    with gdal.config_option("MY_ENV_VAR_GDAL_TEST", None, thread_local=False):
+        assert gdal.GetConfigOption("MY_ENV_VAR_GDAL_TEST") is None

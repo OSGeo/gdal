@@ -6058,10 +6058,13 @@ def config_options(options, thread_local=True):
     old_gdal_cache_max = GetCacheMax() if "GDAL_CACHEMAX" in options else None
 
     for key in options:
+        val = options[key]
         if key == "GDAL_CACHEMAX":
-            SetCacheMax(int(options[key]))
+            SetCacheMax(int(val))
         else:
-            set_config_option(key, options[key])
+            if val is None:
+                val = "__CPL_NULL_VALUE__"
+            set_config_option(key, val)
     try:
         yield
     finally:
