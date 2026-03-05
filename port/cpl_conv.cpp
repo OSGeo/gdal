@@ -2060,6 +2060,10 @@ static void CPLSetConfigOptionDetectUnknownConfigOption(const char *pszKey,
  * value (note: passing NULL will not unset an existing environment variable;
  * it will just unset a value previously set by CPLSetConfigOption()).
  *
+ * Note that setting the GDAL_CACHEMAX configuration option after at least one
+ * raster has been read will be without effect. Use GDALSetCacheMax64()
+ * instead.
+ *
  * Starting with GDAL 3.11, if CPL_DEBUG is enabled prior to this call, and
  * CPLSetConfigOption() is called with a key that is neither a known
  * configuration option of GDAL itself, or one that has been declared with
@@ -2121,6 +2125,10 @@ static void CPLSetThreadLocalTLSFreeFunc(void *pData)
  * a value set through CPLSetConfigOption();
  * it will just unset a value previously set by
  * CPLSetThreadLocalConfigOption()).
+ *
+ * Note that setting the GDAL_CACHEMAX configuration option after at least one
+ * raster has been read will be without effect. Use GDALSetCacheMax64()
+ * instead.
  *
  * @param pszKey the key of the option
  * @param pszValue the value of the option, or NULL to clear a setting.
