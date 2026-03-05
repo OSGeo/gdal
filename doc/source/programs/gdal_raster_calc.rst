@@ -12,18 +12,17 @@
 
 .. Index:: gdal raster calc
 
+Synopsis
+--------
+
+.. program-output:: gdal raster calc --help-doc
+
 Description
 -----------
 
 :program:`gdal raster calc` performs pixel-wise calculations on one or more input GDAL datasets. Calculations
 can be performed eagerly, writing results to a conventional raster format,
 or lazily, written as a set of derived bands in a :ref:`VRT (Virtual Dataset) <raster.vrt>`.
-
-Synopsis
---------
-
-.. program-output:: gdal raster calc --help-doc
-
 
 The list of input GDAL datasets can be specified at the end
 of the command line or put in a text file (one input per line) for very long lists.
