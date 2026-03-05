@@ -70,10 +70,12 @@ be on the right, i.e. a line string goes clockwise around a top.
 .. option:: -inodata
 
     Ignore any nodata value implied in the dataset - treat all values as valid.
+    Cannot be used together with :option:`-snodata`.
 
 .. option:: -snodata <value>
 
     Input pixel value to treat as "nodata".
+    Cannot be used together with :option:`-inodata`.
 
 .. option:: -f <format>
 
