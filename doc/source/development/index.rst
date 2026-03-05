@@ -16,3 +16,4 @@ Development
     cmake
     rfc_process
     rfc/index
+    error_handling
