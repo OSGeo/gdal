@@ -2961,10 +2961,14 @@ def test_gti_read_multi_threaded_disabled_because_truncated_source(tmp_vsimem):
     gdal.VSIFTruncateL(f, gdal.VSIStatL(right_filename).size - 10)
     gdal.VSIFCloseL(f)
 
-    vrt_ds = gdal.Open(index_filename)
+    with gdal.config_options(
+        {"GTI_NUM_THREADS": str(gdal.GetNumCPUs()), "GDAL_NUM_THREADS": "1"},
+        thread_local=False,
+    ):
+        vrt_ds = gdal.Open(index_filename)
 
-    with pytest.raises(Exception, match="right.tif"):
-        vrt_ds.ReadRaster()
+        with pytest.raises(Exception, match="right.tif"):
+            vrt_ds.ReadRaster()
 
     assert vrt_ds.GetMetadataItem("MULTI_THREADED_RASTERIO_LAST_USED", "__DEBUG__") == (
         "1" if gdal.GetNumCPUs() >= 2 else "0"
@@ -3061,7 +3065,8 @@ def test_gti_stac_geoparquet_sentinel2(filename):
     if conn is None:
         pytest.skip("cannot open URL")
 
-    ds = gdal.Open(f"GTI:data/gti/{filename}")
+    with gdal.config_option("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", None):
+        ds = gdal.Open(f"GTI:data/gti/{filename}")
     assert ds.RasterXSize == 5556
     assert ds.RasterYSize == 5540
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "32612"
