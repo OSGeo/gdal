@@ -217,7 +217,7 @@ Examples
     and produce a GeoJSON output with the contour min and max elevations in the ``min`` and ``max`` attributes.
 
 
-    If the minimum and maximum values from the raster are desired, the special values `MIN`` and `MAX``
+    If the minimum and maximum values from the raster are desired, the special values ``MIN`` and ``MAX``
     (case insensitive) can be used:
 
     .. code-block:: bash
