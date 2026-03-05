@@ -98,6 +98,30 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 
     if (!bHasZarrJson)
     {
+        // Detect Kerchunk Parquet reference files before creating a v2
+        // group.  Kerchunk .zmetadata has a "record_size" field that
+        // regular consolidated metadata does not.
+        if (!STARTS_WITH(m_osRootDirectoryName.c_str(), "/vsikerchunk"))
+        {
+            const std::string osZmetadataFilename(CPLFormFilenameSafe(
+                m_osRootDirectoryName.c_str(), ".zmetadata", nullptr));
+            CPLJSONDocument oDoc;
+            bool bOK;
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                bOK = oDoc.Load(osZmetadataFilename);
+            }
+            if (bOK && oDoc.GetRoot().GetObj("record_size").IsValid())
+            {
+                m_osKerchunkParquetPath =
+                    CPLSPrintf("%s{%s}", PARQUET_REF_FS_PREFIX,
+                               m_osRootDirectoryName.c_str());
+                CPLDebugOnly("ZARR", "Opening %s",
+                             m_osKerchunkParquetPath.c_str());
+                return nullptr;
+            }
+        }
+
         auto poRG = ZarrV2Group::Create(shared_from_this(), std::string(), "/");
         // Prevents potential recursion
         m_poWeakRootGroup = poRG;
