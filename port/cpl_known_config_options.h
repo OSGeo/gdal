@@ -1096,6 +1096,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "WMS_INFO_FORMAT", // from minidriver_wms.cpp
    "XDG_CACHE_HOME", // from gdal_misc.cpp, gdalwmscache.cpp
    "ZARR_ALLOW_BIG_TILE_SIZE", // from zarr_v2_array.cpp, zarr_v3_array.cpp
+   "ZARR_VLEN_STRING_MAX_LENGTH", // from zarr_v3_array.cpp, zarr_v3_group.cpp
    "ZLEVEL_OVERVIEW", // from gt_overview.cpp
    "ZMAP_EMIT_EOL_AT_END_OF_COLUMN", // from zmapdataset.cpp
    "ZMAP_PIXEL_IS_POINT", // from zmapdataset.cpp
