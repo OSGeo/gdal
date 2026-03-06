@@ -199,3 +199,13 @@ See Also
    Reader <http://web.archive.org/web/20130730133056/http://home.gdal.org/projects/imagine/hfa_index.html>`__
    page as saved by archive.org.
 -  `Erdas.com <http://www.erdas.com/>`__
+
+Erdas Imagine (.ige) format
+----------------------------
+
+The Erdas Imagine .ige format is related to the HFA (Hierarchical File Architecture)
+format used by Erdas Imagine software.
+
+More details about the historical format specification can be found at:
+
+https://web.archive.org/web/20110205035551/http://home.gdal.org/projects/imagine/ige_format.html
