@@ -50,7 +50,7 @@ static std::wstring StringToWString(const std::string &utf8string)
 {
     wchar_t *pszUTF16 =
         CPLRecodeToWChar(utf8string.c_str(), CPL_ENC_UTF8, CPL_ENC_UCS2);
-    std::wstring utf16string = pszUTF16;
+    std::wstring utf16string(pszUTF16);
     CPLFree(pszUTF16);
     return utf16string;
 }
@@ -63,7 +63,7 @@ static std::string WStringToString(const std::wstring &utf16string)
 {
     char *pszUTF8 =
         CPLRecodeFromWChar(utf16string.c_str(), CPL_ENC_UCS2, CPL_ENC_UTF8);
-    std::string utf8string = pszUTF8;
+    std::string utf8string(pszUTF8);
     CPLFree(pszUTF8);
     return utf8string;
 }
@@ -306,7 +306,7 @@ bool OGROpenFileGDBLayer::CreateFeatureDataset(const char *pszFeatureDataset)
     }
 
     char *pszDefinition = CPLSerializeXMLTree(oTree.get());
-    const std::string osDefinition = pszDefinition;
+    const std::string osDefinition(pszDefinition);
     CPLFree(pszDefinition);
 
     m_osFeatureDatasetGUID = OFGDBGenerateUUID();

@@ -796,44 +796,57 @@ The same performance hints apply as those mentioned for the
 Examples
 --------
 
--  Simple translation of a single shapefile into GeoPackage. The table
+.. example::
+   :title: Simple translation of a single shapefile into GeoPackage 
+   
+   The table
    'abc' will be created with the features from abc.shp and attributes
    from abc.dbf. The file ``filename.gpkg`` must **not** already exist,
    as it will be created. For adding new layers into existing geopackage
    run ogr2ogr with **-update**.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f GPKG filename.gpkg abc.shp
 
--  Update of an existing GeoPackage file – e.g. a GeoPackage template –
+.. example:: 
+   :title: Updating an existing GeoPackage file
+
+   Updates an existing file – e.g. a GeoPackage template –
    by adding features to it from another GeoPackage file containing
    features according to the same or a backwards compatible database
    schema.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -append output.gpkg input.gpkg
 
--  Translation of a directory of shapefiles into a GeoPackage. Each file
+.. example:: 
+   :title: Converting a directory of shapefiles into a GeoPackage
+
+   Each file
    will end up as a new table within the GPKG file. The file
    ``filename.gpkg`` must **not** already exist, as it will be created.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f GPKG filename.gpkg ./path/to/dir
 
--  Translation of a PostGIS database into a GeoPackage. Each table in
+.. example:: 
+   :title: Converting  a PostGIS database into a GeoPackage
+
+   Each table in
    the database will end up as a table in the GPKG file. The file
    ``filename.gpkg`` must **not** already exist, as it will be created.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f GPKG filename.gpkg PG:'dbname=mydatabase host=localhost'
 
-- Perform a join between 2 GeoPackage databases:
+.. example:: 
+   :title: Performing a join between two GeoPackage databases
 
-    ::
+    .. code-block:: bash
 
       ogrinfo my_spatial.gpkg \
         -sql "SELECT poly.id, other.foo FROM poly JOIN other_schema.other USING (id)" \

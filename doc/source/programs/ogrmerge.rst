@@ -190,7 +190,7 @@ Examples
 
    .. code-block:: bash
 
-       ogrmerge -f VRT -o merged.vrt *.shp
+       ogrmerge -o merged.vrt *.shp
 
 
 .. example::
@@ -198,7 +198,7 @@ Examples
 
    .. code-block:: bash
 
-       ogrmerge -f GPKG -o merged.gpkg *.shp
+       ogrmerge -o merged.gpkg *.shp
 
 .. example::
    :title: Adding a field to indicate the source layer

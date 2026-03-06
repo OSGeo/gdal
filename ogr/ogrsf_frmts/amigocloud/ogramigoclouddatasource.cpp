@@ -788,7 +788,7 @@ json_object *OGRAmigoCloudDataSource::RunSQL(const char *pszUnescapedSQL)
     CPLString osSQL;
     std::string pszAPIURL = GetAPIURL();
     osSQL = pszAPIURL + "/users/0/projects/" + CPLString(pszProjectId) + "/sql";
-    std::string sql = pszUnescapedSQL;
+    const std::string sql(pszUnescapedSQL);
     if (sql.find("DELETE") != std::string::npos ||
         sql.find("delete") != std::string::npos ||
         sql.find("INSERT") != std::string::npos ||

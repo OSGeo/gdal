@@ -389,37 +389,40 @@ The following configuration options are available:
 Examples
 --------
 
-Listing the types of a WFS server :
+.. example::
+   :title: Listing the types of a WFS server
 
-::
+   .. code-block:: bash
 
-   ogrinfo -ro WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg
+      ogrinfo -ro WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg
 
-Listing the types of a WFS server whose layer structures are cached in a
-XML file :
+.. example::
+   :title: Listing the types of a WFS server whose layer structures are cached in a XML file
 
-::
+   .. code-block:: bash
 
-   ogrinfo -ro wfs_nw_dvg.xml
+      ogrinfo -ro wfs_nw_dvg.xml
 
-Listing the features of the dvg:nw_dvg2_rbz layer, with a spatial filter :
+.. example::
+   :title: Listing the features of the dvg:nw_dvg2_rbz layer, with a spatial filter
 
-::
+   .. code-block:: bash
+   
+      ogrinfo -ro WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg dvg:nw_dvg2_rbz -spat 0 0 319874 5686804
 
-   ogrinfo -ro WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg dvg:nw_dvg2_rbz -spat 0 0 319874 5686804
+.. example::
+   :title: Retrieving the features of GN "Köln" and "Viersen" from the dvg:nw_dvg2_krs layer
 
-Retrieving the features of GN "Köln" and "Viersen" from the
-dvg:nw_dvg2_krs layer :
+   .. code-block:: bash
+   
+      ogrinfo WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg dvg:nw_dvg2_krs -ro -al -where "GN='Köln' or GN='Viersen'"
 
-::
+.. example::
+   :title: Displaying layer metadata
 
-   ogrinfo WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg dvg:nw_dvg2_krs -ro -al -where "GN='Köln' or GN='Viersen'"
+   .. code-block:: bash
 
-Display layer metadata :
-
-::
-
-   ogrinfo -ro -al WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg WFSLayerMetadata
+      ogrinfo -ro -al WFS:https://www.wfs.nrw.de/geobasis/wfs_nw_dvg WFSLayerMetadata
 
 See Also
 --------

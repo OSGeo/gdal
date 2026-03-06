@@ -838,6 +838,18 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
         // There is no limit per bucket, but a 5 TiB limit per object.
         return static_cast<GIntBig>(5) * 1024 * 1024 * 1024 * 1024;
     }
+
+    std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath) override
+    {
+        if (!cpl::starts_with(osPath, m_osPrefix) &&
+            !cpl::starts_with(osPath, GetStreamingFilename(m_osPrefix)) &&
+            cpl::starts_with(osPath, "s3://"))
+        {
+            return GetFSPrefix() + osPath.substr(strlen("s3://"));
+        }
+        return std::string();
+    }
 };
 
 /************************************************************************/

@@ -743,6 +743,8 @@ OGRErr OGR_L_GetExtent3D(OGRLayerH hLayer, int iGeomField,
  @param pszQuery query in restricted SQL WHERE format, or NULL to clear the
  current query.
 
+ @see GetAttrQueryString() to retrieve the currently installed query string.
+
  @return OGRERR_NONE if successfully installed, or an error code if the
  query expression is in error, or some other failure occurs.
  */
@@ -879,6 +881,29 @@ OGRErr OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszQuery)
 #endif
 
     return OGRLayer::FromHandle(hLayer)->SetAttributeFilter(pszQuery);
+}
+
+/************************************************************************/
+/*                      OGR_L_GetAttributeFilter()                      */
+/************************************************************************/
+
+/**
+ * @brief Fetch the current attribute query string.
+ *
+ * This function is the same as the C++ method OGRLayer::GetAttrQueryString().
+ *
+ * @return the current attribute query string, or NULL if no attribute query is
+ * currently installed. The returned string is short lived and owned by the layer
+ * and should not be modified or freed by the caller.
+ *
+ * @see OGR_L_SetAttributeFilter() to set a new attribute query string.
+ * @since GDAL 3.13
+ */
+const char *OGR_L_GetAttributeFilter(OGRLayerH hLayer)
+{
+    VALIDATE_POINTER1(hLayer, "OGR_L_GetAttributeFilter", nullptr);
+
+    return OGRLayer::FromHandle(hLayer)->GetAttrQueryString();
 }
 
 /************************************************************************/

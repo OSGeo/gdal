@@ -344,21 +344,24 @@ Limitations
 Examples
 --------
 
--  Read layer from FileGDB and load into PostGIS:
+.. example::
+   :title: Reading a layer from FileGDB and load into PostGIS
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -overwrite -f "PostgreSQL" PG:"host=myhost user=myuser dbname=mydb password=mypass" "C:\somefolder\BigFileGDB.gdb" "MyFeatureClass"
 
--  Get detailed info for FileGDB:
+.. example::
+   :title: Getting detailed info for FileGDB
 
-   ::
+   .. code-block:: bash
 
       ogrinfo -al "C:\somefolder\MyGDB.gdb"
 
--  Get detailed info for a zipped FileGDB:
+.. example::
+   :title: Getting detailed info for a zipped FileGDB
 
-   ::
+   .. code-block:: bash
 
       ogrinfo -al "C:\somefolder\MyGDB.gdb.zip"
 

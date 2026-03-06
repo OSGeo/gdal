@@ -654,6 +654,23 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
         return static_cast<GIntBig>(GetMaximumPartCount()) *
                GetMaximumPartSizeInMiB() * 1024 * 1024;
     }
+
+    std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath) override
+    {
+        if (!cpl::starts_with(osPath, m_osPrefix) &&
+            !cpl::starts_with(osPath, GetStreamingFilename(m_osPrefix)))
+        {
+            for (const char *pszPrefix : {"az://", "azure://"})
+            {
+                if (cpl::starts_with(osPath, pszPrefix))
+                {
+                    return GetFSPrefix() + osPath.substr(strlen(pszPrefix));
+                }
+            }
+        }
+        return std::string();
+    }
 };
 
 /************************************************************************/

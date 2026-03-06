@@ -652,6 +652,7 @@ void CPL_DLL OGR_L_SetSpatialFilterRectEx(OGRLayerH, int iGeomField,
                                           double dfMinX, double dfMinY,
                                           double dfMaxX, double dfMaxY);
 OGRErr CPL_DLL OGR_L_SetAttributeFilter(OGRLayerH, const char *);
+const char CPL_DLL *OGR_L_GetAttributeFilter(OGRLayerH);
 void CPL_DLL OGR_L_ResetReading(OGRLayerH);
 OGRFeatureH CPL_DLL OGR_L_GetNextFeature(OGRLayerH) CPL_WARN_UNUSED_RESULT;
 

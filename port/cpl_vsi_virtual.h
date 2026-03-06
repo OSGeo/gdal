@@ -570,6 +570,24 @@ class CPL_DLL VSIFilesystemHandler
     {
         return "/";
     }
+
+    /** Returns a hint about the path that this file system
+     * could (potentially) recognize given the input path.
+     *
+     * e.g. /vsizip/ will return "/vsizip/my.zip" if provided with "my.zip",
+     * /vsicurl/ will return "/vsicurl/https://example.com" if provided with
+     * "https://example.com", /vsis3/ will return "/vsis3/bucket/object" if
+     * provided with "s3://bucket/object", etc.
+     *
+     * Returns an empty string if the input path cannot easily be identified
+     * as a potential match for the file system.
+     */
+    virtual std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath)
+    {
+        (void)osPath;
+        return std::string();
+    }
 };
 #endif /* #ifndef DOXYGEN_SKIP */
 
@@ -719,6 +737,9 @@ class VSIArchiveFilesystemHandler /* non final */ : public VSIFilesystemHandler
     {
         return false;
     }
+
+    std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath) override;
 };
 
 /************************************************************************/

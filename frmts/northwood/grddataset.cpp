@@ -1056,6 +1056,8 @@ GDALDataset *NWT_GRDDataset::Create(const char *pszFilename, int nXSize,
     if (poDS->fp == nullptr)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Failed to create GRD file");
+        nwtCloseGrid(poDS->pGrd);
+        poDS->pGrd = nullptr;
         delete poDS;
         return nullptr;
     }
@@ -1070,6 +1072,9 @@ GDALDataset *NWT_GRDDataset::Create(const char *pszFilename, int nXSize,
     if (poDS->UpdateHeader() != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Failed to create GRD file");
+        poDS->pGrd->fp = nullptr;
+        nwtCloseGrid(poDS->pGrd);
+        poDS->pGrd = nullptr;
         delete poDS;
         return nullptr;
     }

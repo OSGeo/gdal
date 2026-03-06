@@ -9423,6 +9423,16 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
                        : CE_Failure;
         }
     }
+    // For unaligned reads, give the array a chance to pre-populate its
+    // internal chunk cache (e.g. Zarr v3 sharded batches I/O via
+    // PreloadShardedBlocks). The block cache loop below then hits the
+    // already-decompressed chunks instead of issuing individual reads.
+    // Backends that don't override AdviseRead() return true (no-op).
+    if (eRWFlag == GF_Read)
+    {
+        AdviseRead(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, eBufType,
+                   nullptr);
+    }
     return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpaceBuf, nLineSpaceBuf, psExtraArg);

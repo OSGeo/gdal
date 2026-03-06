@@ -1039,6 +1039,8 @@ bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
              nThreadsMax);
 
     m_oChunkCache.clear();
+    m_anCachedAdviseReadStart.assign(arrayStartIdx, arrayStartIdx + nDims);
+    m_anCachedAdviseReadCount.assign(count, count + nDims);
 
     // Overflow checked above
     try
@@ -1172,38 +1174,65 @@ bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 
     // Auto-parallel: prefetch multi-chunk reads via IAdviseRead().
     // arrayStep[i] guaranteed positive after negative-step normalization above.
-    if (nDims >= 2 && m_oChunkCache.empty())
+    // Skip if the current read region is already covered by a previous
+    // IAdviseRead (explicit or auto), so we don't blow away a useful cache.
+    if (nDims >= 2)
     {
-        const char *pszNumThreads =
-            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        if (pszNumThreads != nullptr)
+        bool bAlreadyCached = false;
+        if (!m_oChunkCache.empty() && m_anCachedAdviseReadStart.size() == nDims)
         {
-            size_t nReqChunks = 1;
-            for (size_t i = 0; i < nDims; ++i)
+            bAlreadyCached = true;
+            for (size_t i = 0; i < nDims && bAlreadyCached; ++i)
             {
-                const uint64_t startBlock =
-                    arrayStartIdx[i] / m_anInnerBlockSize[i];
-                const uint64_t endBlock =
-                    (arrayStartIdx[i] +
-                     (count[i] - 1) * static_cast<uint64_t>(arrayStep[i])) /
-                    m_anInnerBlockSize[i];
-                nReqChunks *= static_cast<size_t>(endBlock - startBlock + 1);
+                const GUInt64 reqEnd =
+                    arrayStartIdx[i] +
+                    (count[i] - 1) * static_cast<uint64_t>(arrayStep[i]);
+                const GUInt64 cachedEnd = m_anCachedAdviseReadStart[i] +
+                                          m_anCachedAdviseReadCount[i] - 1;
+                if (arrayStartIdx[i] < m_anCachedAdviseReadStart[i] ||
+                    reqEnd > cachedEnd)
+                {
+                    bAlreadyCached = false;
+                }
             }
-            if (nReqChunks > 1)
+        }
+
+        if (!bAlreadyCached)
+        {
+            const char *pszNumThreads =
+                CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
+            if (pszNumThreads != nullptr)
             {
-                // IAdviseRead expects the contiguous element count per
-                // dimension, not the strided output count.  When step > 1,
-                // expand count to cover the full element range.
-                std::vector<size_t> anAdjustedCount(nDims);
+                size_t nReqChunks = 1;
                 for (size_t i = 0; i < nDims; ++i)
                 {
-                    anAdjustedCount[i] =
-                        1 + (count[i] - 1) * static_cast<size_t>(arrayStep[i]);
+                    const uint64_t startBlock =
+                        arrayStartIdx[i] / m_anInnerBlockSize[i];
+                    const uint64_t endBlock =
+                        (arrayStartIdx[i] +
+                         (count[i] - 1) * static_cast<uint64_t>(arrayStep[i])) /
+                        m_anInnerBlockSize[i];
+                    nReqChunks *=
+                        static_cast<size_t>(endBlock - startBlock + 1);
                 }
-                CPLStringList aosOptions;
-                aosOptions.SetNameValue("NUM_THREADS", pszNumThreads);
-                CPL_IGNORE_RET_VAL(IAdviseRead(
-                    arrayStartIdx, anAdjustedCount.data(), aosOptions.List()));
+                if (nReqChunks > 1)
+                {
+                    // IAdviseRead expects the contiguous element count per
+                    // dimension, not the strided output count.  When step > 1,
+                    // expand count to cover the full element range.
+                    std::vector<size_t> anAdjustedCount(nDims);
+                    for (size_t i = 0; i < nDims; ++i)
+                    {
+                        anAdjustedCount[i] =
+                            1 +
+                            (count[i] - 1) * static_cast<size_t>(arrayStep[i]);
+                    }
+                    CPLStringList aosOptions;
+                    aosOptions.SetNameValue("NUM_THREADS", pszNumThreads);
+                    CPL_IGNORE_RET_VAL(IAdviseRead(arrayStartIdx,
+                                                   anAdjustedCount.data(),
+                                                   aosOptions.List()));
+                }
             }
         }
     }
@@ -2015,7 +2044,12 @@ lbl_next_depth:
                         {
                             memcpy(dst_ptr, pSrcStr,
                                    std::min(nLen, nNativeSize));
-                            if (nLen < nNativeSize)
+                            if (nLen > nNativeSize)
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Too long string truncated");
+                            }
+                            else if (nLen < nNativeSize)
                                 memset(dst_ptr + nLen, 0, nNativeSize - nLen);
                         }
                     }

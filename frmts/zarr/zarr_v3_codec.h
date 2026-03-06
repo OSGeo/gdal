@@ -273,6 +273,49 @@ class ZarrV3CodecBytes final : public ZarrV3Codec
 };
 
 /************************************************************************/
+/*                         ZarrV3CodecVLenUTF8                          */
+/************************************************************************/
+
+/** Implements the vlen-utf8 array-to-bytes codec for variable-length
+ *  UTF-8 strings (zarr-extensions).
+ *
+ *  Binary format (little-endian):
+ *    [u32 item_count] [u32 len_0][bytes_0] [u32 len_1][bytes_1] ...
+ *
+ *  Decode produces a flat buffer of nElements * nativeSize bytes where
+ *  each slot is a null-padded string. Read-only for now.
+ */
+class ZarrV3CodecVLenUTF8 final : public ZarrV3Codec
+{
+  public:
+    static constexpr const char *NAME = "vlen-utf8";
+
+    ZarrV3CodecVLenUTF8();
+
+    IOType GetInputType() const override
+    {
+        return IOType::ARRAY;
+    }
+
+    IOType GetOutputType() const override
+    {
+        return IOType::BYTES;
+    }
+
+    bool InitFromConfiguration(const CPLJSONObject &configuration,
+                               const ZarrArrayMetadata &oInputArrayMetadata,
+                               ZarrArrayMetadata &oOutputArrayMetadata,
+                               bool bEmitWarnings) override;
+
+    std::unique_ptr<ZarrV3Codec> Clone() const override;
+
+    bool Encode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+    bool Decode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+};
+
+/************************************************************************/
 /*                         ZarrV3CodecTranspose                         */
 /************************************************************************/
 
@@ -456,11 +499,11 @@ class ZarrV3CodecShardingIndexed final : public ZarrV3Codec
 
     /** Batch-read multiple inner chunks from the same shard via two
      *  ReadMultiRange() passes (index entries, then data), then decode.
-     *  No persistent state is kept — each call reads the needed index
-     *  entries on demand.
+     *  pszFilename is used as a cache key for the shard index; pass nullptr
+     *  to bypass the cache.
      */
     bool BatchDecodePartial(
-        VSIVirtualHandle *poFile,
+        VSIVirtualHandle *poFile, const char *pszFilename,
         const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
             &anRequests,
         std::vector<ZarrByteVectorQuickResize> &aResults);
@@ -526,9 +569,10 @@ class ZarrV3CodecSequence
     /** Batch-read multiple inner chunks via ReadMultiRange().
      *  Delegates to the sharding codec if present, otherwise falls back
      *  to sequential DecodePartial() calls.
+     *  pszFilename is forwarded to the sharding codec for index caching.
      */
     bool BatchDecodePartial(
-        VSIVirtualHandle *poFile,
+        VSIVirtualHandle *poFile, const char *pszFilename,
         const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
             &anRequests,
         std::vector<ZarrByteVectorQuickResize> &aResults);

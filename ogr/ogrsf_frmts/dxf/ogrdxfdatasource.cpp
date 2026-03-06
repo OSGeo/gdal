@@ -728,7 +728,7 @@ const char *OGRDXFDataSource::LookupTextStyleProperty(const char *pszTextStyle,
 CPLString OGRDXFDataSource::GetTextStyleNameByHandle(const char *pszID)
 
 {
-    CPLString l_osID = pszID;
+    const CPLString l_osID(pszID);
 
     if (oTextStyleHandles.count(l_osID) == 0)
         return "";

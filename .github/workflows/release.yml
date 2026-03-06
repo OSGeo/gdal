@@ -116,34 +116,34 @@ jobs:
           fi
       - name: Upload tar.gz
         id: upload_tar_gz
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
           path: |
             gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
       - name: Upload tar.xz
         id: upload_tar_xz
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
           path: |
             gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
       - name: Upload zip
         id: upload_zip
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           path: |
             gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
-      - uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+      - uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
           subject-digest: sha256:${{ steps.upload_tar_gz.outputs.artifact-digest }}
-      - uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+      - uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
           subject-digest: sha256:${{ steps.upload_tar_xz.outputs.artifact-digest }}
-      - uses: actions/attest-build-provenance@96278af6caaf10aea03fd8d33a09a777ca52d62f # v3.2.0
+      - uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           subject-digest: sha256:${{ steps.upload_zip.outputs.artifact-digest }}
@@ -161,7 +161,7 @@ jobs:
           python3 setup.py bdist_wheel
           cp dist/* ${{ github.workspace }}/dist
       - name: Upload bdist_wheel
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: gdal-utils whl
           path: |
@@ -178,7 +178,7 @@ jobs:
           python3 setup.py sdist
           cp dist/* ${{ github.workspace }}/dist
       - name: Upload sdist
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: gdal sdist
           path: |
@@ -188,7 +188,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') && env.PRE_RELEASE != 'true'
         with:
           attestations: true
-      - uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
+      - uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         if: startsWith(github.ref, 'refs/tags/')
         name: Publish release as draft
         with:

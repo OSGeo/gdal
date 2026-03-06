@@ -78,21 +78,18 @@ class GDALVectorCombineOutputLayer final
         for (const auto &fieldName : m_groupBy)
         {
             // RunStep already checked that the field exists
-            auto nField = srcDefn->GetFieldIndex(fieldName.c_str());
+            const auto iField = srcDefn->GetFieldIndex(fieldName.c_str());
+            CPLAssert(iField >= 0);
 
-            m_srcFieldIndices.push_back(nField);
-            m_defn->AddFieldDefn(srcDefn->GetFieldDefn(nField));
+            m_srcFieldIndices.push_back(iField);
+            m_defn->AddFieldDefn(srcDefn->GetFieldDefn(iField));
         }
 
         // Create a new geometry field corresponding to each input geometry
         // field. An appropriate type is worked out below.
         m_defn->SetGeomType(wkbNone);  // Remove default geometry field
-        for (int iGeomField = 0; iGeomField < srcDefn->GetGeomFieldCount();
-             iGeomField++)
+        for (const OGRGeomFieldDefn *srcGeomDefn : srcDefn->GetGeomFields())
         {
-            const OGRGeomFieldDefn *srcGeomDefn =
-                srcDefn->GetGeomFieldDefn(iGeomField);
-
             const auto eSrcGeomType = srcGeomDefn->GetType();
             const bool bHasZ = OGR_GT_HasZ(eSrcGeomType);
             const bool bHasM = OGR_GT_HasM(eSrcGeomType);
@@ -197,8 +194,11 @@ class GDALVectorCombineOutputLayer final
 
             if (auto it = m_features.find(fieldValues); it == m_features.end())
             {
-                m_features[fieldValues] = std::make_unique<OGRFeature>(m_defn);
-                dstFeature = m_features[fieldValues].get();
+                it = m_features
+                         .insert(std::pair(
+                             fieldValues, std::make_unique<OGRFeature>(m_defn)))
+                         .first;
+                dstFeature = it->second.get();
 
                 dstFeature->SetFrom(srcFeature.get(), srcDstFieldMap.data(),
                                     false);
@@ -324,7 +324,8 @@ class GDALVectorCombineOutputLayer final
             return true;
         }
 
-        if (EQUAL(pszCap, OLCFastGetExtent) ||
+        if (EQUAL(pszCap, OLCStringsAsUTF8) ||
+            EQUAL(pszCap, OLCFastGetExtent) ||
             EQUAL(pszCap, OLCFastGetExtent3D) ||
             EQUAL(pszCap, OLCCurveGeometries) ||
             EQUAL(pszCap, OLCMeasuredGeometries) ||
@@ -397,7 +398,7 @@ class GDALVectorCombineOutputLayer final
     std::map<std::vector<std::string>, std::unique_ptr<OGRFeature>>
         m_features{};
     std::optional<decltype(m_features)::const_iterator> m_itFeature{};
-    OGRFeatureDefn *m_defn;
+    OGRFeatureDefn *const m_defn;
     GIntBig m_nProcessedFeaturesRead = 0;
     const bool m_keepNested;
 };

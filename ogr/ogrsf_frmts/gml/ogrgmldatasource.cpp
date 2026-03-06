@@ -1094,7 +1094,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
                         const char *pszEscapedURL = papszTokens[i + 1];
                         char *pszLocation = CPLUnescapeString(
                             pszEscapedURL, nullptr, CPLES_URL);
-                        CPLString osLocation = pszLocation;
+                        const CPLString osLocation(pszLocation);
                         CPLFree(pszLocation);
                         if (osLocation.ifind("typename=") !=
                                 std::string::npos &&

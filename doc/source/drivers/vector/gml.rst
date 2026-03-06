@@ -1396,19 +1396,19 @@ Example:
 Examples
 --------
 
-The ogr2ogr utility can be used to dump the results of a Oracle query to
-GML:
+.. example::
+   :title: Writing the results of an Oracle query to GML
 
-::
+   .. code-block:: bash
+   
+      ogr2ogr -f GML output.gml OCI:usr/pwd@db my_feature -where "id = 0"
 
-   ogr2ogr -f GML output.gml OCI:usr/pwd@db my_feature -where "id = 0"
+.. example::
+   :title: Writing the results of a PostGIS query to GML
 
-The ogr2ogr utility can be used to dump the results of a PostGIS query
-to GML:
+   .. code-block:: bash
 
-::
-
-   ogr2ogr -f GML output.gml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+      ogr2ogr -f GML output.gml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
 
 See Also
 --------

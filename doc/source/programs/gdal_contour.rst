@@ -70,10 +70,12 @@ be on the right, i.e. a line string goes clockwise around a top.
 .. option:: -inodata
 
     Ignore any nodata value implied in the dataset - treat all values as valid.
+    Cannot be used together with :option:`-snodata`.
 
 .. option:: -snodata <value>
 
     Input pixel value to treat as "nodata".
+    Cannot be used together with :option:`-inodata`.
 
 .. option:: -f <format>
 
@@ -215,7 +217,7 @@ Examples
     and produce a GeoJSON output with the contour min and max elevations in the ``min`` and ``max`` attributes.
 
 
-    If the minimum and maximum values from the raster are desired, the special values `MIN`` and `MAX``
+    If the minimum and maximum values from the raster are desired, the special values ``MIN`` and ``MAX``
     (case insensitive) can be used:
 
     .. code-block:: bash

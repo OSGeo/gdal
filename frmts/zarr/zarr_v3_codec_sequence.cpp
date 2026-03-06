@@ -49,7 +49,11 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
     {
         CPL_IGNORE_RET_VAL(this);
         if (eLastType == ZarrV3Codec::IOType::ARRAY &&
-            oInputArrayMetadata.oElt.nativeSize > 1)
+            oInputArrayMetadata.oElt.nativeSize > 1 &&
+            oInputArrayMetadata.oElt.nativeType !=
+                DtypeElt::NativeType::STRING_ASCII &&
+            oInputArrayMetadata.oElt.nativeType !=
+                DtypeElt::NativeType::STRING_UNICODE)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "'bytes' codec missing. Assuming little-endian storage, "
@@ -94,6 +98,8 @@ bool ZarrV3CodecSequence::InitFromJson(const CPLJSONObject &oCodecs,
             poCodec = std::make_unique<ZarrV3CodecTranspose>();
         else if (osName == ZarrV3CodecCRC32C::NAME)
             poCodec = std::make_unique<ZarrV3CodecCRC32C>();
+        else if (osName == ZarrV3CodecVLenUTF8::NAME)
+            poCodec = std::make_unique<ZarrV3CodecVLenUTF8>();
         else if (osName == ZarrV3CodecShardingIndexed::NAME)
         {
             bShardingFound = true;
@@ -288,7 +294,7 @@ bool ZarrV3CodecSequence::DecodePartial(VSIVirtualHandle *poFile,
 /************************************************************************/
 
 bool ZarrV3CodecSequence::BatchDecodePartial(
-    VSIVirtualHandle *poFile,
+    VSIVirtualHandle *poFile, const char *pszFilename,
     const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
         &anRequests,
     std::vector<ZarrByteVectorQuickResize> &aResults)
@@ -302,7 +308,8 @@ bool ZarrV3CodecSequence::BatchDecodePartial(
             m_apoCodecs.back().get());
         if (poSharding)
         {
-            return poSharding->BatchDecodePartial(poFile, anRequests, aResults);
+            return poSharding->BatchDecodePartial(poFile, pszFilename,
+                                                  anRequests, aResults);
         }
     }
 

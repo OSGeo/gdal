@@ -454,10 +454,12 @@ The following configuration options are available:
 Examples
 --------
 
--  A merge of two shapefiles 'file1.shp' and 'file2.shp' into a new file
-   'file_merged.shp' is performed like this:
+.. example::
+   :title: Merging two shapefiles 'file1.shp' and 'file2.shp' 
+   
+   A new 'file_merged.shp' is created like this:
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr file_merged.shp file1.shp
       ogr2ogr -update -append file_merged.shp file2.shp -nln file_merged
@@ -467,16 +469,17 @@ Examples
 
    The -nln option sets the name of the layer to be copied to.
 
--  Building a spatial index :
+.. example::
+   :title:  Building a spatial index
 
-   ::
+   .. code-block:: bash
 
       ogrinfo file1.shp -sql "CREATE SPATIAL INDEX ON file1"
 
--  Resizing columns of a DBF file to their optimal size
-   :
+.. example::
+   :title: Resizing columns of a DBF file to their optimal size
 
-   ::
+   .. code-block:: bash
 
       ogrinfo file1.dbf -sql "RESIZE file1"
 

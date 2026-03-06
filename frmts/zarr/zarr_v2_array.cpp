@@ -85,6 +85,8 @@ bool ZarrV2Array::Flush()
 
     bool ret = ZarrV2Array::FlushDirtyBlock();
 
+    m_anCachedBlockIndices.clear();
+
     if (m_bDefinitionModified)
     {
         if (!Serialize())
@@ -690,11 +692,17 @@ bool ZarrV2Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
         CPLAssert(psFilterDecompressor);
 
         CPLStringList aosOptions;
-        for (const auto &obj : oFilter.GetChildren())
+
         {
-            aosOptions.SetNameValue(obj.GetName().c_str(),
-                                    obj.ToString().c_str());
+            // Below obj.ToString() involves dynamic memory allocation
+            std::lock_guard<std::mutex> oLock(m_oMutex);
+            for (const auto &obj : oFilter.GetChildren())
+            {
+                aosOptions.SetNameValue(obj.GetName().c_str(),
+                                        obj.ToString().c_str());
+            }
         }
+
         void *out_buffer = &abyTmpRawBlockData[0];
         size_t nOutSize = abyTmpRawBlockData.size();
         if (!psFilterDecompressor->pfnFunc(

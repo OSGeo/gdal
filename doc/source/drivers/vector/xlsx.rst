@@ -95,18 +95,20 @@ The following configuration options are available:
 Examples
 --------
 
--  Transform CSV file input.csv to an Office Open XML file output.xlsx.
+.. example::
+
+   Transform CSV file input.csv to an Office Open XML file output.xlsx.
    The spreadsheet will contain one sheet with name "input".
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f "XLSX" output.xlsx input.csv
 
--  Add the contents of CSV file input2.csv to the OOXML file output.xlsx
+   Add the contents of CSV file input2.csv to the OOXML file output.xlsx
    created in the first example. The spreadsheet will now contain two
    sheets, "input" and "input2".
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f "XLSX" output.xlsx -update input2.csv
 

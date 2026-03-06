@@ -17,6 +17,12 @@ From GDAL 3.12 to GDAL 3.13
     :cpp:func:`OGR_G_AddPointZM`, :cpp:func:`OGR_G_SetPoints` and
     :cpp:func:`OGR_G_SetPointsZM`.
 
+  * ``MIN``, ``MAX`` and ``ABS`` pre-processor macros defined in :source_file:`port/cpl_port.h`
+    have been renamed to ``CPL_MIN``, ``CPL_MAX`` and ``CPL_ABS``.
+
+  * ``M_PI`` is no longer exported. Users that would rely on this macro must now
+    include :file:`math.h`, with the ``_USE_MATH_DEFINES`` macro defined before.
+
 - Changes impacting out-of-tree vector drivers:
 
   * :cpp:func:`GDALDataset::Close` takes now 2 input parameters ``(GDALProgressFunc pfnProgress, void *pProgressData)``,

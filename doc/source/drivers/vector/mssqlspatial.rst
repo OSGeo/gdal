@@ -288,31 +288,35 @@ The driver implements transactions at the dataset level, per :ref:`rfc-54`
 Examples
 --------
 
-Creating a layer from an OGR data source
+.. example::
+   :title: Creating a layer from an OGR data source
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=yes" "rivers.tab"
 
       ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=127.0.0.1;database=TestDB;UID=SA;PWD=DummyPassw0rd" "rivers.gpkg"
 
-Connecting to a layer and dump the contents
+.. example::
+   :title: Connecting to a layer and dumping the contents
 
-   ::
+   .. code-block:: bash
 
       ogrinfo -al "MSSQL:server=.\MSSQLSERVER2008;database=geodb;tables=rivers;trusted_connection=yes"
 
       ogrinfo -al "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd"
 
-Connecting with username/password
+.. example::
+   :title: Connecting with username/password
 
-   ::
+   .. code-block:: bash
 
       ogrinfo -al   MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=no;UID=user;PWD=pwd
 
-Connecting with username/password stored in environment variables
+.. example::
+   :title: Connecting with username/password stored in environment variables
 
-   ::
+   .. code-block:: bash
 
       export MSSQLSPATIAL_UID=user
       export MSSQLSPATIAL_PWD=pwd

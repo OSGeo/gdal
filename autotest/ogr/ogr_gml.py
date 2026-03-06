@@ -5433,3 +5433,13 @@ def test_ogr_gml_multiple_geom_elements_different_last_element(tmp_vsimem):
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (3 4)"
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (7 8)"
+
+
+###############################################################################
+# Test that we don't leak memory on that invalid file
+
+
+def test_ogr_gml_ossfuzz_487160964():
+
+    with gdal.quiet_errors():
+        ogr.Open("data/gml/ossfuzz_487160964.gml")

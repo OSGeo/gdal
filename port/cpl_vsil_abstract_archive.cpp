@@ -795,4 +795,28 @@ bool VSIArchiveFilesystemHandler::IsArchive(const char *pszPath) const
            osFileInArchive.empty();
 }
 
+/************************************************************************/
+/*                GetHintForPotentiallyRecognizedPath()                 */
+/************************************************************************/
+
+std::string VSIArchiveFilesystemHandler::GetHintForPotentiallyRecognizedPath(
+    const std::string &osPath)
+{
+    VSIStatBufL sStat;
+    if (!cpl::starts_with(osPath, GetPrefix()) &&
+        VSIStatExL(osPath.c_str(), &sStat, VSI_STAT_EXISTS_FLAG) == 0)
+    {
+        for (const auto &osExt : GetExtensions())
+        {
+            if (osPath.size() > osExt.size() &&
+                EQUALN(osPath.c_str() + (osPath.size() - osExt.size()),
+                       osExt.c_str(), osExt.size()))
+            {
+                return std::string(GetPrefix()).append("/").append(osPath);
+            }
+        }
+    }
+    return std::string();
+}
+
 //! @endcond

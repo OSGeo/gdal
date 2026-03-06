@@ -1613,7 +1613,7 @@ CPLString PDSDataset::CleanString(const CPLString &osInput)
             pszWrk[i] = '_';
     }
 
-    CPLString osOutput = pszWrk;
+    CPLString osOutput(pszWrk);
     CPLFree(pszWrk);
     return osOutput;
 }

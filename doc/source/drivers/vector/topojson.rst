@@ -40,17 +40,19 @@ URL/filename/text.
 Examples
 --------
 
-Read a TopoJSON file with multiple layers.
+.. example::
+   :title: Reading a TopoJSON file with multiple layers
 
-::
+   .. code-block:: bash
 
-   gdal vector info "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json"
+      gdal vector info "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json"
 
-Write a single layer from a TopoJSON file to GeoJSON file.
+.. example::
+   :title: Writing a single layer from a TopoJSON file to GeoJSON file
 
-::
+   .. code-block:: bash
 
-    gdal vector convert "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" counties-albers-10m.geojson --layer counties
+      gdal vector convert "https://cdn.jsdelivr.net/npm/us-atlas@3/counties-albers-10m.json" counties-albers-10m.geojson --layer counties
 
 See Also
 --------

@@ -437,6 +437,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_WARP_USE_TRANSLATION_OPTIM", // from gdalwarpoperation.cpp
    "GDAL_WMS_MAX_CONNECTIONS", // from gdalogcapidataset.cpp
    "GDAL_XML_VALIDATION", // from ogrgmlasconf.cpp, ogrvrtdriver.cpp, pdfcreatefromcomposition.cpp
+   "GDAL_ZARR_SHARD_INDEX_CACHE_MAX_BYTES", // from zarr_v3_codec_sharding.cpp
    "GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", // from zarr_array.cpp
    "GDALCUTLINE_SKIP_CONTAINMENT_TEST", // from gdalcutline.cpp
    "GDALWARP_DENSIFY_CUTLINE", // from gdalwarp_lib.cpp
@@ -1095,6 +1096,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "WMS_INFO_FORMAT", // from minidriver_wms.cpp
    "XDG_CACHE_HOME", // from gdal_misc.cpp, gdalwmscache.cpp
    "ZARR_ALLOW_BIG_TILE_SIZE", // from zarr_v2_array.cpp, zarr_v3_array.cpp
+   "ZARR_VLEN_STRING_MAX_LENGTH", // from zarr_v3_array.cpp, zarr_v3_group.cpp
    "ZLEVEL_OVERVIEW", // from gt_overview.cpp
    "ZMAP_EMIT_EOL_AT_END_OF_COLUMN", // from zmapdataset.cpp
    "ZMAP_PIXEL_IS_POINT", // from zmapdataset.cpp

@@ -2472,7 +2472,18 @@ def test_ogr_geojson_57(tmp_vsimem):
 ]
 }
 """
-    assert json.loads(got) == json.loads(expected)
+    # PROJ >= 9.8 uses ellipsoidal formula for +proj=eqc (previously
+    # spherical), producing slightly different Y values
+    expected_alt = """{
+"type": "FeatureCollection",
+"bbox": [ -17.9663057, -18.0814781, 17.9663057, 18.0814781 ],
+"features": [
+{ "type": "Feature", "properties": { }, "bbox": [ -17.9663057, -18.0814781, 17.9663057, 18.0814781 ], "geometry": { "type": "Polygon", "coordinates": [ [ [ 17.9663057, 18.0814781 ], [ -17.9663057, 18.0814781 ], [ -17.9663057, -18.0814781 ], [ 17.9663057, -18.0814781 ], [ 17.9663057, 18.0814781 ] ] ] } }
+]
+}
+"""
+    j_got = json.loads(got)
+    assert j_got == json.loads(expected) or j_got == json.loads(expected_alt), got
 
     # Polar case: EPSG:3995: WGS 84 / Arctic Polar Stereographic
     src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0)

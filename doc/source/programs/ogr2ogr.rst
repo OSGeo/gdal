@@ -765,8 +765,8 @@ Advanced examples
 .. example::
    :title: Outputting geometries with the CSV driver.
 
-   By default, this driver does not preserve geometries on layer creation by
-   default. An explicit layer creation option is needed:
+   By default this driver does not preserve geometries upon layer creation.
+   An explicit layer creation option is needed:
 
     .. code-block:: bash
 

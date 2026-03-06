@@ -961,7 +961,7 @@ def ogrmerge(
             if not update and not overwrite_ds:
                 print(
                     "ERROR: Destination dataset already exists, "
-                    + "but -update nor -overwrite_ds are specified",
+                    + "but neither -update nor -overwrite_ds are specified",
                     file=sys.stderr,
                 )
                 return 1
@@ -990,7 +990,7 @@ def ogrmerge(
         if gdal.VSIStatL(dst_filename) and not overwrite_ds:
             print(
                 "ERROR: Destination dataset already exists, "
-                + "but -overwrite_ds are specified",
+                + "but -overwrite_ds is not specified",
                 file=sys.stderr,
             )
             return 1

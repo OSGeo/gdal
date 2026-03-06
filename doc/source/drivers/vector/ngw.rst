@@ -437,41 +437,50 @@ clause has same limitations as SetAttributeFilter method input.
 Examples
 --------
 
-Read datasource contents (1730 is resource group identifier):
+.. example::
+   :title: Reading datasource contents 
 
-::
+   (1730 is resource group identifier):
 
-       ogrinfo -ro NGW:https://demo.nextgis.com/resource/1730
+   .. code-block:: bash
 
-Read layer details (`1730` is resource group identifier, `Parks` is vector layer
-name):
+      ogrinfo -ro NGW:https://demo.nextgis.com/resource/1730
 
-::
+.. example:: 
+   :title: Reading layer details 
 
-       ogrinfo -ro -so NGW:https://demo.nextgis.com/resource/1730 Parks
+   (`1730` is resource group identifier, `Parks` is vector layer
+   name):
+   
+   .. code-block:: bash
+   
+      ogrinfo -ro -so NGW:https://demo.nextgis.com/resource/1730 Parks
 
-Creating and populating a vector layer from a shapefile in existing resource
-group with identifier 1730. New vector layer name will be "some new name":
+.. example:: 
+   :title: Creating and populating a vector layer from a shapefile in existing resource group with identifier 1730.
 
-::
+   New vector layer name will be "some new name":
+   
+   .. code-block:: bash
+   
+      ogr2ogr -f NGW -nln "some new name" -update -doo "BATCH_SIZE=100" -t_srs EPSG:3857 "NGW:https://demo.nextgis.com/resource/1730" myshapefile.shp
 
-       ogr2ogr -f NGW -nln "some new name" -update -doo "BATCH_SIZE=100" -t_srs EPSG:3857 "NGW:https://demo.nextgis.com/resource/1730" myshapefile.shp
+   .. warning::
+      The `-update` key is mandatory, otherwise the destination datasource will
+      silently delete. The `-t_srs EPSG:3857` key is mandatory because vector
+      layers spatial reference in NextGIS Web can be only in EPSG:3857.
+   
+   .. note::
+      The `-doo "BATCH_SIZE=100"` key is recommended for speed up feature transferring.
 
-.. warning::
-   The `-update` key is mandatory, otherwise the destination datasource will
-   silently delete. The `-t_srs EPSG:3857` key is mandatory because vector
-   layers spatial reference in NextGIS Web can be only in EPSG:3857.
+.. example::
+   Creating and populating a vector layer from a shapefile in new resource group with name "new group" and parent identifier 1730.
+  
+   New vector layer name will be "some new name".
 
-.. note::
-   The `-doo "BATCH_SIZE=100"` key is recommended for speed up feature transferring.
+   .. code-block:: bash
 
-Creating and populating a vector layer from a shapefile in new resource
-group with name "new group" and parent identifier 1730. New vector layer name
-will be "some new name":
-
-::
-
-       ogr2ogr -f NGW -nln "Название на русском языке" -dsco "BATCH_SIZE=100" -t_srs EPSG:3857 "NGW:https://demo.nextgis.com/resource/1730/new group" myshapefile.shp
+      ogr2ogr -f NGW -nln "Название на русском языке" -dsco "BATCH_SIZE=100" -t_srs EPSG:3857 "NGW:https://demo.nextgis.com/resource/1730/new group" myshapefile.shp
 
 See also
 --------

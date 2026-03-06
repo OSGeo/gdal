@@ -366,7 +366,7 @@ GDALDataset *MMRDataset::CreateCopy(const char *pszFilename,
 
 {
     // pszFilename doesn't have extension or must end in "I.rel"
-    const CPLString osFileName = pszFilename;
+    const CPLString osFileName(pszFilename);
     CPLString osRelName = CreateAssociatedMetadataFileName(osFileName);
     if (osRelName.empty())
         return nullptr;

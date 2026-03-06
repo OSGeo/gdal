@@ -665,14 +665,14 @@ OGRSelafinDataSource::ICreateLayer(const char *pszLayerName,
     nLayers += 2;
     papoLayers =
         (OGRSelafinLayer **)CPLRealloc(papoLayers, sizeof(void *) * nLayers);
-    CPLString szName = pszLayerName;
-    CPLString szNewLayerName = szName + "_p";
+    const CPLString osName(pszLayerName);
+    CPLString osNewLayerName(osName + "_p");
     papoLayers[nLayers - 2] =
-        new OGRSelafinLayer(this, szNewLayerName, bUpdate, poSpatialRef,
+        new OGRSelafinLayer(this, osNewLayerName, bUpdate, poSpatialRef,
                             poHeader, poHeader->nSteps - 1, POINTS);
-    szNewLayerName = szName + "_e";
+    osNewLayerName = osName + "_e";
     papoLayers[nLayers - 1] =
-        new OGRSelafinLayer(this, szNewLayerName, bUpdate, poSpatialRef,
+        new OGRSelafinLayer(this, osNewLayerName, bUpdate, poSpatialRef,
                             poHeader, poHeader->nSteps - 1, ELEMENTS);
     return papoLayers[nLayers - 2];
 }

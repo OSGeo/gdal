@@ -58,6 +58,7 @@ template <class T> inline T MultiplyElements(const std::vector<T> &vector)
 /*                             ZarrDataset                              */
 /************************************************************************/
 
+class ZarrArray;
 class ZarrGroupBase;
 
 class ZarrDataset final : public GDALDataset
@@ -71,7 +72,7 @@ class ZarrDataset final : public GDALDataset
     bool m_bSpatialProjConvention = false;
     std::shared_ptr<GDALDimension> m_poDimX{};
     std::shared_ptr<GDALDimension> m_poDimY{};
-    std::shared_ptr<GDALMDArray> m_poSingleArray{};
+    std::shared_ptr<ZarrArray> m_poSingleArray{};
 
     static GDALDataset *OpenMultidim(const char *pszFilename, bool bUpdateMode,
                                      CSLConstList papszOpenOptions);
@@ -111,6 +112,14 @@ class ZarrDataset final : public GDALDataset
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
+
+  protected:
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount,
+                     BANDMAP_TYPE panBandMap, GSpacing nPixelSpace,
+                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/
@@ -281,6 +290,7 @@ class ZarrSharedResource
     std::weak_ptr<ZarrGroupBase> m_poWeakRootGroup{};
     std::set<std::string> m_oSetArrayInLoading{};
     std::map<std::string, std::shared_ptr<GDALMDArray>> m_oCacheIndexingVar{};
+    std::string m_osKerchunkParquetPath{};
 
     explicit ZarrSharedResource(const std::string &osRootDirectoryName,
                                 bool bUpdatable);
@@ -346,6 +356,11 @@ class ZarrSharedResource
     UpdateDimensionSize(const std::shared_ptr<GDALDimension> &poUpdatedDim);
 
     std::shared_ptr<ZarrGroupBase> GetRootGroup();
+
+    const std::string &GetKerchunkParquetPath() const
+    {
+        return m_osKerchunkParquetPath;
+    }
 
     void SetRootGroup(const std::shared_ptr<ZarrGroupBase> &poRootGroup)
     {
@@ -449,6 +464,8 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     ~ZarrGroupBase() override;
 
     virtual bool Close();
+
+    bool Flush();
 
     std::shared_ptr<GDALAttribute>
     GetAttribute(const std::string &osName) const override
@@ -967,6 +984,10 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     mutable std::map<std::vector<uint64_t>, CachedBlock> m_oChunkCache{};
 
+    //! Region covered by the last IAdviseRead (for subset check in IRead)
+    mutable std::vector<GUInt64> m_anCachedAdviseReadStart{};
+    mutable std::vector<size_t> m_anCachedAdviseReadCount{};
+
     static uint64_t
     ComputeBlockCount(const std::string &osName,
                       const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
@@ -1404,6 +1425,14 @@ class ZarrV3Array final : public ZarrArray
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
+    bool WriteChunksThreadSafe(const GUInt64 *arrayStartIdx,
+                               const size_t *count, const GInt64 *arrayStep,
+                               const GPtrDiff_t *bufferStride,
+                               const GDALExtendedDataType &bufferDataType,
+                               const void *pSrcBuffer, const int iThread,
+                               const int nThreads,
+                               std::string &osErrorMsg) const;
+
     void LoadOverviews() const;
 
     void ReconstructCreationOptionsFromCodecs();
@@ -1445,6 +1474,14 @@ class ZarrV3Array final : public ZarrArray
                           GDALProgressFunc pfnProgress, void *pProgressData,
                           CSLConstList papszOptions) override;
 
+    static void
+    ExtractSubArrayFromLargerOne(const ZarrByteVectorQuickResize &abySrc,
+                                 const std::vector<size_t> &anSrcBlockSize,
+                                 const std::vector<size_t> &anInnerBlockSize,
+                                 const std::vector<size_t> &anInnerBlockIndices,
+                                 ZarrByteVectorQuickResize &abyChunk,
+                                 const size_t nDTSize);
+
   protected:
     std::string GetDataDirectory() const override;
 
@@ -1471,5 +1508,7 @@ class ZarrV3Array final : public ZarrArray
 };
 
 void ZarrClearCoordinateCache();
+void ZarrClearShardIndexCache();
+void ZarrEraseShardIndexFromCache(const std::string &osFilename);
 
 #endif  // ZARR_H

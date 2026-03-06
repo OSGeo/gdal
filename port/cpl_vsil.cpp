@@ -692,11 +692,23 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
 
     for (auto oIter = aosQueue.rbegin(); oIter != aosQueue.rend(); ++oIter)
     {
-        if (VSIMkdir(oIter->c_str(), mode) != 0)
+        if (VSIMkdir(oIter->c_str(), mode) != 0 &&
+            // In case of concurrent VSIMkdirRecursive() on the same directory
+            (VSIStatL(oIter->c_str(), &sStat) != 0 ||
+             !VSI_ISDIR(sStat.st_mode)))
+        {
             return -1;
+        }
     }
 
-    return VSIMkdir(osPathnameOri.c_str(), mode);
+    if (VSIMkdir(osPathnameOri.c_str(), mode) != 0 &&
+        // In case of concurrent VSIMkdirRecursive() on the same directory
+        (VSIStatL(osPathnameOri.c_str(), &sStat) != 0 ||
+         !VSI_ISDIR(sStat.st_mode)))
+    {
+        return -1;
+    }
+    return 0;
 }
 
 /************************************************************************/

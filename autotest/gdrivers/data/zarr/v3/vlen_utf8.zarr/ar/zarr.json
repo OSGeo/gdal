@@ -1,0 +1,25 @@
+{
+    "zarr_format": 3,
+    "node_type": "array",
+    "shape": [3],
+    "data_type": "string",
+    "chunk_grid": {
+        "name": "regular",
+        "configuration": {
+            "chunk_shape": [3]
+        }
+    },
+    "chunk_key_encoding": {
+        "name": "default",
+        "configuration": {
+            "separator": "/"
+        }
+    },
+    "fill_value": "",
+    "codecs": [
+        {
+            "name": "vlen-utf8",
+            "configuration": {}
+        }
+    ]
+}

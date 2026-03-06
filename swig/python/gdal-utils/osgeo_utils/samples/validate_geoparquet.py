@@ -13,6 +13,7 @@
 ###############################################################################
 
 import json
+import os
 import sys
 
 from osgeo import gdal, ogr, osr
@@ -37,6 +38,23 @@ map_ogr_geom_type_to_geoparquet = {
 }
 
 map_remote_resources = {}
+
+
+def _try_local_proj_schema(uri):
+    """Try to resolve a proj.org schema URI from local PROJ data directory."""
+    prefix = "https://proj.org/schemas/"
+    if not uri.startswith(prefix):
+        return None
+    relative = uri[len(prefix) :]
+    try:
+        for search_path in osr.GetPROJSearchPaths():
+            local_path = os.path.join(search_path, os.path.basename(relative))
+            if os.path.isfile(local_path):
+                with open(local_path, "rb") as f:
+                    return f.read()
+    except OSError:
+        pass
+    return None
 
 
 class GeoParquetValidator:
@@ -99,16 +117,20 @@ class GeoParquetValidator:
             def retrieve_remote_file(uri: str):
                 if not uri.startswith("http://") and not uri.startswith("https://"):
                     raise Exception(f"Cannot retrieve {uri}")
-                import urllib.request
 
                 if uri not in map_remote_resources:
-                    response = urllib.request.urlopen(
-                        urllib.request.Request(uri, headers={"User-Agent": "GDAL"})
-                    ).read()
-                    map_remote_resources[uri] = response
-                else:
-                    response = map_remote_resources[uri]
-                return Resource.from_contents(json.loads(response))
+                    local_content = _try_local_proj_schema(uri)
+                    if local_content is not None:
+                        map_remote_resources[uri] = local_content
+                    else:
+                        import urllib.request
+
+                        response = urllib.request.urlopen(
+                            urllib.request.Request(uri, headers={"User-Agent": "GDAL"})
+                        ).read()
+                        map_remote_resources[uri] = response
+
+                return Resource.from_contents(json.loads(map_remote_resources[uri]))
 
             registry = Registry(retrieve=retrieve_remote_file)
             validator_cls = jsonschema.validators.validator_for(schema)

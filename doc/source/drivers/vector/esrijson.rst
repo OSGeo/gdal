@@ -66,15 +66,17 @@ The following open options are supported:
       through results with a ArcGIS Feature Service endpoint. Has only effect
       for ArcGIS servers >= 10.3 and layers with supportsPagination=true capability.
 
-Example
--------
+Examples
+--------
 
-Read the result of a FeatureService request against a GeoServices REST
-server (note that this server does not support paging):
+.. example::
+   :title: Read the result of a FeatureService request against a GeoServices REST server 
+   
+   Note that this server does not support paging.
 
-::
+   .. code-block:: bash
 
-   ogrinfo -ro -al "https://sampleserver6.arcgisonline.com/arcgis/rest/services/PoolPermits/FeatureServer/0/query?resultRecordCount=10&f=pjson"
+      ogrinfo -ro -al "https://sampleserver6.arcgisonline.com/arcgis/rest/services/PoolPermits/FeatureServer/0/query?resultRecordCount=10&f=pjson"
 
 See Also
 --------

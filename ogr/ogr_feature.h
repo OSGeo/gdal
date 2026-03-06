@@ -819,6 +819,9 @@ class CPL_DLL OGRFeatureDefn
     }
 
     int Dereference()
+#if defined(GDAL_COMPILATION) && !defined(DOXYGEN_XML)
+        CPL_WARN_DEPRECATED("Use Release() instead")
+#endif
     {
         return CPLAtomicDec(&nRefCount);
     }

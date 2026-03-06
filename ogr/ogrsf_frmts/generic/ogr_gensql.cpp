@@ -1336,7 +1336,7 @@ static CPLString GetFilterForJoin(swq_expr_node *poExpr, OGRFeature *poSrcFeat,
     if (poExpr->eNodeType == SNT_CONSTANT)
     {
         char *pszRes = poExpr->Unparse(nullptr, '"');
-        CPLString osRes = pszRes;
+        CPLString osRes(pszRes);
         CPLFree(pszRes);
         return osRes;
     }

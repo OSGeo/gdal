@@ -4408,7 +4408,7 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
     if (pszPVType == nullptr)
         return nullptr;
 
-    const char *pszProduct = CSLFetchNameValue(papszOptions, "PRODUCT");
+    const char *pszProduct = CSLFetchNameValue(papszOptions, "PRODUCT_TYPE");
     if (pszProduct && EQUAL(pszProduct, "CADRG"))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -7489,8 +7489,9 @@ void NITFDriver::InitCreationOptionList()
         "progressive mode'/>"
         "   <Option name='RESTART_INTERVAL' type='int' description='Restart "
         "interval (in MCUs). -1 for auto, 0 for none, > 0 for user specified' "
-        "default='-1'/>"
+        "default='-1'/>";
 #endif
+    osCreationOptions +=
         "   <Option name='NUMI' type='int' default='1' description='Number of "
         "images to create (1-999). Only works with IC=NC if "
         "WRITE_ONLY_FIRST_IMAGE=NO'/>"

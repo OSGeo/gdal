@@ -8263,29 +8263,23 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         }
     }
 
-    OGRFeatureDefn oLayerDefnTmp(poLayerDefn->GetName());
-
-    struct LayerDefnTmpRefReleaser
+    struct FeatureDefnReleaser
     {
-        OGRFeatureDefn &m_oDefn;
-
-        explicit LayerDefnTmpRefReleaser(OGRFeatureDefn &oDefn) : m_oDefn(oDefn)
+        void operator()(OGRFeatureDefn *poFDefn)
         {
-            m_oDefn.Reference();
-        }
-
-        ~LayerDefnTmpRefReleaser()
-        {
-            m_oDefn.Dereference();
+            if (poFDefn)
+                poFDefn->Release();
         }
     };
 
-    LayerDefnTmpRefReleaser oLayerDefnTmpRefReleaser(oLayerDefnTmp);
+    std::unique_ptr<OGRFeatureDefn, FeatureDefnReleaser> poLayerDefnTmp(
+        std::make_unique<OGRFeatureDefn>(poLayerDefn->GetName()).release());
+    poLayerDefnTmp->Reference();
 
     std::vector<int> anIdentityFieldMap;
     if (bFallbackTypesUsed)
     {
-        oLayerDefnTmp.SetGeomType(wkbNone);
+        poLayerDefnTmp->SetGeomType(wkbNone);
         for (int i = 0; i < poLayerDefn->GetFieldCount(); ++i)
         {
             anIdentityFieldMap.push_back(i);
@@ -8299,11 +8293,11 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
             if (oIter != oMapOGRFieldIndexToFieldInfoIndex.end())
                 asFieldInfo[oIter->second].eSetFeatureFieldType =
                     asFieldInfo[oIter->second].eNominalFieldType;
-            oLayerDefnTmp.AddFieldDefn(&oFieldDefn);
+            poLayerDefnTmp->AddFieldDefn(&oFieldDefn);
         }
         for (int i = 0; i < poLayerDefn->GetGeomFieldCount(); ++i)
         {
-            oLayerDefnTmp.AddGeomFieldDefn(poLayerDefn->GetGeomFieldDefn(i));
+            poLayerDefnTmp->AddGeomFieldDefn(poLayerDefn->GetGeomFieldDefn(i));
         }
     }
     else
@@ -8342,7 +8336,8 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         }
     };
 
-    OGRFeature oFeature(bFallbackTypesUsed ? &oLayerDefnTmp : poLayerDefn);
+    OGRFeature oFeature(bFallbackTypesUsed ? poLayerDefnTmp.get()
+                                           : poLayerDefn);
     FeatureCleaner oCleaner(oFeature, abUseStringOptim);
     OGRFeature oFeatureTarget(poLayerDefn);
     OGRFeature *const poFeatureTarget =
@@ -8409,7 +8404,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                     }
                     bool bLossyConversion = false;
                     const auto eSrcType =
-                        oLayerDefnTmp.GetFieldDefnUnsafe(i)->GetType();
+                        poLayerDefnTmp->GetFieldDefnUnsafe(i)->GetType();
                     const auto eDstType =
                         poLayerDefn->GetFieldDefnUnsafe(i)->GetType();
 
@@ -8460,7 +8455,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                                  "For feature " CPL_FRMT_GIB
                                  ", value of field %s cannot not preserved",
                                  oFeatureTarget.GetFID(),
-                                 oLayerDefnTmp.GetFieldDefn(i)->GetNameRef());
+                                 poLayerDefnTmp->GetFieldDefn(i)->GetNameRef());
                         if (bTransactionOK)
                             RollbackTransaction();
                         return false;

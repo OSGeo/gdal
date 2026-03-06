@@ -283,23 +283,26 @@ The following layer creation options are supported:
 Examples
 --------
 
-Listing the tables of a MongoDB database:
+.. example::
+   :title: Listing the tables of a MongoDB database
 
-::
+   .. code-block:: bash
+   
+      ogrinfo -ro mongodb+srv://user:password@cluster0-ox9uy.mongodb.net/test
 
-   ogrinfo -ro mongodb+srv://user:password@cluster0-ox9uy.mongodb.net/test
+.. example::
+   :title: Filtering on a MongoDB field
 
-Filtering on a MongoDB field:
+   .. code-block:: bash
+   
+      ogrinfo -ro mongodb+srv://user:password@cluster0-ox9uy.mongodb.net/test -where '{ "field": 5 }'
 
-::
+.. example::
+   :title: Creating and populating a collection from a shapefile
 
-   ogrinfo -ro mongodb+srv://user:password@cluster0-ox9uy.mongodb.net/test -where '{ "field": 5 }'
-
-Creating and populating a collection from a shapefile:
-
-::
-
-   ogr2ogr -update mongodb+srv://user:password@cluster0-ox9uy.mongodb.net/test shapefile.shp
+   .. code-block:: bash
+   
+      ogr2ogr -update mongodb+srv://user:password@cluster0-ox9uy.mongodb.net/test shapefile.shp
 
 Build instructions
 ------------------

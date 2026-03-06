@@ -1120,3 +1120,282 @@ def test_gdal_grid_lib_errors():
             algorithm="invdist",
             SQLStatement="invalid",
         )
+
+
+###############################################################################
+# Test that ellipse rotation (angle parameter) is correctly applied
+# in the quadtree-accelerated path. Before the fix, the quadtree path
+# silently ignored the angle, producing wrong results.
+
+
+def _make_rotated_ellipse_ds(algorithm, angle):
+    """Grid a single pixel at the origin using points placed so that
+    an ellipse with radius1=3 (X-axis), radius2=1 (Y-axis) includes
+    different points depending on its rotation angle.
+
+    Point layout (relative to origin):
+      A = (2, 0, 10)  -> inside unrotated ellipse, outside 90-deg rotated
+      B = (0, 2, 100) -> outside unrotated ellipse, inside 90-deg rotated
+      C = (0, 0, 1)   -> always inside (at center)
+    """
+    wkt = "MULTIPOINT(2 0 10, 0 2 100, 0 0 1)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    with gdal.config_option("GDAL_GRID_POINT_COUNT_THRESHOLD", "0"):
+        ds = gdal.Grid(
+            "",
+            geom.ExportToJson(),
+            width=1,
+            height=1,
+            outputBounds=[-0.5, -0.5, 0.5, 0.5],
+            format="MEM",
+            algorithm=algorithm,
+        )
+    return ds
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_moving_average_rotated_ellipse():
+    """Moving average with a rotated ellipse should include different
+    points than with angle=0. This was broken before the quadtree
+    rotation fix."""
+
+    # angle=0: ellipse wide along X -> includes A(10) and C(1), not B(100)
+    ds0 = _make_rotated_ellipse_ds("average:radius1=3:radius2=1:angle=0", 0)
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    expected0 = (10 + 1) / 2.0
+    expected0 = struct.unpack("f", struct.pack("f", expected0))[0]
+    assert val0 == pytest.approx(
+        expected0, rel=1e-5
+    ), f"angle=0: expected {expected0}, got {val0}"
+
+    # angle=90: ellipse wide along Y -> includes B(100) and C(1), not A(10)
+    ds90 = _make_rotated_ellipse_ds("average:radius1=3:radius2=1:angle=90", 90)
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    expected90 = (100 + 1) / 2.0
+    expected90 = struct.unpack("f", struct.pack("f", expected90))[0]
+    assert val90 == pytest.approx(
+        expected90, rel=1e-5
+    ), f"angle=90: expected {expected90}, got {val90}"
+
+    assert val0 != pytest.approx(
+        val90, rel=1e-5
+    ), "Rotation should produce different results"
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_data_metric_minimum_rotated_ellipse():
+    """Minimum with rotated ellipse."""
+
+    ds0 = _make_rotated_ellipse_ds("minimum:radius1=3:radius2=1:angle=0", 0)
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    assert val0 == pytest.approx(1.0, rel=1e-5)  # min(10, 1) = 1
+
+    ds90 = _make_rotated_ellipse_ds("minimum:radius1=3:radius2=1:angle=90", 90)
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    assert val90 == pytest.approx(1.0, rel=1e-5)  # min(100, 1) = 1
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_data_metric_maximum_rotated_ellipse():
+    """Maximum with rotated ellipse should pick different max values."""
+
+    ds0 = _make_rotated_ellipse_ds("maximum:radius1=3:radius2=1:angle=0", 0)
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    assert val0 == pytest.approx(10.0, rel=1e-5)  # max(10, 1) = 10
+
+    ds90 = _make_rotated_ellipse_ds("maximum:radius1=3:radius2=1:angle=90", 90)
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    assert val90 == pytest.approx(100.0, rel=1e-5)  # max(100, 1) = 100
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_data_metric_range_rotated_ellipse():
+    """Range with rotated ellipse."""
+
+    ds0 = _make_rotated_ellipse_ds("range:radius1=3:radius2=1:angle=0", 0)
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    assert val0 == pytest.approx(9.0, rel=1e-5)  # 10 - 1
+
+    ds90 = _make_rotated_ellipse_ds("range:radius1=3:radius2=1:angle=90", 90)
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    assert val90 == pytest.approx(99.0, rel=1e-5)  # 100 - 1
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_data_metric_count_rotated_ellipse():
+    """Count with rotated ellipse should find 2 points regardless
+    of rotation (different 2 points, but still 2)."""
+
+    ds0 = _make_rotated_ellipse_ds("count:radius1=3:radius2=1:angle=0", 0)
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    assert val0 == pytest.approx(2.0, rel=1e-5)
+
+    ds90 = _make_rotated_ellipse_ds("count:radius1=3:radius2=1:angle=90", 90)
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    assert val90 == pytest.approx(2.0, rel=1e-5)
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_data_metric_average_distance_rotated_ellipse():
+    """Average distance with rotated ellipse should differ because
+    different points are included."""
+
+    ds0 = _make_rotated_ellipse_ds("average_distance:radius1=3:radius2=1:angle=0", 0)
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # Points A(2,0) and C(0,0): distances are 2 and 0
+    expected0 = (2.0 + 0.0) / 2.0
+    expected0 = struct.unpack("f", struct.pack("f", expected0))[0]
+    assert val0 == pytest.approx(expected0, rel=1e-5)
+
+    ds90 = _make_rotated_ellipse_ds("average_distance:radius1=3:radius2=1:angle=90", 90)
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # Points B(0,2) and C(0,0): distances are 2 and 0
+    expected90 = (2.0 + 0.0) / 2.0
+    expected90 = struct.unpack("f", struct.pack("f", expected90))[0]
+    assert val90 == pytest.approx(expected90, rel=1e-5)
+
+
+###############################################################################
+# Test ellipse rotation in the PerQuadrant (quadtree) code path.
+# max_points_per_quadrant forces the PerQuadrant variant which always
+# creates a quadtree. Before the fix, these functions ignored the angle
+# parameter, causing wrong points to be included in the search ellipse.
+#
+# Point layout (relative to grid point at origin):
+#   A = (2,   0, 10)  -> inside unrotated ellipse (r1=3,r2=1), outside 90° rotated
+#   B = (0, 1.5, 100) -> outside unrotated, inside 90° rotated
+#   D = (0, 2.5, 300) -> outside unrotated, inside 90° rotated
+#   C = (0,   0, 50)  -> always inside (at center)
+#
+# angle=0:  includes {A, C}       (2 points)
+# angle=90: includes {B, D, C}    (3 points)
+
+
+def _make_rotated_ellipse_per_quadrant_ds(algorithm):
+    """Grid a single pixel at the origin via the PerQuadrant code path."""
+    wkt = "MULTIPOINT(2 0 10, 0 1.5 100, 0 2.5 300, 0 0 50)"
+    geom = ogr.CreateGeometryFromWkt(wkt)
+    ds = gdal.Grid(
+        "",
+        geom.ExportToJson(),
+        width=1,
+        height=1,
+        outputBounds=[-0.5, -0.5, 0.5, 0.5],
+        format="MEM",
+        algorithm=algorithm,
+    )
+    return ds
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_moving_average_rotated_per_quadrant():
+    """Moving average with rotated ellipse via PerQuadrant (quadtree) path."""
+
+    ds0 = _make_rotated_ellipse_per_quadrant_ds(
+        "average:radius1=3:radius2=1:angle=0:max_points_per_quadrant=10"
+    )
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=0: includes A(10), C(50) -> avg = 30.0
+    assert val0 == pytest.approx(30.0, rel=1e-5)
+
+    ds90 = _make_rotated_ellipse_per_quadrant_ds(
+        "average:radius1=3:radius2=1:angle=90:max_points_per_quadrant=10"
+    )
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=90: includes B(100), D(300), C(50) -> avg = 150.0
+    assert val90 == pytest.approx(150.0, rel=1e-5)
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_minimum_rotated_per_quadrant():
+    """Minimum with rotated ellipse via PerQuadrant (quadtree) path."""
+
+    ds0 = _make_rotated_ellipse_per_quadrant_ds(
+        "minimum:radius1=3:radius2=1:angle=0:max_points_per_quadrant=10"
+    )
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=0: min(10, 50) = 10
+    assert val0 == pytest.approx(10.0, rel=1e-5)
+
+    ds90 = _make_rotated_ellipse_per_quadrant_ds(
+        "minimum:radius1=3:radius2=1:angle=90:max_points_per_quadrant=10"
+    )
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=90: min(100, 300, 50) = 50
+    assert val90 == pytest.approx(50.0, rel=1e-5)
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_maximum_rotated_per_quadrant():
+    """Maximum with rotated ellipse via PerQuadrant (quadtree) path."""
+
+    ds0 = _make_rotated_ellipse_per_quadrant_ds(
+        "maximum:radius1=3:radius2=1:angle=0:max_points_per_quadrant=10"
+    )
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=0: max(10, 50) = 50
+    assert val0 == pytest.approx(50.0, rel=1e-5)
+
+    ds90 = _make_rotated_ellipse_per_quadrant_ds(
+        "maximum:radius1=3:radius2=1:angle=90:max_points_per_quadrant=10"
+    )
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=90: max(100, 300, 50) = 300
+    assert val90 == pytest.approx(300.0, rel=1e-5)
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_range_rotated_per_quadrant():
+    """Range with rotated ellipse via PerQuadrant (quadtree) path."""
+
+    ds0 = _make_rotated_ellipse_per_quadrant_ds(
+        "range:radius1=3:radius2=1:angle=0:max_points_per_quadrant=10"
+    )
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=0: 50 - 10 = 40
+    assert val0 == pytest.approx(40.0, rel=1e-5)
+
+    ds90 = _make_rotated_ellipse_per_quadrant_ds(
+        "range:radius1=3:radius2=1:angle=90:max_points_per_quadrant=10"
+    )
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=90: 300 - 50 = 250
+    assert val90 == pytest.approx(250.0, rel=1e-5)
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_count_rotated_per_quadrant():
+    """Count with rotated ellipse via PerQuadrant (quadtree) path."""
+
+    ds0 = _make_rotated_ellipse_per_quadrant_ds(
+        "count:radius1=3:radius2=1:angle=0:max_points_per_quadrant=10"
+    )
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=0: A, C -> 2
+    assert val0 == pytest.approx(2.0, rel=1e-5)
+
+    ds90 = _make_rotated_ellipse_per_quadrant_ds(
+        "count:radius1=3:radius2=1:angle=90:max_points_per_quadrant=10"
+    )
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=90: B, D, C -> 3
+    assert val90 == pytest.approx(3.0, rel=1e-5)
+
+
+@pytest.mark.require_driver("GeoJSON")
+def test_gdal_grid_lib_average_distance_rotated_per_quadrant():
+    """Average distance with rotated ellipse via PerQuadrant (quadtree) path."""
+
+    ds0 = _make_rotated_ellipse_per_quadrant_ds(
+        "average_distance:radius1=3:radius2=1:angle=0:max_points_per_quadrant=10"
+    )
+    val0 = struct.unpack("f", ds0.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=0: A(dist=2), C(dist=0) -> avg = 1.0
+    assert val0 == pytest.approx(1.0, rel=1e-5)
+
+    ds90 = _make_rotated_ellipse_per_quadrant_ds(
+        "average_distance:radius1=3:radius2=1:angle=90:max_points_per_quadrant=10"
+    )
+    val90 = struct.unpack("f", ds90.ReadRaster(buf_type=gdal.GDT_Float32))[0]
+    # angle=90: B(dist=1.5), D(dist=2.5), C(dist=0) -> avg = 4/3
+    assert val90 == pytest.approx(4.0 / 3.0, rel=1e-5)

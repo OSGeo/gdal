@@ -164,49 +164,52 @@ option.
 Vector layer (scene metadata) examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Listing all scenes available (with the rights of the account) :
+.. example::
+   :title: Listing all scenes available (with the rights of the account)
+   
+   .. code-block:: bash
+   
+      ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value
+   
+   or
+   
+   .. code-block:: bash
+   
+      ogrinfo -ro -al "PLScenes:api_key=some_value"
+   
+   or
+   
+   .. code-block:: bash
+   
+      ogrinfo -ro -al "PLScenes:" --config PL_API_KEY some_value
 
-::
+.. example::
+   :title: Listing all scenes available on PSOrthoTile item types, under a point of (lat,lon)=(40,-100)
 
-   ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value
+   .. code-block:: bash
 
-or
+      ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value PSOrthoTile -spat -100 40 -100 40
 
-::
+.. example::
+   :title: Listing all scenes available within a bounding box (lat,lon)=(40,-100) to (lat,lon)=(39,-99)
 
-   ogrinfo -ro -al "PLScenes:api_key=some_value"
+   .. code-block:: bash
 
-or
+      ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value -spat -100 40 -99 39
 
-::
+.. example::
+   :title: Listing all scenes available matching criteria
 
-   ogrinfo -ro -al "PLScenes:" --config PL_API_KEY some_value
+   .. code-block:: bash
 
-Listing all scenes available on PSOrthoTile item types, under a point of
-(lat,lon)=(40,-100) :
+      ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value PSOrthoTile -where "acquired >= '2015/03/26 00:00:00' AND cloud_cover < 10"
 
-::
+.. example::
+   :title: Listing all downloadable scenes
 
-   ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value PSOrthoTile -spat -100 40 -100 40
+   .. code-block:: bash
 
-Listing all scenes available within a bounding box (lat,lon)=(40,-100)
-to (lat,lon)=(39,-99)
-
-::
-
-   ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value -spat -100 40 -99 39
-
-Listing all scenes available matching criteria :
-
-::
-
-   ogrinfo -ro -al "PLScenes:" -oo API_KEY=some_value PSOrthoTile -where "acquired >= '2015/03/26 00:00:00' AND cloud_cover < 10"
-
-List all downloadable scenes:
-
-::
-
-   ogrinfo -ro -al -q "PLScenes:" -oo API_KEY=some_value PSOrthoTile -where "permissions='assets:download'"
+      ogrinfo -ro -al -q "PLScenes:" -oo API_KEY=some_value PSOrthoTile -where "permissions='assets:download'"
 
 Raster access
 -------------
@@ -225,24 +228,26 @@ of this retry can be configured with the :oo:`ACTIVATION_TIMEOUT` open option.
 Raster access examples
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Displaying raster metadata :
+.. example::
+   :title: Displaying raster metadata
 
-::
+   .. code-block:: bash
+   
+      gdalinfo "PLScenes:scene=scene_id,itemtypes=itemypes,asset=analytic" -oo API_KEY=some_value
+   
+   or
+   
+   .. code-block:: bash
+   
+      gdalinfo "PLScenes:" -oo API_KEY=some_value -oo ITEMTYPES=itemtypes -oo SCENE=scene_id -oo ASSET=analytic
 
-   gdalinfo "PLScenes:scene=scene_id,itemtypes=itemypes,asset=analytic" -oo API_KEY=some_value
+.. example::
+   :title: Converting/downloading a whole file
 
-or
-
-::
-
-   gdalinfo "PLScenes:" -oo API_KEY=some_value -oo ITEMTYPES=itemtypes -oo SCENE=scene_id -oo ASSET=analytic
-
-Converting/downloading a whole file:
-
-::
-
-   gdal_translate "PLScenes:" -oo API_KEY=some_value -oo SCENE=scene_id \
-                   -oo ITEMTYPES=itemtypes -oo ASSET=analytic -oo RANDOM_ACCESS=NO out.tif
+   .. code-block:: bash
+   
+      gdal_translate "PLScenes:" -oo API_KEY=some_value -oo SCENE=scene_id \
+                      -oo ITEMTYPES=itemtypes -oo ASSET=analytic -oo RANDOM_ACCESS=NO out.tif
 
 See Also
 --------

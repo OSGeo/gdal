@@ -190,14 +190,14 @@ changed in later versions.
 
     Set nodata values at the VRT band level (different values can be supplied for each band).  If more
     than one value is supplied, all values should be quoted to keep them together
-    as a single operating system argument (:example:`vrtnodata`). If the option is not specified,
+    as a single operating system argument (:example:`gdalbuildvrt-vrtnodata`). If the option is not specified,
     intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
     is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
     `None` to ignore intrinsic nodata settings on the source datasets.
 
 .. option:: -separate
 
-    Place each input file into a separate band. See :example:`separate`.
+    Place each input file into a separate band. See :example:`gdalbuildvrt-separate`.
     Contrary to the default mode, it is not
     required that all bands have the same datatype.
     This option is mutually exclusive with :option:`-pixel-function`.
@@ -251,7 +251,7 @@ changed in later versions.
 
 .. option:: -input_file_list <filename>
 
-    Specify a text file with an input filename on each line. See :example:`filelist`.
+    Specify a text file with an input filename on each line. See :example:`gdalbuildvrt-filelist`.
 
 .. option:: -q
 
@@ -292,7 +292,7 @@ Examples
 
 .. example::
    :title: Make a virtual mosaic from files whose name is specified in a text file
-   :id: filelist
+   :id: gdalbuildvrt-filelist
 
    .. code-block:: bash
 
@@ -300,7 +300,7 @@ Examples
 
 .. example::
    :title: Make a RGB virtual mosaic from 3 single-band input files
-   :id: separate
+   :id: gdalbuildvrt-separate
 
    .. code-block:: bash
 
@@ -308,7 +308,7 @@ Examples
 
 .. example::
    :title: Make a virtual mosaic with blue background colour (RGB: 0 0 255)
-   :id: vrtnodata
+   :id: gdalbuildvrt-vrtnodata
 
    .. code-block:: bash
 

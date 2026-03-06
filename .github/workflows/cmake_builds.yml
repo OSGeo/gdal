@@ -38,7 +38,7 @@ jobs:
     - name: Checkout GDAL
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
     - name: Setup cache
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
@@ -332,7 +332,7 @@ jobs:
             mingw-w64-x86_64-libgeotiff mingw-w64-x86_64-libpng mingw-w64-x86_64-libtiff mingw-w64-x86_64-openjpeg2
             mingw-w64-x86_64-python-pip mingw-w64-x86_64-python-numpy mingw-w64-x86_64-python-pytest mingw-w64-x86_64-python-setuptools mingw-w64-x86_64-swig mingw-w64-x86_64-python-psutil mingw-w64-x86_64-blosc mingw-w64-x86_64-libavif
       - name: Setup cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
         id: cache
         with:
           path: ${{ github.workspace }}\.ccache
@@ -418,7 +418,7 @@ jobs:
       shell: pwsh
       run: |
         echo "JAVA_HOME=$env:JAVA_HOME_11_X64" >> %GITHUB_ENV%
-    - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
+    - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
       with:
         activate-environment: gdalenv
         miniforge-version: latest
@@ -529,7 +529,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-    - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
+    - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
       with:
         activate-environment: gdalenv
         miniforge-version: latest
@@ -621,7 +621,7 @@ jobs:
     - name: Checkout GDAL
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
     - name: Setup cache
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
       id: cache
       with:
           path: ${{ github.workspace }}/.ccache
@@ -663,12 +663,11 @@ jobs:
         mkdir -p $GITHUB_WORKSPACE/build
         export PKG_CONFIG_PATH=/opt/homebrew/Cellar/libxml2/lib/pkgconfig
         # FIXME: remove -DBUILD_PYTHON_BINDINGS=OFF. Python tests fail with "ModuleNotFoundError: No module named '_gdal'" with macos-12
-        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" -DBUILD_PYTHON_BINDINGS=OFF  "-DUSE_PRECOMPILED_HEADERS=ON"
+        cmake -Werror=dev -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal ${CMAKE_OPTIONS} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror -DUSE_CCACHE=ON -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DWERROR_DEV_FLAG="-Werror=dev" -DBUILD_PYTHON_BINDINGS=OFF  "-DUSE_PRECOMPILED_HEADERS=ON" -DGDAL_ENABLE_MACOSX_FRAMEWORK=ON
         #PYTHON_CMD=$(cat $GITHUB_WORKSPACE/build/python_executable.txt) && $PYTHON_CMD -m pip install --user -r $GITHUB_WORKSPACE/autotest/requirements.txt
     - name: Build
       run: |
         cmake --build $GITHUB_WORKSPACE/build -j 3
-        otool -L $GITHUB_WORKSPACE/build/libgdal.dylib
     - name: test
       run: cmake --build $GITHUB_WORKSPACE/build --target quicktest
     - name: test (with ctest)
@@ -678,15 +677,9 @@ jobs:
         BUILD_NAME: "macos_build_brew"
     - name: Install
       run: cmake --build $GITHUB_WORKSPACE/build --target install -j 3
-    - name: Test post-install usage (with pkg-config)
+    - name: Test post-install usage (with macOSX Framework)
       run: |
-        ./autotest/postinstall/test_pkg-config.sh $GITHUB_WORKSPACE/install-gdal
-    - name: Test post-install usage (with gdal-config)
-      run: |
-        ./autotest/postinstall/test_gdal-config.sh $GITHUB_WORKSPACE/install-gdal
-    - name: Test post-install usage (with CMake)
-      run: |
-        ./autotest/postinstall/test_cmake.sh $GITHUB_WORKSPACE/install-gdal --dynamic --disable-odbc
+        ./autotest/postinstall/test_framework.sh $GITHUB_WORKSPACE/install-gdal
     - name: ccache statistics
       run: ccache -s
 
@@ -707,7 +700,7 @@ jobs:
         git config --global core.autocrlf false
     - name: Checkout GDAL
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
-    - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
+    - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
       with:
         activate-environment: gdalenv
         python-version: "3.10"

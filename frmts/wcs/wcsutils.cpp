@@ -32,7 +32,7 @@ void Swap(double &a, double &b)
 std::string URLEncode(const std::string &str)
 {
     char *pszEncoded = CPLEscapeString(str.c_str(), -1, CPLES_URL);
-    std::string str2 = pszEncoded;
+    std::string str2(pszEncoded);
     CPLFree(pszEncoded);
     return str2;
 }

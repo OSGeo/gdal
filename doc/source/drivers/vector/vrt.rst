@@ -15,9 +15,8 @@ coordinate system information with a datasource, merge layers from
 different datasources into a single data source, or even just to provide
 an anchor file for access to non-file oriented datasources.
 
-The virtual files are currently normally prepared by hand.
-However an unofficial test script can be found at
-https://github.com/OSGeo/gdal/blob/master/swig/python/gdal-utils/osgeo_utils/samples/ogr2vrt.py
+Vector virtual files may be prepared by hand, however e.g.,
+:program:`ogrmerge`, such as in ``ogrmerge -o merged.vrt *.shp`` can also be used.
 
 Note .vrt files starting with
 
@@ -350,216 +349,219 @@ following subelements:
 -  **ExtentXMin**, **ExtentYMin**, **ExtentXMax** and **ExtentXMax**
    (optional) : see above for the syntax
 
-Example: ODBC Point Layer
--------------------------
+Examples
+--------
 
-In the following example (disease.ovf) the worms table from the ODBC
-database DISEASE is used to form a spatial layer. The virtual file uses
-the "x" and "y" columns to get the spatial location. It also marks the
-layer as a point layer, and as being in the WGS84 coordinate system.
+.. example::
+   :title: ODBC Point Layer
 
-.. code-block:: XML
+   In the following example (disease.ovf) the worms table from the ODBC
+   database DISEASE is used to form a spatial layer. The virtual file uses
+   the "x" and "y" columns to get the spatial location. It also marks the
+   layer as a point layer, and as being in the WGS84 coordinate system.
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTLayer name="worms">
+              <SrcDataSource>ODBC:DISEASE,worms</SrcDataSource>
+              <SrcLayer>worms</SrcLayer>
+              <GeometryType>wkbPoint</GeometryType>
+              <LayerSRS>WGS84</LayerSRS>
+              <GeometryField encoding="PointFromColumns" x="x" y="y"/>
+          </OGRVRTLayer>
+      </OGRVRTDataSource>
 
-   <OGRVRTDataSource>
-       <OGRVRTLayer name="worms">
-           <SrcDataSource>ODBC:DISEASE,worms</SrcDataSource>
-           <SrcLayer>worms</SrcLayer>
-           <GeometryType>wkbPoint</GeometryType>
-           <LayerSRS>WGS84</LayerSRS>
-           <GeometryField encoding="PointFromColumns" x="x" y="y"/>
-       </OGRVRTLayer>
-   </OGRVRTDataSource>
+.. example::
+   :title: Renaming attributes
 
-Example: Renaming attributes
-----------------------------
+   It can be useful in some circumstances to be able to rename the field
+   names from a source layer to other names. This is particularly true when
+   you want to transcode to a format whose schema is fixed, such as GPX
+   (<name>, <desc>, etc.). This can be accomplished using SQL this way:
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTLayer name="remapped_layer">
+              <SrcDataSource>your_source.shp</SrcDataSource>
+              <SrcSQL>SELECT src_field_1 AS name, src_field_2 AS desc FROM your_source_layer_name</SrcSQL>
+          </OGRVRTLayer>
+      </OGRVRTDataSource>
+   
+   This can also be accomplished using explicit field
+   definitions:
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTLayer name="remapped_layer">
+              <SrcDataSource>your_source.shp</SrcDataSource>
+              <SrcLayer>your_source</SrcLayer>
+              <Field name="name" src="src_field_1" />
+              <Field name="desc" src="src_field_2" type="String" width="45" />
+          </OGRVRTLayer>
+      </OGRVRTDataSource>
 
-It can be useful in some circumstances to be able to rename the field
-names from a source layer to other names. This is particularly true when
-you want to transcode to a format whose schema is fixed, such as GPX
-(<name>, <desc>, etc.). This can be accomplished using SQL this way:
+.. example::
+   :title: Transparent spatial filtering
 
-.. code-block:: XML
+   The following example will only return features from the source layer
+   that intersect the (0,40)-(10,50) region. Furthermore, returned
+   geometries will be clipped to fit into that region.
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTLayer name="source">
+              <SrcDataSource>source.shp</SrcDataSource>
+              <SrcRegion clip="true">POLYGON((0 40,10 40,10 50,0 50,0 40))</SrcRegion>
+          </OGRVRTLayer>
+      </OGRVRTDataSource>
 
-   <OGRVRTDataSource>
-       <OGRVRTLayer name="remapped_layer">
-           <SrcDataSource>your_source.shp</SrcDataSource>
-           <SrcSQL>SELECT src_field_1 AS name, src_field_2 AS desc FROM your_source_layer_name</SrcSQL>
-       </OGRVRTLayer>
-   </OGRVRTDataSource>
+.. example::
+   :title: Reprojected layer
 
-This can also be accomplished using explicit field
-definitions:
+   The following example will return the source.shp layer reprojected to
+   EPSG:4326.
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTWarpedLayer>
+              <OGRVRTLayer name="source">
+                  <SrcDataSource>source.shp</SrcDataSource>
+              </OGRVRTLayer>
+              <TargetSRS>EPSG:4326</TargetSRS>
+          </OGRVRTWarpedLayer>
+      </OGRVRTDataSource>
 
-.. code-block:: XML
+.. example::
+   :title: Union layer
 
-   <OGRVRTDataSource>
-       <OGRVRTLayer name="remapped_layer">
-           <SrcDataSource>your_source.shp</SrcDataSource>
-           <SrcLayer>your_source</SrcLayer>
-           <Field name="name" src="src_field_1" />
-           <Field name="desc" src="src_field_2" type="String" width="45" />
-       </OGRVRTLayer>
-   </OGRVRTDataSource>
+   The following example will return a layer that is the concatenation of
+   source1.shp and source2.shp.
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTUnionLayer name="unionLayer">
+              <OGRVRTLayer name="source1">
+                  <SrcDataSource>source1.shp</SrcDataSource>
+              </OGRVRTLayer>
+              <OGRVRTLayer name="source2">
+                  <SrcDataSource>source2.shp</SrcDataSource>
+              </OGRVRTLayer>
+          </OGRVRTUnionLayer>
+      </OGRVRTDataSource>
 
-Example: Transparent spatial filtering
---------------------------------------
+.. example::
+   :title: SQLite/Spatialite SQL dialect
 
-The following example will only return features from the source layer
-that intersect the (0,40)-(10,50) region. Furthermore, returned
-geometries will be clipped to fit into that region.
+   The following example will return four different layers which are
+   generated in a fly from the same polygon shapefile. The first one is the
+   shapefile layer as it stands. The second layer gives simplified polygons
+   by applying SpatiaLite function "Simplify" with parameter tolerance=10.
+   In the third layer the original geometries are replaced by their convex
+   hulls. In the fourth layer SpatiaLite function PointOnSurface is used
+   for replacing the original geometries by points which are inside the
+   corresponding source polygons. Note that for using the last three layers
+   of this VRT file GDAL must be compiled with SQLite and SpatiaLite.
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTLayer name="polygons">
+              <SrcDataSource>polygons.shp</SrcDataSource>
+          </OGRVRTLayer>
+          <OGRVRTLayer name="polygons_as_simplified">
+              <SrcDataSource>polygons.shp</SrcDataSource>
+              <SrcSQL dialect="sqlite">SELECT Simplify(geometry,10) from polygons</SrcSQL>
+          </OGRVRTLayer>
+          <OGRVRTLayer name="polygons_as_hulls">
+              <SrcDataSource>polygons.shp</SrcDataSource>
+              <SrcSQL dialect="sqlite">SELECT ConvexHull(geometry) from polygons</SrcSQL>
+          </OGRVRTLayer>
+          <OGRVRTLayer name="polygons_as_points">
+              <SrcDataSource>polygons.shp</SrcDataSource>
+              <SrcSQL dialect="sqlite">SELECT PointOnSurface(geometry) from polygons</SrcSQL>
+          </OGRVRTLayer>
+      </OGRVRTDataSource>
 
-.. code-block:: XML
+.. example::
+   :title: Multiple geometry fields
 
-   <OGRVRTDataSource>
-       <OGRVRTLayer name="source">
-           <SrcDataSource>source.shp</SrcDataSource>
-           <SrcRegion clip="true">POLYGON((0 40,10 40,10 50,0 50,0 40))</SrcRegion>
-       </OGRVRTLayer>
-   </OGRVRTDataSource>
-
-Example: Reprojected layer
---------------------------
-
-The following example will return the source.shp layer reprojected to
-EPSG:4326.
-
-.. code-block:: XML
-
-   <OGRVRTDataSource>
-       <OGRVRTWarpedLayer>
-           <OGRVRTLayer name="source">
-               <SrcDataSource>source.shp</SrcDataSource>
-           </OGRVRTLayer>
-           <TargetSRS>EPSG:4326</TargetSRS>
-       </OGRVRTWarpedLayer>
-   </OGRVRTDataSource>
-
-Example: Union layer
---------------------
-
-The following example will return a layer that is the concatenation of
-source1.shp and source2.shp.
-
-.. code-block:: XML
-
-   <OGRVRTDataSource>
-       <OGRVRTUnionLayer name="unionLayer">
-           <OGRVRTLayer name="source1">
-               <SrcDataSource>source1.shp</SrcDataSource>
-           </OGRVRTLayer>
-           <OGRVRTLayer name="source2">
-               <SrcDataSource>source2.shp</SrcDataSource>
-           </OGRVRTLayer>
-       </OGRVRTUnionLayer>
-   </OGRVRTDataSource>
-
-Example: SQLite/Spatialite SQL dialect
---------------------------------------
-
-The following example will return four different layers which are
-generated in a fly from the same polygon shapefile. The first one is the
-shapefile layer as it stands. The second layer gives simplified polygons
-by applying SpatiaLite function "Simplify" with parameter tolerance=10.
-In the third layer the original geometries are replaced by their convex
-hulls. In the fourth layer SpatiaLite function PointOnSurface is used
-for replacing the original geometries by points which are inside the
-corresponding source polygons. Note that for using the last three layers
-of this VRT file GDAL must be compiled with SQLite and SpatiaLite.
-
-.. code-block:: XML
-
-   <OGRVRTDataSource>
-       <OGRVRTLayer name="polygons">
-           <SrcDataSource>polygons.shp</SrcDataSource>
-       </OGRVRTLayer>
-       <OGRVRTLayer name="polygons_as_simplified">
-           <SrcDataSource>polygons.shp</SrcDataSource>
-           <SrcSQL dialect="sqlite">SELECT Simplify(geometry,10) from polygons</SrcSQL>
-       </OGRVRTLayer>
-       <OGRVRTLayer name="polygons_as_hulls">
-           <SrcDataSource>polygons.shp</SrcDataSource>
-           <SrcSQL dialect="sqlite">SELECT ConvexHull(geometry) from polygons</SrcSQL>
-       </OGRVRTLayer>
-       <OGRVRTLayer name="polygons_as_points">
-           <SrcDataSource>polygons.shp</SrcDataSource>
-           <SrcSQL dialect="sqlite">SELECT PointOnSurface(geometry) from polygons</SrcSQL>
-       </OGRVRTLayer>
-   </OGRVRTDataSource>
-
-Example: Multiple geometry fields
----------------------------------
-
-The following example will expose all the attribute and geometry fields
-of the source layer:
-
-.. code-block:: XML
-
-   <OGRVRTDataSource>
-       <OGRVRTLayer name="test">
-           <SrcDataSource>PG:dbname=testdb</SrcDataSource>
-       </OGRVRTLayer>
-   </OGRVRTDataSource>
-
-To expose only part (or all!) of the fields:
-
-.. code-block:: XML
-
-   <OGRVRTDataSource>
-       <OGRVRTLayer name="other_test">
-           <SrcDataSource>PG:dbname=testdb</SrcDataSource>
-           <SrcLayer>test</SrcLayer>
-           <GeometryField name="pg_geom_field_1" />
-           <GeometryField name="vrt_geom_field_2" field="pg_geom_field_2">
-               <GeometryType>wkbPolygon</GeometryType>
-               <SRS>EPSG:4326</SRS>
-               <ExtentXMin>-180</ExtentXMin>
-               <ExtentYMin>-90</ExtentYMin>
-               <ExtentXMax>180</ExtentXMax>
-               <ExtentYMax>90</ExtentYMax>
-           </GeometryField>
-           <Field name="vrt_field_1" src="src_field_1" />
-       </OGRVRTLayer>w
-   </OGRVRTDataSource>
-
-To reproject the 'pg_geom_field_2' geometry field to EPSG:4326:
-
-.. code-block:: XML
-
-   <OGRVRTDataSource>
-       <OGRVRTWarpedLayer>
-           <OGRVRTLayer name="other_test">
-               <SrcDataSource>PG:dbname=testdb</SrcDataSource>
-           </OGRVRTLayer>
-           <WarpedGeomFieldName>pg_geom_field_2</WarpedGeomFieldName>
-           <TargetSRS>EPSG:32631</TargetSRS>
-       </OGRVRTWarpedLayer>
-   </OGRVRTDataSource>
-
-To make the union of several multi-geometry layers and keep only a few
-of them:
-
-.. code-block:: XML
-
-   <OGRVRTDataSource>
-       <OGRVRTUnionLayer name="unionLayer">
-           <OGRVRTLayer name="source1">
-               <SrcDataSource>PG:dbname=testdb</SrcDataSource>
-           </OGRVRTLayer>
-           <OGRVRTLayer name="source2">
-               <SrcDataSource>PG:dbname=testdb</SrcDataSource>
-           </OGRVRTLayer>
-           <GeometryField name="pg_geom_field_2">
-               <GeometryType>wkbPolygon</GeometryType>
-               <SRS>EPSG:4326</SRS>
-               <ExtentXMin>-180</ExtentXMin>
-               <ExtentYMin>-90</ExtentYMin>
-               <ExtentXMax>180</ExtentXMax>
-               <ExtentYMax>90</ExtentYMax>
-           </GeometryField>
-           <GeometryField name="pg_geom_field_3" />
-           <Field name="src_field_1" />
-       </OGRVRTUnionLayer>
-   </OGRVRTDataSource>
+   The following example will expose all the attribute and geometry fields
+   of the source layer:
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTLayer name="test">
+              <SrcDataSource>PG:dbname=testdb</SrcDataSource>
+          </OGRVRTLayer>
+      </OGRVRTDataSource>
+   
+   To expose only part (or all!) of the fields:
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTLayer name="other_test">
+              <SrcDataSource>PG:dbname=testdb</SrcDataSource>
+              <SrcLayer>test</SrcLayer>
+              <GeometryField name="pg_geom_field_1" />
+              <GeometryField name="vrt_geom_field_2" field="pg_geom_field_2">
+                  <GeometryType>wkbPolygon</GeometryType>
+                  <SRS>EPSG:4326</SRS>
+                  <ExtentXMin>-180</ExtentXMin>
+                  <ExtentYMin>-90</ExtentYMin>
+                  <ExtentXMax>180</ExtentXMax>
+                  <ExtentYMax>90</ExtentYMax>
+              </GeometryField>
+              <Field name="vrt_field_1" src="src_field_1" />
+          </OGRVRTLayer>w
+      </OGRVRTDataSource>
+   
+   To reproject the 'pg_geom_field_2' geometry field to EPSG:4326:
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTWarpedLayer>
+              <OGRVRTLayer name="other_test">
+                  <SrcDataSource>PG:dbname=testdb</SrcDataSource>
+              </OGRVRTLayer>
+              <WarpedGeomFieldName>pg_geom_field_2</WarpedGeomFieldName>
+              <TargetSRS>EPSG:32631</TargetSRS>
+          </OGRVRTWarpedLayer>
+      </OGRVRTDataSource>
+   
+   To make the union of several multi-geometry layers and keep only a few
+   of them:
+   
+   .. code-block:: XML
+   
+      <OGRVRTDataSource>
+          <OGRVRTUnionLayer name="unionLayer">
+              <OGRVRTLayer name="source1">
+                  <SrcDataSource>PG:dbname=testdb</SrcDataSource>
+              </OGRVRTLayer>
+              <OGRVRTLayer name="source2">
+                  <SrcDataSource>PG:dbname=testdb</SrcDataSource>
+              </OGRVRTLayer>
+              <GeometryField name="pg_geom_field_2">
+                  <GeometryType>wkbPolygon</GeometryType>
+                  <SRS>EPSG:4326</SRS>
+                  <ExtentXMin>-180</ExtentXMin>
+                  <ExtentYMin>-90</ExtentYMin>
+                  <ExtentXMax>180</ExtentXMax>
+                  <ExtentYMax>90</ExtentYMax>
+              </GeometryField>
+              <GeometryField name="pg_geom_field_3" />
+              <Field name="src_field_1" />
+          </OGRVRTUnionLayer>
+      </OGRVRTDataSource>
 
 Other Notes
 -----------

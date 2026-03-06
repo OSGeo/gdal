@@ -134,21 +134,22 @@ domains.
 
 Writing to /dev/stdout or /vsistdout/ is also supported.
 
-Example
--------
+Examples
+--------
 
-The ogr2ogr utility can be used to dump the results of a PostGIS query
-to KML:
+.. example::
+   :title: Writing the results of a PostGIS query to KML
 
-::
+   .. code-block:: bash
+   
+      ogr2ogr -f KML output.kml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
 
-   ogr2ogr -f KML output.kml PG:'host=myserver dbname=warmerda' -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+.. example::
+   :title: Dumping the contents of a .kml file as OGR sees it
 
-How to dump contents of .kml file as OGR sees it:
-
-::
-
-   ogrinfo -ro somedisplay.kml
+   .. code-block:: bash
+   
+      ogrinfo -ro somedisplay.kml
 
 Caveats
 -------

@@ -7033,7 +7033,7 @@ def test_nitf_create_02_00(tmp_path):
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg(tmp_path):
+def test_nitf_create_copy_cadrg(tmp_path):
 
     if gdaltest.is_travis_branch("fedora_rawhide"):
         pytest.skip(
@@ -7415,7 +7415,7 @@ def test_nitf_create_cadrg(tmp_path):
 @pytest.mark.parametrize(
     "COLOR_QUANTIZATION_BITS,expected_cs", [(5, 29165), (8, 17498)]
 )
-def test_nitf_create_cadrg_color_quantization_bits(
+def test_nitf_create_copy_cadrg_color_quantization_bits(
     tmp_path, COLOR_QUANTIZATION_BITS, expected_cs
 ):
 
@@ -7445,7 +7445,7 @@ def test_nitf_create_cadrg_color_quantization_bits(
 @pytest.mark.parametrize(
     "color_table_per_frame,expected_cs", [(False, 29165), (True, 60345)]
 )
-def test_nitf_create_cadrg_color_table_per_frame(
+def test_nitf_create_copy_cadrg_color_table_per_frame(
     tmp_path, color_table_per_frame, expected_cs
 ):
 
@@ -7475,7 +7475,7 @@ def test_nitf_create_cadrg_color_table_per_frame(
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_with_transparency(tmp_path):
+def test_nitf_create_copy_cadrg_with_transparency(tmp_path):
 
     if gdaltest.is_travis_branch("fedora_rawhide"):
         pytest.skip(
@@ -7545,7 +7545,7 @@ def test_nitf_create_cadrg_with_transparency(tmp_path):
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_auto_tile_north_hemisphere(tmp_path):
+def test_nitf_create_copy_cadrg_auto_tile_north_hemisphere(tmp_path):
 
     tab_pct = [0]
 
@@ -7622,7 +7622,7 @@ def test_nitf_create_cadrg_auto_tile_north_hemisphere(tmp_path):
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_auto_tile_south_hemisphere(tmp_vsimem):
+def test_nitf_create_copy_cadrg_auto_tile_south_hemisphere(tmp_vsimem):
 
     gdal.Translate(
         tmp_vsimem,
@@ -7658,7 +7658,7 @@ def test_nitf_create_cadrg_auto_tile_south_hemisphere(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_error_cases(tmp_vsimem, tmp_path):
+def test_nitf_create_copy_cadrg_error_cases(tmp_vsimem, tmp_path):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_UInt16)
     with pytest.raises(
@@ -7807,7 +7807,7 @@ def test_nitf_create_cadrg_error_cases(tmp_vsimem, tmp_path):
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_blank_frame_rgb_0(tmp_vsimem):
+def test_nitf_create_copy_cadrg_blank_frame_rgb_0(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1536, 1536, 3)
     src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
@@ -7832,7 +7832,7 @@ def test_nitf_create_cadrg_blank_frame_rgb_0(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_blank_frame_rgb_255(tmp_vsimem):
+def test_nitf_create_copy_cadrg_blank_frame_rgb_255(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1536, 1536, 3)
     src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
@@ -7860,7 +7860,7 @@ def test_nitf_create_cadrg_blank_frame_rgb_255(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_blank_frame_rgba(tmp_vsimem):
+def test_nitf_create_copy_cadrg_blank_frame_rgba(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 4)
     src_ds.GetRasterBand(1).SetColorInterpretation(gdal.GCI_RedBand)
@@ -7882,7 +7882,7 @@ def test_nitf_create_cadrg_blank_frame_rgba(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_blank_frame_color_table(tmp_vsimem):
+def test_nitf_create_copy_cadrg_blank_frame_color_table(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1536, 1536, 1)
     ct = gdal.ColorTable()
@@ -7908,7 +7908,7 @@ def test_nitf_create_cadrg_blank_frame_color_table(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_reprojection_skip_non_intersecting_tiles(tmp_vsimem):
+def test_nitf_create_copy_cadrg_reprojection_skip_non_intersecting_tiles(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 15, 1)
     ct = gdal.ColorTable()
@@ -7946,7 +7946,7 @@ def test_nitf_create_cadrg_reprojection_skip_non_intersecting_tiles(tmp_vsimem):
 
 
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_south_pole(tmp_vsimem):
+def test_nitf_create_copy_cadrg_south_pole(tmp_vsimem):
 
     gdal.GetDriverByName("NITF").CreateCopy(
         tmp_vsimem,
@@ -7989,7 +7989,7 @@ def test_nitf_create_cadrg_south_pole(tmp_vsimem):
     ],
 )
 @gdaltest.enable_exceptions()
-def test_nitf_create_cadrg_resampling(tmp_vsimem, resampling, expected_cs):
+def test_nitf_create_copy_cadrg_resampling(tmp_vsimem, resampling, expected_cs):
 
     src_ds = gdal.Translate(
         "",
@@ -8016,3 +8016,15 @@ def test_nitf_create_cadrg_resampling(tmp_vsimem, resampling, expected_cs):
 
     with gdal.Open(tmp_vsimem / "RPF/ZONE2/00AEH010.MM2") as ds:
         assert ds.GetRasterBand(1).Checksum() == expected_cs
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_nitf_create_cadrg_not_supported(tmp_vsimem):
+
+    with pytest.raises(Exception, match="CADRG creation only supported in CreateCopy"):
+        gdal.GetDriverByName("NITF").Create(
+            tmp_vsimem / "out", 1, 1, 1, options=["PRODUCT_TYPE=CADRG"]
+        )

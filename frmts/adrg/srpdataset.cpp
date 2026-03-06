@@ -971,11 +971,11 @@ DDFRecord *SRPDataset::FindRecordInGENForIMG(DDFModule &module,
             const char *pszBAD = record->GetStringSubfield("SPR", 0, "BAD", 0);
             if (pszBAD == nullptr || strlen(pszBAD) != 12)
                 continue;
-            const CPLString osBAD = pszBAD;
+            CPLString osBAD(pszBAD);
             {
-                char *c = (char *)strchr(osBAD.c_str(), ' ');
-                if (c)
-                    *c = 0;
+                const auto nSpacePos = osBAD.find(' ');
+                if (nSpacePos != std::string::npos)
+                    osBAD.resize(nSpacePos);
             }
 
             if (EQUAL(osShortIMGFilename.c_str(), osBAD.c_str()))
@@ -1028,7 +1028,7 @@ SRPDataset *SRPDataset::OpenDataset(const char *pszGENFileName,
     if (pszNAM == nullptr)
         return nullptr;
 
-    const CPLString osNAM = pszNAM;
+    const CPLString osNAM(pszNAM);
     CPLDebug("SRP", "osNAM=%s", osNAM.c_str());
     if (strlen(pszNAM) != 8)
     {

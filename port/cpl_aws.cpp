@@ -2761,17 +2761,26 @@ bool VSIS3HandleHelper::CanRestartOnError(const char *pszErrorMsg,
         return true;
     }
 
+    if (EQUAL(pszCode, "RequestTimeout"))
+    {
+        const char *pszMessage =
+            CPLGetXMLValue(psTree, "=Error.Message", nullptr);
+        if (pszMessage != nullptr)
+            CPLDebug("S3", "Request Timeout: %s", pszMessage);
+
+        CPLDestroyXMLNode(psTree);
+        return true;
+    }
+
     if (bSetError)
     {
         // Translate AWS errors into VSI errors.
-        const char *pszMessage =
-            CPLGetXMLValue(psTree, "=Error.Message", nullptr);
 
-        if (pszMessage == nullptr)
-        {
-            VSIError(VSIE_ObjectStorageGenericError, "%s", pszErrorMsg);
-        }
-        else if (EQUAL(pszCode, "AccessDenied"))
+        const char *pszMessage =
+            CPLGetXMLValue(psTree, "=Error.Message", pszErrorMsg);
+        // Some S3 implementations (e.g. OpenStack) skip the Message part
+
+        if (EQUAL(pszCode, "AccessDenied"))
         {
             VSIError(VSIE_AccessDenied, "%s", pszMessage);
         }

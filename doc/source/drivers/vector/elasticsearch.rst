@@ -652,77 +652,93 @@ and should be preferred (see above):
 Examples
 --------
 
-**Open the local store:**
+.. example::
+   :title: Open the local store
 
-::
+   .. code-block:: bash
+   
+      ogrinfo ES:
 
-   ogrinfo ES:
+.. example::
+   :title: Open a remote store
 
-**Open a remote store:**
+   .. code-block:: bash
+   
+      ogrinfo ES:http://example.com:9200
 
-::
+.. example::
+   :title: Filtering on a Elastic Search field
 
-   ogrinfo ES:http://example.com:9200
+   .. code-block:: bash
 
-**Filtering on a Elastic Search field:**
+      ogrinfo -ro ES: my_type -where '{ "post_filter": { "term": { "properties.EAS_ID": 168 } } }'
 
-::
+   **Using "match" query on Windows:**
+   On Windows the query must be between double quotes and double quotes
+   inside the query must be escaped.
+   
+   ::
+   
+      C:\GDAL_on_Windows>ogrinfo ES: my_type -where "{\"query\": { \"match\": { \"properties.NAME\": \"Helsinki\" } } }"
 
-   ogrinfo -ro ES: my_type -where '{ "post_filter": { "term": { "properties.EAS_ID": 168 } } }'
+.. example::
+   :title: Basic aggregation
 
-**Using "match" query on Windows:**
-On Windows the query must be between double quotes and double quotes
-inside the query must be escaped.
+   .. code-block:: bash
+   
+      ogrinfo -ro ES: my_type -oo "AGGREGATION={\"index\":\"my_points\"}"
 
-::
+.. example::
+   :title: Load an Elasticsearch index with a shapefile
 
-   C:\GDAL_on_Windows>ogrinfo ES: my_type -where "{\"query\": { \"match\": { \"properties.NAME\": \"Helsinki\" } } }"
+   .. code-block:: bash
+   
+      ogr2ogr -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
-**Basic aggregation:**
+.. example::
+   :title: Create a Mapping File
+   
+   The mapping file allows you to modify the
+   mapping according to the `Elasticsearch field-specific
+   types <http://www.elasticsearch.org/guide/reference/mapping/core-types.html>`__.
+   There are many options to choose from, however, most of the
+   functionality is based on all the different things you are able to do
+   with text fields.
+   
+   .. code-block:: bash
+   
+      ogr2ogr -progress -lco WRITE_MAPPING=/path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
-::
+.. example::
+   :title: Read the Mapping File
+  
+   Reads the mapping file during the transformation
 
-   ogrinfo -ro ES: my_type -oo "AGGREGATION={\"index\":\"my_points\"}"
+   .. code-block:: bash
+   
+      ogr2ogr -progress -lco MAPPING=/path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
-**Load an Elasticsearch index with a shapefile:**
+.. example::
+   :title: Bulk Uploading (for larger datasets)
+   
+   Bulk loading helps when
+   uploading a lot of data. The integer value is the number of bytes that
+   are collected before being inserted. `Bulk size
+   considerations <https://www.elastic.co/guide/en/elasticsearch/guide/current/bulk.html#_how_big_is_too_big>`__
+   
+   .. code-block:: bash
+   
+      ogr2ogr -progress -lco BULK_SIZE=5000000 -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
 
-::
+.. example::
+   :title: Overwrite the current Index
+   
+   If specified, this will overwrite the
+   current index. Otherwise, the data will be appended.
 
-   ogr2ogr -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
-
-**Create a Mapping File:** The mapping file allows you to modify the
-mapping according to the `Elasticsearch field-specific
-types <http://www.elasticsearch.org/guide/reference/mapping/core-types.html>`__.
-There are many options to choose from, however, most of the
-functionality is based on all the different things you are able to do
-with text fields.
-
-::
-
-   ogr2ogr -progress -lco WRITE_MAPPING=/path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
-
-**Read the Mapping File:** Reads the mapping file during the
-transformation
-
-::
-
-   ogr2ogr -progress -lco MAPPING=/path/to/file/map.txt -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
-
-**Bulk Uploading (for larger datasets):** Bulk loading helps when
-uploading a lot of data. The integer value is the number of bytes that
-are collected before being inserted. `Bulk size
-considerations <https://www.elastic.co/guide/en/elasticsearch/guide/current/bulk.html#_how_big_is_too_big>`__
-
-::
-
-   ogr2ogr -progress -lco BULK_SIZE=5000000 -f "Elasticsearch" http://localhost:9200 my_shapefile.shp
-
-**Overwrite the current Index:** If specified, this will overwrite the
-current index. Otherwise, the data will be appended.
-
-::
-
-   ogr2ogr -progress -overwrite ES:http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
+   .. code-block:: bash
+   
+      ogr2ogr -progress -overwrite ES:http://localhost:9200 PG:"host=localhost user=postgres dbname=my_db password=password" "my_table" -nln thetable
 
 See Also
 --------

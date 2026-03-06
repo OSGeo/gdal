@@ -129,45 +129,50 @@ The following layer creation options are available:
 Examples
 --------
 
-* Listing available tables from a BigQuery dataset:
+.. example::
+   :title: Listing available tables from a BigQuery dataset
 
-  ::
+   .. code-block:: bash
+ 
+       gdal vector info ADBC: \
+           --oo BIGQUERY_PROJECT_ID=my_project_id \
+           --oo BIGQUERY_DATASET_ID=my_dataset \
+           --oo BIGQUERY_JSON_CREDENTIAL_FILE=$HOME/.config/gcloud/application_default_credentials.json
 
-      gdal vector info ADBC: \
-          --oo BIGQUERY_PROJECT_ID=my_project_id \
-          --oo BIGQUERY_DATASET_ID=my_dataset \
-          --oo BIGQUERY_JSON_CREDENTIAL_FILE=$HOME/.config/gcloud/application_default_credentials.json
+.. example::
+   :title: Displaying the results of a SQL statement
 
-* Displaying the results of a SQL statement:
+   .. code-block:: bash
+ 
+       gdal vector info ADBC: --features \
+           --oo BIGQUERY_PROJECT_ID=my_project_id \
+           --oo BIGQUERY_JSON_CREDENTIAL_FILE=$HOME/.config/gcloud/application_default_credentials.json
+           --oo "SQL=SELECT * FROM my_dataset.my_table ORDER BY area DESC LIMIT 10"
 
-  ::
+.. example::
+   :title: Converting a subset of a BigQuery table to a GeoPackage file
 
-      gdal vector info ADBC: --features \
-          --oo BIGQUERY_PROJECT_ID=my_project_id \
-          --oo BIGQUERY_JSON_CREDENTIAL_FILE=$HOME/.config/gcloud/application_default_credentials.json
-          --oo "SQL=SELECT * FROM my_dataset.my_table ORDER BY area DESC LIMIT 10"
-
-* Converting a subset of a BigQuery table to a GeoPackage file:
-
-  ::
+   .. code-block:: bash
 
       gdal vector sql --input=ADBC: --output=out.gpkg \
           "--sql=SELECT * FROM my_dataset.my_table WHERE country = 'France'" \
           --oo BIGQUERY_PROJECT_ID=my_project_id \
           --oo BIGQUERY_JSON_CREDENTIAL_FILE=$HOME/.config/gcloud/application_default_credentials.json
 
-* Converting a GeoPackage file to a BigQuery table (provided the input table(s) use geographic coordinates):
+.. example:: 
+   :title: Converting a GeoPackage file to a BigQuery table (provided the input table(s) use geographic coordinates):
 
-  ::
+   .. code-block:: bash
 
       gdal vector convert --update --input=my.gpkg --output=ADBC: \
           --output-oo BIGQUERY_PROJECT_ID=my_project_id \
           --output-oo BIGQUERY_DATASET_ID=my_dataset \
           --output-oo BIGQUERY_JSON_CREDENTIAL_FILE=$HOME/.config/gcloud/application_default_credentials.json
 
-* Converting a shapefile file to a BigQuery table, doing prior reprojection to WGS 84 (EPSG:4326), and renaming the layer
+.. example::
+   :title: Converting a shapefile file to a BigQuery table, doing prior reprojection to WGS 84 (EPSG:4326), and renaming the layer
 
-  ::
+   .. code-block:: bash
 
       gdal vector pipeline read my.gpkg ! \
           reproject --dst-crs=EPSG:4326 ! \

@@ -533,25 +533,27 @@ The following configuration options are available:
 Examples
 ~~~~~~~~
 
--  This example shows using ogr2ogr to transform a shapefile with point
-   geometry into a .csv file with the X,Y,Z coordinates of the points as
-   first columns in the .csv file
+.. example:: 
+   :title: Converting point shapefile to `.csv` with X,Y,Z coordinates columns
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f CSV output.csv input.shp -lco GEOMETRY=AS_XYZ
 
--  This example shows using ogr2ogr to transform a shapefile into a .csv
-   file with geometry field formatted using GeoJSON format.
+.. example::
+   :title: Converting a shapefile to `.csv` with file with geometry field formatted as GeoJSON
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f CSV output.csv input.shp -dialect sqlite -sql \
           "select AsGeoJSON(geometry) AS geom, * from input"
 
-- Convert a CSV into a GeoPackage. Specify the names of the coordinate columns and assign a coordinate reference system.
+.. example::
+   :title: Converting a CSV into a GeoPackage
+  
+   Specify the names of the coordinate columns and assign a coordinate reference system.
 
-   ::
+   .. code-block:: bash
 
      ogr2ogr \
        -f GPKG output.gpkg \
@@ -560,9 +562,12 @@ Examples
        -oo Y_POSSIBLE_NAMES=latitude \
        -a_srs 'EPSG:4326'
 
--  Use `ogr2ogr -segmentize` to densify a input geometry being specified in the ``WKT`` special field. Note that one needs to specify the GEOMETRY=AS_WKT layer creation option, otherwise the input geometry would be returned unmodified:
+.. example:: 
+   :title: Densifying an input geometry specified in the ``WKT`` special field.
 
-   ::
+   Note that one needs to specify the GEOMETRY=AS_WKT layer creation option, otherwise the input geometry would be returned unmodified.
+
+   .. code-block:: console
 
     $ cat input.csv
     WKT,ID,Name

@@ -159,48 +159,55 @@ The following layer creation options are supported:
       Optionally specify database engine to use. In MySQL 4.x
       this must be set to MyISAM for spatial tables.
 
-The following example datasource name opens the database schema
-*westholland* with password *psv9570* for userid *root* on the port
-*3306*. No hostname is provided, so localhost is assumed. The tables=
-directive means that only the bedrijven table is scanned and presented
-as a layer for use.
 
-::
+.. example::
 
-   MYSQL:westholland,user=root,password=psv9570,port=3306,tables=bedrijven
+   The following example datasource name opens the database schema
+   *westholland* with password *psv9570* for userid *root* on the port
+   *3306*. No hostname is provided, so localhost is assumed. The tables=
+   directive means that only the bedrijven table is scanned and presented
+   as a layer for use.
+   
+   ::
+   
+      MYSQL:westholland,user=root,password=psv9570,port=3306,tables=bedrijven
 
-The following example uses ogr2ogr to create copy the world_borders
-layer from a shapefile into a MySQL table. It overwrites a table with
-the existing name *borders2*, sets a layer creation option to specify
-the geometry column name to *SHAPE2*.
+.. example::
 
-::
+   The following example uses ogr2ogr to create copy the world_borders
+   layer from a shapefile into a MySQL table. It overwrites a table with
+   the existing name *borders2*, sets a layer creation option to specify
+   the geometry column name to *SHAPE2*.
+   
+   .. code-block:: bash
+   
+      ogr2ogr -f MySQL MySQL:test,user=root world_borders.shp -nln borders2 -update -overwrite -lco GEOMETRY_NAME=SHAPE2
 
-   ogr2ogr -f MySQL MySQL:test,user=root world_borders.shp -nln borders2 -update -overwrite -lco GEOMETRY_NAME=SHAPE2
+.. example::
 
-The following example uses ogrinfo to return some summary information
-about the borders2 layer in the test database.
-
-::
-
-   ogrinfo MySQL:test,user=root borders2 -so
-
-       Layer name: borders2
-       Geometry: Polygon
-       Feature Count: 3784
-       Extent: (-180.000000, -90.000000) - (180.000000, 83.623596)
-       Layer SRS WKT:
-       GEOGCS["GCS_WGS_1984",
-           DATUM["WGS_1984",
-               SPHEROID["WGS_84",6378137,298.257223563]],
-           PRIMEM["Greenwich",0],
-           UNIT["Degree",0.017453292519943295]]
-       FID Column = OGR_FID
-       Geometry Column = SHAPE2
-       cat: Real (0.0)
-       fips_cntry: String (80.0)
-       cntry_name: String (80.0)
-       area: Real (15.2)
-       pop_cntry: Real (15.2)
+   The following example uses ogrinfo to return some summary information
+   about the borders2 layer in the test database.
+   
+   .. code-block:: console
+   
+      $ ogrinfo MySQL:test,user=root borders2 -so
+   
+          Layer name: borders2
+          Geometry: Polygon
+          Feature Count: 3784
+          Extent: (-180.000000, -90.000000) - (180.000000, 83.623596)
+          Layer SRS WKT:
+          GEOGCS["GCS_WGS_1984",
+              DATUM["WGS_1984",
+                  SPHEROID["WGS_84",6378137,298.257223563]],
+              PRIMEM["Greenwich",0],
+              UNIT["Degree",0.017453292519943295]]
+          FID Column = OGR_FID
+          Geometry Column = SHAPE2
+          cat: Real (0.0)
+          fips_cntry: String (80.0)
+          cntry_name: String (80.0)
+          area: Real (15.2)
+          pop_cntry: Real (15.2)
 
 

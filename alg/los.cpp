@@ -354,7 +354,7 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
         {
             SetXYIntersection(x, y);
         }
-        return IsAboveTerrain(hBand, x, y, z);
+        return isAbove;
     };
 
     return Bresenham2D(xA, yA, xB, yB, OnBresenhamPoint);

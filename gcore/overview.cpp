@@ -1073,7 +1073,7 @@ static int
 
         // Compute the maximum of each DEST_ELTS value to RMS-average
         const auto maxV = max_ps(max_ps(firstLineEven, firstLineOdd),
-                                 max_ps(secondLineEven, secondLineEven));
+                                 max_ps(secondLineEven, secondLineOdd));
 
         // Normalize each value by the maximum of the DEST_ELTS ones.
         // This step is important to avoid that the square evaluates to infinity

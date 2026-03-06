@@ -48,6 +48,7 @@ def test_basic_test_1():
         ds = gdal.Open("non_existing_ds", gdal.GA_ReadOnly)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
+    assert "Changing the filename" not in gdal.GetLastErrorMsg()
     pytest.fail("did not get expected error message, got %s" % gdal.GetLastErrorMsg())
 
 
@@ -86,6 +87,7 @@ def test_basic_test_2():
         ds = gdal.Open("non_existing_ds", gdal.GA_Update)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
+    assert "Changing the filename" not in gdal.GetLastErrorMsg()
     pytest.fail("did not get expected error message, got %s" % gdal.GetLastErrorMsg())
 
 
@@ -94,6 +96,7 @@ def test_basic_test_3():
         ds = gdal.Open("", gdal.GA_ReadOnly)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
+    assert "Changing the filename" not in gdal.GetLastErrorMsg()
     pytest.fail("did not get expected error message, got %s" % gdal.GetLastErrorMsg())
 
 
@@ -102,6 +105,7 @@ def test_basic_test_4():
         ds = gdal.Open("", gdal.GA_Update)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
+    assert "Changing the filename" not in gdal.GetLastErrorMsg()
     pytest.fail("did not get expected error message, got %s" % gdal.GetLastErrorMsg())
 
 
@@ -110,12 +114,110 @@ def test_basic_test_5():
         ds = gdal.Open("data/doctype.xml", gdal.GA_ReadOnly)
     last_error = gdal.GetLastErrorMsg()
     expected = "`data/doctype.xml' not recognized as being in a supported file format"
+    assert "Changing the filename" not in last_error
     assert ds is not None or expected in last_error
 
 
 def test_basic_test_5bis():
     with pytest.raises(RuntimeError, match="not a string"):
         gdal.Open(12345)
+
+
+@gdaltest.enable_exceptions()
+def test_hint_vsizip(tmp_vsimem):
+    with pytest.raises(
+        Exception,
+        match=r"Changing the filename to /vsizip/data/byte.tif.zip may help it to be recognized.",
+    ):
+        gdal.Open("data/byte.tif.zip")
+
+    with pytest.raises(Exception):
+        gdal.Open("/vsizip//vsimem/does/not/exist.zip")
+    assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
+
+    gdal.FileFromMemBuffer(tmp_vsimem / "FOO.ZIP", "PKdummy")
+    with pytest.raises(
+        Exception,
+        match=rf"Changing the filename to /vsizip/{tmp_vsimem}/FOO.ZIP may help it to be recognized.",
+    ):
+        gdal.Open(tmp_vsimem / "FOO.ZIP")
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("HTTP")
+@pytest.mark.require_curl()
+def test_hint_http():
+    with pytest.raises(
+        Exception,
+        match=r"Changing the filename to /vsicurl/http://example.com may help it to be recognized.",
+    ):
+        gdal.Open("http://example.com")
+
+    with pytest.raises(Exception):
+        gdal.Open("/vsicurl/http://example.com")
+    assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
+
+    with pytest.raises(Exception):
+        gdal.Open("/vsicurl?http://example.com")
+    assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
+
+    with pytest.raises(Exception):
+        gdal.Open("/vsicurl_streaming/http://example.com")
+    assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_curl()
+def test_hint_s3():
+    with pytest.raises(
+        Exception,
+        match="Changing the filename to /vsis3/bucket/object may help it to be recognized",
+    ):
+        gdal.Open("s3://bucket/object")
+
+    with pytest.raises(Exception):
+        gdal.Open("/vsis3/i_do_not_exist/at_all")
+    assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
+
+    with pytest.raises(Exception):
+        gdal.Open("/vsis3_streaming/i_do_not_exist/at_all")
+    assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_curl()
+def test_hint_gs():
+    with pytest.raises(
+        Exception,
+        match="Changing the filename to /vsigs/bucket/object may help it to be recognized",
+    ):
+        gdal.Open("gs://bucket/object")
+
+    with pytest.raises(Exception):
+        gdal.Open("/vsigs/i_do_not_exist/at_all")
+    assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
+
+    with pytest.raises(Exception):
+        gdal.Open("/vsigs_streaming/i_do_not_exist/at_all")
+    assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_curl()
+def test_hint_az():
+    with pytest.raises(
+        Exception,
+        match="Changing the filename to /vsiaz/bucket/object may help it to be recognized",
+    ):
+        gdal.Open("az://bucket/object")
+
+    with pytest.raises(Exception):
+        gdal.Open("/vsiaz/i_do_not_exist/at_all")
+    assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
+
+    with pytest.raises(Exception):
+        gdal.Open("/vsiaz_streaming/i_do_not_exist/at_all")
+    assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
 
 
 ###############################################################################
@@ -1210,3 +1312,26 @@ def test_basic_exclude_driver_at_open_time():
             gdal.OF_RASTER | gdal.OF_VERBOSE_ERROR,
             allowed_drivers=["-GTiff", "-LIBERTIFF"],
         )
+
+
+@gdaltest.enable_exceptions()
+def test_basic_config_option_GDAL_CACHEMAX():
+
+    with pytest.raises(
+        Exception,
+        match="Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible of the thread_local=True argument of gdal.config_option",
+    ):
+        with gdal.config_option("GDAL_CACHEMAX", 1):
+            pass
+
+    old_val = gdal.GetCacheMax()
+    with gdal.config_option("GDAL_CACHEMAX", 1, thread_local=False):
+        assert gdal.GetCacheMax() == 1
+    assert gdal.GetCacheMax() == old_val
+
+    with pytest.raises(
+        Exception,
+        match="Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible of the thread_local=True argument of gdal.config_options",
+    ):
+        with gdal.config_options({"GDAL_CACHEMAX": 1}):
+            pass

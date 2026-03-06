@@ -161,7 +161,8 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
         auto oAccumulator = oErrorAccumulator.InstallForCurrentScope();
         CPL_IGNORE_RET_VAL(oAccumulator);
         poDS = GDALDataset::Open(
-            osResultFilename, poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
+            osResultFilename,
+            poOpenInfo->nOpenFlags & ~(GDAL_OF_SHARED | GDAL_OF_VERBOSE_ERROR),
             poOpenInfo->papszAllowedDrivers, aosOpenOptions.List(), nullptr);
     }
 
@@ -204,10 +205,12 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            poDS = GDALDataset::Open(osTempFilename,
-                                     poOpenInfo->nOpenFlags & ~GDAL_OF_SHARED,
-                                     poOpenInfo->papszAllowedDrivers,
-                                     aosOpenOptions.List(), nullptr);
+            poDS =
+                GDALDataset::Open(osTempFilename,
+                                  poOpenInfo->nOpenFlags &
+                                      ~(GDAL_OF_SHARED | GDAL_OF_VERBOSE_ERROR),
+                                  poOpenInfo->papszAllowedDrivers,
+                                  aosOpenOptions.List(), nullptr);
             if (VSIUnlink(osTempFilename) != 0 && poDS != nullptr)
                 poDS->MarkSuppressOnClose(); /* VSIUnlink() may not work on
                                                 windows */

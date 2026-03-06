@@ -1073,8 +1073,8 @@ int MIFFile::Close()
      * Note: we have to check the reference count before deleting
      * m_poSpatialRef and m_poDefn
      *----------------------------------------------------------------*/
-    if (m_poDefn && m_poDefn->Dereference() == 0)
-        delete m_poDefn;
+    if (m_poDefn)
+        m_poDefn->Release();
     m_poDefn = nullptr;
 
     if (m_poSpatialRef && m_poSpatialRef->Dereference() == 0)
@@ -1534,8 +1534,8 @@ int MIFFile::SetFeatureDefn(
      * Delete current feature defn if there is already one.
      * AddFieldNative() will take care of creating a new one for us.
      *----------------------------------------------------------------*/
-    if (m_poDefn && m_poDefn->Dereference() == 0)
-        delete m_poDefn;
+    if (m_poDefn)
+        m_poDefn->Release();
     m_poDefn = nullptr;
 
     /*-----------------------------------------------------------------

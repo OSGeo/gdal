@@ -343,6 +343,9 @@ class VSICurlFilesystemHandler final : public VSICurlFilesystemHandlerBase
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override;
+
+    std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath) override;
 };
 
 /************************************************************************/

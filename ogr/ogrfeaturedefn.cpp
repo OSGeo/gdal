@@ -122,8 +122,15 @@ void OGR_FD_Destroy(OGRFeatureDefnH hDefn)
 void OGRFeatureDefn::Release()
 
 {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     if (Dereference() <= 0)
         delete this;
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 }
 
 /************************************************************************/
@@ -1179,6 +1186,9 @@ int OGR_FD_Reference(OGRFeatureDefnH hDefn)
  *
  * \brief Decrements the reference count by one.
  *
+ * \warning This method does not destroy the object when the reference count
+ *          is zero. You generally want to use Release() instead.
+ *
  * This method is the same as the C function OGR_FD_Dereference().
  *
  * @return the updated reference count.
@@ -1191,6 +1201,9 @@ int OGR_FD_Reference(OGRFeatureDefnH hDefn)
 /**
  * \brief Decrements the reference count by one.
  *
+ * \warning This method does not destroy the object when the reference count
+ *          is zero. You generally want to use OGR_FD_Release() instead.
+
  * This function is the same as the C++ method OGRFeatureDefn::Dereference().
  *
  * @param hDefn handle to the feature definition on witch OGRFeature are
@@ -1201,7 +1214,14 @@ int OGR_FD_Reference(OGRFeatureDefnH hDefn)
 int OGR_FD_Dereference(OGRFeatureDefnH hDefn)
 
 {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     return OGRFeatureDefn::FromHandle(hDefn)->Dereference();
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 }
 
 /************************************************************************/

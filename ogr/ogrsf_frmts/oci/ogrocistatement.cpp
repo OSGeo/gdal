@@ -74,9 +74,9 @@ void OGROCIStatement::Clean()
     CPLFree(panFieldMap);
     panFieldMap = nullptr;
 
-    if (poDefn != nullptr && poDefn->Dereference() <= 0)
+    if (poDefn != nullptr)
     {
-        delete poDefn;
+        poDefn->Release();
         poDefn = nullptr;
     }
 

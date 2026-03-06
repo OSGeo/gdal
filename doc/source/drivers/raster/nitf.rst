@@ -947,11 +947,11 @@ generated manually with the :ref:`gdal driver rpftoc create <raster.rpftoc.creat
 
 .. example::
    :title: Create CADRG frames from a VRT mosaic, specifying it is an
-           Operational Navigation Chart (scale 1:5 million), using hard-coded dates
+           Operational Navigation Chart (scale 1:1 million), using hard-coded dates
 
    .. code-block:: bash
 
-        gdal raster create input_mosaic.vrt output_directory \
+        gdal raster convert input_mosaic.vrt output_directory \
             --format=NITF --co PRODUCT_TYPE=CADRG --co SERIES_CODE=ON
 
 .. example::
@@ -960,7 +960,7 @@ generated manually with the :ref:`gdal driver rpftoc create <raster.rpftoc.creat
 
    .. code-block:: bash
 
-        gdal raster create input_mosaic.vrt output_directory \
+        gdal raster convert input_mosaic.vrt output_directory \
             --format=NITF --co PRODUCT_TYPE=CADRG --co SERIES_CODE=CG --co SCALE=5000 \
             --co OSTAID=MyCompany --co ONAME=Norway --co PRODUCER_CODE_ID=X --co SECURITY_COUNTRY_CODE=NO \
             --co FDT=NOW --co IDATIM=NOW --co CURRENCY_DATE=NOW \

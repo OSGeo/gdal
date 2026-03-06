@@ -129,7 +129,7 @@ OGRDWGDataSource::SimplifyBlockGeometry(OGRGeometryCollection *poCollection)
 DWGBlockDefinition *OGRDWGDataSource::LookupBlock(const char *pszName)
 
 {
-    CPLString osName = pszName;
+    const CPLString osName(pszName);
 
     if (oBlockMap.count(osName) == 0)
         return nullptr;

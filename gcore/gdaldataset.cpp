@@ -40,6 +40,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_vsi_error.h"
+#include "cpl_vsi_virtual.h"
 
 #include "gdal.h"
 #include "gdal_alg.h"
@@ -4577,6 +4578,23 @@ retry:
 
     if (nOpenFlags & GDAL_OF_VERBOSE_ERROR)
     {
+        std::string osHint;
+        const CPLStringList aosVSIFSPrefixes(VSIFileManager::GetPrefixes());
+        for (const char *pszFSPrefix : aosVSIFSPrefixes)
+        {
+            auto poFS = VSIFileManager::GetHandler(pszFSPrefix);
+            if (poFS)
+            {
+                osHint = poFS->GetHintForPotentiallyRecognizedPath(pszFilename);
+                if (!osHint.empty())
+                {
+                    osHint = " Changing the filename to " + osHint +
+                             " may help it to be recognized.";
+                    break;
+                }
+            }
+        }
+
         if (nDriverCount == 0)
         {
             CPLError(CE_Failure, CPLE_OpenFailed, "No driver registered.");
@@ -4596,14 +4614,19 @@ retry:
         }
         // Check to see if there was a filesystem error, and report it if so.
         // If not, return a more generic error.
+        else if (!osHint.empty() && VSIGetLastErrorNo() == VSIE_FileError)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "%s.%s", VSIGetLastErrorMsg(),
+                     osHint.c_str());
+        }
         else if (!VSIToCPLError(CE_Failure, CPLE_OpenFailed))
         {
             if (oOpenInfo.bStatOK)
             {
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "`%s' not recognized as being in a supported file "
-                         "format.",
-                         pszFilename);
+                         "format.%s",
+                         pszFilename, osHint.c_str());
             }
             else
             {
@@ -4611,8 +4634,8 @@ retry:
                 // the file did not exist on the filesystem.
                 CPLError(CE_Failure, CPLE_OpenFailed,
                          "`%s' does not exist in the file system, "
-                         "and is not recognized as a supported dataset name.",
-                         pszFilename);
+                         "and is not recognized as a supported dataset name.%s",
+                         pszFilename, osHint.c_str());
             }
         }
     }

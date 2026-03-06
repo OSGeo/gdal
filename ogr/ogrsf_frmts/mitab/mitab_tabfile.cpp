@@ -2017,9 +2017,8 @@ int TABFile::SetFeatureDefn(
      * Keep a reference to the OGRFeatureDefn... we'll have to take the
      * reference count into account when we are done with it.
      *----------------------------------------------------------------*/
-    if (m_poDefn && m_poDefn->Dereference() == 0)
-        delete m_poDefn;
-
+    if (m_poDefn)
+        m_poDefn->Release();
     m_poDefn = poFeatureDefn;
     m_poDefn->Reference();
 
