@@ -130,11 +130,13 @@ output coordinate system or even reprojecting the features during translation.
     of the native SQL of an RDBMS by passing the ``OGRSQL`` dialect value.
     The :ref:`sql_sqlite_dialect` dialect can be chosen with the ``SQLITE``
     and ``INDIRECT_SQLITE`` dialect values, and this can be used with any datasource.
+    (:option:`-dialect` is ignored with :option:`-where`. Use :option:`-sql` instead.)
 
 .. option:: -where <restricted_where>|@<filename>
 
     Attribute query (like SQL WHERE). The ``@filename``
     syntax can be used to indicate that the content is in the pointed filename.
+    (:option:`-dialect` is ignored with :option:`-where`. Use :option:`-sql` instead.)
 
 .. option:: -skipfailures
 
