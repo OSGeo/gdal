@@ -482,8 +482,8 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
 %typemap(imtype,
   inattributes="[MarshalAs(UnmanagedType.LPUTF8Str)]",
   outattributes="[return: MarshalAs(UnmanagedType.LPUTF8Str)]")
-    (const char *utf8_path) "String"
-	
+    (const char *utf8_path), (const char *utf8_path_or_none = NULL) "string"
+
 %apply ( const char *utf8_path ) { const char* GetFieldAsString };
 
 /*

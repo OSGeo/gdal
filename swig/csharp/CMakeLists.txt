@@ -873,7 +873,7 @@ if (BUILD_TESTING)
       NAME csharp_getcrsinfo
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CSHARP_INTERPRETER} GetCRSInfo/GetCRSInfo${_ex} "EPSG" 20)
-    set_property(TEST csharp_getcrsinfo PROPERTY ENVIRONMENT "${TEST_ENV}")	
+    set_property(TEST csharp_getcrsinfo PROPERTY ENVIRONMENT "${TEST_ENV}")
     add_test(
       NAME csharp_testutf8
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
