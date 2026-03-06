@@ -876,6 +876,21 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
     CPLJSONObject dtype;
     const std::string dummy("dummy");
 
+    if (oDataType.GetClass() == GEDTC_STRING)
+    {
+        const int nMaxLen = std::max(
+            2, atoi(CPLGetConfigOption("ZARR_VLEN_STRING_MAX_LENGTH", "256")));
+        DtypeElt elt;
+        elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
+        elt.nativeOffset = 0;
+        elt.nativeSize = static_cast<size_t>(nMaxLen);
+        elt.gdalOffset = 0;
+        elt.gdalSize = oDataType.GetSize();
+        aoDtypeElts.emplace_back(elt);
+        dtype.Set(dummy, "string");
+        return dtype;
+    }
+
     const auto eDT = oDataType.GetNumericDataType();
     DtypeElt elt;
     bool bUnsupported = false;
@@ -1023,7 +1038,8 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         return nullptr;
     }
 
-    if (oDataType.GetClass() != GEDTC_NUMERIC)
+    if (oDataType.GetClass() != GEDTC_NUMERIC &&
+        oDataType.GetClass() != GEDTC_STRING)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unsupported data type with Zarr V3");
@@ -1080,9 +1096,11 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     std::unique_ptr<ZarrV3CodecSequence> poCodecs;
     CPLJSONArray oCodecs;
 
+    const bool bIsString = (oDataType.GetClass() == GEDTC_STRING);
+
     const bool bFortranOrder = EQUAL(
         CSLFetchNameValueDef(papszOptions, "CHUNK_MEMORY_LAYOUT", "C"), "F");
-    if (bFortranOrder && aoDimensions.size() > 1)
+    if (!bIsString && bFortranOrder && aoDimensions.size() > 1)
     {
         CPLJSONObject oCodec;
         oCodec.Add("name", "transpose");
@@ -1097,10 +1115,18 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         oCodecs.Add(oCodec);
     }
 
-    // Not documented option, but 'bytes' codec is required
-    const char *pszEndian =
-        CSLFetchNameValueDef(papszOptions, "@ENDIAN", "little");
+    // Array-to-bytes codec: vlen-utf8 for strings, bytes for numeric
+    if (bIsString)
     {
+        CPLJSONObject oCodec;
+        oCodec.Add("name", "vlen-utf8");
+        oCodecs.Add(oCodec);
+    }
+    else
+    {
+        // Not documented option, but 'bytes' codec is required
+        const char *pszEndian =
+            CSLFetchNameValueDef(papszOptions, "@ENDIAN", "little");
         CPLJSONObject oCodec;
         oCodec.Add("name", "bytes");
         oCodec.Add("configuration", ZarrV3CodecBytes::GetConfiguration(
@@ -1161,10 +1187,13 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
                   : (EQUAL(shuffle, "2") || EQUAL(shuffle, "BIT"))
                       ? "bitshuffle"
                       : "invalid";
-        const int typesize = atoi(CSLFetchNameValueDef(
-            papszOptions, "BLOSC_TYPESIZE",
-            CPLSPrintf("%d", GDALGetDataTypeSizeBytes(GDALGetNonComplexDataType(
-                                 oDataType.GetNumericDataType())))));
+        const int nDefaultTypeSize =
+            bIsString ? 1
+                      : GDALGetDataTypeSizeBytes(GDALGetNonComplexDataType(
+                            oDataType.GetNumericDataType()));
+        const int typesize =
+            atoi(CSLFetchNameValueDef(papszOptions, "BLOSC_TYPESIZE",
+                                      CPLSPrintf("%d", nDefaultTypeSize)));
         const int blocksize =
             atoi(CSLFetchNameValueDef(papszOptions, "BLOSC_BLOCKSIZE", "0"));
         oCodec.Add("configuration",
@@ -1278,8 +1307,11 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     poArray->SetFilename(osFilename);
     poArray->SetDimSeparator(pszDimSeparator);
     poArray->SetDtype(dtype);
-    if (oCodecs.Size() > 0 &&
-        oCodecs[oCodecs.Size() - 1].GetString("name") != "bytes")
+    const auto osLastCodecName =
+        oCodecs.Size() > 0 ? oCodecs[oCodecs.Size() - 1].GetString("name")
+                           : std::string();
+    if (!osLastCodecName.empty() && osLastCodecName != "bytes" &&
+        osLastCodecName != "vlen-utf8")
     {
         poArray->SetStructuralInfo(
             "COMPRESSOR", oCodecs[oCodecs.Size() - 1].ToString().c_str());

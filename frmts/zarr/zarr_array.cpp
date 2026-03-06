@@ -2044,7 +2044,12 @@ lbl_next_depth:
                         {
                             memcpy(dst_ptr, pSrcStr,
                                    std::min(nLen, nNativeSize));
-                            if (nLen < nNativeSize)
+                            if (nLen > nNativeSize)
+                            {
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "Too long string truncated");
+                            }
+                            else if (nLen < nNativeSize)
                                 memset(dst_ptr + nLen, 0, nNativeSize - nLen);
                         }
                     }
