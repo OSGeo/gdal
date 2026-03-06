@@ -176,9 +176,7 @@ The following general options are available:
 
 .. include:: options/co.rst
 
-.. option:: -q
-
-    Suppress progress monitor and other non-error output.
+.. include:: options/quiet.rst
 
 For all algorithms, except color-relief, a nodata value in the target dataset
 will be emitted if at least one pixel set to the nodata value is found in the

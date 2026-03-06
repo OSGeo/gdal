@@ -55,9 +55,7 @@ Also some information is written to the stdout.
 
     Show progress.
 
-.. option:: -quiet
-
-    Suppress all messages except errors and results.
+.. include:: options/quiet.rst
 
 .. option:: -f <format_name>
 

@@ -40,6 +40,8 @@ be on the right, i.e. a line string goes clockwise around a top.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -b <band>
 
     Picks a particular band to get the DEM from. Defaults to band 1.
@@ -137,10 +139,6 @@ be on the right, i.e. a line string goes clockwise around a top.
     transaction. If set to 0, no explicit transaction is done.
 
     .. versionadded:: 3.10
-
-.. option:: -q
-
-    Be quiet: do not print progress indicators.
 
 C API
 -----

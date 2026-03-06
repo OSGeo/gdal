@@ -32,6 +32,8 @@ if either alpha band or mask band is not set.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -o <outfile>
 
     The name of the output file to be created.
@@ -102,10 +104,6 @@ if either alpha band or mask band is not set.
     algorithm and will work with concave areas. It requires creating a temporary
     dataset and is slower than ``twopasses``. When a non-zero value for :option:`-nb`
     is used, ``twopasses`` is actually called as an initial step of ``floodfill``.
-
-.. option:: -q
-
-    Suppress progress monitor and other non-error output.
 
 .. option:: <infile>
 
