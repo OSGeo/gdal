@@ -1627,13 +1627,13 @@ class GDALPDFiumRenderDeviceDriver final : public RenderDeviceDriverIface
                                        options, blend_type);
     }
 
-    virtual bool ContinueDIBits(CFX_AggImageRenderer *handle,
+    virtual bool ContinueDIBits(Continuation *continuation,
                                 PauseIndicatorIface *pPause) override
     {
-        return m_poParent->ContinueDIBits(handle, pPause);
+        return m_poParent->ContinueDIBits(continuation, pPause);
     }
 
-    virtual bool DrawDeviceText(const pdfium::span<const TextCharPos> &pCharPos,
+    virtual bool DrawDeviceText(pdfium::span<const TextCharPos> pCharPos,
                                 CFX_Font *pFont,
                                 const CFX_Matrix &mtObject2Device,
                                 float font_size, uint32_t color,

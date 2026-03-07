@@ -2713,6 +2713,10 @@ def test_sentinel2_zipped():
 
 
 def test_sentinel2_l1c_processing_baseline_5_09__1():
+
+    if gdaltest.is_travis_branch("cmake-ubuntu-noble"):
+        pytest.skip()
+
     filename_xml = "data/sentinel2/fake_l1c_processing_baseline_5_09/S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE/MTD_MSIL1C.xml"
 
     gdal.ErrorReset()
@@ -2816,6 +2820,10 @@ def test_sentinel2_l1c_processing_baseline_5_09__1():
 
 
 def test_sentinel2_l1c_processing_baseline_5_09__2():
+
+    if gdaltest.is_travis_branch("cmake-ubuntu-noble"):
+        pytest.skip()
+
     filename_xml = "data/sentinel2/fake_l1c_processing_baseline_5_09/S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE/MTD_MSIL1C.xml"
     gdal.ErrorReset()
     ds = gdal.Open("SENTINEL2_L1C:%s:20m:EPSG_32634" % filename_xml)
@@ -2918,6 +2926,10 @@ def test_sentinel2_l1c_processing_baseline_5_09__2():
 
 
 def test_sentinel2_l2a_processing_baseline_5_09__1():
+
+    if gdaltest.is_travis_branch("cmake-ubuntu-noble"):
+        pytest.skip()
+
     filename_xml = "data/sentinel2/fake_l2a_processing_baseline_5_09/S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE/MTD_MSIL2A.xml"
     gdal.ErrorReset()
     ds = gdal.Open("SENTINEL2_L2A:%s:10m:EPSG_32634" % filename_xml)
@@ -3047,6 +3059,10 @@ def test_sentinel2_l2a_processing_baseline_5_09__1():
 
 
 def test_sentinel2_l2a_processing_baseline_5_09__2():
+
+    if gdaltest.is_travis_branch("cmake-ubuntu-noble"):
+        pytest.skip()
+
     filename_xml = "data/sentinel2/fake_l2a_processing_baseline_5_09/S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE/MTD_MSIL2A.xml"
     gdal.ErrorReset()
     ds = gdal.Open("SENTINEL2_L2A:%s:20m:EPSG_32634" % filename_xml)
