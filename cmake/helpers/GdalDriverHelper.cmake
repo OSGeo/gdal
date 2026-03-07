@@ -332,6 +332,10 @@ function(add_gdal_driver)
         endif ()
     endif ()
 
+    if(GDAL_INSTALL_RPATH)
+      set_target_properties(${_DRIVER_TARGET} PROPERTIES INSTALL_RPATH ${GDAL_INSTALL_RPATH})
+    endif()
+
     target_compile_definitions(${_DRIVER_TARGET} PUBLIC $<$<CONFIG:DEBUG>:GDAL_DEBUG>)
 
     if (USE_PRECOMPILED_HEADERS AND NOT _DRIVER_SKIP_GDAL_PRIV_HEADER)
