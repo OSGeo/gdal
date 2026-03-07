@@ -296,10 +296,10 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
             CPLJSONObject oConventionProj;
             oConventionProj.Set(
                 "schema_url",
-                "https://raw.githubusercontent.com/zarr-experimental/geo-proj/"
+                "https://raw.githubusercontent.com/zarr-conventions/geo-proj/"
                 "refs/tags/v1/schema.json");
             oConventionProj.Set("spec_url",
-                                "https://github.com/zarr-experimental/geo-proj/"
+                                "https://github.com/zarr-conventions/geo-proj/"
                                 "blob/v1/README.md");
             oConventionProj.Set("uuid", "f17cb550-5864-4468-aeb7-f3180cfb622f");
             oConventionProj.Set("name", "proj:");  // ending colon intended
