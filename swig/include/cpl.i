@@ -470,6 +470,17 @@ void VSICloseDir(VSIDIR* dir);
 
 #endif
 
+%apply (const char *utf8_path) {
+    const char* wrapper_CPLGetConfigOption,
+    const char* wrapper_CPLGetGlobalConfigOption,
+    const char* wrapper_CPLGetThreadLocalConfigOption,
+    const char* wrapper_VSIGetCredential,
+    const char* wrapper_VSIGetPathSpecificOption
+};
+%apply (const char *utf8_path_or_none) {
+    const char* pszValue,
+    const char* pszDefault
+};
 %apply Pointer NONNULL {const char * pszKey};
 void CPLSetConfigOption( const char * pszKey, const char * pszValue );
 void CPLSetThreadLocalConfigOption( const char * pszKey, const char * pszValue );
@@ -532,6 +543,7 @@ const char *wrapper_VSIGetPathSpecificOption( const char* pszPathPrefix, const c
 
 %clear const char * pszPathPrefix;
 %clear const char * pszKey;
+%clear (const char* pszValue), (const char* pszDefault);
 
 
 %inline {

@@ -703,6 +703,16 @@ if (BUILD_TESTING)
 
     gdal_build_csharp_sample(
       OUTPUT
+      GDALTestUtf8.exe
+      SOURCE
+      ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALTestUtf8.cs
+      DEPENDS
+      gdal_csharp
+      SYSTEM_DEPENDS
+      OSGeo.GDAL)
+
+    gdal_build_csharp_sample(
+      OUTPUT
       OGRLayerAlg.exe
       SOURCE
       ${CMAKE_CURRENT_SOURCE_DIR}/apps/OGRLayerAlg.cs
@@ -766,6 +776,7 @@ if (BUILD_TESTING)
               OSGeo.GDAL.Samples.GDALOverviews
               OSGeo.GDAL.Samples.GDALCreateCopy
               OSGeo.GDAL.Samples.GDALGetHistogram
+              OSGeo.GDAL.Samples.GDALTestUtf8
               OSGeo.GDAL.Samples.GDALTest
               OSGeo.GDAL.Samples.OGRLayerAlg
               OSGeo.GDAL.Samples.GDALWarp
@@ -863,4 +874,9 @@ if (BUILD_TESTING)
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CSHARP_INTERPRETER} GetCRSInfo/GetCRSInfo${_ex} "EPSG" 20)
     set_property(TEST csharp_getcrsinfo PROPERTY ENVIRONMENT "${TEST_ENV}")
+    add_test(
+      NAME csharp_testutf8
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CSHARP_INTERPRETER} GDALTestUtf8/GDALTestUtf8${_ex})
+    set_property(TEST csharp_testutf8 PROPERTY ENVIRONMENT "${TEST_ENV}")
 endif()
