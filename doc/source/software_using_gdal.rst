@@ -18,14 +18,14 @@ Free and open source
 - `Feature Data Objects (FDO)  <http://fdo.osgeo.org>`_  Open source spatial data access libraries (LGPL)
 - `Fiona  <http://pypi.python.org/pypi/Fiona>`_  Fiona is OGR's neater Python API – sleek and elegant on the outside, indomitable power on the inside.
 - `gdal3.js.org <https://gdal3.js.org>`_  Convert raster and vector geospatial data to various formats and coordinate systems entirely in the browser.
-- `GdalToTiles  <http://www.codeplex.com/gdal2tilescsharp>`_  C# Program (open source) for making image tiles for Google Earth with KML Superoverlay.
+- `GdalToTiles` C# Program (open source) for making image tiles for Google Earth with KML Superoverlay. (project discontinued; was hosted on CodePlex which shut down in December 2017)
 - `GeoDa  <http://geodacenter.github.io/index.html>`_  Introduction to Spatial Data Analysis (spatial autocorrelation and spatial regression) (GPL)
 - `GeoDjango  <https://docs.djangoproject.com/en/dev/ref/contrib/gis/>`_  A framework for building geographic web applications.
 - `geofileops <https://geofileops.readthedocs.io/en/stable/>`_  Python toolbox to process large vector files faster.
 - `GeoKettle  <https://live.osgeo.org/archive/10.5/en/overview/geokettle_overview.html>`_  An open source spatial ETL (Extract, Transform and Load) tool (LGPL)
 - `GeoNotebook  <https://github.com/OpenGeoscience/geonotebook>`_  a Jupyter notebook extension for geospatial visualization and analysis. (Apache 2.0)
 - `GeoServer  <https://geoserver.org>`_  a open source software server written in Java that allows users to share and edit geospatial data.
-- `GMT (Generic Mapping Tools)  <http://gmt.soest.hawaii.edu>`_  an open source collection of tools for processing and displaying xy and xyz datasets.
+- `GMT (Generic Mapping Tools)  <https://www.generic-mapping-tools.org>`_  an open source collection of tools for processing and displaying xy and xyz datasets.
 - `GRASS GIS  <https://grass.osgeo.org/>`_  A raster/vector open source GIS that uses GDAL for raster/vector import and export (via r.in.gdal/r.out.gdal)
 - `gstat  <https://www.gstat.org>`_  a geostatistical modelling package.
 - `GuidosToolbox  <https://forest.jrc.ec.europa.eu/en/activities/lpa/gtb/>`_  A multi-platform desktop application for generic image object analysis.
@@ -48,9 +48,9 @@ Free and open source
 - `OpenCPN  <http://opencpn.org>`_  A concise ChartPlotter/Navigator. A cross-platform ship-borne GUI application.
 - `OpenDataCube  <https://www.opendatacube.org>`_  FOSS software package that simplifies the management and analysis of large amounts of satellite imagery and other Earth observation data.
 - `OpenEV  <http://openev.sourceforge.net>`_  An OpenGL/GTK/Python based graphical viewer which exclusively uses GDAL for raster access.
-- `OFGT <https://github.com/openforis/geospatial-toolkit>`_  a collection of utilities for multipurpose forest monitoring under the `Open Foris Initiative <http://km.fao.org/OFwiki/index.php/Main_Page>`_ Open Foris Initiative.
+- `OFGT <https://github.com/openforis/geospatial-toolkit>`_  a collection of utilities for multipurpose forest monitoring under the `Open Foris Initiative <https://www.openforis.org>`_ Open Foris Initiative.
 - `OpenFLUID  <https://www.openfluid-project.org>`_  a software platform for spatial modelling of landscapes dynamics
-- `OpenSceneGraph  <http://www.openscenegraph.org>`_  3D rendering engine with `osgdem <http://www.openscenegraph.org/projects/osg/wiki/Support/UserGuides/osgdem>`_ and `osgEarth <http://wush.net/trac/osgearth/wiki/Downloads>`_ plugins.
+- `OpenSceneGraph  <http://www.openscenegraph.org>`_  3D rendering engine with `osgdem <http://www.openscenegraph.org/projects/osg/wiki/Support/UserGuides/osgdem>`_ and `osgEarth <https://github.com/pelicanmapping/osgearth>`_ plugins.
 - `Opticks  <http://opticks.org>`_  an open source remote sensing application and development framework, with a GDAL plugin.
 - `Orfeo Toolbox (OTB)  <http://www.orfeo-toolbox.org>`_  a general remote sensing image processing library.
 - `OSSIM  <https://github.com/ossimlabs/ossim>`_  Another geospatial viewing and analysis environment which uses GDAL as one of several plugins.

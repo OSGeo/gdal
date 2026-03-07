@@ -121,6 +121,7 @@ edit data.
     of the native SQL of an RDBMS by passing the ``OGRSQL`` dialect value.
     The :ref:`sql_sqlite_dialect` can be selected with the ``SQLITE``
     and ``INDIRECT_SQLITE`` dialect values, and this can be used with any datasource.
+    Note: -dialect is ignored with -where. Use -sql instead of -where if you want to use -dialect.
 
 .. option:: -spat <xmin> <ymin> <xmax> <ymax>
 

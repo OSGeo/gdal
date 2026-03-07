@@ -50,6 +50,8 @@ computer.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. include:: options/ot.rst
 
 If not set then a default type is used, which might not be supported
@@ -163,10 +165,6 @@ by the relevant driver, causing a error.
     Source dataset open option (format specific)
 
 .. include:: options/co.rst
-
-.. option:: -q
-
-    Suppress progress monitor and other non-error output.
 
 .. option:: <src_datasource>
 

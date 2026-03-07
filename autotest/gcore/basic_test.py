@@ -1312,3 +1312,26 @@ def test_basic_exclude_driver_at_open_time():
             gdal.OF_RASTER | gdal.OF_VERBOSE_ERROR,
             allowed_drivers=["-GTiff", "-LIBERTIFF"],
         )
+
+
+@gdaltest.enable_exceptions()
+def test_basic_config_option_GDAL_CACHEMAX():
+
+    with pytest.raises(
+        Exception,
+        match="Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible of the thread_local=True argument of gdal.config_option",
+    ):
+        with gdal.config_option("GDAL_CACHEMAX", 1):
+            pass
+
+    old_val = gdal.GetCacheMax()
+    with gdal.config_option("GDAL_CACHEMAX", 1, thread_local=False):
+        assert gdal.GetCacheMax() == 1
+    assert gdal.GetCacheMax() == old_val
+
+    with pytest.raises(
+        Exception,
+        match="Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible of the thread_local=True argument of gdal.config_options",
+    ):
+        with gdal.config_options({"GDAL_CACHEMAX": 1}):
+            pass

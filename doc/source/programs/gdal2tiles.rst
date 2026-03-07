@@ -225,7 +225,7 @@ Options for generated HTML viewers a la Google Maps
 
 .. option:: -g <GOOGLEKEY>, --googlekey=<GOOGLEKEY>
 
-  Google Maps API key from http://code.google.com/apis/maps/signup.html.
+  Google Maps API key from https://developers.google.com/maps/get-started.
 
 .. option:: -b <BINGKEY>, --bingkey=<BINGKEY>
 

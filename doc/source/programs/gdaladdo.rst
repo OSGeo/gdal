@@ -30,6 +30,8 @@ most supported file formats with one of several downsampling algorithms.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -r {nearest|average|rms|gauss|bilinear|cubic|cubicspline|lanczos|average_magphase|mode}
 
     Select a resampling algorithm. The default is ``nearest``, which is generally not

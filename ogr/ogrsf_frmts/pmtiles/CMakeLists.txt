@@ -22,5 +22,5 @@ endif ()
 # Needed for Create() mode
 if (GDAL_USE_SQLITE3)
   target_compile_definitions(ogr_PMTiles PRIVATE -DHAVE_SQLITE)
-  gdal_target_link_libraries(ogr_PMTiles PRIVATE SQLite::SQLite3)
+  gdal_target_link_libraries(ogr_PMTiles PRIVATE SQLite3::SQLite3)
 endif ()
