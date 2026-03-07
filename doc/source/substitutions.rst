@@ -6,7 +6,7 @@
 .. |GDAL| replace:: `GDAL <https://gdal.org/>`__
 .. |JSON| replace:: `JSON <https://en.wikipedia.org/wiki/JSON>`__
 .. |XML| replace:: `XML <https://en.wikipedia.org/wiki/XML>`__
-.. |jq| replace:: `jq <https://stedolan.github.io/jq/>`__
+.. |jq| replace:: `jq <https://jqlang.org/>`__
 .. |CSV| replace:: `CSV <https://en.wikipedia.org/wiki/Comma-separated_values>`__
 .. |NumPy| replace:: `NumPy <http://www.numpy.org/>`__
 .. |Bash| replace:: `Bash <https://en.wikipedia.org/wiki/Bash_(Unix_shell)>`__

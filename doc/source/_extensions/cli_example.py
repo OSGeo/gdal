@@ -8,17 +8,24 @@ class Example:
     # class to store properties of an example and where it was
     # defined
 
-    def __init__(self, *, example_id, example_num, docname, lineno):
+    def __init__(self, *, example_id, example_num, docname, lineno, title_nodes):
         self.example_id = example_id
         self.example_num = example_num
         self.docname = docname
         self.lineno = lineno
+        self.title_nodes = title_nodes
 
     def __eq__(self, other):
         if not isinstance(other, Example):
             return NotImplemented
 
-        return self.__dict__ == other.__dict__
+        # ignore title_nodes for comparison
+        return (
+            self.example_id == other.example_id
+            and self.example_num == other.example_num
+            and self.docname == other.docname
+            and self.lineno == other.lineno
+        )
 
 
 class ExampleRole(SphinxRole):
@@ -63,10 +70,14 @@ class ExampleDirective(SphinxDirective):
 
         example_num = len(self.env.gdal_examples_for_doc[docname]) + 1
 
-        title_content = self.options.get("title", None)
-        if title_content:
-            title_content = f"Example {example_num}: {title_content}"
+        original_title_content = self.options.get("title", None)
+        if original_title_content:
+            # Parse the title RST so inline formatting like ``jq`` is handled
+            title_nodes, _ = self.state.inline_text(original_title_content, self.lineno)
+            link_text = "".join(n.astext() for n in title_nodes)
+            title_content = f"Example {example_num}: {link_text}"
         else:
+            title_nodes = None
             title_content = f"Example {example_num}"
 
         example_id = self.options.get("id")
@@ -87,6 +98,7 @@ class ExampleDirective(SphinxDirective):
                     docname=docname,
                     lineno=self.lineno,
                     example_num=example_num,
+                    title_nodes=title_nodes,
                 )
 
         if example_id is None:
@@ -132,21 +144,29 @@ def link_example_refs(app, env, node, contnode):
 
     example = examples[example_id]
 
-    ref_node = nodes.reference("", "", refid=node["reftarget"], internal=True)
-
     # Set the link text to the example number (e.g, "Example 5") if the example
     # body is in the same document as the reference. Otherwise, set the link
     # text to the program/driver name and example number ("gdalwarp example 5").
     if node["refdoc"] == example.docname:
+        ref_node = nodes.reference("", "", refid=example_id, internal=True)
         link_text = f"Example {example.example_num}"
     else:
-        example_doc_title = str(env.titles[example.docname].children[0])
-
         # TODO: trim the example_doc name, if it's a really long one like
         # WMO General Regularly-distributed Information in Binary form ?
-        link_text = f"{example_doc_title} example {example.example_num}"
-
-    ref_node.append(nodes.Text(link_text))
+        ref_uri = (
+            app.builder.get_relative_uri(node["refdoc"], example.docname)
+            + "#"
+            + example_id
+        )
+        ref_node = nodes.reference("", "", refuri=ref_uri, internal=True)
+        if example.title_nodes is not None:
+            # use a title if available
+            for child in example.title_nodes:
+                ref_node += child
+        else:
+            example_doc_title = env.titles[example.docname].children[0].astext()
+            link_text = f"{example_doc_title} example {example.example_num}"
+            ref_node.append(nodes.Text(link_text))
 
     return ref_node
 

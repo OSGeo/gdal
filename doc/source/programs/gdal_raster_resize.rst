@@ -90,6 +90,7 @@ Examples
 
 .. example::
    :title: Resize a dataset to 1000 columns and 500 lines using cubic resampling
+   :id: gdal-raster-resize-cubic
 
    .. code-block:: bash
 

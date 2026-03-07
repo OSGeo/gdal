@@ -54,3 +54,17 @@ Examples
    .. code-block:: console
 
        $ gdal vector convert --format=OpenFileGDB poly.gpkg poly.gdb
+
+.. example::
+   :id: gdal-vector-drivers
+   :title: Check if the vector Parquet driver is installed
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector --formats | grep Parquet
+
+      .. code-tab:: ps1
+
+        gdal vector --formats | Select-String "Parquet"

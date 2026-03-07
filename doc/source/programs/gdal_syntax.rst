@@ -78,6 +78,17 @@ The following command lines are valid:
     gdal raster convert --creation-option COMPRESS=LZW --creation-option TILED=YES --overwrite input.tif output.tif
     gdal raster convert input.tif output.tif --co COMPRESS=LZW,TILED=YES --overwrite
 
+Working with JSON Output
+++++++++++++++++++++++++
+
+Several GDAL commands can produce JSON output. |jq| is a useful tool
+to parse this JSON and extract specific information. Precompiled binaries
+of |jq| are available for Linux, macOS, and Windows.
+
+Some example workflows are listed below:
+
+- :example:`gdal-driver-search`
+- :example:`gdal-vector-info-geom-name`
 
 Suggestions for argument values
 +++++++++++++++++++++++++++++++

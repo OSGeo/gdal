@@ -7,6 +7,7 @@ User oriented documentation
 .. toctree::
    :maxdepth: 1
 
+   cookbook
    raster_data_model
    band_algebra
    multidim_raster_data_model

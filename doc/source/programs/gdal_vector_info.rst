@@ -123,3 +123,33 @@ Examples
 
    .. command-output:: gdal vector info --format=JSON poly.gpkg
       :cwd: ../../data
+
+.. example::
+   :id: gdal-vector-info-geom-name
+   :title: List all datasets and their geometry fields using ``jq``
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        $ gdal vector info counties-albers-10m.gpkg --output-format=JSON | jq -r '
+          .layers[]
+          | .name as $layer
+          | .geometryFields[]?
+          | "\($layer): \(.name) (\(.type))"'
+
+      .. code-tab:: ps1
+
+        gdal vector info counties-albers-10m.gpkg --output-format=JSON | jq -r '
+          .layers[]
+          | .name as $layer
+          | .geometryFields[]?
+          | \"\($layer): \(.name) (\(.type))\"'
+
+   returns:
+
+   .. code-block::
+
+    counties: geom (Geometry)
+    states: geom (MultiPolygon)
+    nation: geom (MultiPolygon)
