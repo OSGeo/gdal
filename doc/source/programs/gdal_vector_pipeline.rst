@@ -247,9 +247,67 @@ Examples
         $ gdal vector pipeline ! read in.gpkg ! reproject --dst-crs=EPSG:32632 ! write in_epsg_32632.gdalg.json --overwrite
         $ gdal vector info in_epsg_32632.gdalg.json
 
-.. example:: Union 2 source shapefiles (with similar structure), reproject them to EPSG:32632, keep only cities larger than 1 million inhabitants and write to a GeoPackage
-   :title:
+.. example::
+   :title: Union 2 source shapefiles (with similar structure), reproject them to EPSG:32632, keep only cities larger than 1 million inhabitants and write to a GeoPackage
 
    .. code-block:: bash
 
         $ gdal vector pipeline ! concat --single --dst-crs=EPSG:32632 france.shp belgium.shp ! filter --where "pop > 1e6" ! write out.gpkg --overwrite
+
+
+.. example::
+   :title: Filter and reproject a FlatGeobuf to a Point GeoJSON file
+
+   When using :ref:`select <gdal_vector_select>` to restrict the output fields,
+   ensure that it appears **after** the :ref:`filter <gdal_vector_filter>`
+   step in the pipeline when the filter expression references fields. If a
+   field required by the filter is removed by ``select``, it will not be
+   available and the command will fail with: ``ERROR 1: "worldcity" not recognised as an available field.``
+
+   If you want the output to contain spatial data, you must also include the geometry
+   field in the selected fields. In this example the source dataset has no named geometry column. In such
+   cases the special field ``_ogr_geometry_`` can be used to reference the
+   geometry. If no geometry field is included, reprojection will
+   fail with: ``ERROR 1: reproject: Layer 'ne_110m_populated_places_simple' has no spatial reference system``.
+
+   Finally, ensure that there are **no spaces** between the field names in the
+   list. For example: ``"_ogr_geometry_, name"`` will
+   produce the error: ``ERROR 1: Field ' name' does not exist in layer 'ne_110m_populated_places_simple'.``
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector pipeline \
+            ! read ne_110m_populated_places_simple.fgb \
+            ! filter --where "worldcity = 1" \
+            ! select --fields "_ogr_geometry_,name" \
+            ! set-geom-type --single \
+            ! reproject --dst-crs=ESRI:53009 \
+            ! write worldcity_53009.geojson --overwrite
+
+      .. code-tab:: ps1
+
+        gdal vector pipeline `
+            ! read ne_110m_populated_places_simple.fgb `
+            ! filter --where "worldcity = 1" `
+            ! select --fields "_ogr_geometry_,name" `
+            ! set-geom-type --single `
+            ! reproject --dst-crs=ESRI:53009 `
+            ! write worldcity_53009.geojson --overwrite
+
+.. only:: html
+
+   .. image:: ../../images/programs/gdal_pipeline_vector_example.svg
+      :width: 0
+      :height: 0
+
+   .. raw:: html
+
+      <object type="image/svg+xml"
+              data="../_images/gdal_pipeline_vector_example.svg">
+      </object>
+
+.. only:: not html
+
+   .. image:: ../../images/programs/gdal_pipeline_vector_example.svg
