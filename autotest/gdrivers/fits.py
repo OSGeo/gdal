@@ -704,7 +704,9 @@ def test_fits_vector_write_with_source_fits_metadata():
 
     filename = "tmp/out.fits"
     with gdal.quiet_errors():
-        gdal.VectorTranslate(filename, "data/fits/binary_table.fits", options="-f FITS")
+        gdal.VectorTranslate(
+            filename, "data/fits/binary_table.fits", options="-f FITS -skip"
+        )
     try:
         ds = ogr.Open(filename)
         lyr = ds.GetLayer(0)
@@ -820,7 +822,7 @@ def test_fits_vector_write_without_source_fits_metadata():
     filename = "tmp/out.fits"
     with gdal.quiet_errors():
         gdal.VectorTranslate(
-            filename, "data/fits/binary_table.fits", options="-f FITS -nomd"
+            filename, "data/fits/binary_table.fits", options="-f FITS -nomd -skip"
         )
     try:
         ds = ogr.Open(filename)
@@ -940,7 +942,7 @@ def test_fits_vector_write_without_source_fits_metadata_compute_repeat():
         gdal.VectorTranslate(
             filename,
             "data/fits/binary_table.fits",
-            options="-f FITS -nomd -lco COMPUTE_REPEAT=AT_FIRST_FEATURE_CREATION -lco REPEAT_2E=3",
+            options="-f FITS -nomd -lco COMPUTE_REPEAT=AT_FIRST_FEATURE_CREATION -lco REPEAT_2E=3 -skip",
         )
     try:
         ds = ogr.Open(filename)
@@ -1059,7 +1061,7 @@ def test_fits_vector_editing():
     filename = "tmp/out.fits"
     with gdal.quiet_errors():
         gdal.VectorTranslate(
-            filename, "data/fits/binary_table.fits", options="-f FITS -nomd"
+            filename, "data/fits/binary_table.fits", options="-f FITS -nomd -skip"
         )
     try:
         ds = ogr.Open(filename, update=1)
