@@ -263,6 +263,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", // from ecwdataset.cpp
    "GDAL_ECW_WRITE_COMPANY", // from ecwcreatecopy.cpp
    "GDAL_ECW_WRITE_COMPRESSION_SOFTWARE", // from ecwcreatecopy.cpp
+   "GDAL_ENABLE_EXTERNAL", // from gdalalg_external.cpp
    "GDAL_ENABLE_PYTHON_PATH", // from gdalpython.cpp
    "GDAL_ENABLE_PYTHON_SYMLINK", // from gdalpython.cpp
    "GDAL_ENABLE_READ_WRITE_MUTEX", // from gdaldataset.cpp

@@ -42,6 +42,11 @@ class GDALRasterCompareAlgorithm /* non final */
         return true;
     }
 
+    int GetOutputType() const override
+    {
+        return 0;
+    }
+
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
