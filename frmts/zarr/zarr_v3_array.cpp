@@ -1157,6 +1157,20 @@ bool ZarrV3Array::FlushDirtyBlockSharded() const
     auto oIt = m_oShardWriteCache.find(osFilename);
     if (oIt == m_oShardWriteCache.end())
     {
+        // Bound the number of decoded shards kept in memory at once.
+        // This limits memory usage for sparse write patterns that touch
+        // many shards before Flush() is called.
+        const int nMaxShardCacheEntries =
+            std::max(1, atoi(CPLGetConfigOption(
+                            "GDAL_ZARR_V3_MAX_SHARD_CACHE_ENTRIES", "128")));
+        if (static_cast<int>(m_oShardWriteCache.size()) >= nMaxShardCacheEntries)
+        {
+            auto oItToFlush = m_oShardWriteCache.begin();
+            if (!FlushSingleShard(oItToFlush->first, oItToFlush->second))
+                return false;
+            m_oShardWriteCache.erase(oItToFlush);
+        }
+
         ShardWriteEntry entry;
         try
         {
