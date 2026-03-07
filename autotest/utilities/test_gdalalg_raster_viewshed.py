@@ -141,6 +141,18 @@ def test_gdalalg_raster_viewshed_max_distance_and_out_of_range_value(viewshed_in
     ds = alg["output"].GetDataset()
     assert ds.GetRasterBand(1).Checksum() not in (-1, 0, VIEWSHED_NOMINAL_CHECKSUM, cs)
 
+    alg = get_alg()
+    alg["input"] = viewshed_input
+    alg["output"] = ""
+    alg["output-format"] = "MEM"
+    alg["position"] = [621528, 4817617, 100]
+    alg["max-distance"] = 2000
+    alg["mode"] = "ground"
+    alg["out-of-range-value"] = -9999
+    assert alg.Run()
+    ds = alg["output"].GetDataset()
+    assert ds.GetRasterBand(1).Checksum() not in (-1, 0, VIEWSHED_NOMINAL_CHECKSUM, cs)
+
 
 def test_gdalalg_raster_viewshed_curvature_coefficient(viewshed_input):
 
