@@ -874,18 +874,24 @@ OGRSQLiteBaseDataSource::GetRelationship(const std::string &name) const
 /*                             prepareSql()                             */
 /************************************************************************/
 
-int OGRSQLiteBaseDataSource::prepareSql(sqlite3 *db, const char *zSql,
-                                        int nByte, sqlite3_stmt **ppStmt,
-                                        const char **pzTail)
+sqlite3_stmt *OGRSQLiteBaseDataSource::prepareSql(sqlite3 *db, const char *zSql,
+                                                  int nByte)
 {
-    const int rc{sqlite3_prepare_v2(db, zSql, nByte, ppStmt, pzTail)};
+    sqlite3_stmt *stmt = nullptr;
+    const char *pszTail = nullptr;
+    const int rc = sqlite3_prepare_v2(db, zSql, nByte, &stmt, &pszTail);
     if (rc != SQLITE_OK && pfnQueryLoggerFunc)
     {
         std::string error{"Error preparing query: "};
         error.append(sqlite3_errmsg(db));
         pfnQueryLoggerFunc(zSql, error.c_str(), -1, -1, poQueryLoggerArg);
     }
-    return rc;
+    else if (pszTail && SQLHasRemainingContent(pszTail))
+    {
+        sqlite3_finalize(stmt);
+        stmt = nullptr;
+    }
+    return stmt;
 }
 
 /************************************************************************/
@@ -2054,8 +2060,7 @@ bool OGRSQLiteDataSource::InitWithEPSG()
                                 nSRSId, nSRSId);
                     }
 
-                    sqlite3_stmt *hInsertStmt = nullptr;
-                    rc = prepareSql(hDB, osCommand, -1, &hInsertStmt, nullptr);
+                    sqlite3_stmt *hInsertStmt = prepareSql(hDB, osCommand, -1);
 
                     if (pszProjCS)
                     {
@@ -2124,12 +2129,14 @@ bool OGRSQLiteDataSource::InitWithEPSG()
                                      "VALUES (%d, 'EPSG', '%d', ?)",
                                      nSRSId, nSRSId);
 
-                    sqlite3_stmt *hInsertStmt = nullptr;
-                    rc = prepareSql(hDB, osCommand, -1, &hInsertStmt, nullptr);
+                    sqlite3_stmt *hInsertStmt =
+                        prepareSql(hDB, osCommand.c_str());
 
-                    if (rc == SQLITE_OK)
+                    if (hInsertStmt)
                         rc = sqlite3_bind_text(hInsertStmt, 1, pszWKT, -1,
                                                SQLITE_STATIC);
+                    else
+                        rc = SQLITE_ERROR;
 
                     if (rc == SQLITE_OK)
                         rc = sqlite3_step(hInsertStmt);
@@ -3300,8 +3307,6 @@ OGRLayer *OGRSQLiteDataSource::ExecuteSQL(const char *pszSQLCommand,
     /* -------------------------------------------------------------------- */
     /*      Prepare statement.                                              */
     /* -------------------------------------------------------------------- */
-    sqlite3_stmt *hSQLStmt = nullptr;
-
     CPLString osSQLCommand = pszSQLCommand;
 
     /* This will speed-up layer creation */
@@ -3325,28 +3330,25 @@ OGRLayer *OGRSQLiteDataSource::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
-    int rc =
-        prepareSql(GetDB(), osSQLCommand.c_str(),
-                   static_cast<int>(osSQLCommand.size()), &hSQLStmt, nullptr);
+    const auto nErrorCount = CPLGetErrorCounter();
+    sqlite3_stmt *hSQLStmt = prepareSql(GetDB(), osSQLCommand.c_str(),
+                                        static_cast<int>(osSQLCommand.size()));
 
-    if (rc != SQLITE_OK)
+    if (!hSQLStmt)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
-                 osSQLCommand.c_str(), sqlite3_errmsg(GetDB()));
-
-        if (hSQLStmt != nullptr)
+        if (nErrorCount == CPLGetErrorCounter())
         {
-            sqlite3_finalize(hSQLStmt);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "In ExecuteSQL(): sqlite3_prepare_v2(%s):\n  %s",
+                     osSQLCommand.c_str(), sqlite3_errmsg(GetDB()));
         }
-
         return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Do we get a resultset?                                          */
     /* -------------------------------------------------------------------- */
-    rc = sqlite3_step(hSQLStmt);
+    int rc = sqlite3_step(hSQLStmt);
     if (rc != SQLITE_ROW)
     {
         if (rc != SQLITE_DONE)
@@ -4558,14 +4560,16 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
             "SELECT srid FROM spatial_ref_sys WHERE proj4text = ? LIMIT 2");
     }
 
-    sqlite3_stmt *hSelectStmt = nullptr;
-    int rc = prepareSql(hDB, osCommand, -1, &hSelectStmt, nullptr);
+    sqlite3_stmt *hSelectStmt = prepareSql(hDB, osCommand.c_str());
 
-    if (rc == SQLITE_OK)
+    int rc = SQLITE_OK;
+    if (hSelectStmt)
         rc = sqlite3_bind_text(hSelectStmt, 1,
                                (pszSRTEXTColName != nullptr) ? osWKT.c_str()
                                                              : osProj4.c_str(),
                                -1, SQLITE_STATIC);
+    else
+        rc = SQLITE_ERROR;
 
     if (rc == SQLITE_OK)
         rc = sqlite3_step(hSelectStmt);
@@ -4791,14 +4795,14 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
         }
     }
 
-    sqlite3_stmt *hInsertStmt = nullptr;
-    rc = prepareSql(hDB, osCommand, -1, &hInsertStmt, nullptr);
+    sqlite3_stmt *hInsertStmt = prepareSql(hDB, osCommand.c_str());
+    if (!hInsertStmt)
+        rc = SQLITE_ERROR;
 
-    for (int i = 0; apszToInsert[i] != nullptr; i++)
+    for (int i = 0; rc == SQLITE_OK && apszToInsert[i] != nullptr; i++)
     {
-        if (rc == SQLITE_OK)
-            rc = sqlite3_bind_text(hInsertStmt, i + 1, apszToInsert[i], -1,
-                                   SQLITE_STATIC);
+        rc = sqlite3_bind_text(hInsertStmt, i + 1, apszToInsert[i], -1,
+                               SQLITE_STATIC);
     }
 
     if (rc == SQLITE_OK)

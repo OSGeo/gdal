@@ -257,12 +257,10 @@ class OGRSQLiteBaseDataSource CPL_NON_FINAL : public GDALPamDataset
     bool AreSpatialiteTriggersSafe();
 
     // sqlite3_prepare_v2 error logging wrapper
-    int
-    prepareSql(sqlite3 *db,           /* Database handle */
-               const char *zSql,      /* SQL statement, UTF-8 encoded */
-               int nByte,             /* Maximum length of zSql in bytes. */
-               sqlite3_stmt **ppStmt, /* OUT: Statement handle */
-               const char **pzTail /* OUT: Pointer to unused portion of zSql */
+    sqlite3_stmt *
+    prepareSql(sqlite3 *db,      /* Database handle */
+               const char *zSql, /* SQL statement, UTF-8 encoded */
+               int nByte = -1    /* Maximum length of zSql in bytes. */
     );
 
     GDALQueryLoggerFunc pfnQueryLoggerFunc = nullptr;
