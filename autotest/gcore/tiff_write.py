@@ -12536,6 +12536,11 @@ def test_tiff_write_rat(tmp_vsimem, GTIFF_WRITE_RAT_TO_PAM):
         else:
             assert gdal.VSIStatL(str(filename2) + ".aux.xml") is None
 
+        # Test that RAT gets re-written when modifying another compoonent of
+        # the GDAL_METADATA tag without re-requesting the RAT.
+        with gdal.Open(filename2, gdal.GA_Update) as ds:
+            ds.SetMetadataItem("foo", "bar")
+
         with gdal.Open(filename2) as ds:
             got_rat = ds.GetRasterBand(1).GetDefaultRAT()
             assert ds.GetRasterBand(1).GetDefaultRAT()  # do it again
@@ -12627,3 +12632,47 @@ def test_tiff_cog_layout(tmp_vsimem):
         )
     with gdal.Open(tmp_vsimem / "out.tif") as ds:
         assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
+
+
+###############################################################################
+
+
+def test_tiff_no_get_sibling_files(tmp_vsimem):
+
+    if "DEBUG=YES" not in gdal.VersionInfo("BUILD_INFO"):
+        pytest.skip("Only compatible of a GDAL build with -DDEBUG")
+
+    res = [False]
+
+    def handler(lvl, no, msg):
+        if "file listing" in msg:
+            res[0] = True
+
+    with gdal.config_option("CPL_DEBUG", "GTiff"):
+        with gdaltest.error_handler(handler):
+            gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "foo.tif", 1, 1)
+    assert not res[0]
+
+    with gdal.config_options(
+        {"CPL_DEBUG": "GTiff", "GDAL_DISABLE_READDIR_ON_OPEN": "YES"}
+    ):
+        with gdaltest.error_handler(handler):
+            with gdal.Open(tmp_vsimem / "foo.tif") as ds:
+                ds.GetRasterBand(1).GetDefaultRAT()
+    assert not res[0]
+
+    with gdal.config_options(
+        {"CPL_DEBUG": "GTiff", "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR"}
+    ):
+        with gdaltest.error_handler(handler):
+            with gdal.Open(tmp_vsimem / "foo.tif") as ds:
+                ds.GetRasterBand(1).GetDefaultRAT()
+    assert not res[0]
+
+    with gdal.config_options(
+        {"CPL_DEBUG": "GTiff", "GDAL_DISABLE_READDIR_ON_OPEN": "NO"}
+    ):
+        with gdaltest.error_handler(handler):
+            with gdal.Open(tmp_vsimem / "foo.tif") as ds:
+                ds.GetRasterBand(1).GetDefaultRAT()
+    assert res[0]

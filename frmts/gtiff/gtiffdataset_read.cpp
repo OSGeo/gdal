@@ -3942,8 +3942,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // In the case of GDAL_DISABLE_READDIR_ON_OPEN = NO / EMPTY_DIR
-    if (poOpenInfo->AreSiblingFilesLoaded() &&
-        CSLCount(poOpenInfo->GetSiblingFiles()) <= 1)
+    if (poOpenInfo->AreSiblingFilesLoaded())
     {
         poDS->oOvManager.TransferSiblingFiles(
             CSLDuplicate(poOpenInfo->GetSiblingFiles()));
@@ -5831,6 +5830,7 @@ CSLConstList GTiffDataset::GetSiblingFiles()
     const int nMaxFiles =
         atoi(CPLGetConfigOption("GDAL_READDIR_LIMIT_ON_OPEN", "1000"));
     const std::string osDirname = CPLGetDirnameSafe(m_osFilename.c_str());
+    CPLDebugOnly("GTiff", "Doing '%s' file listing", osDirname.c_str());
     CPLStringList aosSiblingFiles(VSIReadDirEx(osDirname.c_str(), nMaxFiles));
     if (nMaxFiles > 0 && aosSiblingFiles.size() > nMaxFiles)
     {
