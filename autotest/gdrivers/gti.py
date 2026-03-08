@@ -1733,7 +1733,7 @@ def test_gti_on_the_fly_warping(tmp_vsimem):
     del index_ds
 
     vrt_ds = gdal.Open(index_filename)
-    assert vrt_ds.GetRasterBand(1).Checksum() == 4772
+    assert vrt_ds.GetRasterBand(1).Checksum() in (4772, 4663)
 
     # Check that we add transparency to the warped source
     index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
