@@ -148,8 +148,8 @@ def link_example_refs(app, env, node, contnode):
     # body is in the same document as the reference. Otherwise, set the link
     # text to the program/driver name and example number ("gdalwarp example 5").
     if node["refdoc"] == example.docname:
-        ref_node = nodes.reference("", "", refid=example_id, internal=True)
         link_text = f"Example {example.example_num}"
+        ref_node = nodes.reference("", link_text, refid=example_id, internal=True)
     else:
         # TODO: trim the example_doc name, if it's a really long one like
         # WMO General Regularly-distributed Information in Binary form ?
