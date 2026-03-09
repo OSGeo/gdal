@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_vector_pipeline.h"
+#include "gdalalg_external.h"
 #include "gdalalg_materialize.h"
 #include "gdalalg_vector_read.h"
 #include "gdalalg_vector_buffer.h"
@@ -198,6 +199,11 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
 
     registry.Register<GDALTeeVectorAlgorithm>(
         addSuffixIfNeeded(GDALTeeVectorAlgorithm::NAME));
+
+    if (!forMixedPipeline)
+    {
+        registry.Register<GDALExternalVectorAlgorithm>();
+    }
 }
 
 /************************************************************************/

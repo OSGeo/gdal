@@ -5434,6 +5434,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                         nDstFieldCount++;
                     }
                 }
+                else if (!psOptions->bSkipFailures)
+                    return nullptr;
             }
         }
 
@@ -5682,6 +5684,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                     nDstFieldCount++;
                 }
             }
+            else if (!psOptions->bSkipFailures)
+                return nullptr;
 
             if (m_bResolveDomains && !osDomainName.empty())
             {
@@ -5700,6 +5704,8 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                         oMapResolved[nDstFieldCount] = resolvedInfo;
                         nDstFieldCount++;
                     }
+                    else if (!psOptions->bSkipFailures)
+                        return nullptr;
                 }
             }
         }

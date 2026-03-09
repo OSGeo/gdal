@@ -34,8 +34,8 @@ pytestmark = [
         pytest.importorskip("jsonschema") is None, reason="jsonschema module missing"
     ),
     pytest.mark.skipif(
-        gdaltest.is_travis_branch("cmake-ubuntu-jammy"),
-        reason="no longer works on cmake-ubuntu-jammy",
+        gdaltest.is_travis_branch("cmake-ubuntu-noble"),
+        reason="no longer works on cmake-ubuntu-noble",
     ),
 ]
 

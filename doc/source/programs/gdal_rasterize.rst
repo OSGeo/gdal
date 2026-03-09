@@ -35,6 +35,8 @@ raster data is supported.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -b <band>
 
     The band(s) to burn values into.  Multiple -b arguments may be used to burn
@@ -194,10 +196,6 @@ raster data is supported.
     .. versionadded:: 3.7
 
     Source dataset open option (format specific)
-
-.. option:: -q
-
-    Suppress progress monitor and other non-error output.
 
 .. option:: <src_datasource>
 

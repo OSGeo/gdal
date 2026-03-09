@@ -132,7 +132,7 @@ target_include_directories(
 if (GDAL_USE_SQLITE3)
   target_compile_definitions(gdal_unit_test PRIVATE -DHAVE_SQLITE3)
   target_include_directories(
-      gdal_unit_test PRIVATE $<TARGET_PROPERTY:SQLite::SQLite3,INTERFACE_INCLUDE_DIRECTORIES>)
+      gdal_unit_test PRIVATE $<TARGET_PROPERTY:SQLite3::SQLite3,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
 target_compile_definitions(gdal_unit_test PRIVATE -DGDAL_TEST_ROOT_DIR="${GDAL_ROOT_TEST_DIR}")

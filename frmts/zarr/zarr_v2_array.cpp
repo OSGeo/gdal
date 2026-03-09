@@ -680,22 +680,24 @@ bool ZarrV2Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
     for (int i = m_oFiltersArray.Size(); i > 0;)
     {
         --i;
-        const auto &oFilter = m_oFiltersArray[i];
-        const auto osFilterId = oFilter["id"].ToString();
-        const auto psFilterDecompressor =
-            EQUAL(osFilterId.c_str(), "shuffle") ? ZarrGetShuffleDecompressor()
-            : EQUAL(osFilterId.c_str(), "quantize")
-                ? ZarrGetQuantizeDecompressor()
-            : EQUAL(osFilterId.c_str(), "fixedscaleoffset")
-                ? ZarrGetFixedScaleOffsetDecompressor()
-                : CPLGetDecompressor(osFilterId.c_str());
-        CPLAssert(psFilterDecompressor);
-
+        const CPLCompressor *psFilterDecompressor;
         CPLStringList aosOptions;
-
+        std::string osFilterId;
         {
-            // Below obj.ToString() involves dynamic memory allocation
+            // Below CPLJSONObject/CPLJSONArray uses are not thread safe
             std::lock_guard<std::mutex> oLock(m_oMutex);
+            const auto &oFilter = m_oFiltersArray[i];
+            osFilterId = oFilter["id"].ToString();
+            psFilterDecompressor =
+                EQUAL(osFilterId.c_str(), "shuffle")
+                    ? ZarrGetShuffleDecompressor()
+                : EQUAL(osFilterId.c_str(), "quantize")
+                    ? ZarrGetQuantizeDecompressor()
+                : EQUAL(osFilterId.c_str(), "fixedscaleoffset")
+                    ? ZarrGetFixedScaleOffsetDecompressor()
+                    : CPLGetDecompressor(osFilterId.c_str());
+            CPLAssert(psFilterDecompressor);
+
             for (const auto &obj : oFilter.GetChildren())
             {
                 aosOptions.SetNameValue(obj.GetName().c_str(),

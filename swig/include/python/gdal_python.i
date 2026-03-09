@@ -6034,7 +6034,7 @@ def config_options(options, thread_local=True):
             Dictionary of configuration options passed as key, value
        thread_local : bool, default=True
             Whether the configuration options should be only set on the current
-            thread.
+            thread. Note that GDAL_CACHEMAX cannot be set with thread_local=True.
 
        Returns
        -------
@@ -6051,15 +6051,28 @@ def config_options(options, thread_local=True):
     get_config_option = GetThreadLocalConfigOption if thread_local else GetGlobalConfigOption
     set_config_option = SetThreadLocalConfigOption if thread_local else SetConfigOption
 
+    if thread_local and "GDAL_CACHEMAX" in options:
+        raise ValueError("Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible of the thread_local=True argument of gdal.config_options()")
+
     oldvals = {key: get_config_option(key) for key in options}
+    old_gdal_cache_max = GetCacheMax() if "GDAL_CACHEMAX" in options else None
 
     for key in options:
-        set_config_option(key, options[key])
+        val = options[key]
+        if key == "GDAL_CACHEMAX":
+            SetCacheMax(int(val))
+        else:
+            if val is None:
+                val = "__CPL_NULL_VALUE__"
+            set_config_option(key, val)
     try:
         yield
     finally:
         for key in options:
-            set_config_option(key, oldvals[key])
+            if key == "GDAL_CACHEMAX":
+                SetCacheMax(int(old_gdal_cache_max))
+            else:
+                set_config_option(key, oldvals[key])
 
 
 def config_option(key, value, thread_local=True):
@@ -6073,7 +6086,7 @@ def config_option(key, value, thread_local=True):
             Value of the configuration option
        thread_local : bool, default=True
             Whether the configuration option should be only set on the current
-            thread.
+            thread. Note that GDAL_CACHEMAX cannot be set with thread_local=True.
 
        Returns
        -------
@@ -6087,6 +6100,10 @@ def config_option(key, value, thread_local=True):
        ...     gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
        <osgeo.gdal.Dataset; proxy of <Swig Object of type 'GDALDatasetShadow *' at 0x...> >
     """
+
+    if thread_local and key == "GDAL_CACHEMAX":
+        raise ValueError("Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible of the thread_local=True argument of gdal.config_option()")
+
     return config_options({key: value}, thread_local=thread_local)
 
 

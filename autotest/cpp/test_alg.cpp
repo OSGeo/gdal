@@ -112,7 +112,7 @@ TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfSrcNoDataReal)
     psOptions->eWorkingDataType = GDT_Unknown;
     psOptions->padfSrcNoDataReal[0] = -1.0;
     GDALWarpResolveWorkingDataType(psOptions);
-    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Int16);
+    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Int8);
 
     psOptions->eWorkingDataType = GDT_Unknown;
     psOptions->padfSrcNoDataReal[0] = 2.0;
@@ -220,7 +220,7 @@ TEST_F(test_alg, GDALWarpResolveWorkingDataType_padfDstNoDataReal)
     psOptions->eWorkingDataType = GDT_Unknown;
     psOptions->padfDstNoDataReal[0] = -1.0;
     GDALWarpResolveWorkingDataType(psOptions);
-    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Int16);
+    EXPECT_EQ(psOptions->eWorkingDataType, GDT_Int8);
 
     psOptions->eWorkingDataType = GDT_Unknown;
     psOptions->padfDstNoDataReal[0] = 2.0;

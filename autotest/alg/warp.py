@@ -2331,3 +2331,11 @@ def test_warp_homography_overview():
         255,
         255,
     )
+
+
+@gdaltest.enable_exceptions()
+def test_warp_int8_nearest():
+
+    src_ds = gdal.Open("../gdrivers/data/gtiff/int8.tif")
+    warped_ds = gdal.Warp("", src_ds, format="MEM")
+    assert warped_ds.ReadRaster() == src_ds.ReadRaster()

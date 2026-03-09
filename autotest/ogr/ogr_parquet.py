@@ -34,7 +34,7 @@ GEOPARQUET_1_1_0_JSON_SCHEMA = "data/parquet/schema_1_1_0.json"
 def _has_validate():
     import sys
 
-    if gdaltest.is_travis_branch("cmake-ubuntu-jammy"):
+    if gdaltest.is_travis_branch("cmake-ubuntu-noble"):
         pytest.skip()
 
     from test_py_scripts import samples_path

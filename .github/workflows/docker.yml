@@ -76,9 +76,9 @@ jobs:
           set -e
           cd docker/${{ matrix.base }}
           if test "${{ env.PUSH_PACKAGES }}" == "true"; then
-            ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --push
+            ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --gdal local --push
           else
-            ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch
+            ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --gdal local
           fi
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} gdalinfo --formats
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-latest-${{ matrix.platform }} ogrinfo --formats
@@ -143,6 +143,6 @@ jobs:
         run: |
           set -e
           cd docker/ubuntu-full
-          ./build.sh --platform linux/amd64 --with-multi-arch --with-oracle --with-mrsid --with-ecw
+          ./build.sh --gdal local --platform linux/amd64 --with-multi-arch --with-oracle --with-mrsid --with-ecw
           docker run --rm ghcr.io/osgeo/gdal:ubuntu-full-latest-amd64 gdalinfo --formats
           docker run --rm ghcr.io/osgeo/gdal:ubuntu-full-latest-amd64 ogrinfo --formats

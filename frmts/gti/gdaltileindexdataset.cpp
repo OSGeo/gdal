@@ -355,6 +355,8 @@ class GDALTileIndexDataset final : public GDALPamDataset
     //! Whether the GTI file is a STAC collection
     bool m_bSTACCollection = false;
 
+    std::string m_osWarpMemory{};
+
     //! From a source dataset name, return its SourceDesc description structure.
     bool GetSourceDesc(const std::string &osTileName, SourceDesc &oSourceDesc,
                        std::mutex *pMutex);
@@ -2417,6 +2419,9 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     oOvManager.Initialize(this, poOpenInfo->pszFilename);
 
+    m_osWarpMemory = CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                          "WARPING_MEMORY_SIZE", "");
+
     return true;
 }
 
@@ -3551,7 +3556,13 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
                      osTileName.c_str());
             bWarpVRT = true;
             bExportSRS = true;
-            bAddAlphaToVRT = true;
+            if (poTileDS->GetRasterBand(poTileDS->GetRasterCount())
+                        ->GetColorInterpretation() != GCI_AlphaBand &&
+                GetRasterBand(nBands)->GetColorInterpretation() ==
+                    GCI_AlphaBand)
+            {
+                bAddAlphaToVRT = true;
+            }
         }
         else if (poTileDS->GetGeoTransform(tileGT) == CE_None &&
                  tileGT.yscale > 0 &&
@@ -3620,37 +3631,37 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
             }
 
             // Second pass to create a warped source VRT whose
-            // extent is aligned on the one of the target VRT
+            // extent is aligned on the one of the target GTI
             GDALGeoTransform warpDSGT;
             const auto eErr = poWarpDS->GetGeoTransform(warpDSGT);
             CPL_IGNORE_RET_VAL(eErr);
             CPLAssert(eErr == CE_None);
-            const double dfVRTMinX = m_gt.xorig;
-            const double dfVRTResX = m_gt.xscale;
-            const double dfVRTMaxY = m_gt.yorig;
-            const double dfVRTResYAbs = -m_gt.yscale;
+            const double dfGTIMinX = m_gt.xorig;
+            const double dfGTIResX = m_gt.xscale;
+            const double dfGTIMaxY = m_gt.yorig;
+            const double dfGTIResYAbs = -m_gt.yscale;
             const double dfWarpMinX =
-                std::floor((warpDSGT.xorig - dfVRTMinX) / dfVRTResX) *
-                    dfVRTResX +
-                dfVRTMinX;
+                std::floor((warpDSGT.xorig - dfGTIMinX) / dfGTIResX) *
+                    dfGTIResX +
+                dfGTIMinX;
             const double dfWarpMaxX =
                 std::ceil((warpDSGT.xorig +
                            warpDSGT.xscale * poWarpDS->GetRasterXSize() -
-                           dfVRTMinX) /
-                          dfVRTResX) *
-                    dfVRTResX +
-                dfVRTMinX;
+                           dfGTIMinX) /
+                          dfGTIResX) *
+                    dfGTIResX +
+                dfGTIMinX;
             const double dfWarpMaxY =
-                dfVRTMaxY -
-                std::floor((dfVRTMaxY - warpDSGT.yorig) / dfVRTResYAbs) *
-                    dfVRTResYAbs;
+                dfGTIMaxY -
+                std::floor((dfGTIMaxY - warpDSGT.yorig) / dfGTIResYAbs) *
+                    dfGTIResYAbs;
             const double dfWarpMinY =
-                dfVRTMaxY -
-                std::ceil((dfVRTMaxY -
+                dfGTIMaxY -
+                std::ceil((dfGTIMaxY -
                            (warpDSGT.yorig +
                             warpDSGT.yscale * poWarpDS->GetRasterYSize())) /
-                          dfVRTResYAbs) *
-                    dfVRTResYAbs;
+                          dfGTIResYAbs) *
+                    dfGTIResYAbs;
 
             aosOptions.AddString("-te");
             aosOptions.AddString(CPLSPrintf("%.17g", dfWarpMinX));
@@ -3659,11 +3670,17 @@ bool GDALTileIndexDataset::GetSourceDesc(const std::string &osTileName,
             aosOptions.AddString(CPLSPrintf("%.17g", dfWarpMaxY));
 
             aosOptions.AddString("-tr");
-            aosOptions.AddString(CPLSPrintf("%.17g", dfVRTResX));
-            aosOptions.AddString(CPLSPrintf("%.17g", dfVRTResYAbs));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfGTIResX));
+            aosOptions.AddString(CPLSPrintf("%.17g", dfGTIResYAbs));
 
             if (bAddAlphaToVRT)
                 aosOptions.AddString("-dstalpha");
+
+            if (!m_osWarpMemory.empty())
+            {
+                aosOptions.AddString("-wm");
+                aosOptions.AddString(m_osWarpMemory.c_str());
+            }
 
             psWarpOptions = GDALWarpAppOptionsNew(aosOptions.List(), nullptr);
             poWarpDS.reset(GDALDataset::FromHandle(GDALWarp(
@@ -5321,9 +5338,12 @@ void GDALRegister_GTI()
         "  <Option name='MINY' type='float'/>"
         "  <Option name='MAXX' type='float'/>"
         "  <Option name='MAXY' type='float'/>"
-        "<Option name='NUM_THREADS' type='string' description="
+        "  <Option name='NUM_THREADS' type='string' description="
         "'Number of worker threads for reading. Can be set to ALL_CPUS' "
         "default='ALL_CPUS'/>"
+        "  <Option name='WARPING_MEMORY_SIZE' type='string' description="
+        "'Set the amount of memory that the warp API is allowed to use for "
+        "caching' default='64MB'/>"
         "</OpenOptionList>");
 
 #ifdef GDAL_ENABLE_ALGORITHMS

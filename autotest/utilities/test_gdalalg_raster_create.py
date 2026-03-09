@@ -547,3 +547,20 @@ def test_gdalalg_raster_create_pipeline_middle_step():
         assert ds.RasterXSize == 20
         assert ds.RasterYSize == 20
         assert ds.GetRasterBand(1).ComputeRasterMinMax() == (7, 7)
+
+
+def test_gdalalg_raster_create_like_not_positional(tmp_vsimem):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+    _, err = gdaltest.runexternal_out_and_err(
+        f"{gdal_path} raster create ../gcore/data/byte.tif {tmp_vsimem}/out.tif"
+    )
+    assert (
+        "Positional values starting at '/vsimem/test_gdalalg_raster_create_like_not_positional/out.tif' are not expected"
+        in err
+    )

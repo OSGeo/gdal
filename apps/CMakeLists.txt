@@ -38,6 +38,7 @@ target_sources(appslib PRIVATE
   gdalalg_dataset_copy.cpp
   gdalalg_dataset_rename.cpp
   gdalalg_dataset_delete.cpp
+  gdalalg_external.cpp
   gdalalg_materialize.cpp
   gdalalg_mdim.cpp
   gdalalg_mdim_info.cpp
@@ -319,6 +320,10 @@ if (BUILD_APPS)
     endif ()
     target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> utils_common)
 
+    if(GDAL_INSTALL_RPATH)
+      set_target_properties(${UTILCMD} PROPERTIES INSTALL_RPATH "${GDAL_INSTALL_RPATH};${GDAL_INSTALL_RPATH_FOR_BINARY}")
+    endif()
+
     if (NOT GDAL_ENABLE_DRIVER_GTI OR GDAL_ENABLE_DRIVER_GTI_PLUGIN)
         target_compile_definitions(${UTILCMD} PRIVATE -DGTI_DRIVER_DISABLED_OR_PLUGIN)
     endif()
@@ -379,6 +384,11 @@ if (BUILD_APPS)
     target_include_directories(
       ${UTILCMD} PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
     target_link_libraries(${UTILCMD} PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}>)
+
+    if(GDAL_INSTALL_RPATH)
+      set_target_properties(${UTILCMD} PROPERTIES INSTALL_RPATH "${GDAL_INSTALL_RPATH};${GDAL_INSTALL_RPATH_FOR_BINARY}")
+    endif()
+
   endforeach ()
 endif ()
 

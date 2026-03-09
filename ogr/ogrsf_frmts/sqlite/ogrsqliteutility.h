@@ -104,4 +104,6 @@ void OGRSQLite_gdal_get_pixel_value_common(const char *pszFunctionName,
 bool SQLCheckLineIsSafe(const char *pszLine);
 #endif
 
+bool SQLHasRemainingContent(const char *pszTail);
+
 #endif  // OGR_SQLITEUTILITY_H_INCLUDED

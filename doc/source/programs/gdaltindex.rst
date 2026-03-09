@@ -31,6 +31,8 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -overwrite
 
     .. versionadded:: 3.9

@@ -1669,7 +1669,8 @@ bool OGRFeature::IsFieldNull(int iField) const
     const int iSpecialField = iField - poDefn->GetFieldCountUnsafe();
     if (iSpecialField >= 0)
     {
-        // FIXME?
+        // Special fields (FID, geometry, style, area) are virtual/derived
+        // values that have no nullable state.
         return false;
     }
     else

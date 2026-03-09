@@ -36,6 +36,7 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm(
                                           .SetAutoOpenInputDatasets(true)
                                           .SetInputDatasetAlias("like")
                                           .SetInputDatasetRequired(false)
+                                          .SetInputDatasetPositional(false)
                                           .SetInputDatasetMaxCount(1))
 {
     AddRasterInputArgs(false, false);

@@ -1095,7 +1095,8 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
     bool bEmptyLayer = false;
 
     sqlite3_stmt *hSQLStmt = nullptr;
-    int rc = sqlite3_prepare_v2(hDB, pszStatement, -1, &hSQLStmt, nullptr);
+    const char *pszTail = nullptr;
+    int rc = sqlite3_prepare_v2(hDB, pszStatement, -1, &hSQLStmt, &pszTail);
 
     if (rc != SQLITE_OK)
     {
@@ -1106,8 +1107,16 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
         if (hSQLStmt != nullptr)
         {
             sqlite3_finalize(hSQLStmt);
+            hSQLStmt = nullptr;
         }
-
+    }
+    else if (pszTail && SQLHasRemainingContent(pszTail))
+    {
+        sqlite3_finalize(hSQLStmt);
+        hSQLStmt = nullptr;
+    }
+    if (!hSQLStmt)
+    {
         delete poSQLiteDS;
         VSIUnlink(pszTmpDBName);
         CPLFree(pszTmpDBName);

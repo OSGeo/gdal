@@ -36,6 +36,8 @@ resampling, and rescaling pixels in the process.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. include:: options/ot.rst
 
 .. option:: -strict

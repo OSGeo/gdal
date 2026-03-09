@@ -2911,7 +2911,9 @@ const char *CPL_STDCALL GDALVersionInfo(const char *pszRequest)
 #ifdef USE_ONLY_EMBEDDED_RESOURCE_FILES
         osBuildInfo += "USE_ONLY_EMBEDDED_RESOURCE_FILES=YES\n";
 #endif
-
+#ifdef DEBUG
+        osBuildInfo += "DEBUG=YES\n";
+#endif
 #undef STRINGIFY_HELPER
 #undef STRINGIFY
 

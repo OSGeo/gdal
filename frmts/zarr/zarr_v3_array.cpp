@@ -177,7 +177,13 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
         oConfiguration.Add("separator", m_osDimSeparator);
     }
 
-    if (m_pabyNoData == nullptr)
+    if (m_oType.GetClass() == GEDTC_STRING && m_pabyNoData != nullptr)
+    {
+        char *pStr = nullptr;
+        memcpy(&pStr, m_pabyNoData, sizeof(pStr));
+        oRoot.Add("fill_value", pStr ? pStr : "");
+    }
+    else if (m_pabyNoData == nullptr)
     {
         if (m_oType.GetNumericDataType() == GDT_Float16 ||
             m_oType.GetNumericDataType() == GDT_Float32 ||
@@ -1672,12 +1678,6 @@ bool ZarrV3Array::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                          const GDALExtendedDataType &bufferDataType,
                          const void *pSrcBuffer)
 {
-    if (m_oType.GetClass() == GEDTC_STRING)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Writing Zarr V3 string data types is not yet supported");
-        return false;
-    }
 
     // Multithreading writing if window is aligned on chunk boundaries.
     if (m_oType == bufferDataType && m_oType.GetClass() == GEDTC_NUMERIC)
@@ -1908,6 +1908,24 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
             {
                 elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
                 eDT = GDT_CFloat64;
+            }
+            else if (str == "string")
+            {
+                // Variable-length UTF-8 strings (zarr-extensions).
+                // nativeSize determines the fixed slot size used by the
+                // vlen-utf8 codec; strings exceeding (nativeSize-1) are
+                // truncated.  Increase via ZARR_VLEN_STRING_MAX_LENGTH.
+                const int nMaxLen =
+                    std::max(2, atoi(CPLGetConfigOption(
+                                    "ZARR_VLEN_STRING_MAX_LENGTH", "256")));
+                elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
+                elt.nativeSize = static_cast<size_t>(nMaxLen);
+                elt.gdalType = GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nMaxLen));
+                elt.gdalSize = elt.gdalType.GetSize();
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nMaxLen));
             }
             else
                 break;

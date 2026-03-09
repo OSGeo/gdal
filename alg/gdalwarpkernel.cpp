@@ -186,6 +186,7 @@ static CPLErr GWKBilinearNoMasksOrDstDensityOnlyDouble(GDALWarpKernel *poWK);
 #endif
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyShort(GDALWarpKernel *poWK);
 static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyShort(GDALWarpKernel *poWK);
+static CPLErr GWKNearestInt8(GDALWarpKernel *poWK);
 static CPLErr GWKNearestShort(GDALWarpKernel *poWK);
 static CPLErr GWKNearestUnsignedShort(GDALWarpKernel *poWK);
 static CPLErr GWKNearestNoMasksOrDstDensityOnlyFloat(GDALWarpKernel *poWK);
@@ -1367,6 +1368,9 @@ CPLErr GDALWarpKernel::PerformWarp()
     if ((eWorkingDataType == GDT_UInt16) && eResample == GRA_Bilinear &&
         bNoMasksOrDstDensityOnly)
         return GWKBilinearNoMasksOrDstDensityOnlyUShort(this);
+
+    if (eWorkingDataType == GDT_Int8 && eResample == GRA_NearestNeighbour)
+        return GWKNearestInt8(this);
 
     if (eWorkingDataType == GDT_Int16 && eResample == GRA_NearestNeighbour)
         return GWKNearestShort(this);
@@ -6770,6 +6774,11 @@ static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyUShort(GDALWarpKernel *poWK)
     return GWKRun(
         poWK, "GWKCubicSplineNoMasksOrDstDensityOnlyUShort",
         GWKResampleNoMasksOrDstDensityOnlyThread<GUInt16, GRA_CubicSpline>);
+}
+
+static CPLErr GWKNearestInt8(GDALWarpKernel *poWK)
+{
+    return GWKRun(poWK, "GWKNearestInt8", GWKNearestThread<int8_t>);
 }
 
 static CPLErr GWKNearestShort(GDALWarpKernel *poWK)

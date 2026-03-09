@@ -527,6 +527,19 @@ also defined as layer metadata items or in the .gti XML file
 
       Maximum Y value for the virtual mosaic extent
 
+-  .. oo:: WARPING_MEMORY_SIZE.
+      :choices: <string>
+      :default: 64MB
+      :since: 3.12.3
+
+      Set the amount of memory that the warp API is allowed to use for caching
+      when on-the-fly reprojection occurs.
+      The value can be specified either as a fixed amount of memory (e.g.
+      ``200MB``, ``1G``) or as a percentage of usable RAM (``10%``).
+      Note that, in case of multi-threaded optimizations described in the
+      paragraph below, the value applies for each warped source.
+
+
 Multi-threading optimizations
 -----------------------------
 

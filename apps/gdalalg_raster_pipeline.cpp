@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "gdalalg_raster_pipeline.h"
+#include "gdalalg_external.h"
 #include "gdalalg_materialize.h"
 #include "gdalalg_raster_read.h"
 #include "gdalalg_raster_calc.h"
@@ -232,6 +233,11 @@ void GDALRasterPipelineAlgorithm::RegisterAlgorithms(
     registry.Register<GDALRasterViewshedAlgorithm>();
     registry.Register<GDALTeeRasterAlgorithm>(
         addSuffixIfNeeded(GDALTeeRasterAlgorithm::NAME));
+
+    if (!forMixedPipeline)
+    {
+        registry.Register<GDALExternalRasterAlgorithm>();
+    }
 }
 
 /************************************************************************/

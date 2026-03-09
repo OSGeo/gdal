@@ -83,6 +83,8 @@ changed in later versions.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -tileindex <field_name>
 
     Use the specified value as the tile index field, instead of the default

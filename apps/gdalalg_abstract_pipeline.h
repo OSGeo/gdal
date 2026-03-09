@@ -459,6 +459,7 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
 
     bool m_bInnerPipeline = false;
     bool m_bExpectReadStep = true;
+    int m_nFirstStepWithUnknownInputType = -1;
 
     enum class StepConstraint
     {

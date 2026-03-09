@@ -4757,3 +4757,37 @@ def test_ogr_sqlite_ST_Hilbert(tmp_vsimem, require_spatialite):
                 "SELECT ST_Hilbert(geometry, NULL) FROM test"
             ) as sql_lyr:
                 pass
+
+
+###############################################################################
+# Check that we detect multiple statements and error out
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "sql,error_expected",
+    [
+        ("SELECT 1", False),
+        ("SELECT 1 ", False),
+        ("SELECT 1\t", False),
+        ("SELECT 1\n", False),
+        ("SELECT 1\r", False),
+        ("SELECT 1 -- ok SELECT 2", False),
+        ("SELECT 1 -- ok\n-- disabled", False),
+        ("SELECT 1 /* ok SELECT 2 */ ", False),
+        ("SELECT 1 /* ok\nSELECT 2 */", False),
+        # Error cases
+        ("SELECT 1;SELECT 2", True),
+        ("SELECT 1;\nSELECT 2", True),
+        ("SELECT 1; -- \nSELECT 2", True),
+    ],
+)
+def test_ogr_sqlite_detect_multiple_statements(sql, error_expected):
+    ds = ogr.Open(":memory:")
+    if error_expected:
+        with pytest.raises(Exception, match="Multiple statements are not supported"):
+            with ds.ExecuteSQL(sql):
+                pass
+    else:
+        with ds.ExecuteSQL(sql):
+            pass

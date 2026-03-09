@@ -36,6 +36,8 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. include:: options/co.rst
 
 .. option:: -b <band>

@@ -34,6 +34,8 @@ The following command line parameters can appear in any order.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. include:: options/if.rst
 
 .. option:: -of <format>

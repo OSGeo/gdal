@@ -28,12 +28,12 @@ permissions:
 
 jobs:
 
-  build-linux-ubuntu-jammy:
-    runs-on: ubuntu-22.04
+  build-linux-ubuntu-noble:
+    runs-on: ubuntu-24.04
     env:
-      BUILD_NAME: cmake-ubuntu-jammy
-      CMAKE_OPTIONS: -DPython_LOOKUP_VERSION=3.10 -DUSE_CCACHE=ON -DSWIG_REGENERATE_PYTHON=ON
-      cache-name: cmake-ubuntu-jammy
+      BUILD_NAME: cmake-ubuntu-noble
+      CMAKE_OPTIONS: -DUSE_CCACHE=ON
+      cache-name: cmake-ubuntu-noble
     steps:
     - name: Checkout GDAL
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
@@ -55,15 +55,16 @@ jobs:
            libpoppler-dev libpoppler-private-dev gpsbabel libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils \
            libfreexl-dev unixodbc-dev libwebp-dev liblcms2-2 libcrypto++-dev libkml-dev \
            libmysqlclient-dev libarmadillo-dev wget libfyba-dev libjsoncpp-dev libexpat1-dev \
-           libsqlite3-dev sqlite3-pcre libpcre3-dev libspatialite-dev libsfcgal-dev fossil libcairo2-dev libjson-c-dev libdeflate-dev liblz4-dev libblosc-dev libarchive-dev \
+           libsqlite3-dev libpcre3-dev libspatialite-dev libsfcgal-dev fossil libcairo2-dev libjson-c-dev libdeflate-dev liblz4-dev libblosc-dev libarchive-dev \
            libqhull-dev libcfitsio-dev libopenjp2-7-dev libheif-dev \
-           python3-dev libpython3-dev libpython3.10-dev python3.10-dev python3-numpy python3-lxml python3-pyflakes python3-setuptools python3-pip python3-venv \
+           python3-dev libpython3-dev libpython3.12-dev python3.12-dev python3-numpy python3-lxml python3-pyflakes python3-setuptools python3-pip python3-venv \
            python3-pytest swig doxygen texlive-latex-base make cppcheck ccache g++ \
-           libpq-dev libpqtypes-dev postgresql-14 postgresql-14-postgis-3 postgresql-client-14 postgresql-14-postgis-3-scripts
+           libpq-dev libpqtypes-dev postgresql-16 postgresql-16-postgis-3 postgresql-client-16 postgresql-16-postgis-3-scripts \
+           mono-mcs libmono-system-drawing4.0-cil
         # MSSQL: client side
-        # Disabled because of Conflicting values set for option Signed-By regarding source https://packages.microsoft.com/ubuntu/22.04/prod/ jammy: /usr/share/keyrings/microsoft-prod.gpg !=
+        # Disabled because of Conflicting values set for option Signed-By regarding source https://packages.microsoft.com/ubuntu/24.04/prod/ noble: /usr/share/keyrings/microsoft-prod.gpg !=
         # curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-        # curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
+        # curl https://packages.microsoft.com/config/ubuntu/24.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
         # sudo apt-get update
         # sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
         # HANA: client side
@@ -143,12 +144,12 @@ jobs:
 
     - name: Install pdfium
       run: |
-        wget -q https://github.com/rouault/pdfium_build_gdal_3_12/releases/download/pdfium_7391_v1/install-ubuntu2004-rev7391.tar.gz \
-          && tar -xzf install-ubuntu2004-rev7391.tar.gz \
+        wget -q https://github.com/rouault/pdfium_build_gdal_3_13/releases/download/pdfium_7724_v1/install-ubuntu2404-rev7724.tar.gz \
+          && tar -xzf install-ubuntu2404-rev7724.tar.gz \
           && sudo chown -R root:root install \
           && sudo mv install/lib/* /usr/lib/ \
           && sudo mv install/include/* /usr/include/ \
-          && sudo rm -rf install-ubuntu2004-rev7391.tar.gz install \
+          && sudo rm -rf install-ubuntu2404-rev7724.tar.gz install \
           && sudo apt-get update -y \
           && sudo apt-get install -y --fix-missing --no-install-recommends liblcms2-dev
     - name: Configure ccache
@@ -215,23 +216,25 @@ jobs:
         test -f $GITHUB_WORKSPACE/install-gdal/share/man/man1/gdaladdo.1
         export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib
         $GITHUB_WORKSPACE/install-gdal/bin/gdalinfo --version
-        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.12/dist-packages python3 -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
         # Test fix for https://github.com/conda-forge/gdal-feedstock/issues/995
-        PYTHONWARNINGS="error" PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 -c "from osgeo import gdal"
-        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.10/dist-packages python3 $GITHUB_WORKSPACE/scripts/check_doc.py
+        PYTHONWARNINGS="error" PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.12/dist-packages python3 -c "from osgeo import gdal"
+        PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/local/lib/python3.12/dist-packages python3 $GITHUB_WORKSPACE/scripts/check_doc.py
     - name: CMake with rpath
       run: |
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
-        (cd $GITHUB_WORKSPACE/superbuild/build; cmake .. "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-with-rpath" "-DCMAKE_INSTALL_RPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib")
+        (cd $GITHUB_WORKSPACE/superbuild/build; cmake .. "-DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal-with-rpath" -DGDAL_SET_INSTALL_RELATIVE_RPATH=ON)
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
+        readelf -d $GITHUB_WORKSPACE/install-gdal-with-rpath/lib/libgdal.so | grep RUNPATH | grep "\$ORIGIN"
+        readelf -d $GITHUB_WORKSPACE/install-gdal-with-rpath/bin/gdal | grep RUNPATH | grep "\$ORIGIN:\$ORIGIN/../lib"
         # For some reason, during the install phase of above invocation, the Python bindings are rebuilt after the build phase, and without the rpath... Can't reproduce that locally
-        # PYTHONPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib/python3.10/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
+        # PYTHONPATH=$GITHUB_WORKSPACE/install-gdal-with-rpath/lib/python3.12/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
     - name: Rerun using Mono
       run: |
         export PATH=$CMAKE_DIR:/usr/local/bin:/usr/bin:/bin # Avoid CMake config from brew etc.
         cd $GITHUB_WORKSPACE/superbuild/build
         rm -rf swig/csharp
-        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -UCMAKE_INSTALL_RPATH -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
+        cmake  ${CMAKE_OPTIONS} -DCSHARP_MONO=ON -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/install-gdal -UGDAL_SET_INSTALL_RELATIVE_RPATH -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -DCMAKE_C_FLAGS=-Werror -DCMAKE_CXX_FLAGS=-Werror ..
         cmake --build $GITHUB_WORKSPACE/superbuild/build --target install -- -j$(nproc)
         # Below fails with errors like 'System.InvalidProgramException: Invalid IL code in CreateData:Main (string[]): IL_00c4: callvirt  0x0a00000c'
         # ctest -V -R "^csharp.*"
@@ -249,7 +252,7 @@ jobs:
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib python -c "from osgeo import gdal_array"
         which gdal_edit
         cp $GITHUB_WORKSPACE/autotest/gcore/data/byte.tif .
-        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib ldd myvenv/lib/python3.10/site-packages/osgeo/_gdal.cpython-310-x86_64-linux-gnu.so
+        LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib ldd myvenv/lib/python3.12/site-packages/osgeo/_gdal.cpython-312-x86_64-linux-gnu.so
         LD_LIBRARY_PATH=$GITHUB_WORKSPACE/install-gdal/lib gdal_edit byte.tif -mo FOO=BAR
         rm -f myvenv/bin/gdal_edit
         rm -f myvenv/bin/gdal_edit.py
@@ -399,10 +402,9 @@ jobs:
         run: ccache -s
 
   build-windows-conda:
-    runs-on: windows-2022
+    runs-on: windows-2025-vs2026
     env:
         architecture: x64
-        #generator: Visual Studio 17 2022
         generator: Ninja
         cache-name: cmake-msvc
     steps:
@@ -443,8 +445,8 @@ jobs:
     - name: Install pdfium
       shell: bash -l {0}
       run: |
-        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_12/releases/download/pdfium_7391_v1/install-win10-vs2019-x64-rev7391.zip
-        unzip install-win10-vs2019-x64-rev7391.zip
+        curl -LOs https://github.com/rouault/pdfium_build_gdal_3_13/releases/download/pdfium_7724_v1/install-win10-vs2026-x64-rev7724.zip
+        unzip install-win10-vs2026-x64-rev7724.zip
         mv install install-pdfium
 
     - name: Remove conflicting libraries

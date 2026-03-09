@@ -7644,8 +7644,6 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
     /* -------------------------------------------------------------------- */
     /*      Prepare statement.                                              */
     /* -------------------------------------------------------------------- */
-    sqlite3_stmt *hSQLStmt = nullptr;
-
     /* This will speed-up layer creation */
     /* ORDER BY are costly to evaluate and are not necessary to establish */
     /* the layer definition. */
@@ -7668,32 +7666,30 @@ OGRLayer *GDALGeoPackageDataset::ExecuteSQL(const char *pszSQLCommand,
         }
     }
 
-    int rc = prepareSql(hDB, osSQLCommandTruncated.c_str(),
-                        static_cast<int>(osSQLCommandTruncated.size()),
-                        &hSQLStmt, nullptr);
-
-    if (rc != SQLITE_OK)
+    const auto nErrorCount = CPLGetErrorCounter();
+    sqlite3_stmt *hSQLStmt =
+        prepareSql(hDB, osSQLCommandTruncated.c_str(),
+                   static_cast<int>(osSQLCommandTruncated.size()));
+    if (!hSQLStmt)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "In ExecuteSQL(): sqlite3_prepare_v2(%s): %s",
-                 osSQLCommandTruncated.c_str(), sqlite3_errmsg(hDB));
-
-        if (hSQLStmt != nullptr)
+        if (nErrorCount == CPLGetErrorCounter())
         {
-            sqlite3_finalize(hSQLStmt);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "In ExecuteSQL(): sqlite3_prepare_v2(%s): %s",
+                     osSQLCommandTruncated.c_str(), sqlite3_errmsg(hDB));
         }
-
         return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Do we get a resultset?                                          */
     /* -------------------------------------------------------------------- */
-    rc = sqlite3_step(hSQLStmt);
+    int rc = sqlite3_step(hSQLStmt);
 
     for (auto &poLayer : m_apoLayers)
     {
-        poLayer->RunDeferredDropRTreeTableIfNecessary();
+        if (!poLayer->RunDeferredDropRTreeTableIfNecessary())
+            return nullptr;
     }
 
     if (rc != SQLITE_ROW)

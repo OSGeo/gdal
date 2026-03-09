@@ -1641,7 +1641,7 @@ def test_pdf_overviews(poppler_or_pdfium):
 def test_pdf_password(poppler_or_pdfium_or_podofo):
 
     if gdaltest.is_travis_branch("alpine_32bit") or gdaltest.is_travis_branch(
-        "cmake-ubuntu-jammy"
+        "cmake-ubuntu-noble"
     ):
         pytest.skip()
 

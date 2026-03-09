@@ -1061,3 +1061,44 @@ int SQLPrepareWithError(sqlite3 *db, const char *sql, int nByte,
     }
     return ret;
 }
+
+/** Returns true if pszTail (has set by sqlite3_prepare_v2) has still
+ * remaining non-blank / non-comment content.
+ */
+bool SQLHasRemainingContent(const char *pszTail)
+{
+    bool bInCComment = false;
+    bool bInSingleLineComment = false;
+    for (; *pszTail; ++pszTail)
+    {
+        const char c = *pszTail;
+        const char cNext = pszTail[1];
+        if (c == ' ' || c == '\t')
+        {
+            continue;
+        }
+        else if (c == '\n' || c == '\r')
+        {
+            bInSingleLineComment = false;
+        }
+        else if (c == '-' && cNext == '-')
+        {
+            bInSingleLineComment = true;
+        }
+        else if (c == '/' && cNext == '*')
+        {
+            bInCComment = true;
+        }
+        else if (bInCComment && c == '*' && cNext == '/')
+        {
+            bInCComment = false;
+        }
+        else if (!bInCComment && !bInSingleLineComment)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Multiple statements are not supported");
+            return true;
+        }
+    }
+    return false;
+}

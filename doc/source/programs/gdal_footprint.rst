@@ -37,6 +37,8 @@ proper mask bands.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -b <band>
 
     Band(s) of interest. Between 1 and the number of bands of the raster.
@@ -125,10 +127,6 @@ proper mask bands.
     Maximum number of points of each output geometry (not counting the closing
     point of each ring, which is always identical to the first point).
     The default value is 100. ``unlimited`` can be used to remove that limitation.
-
-.. option:: -q
-
-    Suppress progress monitor and other non-error output.
 
 .. option:: -oo <NAME>=<VALUE>
 

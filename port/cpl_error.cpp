@@ -1589,6 +1589,7 @@ CPLErrorAccumulator::Context::~Context()
 CPLErrorAccumulator::Context CPLErrorAccumulator::InstallForCurrentScope()
 {
     CPLPushErrorHandlerEx(CPLErrorAccumulator::Accumulator, this);
+    CPLSetCurrentErrorHandlerCatchDebug(false);
     return CPLErrorAccumulator::Context();
 }
 

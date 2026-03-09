@@ -41,6 +41,13 @@ void CPL_DLL CPLVerifyConfiguration(void);
 
 bool CPL_DLL CPLIsDebugEnabled(void);
 
+/** Special value to indicate setting the null value to a configuration option,
+ * even if there is an environment variable defining it.
+ *
+ * @since 3.13
+ */
+#define CPL_NULL_VALUE "__CPL_NULL_VALUE__"
+
 const char CPL_DLL *CPL_STDCALL CPLGetConfigOption(const char *, const char *)
     CPL_WARN_UNUSED_RESULT;
 const char CPL_DLL *CPL_STDCALL CPLGetThreadLocalConfigOption(

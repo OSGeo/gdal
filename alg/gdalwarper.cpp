@@ -373,6 +373,11 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
                                          *ppImageData,  // Already a GByte *.
                                          panValidityMask, pbOutAllValid);
 
+        case GDT_Int8:
+            return GDALWarpNoDataMaskerT(
+                padfNoData, nPixels, reinterpret_cast<int8_t *>(*ppImageData),
+                panValidityMask, pbOutAllValid);
+
         case GDT_Int16:
             return GDALWarpNoDataMaskerT(
                 padfNoData, nPixels, reinterpret_cast<GInt16 *>(*ppImageData),
@@ -1772,8 +1777,6 @@ void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
         return;
     }
 
-    psOptions->eWorkingDataType = GDT_UInt8;
-
     // If none of the provided input nodata values can be represented in the
     // data type of the corresponding source band, ignore them.
     if (psOptions->hSrcDS && psOptions->padfSrcNoDataReal)
@@ -1858,6 +1861,9 @@ void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
                 psOptions->padfDstNoDataImag[iBand], true);
         }
     }
+
+    if (psOptions->eWorkingDataType == GDT_Unknown)
+        psOptions->eWorkingDataType = GDT_UInt8;
 
     const bool bApplyVerticalShift = CPLFetchBool(
         psOptions->papszWarpOptions, "APPLY_VERTICAL_SHIFT", false);

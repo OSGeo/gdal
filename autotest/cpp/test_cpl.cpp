@@ -4368,21 +4368,39 @@ TEST_F(test_cpl, test_config_overrides_environment)
     char szEnvVar[] = "TEST_CONFIG_OVERRIDES_ENVIRONMENT=123";
     putenv(szEnvVar);
 
-    ASSERT_STREQ(
-        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
-        "123");
+    constexpr const char *key = "TEST_CONFIG_OVERRIDES_ENVIRONMENT";
 
-    CPLSetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", "456");
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
 
-    ASSERT_STREQ(
-        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
-        "456");
+    CPLSetConfigOption(key, "456");
 
-    CPLSetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr);
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "456");
 
-    ASSERT_STREQ(
-        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
-        "123");
+    CPLSetConfigOption(key, nullptr);
+
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
+
+    CPLSetConfigOption(key, CPL_NULL_VALUE);
+
+    ASSERT_EQ(CPLGetConfigOption(key, nullptr), nullptr);
+
+    CPLSetConfigOption(key, nullptr);
+
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
+
+    {
+        CPLConfigOptionSetter oSetter(key, nullptr, false);
+
+        ASSERT_EQ(CPLGetConfigOption(key, nullptr), nullptr);
+    }
+
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
+
+    CPLSetThreadLocalConfigOption(key, CPL_NULL_VALUE);
+
+    ASSERT_EQ(CPLGetConfigOption(key, nullptr), nullptr);
+
+    ASSERT_EQ(CPLGetThreadLocalConfigOption(key, nullptr), nullptr);
 }
 
 // Test CPLWorkerThreadPool recursion

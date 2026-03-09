@@ -269,7 +269,7 @@ OGROSMDataSource::~OGROSMDataSource()
 
 #ifdef OSM_DEBUG
     FILE *f = fopen("keys.txt", "wt");
-    for (int i = 1; i < startic_cast<int>(asKeys.size()); i++)
+    for (int i = 1; i < static_cast<int>(asKeys.size()); i++)
     {
         KeyDesc *psKD = asKeys[i];
         if (psKD)
