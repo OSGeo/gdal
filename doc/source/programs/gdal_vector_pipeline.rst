@@ -256,7 +256,7 @@ Examples
 
 
 .. example::
-   :title: Filter and reproject a FlatGeobuf to a Point GeoJSON file
+   :title: Filter and reproject a GeoPackage layer to a GeoJSON file
 
    When using :ref:`select <gdal_vector_select>` to restrict the output fields,
    ensure that it appears **after** the :ref:`filter <gdal_vector_filter>`
@@ -279,20 +279,18 @@ Examples
       .. code-tab:: bash
 
         gdal vector pipeline \
-            ! read ne_110m_populated_places_simple.fgb \
+            ! read natural_earth_vector.gpkg --layer ne_110m_populated_places_simple \
             ! filter --where "worldcity = 1" \
             ! select --fields "_ogr_geometry_,name" \
-            ! set-geom-type --single \
             ! reproject --dst-crs=ESRI:53009 \
             ! write worldcity_53009.geojson --overwrite
 
       .. code-tab:: ps1
 
         gdal vector pipeline `
-            ! read ne_110m_populated_places_simple.fgb `
+            ! read natural_earth_vector.gpkg --layer ne_110m_populated_places_simple `
             ! filter --where "worldcity = 1" `
             ! select --fields "_ogr_geometry_,name" `
-            ! set-geom-type --single `
             ! reproject --dst-crs=ESRI:53009 `
             ! write worldcity_53009.geojson --overwrite
 
