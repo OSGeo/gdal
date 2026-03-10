@@ -215,7 +215,8 @@ char **GeoRasterWrapper::ParseIdentificator(const char *pszStringID)
     if (CSLCount(papszParam) > 0)
     {
         char **papszFirst2 = CSLTokenizeString2(
-            papszParam[0], "/", CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS);
+            papszParam[0], "/",
+            CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS | CSLT_PRESERVEQUOTES);
         if (CSLCount(papszFirst2) == 2)
         {
             papszParam = CSLInsertStrings(papszParam, 0, papszFirst2);
@@ -329,7 +330,8 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate,
     else
     {
         char **papszSchema = CSLTokenizeString2(
-            papszParam[3], ".", CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS);
+            papszParam[3], ".",
+            CSLT_HONOURSTRINGS | CSLT_ALLOWEMPTYTOKENS | CSLT_PRESERVEQUOTES);
 
         if (CSLCount(papszSchema) == 2)
         {
