@@ -1328,7 +1328,7 @@ def create_base_tile(
     # Query is in 'nearest neighbour' but can be bigger in then the tile_size
     # We scale down the query to the tile_size by supplied algorithm.
 
-    if rxsize != 0 and rysize != 0 and wxsize != 0 and wysize != 0:
+    if rxsize > 0 and rysize > 0 and wxsize > 0 and wysize > 0:
         alpha = alphaband.ReadRaster(rx, ry, rxsize, rysize, wxsize, wysize)
 
         # Detect totally transparent tile and skip its creation
