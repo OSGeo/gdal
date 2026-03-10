@@ -38,7 +38,7 @@ Examples:
 | geor:scott,tiger,demodb,table,column,"id = 1"
 | geor:gisuser[scott]/welcome,demodb,table,column,"id = 1"
 | geor:/@demodb,table,column,"id = 1"
-| geor:scott/\"Welcome@Tiger\"@"(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.ca-toronto-1.oraclecloud.com))(connect_data=(service_name=g0eab5a4f6c8694_low.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)(MY_WALLET_DIRECTORY=/path/to/my/wallet)))",table,column,id=1
+| geor:scott/\\"Welcome@Tiger\\"@"(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.ca-toronto-1.oraclecloud.com))(connect_data=(service_name=g0eab5a4f6c8694_low.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)(MY_WALLET_DIRECTORY=/path/to/my/wallet)))",table,column,id=1
 | "georaster:scott/tiger@demodb,table,column,gain>10"
 | "georaster:scott/tiger@demodb,table,column,city='Brasilia'"
 | georaster:scott,tiger,,rdt_10$,10
