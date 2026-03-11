@@ -24,8 +24,8 @@
 
 CPL_C_START
 
-GDALDatasetH CPL_DLL CPL_STDCALL MEMCreate(int, int, int, GDALDataType,
-                                           CSLConstList);
+GDALDatasetH CPL_DLL MEMCreate(int nXSize, int nYSize, int nBands,
+                               GDALDataType eType, CSLConstList papszOptions);
 
 CPL_C_END
 
