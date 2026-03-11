@@ -31,11 +31,25 @@
 #include "cpl_vsi.h"
 #include "gdal.h"
 #include "gdal_frmts.h"
+#include "gdal_mem.h"
 
 struct MEMDataset::Private
 {
     std::shared_ptr<GDALGroup> m_poRootGroup{};
 };
+
+/************************************************************************/
+/*                              MEMCreate()                             */
+/************************************************************************/
+
+GDALDatasetH CPL_STDCALL MEMCreate(int nXSize, int nYSize, int nBands,
+                                   GDALDataType eType,
+                                   CSLConstList papszOptions)
+
+{
+    return GDALDataset::ToHandle(
+        MEMDataset::Create("", nXSize, nYSize, nBands, eType, papszOptions));
+}
 
 /************************************************************************/
 /*                        MEMCreateRasterBand()                         */

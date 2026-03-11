@@ -17,6 +17,7 @@
 #include "gdal_utils.h"
 #include "gdal_priv_templates.hpp"
 #include "gdal.h"
+#include "gdal_mem.h"
 #include "tilematrixset.hpp"
 #include "gdalcachedpixelaccessor.h"
 #include "memdataset.h"
@@ -1346,6 +1347,31 @@ TEST_F(test_gdal, GDALDataset_GetBands_const)
     EXPECT_EQ(poConstDS->GetBands()[0], poConstDS->GetRasterBand(1));
     EXPECT_EQ(poConstDS->GetBands()[static_cast<size_t>(0)],
               poConstDS->GetRasterBand(1));
+}
+
+TEST_F(test_gdal, MEMCreate)
+{
+    CPLStringList aosOptions;
+    aosOptions.AddNameValue("INTERLEAVE", "PIXEL");
+
+    GDALDatasetH hDS = MEMCreate(2, 3, 2, GDT_UInt16, aosOptions.List());
+    ASSERT_NE(hDS, nullptr);
+
+    EXPECT_EQ(GDALGetRasterXSize(hDS), 2);
+    EXPECT_EQ(GDALGetRasterYSize(hDS), 3);
+    EXPECT_EQ(GDALGetRasterCount(hDS), 2);
+    EXPECT_EQ(GDALGetAccess(hDS), GA_Update);
+
+    const char *pszInterleave =
+        GDALGetMetadataItem(hDS, "INTERLEAVE", "IMAGE_STRUCTURE");
+    ASSERT_NE(pszInterleave, nullptr);
+    EXPECT_STREQ(pszInterleave, "PIXEL");
+
+    GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
+    ASSERT_NE(hBand, nullptr);
+    EXPECT_EQ(GDALGetRasterDataType(hBand), GDT_UInt16);
+
+    GDALClose(hDS);
 }
 
 TEST_F(test_gdal, GDALExtendedDataType)

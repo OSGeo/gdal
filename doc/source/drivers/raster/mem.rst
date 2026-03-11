@@ -107,6 +107,17 @@ The MEM format is one of the few that supports the AddBand() method. The
 AddBand() method supports DATAPOINTER, PIXELOFFSET and LINEOFFSET
 options to reference an existing memory array.
 
+Programmatic creation
+---------------------
+
+.. versionadded:: 3.13
+
+Applications can directly create a MEM raster dataset through the
+``MEMCreate()`` C API declared in ``gdal_mem.h``. This is the lightweight
+programmatic creation entry point for temporary in-memory rasters, and accepts
+the same creation options as the MEM driver ``Create()`` implementation, such
+as ``INTERLEAVE=PIXEL``.
+
 Driver capabilities
 -------------------
 
