@@ -177,6 +177,9 @@ LIBERTIFF driver:
 MBTiles driver:
  * Add ELEVATION_TYPE creation option
 
+MEM driver:
+ * add public gdal_mem.h header exposing MEMCreate() C API
+
 MiramonRaster driver:
  * Add support for exposing the MiraMon automatic palette for categorical
    rasters
