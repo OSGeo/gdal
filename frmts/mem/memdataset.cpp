@@ -39,7 +39,7 @@ struct MEMDataset::Private
 };
 
 /************************************************************************/
-/*                              MEMCreate()                             */
+/*                             MEMCreate()                              */
 /************************************************************************/
 
 GDALDatasetH CPL_STDCALL MEMCreate(int nXSize, int nYSize, int nBands,

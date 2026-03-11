@@ -1,10 +1,12 @@
 /******************************************************************************
  *
- * Project:  Memory Array Translator
+ * Project:  MEM GDAL Datasets
  * Purpose:  C/Public declarations of MEM GDAL dataset objects.
- * Author:   GDAL contributors
+ * Author:   Kristin Cowalcijk <kristincowalcijk@gmail.com>
  *
  ******************************************************************************
+ * Copyright (c) 2026, Kristin Cowalcijk <kristincowalcijk@gmail.com>
+ *
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
@@ -17,13 +19,13 @@
  * Public (C callable) entry points for MEM GDAL dataset objects.
  */
 
+#include "cpl_port.h"
 #include "gdal.h"
 
 CPL_C_START
 
-GDALDatasetH CPL_DLL CPL_STDCALL
-MEMCreate(int nXSize, int nYSize, int nBands, GDALDataType eType,
-          CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+GDALDatasetH CPL_DLL CPL_STDCALL MEMCreate(int, int, int, GDALDataType,
+                                           CSLConstList);
 
 CPL_C_END
 
