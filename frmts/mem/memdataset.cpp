@@ -42,9 +42,20 @@ struct MEMDataset::Private
 /*                             MEMCreate()                              */
 /************************************************************************/
 
-GDALDatasetH CPL_STDCALL MEMCreate(int nXSize, int nYSize, int nBands,
-                                   GDALDataType eType,
-                                   CSLConstList papszOptions)
+/**
+ * Create a new in-memory raster dataset.
+ *
+ * @param nXSize Width of created raster in pixels.
+ * @param nYSize Height of created raster in pixels.
+ * @param nBands Number of bands.
+ * @param eType Type of raster bands.
+ * @param papszOptions MEM driver creation options.
+ *
+ * @return NULL on failure, or a new MEM dataset handle on success.
+ */
+
+GDALDatasetH MEMCreate(int nXSize, int nYSize, int nBands, GDALDataType eType,
+                       CSLConstList papszOptions)
 
 {
     return GDALDataset::ToHandle(
