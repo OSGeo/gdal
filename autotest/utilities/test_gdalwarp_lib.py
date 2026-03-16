@@ -4553,9 +4553,7 @@ def test_gdalwarp_lib_init_dest_invalid(tmp_vsimem, init_dest):
 
 def test_gdalwarp_lib_init_dest_nodata_invalid(tmp_vsimem):
 
-    # TODO: switch from warning to failure in GDAL 3.12
-    # with pytest.raises(Exception, match="NoData value was not defined"):
-    with gdaltest.error_raised(gdal.CE_Warning, "NoData value was not defined"):
+    with gdaltest.error_raised(gdal.CE_Failure, "NoData value was not defined"):
         gdal.Warp(
             tmp_vsimem / "out.tif",
             "../gcore/data/byte.tif",
