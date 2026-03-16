@@ -122,14 +122,13 @@ rst_prolog = open(os.path.join(os.path.dirname(__file__), "substitutions.rst")).
 doc_version_known = "READTHEDOCS_VERSION" in os.environ
 offline_doc_version = os.environ.get("READTHEDOCS_VERSION", "latest")
 pdf_url = f"/_/downloads/en/{offline_doc_version}/pdf/"
-zip_url = f"/_/downloads/en/{offline_doc_version}/htmlzip/"
 if doc_version_known:
     offline_download_text = "This documentation is also "
     url_root = ""
 else:
     offline_download_text = "Documentation for the latest version of GDAL is "
     url_root = "https://gdal.org"
-offline_download_text += f"available as a `PDF <{url_root}{pdf_url}>`__ or a `ZIP of individual HTML pages <{url_root}{zip_url}>`__ for offline browsing."
+offline_download_text += f"available as a `PDF <{url_root}{pdf_url}>`__ for offline browsing."
 rst_prolog += f"""
 .. |offline-download| replace:: {offline_download_text}
 """
