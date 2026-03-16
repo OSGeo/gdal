@@ -846,8 +846,7 @@ CPLErr GDALWarpOperation::InitializeDestinationBuffer(void *pDstBuffer,
             if (psOptions->padfDstNoDataReal == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "INIT_DEST was set to NO_DATA, but a NoData value was 
-                         not defined.");                        
+                         "INIT_DEST was set to NO_DATA, but a NoData value was not defined.");                        
             }
             else
             {
