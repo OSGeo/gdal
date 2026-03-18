@@ -27,6 +27,7 @@ Available sub-commands
 - :ref:`gdal_vector_filter`
 - :ref:`gdal_vector_index`
 - :ref:`gdal_vector_info`
+- :ref:`gdal_vector_export_schema`
 - :ref:`gdal_vector_layer_algebra`
 - :ref:`gdal_vector_partition`
 - :ref:`gdal_vector_pipeline`

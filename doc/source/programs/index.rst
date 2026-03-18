@@ -211,6 +211,7 @@ Vector commands
    gdal_vector_edit
    gdal_vector_filter
    gdal_vector_info
+   gdal_vector_export_schema
    gdal_vector_explode_collections
    gdal_vector_grid
    gdal_vector_index

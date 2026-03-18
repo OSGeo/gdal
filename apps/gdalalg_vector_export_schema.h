@@ -27,7 +27,7 @@ class GDALVectorExportSchemaAlgorithm /* non final */
   public:
     static constexpr const char *NAME = "export-schema";
     static constexpr const char *DESCRIPTION =
-        "Return information on a vector dataset.";
+        "Export the OGR_SCHEMA from a vector dataset.";
     static constexpr const char *HELP_URL =
         "/programs/gdal_vector_export_schema.html";
 

@@ -868,6 +868,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_export_schema",
+        "gdal-vector-export-schema",
+        "Export the OGR_SCHEMA from a vector dataset",
+        [author_elpaso],
+        1,
+    ),
+    (
         "programs/gdal_vector_check_coverage",
         "gdal-vector-check-coverage",
         "Check polygon coverage for validity",
