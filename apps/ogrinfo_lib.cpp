@@ -71,6 +71,9 @@ struct GDALVectorInfoOptions
 
     // Set by gdal vector info
     bool bIsCli = false;
+
+    // Select the OGR_SCHEMA export
+    bool bExportOgrSchema = false;
 };
 
 /************************************************************************/
@@ -806,9 +809,14 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
     const bool bJson = psOptions->eFormat == FORMAT_JSON;
     const bool bIsSummaryCli =
         psOptions->bIsCli && psOptions->bSummaryUserRequested;
+    const bool bExportOgrSchema = psOptions->bExportOgrSchema;
     OGRFeatureDefn *poDefn = poLayer->GetLayerDefn();
 
     oLayer.Set("name", poLayer->GetName());
+    if (bExportOgrSchema)
+    {
+        oLayer.Set("schemaType", "Full");
+    }
     const int nGeomFieldCount =
         psOptions->bGeomType ? poLayer->GetLayerDefn()->GetGeomFieldCount() : 0;
 
@@ -1706,7 +1714,9 @@ static void PrintLayerSummary(CPLString &osRet, CPLJSONObject &oLayer,
     const bool bJson = psOptions->eFormat == FORMAT_JSON;
     const bool bIsSummaryCli = psOptions->bIsCli && psOptions->bSummaryOnly;
     if (bJson)
+    {
         oLayer.Set("name", poLayer->GetName());
+    }
     else
         ConcatStr(osRet, psOptions->bStdoutOutput, poLayer->GetName());
 
@@ -1876,19 +1886,23 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
     CPLJSONObject oRoot;
     const std::string osFilename(poDS->GetDescription());
 
+    const bool bExportOgrSchema = psOptions->bExportOgrSchema;
     const bool bJson = psOptions->eFormat == FORMAT_JSON;
     const bool bIsSummaryCli =
-        psOptions->bIsCli && psOptions->bSummaryUserRequested;
+        (psOptions->bIsCli && psOptions->bSummaryUserRequested);
 
     CPLJSONArray oLayerArray;
     if (bJson)
     {
-        oRoot.Set("description", poDS->GetDescription());
-        if (poDriver)
+        if (!bExportOgrSchema)
         {
-            oRoot.Set("driverShortName", poDriver->GetDescription());
-            oRoot.Set("driverLongName",
-                      poDriver->GetMetadataItem(GDAL_DMD_LONGNAME));
+            oRoot.Set("description", poDS->GetDescription());
+            if (poDriver)
+            {
+                oRoot.Set("driverShortName", poDriver->GetDescription());
+                oRoot.Set("driverLongName",
+                          poDriver->GetMetadataItem(GDAL_DMD_LONGNAME));
+            }
         }
         oRoot.Add("layers", oLayerArray);
     }
@@ -1916,7 +1930,7 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
 
     int nRepeatCount = psOptions->nRepeatCount;
 
-    if (!bIsSummaryCli)
+    if (!bIsSummaryCli && !bExportOgrSchema)
     {
         GDALVectorInfoReportMetadata(
             osRet, oRoot, psOptions, poDS, psOptions->bListMDD,
@@ -2201,7 +2215,7 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
         }
     }
 
-    if (!papszLayers && !bIsSummaryCli)
+    if (!papszLayers && !bIsSummaryCli && !bExportOgrSchema)
     {
         ReportRelationships(osRet, oRoot, psOptions, poDS);
     }
@@ -2246,6 +2260,14 @@ static std::unique_ptr<GDALArgumentParser> GDALVectorInfoOptionsGetParser(
         .action([psOptions](const std::string &)
                 { psOptions->eFormat = FORMAT_JSON; })
         .help(_("Display the output in json format."));
+
+    // Hidden argument to select OGR_SCHEMA output
+    argParser->add_argument("-schema")
+        .flag()
+        .hidden()
+        .action([psOptions](const std::string &)
+                { psOptions->bExportOgrSchema = true; })
+        .help(_("Export the OGR_SCHEMA in json format."));
 
     argParser->add_argument("-ro")
         .flag()
@@ -2674,6 +2696,22 @@ GDALVectorInfoOptionsNew(char **papszArgv,
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "-dialect is ignored with -where. Use -sql instead");
+        }
+
+        // Patch options when -schema is set
+        if (psOptions->bExportOgrSchema)
+        {
+            // TODO: validate and raise an error if incompatible options are set?
+            //       not strictly necessary given that -schema is an hidden option
+            psOptions->eFormat = FORMAT_JSON;
+            psOptions->bAllLayers = true;
+            psOptions->bShowMetadata = false;
+            psOptions->bListMDD = false;
+            psOptions->bFeatureCount = false;
+            psOptions->bIsCli = true;
+            psOptions->bSummaryOnly = false;
+            psOptions->bExtent = false;
+            psOptions->bExtent3D = false;
         }
 
         return psOptions.release();

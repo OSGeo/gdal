@@ -46,6 +46,12 @@
           "items": {
             "$ref": "#/definitions/field"
           }
+        },
+        "geometryFields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/geometryField"
+          }
         }
       },
       "required": [
@@ -81,6 +87,36 @@
         },
         "newName": {
           "description": "The new name of the field",
+          "type": "string"
+        },
+        "nullable": {
+          "description": "Whether the field is not nullable",
+          "type": "boolean"
+        },
+        "uniqueConstraint": {
+          "description": "Whether the field is unique",
+          "type": "boolean"
+        },
+        "defaultValue": {
+          "description": "The default value for the field",
+          "type": [
+            "string"
+          ]
+        },
+        "aliases": {
+          "description": "Alias for the field",
+          "type": "string"
+        },
+        "comment": {
+          "description": "Comment for the field",
+          "type": "string"
+        },
+        "domainName": {
+          "description": "Domain for the field",
+          "type": "string"
+        },
+        "timezone": {
+          "description": "Time zone for date/time fields",
           "type": "string"
         }
       },
@@ -132,6 +168,107 @@
         "JSON",
         "UUID"
       ]
+    },
+    "geometryField": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "pattern": "^(Geometry|((Multi)?Point)|((Multi)?LineString)|((Multi)?Polygon)|GeometryCollection|((Multi)?Curve)|((Multi)?Surface)|CircularString|CompoundCurve|CurvePolygon|Tin|PolyhedralSurface|Triangle)[Z]?[M]?$"
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "coordinateSystem": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/coordinateSystem"
+            }
+          ]
+        },
+        "supportedSRSList": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "object",
+                    "properties": {
+                      "authority": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "wkt": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "xyCoordinateResolution": {
+          "type": "number"
+        },
+        "zCoordinateResolution": {
+          "type": "number"
+        },
+        "mCoordinateResolution": {
+          "type": "number"
+        },
+        "coordinatePrecisionFormatSpecificOptions": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "coordinateSystem": {
+      "type": "object",
+      "properties": {
+        "wkt": {
+          "type": "string"
+        },
+        "projjson": {
+          "$ref": "https://proj.org/schemas/v0.5/projjson.schema.json"
+        },
+        "dataAxisToSRSAxisMapping": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minItems": 2,
+            "maxItems": 3
+          }
+        },
+        "coordinateEpoch": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "wkt",
+        "dataAxisToSRSAxisMapping"
+      ],
+      "additionalProperties": false
     }
   }
 }

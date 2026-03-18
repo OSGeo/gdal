@@ -639,3 +639,71 @@ def test_ogrinfo_lib_coordinate_epoch(epoch):
     crs = j["layers"][0]["geometryFields"][0]["coordinateSystem"]
     assert "coordinateEpoch" in crs
     assert crs["coordinateEpoch"] == float(epoch)
+
+
+#############################################################################
+# Test -schema to export OGR_SCHEMA
+
+
+def test_ogrinfo_lib_schema():
+    ds = gdal.GetDriverByName("MEM").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("field1", ogr.OFTString))
+    floatf = ogr.FieldDefn("field2", ogr.OFTReal)
+    floatf.SetPrecision(2)
+    floatf.SetWidth(5)
+    floatf.SetDefault("3.14")
+    lyr.CreateField(floatf)
+    datef = ogr.FieldDefn("field3", ogr.OFTDate)
+    datef.SetTZFlag(ogr.TZFLAG_UTC)
+    lyr.CreateField(datef)
+
+    lyr2 = ds.CreateLayer("test2")
+    lyr2.CreateField(ogr.FieldDefn("field11", ogr.OFTString))
+    lyr2.CreateField(ogr.FieldDefn("field21", ogr.OFTInteger))
+
+    ret = gdal.VectorInfo(ds, options="-schema")
+    jret = json.loads(ret)
+    layer1 = jret["layers"][0]
+    assert layer1["name"] == "test"
+    assert layer1["fields"] == [
+        {
+            "name": "field1",
+            "type": "String",
+            "nullable": True,
+            "uniqueConstraint": False,
+        },
+        {
+            "name": "field2",
+            "type": "Real",
+            "width": 5,
+            "precision": 2,
+            "nullable": True,
+            "uniqueConstraint": False,
+            "defaultValue": "3.14",
+        },
+        {
+            "name": "field3",
+            "type": "Date",
+            "nullable": True,
+            "uniqueConstraint": False,
+            "timezone": "UTC",
+        },
+    ]
+
+    layer2 = jret["layers"][1]
+    assert layer2["name"] == "test2"
+    assert layer2["fields"] == [
+        {
+            "name": "field11",
+            "type": "String",
+            "nullable": True,
+            "uniqueConstraint": False,
+        },
+        {
+            "name": "field21",
+            "type": "Integer",
+            "nullable": True,
+            "uniqueConstraint": False,
+        },
+    ]
