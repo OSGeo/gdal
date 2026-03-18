@@ -2455,13 +2455,12 @@ CPL_DLL char *MMReturnValueFromSectionINIFile(const char *filename,
                 {
                     value = section_header;  // Freed out
                     section_header = nullptr;
+                    VSIFCloseL(file);
+                    VSIFree(pszString);
+                    VSIFree(section_header);
+                    return value;
                 }
             }
-
-            VSIFCloseL(file);
-            VSIFree(pszString);
-            VSIFree(section_header);
-            return value;
         }
         VSIFree(pszString);
     }
