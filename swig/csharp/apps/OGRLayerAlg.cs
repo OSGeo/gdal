@@ -56,119 +56,117 @@ class OGRLayerAlg {
             /* -------------------------------------------------------------------- */
             /*      Open data source.                                              */
             /* -------------------------------------------------------------------- */
-            DataSource ds1 = Ogr.Open(args[1], 0);
-
-            if (ds1 == null)
+            using ( DataSource ds1 = Ogr.Open(args[1], 0) )
+            using ( DataSource ds2 = Ogr.Open(args[3], 0) )
             {
-                Console.WriteLine("Can't open " + args[1]);
-                System.Environment.Exit(-1);
-            }
-
-            Layer layer1 = ds1.GetLayerByName(args[2]);
-
-            if (layer1 == null)
-            {
-                Console.WriteLine("FAILURE: Couldn't fetch layer " + args[2]);
-                System.Environment.Exit(-1);
-            }
-
-            DataSource ds2 = Ogr.Open(args[3], 0);
-
-            if (ds2 == null)
-            {
-                Console.WriteLine("Can't open " + args[3]);
-                System.Environment.Exit(-1);
-            }
-
-            Layer layer2 = ds2.GetLayerByName(args[4]);
-
-            if (layer2 == null)
-            {
-                Console.WriteLine("FAILURE: Couldn't fetch layer " + args[4]);
-                System.Environment.Exit(-1);
-            }
-
-            /* -------------------------------------------------------------------- */
-		    /*      Get driver for creating the result ds                          */
-		    /* -------------------------------------------------------------------- */
-            Driver drv = Ogr.GetDriverByName("ESRI Shapefile");
-
-		    if (drv == null)
-		    {
-			    Console.WriteLine("Can't get driver.");
-                System.Environment.Exit(-1);
-		    }
-
-            /* -------------------------------------------------------------------- */
-		    /*      Creating the datasource                                         */
-		    /* -------------------------------------------------------------------- */
-
-            DataSource ds = drv.CreateDataSource( args[5], new string[] {} );
-            if (drv == null)
-            {
-                Console.WriteLine("Can't create the datasource.");
-                System.Environment.Exit(-1);
-            }
-
-            /* -------------------------------------------------------------------- */
-            /*      Process options                                                 */
-            /* -------------------------------------------------------------------- */
-
-            string[] options = null;
-            if (args.Length > 7)
-            {
-                options = new string[args.Length - 7];
-                Array.Copy(args, 7, options, 0, args.Length - 7);
-            }
-
-            /* -------------------------------------------------------------------- */
-            /*      Creating the layer                                              */
-            /* -------------------------------------------------------------------- */
-
-            Layer layer;
-
-            int i;
-            for(i=0;i<ds.GetLayerCount();i++)
-            {
-                layer = ds.GetLayerByIndex( i );
-                if( layer != null && layer.GetLayerDefn().GetName() == args[6])
+                if (ds1 == null)
                 {
-                    Console.WriteLine("Layer already existed. Recreating it.\n");
-                    ds.DeleteLayer(i);
-                    break;
+                    Console.WriteLine("Can't open " + args[1]);
+                    System.Environment.Exit(-1);
                 }
-            }
+                if (ds2 == null)
+                {
+                    Console.WriteLine("Can't open " + args[3]);
+                    System.Environment.Exit(-1);
+                }
 
-            layer = ds.CreateLayer(args[6], null, layer1.GetLayerDefn().GetGeomType(), new string[] { });
-            if( layer == null )
-            {
-                Console.WriteLine("Layer creation failed.");
-                System.Environment.Exit(-1);
-            }
+                using ( Layer layer1 = ds1.GetLayerByName(args[2]) )
+                using ( Layer layer2 = ds2.GetLayerByName(args[4]) )
+                {
+                    if (layer1 == null)
+                    {
+                        Console.WriteLine("FAILURE: Couldn't fetch layer " + args[2]);
+                        System.Environment.Exit(-1);
+                    }
+                    if (layer2 == null)
+                    {
+                        Console.WriteLine("FAILURE: Couldn't fetch layer " + args[4]);
+                        System.Environment.Exit(-1);
+                    }
 
-            switch(args[0])
-            {
-                case "Intersection":
-                    layer1.Intersection(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Intersection");
-                    break;
-                case "Union":
-                    layer1.Union(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Union");
-                    break;
-                case "SymDifference":
-                    layer1.SymDifference(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "SymDifference");
-                    break;
-                case "Identity":
-                    layer1.Identity(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Identity");
-                    break;
-                case "Update":
-                    layer1.Update(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Update");
-                    break;
-                case "Clip":
-                    layer1.Clip(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Clip");
-                    break;
-                case "Erase":
-                    layer1.Erase(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Erase");
-                    break;
+                    /* -------------------------------------------------------------------- */
+                    /*      Get driver for creating the result ds                          */
+                    /* -------------------------------------------------------------------- */
+                    Driver drv = Ogr.GetDriverByName("ESRI Shapefile");
+
+                    if (drv == null)
+                    {
+                        Console.WriteLine("Can't get driver.");
+                        System.Environment.Exit(-1);
+                    }
+
+                    /* -------------------------------------------------------------------- */
+                    /*      Creating the datasource                                         */
+                    /* -------------------------------------------------------------------- */
+
+                    using ( DataSource ds = drv.CreateDataSource( args[5], new string[] {} ) )
+                    {
+                        if (drv == null)
+                        {
+                            Console.WriteLine("Can't create the datasource.");
+                            System.Environment.Exit(-1);
+                        }
+
+                        /* -------------------------------------------------------------------- */
+                        /*      Process options                                                 */
+                        /* -------------------------------------------------------------------- */
+
+                        string[] options = null;
+                        if (args.Length > 7)
+                        {
+                            options = new string[args.Length - 7];
+                            Array.Copy(args, 7, options, 0, args.Length - 7);
+                        }
+
+                        /* -------------------------------------------------------------------- */
+                        /*      Creating the layer                                              */
+                        /* -------------------------------------------------------------------- */
+
+                        int i;
+                        for(i=0;i<ds.GetLayerCount();i++)
+                        {
+                            using Layer layeri = ds.GetLayerByIndex( i );
+                            if( layeri != null && layeri.GetLayerDefn().GetName() == args[6])
+                            {
+                                Console.WriteLine("Layer already existed. Recreating it.\n");
+                                ds.DeleteLayer(i);
+                                break;
+                            }
+                        }
+
+                        using Layer layer = ds.CreateLayer(args[6], null, layer1.GetLayerDefn().GetGeomType(), new string[] { });
+                        if( layer == null )
+                        {
+                            Console.WriteLine("Layer creation failed.");
+                            System.Environment.Exit(-1);
+                        }
+
+                        switch(args[0])
+                        {
+                            case "Intersection":
+                                layer1.Intersection(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Intersection");
+                                break;
+                            case "Union":
+                                layer1.Union(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Union");
+                                break;
+                            case "SymDifference":
+                                layer1.SymDifference(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "SymDifference");
+                                break;
+                            case "Identity":
+                                layer1.Identity(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Identity");
+                                break;
+                            case "Update":
+                                layer1.Update(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Update");
+                                break;
+                            case "Clip":
+                                layer1.Clip(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Clip");
+                                break;
+                            case "Erase":
+                                layer1.Erase(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Erase");
+                                break;
+                        }
+                    }
+                }
             }
         }
         catch (Exception e)

@@ -52,66 +52,65 @@ class GDALColorTable {
             /* -------------------------------------------------------------------- */
             Gdal.AllRegister();
 
-            Driver dv = null;
-            Dataset ds = null, ds_out = null;
-            Band band = null, ba_out = null;
-            ColorTable ct = null, ct_out = null;
             byte [] buffer;
 
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            ds = Gdal.Open(file, Access.GA_ReadOnly);
-            band = ds.GetRasterBand(1);
-            ct = band.GetRasterColorTable();
-
-            if( ct != null )
-                Console.WriteLine( "Band has a color table with " + ct.GetCount() + " entries.");
-            else
+            using ( Dataset ds = Gdal.Open(file, Access.GA_ReadOnly) )
+            using ( Band band = ds.GetRasterBand(1) )
+            using ( ColorTable ct = band.GetRasterColorTable() )
             {
-                Console.WriteLine( "Data source has no color table");
-                return;
+                if (ct != null)
+                    Console.WriteLine("Band has a color table with " + ct.GetCount() + " entries.");
+                else
+                {
+                    Console.WriteLine("Data source has no color table");
+                    return;
+                }
+
+                buffer = new byte[ds.RasterXSize * ds.RasterYSize];
+                band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buffer,
+                    ds.RasterXSize, ds.RasterYSize, 0, 0);
+
+                /* -------------------------------------------------------------------- */
+                /*      Get driver                                                      */
+                /* -------------------------------------------------------------------- */
+                Driver dv = Gdal.GetDriverByName("GTiff");
+
+                using ( Dataset ds_out = dv.Create(file_out, ds.RasterXSize, ds.RasterYSize,
+                                                   ds.RasterCount, band.DataType, new string[] { }
+                                                   ) )
+                using ( Band ba_out = ds_out.GetRasterBand(1) )
+                using ( ColorTable ct_out = new ColorTable(PaletteInterp.GPI_RGB) )
+                {
+                    ba_out.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buffer,
+                        ds.RasterXSize, ds.RasterYSize, 0, 0);
+
+                    /* -------------------------------------------------------------------- */
+                    /*      Copying the colortable                                          */
+                    /* -------------------------------------------------------------------- */
+                    for (int i = 0; i < ct.GetCount(); i++)
+                    {
+                        ColorEntry ce = null, ce_out = null;
+
+                        ce = ct.GetColorEntry(i);
+                        ce_out = new ColorEntry();
+
+                        ce_out.c1 = ce.c1;
+                        ce_out.c2 = ce.c2;
+                        ce_out.c3 = ce.c3;
+                        ce_out.c4 = ce.c4;
+
+                        ct_out.SetColorEntry(i, ce_out);
+
+                        ce.Dispose();
+                        ce_out.Dispose();
+                    }
+
+                    ba_out.SetRasterColorTable(ct_out);
+                }
             }
-
-            buffer = new byte [ds.RasterXSize * ds.RasterYSize];
-            band.ReadRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buffer,
-                ds.RasterXSize, ds.RasterYSize, 0, 0);
-
-            /* -------------------------------------------------------------------- */
-            /*      Get driver                                                      */
-            /* -------------------------------------------------------------------- */
-            dv = Gdal.GetDriverByName("GTiff");
-
-            ds_out = dv.Create(file_out, ds.RasterXSize, ds.RasterYSize,
-                ds.RasterCount, band.DataType, new string [] {});
-            ba_out = ds_out.GetRasterBand(1);
-            ct_out = new ColorTable(PaletteInterp.GPI_RGB);
-
-            ba_out.WriteRaster(0, 0, ds.RasterXSize, ds.RasterYSize, buffer,
-                ds.RasterXSize, ds.RasterYSize, 0, 0);
-
-            /* -------------------------------------------------------------------- */
-            /*      Copying the colortable                                          */
-            /* -------------------------------------------------------------------- */
-            for (int i = 0; i < ct.GetCount(); i++)
-            {
-                ColorEntry ce = null, ce_out = null;
-
-                ce = ct.GetColorEntry(i);
-                ce_out = new ColorEntry();
-
-                ce_out.c1 = ce.c1;
-                ce_out.c2 = ce.c2;
-                ce_out.c3 = ce.c3;
-                ce_out.c4 = ce.c4;
-
-                ct_out.SetColorEntry(i, ce_out);
-
-                ce.Dispose();
-                ce_out.Dispose();
-            }
-
-            ba_out.SetRasterColorTable(ct_out);
         }
         catch (Exception e)
         {

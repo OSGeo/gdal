@@ -68,21 +68,24 @@ class GDALWrite {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly );
-
-            if (ds == null)
-            {
-                Console.WriteLine("Can't open source dataset " + args[0]);
-                System.Environment.Exit(-1);
-            }
-
             string[] options = new string [] {"TILED=YES"};
-            Dataset dso = drv.CreateCopy(args[1], ds, 0, options, new Gdal.GDALProgressFuncDelegate(ProgressFunc), "Sample Data");
-
-            if (dso == null)
+            
+            using ( Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly ))
+            using ( Dataset dso = drv.CreateCopy(
+                    args[1], ds, 0, options, new Gdal.GDALProgressFuncDelegate(ProgressFunc), "Sample Data"
+                ) )
             {
-                Console.WriteLine("Can't create dest dataset " + args[1]);
-                System.Environment.Exit(-1);
+                if (ds == null)
+                {
+                    Console.WriteLine("Can't open source dataset " + args[0]);
+                    System.Environment.Exit(-1);
+                }
+
+                if (dso == null)
+                {
+                    Console.WriteLine("Can't create dest dataset " + args[1]);
+                    System.Environment.Exit(-1);
+                }
             }
         }
         catch (Exception e)

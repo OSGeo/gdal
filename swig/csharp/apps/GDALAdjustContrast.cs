@@ -76,22 +76,22 @@ class GDALAdjustContrast {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = Gdal.Open(args[0], Access.GA_Update);
-
-            if (ds == null)
+            using (Dataset ds = Gdal.Open(args[0], Access.GA_Update))
             {
-                Console.WriteLine("Can't open " + args[0]);
-                System.Environment.Exit(-1);
+                if (ds == null)
+                {
+                    Console.WriteLine("Can't open " + args[0]);
+                    System.Environment.Exit(-1);
+                }
+
+                Bitmap bmp = CreateCompatibleBitmap(ds, ds.RasterXSize, ds.RasterYSize);
+                LoadBitmapDirect(ds, bmp, 0, 0, ds.RasterXSize, ds.RasterYSize, ds.RasterXSize, ds.RasterYSize, 0);
+                Bitmap newBitmap = (Bitmap)bmp.Clone();
+
+                SaveBitmapDirect(ds, newBitmap, 0, 0, ds.RasterXSize, ds.RasterYSize, ds.RasterXSize, ds.RasterYSize);
+
+                ds.FlushCache();
             }
-
-            Bitmap bmp = CreateCompatibleBitmap(ds, ds.RasterXSize, ds.RasterYSize);
-            LoadBitmapDirect(ds, bmp, 0, 0, ds.RasterXSize, ds.RasterYSize, ds.RasterXSize, ds.RasterYSize, 0);
-            Bitmap newBitmap = (Bitmap)bmp.Clone();
-
-            SaveBitmapDirect(ds, newBitmap, 0, 0, ds.RasterXSize, ds.RasterYSize, ds.RasterXSize, ds.RasterYSize);
-
-            ds.FlushCache();
-
         }
         catch (Exception e)
         {

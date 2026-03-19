@@ -97,28 +97,30 @@ class GDALMemDataset {
         {
             Driver drvmem = Gdal.GetDriverByName("MEM");
             // create a MEM dataset
-            Dataset ds = drvmem.Create("", bmp.Width, bmp.Height, 0, dataType, null);
-            // add bands in a reverse order
-            for (int i = 1; i <= bandCount; i++)
+            using ( Dataset ds = drvmem.Create("", bmp.Width, bmp.Height, 0, dataType, null) )
             {
-                ds.AddBand(dataType, new string[] { "DATAPOINTER=" + Convert.ToString(buf.ToInt64() + bandCount - i), "PIXELOFFSET=" + pixelOffset, "LINEOFFSET=" + stride });
+                // add bands in a reverse order
+                for (int i = 1; i <= bandCount; i++)
+                {
+                    ds.AddBand(dataType, new string[] { "DATAPOINTER=" + Convert.ToString(buf.ToInt64() + bandCount - i), "PIXELOFFSET=" + pixelOffset, "LINEOFFSET=" + stride });
+                }
+
+                // display parameters
+                Console.WriteLine("Raster dataset parameters:");
+                Console.WriteLine("  RasterCount: " + ds.RasterCount);
+                Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
+
+                // write dataset to tif file
+                Driver drv = Gdal.GetDriverByName("GTiff");
+
+                if (drv == null)
+                {
+                    Console.WriteLine("Can't get driver.");
+                    System.Environment.Exit(-1);
+                }
+
+                drv.CreateCopy("sample2.tif", ds, 0, null, null, null);
             }
-
-            // display parameters
-            Console.WriteLine("Raster dataset parameters:");
-            Console.WriteLine("  RasterCount: " + ds.RasterCount);
-            Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-
-            // write dataset to tif file
-            Driver drv = Gdal.GetDriverByName("GTiff");
-
-            if (drv == null)
-            {
-                Console.WriteLine("Can't get driver.");
-                System.Environment.Exit(-1);
-            }
-
-            drv.CreateCopy("sample2.tif", ds, 0, null, null, null);
         }
         catch (Exception ex)
         {

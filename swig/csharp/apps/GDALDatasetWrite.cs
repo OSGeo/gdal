@@ -55,7 +55,6 @@ class GDALWrite {
         if (args.Length > 2)
             h = int.Parse(args[2]);
 
-        //try 
         {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
@@ -78,39 +77,35 @@ class GDALWrite {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = drv.Create(args[0], w, h, 3, DataType.GDT_Byte, null);
-		
-            if (ds == null) 
+            using ( Dataset ds = drv.Create(args[0], w, h, 3, DataType.GDT_Byte, null) )
             {
-                Console.WriteLine("Can't create " + args[0]);
-                System.Environment.Exit(-1);
-            }
-
-            /* -------------------------------------------------------------------- */
-            /*      Preparing the data in a byte buffer.                            */
-            /* -------------------------------------------------------------------- */
-
-            byte [] buffers = new byte [w * h * 3];
-
-            for (int i = 0; i < w; i++)
-            {
-                for (int j = 0; j < h; j++)
+                if (ds == null) 
                 {
-                    buffers[(i * w + j)] = (byte)(256 - i * 256 / w);
-                    buffers[w * h + (i * w + j)] = 0;
-                    buffers[2 * w * h + (i * w + j)] = (byte)(i * 256 / w);
+                    Console.WriteLine("Can't create " + args[0]);
+                    System.Environment.Exit(-1);
                 }
+
+                /* -------------------------------------------------------------------- */
+                /*      Preparing the data in a byte buffer.                            */
+                /* -------------------------------------------------------------------- */
+
+                byte [] buffers = new byte [w * h * 3];
+
+                for (int i = 0; i < w; i++)
+                {
+                    for (int j = 0; j < h; j++)
+                    {
+                        buffers[(i * w + j)] = (byte)(256 - i * 256 / w);
+                        buffers[w * h + (i * w + j)] = 0;
+                        buffers[2 * w * h + (i * w + j)] = (byte)(i * 256 / w);
+                    }
+                }
+
+                int[] iBandMap = { 1, 2, 3 };
+                ds.WriteRaster(0, 0, w, h, buffers, w, h, 3, iBandMap, 0, 0, 0);
+
+                ds.FlushCache();
             }
-
-            int[] iBandMap = { 1, 2, 3 };
-            ds.WriteRaster(0, 0, w, h, buffers, w, h, 3, iBandMap, 0, 0, 0);
-
-            ds.FlushCache();
-
         }
-        /*catch (Exception e) 
-        {
-            Console.WriteLine("Application error: " + e.Message);
-        }*/
     }
 }

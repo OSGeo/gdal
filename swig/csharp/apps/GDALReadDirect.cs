@@ -63,58 +63,58 @@ class GDALReadDirect {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly );
-
-            if (ds == null)
+            using ( Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly ) )
             {
-                Console.WriteLine("Can't open " + args[0]);
-                System.Environment.Exit(-1);
-            }
-
-            Console.WriteLine("Raster dataset parameters:");
-            Console.WriteLine("  Projection: " + ds.GetProjectionRef());
-            Console.WriteLine("  RasterCount: " + ds.RasterCount);
-            Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-
-            /* -------------------------------------------------------------------- */
-            /*      Get driver                                                      */
-            /* -------------------------------------------------------------------- */
-            Driver drv = ds.GetDriver();
-
-            if (drv == null)
-            {
-                Console.WriteLine("Can't get driver.");
-                System.Environment.Exit(-1);
-            }
-
-            Console.WriteLine("Using driver " + drv.LongName);
-
-            /* -------------------------------------------------------------------- */
-            /*      Get raster band                                                 */
-            /* -------------------------------------------------------------------- */
-            for (int iBand = 1; iBand <= ds.RasterCount; iBand++)
-            {
-                Band band = ds.GetRasterBand(iBand);
-                Console.WriteLine("Band " + iBand + " :");
-                Console.WriteLine("   DataType: " + band.DataType);
-                Console.WriteLine("   Size (" + band.XSize + "," + band.YSize + ")");
-                Console.WriteLine("   PaletteInterp: " + band.GetRasterColorInterpretation().ToString());
-
-                for (int iOver = 0; iOver < band.GetOverviewCount(); iOver++)
+                if (ds == null)
                 {
-                    Band over = band.GetOverview(iOver);
-                    Console.WriteLine("      OverView " + iOver + " :");
-                    Console.WriteLine("         DataType: " + over.DataType);
-                    Console.WriteLine("         Size (" + over.XSize + "," + over.YSize + ")");
-                    Console.WriteLine("         PaletteInterp: " + over.GetRasterColorInterpretation().ToString());
+                    Console.WriteLine("Can't open " + args[0]);
+                    System.Environment.Exit(-1);
                 }
+
+                Console.WriteLine("Raster dataset parameters:");
+                Console.WriteLine("  Projection: " + ds.GetProjectionRef());
+                Console.WriteLine("  RasterCount: " + ds.RasterCount);
+                Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
+
+                /* -------------------------------------------------------------------- */
+                /*      Get driver                                                      */
+                /* -------------------------------------------------------------------- */
+                Driver drv = ds.GetDriver();
+
+                if (drv == null)
+                {
+                    Console.WriteLine("Can't get driver.");
+                    System.Environment.Exit(-1);
+                }
+
+                Console.WriteLine("Using driver " + drv.LongName);
+
+                /* -------------------------------------------------------------------- */
+                /*      Get raster band                                                 */
+                /* -------------------------------------------------------------------- */
+                for (int iBand = 1; iBand <= ds.RasterCount; iBand++)
+                {
+                    using Band band = ds.GetRasterBand(iBand);
+                    Console.WriteLine("Band " + iBand + " :");
+                    Console.WriteLine("   DataType: " + band.DataType);
+                    Console.WriteLine("   Size (" + band.XSize + "," + band.YSize + ")");
+                    Console.WriteLine("   PaletteInterp: " + band.GetRasterColorInterpretation().ToString());
+
+                    for (int iOver = 0; iOver < band.GetOverviewCount(); iOver++)
+                    {
+                        using Band over = band.GetOverview(iOver);
+                        Console.WriteLine("      OverView " + iOver + " :");
+                        Console.WriteLine("         DataType: " + over.DataType);
+                        Console.WriteLine("         Size (" + over.XSize + "," + over.YSize + ")");
+                        Console.WriteLine("         PaletteInterp: " + over.GetRasterColorInterpretation().ToString());
+                    }
+                }
+
+                /* -------------------------------------------------------------------- */
+                /*      Processing the raster                                           */
+                /* -------------------------------------------------------------------- */
+                SaveBitmapDirect(ds, args[1], iOverview);
             }
-
-            /* -------------------------------------------------------------------- */
-            /*      Processing the raster                                           */
-            /* -------------------------------------------------------------------- */
-            SaveBitmapDirect(ds, args[1], iOverview);
-
         }
         catch (Exception e)
         {
@@ -187,6 +187,10 @@ class GDALReadDirect {
         }
 
         bitmap.Save(filename);
+
+        redBand.Dispose();
+        greenBand.Dispose();
+        blueBand.Dispose();
     }
 
     private static void SaveBitmapPaletteDirect(Dataset ds, string filename, int iOverview)
@@ -196,7 +200,7 @@ class GDALReadDirect {
         if (iOverview >= 0 && band.GetOverviewCount() > iOverview)
             band = band.GetOverview(iOverview);
 
-        ColorTable ct = band.GetRasterColorTable();
+        using ColorTable ct = band.GetRasterColorTable();
         if (ct == null)
         {
             Console.WriteLine("   Band has no color table!");
@@ -248,6 +252,8 @@ class GDALReadDirect {
         }
 
         bitmap.Save(filename);
+
+        band.Dispose();
     }
 
     private static void SaveBitmapGrayDirect(Dataset ds, string filename, int iOverview)
@@ -292,6 +298,8 @@ class GDALReadDirect {
         }
 
         bitmap.Save(filename);
+        
+        band.Dispose();
     }
 }
 #pragma warning restore CA1416 // Validate platform compatibility

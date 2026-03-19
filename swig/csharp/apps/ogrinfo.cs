@@ -55,40 +55,41 @@ class OGRInfo {
 		/* -------------------------------------------------------------------- */
 		/*      Open data source.                                               */
 		/* -------------------------------------------------------------------- */
-		DataSource ds = Ogr.Open( args[0], 0 );
-
-		if (ds == null) {
-			Console.WriteLine("Can't open " + args[0]);
-			System.Environment.Exit(-1);
-		}
-
-		/* -------------------------------------------------------------------- */
-		/*      Get driver                                                      */
-		/* -------------------------------------------------------------------- */
-		Driver drv = ds.GetDriver();
-
-		if (drv == null)
+		using ( DataSource ds = Ogr.Open( args[0], 0 ) )
 		{
-			Console.WriteLine("Can't get driver.");
-			System.Environment.Exit(-1);
-		}
-        // TODO: drv.name is still unsafe with lazy initialization (Bug 1339)
-        Console.WriteLine("Using driver " + drv.name);
-
-		/* -------------------------------------------------------------------- */
-		/*      Iterating through the layers                                    */
-		/* -------------------------------------------------------------------- */
-
-		for( int iLayer = 0; iLayer < ds.GetLayerCount(); iLayer++ )
-		{
-			Layer layer = ds.GetLayerByIndex(iLayer);
-
-			if( layer == null )
-			{
-				Console.WriteLine( "FAILURE: Couldn't fetch advertised layer " + iLayer );
+			if (ds == null) {
+				Console.WriteLine("Can't open " + args[0]);
 				System.Environment.Exit(-1);
 			}
-			ReportLayer(layer);
+
+			/* -------------------------------------------------------------------- */
+			/*      Get driver                                                      */
+			/* -------------------------------------------------------------------- */
+			Driver drv = ds.GetDriver();
+
+			if (drv == null)
+			{
+				Console.WriteLine("Can't get driver.");
+				System.Environment.Exit(-1);
+			}
+			// TODO: drv.name is still unsafe with lazy initialization (Bug 1339)
+			Console.WriteLine("Using driver " + drv.name);
+
+			/* -------------------------------------------------------------------- */
+			/*      Iterating through the layers                                    */
+			/* -------------------------------------------------------------------- */
+
+			for( int iLayer = 0; iLayer < ds.GetLayerCount(); iLayer++ )
+			{
+				using Layer layer = ds.GetLayerByIndex(iLayer);
+
+				if( layer == null )
+				{
+					Console.WriteLine( "FAILURE: Couldn't fetch advertised layer " + iLayer );
+					System.Environment.Exit(-1);
+				}
+				ReportLayer(layer);
+			}
 		}
 	}
 
@@ -195,15 +196,15 @@ class OGRInfo {
 		if( feat.GetStyleString() != null )
 			Console.WriteLine( "  Style = " + feat.GetStyleString() );
 
-		Geometry geom = feat.GetGeometryRef();
+		using Geometry geom = feat.GetGeometryRef();
 		if( geom != null )
 		{
 			Console.WriteLine( "  " + geom.GetGeometryName() +
 				"(" + geom.GetGeometryType() + ")" );
-			Geometry sub_geom;
+				
 			for (int i = 0; i < geom.GetGeometryCount(); i++)
 			{
-				sub_geom = geom.GetGeometryRef(i);
+				using Geometry sub_geom = geom.GetGeometryRef(i);
 				if ( sub_geom != null )
 				{
 					Console.WriteLine( "  subgeom" + i + ": " + sub_geom.GetGeometryName() +

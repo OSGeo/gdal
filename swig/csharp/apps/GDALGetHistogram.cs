@@ -56,41 +56,42 @@ class GDALGetHistogram {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly );
-		
-            if (ds == null) 
+            using ( Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly ) )
             {
-                Console.WriteLine("Can't open " + args[0]);
-                System.Environment.Exit(-1);
-            }
+                if (ds == null) 
+                {
+                    Console.WriteLine("Can't open " + args[0]);
+                    System.Environment.Exit(-1);
+                }
 
-            Console.WriteLine("Raster dataset parameters:");
-            Console.WriteLine("  Projection: " + ds.GetProjectionRef());
-            Console.WriteLine("  RasterCount: " + ds.RasterCount);
-            Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-           
- 
-            /* -------------------------------------------------------------------- */
-            /*      Get the Histogram arrays                                        */
-            /* -------------------------------------------------------------------- */
-            for (int iBand = 1; iBand <= ds.RasterCount; iBand++) 
-            {
-                Console.WriteLine("Band " + iBand + ":");
-                int[] histData = new int[256]; 
-                Band band = ds.GetRasterBand(iBand);
-                double pdfMin, pdfMax, pdfMean, pdfStdDev;
-                band.GetStatistics(0, 1, out pdfMin, out pdfMax, out pdfMean, out pdfStdDev);
-                Console.WriteLine("Min=" + pdfMin);
-                Console.WriteLine("Max=" + pdfMax);
-                Console.WriteLine("Mean=" + pdfMean);
-                Console.WriteLine("StdDev=" + pdfStdDev);
-                band.GetHistogram(-0.5, 255.5, 255, histData, 0, 1,
-                           new Gdal.GDALProgressFuncDelegate(ProgressFunc), "");
-                for (int i = 0; i < 255; i++)
-                    Console.Write(String.Format(" {0:x}", histData[i]));
-                Console.WriteLine("");
+                Console.WriteLine("Raster dataset parameters:");
+                Console.WriteLine("  Projection: " + ds.GetProjectionRef());
+                Console.WriteLine("  RasterCount: " + ds.RasterCount);
+                Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
+            
+    
+                /* -------------------------------------------------------------------- */
+                /*      Get the Histogram arrays                                        */
+                /* -------------------------------------------------------------------- */
+                for (int iBand = 1; iBand <= ds.RasterCount; iBand++) 
+                {
+                    Console.WriteLine("Band " + iBand + ":");
+                    int[] histData = new int[256];
+                    using Band band = ds.GetRasterBand(iBand);
+                    double pdfMin, pdfMax, pdfMean, pdfStdDev;
+                    band.GetStatistics(0, 1, out pdfMin, out pdfMax, out pdfMean, out pdfStdDev);
+                    Console.WriteLine("Min=" + pdfMin);
+                    Console.WriteLine("Max=" + pdfMax);
+                    Console.WriteLine("Mean=" + pdfMean);
+                    Console.WriteLine("StdDev=" + pdfStdDev);
+                    band.GetHistogram(-0.5, 255.5, 255, histData, 0, 1,
+                            new Gdal.GDALProgressFuncDelegate(ProgressFunc), "");
+                    for (int i = 0; i < 255; i++)
+                        Console.Write(String.Format(" {0:x}", histData[i]));
+                    Console.WriteLine("");
+                }
+                Console.WriteLine("Completed.");
             }
-            Console.WriteLine("Completed.");
         }
         catch (Exception e) 
         {

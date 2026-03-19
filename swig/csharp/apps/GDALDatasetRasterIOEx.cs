@@ -76,46 +76,46 @@ class GDALReadDirect {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly );
-		
-            if (ds == null) 
+            using ( Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly ) ) 
             {
-                Console.WriteLine("Can't open " + args[0]);
-                System.Environment.Exit(-1);
+                if (ds == null) 
+                {
+                    Console.WriteLine("Can't open " + args[0]);
+                    System.Environment.Exit(-1);
+                }
+
+                Console.WriteLine("Raster dataset parameters:");
+                Console.WriteLine("  Projection: " + ds.GetProjectionRef());
+                Console.WriteLine("  RasterCount: " + ds.RasterCount);
+                Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
+                
+                /* -------------------------------------------------------------------- */
+                /*      Get driver                                                      */
+                /* -------------------------------------------------------------------- */	
+                Driver drv = ds.GetDriver();
+
+                if (drv == null) 
+                {
+                    Console.WriteLine("Can't get driver.");
+                    System.Environment.Exit(-1);
+                }
+                
+                Console.WriteLine("Using driver " + drv.LongName);
+
+                if (args.Length > 2)
+                    scale = double.Parse(args[2]);
+
+                if (args.Length > 3)
+                    argVersion = int.Parse(args[3]);
+
+                if (args.Length > 4)
+                    resampleAlg = (RIOResampleAlg)Enum.Parse(typeof(RIOResampleAlg), args[4]);
+
+                /* -------------------------------------------------------------------- */
+                /*      Processing the raster                                           */
+                /* -------------------------------------------------------------------- */
+                SaveBitmapDirect(args[1], ds, 0, 0, ds.RasterXSize, ds.RasterYSize, Convert.ToInt32(scale * ds.RasterXSize), Convert.ToInt32(scale * ds.RasterYSize));
             }
-
-            Console.WriteLine("Raster dataset parameters:");
-            Console.WriteLine("  Projection: " + ds.GetProjectionRef());
-            Console.WriteLine("  RasterCount: " + ds.RasterCount);
-            Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-            
-            /* -------------------------------------------------------------------- */
-            /*      Get driver                                                      */
-            /* -------------------------------------------------------------------- */	
-            Driver drv = ds.GetDriver();
-
-            if (drv == null) 
-            {
-                Console.WriteLine("Can't get driver.");
-                System.Environment.Exit(-1);
-            }
-            
-            Console.WriteLine("Using driver " + drv.LongName);
-
-            if (args.Length > 2)
-                scale = double.Parse(args[2]);
-
-            if (args.Length > 3)
-                argVersion = int.Parse(args[3]);
-
-            if (args.Length > 4)
-                resampleAlg = (RIOResampleAlg)Enum.Parse(typeof(RIOResampleAlg), args[4]);
-
-            /* -------------------------------------------------------------------- */
-            /*      Processing the raster                                           */
-            /* -------------------------------------------------------------------- */
-            SaveBitmapDirect(args[1], ds, 0, 0, ds.RasterXSize, ds.RasterYSize, Convert.ToInt32(scale * ds.RasterXSize), Convert.ToInt32(scale * ds.RasterYSize));
-            
         }
         catch (Exception e)
         {
@@ -134,10 +134,11 @@ class GDALReadDirect {
         bool isIndexed = false;
         int channelSize = 8;
         ColorTable ct = null;
+
         // Evaluate the bands and find out a proper image transfer format
         for (int i = 0; i < ds.RasterCount; i++)
         {
-            Band band = ds.GetRasterBand(i + 1);
+            using Band band = ds.GetRasterBand(i + 1);
             if (Gdal.GetDataTypeSize(band.DataType) > 8)
                 channelSize = 16;
             switch (band.GetRasterColorInterpretation())
@@ -309,5 +310,6 @@ class GDALReadDirect {
         }
 
         bitmap.Save(filename);
+        ct.Dispose();
     }
 }
