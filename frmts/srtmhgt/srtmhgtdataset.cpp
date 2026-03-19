@@ -524,9 +524,9 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
     const int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
     {
-        CPLError(
-            CE_Failure, CPLE_NotSupported,
-            "SRTMHGT driver does not support source dataset with zero bands.\n");
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "SRTMHGT driver does not support source dataset with zero "
+                 "bands.\n");
         return nullptr;
     }
     else if (nBands != 1)
