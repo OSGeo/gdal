@@ -5398,7 +5398,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     {
         ReportError(
             pszFilename, CE_Failure, CPLE_AppDefined,
-            "Attempt to create %dx%dx%d TIFF file, but width, height and bands"
+            "Attempt to create %dx%dx%d TIFF file, but width, height and bands "
             "must be positive.",
             nXSize, nYSize, l_nBands);
 

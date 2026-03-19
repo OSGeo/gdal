@@ -672,7 +672,7 @@ static GDALDataset *DTEDCreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "DTED driver does not support source dataset with zero band.\n");
+            "DTED driver does not support source dataset with zero bands.\n");
         return nullptr;
     }
 

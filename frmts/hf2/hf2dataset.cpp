@@ -729,7 +729,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "HF2 driver does not support source dataset with zero band.\n");
+            "HF2 driver does not support source dataset with zero bands.\n");
         return nullptr;
     }
 

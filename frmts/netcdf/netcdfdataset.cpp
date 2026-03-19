@@ -9635,7 +9635,7 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "NetCDF driver does not support "
-                 "source dataset with zero band.");
+                 "source dataset with zero bands.");
         return nullptr;
     }
 

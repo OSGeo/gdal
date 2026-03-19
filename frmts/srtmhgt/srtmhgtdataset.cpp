@@ -526,7 +526,7 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "SRTMHGT driver does not support source dataset with zero band.\n");
+            "SRTMHGT driver does not support source dataset with zero bands.\n");
         return nullptr;
     }
     else if (nBands != 1)

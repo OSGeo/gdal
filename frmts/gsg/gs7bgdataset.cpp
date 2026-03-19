@@ -1134,7 +1134,7 @@ GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
     if (nBands == 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "Driver does not support source dataset with zero band.\n");
+                 "Driver does not support source dataset with zero bands.\n");
         return nullptr;
     }
     else if (nBands > 1)
