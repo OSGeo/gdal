@@ -1452,7 +1452,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "GSAG driver does not support source dataset with zero bands.\n");
+            "GSAG driver does not support source datasets with zero bands.");
         return nullptr;
     }
     else if (nBands > 1)

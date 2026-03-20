@@ -1597,7 +1597,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "XYZ driver does not support source dataset with zero bands.\n");
+            "XYZ driver does not support source datasets with zero bands.");
         return nullptr;
     }
 

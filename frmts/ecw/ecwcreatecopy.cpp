@@ -1102,7 +1102,7 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "ECW driver does not support source dataset with zero bands.\n");
+            "ECW driver does not support source datasets with zero bands.");
         return nullptr;
     }
 
@@ -1299,7 +1299,7 @@ GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "ECW driver does not support source dataset with zero bands.\n");
+            "ECW driver does not support source datasets with zero bands.");
         return nullptr;
     }
 
@@ -1394,7 +1394,7 @@ GDALDataset *ECWCreateCopyJPEG2000(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "JP2ECW driver does not support source dataset with zero bands.\n");
+            "JP2ECW driver does not support source datasets with zero bands.");
         return nullptr;
     }
 

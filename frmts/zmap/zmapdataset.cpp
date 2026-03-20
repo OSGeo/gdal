@@ -553,7 +553,7 @@ GDALDataset *ZMapDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "ZMap driver does not support source dataset with zero bands.\n");
+            "ZMap driver does not support source datasets with zero bands.");
         return nullptr;
     }
 

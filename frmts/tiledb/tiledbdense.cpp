@@ -2725,7 +2725,7 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "TileDB driver does not support "
-                     "source dataset with zero bands.");
+                     "source datasets with zero bands.");
             return nullptr;
         }
     }

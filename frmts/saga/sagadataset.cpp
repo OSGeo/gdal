@@ -998,7 +998,7 @@ GDALDataset *SAGADataset::CreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "SAGA driver does not support source dataset with zero bands.\n");
+            "SAGA driver does not support source datasets with zero bands.");
         return nullptr;
     }
     else if (nBands > 1)
