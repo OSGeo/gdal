@@ -10,8 +10,8 @@
 
     Export the OGR_SCHEMA from a vector dataset.
 
-    OGR_SCHEMA is a JSON structure describing the structure of a vector dataset
-    according to the `OGR_SCHEMA open option schema definition <https://raw.githubusercontent.com/OSGeo/gdal/refs/heads/master/ogr/data/ogr_fields_override.schema.json>`_
+    OGR_SCHEMA is a JSON object describing the structure of a vector dataset
+    according to the `OGR_SCHEMA schema definition <https://raw.githubusercontent.com/OSGeo/gdal/refs/heads/master/ogr/data/ogr_fields_override.schema.json>`_
 
 .. Index:: gdal vector
 
