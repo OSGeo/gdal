@@ -49,7 +49,7 @@ void Range::setRange(const char *pszStr)
     Range::List *poEnd = nullptr;
     if (pszStr == nullptr || pszStr[0] != '[')
     {
-        CPLError(CE_Warning, CPLE_IllegalArg, "Invalid range specified\n");
+        CPLError(CE_Warning, CPLE_IllegalArg, "Invalid range specified");
         return;
     }
     const char *pszc = pszStr;
@@ -78,7 +78,7 @@ void Range::setRange(const char *pszStr)
             if (*psze != ':' && *psze != ',' && *psze != ']')
             {
                 CPLError(CE_Warning, CPLE_IllegalArg,
-                         "Invalid range specified\n");
+                         "Invalid range specified");
                 deleteList(poVals);
                 poVals = nullptr;
                 return;
@@ -95,7 +95,7 @@ void Range::setRange(const char *pszStr)
                 if (*psze != ',' && *psze != ']')
                 {
                     CPLError(CE_Warning, CPLE_IllegalArg,
-                             "Invalid range specified\n");
+                             "Invalid range specified");
                     deleteList(poVals);
                     poVals = nullptr;
                     return;
@@ -127,7 +127,7 @@ void Range::setRange(const char *pszStr)
     }
     if (*pszc != ']')
     {
-        CPLError(CE_Warning, CPLE_IllegalArg, "Invalid range specified\n");
+        CPLError(CE_Warning, CPLE_IllegalArg, "Invalid range specified");
         deleteList(poVals);
         poVals = nullptr;
     }

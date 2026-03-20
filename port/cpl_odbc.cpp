@@ -224,8 +224,7 @@ bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
         }
     }
 
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "ODBC: MDB Tools driver not found!\n");
+    CPLError(CE_Failure, CPLE_AppDefined, "ODBC: MDB Tools driver not found!");
     // Driver not found!
     return false;
 }

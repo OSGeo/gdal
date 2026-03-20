@@ -526,13 +526,13 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "SRTMHGT driver does not support source dataset with zero "
-                 "bands.\n");
+                 "bands.");
         return nullptr;
     }
     else if (nBands != 1)
     {
         CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                 "SRTMHGT driver only uses the first band of the dataset.\n");
+                 "SRTMHGT driver only uses the first band of the dataset.");
         if (bStrict)
             return nullptr;
     }

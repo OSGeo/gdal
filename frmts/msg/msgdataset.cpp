@@ -104,7 +104,7 @@ GDALDataset *MSGDataset::Open(GDALOpenInfo *poOpenInfo)
         if (sErr.compare("-") !=
             0)  // this driver does not recognize this format .. be silent and
             // return false so that another driver can try
-            CPLError(CE_Failure, CPLE_AppDefined, "%s", (sErr + "\n").c_str());
+            CPLError(CE_Failure, CPLE_AppDefined, "%s", (sErr + "").c_str());
         return nullptr;
     }
 
@@ -576,7 +576,7 @@ CPLErr MSGRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
                 {
                     CPLError(
                         CE_Failure, CPLE_AppDefined,
-                        "Not enough memory to perform wavelet decompression\n");
+                        "Not enough memory to perform wavelet decompression");
                     return CE_Failure;
                 }
 

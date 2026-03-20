@@ -3734,7 +3734,7 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
                 default:
                 {
                     CPLError(CE_Failure, CPLE_NoWriteAccess,
-                             "Unsupported attribute definition.\n");
+                             "Unsupported attribute definition.");
                     return;
                 }
             }
@@ -4209,7 +4209,7 @@ OGRErr OGRTileDBLayer::ICreateFeature(OGRFeature *poFeature)
             default:
             {
                 CPLError(CE_Failure, CPLE_NoWriteAccess,
-                         "Unsupported attribute definition.\n");
+                         "Unsupported attribute definition.");
                 return OGRERR_FAILURE;
             }
         }

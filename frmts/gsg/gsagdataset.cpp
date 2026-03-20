@@ -550,7 +550,7 @@ CPLErr GSAGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (eAccess == GA_ReadOnly)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to write block, dataset opened read only.\n");
+                 "Unable to write block, dataset opened read only.");
         return CE_Failure;
     }
 
@@ -628,7 +628,7 @@ CPLErr GSAGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failure writing block, "
-                     "unable to shift file contents.\n");
+                     "unable to shift file contents.");
             return CE_Failure;
         }
 
@@ -641,13 +641,13 @@ CPLErr GSAGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (VSIFSeekL(poGDS->fp, panLineOffset[nBlockYOff], SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to seek to grid line.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to seek to grid line.");
         return CE_Failure;
     }
 
     if (VSIFWriteL(sOut.c_str(), 1, sOut.length(), poGDS->fp) != sOut.length())
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to write grid block.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to write grid block.");
         return CE_Failure;
     }
 
@@ -874,7 +874,7 @@ GDALDataset *GSAGDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (nTemp > std::numeric_limits<int>::max())
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Number of X axis grid columns not representable.\n");
+                 "Number of X axis grid columns not representable.");
         poDS->nRasterXSize = std::numeric_limits<int>::max();
     }
     else if (nTemp == 0)
@@ -899,7 +899,7 @@ GDALDataset *GSAGDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (nTemp > std::numeric_limits<int>::max() - 1)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Number of Y axis grid rows not representable.\n");
+                 "Number of Y axis grid rows not representable.");
         poDS->nRasterYSize = std::numeric_limits<int>::max() - 1;
     }
     else if (nTemp == 0)
@@ -1103,7 +1103,7 @@ CPLErr GSAGDataset::SetGeoTransform(const GDALGeoTransform &gt)
     if (eAccess == GA_ReadOnly)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to set GeoTransform, dataset opened read only.\n");
+                 "Unable to set GeoTransform, dataset opened read only.");
         return CE_Failure;
     }
 
@@ -1161,7 +1161,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
     if (VSIFSeekL(fp, 0, SEEK_END) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to seek to end of grid file.\n");
+                 "Unable to seek to end of grid file.");
         return CE_Failure;
     }
 
@@ -1188,7 +1188,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Unable to write padding to grid file "
-                             "(Out of space?).\n");
+                             "(Out of space?).");
                     return CE_Failure;
                 }
             }
@@ -1209,7 +1209,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
     {
         VSIFree(pabyBuffer);
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to seek to start of shift in grid file.\n");
+                 "Unable to seek to start of shift in grid file.");
         return CE_Failure;
     }
 
@@ -1222,7 +1222,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         if (nRead < nOverlap && !VSIFEofL(fp))
         {
             VSIFree(pabyBuffer);
-            CPLError(CE_Failure, CPLE_FileIO, "Error reading grid file.\n");
+            CPLError(CE_Failure, CPLE_FileIO, "Error reading grid file.");
             return CE_Failure;
         }
 
@@ -1231,7 +1231,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         {
             VSIFree(pabyBuffer);
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to seek to start of shift in grid file.\n");
+                     "Unable to seek to start of shift in grid file.");
             return CE_Failure;
         }
 
@@ -1242,7 +1242,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
                 VSIFree(pabyBuffer);
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Unable to write padding to grid file "
-                         "(Out of space?).\n");
+                         "(Out of space?).");
                 return CE_Failure;
             }
         }
@@ -1254,7 +1254,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
             {
                 VSIFree(pabyBuffer);
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Unable to write to grid file (Out of space?).\n");
+                         "Unable to write to grid file (Out of space?).");
                 return CE_Failure;
             }
 
@@ -1279,7 +1279,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         {
             VSIFree(pabyBuffer);
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to read from grid file (possible corruption).\n");
+                     "Unable to read from grid file (possible corruption).");
             return CE_Failure;
         }
 
@@ -1292,7 +1292,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         {
             VSIFree(pabyBuffer);
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to seek in grid file (possible corruption).\n");
+                     "Unable to seek in grid file (possible corruption).");
             return CE_Failure;
         }
 
@@ -1301,7 +1301,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         {
             VSIFree(pabyBuffer);
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to write to grid file (out of space?).\n");
+                     "Unable to write to grid file (out of space?).");
             return CE_Failure;
         }
 
@@ -1322,7 +1322,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         {
             VSIFree(pabyBuffer);
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to write to grid file (out of space?).\n");
+                     "Unable to write to grid file (out of space?).");
             return CE_Failure;
         }
 
@@ -1330,7 +1330,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         {
             VSIFree(pabyBuffer);
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to write to grid file (out of space?).\n");
+                     "Unable to write to grid file (out of space?).");
             return CE_Failure;
         }
     }
@@ -1341,7 +1341,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         if (VSIFSeekL(fp, VSIFTellL(fp) - strlen(pszEOL), SEEK_SET) != 0)
         {
             VSIFree(pabyBuffer);
-            CPLError(CE_Failure, CPLE_FileIO, "Unable to seek in grid file.\n");
+            CPLError(CE_Failure, CPLE_FileIO, "Unable to seek in grid file.");
             return CE_Failure;
         }
 
@@ -1351,7 +1351,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
             {
                 VSIFree(pabyBuffer);
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Error writing to grid file.\n");
+                         "Error writing to grid file.");
                 return CE_Failure;
             }
         }
@@ -1360,7 +1360,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         {
             VSIFree(pabyBuffer);
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to write to grid file (out of space?).\n");
+                     "Unable to write to grid file (out of space?).");
             return CE_Failure;
         }
     }
@@ -1406,7 +1406,7 @@ CPLErr GSAGDataset::UpdateHeader()
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Unable to update grid header, "
-                     "failure shifting file contents.\n");
+                     "failure shifting file contents.");
             return CE_Failure;
         }
 
@@ -1420,14 +1420,14 @@ CPLErr GSAGDataset::UpdateHeader()
     if (VSIFSeekL(fp, 0, SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to seek to start of grid file.\n");
+                 "Unable to seek to start of grid file.");
         return CE_Failure;
     }
 
     if (VSIFWriteL(sOut.c_str(), 1, sOut.length(), fp) != sOut.length())
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to update file header.  Disk full?\n");
+                 "Unable to update file header.  Disk full?");
         return CE_Failure;
     }
 
@@ -1461,18 +1461,18 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Unable to create copy, Golden Software ASCII Grid "
-                     "format only supports one raster band.\n");
+                     "format only supports one raster band.");
             return nullptr;
         }
         else
             CPLError(CE_Warning, CPLE_NotSupported,
                      "Golden Software ASCII Grid format only supports one "
-                     "raster band, first band will be copied.\n");
+                     "raster band, first band will be copied.");
     }
 
     if (!pfnProgress(0.0, nullptr, pProgressData))
     {
-        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated\n");
+        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
         return nullptr;
     }
 
@@ -1510,7 +1510,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
     {
         VSIFCloseL(fp);
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to create copy, writing header failed.\n");
+                 "Unable to create copy, writing header failed.");
         return nullptr;
     }
 
@@ -1523,7 +1523,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
     {
         VSIFCloseL(fp);
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to create copy, writing header failed.\n");
+                 "Unable to create copy, writing header failed.");
         return nullptr;
     }
 
@@ -1586,7 +1586,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
                     VSIFCloseL(fp);
                     VSIFree(pdfData);
                     CPLError(CE_Failure, CPLE_FileIO,
-                             "Unable to write grid cell.  Disk full?\n");
+                             "Unable to write grid cell.  Disk full?");
                     return nullptr;
                 }
             }
@@ -1596,7 +1596,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
                 VSIFCloseL(fp);
                 VSIFree(pdfData);
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Unable to finish write of grid line. Disk full?\n");
+                         "Unable to finish write of grid line. Disk full?");
                 return nullptr;
             }
         }
@@ -1606,7 +1606,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
             VSIFCloseL(fp);
             VSIFree(pdfData);
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to finish write of grid row. Disk full?\n");
+                     "Unable to finish write of grid row. Disk full?");
             return nullptr;
         }
 
@@ -1635,8 +1635,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
                               "\x0D\x0A") != CE_None)
         {
             VSIFCloseL(fp);
-            CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to shift file contents.\n");
+            CPLError(CE_Failure, CPLE_FileIO, "Unable to shift file contents.");
             return nullptr;
         }
     }
@@ -1645,7 +1644,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
     {
         VSIFCloseL(fp);
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to seek to start of grid file copy.\n");
+                 "Unable to seek to start of grid file copy.");
         return nullptr;
     }
 
@@ -1653,8 +1652,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
                    fp) != ssRange.str().length())
     {
         VSIFCloseL(fp);
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write range information.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to write range information.");
         return nullptr;
     }
 

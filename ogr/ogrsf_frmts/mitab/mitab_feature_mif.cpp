@@ -1055,7 +1055,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             CPLError(
                 CE_Warning, CPLE_AppDefined,
                 "Geometry of polygon cannot be translated to Simple Geometry. "
-                "All polygons will be contained in a multipolygon.\n");
+                "All polygons will be contained in a multipolygon.");
         }
     }
 

@@ -121,8 +121,7 @@ int DDFRecord::Read()
     }
     else if (nReadBytes != (size_t)(nDataSize - nFieldOffset))
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Data record is short on DDF file.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Data record is short on DDF file.");
 
         return FALSE;
     }

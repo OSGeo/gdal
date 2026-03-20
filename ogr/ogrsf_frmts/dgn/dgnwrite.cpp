@@ -94,7 +94,7 @@ int DGNResizeElement(DGNHandle hDGN, DGNElemCore *psElement, int nNewSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed seek or read when trying to mark existing\n"
-                     "element as deleted in DGNResizeElement()\n");
+                     "element as deleted in DGNResizeElement()");
             return FALSE;
         }
 
@@ -107,7 +107,7 @@ int DGNResizeElement(DGNHandle hDGN, DGNElemCore *psElement, int nNewSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed seek or write when trying to mark existing\n"
-                     "element as deleted in DGNResizeElement()\n");
+                     "element as deleted in DGNResizeElement()");
             return FALSE;
         }
 

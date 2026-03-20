@@ -273,7 +273,7 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
                  "Unable to write using band ordered IRasterIO when using "
-                 "interleave 'ATTRIBUTES'.\n");
+                 "interleave 'ATTRIBUTES'.");
         return CE_Failure;
     }
 
@@ -418,7 +418,7 @@ CPLErr TileDBRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     if (eAccess == GA_ReadOnly)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to write block, dataset is opened read only.\n");
+                 "Unable to write block, dataset is opened read only.");
         return CE_Failure;
     }
 

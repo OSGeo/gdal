@@ -2083,7 +2083,7 @@ OGRErr OGRLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
     (void)bApproxOK;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "CreateField() not supported by this layer.\n");
+             "CreateField() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2173,7 +2173,7 @@ OGRErr OGRLayer::DeleteField(int iField)
     (void)iField;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "DeleteField() not supported by this layer.\n");
+             "DeleteField() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2263,7 +2263,7 @@ OGRErr OGRLayer::ReorderFields(int *panMap)
     (void)panMap;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "ReorderFields() not supported by this layer.\n");
+             "ReorderFields() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2498,7 +2498,7 @@ OGRErr OGRLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
     (void)poNewFieldDefn;
     (void)nFlagsIn;
     CPLError(CE_Failure, CPLE_NotSupported,
-             "AlterFieldDefn() not supported by this layer.\n");
+             "AlterFieldDefn() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2603,7 +2603,7 @@ OGRErr OGRLayer::AlterGeomFieldDefn(int iGeomField,
     (void)nFlagsIn;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "AlterGeomFieldDefn() not supported by this layer.\n");
+             "AlterGeomFieldDefn() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -2703,7 +2703,7 @@ OGRErr OGRLayer::CreateGeomField(const OGRGeomFieldDefn *poField, int bApproxOK)
     (void)bApproxOK;
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "CreateGeomField() not supported by this layer.\n");
+             "CreateGeomField() not supported by this layer.");
 
     return OGRERR_UNSUPPORTED_OPERATION;
 }

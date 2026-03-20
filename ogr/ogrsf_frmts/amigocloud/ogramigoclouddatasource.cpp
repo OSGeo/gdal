@@ -223,7 +223,7 @@ int OGRAmigoCloudDataSource::Open(const char *pszFilename,
     if (osAPIKey.empty())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "AMIGOCLOUD_API_KEY is not defined.\n");
+                 "AMIGOCLOUD_API_KEY is not defined.");
         return FALSE;
     }
 

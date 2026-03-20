@@ -736,7 +736,7 @@ GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Unsupported ILWIS data file. \n"
-                         "can't treat as raster.\n");
+                         "can't treat as raster.");
                 return nullptr;
             }
         }
@@ -755,7 +755,7 @@ GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             // CPLError( CE_Failure, CPLE_AppDefined,
             //           "Unsupported ILWIS data file. \n"
-            //           "can't treat as raster.\n" );
+            //           "can't treat as raster." );
             return nullptr;
         }
     }
@@ -763,7 +763,7 @@ GDALDataset *ILWISDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unsupported ILWIS data file. \n"
-                 "can't treat as raster.\n");
+                 "can't treat as raster.");
         return nullptr;
     }
 

@@ -321,7 +321,7 @@ bool TSXDataset::getGCPsFromGEOREF_XML(const char *pszGeorefFilename)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Warning- incomplete"
-                     " ellipsoid information.  Using wgs-84 parameters.\n");
+                     " ellipsoid information.  Using wgs-84 parameters.");
             osr.SetWellKnownGeogCS("WGS84");
         }
         else if (EQUAL(pszEllipsoidName, "WGS84"))
@@ -478,7 +478,7 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
     if (psComponents == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Unable to find <productComponents> tag in file.\n");
+                 "Unable to find <productComponents> tag in file.");
         return nullptr;
     }
 
@@ -488,7 +488,7 @@ GDALDataset *TSXDataset::Open(GDALOpenInfo *poOpenInfo)
     if (psProductInfo == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Unable to find <productInfo> tag in file.\n");
+                 "Unable to find <productInfo> tag in file.");
         return nullptr;
     }
 

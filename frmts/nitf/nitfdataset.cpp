@@ -2423,7 +2423,7 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     if (poSRS->IsSameGeogCS(&oSRS_WGS84) == FALSE)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "NITF only supports WGS84 geographic and UTM projections.\n");
+                 "NITF only supports WGS84 geographic and UTM projections.");
         return CE_Failure;
     }
 
@@ -2433,7 +2433,7 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "NITF file should have been created with creation option "
-                     "'ICORDS=G' (or 'ICORDS=D').\n");
+                     "'ICORDS=G' (or 'ICORDS=D').");
             return CE_Failure;
         }
     }
@@ -2443,14 +2443,14 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "NITF file should have been created with creation option "
-                     "'ICORDS=N'.\n");
+                     "'ICORDS=N'.");
             return CE_Failure;
         }
         else if (!bNorth && psImage->chICORDS != 'S')
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "NITF file should have been created with creation option "
-                     "'ICORDS=S'.\n");
+                     "'ICORDS=S'.");
             return CE_Failure;
         }
 
@@ -2459,7 +2459,7 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "NITF only supports WGS84 geographic and UTM projections.\n");
+                 "NITF only supports WGS84 geographic and UTM projections.");
         return CE_Failure;
     }
 
@@ -4943,7 +4943,7 @@ NITFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             {
                 CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
                          "NITF only supports WGS84 geographic and UTM "
-                         "projections.\n");
+                         "projections.");
                 if (bStrict)
                 {
                     return nullptr;
@@ -5233,7 +5233,7 @@ NITFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         {
             CPLError(
                 (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                "NITF only supports WGS84 geographic and UTM projections.\n");
+                "NITF only supports WGS84 geographic and UTM projections.");
             if (bStrict)
             {
                 return nullptr;

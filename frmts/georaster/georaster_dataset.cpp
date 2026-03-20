@@ -1493,7 +1493,7 @@ GDALDataset *GeoRasterDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "GeoRaster driver does not support source dataset with zero "
-                 "band.\n");
+                 "band.");
         return nullptr;
     }
 

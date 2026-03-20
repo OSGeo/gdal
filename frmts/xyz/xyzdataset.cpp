@@ -1604,7 +1604,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
     if (nBands != 1)
     {
         CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                 "XYZ driver only uses the first band of the dataset.\n");
+                 "XYZ driver only uses the first band of the dataset.");
         if (bStrict)
             return nullptr;
     }
@@ -1624,7 +1624,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "XYZ driver does not support CreateCopy() from skewed or "
-                 "rotated dataset.\n");
+                 "rotated dataset.");
         return nullptr;
     }
 
@@ -1753,7 +1753,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
                 {
                     eErr = CE_Failure;
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Write failed, disk full?\n");
+                             "Write failed, disk full?");
                     break;
                 }
                 osBuf = "";

@@ -1855,7 +1855,7 @@ bool OGRSQLiteDataSource::Create(const char *pszNameIn,
         CPLError(
             CE_Failure, CPLE_NotSupported,
             "OGR was built without libspatialite support\n"
-            "... sorry, creating/writing any SpatiaLite DB is unsupported\n");
+            "... sorry, creating/writing any SpatiaLite DB is unsupported");
 
         return false;
 #endif

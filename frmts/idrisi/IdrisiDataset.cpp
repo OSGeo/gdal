@@ -1029,7 +1029,7 @@ GDALDataset *IdrisiDataset::CreateCopy(const char *pszFilename,
             CE_Failure, CPLE_AppDefined,
             "Attempt to create IDRISI dataset with an unsupported "
             "data type when there are three bands. Only BYTE allowed.\n"
-            "Try again by selecting a specific band to convert if possible.\n");
+            "Try again by selecting a specific band to convert if possible.");
         return nullptr;
     }
 
@@ -1282,7 +1282,7 @@ CPLErr IdrisiDataset::SetGeoTransform(const GDALGeoTransform &gt)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to set rotated geotransform on Idrisi Raster file.\n"
-                 "Idrisi Raster does not support rotation.\n");
+                 "Idrisi Raster does not support rotation.");
         return CE_Failure;
     }
 

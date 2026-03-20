@@ -1096,7 +1096,7 @@ void *GDALProxyPoolDataset::GetInternalHandle(const char *pszRequest)
     CPLError(
         CE_Warning, CPLE_AppDefined,
         "GetInternalHandle() cannot be safely called on a proxy pool dataset\n"
-        "as the returned value may be invalidated at any time.\n");
+        "as the returned value may be invalidated at any time.");
     return GDALProxyDataset::GetInternalHandle(pszRequest);
 }
 

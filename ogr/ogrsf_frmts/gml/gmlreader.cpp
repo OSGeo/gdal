@@ -300,7 +300,7 @@ bool GMLReader::SetupParserXerces()
         XMLString::release(&xmlUriNS);
 
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Exception initializing Xerces based GML reader.\n");
+                 "Exception initializing Xerces based GML reader.");
         return false;
     }
 

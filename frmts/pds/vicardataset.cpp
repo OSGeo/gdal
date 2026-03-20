@@ -2534,7 +2534,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
     if (eDataType == GDT_Unknown)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Could not find known VICAR label entries!\n");
+                 "Could not find known VICAR label entries!");
         return nullptr;
     }
     double dfNoData = 0.0;

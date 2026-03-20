@@ -3388,7 +3388,7 @@ bool S57Reader::FindAndApplyUpdates(const char *pszPath)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Can't apply updates to a base file with a different\n"
-                 "extension than .000.\n");
+                 "extension than .000.");
         return false;
     }
 

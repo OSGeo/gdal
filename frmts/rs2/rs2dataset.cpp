@@ -1259,7 +1259,7 @@ GDALDataset *RS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Warning- incomplete"
-                     " ellipsoid information.  Using wgs-84 parameters.\n");
+                     " ellipsoid information.  Using wgs-84 parameters.");
             oLL.SetWellKnownGeogCS("WGS84");
             oPrj.SetWellKnownGeogCS("WGS84");
         }

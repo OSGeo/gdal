@@ -257,7 +257,7 @@ CPLErr GS7BGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                   SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to seek to beginning of grid row.\n");
+                 "Unable to seek to beginning of grid row.");
         return CE_Failure;
     }
 
@@ -265,7 +265,7 @@ CPLErr GS7BGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         static_cast<unsigned>(nBlockXSize))
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to read block from grid file.\n");
+                 "Unable to read block from grid file.");
         return CE_Failure;
     }
 
@@ -289,7 +289,7 @@ CPLErr GS7BGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     if (eAccess == GA_ReadOnly)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to write block, dataset opened read only.\n");
+                 "Unable to write block, dataset opened read only.");
         return CE_Failure;
     }
 
@@ -329,7 +329,7 @@ CPLErr GS7BGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                   SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to seek to beginning of grid row.\n");
+                 "Unable to seek to beginning of grid row.");
         return CE_Failure;
     }
 
@@ -354,7 +354,7 @@ CPLErr GS7BGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         static_cast<unsigned>(nBlockXSize))
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write block to grid file.\n");
+                 "Unable to write block to grid file.");
         return CE_Failure;
     }
 
@@ -523,7 +523,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         delete poDS;
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to seek to start of grid file header.\n");
+                 "Unable to seek to start of grid file header.");
         return nullptr;
     }
 
@@ -531,7 +531,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&nTag, sizeof(GInt32), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to read Tag.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read Tag.");
         return nullptr;
     }
 
@@ -540,7 +540,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (nTag != nHEADER_TAG)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Header tag not found.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Header tag not found.");
         return nullptr;
     }
 
@@ -548,8 +548,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&nSize, sizeof(GUInt32), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to read file section size.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read file section size.");
         return nullptr;
     }
 
@@ -559,7 +558,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&nVersion, sizeof(GInt32), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to read file version.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read file version.");
         return nullptr;
     }
 
@@ -579,7 +578,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
         if (VSIFReadL((void *)&nTag, sizeof(GInt32), 1, poDS->fp) != 1)
         {
             delete poDS;
-            CPLError(CE_Failure, CPLE_FileIO, "Unable to read Tag.\n");
+            CPLError(CE_Failure, CPLE_FileIO, "Unable to read Tag.");
             return nullptr;
         }
 
@@ -589,7 +588,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             delete poDS;
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to read file section size.\n");
+                     "Unable to read file section size.");
             return nullptr;
         }
 
@@ -602,7 +601,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 delete poDS;
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Unable to seek to end of file section.\n");
+                         "Unable to seek to end of file section.");
                 return nullptr;
             }
         }
@@ -616,7 +615,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&nRows, sizeof(GInt32), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to read raster Y size.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read raster Y size.");
         return nullptr;
     }
     CPL_LSBPTR32(&nRows);
@@ -627,7 +626,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&nCols, sizeof(GInt32), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to read raster X size.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read raster X size.");
         return nullptr;
     }
     CPL_LSBPTR32(&nCols);
@@ -650,7 +649,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&dfTemp, sizeof(double), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to read minimum X value.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read minimum X value.");
         return nullptr;
     }
     CPL_LSBPTR64(&dfTemp);
@@ -660,7 +659,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&dfTemp, sizeof(double), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to read minimum X value.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read minimum X value.");
         return nullptr;
     }
     CPL_LSBPTR64(&dfTemp);
@@ -671,8 +670,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&dfTemp, sizeof(double), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to read spacing in X value.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read spacing in X value.");
         return nullptr;
     }
     CPL_LSBPTR64(&dfTemp);
@@ -683,8 +681,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&dfTemp, sizeof(double), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to read spacing in Y value.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read spacing in Y value.");
         return nullptr;
     }
     CPL_LSBPTR64(&dfTemp);
@@ -694,7 +691,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&dfTemp, sizeof(double), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to read Z min value.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read Z min value.");
         return nullptr;
     }
     CPL_LSBPTR64(&dfTemp);
@@ -704,7 +701,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&dfTemp, sizeof(double), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to read Z max value.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read Z max value.");
         return nullptr;
     }
     CPL_LSBPTR64(&dfTemp);
@@ -715,7 +712,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&dfTemp, sizeof(double), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to read rotation value.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read rotation value.");
         return nullptr;
     }
 
@@ -723,7 +720,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&dfTemp, sizeof(double), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to Blank value.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to Blank value.");
         return nullptr;
     }
     CPL_LSBPTR64(&dfTemp);
@@ -735,7 +732,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (VSIFReadL((void *)&nTag, sizeof(GInt32), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to read Tag.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to read Tag.");
         return nullptr;
     }
 
@@ -743,14 +740,14 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     if (nTag != nDATA_TAG)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Data tag not found.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Data tag not found.");
         return nullptr;
     }
 
     if (VSIFReadL((void *)&nSize, sizeof(GInt32), 1, poDS->fp) != 1)
     {
         delete poDS;
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to data section size.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to data section size.");
         return nullptr;
     }
 
@@ -821,7 +818,7 @@ CPLErr GS7BGDataset::SetGeoTransform(const GDALGeoTransform &gt)
     if (eAccess == GA_ReadOnly)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to set GeoTransform, dataset opened read only.\n");
+                 "Unable to set GeoTransform, dataset opened read only.");
         return CE_Failure;
     }
 
@@ -868,7 +865,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFSeekL(fp, 0, SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to seek to start of grid file.\n");
+                 "Unable to seek to start of grid file.");
         return CE_Failure;
     }
 
@@ -876,39 +873,35 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write header tag to grid file.\n");
+                 "Unable to write header tag to grid file.");
         return CE_Failure;
     }
 
     nTemp = CPL_LSBWORD32(sizeof(GInt32));  // Size of version section.
     if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write size to grid file.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to write size to grid file.");
         return CE_Failure;
     }
 
     nTemp = CPL_LSBWORD32(1);  // Version
     if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write size to grid file.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to write size to grid file.");
         return CE_Failure;
     }
 
     nTemp = CPL_LSBWORD32(nGRID_TAG);  // Mark start of grid
     if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write size to grid file.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to write size to grid file.");
         return CE_Failure;
     }
 
     nTemp = CPL_LSBWORD32(72);  // Grid info size (the remainder of the header)
     if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write size to grid file.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to write size to grid file.");
         return CE_Failure;
     }
 
@@ -916,7 +909,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write Y size to grid file.\n");
+                 "Unable to write Y size to grid file.");
         return CE_Failure;
     }
 
@@ -924,7 +917,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write X size to grid file.\n");
+                 "Unable to write X size to grid file.");
         return CE_Failure;
     }
 
@@ -933,7 +926,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&dfTemp, sizeof(double), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write minimum X value to grid file.\n");
+                 "Unable to write minimum X value to grid file.");
         return CE_Failure;
     }
 
@@ -942,7 +935,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&dfTemp, sizeof(double), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write minimum Y value to grid file.\n");
+                 "Unable to write minimum Y value to grid file.");
         return CE_Failure;
     }
 
@@ -952,7 +945,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&dfTemp, sizeof(double), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write spacing in X value.\n");
+                 "Unable to write spacing in X value.");
         return CE_Failure;
     }
 
@@ -962,7 +955,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&dfTemp, sizeof(double), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write spacing in Y value.\n");
+                 "Unable to write spacing in Y value.");
         return CE_Failure;
     }
 
@@ -971,7 +964,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&dfTemp, sizeof(double), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write minimum Z value to grid file.\n");
+                 "Unable to write minimum Z value to grid file.");
         return CE_Failure;
     }
 
@@ -980,7 +973,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&dfTemp, sizeof(double), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write maximum Z value to grid file.\n");
+                 "Unable to write maximum Z value to grid file.");
         return CE_Failure;
     }
 
@@ -989,7 +982,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&dfTemp, sizeof(double), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write rotation value to grid file.\n");
+                 "Unable to write rotation value to grid file.");
         return CE_Failure;
     }
 
@@ -998,7 +991,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&dfTemp, sizeof(double), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write cell blank value to grid file.\n");
+                 "Unable to write cell blank value to grid file.");
         return CE_Failure;
     }
 
@@ -1006,7 +999,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     nTemp = CPL_LSBWORD32(nDATA_TAG);  // Mark start of data
     if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Unable to data tag to grid file.\n");
+        CPLError(CE_Failure, CPLE_FileIO, "Unable to data tag to grid file.");
         return CE_Failure;
     }
 
@@ -1015,7 +1008,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write data size to grid file.\n");
+                 "Unable to write data size to grid file.");
         return CE_Failure;
     }
 
@@ -1075,7 +1068,7 @@ GDALDataset *GS7BGDataset::Create(const char *pszFilename, int nXSize,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unable to create copy, "
-                 "format only supports one raster band.\n");
+                 "format only supports one raster band.");
         return nullptr;
     }
 
@@ -1106,7 +1099,7 @@ GDALDataset *GS7BGDataset::Create(const char *pszFilename, int nXSize,
             {
                 VSIFCloseL(fp);
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Unable to write grid cell.  Disk full?\n");
+                         "Unable to write grid cell.  Disk full?");
                 return nullptr;
             }
         }
@@ -1143,13 +1136,13 @@ GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Unable to create copy, "
-                     "format only supports one raster band.\n");
+                     "format only supports one raster band.");
             return nullptr;
         }
         else
             CPLError(CE_Warning, CPLE_NotSupported,
                      "Format only supports one "
-                     "raster band, first band will be copied.\n");
+                     "raster band, first band will be copied.");
     }
 
     const int nXSize = poSrcDS->GetRasterXSize();
@@ -1163,7 +1156,7 @@ GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
 
     if (!pfnProgress(0.0, nullptr, pProgressData))
     {
-        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated\n");
+        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
         return nullptr;
     }
 
@@ -1242,7 +1235,7 @@ GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
             VSIFCloseL(fp);
             VSIFree(pfData);
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Unable to write grid row. Disk full?\n");
+                     "Unable to write grid row. Disk full?");
             return nullptr;
         }
 

@@ -240,7 +240,7 @@ CPLErr BIGGIFDataset::ReOpen()
     if (hGifFile == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "DGifOpen() failed.  Perhaps the gif file is corrupt?\n");
+                 "DGifOpen() failed.  Perhaps the gif file is corrupt?");
 
         return CE_Failure;
     }

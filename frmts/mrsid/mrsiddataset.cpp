@@ -1044,7 +1044,7 @@ CPLErr MrSIDDataset::IBuildOverviews(const char *, int, const int *, int,
 {
     CPLError(CE_Warning, CPLE_AppDefined,
              "MrSID overviews are built-in, so building external "
-             "overviews is unnecessary. Ignoring.\n");
+             "overviews is unnecessary. Ignoring.");
 
     return CE_None;
 }
@@ -3198,7 +3198,7 @@ static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
                  "MrSID driver ignores color table. "
                  "The source raster band will be considered as grey level.\n"
                  "Consider using color table expansion (-expand option in "
-                 "gdal_translate)\n");
+                 "gdal_translate)");
         if (bStrict)
             return nullptr;
     }
@@ -3447,7 +3447,7 @@ static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                  "MrSID driver ignores color table. "
                  "The source raster band will be considered as grey level.\n"
                  "Consider using color table expansion (-expand option in "
-                 "gdal_translate)\n");
+                 "gdal_translate)");
         if (bStrict)
             return nullptr;
     }

@@ -722,7 +722,7 @@ CPLErr GDALECWCompressor::Initialize(
     if (gt.xrot != 0.0 || gt.yrot != 0.0)
         CPLError(CE_Warning, CPLE_NotSupported,
                  "Rotational coefficients ignored, georeferencing of\n"
-                 "output ECW file will be incorrect.\n");
+                 "output ECW file will be incorrect.");
     else
     {
         psClient->fOriginX = gt.xorig;
@@ -1163,7 +1163,7 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                          "ECW version 2 does not support UInt16 data type, "
                          "truncating to Byte."
                          " Consider specifying ECW_FORMAT_VERSION=3 for full "
-                         "UInt16 support available in ECW version 3. \n");
+                         "UInt16 support available in ECW version 3. ");
             }
             else
 #endif
@@ -1335,7 +1335,7 @@ GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "ECW v2 does not support UInt16 data type. Consider "
                      " specifying ECW_FORMAT_VERSION=3 for full UInt16 support "
-                     "available in ECW v3. \n");
+                     "available in ECW v3. ");
         }
         else
 #endif
@@ -1369,7 +1369,7 @@ GDALDataset *ECWCreateCopyECW(const char *pszFilename, GDALDataset *poSrcDS,
                  "ECW driver ignores color table. "
                  "The source raster band will be considered as grey level.\n"
                  "Consider using color table expansion (-expand option in "
-                 "gdal_translate)\n");
+                 "gdal_translate)");
         if (bStrict)
             return nullptr;
     }
@@ -1428,7 +1428,7 @@ GDALDataset *ECWCreateCopyJPEG2000(const char *pszFilename,
                  "JP2ECW driver ignores color table. "
                  "The source raster band will be considered as grey level.\n"
                  "Consider using color table expansion (-expand option in "
-                 "gdal_translate)\n");
+                 "gdal_translate)");
         if (bStrict)
             return nullptr;
     }

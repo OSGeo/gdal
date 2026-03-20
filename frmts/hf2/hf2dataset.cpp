@@ -736,7 +736,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
     if (nBands != 1)
     {
         CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                 "HF2 driver only uses the first band of the dataset.\n");
+                 "HF2 driver only uses the first band of the dataset.");
         if (bStrict)
             return nullptr;
     }
@@ -759,7 +759,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "HF2 driver does not support CreateCopy() from skewed or "
-                 "rotated dataset.\n");
+                 "rotated dataset.");
         return nullptr;
     }
 

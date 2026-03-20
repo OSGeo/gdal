@@ -676,7 +676,7 @@ CPLErr WCSDataset110::ParseCapabilities(CPLXMLNode *Capabilities,
     if (strcmp(Capabilities->pszValue, "Capabilities") != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Error in capabilities document.\n");
+                 "Error in capabilities document.");
         return CE_Failure;
     }
 
@@ -868,7 +868,7 @@ CPLErr WCSDataset110::ParseCapabilities(CPLXMLNode *Capabilities,
                     // within CoverageSummary (07-067r5 Fig4)
                     CSLDestroy(metadata);
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Error in capabilities document.\n");
+                             "Error in capabilities document.");
                     return CE_Failure;
                 }
             }

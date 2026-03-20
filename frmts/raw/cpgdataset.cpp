@@ -716,7 +716,7 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Did not have a convair SIRC-style test dataset\n"
                      "with transposed=1 for testing.  Georeferencing may be "
-                     "wrong.\n");
+                     "wrong.");
             dfnorth_center = dfnorth - nSamples * dfsample_size / 2.0;
             poDS->m_gt.xorig = dfeast;
             poDS->m_gt.xrot = dfsample_size_az;

@@ -2658,7 +2658,7 @@ const char *OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream *)
     struct ArrowArrayStream stream;
     if( !poLayer->GetArrowStream(&stream, nullptr))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GetArrowStream() failed\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "GetArrowStream() failed");
         exit(1);
     }
     struct ArrowSchema schema;
@@ -2869,7 +2869,7 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
     if( !OGR_L_GetArrowStream(hLayer, &stream, nullptr))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "OGR_L_GetArrowStream() failed\n");
+                 "OGR_L_GetArrowStream() failed");
         exit(1);
     }
     struct ArrowSchema schema;

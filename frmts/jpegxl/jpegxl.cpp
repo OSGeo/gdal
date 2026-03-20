@@ -1196,7 +1196,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                                     jpeg_data_chunk.size()))
                         {
                             CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Decoder failed to set JPEG Buffer\n");
+                                     "Decoder failed to set JPEG Buffer");
                             return CE_Failure;
                         }
                     }
@@ -1220,7 +1220,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                                     jpeg_data_chunk.size()))
                         {
                             CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Decoder failed to set JPEG Buffer\n");
+                                     "Decoder failed to set JPEG Buffer");
                             return CE_Failure;
                         }
                     }

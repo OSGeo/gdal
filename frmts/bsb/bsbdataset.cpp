@@ -919,7 +919,7 @@ static int BSBIsSRSOK(const char *pszWKT)
     if (!bOK)
     {
         CPLError(CE_Warning, CPLE_NotSupported,
-                 "BSB only supports WGS84 or NAD83 geographic projections.\n");
+                 "BSB only supports WGS84 or NAD83 geographic projections.");
     }
 
     return bOK;
@@ -942,7 +942,7 @@ static GDALDataset *BSBCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     if (nBands != 1)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "BSB driver only supports one band images.\n");
+                 "BSB driver only supports one band images.");
 
         return NULL;
     }

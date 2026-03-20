@@ -150,8 +150,7 @@ int main(int argc, char *argv[])
     struct ArrowArrayStream stream;
     if (!OGR_L_GetArrowStream(hLayer, &stream, aosSteamOptions.List()))
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "OGR_L_GetArrowStream() failed\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "OGR_L_GetArrowStream() failed");
         CSLDestroy(argv);
         exit(1);
     }
@@ -166,7 +165,7 @@ int main(int argc, char *argv[])
     {
         schema.release(&schema);
         stream.release(&stream);
-        CPLError(CE_Failure, CPLE_AppDefined, "get_schema() failed\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "get_schema() failed");
         CSLDestroy(argv);
         exit(1);
     }

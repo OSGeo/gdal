@@ -679,7 +679,7 @@ static GDALDataset *DTEDCreateCopy(const char *pszFilename,
     if (nBands != 1)
     {
         CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                 "DTED driver only uses the first band of the dataset.\n");
+                 "DTED driver only uses the first band of the dataset.");
         if (bStrict)
             return nullptr;
     }

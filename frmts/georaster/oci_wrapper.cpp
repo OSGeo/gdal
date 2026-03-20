@@ -1896,19 +1896,19 @@ bool CheckError(sword nStatus, OCIError *hError)
             return false;
             break;
         case OCI_NEED_DATA:
-            CPLError(CE_Failure, CPLE_AppDefined, "OCI_NEED_DATA\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "OCI_NEED_DATA");
             break;
         case OCI_NO_DATA:
-            CPLError(CE_Failure, CPLE_AppDefined, "OCI_NODATA\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "OCI_NODATA");
             break;
         case OCI_INVALID_HANDLE:
             CPLError(CE_Failure, CPLE_AppDefined, "OCI_INVALID_HANDLE");
             break;
         case OCI_STILL_EXECUTING:
-            CPLError(CE_Failure, CPLE_AppDefined, "OCI_STILL_EXECUTE\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "OCI_STILL_EXECUTE");
             break;
         case OCI_CONTINUE:
-            CPLError(CE_Failure, CPLE_AppDefined, "OCI_CONTINUE\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "OCI_CONTINUE");
             break;
         case OCI_ERROR:
 
