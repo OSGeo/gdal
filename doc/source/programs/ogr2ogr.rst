@@ -548,7 +548,7 @@ output coordinate system or even reprojecting the features during translation.
 .. option:: -explodecollections
 
     Produce one feature for each geometry in any kind of geometry collection in
-    the source file, applied after any ``-sql`` option. This options is not
+    the source file, applied after any ``-sql`` or ``-limit`` option. This options is not
     compatible with ``-preserve_fid`` but ``-sql "SELECT fid AS original_fid, * FROM ..."``
     can be used to store the original FID if needed.
 
