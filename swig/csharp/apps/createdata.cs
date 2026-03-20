@@ -8,6 +8,7 @@
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
  * Copyright (c) 2009-2010, Even Rouault <even dot rouault at spatialys.com>
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
@@ -33,7 +34,8 @@ using OSGeo.OSR;
 /// A C# based sample to create a layer.
 /// </summary>
 
-class CreateData {
+class CreateData
+{
 
     public static void usage()
 
@@ -66,10 +68,6 @@ class CreateData {
             System.Environment.Exit(-1);
         }
 
-        // TODO: drv.name is still unsafe with lazy initialization (Bug 1339)
-        //string DriverName = drv.name;
-        //Console.WriteLine("Using driver " + DriverName);
-
         /* -------------------------------------------------------------------- */
         /*      Creating the datasource                                         */
         /* -------------------------------------------------------------------- */
@@ -88,173 +86,192 @@ class CreateData {
             int i;
             for (i = 0; i < ds.GetLayerCount(); i++)
             {
-                using Layer layeri = ds.GetLayerByIndex(i);
-                if (layeri != null && layeri.GetLayerDefn().GetName() == args[1])
+                using (Layer layeri = ds.GetLayerByIndex(i))
                 {
-                    Console.WriteLine("Layer already existed. Recreating it.\n");
-                    ds.DeleteLayer(i);
-                    break;
+                    if (layeri != null && layeri.GetLayerDefn().GetName() == args[1])
+                    {
+                        Console.WriteLine("Layer already existed. Recreating it.\n");
+                        ds.DeleteLayer(i);
+                        break;
+                    }
                 }
             }
 
-            using Layer layer = ds.CreateLayer(args[1], null, wkbGeometryType.wkbPoint, new string[] { });
-            if (layer == null)
+            using (Layer layer = ds.CreateLayer(args[1], null, wkbGeometryType.wkbPoint, new string[] { }))
             {
-                Console.WriteLine("Layer creation failed.");
-                System.Environment.Exit(-1);
+                if (layer == null)
+                {
+                    Console.WriteLine("Layer creation failed.");
+                    System.Environment.Exit(-1);
+                }
+
+                /* -------------------------------------------------------------------- */
+                /*      Adding attribute fields                                         */
+                /* -------------------------------------------------------------------- */
+
+                using (FieldDefn fdefn = new FieldDefn("Name", FieldType.OFTString))
+                {
+                    fdefn.SetWidth(32);
+
+                    if (layer.CreateField(fdefn, 1) != 0)
+                    {
+                        Console.WriteLine("Creating Name field failed.");
+                        Environment.Exit(-1);
+                    }
+                }
+
+                using (FieldDefn fdefn = new FieldDefn("IntField", FieldType.OFTInteger))
+                {
+                    if (layer.CreateField(fdefn, 1) != 0)
+                    {
+                        Console.WriteLine("Creating IntField field failed.");
+                        Environment.Exit(-1);
+                    }
+                }
+
+                using (FieldDefn fdefn = new FieldDefn("DbleField", FieldType.OFTReal))
+                {
+                    if (layer.CreateField(fdefn, 1) != 0)
+                    {
+                        Console.WriteLine("Creating DbleField field failed.");
+                        Environment.Exit(-1);
+                    }
+                }
+
+                using (FieldDefn fdefn = new FieldDefn("DateField", FieldType.OFTDate))
+                {
+                    if (layer.CreateField(fdefn, 1) != 0)
+                    {
+                        Console.WriteLine("Creating DateField field failed.");
+                        Environment.Exit(-1);
+                    }
+                }
+                /* -------------------------------------------------------------------- */
+                /*      Adding features                                                 */
+                /* -------------------------------------------------------------------- */
+
+                using (Feature feature = new Feature(layer.GetLayerDefn()))
+                {
+                    feature.SetField("Name", "value");
+                    feature.SetField("IntField", (int)123);
+                    feature.SetField("DbleField", (double)12.345);
+                    feature.SetField("DateField", 2007, 3, 15, 18, 24, 30, 0);
+
+                    using (Geometry geom = Geometry.CreateFromWkt("POINT(47.0 19.2)"))
+                    {
+
+                        if (feature.SetGeometry(geom) != 0)
+                        {
+                            Console.WriteLine("Failed add geometry to the feature");
+                            System.Environment.Exit(-1);
+                        }
+                    }
+
+                    if (layer.CreateFeature(feature) != 0)
+                    {
+                        Console.WriteLine("Failed to create feature in shapefile");
+                        System.Environment.Exit(-1);
+                    }
+                }
+                ReportLayer(layer);
             }
-
-            /* -------------------------------------------------------------------- */
-            /*      Adding attribute fields                                         */
-            /* -------------------------------------------------------------------- */
-
-            FieldDefn fdefn = new FieldDefn("Name", FieldType.OFTString);
-
-            fdefn.SetWidth(32);
-
-            if (layer.CreateField(fdefn, 1) != 0)
-            {
-                Console.WriteLine("Creating Name field failed.");
-                System.Environment.Exit(-1);
-            }
-
-            fdefn = new FieldDefn("IntField", FieldType.OFTInteger);
-            if (layer.CreateField(fdefn, 1) != 0)
-            {
-                Console.WriteLine("Creating IntField field failed.");
-                System.Environment.Exit(-1);
-            }
-
-            fdefn = new FieldDefn("DbleField", FieldType.OFTReal);
-            if (layer.CreateField(fdefn, 1) != 0)
-            {
-                Console.WriteLine("Creating DbleField field failed.");
-                System.Environment.Exit(-1);
-            }
-
-            fdefn = new FieldDefn("DateField", FieldType.OFTDate);
-            if (layer.CreateField(fdefn, 1) != 0)
-            {
-                Console.WriteLine("Creating DateField field failed.");
-                System.Environment.Exit(-1);
-            }
-            fdefn.Dispose();
-
-            /* -------------------------------------------------------------------- */
-            /*      Adding features                                                 */
-            /* -------------------------------------------------------------------- */
-
-            using Feature feature = new Feature(layer.GetLayerDefn());
-            feature.SetField("Name", "value");
-            feature.SetField("IntField", (int)123);
-            feature.SetField("DbleField", (double)12.345);
-            feature.SetField("DateField", 2007, 3, 15, 18, 24, 30, 0);
-
-            using Geometry geom = Geometry.CreateFromWkt("POINT(47.0 19.2)");
-
-            if (feature.SetGeometry(geom) != 0)
-            {
-                Console.WriteLine("Failed add geometry to the feature");
-                System.Environment.Exit(-1);
-            }
-
-            if (layer.CreateFeature(feature) != 0)
-            {
-                Console.WriteLine("Failed to create feature in shapefile");
-                System.Environment.Exit(-1);
-            }
-
-            ReportLayer(layer);
         }
     }
 
 
     public static void ReportLayer(Layer layer)
     {
-        using FeatureDefn def = layer.GetLayerDefn();
-        Console.WriteLine("Layer name: " + def.GetName());
-        Console.WriteLine("Feature Count: " + layer.GetFeatureCount(1));
-        Envelope ext = new Envelope();
-        layer.GetExtent(ext, 1);
-        Console.WriteLine("Extent: " + ext.MinX + "," + ext.MaxX + "," +
-            ext.MinY + "," + ext.MaxY);
-
-        /* -------------------------------------------------------------------- */
-        /*      Reading the spatial reference                                   */
-        /* -------------------------------------------------------------------- */
-        OSGeo.OSR.SpatialReference sr = layer.GetSpatialRef();
-        string srs_wkt;
-        if (sr != null)
+        using (FeatureDefn def = layer.GetLayerDefn())
         {
-            sr.ExportToPrettyWkt(out srs_wkt, 1);
-        }
-        else
-            srs_wkt = "(unknown)";
+            using (Envelope ext = new Envelope())
+            {
+                Console.WriteLine("Layer name: " + def.GetName());
+                Console.WriteLine("Feature Count: " + layer.GetFeatureCount(1));
+                layer.GetExtent(ext, 1);
+                Console.WriteLine("Extent: " + ext.MinX + "," + ext.MaxX + "," +
+                    ext.MinY + "," + ext.MaxY);
+
+            }
+
+            /* -------------------------------------------------------------------- */
+            /*      Reading the spatial reference                                   */
+            /* -------------------------------------------------------------------- */
+            using (OSGeo.OSR.SpatialReference sr = layer.GetSpatialRef())
+            {
+                string srs_wkt;
+                if (sr != null)
+                {
+                    sr.ExportToPrettyWkt(out srs_wkt, 1);
+                }
+                else
+                    srs_wkt = "(unknown)";
 
 
-        Console.WriteLine("Layer SRS WKT: " + srs_wkt);
+                Console.WriteLine("SRS WKT: " + srs_wkt);
+            }
 
-        /* -------------------------------------------------------------------- */
-        /*      Reading the fields                                              */
-        /* -------------------------------------------------------------------- */
-        Console.WriteLine("Field definition:");
-        for (int iAttr = 0; iAttr < def.GetFieldCount(); iAttr++)
-        {
-            using FieldDefn fdef = def.GetFieldDefn(iAttr);
+            /* -------------------------------------------------------------------- */
+            /*      Reading the fields                                              */
+            /* -------------------------------------------------------------------- */
+            Console.WriteLine("Field definition:");
 
-            Console.WriteLine(fdef.GetNameRef() + ": " +
-                fdef.GetFieldTypeName(fdef.GetFieldType()) + " (" +
-                fdef.GetWidth() + "." +
-                fdef.GetPrecision() + ")");
-        }
+            for (int iAttr = 0; iAttr < def.GetFieldCount(); iAttr++)
+                using (FieldDefn fdef = def.GetFieldDefn(iAttr))
+                {
+                    Console.WriteLine(fdef.GetNameRef() + ": " +
+                        fdef.GetFieldTypeName(fdef.GetFieldType()) + " (" +
+                        fdef.GetWidth() + "." +
+                        fdef.GetPrecision() + ")");
+                }
 
-        /* -------------------------------------------------------------------- */
-        /*      Reading the shapes                                              */
-        /* -------------------------------------------------------------------- */
-        Console.WriteLine("");
-        Feature feat;
-        while ( ( feat = layer.GetNextFeature() ) != null )
-        {
-            ReportFeature(feat, def);
-            feat.Dispose();
+            /* -------------------------------------------------------------------- */
+            /*      Reading the shapes                                              */
+            /* -------------------------------------------------------------------- */
+            Console.WriteLine("");
+            Feature feat;
+            while ((feat = layer.GetNextFeature()) != null)
+            {
+                ReportFeature(feat, def);
+                feat.Dispose();
+            }
         }
     }
 
     public static void ReportFeature(Feature feat, FeatureDefn def)
     {
         Console.WriteLine("Feature(" + def.GetName() + "): " + feat.GetFID());
+
         for (int iField = 0; iField < feat.GetFieldCount(); iField++)
-        {
-            using FieldDefn fdef = def.GetFieldDefn(iField);
+            using (FieldDefn fdef = def.GetFieldDefn(iField))
+            {
+                Console.Write(fdef.GetNameRef() + " (" +
+                    fdef.GetFieldTypeName(fdef.GetFieldType()) + ") = ");
 
-            Console.Write(fdef.GetNameRef() + " (" +
-                fdef.GetFieldTypeName(fdef.GetFieldType()) + ") = ");
-
-            if (feat.IsFieldSet(iField))
-                Console.WriteLine(feat.GetFieldAsString(iField));
-            else
-                Console.WriteLine("(null)");
-        }
+                if (feat.IsFieldSet(iField))
+                    Console.WriteLine(feat.GetFieldAsString(iField));
+                else
+                    Console.WriteLine("(null)");
+            }
 
         if (feat.GetStyleString() != null)
             Console.WriteLine("  Style = " + feat.GetStyleString());
 
-        using ( Geometry geom = feat.GetGeometryRef() )
-        {
+        using (Geometry geom = feat.GetGeometryRef())
+        using (Envelope env = new Envelope())
             if (geom != null)
+            {
                 Console.WriteLine("  " + geom.GetGeometryName() +
                     "(" + geom.GetGeometryType() + ")");
 
-            Envelope env = new Envelope();
-            geom.GetEnvelope(env);
-            Console.WriteLine("   ENVELOPE: " + env.MinX + "," + env.MaxX + "," +
-                env.MinY + "," + env.MaxY);
+                geom.GetEnvelope(env);
+                Console.WriteLine("   ENVELOPE: " + env.MinX + "," + env.MaxX + "," +
+                    env.MinY + "," + env.MaxY);
 
-            string geom_wkt;
-            geom.ExportToWkt(out geom_wkt);
-            Console.WriteLine("  " + geom_wkt);
+                string geom_wkt;
+                geom.ExportToWkt(out geom_wkt);
+                Console.WriteLine("  " + geom_wkt);
 
-            Console.WriteLine("");
-        }
+                Console.WriteLine("");
+            }
     }
 }

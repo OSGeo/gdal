@@ -7,6 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
@@ -29,14 +30,15 @@ using OSGeo.GDAL;
 /// A C# based sample to write a GDAL raster using CreateCopy.
 /// </summary>
 
-class GDALWrite {
+class GDALWrite
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
-		Console.WriteLine("usage: gdalcreatecopy {dataset name} {out file name}");
-		System.Environment.Exit(-1);
-	}
+    {
+        Console.WriteLine("usage: gdalcreatecopy {dataset name} {out file name}");
+        System.Environment.Exit(-1);
+    }
 
     public static void Main(string[] args)
     {
@@ -68,12 +70,12 @@ class GDALWrite {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            string[] options = new string [] {"TILED=YES"};
-            
-            using ( Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly ))
-            using ( Dataset dso = drv.CreateCopy(
+            string[] options = new string[] { "TILED=YES" };
+
+            using (Dataset ds = Gdal.Open(args[0], Access.GA_ReadOnly))
+            using (Dataset dso = drv.CreateCopy(
                     args[1], ds, 0, options, new Gdal.GDALProgressFuncDelegate(ProgressFunc), "Sample Data"
-                ) )
+                ))
             {
                 if (ds == null)
                 {

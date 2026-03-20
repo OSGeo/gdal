@@ -7,11 +7,13 @@
  *
  ******************************************************************************
  * Copyright (c) 2013, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 using System;
+
 
 using OSGeo.OGR;
 
@@ -30,15 +32,16 @@ using OSGeo.OGR;
 /// A sample app to demonstrate the usage of the RFC-39 functions.
 /// </summary>
 
-class OGRLayerAlg {
+class OGRLayerAlg
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
+    {
         Console.WriteLine("usage: ogrlayeralg {function} {Data Source 1} {layer1} {Data Source 2} {layer2} {Result Data Source Name} {Result Layer Name} [{Options}]");
         Console.WriteLine("example: ogrlayeralg Union data1.shp layer1 data.shp layer2 result.shp resultlayer SKIP_FAILURES=YES");
-		System.Environment.Exit(-1);
-	}
+        System.Environment.Exit(-1);
+    }
 
     public static void Main(string[] args)
     {
@@ -56,8 +59,8 @@ class OGRLayerAlg {
             /* -------------------------------------------------------------------- */
             /*      Open data source.                                              */
             /* -------------------------------------------------------------------- */
-            using ( DataSource ds1 = Ogr.Open(args[1], 0) )
-            using ( DataSource ds2 = Ogr.Open(args[3], 0) )
+            using (DataSource ds1 = Ogr.Open(args[1], 0))
+            using (DataSource ds2 = Ogr.Open(args[3], 0))
             {
                 if (ds1 == null)
                 {
@@ -70,8 +73,8 @@ class OGRLayerAlg {
                     System.Environment.Exit(-1);
                 }
 
-                using ( Layer layer1 = ds1.GetLayerByName(args[2]) )
-                using ( Layer layer2 = ds2.GetLayerByName(args[4]) )
+                using (Layer layer1 = ds1.GetLayerByName(args[2]))
+                using (Layer layer2 = ds2.GetLayerByName(args[4]))
                 {
                     if (layer1 == null)
                     {
@@ -99,7 +102,7 @@ class OGRLayerAlg {
                     /*      Creating the datasource                                         */
                     /* -------------------------------------------------------------------- */
 
-                    using ( DataSource ds = drv.CreateDataSource( args[5], new string[] {} ) )
+                    using (DataSource ds = drv.CreateDataSource(args[5], new string[] { }))
                     {
                         if (drv == null)
                         {
@@ -123,47 +126,49 @@ class OGRLayerAlg {
                         /* -------------------------------------------------------------------- */
 
                         int i;
-                        for(i=0;i<ds.GetLayerCount();i++)
-                        {
-                            using Layer layeri = ds.GetLayerByIndex( i );
-                            if( layeri != null && layeri.GetLayerDefn().GetName() == args[6])
+                        for (i = 0; i < ds.GetLayerCount(); i++)
+                            using (Layer layeri = ds.GetLayerByIndex(i))
                             {
-                                Console.WriteLine("Layer already existed. Recreating it.\n");
-                                ds.DeleteLayer(i);
-                                break;
+                                if (layeri != null && layeri.GetLayerDefn().GetName() == args[6])
+                                {
+                                    Console.WriteLine("Layer already existed. Recreating it.\n");
+                                    ds.DeleteLayer(i);
+                                    break;
+                                }
                             }
-                        }
 
-                        using Layer layer = ds.CreateLayer(args[6], null, layer1.GetLayerDefn().GetGeomType(), new string[] { });
-                        if( layer == null )
+                        using (Layer layer = ds.CreateLayer(args[6], null, layer1.GetLayerDefn().GetGeomType(), new string[] { }))
                         {
-                            Console.WriteLine("Layer creation failed.");
-                            System.Environment.Exit(-1);
-                        }
+                            if (layer == null)
+                            {
+                                Console.WriteLine("Layer creation failed.");
+                                System.Environment.Exit(-1);
+                            }
 
-                        switch(args[0])
-                        {
-                            case "Intersection":
-                                layer1.Intersection(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Intersection");
-                                break;
-                            case "Union":
-                                layer1.Union(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Union");
-                                break;
-                            case "SymDifference":
-                                layer1.SymDifference(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "SymDifference");
-                                break;
-                            case "Identity":
-                                layer1.Identity(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Identity");
-                                break;
-                            case "Update":
-                                layer1.Update(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Update");
-                                break;
-                            case "Clip":
-                                layer1.Clip(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Clip");
-                                break;
-                            case "Erase":
-                                layer1.Erase(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Erase");
-                                break;
+                            switch (args[0])
+                            {
+                                case "Intersection":
+                                    layer1.Intersection(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Intersection");
+                                    break;
+                                case "Union":
+                                    layer1.Union(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Union");
+                                    break;
+                                case "SymDifference":
+                                    layer1.SymDifference(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "SymDifference");
+                                    break;
+                                case "Identity":
+                                    layer1.Identity(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Identity");
+                                    break;
+                                case "Update":
+                                    layer1.Update(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Update");
+                                    break;
+                                case "Clip":
+                                    layer1.Clip(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Clip");
+                                    break;
+                                case "Erase":
+                                    layer1.Erase(layer2, layer, options, new Ogr.GDALProgressFuncDelegate(ProgressFunc), "Erase");
+                                    break;
+                            }
                         }
                     }
                 }
@@ -175,15 +180,15 @@ class OGRLayerAlg {
         }
     }
 
-	public static int ProgressFunc(double Complete, IntPtr Message, IntPtr Data)
-	{
-		Console.Write("Processing ... " + Complete * 100 + "% Completed.");
-		if (Message != IntPtr.Zero)
-			Console.Write(" Message:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Message));
-		if (Data != IntPtr.Zero)
-			Console.Write(" Data:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Data));
+    public static int ProgressFunc(double Complete, IntPtr Message, IntPtr Data)
+    {
+        Console.Write("Processing ... " + Complete * 100 + "% Completed.");
+        if (Message != IntPtr.Zero)
+            Console.Write(" Message:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Message));
+        if (Data != IntPtr.Zero)
+            Console.Write(" Data:" + System.Runtime.InteropServices.Marshal.PtrToStringAnsi(Data));
 
-		Console.WriteLine("");
-		return 1;
-	}
+        Console.WriteLine("");
+        return 1;
+    }
 }

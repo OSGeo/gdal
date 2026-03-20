@@ -8,6 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
@@ -15,6 +16,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.Runtime.InteropServices;
 
 using OSGeo.GDAL;
@@ -34,14 +36,15 @@ using OSGeo.GDAL;
 /// A C# based sample to read GDAL raster data directly to a C# bitmap.
 /// </summary> 
 
-class GDALReadDirect {
-	
-	public static void usage() 
+class GDALReadDirect
+{
 
-	{
+    public static void usage()
+
+    {
         Console.WriteLine("usage: GDALDatasetRasterIOEx {GDAL dataset name} {output file name} {scale = 0.5} {version = 1} {resample alg = GRIORA_NearestNeighbour}");
-		System.Environment.Exit(-1);
-	}
+        System.Environment.Exit(-1);
+    }
 
     public static int ProgressFunc(double Complete, IntPtr Message, IntPtr Data)
     {
@@ -58,15 +61,15 @@ class GDALReadDirect {
     private static RIOResampleAlg resampleAlg = RIOResampleAlg.GRIORA_NearestNeighbour;
     private static int argVersion = 1;
     private static double scale = 0.5;
- 
-    public static void Main(string[] args) 
+
+    public static void Main(string[] args)
     {
         if (args.Length < 2) usage();
 
         // Using early initialization of System.Console
         Console.WriteLine("");
 
-        try 
+        try
         {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
@@ -76,9 +79,9 @@ class GDALReadDirect {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            using ( Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly ) ) 
+            using (Dataset ds = Gdal.Open(args[0], Access.GA_ReadOnly))
             {
-                if (ds == null) 
+                if (ds == null)
                 {
                     Console.WriteLine("Can't open " + args[0]);
                     System.Environment.Exit(-1);
@@ -88,25 +91,25 @@ class GDALReadDirect {
                 Console.WriteLine("  Projection: " + ds.GetProjectionRef());
                 Console.WriteLine("  RasterCount: " + ds.RasterCount);
                 Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-                
+
                 /* -------------------------------------------------------------------- */
                 /*      Get driver                                                      */
-                /* -------------------------------------------------------------------- */	
+                /* -------------------------------------------------------------------- */
                 Driver drv = ds.GetDriver();
 
-                if (drv == null) 
+                if (drv == null)
                 {
                     Console.WriteLine("Can't get driver.");
                     System.Environment.Exit(-1);
                 }
-                
+
                 Console.WriteLine("Using driver " + drv.LongName);
 
                 if (args.Length > 2)
-                    scale = double.Parse(args[2]);
+                    scale = double.Parse(args[2], CultureInfo.InvariantCulture);
 
                 if (args.Length > 3)
-                    argVersion = int.Parse(args[3]);
+                    argVersion = int.Parse(args[3], CultureInfo.InvariantCulture);
 
                 if (args.Length > 4)
                     resampleAlg = (RIOResampleAlg)Enum.Parse(typeof(RIOResampleAlg), args[4]);
@@ -137,52 +140,52 @@ class GDALReadDirect {
 
         // Evaluate the bands and find out a proper image transfer format
         for (int i = 0; i < ds.RasterCount; i++)
-        {
-            using Band band = ds.GetRasterBand(i + 1);
-            if (Gdal.GetDataTypeSize(band.DataType) > 8)
-                channelSize = 16;
-            switch (band.GetRasterColorInterpretation())
+            using (Band band = ds.GetRasterBand(i + 1))
             {
-                case ColorInterp.GCI_AlphaBand:
-                    channelCount = 4;
-                    hasAlpha = true;
-                    bandMap[3] = i + 1;
-                    break;
-                case ColorInterp.GCI_BlueBand:
-                    if (channelCount < 3)
-                        channelCount = 3;
-                    bandMap[0] = i + 1;
-                    break;
-                case ColorInterp.GCI_RedBand:
-                    if (channelCount < 3)
-                        channelCount = 3;
-                    bandMap[2] = i + 1;
-                    break;
-                case ColorInterp.GCI_GreenBand:
-                    if (channelCount < 3)
-                        channelCount = 3;
-                    bandMap[1] = i + 1;
-                    break;
-                case ColorInterp.GCI_PaletteIndex:
-                    ct = band.GetRasterColorTable();
-                    isIndexed = true;
-                    bandMap[0] = i + 1;
-                    break;
-                case ColorInterp.GCI_GrayIndex:
-                    isIndexed = true;
-                    bandMap[0] = i + 1;
-                    break;
-                default:
-                    // we create the bandmap using the dataset ordering by default
-                    if (i < 4 && bandMap[i] == 0)
-                    {
-                        if (channelCount < i)
-                            channelCount = i;
-                        bandMap[i] = i + 1;
-                    }
-                    break;
+                if (Gdal.GetDataTypeSize(band.DataType) > 8)
+                    channelSize = 16;
+                switch (band.GetRasterColorInterpretation())
+                {
+                    case ColorInterp.GCI_AlphaBand:
+                        channelCount = 4;
+                        hasAlpha = true;
+                        bandMap[3] = i + 1;
+                        break;
+                    case ColorInterp.GCI_BlueBand:
+                        if (channelCount < 3)
+                            channelCount = 3;
+                        bandMap[0] = i + 1;
+                        break;
+                    case ColorInterp.GCI_RedBand:
+                        if (channelCount < 3)
+                            channelCount = 3;
+                        bandMap[2] = i + 1;
+                        break;
+                    case ColorInterp.GCI_GreenBand:
+                        if (channelCount < 3)
+                            channelCount = 3;
+                        bandMap[1] = i + 1;
+                        break;
+                    case ColorInterp.GCI_PaletteIndex:
+                        ct = band.GetRasterColorTable();
+                        isIndexed = true;
+                        bandMap[0] = i + 1;
+                        break;
+                    case ColorInterp.GCI_GrayIndex:
+                        isIndexed = true;
+                        bandMap[0] = i + 1;
+                        break;
+                    default:
+                        // we create the bandmap using the dataset ordering by default
+                        if (i < 4 && bandMap[i] == 0)
+                        {
+                            if (channelCount < i)
+                                channelCount = i;
+                            bandMap[i] = i + 1;
+                        }
+                        break;
+                }
             }
-        }
 
         // find out the pixel format based on the gathered information
         PixelFormat pixelFormat;
@@ -289,7 +292,8 @@ class GDALReadDirect {
             using (RasterIOExtraArg arg = new RasterIOExtraArg())
             {
                 GCHandle handle = GCHandle.Alloc("Test data", GCHandleType.Pinned);
-                try {               
+                try
+                {
                     arg.nVersion = argVersion;
                     arg.eResampleAlg = resampleAlg;
                     arg.pfnProgress = new Gdal.GDALProgressFuncDelegate(ProgressFunc);

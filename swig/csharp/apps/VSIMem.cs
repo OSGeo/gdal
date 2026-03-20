@@ -7,6 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2013, Tamas Szekeres
+ 
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
@@ -15,6 +16,7 @@ using System;
 using System.IO;
 
 using System.Runtime.InteropServices;
+
 using OSGeo.GDAL;
 
 
@@ -32,20 +34,22 @@ using OSGeo.GDAL;
 /// A C# based sample for demonstrating the in-memory virtual file support.
 /// </summary>
 
-class VSIMem {
+class VSIMem
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
-		Console.WriteLine("usage example: vsimem [image file]");
-		System.Environment.Exit(-1);
-	}
+    {
+        Console.WriteLine("usage example: vsimem [image file]");
+        System.Environment.Exit(-1);
+    }
 
-	public static void Main(string[] args) {
+    public static void Main(string[] args)
+    {
 
-		if (args.Length != 1) usage();
+        if (args.Length != 1) usage();
 
-		byte[] imageBuffer;
+        byte[] imageBuffer;
 
         using (FileStream fs = new FileStream(args[0], FileMode.Open, FileAccess.Read))
         {
@@ -64,21 +68,27 @@ class VSIMem {
         try
         {
             Gdal.FileFromMemBuffer(memFilename, imageBuffer);
-            Dataset ds = Gdal.Open(memFilename, Access.GA_ReadOnly);
-
-            Console.WriteLine("Raster dataset parameters:");
-            Console.WriteLine("  RasterCount: " + ds.RasterCount);
-            Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-
-            Driver drv = Gdal.GetDriverByName("GTiff");
-
-            if (drv == null)
+            using (Dataset ds = Gdal.Open(memFilename, Access.GA_ReadOnly))
             {
-                Console.WriteLine("Can't get driver.");
-                System.Environment.Exit(-1);
-            }
+                if (ds == null)
+                {
+                    Console.WriteLine("Can't open in-memory file.");
+                    System.Environment.Exit(-1);
+                }
+                Console.WriteLine("Raster dataset parameters:");
+                Console.WriteLine("  RasterCount: " + ds.RasterCount);
+                Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
 
-            drv.CreateCopy("sample.tif", ds, 0, null, null, null);
+                Driver drv = Gdal.GetDriverByName("GTiff");
+
+                if (drv == null)
+                {
+                    Console.WriteLine("Can't get driver.");
+                    System.Environment.Exit(-1);
+                }
+
+                drv.CreateCopy("sample.tif", ds, 0, null, null, null);
+            }
         }
         catch (Exception ex)
         {
@@ -88,5 +98,5 @@ class VSIMem {
         {
             Gdal.Unlink(memFilename);
         }
-	}
+    }
 }

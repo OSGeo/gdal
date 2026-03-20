@@ -7,17 +7,19 @@
  *
  ******************************************************************************
  * Copyright (c) 2013, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 using System;
-using System.IO;
-
-using System.Runtime.InteropServices;
-using OSGeo.GDAL;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
+using System.IO;
+using System.Runtime.InteropServices;
+
+using OSGeo.GDAL;
 
 
 /**
@@ -34,18 +36,20 @@ using System.Drawing.Imaging;
 /// A C# based sample for demonstrating the in-memory dataset driver..
 /// </summary>
 
-class GDALMemDataset {
+class GDALMemDataset
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
-		Console.WriteLine("usage example: GDALMemDataset [image file]");
-		System.Environment.Exit(-1);
-	}
+    {
+        Console.WriteLine("usage example: GDALMemDataset [image file]");
+        System.Environment.Exit(-1);
+    }
 
-	public static void Main(string[] args) {
+    public static void Main(string[] args)
+    {
 
-		if (args.Length != 1) usage();
+        if (args.Length != 1) usage();
 
         Gdal.AllRegister();
 
@@ -97,12 +101,12 @@ class GDALMemDataset {
         {
             Driver drvmem = Gdal.GetDriverByName("MEM");
             // create a MEM dataset
-            using ( Dataset ds = drvmem.Create("", bmp.Width, bmp.Height, 0, dataType, null) )
+            using (Dataset ds = drvmem.Create("", bmp.Width, bmp.Height, 0, dataType, null))
             {
                 // add bands in a reverse order
                 for (int i = 1; i <= bandCount; i++)
                 {
-                    ds.AddBand(dataType, new string[] { "DATAPOINTER=" + Convert.ToString(buf.ToInt64() + bandCount - i), "PIXELOFFSET=" + pixelOffset, "LINEOFFSET=" + stride });
+                    ds.AddBand(dataType, new string[] { "DATAPOINTER=" + Convert.ToString(buf.ToInt64() + bandCount - i, CultureInfo.InvariantCulture), "PIXELOFFSET=" + pixelOffset, "LINEOFFSET=" + stride });
                 }
 
                 // display parameters
@@ -130,5 +134,5 @@ class GDALMemDataset {
         {
             bmp.UnlockBits(bitmapData);
         }
-	}
+    }
 }

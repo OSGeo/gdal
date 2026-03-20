@@ -9,6 +9,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
@@ -17,8 +18,9 @@
 
 using System;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+
 using OSGeo.GDAL;
 
 /**
@@ -36,14 +38,15 @@ using OSGeo.GDAL;
 /// memory, adjust the contrast of the image and write back to the dataset persistently.
 /// </summary>
 
-class GDALAdjustContrast {
+class GDALAdjustContrast
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
+    {
         Console.WriteLine("usage: GDALAdjustContrast {dataset name} {contrast ratio}");
-		System.Environment.Exit(-1);
-	}
+        System.Environment.Exit(-1);
+    }
 
 
     // bitmap parameters
@@ -112,61 +115,61 @@ class GDALAdjustContrast {
         channelSize = 8;
         // Evaluate the bands and find out a proper image transfer format
         for (int i = 0; i < ds.RasterCount; i++)
-        {
-            Band band = ds.GetRasterBand(i + 1);
-            if (Gdal.GetDataTypeSize(band.DataType) > 8)
-                channelSize = 16;
-
-            // retrieving the premultiplied alpha flag
-            string[] metadata = band.GetMetadata("");
-            for (int iMeta = 0; iMeta < metadata.Length; iMeta++)
+            using (Band band = ds.GetRasterBand(i + 1))
             {
-                if (metadata[iMeta].StartsWith("PREMULTIPLIED_ALPHA"))
-                    isPremultiplied = true;
-            }
+                if (Gdal.GetDataTypeSize(band.DataType) > 8)
+                    channelSize = 16;
 
-            switch (band.GetRasterColorInterpretation())
-            {
-                case ColorInterp.GCI_AlphaBand:
-                    channelCount = 4;
-                    hasAlpha = true;
-                    bandMap[3] = i + 1;
-                    break;
-                case ColorInterp.GCI_BlueBand:
-                    if (channelCount < 3)
-                        channelCount = 3;
-                    bandMap[0] = i + 1;
-                    break;
-                case ColorInterp.GCI_RedBand:
-                    if (channelCount < 3)
-                        channelCount = 3;
-                    bandMap[2] = i + 1;
-                    break;
-                case ColorInterp.GCI_GreenBand:
-                    if (channelCount < 3)
-                        channelCount = 3;
-                    bandMap[1] = i + 1;
-                    break;
-                case ColorInterp.GCI_PaletteIndex:
-                    ct = band.GetRasterColorTable();
-                    isIndexed = true;
-                    bandMap[0] = i + 1;
-                    break;
-                case ColorInterp.GCI_GrayIndex:
-                    isIndexed = true;
-                    bandMap[0] = i + 1;
-                    break;
-                default:
-                    // we create the bandmap using the dataset ordering by default
-                    if (i < 4 && bandMap[i] == 0)
-                    {
-                        if (channelCount < i)
-                            channelCount = i;
-                        bandMap[i] = i + 1;
-                    }
-                    break;
+                // retrieving the premultiplied alpha flag
+                string[] metadata = band.GetMetadata("");
+                for (int iMeta = 0; iMeta < metadata.Length; iMeta++)
+                {
+                    if (metadata[iMeta].StartsWith("PREMULTIPLIED_ALPHA"))
+                        isPremultiplied = true;
+                }
+
+                switch (band.GetRasterColorInterpretation())
+                {
+                    case ColorInterp.GCI_AlphaBand:
+                        channelCount = 4;
+                        hasAlpha = true;
+                        bandMap[3] = i + 1;
+                        break;
+                    case ColorInterp.GCI_BlueBand:
+                        if (channelCount < 3)
+                            channelCount = 3;
+                        bandMap[0] = i + 1;
+                        break;
+                    case ColorInterp.GCI_RedBand:
+                        if (channelCount < 3)
+                            channelCount = 3;
+                        bandMap[2] = i + 1;
+                        break;
+                    case ColorInterp.GCI_GreenBand:
+                        if (channelCount < 3)
+                            channelCount = 3;
+                        bandMap[1] = i + 1;
+                        break;
+                    case ColorInterp.GCI_PaletteIndex:
+                        ct = band.GetRasterColorTable();
+                        isIndexed = true;
+                        bandMap[0] = i + 1;
+                        break;
+                    case ColorInterp.GCI_GrayIndex:
+                        isIndexed = true;
+                        bandMap[0] = i + 1;
+                        break;
+                    default:
+                        // we create the bandmap using the dataset ordering by default
+                        if (i < 4 && bandMap[i] == 0)
+                        {
+                            if (channelCount < i)
+                                channelCount = i;
+                            bandMap[i] = i + 1;
+                        }
+                        break;
+                }
             }
-        }
 
         // find out the pixel format based on the gathered information
         if (isIndexed)

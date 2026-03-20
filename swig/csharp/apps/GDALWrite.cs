@@ -7,11 +7,13 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 using System;
+using System.Globalization;
 
 using OSGeo.GDAL;
 
@@ -29,14 +31,15 @@ using OSGeo.GDAL;
 /// A C# based sample to write a GDAL raster.
 /// </summary>
 
-class GDALWrite {
+class GDALWrite
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
-		Console.WriteLine("usage: gdalwrite {dataset name} {width} {height}");
-		System.Environment.Exit(-1);
-	}
+    {
+        Console.WriteLine("usage: gdalwrite {dataset name} {width} {height}");
+        System.Environment.Exit(-1);
+    }
 
     public static void Main(string[] args)
     {
@@ -53,10 +56,10 @@ class GDALWrite {
         h = 100;
 
         if (args.Length > 1)
-            w = int.Parse(args[1]);
+            w = int.Parse(args[1], CultureInfo.InvariantCulture);
 
         if (args.Length > 2)
-            h = int.Parse(args[2]);
+            h = int.Parse(args[2], CultureInfo.InvariantCulture);
 
         bXSize = w;
         bYSize = 1;
@@ -82,12 +85,12 @@ class GDALWrite {
         /* -------------------------------------------------------------------- */
         /*      Open dataset.                                                   */
         /* -------------------------------------------------------------------- */
-        string[] options = new string [] {
+        string[] options = new string[] {
                 "BLOCKXSIZE=" + bXSize,
                 "BLOCKYSIZE=" + bYSize
             };
 
-        using ( Dataset ds = drv.Create(args[0], w, h, 1, DataType.GDT_Byte, options) )
+        using (Dataset ds = drv.Create(args[0], w, h, 1, DataType.GDT_Byte, options))
         {
             if (ds == null)
             {
@@ -106,9 +109,9 @@ class GDALWrite {
             };
             ds.SetGCPs(GCPs, "");
 
-            using ( Band band = ds.GetRasterBand(1) )
+            using (Band band = ds.GetRasterBand(1))
             {
-                byte [] buffer = new byte [w * h];
+                byte[] buffer = new byte[w * h];
 
                 for (int i = 0; i < w; i++)
                 {

@@ -8,6 +8,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
@@ -35,23 +36,24 @@ using OSGeo.GDAL;
 /// A C# based sample to read GDAL raster data directly to a C# bitmap.
 /// </summary> 
 
-class GDALReadDirect {
-    
-    public static void usage() 
+class GDALReadDirect
+{
+
+    public static void usage()
 
     {
         Console.WriteLine("usage: GDALDatasetRasterIO {GDAL dataset name} {output file name}");
         System.Environment.Exit(-1);
     }
- 
-    public static void Main(string[] args) 
+
+    public static void Main(string[] args)
     {
         if (args.Length < 2) usage();
 
         // Using early initialization of System.Console
         Console.WriteLine("");
 
-        try 
+        try
         {
             /* -------------------------------------------------------------------- */
             /*      Register driver(s).                                             */
@@ -61,7 +63,7 @@ class GDALReadDirect {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            using ( Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly ) )
+            using (Dataset ds = Gdal.Open(args[0], Access.GA_ReadOnly))
             {
                 if (ds == null)
                 {
@@ -73,10 +75,10 @@ class GDALReadDirect {
                 Console.WriteLine("  Projection: " + ds.GetProjectionRef());
                 Console.WriteLine("  RasterCount: " + ds.RasterCount);
                 Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-                
+
                 /* -------------------------------------------------------------------- */
                 /*      Get driver                                                      */
-                /* -------------------------------------------------------------------- */	
+                /* -------------------------------------------------------------------- */
                 Driver drv = ds.GetDriver();
 
                 if (drv == null)
@@ -84,7 +86,7 @@ class GDALReadDirect {
                     Console.WriteLine("Can't get driver.");
                     System.Environment.Exit(-1);
                 }
-                
+
                 Console.WriteLine("Using driver " + drv.LongName);
 
                 /* -------------------------------------------------------------------- */
@@ -110,55 +112,55 @@ class GDALReadDirect {
         bool isIndexed = false;
         int channelSize = 8;
         ColorTable ct = null;
-  
+
         // Evaluate the bands and find out a proper image transfer format
         for (int i = 0; i < ds.RasterCount; i++)
-        {
-            using Band band = ds.GetRasterBand(i + 1);
-            if (Gdal.GetDataTypeSize(band.DataType) > 8)
-                channelSize = 16;
-            switch (band.GetRasterColorInterpretation())
+            using (Band band = ds.GetRasterBand(i + 1))
             {
-                case ColorInterp.GCI_AlphaBand:
-                    channelCount = 4;
-                    hasAlpha = true;
-                    bandMap[3] = i + 1;
-                    break;
-                case ColorInterp.GCI_BlueBand:
-                    if (channelCount < 3)
-                        channelCount = 3;
-                    bandMap[0] = i + 1;
-                    break;
-                case ColorInterp.GCI_RedBand:
-                    if (channelCount < 3)
-                        channelCount = 3;
-                    bandMap[2] = i + 1;
-                    break;
-                case ColorInterp.GCI_GreenBand:
-                    if (channelCount < 3)
-                        channelCount = 3;
-                    bandMap[1] = i + 1;
-                    break;
-                case ColorInterp.GCI_PaletteIndex:
-                    ct = band.GetRasterColorTable();
-                    isIndexed = true;
-                    bandMap[0] = i + 1;
-                    break;
-                case ColorInterp.GCI_GrayIndex:
-                    isIndexed = true;
-                    bandMap[0] = i + 1;
-                    break;
-                default:
-                    // we create the bandmap using the dataset ordering by default
-                    if (i < 4 && bandMap[i] == 0)
-                    {
-                        if (channelCount < i)
-                            channelCount = i;
-                        bandMap[i] = i + 1;
-                    }
-                    break;
+                if (Gdal.GetDataTypeSize(band.DataType) > 8)
+                    channelSize = 16;
+                switch (band.GetRasterColorInterpretation())
+                {
+                    case ColorInterp.GCI_AlphaBand:
+                        channelCount = 4;
+                        hasAlpha = true;
+                        bandMap[3] = i + 1;
+                        break;
+                    case ColorInterp.GCI_BlueBand:
+                        if (channelCount < 3)
+                            channelCount = 3;
+                        bandMap[0] = i + 1;
+                        break;
+                    case ColorInterp.GCI_RedBand:
+                        if (channelCount < 3)
+                            channelCount = 3;
+                        bandMap[2] = i + 1;
+                        break;
+                    case ColorInterp.GCI_GreenBand:
+                        if (channelCount < 3)
+                            channelCount = 3;
+                        bandMap[1] = i + 1;
+                        break;
+                    case ColorInterp.GCI_PaletteIndex:
+                        ct = band.GetRasterColorTable();
+                        isIndexed = true;
+                        bandMap[0] = i + 1;
+                        break;
+                    case ColorInterp.GCI_GrayIndex:
+                        isIndexed = true;
+                        bandMap[0] = i + 1;
+                        break;
+                    default:
+                        // we create the bandmap using the dataset ordering by default
+                        if (i < 4 && bandMap[i] == 0)
+                        {
+                            if (channelCount < i)
+                                channelCount = i;
+                            bandMap[i] = i + 1;
+                        }
+                        break;
+                }
             }
-        }
 
         // find out the pixel format based on the gathered information
         PixelFormat pixelFormat;
