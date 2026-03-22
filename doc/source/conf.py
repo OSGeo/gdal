@@ -925,6 +925,13 @@ man_pages = [
         1,
     ),
     (
+        "programs/gdal_vector_create",
+        "gdal-vector-create",
+        "Create a vector dataset",
+        [author_elpaso],
+        1,
+    ),
+    (
         "programs/gdal_vector_dissolve",
         "gdal-vector-dissolve",
         "Unions the elements of each feature's geometry.",

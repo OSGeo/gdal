@@ -25,6 +25,7 @@
 #include "gdalalg_vector_concave_hull.h"
 #include "gdalalg_vector_convert.h"
 #include "gdalalg_vector_convex_hull.h"
+#include "gdalalg_vector_create.h"
 #include "gdalalg_vector_dissolve.h"
 #include "gdalalg_vector_edit.h"
 #include "gdalalg_vector_explode_collections.h"
@@ -81,6 +82,7 @@ GDALVectorAlgorithm::GDALVectorAlgorithm()
     RegisterSubAlgorithm<GDALVectorConcaveHullAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorConvertAlgorithm>();
     RegisterSubAlgorithm<GDALVectorConvexHullAlgorithmStandalone>();
+    RegisterSubAlgorithm<GDALVectorCreateAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorDissolveAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorEditAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALVectorExportSchemaAlgorithmStandalone>();

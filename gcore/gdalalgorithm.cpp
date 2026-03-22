@@ -35,6 +35,7 @@
 #include <map>
 #include <type_traits>
 #include <string_view>
+#include <regex>
 
 #ifndef _
 #define _(x) (x)
@@ -5089,6 +5090,96 @@ GDALAlgorithm::AddFieldNameArg(std::string *pValue, const char *helpMessage)
 {
     return AddArg("field-name", 0, MsgOrDefault(helpMessage, _("Field name")),
                   pValue);
+}
+
+/************************************************************************/
+/*                GDALAlgorithm::ParseFieldDefinition()                 */
+/************************************************************************/
+bool GDALAlgorithm::ParseFieldDefinition(const std::string &posStrDef,
+                                         OGRFieldDefn *poFieldDefn,
+                                         std::string *posError)
+{
+    static const std::regex re(
+        R"(^([^:]+):([^(\s]+)(?:\((\d+)(?:,(\d+))?\))?$)");
+    std::smatch match;
+    if (std::regex_match(posStrDef, match, re))
+    {
+        const std::string name = match[1];
+        const std::string type = match[2];
+        const int width = match[3].matched ? std::stoi(match[3]) : 0;
+        const int precision = match[4].matched ? std::stoi(match[4]) : 0;
+        poFieldDefn->SetName(name.c_str());
+
+        const auto typeEnum{OGRFieldDefn::GetFieldTypeByName(type.c_str())};
+        if (typeEnum == OFTString && !EQUAL(type.c_str(), "String"))
+        {
+            if (posError)
+                *posError = "Unsupported field type: " + type;
+
+            return false;
+        }
+        poFieldDefn->SetType(typeEnum);
+        poFieldDefn->SetWidth(width);
+        poFieldDefn->SetPrecision(precision);
+        return true;
+    }
+
+    if (posError)
+        *posError = "Invalid field definition format. Expected "
+                    "<NAME>:<TYPE>[(<WIDTH>[,<PRECISION>])]";
+
+    return false;
+}
+
+/************************************************************************/
+/*                GDALAlgorithm::AddFieldDefinitionArg()                */
+/************************************************************************/
+
+GDALInConstructionAlgorithmArg &
+GDALAlgorithm::AddFieldDefinitionArg(std::vector<std::string> *pValues,
+                                     std::vector<OGRFieldDefn> *pFieldDefns,
+                                     const char *helpMessage)
+{
+    auto &arg =
+        AddArg("field", 0, MsgOrDefault(helpMessage, _("Field definition")),
+               pValues)
+            .SetMetaVar("<NAME>:<TYPE>[(<WIDTH>[,<PRECISION>])]")
+            .SetPackedValuesAllowed(true)
+            .SetRepeatedArgAllowed(true);
+
+    auto validationFunction = [this, pFieldDefns, pValues]()
+    {
+        pFieldDefns->clear();
+        for (const auto &strValue : *pValues)
+        {
+            OGRFieldDefn fieldDefn("", OFTString);
+            std::string error;
+            if (!GDALAlgorithm::ParseFieldDefinition(strValue, &fieldDefn,
+                                                     &error))
+            {
+                ReportError(CE_Failure, CPLE_AppDefined, "%s", error.c_str());
+                return false;
+            }
+            // Check uniqueness of field names
+            for (const auto &existingFieldDefn : *pFieldDefns)
+            {
+                if (EQUAL(existingFieldDefn.GetNameRef(),
+                          fieldDefn.GetNameRef()))
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Duplicate field name: '%s'",
+                                fieldDefn.GetNameRef());
+                    return false;
+                }
+            }
+            pFieldDefns->push_back(fieldDefn);
+        }
+        return true;
+    };
+
+    arg.AddValidationAction(std::move(validationFunction));
+
+    return arg;
 }
 
 /************************************************************************/

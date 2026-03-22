@@ -209,6 +209,7 @@ Vector commands
    gdal_vector_concave_hull
    gdal_vector_convert
    gdal_vector_convex_hull
+   gdal_vector_create
    gdal_vector_dissolve
    gdal_vector_edit
    gdal_vector_filter
@@ -254,6 +255,7 @@ Vector commands
     - :ref:`gdal_vector_concave_hull`: Compute the concave hull of geometries of a vector dataset
     - :ref:`gdal_vector_convert`: Convert a vector dataset
     - :ref:`gdal_vector_convex_hull`: Compute the convex hull of geometries of a vector dataset
+    - :ref:`gdal_vector_create`: Create a vector dataset
     - :ref:`gdal_vector_edit`: Edit metadata of a vector dataset
     - :ref:`gdal_vector_explode_collections`: Explode geometries of type collection of a vector dataset
     - :ref:`gdal_vector_export_schema`: Export the OGR_SCHEMA from a vector dataset
