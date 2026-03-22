@@ -251,6 +251,7 @@ Vector commands
     - :ref:`gdal_vector_convert`: Convert a vector dataset
     - :ref:`gdal_vector_edit`: Edit metadata of a vector dataset
     - :ref:`gdal_vector_explode_collections`: Explode geometries of type collection of a vector dataset
+    - :ref:`gdal_vector_export_schema`: Export the OGR_SCHEMA from a vector dataset
     - :ref:`gdal_vector_filter`: Filter a vector dataset
     - :ref:`gdal_vector_grid`: Create a regular grid from scattered points
     - :ref:`gdal_vector_info`: Get information on a vector dataset
