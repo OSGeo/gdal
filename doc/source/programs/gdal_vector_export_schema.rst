@@ -4,16 +4,16 @@
 ``gdal vector export_schema``
 ================================================================================
 
-.. versionadded:: 3.12
+.. versionadded:: 3.13
 
 .. only:: html
 
     Export the OGR_SCHEMA from a vector dataset.
 
     OGR_SCHEMA is a JSON object describing the structure of a vector dataset
-    according to the `OGR_SCHEMA schema definition <https://raw.githubusercontent.com/OSGeo/gdal/refs/heads/master/ogr/data/ogr_fields_override.schema.json>`_
+    according to the OGR_SCHEMA schema definition at :source_file:`ogr/data/ogr_fields_override.schema.json>`
 
-.. Index:: gdal vector
+.. Index:: gdal vector export-schema
 
 Synopsis
 --------
@@ -26,7 +26,7 @@ Description
 :program:`gdal vector export-schema` export the OGR_SCHEMA from a GDAL supported
 vector dataset.
 
-Starting with GDAL 3.12, :program:`gdal vector export-schema` can be used as the last
+:program:`gdal vector export-schema` can be used as the last
 step of a pipeline.
 
 The following options are available:
