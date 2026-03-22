@@ -247,6 +247,22 @@ AS float))) FROM test GROUP BY way_id"* will return :
      way_id (String) = 2
      LINESTRING (-2 49,-3 50)
 
+And if we only have one line to make,
+
+::
+
+    $ cat test2.csv
+    x,y
+    2,49
+    3,50
+    4,51
+
+    $ ogrinfo test2.csv -dialect SQLite -sql \
+    "SELECT MakeLine(MakePoint(x+0,y+0)) FROM test2"
+
+    OGRFeature(SELECT):0
+      LINESTRING (2 49,3 50,4 51)
+
 VSI Virtual File System API support
 -----------------------------------
 
