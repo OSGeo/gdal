@@ -36,10 +36,9 @@ class GDALVectorCreateAlgorithm /* non final */
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     /** Get the list of fields to create in the output layer,
-     * based on the given OGR_SCHEMA and/or the -field parameters.
-     * OGR_SCHEMA is processed first, and then -field parameters are applied
-     * on top of it, possibly overriding field definitions coming from
-     * OGR_SCHEMA.
+     * based on the given OGR_SCHEMA or the --like argument
+     * and/or the --field parameters.
+     * OGR_SCHEMA and --like and --field parameters are mutually exclusive
      */
     std::vector<OGRFieldDefn> GetOutputFields() const;
 
@@ -58,9 +57,19 @@ class GDALVectorCreateAlgorithm /* non final */
         return true;
     }
 
+    /**
+     * Create a layer in the given dataset given the fields defined in fieldDefinitions
+     * and geometry fields defined in geometryFieldDefinitions.
+     */
+    bool CreateLayer(
+        GDALDataset *poDstDS, const std::string &layerName,
+        const std::vector<OGRFieldDefn> &fieldDefinitions,
+        const std::vector<OGRGeomFieldDefn> &geometryFieldDefinitions) const;
+
     std::string m_crs;
     std::string m_geometryType;
     std::string m_geometryFieldName;
+    std::string m_schemaJsonOrPath;
     std::vector<OGRFieldDefn> m_fieldDefinitions;
     std::vector<std::string> m_fieldStrDefinitions;
 };

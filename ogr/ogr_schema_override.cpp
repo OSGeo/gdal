@@ -13,8 +13,12 @@
 
 #include "ogr_schema_override.h"
 #include "ogrsf_frmts.h"
+#include "ogr_p.h"
 
-bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON)
+constexpr char OGR_SCHEMA_UNDEFINED_VALUE[] = "ogr_schema_undefined_value";
+
+bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON,
+                                     bool bAllowGeometryFields)
 {
     std::string osFieldsSchemaOverride;
     bool bFieldsSchemaOverrideIsFilePath{false};
@@ -77,6 +81,29 @@ bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON)
                             const CPLString osNewName(
                                 CPLString(oField.GetString("newName"))
                                     .tolower());
+                            const CPLString osNullable(
+                                CPLString(
+                                    oField.GetString(
+                                        "nullable", OGR_SCHEMA_UNDEFINED_VALUE))
+                                    .tolower());
+                            const CPLString osUnique(
+                                CPLString(oField.GetString(
+                                              "uniqueConstraint",
+                                              OGR_SCHEMA_UNDEFINED_VALUE))
+                                    .tolower());
+                            const CPLString osDefaultValue(CPLString(
+                                oField.GetString("defaultValue",
+                                                 OGR_SCHEMA_UNDEFINED_VALUE)));
+                            const CPLString osAlias(CPLString(oField.GetString(
+                                "alias", OGR_SCHEMA_UNDEFINED_VALUE)));
+                            const CPLString osComment(
+                                CPLString(oField.GetString(
+                                    "comment", OGR_SCHEMA_UNDEFINED_VALUE)));
+                            const CPLString osDomain(CPLString(oField.GetString(
+                                "domainName", OGR_SCHEMA_UNDEFINED_VALUE)));
+                            const CPLString osTimeZone(
+                                CPLString(oField.GetString(
+                                    "timezone", OGR_SCHEMA_UNDEFINED_VALUE)));
                             const auto nWidth = oField.GetInteger("width", 0);
                             const auto nPrecision =
                                 oField.GetInteger("precision", 0);
@@ -205,6 +232,74 @@ bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON)
                                 oFieldOverride.SetFieldPrecision(nPrecision);
                             }
 
+                            if (!EQUAL(osAlias, OGR_SCHEMA_UNDEFINED_VALUE))
+                            {
+                                oFieldOverride.SetAlias(osAlias);
+                            }
+
+                            if (!EQUAL(osComment, OGR_SCHEMA_UNDEFINED_VALUE))
+                            {
+                                oFieldOverride.SetComment(osComment);
+                            }
+
+                            if (!EQUAL(osDomain, OGR_SCHEMA_UNDEFINED_VALUE))
+                            {
+                                oFieldOverride.SetDomainName(osDomain);
+                            }
+
+                            if (!EQUAL(osTimeZone, OGR_SCHEMA_UNDEFINED_VALUE))
+                            {
+                                oFieldOverride.SetTimezone(osTimeZone);
+                            }
+
+                            if (!EQUAL(osDefaultValue,
+                                       OGR_SCHEMA_UNDEFINED_VALUE))
+                            {
+                                oFieldOverride.SetDefaultValue(osDefaultValue);
+                            }
+
+                            if (!EQUAL(osNullable, OGR_SCHEMA_UNDEFINED_VALUE))
+                            {
+                                if (osNullable == "true")
+                                {
+                                    oFieldOverride.SetNullable(true);
+                                }
+                                else if (osNullable == "false")
+                                {
+                                    oFieldOverride.SetNullable(false);
+                                }
+                                else
+                                {
+                                    CPLError(CE_Failure, CPLE_AppDefined,
+                                             "Invalid value for nullable "
+                                             "attribute for field %s: %s",
+                                             osFieldName.c_str(),
+                                             osNullable.c_str());
+                                    return false;
+                                }
+                            }
+
+                            if (!EQUAL(osUnique, OGR_SCHEMA_UNDEFINED_VALUE))
+                            {
+                                if (osUnique == "true")
+                                {
+                                    oFieldOverride.SetUnique(true);
+                                }
+                                else if (osUnique == "false")
+                                {
+                                    oFieldOverride.SetUnique(false);
+                                }
+                                else
+                                {
+                                    CPLError(
+                                        CE_Failure, CPLE_AppDefined,
+                                        "Invalid value for uniqueConstraint "
+                                        "attribute for field %s: %s",
+                                        osFieldName.c_str(), osUnique.c_str());
+                                    return false;
+                                }
+                            }
+
                             if (bSchemaFullOverride || oFieldOverride.IsValid())
                             {
                                 if (osFieldName.empty())
@@ -224,6 +319,100 @@ bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON)
                                          "Field %s has no valid overrides "
                                          "and schemaType is not \"Full\"",
                                          osFieldName.c_str());
+                                return false;
+                            }
+                        }
+                    }
+
+                    const auto oGeometryLayerFields =
+                        oLayer.GetArray("geometryFields");
+                    if (oGeometryLayerFields.Size() > 0 &&
+                        !bAllowGeometryFields)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Geometry fields are not allowed in "
+                                 "OGR_SCHEMA overrides");
+                        return false;
+                    }
+                    else if (oGeometryLayerFields.Size() > 0)
+                    {
+                        for (const auto &oGeometryField : oGeometryLayerFields)
+                        {
+                            OGRGeomFieldDefnOverride oGeomFieldOverride;
+                            const auto osGeomFieldName =
+                                oGeometryField.GetString("name");
+                            oGeomFieldOverride.SetFieldName(osGeomFieldName);
+                            const CPLString oGeometryType(
+                                CPLString(oGeometryField.GetString("type"))
+                                    .tolower());
+                            if (!oGeometryType.empty())
+                            {
+                                const OGRwkbGeometryType eType =
+                                    OGRFromOGCGeomType(oGeometryType.c_str());
+                                if (eType == wkbUnknown)
+                                {
+                                    CPLError(CE_Failure, CPLE_AppDefined,
+                                             "Unsupported geometry field type: "
+                                             "%s for geometry field %s",
+                                             oGeometryType.c_str(),
+                                             osGeomFieldName.c_str());
+                                    return false;
+                                }
+                                oGeomFieldOverride.SetGeometryType(eType);
+
+                                // SRS
+                                const auto osSRS =
+                                    oGeometryField.GetObj("coordinateSystem");
+                                if (!osSRS.GetString("wkt").empty() ||
+                                    !osSRS.GetString("projjson").empty())
+                                {
+                                    OGRSpatialReference poSRS;
+                                    std::string srs;
+                                    if (const auto wkt = osSRS.GetString("wkt");
+                                        !wkt.empty())
+                                    {
+                                        srs = wkt;
+                                    }
+                                    else if (const auto projjson =
+                                                 osSRS.GetString("projjson");
+                                             !projjson.empty())
+                                    {
+                                        srs = projjson;
+                                    }
+
+                                    if (!srs.empty())
+                                    {
+                                        if (poSRS.SetFromUserInput(
+                                                srs.c_str()) != OGRERR_NONE)
+                                        {
+                                            CPLError(CE_Failure,
+                                                     CPLE_AppDefined,
+                                                     "Failed to parse SRS "
+                                                     "definition for geometry "
+                                                     "field %s.",
+                                                     osGeomFieldName.c_str());
+                                            return false;
+                                        }
+                                        oGeomFieldOverride.SetSRS(poSRS);
+                                    }
+                                    else
+                                    {
+                                        // No SRS, assuming it's ok, just issue a warning
+                                        CPLError(CE_Warning, CPLE_AppDefined,
+                                                 "CRS definition is missing "
+                                                 "for geometry field %s.",
+                                                 osGeomFieldName.c_str());
+                                    }
+                                }
+
+                                oLayerOverride.AddGeometryFieldOverride(
+                                    oGeomFieldOverride);
+                            }
+                            else
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "Geometry field %s has no type",
+                                         osGeomFieldName.c_str());
                                 return false;
                             }
                         }
@@ -410,6 +599,20 @@ bool OGRSchemaOverride::DefaultApply(
     return true;
 }
 
+const OGRLayerSchemaOverride &
+OGRSchemaOverride::GetLayerOverride(const std::string &osLayerName) const
+{
+    for (const auto &oLayerOverride : m_aoLayerOverrides)
+    {
+        if (oLayerOverride.GetLayerName() == osLayerName)
+        {
+            return oLayerOverride;
+        }
+    }
+    static const OGRLayerSchemaOverride emptyOverride{};
+    return emptyOverride;
+}
+
 bool OGRLayerSchemaOverride::IsValid() const
 {
     bool isValid =
@@ -434,6 +637,87 @@ bool OGRFieldDefnOverride::IsValid() const
            m_eSubType.has_value() || m_eSrcType.has_value() ||
            m_eSrcSubType.has_value() || m_nWidth.has_value() ||
            m_nPrecision.has_value();
+}
+
+OGRFieldDefn
+OGRFieldDefnOverride::ToFieldDefn(const std::string &osDefaultName) const
+{
+
+    OGRFieldDefn oFieldDefn(m_osName.value_or(osDefaultName).c_str(),
+                            m_eType.value_or(OFTString));
+
+    oFieldDefn.SetName(m_osName.value_or(osDefaultName).c_str());
+
+    if (m_eSubType.has_value())
+        oFieldDefn.SetSubType(m_eSubType.value());
+    if (m_nWidth.has_value())
+        oFieldDefn.SetWidth(m_nWidth.value());
+    if (m_nPrecision.has_value())
+        oFieldDefn.SetPrecision(m_nPrecision.value());
+    if (m_osName.has_value())
+        oFieldDefn.SetName(m_osName.value().c_str());
+    if (m_bNullable.has_value())
+        oFieldDefn.SetNullable(m_bNullable.value());
+    if (m_bUnique.has_value())
+        oFieldDefn.SetUnique(m_bUnique.value());
+    if (m_osComment.has_value())
+        oFieldDefn.SetComment(m_osComment.value().c_str());
+    if (m_osAlias.has_value())
+        oFieldDefn.SetAlternativeName(m_osAlias.value().c_str());
+    if (m_osTimezone.has_value())
+    {
+        const auto tzValue{m_osTimezone.value().c_str()};
+        if (EQUAL(tzValue, "UTC"))
+        {
+            oFieldDefn.SetTZFlag(OGR_TZFLAG_UTC);
+        }
+        else if (EQUAL(tzValue, "localtime"))
+        {
+            oFieldDefn.SetTZFlag(OGR_TZFLAG_LOCALTIME);
+        }
+        else if (EQUAL(tzValue, "mixed timezones"))
+        {
+            oFieldDefn.SetTZFlag(OGR_TZFLAG_MIXED_TZ);
+        }
+        else
+        {
+            const auto tzFlag{OGRTimezoneToTZFlag(
+                tzValue, /* bEmitErrorIfUnhandledFormat */ false)};
+            oFieldDefn.SetTZFlag(tzFlag);
+            if (tzFlag == OGR_TZFLAG_UNKNOWN)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid timezone value: %s. Ignoring it.", tzValue);
+            }
+        }
+    }
+    if (m_osDomainName.has_value())
+        oFieldDefn.SetDomainName(m_osDomainName.value().c_str());
+    if (m_osDefaultValue.has_value())
+        oFieldDefn.SetDefault(m_osDefaultValue.value().c_str());
+    return oFieldDefn;
+}
+
+OGRGeomFieldDefn OGRGeomFieldDefnOverride::ToGeometryFieldDefn(
+    const std::string &osDefaultName) const
+{
+
+    OGRGeomFieldDefn oGeomFieldDefn{m_osName.value_or(osDefaultName).c_str(),
+                                    m_eType.value_or(wkbUnknown)};
+
+    if (m_bNullable.has_value())
+    {
+        oGeomFieldDefn.SetNullable(m_bNullable.value());
+    }
+
+    if (m_oSRS.has_value())
+    {
+        std::unique_ptr<OGRSpatialReference> poSRS =
+            std::make_unique<OGRSpatialReference>(m_oSRS.value());
+        oGeomFieldDefn.SetSpatialRef(poSRS.release());
+    }
+
+    return oGeomFieldDefn;
 }
 
 //! @endcond

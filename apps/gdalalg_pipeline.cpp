@@ -168,6 +168,10 @@ void GDALPipelineStepAlgorithm::AddVectorInputArgs(bool hiddenForCLI)
             .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
             .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
             .SetHiddenForCLI(hiddenForCLI);
+    if (!m_constructorOptions.inputDatasetAlias.empty())
+        datasetArg.AddAlias(m_constructorOptions.inputDatasetAlias);
+    if (!m_constructorOptions.inputDatasetMetaVar.empty())
+        datasetArg.SetMetaVar(m_constructorOptions.inputDatasetMetaVar);
     if (m_constructorOptions.inputDatasetPositional && !hiddenForCLI)
         datasetArg.SetPositional();
     if (m_constructorOptions.inputDatasetRequired && !hiddenForCLI)

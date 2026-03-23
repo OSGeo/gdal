@@ -63,6 +63,12 @@ Details for options can be found in :ref:`gdal_vector_concat`.
 
 Details for options can be found in :ref:`gdal_vector_clip`.
 
+* create
+
+.. program-output:: gdal vector pipeline --help-doc=create
+
+Details for options can be found in :ref:`gdal_vector_create`.
+
 * edit
 
 .. program-output:: gdal vector pipeline --help-doc=edit
