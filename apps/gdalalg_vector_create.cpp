@@ -64,6 +64,8 @@ GDALVectorCreateAlgorithm::GDALVectorCreateAlgorithm(bool standaloneStep)
     // Add field definition argument
     AddFieldDefinitionArg(&m_fieldStrDefinitions, &m_fieldDefinitions,
                           _("Add a field definition to the output layer"))
+        .SetMetaVar("<NAME>:<TYPE>[(,<WIDTH>[,<PRECISION>])]")
+        .SetPackedValuesAllowed(false)
         .SetRepeatedArgAllowed(true);
 }
 
@@ -119,7 +121,7 @@ bool GDALVectorCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
     poDstDS.reset(poDstDriver->Create(datasetName.c_str(), 0, 0, 0, GDT_Unknown,
                                       CPLStringList(m_creationOptions)));
 
-    if (poDstDriver && EQUAL(poDstDriver->GetDescription(), "ESRI Shapefile") &&
+    if (EQUAL(poDstDriver->GetDescription(), "ESRI Shapefile") &&
         EQUAL(CPLGetExtensionSafe(poDstDS->GetDescription()).c_str(), "shp") &&
         poDstDS->GetLayerCount() <= 1)
     {

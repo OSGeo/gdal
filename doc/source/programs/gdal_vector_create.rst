@@ -57,7 +57,7 @@ Program-Specific Options
    ``Z``, ``M`` or ``ZM`` suffixes can be appended to the above values to
    indicate the dimensionality.
 
-.. option:: --field <NAME>:<TYPE>[(<WIDTH>[,<PRECISION>])]>
+.. option:: --field <NAME>:<TYPE>[(,<WIDTH>[,<PRECISION>])]
 
    Defines a field to be created in the layer. This option can be repeated multiple times to create multiple fields.
 
