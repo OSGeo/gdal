@@ -148,6 +148,8 @@ class PCIDSK2Band final : public GDALPamRasterBand
     CSLConstList GetMetadata(const char *) override;
     CPLErr SetMetadataItem(const char *, const char *, const char *) override;
     const char *GetMetadataItem(const char *, const char *) override;
+    double GetNoDataValue(int *) override;
+    CPLErr SetNoDataValue(double dfNoData) override;
 
     char **GetCategoryNames() override;
 };

@@ -698,6 +698,43 @@ char **PCIDSK2Band::GetMetadataDomainList()
 }
 
 /************************************************************************/
+/*                         GetNoDataValue()                             */
+/************************************************************************/
+
+double PCIDSK2Band::GetNoDataValue(int *pbSuccess)
+{
+    const char *pszNoData = GetMetadataItem("NO_DATA_VALUE", "");
+    if (pszNoData != nullptr)
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return CPLAtof(pszNoData);
+    }
+
+    PCIDSK2Dataset *poGDS = cpl::down_cast<PCIDSK2Dataset *>(poDS);
+    pszNoData = poGDS->GetMetadataItem("NO_DATA_VALUE", "");
+    if (pszNoData != nullptr)
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return CPLAtof(pszNoData);
+    }
+
+    if (pbSuccess)
+        *pbSuccess = FALSE;
+    return 0.0;
+}
+
+/************************************************************************/
+/*                         SetNoDataValue()                             */
+/************************************************************************/
+
+CPLErr PCIDSK2Band::SetNoDataValue(double dfNoData)
+{
+    return SetMetadataItem("NO_DATA_VALUE", CPLSPrintf("%.17g", dfNoData), "");
+}
+
+/************************************************************************/
 /*                          GetMetadataItem()                           */
 /************************************************************************/
 
