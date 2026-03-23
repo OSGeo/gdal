@@ -238,4 +238,10 @@ std::vector<OGRFieldDefn> GDALVectorCreateAlgorithm::GetOutputFields() const
     return m_fieldDefinitions;
 }
 
+/************************************************************************/
+/*                ~GDALVectorCreateAlgorithmStandalone()                */
+/************************************************************************/
+GDALVectorCreateAlgorithmStandalone::~GDALVectorCreateAlgorithmStandalone() =
+    default;
+
 //! @endcond

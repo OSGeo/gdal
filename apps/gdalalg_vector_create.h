@@ -78,9 +78,7 @@ class GDALVectorCreateAlgorithmStandalone final
     {
     }
 
-    ~GDALVectorCreateAlgorithmStandalone() override
-    {
-    }
+    ~GDALVectorCreateAlgorithmStandalone() override;
 };
 
 //! @endcond
