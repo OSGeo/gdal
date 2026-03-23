@@ -2927,10 +2927,10 @@ class CPL_DLL GDALAlgorithmRegistry
 
     /**
      *  Parse and validate a field definition in the form &lt;NAME&gt;:&lt;TYPE&gt;[(&lt;WIDTH&gt;[,&lt;PRECISION&gt;])]
-     *  @oStrDef the field definition string to parse
-     *  @poFieldDefn the field definition to populate
-     *  @osError error message in case of failure
-     *  @return true on success, false on failure with osError set to the error message
+     *  \param osStrDef the field definition string to parse
+     *  \param poFieldDefn the field definition to populate
+     *  \param posError error message in case of failure
+     *  \param true on success, false on failure with osError set to the error message
      */
     static bool ParseFieldDefinition(const std::string &osStrDef,
                                      OGRFieldDefn *poFieldDefn,
@@ -2939,9 +2939,9 @@ class CPL_DLL GDALAlgorithmRegistry
     /**
      *  Add field definition argument
      *  in the form <NAME>:<TYPE>[(<WIDTH>[,<PRECISION>])]
-     *  @pStrValues the field definitions as strings
-     *  @pFieldDefns the field definitions to populate
-     *  @helpMessage optional help message for this argument
+     *  \param pValues the field definitions as strings
+     *  \param pFieldDefns the field definitions to populate
+     *  \param helpMessage optional help message for this argument
      */
     GDALInConstructionAlgorithmArg &
     AddFieldDefinitionArg(std::vector<std::string> *pValues,
