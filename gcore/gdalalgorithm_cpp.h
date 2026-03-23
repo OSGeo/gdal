@@ -2926,7 +2926,7 @@ class CPL_DLL GDALAlgorithmRegistry
     AddFieldNameArg(std::string *pValue, const char *helpMessage = nullptr);
 
     /**
-     *  Parse and validate a field definition in the form <NAME>:<TYPE>[(<WIDTH>[,<PRECISION>])]
+     *  Parse and validate a field definition in the form &lt;NAME&gt;:&lt;TYPE&gt;[(&lt;WIDTH&gt;[,&lt;PRECISION&gt;])]
      *  @oStrDef the field definition string to parse
      *  @poFieldDefn the field definition to populate
      *  @osError error message in case of failure
