@@ -43,7 +43,7 @@ class GDALVectorCreateAlgorithm /* non final */
      */
     std::vector<OGRFieldDefn> GetOutputFields() const;
 
-    virtual bool CanBeFirstStep() const override
+    bool CanBeFirstStep() const override
     {
         return true;
     }
