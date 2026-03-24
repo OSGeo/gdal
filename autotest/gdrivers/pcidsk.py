@@ -203,7 +203,7 @@ def test_pcidsk_5(tmp_path):
     assert band.GetColorInterpretation() == gdal.GCI_Undefined, "Paletted?"
 
 
- ###############################################################################
+###############################################################################
 # Test reading and writing nodata values
 
 

@@ -698,7 +698,7 @@ char **PCIDSK2Band::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                         GetNoDataValue()                             */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double PCIDSK2Band::GetNoDataValue(int *pbSuccess)
@@ -726,7 +726,7 @@ double PCIDSK2Band::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                         SetNoDataValue()                             */
+/*                           SetNoDataValue()                           */
 /************************************************************************/
 
 CPLErr PCIDSK2Band::SetNoDataValue(double dfNoData)
