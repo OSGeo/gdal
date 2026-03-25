@@ -74,8 +74,8 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
     CRS
 
-        Coordinate Reference System. A system that maps spatial data coordinates to real-world locations,
-        combining a coordinate system with a reference surface like a projection or :term:`ellipsoid`.
+        Coordinate Reference System. Specifies how coordinates correspond to locations on Earth,
+        including the coordinate system, :term:`datum`, and, if applicable, a projection.
 
     CSL
 
@@ -86,6 +86,11 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         A command-line tool and library for transferring data with URLs, supporting protocols such as HTTP, HTTPS, FTP, and more.
         Commonly used for testing and interacting with web services.
+
+    Datum
+
+        A model of the Earth that specifies the size and shape of the reference :term:`ellipsoid` and its position and orientation
+        relative to the Earth, providing the basis for a :term:`CRS`.
 
     DEM
 

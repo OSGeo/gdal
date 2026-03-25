@@ -179,3 +179,16 @@ Examples
 
         > gdal raster info https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/36/Q/WD/2020/7/S2A_36QWD_20200701_0_L2A/TCI.tif --of=JSON `
         | jq '.metadata.IMAGE_STRUCTURE.LAYOUT == \"COG\"'
+
+.. example::
+   :title: Return the CRS used by the raster using ``jq``
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+         gdal raster info in.tif --of json | jq -r '.stac."proj:projjson".id | .authority + ":" + (.code|tostring)'
+
+      .. code-tab:: ps1
+
+         gdal raster info in.tif --of json | jq -r '.stac.\"proj:projjson\".id | .authority + \":\" + (.code|tostring)'

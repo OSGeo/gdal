@@ -14,6 +14,7 @@
 .. |Docker| replace:: `Docker <https://www.docker.com/>`__
 .. |gdal-dev| replace:: `gdal-dev <https://lists.osgeo.org/mailman/listinfo/gdal-dev>`__
 .. |OSGeo/gdal| replace:: `OSGeo/gdal <https://github.com/OSGeo/gdal>`__
+.. |OGC| replace:: `OGC <https://www.ogc.org//>`__
 .. |Sphinx| replace:: `Sphinx <https://www.sphinx-doc.org/>`__
 .. |sphinx-autobuild| replace:: `sphinx-autobuild <https://pypi.org/project/sphinx-autobuild/>`__
 .. |about-config-options| replace:: :ref:`Configuration options <configoptions>` can be specified in command-line tools using the syntax ``--config <NAME>=<VALUE>`` or using functions such as :cpp:func:`CPLSetConfigOption` (C) or :py:func:`gdal.config_options<osgeo.gdal.config_options>` (Python).
