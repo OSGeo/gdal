@@ -1065,6 +1065,28 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     return CE_None;
 }  // IReadBlock
 
+/************************************************************************/
+/*                            CreateCopy()                              */
+/************************************************************************/
+
+GDALDataset *CreateCopy(const char* pszFilename,
+                        GDALDataset* poSrcDS, int bStrict,
+                        CSLConstList papszOptions,
+                        GDALProgressFunc pfnProgress,
+                        void* pProgressData)
+{
+    if (!pszFilename || !poSrcDS)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ESRIC CreateCopy: invalid arguments");
+        return nullptr;
+    }
+
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "ESRIC CreateCopy: not yet implemented");
+    return nullptr;
+}
+
 }  // namespace ESRIC
 
 void CPL_DLL GDALRegister_ESRIC()
@@ -1097,8 +1119,21 @@ void CPL_DLL GDALRegister_ESRIC()
         "default='NO'>"
         "  </Option>"
         "</OpenOptionList>");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='TILE_FORMAT' type='string-select' default='JPEG' "
+        "description='Tile image encoding format'>"
+        "    <Value>JPEG</Value>"
+        "    <Value>PNG</Value>"
+        "  </Option>"
+        "</CreationOptionList>");
+
     poDriver->pfnIdentify = ESRIC::Identify;
     poDriver->pfnOpen = ESRIC::ECDataset::Open;
+    poDriver->pfnCreateCopy = ESRIC::CreateCopy;
     poDriver->pfnDelete = ESRIC::Delete;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
