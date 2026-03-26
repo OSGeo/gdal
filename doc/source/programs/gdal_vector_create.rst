@@ -158,5 +158,5 @@ Examples
 .. example::
     :title: Create a new vector dataset with a layer named `countries_new` based on the layer `countries` of an existing dataset
 
-    .. command-output:: gdal vector create --like ../ogr/data/poly.gpkg --input-layer countries --output-layer countries_new ./countries.gpkg
+    .. command-output:: gdal vector create --like ../data/poly.gpkg --input-layer poly --output-layer areas_new ./areas.gpkg
         :cwd: ../../data

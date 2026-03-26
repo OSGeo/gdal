@@ -259,87 +259,37 @@ class CPL_DLL OGRLayerSchemaOverride
   public:
     OGRLayerSchemaOverride() = default;
 
-    void SetLayerName(const std::string &osLayerName)
-    {
-        m_osLayerName = osLayerName;
-    }
+    void SetLayerName(const std::string &osLayerName);
 
     void AddNamedFieldOverride(const std::string &osFieldName,
-                               const OGRFieldDefnOverride &oFieldOverride)
-    {
-        m_oNamedFieldOverrides[osFieldName] = oFieldOverride;
-    }
+                               const OGRFieldDefnOverride &oFieldOverride);
 
-    void AddUnnamedFieldOverride(const OGRFieldDefnOverride &oFieldOverride)
-    {
-        m_aoUnnamedFieldOverrides.push_back(oFieldOverride);
-    }
+    void AddUnnamedFieldOverride(const OGRFieldDefnOverride &oFieldOverride);
 
-    const std::string &GetLayerName() const
-    {
-        return m_osLayerName;
-    }
+    const std::string &GetLayerName() const;
 
     const std::map<std::string, OGRFieldDefnOverride> &
-    GetNamedFieldOverrides() const
-    {
-        return m_oNamedFieldOverrides;
-    }
+    GetNamedFieldOverrides() const;
 
-    const std::vector<OGRFieldDefnOverride> &GetUnnamedFieldOverrides() const
-    {
-        return m_aoUnnamedFieldOverrides;
-    }
+    const std::vector<OGRFieldDefnOverride> &GetUnnamedFieldOverrides() const;
 
-    void
-    AddGeometryFieldOverride(const OGRGeomFieldDefnOverride &oGeomFieldOverride)
-    {
-        m_aoGeomFieldOverrides.push_back(oGeomFieldOverride);
-    }
+    void AddGeometryFieldOverride(
+        const OGRGeomFieldDefnOverride &oGeomFieldOverride);
 
     const std::vector<OGRGeomFieldDefnOverride> &
-    GetGeometryFieldOverrides() const
-    {
-        return m_aoGeomFieldOverrides;
-    }
+    GetGeometryFieldOverrides() const;
 
-    const std::vector<OGRFieldDefn> GetFieldDefinitions() const
-    {
-        std::vector<OGRFieldDefn> ret;
-        for (const auto &kv : m_oNamedFieldOverrides)
-        {
-            ret.push_back(kv.second.ToFieldDefn(kv.first));
-        }
-        return ret;
-    }
+    std::vector<OGRFieldDefn> GetFieldDefinitions() const;
 
-    const std::vector<OGRGeomFieldDefn> GetGeomFieldDefinitions() const
-    {
-        std::vector<OGRGeomFieldDefn> ret;
-        for (const auto &oGeomFieldOverride : m_aoGeomFieldOverrides)
-        {
-            ret.push_back(oGeomFieldOverride.ToGeometryFieldDefn("geom"));
-        }
-        return ret;
-    }
+    std::vector<OGRGeomFieldDefn> GetGeomFieldDefinitions() const;
 
-    bool IsFullOverride() const
-    {
-        return m_bIsFullOverride;
-    }
+    bool IsFullOverride() const;
 
-    void SetFullOverride(bool bIsFullOverride)
-    {
-        m_bIsFullOverride = bIsFullOverride;
-    }
+    void SetFullOverride(bool bIsFullOverride);
 
     bool IsValid() const;
 
-    bool empty() const
-    {
-        return m_osLayerName.empty() && m_oNamedFieldOverrides.empty() &&
-               m_aoUnnamedFieldOverrides.empty() && !m_bIsFullOverride;
-    }
+    bool empty() const;
 
   private:
     std::string m_osLayerName{};
@@ -357,10 +307,7 @@ class CPL_DLL OGRSchemaOverride
   public:
     OGRSchemaOverride() = default;
 
-    void AddLayerOverride(const OGRLayerSchemaOverride &oLayerOverride)
-    {
-        m_aoLayerOverrides.push_back(oLayerOverride);
-    }
+    void AddLayerOverride(const OGRLayerSchemaOverride &oLayerOverride);
 
     /**
      * Load an override schema from JSON string that follows OGR_SCHEMA specification.
@@ -371,10 +318,7 @@ class CPL_DLL OGRSchemaOverride
     bool LoadFromJSON(const std::string &osJSON,
                       bool bAllowGeometryFields = false);
 
-    const std::vector<OGRLayerSchemaOverride> &GetLayerOverrides() const
-    {
-        return m_aoLayerOverrides;
-    }
+    const std::vector<OGRLayerSchemaOverride> &GetLayerOverrides() const;
 
     bool IsValid() const;
 

@@ -17,6 +17,12 @@
 
 constexpr char OGR_SCHEMA_UNDEFINED_VALUE[] = "ogr_schema_undefined_value";
 
+void OGRSchemaOverride::AddLayerOverride(
+    const OGRLayerSchemaOverride &oLayerOverride)
+{
+    m_aoLayerOverrides.push_back(oLayerOverride);
+}
+
 bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON,
                                      bool bAllowGeometryFields)
 {
@@ -366,7 +372,9 @@ bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON,
                                 if (!osSRS.GetString("wkt").empty() ||
                                     !osSRS.GetString("projjson").empty())
                                 {
-                                    OGRSpatialReference poSRS;
+                                    OGRSpatialReference oSRS;
+                                    oSRS.SetAxisMappingStrategy(
+                                        OAMS_TRADITIONAL_GIS_ORDER);
                                     std::string srs;
                                     if (const auto wkt = osSRS.GetString("wkt");
                                         !wkt.empty())
@@ -382,7 +390,7 @@ bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON,
 
                                     if (!srs.empty())
                                     {
-                                        if (poSRS.SetFromUserInput(
+                                        if (oSRS.SetFromUserInput(
                                                 srs.c_str()) != OGRERR_NONE)
                                         {
                                             CPLError(CE_Failure,
@@ -393,7 +401,7 @@ bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON,
                                                      osGeomFieldName.c_str());
                                             return false;
                                         }
-                                        oGeomFieldOverride.SetSRS(poSRS);
+                                        oGeomFieldOverride.SetSRS(oSRS);
                                     }
                                     else
                                     {
@@ -451,6 +459,12 @@ bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON,
         CPLError(CE_Failure, CPLE_AppDefined, "SCHEMA info is invalid JSON");
         return false;
     }
+}
+
+const std::vector<OGRLayerSchemaOverride> &
+OGRSchemaOverride::GetLayerOverrides() const
+{
+    return m_aoLayerOverrides;
 }
 
 bool OGRSchemaOverride::IsValid() const
@@ -613,6 +627,83 @@ OGRSchemaOverride::GetLayerOverride(const std::string &osLayerName) const
     return emptyOverride;
 }
 
+void OGRLayerSchemaOverride::SetLayerName(const std::string &osLayerName)
+{
+    m_osLayerName = osLayerName;
+}
+
+void OGRLayerSchemaOverride::AddNamedFieldOverride(
+    const std::string &osFieldName, const OGRFieldDefnOverride &oFieldOverride)
+{
+    m_oNamedFieldOverrides[osFieldName] = oFieldOverride;
+}
+
+void OGRLayerSchemaOverride::AddUnnamedFieldOverride(
+    const OGRFieldDefnOverride &oFieldOverride)
+{
+    m_aoUnnamedFieldOverrides.push_back(oFieldOverride);
+}
+
+const std::string &OGRLayerSchemaOverride::GetLayerName() const
+{
+    return m_osLayerName;
+}
+
+const std::map<std::string, OGRFieldDefnOverride> &
+OGRLayerSchemaOverride::GetNamedFieldOverrides() const
+{
+    return m_oNamedFieldOverrides;
+}
+
+const std::vector<OGRFieldDefnOverride> &
+OGRLayerSchemaOverride::GetUnnamedFieldOverrides() const
+{
+    return m_aoUnnamedFieldOverrides;
+}
+
+void OGRLayerSchemaOverride::AddGeometryFieldOverride(
+    const OGRGeomFieldDefnOverride &oGeomFieldOverride)
+{
+    m_aoGeomFieldOverrides.push_back(oGeomFieldOverride);
+}
+
+const std::vector<OGRGeomFieldDefnOverride> &
+OGRLayerSchemaOverride::GetGeometryFieldOverrides() const
+{
+    return m_aoGeomFieldOverrides;
+}
+
+std::vector<OGRFieldDefn> OGRLayerSchemaOverride::GetFieldDefinitions() const
+{
+    std::vector<OGRFieldDefn> ret;
+    for (const auto &kv : m_oNamedFieldOverrides)
+    {
+        ret.push_back(kv.second.ToFieldDefn(kv.first));
+    }
+    return ret;
+}
+
+std::vector<OGRGeomFieldDefn>
+OGRLayerSchemaOverride::GetGeomFieldDefinitions() const
+{
+    std::vector<OGRGeomFieldDefn> ret;
+    for (const auto &oGeomFieldOverride : m_aoGeomFieldOverrides)
+    {
+        ret.push_back(oGeomFieldOverride.ToGeometryFieldDefn("geom"));
+    }
+    return ret;
+}
+
+bool OGRLayerSchemaOverride::IsFullOverride() const
+{
+    return m_bIsFullOverride;
+}
+
+void OGRLayerSchemaOverride::SetFullOverride(bool bIsFullOverride)
+{
+    m_bIsFullOverride = bIsFullOverride;
+}
+
 bool OGRLayerSchemaOverride::IsValid() const
 {
     bool isValid =
@@ -629,6 +720,12 @@ bool OGRLayerSchemaOverride::IsValid() const
         }
     }
     return isValid;
+}
+
+bool OGRLayerSchemaOverride::empty() const
+{
+    return m_osLayerName.empty() && m_oNamedFieldOverrides.empty() &&
+           m_aoUnnamedFieldOverrides.empty() && !m_bIsFullOverride;
 }
 
 bool OGRFieldDefnOverride::IsValid() const
