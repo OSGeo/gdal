@@ -1075,15 +1075,17 @@ GDALDataset *CreateCopy(const char* pszFilename,
                         GDALProgressFunc pfnProgress,
                         void* pProgressData)
 {
-    if (!pszFilename || !poSrcDS)
+    const int nBands = poSrcDS->GetRasterCount();
+    if (nBands < 1 || nBands > 4)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ESRIC CreateCopy: invalid arguments");
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ESRIC: source must have 1 to 4 bands, got %d", nBands);
         return nullptr;
     }
 
     CPLError(CE_Failure, CPLE_NotSupported,
-             "ESRIC CreateCopy: not yet implemented");
+             "ESRIC: CreateCopy not yet implemented");
+
     return nullptr;
 }
 
