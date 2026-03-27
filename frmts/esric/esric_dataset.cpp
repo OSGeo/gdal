@@ -21,6 +21,7 @@
 #include "gdal_proxy.h"
 #include "gdal_utils.h"
 #include "cpl_vsi_virtual.h"
+#include "tilematrixset.hpp"
 
 using namespace std;
 
@@ -1082,6 +1083,60 @@ GDALDataset *CreateCopy(const char* pszFilename,
                  "ESRIC: source must have 1 to 4 bands, got %d", nBands);
         return nullptr;
     }
+
+    // Detect tiling scheme from source SRS
+    const OGRSpatialReference *poSrcSRS = poSrcDS->GetSpatialRef();
+    int nEPSGCode = 0;
+    if (poSrcSRS)
+    {
+        OGRSpatialReference oSRS(*poSrcSRS);
+        oSRS.AutoIdentifyEPSG();
+        const char *pszAuthName = oSRS.GetAuthorityName(nullptr);
+        const char *pszAuthCode = oSRS.GetAuthorityCode(nullptr);
+        if (pszAuthName && EQUAL(pszAuthName, "EPSG") && pszAuthCode)
+            nEPSGCode = atoi(pszAuthCode);
+    }
+
+    if (nEPSGCode != 3857 && nEPSGCode != 4326)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ESRIC: SRS is limited to EPSG:3857 (Web Mercator) or "
+                 "EPSG:4326 (WGS84 Geographic)");
+        return nullptr;
+    }
+
+    // Get the tiling scheme definition.
+    // TODO: Can we support custom tiling schemes?
+    const auto poTMS = gdal::TileMatrixSet::parse(
+        (nEPSGCode == 3857) ? "GoogleMapsCompatible" : "WorldCRS84Quad");
+    if (!poTMS)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ESRIC: failed to determine SRS definition");
+        return nullptr;
+    }
+    const auto &aoTMList = poTMS->tileMatrixList();
+
+    // Determine finest LOD based on source pixel size.
+    // TODO: Add creation options to allow specifying min/maxLOD
+    GDALGeoTransform gt;
+    poSrcDS->GetGeoTransform(gt);
+    const double dfSrcPixelSize = std::abs(gt.xscale);
+
+    int nMaxLOD = 0;
+    for (int i = 0; i < static_cast<int>(aoTMList.size()); i++)
+    {
+        if (aoTMList[i].mResX >= dfSrcPixelSize)
+        {
+            nMaxLOD = i;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    CPLDebug("ESRIC", "Writing LODs 0 to %d", nMaxLOD);
 
     CPLError(CE_Failure, CPLE_NotSupported,
              "ESRIC: CreateCopy not yet implemented");
