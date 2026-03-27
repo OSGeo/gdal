@@ -3625,7 +3625,7 @@ worldfile
 worldfiles
 WriteArray
 WriteArrowBatch
-wwith
+with
 www
 Wx
 xA
