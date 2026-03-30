@@ -233,6 +233,11 @@ jobs:
 
       - name: Save build cache
         uses: actions/cache/save@v3
+        # Do not write to cache on pull_request events to prevent cache poisoning.
+        # Fork PRs can otherwise overwrite shared cache keys used by main branch runs
+        # and as we have "packages: write" that could potentially lead to compromising
+        # our gdal-deps Docker images.
+        if: github.event_name != 'pull_request'
         with:
           path: ${{ github.workspace }}/.ccache
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
