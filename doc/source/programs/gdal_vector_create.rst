@@ -37,7 +37,6 @@ The following options are available:
 Program-Specific Options
 ------------------------
 
-
 .. option:: --output-layer <OUTPUT-LAYER>
 
     Output layer name.
@@ -91,13 +90,6 @@ Program-Specific Options
     PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
 
     Mutually exclusive with :option:`--schema` and with :option:`--like`.
-
-.. option:: --output-layer <OUTPUT-LAYER>
-
-    Defined the output layer name.
-
-    This argument is only supported in case of single layer creation and it allows
-    to define or override the name of the created layer.
 
 .. option:: --geometry-type <GEOMETRY-TYPE>
 
