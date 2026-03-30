@@ -173,7 +173,8 @@ void GDALVectorPipelineAlgorithm::RegisterAlgorithms(
         addSuffixIfNeeded(GDALVectorClipAlgorithm::NAME));
     registry.Register<GDALVectorDissolveAlgorithm>();
 
-    registry.Register<GDALVectorCreateAlgorithm>();
+    registry.Register<GDALVectorCreateAlgorithm>(
+        addSuffixIfNeeded(GDALVectorCreateAlgorithm::NAME));
 
     registry.Register<GDALVectorEditAlgorithm>(
         addSuffixIfNeeded(GDALVectorEditAlgorithm::NAME));
