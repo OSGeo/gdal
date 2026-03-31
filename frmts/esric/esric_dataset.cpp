@@ -1154,6 +1154,21 @@ GDALDataset *CreateCopy(const char* pszFilename,
         return nullptr;
     }
 
+    // Iterate LODs from finest to coarsest
+    for (int iLOD = nMaxLOD; iLOD >= 0; iLOD--)
+    {
+        // Create LOD subdirectory
+        const std::string osLODDir =
+            CPLSPrintf("%s/tile/L%02d", osTempDir.c_str(), iLOD);
+        if (VSIMkdirRecursive(osLODDir.c_str(), 0755) != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "ESRIC: Failed to create LOD directory %s", osLODDir.c_str());
+            VSIRmdirRecursive(osTempDir.c_str());
+            return nullptr;
+        }
+    }
+
     CPLError(CE_Failure, CPLE_NotSupported,
              "ESRIC: CreateCopy not yet implemented");
 
