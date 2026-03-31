@@ -1076,6 +1076,9 @@ GDALDataset *CreateCopy(const char* pszFilename,
                         GDALProgressFunc pfnProgress,
                         void* pProgressData)
 {
+    if (!pfnProgress)
+        pfnProgress = GDALDummyProgress;
+
     const int nBands = poSrcDS->GetRasterCount();
     if (nBands < 1 || nBands > 4)
     {
@@ -1137,6 +1140,10 @@ GDALDataset *CreateCopy(const char* pszFilename,
     }
 
     CPLDebug("ESRIC", "Writing LODs 0 to %d", nMaxLOD);
+
+    // Parse creation options
+    const char *pszFormat =
+        CSLFetchNameValueDef(papszOptions, "TILE_FORMAT", "JPEG");
 
     CPLError(CE_Failure, CPLE_NotSupported,
              "ESRIC: CreateCopy not yet implemented");
