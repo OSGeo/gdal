@@ -1145,6 +1145,15 @@ GDALDataset *CreateCopy(const char* pszFilename,
     const char *pszFormat =
         CSLFetchNameValueDef(papszOptions, "TILE_FORMAT", "JPEG");
 
+    // Create temp directory for bundle files
+    const std::string osTempDir = CPLGenerateTempFilenameSafe("esric_tiles");
+    if (VSIMkdirRecursive(osTempDir.c_str(), 0755) != 0)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "ESRIC: Failed to create temp directory %s", osTempDir.c_str());
+        return nullptr;
+    }
+
     CPLError(CE_Failure, CPLE_NotSupported,
              "ESRIC: CreateCopy not yet implemented");
 
