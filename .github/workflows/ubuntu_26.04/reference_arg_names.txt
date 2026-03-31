@@ -269,6 +269,7 @@ resume
 return-code
 scale
 scale-axes
+schema
 scheme
 sd-filename
 side
