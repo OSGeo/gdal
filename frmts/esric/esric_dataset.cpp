@@ -1154,9 +1154,48 @@ GDALDataset *CreateCopy(const char* pszFilename,
         return nullptr;
     }
 
+    // Band count: JPEG requires 3, PNG keeps source bands
+    const int nCodecBands = EQUAL(pszFormat, "JPEG")
+                                ? 3
+                                : nBands;
+    const int nTileSize = aoTMList[0].mTileWidth;
+
+    // Source raster extent (from geotransform)
+    const double dfSrcMinX = gt[0];
+    const double dfSrcMaxY = gt[3];
+    const double dfSrcMaxX = gt[0] + poSrcDS->GetRasterXSize() * gt[1];
+    const double dfSrcMinY = gt[3] + poSrcDS->GetRasterYSize() * gt[5];
+
+    // Tile buffer: nTileSize x nTileSize x nCodecBands bytes
+    const size_t nTileBufSize =
+        static_cast<size_t>(nTileSize) * nTileSize * nCodecBands;
+    std::vector<GByte> abyTileBuf(nTileBufSize);
+    std::vector<GByte> abyEncoded;
+
     // Iterate LODs from finest to coarsest
     for (int iLOD = nMaxLOD; iLOD >= 0; iLOD--)
     {
+        const auto &oTM = aoTMList[iLOD];
+        const double dfRes = oTM.mResX;
+        const double dfTileGeo = nTileSize * dfRes;
+        const double dfOriginX = oTM.mTopLeftX;
+        const double dfOriginY = oTM.mTopLeftY;
+
+        // Tile grid range covering the source extent
+        int nColMin = static_cast<int>(
+            std::floor((dfSrcMinX - dfOriginX) / dfTileGeo));
+        int nColMax = static_cast<int>(
+            std::floor((dfSrcMaxX - dfOriginX) / dfTileGeo));
+        int nRowMin = static_cast<int>(
+            std::floor((dfOriginY - dfSrcMaxY) / dfTileGeo));
+        int nRowMax = static_cast<int>(
+            std::floor((dfOriginY - dfSrcMinY) / dfTileGeo));
+
+        nColMin = std::max(nColMin, 0);
+        nRowMin = std::max(nRowMin, 0);
+        nColMax = std::min(nColMax, oTM.mMatrixWidth - 1);
+        nRowMax = std::min(nRowMax, oTM.mMatrixHeight - 1);
+
         // Create LOD subdirectory
         const std::string osLODDir =
             CPLSPrintf("%s/tile/L%02d", osTempDir.c_str(), iLOD);
