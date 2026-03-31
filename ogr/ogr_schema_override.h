@@ -313,7 +313,7 @@ class CPL_DLL OGRSchemaOverride
      * Load an override schema from JSON string that follows OGR_SCHEMA specification.
      * @param osJSON JSON string
      * @param bAllowGeometryFields Whether to allow a geometry fields in the JSON (normally not overrideable but allowed if the schema is applied to a dataset that doesn't have any geometry field, so that it can be used to create a geometry field in that case)
-     * @return
+     * @return TRUE if the JSON was successfully parsed and the schema override is valid, FALSE otherwise
      */
     bool LoadFromJSON(const std::string &osJSON,
                       bool bAllowGeometryFields = false);
