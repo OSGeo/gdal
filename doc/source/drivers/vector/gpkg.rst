@@ -810,7 +810,7 @@ Examples
 
    .. code-block:: bash
 
-      ogr2ogr -f GPKG filename.gpkg abc.shp
+      ogr2ogr filename.gpkg abc.shp
 
 .. example::
    :title: Updating an existing GeoPackage file
@@ -833,7 +833,7 @@ Examples
 
    .. code-block:: bash
 
-      ogr2ogr -f GPKG filename.gpkg ./path/to/dir
+      ogr2ogr filename.gpkg ./path/to/dir
 
 .. example::
    :title: Converting  a PostGIS database into a GeoPackage
@@ -844,7 +844,7 @@ Examples
 
    .. code-block:: bash
 
-      ogr2ogr -f GPKG filename.gpkg PG:'dbname=mydatabase host=localhost'
+      ogr2ogr filename.gpkg PG:'dbname=mydatabase host=localhost'
 
 .. example::
    :title: Performing a join between two GeoPackage databases
