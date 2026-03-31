@@ -374,6 +374,7 @@ def test_ogr_schema(tmp_vsimem):
     ), "Unexpected CRS with --like"
 
 
+@pytest.mark.require_driver("GPKG")
 def test_aspatial_layer(tmp_vsimem):
     alg = get_create_alg()
 
