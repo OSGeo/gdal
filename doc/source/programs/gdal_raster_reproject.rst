@@ -342,7 +342,7 @@ Examples
    that is not recognized by GDAL, but that can be reprojected to the known ESRI:54052 code.
 
    Using ``"PROFILE=BASELINE"`` creates a :term:`PAM` file with a top-level ``ESRI:54052`` code,
-   rather than using the embedded metadata tags to define the CRS. See :ref:`GTiff <raster.gtiff>` ```PROFILE``.
+   rather than using the embedded metadata tags to define the CRS. See :ref:`GTiff <raster.gtiff>` ``PROFILE``.
 
    .. code-block:: bash
 
