@@ -29,6 +29,11 @@ CPL_C_START
 void CPL_DLL GDALRegister_ESRIC();
 CPL_C_END
 
+constexpr int WBSZ = 128;              // tiles per bundle dimension
+constexpr int WBSZ2 = WBSZ * WBSZ;     // 16384 tiles per bundle
+constexpr int WIDXSZ = WBSZ2 * 8;      // 131072 byte index
+constexpr int WHEADER = 64;            // bundle header size
+
 namespace ESRIC
 {
 
@@ -1065,6 +1070,123 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 
     return CE_None;
 }  // IReadBlock
+
+/************************************************************************/
+/*                           BundleWriter                               */
+/************************************************************************/
+
+// Compact Cache V2 bundle writer.
+// See https://github.com/Esri/raster-tiles-compactcache
+
+struct BundleWriter
+{
+    std::string osTempPath{};
+    VSIVirtualHandleUniquePtr fp{};
+    std::vector<GUInt64> aIndex{};
+    GUInt64 nCurrentOffset = 0;
+    GUInt32 nMaxTileSize = 0;
+
+    bool Init(const std::string &osPath)
+    {
+        osTempPath = osPath;
+        fp.reset(VSIFOpenL(osPath.c_str(), "wb"));
+        if (!fp)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to create bundle %s",
+                     osPath.c_str());
+            return false;
+        }
+
+        GByte abyHeader[WHEADER] = {};
+        auto setU32 = [&](int off, GUInt32 v)
+        {
+            CPL_LSBPTR32(&v);
+            memcpy(abyHeader + off, &v, 4);
+        };
+        auto setU64 = [&](int off, GUInt64 v)
+        {
+            CPL_LSBPTR64(&v);
+            memcpy(abyHeader + off, &v, 8);
+        };
+
+        // Write 64-byte header (little-endian)
+        setU32(0, 3);                         // version 32-byte
+        setU32(4, WBSZ2);                     // record count 32-byte
+        setU32(8, 0);                         // maxRecordSize 32-byte
+        setU32(12, 5);                        // offset byte count 32-byte
+        setU64(16, 0);                        // slack space 64-byte
+        setU64(24, WHEADER + WIDXSZ);         // file size (initial) 64-byte
+        setU64(32, 40);                       // user header offset 64-byte
+        setU32(40, 20 + WIDXSZ);              // user header size 32-byte
+        setU32(44, 3);                        // legacy 32-byte
+        setU32(48, 16);                       // legacy 32-byte
+        setU32(52, WBSZ2);                    // legacy 32-byte
+        setU32(56, 5);                        // legacy 32-byte
+        setU32(60, WIDXSZ);                   // index size 32-byte
+        fp->Write(abyHeader, 1, WHEADER);
+
+        // Write empty index
+        aIndex.assign(WBSZ2, 0);
+        std::vector<GByte> zeros(WIDXSZ, 0);
+        fp->Write(zeros.data(), 1, WIDXSZ);
+
+        nCurrentOffset = WHEADER + WIDXSZ;
+        nMaxTileSize = 0;
+        return true;
+    }
+
+    bool WriteTile(int nRow, int nCol, const GByte *pabyData, GUInt32 nSize)
+    {
+        if (!fp || nSize == 0)
+            return false;
+
+        // Write 4-byte LE size prefix followed by tile data
+        GUInt32 nSizeLE = nSize;
+        CPL_LSBPTR32(&nSizeLE);
+        fp->Write(&nSizeLE, 1, 4);
+        fp->Write(pabyData, 1, nSize);
+
+        // Index offset points to the tile data, not the 4-byte size prefix
+        nCurrentOffset += 4;
+        const int nIdx = (nRow % WBSZ) * WBSZ + (nCol % WBSZ);
+        aIndex[nIdx] = nCurrentOffset | (static_cast<GUInt64>(nSize) << 40);
+        nCurrentOffset += nSize;
+
+        if (nSize > nMaxTileSize)
+            nMaxTileSize = nSize;
+        return true;
+    }
+
+    bool Finalize()
+    {
+        if (!fp)
+            return false;
+
+        // Update maxRecordSize at offset 8
+        GUInt32 nMaxLE = nMaxTileSize;
+        CPL_LSBPTR32(&nMaxLE);
+        fp->Seek(static_cast<vsi_l_offset>(8), SEEK_SET);
+        fp->Write(&nMaxLE, 1, 4);
+
+        // Update file size at offset 24
+        GUInt64 nFileSizeLE = nCurrentOffset;
+        CPL_LSBPTR64(&nFileSizeLE);
+        fp->Seek(static_cast<vsi_l_offset>(24), SEEK_SET);
+        fp->Write(&nFileSizeLE, 1, 8);
+
+        // Write completed index at offset 64
+        fp->Seek(static_cast<vsi_l_offset>(WHEADER), SEEK_SET);
+        if constexpr (!CPL_IS_LSB)
+        {
+            for (auto &v : aIndex)
+                CPL_LSBPTR64(&v);
+        }
+        fp->Write(aIndex.data(), 8, WBSZ2);
+
+        fp.reset();
+        return true;
+    }
+};
 
 /************************************************************************/
 /*                            CreateCopy()                              */
