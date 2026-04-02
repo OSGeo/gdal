@@ -213,7 +213,7 @@ Reprojecting vector data is handled by :ref:`gdal_vector_reproject`. We can repr
     gdal vector reproject --dst-crs=EPSG:3857 natural_earth_vector.gpkg natural_earth_vector_3857.gpkg --overwrite
 
 
-If you want to reproject just a single layer, you can specify the layer name with the ``--layer`` option. For example, to reproject just the "ne_10m_admin_0_countries" layer:
+If you want to reproject just a single layer, you can specify the layer name with the ``--layer`` option. For example, to reproject just the ``ne_10m_admin_0_countries`` layer:
 
 .. code-block:: bash
 
