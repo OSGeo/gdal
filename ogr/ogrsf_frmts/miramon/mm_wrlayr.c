@@ -2140,6 +2140,7 @@ static int MMCloseArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     ret_code = 0;
 end_label:
     fclose_and_nullify(&pMMArcLayer->pF);
+    fclose_and_nullify(&pMMArcLayer->pF3d);
 
     fclose_and_nullify(&pMMArcLayer->pFAL);
 
