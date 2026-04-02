@@ -89,7 +89,7 @@ a command-line tool to display and validate a CRS:
     gdalsrsinfo -V IAU_2015:30100
 
 GDAL can work with the many different CRS formats supported by PROJ, see :example:`gdal-vector-reproject-crs`. See the full list
-of options at the `projinfo <https://proj.org/en/stable/apps/projinfo.html>` page.
+of options at the `projinfo <https://proj.org/en/stable/apps/projinfo.html>`__ page.
 
 Now let's reproject the raster dataset to Web Mercator, and look at the projection information.
 
