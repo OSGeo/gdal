@@ -17,9 +17,12 @@
 #include <cassert>
 #include <vector>
 #include <algorithm>
+#include <map>
 #include "cpl_json.h"
+#include "gdal_alg.h"
 #include "gdal_proxy.h"
 #include "gdal_utils.h"
+#include "gdalwarper.h"
 #include "cpl_vsi_virtual.h"
 #include "tilematrixset.hpp"
 
@@ -1276,59 +1279,105 @@ GDALDataset *CreateCopy(const char* pszFilename,
         return nullptr;
     }
 
-    // Band count: JPEG requires 3, PNG keeps source bands
-    const int nCodecBands = EQUAL(pszFormat, "JPEG")
-                                ? 3
-                                : nBands;
-    const int nTileSize = aoTMList[0].mTileWidth;
+    // Compute source extent in target CRS
+    OGRSpatialReference oTargetSRS;
+    oTargetSRS.importFromEPSG(nEPSGCode);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    // Source raster extent (from geotransform)
-    const double dfSrcMinX = gt[0];
-    const double dfSrcMaxY = gt[3];
-    const double dfSrcMaxX = gt[0] + poSrcDS->GetRasterXSize() * gt[1];
-    const double dfSrcMinY = gt[3] + poSrcDS->GetRasterYSize() * gt[5];
+    char *pszTargetWKTRaw = nullptr;
+    oTargetSRS.exportToWkt(&pszTargetWKTRaw);
+    const std::string osTargetWKT(pszTargetWKTRaw);
+    CPLFree(pszTargetWKTRaw);
 
-    // Tile buffer: nTileSize x nTileSize x nCodecBands bytes
-    const size_t nTileBufSize =
-        static_cast<size_t>(nTileSize) * nTileSize * nCodecBands;
-    std::vector<GByte> abyTileBuf(nTileBufSize);
-    std::vector<GByte> abyEncoded;
+    CPLStringList aosTO;
+    aosTO.SetNameValue("DST_SRS", osTargetWKT.c_str());
 
-    // Iterate LODs from finest to coarsest
-    for (int iLOD = nMaxLOD; iLOD >= 0; iLOD--)
+    void *hTransformArg = GDALCreateGenImgProjTransformer2(
+        GDALDataset::ToHandle(poSrcDS), nullptr, aosTO.List());
+    if (!hTransformArg)
+    {
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    double adfDstGT[6] = {};
+    int nDstPixels = 0;
+    int nDstLines = 0;
+    double adfExtent[4] = {};  // minx, miny, maxx, maxy
+    CPLErr eErr = GDALSuggestedWarpOutput2(
+        GDALDataset::ToHandle(poSrcDS), GDALGenImgProjTransform,
+        hTransformArg, adfDstGT, &nDstPixels, &nDstLines, adfExtent, 0);
+    GDALDestroyGenImgProjTransformer(hTransformArg);
+    hTransformArg = nullptr;
+
+    if (eErr != CE_None)
+    {
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    // Get tile encoder driver
+    const bool bJPEG = EQUAL(pszFormat, "JPEG");
+    const int nTileBands = bJPEG ? 3 : 4;
+    GDALDriverH hTileDriver = GDALGetDriverByName(bJPEG ? "JPEG" : "PNG");
+    if (!hTileDriver)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ESRIC: %s driver not available", bJPEG ? "JPEG" : "PNG");
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    // Generate tiles for each LOD
+    int nTilesWritten = 0;
+    eErr = CE_None;
+
+    for (int iLOD = 0; iLOD <= nMaxLOD && eErr == CE_None; iLOD++)
     {
         const auto &oTM = aoTMList[iLOD];
-        const double dfRes = oTM.mResX;
-        const double dfTileGeo = nTileSize * dfRes;
-        const double dfOriginX = oTM.mTopLeftX;
-        const double dfOriginY = oTM.mTopLeftY;
+        const int nTileW = oTM.mTileWidth;
+        const int nTileH = oTM.mTileHeight;
+        const double dfResX = oTM.mResX;
+        const double dfResY = oTM.mResY;
+        const double dfTileExtX = nTileW * dfResX;
+        const double dfTileExtY = nTileH * dfResY;
+        const size_t nTilePixels =
+            static_cast<size_t>(nTileW) * nTileH;
 
-        // Tile grid range covering the source extent
-        int nColMin = static_cast<int>(
-            std::floor((dfSrcMinX - dfOriginX) / dfTileGeo));
-        int nColMax = static_cast<int>(
-            std::floor((dfSrcMaxX - dfOriginX) / dfTileGeo));
-        int nRowMin = static_cast<int>(
-            std::floor((dfOriginY - dfSrcMaxY) / dfTileGeo));
-        int nRowMax = static_cast<int>(
-            std::floor((dfOriginY - dfSrcMinY) / dfTileGeo));
+        // Compute tile range overlapping source extent
+        const int nMinCol = std::max(
+            0, static_cast<int>(
+                   floor((adfExtent[0] - oTM.mTopLeftX) / dfTileExtX)));
+        const int nMaxCol = std::min(
+            oTM.mMatrixWidth - 1,
+            static_cast<int>(
+                floor((adfExtent[2] - oTM.mTopLeftX) / dfTileExtX)));
+        const int nMinRow = std::max(
+            0, static_cast<int>(
+                   floor((oTM.mTopLeftY - adfExtent[3]) / dfTileExtY)));
+        const int nMaxRow = std::min(
+            oTM.mMatrixHeight - 1,
+            static_cast<int>(
+                floor((oTM.mTopLeftY - adfExtent[1]) / dfTileExtY)));
 
-        nColMin = std::max(nColMin, 0);
-        nRowMin = std::max(nRowMin, 0);
-        nColMax = std::min(nColMax, oTM.mMatrixWidth - 1);
-        nRowMax = std::min(nRowMax, oTM.mMatrixHeight - 1);
+        if (nMinCol > nMaxCol || nMinRow > nMaxRow)
+            continue;
 
         // Create LOD subdirectory
-        const std::string osLODDir =
-            CPLSPrintf("%s/tile/L%02d", osTempDir.c_str(), iLOD);
-        if (VSIMkdirRecursive(osLODDir.c_str(), 0755) != 0)
+        const std::string osLODDir = CPLFormFilenameSafe(
+            osTempDir.c_str(), CPLSPrintf("L%02d", iLOD), nullptr);
+        if (VSIMkdir(osLODDir.c_str(), 0755) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "ESRIC: Failed to create LOD directory %s", osLODDir.c_str());
-            VSIRmdirRecursive(osTempDir.c_str());
-            return nullptr;
+                     "ESRIC: failed to create directory %s",
+                     osLODDir.c_str());
+            eErr = CE_Failure;
+            break;
         }
     }
+
+    // Clean up temp directory
+    VSIRmdirRecursive(osTempDir.c_str());
 
     CPLError(CE_Failure, CPLE_NotSupported,
              "ESRIC: CreateCopy not yet implemented");
