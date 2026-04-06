@@ -54,7 +54,7 @@ GDALRasterUpdateAlgorithm::GDALRasterUpdateAlgorithm(bool standaloneStep)
         AddRasterHiddenInputDatasetArg();
     }
 
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER)
+    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER | GDAL_OF_UPDATE)
         .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
 
     m_update = true;
