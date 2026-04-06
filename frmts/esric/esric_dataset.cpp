@@ -1651,7 +1651,10 @@ GDALDataset *CreateCopy(const char* pszFilename,
                     }
                 }
 
-                CPLFree(pabyBlob);
+                if(eErr == CE_None)
+                {
+                    CPLFree(pabyBlob);
+                }
 
                 nTilesWritten++;
                 if (!pfnProgress(
