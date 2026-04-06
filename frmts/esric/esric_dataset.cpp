@@ -1328,6 +1328,44 @@ GDALDataset *CreateCopy(const char* pszFilename,
         return nullptr;
     }
 
+    // Count total tiles
+    int nTotalTiles = 0;
+    for (int iLOD = 0; iLOD <= nMaxLOD; iLOD++)
+    {
+        const auto &oTM = aoTMList[iLOD];
+        const double dfTileExtX = oTM.mTileWidth * oTM.mResX;
+        const double dfTileExtY = oTM.mTileHeight * oTM.mResY;
+
+        const int nMinCol = std::max(
+            0, static_cast<int>(
+                   floor((adfExtent[0] - oTM.mTopLeftX) / dfTileExtX)));
+        const int nMaxCol = std::min(
+            oTM.mMatrixWidth - 1,
+            static_cast<int>(
+                floor((adfExtent[2] - oTM.mTopLeftX) / dfTileExtX)));
+        const int nMinRow = std::max(
+            0, static_cast<int>(
+                   floor((oTM.mTopLeftY - adfExtent[3]) / dfTileExtY)));
+        const int nMaxRow = std::min(
+            oTM.mMatrixHeight - 1,
+            static_cast<int>(
+                floor((oTM.mTopLeftY - adfExtent[1]) / dfTileExtY)));
+
+        if (nMinCol <= nMaxCol && nMinRow <= nMaxRow)
+            nTotalTiles +=
+                (nMaxCol - nMinCol + 1) * (nMaxRow - nMinRow + 1);
+    }
+
+    if (nTotalTiles == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ESRIC: source extent does not overlap any tiles");
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    CPLDebug("ESRIC", "Total tiles to process: %d", nTotalTiles);
+
     // Generate tiles for each LOD
     int nTilesWritten = 0;
     eErr = CE_None;
@@ -1374,6 +1412,268 @@ GDALDataset *CreateCopy(const char* pszFilename,
             eErr = CE_Failure;
             break;
         }
+
+        // Build warped VRT covering the tiles at this LOD
+        const double dfAlignedMinX =
+            oTM.mTopLeftX + nMinCol * dfTileExtX;
+        const double dfAlignedMaxY =
+            oTM.mTopLeftY - nMinRow * dfTileExtY;
+        const int nPixelsX = (nMaxCol - nMinCol + 1) * nTileW;
+        const int nPixelsY = (nMaxRow - nMinRow + 1) * nTileH;
+
+        double adfLODGT[6] = {dfAlignedMinX, dfResX, 0.0,
+                               dfAlignedMaxY, 0.0,   -dfResY};
+
+        void *hLODTransform = GDALCreateGenImgProjTransformer2(
+            GDALDataset::ToHandle(poSrcDS), nullptr, aosTO.List());
+        if (!hLODTransform)
+        {
+            eErr = CE_Failure;
+            break;
+        }
+        GDALSetGenImgProjTransformerDstGeoTransform(hLODTransform,
+                                                    adfLODGT);
+
+        void *hApproxTransform = GDALCreateApproxTransformer(
+            GDALGenImgProjTransform, hLODTransform, 0.125);
+        GDALApproxTransformerOwnsSubtransformer(hApproxTransform, TRUE);
+
+        auto psWO = GDALCreateWarpOptions();
+        psWO->hSrcDS = GDALDataset::ToHandle(poSrcDS);
+        psWO->eResampleAlg = GRA_Bilinear;
+        psWO->eWorkingDataType = GDT_Byte;
+        psWO->nBandCount = nBands;
+        psWO->panSrcBands =
+            static_cast<int *>(CPLMalloc(sizeof(int) * nBands));
+        psWO->panDstBands =
+            static_cast<int *>(CPLMalloc(sizeof(int) * nBands));
+        for (int i = 0; i < nBands; i++)
+        {
+            psWO->panSrcBands[i] = i + 1;
+            psWO->panDstBands[i] = i + 1;
+        }
+        psWO->pTransformerArg = hApproxTransform;
+        psWO->pfnTransformer = GDALApproxTransform;
+        psWO->papszWarpOptions =
+            CSLSetNameValue(nullptr, "INIT_DEST", "0");
+
+        GDALDatasetH hWarpedDS = GDALCreateWarpedVRT(
+            GDALDataset::ToHandle(poSrcDS), nPixelsX, nPixelsY,
+            adfLODGT, psWO);
+        GDALDestroyWarpOptions(psWO);
+
+        if (!hWarpedDS)
+        {
+            GDALDestroyApproxTransformer(hApproxTransform);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ESRIC: failed to create warped VRT for LOD %d",
+                     iLOD);
+            eErr = CE_Failure;
+            break;
+        }
+
+        // Map of Bundle writers for this LOD. Key is the file path
+        std::map<std::string, BundleWriter> oBundles;
+
+        for (int nRow = nMinRow;
+             nRow <= nMaxRow && eErr == CE_None; nRow++)
+        {
+            for (int nCol = nMinCol;
+                 nCol <= nMaxCol && eErr == CE_None; nCol++)
+            {
+                const int nXOff = (nCol - nMinCol) * nTileW;
+                const int nYOff = (nRow - nMinRow) * nTileH;
+
+                // Read source bands
+                std::vector<GByte> abySrc(nTilePixels * nBands, 0);
+                if (GDALDatasetRasterIO(
+                        hWarpedDS, GF_Read, nXOff, nYOff, nTileW,
+                        nTileH, abySrc.data(), nTileW, nTileH,
+                        GDT_Byte, nBands, nullptr, 1, nTileW,
+                        static_cast<GSpacing>(nTilePixels)) != CE_None)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "ESRIC: failed to read tile data at "
+                             "LOD %d row %d col %d",
+                             iLOD, nRow, nCol);
+                    eErr = CE_Failure;
+                    break;
+                }
+
+                // Skip empty tiles
+                if (std::all_of(abySrc.begin(), abySrc.end(),
+                                [](GByte b)
+                {
+                    return b == 0;
+                }))
+                {
+                    nTilesWritten++;
+                    if (!pfnProgress(
+                        static_cast<double>(nTilesWritten) /
+                        nTotalTiles,
+                        "", pProgressData))
+                    {
+                        eErr = CE_Failure;
+                    }
+                    continue;
+                }
+
+                // Create MEM dataset and map source bands to tile bands
+                GDALDriverH hMemDrv = GDALGetDriverByName("MEM");
+                GDALDatasetH hMemDS =
+                    GDALCreate(hMemDrv, "", nTileW, nTileH, nTileBands,
+                               GDT_Byte, nullptr);
+
+                for (int iBand = 0; iBand < nTileBands; iBand++)
+                {
+                    GDALRasterBandH hBand =
+                        GDALGetRasterBand(hMemDS, iBand + 1);
+
+                    if (iBand < 3)
+                    {
+                        // RGB - pick source band index
+                        int nSrcIdx =
+                            (nBands >= 3)
+                                ? iBand
+                                : 0;  // Grey or Grey+Alpha -> replicate
+                        GDALRasterIO(
+                            hBand, GF_Write, 0, 0, nTileW, nTileH,
+                            abySrc.data() + nSrcIdx * nTilePixels,
+                            nTileW, nTileH, GDT_Byte, 0, 0);
+                    }
+                    else
+                    {
+                        // Alpha band (iBand == 3, PNG only)
+                        if (nBands == 2)
+                        {
+                            // Grey+Alpha
+                            GDALRasterIO(
+                                hBand, GF_Write, 0, 0, nTileW, nTileH,
+                                abySrc.data() + nTilePixels, nTileW,
+                                nTileH, GDT_Byte, 0, 0);
+                        }
+                        else if (nBands == 4)
+                        {
+                            // RGBA
+                            GDALRasterIO(
+                                hBand, GF_Write, 0, 0, nTileW, nTileH,
+                                abySrc.data() + 3 * nTilePixels,
+                                nTileW, nTileH, GDT_Byte, 0, 0);
+                        }
+                        else
+                        {
+                            // No source alpha. Fill opaque
+                            std::vector<GByte> abyAlpha(nTilePixels,
+                                                        255);
+                            GDALRasterIO(hBand, GF_Write, 0, 0,
+                                         nTileW, nTileH,
+                                         abyAlpha.data(), nTileW,
+                                         nTileH, GDT_Byte, 0, 0);
+                        }
+                    }
+                }
+
+                // Set color interpretation for correct encoding
+                if (nTileBands >= 3)
+                {
+                    GDALSetRasterColorInterpretation(
+                        GDALGetRasterBand(hMemDS, 1), GCI_RedBand);
+                    GDALSetRasterColorInterpretation(
+                        GDALGetRasterBand(hMemDS, 2), GCI_GreenBand);
+                    GDALSetRasterColorInterpretation(
+                        GDALGetRasterBand(hMemDS, 3), GCI_BlueBand);
+                }
+                if (nTileBands == 4)
+                    GDALSetRasterColorInterpretation(
+                        GDALGetRasterBand(hMemDS, 4), GCI_AlphaBand);
+
+                // Encode tile to JPEG/PNG
+                const std::string osMemFile(
+                    VSIMemGenerateHiddenFilename("esric_tile"));
+                GDALDatasetH hOutDS =
+                    GDALCreateCopy(hTileDriver, osMemFile.c_str(),
+                                   hMemDS, FALSE, nullptr, nullptr,
+                                   nullptr);
+                if (!hOutDS)
+                {
+                    GDALClose(hMemDS);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "ESRIC: failed to encode tile at "
+                             "LOD %d row %d col %d",
+                             iLOD, nRow, nCol);
+                    eErr = CE_Failure;
+                    break;
+                }
+                GDALClose(hOutDS);
+                GDALClose(hMemDS);
+
+                // Retrieve encoded blob
+                vsi_l_offset nBlobSize = 0;
+                GByte *pabyBlob = VSIGetMemFileBuffer(
+                    osMemFile.c_str(), &nBlobSize, TRUE);
+
+                if (pabyBlob && nBlobSize > 0)
+                {
+                    // Determine which bundle this tile belongs to
+                    const int nBundleRow = (nRow / WBSZ) * WBSZ;
+                    const int nBundleCol = (nCol / WBSZ) * WBSZ;
+                    const std::string osBundlePath = CPLSPrintf(
+                        "%s/R%04xC%04x.bundle", osLODDir.c_str(),
+                        nBundleRow, nBundleCol);
+
+                    // Get or create bundle writer
+                    auto oIt = oBundles.find(osBundlePath);
+                    if (oIt == oBundles.end())
+                    {
+                        auto oRes = oBundles.emplace(osBundlePath,
+                                                     BundleWriter());
+                        oIt = oRes.first;
+                        if (!oIt->second.Init(osBundlePath))
+                        {
+                            CPLFree(pabyBlob);
+                            eErr = CE_Failure;
+                            break;
+                        }
+                    }
+
+                    if (!oIt->second.WriteTile(
+                            nRow, nCol, pabyBlob,
+                            static_cast<GUInt32>(nBlobSize)))
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_FileIO,
+                            "ESRIC: failed to write tile to bundle "
+                            "at LOD %d row %d col %d",
+                            iLOD, nRow, nCol);
+                        CPLFree(pabyBlob);
+                        eErr = CE_Failure;
+                        break;
+                    }
+                }
+
+                CPLFree(pabyBlob);
+
+                nTilesWritten++;
+                if (!pfnProgress(
+                        static_cast<double>(nTilesWritten) /
+                            nTotalTiles,
+                        "", pProgressData))
+                {
+                    eErr = CE_Failure;
+                }
+            }
+        }
+
+        // Finalize all bundles for this LOD
+        for (auto &[osPath, oWriter] : oBundles)
+        {
+            oWriter.Finalize();
+        }
+
+        // VRTWarpedDataset::CloseDependentDatasets() destroys the
+        // transformer stored in the warper options, so we must not
+        // destroy it again here.
+        GDALClose(hWarpedDS);
     }
 
     // Clean up temp directory
