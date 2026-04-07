@@ -34,7 +34,8 @@ void GDALVectorOutputAbstractAlgorithm::AddAllOutputArgs()
         .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
                          {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
-        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
+        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT)
+        .SetOpenForUpdateIfAnyOf({"update", "append", "overwrite-layer"});
     AddCreationOptionsArg(&m_creationOptions);
     AddLayerCreationOptionsArg(&m_layerCreationOptions);
     AddOverwriteArg(&m_overwrite).SetMutualExclusionGroup("overwrite-update");

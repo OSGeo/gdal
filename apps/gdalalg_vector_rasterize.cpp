@@ -50,7 +50,8 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
             .SetMinCount(1)
             .SetMaxCount(1);
         AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER)
-            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
+            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT)
+            .SetOpenForUpdateIfAnyOf({"update", "add"});
         AddCreationOptionsArg(&m_creationOptions);
         AddOverwriteArg(&m_overwrite);
     }
