@@ -1192,6 +1192,129 @@ struct BundleWriter
 };
 
 /************************************************************************/
+/*                       BuildRootJSON()                               */
+/************************************************************************/
+
+static bool BuildRootJSON(
+    const CPLString &osPath,
+    const char* pszFilename,
+    const std::vector<gdal::TileMatrixSet::TileMatrix> &aoTMList,
+    int nMinLOD, int nMaxLOD, const char *pszFormat, int nQuality,
+    int nEPSGCode, const double adfExtent[4])
+{
+    CPLJSONDocument oDoc;
+    CPLJSONObject oRoot = oDoc.GetRoot();
+
+    // Use the base filename as the item name and title
+    const std::string osBaseName =
+        CPLGetBasenameSafe(pszFilename);
+
+    oRoot.Add("name", osBaseName);
+    oRoot.Add("version", "1.0"); // Current version based on https://github.com/Esri/tile-package-spec/blob/master/docs/root.md
+
+    oRoot.Add("tileBundlesPath", "tile");
+    oRoot.Add("minLOD", nMinLOD);
+    oRoot.Add("maxLOD", nMaxLOD);
+
+    // spatialReference
+    const auto addSR = [&](CPLJSONObject &oParent)
+    {
+        CPLJSONObject oSR;
+        oSR.Add("wkid", nEPSGCode);
+        oSR.Add("latestWkid", nEPSGCode);
+        oParent.Add("spatialReference", oSR);
+    };
+
+    addSR(oRoot);
+
+    // tileInfo: origin, tile size, LODs
+    const auto &oTM0 = aoTMList[0];
+    CPLJSONObject oTileInfo;
+    oTileInfo.Add("rows", oTM0.mTileWidth);
+    oTileInfo.Add("cols", oTM0.mTileWidth);
+    oTileInfo.Add("dpi", 96);
+
+    CPLJSONObject oOrigin;
+    oOrigin.Add("x", oTM0.mTopLeftX);
+    oOrigin.Add("y", oTM0.mTopLeftY);
+    oTileInfo.Add("origin", oOrigin);
+    addSR(oTileInfo);
+
+    CPLJSONArray oLods;
+    for (int i = nMinLOD; i <= nMaxLOD; i++)
+    {
+        const double dfRes = aoTMList[i].mResX;
+        CPLJSONObject oLod;
+        oLod.Add("level", i);
+        oLod.Add("resolution", dfRes);
+        oLods.Add(oLod);
+    }
+    oTileInfo.Add("lods", oLods);
+    oRoot.Add("tileInfo", oTileInfo);
+
+    // storageInfo
+    CPLJSONObject oStorage;
+    oStorage.Add("storageFormat", "esriMapCacheStorageModeCompactV2");
+    oStorage.Add("packetSize", WBSZ);
+    oRoot.Add("storageInfo", oStorage);
+
+    // tileImageInfo
+    CPLJSONObject oImageInfo;
+    oImageInfo.Add("format", pszFormat);
+    oImageInfo.Add("compression", nQuality);
+    oRoot.Add("tileImageInfo", oImageInfo);
+
+    // fullExtent / initialExtent
+    for (const char *pszKey : {"fullExtent", "initialExtent"})
+    {
+        CPLJSONObject oExt;
+        oExt.Add("xmin", adfExtent[0]);
+        oExt.Add("ymin", adfExtent[1]);
+        oExt.Add("xmax", adfExtent[2]);
+        oExt.Add("ymax", adfExtent[3]);
+        addSR(oExt);
+        oRoot.Add(pszKey, oExt);
+    }
+
+    return oDoc.Save(osPath);
+}
+
+/************************************************************************/
+/*                      BuildItemInfoJSON()                            */
+/************************************************************************/
+
+static bool BuildItemInfoJSON(const CPLString& osPath, const char* pszFilename)
+{
+    CPLJSONDocument oDoc;
+    CPLJSONObject oRoot = oDoc.GetRoot();
+
+    // Use the base filename as the item name and title
+    const std::string osBaseName =
+        CPLGetBasenameSafe(pszFilename);
+
+    oRoot.Add("name", osBaseName);
+    oRoot.Add("version", "1.0"); // Current version based on https://github.com/Esri/tile-package-spec/blob/master/docs/iteminfo.md
+
+    // TODO: Generate a UUID. How is this done elsewhere in gdal?
+    oRoot.Add("guid", "69d444a9-4ae1-4784-98be-000048230029");
+
+    // Unix time in milliseconds
+    oRoot.Add("created",
+              static_cast<GInt64>(time(nullptr)) * 1000);
+    oRoot.Add("title", osBaseName);
+    oRoot.Add("type", "Compact Tile Package");
+
+    // The following keywords are the minimum required to be recognized as a tile package
+    CPLJSONArray oKeywords;
+    oKeywords.Add("Compact Tile Package");
+    oKeywords.Add("Tile Package");
+    oKeywords.Add("tpkx");
+    oRoot.Add("typekeywords", oKeywords);
+
+    return oDoc.Save(osPath);
+}
+
+/************************************************************************/
 /*                            CreateCopy()                              */
 /************************************************************************/
 
