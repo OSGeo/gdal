@@ -1196,7 +1196,7 @@ struct BundleWriter
 /************************************************************************/
 
 static bool BuildRootJSON(
-    const CPLString &osPath,
+    const CPLString &tempDir,
     const char* pszFilename,
     const std::vector<gdal::TileMatrixSet::TileMatrix> &aoTMList,
     int nMinLOD, int nMaxLOD, const char *pszFormat, int nQuality,
@@ -1276,14 +1276,14 @@ static bool BuildRootJSON(
         oRoot.Add(pszKey, oExt);
     }
 
-    return oDoc.Save(osPath);
+    return oDoc.Save(tempDir + "/root.json");
 }
 
 /************************************************************************/
 /*                      BuildItemInfoJSON()                            */
 /************************************************************************/
 
-static bool BuildItemInfoJSON(const CPLString& osPath, const char* pszFilename)
+static bool BuildItemInfoJSON(const CPLString& tempDir, const char* pszFilename)
 {
     CPLJSONDocument oDoc;
     CPLJSONObject oRoot = oDoc.GetRoot();
@@ -1812,6 +1812,30 @@ GDALDataset *CreateCopy(const char* pszFilename,
         // transformer stored in the warper options, so we must not
         // destroy it again here.
         GDALClose(hWarpedDS);
+    }
+
+    // ----------------------------------------------------------------
+    // Write JSON metadata
+    // ----------------------------------------------------------------
+    if (eErr == CE_None)
+    {
+        if (!BuildRootJSON(osTempDir, pszFilename, aoTMList,
+                           0, nMaxLOD, pszFormat, 75,
+                           nEPSGCode, adfExtent))
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to write root.json");
+            eErr = CE_Failure;
+        }
+    }
+
+    if (eErr == CE_None)
+    {
+        if (!BuildItemInfoJSON(osTempDir, pszFilename))
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Failed to write iteminfo.json");
+            eErr = CE_Failure;
+        }
     }
 
     // Clean up temp directory
