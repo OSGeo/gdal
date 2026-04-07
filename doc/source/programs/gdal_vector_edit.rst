@@ -134,7 +134,7 @@ Examples
         $ gdal vector edit --crs=EPSG:4326 --geometry-type=POLYGONZM in.gpkg out.gpkg --overwrite
 
 .. example::
-   :title: Apply a projection to a Shapefile
+   :title: Apply a CRS to a Shapefile
 
    If a Shapefile is missing its associated ``.prj`` file, it can be created as follows:
 
