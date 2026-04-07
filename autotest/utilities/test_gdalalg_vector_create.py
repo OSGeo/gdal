@@ -661,3 +661,41 @@ def test_gdalalg_vector_create_explicit_fid(tmp_vsimem):
         assert out_lyr.GetFIDColumn() == "my_fid"
         assert out_lyr.GetLayerDefn().GetFieldCount() == 0
         assert out_lyr.GetLayerDefn().GetGeomFieldCount() == 0
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdal_vector_create_compact_crs(tmp_vsimem):
+
+    ogr_schema = r"""
+{
+    "layers":[
+    {
+        "name": "layer1",
+        "schemaType": "Full",
+        "fields": [
+        {
+            "name": "field1",
+            "type": "DateTime",
+            "timezone": "+11:30"
+        }],
+        "geometryFields": [{
+            "name": "geom1",
+            "type": "Point",
+            "coordinateSystem": { "authid" : "EPSG:32632" }
+        }]
+    }]
+}"""
+
+    alg = get_create_alg()
+    alg["output"] = str(tmp_vsimem / "test_compact_crs.gpkg")
+    alg["schema"] = ogr_schema
+
+    assert alg.Run()
+    ds = alg["output"].GetDataset()
+    assert ds is not None, "Failed to open dataset"
+    layer = ds.GetLayer(0)
+    assert layer is not None, "Layer not found"
+    geom_defn = layer.GetLayerDefn().GetGeomFieldDefn(0)
+    assert geom_defn.GetName() == "geom1", "Unexpected geometry field name"
+    assert geom_defn.GetType() == ogr.wkbPoint, "Unexpected geometry type"
+    assert geom_defn.GetSpatialRef().GetAuthorityCode(None) == "32632", "Unexpected CRS"
