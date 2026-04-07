@@ -1311,7 +1311,61 @@ static bool BuildItemInfoJSON(const CPLString& tempDir, const char* pszFilename)
     oKeywords.Add("tpkx");
     oRoot.Add("typekeywords", oKeywords);
 
-    return oDoc.Save(osPath);
+    return oDoc.Save(tempDir + "/iteminfo.json");
+}
+
+/************************************************************************/
+/*                         PackageTpkx()                                */
+/************************************************************************/
+
+// Zip the contents of osTempDir into the .tpkx file at pszFilename.
+// A valid tpkx will contain a root.json, iteminfo.json, and a tile
+// subdirectory with LOD subdirectories the contain the bundle files.
+static bool PackageTpkx(const char *pszFilename,
+                         const std::string &osTempDir)
+{
+    void *hZIP = CPLCreateZip(pszFilename, nullptr);
+    if (!hZIP)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "ESRIC: cannot create %s",
+                 pszFilename);
+        return false;
+    }
+
+    bool bOK = true;
+
+    // Loop over all files in osTempDir and add them to the ZIP
+    char **papszFiles = VSIReadDirRecursive(osTempDir.c_str());
+    for (int i = 0; papszFiles && papszFiles[i] && bOK; i++)
+    {
+        const std::string osSrcPath =
+            CPLFormFilenameSafe(osTempDir.c_str(), papszFiles[i], nullptr);
+
+        VSIStatBufL sStat;
+        if (VSIStatL(osSrcPath.c_str(), &sStat) != 0 ||
+            VSI_ISDIR(sStat.st_mode))
+            continue;  // skip directories
+
+        if (CPLAddFileInZip(hZIP, papszFiles[i], osSrcPath.c_str(),
+                            nullptr, nullptr, nullptr,
+                            nullptr) != CE_None)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "ESRIC: failed to add %s to archive", papszFiles[i]);
+            bOK = false;
+            break;
+        }
+    }
+    CSLDestroy(papszFiles);
+
+    if (CPLCloseZip(hZIP) != CE_None)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "ESRIC: failed to finalize %s", pszFilename);
+        bOK = false;
+    }
+
+    return bOK;
 }
 
 /************************************************************************/
@@ -1838,13 +1892,22 @@ GDALDataset *CreateCopy(const char* pszFilename,
         }
     }
 
+    // Package temp directory into .tpkx ZIP archive
+    if (eErr == CE_None)
+    {
+        if (!PackageTpkx(pszFilename, osTempDir))
+            eErr = CE_Failure;
+    }
+
     // Clean up temp directory
     VSIRmdirRecursive(osTempDir.c_str());
 
-    CPLError(CE_Failure, CPLE_NotSupported,
-             "ESRIC: CreateCopy not yet implemented");
+    if (eErr != CE_None)
+        return nullptr;
 
-    return nullptr;
+    // Open the created .tpkx and return it
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    return ECDataset::Open(&oOpenInfo);
 }
 
 }  // namespace ESRIC
