@@ -74,7 +74,7 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
     CRS
 
-        Coordinate Reference System. Specifies how coordinates correspond to locations on Earth,
+        Coordinate Reference System. Specifies how coordinates correspond to locations on Earth (or other celestial bodies!),
         including the coordinate system, :term:`datum`, and, if applicable, a projection.
 
     CSL
