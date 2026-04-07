@@ -1381,7 +1381,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
     if (!pfnProgress)
         pfnProgress = GDALDummyProgress;
 
-    const int nBands = poSrcDS->GetRasterCount();
+    int nBands = poSrcDS->GetRasterCount();
     if (nBands < 1 || nBands > 4)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1517,6 +1517,36 @@ GDALDataset *CreateCopy(const char* pszFilename,
         return nullptr;
     }
 
+    // Expand paletted 1-band sources to RGB(A) so that resampling operates on colour values
+    // instead of palette indices
+    GDALDataset *poEffectiveSrcDS = poSrcDS;
+    GDALDatasetH hExpandedDS = nullptr;
+    if (nBands == 1 &&
+        poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr)
+    {
+        CPLStringList aosTranslateOpts;
+        aosTranslateOpts.AddString("-of");
+        aosTranslateOpts.AddString("VRT");
+        aosTranslateOpts.AddString("-expand");
+        aosTranslateOpts.AddString(bJPEG ? "rgb" : "rgba");
+        auto psTranslateOpts =
+            GDALTranslateOptionsNew(aosTranslateOpts.List(), nullptr);
+        hExpandedDS = GDALTranslate(
+            "", GDALDataset::ToHandle(poSrcDS), psTranslateOpts, nullptr);
+        GDALTranslateOptionsFree(psTranslateOpts);
+        if (hExpandedDS)
+        {
+            poEffectiveSrcDS = GDALDataset::FromHandle(hExpandedDS);
+            nBands = poEffectiveSrcDS->GetRasterCount();
+        }
+    }
+
+    const bool bSrcHasAlpha = (nBands == 2 || nBands == 4);
+    const bool bAddAlpha = (!bJPEG && !bSrcHasAlpha);
+    int bHasNoData = FALSE;
+    const double dfSrcNoData =
+        poEffectiveSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
+
     // Count total tiles
     int nTotalTiles = 0;
     for (int iLOD = 0; iLOD <= nMaxLOD; iLOD++)
@@ -1614,7 +1644,8 @@ GDALDataset *CreateCopy(const char* pszFilename,
                                dfAlignedMaxY, 0.0,   -dfResY};
 
         void *hLODTransform = GDALCreateGenImgProjTransformer2(
-            GDALDataset::ToHandle(poSrcDS), nullptr, aosTO.List());
+            GDALDataset::ToHandle(poEffectiveSrcDS), nullptr,
+            aosTO.List());
         if (!hLODTransform)
         {
             eErr = CE_Failure;
@@ -1628,15 +1659,35 @@ GDALDataset *CreateCopy(const char* pszFilename,
         GDALApproxTransformerOwnsSubtransformer(hApproxTransform, TRUE);
 
         auto psWO = GDALCreateWarpOptions();
-        psWO->hSrcDS = GDALDataset::ToHandle(poSrcDS);
+        psWO->hSrcDS = GDALDataset::ToHandle(poEffectiveSrcDS);
         psWO->eResampleAlg = GRA_Bilinear;
         psWO->eWorkingDataType = GDT_Byte;
-        psWO->nBandCount = nBands;
-        psWO->panSrcBands =
-            static_cast<int *>(CPLMalloc(sizeof(int) * nBands));
-        psWO->panDstBands =
-            static_cast<int *>(CPLMalloc(sizeof(int) * nBands));
-        for (int i = 0; i < nBands; i++)
+
+        if (bSrcHasAlpha)
+        {
+            // Source has alpha. Warp color bands only
+            psWO->nBandCount = nBands - 1;
+            psWO->nSrcAlphaBand = nBands;
+            psWO->nDstAlphaBand = nBands;
+        }
+        else if (bAddAlpha)
+        {
+            // PNG without source alpha. Warp all source bands
+            // and expand to alpha
+            psWO->nBandCount = nBands;
+            psWO->nDstAlphaBand = nBands + 1;
+        }
+        else
+        {
+            // JPEG. No alpha
+            psWO->nBandCount = nBands;
+        }
+
+        psWO->panSrcBands = static_cast<int *>(
+            CPLMalloc(sizeof(int) * psWO->nBandCount));
+        psWO->panDstBands = static_cast<int *>(
+            CPLMalloc(sizeof(int) * psWO->nBandCount));
+        for (int i = 0; i < psWO->nBandCount; i++)
         {
             psWO->panSrcBands[i] = i + 1;
             psWO->panDstBands[i] = i + 1;
@@ -1646,9 +1697,18 @@ GDALDataset *CreateCopy(const char* pszFilename,
         psWO->papszWarpOptions =
             CSLSetNameValue(nullptr, "INIT_DEST", "0");
 
+        // Set the source no data if it exists
+        if (bHasNoData)
+        {
+            psWO->padfSrcNoDataReal = static_cast<double *>(
+                CPLMalloc(sizeof(double) * psWO->nBandCount));
+            for (int i = 0; i < psWO->nBandCount; i++)
+                psWO->padfSrcNoDataReal[i] = dfSrcNoData;
+        }
+
         GDALDatasetH hWarpedDS = GDALCreateWarpedVRT(
-            GDALDataset::ToHandle(poSrcDS), nPixelsX, nPixelsY,
-            adfLODGT, psWO);
+            GDALDataset::ToHandle(poEffectiveSrcDS), nPixelsX,
+            nPixelsY, adfLODGT, psWO);
         GDALDestroyWarpOptions(psWO);
 
         if (!hWarpedDS)
@@ -1664,6 +1724,12 @@ GDALDataset *CreateCopy(const char* pszFilename,
         // Map of Bundle writers for this LOD. Key is the file path
         std::map<std::string, BundleWriter> oBundles;
 
+        // Query the actual VRT band count
+        const int nVRTBands = GDALGetRasterCount(hWarpedDS);
+        // Number of color bands in the VRT
+        const int nColorBands =
+            (nTileBands == 4) ? nVRTBands - 1 : nVRTBands;
+
         for (int nRow = nMinRow;
              nRow <= nMaxRow && eErr == CE_None; nRow++)
         {
@@ -1673,12 +1739,12 @@ GDALDataset *CreateCopy(const char* pszFilename,
                 const int nXOff = (nCol - nMinCol) * nTileW;
                 const int nYOff = (nRow - nMinRow) * nTileH;
 
-                // Read source bands
-                std::vector<GByte> abySrc(nTilePixels * nBands, 0);
+                // Read all VRT bands
+                std::vector<GByte> abySrc(nTilePixels * nVRTBands, 0);
                 if (GDALDatasetRasterIO(
                         hWarpedDS, GF_Read, nXOff, nYOff, nTileW,
                         nTileH, abySrc.data(), nTileW, nTileH,
-                        GDT_Byte, nBands, nullptr, 1, nTileW,
+                        GDT_Byte, nVRTBands, nullptr, 1, nTileW,
                         static_cast<GSpacing>(nTilePixels)) != CE_None)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -1690,24 +1756,42 @@ GDALDataset *CreateCopy(const char* pszFilename,
                 }
 
                 // Skip empty tiles
-                if (std::all_of(abySrc.begin(), abySrc.end(),
-                                [](GByte b)
+                // PNG: skip when alpha is all zero
+                // JPEG: skip when all bytes are zero (consistent with reader returning zeroed
+                //          pixels for missing tiles).
+                bool bEmpty = false;
+                if (nTileBands == 4)
                 {
-                    return b == 0;
-                }))
+                    const GByte *pabyAlpha =
+                        abySrc.data() +
+                        static_cast<size_t>(nVRTBands - 1) *
+                            nTilePixels;
+                    bEmpty = std::all_of(
+                        pabyAlpha, pabyAlpha + nTilePixels,
+                        [](GByte b) { return b == 0; });
+                }
+                else
+                {
+                    // JPEG
+                    bEmpty = std::all_of(
+                        abySrc.begin(), abySrc.end(),
+                        [](GByte b) { return b == 0; });
+                }
+
+                if (bEmpty)
                 {
                     nTilesWritten++;
                     if (!pfnProgress(
-                        static_cast<double>(nTilesWritten) /
-                        nTotalTiles,
-                        "", pProgressData))
+                            static_cast<double>(nTilesWritten) /
+                                nTotalTiles,
+                            "", pProgressData))
                     {
                         eErr = CE_Failure;
                     }
                     continue;
                 }
 
-                // Create MEM dataset and map source bands to tile bands
+                // Create MEM dataset and map VRT bands to tile bands
                 GDALDriverH hMemDrv = GDALGetDriverByName("MEM");
                 GDALDatasetH hMemDS =
                     GDALCreate(hMemDrv, "", nTileW, nTileH, nTileBands,
@@ -1720,11 +1804,9 @@ GDALDataset *CreateCopy(const char* pszFilename,
 
                     if (iBand < 3)
                     {
-                        // RGB - pick source band index
-                        int nSrcIdx =
-                            (nBands >= 3)
-                                ? iBand
-                                : 0;  // Grey or Grey+Alpha -> replicate
+                        // RGB. Pick VRT color band index
+                        const int nSrcIdx =
+                            (nColorBands >= 3) ? iBand : 0;
                         GDALRasterIO(
                             hBand, GF_Write, 0, 0, nTileW, nTileH,
                             abySrc.data() + nSrcIdx * nTilePixels,
@@ -1732,33 +1814,13 @@ GDALDataset *CreateCopy(const char* pszFilename,
                     }
                     else
                     {
-                        // Alpha band (iBand == 3, PNG only)
-                        if (nBands == 2)
-                        {
-                            // Grey+Alpha
-                            GDALRasterIO(
-                                hBand, GF_Write, 0, 0, nTileW, nTileH,
-                                abySrc.data() + nTilePixels, nTileW,
-                                nTileH, GDT_Byte, 0, 0);
-                        }
-                        else if (nBands == 4)
-                        {
-                            // RGBA
-                            GDALRasterIO(
-                                hBand, GF_Write, 0, 0, nTileW, nTileH,
-                                abySrc.data() + 3 * nTilePixels,
-                                nTileW, nTileH, GDT_Byte, 0, 0);
-                        }
-                        else
-                        {
-                            // No source alpha. Fill opaque
-                            std::vector<GByte> abyAlpha(nTilePixels,
-                                                        255);
-                            GDALRasterIO(hBand, GF_Write, 0, 0,
-                                         nTileW, nTileH,
-                                         abyAlpha.data(), nTileW,
-                                         nTileH, GDT_Byte, 0, 0);
-                        }
+                        // Alpha band
+                        GDALRasterIO(
+                            hBand, GF_Write, 0, 0, nTileW, nTileH,
+                            abySrc.data() +
+                                static_cast<size_t>(nVRTBands - 1) *
+                                    nTilePixels,
+                            nTileW, nTileH, GDT_Byte, 0, 0);
                     }
                 }
 
@@ -1867,6 +1929,9 @@ GDALDataset *CreateCopy(const char* pszFilename,
         // destroy it again here.
         GDALClose(hWarpedDS);
     }
+
+    if (hExpandedDS)
+        GDALClose(hExpandedDS);
 
     // ----------------------------------------------------------------
     // Write JSON metadata
