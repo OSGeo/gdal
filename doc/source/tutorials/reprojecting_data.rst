@@ -151,7 +151,7 @@ The CRS output is shown below.
 
 - ``PROJCRS["WGS 84 / Pseudo-Mercator",`` - this is a *projected* CRS rather than a *geographic* CRS
 
-- ``BASEGEOGCRS["WGS 84", ...]`` - the underlying coordinate system is based on WGS 84. The same properties as
+- ``BASEGEOGCRS["WGS 84", ...]`` - the underlying coordinate reference system is based on WGS 84. The same properties as
    above are listed here
 
 - ``CONVERSION["Popular Visualisation Pseudo-Mercator", ...]`` this details the map projection itself
