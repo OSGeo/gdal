@@ -375,14 +375,22 @@ bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON,
                                 const auto osSRS =
                                     oGeometryField.GetObj("coordinateSystem");
                                 if (!osSRS.GetString("wkt").empty() ||
-                                    !osSRS.GetString("projjson").empty())
+                                    !osSRS.GetString("projjson").empty() ||
+                                    !osSRS.GetString("authid").empty())
                                 {
                                     OGRSpatialReference oSRS;
                                     oSRS.SetAxisMappingStrategy(
                                         OAMS_TRADITIONAL_GIS_ORDER);
                                     std::string srs;
-                                    if (const auto wkt = osSRS.GetString("wkt");
-                                        !wkt.empty())
+                                    if (const auto authid =
+                                            osSRS.GetString("authid");
+                                        !authid.empty())
+                                    {
+                                        srs = authid;
+                                    }
+                                    else if (const auto wkt =
+                                                 osSRS.GetString("wkt");
+                                             !wkt.empty())
                                     {
                                         srs = wkt;
                                     }

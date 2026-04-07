@@ -16,7 +16,7 @@ import json
 import gdaltest
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 
 def get_alg():
@@ -51,7 +51,7 @@ def test_gdalalg_vector_info_features_json():
     assert geom_fields[0]["name"] == ""
     assert geom_fields[0]["type"] == "LineString"
     assert geom_fields[0]["nullable"] is True
-    assert geom_fields[0]["coordinateSystem"]["projjson"]["id"]["code"] == 4326
+    assert geom_fields[0]["coordinateSystem"]["authid"] == "EPSG:4326"
 
 
 @pytest.mark.require_driver("GPKG")
@@ -59,7 +59,9 @@ def test_export_field_with_alias_comment_domain_default(tmp_vsimem):
 
     path = str(tmp_vsimem / "test.gpkg")
     ds = ogr.GetDriverByName("GPKG").CreateDataSource(path)
-    layer = ds.CreateLayer("test_layer")
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    layer = ds.CreateLayer("test_layer", srs=srs)
     field_defn = ogr.FieldDefn("field1", ogr.OFTReal)
     field_defn.SetNullable(True)
     field_defn.SetUnique(True)
@@ -85,3 +87,7 @@ def test_export_field_with_alias_comment_domain_default(tmp_vsimem):
     assert j["layers"][0]["fields"][0]["alias"] == "alias1"
     assert j["layers"][0]["fields"][0]["defaultValue"] == "1234"
     assert j["layers"][0]["fields"][0]["domainName"] == "domain1"
+    assert (
+        j["layers"][0]["geometryFields"][0]["coordinateSystem"]["authid"]
+        == "EPSG:32631"
+    )

@@ -951,45 +951,68 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject &oLayer,
                     {
                         CPLJSONObject oCRS;
                         oGeometryField.Add("coordinateSystem", oCRS);
-                        char *pszWKT = nullptr;
-                        poSRS->exportToWkt(&pszWKT, apszWKTOptions);
-                        if (pszWKT)
-                        {
-                            oCRS.Set("wkt", pszWKT);
-                            CPLFree(pszWKT);
-                        }
 
+                        // When exporting the schema give priority
+                        // to the compact <authority:code> form
+                        bool authIdSet{false};
+                        if (psOptions->bExportOgrSchema)
                         {
-                            char *pszProjJson = nullptr;
-                            // PROJJSON requires PROJ >= 6.2
-                            CPLErrorStateBackuper oCPLErrorHandlerPusher(
-                                CPLQuietErrorHandler);
-                            CPL_IGNORE_RET_VAL(
-                                poSRS->exportToPROJJSON(&pszProjJson, nullptr));
-                            if (pszProjJson)
+                            const char *pszAuthCode =
+                                poSRS->GetAuthorityCode(nullptr);
+                            const char *pszAuthName =
+                                poSRS->GetAuthorityName(nullptr);
+                            if (pszAuthName && pszAuthCode)
                             {
-                                CPLJSONDocument oDoc;
-                                if (oDoc.LoadMemory(pszProjJson))
-                                {
-                                    oCRS.Add("projjson", oDoc.GetRoot());
-                                }
-                                CPLFree(pszProjJson);
+                                std::string oSRS{pszAuthName};
+                                oSRS += ':';
+                                oSRS += pszAuthCode;
+                                oCRS.Set("authid", oSRS);
+                                authIdSet = true;
                             }
                         }
 
-                        const auto &anAxes =
-                            poSRS->GetDataAxisToSRSAxisMapping();
-                        CPLJSONArray oAxisMapping;
-                        for (const auto nAxis : anAxes)
+                        if (!authIdSet)
                         {
-                            oAxisMapping.Add(nAxis);
-                        }
-                        oCRS.Add("dataAxisToSRSAxisMapping", oAxisMapping);
+                            char *pszWKT = nullptr;
+                            poSRS->exportToWkt(&pszWKT, apszWKTOptions);
+                            if (pszWKT)
+                            {
+                                oCRS.Set("wkt", pszWKT);
+                                CPLFree(pszWKT);
+                            }
 
-                        const double dfCoordinateEpoch =
-                            poSRS->GetCoordinateEpoch();
-                        if (dfCoordinateEpoch > 0)
-                            oCRS.Set("coordinateEpoch", dfCoordinateEpoch);
+                            {
+                                char *pszProjJson = nullptr;
+                                // PROJJSON requires PROJ >= 6.2
+                                CPLErrorStateBackuper oCPLErrorHandlerPusher(
+                                    CPLQuietErrorHandler);
+                                CPL_IGNORE_RET_VAL(poSRS->exportToPROJJSON(
+                                    &pszProjJson, nullptr));
+                                if (pszProjJson)
+                                {
+                                    CPLJSONDocument oDoc;
+                                    if (oDoc.LoadMemory(pszProjJson))
+                                    {
+                                        oCRS.Add("projjson", oDoc.GetRoot());
+                                    }
+                                    CPLFree(pszProjJson);
+                                }
+                            }
+
+                            const auto &anAxes =
+                                poSRS->GetDataAxisToSRSAxisMapping();
+                            CPLJSONArray oAxisMapping;
+                            for (const auto nAxis : anAxes)
+                            {
+                                oAxisMapping.Add(nAxis);
+                            }
+                            oCRS.Add("dataAxisToSRSAxisMapping", oAxisMapping);
+
+                            const double dfCoordinateEpoch =
+                                poSRS->GetCoordinateEpoch();
+                            if (dfCoordinateEpoch > 0)
+                                oCRS.Set("coordinateEpoch", dfCoordinateEpoch);
+                        }
                     }
                     else
                     {
