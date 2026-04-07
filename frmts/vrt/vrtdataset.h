@@ -263,8 +263,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     friend VRTDatasetH CPL_STDCALL VRTCreate(int nXSize, int nYSize);
 
     std::vector<gdal::GCP> m_asGCPs{};
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-        m_poGCP_SRS{};
+    OGRSpatialReferenceRefCountedPtr m_poGCP_SRS{};
 
     bool m_bNeedsFlush = false;
     bool m_bWritable = true;
@@ -322,7 +321,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     int m_nBlockXSize = 0;
     int m_nBlockYSize = 0;
 
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> m_poSRS{};
+    OGRSpatialReferenceRefCountedPtr m_poSRS{};
 
     int m_bGeoTransformSet = false;
     GDALGeoTransform m_gt{};

@@ -86,10 +86,6 @@ class GDALFileFeatureStore : public GDALFeatureStore
 
     ~GDALFileFeatureStore() override
     {
-        if (m_defn != nullptr)
-        {
-            const_cast<OGRFeatureDefn *>(m_defn)->Release();
-        }
         if (m_file != nullptr)
         {
             VSIFCloseL(m_file);
@@ -112,7 +108,7 @@ class GDALFileFeatureStore : public GDALFeatureStore
             return nullptr;
         }
 
-        auto poFeature = std::make_unique<OGRFeature>(m_defn);
+        auto poFeature = std::make_unique<OGRFeature>(m_defn.get());
         if (!poFeature->DeserializeFromBinary(m_buf.data(), m_buf.size()))
         {
             return nullptr;
@@ -135,8 +131,7 @@ class GDALFileFeatureStore : public GDALFeatureStore
 
         if (m_defn == nullptr)
         {
-            m_defn = f->GetDefnRef();
-            const_cast<OGRFeatureDefn *>(m_defn)->Reference();
+            m_defn.reset(const_cast<OGRFeatureDefn *>(f->GetDefnRef()));
         }
 
         if (!f->SerializeToBinary(m_buf))
@@ -172,7 +167,7 @@ class GDALFileFeatureStore : public GDALFeatureStore
     };
 
     std::string m_fileName{};
-    const OGRFeatureDefn *m_defn{nullptr};
+    OGRFeatureDefnRefCountedPtr m_defn{};
     vsi_l_offset m_fileSize{0};
     VSILFILE *m_file{nullptr};
     std::vector<Loc> m_locs{};

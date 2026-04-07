@@ -61,7 +61,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                              bool bSingleLayerOutput, int srcGeomField,
                              bool skipValid)
         : GDALVectorPipelineOutputLayer(layer),
-          m_defn(OGRFeatureDefn::CreateFeatureDefn(
+          m_defn(OGRFeatureDefnRefCountedPtr::makeInstance(
               bSingleLayerOutput ? "error_location"
                                  : std::string("error_location_")
                                        .append(layer.GetDescription())
@@ -69,7 +69,6 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
           m_geosContext(OGRGeometry::createGEOSContext()),
           m_srcGeomField(srcGeomField), m_skipValid(skipValid)
     {
-        m_defn->Reference();
         m_defn->SetGeomType(wkbMultiPoint);
 
         if (!srcFieldIndices.empty())
@@ -108,12 +107,12 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_defn;
+        return m_defn.get();
     }
 
     std::unique_ptr<OGRFeature> CreateFeatureFromLastError() const
     {
-        auto poErrorFeature = std::make_unique<OGRFeature>(m_defn);
+        auto poErrorFeature = std::make_unique<OGRFeature>(m_defn.get());
 
         std::string msg = CPLGetLastErrorMsg();
 
@@ -229,7 +228,8 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                                 "because GEOS library version is < 3.14.");
                         }
 
-                        poErrorFeature = std::make_unique<OGRFeature>(m_defn);
+                        poErrorFeature =
+                            std::make_unique<OGRFeature>(m_defn.get());
                         if (pszReason == nullptr)
                         {
                             if (checkedSimple)
@@ -280,7 +280,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
         if (!poErrorFeature && !m_skipValid)
         {
-            poErrorFeature = std::make_unique<OGRFeature>(m_defn);
+            poErrorFeature = std::make_unique<OGRFeature>(m_defn.get());
             // TODO Set geometry to POINT EMPTY ?
         }
 
@@ -300,7 +300,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
   private:
     std::vector<int> m_srcFieldMap{};
-    OGRFeatureDefn *const m_defn;
+    const OGRFeatureDefnRefCountedPtr m_defn;
     const GEOSContextHandle_t m_geosContext;
     const int m_srcGeomField;
     const bool m_skipValid;
@@ -308,7 +308,6 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
 GDALInvalidLocationLayer::~GDALInvalidLocationLayer()
 {
-    m_defn->Release();
     finishGEOS_r(m_geosContext);
 }
 

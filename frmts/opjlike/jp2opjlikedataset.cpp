@@ -19,6 +19,7 @@
 #include "cpl_atomic_ops.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "cpl_vsi_virtual.h"
 #include "cpl_worker_thread_pool.h"
 #include "gdal_frmts.h"
 #include "gdaljp2abstractdataset.h"
@@ -860,261 +861,278 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close(GDALProgressFunc, void *)
         {
             if (this->bRewrite)
             {
-                GDALJP2Box oBox(this->fp_);
-                vsi_l_offset nOffsetJP2C = 0;
-                vsi_l_offset nLengthJP2C = 0;
-                vsi_l_offset nOffsetXML = 0;
-                vsi_l_offset nOffsetASOC = 0;
-                vsi_l_offset nOffsetUUID = 0;
-                vsi_l_offset nOffsetIHDR = 0;
-                vsi_l_offset nLengthIHDR = 0;
-                int bMSIBox = FALSE;
-                int bGMLData = FALSE;
-                int bUnsupportedConfiguration = FALSE;
-                if (oBox.ReadFirst())
+                if (BASE::canPerformDirectIO())
                 {
-                    while (strlen(oBox.GetType()) > 0)
+                    /* Grok handles box rewriting natively via transcode */
+                    VSIFCloseL(this->fp_);
+                    this->fp_ = nullptr;
+                    if (!CODEC::rewriteBoxes(GetDescription(), this))
+                        eErr = CE_Failure;
+                }
+                else
+                {
+                    GDALJP2Box oBox(this->fp_);
+                    vsi_l_offset nOffsetJP2C = 0;
+                    vsi_l_offset nLengthJP2C = 0;
+                    vsi_l_offset nOffsetXML = 0;
+                    vsi_l_offset nOffsetASOC = 0;
+                    vsi_l_offset nOffsetUUID = 0;
+                    vsi_l_offset nOffsetIHDR = 0;
+                    vsi_l_offset nLengthIHDR = 0;
+                    int bMSIBox = FALSE;
+                    int bGMLData = FALSE;
+                    int bUnsupportedConfiguration = FALSE;
+                    if (oBox.ReadFirst())
                     {
-                        if (EQUAL(oBox.GetType(), "jp2c"))
+                        while (strlen(oBox.GetType()) > 0)
                         {
-                            if (nOffsetJP2C == 0)
+                            if (EQUAL(oBox.GetType(), "jp2c"))
                             {
-                                nOffsetJP2C = VSIFTellL(this->fp_);
-                                nLengthJP2C = oBox.GetDataLength();
-                            }
-                            else
-                                bUnsupportedConfiguration = TRUE;
-                        }
-                        else if (EQUAL(oBox.GetType(), "jp2h"))
-                        {
-                            GDALJP2Box oSubBox(this->fp_);
-                            if (oSubBox.ReadFirstChild(&oBox) &&
-                                EQUAL(oSubBox.GetType(), "ihdr"))
-                            {
-                                nOffsetIHDR = VSIFTellL(this->fp_);
-                                nLengthIHDR = oSubBox.GetDataLength();
-                            }
-                        }
-                        else if (EQUAL(oBox.GetType(), "xml "))
-                        {
-                            if (nOffsetXML == 0)
-                                nOffsetXML = VSIFTellL(this->fp_);
-                        }
-                        else if (EQUAL(oBox.GetType(), "asoc"))
-                        {
-                            if (nOffsetASOC == 0)
-                                nOffsetASOC = VSIFTellL(this->fp_);
-
-                            GDALJP2Box oSubBox(this->fp_);
-                            if (oSubBox.ReadFirstChild(&oBox) &&
-                                EQUAL(oSubBox.GetType(), "lbl "))
-                            {
-                                char *pszLabel = reinterpret_cast<char *>(
-                                    oSubBox.ReadBoxData());
-                                if (pszLabel != nullptr &&
-                                    EQUAL(pszLabel, "gml.data"))
+                                if (nOffsetJP2C == 0)
                                 {
-                                    bGMLData = TRUE;
+                                    nOffsetJP2C = VSIFTellL(this->fp_);
+                                    nLengthJP2C = oBox.GetDataLength();
                                 }
                                 else
                                     bUnsupportedConfiguration = TRUE;
-                                CPLFree(pszLabel);
+                            }
+                            else if (EQUAL(oBox.GetType(), "jp2h"))
+                            {
+                                GDALJP2Box oSubBox(this->fp_);
+                                if (oSubBox.ReadFirstChild(&oBox) &&
+                                    EQUAL(oSubBox.GetType(), "ihdr"))
+                                {
+                                    nOffsetIHDR = VSIFTellL(this->fp_);
+                                    nLengthIHDR = oSubBox.GetDataLength();
+                                }
+                            }
+                            else if (EQUAL(oBox.GetType(), "xml "))
+                            {
+                                if (nOffsetXML == 0)
+                                    nOffsetXML = VSIFTellL(this->fp_);
+                            }
+                            else if (EQUAL(oBox.GetType(), "asoc"))
+                            {
+                                if (nOffsetASOC == 0)
+                                    nOffsetASOC = VSIFTellL(this->fp_);
+
+                                GDALJP2Box oSubBox(this->fp_);
+                                if (oSubBox.ReadFirstChild(&oBox) &&
+                                    EQUAL(oSubBox.GetType(), "lbl "))
+                                {
+                                    char *pszLabel = reinterpret_cast<char *>(
+                                        oSubBox.ReadBoxData());
+                                    if (pszLabel != nullptr &&
+                                        EQUAL(pszLabel, "gml.data"))
+                                    {
+                                        bGMLData = TRUE;
+                                    }
+                                    else
+                                        bUnsupportedConfiguration = TRUE;
+                                    CPLFree(pszLabel);
+                                }
+                                else
+                                    bUnsupportedConfiguration = TRUE;
+                            }
+                            else if (EQUAL(oBox.GetType(), "uuid"))
+                            {
+                                if (nOffsetUUID == 0)
+                                    nOffsetUUID = VSIFTellL(this->fp_);
+                                if (GDALJP2Metadata::IsUUID_MSI(oBox.GetUUID()))
+                                    bMSIBox = TRUE;
+                                else if (!GDALJP2Metadata::IsUUID_XMP(
+                                             oBox.GetUUID()))
+                                    bUnsupportedConfiguration = TRUE;
+                            }
+                            else if (!EQUAL(oBox.GetType(), "jP  ") &&
+                                     !EQUAL(oBox.GetType(), "ftyp") &&
+                                     !EQUAL(oBox.GetType(), "rreq") &&
+                                     !EQUAL(oBox.GetType(), "jp2h") &&
+                                     !EQUAL(oBox.GetType(), "jp2i"))
+                            {
+                                bUnsupportedConfiguration = TRUE;
+                            }
+
+                            if (bUnsupportedConfiguration || !oBox.ReadNext())
+                                break;
+                        }
+                    }
+
+                    const char *pszGMLJP2;
+                    int bGeoreferencingCompatOfGMLJP2 =
+                        (!m_oSRS.IsEmpty() && bGeoTransformValid &&
+                         nGCPCount == 0);
+                    if (bGeoreferencingCompatOfGMLJP2 &&
+                        ((this->bHasGeoreferencingAtOpening && bGMLData) ||
+                         (!this->bHasGeoreferencingAtOpening)))
+                        pszGMLJP2 = "GMLJP2=YES";
+                    else
+                        pszGMLJP2 = "GMLJP2=NO";
+
+                    const char *pszGeoJP2;
+                    int bGeoreferencingCompatOfGeoJP2 =
+                        (!m_oSRS.IsEmpty() || nGCPCount != 0 ||
+                         bGeoTransformValid);
+                    if (bGeoreferencingCompatOfGeoJP2 &&
+                        ((this->bHasGeoreferencingAtOpening && bMSIBox) ||
+                         (!this->bHasGeoreferencingAtOpening) ||
+                         this->nGCPCount > 0))
+                        pszGeoJP2 = "GeoJP2=YES";
+                    else
+                        pszGeoJP2 = "GeoJP2=NO";
+
+                    /* Test that the length of the JP2C box is not 0 */
+                    int bJP2CBoxOKForRewriteInPlace = TRUE;
+                    if (nOffsetJP2C > 16 && !bUnsupportedConfiguration)
+                    {
+                        VSIFSeekL(this->fp_, nOffsetJP2C - 8, SEEK_SET);
+                        GByte abyBuffer[8];
+                        VSIFReadL(abyBuffer, 1, 8, this->fp_);
+                        if (memcmp(abyBuffer + 4, "jp2c", 4) == 0 &&
+                            abyBuffer[0] == 0 && abyBuffer[1] == 0 &&
+                            abyBuffer[2] == 0 && abyBuffer[3] == 0)
+                        {
+                            if (nLengthJP2C + 8 < UINT32_MAX)
+                            {
+                                CPLDebug(CODEC::debugId(),
+                                         "Patching length of JP2C box with "
+                                         "real length");
+                                VSIFSeekL(this->fp_, nOffsetJP2C - 8, SEEK_SET);
+                                GUInt32 nLength =
+                                    static_cast<GUInt32>(nLengthJP2C) + 8;
+                                CPL_MSBPTR32(&nLength);
+                                if (VSIFWriteL(&nLength, 1, 4, this->fp_) != 1)
+                                    eErr = CE_Failure;
                             }
                             else
-                                bUnsupportedConfiguration = TRUE;
+                                bJP2CBoxOKForRewriteInPlace = FALSE;
                         }
-                        else if (EQUAL(oBox.GetType(), "uuid"))
-                        {
-                            if (nOffsetUUID == 0)
-                                nOffsetUUID = VSIFTellL(this->fp_);
-                            if (GDALJP2Metadata::IsUUID_MSI(oBox.GetUUID()))
-                                bMSIBox = TRUE;
-                            else if (!GDALJP2Metadata::IsUUID_XMP(
-                                         oBox.GetUUID()))
-                                bUnsupportedConfiguration = TRUE;
-                        }
-                        else if (!EQUAL(oBox.GetType(), "jP  ") &&
-                                 !EQUAL(oBox.GetType(), "ftyp") &&
-                                 !EQUAL(oBox.GetType(), "rreq") &&
-                                 !EQUAL(oBox.GetType(), "jp2h") &&
-                                 !EQUAL(oBox.GetType(), "jp2i"))
-                        {
-                            bUnsupportedConfiguration = TRUE;
-                        }
-
-                        if (bUnsupportedConfiguration || !oBox.ReadNext())
-                            break;
                     }
-                }
 
-                const char *pszGMLJP2;
-                int bGeoreferencingCompatOfGMLJP2 =
-                    (!m_oSRS.IsEmpty() && bGeoTransformValid && nGCPCount == 0);
-                if (bGeoreferencingCompatOfGMLJP2 &&
-                    ((this->bHasGeoreferencingAtOpening && bGMLData) ||
-                     (!this->bHasGeoreferencingAtOpening)))
-                    pszGMLJP2 = "GMLJP2=YES";
-                else
-                    pszGMLJP2 = "GMLJP2=NO";
-
-                const char *pszGeoJP2;
-                int bGeoreferencingCompatOfGeoJP2 =
-                    (!m_oSRS.IsEmpty() || nGCPCount != 0 || bGeoTransformValid);
-                if (bGeoreferencingCompatOfGeoJP2 &&
-                    ((this->bHasGeoreferencingAtOpening && bMSIBox) ||
-                     (!this->bHasGeoreferencingAtOpening) ||
-                     this->nGCPCount > 0))
-                    pszGeoJP2 = "GeoJP2=YES";
-                else
-                    pszGeoJP2 = "GeoJP2=NO";
-
-                /* Test that the length of the JP2C box is not 0 */
-                int bJP2CBoxOKForRewriteInPlace = TRUE;
-                if (nOffsetJP2C > 16 && !bUnsupportedConfiguration)
-                {
-                    VSIFSeekL(this->fp_, nOffsetJP2C - 8, SEEK_SET);
-                    GByte abyBuffer[8];
-                    VSIFReadL(abyBuffer, 1, 8, this->fp_);
-                    if (memcmp(abyBuffer + 4, "jp2c", 4) == 0 &&
-                        abyBuffer[0] == 0 && abyBuffer[1] == 0 &&
-                        abyBuffer[2] == 0 && abyBuffer[3] == 0)
+                    if (nOffsetJP2C == 0 || bUnsupportedConfiguration)
                     {
-                        if (nLengthJP2C + 8 < UINT32_MAX)
+                        eErr = CE_Failure;
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Cannot rewrite file due to unsupported JP2 box "
+                            "configuration");
+                        VSIFCloseL(this->fp_);
+                    }
+                    else if (bJP2CBoxOKForRewriteInPlace &&
+                             (nOffsetXML == 0 || nOffsetXML > nOffsetJP2C) &&
+                             (nOffsetASOC == 0 || nOffsetASOC > nOffsetJP2C) &&
+                             (nOffsetUUID == 0 || nOffsetUUID > nOffsetJP2C))
+                    {
+                        CPLDebug(CODEC::debugId(),
+                                 "Rewriting boxes after codestream");
+
+                        /* Update IPR flag */
+                        if (nLengthIHDR == 14)
                         {
-                            CPLDebug(
-                                CODEC::debugId(),
-                                "Patching length of JP2C box with real length");
-                            VSIFSeekL(this->fp_, nOffsetJP2C - 8, SEEK_SET);
-                            GUInt32 nLength =
-                                static_cast<GUInt32>(nLengthJP2C) + 8;
-                            CPL_MSBPTR32(&nLength);
-                            if (VSIFWriteL(&nLength, 1, 4, this->fp_) != 1)
+                            VSIFSeekL(this->fp_, nOffsetIHDR + nLengthIHDR - 1,
+                                      SEEK_SET);
+                            GByte bIPR = GetMetadata("xml:IPR") != nullptr;
+                            if (VSIFWriteL(&bIPR, 1, 1, this->fp_) != 1)
+                                eErr = CE_Failure;
+                        }
+
+                        VSIFSeekL(this->fp_, nOffsetJP2C + nLengthJP2C,
+                                  SEEK_SET);
+
+                        GDALJP2Metadata oJP2MD;
+                        if (GetGCPCount() > 0)
+                        {
+                            oJP2MD.SetGCPs(GetGCPCount(), GetGCPs());
+                            oJP2MD.SetSpatialRef(GetGCPSpatialRef());
+                        }
+                        else
+                        {
+                            const OGRSpatialReference *poSRS = GetSpatialRef();
+                            if (poSRS != nullptr)
+                            {
+                                oJP2MD.SetSpatialRef(poSRS);
+                            }
+                            if (bGeoTransformValid)
+                            {
+                                oJP2MD.SetGeoTransform(m_gt);
+                            }
+                        }
+
+                        const char *pszAreaOrPoint =
+                            GetMetadataItem(GDALMD_AREA_OR_POINT);
+                        oJP2MD.bPixelIsPoint =
+                            pszAreaOrPoint != nullptr &&
+                            EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
+
+                        if (!WriteIPRBox(this->fp_, this))
+                            eErr = CE_Failure;
+
+                        if (bGeoreferencingCompatOfGMLJP2 &&
+                            EQUAL(pszGMLJP2, "GMLJP2=YES"))
+                        {
+                            GDALJP2Box *poBox =
+                                oJP2MD.CreateGMLJP2(nRasterXSize, nRasterYSize);
+                            if (!WriteBox(this->fp_, poBox))
+                                eErr = CE_Failure;
+                            delete poBox;
+                        }
+
+                        if (!WriteXMLBoxes(this->fp_, this) ||
+                            !WriteGDALMetadataBox(this->fp_, this, nullptr))
+                            eErr = CE_Failure;
+
+                        if (bGeoreferencingCompatOfGeoJP2 &&
+                            EQUAL(pszGeoJP2, "GeoJP2=YES"))
+                        {
+                            GDALJP2Box *poBox = oJP2MD.CreateJP2GeoTIFF();
+                            if (!WriteBox(this->fp_, poBox))
+                                eErr = CE_Failure;
+                            delete poBox;
+                        }
+
+                        if (!WriteXMPBox(this->fp_, this))
+                            eErr = CE_Failure;
+
+                        if (VSIFTruncateL(this->fp_, VSIFTellL(this->fp_)) != 0)
+                            eErr = CE_Failure;
+
+                        if (VSIFCloseL(this->fp_) != 0)
+                            eErr = CE_Failure;
+                    }
+                    else
+                    {
+                        VSIFCloseL(this->fp_);
+
+                        CPLDebug(CODEC::debugId(), "Rewriting whole file");
+
+                        const char *const apszOptions[] = {
+                            "USE_SRC_CODESTREAM=YES",
+                            "CODEC=JP2",
+                            "WRITE_METADATA=YES",
+                            pszGMLJP2,
+                            pszGeoJP2,
+                            nullptr};
+                        CPLString osTmpFilename(
+                            CPLSPrintf("%s.tmp", GetDescription()));
+                        GDALDataset *poOutDS =
+                            CreateCopy(osTmpFilename, this, FALSE,
+                                       const_cast<char **>(apszOptions),
+                                       GDALDummyProgress, nullptr);
+                        if (poOutDS)
+                        {
+                            if (GDALClose(poOutDS) != CE_None)
+                                eErr = CE_Failure;
+                            if (VSIRename(osTmpFilename, GetDescription()) != 0)
                                 eErr = CE_Failure;
                         }
                         else
-                            bJP2CBoxOKForRewriteInPlace = FALSE;
-                    }
-                }
-
-                if (nOffsetJP2C == 0 || bUnsupportedConfiguration)
-                {
-                    eErr = CE_Failure;
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot rewrite file due to unsupported JP2 box "
-                             "configuration");
-                    VSIFCloseL(this->fp_);
-                }
-                else if (bJP2CBoxOKForRewriteInPlace &&
-                         (nOffsetXML == 0 || nOffsetXML > nOffsetJP2C) &&
-                         (nOffsetASOC == 0 || nOffsetASOC > nOffsetJP2C) &&
-                         (nOffsetUUID == 0 || nOffsetUUID > nOffsetJP2C))
-                {
-                    CPLDebug(CODEC::debugId(),
-                             "Rewriting boxes after codestream");
-
-                    /* Update IPR flag */
-                    if (nLengthIHDR == 14)
-                    {
-                        VSIFSeekL(this->fp_, nOffsetIHDR + nLengthIHDR - 1,
-                                  SEEK_SET);
-                        GByte bIPR = GetMetadata("xml:IPR") != nullptr;
-                        if (VSIFWriteL(&bIPR, 1, 1, this->fp_) != 1)
-                            eErr = CE_Failure;
-                    }
-
-                    VSIFSeekL(this->fp_, nOffsetJP2C + nLengthJP2C, SEEK_SET);
-
-                    GDALJP2Metadata oJP2MD;
-                    if (GetGCPCount() > 0)
-                    {
-                        oJP2MD.SetGCPs(GetGCPCount(), GetGCPs());
-                        oJP2MD.SetSpatialRef(GetGCPSpatialRef());
-                    }
-                    else
-                    {
-                        const OGRSpatialReference *poSRS = GetSpatialRef();
-                        if (poSRS != nullptr)
                         {
-                            oJP2MD.SetSpatialRef(poSRS);
+                            eErr = CE_Failure;
+                            VSIUnlink(osTmpFilename);
                         }
-                        if (bGeoTransformValid)
-                        {
-                            oJP2MD.SetGeoTransform(m_gt);
-                        }
+                        VSIUnlink(
+                            CPLSPrintf("%s.tmp.aux.xml", GetDescription()));
                     }
-
-                    const char *pszAreaOrPoint =
-                        GetMetadataItem(GDALMD_AREA_OR_POINT);
-                    oJP2MD.bPixelIsPoint =
-                        pszAreaOrPoint != nullptr &&
-                        EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
-
-                    if (!WriteIPRBox(this->fp_, this))
-                        eErr = CE_Failure;
-
-                    if (bGeoreferencingCompatOfGMLJP2 &&
-                        EQUAL(pszGMLJP2, "GMLJP2=YES"))
-                    {
-                        GDALJP2Box *poBox =
-                            oJP2MD.CreateGMLJP2(nRasterXSize, nRasterYSize);
-                        if (!WriteBox(this->fp_, poBox))
-                            eErr = CE_Failure;
-                        delete poBox;
-                    }
-
-                    if (!WriteXMLBoxes(this->fp_, this) ||
-                        !WriteGDALMetadataBox(this->fp_, this, nullptr))
-                        eErr = CE_Failure;
-
-                    if (bGeoreferencingCompatOfGeoJP2 &&
-                        EQUAL(pszGeoJP2, "GeoJP2=YES"))
-                    {
-                        GDALJP2Box *poBox = oJP2MD.CreateJP2GeoTIFF();
-                        if (!WriteBox(this->fp_, poBox))
-                            eErr = CE_Failure;
-                        delete poBox;
-                    }
-
-                    if (!WriteXMPBox(this->fp_, this))
-                        eErr = CE_Failure;
-
-                    if (VSIFTruncateL(this->fp_, VSIFTellL(this->fp_)) != 0)
-                        eErr = CE_Failure;
-
-                    if (VSIFCloseL(this->fp_) != 0)
-                        eErr = CE_Failure;
-                }
-                else
-                {
-                    VSIFCloseL(this->fp_);
-
-                    CPLDebug(CODEC::debugId(), "Rewriting whole file");
-
-                    const char *const apszOptions[] = {"USE_SRC_CODESTREAM=YES",
-                                                       "CODEC=JP2",
-                                                       "WRITE_METADATA=YES",
-                                                       pszGMLJP2,
-                                                       pszGeoJP2,
-                                                       nullptr};
-                    CPLString osTmpFilename(
-                        CPLSPrintf("%s.tmp", GetDescription()));
-                    GDALDataset *poOutDS =
-                        CreateCopy(osTmpFilename, this, FALSE,
-                                   const_cast<char **>(apszOptions),
-                                   GDALDummyProgress, nullptr);
-                    if (poOutDS)
-                    {
-                        if (GDALClose(poOutDS) != CE_None)
-                            eErr = CE_Failure;
-                        if (VSIRename(osTmpFilename, GetDescription()) != 0)
-                            eErr = CE_Failure;
-                    }
-                    else
-                    {
-                        eErr = CE_Failure;
-                        VSIUnlink(osTmpFilename);
-                    }
-                    VSIUnlink(CPLSPrintf("%s.tmp.aux.xml", GetDescription()));
                 }
             }
             else
@@ -1533,7 +1551,15 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Look for color table or cdef box                                */
     /* -------------------------------------------------------------------- */
-    if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2))
+    if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2) &&
+        BASE::canPerformDirectIO())
+    {
+        /* Grok parses JP2 boxes natively; extract cdef/pclr from codec */
+        localctx.extractJP2BoxInfo(poDS->nBands, poDS->nRedIndex,
+                                   poDS->nGreenIndex, poDS->nBlueIndex,
+                                   poDS->nAlphaIndex, &poCT);
+    }
+    else if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2))
     {
         vsi_l_offset nCurOffset = VSIFTellL(poDS->fp_);
 
@@ -1746,19 +1772,20 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
         }
 
         VSIFSeekL(poDS->fp_, nCurOffset, SEEK_SET);
+    }
 
-        if (poDS->eColorSpace == CODEC::cvtenum(JP2_CLRSPC_GRAY) &&
-            poDS->nBands == 4 && poDS->nRedIndex == 0 &&
-            poDS->nGreenIndex == 1 && poDS->nBlueIndex == 2 &&
-            poDS->m_osFilename.find("dop10rgbi") != std::string::npos)
-        {
-            CPLDebug(CODEC::debugId(),
-                     "Autofix wrong colorspace from Greyscale to sRGB");
-            // Workaround https://github.com/uclouvain/openjpeg/issues/1464
-            // dop10rgbi products from https://www.opengeodata.nrw.de/produkte/geobasis/lusat/dop/dop_jp2_f10/
-            // have a wrong color space.
-            poDS->eColorSpace = CODEC::cvtenum(JP2_CLRSPC_SRGB);
-        }
+    if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2) &&
+        poDS->eColorSpace == CODEC::cvtenum(JP2_CLRSPC_GRAY) &&
+        poDS->nBands == 4 && poDS->nRedIndex == 0 && poDS->nGreenIndex == 1 &&
+        poDS->nBlueIndex == 2 &&
+        poDS->m_osFilename.find("dop10rgbi") != std::string::npos)
+    {
+        CPLDebug(CODEC::debugId(),
+                 "Autofix wrong colorspace from Greyscale to sRGB");
+        // Workaround https://github.com/uclouvain/openjpeg/issues/1464
+        // dop10rgbi products from https://www.opengeodata.nrw.de/produkte/geobasis/lusat/dop/dop_jp2_f10/
+        // have a wrong color space.
+        poDS->eColorSpace = CODEC::cvtenum(JP2_CLRSPC_SRGB);
     }
 
     /* -------------------------------------------------------------------- */
@@ -2843,8 +2870,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
 
     const char *pszAccess =
         STARTS_WITH_CI(pszFilename, "/vsisubfile/") ? "r+b" : "w+b";
-    VSILFILE *fp = VSIFOpenL(pszFilename, pszAccess);
-    if (fp == nullptr)
+    VSIVirtualHandleUniquePtr fpOwner(VSIFOpenL(pszFilename, pszAccess));
+    if (!fpOwner)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot create file");
         CPLFree(localctx.pasBandParams);
@@ -2852,6 +2879,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         delete poGMLJP2Box;
         return nullptr;
     }
+    VSILFILE *fp = fpOwner.get();
 
     /* -------------------------------------------------------------------- */
     /*      Add JP2 boxes.                                                  */
@@ -2859,7 +2887,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     vsi_l_offset nStartJP2C = 0;
     int bUseXLBoxes = FALSE;
 
-    if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2))
+    if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2) &&
+        !BASE::canPerformDirectIO())
     {
         GDALJP2Box jPBox(fp);
         jPBox.SetType("jP  ");
@@ -3241,7 +3270,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         }
     }
 
-    if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2))
+    if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2) &&
+        !BASE::canPerformDirectIO())
     {
         // Start codestream box
         nStartJP2C = VSIFTellL(fp);
@@ -3308,7 +3338,6 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                     : static_cast<size_t>(nCodeStreamLength - nRead);
             if (VSIFReadL(abyBuffer, 1, nToRead, fpSrc) != nToRead)
             {
-                VSIFCloseL(fp);
                 VSIFCloseL(fpSrc);
                 delete poGMLJP2Box;
                 return nullptr;
@@ -3333,7 +3362,6 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                 !pfnProgress((nRead + nToRead) * 1.0 / nCodeStreamLength,
                              nullptr, pProgressData))
             {
-                VSIFCloseL(fp);
                 VSIFCloseL(fpSrc);
                 delete poGMLJP2Box;
                 return nullptr;
@@ -3354,10 +3382,34 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         {
             CPLError(CE_Failure, CPLE_AppDefined, "init compress failed");
             localctx.free();
-            VSIFCloseL(fp);
             delete poGMLJP2Box;
             return nullptr;
         }
+
+        /* Grok JP2: let codec handle box writing natively */
+        if (BASE::canPerformDirectIO() &&
+            eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2))
+        {
+            localctx.setupJP2Metadata(
+                bInspireTG, bProfile1, bGeoBoxesAfter,
+                (bGeoJP2Option && bGeoreferencingCompatOfGeoJP2) ? &oJP2MD
+                                                                 : nullptr,
+                poGMLJP2Box, nAlphaBandIndex, nRedBandIndex, nGreenBandIndex,
+                nBlueBandIndex, eColorSpace, nBands, poCT, poSrcDS,
+                papszOptions);
+        }
+
+        if (!localctx.initCodec(pszFilename, fpOwner))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "codec initialization failed");
+            localctx.free();
+            delete poGMLJP2Box;
+            return nullptr;
+        }
+        if (!fpOwner)
+            fp = nullptr;
+
         const int nTilesX = DIV_ROUND_UP(nXSize, nBlockXSize);
         const int nTilesY = DIV_ROUND_UP(nYSize, nBlockYSize);
 
@@ -3387,7 +3439,6 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         if (pTempBuffer == nullptr)
         {
             localctx.free();
-            VSIFCloseL(fp);
             delete poGMLJP2Box;
             return nullptr;
         }
@@ -3402,7 +3453,6 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             {
                 localctx.free();
                 CPLFree(pTempBuffer);
-                VSIFCloseL(fp);
                 delete poGMLJP2Box;
                 return nullptr;
             }
@@ -3632,7 +3682,6 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         if (eErr != CE_None)
         {
             localctx.free();
-            VSIFCloseL(fp);
             delete poGMLJP2Box;
             return nullptr;
         }
@@ -3640,7 +3689,6 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         if (!localctx.finishCompress())
         {
             localctx.free();
-            VSIFCloseL(fp);
             delete poGMLJP2Box;
             return nullptr;
         }
@@ -3652,6 +3700,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
     /* -------------------------------------------------------------------- */
     bool bRet = true;
     if (eCodecFormat == CODEC::cvtenum(JP2_CODEC_JP2) &&
+        !BASE::canPerformDirectIO() &&
         !CPLFetchBool(papszOptions, "JP2C_LENGTH_ZERO",
                       false) /* debug option */)
     {
@@ -3733,8 +3782,11 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         }
     }
 
-    if (VSIFCloseL(fp) != 0)
-        bRet = false;
+    if (fpOwner)
+    {
+        if (VSIFCloseL(fpOwner.release()) != 0)
+            bRet = false;
+    }
     delete poGMLJP2Box;
     if (!bRet)
         return nullptr;

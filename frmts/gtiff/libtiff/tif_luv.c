@@ -212,7 +212,7 @@ static int LogL16Decode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
         }
         tp = (int16_t *)sp->tbuf;
     }
-    _TIFFmemset((void *)tp, 0, npixels * sizeof(tp[0]));
+    _TIFFmemset((void *)tp, 0, (tmsize_t)((size_t)npixels * sizeof(tp[0])));
 
     bp = (unsigned char *)tif->tif_rawcp;
     cc = tif->tif_rawcc;
@@ -290,7 +290,7 @@ static int LogLuvDecode24(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
     cc = tif->tif_rawcc;
     for (i = 0; i < npixels && cc >= 3; i++)
     {
-        tp[i] = bp[0] << 16 | bp[1] << 8 | bp[2];
+        tp[i] = (uint32_t)bp[0] << 16 | (uint32_t)bp[1] << 8 | bp[2];
         bp += 3;
         cc -= 3;
     }
@@ -342,7 +342,7 @@ static int LogLuvDecode32(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
         }
         tp = (uint32_t *)sp->tbuf;
     }
-    _TIFFmemset((void *)tp, 0, npixels * sizeof(tp[0]));
+    _TIFFmemset((void *)tp, 0, (tmsize_t)((size_t)npixels * sizeof(tp[0])));
 
     bp = (unsigned char *)tif->tif_rawcp;
     cc = tif->tif_rawcc;
@@ -978,7 +978,7 @@ static
 
     if (v < UV_VSTART)
         return oog_encode(u, v);
-    vi = tiff_itrunc((v - UV_VSTART) * (1. / UV_SQSIZ), em);
+    vi = (unsigned int)tiff_itrunc((v - UV_VSTART) * (1. / UV_SQSIZ), em);
     if (vi >= UV_NVS)
         return oog_encode(u, v);
     if (u < uv_row[vi].ustart)
@@ -1082,7 +1082,7 @@ static
     if (Ce < 0) /* never happens */
         Ce = uv_encode(U_NEU, V_NEU, SGILOGENCODE_NODITHER);
     /* combine encodings */
-    return (Le << 14 | Ce);
+    return (uint32_t)Le << 14 | (uint32_t)Ce;
 }
 
 static void Luv24toXYZ(LogLuvState *sp, uint8_t *op, tmsize_t n)
@@ -1113,8 +1113,8 @@ static void Luv24toLuv48(LogLuvState *sp, uint8_t *op, tmsize_t n)
             u = U_NEU;
             v = V_NEU;
         }
-        *luv3++ = (int16_t)(u * (1L << 15));
-        *luv3++ = (int16_t)(v * (1L << 15));
+        *luv3++ = (int16_t)(u * (1 << 15));
+        *luv3++ = (int16_t)(v * (1 << 15));
         luv++;
     }
 }
@@ -1168,7 +1168,7 @@ static void Luv24fromLuv48(LogLuvState *sp, uint8_t *op, tmsize_t n)
                        sp->encode_meth);
         if (Ce < 0) /* never happens */
             Ce = uv_encode(U_NEU, V_NEU, SGILOGENCODE_NODITHER);
-        *luv++ = (uint32_t)Le << 14 | Ce;
+        *luv++ = (uint32_t)Le << 14 | (uint32_t)Ce;
         luv3 += 3;
     }
 }
@@ -1224,13 +1224,13 @@ static
     if (u <= 0.)
         ue = 0;
     else
-        ue = tiff_itrunc(UVSCALE * u, em);
+        ue = (unsigned int)tiff_itrunc(UVSCALE * u, em);
     if (ue > 255)
         ue = 255;
     if (v <= 0.)
         ve = 0;
     else
-        ve = tiff_itrunc(UVSCALE * v, em);
+        ve = (unsigned int)tiff_itrunc(UVSCALE * v, em);
     if (ve > 255)
         ve = 255;
     /* combine encodings */
@@ -1261,8 +1261,8 @@ static void Luv32toLuv48(LogLuvState *sp, uint8_t *op, tmsize_t n)
         *luv3++ = (int16_t)(*luv >> 16);
         u = 1. / UVSCALE * ((*luv >> 8 & 0xff) + .5);
         v = 1. / UVSCALE * ((*luv & 0xff) + .5);
-        *luv3++ = (int16_t)(u * (1L << 15));
-        *luv3++ = (int16_t)(v * (1L << 15));
+        *luv3++ = (int16_t)(u * (1 << 15));
+        *luv3++ = (int16_t)(v * (1 << 15));
         luv++;
     }
 }
@@ -1303,9 +1303,10 @@ static void Luv32fromLuv48(LogLuvState *sp, uint8_t *op, tmsize_t n)
     {
         while (n-- > 0)
         {
-            *luv++ = (uint32_t)luv3[0] << 16 |
-                     (luv3[1] * (uint32_t)(UVSCALE + .5) >> 7 & 0xff00) |
-                     (luv3[2] * (uint32_t)(UVSCALE + .5) >> 15 & 0xff);
+            *luv++ =
+                (uint32_t)luv3[0] << 16 |
+                ((uint32_t)luv3[1] * (uint32_t)(UVSCALE + .5) >> 7 & 0xff00) |
+                ((uint32_t)luv3[2] * (uint32_t)(UVSCALE + .5) >> 15 & 0xff);
             luv3 += 3;
         }
         return;
@@ -1401,7 +1402,7 @@ static int LogL16InitState(TIFF *tif)
         sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_imagelength);
     if (multiply_ms(sp->tbuflen, sizeof(int16_t)) == 0 ||
         (sp->tbuf = (uint8_t *)_TIFFmallocExt(
-             tif, sp->tbuflen * sizeof(int16_t))) == NULL)
+             tif, (tmsize_t)((size_t)sp->tbuflen * sizeof(int16_t)))) == NULL)
     {
         TIFFErrorExtR(tif, module, "No space for SGILog translation buffer");
         return (0);
@@ -1508,7 +1509,7 @@ static int LogLuvInitState(TIFF *tif)
         sp->tbuflen = multiply_ms(td->td_imagewidth, td->td_imagelength);
     if (multiply_ms(sp->tbuflen, sizeof(uint32_t)) == 0 ||
         (sp->tbuf = (uint8_t *)_TIFFmallocExt(
-             tif, sp->tbuflen * sizeof(uint32_t))) == NULL)
+             tif, (tmsize_t)((size_t)sp->tbuflen * sizeof(uint32_t)))) == NULL)
     {
         TIFFErrorExtR(tif, module, "No space for SGILog translation buffer");
         return (0);

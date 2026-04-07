@@ -867,7 +867,8 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
             {
                 if (!TIFFWriteDirectoryTagAscii(
                         tif, &ndir, dir, TIFFTAG_INKNAMES,
-                        tif->tif_dir.td_inknameslen, tif->tif_dir.td_inknames))
+                        (uint32_t)tif->tif_dir.td_inknameslen,
+                        tif->tif_dir.td_inknames))
                     goto bad;
             }
             if (TIFFFieldSet(tif, FIELD_NUMBEROFINKS))
@@ -1018,7 +1019,7 @@ static int TIFFWriteDirectorySec(TIFF *tif, int isimage, int imagedone,
         {
             uint16_t tag =
                 (uint16_t)tif->tif_dir.td_customValues[m].info->field_tag;
-            uint32_t count = tif->tif_dir.td_customValues[m].count;
+            uint32_t count = (uint32_t)tif->tif_dir.td_customValues[m].count;
             switch (tif->tif_dir.td_customValues[m].info->field_type)
             {
                 case TIFF_ASCII:
@@ -3529,7 +3530,7 @@ int _TIFFRewriteField(TIFF *tif, uint16_t tag, TIFFDataType in_datatype,
         if (entry_tag == tag)
             break;
 
-        read_offset += dirsize;
+        read_offset += (uint64_t)dirsize;
     }
 
     if (entry_tag != tag)
@@ -3659,7 +3660,7 @@ int _TIFFRewriteField(TIFF *tif, uint16_t tag, TIFFDataType in_datatype,
         return 0;
 
     if (datatype == in_datatype)
-        memcpy(buf_to_write, data, count * TIFFDataWidth(datatype));
+        memcpy(buf_to_write, data, (size_t)(count * TIFFDataWidth(datatype)));
     else if (datatype == TIFF_SLONG && in_datatype == TIFF_SLONG8)
     {
         tmsize_t i;
@@ -3752,8 +3753,8 @@ int _TIFFRewriteField(TIFF *tif, uint16_t tag, TIFFDataType in_datatype,
         tif->tif_dir.td_stripoffset_entry.tdir_type == 0 &&
         tif->tif_dir.td_stripoffset_entry.tdir_offset.toff_long8 == 0)
     {
-        tif->tif_dir.td_stripoffset_entry.tdir_type = datatype;
-        tif->tif_dir.td_stripoffset_entry.tdir_count = count;
+        tif->tif_dir.td_stripoffset_entry.tdir_type = (uint16_t)datatype;
+        tif->tif_dir.td_stripoffset_entry.tdir_count = (uint64_t)count;
     }
     else if ((tag == TIFFTAG_TILEBYTECOUNTS ||
               tag == TIFFTAG_STRIPBYTECOUNTS) &&
@@ -3761,8 +3762,8 @@ int _TIFFRewriteField(TIFF *tif, uint16_t tag, TIFFDataType in_datatype,
              tif->tif_dir.td_stripbytecount_entry.tdir_type == 0 &&
              tif->tif_dir.td_stripbytecount_entry.tdir_offset.toff_long8 == 0)
     {
-        tif->tif_dir.td_stripbytecount_entry.tdir_type = datatype;
-        tif->tif_dir.td_stripbytecount_entry.tdir_count = count;
+        tif->tif_dir.td_stripbytecount_entry.tdir_type = (uint16_t)datatype;
+        tif->tif_dir.td_stripbytecount_entry.tdir_count = (uint64_t)count;
     }
 
     /* -------------------------------------------------------------------- */
@@ -3810,13 +3811,14 @@ int _TIFFRewriteField(TIFF *tif, uint16_t tag, TIFFDataType in_datatype,
         if (count * TIFFDataWidth(datatype) == 4)
         {
             uint32_t value;
-            memcpy(&value, buf_to_write, count * TIFFDataWidth(datatype));
+            memcpy(&value, buf_to_write,
+                   (size_t)(count * TIFFDataWidth(datatype)));
             entry_offset = value;
         }
         else
         {
             memcpy(&entry_offset, buf_to_write,
-                   count * TIFFDataWidth(datatype));
+                   (size_t)(count * TIFFDataWidth(datatype)));
         }
     }
 
@@ -3826,7 +3828,7 @@ int _TIFFRewriteField(TIFF *tif, uint16_t tag, TIFFDataType in_datatype,
     /* -------------------------------------------------------------------- */
     /*      Adjust the directory entry.                                     */
     /* -------------------------------------------------------------------- */
-    entry_type = datatype;
+    entry_type = (uint16_t)datatype;
     entry_count = (uint64_t)count;
     memcpy(direntry_raw + 2, &entry_type, sizeof(uint16_t));
     if (tif->tif_flags & TIFF_SWAB)

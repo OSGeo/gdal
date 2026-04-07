@@ -50,12 +50,10 @@ class GDALVectorCombineOutputLayer final
         OGRLayer &srcLayer, int geomFieldIndex,
         const std::vector<std::string> &groupBy, bool keepNested)
         : GDALVectorNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
-          m_groupBy(groupBy), m_defn(OGRFeatureDefn::CreateFeatureDefn(
+          m_groupBy(groupBy), m_defn(OGRFeatureDefnRefCountedPtr::makeInstance(
                                   srcLayer.GetLayerDefn()->GetName())),
           m_keepNested(keepNested)
     {
-        m_defn->Reference();
-
         const OGRFeatureDefn *srcDefn = m_srcLayer.GetLayerDefn();
 
         // Copy field definitions for attribute fields used in
@@ -98,11 +96,6 @@ class GDALVectorCombineOutputLayer final
         }
     }
 
-    ~GDALVectorCombineOutputLayer() override
-    {
-        m_defn->Release();
-    }
-
     GIntBig GetFeatureCount(int bForce) override
     {
         if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
@@ -115,7 +108,7 @@ class GDALVectorCombineOutputLayer final
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_defn;
+        return m_defn.get();
     }
 
     OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -181,7 +174,8 @@ class GDALVectorCombineOutputLayer final
             {
                 it = m_features
                          .insert(std::pair(
-                             fieldValues, std::make_unique<OGRFeature>(m_defn)))
+                             fieldValues,
+                             std::make_unique<OGRFeature>(m_defn.get())))
                          .first;
                 dstFeature = it->second.get();
 
@@ -383,7 +377,7 @@ class GDALVectorCombineOutputLayer final
     std::map<std::vector<std::string>, std::unique_ptr<OGRFeature>>
         m_features{};
     std::optional<decltype(m_features)::const_iterator> m_itFeature{};
-    OGRFeatureDefn *const m_defn;
+    const OGRFeatureDefnRefCountedPtr m_defn;
     GIntBig m_nProcessedFeaturesRead = 0;
     const bool m_keepNested;
 };

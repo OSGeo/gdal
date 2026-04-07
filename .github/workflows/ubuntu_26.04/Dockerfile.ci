@@ -44,7 +44,7 @@ RUN apt-get update && \
     libnetcdf-dev \
     libopenexr-dev \
     libopenjp2-7-dev \
-    libpcre3-dev \
+    libpcre2-dev \
     libpng-dev \
     libpq-dev \
     libproj-dev \
@@ -230,7 +230,7 @@ RUN curl -LO -fsS https://github.com/apache/arrow/archive/refs/heads/main.zip \
     && rm -rf arrow-main
 
 # Build Grok JPEG 2000 library
-ARG GROK_VERSION=master
+ARG GROK_VERSION=v20.2.7
 
 RUN git clone --recursive --depth 1 --branch ${GROK_VERSION} \
     https://github.com/GrokImageCompression/grok.git grok-git && \

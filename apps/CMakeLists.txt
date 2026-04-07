@@ -159,6 +159,8 @@ add_dependencies(appslib generate_gdal_version_h)
 target_sources(${GDAL_LIB_TARGET_NAME} PRIVATE $<TARGET_OBJECTS:appslib>)
 gdal_standard_includes(appslib)
 target_compile_options(appslib PRIVATE ${GDAL_CXX_WARNING_FLAGS} ${WFLAG_OLD_STYLE_CAST} ${WFLAG_EFFCXX} ${WFLAG_DOUBLE_PROMOTION})
+target_compile_definitions(appslib PRIVATE DEPRECATE_OGRFEATUREDEFN_REF_COUNTING)
+target_compile_definitions(appslib PRIVATE DEPRECATE_OGRSPATIALREFERENCE_REF_COUNTING)
 target_include_directories(
   appslib PRIVATE $<TARGET_PROPERTY:gdal_vrt,SOURCE_DIR> $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 if (HAVE_ATOMIC_UINT64_T_WITH_ATOMIC)

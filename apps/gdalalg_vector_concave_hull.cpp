@@ -61,8 +61,6 @@ class GDALVectorConcaveHullAlgorithmLayer final
               oSrcLayer, opts),
           m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
     {
-        m_poFeatureDefn->Reference();
-
         // Concave hull output type can vary; advertise unknown to avoid schema conflicts.
         // In polygon/multipolygoon mode, preserve input type
         for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
@@ -77,14 +75,9 @@ class GDALVectorConcaveHullAlgorithmLayer final
         }
     }
 
-    ~GDALVectorConcaveHullAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
-    }
-
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
   protected:
@@ -135,12 +128,12 @@ class GDALVectorConcaveHullAlgorithmLayer final
             }
         }
 
-        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
+        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
         return poSrcFeature;
     }
 
   private:
-    OGRFeatureDefn *const m_poFeatureDefn;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorConcaveHullAlgorithmLayer)
 };

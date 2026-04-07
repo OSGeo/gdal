@@ -273,8 +273,8 @@ static const char *StateNames[] = {
                                        : tif->tif_curstrip);                   \
             return (-1);                                                       \
         }                                                                      \
-        *pa++ = RunLength + (x);                                               \
-        a0 += (x);                                                             \
+        *pa++ = (uint32_t)((uint32_t)RunLength + (uint32_t)(x));               \
+        a0 += (int)(uint32_t)(x);                                              \
         RunLength = 0;                                                         \
     } while (0)
 #endif
@@ -334,20 +334,20 @@ static const char *StateNames[] = {
     {                                                                          \
         if (RunLength)                                                         \
             SETVALUE(0);                                                       \
-        if (a0 != lastx)                                                       \
+        if (a0 != (int)lastx)                                                  \
         {                                                                      \
             badlength(a0, lastx);                                              \
-            while (a0 > lastx && pa > thisrun)                                 \
-                a0 -= *--pa;                                                   \
-            if (a0 < lastx)                                                    \
+            while (a0 > (int)lastx && pa > thisrun)                            \
+                a0 -= (int)*--pa;                                              \
+            if (a0 < (int)lastx)                                               \
             {                                                                  \
                 if (a0 < 0)                                                    \
                     a0 = 0;                                                    \
                 if ((pa - thisrun) & 1)                                        \
                     SETVALUE(0);                                               \
-                SETVALUE(lastx - a0);                                          \
+                SETVALUE((uint32_t)((int)lastx - a0));                         \
             }                                                                  \
-            else if (a0 > lastx)                                               \
+            else if (a0 > (int)lastx)                                          \
             {                                                                  \
                 SETVALUE(lastx);                                               \
                 SETVALUE(0);                                                   \
@@ -385,8 +385,9 @@ static const char *StateNames[] = {
                         goto doneWhite1d;                                      \
                     case S_MakeUpW:                                            \
                     case S_MakeUp:                                             \
-                        a0 += TabEnt->Param;                                   \
-                        RunLength += TabEnt->Param;                            \
+                        a0 = (int)((uint32_t)a0 + TabEnt->Param);              \
+                        RunLength =                                            \
+                            (int)((uint32_t)RunLength + TabEnt->Param);        \
                         break;                                                 \
                     default:                                                   \
                         unexpected("WhiteTable", a0);                          \
@@ -394,7 +395,7 @@ static const char *StateNames[] = {
                 }                                                              \
             }                                                                  \
         doneWhite1d:                                                           \
-            if (a0 >= lastx)                                                   \
+            if (a0 >= (int)lastx)                                              \
                 goto done1d;                                                   \
             for (;;)                                                           \
             {                                                                  \
@@ -409,8 +410,8 @@ static const char *StateNames[] = {
                         goto doneBlack1d;                                      \
                     case S_MakeUpB:                                            \
                     case S_MakeUp:                                             \
-                        a0 += TabEnt->Param;                                   \
-                        RunLength += TabEnt->Param;                            \
+                        a0 += (int)TabEnt->Param;                              \
+                        RunLength += (int)TabEnt->Param;                       \
                         break;                                                 \
                     default:                                                   \
                         unexpected("BlackTable", a0);                          \
@@ -418,7 +419,7 @@ static const char *StateNames[] = {
                 }                                                              \
             }                                                                  \
         doneBlack1d:                                                           \
-            if (a0 >= lastx)                                                   \
+            if (a0 >= (int)lastx)                                              \
                 goto done1d;                                                   \
             if (*(pa - 1) == 0 && *(pa - 2) == 0)                              \
                 pa -= 2;                                                       \
@@ -439,7 +440,7 @@ static const char *StateNames[] = {
     do                                                                         \
     {                                                                          \
         if (pa != thisrun)                                                     \
-            while (b1 <= a0 && b1 < lastx)                                     \
+            while (b1 <= a0 && b1 < (int)lastx)                                \
             {                                                                  \
                 if (pb + 1 >= sp->refruns + sp->nruns)                         \
                 {                                                              \
@@ -449,7 +450,7 @@ static const char *StateNames[] = {
                         isTiled(tif) ? tif->tif_curtile : tif->tif_curstrip);  \
                     return (-1);                                               \
                 }                                                              \
-                b1 += pb[0] + pb[1];                                           \
+                b1 += (int)(pb[0] + pb[1]);                                    \
                 pb += 2;                                                       \
             }                                                                  \
     } while (0)
@@ -460,7 +461,7 @@ static const char *StateNames[] = {
 #define EXPAND2D(eoflab)                                                       \
     do                                                                         \
     {                                                                          \
-        while (a0 < lastx)                                                     \
+        while (a0 < (int)lastx)                                                \
         {                                                                      \
             if (pa >= thisrun + sp->nruns)                                     \
             {                                                                  \
@@ -485,10 +486,11 @@ static const char *StateNames[] = {
                                                    : tif->tif_curstrip);       \
                         return (-1);                                           \
                     }                                                          \
-                    b1 += *pb++;                                               \
-                    RunLength += b1 - a0;                                      \
+                    b1 = b1 + (int)*pb++;                                      \
+                    RunLength =                                                \
+                        (int)((uint32_t)RunLength + (uint32_t)(b1 - a0));      \
                     a0 = b1;                                                   \
-                    b1 += *pb++;                                               \
+                    b1 = b1 + (int)*pb++;                                      \
                     break;                                                     \
                 case S_Horiz:                                                  \
                     if ((pa - thisrun) & 1)                                    \
@@ -503,8 +505,9 @@ static const char *StateNames[] = {
                                     goto doneWhite2da;                         \
                                 case S_MakeUpB:                                \
                                 case S_MakeUp:                                 \
-                                    a0 += TabEnt->Param;                       \
-                                    RunLength += TabEnt->Param;                \
+                                    a0 = (int)((uint32_t)a0 + TabEnt->Param);  \
+                                    RunLength = (int)((uint32_t)RunLength +    \
+                                                      TabEnt->Param);          \
                                     break;                                     \
                                 default:                                       \
                                     goto badBlack2d;                           \
@@ -521,8 +524,9 @@ static const char *StateNames[] = {
                                     goto doneBlack2da;                         \
                                 case S_MakeUpW:                                \
                                 case S_MakeUp:                                 \
-                                    a0 += TabEnt->Param;                       \
-                                    RunLength += TabEnt->Param;                \
+                                    a0 = (int)((uint32_t)a0 + TabEnt->Param);  \
+                                    RunLength = (int)((uint32_t)RunLength +    \
+                                                      TabEnt->Param);          \
                                     break;                                     \
                                 default:                                       \
                                     goto badWhite2d;                           \
@@ -542,8 +546,9 @@ static const char *StateNames[] = {
                                     goto doneWhite2db;                         \
                                 case S_MakeUpW:                                \
                                 case S_MakeUp:                                 \
-                                    a0 += TabEnt->Param;                       \
-                                    RunLength += TabEnt->Param;                \
+                                    a0 = (int)((uint32_t)a0 + TabEnt->Param);  \
+                                    RunLength = (int)((uint32_t)RunLength +    \
+                                                      TabEnt->Param);          \
                                     break;                                     \
                                 default:                                       \
                                     goto badWhite2d;                           \
@@ -560,8 +565,9 @@ static const char *StateNames[] = {
                                     goto doneBlack2db;                         \
                                 case S_MakeUpB:                                \
                                 case S_MakeUp:                                 \
-                                    a0 += TabEnt->Param;                       \
-                                    RunLength += TabEnt->Param;                \
+                                    a0 = (int)((uint32_t)a0 + TabEnt->Param);  \
+                                    RunLength = (int)((uint32_t)RunLength +    \
+                                                      TabEnt->Param);          \
                                     break;                                     \
                                 default:                                       \
                                     goto badBlack2d;                           \
@@ -584,11 +590,11 @@ static const char *StateNames[] = {
                                                    : tif->tif_curstrip);       \
                         return (-1);                                           \
                     }                                                          \
-                    b1 += *pb++;                                               \
+                    b1 = b1 + (int)*pb++;                                      \
                     break;                                                     \
                 case S_VR:                                                     \
                     CHECK_b1;                                                  \
-                    SETVALUE(b1 - a0 + TabEnt->Param);                         \
+                    SETVALUE((int)((uint32_t)(b1 - a0) + TabEnt->Param));      \
                     if (pb >= sp->refruns + sp->nruns)                         \
                     {                                                          \
                         TIFFErrorExtR(tif, module,                             \
@@ -599,24 +605,24 @@ static const char *StateNames[] = {
                                                    : tif->tif_curstrip);       \
                         return (-1);                                           \
                     }                                                          \
-                    b1 += *pb++;                                               \
+                    b1 = b1 + (int)*pb++;                                      \
                     break;                                                     \
                 case S_VL:                                                     \
                     CHECK_b1;                                                  \
-                    if (b1 < (int)(a0 + TabEnt->Param))                        \
+                    if (b1 < (int)((uint32_t)a0 + TabEnt->Param))              \
                     {                                                          \
                         unexpected("VL", a0);                                  \
                         goto eol2d;                                            \
                     }                                                          \
-                    SETVALUE(b1 - a0 - TabEnt->Param);                         \
-                    b1 -= *--pb;                                               \
+                    SETVALUE((int)((uint32_t)(b1 - a0) - TabEnt->Param));      \
+                    b1 = b1 - (int)*--pb;                                      \
                     break;                                                     \
                 case S_Ext:                                                    \
-                    *pa++ = lastx - a0;                                        \
+                    *pa++ = (uint32_t)((int)lastx - a0);                       \
                     extension(a0);                                             \
                     goto eol2d;                                                \
                 case S_EOL:                                                    \
-                    *pa++ = lastx - a0;                                        \
+                    *pa++ = (uint32_t)((int)lastx - a0);                       \
                     NeedBits8(4, eof2d);                                       \
                     if (GetBits(4))                                            \
                         unexpected("EOL", a0);                                 \

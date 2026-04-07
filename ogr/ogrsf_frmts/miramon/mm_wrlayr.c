@@ -1916,7 +1916,7 @@ int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
 /* -------------------------------------------------------------------- */
 static int MMClose3DSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                  MM_INTERNAL_FID nElements, VSILFILE *pF,
-                                 VSILFILE *pF3d, const char *pszF3d,
+                                 VSILFILE **pF3d, const char *pszF3d,
                                  struct MM_ZSection *pZSection,
                                  MM_FILE_OFFSET FinalOffset)
 {
@@ -1926,7 +1926,7 @@ static int MMClose3DSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     // Avoid closing when it has no sense. But it's not an error.
     // Just return elegantly.
-    if (!pF || !pF3d || !pszF3d || !pZSection)
+    if (!pF || !pF3d || !(*pF3d) || !pszF3d || !pZSection)
         return 0;
 
     if (hMiraMonLayer->bIsReal3d)
@@ -1944,13 +1944,13 @@ static int MMClose3DSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
         if (MMAppendBlockToBuffer(&pZSection->FlushZL))
             goto end_label;
 
-        if (MMMoveFromFileToFile(pF3d, pF, &pZSection->ZSectionOffset))
+        if (MMMoveFromFileToFile(*pF3d, pF, &pZSection->ZSectionOffset))
             goto end_label;
     }
 
     ret_code = 0;
 end_label:
-    fclose_and_nullify(&pF3d);
+    fclose_and_nullify(pF3d);
     if (pszF3d && *pszF3d != '\0')
         VSIUnlink(pszF3d);
 
@@ -2000,7 +2000,7 @@ static int MMClosePointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
         if (MMClose3DSectionLayer(
                 hMiraMonLayer, hMiraMonLayer->TopHeader.nElemCount,
-                hMiraMonLayer->MMPoint.pF, hMiraMonLayer->MMPoint.pF3d,
+                hMiraMonLayer->MMPoint.pF, &hMiraMonLayer->MMPoint.pF3d,
                 hMiraMonLayer->MMPoint.psz3DLayerName,
                 &hMiraMonLayer->MMPoint.pZSection, hMiraMonLayer->OffsetCheck))
         {
@@ -2013,6 +2013,7 @@ static int MMClosePointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     ret_code = 0;
 end_label:
     fclose_and_nullify(&hMiraMonLayer->MMPoint.pF);
+    fclose_and_nullify(&hMiraMonLayer->MMPoint.pF3d);
     return ret_code;
 }
 
@@ -2128,7 +2129,7 @@ static int MMCloseArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         // 3D Section
         if (MMClose3DSectionLayer(
                 hMiraMonLayer, pArcTopHeader->nElemCount, pMMArcLayer->pF,
-                pMMArcLayer->pF3d, pMMArcLayer->psz3DLayerName,
+                &pMMArcLayer->pF3d, pMMArcLayer->psz3DLayerName,
                 &pMMArcLayer->pZSection, hMiraMonLayer->OffsetCheck))
         {
             CPLError(CE_Failure, CPLE_NoWriteAccess, "Error writing to file %s",
@@ -2140,6 +2141,7 @@ static int MMCloseArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     ret_code = 0;
 end_label:
     fclose_and_nullify(&pMMArcLayer->pF);
+    fclose_and_nullify(&pMMArcLayer->pF3d);
 
     fclose_and_nullify(&pMMArcLayer->pFAL);
 

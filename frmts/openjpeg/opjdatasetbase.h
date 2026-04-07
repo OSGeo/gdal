@@ -687,6 +687,35 @@ struct OPJCodecWrapper
         return opj_start_compress(pCodec, psImage, pStream);
     }
 
+    /* No-ops: OpenJPEG JP2 boxes are handled by GDAL's GDALJP2Box I/O */
+    static bool ownsFile()
+    {
+        return false;
+    }
+
+    static bool initCodec([[maybe_unused]] const char *pszFilename,
+                          [[maybe_unused]] VSIVirtualHandleUniquePtr &fpOwner)
+    {
+        return true;
+    }
+
+    static void setupJP2Metadata(bool, int, bool, GDALJP2Metadata *,
+                                 GDALJP2Box *, int, int, int, int,
+                                 JP2_COLOR_SPACE, int, GDALColorTable *,
+                                 GDALDataset *, CSLConstList)
+    {
+    }
+
+    static void extractJP2BoxInfo(int, int &, int &, int &, int &,
+                                  GDALColorTable **)
+    {
+    }
+
+    static bool rewriteBoxes(const char *, GDALDataset *)
+    {
+        return false;
+    }
+
     bool compressTile(int tileIndex, GByte *buff, uint32_t buffLen)
     {
         if (!pCodec || !pStream)

@@ -60,7 +60,7 @@ typedef size_t WordType;
  */
 #define LZW_COMPAT /* include backwards compatibility code */
 
-#define MAXCODE(n) ((1L << (n)) - 1)
+#define MAXCODE(n) ((1 << (n)) - 1)
 /*
  * The TIFF spec specifies that encoded bit
  * strings range from 9 to 12 bits.
@@ -372,7 +372,7 @@ static int LZWPreDecode(TIFF *tif, uint16_t s)
                 nextbits += 8 * SIZEOF_WORDTYPE;                               \
                 dec_bitsleft -= 8 * SIZEOF_WORDTYPE;                           \
                 code = (WordType)((codetmp | (nextdata >> nextbits)) &         \
-                                  nbitsmask);                                  \
+                                  (WordType)nbitsmask);                        \
                 break;                                                         \
             }                                                                  \
             else                                                               \
@@ -396,7 +396,7 @@ static int LZWPreDecode(TIFF *tif, uint16_t s)
                 }                                                              \
             }                                                                  \
         }                                                                      \
-        code = (WordType)((nextdata >> nextbits) & nbitsmask);                 \
+        code = (WordType)((nextdata >> nextbits) & (WordType)nbitsmask);       \
     } while (0)
 
 static int LZWDecode(TIFF *tif, uint8_t *op0, tmsize_t occ0, uint16_t s)
@@ -472,7 +472,8 @@ static int LZWDecode(TIFF *tif, uint8_t *op0, tmsize_t occ0, uint16_t s)
     }
 
     bp = (uint8_t *)tif->tif_rawcp;
-    sp->dec_bitsleft += (((uint64_t)tif->tif_rawcc - sp->old_tif_rawcc) << 3);
+    sp->dec_bitsleft +=
+        (((uint64_t)tif->tif_rawcc - (uint64_t)sp->old_tif_rawcc) << 3);
     uint64_t dec_bitsleft = sp->dec_bitsleft;
     nbits = sp->lzw_nbits;
     nextdata = sp->lzw_nextdata;
@@ -493,7 +494,7 @@ begin:
 {
     WordType code;
     GetNextCodeLZW();
-    codep = dec_codetab + code;
+    codep = dec_codetab + (unsigned long)code;
     if (code >= CODE_FIRST)
         goto code_above_or_equal_to_258;
     if (code < 256)
@@ -673,7 +674,7 @@ code_clear:
     free_entp = dec_codetab + CODE_FIRST;
     nbits = BITS_MIN;
     nbitsmask = MAXCODE(BITS_MIN);
-    maxcodep = dec_codetab + nbitsmask - 1;
+    maxcodep = dec_codetab + (unsigned long)nbitsmask - 1;
     do
     {
         GetNextCodeLZW();
@@ -774,7 +775,7 @@ error_code:
         else                                                                   \
         {                                                                      \
             _get(_sp, _bp, _code);                                             \
-            dec_bitsleft -= nbits;                                             \
+            dec_bitsleft -= (uint64_t)nbits;                                   \
         }                                                                      \
     }
 
@@ -790,7 +791,7 @@ error_code:
             nextdata |= (unsigned long)*(bp)++ << nextbits;                    \
             nextbits += 8;                                                     \
         }                                                                      \
-        code = (hcode_t)(nextdata & nbitsmask);                                \
+        code = (hcode_t)(nextdata & (unsigned long)nbitsmask);                 \
         nextdata >>= nbits;                                                    \
         nextbits -= nbits;                                                     \
     }
@@ -858,7 +859,8 @@ static int LZWDecodeCompat(TIFF *tif, uint8_t *op0, tmsize_t occ0, uint16_t s)
 
     bp = (uint8_t *)tif->tif_rawcp;
 
-    sp->dec_bitsleft += (((uint64_t)tif->tif_rawcc - sp->old_tif_rawcc) << 3);
+    sp->dec_bitsleft +=
+        (((uint64_t)tif->tif_rawcc - (uint64_t)sp->old_tif_rawcc) << 3);
     uint64_t dec_bitsleft = sp->dec_bitsleft;
 
     nbits = sp->lzw_nbits;
@@ -1196,7 +1198,7 @@ static int LZWEncode(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
                  * Avoid pointer arithmetic because of
                  * wraparound problems with segments.
                  */
-                if ((h -= disp) < 0)
+                if ((h -= (int)disp) < 0)
                     h += HSIZE;
                 hp = &sp->enc_hashtab[h];
                 if (hp->hash == fcode)
@@ -1319,7 +1321,7 @@ static int LZWPostEncode(TIFF *tif)
     {
         int free_ent = sp->lzw_free_ent;
 
-        PutNextCode(op, sp->enc_oldcode);
+        PutNextCode(op, (WordType)sp->enc_oldcode);
         sp->enc_oldcode = (hcode_t)-1;
         free_ent++;
 

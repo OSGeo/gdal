@@ -2428,7 +2428,7 @@ CPLErr JPGDataset::StartDecompress()
         /* in libjpeg */
 
         // 1 MB for regular libjpeg usage
-        vsi_l_offset nRequiredMemory = 1024 * 1024;
+        uint64_t nRequiredMemory = 1024 * 1024;
 
         for (int ci = 0; ci < sDInfo.num_components; ci++)
         {
@@ -2439,12 +2439,20 @@ CPLErr JPGDataset::StartDecompress()
                          "Invalid sampling factor(s)");
                 return CE_Failure;
             }
-            nRequiredMemory +=
-                static_cast<vsi_l_offset>(DIV_ROUND_UP(
-                    compptr->width_in_blocks, compptr->h_samp_factor)) *
-                DIV_ROUND_UP(compptr->height_in_blocks,
-                             compptr->v_samp_factor) *
-                sizeof(JBLOCK);
+            const int nWidthSubsampled = cpl::div_round_up(
+                compptr->width_in_blocks, compptr->h_samp_factor);
+            const int nHeightSubsampled = cpl::div_round_up(
+                compptr->height_in_blocks, compptr->v_samp_factor);
+            const uint64_t nTmp =
+                static_cast<uint64_t>(nWidthSubsampled) * nHeightSubsampled;
+            if (nTmp > std::numeric_limits<uint64_t>::max() / sizeof(JBLOCK) ||
+                nRequiredMemory > std::numeric_limits<uint64_t>::max() -
+                                      nTmp * sizeof(JBLOCK))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Corrupted image");
+                return CE_Failure;
+            }
+            nRequiredMemory += nTmp * sizeof(JBLOCK);
         }
 
         if (nRequiredMemory > 10 * 1024 * 1024 && ppoActiveDS &&
@@ -3673,10 +3681,82 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 
     poDS->bIsSubfile = bIsSubfile;
 
+    poDS->ArtemisIIEasterEgg();
+
     return poDS;
 }
 
 #if !defined(JPGDataset)
+
+/************************************************************************/
+/*                         ArtemisIIEasterEgg()                         */
+/************************************************************************/
+
+void JPGDatasetCommon::ArtemisIIEasterEgg()
+{
+    // Is this the Artemis II mythic image of https://www.nasa.gov/wp-content/uploads/2026/04/art002e000192.jpg ?
+    // If so, then use georeferencing kindly provided by Simeon Schmauß (https://mastodon.social/@stim3on@fosstodon.org)
+    // in https://fosstodon.org/@stim3on/116353715518726592
+    GDALGeoTransform gt;
+    // Do cheapest tests first...
+    if (nRasterXSize == 5568 && nRasterYSize == 3712 &&
+        strstr(GetDescription(), "art002e000192") != nullptr &&
+        GetSpatialRef() == nullptr && GetGeoTransform(gt) != CE_None)
+    {
+        const char *pszWKT =
+            "PROJCRS[\"Tilted perspective projection for Hello world picture "
+            "taken by Reid Wiseman from Artemis II\","
+            "    BASEGEOGCRS[\"WGS84\","
+            "        DATUM[\"World Geodetic System 1984\","
+            "            ELLIPSOID[\"WGS 84\",6378137,298.257223563,"
+            "                LENGTHUNIT[\"metre\",1]],"
+            "            ID[\"EPSG\",6326]],"
+            "        PRIMEM[\"Greenwich\",0,"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433],"
+            "            ID[\"EPSG\",8901]]],"
+            "    CONVERSION[\"Tilted perspective - Hello world - Artemis II\","
+            "        METHOD[\"PROJ tpers\"],"
+            "        PARAMETER[\"lat_0\",-1.6359082148,"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433,"
+            "                ID[\"EPSG\",9122]]],"
+            "        PARAMETER[\"lon_0\",-17.4323556611,"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433,"
+            "                ID[\"EPSG\",9122]]],"
+            "        PARAMETER[\"h\",10290019.124,"
+            "            LENGTHUNIT[\"metre\",1,"
+            "                ID[\"EPSG\",9001]]],"
+            "        PARAMETER[\"tilt\",-4.15,"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433,"
+            "                ID[\"EPSG\",9122]]],"
+            "        PARAMETER[\"azi\",121.5,"
+            "            ANGLEUNIT[\"degree\",0.0174532925199433,"
+            "                ID[\"EPSG\",9122]]]],"
+            "    CS[Cartesian,2],"
+            "        AXIS[\"(E)\",east,"
+            "            ORDER[1],"
+            "            LENGTHUNIT[\"metre\",1,"
+            "                ID[\"EPSG\",9001]]],"
+            "        AXIS[\"(N)\",north,"
+            "            ORDER[2],"
+            "            LENGTHUNIT[\"metre\",1,"
+            "                ID[\"EPSG\",9001]]],"
+            "    REMARK[\"Credits to Simeon Schmauß for deriving this CRS: "
+            "https://fosstodon.org/@stim3on/116353715518726592\"]]";
+
+        m_oSRS.importFromWkt(pszWKT);
+        bGeoTransformValid = true;
+        m_gt[0] = -5.2217134991559219e+06;
+        m_gt[1] = 2.6965734323778038e+03;
+        m_gt[2] = -1.2177960904732563e+03;
+        m_gt[3] = 7.5987852091184044e+06;
+        m_gt[4] = -1.2009140912982348e+03;
+        m_gt[5] = -2.6924269785799042e+03;
+        GDALDataset::SetMetadataItem(
+            "GEOREFERENCING_CREDITS",
+            "Simeon Schmauß: "
+            "https://fosstodon.org/@stim3on/116353715518726592");
+    }
+}
 
 /************************************************************************/
 /*                         LoadWorldFileOrTab()                         */

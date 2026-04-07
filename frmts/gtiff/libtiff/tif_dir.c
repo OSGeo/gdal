@@ -50,7 +50,8 @@ static void setByteArray(TIFF *tif, void **vpp, const void *vp, size_t nmemb,
     }
     if (vp)
     {
-        tmsize_t bytes = _TIFFMultiplySSize(NULL, nmemb, elem_size, NULL);
+        tmsize_t bytes = _TIFFMultiplySSize(NULL, (tmsize_t)nmemb,
+                                            (tmsize_t)elem_size, NULL);
         if (bytes)
             *vpp = (void *)_TIFFmallocExt(tif, bytes);
         if (*vpp)
@@ -121,7 +122,8 @@ static void setDoubleArrayOneValue(TIFF *tif, double **vpp, double value,
 {
     if (*vpp)
         _TIFFfreeExt(tif, *vpp);
-    *vpp = (double *)_TIFFmallocExt(tif, nmemb * sizeof(double));
+    *vpp = (double *)_TIFFmallocExt(tif,
+                                    (tmsize_t)nmemb * (tmsize_t)sizeof(double));
     if (*vpp)
     {
         while (nmemb--)
@@ -273,7 +275,7 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
             /*
              * Setup new compression routine state.
              */
-            if ((status = TIFFSetCompressionScheme(tif, v)) != 0)
+            if ((status = TIFFSetCompressionScheme(tif, (int)v)) != 0)
                 td->td_compression = (uint16_t)v;
             else
                 status = 0;
@@ -418,7 +420,7 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
             td->td_halftonehints[1] = (uint16_t)va_arg(ap, uint16_vap);
             break;
         case TIFFTAG_COLORMAP:
-            v32 = (uint32_t)(1L << td->td_bitspersample);
+            v32 = (uint32_t)(1UL << td->td_bitspersample);
             _TIFFsetShortArrayExt(tif, &td->td_colormap[0],
                                   va_arg(ap, uint16_t *), v32);
             _TIFFsetShortArrayExt(tif, &td->td_colormap[1],
@@ -558,7 +560,7 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
             if (ninksinstring > 0)
             {
                 _TIFFsetNString(tif, &td->td_inknames, s, v);
-                td->td_inknameslen = v;
+                td->td_inknameslen = (int)v;
                 /* Set NumberOfInks to the value ninksinstring */
                 if (TIFFFieldSet(tif, FIELD_NUMBEROFINKS))
                 {
@@ -704,7 +706,8 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
 
                 new_customValues = (TIFFTagValue *)_TIFFreallocExt(
                     tif, td->td_customValues,
-                    sizeof(TIFFTagValue) * (td->td_customValueCount + 1));
+                    (tmsize_t)(sizeof(TIFFTagValue) *
+                               (size_t)(td->td_customValueCount + 1)));
                 if (!new_customValues)
                 {
                     TIFFErrorExtR(tif, module,
@@ -763,7 +766,7 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
                     }
                     ma = (uint32_t)len;
                 }
-                tv->count = ma;
+                tv->count = (int)ma;
                 setByteArray(tif, &tv->value, mb, ma, 1);
             }
             else
@@ -771,9 +774,9 @@ static int _TIFFVSetField(TIFF *tif, uint32_t tag, va_list ap)
                 if (fip->field_passcount)
                 {
                     if (fip->field_writecount == TIFF_VARIABLE2)
-                        tv->count = (uint32_t)va_arg(ap, uint32_t);
+                        tv->count = (int)va_arg(ap, uint32_t);
                     else
-                        tv->count = (int)va_arg(ap, int);
+                        tv->count = va_arg(ap, int);
                 }
                 else if (fip->field_writecount == TIFF_VARIABLE ||
                          fip->field_writecount == TIFF_VARIABLE2)
@@ -1850,7 +1853,7 @@ static int TIFFAdvanceDirectory(TIFF *tif, uint64_t *nextdiroff, uint64_t *off,
             uint16_t dircount;
             uint32_t nextdir32;
             poffa = (tmsize_t)poff;
-            poffb = poffa + sizeof(uint16_t);
+            poffb = poffa + (tmsize_t)sizeof(uint16_t);
             if (((uint64_t)poffa != poff) || (poffb < poffa) ||
                 (poffb < (tmsize_t)sizeof(uint16_t)) || (poffb > tif->tif_size))
             {
@@ -1864,7 +1867,7 @@ static int TIFFAdvanceDirectory(TIFF *tif, uint64_t *nextdiroff, uint64_t *off,
             if (tif->tif_flags & TIFF_SWAB)
                 TIFFSwabShort(&dircount);
             poffc = poffb + dircount * 12;
-            poffd = poffc + sizeof(uint32_t);
+            poffd = poffc + (tmsize_t)sizeof(uint32_t);
             if ((poffc < poffb) || (poffc < dircount * 12) || (poffd < poffc) ||
                 (poffd < (tmsize_t)sizeof(uint32_t)) || (poffd > tif->tif_size))
             {
@@ -1891,7 +1894,7 @@ static int TIFFAdvanceDirectory(TIFF *tif, uint64_t *nextdiroff, uint64_t *off,
                 return (0);
             }
             poffa = (tmsize_t)poff;
-            poffb = poffa + sizeof(uint64_t);
+            poffb = poffa + (tmsize_t)sizeof(uint64_t);
             if (poffb > tif->tif_size)
             {
                 TIFFErrorExtR(tif, module,
@@ -1916,7 +1919,7 @@ static int TIFFAdvanceDirectory(TIFF *tif, uint64_t *nextdiroff, uint64_t *off,
                 return (0);
             }
             poffc = poffb + dircount16 * 20;
-            poffd = poffc + sizeof(uint64_t);
+            poffd = poffc + (tmsize_t)sizeof(uint64_t);
             if (poffd > tif->tif_size)
             {
                 TIFFErrorExtR(tif, module, "Error fetching directory link");

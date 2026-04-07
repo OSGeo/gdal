@@ -1640,10 +1640,9 @@ OGRSQLiteTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     auto poSRSIn = poGeomFieldIn->GetSpatialRef();
     if (poSRSIn)
     {
-        auto l_poSRS = poSRSIn->Clone();
+        auto l_poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSIn);
         l_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        poGeomField->SetSpatialRef(l_poSRS);
-        l_poSRS->Release();
+        poGeomField->SetSpatialRef(l_poSRS.get());
     }
 
     /* -------------------------------------------------------------------- */

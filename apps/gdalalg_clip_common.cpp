@@ -113,11 +113,10 @@ GDALClipCommon::GetClipGeometry()
 
         if (!m_bboxCrs.empty())
         {
-            auto poSRS = new OGRSpatialReference();
+            auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             CPL_IGNORE_RET_VAL(poSRS->SetFromUserInput(m_bboxCrs.c_str()));
-            poClipGeom->assignSpatialReference(poSRS);
-            poSRS->Release();
+            poClipGeom->assignSpatialReference(poSRS.get());
         }
     }
     else if (!m_geometry.empty())
@@ -136,11 +135,11 @@ GDALClipCommon::GetClipGeometry()
                     OGRGeometryFactory::createFromGeoJson(m_geometry.c_str()));
                 if (poClipGeom && poClipGeom->getSpatialReference() == nullptr)
                 {
-                    auto poSRS = new OGRSpatialReference();
+                    auto poSRS =
+                        OGRSpatialReferenceRefCountedPtr::makeInstance();
                     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                     CPL_IGNORE_RET_VAL(poSRS->SetFromUserInput("WGS84"));
-                    poClipGeom->assignSpatialReference(poSRS);
-                    poSRS->Release();
+                    poClipGeom->assignSpatialReference(poSRS.get());
                 }
             }
         }
@@ -153,12 +152,11 @@ GDALClipCommon::GetClipGeometry()
 
         if (!m_geometryCrs.empty())
         {
-            auto poSRS = new OGRSpatialReference();
+            auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             // Validity of CRS already checked by GDALAlgorithm
             CPL_IGNORE_RET_VAL(poSRS->SetFromUserInput(m_geometryCrs.c_str()));
-            poClipGeom->assignSpatialReference(poSRS);
-            poSRS->Release();
+            poClipGeom->assignSpatialReference(poSRS.get());
         }
     }
     else if (auto poLikeDS = m_likeDataset.GetDatasetRef())

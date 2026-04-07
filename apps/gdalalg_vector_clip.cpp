@@ -82,17 +82,11 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         SetDescription(oSrcLayer.GetDescription());
         SetMetadata(oSrcLayer.GetMetadata());
         oSrcLayer.SetSpatialFilter(m_poClipGeom.get());
-        m_poFeatureDefn->Reference();
-    }
-
-    ~GDALVectorClipAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
     }
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
     void TranslateFeature(
@@ -111,7 +105,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         poIntersection->assignSpatialReference(
             m_poFeatureDefn->GetGeomFieldDefn(0)->GetSpatialRef());
 
-        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
+        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
 
         const auto eSrcGeomType = wkbFlatten(poGeom->getGeometryType());
         const auto eFeatGeomType =
@@ -174,7 +168,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
     const OGRwkbGeometryType m_eSrcLayerGeomType;
     const OGRwkbGeometryType m_eFlattenSrcLayerGeomType;
     const bool m_bSrcLayerGeomTypeIsCollection;
-    OGRFeatureDefn *const m_poFeatureDefn;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorClipAlgorithmLayer)
 };

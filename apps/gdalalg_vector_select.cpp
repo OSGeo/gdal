@@ -62,7 +62,7 @@ class GDALVectorSelectAlgorithmLayer final
     : public GDALVectorPipelineOutputLayer
 {
   private:
-    OGRFeatureDefn *const m_poFeatureDefn = nullptr;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
     std::vector<int> m_anMapSrcFieldsToDstFields{};
     std::vector<int> m_anMapDstGeomFieldsToSrcGeomFields{};
 
@@ -71,7 +71,7 @@ class GDALVectorSelectAlgorithmLayer final
     std::unique_ptr<OGRFeature>
     TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeature) const
     {
-        auto poFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
+        auto poFeature = std::make_unique<OGRFeature>(m_poFeatureDefn.get());
         poFeature->SetFID(poSrcFeature->GetFID());
         const auto styleString = poSrcFeature->GetStyleString();
         if (styleString)
@@ -100,19 +100,13 @@ class GDALVectorSelectAlgorithmLayer final
     explicit GDALVectorSelectAlgorithmLayer(
         OGRLayer &oSrcLayer, const std::string &osOutputLayerName)
         : GDALVectorPipelineOutputLayer(oSrcLayer),
-          m_poFeatureDefn(new OGRFeatureDefn(osOutputLayerName.empty()
-                                                 ? oSrcLayer.GetName()
-                                                 : osOutputLayerName.c_str()))
+          m_poFeatureDefn(OGRFeatureDefnRefCountedPtr::makeInstance(
+              osOutputLayerName.empty() ? oSrcLayer.GetName()
+                                        : osOutputLayerName.c_str()))
     {
         SetDescription(m_poFeatureDefn->GetName());
         SetMetadata(oSrcLayer.GetMetadata());
         m_poFeatureDefn->SetGeomType(wkbNone);
-        m_poFeatureDefn->Reference();
-    }
-
-    ~GDALVectorSelectAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
     }
 
     bool IncludeFields(const std::vector<std::string> &selectedFields,
@@ -250,7 +244,7 @@ class GDALVectorSelectAlgorithmLayer final
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
     GIntBig GetFeatureCount(int bForce) override

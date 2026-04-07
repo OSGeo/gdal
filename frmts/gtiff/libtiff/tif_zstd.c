@@ -165,7 +165,7 @@ static int ZSTDDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
     }
 
     tif->tif_rawcp += in_buffer.pos;
-    tif->tif_rawcc -= in_buffer.pos;
+    tif->tif_rawcc -= (tmsize_t)in_buffer.pos;
 
     return 1;
 }
@@ -287,7 +287,7 @@ static int ZSTDPostEncode(TIFF *tif)
         }
         if (sp->out_buffer.pos > 0)
         {
-            tif->tif_rawcc = sp->out_buffer.pos;
+            tif->tif_rawcc = (tmsize_t)sp->out_buffer.pos;
             if (!TIFFFlushData1(tif))
                 return 0;
             sp->out_buffer.dst = tif->tif_rawcp;

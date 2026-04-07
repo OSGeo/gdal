@@ -86,13 +86,11 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
         const std::vector<std::string> &layerMetadata,
         const std::vector<std::string> &unsetLayerMetadata, bool unsetFID)
         : GDALVectorPipelineOutputLayer(oSrcLayer),
-          m_bOverrideCrs(!overrideCrs.empty()), m_unsetFID(unsetFID)
+          m_bOverrideCrs(!overrideCrs.empty()), m_unsetFID(unsetFID),
+          m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
     {
         SetDescription(oSrcLayer.GetDescription());
         SetMetadata(oSrcLayer.GetMetadata());
-
-        m_poFeatureDefn = oSrcLayer.GetLayerDefn()->Clone();
-        m_poFeatureDefn->Reference();
 
         if (activeLayer.empty() || activeLayer == GetDescription())
         {
@@ -128,24 +126,19 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
                 if (!EQUAL(overrideCrs.c_str(), "null") &&
                     !EQUAL(overrideCrs.c_str(), "none"))
                 {
-                    m_poSRS = new OGRSpatialReference();
+                    m_poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
                     m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    m_poSRS->SetFromUserInput(overrideCrs.c_str());
+                    // already checked by GDALAlgorithmArg framework
+                    CPL_IGNORE_RET_VAL(
+                        m_poSRS->SetFromUserInput(overrideCrs.c_str()));
                 }
                 for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
                 {
                     m_poFeatureDefn->GetGeomFieldDefn(i)->SetSpatialRef(
-                        m_poSRS);
+                        m_poSRS.get());
                 }
             }
         }
-    }
-
-    ~GDALVectorEditAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
-        if (m_poSRS)
-            m_poSRS->Release();
     }
 
     const char *GetFIDColumn() const override
@@ -157,21 +150,21 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
     void TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
-        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
+        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
         if (m_bOverrideCrs)
         {
             for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
             {
                 auto poGeom = poSrcFeature->GetGeomFieldRef(i);
                 if (poGeom)
-                    poGeom->assignSpatialReference(m_poSRS);
+                    poGeom->assignSpatialReference(m_poSRS.get());
             }
         }
         if (m_unsetFID)
@@ -190,8 +183,8 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
   private:
     const bool m_bOverrideCrs;
     const bool m_unsetFID;
-    OGRFeatureDefn *m_poFeatureDefn = nullptr;
-    OGRSpatialReference *m_poSRS = nullptr;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
+    OGRSpatialReferenceRefCountedPtr m_poSRS{};
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorEditAlgorithmLayer)
 };

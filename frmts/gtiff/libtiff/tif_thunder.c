@@ -60,7 +60,7 @@ static const int threebitdeltas[8] = {0, 1, 2, 3, 0, -3, -2, -1};
         if (npixels < maxpixels)                                               \
         {                                                                      \
             if (npixels++ & 1)                                                 \
-                *op++ |= lastpixel;                                            \
+                *op++ |= (uint8_t)lastpixel;                                   \
             else                                                               \
                 op[0] = (uint8_t)(lastpixel << 4);                             \
         }                                                                      \
@@ -112,7 +112,7 @@ static int ThunderDecode(TIFF *tif, uint8_t *op0, tmsize_t maxpixels)
                     break;
                 if (npixels & 1)
                 {
-                    op[0] |= lastpixel;
+                    op[0] |= (uint8_t)lastpixel;
                     lastpixel = *op++;
                     npixels++;
                     n--;

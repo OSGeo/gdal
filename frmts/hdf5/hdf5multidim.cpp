@@ -1399,6 +1399,14 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
         H5Sget_simple_extent_dims(m_hDataSpace, &anDimSizes[0], nullptr);
     }
 
+    // Build a "classic" subdataset name from group and array names
+    const std::string osSubdatasetName(
+        "/" +
+        CPLString(osParentName)
+            .replaceAll("Data Fields", "Data_Fields")
+            .replaceAll("Geolocation Fields", "Geolocation_Fields") +
+        "/" + GetName());
+
     if (nDims == 1)
     {
         auto attrCLASS = GetAttribute("CLASS");
@@ -1504,17 +1512,9 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
     else
     {
         // Use HDF-EOS5 metadata if available to create dimensions
-
         HDF5EOSParser::GridDataFieldMetadata oGridDataFieldMetadata;
         HDF5EOSParser::SwathFieldMetadata oSwathFieldMetadata;
         const auto poHDF5EOSParser = m_poShared->GetHDF5EOSParser();
-        // Build a "classic" subdataset name from group and array names
-        const std::string osSubdatasetName(
-            "/" +
-            CPLString(osParentName)
-                .replaceAll("Data Fields", "Data_Fields")
-                .replaceAll("Geolocation Fields", "Geolocation_Fields") +
-            "/" + GetName());
         if (poHDF5EOSParser &&
             poHDF5EOSParser->GetGridDataFieldMetadata(osSubdatasetName.c_str(),
                                                       oGridDataFieldMetadata) &&
@@ -1667,13 +1667,55 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
     }
 
     std::map<std::string, std::shared_ptr<GDALDimension>> oMapFullNameToDim;
-    // cppcheck-suppress knownConditionTrueFalse
-    if (poGroup && !mapDimIndexToDimFullName.empty())
+    bool bMissingDims = true;
+    // Fill oMapFullNameToDim with dimensions from the current group
+    if (!mapDimIndexToDimFullName.empty())
     {
-        auto groupDims = poGroup->GetDimensions();
+        CPLAssert(poGroup);
+        const auto groupDims = poGroup->GetDimensions();
         for (const auto &dim : groupDims)
         {
             oMapFullNameToDim[dim->GetFullName()] = dim;
+        }
+
+        bMissingDims = false;
+        for (int i = 0; i < nDims; ++i)
+        {
+            const auto oIter =
+                mapDimIndexToDimFullName.find(static_cast<size_t>(i));
+            if (oIter != mapDimIndexToDimFullName.end())
+            {
+                const auto oIter2 = oMapFullNameToDim.find(oIter->second);
+                if (oIter2 == oMapFullNameToDim.end())
+                {
+                    bMissingDims = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    // If not enough, look for dimensions in other groups
+    if (bMissingDims)
+    {
+        auto poRootGroup = m_poShared->GetRootGroup();
+        if (poRootGroup)
+        {
+            for (int i = 0; i < nDims; ++i)
+            {
+                auto oIter =
+                    mapDimIndexToDimFullName.find(static_cast<size_t>(i));
+                if (oIter != mapDimIndexToDimFullName.end())
+                {
+                    const auto &osDimFullName = oIter->second;
+                    auto poDim =
+                        poRootGroup->OpenDimensionFromFullname(osDimFullName);
+                    if (poDim)
+                    {
+                        oMapFullNameToDim[osDimFullName] = poDim;
+                    }
+                }
+            }
         }
     }
 
@@ -1712,6 +1754,39 @@ void HDF5Array::InstantiateDimensions(const std::string &osParentName,
             m_dims.emplace_back(std::make_shared<GDALDimension>(
                 std::string(), CPLSPrintf("dim%d", i), std::string(),
                 std::string(), anDimSizes[i]));
+        }
+    }
+
+    // Use HDF-EOS5 metadata if available to create SRS
+    HDF5EOSParser::GridDataFieldMetadata oGridDataFieldMetadata;
+    const auto poHDF5EOSParser = m_poShared->GetHDF5EOSParser();
+    if (poHDF5EOSParser &&
+        poHDF5EOSParser->GetGridDataFieldMetadata(osSubdatasetName.c_str(),
+                                                  oGridDataFieldMetadata))
+    {
+        auto poSRS = oGridDataFieldMetadata.poGridMetadata->GetSRS();
+        if (poSRS)
+        {
+            int iDimX = 0;
+            int iDimY = 0;
+            for (int iDim = 0; iDim < static_cast<int>(m_dims.size()); ++iDim)
+            {
+                const auto &poDim = m_dims[iDim];
+                if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X)
+                    iDimX = iDim + 1;
+                else if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y)
+                    iDimY = iDim + 1;
+            }
+
+            if (iDimX > 0 && iDimY > 0)
+            {
+                m_poSRS = std::shared_ptr<OGRSpatialReference>(poSRS->Clone());
+                if (m_poSRS->GetDataAxisToSRSAxisMapping() ==
+                    std::vector<int>{2, 1})
+                    m_poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
+                else
+                    m_poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
+            }
         }
     }
 }

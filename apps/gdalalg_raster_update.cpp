@@ -40,8 +40,7 @@ GDALRasterUpdateAlgorithm::GDALRasterUpdateAlgorithm(bool standaloneStep)
                                       ConstructorOptions()
                                           .SetStandaloneStep(standaloneStep)
                                           .SetInputDatasetMaxCount(1)
-                                          .SetAddDefaultArguments(false)
-                                          .SetInputDatasetAlias("dataset"))
+                                          .SetAddDefaultArguments(false))
 {
     AddProgressArg();
 

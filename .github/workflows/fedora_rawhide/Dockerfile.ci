@@ -9,7 +9,7 @@ RUN dnf install -y clang make diffutils ccache cmake \
       openjpeg2-devel cfitsio-devel libwebp-devel \
       libkml-devel json-c-devel \
       geos-devel \
-      sqlite-devel pcre-devel libspatialite-devel freexl-devel \
+      sqlite-devel pcre2-devel libspatialite-devel freexl-devel \
       libtiff-devel libgeotiff-devel \
       poppler-cpp-devel podofo-devel \
       cryptopp-devel \

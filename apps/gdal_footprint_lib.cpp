@@ -660,16 +660,17 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
             }
         }
 
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+        OGRSpatialReferenceRefCountedPtr poSRS;
         if (psOptions->bOutCSGeoref)
         {
             if (!psOptions->oOutputSRS.IsEmpty())
             {
-                poSRS.reset(psOptions->oOutputSRS.Clone());
+                poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(
+                    psOptions->oOutputSRS);
             }
             else if (auto poSrcSRS = poSrcDS->GetSpatialRef())
             {
-                poSRS.reset(poSrcSRS->Clone());
+                poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSrcSRS);
             }
         }
 

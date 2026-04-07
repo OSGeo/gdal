@@ -82,6 +82,7 @@
 #include <grk_config.h>
 
 #include "gdal_thread_pool.h"
+#include "gdaljp2metadata.h"
 
 #ifdef HAVE_CURL
 #include "cpl_aws.h"
@@ -936,20 +937,10 @@ struct GRKCodecWrapper
         psImage->color_space = static_cast<GRK_COLOR_SPACE>(eColorSpace);
         psImage->numcomps = nBands;
 
-        grk_stream_params streamParams = {};
-        streamParams.seek_fn = JP2Dataset_Seek;
-        streamParams.write_fn = JP2Dataset_Write;
-        streamParams.user_data = psJP2File;
-
-        /* Always ask Grok to do codestream only. We will take care */
-        /* of JP2 boxes */
+        /* Default to J2K; setupJP2Metadata() switches to GRK_FMT_JP2
+         * when writing JP2 files.  Codec creation is deferred to
+         * initCodec() so JP2 metadata can be set first. */
         compressParams.cod_format = GRK_FMT_J2K;
-        pCodec = grk_compress_init(&streamParams, &compressParams, psImage);
-        if (pCodec == nullptr)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "grk_compress_init() failed");
-            return false;
-        }
 
         // Store tile grid info for compressTile
         compressBlockXSize = nBlockXSize;
@@ -970,6 +961,579 @@ struct GRKCodecWrapper
                 memset(comp->data, 0,
                        static_cast<size_t>(comp->stride) * comp->h *
                            sizeof(int32_t));
+        }
+
+        return true;
+    }
+
+    /**
+     * @brief Extract cdef and palette info from Grok's parsed JP2 boxes.
+     */
+    void extractJP2BoxInfo(int nBands, int &nRedIndex, int &nGreenIndex,
+                           int &nBlueIndex, int &nAlphaIndex,
+                           GDALColorTable **ppoCT)
+    {
+        if (!psImage || !psImage->meta)
+            return;
+
+        auto *cdef = psImage->meta->color.channel_definition;
+        if (cdef &&
+            cdef->num_channel_descriptions == static_cast<uint16_t>(nBands))
+        {
+            nRedIndex = nGreenIndex = nBlueIndex = -1;
+            for (int i = 0; i < nBands; i++)
+            {
+                int CNi = cdef->descriptions[i].channel;
+                int Typi = cdef->descriptions[i].typ;
+                int Asoci = cdef->descriptions[i].asoc;
+                if (CNi < 0 || CNi >= nBands)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Wrong value of CN%d=%d", i, CNi);
+                    break;
+                }
+                if (Typi == 0)
+                {
+                    if (Asoci == 1)
+                        nRedIndex = CNi;
+                    else if (Asoci == 2)
+                        nGreenIndex = CNi;
+                    else if (Asoci == 3)
+                        nBlueIndex = CNi;
+                    else if (Asoci < 0 || (Asoci > nBands && Asoci != 65535))
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Wrong value of Asoc%d=%d", i, Asoci);
+                        break;
+                    }
+                }
+                else if (Typi == 1)
+                    nAlphaIndex = CNi;
+            }
+        }
+        else if (cdef)
+            CPLDebug(debugId(), "Unsupported cdef content");
+
+        auto *pal = psImage->meta->color.palette;
+        if (pal && pal->num_entries <= 256 &&
+            (pal->num_channels == 3 || pal->num_channels == 4))
+        {
+            bool allPrec7 = true;
+            for (int c = 0; c < pal->num_channels; c++)
+                if (pal->channel_prec[c] != 7)
+                {
+                    allPrec7 = false;
+                    break;
+                }
+            if (allPrec7)
+            {
+                *ppoCT = new GDALColorTable();
+                for (int i = 0; i < pal->num_entries; i++)
+                {
+                    GDALColorEntry e;
+                    int off = i * pal->num_channels;
+                    e.c1 = static_cast<short>(pal->lut[off]);
+                    e.c2 = static_cast<short>(pal->lut[off + 1]);
+                    e.c3 = static_cast<short>(pal->lut[off + 2]);
+                    e.c4 = (pal->num_channels == 4)
+                               ? static_cast<short>(pal->lut[off + 3])
+                               : 255;
+                    (*ppoCT)->SetColorEntry(i, &e);
+                }
+            }
+        }
+    }
+
+    /**
+     * @brief Set JP2 metadata on the image for Grok-native JP2 writing.
+     *
+     * Called between initCompress() and initCodec().
+     */
+    void setupJP2Metadata(bool bInspireTG, int bProfile1, bool bGeoBoxesAfter,
+                          GDALJP2Metadata *poJP2MD, GDALJP2Box *poGMLJP2Box,
+                          int nAlphaBandIndex, int nRedBandIndex,
+                          int nGreenBandIndex, int nBlueBandIndex,
+                          JP2_COLOR_SPACE eColorSpace, int nBands,
+                          GDALColorTable *poCT, GDALDataset *poSrcDS,
+                          CSLConstList papszOptions)
+    {
+        compressParams.cod_format = GRK_FMT_JP2;
+
+        if (!psImage->meta)
+            psImage->meta = grk_image_meta_new();
+
+        /* JPX branding + reader requirements */
+        const bool bJPXBranding =
+            CPLFetchBool(papszOptions, "JPX", true) && poGMLJP2Box != nullptr;
+        if (bJPXBranding)
+        {
+            compressParams.jpx_branding = true;
+            compressParams.write_rreq = true;
+            compressParams.num_rreq_standard_features = 0;
+            compressParams.rreq_standard_features
+                [compressParams.num_rreq_standard_features++] =
+                bProfile1 ? 4 : 5;
+            compressParams.rreq_standard_features
+                [compressParams.num_rreq_standard_features++] = 67;
+        }
+        if (bInspireTG && poGMLJP2Box != nullptr &&
+            !CPLFetchBool(papszOptions, "JPX", true))
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "INSPIRE_TG=YES implies GMLJP2 which recommends "
+                     "JPX capability");
+        }
+
+        compressParams.geoboxes_after_jp2c = bGeoBoxesAfter;
+
+        const bool bWriteMetadata =
+            CPLFetchBool(papszOptions, "WRITE_METADATA", false);
+        const bool bMainMDOnly =
+            CPLFetchBool(papszOptions, "MAIN_MD_DOMAIN_ONLY", false);
+        const bool bIPR =
+            poSrcDS->GetMetadata("xml:IPR") != nullptr && bWriteMetadata;
+
+        if (bIPR)
+        {
+            compressParams.rreq_standard_features
+                [compressParams.num_rreq_standard_features++] = 35;
+        }
+
+        /* GeoTIFF UUID */
+        if (poJP2MD)
+        {
+            std::unique_ptr<GDALJP2Box> poGeoBox(poJP2MD->CreateJP2GeoTIFF());
+            if (poGeoBox)
+            {
+                const GByte *p = poGeoBox->GetWritableData();
+                GIntBig n = poGeoBox->GetDataLength();
+                if (n > 16) /* skip 16-byte UUID prefix */
+                    grk_image_meta_set_field(psImage->meta, "geotiff", p + 16,
+                                             static_cast<size_t>(n - 16));
+            }
+        }
+
+        /* IPR box */
+        if (bIPR)
+        {
+            std::unique_ptr<GDALJP2Box> poIPRBox(
+                GDALJP2Metadata::CreateIPRBox(poSrcDS));
+            if (poIPRBox)
+            {
+                const GByte *p = poIPRBox->GetWritableData();
+                GIntBig n = poIPRBox->GetDataLength();
+                if (n > 0)
+                    grk_image_meta_set_field(psImage->meta, "ipr", p,
+                                             static_cast<size_t>(n));
+            }
+        }
+
+        /* GMLJP2 asoc boxes */
+        if (poGMLJP2Box)
+        {
+            const GByte *asocData = poGMLJP2Box->GetWritableData();
+            int asocLen = static_cast<int>(poGMLJP2Box->GetDataLength());
+            flattenAndSetAsocBoxes(psImage, asocData, asocLen);
+        }
+
+        /* XMP UUID */
+        if (bWriteMetadata && !bMainMDOnly)
+        {
+            std::unique_ptr<GDALJP2Box> poXMPBox(
+                GDALJP2Metadata::CreateXMPBox(poSrcDS));
+            if (poXMPBox)
+            {
+                const GByte *p = poXMPBox->GetWritableData();
+                GIntBig n = poXMPBox->GetDataLength();
+                if (n > 16)
+                    grk_image_meta_set_field(psImage->meta, "xmp", p + 16,
+                                             static_cast<size_t>(n - 16));
+            }
+        }
+
+        /* GDAL metadata XML box */
+        if (bWriteMetadata)
+        {
+            std::unique_ptr<GDALJP2Box> poMDBox(
+                GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(
+                    poSrcDS, bMainMDOnly));
+            if (poMDBox)
+            {
+                const GByte *p = poMDBox->GetWritableData();
+                GIntBig n = poMDBox->GetDataLength();
+                if (n > 0)
+                    grk_image_meta_set_field(psImage->meta, "xml", p,
+                                             static_cast<size_t>(n));
+            }
+        }
+
+        /* cdef: component type/association */
+        setupCdef(nAlphaBandIndex, nRedBandIndex, nGreenBandIndex,
+                  nBlueBandIndex, eColorSpace, nBands, poCT, papszOptions);
+
+        /* Display resolution */
+        setupResolution(poSrcDS);
+    }
+
+  private:
+    void setupCdef(int nAlphaBandIndex, int nRedBandIndex, int nGreenBandIndex,
+                   int nBlueBandIndex, JP2_COLOR_SPACE eColorSpace, int nBands,
+                   GDALColorTable *poCT, CSLConstList papszOptions)
+    {
+        bool needCdef =
+            (((nBands == 3 || nBands == 4) &&
+              (eColorSpace == static_cast<JP2_COLOR_SPACE>(GRK_CLRSPC_SRGB) ||
+               eColorSpace == static_cast<JP2_COLOR_SPACE>(GRK_CLRSPC_SYCC)) &&
+              (nRedBandIndex != 0 || nGreenBandIndex != 1 ||
+               nBlueBandIndex != 2)) ||
+             nAlphaBandIndex >= 0);
+        if (!needCdef)
+            return;
+
+        int nComponents = nBands;
+        if (poCT != nullptr)
+        {
+            int nCTComp =
+                atoi(CSLFetchNameValueDef(papszOptions, "CT_COMPONENTS", "0"));
+            if (nCTComp == 4)
+                nComponents = 4;
+        }
+        for (int i = 0; i < nComponents; i++)
+        {
+            if (i != nAlphaBandIndex)
+            {
+                psImage->comps[i].type = GRK_CHANNEL_TYPE_COLOUR;
+                if (eColorSpace ==
+                        static_cast<JP2_COLOR_SPACE>(GRK_CLRSPC_GRAY) &&
+                    i == 0)
+                    psImage->comps[i].association = GRK_CHANNEL_ASSOC_COLOUR_1;
+                else if (i == nRedBandIndex)
+                    psImage->comps[i].association = GRK_CHANNEL_ASSOC_COLOUR_1;
+                else if (i == nGreenBandIndex)
+                    psImage->comps[i].association = GRK_CHANNEL_ASSOC_COLOUR_2;
+                else if (i == nBlueBandIndex)
+                    psImage->comps[i].association = GRK_CHANNEL_ASSOC_COLOUR_3;
+            }
+            else
+            {
+                psImage->comps[i].type = GRK_CHANNEL_TYPE_OPACITY;
+                psImage->comps[i].association = GRK_CHANNEL_ASSOC_WHOLE_IMAGE;
+            }
+        }
+    }
+
+    void setupResolution(GDALDataset *poSrcDS)
+    {
+        if (poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION") == nullptr ||
+            poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION") == nullptr ||
+            poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT") == nullptr)
+            return;
+
+        double dfXRes =
+            CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_XRESOLUTION"));
+        double dfYRes =
+            CPLAtof(poSrcDS->GetMetadataItem("TIFFTAG_YRESOLUTION"));
+        int nResUnit = atoi(poSrcDS->GetMetadataItem("TIFFTAG_RESOLUTIONUNIT"));
+        if (nResUnit == 2)
+        {
+            dfXRes = dfXRes * 39.37 / 100.0;
+            dfYRes = dfYRes * 39.37 / 100.0;
+        }
+        if ((nResUnit == 2 || nResUnit == 3) && dfXRes > 0 && dfYRes > 0 &&
+            dfXRes < 65535 && dfYRes < 65535)
+        {
+            compressParams.write_display_resolution = true;
+            compressParams.display_resolution[0] = dfXRes * 100.0;
+            compressParams.display_resolution[1] = dfYRes * 100.0;
+        }
+    }
+
+    static void flattenAndSetAsocBoxes(grk_image *image, const GByte *asocData,
+                                       int asocDataLen)
+    {
+        struct AsocEntry
+        {
+            uint32_t level;
+            std::string label;
+            std::vector<uint8_t> xml;
+        };
+
+        std::vector<AsocEntry> entries;
+
+        std::function<void(const GByte *, int, uint32_t)> flattenAsoc;
+        flattenAsoc = [&](const GByte *data, int dataLen, uint32_t level)
+        {
+            int offset = 0;
+            AsocEntry thisEntry;
+            thisEntry.level = level;
+            std::vector<std::pair<const GByte *, int>> childAsocs;
+
+            while (offset + 8 <= dataLen)
+            {
+                uint32_t sz = static_cast<uint32_t>(
+                    (static_cast<uint32_t>(data[offset]) << 24) |
+                    (data[offset + 1] << 16) | (data[offset + 2] << 8) |
+                    data[offset + 3]);
+                if (sz < 8 || offset + static_cast<int>(sz) > dataLen)
+                    break;
+                const GByte *boxContent = data + offset + 8;
+                uint32_t boxContentLen = sz - 8;
+
+                if (memcmp(data + offset + 4, "lbl ", 4) == 0)
+                    thisEntry.label.assign(
+                        reinterpret_cast<const char *>(boxContent),
+                        boxContentLen);
+                else if (memcmp(data + offset + 4, "xml ", 4) == 0)
+                    thisEntry.xml.assign(boxContent,
+                                         boxContent + boxContentLen);
+                else if (memcmp(data + offset + 4, "asoc", 4) == 0)
+                    childAsocs.push_back(
+                        {boxContent, static_cast<int>(boxContentLen)});
+                offset += static_cast<int>(sz);
+            }
+            entries.push_back(std::move(thisEntry));
+            for (auto &child : childAsocs)
+                flattenAsoc(child.first, child.second, level + 1);
+        };
+        flattenAsoc(asocData, asocDataLen, 0);
+
+        if (!entries.empty())
+        {
+            std::vector<grk_asoc> asocs(entries.size());
+            for (size_t i = 0; i < entries.size(); i++)
+            {
+                asocs[i].level = entries[i].level;
+                asocs[i].label = entries[i].label.c_str();
+                asocs[i].xml =
+                    entries[i].xml.empty() ? nullptr : entries[i].xml.data();
+                asocs[i].xml_len = static_cast<uint32_t>(entries[i].xml.size());
+            }
+            grk_image_meta_set_asocs(image->meta, asocs.data(),
+                                     static_cast<uint32_t>(asocs.size()));
+        }
+    }
+
+  public:
+    /**
+     * @brief Returns true if the codec uses native file I/O for writing.
+     *
+     * When true, the VSILFILE passed to open() was closed and should
+     * not be used or closed by the caller.
+     */
+    bool ownsFile() const
+    {
+        return psJP2File && psJP2File->fp_ == nullptr;
+    }
+
+    /**
+     * @brief Create the Grok codec after metadata has been set.
+     *
+     * For local files and /vsis3/, uses native file I/O (closing the
+     * VSILFILE).  For other VSI paths, uses VSILFILE callbacks.
+     */
+    bool initCodec(const char *pszFilename, VSIVirtualHandleUniquePtr &fpOwner)
+    {
+        grk_stream_params streamParams = {};
+        if (pszFilename && GrokCanRead(pszFilename))
+        {
+            CPLDebug("GROK", "Native file write for: %s", pszFilename);
+            safe_strcpy(streamParams.file, pszFilename);
+            fpOwner.reset();  // close before Grok opens natively
+            if (psJP2File)
+                psJP2File->fp_ = nullptr;
+        }
+        else
+        {
+            streamParams.seek_fn = JP2Dataset_Seek;
+            streamParams.write_fn = JP2Dataset_Write;
+            streamParams.user_data = psJP2File;
+        }
+
+        pCodec = grk_compress_init(&streamParams, &compressParams, psImage);
+        if (pCodec == nullptr)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "grk_compress_init() failed");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * @brief Rewrite JP2 boxes via Grok transcode.
+     *
+     * Replaces the driver-side box rewriting logic in Close() by using
+     * grk_transcode() to copy the codestream verbatim while writing
+     * updated metadata boxes.
+     *
+     * @param pszFilename source (and destination) file path
+     * @param poDS        dataset carrying updated metadata
+     * @return true on success
+     */
+    static bool rewriteBoxes(const char *pszFilename, GDALDataset *poDS)
+    {
+        CPLDebug("GROK", "Rewriting boxes via transcode for %s", pszFilename);
+
+        /* Read source header to get image */
+        grk_stream_params srcStreamParams{};
+        safe_strcpy(srcStreamParams.file, pszFilename);
+
+        grk_decompress_parameters dparams{};
+        auto *decCodec = grk_decompress_init(&srcStreamParams, &dparams);
+        if (!decCodec)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "grk_decompress_init() failed for rewrite");
+            return false;
+        }
+
+        grk_header_info srcHeader{};
+        if (!grk_decompress_read_header(decCodec, &srcHeader))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "grk_decompress_read_header() failed for rewrite");
+            grk_object_unref(decCodec);
+            return false;
+        }
+
+        auto *srcImage = grk_decompress_get_image(decCodec);
+        if (!srcImage)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "grk_decompress_get_image() failed for rewrite");
+            grk_object_unref(decCodec);
+            return false;
+        }
+
+        /* Prepare updated metadata on the image */
+        if (!srcImage->meta)
+            srcImage->meta = grk_image_meta_new();
+
+        /* GeoTIFF UUID */
+        GDALJP2Metadata oJP2MD;
+        if (poDS->GetGCPCount() > 0)
+        {
+            oJP2MD.SetGCPs(poDS->GetGCPCount(), poDS->GetGCPs());
+            oJP2MD.SetSpatialRef(poDS->GetGCPSpatialRef());
+        }
+        else
+        {
+            const OGRSpatialReference *poSRS = poDS->GetSpatialRef();
+            if (poSRS)
+                oJP2MD.SetSpatialRef(poSRS);
+            GDALGeoTransform gt;
+            if (poDS->GetGeoTransform(gt) == CE_None &&
+                gt != GDALGeoTransform())
+                oJP2MD.SetGeoTransform(gt);
+        }
+        const char *pszAreaOrPoint =
+            poDS->GetMetadataItem(GDALMD_AREA_OR_POINT);
+        oJP2MD.bPixelIsPoint =
+            pszAreaOrPoint && EQUAL(pszAreaOrPoint, GDALMD_AOP_POINT);
+
+        {
+            std::unique_ptr<GDALJP2Box> poGeoBox(oJP2MD.CreateJP2GeoTIFF());
+            if (poGeoBox)
+            {
+                const GByte *p = poGeoBox->GetWritableData();
+                GIntBig n = poGeoBox->GetDataLength();
+                if (n > 16)
+                    grk_image_meta_set_field(srcImage->meta, "geotiff", p + 16,
+                                             static_cast<size_t>(n - 16));
+            }
+        }
+
+        /* IPR box */
+        {
+            std::unique_ptr<GDALJP2Box> poIPRBox(
+                GDALJP2Metadata::CreateIPRBox(poDS));
+            if (poIPRBox)
+            {
+                const GByte *p = poIPRBox->GetWritableData();
+                GIntBig n = poIPRBox->GetDataLength();
+                if (n > 0)
+                    grk_image_meta_set_field(srcImage->meta, "ipr", p,
+                                             static_cast<size_t>(n));
+            }
+        }
+
+        /* XMP UUID */
+        {
+            std::unique_ptr<GDALJP2Box> poXMPBox(
+                GDALJP2Metadata::CreateXMPBox(poDS));
+            if (poXMPBox)
+            {
+                const GByte *p = poXMPBox->GetWritableData();
+                GIntBig n = poXMPBox->GetDataLength();
+                if (n > 16)
+                    grk_image_meta_set_field(srcImage->meta, "xmp", p + 16,
+                                             static_cast<size_t>(n - 16));
+            }
+        }
+
+        /* GDAL metadata XML box */
+        {
+            std::unique_ptr<GDALJP2Box> poMDBox(
+                GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(poDS,
+                                                                     false));
+            if (poMDBox)
+            {
+                const GByte *p = poMDBox->GetWritableData();
+                GIntBig n = poMDBox->GetDataLength();
+                if (n > 0)
+                    grk_image_meta_set_field(srcImage->meta, "xml", p,
+                                             static_cast<size_t>(n));
+            }
+        }
+
+        /* GMLJP2 asoc boxes */
+        bool bHasSRS = poDS->GetSpatialRef() != nullptr &&
+                       !poDS->GetSpatialRef()->IsEmpty();
+        GDALGeoTransform gt;
+        bool bHasGT =
+            poDS->GetGeoTransform(gt) == CE_None && gt != GDALGeoTransform();
+        if (bHasSRS && bHasGT && poDS->GetGCPCount() == 0)
+        {
+            std::unique_ptr<GDALJP2Box> poGMLBox(oJP2MD.CreateGMLJP2(
+                poDS->GetRasterXSize(), poDS->GetRasterYSize()));
+            if (poGMLBox)
+            {
+                const GByte *asocData = poGMLBox->GetWritableData();
+                int asocLen = static_cast<int>(poGMLBox->GetDataLength());
+                flattenAndSetAsocBoxes(srcImage, asocData, asocLen);
+            }
+        }
+
+        /* Transcode: copy codestream, rewrite boxes */
+        grk_cparameters cparams{};
+        grk_compress_set_default_params(&cparams);
+        cparams.cod_format = GRK_FMT_JP2;
+
+        CPLString osTmpFilename(CPLSPrintf("%s.tmp", pszFilename));
+
+        grk_stream_params transSrcParams{};
+        safe_strcpy(transSrcParams.file, pszFilename);
+
+        grk_stream_params dstParams{};
+        safe_strcpy(dstParams.file, osTmpFilename.c_str());
+
+        uint64_t written =
+            grk_transcode(&transSrcParams, &dstParams, &cparams, srcImage);
+        grk_object_unref(decCodec);
+
+        if (written == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "grk_transcode() failed for box rewrite");
+            VSIUnlink(osTmpFilename);
+            return false;
+        }
+
+        if (VSIRename(osTmpFilename, pszFilename) != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Failed to rename %s to %s",
+                     osTmpFilename.c_str(), pszFilename);
+            VSIUnlink(osTmpFilename);
+            return false;
         }
 
         return true;

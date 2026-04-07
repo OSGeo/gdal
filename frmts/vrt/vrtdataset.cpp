@@ -517,7 +517,7 @@ CPLErr VRTDataset::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPathIn)
     const CPLXMLNode *psSRSNode = CPLGetXMLNode(psTree, "SRS");
     if (psSRSNode)
     {
-        m_poSRS.reset(new OGRSpatialReference());
+        m_poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         m_poSRS->SetFromUserInput(
             CPLGetXMLValue(psSRSNode, nullptr, ""),
             OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get());
@@ -569,7 +569,7 @@ CPLErr VRTDataset::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPathIn)
     {
         OGRSpatialReference *poSRS = nullptr;
         GDALDeserializeGCPListFromXML(psGCPList, m_asGCPs, &poSRS);
-        m_poGCP_SRS.reset(poSRS);
+        m_poGCP_SRS.reset(poSRS, /* add_ref = */ false);
     }
 
     /* -------------------------------------------------------------------- */
@@ -719,7 +719,7 @@ CPLErr VRTDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
                            const OGRSpatialReference *poGCP_SRS)
 
 {
-    m_poGCP_SRS.reset(poGCP_SRS ? poGCP_SRS->Clone() : nullptr);
+    m_poGCP_SRS = OGRSpatialReferenceRefCountedPtr::makeClone(poGCP_SRS);
     m_asGCPs = gdal::GCP::fromC(pasGCPListIn, nGCPCountIn);
 
     SetNeedsFlush();
@@ -734,7 +734,7 @@ CPLErr VRTDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 CPLErr VRTDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 
 {
-    m_poSRS.reset(poSRS ? poSRS->Clone() : nullptr);
+    m_poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRS);
 
     SetNeedsFlush();
 

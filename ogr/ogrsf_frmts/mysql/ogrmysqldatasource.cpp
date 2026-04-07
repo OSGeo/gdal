@@ -579,8 +579,7 @@ const OGRSpatialReference *OGRMySQLDataSource::FetchSRS(int nId)
 
     FreeResultAndNullify(hResult);
 
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS(
-        new OGRSpatialReference());
+    auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (pszWKT == nullptr || poSRS->importFromWkt(pszWKT) != OGRERR_NONE)
     {

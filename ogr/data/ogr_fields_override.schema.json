@@ -246,6 +246,10 @@
     "coordinateSystem": {
       "type": "object",
       "properties": {
+        "authid": {
+          "type": "string",
+          "description": "A SRS definition in the form <authority>:<code> (e.g. EPSG:4326)"
+        },
         "wkt": {
           "type": "string"
         },
@@ -264,10 +268,6 @@
           "type": "number"
         }
       },
-      "required": [
-        "wkt",
-        "dataAxisToSRSAxisMapping"
-      ],
       "additionalProperties": false
     }
   }

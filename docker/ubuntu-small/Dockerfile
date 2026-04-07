@@ -39,7 +39,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble-security main restricted universe" >> /etc/apt/sources.list \
     && dpkg --add-architecture ${TARGET_ARCH} \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-13-${GCC_ARCH}-linux-gnu \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends g++-13-${GCC_ARCH}-linux-gnu \
     && ln -s ${GCC_ARCH}-linux-gnu-gcc-13 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
     && ln -s ${GCC_ARCH}-linux-gnu-g++-13 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
     fi
@@ -80,7 +80,7 @@ ARG PROJ_INSTALL_PREFIX
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
     mkdir -p /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
-    && curl -LO -fsS http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/${PROJ_INSTALL_PREFIX}/share/proj \
     && rm -f *.zip
 
@@ -91,7 +91,7 @@ ARG WITH_CCACHE
 ARG PROJ_VERSION=master
 RUN --mount=type=cache,id=ubuntu-small-proj,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
-    && curl -Lo - -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
         | tar xz -C proj --strip-components=1 \
     && export PROJ_DB_CACHE_PARAM="" \
     && cd proj \
@@ -149,14 +149,14 @@ RUN --mount=type=cache,id=ubuntu-small-gdal,target=$HOME/.cache \
     && dpkg --force depends -r libproj-dev \
     && cd gdal \
     && if test "${GDAL_VERSION}" = "master"; then \
-        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
+        export GDAL_VERSION=$(curl --retry 3 --retry-all-errors --retry-delay 3 -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
     && if test "${GDAL_VERSION}" = "local"; then \
         export GDAL_VERSION=$(git describe --match=BOGUSTAG --always --abbrev=40 --dirty); \
     else \
         rm -rf ./*; \
-        (curl -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
+        (curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
           | tar xz --strip-components=1) || exit 1; \
     fi \
     && if test "x${GDAL_BUILD_IS_RELEASE:-}" = "x"; then \
@@ -249,7 +249,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libzstd1 bash libpq5 libssl3 libopenjp2-7 libspatialite8 \
         libmuparser2v5 \
         libtcmalloc-minimal4 \
-    && apt-get install -y python-is-python3
+        python-is-python3
 
 # Order layers starting with less frequently varying ones
 # Only used for custom libopenjp2

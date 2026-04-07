@@ -2346,7 +2346,7 @@ const OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
     /*      Try looking up in spatial_ref_sys table.                        */
     /* -------------------------------------------------------------------- */
     CPLString osCommand;
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+    OGRSpatialReferenceRefCountedPtr poSRS;
 
     osCommand.Printf("SELECT srtext, auth_name, auth_srid FROM spatial_ref_sys "
                      "WHERE srid = %d",
@@ -2359,7 +2359,7 @@ const OGRSpatialReference *OGRPGDataSource::FetchSRS(int nId)
         const char *pszWKT = PQgetvalue(hResult, 0, 0);
         const char *pszAuthName = PQgetvalue(hResult, 0, 1);
         const char *pszAuthSRID = PQgetvalue(hResult, 0, 2);
-        poSRS.reset(new OGRSpatialReference());
+        poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         // Try to import first from EPSG code, and then from WKT

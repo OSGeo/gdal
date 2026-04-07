@@ -78,16 +78,25 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes != 0)
         return nullptr;
 
-    if (!STARTS_WITH_CI(poOpenInfo->pszFilename, "http:") &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "https:") &&
-        !STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp:"))
+    const char *pszFilename = poOpenInfo->pszFilename;
+    if (STARTS_WITH_CI(pszFilename, "HTTP:http://") ||
+        STARTS_WITH_CI(pszFilename, "HTTP:https://") ||
+        STARTS_WITH_CI(pszFilename, "HTTP:ftp://"))
+    {
+        pszFilename += strlen("HTTP:");
+    }
+    else if (!STARTS_WITH(pszFilename, "http://") &&
+             !STARTS_WITH(pszFilename, "https://") &&
+             !STARTS_WITH(pszFilename, "ftp://"))
+    {
         return nullptr;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Fetch the result.                                               */
     /* -------------------------------------------------------------------- */
     CPLErrorReset();
-    CPLHTTPResult *psResult = CPLHTTPFetch(poOpenInfo->pszFilename, nullptr);
+    CPLHTTPResult *psResult = CPLHTTPFetch(pszFilename, nullptr);
 
     /* -------------------------------------------------------------------- */
     /*      Try to handle errors.                                           */
@@ -106,7 +115,7 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
         HTTPFetchContentDispositionFilename(psResult->papszHeaders);
     if (osFilename.empty())
     {
-        osFilename = CPLGetFilename(poOpenInfo->pszFilename);
+        osFilename = CPLGetFilename(pszFilename);
         /* If we have special characters, let's default to a fixed name */
         if (strchr(osFilename.c_str(), '?') || strchr(osFilename.c_str(), '&'))
             osFilename = "file.dat";
@@ -152,6 +161,7 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Try opening this result as a gdaldataset.                       */
     /* -------------------------------------------------------------------- */
+
     /* suppress errors as not all drivers support /vsimem */
 
     GDALDataset *poDS;
@@ -172,13 +182,18 @@ static GDALDataset *HTTPOpen(GDALOpenInfo *poOpenInfo)
         oErrorAccumulator.ReplayErrors();
     }
 
-    // The JP2OpenJPEG driver may need to reopen the file, hence this special
+    // The JP2OpenJPEG, XLSX or ODS drivers may need to reopen the file, hence this special
     // behavior
-    if (poDS != nullptr && poDS->GetDriver() != nullptr &&
-        EQUAL(poDS->GetDriver()->GetDescription(), "JP2OpenJPEG"))
+    if (poDS)
     {
-        poDS->MarkSuppressOnClose();
-        return poDS;
+        auto poDriver = poDS->GetDriver();
+        if (poDriver && (EQUAL(poDriver->GetDescription(), "JP2OpenJPEG") ||
+                         EQUAL(poDriver->GetDescription(), "XLSX") ||
+                         EQUAL(poDriver->GetDescription(), "ODS")))
+        {
+            poDS->MarkSuppressOnClose();
+            return poDS;
+        }
     }
 
     /* -------------------------------------------------------------------- */

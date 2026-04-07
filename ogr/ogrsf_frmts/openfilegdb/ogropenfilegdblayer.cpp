@@ -239,7 +239,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
                 GDBGridSettingsToOGR(psSpatialReference));
         }
 
-        OGRSpatialReference *poParentSRS = nullptr;
+        OGRSpatialReferenceRefCountedPtr poParentSRS;
         if (!osParentDefinition.empty())
         {
             CPLXMLNode *psParentTree =
@@ -266,7 +266,7 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
         {
             if (poSRS)
             {
-                if (!poSRS->IsSame(poParentSRS))
+                if (!poSRS->IsSame(poParentSRS.get()))
                 {
                     // Not sure this situation is really valid (seems more a
                     // bug of the editing software), but happens with
@@ -284,15 +284,13 @@ int OGROpenFileGDBLayer::BuildGeometryColumnGDBv10(
                         GetDescription(), poSRS->GetName(),
                         poParentSRS->GetName());
                 }
-                poSRS->Release();
             }
             // Always use the SRS of the feature dataset
-            poSRS = poParentSRS;
+            poSRS = std::move(poParentSRS);
         }
         if (poSRS != nullptr)
         {
-            poGeomFieldDefn->SetSpatialRef(poSRS);
-            poSRS->Dereference();
+            poGeomFieldDefn->SetSpatialRef(poSRS.get());
         }
         m_poFeatureDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
     }
@@ -422,7 +420,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                 m_poDS->BuildSRS(poGDBGeomField->GetWKT().c_str());
             if (poSRSFromGDBTable)
             {
-                if (!poSRS->IsSame(poSRSFromGDBTable))
+                if (!poSRS->IsSame(poSRSFromGDBTable.get()))
                 {
                     CPLDebug("OpenFileGDB",
                              "Table %s declare a CRS '%s' in its XML "
@@ -432,7 +430,6 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
                              GetDescription(), poSRS->GetName(),
                              poSRSFromGDBTable->GetName());
                 }
-                poSRSFromGDBTable->Release();
             }
         }
 #endif
@@ -524,7 +521,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         }
         auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(0);
 
-        OGRSpatialReference *poSRS = nullptr;
+        OGRSpatialReferenceRefCountedPtr poSRS;
         if (!poGDBGeomField->GetWKT().empty() &&
             poGDBGeomField->GetWKT()[0] != '{')
         {
@@ -532,8 +529,7 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         }
         if (poSRS != nullptr)
         {
-            poGeomFieldDefn->SetSpatialRef(poSRS);
-            poSRS->Dereference();
+            poGeomFieldDefn->SetSpatialRef(poSRS.get());
         }
     }
     else if (m_osDefinition.empty() && m_iGeomFieldIdx < 0)

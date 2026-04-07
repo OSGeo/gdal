@@ -37,6 +37,7 @@ GDALVectorSQLAlgorithm::GetConstructorOptions(bool standaloneStep)
     opts.SetOutputDatasetRequired(false);
     opts.SetAddInputLayerNameArgument(false);
     opts.SetAddOutputLayerNameArgument(false);
+    opts.SetInputDatasetAlias("dataset");
     return opts;
 }
 
@@ -114,7 +115,7 @@ namespace
 
 class ProxiedSQLLayer final : public OGRProxiedLayer
 {
-    mutable OGRFeatureDefn *m_poLayerDefn = nullptr;
+    mutable OGRFeatureDefnRefCountedPtr m_poLayerDefn{};
     mutable std::mutex m_oMutex{};
 
     CPL_DISALLOW_COPY_ASSIGN(ProxiedSQLLayer)
@@ -130,12 +131,6 @@ class ProxiedSQLLayer final : public OGRProxiedLayer
         SetDescription(osName.c_str());
     }
 
-    ~ProxiedSQLLayer() override
-    {
-        if (m_poLayerDefn)
-            m_poLayerDefn->Release();
-    }
-
     const char *GetName() const override
     {
         return GetDescription();
@@ -147,10 +142,10 @@ class ProxiedSQLLayer final : public OGRProxiedLayer
 
         if (!m_poLayerDefn)
         {
-            m_poLayerDefn = OGRProxiedLayer::GetLayerDefn()->Clone();
+            m_poLayerDefn.reset(OGRProxiedLayer::GetLayerDefn()->Clone());
             m_poLayerDefn->SetName(GetDescription());
         }
-        return m_poLayerDefn;
+        return m_poLayerDefn.get();
     }
 };
 
@@ -271,7 +266,7 @@ bool GDALVectorSQLAlgorithm::RunStep(GDALPipelineStepRunContext &)
                             "Execution of the SQL statement '%s' failed.%s",
                             sql.c_str(),
                             m_update ? ""
-                                     : " Perhaps you need to specify the "
+                                     : ".\nPerhaps you need to specify the "
                                        "'update' argument?");
                 return false;
             }

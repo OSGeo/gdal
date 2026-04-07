@@ -661,14 +661,10 @@ class OGRSQLiteDataSource final : public OGRSQLiteBaseDataSource
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 
-    OGRSpatialReference *AddSRIDToCache(
-        int nId,
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-            &&poSRS);
+    OGRSpatialReference *AddSRIDToCache(int nId,
+                                        OGRSpatialReferenceRefCountedPtr poSRS);
 
     bool m_bHaveGeometryColumns = false;
     bool m_bIsSpatiaLiteDB = false;

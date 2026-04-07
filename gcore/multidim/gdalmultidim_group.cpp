@@ -902,7 +902,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
             EXIT_OR_CONTINUE_IF_NULL(srcArray);
 
             if (cpl::contains(mapSrcVariableNameToIndexedDimName,
-                              srcArray->GetName()))
+                              srcArray->GetName()) &&
+                !OpenMDArray(name))
             {
                 if (!CopyArray(srcArray))
                     return false;
@@ -916,7 +917,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
             EXIT_OR_CONTINUE_IF_NULL(srcArray);
 
             if (!cpl::contains(mapSrcVariableNameToIndexedDimName,
-                               srcArray->GetName()))
+                               srcArray->GetName()) &&
+                !OpenMDArray(name))
             {
                 if (!CopyArray(srcArray))
                     return false;

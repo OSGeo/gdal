@@ -367,7 +367,7 @@ static bool TIFFHashSetRehash(TIFFHashSet *set)
 {
     int nNewAllocatedSize = anPrimes[set->nIndiceAllocatedSize];
     TIFFList **newTabList =
-        (TIFFList **)(calloc(nNewAllocatedSize, sizeof(TIFFList *)));
+        (TIFFList **)(calloc((size_t)nNewAllocatedSize, sizeof(TIFFList *)));
     if (newTabList == NULL)
         return false;
 #ifdef HASH_DEBUG
@@ -384,7 +384,7 @@ static bool TIFFHashSetRehash(TIFFHashSet *set)
         while (cur)
         {
             const unsigned long nNewHashVal =
-                set->fnHashFunc(cur->pData) % nNewAllocatedSize;
+                set->fnHashFunc(cur->pData) % (unsigned long)nNewAllocatedSize;
 #ifdef HASH_DEBUG
             if (newTabList[nNewHashVal])
                 set->nCollisions++;
@@ -408,7 +408,8 @@ static bool TIFFHashSetRehash(TIFFHashSet *set)
 
 static void **TIFFHashSetFindPtr(TIFFHashSet *set, const void *elt)
 {
-    const unsigned long nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
+    const unsigned long nHashVal =
+        set->fnHashFunc(elt) % (unsigned long)set->nAllocatedSize;
     TIFFList *cur = set->tabList[nHashVal];
     while (cur)
     {
@@ -464,7 +465,8 @@ bool TIFFHashSetInsert(TIFFHashSet *set, void *elt)
         }
     }
 
-    const unsigned long nHashVal = set->fnHashFunc(elt) % set->nAllocatedSize;
+    const unsigned long nHashVal =
+        set->fnHashFunc(elt) % (unsigned long)set->nAllocatedSize;
 #ifdef HASH_DEBUG
     if (set->tabList[nHashVal])
         set->nCollisions++;
@@ -532,7 +534,8 @@ static bool TIFFHashSetRemoveInternal(TIFFHashSet *set, const void *elt,
         }
     }
 
-    int nHashVal = (int)(set->fnHashFunc(elt) % set->nAllocatedSize);
+    int nHashVal =
+        (int)(set->fnHashFunc(elt) % (unsigned long)set->nAllocatedSize);
     TIFFList *cur = set->tabList[nHashVal];
     TIFFList *prev = NULL;
     while (cur)

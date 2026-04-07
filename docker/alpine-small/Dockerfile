@@ -38,7 +38,7 @@ ENV PATH=/usr/lib/ninja-build/bin:$PATH
 # Build openjpeg
 #ARG OPENJPEG_VERSION=2.3.1
 RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
-    curl -LO -fsS https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/uclouvain/openjpeg/archive/v${OPENJPEG_VERSION}.tar.gz \
     && tar xzf v${OPENJPEG_VERSION}.tar.gz \
     && rm -f v${OPENJPEG_VERSION}.tar.gz \
     && cd openjpeg-${OPENJPEG_VERSION} \
@@ -56,7 +56,7 @@ RUN if test "${OPENJPEG_VERSION}" != ""; then ( \
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
     mkdir -p /build_projgrids/usr/share/proj \
-    && curl -LO -fsS http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
     && rm -f *.zip
 
@@ -68,7 +68,7 @@ ARG WITH_CCACHE
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN --mount=type=cache,id=alpine-small-proj,target=$HOME/.cache \
-    curl -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && if test "${RSYNC_REMOTE}" != ""; then \
@@ -120,14 +120,14 @@ COPY --link . gdal/
 RUN --mount=type=cache,id=alpine-small-gdal,target=$HOME/.cache \
     cd gdal \
     && if test "${GDAL_VERSION}" = "master"; then \
-        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
+        export GDAL_VERSION=$(curl --retry 3 --retry-all-errors --retry-delay 3 -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
     && if test "${GDAL_VERSION}" = "local"; then \
         export GDAL_VERSION=$(git describe --match=BOGUSTAG --always --abbrev=40 --dirty); \
     else \
         rm -rf ./*; \
-        (curl -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
+        (curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
           | tar xz --strip-components=1) || exit 1; \
     fi \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \

@@ -976,7 +976,7 @@ static int PredictorEncodeRow(TIFF *tif, uint8_t *bp, tmsize_t cc, uint16_t s)
                       (int64_t)cc);
         return 0;
     }
-    memcpy(working_copy, bp, cc);
+    memcpy(working_copy, bp, (size_t)cc);
 
     if (!(*sp->encodepfunc)(tif, working_copy, cc))
     {
@@ -1014,7 +1014,7 @@ static int PredictorEncodeTile(TIFF *tif, uint8_t *bp0, tmsize_t cc0,
                       (int64_t)cc0);
         return 0;
     }
-    memcpy(working_copy, bp0, cc0);
+    memcpy(working_copy, bp0, (size_t)cc0);
     bp = working_copy;
 
     rowsize = sp->rowsize;

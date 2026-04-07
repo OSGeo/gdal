@@ -4329,9 +4329,9 @@ const char *OGRSQLiteDataSource::GetSRTEXTColName()
 /*      sure it is freshly created, or add a reference yourself if not. */
 /************************************************************************/
 
-OGRSpatialReference *OGRSQLiteDataSource::AddSRIDToCache(
-    int nId,
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> &&poSRS)
+OGRSpatialReference *
+OGRSQLiteDataSource::AddSRIDToCache(int nId,
+                                    OGRSpatialReferenceRefCountedPtr poSRS)
 {
     /* -------------------------------------------------------------------- */
     /*      Add to the cache.                                               */
@@ -4347,11 +4347,11 @@ OGRSpatialReference *OGRSQLiteDataSource::AddSRIDToCache(
 /*      it to the table.                                                */
 /************************************************************************/
 
-int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
+int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRSIn)
 
 {
     int nSRSId = m_nUndefinedSRID;
-    if (poSRS == nullptr)
+    if (poSRSIn == nullptr)
         return nSRSId;
 
     /* -------------------------------------------------------------------- */
@@ -4359,22 +4359,21 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
     /* -------------------------------------------------------------------- */
     for (const auto &pair : m_oSRSCache)
     {
-        if (pair.second.get() == poSRS)
+        if (pair.second.get() == poSRSIn)
             return pair.first;
     }
     for (const auto &pair : m_oSRSCache)
     {
-        if (pair.second != nullptr && pair.second->IsSame(poSRS))
+        if (pair.second != nullptr && pair.second->IsSame(poSRSIn))
             return pair.first;
     }
 
     /* -------------------------------------------------------------------- */
     /*      Build a copy since we may call AutoIdentifyEPSG()               */
     /* -------------------------------------------------------------------- */
-    OGRSpatialReference oSRS(*poSRS);
-    poSRS = nullptr;
+    auto poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSIn);
 
-    const char *pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+    const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
     const char *pszAuthorityCode = nullptr;
 
     if (pszAuthorityName == nullptr || strlen(pszAuthorityName) == 0)
@@ -4384,19 +4383,19 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
         /*      Try to identify an EPSG code */
         /* --------------------------------------------------------------------
          */
-        oSRS.AutoIdentifyEPSG();
+        poSRS->AutoIdentifyEPSG();
 
-        pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+        pszAuthorityName = poSRS->GetAuthorityName(nullptr);
         if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
         {
-            pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
+            pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
             if (pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0)
             {
                 /* Import 'clean' SRS */
-                oSRS.importFromEPSG(atoi(pszAuthorityCode));
+                poSRS->importFromEPSG(atoi(pszAuthorityCode));
 
-                pszAuthorityName = oSRS.GetAuthorityName(nullptr);
-                pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
+                pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+                pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
             }
         }
     }
@@ -4413,7 +4412,7 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
     if (pszAuthorityName != nullptr && strlen(pszAuthorityName) > 0)
     {
-        pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
+        pszAuthorityCode = poSRS->GetAuthorityCode(nullptr);
 
         if (pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0)
         {
@@ -4476,16 +4475,8 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
                 if (nSRSId != m_nUndefinedSRID)
                 {
-                    std::unique_ptr<OGRSpatialReference,
-                                    OGRSpatialReferenceReleaser>
-                        poCachedSRS;
-                    poCachedSRS.reset(oSRS.Clone());
-                    if (poCachedSRS)
-                    {
-                        poCachedSRS->SetAxisMappingStrategy(
-                            OAMS_TRADITIONAL_GIS_ORDER);
-                    }
-                    AddSRIDToCache(nSRSId, std::move(poCachedSRS));
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    AddSRIDToCache(nSRSId, std::move(poSRS));
                 }
 
                 return nSRSId;
@@ -4506,7 +4497,7 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
     /* -------------------------------------------------------------------- */
     char *pszWKT = nullptr;
 
-    if (oSRS.exportToWkt(&pszWKT) != OGRERR_NONE)
+    if (poSRS->exportToWkt(&pszWKT) != OGRERR_NONE)
     {
         CPLFree(pszWKT);
         return m_nUndefinedSRID;
@@ -4542,7 +4533,7 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
          */
         char *pszProj4 = nullptr;
 
-        if (oSRS.exportToProj4(&pszProj4) != OGRERR_NONE)
+        if (poSRS->exportToProj4(&pszProj4) != OGRERR_NONE)
         {
             CPLFree(pszProj4);
             return m_nUndefinedSRID;
@@ -4586,10 +4577,7 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
         if (nSRSId != m_nUndefinedSRID)
         {
-            std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-                poSRSClone;
-            poSRSClone.reset(oSRS.Clone());
-            AddSRIDToCache(nSRSId, std::move(poSRSClone));
+            AddSRIDToCache(nSRSId, std::move(poSRS));
         }
 
         return nSRSId;
@@ -4613,7 +4601,7 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
     if (osProj4.empty())
     {
         char *pszProj4 = nullptr;
-        if (oSRS.exportToProj4(&pszProj4) == OGRERR_NONE)
+        if (poSRS->exportToProj4(&pszProj4) == OGRERR_NONE)
         {
             osProj4 = pszProj4;
         }
@@ -4719,9 +4707,9 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
         if (pszSRTEXTColName != nullptr)
             osSRTEXTColNameWithCommaBefore.Printf(", %s", pszSRTEXTColName);
 
-        const char *pszProjCS = oSRS.GetAttrValue("PROJCS");
+        const char *pszProjCS = poSRS->GetAttrValue("PROJCS");
         if (pszProjCS == nullptr)
-            pszProjCS = oSRS.GetAttrValue("GEOGCS");
+            pszProjCS = poSRS->GetAttrValue("GEOGCS");
 
         if (pszAuthorityName != nullptr)
         {
@@ -4822,10 +4810,8 @@ int OGRSQLiteDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
 
     if (nSRSId != m_nUndefinedSRID)
     {
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-            poCachedSRS(new OGRSpatialReference(std::move(oSRS)));
-        poCachedSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        AddSRIDToCache(nSRSId, std::move(poCachedSRS));
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        AddSRIDToCache(nSRSId, std::move(poSRS));
     }
 
     return nSRSId;
@@ -4861,7 +4847,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS(int nId)
     char **papszResult = nullptr;
     int nRowCount = 0;
     int nColCount = 0;
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+    OGRSpatialReferenceRefCountedPtr poSRS;
 
     CPLString osCommand;
     osCommand.Printf("SELECT srtext FROM spatial_ref_sys WHERE srid = %d "
@@ -4888,7 +4874,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS(int nId)
             /*      Translate into a spatial reference. */
             /* --------------------------------------------------------------------
              */
-            poSRS.reset(new OGRSpatialReference());
+            poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             if (poSRS->importFromWkt(osWKT.c_str()) != OGRERR_NONE)
             {
@@ -4944,7 +4930,7 @@ OGRSpatialReference *OGRSQLiteDataSource::FetchSRS(int nId)
             const char *pszWKT =
                 (pszSRTEXTColName != nullptr) ? papszRow[3] : nullptr;
 
-            poSRS.reset(new OGRSpatialReference());
+            poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
             /* Try first from EPSG code */

@@ -767,7 +767,7 @@ void OGROCIDataSource::ReleaseResultSet(OGRLayer *poLayer)
 /*      OGRSpatialReference, as handles may be cached.                  */
 /************************************************************************/
 
-OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
+OGRSpatialReferenceRefCountedPtr OGROCIDataSource::FetchSRS(int nId)
 
 {
     if (nId < 0)
@@ -779,7 +779,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
     auto oIter = m_oSRSCache.find(nId);
     if (oIter != m_oSRSCache.end())
     {
-        return oIter->second.get();
+        return oIter->second;
     }
 
     /* -------------------------------------------------------------------- */
@@ -803,8 +803,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      Turn into a spatial reference.                                  */
     /* -------------------------------------------------------------------- */
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS(
-        new OGRSpatialReference());
+    auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (poSRS->importFromWkt(papszResult[0]) != OGRERR_NONE)
     {
@@ -828,7 +827,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
             oSRS_EPSG.IsSame(poSRS.get(), apszOptions))
         {
             *poSRS = oSRS_EPSG;
-            return poSRS.release();
+            return poSRS;
         }
     }
 
@@ -863,7 +862,7 @@ OGRSpatialReference *OGROCIDataSource::FetchSRS(int nId)
     /*      Add to the cache.                                               */
     /* -------------------------------------------------------------------- */
     oIter = m_oSRSCache.emplace(nId, std::move(poSRS)).first;
-    return oIter->second.get();
+    return oIter->second;
 }
 
 /************************************************************************/

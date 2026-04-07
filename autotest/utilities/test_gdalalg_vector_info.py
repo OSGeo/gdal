@@ -135,6 +135,38 @@ def test_gdalalg_vector_info_sql():
     assert j["layers"][0]["fields"][0]["name"] == "foo"
 
 
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_info_sql_hint_about_vector_sql_instead(tmp_vsimem):
+
+    gdal.alg.vector.convert(
+        input="../ogr/data/poly.shp", output=tmp_vsimem / "poly.gpkg"
+    )
+
+    # Warning message not caputred on that platform. Not sure why, but not
+    # worth investigating.
+    if not gdaltest.is_travis_branch("ubuntu_2004"):
+
+        # read-only error from GPKG driver
+        with gdaltest.error_raised(
+            gdal.CE_Warning,
+            match='Perhaps you want to run "gdal vector sql --update" instead?',
+        ):
+            with pytest.raises(Exception):
+                gdal.alg.vector.info(
+                    input=tmp_vsimem / "poly.gpkg", sql="DELETE FROM poly"
+                )
+
+        # read-only error from sqlite3
+        with gdaltest.error_raised(
+            gdal.CE_Warning,
+            match='Perhaps you want to run "gdal vector sql --update" instead?',
+        ):
+            with pytest.raises(Exception):
+                gdal.alg.vector.info(
+                    input=tmp_vsimem / "poly.gpkg", sql="DELETE FROM poly WHERE 1=1"
+                )
+
+
 def test_gdalalg_vector_info_layer():
     info = get_info_alg()
     assert info.ParseRunAndFinalize(["-l", "path", "data/path.shp"])

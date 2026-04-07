@@ -599,6 +599,14 @@ def validate(
             if expected_ftyp_branding is None:
                 if gmljp2_found and "gmljp2:GMLJP2CoverageCollection" in gmljp2:
                     expected_ftyp_branding = "jpx "
+                elif gmljp2_found:
+                    # GMLJP2 v1 uses asoc/lbl boxes from JPEG2000 Part II;
+                    # "jpx " branding is valid per section 8.1 of 05-047r3
+                    actual_br = get_field_val(ftyp, "BR")
+                    if actual_br in ("jp2 ", "jpx "):
+                        expected_ftyp_branding = actual_br
+                    else:
+                        expected_ftyp_branding = "jp2 "
                 else:
                     expected_ftyp_branding = "jp2 "
 

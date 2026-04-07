@@ -472,7 +472,6 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
                             if (poSRS)
                             {
                                 m_oRasterSRS = *poSRS;
-                                poSRS->Release();
                             }
                         }
                     }
@@ -553,7 +552,6 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
                         if (poSRS)
                         {
                             m_oRasterSRS = *poSRS;
-                            poSRS->Release();
                         }
                     }
                 }

@@ -432,7 +432,7 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
     const char *pszFeatureDataset =
         m_aosCreationOptions.FetchNameValue("FEATURE_DATASET");
     std::string osFeatureDatasetDef;
-    std::unique_ptr<OGRSpatialReference> poFeatureDatasetSRS;
+    OGRSpatialReferenceRefCountedPtr poFeatureDatasetSRS;
     if (pszFeatureDataset)
     {
         {
@@ -487,7 +487,7 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
                 CPLSearchXMLNode(psParentTree, "=DEFeatureDataset");
             if (psParentInfo != nullptr)
             {
-                poFeatureDatasetSRS.reset(m_poDS->BuildSRS(psParentInfo));
+                poFeatureDatasetSRS = m_poDS->BuildSRS(psParentInfo);
             }
             CPLDestroyXMLNode(psParentTree);
         }
@@ -601,15 +601,13 @@ bool OGROpenFileGDBLayer::Create(const OGRGeomFieldDefn *poSrcGeomFieldDefn)
                 return false;
             }
 
-            auto poSRSClone = poSRS->Clone();
-            poGeomFieldDefn->SetSpatialRef(poSRSClone);
-            poSRSClone->Release();
+            auto poSRSClone =
+                OGRSpatialReferenceRefCountedPtr::makeClone(poSRS);
+            poGeomFieldDefn->SetSpatialRef(poSRSClone.get());
         }
         else if (poFeatureDatasetSRS)
         {
-            auto poSRSClone = poFeatureDatasetSRS->Clone();
-            poGeomFieldDefn->SetSpatialRef(poSRSClone);
-            poSRSClone->Release();
+            poGeomFieldDefn->SetSpatialRef(poFeatureDatasetSRS.get());
         }
 
         std::string osWKT;
@@ -1784,16 +1782,9 @@ OGRErr OGROpenFileGDBLayer::AlterGeomFieldDefn(
                 return OGRERR_FAILURE;
             }
 
-            if (poNewSRS)
-            {
-                auto poNewSRSClone = poNewSRS->Clone();
-                oField.SetSpatialRef(poNewSRSClone);
-                poNewSRSClone->Release();
-            }
-            else
-            {
-                oField.SetSpatialRef(nullptr);
-            }
+            auto poNewSRSClone =
+                OGRSpatialReferenceRefCountedPtr::makeClone(poNewSRS);
+            oField.SetSpatialRef(poNewSRSClone.get());
         }
     }
 

@@ -78,14 +78,9 @@ class GDALVectorSetGeomTypeAlgorithmLayer final
         OGRLayer &oSrcLayer,
         const GDALVectorSetGeomTypeAlgorithm::Options &opts);
 
-    ~GDALVectorSetGeomTypeAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
-    }
-
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
     GIntBig GetFeatureCount(int bForce) override
@@ -116,7 +111,7 @@ class GDALVectorSetGeomTypeAlgorithmLayer final
     TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeature) const override;
 
   private:
-    OGRFeatureDefn *m_poFeatureDefn = nullptr;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorSetGeomTypeAlgorithmLayer)
 
@@ -133,8 +128,6 @@ GDALVectorSetGeomTypeAlgorithmLayer::GDALVectorSetGeomTypeAlgorithmLayer(
           oSrcLayer, opts),
       m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
 {
-    m_poFeatureDefn->Reference();
-
     if (!m_opts.m_featureGeomOnly)
     {
         for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
@@ -215,7 +208,7 @@ std::unique_ptr<OGRFeature>
 GDALVectorSetGeomTypeAlgorithmLayer::TranslateFeature(
     std::unique_ptr<OGRFeature> poSrcFeature) const
 {
-    poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
+    poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
     for (int i = 0; i < poSrcFeature->GetGeomFieldCount(); ++i)
     {
         auto poGeom = poSrcFeature->GetGeomFieldRef(i);

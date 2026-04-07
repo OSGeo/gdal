@@ -342,12 +342,12 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (m_outputLayerName.empty())
         m_outputLayerName = "tileindex";
 
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-        poTargetCRS{};
+    OGRSpatialReferenceRefCountedPtr poTargetCRS;
     if (!m_crs.empty())
     {
-        poTargetCRS.reset(std::make_unique<OGRSpatialReference>().release());
+        poTargetCRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poTargetCRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        // already checked by GDALAlgorithmArg framework
         CPL_IGNORE_RET_VAL(poTargetCRS->SetFromUserInput(m_crs.c_str()));
     }
 
@@ -365,16 +365,7 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     int nLocationFieldIdx = -1;
     int nSourceCRSFieldIdx = -1;
 
-    struct OGRFeatureDefnReleaser
-    {
-        void operator()(OGRFeatureDefn *poFDefn)
-        {
-            if (poFDefn)
-                poFDefn->Release();
-        }
-    };
-
-    std::unique_ptr<OGRFeatureDefn, OGRFeatureDefnReleaser> poRefFeatureDefn;
+    OGRFeatureDefnRefCountedPtr poRefFeatureDefn;
     if (poDstLayer)
     {
         nLocationFieldIdx =
@@ -404,7 +395,8 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         {
             const auto poSrcCRS = poDstLayer->GetSpatialRef();
             if (poSrcCRS)
-                poTargetCRS.reset(poSrcCRS->Clone());
+                poTargetCRS =
+                    OGRSpatialReferenceRefCountedPtr::makeClone(poSrcCRS);
         }
 
         for (auto &&poFeature : poDstLayer)
@@ -450,7 +442,8 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             const auto poSrcCRS =
                 poSrcDS->GetLayer(anLayerIndices[0])->GetSpatialRef();
             if (poSrcCRS)
-                poTargetCRS.reset(poSrcCRS->Clone());
+                poTargetCRS =
+                    OGRSpatialReferenceRefCountedPtr::makeClone(poSrcCRS);
         }
 
         poDstLayer = setupRet.outDS->CreateLayer(m_outputLayerName.c_str(),

@@ -276,6 +276,87 @@ A generic :ref:`/vsicurl/ <vsicurl>` file system handler exists for online resou
 
 When reading of entire files in a streaming way is possible, prefer using the :ref:`/vsicurl_streaming/ <vsicurl_streaming>`, and its variants for the above cloud storage services, for more efficiency.
 
+/vsicurl/ vs /vsicurl_streaming/ vs HTTP pseudo-driver
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+After 35 years of existence, one might reasonably hope that reliable access to
+remote files via the HTTP protocol would be a fully solved problem. While this is
+mostly true for browser-based experience, the way GDAL accesses data often pushes
+servers into less-tested territory, requiring users to understand specific
+low level details.
+
+Below are the options available for "standard" HTTP access (excluding the use
+of specific file systems such as ``/vsigs/`` to deal with the specifics of
+each cloud provider):
+
+* ``/vsicurl/``: This virtual file system relies heavily on the server's ability
+  to efficiently handle `HTTP range requests <https://en.wikipedia.org/wiki/Byte_serving>`.
+  A range request includes a header from the client (GDAL) asking the server to
+  return only a specific portion of the resource, defined by start and end
+  offsets. This allows most GDAL drivers to consume datasets piece-wise without
+  downloading the entire file. This is most effective for static resources,
+  such as pre-computed files, rather than content generated on-the-fly for each
+  request. The primary differences compared to local file access are network
+  latency and bandwidth limits, which ``/vsicurl/`` attempts to mitigate through
+  in-memory caching and by requesting chunks large enough to justify the request
+  overhead.
+
+  .. example::
+     :title: Getting metadata from a very large remote Cloud Optimized GeoTIFF
+
+     .. code-block:: bash
+
+          $ gdal raster info /vsicurl/https://example.com/very_large_cog.tif
+
+
+* ``/vsicurl_streaming/``: This virtual file system initiates a background
+  request to download the entire file into memory. It is best suited for drivers
+  that read a dataset sequentially from start to finish with no random seeking.
+  Notably, ``/vsicurl_streaming/`` does not use HTTP range requests. Of the
+  three options listed here, this is generally the least used. It is
+  particularly ill-suited when reading remote ZIP'ed files, which require
+  reading the end of the file first to get the list of files within the ZIP.
+
+  .. example::
+     :title: Converting a very large remote CSV file to GeoPackage
+
+     .. code-block:: bash
+
+          $ gdal vector convert /vsicurl_streaming/https://example.com/very_large.csv out.gpkg
+
+  .. example::
+     :title: Copying a remote file to local current directory
+
+     .. code-block:: bash
+
+          $ gdal vsi copy /vsicurl_streaming/https://example.com/file.bin .
+
+  .. spelling:word-list::
+      ZIP'ed
+
+* the ``HTTP`` (pseudo-driver): This driver downloads the full content of a file
+  into memory before passing it to other GDAL drivers. For modest file sizes
+  that fit easily into RAM and require full processing, this is often the
+  fastest option. It involves a single standard HTTP GET request and does not
+  require range request support. This is frequently the only viable approach
+  for dynamically generated content (often identifiable by the presence of
+  query parameters in the URL).
+  The HTTP pseudo-driver is automatically selected when providing a URL without
+  any ``/vsi`` prefix.
+
+  .. example::
+     :title: Reprojecting a medium size (fitting into RAM) remote GeoTIFF file
+
+     .. code-block:: bash
+
+         $ gdal raster reproject --dst-crs EPSG:32631 -r cubic https://example.com/medium_size.tif out.tif
+
+
+While the HTTP protocol technically allows servers to advertise whether they
+support range requests (via the Accept-Ranges header), this is not consistently
+(or efficiently) implemented enough for GDAL to use it as a reliable, automated
+check for selecting the best access strategy.
+
 How to set credentials ?
 ++++++++++++++++++++++++
 

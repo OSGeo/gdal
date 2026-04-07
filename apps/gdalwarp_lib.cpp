@@ -3473,10 +3473,10 @@ static CPLErr LoadCutline(const std::string &osCutlineDSNameOrWKT,
         STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "MULTIPOLYGON(") ||
         STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "MULTIPOLYGON ("))
     {
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+        OGRSpatialReferenceRefCountedPtr poSRS;
         if (!osSRS.empty())
         {
-            poSRS.reset(new OGRSpatialReference());
+            poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             poSRS->SetFromUserInput(osSRS.c_str());
         }
@@ -3570,8 +3570,7 @@ static CPLErr LoadCutline(const std::string &osCutlineDSNameOrWKT,
     /* -------------------------------------------------------------------- */
     if (!osSRS.empty())
     {
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS(
-            new OGRSpatialReference());
+        auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         poSRS->SetFromUserInput(osSRS.c_str());
         poMultiPolygon->assignSpatialReference(poSRS.get());

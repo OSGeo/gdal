@@ -353,7 +353,7 @@ CPLErr VRTProcessedDataset::Init(const CPLXMLNode *psTree,
         const OGRSpatialReference *poSRS = m_poSrcDS->GetSpatialRef();
         if (poSRS)
         {
-            m_poSRS.reset(poSRS->Clone());
+            m_poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRS);
         }
     }
 

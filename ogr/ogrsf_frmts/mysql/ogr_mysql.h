@@ -241,9 +241,7 @@ class OGRMySQLDataSource final : public GDALDataset
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 
     OGRMySQLLayer *poLongResultLayer;
 

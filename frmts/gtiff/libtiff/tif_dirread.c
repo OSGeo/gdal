@@ -597,7 +597,7 @@ TIFFReadDirEntrySshort(TIFF *tif, TIFFDirEntry *direntry, int16_t *value)
             err = TIFFReadDirEntryCheckRangeSshortShort(m);
             if (err != TIFFReadDirEntryErrOk)
                 return (err);
-            *value = (uint16_t)m;
+            *value = (int16_t)m;
             return (TIFFReadDirEntryErrOk);
         }
         case TIFF_SSHORT:
@@ -1288,13 +1288,13 @@ TIFFReadDirEntryArrayWithLimit(TIFF *tif, TIFFDirEntry *direntry,
      * in either the current data type or the dest data type.  This also
      * avoids problems with overflow of tmsize_t on 32bit systems.
      */
-    if ((uint64_t)(MAX_SIZE_TAG_DATA / typesize) < target_count64)
+    if ((uint64_t)(MAX_SIZE_TAG_DATA / (unsigned int)typesize) < target_count64)
         return (TIFFReadDirEntryErrSizesan);
     if ((uint64_t)(MAX_SIZE_TAG_DATA / desttypesize) < target_count64)
         return (TIFFReadDirEntryErrSizesan);
 
     *count = (uint32_t)target_count64;
-    datasize = (*count) * typesize;
+    datasize = (uint32_t)(*count) * (unsigned int)typesize;
     assert((tmsize_t)datasize > 0);
 
     if (datasize > 100 * 1024 * 1024)
@@ -3993,7 +3993,7 @@ static enum TIFFReadDirEntryErr TIFFReadDirEntryData(TIFF *tif, uint64_t offset,
         {
             return TIFFReadDirEntryErrIo;
         }
-        mb = ma + size;
+        mb = (uint64_t)ma + (uint64_t)size;
         if (mb > (uint64_t)tif->tif_size)
             return (TIFFReadDirEntryErrIo);
         _TIFFmemcpy(dest, tif->tif_base + ma, size);
@@ -4173,7 +4173,8 @@ static int ByteCountLooksBad(TIFF *tif)
  */
 static bool EvaluateIFDdatasizeReading(TIFF *tif, TIFFDirEntry *dp)
 {
-    const uint64_t data_width = TIFFDataWidth((TIFFDataType)dp->tdir_type);
+    const uint64_t data_width =
+        (uint64_t)TIFFDataWidth((TIFFDataType)dp->tdir_type);
     if (data_width != 0 && dp->tdir_count > UINT64_MAX / data_width)
     {
         TIFFErrorExtR(tif, "EvaluateIFDdatasizeReading",
@@ -4311,9 +4312,9 @@ static void CalcFinalIFDdatasizeReading(TIFF *tif, uint16_t dircount)
 
     /* Finally, add the size of the IFD tag entries themselves. */
     if (!(tif->tif_flags & TIFF_BIGTIFF))
-        tif->tif_dir.td_dirdatasize_read = 2 + dircount * 12 + 4 + size;
+        tif->tif_dir.td_dirdatasize_read = 2U + dircount * 12U + 4U + size;
     else
-        tif->tif_dir.td_dirdatasize_read = 8 + dircount * 20 + 8 + size;
+        tif->tif_dir.td_dirdatasize_read = 8U + dircount * 20U + 8U + size;
 } /*-- CalcFinalIFDdatasizeReading() --*/
 
 /*
@@ -5192,7 +5193,7 @@ int TIFFReadDirectory(TIFF *tif)
             tif->tif_dir.td_maxsamplevalue = 0xFFFF;
         else
             tif->tif_dir.td_maxsamplevalue =
-                (uint16_t)((1L << tif->tif_dir.td_bitspersample) - 1);
+                (uint16_t)((1 << tif->tif_dir.td_bitspersample) - 1);
     }
 
 #ifdef STRIPBYTECOUNTSORTED_UNUSED
@@ -5362,7 +5363,7 @@ static void TIFFReadDirectoryFindFieldInfo(TIFF *tif, uint16_t tagid,
             break;
         mb--;
     }
-    *fii = mb;
+    *fii = (uint32_t)mb;
 }
 
 /*
@@ -5617,7 +5618,7 @@ static int EstimateStripByteCounts(TIFF *tif, TIFFDirEntry *dir,
         {
             uint32_t typewidth;
             uint64_t datasize;
-            typewidth = TIFFDataWidth((TIFFDataType)dp->tdir_type);
+            typewidth = (uint32_t)TIFFDataWidth((TIFFDataType)dp->tdir_type);
             if (typewidth == 0)
             {
                 TIFFErrorExtR(
@@ -6195,9 +6196,9 @@ static uint16_t TIFFFetchDirectory(TIFF *tif, uint64_t diroff,
          */
         if (!(tif->tif_flags & TIFF_BIGTIFF))
         {
-            m = off + sizeof(uint16_t);
-            if ((m < off) || (m < (tmsize_t)sizeof(uint16_t)) ||
-                (m > tif->tif_size))
+            m = (tmsize_t)((uint64_t)off + sizeof(uint16_t));
+            if ((m < off) || ((uint64_t)m < sizeof(uint16_t)) ||
+                ((uint64_t)m > (uint64_t)tif->tif_size))
             {
                 TIFFErrorExtR(tif, module, "Can not read TIFF directory count");
                 return 0;
@@ -6206,7 +6207,7 @@ static uint16_t TIFFFetchDirectory(TIFF *tif, uint64_t diroff,
             {
                 _TIFFmemcpy(&dircount16, tif->tif_base + off, sizeof(uint16_t));
             }
-            off += sizeof(uint16_t);
+            off = (tmsize_t)((uint64_t)off + sizeof(uint16_t));
             if (tif->tif_flags & TIFF_SWAB)
                 TIFFSwabShort(&dircount16);
             if (dircount16 > 4096)
@@ -6221,9 +6222,9 @@ static uint16_t TIFFFetchDirectory(TIFF *tif, uint64_t diroff,
         else
         {
             uint64_t dircount64;
-            m = off + sizeof(uint64_t);
-            if ((m < off) || (m < (tmsize_t)sizeof(uint64_t)) ||
-                (m > tif->tif_size))
+            m = (tmsize_t)((uint64_t)off + sizeof(uint64_t));
+            if ((m < off) || ((uint64_t)m < sizeof(uint64_t)) ||
+                ((uint64_t)m > (uint64_t)tif->tif_size))
             {
                 TIFFErrorExtR(tif, module, "Can not read TIFF directory count");
                 return 0;
@@ -6232,7 +6233,7 @@ static uint16_t TIFFFetchDirectory(TIFF *tif, uint64_t diroff,
             {
                 _TIFFmemcpy(&dircount64, tif->tif_base + off, sizeof(uint64_t));
             }
-            off += sizeof(uint64_t);
+            off = (tmsize_t)((uint64_t)off + sizeof(uint64_t));
             if (tif->tif_flags & TIFF_SWAB)
                 TIFFSwabLong8(&dircount64);
             if (dircount64 > 4096)
@@ -6288,9 +6289,9 @@ static uint16_t TIFFFetchDirectory(TIFF *tif, uint64_t diroff,
             if (!(tif->tif_flags & TIFF_BIGTIFF))
             {
                 uint32_t nextdiroff32;
-                m = off + sizeof(uint32_t);
-                if ((m < off) || (m < (tmsize_t)sizeof(uint32_t)) ||
-                    (m > tif->tif_size))
+                m = (tmsize_t)((uint64_t)off + sizeof(uint32_t));
+                if ((m < off) || ((uint64_t)m < sizeof(uint32_t)) ||
+                    ((uint64_t)m > (uint64_t)tif->tif_size))
                     nextdiroff32 = 0;
                 else
                     _TIFFmemcpy(&nextdiroff32, tif->tif_base + off,
@@ -6301,9 +6302,9 @@ static uint16_t TIFFFetchDirectory(TIFF *tif, uint64_t diroff,
             }
             else
             {
-                m = off + sizeof(uint64_t);
-                if ((m < off) || (m < (tmsize_t)sizeof(uint64_t)) ||
-                    (m > tif->tif_size))
+                m = (tmsize_t)((uint64_t)off + sizeof(uint64_t));
+                if ((m < off) || ((uint64_t)m < sizeof(uint64_t)) ||
+                    ((uint64_t)m > (uint64_t)tif->tif_size))
                     *nextdiroff = 0;
                 else
                     _TIFFmemcpy(nextdiroff, tif->tif_base + off,
@@ -8166,7 +8167,7 @@ static void TryChopUpUncompressedBigTiff(TIFF *tif)
 TIFF_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static uint64_t _TIFFUnsanitizedAddUInt64AndInt(uint64_t a, int b)
 {
-    return a + b;
+    return a + (uint64_t)b;
 }
 
 /* Read the value of [Strip|Tile]Offset or [Strip|Tile]ByteCount around
@@ -8245,7 +8246,7 @@ static int _TIFFPartialReadStripArray(TIFF *tif, TIFFDirEntry *dirent,
         panVals[strile] = 0;
         return 0;
     }
-    nOffset = nBaseOffset + (uint64_t)sizeofval * strile;
+    nOffset = nBaseOffset + (uint64_t)sizeofval * (uint64_t)strile;
     nOffsetStartPage = (nOffset / IO_CACHE_PAGE_SIZE) * IO_CACHE_PAGE_SIZE;
     nOffsetEndPage = nOffsetStartPage + IO_CACHE_PAGE_SIZE;
 
@@ -8388,9 +8389,9 @@ static int _TIFFFetchStrileValue(TIFF *tif, uint32_t strile,
         }
 #endif
         offsetArray = (uint64_t *)(_TIFFreallocExt(tif, td->td_stripoffset_p,
-                                                   nArraySize));
+                                                   (tmsize_t)nArraySize));
         bytecountArray = (uint64_t *)(_TIFFreallocExt(
-            tif, td->td_stripbytecount_p, nArraySize));
+            tif, td->td_stripbytecount_p, (tmsize_t)nArraySize));
         if (offsetArray)
             td->td_stripoffset_p = offsetArray;
         if (bytecountArray)
@@ -8424,7 +8425,7 @@ static int _TIFFFetchStrileValue(TIFF *tif, uint32_t strile,
 
     if (~((*parray)[strile]) == 0)
     {
-        if (!_TIFFPartialReadStripArray(tif, dirent, strile, *parray))
+        if (!_TIFFPartialReadStripArray(tif, dirent, (int)strile, *parray))
         {
             (*parray)[strile] = 0;
             return 0;

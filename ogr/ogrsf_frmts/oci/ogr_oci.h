@@ -318,7 +318,7 @@ class OGROCIWritableLayer CPL_NON_FINAL : public OGROCILayer
     int bPreservePrecision;
     int nDefaultStringSize;
 
-    OGRSpatialReference *poSRS;
+    OGRSpatialReferenceRefCountedPtr poSRS{};
 
     char **papszOptions;
 
@@ -333,7 +333,7 @@ class OGROCIWritableLayer CPL_NON_FINAL : public OGROCILayer
   public:
     const OGRSpatialReference *GetSpatialRef() const override
     {
-        return poSRS;
+        return poSRS.get();
     }
 
     virtual OGRErr CreateField(const OGRFieldDefn *poField,
@@ -410,11 +410,6 @@ class OGROCILoaderLayer final : public OGROCIWritableLayer
     OGRFeature *GetNextFeature() override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-
-    const OGRSpatialReference *GetSpatialRef() const override
-    {
-        return poSRS;
-    }
 
     int TestCapability(const char *) const override;
 };
@@ -548,9 +543,7 @@ class OGROCIDataSource final : public GDALDataset
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 
   public:
     OGROCIDataSource();
@@ -593,7 +586,7 @@ class OGROCIDataSource final : public GDALDataset
     void ReleaseResultSet(OGRLayer *poLayer) override;
 
     int FetchSRSId(const OGRSpatialReference *poSRS);
-    OGRSpatialReference *FetchSRS(int nSRID);
+    OGRSpatialReferenceRefCountedPtr FetchSRS(int nSRID);
 };
 
 /* -------------------------------------------------------------------- */

@@ -679,3 +679,139 @@ def test_gdalalg_raster_edit_color_interpretation_autocomplete():
     ).split(" ")
     assert "all=" not in out
     assert "Red" in out
+
+
+def test_gdalalg_raster_edit_scale():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+
+    gdal.alg.raster.edit(dataset=ds, scale=2.5)
+    assert ds.GetRasterBand(1).GetScale() == 2.5
+    assert ds.GetRasterBand(2).GetScale() == 2.5
+    assert ds.GetRasterBand(3).GetScale() == 2.5
+
+    gdal.alg.raster.edit(dataset=ds, scale=[3.5, 2, 1.5])
+    assert ds.GetRasterBand(1).GetScale() == 3.5
+    assert ds.GetRasterBand(2).GetScale() == 2
+    assert ds.GetRasterBand(3).GetScale() == 1.5
+
+    gdal.alg.raster.edit(dataset=ds, scale="2=2.5")
+    assert ds.GetRasterBand(1).GetScale() == 3.5
+    assert ds.GetRasterBand(2).GetScale() == 2.5
+    assert ds.GetRasterBand(3).GetScale() == 1.5
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value 'foo' for 'scale'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale="foo")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value 'foo=1' for 'scale'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale="foo=1")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value '1=foo' for 'scale'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale="1=foo")
+
+    with pytest.raises(
+        Exception,
+        match="Less scale values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale=[1, 2])
+
+    with pytest.raises(
+        Exception,
+        match="More scale values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale=[1, 2, 3, 4])
+
+    with pytest.raises(
+        Exception,
+        match="Mix of different syntaxes to specify scale",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale=[1, "2=3"])
+
+    with pytest.raises(
+        Exception,
+        match="Invalid band number '0' in '0=3'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale=[1, "0=3"])
+
+    with pytest.raises(
+        Exception,
+        match="Invalid band number '4' in '4=3'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale=[1, "4=3"])
+
+
+def test_gdalalg_raster_edit_offset():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+
+    gdal.alg.raster.edit(dataset=ds, offset=2.5)
+    assert ds.GetRasterBand(1).GetOffset() == 2.5
+    assert ds.GetRasterBand(2).GetOffset() == 2.5
+    assert ds.GetRasterBand(3).GetOffset() == 2.5
+
+    gdal.alg.raster.edit(dataset=ds, offset=[3.5, 2, 1.5])
+    assert ds.GetRasterBand(1).GetOffset() == 3.5
+    assert ds.GetRasterBand(2).GetOffset() == 2
+    assert ds.GetRasterBand(3).GetOffset() == 1.5
+
+    gdal.alg.raster.edit(dataset=ds, offset="2=2.5")
+    assert ds.GetRasterBand(1).GetOffset() == 3.5
+    assert ds.GetRasterBand(2).GetOffset() == 2.5
+    assert ds.GetRasterBand(3).GetOffset() == 1.5
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value 'foo' for 'offset'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset="foo")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value 'foo=1' for 'offset'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset="foo=1")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value '1=foo' for 'offset'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset="1=foo")
+
+    with pytest.raises(
+        Exception,
+        match="Less offset values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset=[1, 2])
+
+    with pytest.raises(
+        Exception,
+        match="More offset values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset=[1, 2, 3, 4])
+
+    with pytest.raises(
+        Exception,
+        match="Mix of different syntaxes to specify offset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset=[1, "2=3"])
+
+    with pytest.raises(
+        Exception,
+        match="Invalid band number '0' in '0=3'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset=[1, "0=3"])
+
+    with pytest.raises(
+        Exception,
+        match="Invalid band number '4' in '4=3'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset=[1, "4=3"])

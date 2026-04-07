@@ -28,7 +28,7 @@ GDALInfoAlgorithm::GDALInfoAlgorithm()
 {
     // only for the help message
     AddOutputFormatArg(&m_format).SetChoices("json", "text");
-    AddInputDatasetArg(&m_dataset);
+    AddInputDatasetArg(&m_dataset).AddAlias("dataset");
 
     m_longDescription = "For all options, run 'gdal raster info --help' or "
                         "'gdal vector info --help'";

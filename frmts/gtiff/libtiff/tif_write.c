@@ -831,11 +831,11 @@ static int TIFFAppendToStrip(TIFF *tif, uint32_t strip, uint8_t *data,
         /*
          * We are starting a fresh strip/tile, so set the size to zero.
          */
-        old_byte_count = td->td_stripbytecount_p[strip];
+        old_byte_count = (int64_t)td->td_stripbytecount_p[strip];
         td->td_stripbytecount_p[strip] = 0;
     }
 
-    m = tif->tif_curoff + cc;
+    m = tif->tif_curoff + (uint64_t)cc;
     if (!(tif->tif_flags & TIFF_BIGTIFF))
         m = (uint32_t)m;
     if ((m < tif->tif_curoff) || (m < (uint64_t)cc))
@@ -869,7 +869,7 @@ static int TIFFAppendToStrip(TIFF *tif, uint32_t strip, uint8_t *data,
         offsetRead = td->td_stripoffset_p[strip];
         offsetWrite = TIFFSeekFile(tif, 0, SEEK_END);
 
-        m = offsetWrite + toCopy + cc;
+        m = offsetWrite + (uint64_t)toCopy + (uint64_t)cc;
         if (!(tif->tif_flags & TIFF_BIGTIFF) && m != (uint32_t)m)
         {
             TIFFErrorExtR(tif, module, "Maximum TIFF file size exceeded");
@@ -915,15 +915,15 @@ static int TIFFAppendToStrip(TIFF *tif, uint32_t strip, uint8_t *data,
                 _TIFFfreeExt(tif, temp);
                 return (0);
             }
-            offsetRead += tempSize;
-            offsetWrite += tempSize;
-            td->td_stripbytecount_p[strip] += tempSize;
-            toCopy -= tempSize;
+            offsetRead += (uint64_t)tempSize;
+            offsetWrite += (uint64_t)tempSize;
+            td->td_stripbytecount_p[strip] += (uint64_t)tempSize;
+            toCopy -= (uint64_t)tempSize;
         }
         _TIFFfreeExt(tif, temp);
 
         /* Append the data of this call */
-        offsetWrite += cc;
+        offsetWrite += (uint64_t)cc;
         m = offsetWrite;
     }
 
@@ -934,7 +934,7 @@ static int TIFFAppendToStrip(TIFF *tif, uint32_t strip, uint8_t *data,
         return (0);
     }
     tif->tif_curoff = m;
-    td->td_stripbytecount_p[strip] += cc;
+    td->td_stripbytecount_p[strip] += (uint64_t)cc;
 
     if ((int64_t)td->td_stripbytecount_p[strip] != old_byte_count)
         tif->tif_flags |= TIFF_DIRTYSTRIP;

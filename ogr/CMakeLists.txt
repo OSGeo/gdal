@@ -186,6 +186,7 @@ target_public_header(
   ogr_geomcoordinateprecision.h
   ogr_p.h
   ogr_spatialref.h
+  ogr_refcountedptr.h
   ogr_swq.h
   ogr_srs_api.h
   ogrsf_frmts/ogrsf_frmts.h)

@@ -78,6 +78,7 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
 
     AddArg("color-interpretation", 0, _("Set band color interpretation"),
            &m_colorInterpretation)
+        .SetMetaVar("[all|<BAND>=]<COLOR-INTEPRETATION>")
         .SetAutoCompleteFunction(
             [this](const std::string &s)
             {
@@ -104,6 +105,49 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
                 }
                 return ret;
             });
+
+    const auto ValidationActionScaleOffset =
+        [this](const char *argName, const std::vector<std::string> &values)
+    {
+        for (const std::string &s : values)
+        {
+            bool valid = true;
+            const auto nPos = s.find('=');
+            if (nPos != std::string::npos)
+            {
+                if (CPLGetValueType(s.substr(0, nPos).c_str()) !=
+                        CPL_VALUE_INTEGER ||
+                    CPLGetValueType(s.substr(nPos + 1).c_str()) ==
+                        CPL_VALUE_STRING)
+                {
+                    valid = false;
+                }
+            }
+            else if (CPLGetValueType(s.c_str()) == CPL_VALUE_STRING)
+            {
+                valid = false;
+            }
+            if (!valid)
+            {
+                ReportError(CE_Failure, CPLE_IllegalArg,
+                            "Invalid value '%s' for '%s'", s.c_str(), argName);
+                return false;
+            }
+        }
+        return true;
+    };
+
+    AddArg("scale", 0, _("Override band scale factor"), &m_scale)
+        .SetMetaVar("[<BAND>=]<SCALE>")
+        .AddValidationAction(
+            [this, ValidationActionScaleOffset]()
+            { return ValidationActionScaleOffset("scale", m_scale); });
+
+    AddArg("offset", 0, _("Override band offset constant"), &m_offset)
+        .SetMetaVar("[<BAND>=]<OFFSET>")
+        .AddValidationAction(
+            [this, ValidationActionScaleOffset]()
+            { return ValidationActionScaleOffset("offset", m_offset); });
 
     {
         auto &arg = AddArg("metadata", 0, _("Add/update dataset metadata item"),
@@ -480,6 +524,103 @@ bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     return false;
                 }
             }
+        }
+
+        const auto ScaleOffsetSetterLambda =
+            [this, poDS](const char *argName,
+                         const std::vector<std::string> &values,
+                         CPLErr (GDALRasterBand::*Setter)(double))
+        {
+            if (values.size() == 1 && values[0].find('=') == std::string::npos)
+            {
+                const double dfScale = CPLAtof(values[0].c_str());
+                for (int i = 0; i < poDS->GetRasterCount(); ++i)
+                {
+                    if ((poDS->GetRasterBand(i + 1)->*Setter)(dfScale) !=
+                        CE_None)
+                        return false;
+                }
+            }
+            else
+            {
+                int nBandIter = 0;
+                bool bSyntaxExplicitBand = false;
+                bool bSyntaxImplicitBand = false;
+                for (const std::string &token : values)
+                {
+                    const CPLStringList aosTokens(
+                        CSLTokenizeString2(token.c_str(), "=", 0));
+                    if (aosTokens.size() == 2)
+                    {
+                        bSyntaxExplicitBand = true;
+                        const int nBand = atoi(aosTokens[0]);
+                        if (nBand <= 0 || nBand > poDS->GetRasterCount())
+                        {
+                            ReportError(CE_Failure, CPLE_NotSupported,
+                                        "Invalid band number '%s' in '%s'",
+                                        aosTokens[0], token.c_str());
+                            return false;
+                        }
+                        const double dfScale = CPLAtof(aosTokens[1]);
+                        if ((poDS->GetRasterBand(nBand)->*Setter)(dfScale) !=
+                            CE_None)
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        bSyntaxImplicitBand = true;
+                        ++nBandIter;
+                        if (nBandIter > poDS->GetRasterCount())
+                        {
+                            ReportError(CE_Failure, CPLE_IllegalArg,
+                                        "More %s values "
+                                        "specified than bands in the dataset",
+                                        argName);
+                            return false;
+                        }
+                        const double dfScale = CPLAtof(token.c_str());
+                        if ((poDS->GetRasterBand(nBandIter)->*Setter)(
+                                dfScale) != CE_None)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                if (((bSyntaxExplicitBand ? 1 : 0) +
+                     (bSyntaxImplicitBand ? 1 : 0)) != 1)
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Mix of different syntaxes to specify %s",
+                                argName);
+                    return false;
+                }
+                if (bSyntaxImplicitBand && nBandIter != poDS->GetRasterCount())
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Less %s values specified "
+                                "than bands in the dataset",
+                                argName);
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
+        if (!m_scale.empty())
+        {
+            if (!ScaleOffsetSetterLambda("scale", m_scale,
+                                         &GDALRasterBand::SetScale))
+                return false;
+        }
+
+        if (!m_offset.empty())
+        {
+            if (!ScaleOffsetSetterLambda("offset", m_offset,
+                                         &GDALRasterBand::SetOffset))
+                return false;
         }
 
         const CPLStringList aosMD(m_metadata);

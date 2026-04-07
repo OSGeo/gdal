@@ -39,6 +39,7 @@ GDALRasterMosaicStackCommonAlgorithm::GetConstructorOptions(bool standaloneStep)
         _("Input raster datasets (or specify a @<filename> to point to a "
           "file containing filenames)"));
     opts.SetAddDefaultArguments(false);
+    opts.SetInputDatasetMetaVar("INPUTS");
     opts.SetInputDatasetMaxCount(INT_MAX);
     return opts;
 }

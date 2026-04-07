@@ -104,7 +104,7 @@ class GDALVectorRenameLayerAlgorithmLayer final
     : public GDALVectorPipelineOutputLayer
 {
   private:
-    OGRFeatureDefn *const m_poFeatureDefn = nullptr;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorRenameLayerAlgorithmLayer)
 
@@ -112,7 +112,7 @@ class GDALVectorRenameLayerAlgorithmLayer final
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
-        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
+        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
         apoOutFeatures.push_back(std::move(poSrcFeature));
     }
 
@@ -132,17 +132,11 @@ class GDALVectorRenameLayerAlgorithmLayer final
         }
         SetDescription(m_poFeatureDefn->GetName());
         SetMetadata(oSrcLayer.GetMetadata());
-        m_poFeatureDefn->Reference();
-    }
-
-    ~GDALVectorRenameLayerAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
     }
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
     GIntBig GetFeatureCount(int bForce) override
@@ -183,7 +177,7 @@ class GDALVectorRenameLayerAlgorithmLayer final
             std::unique_ptr<OGRFeature>(m_srcLayer.GetFeature(nFID));
         if (!poSrcFeature)
             return nullptr;
-        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
+        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
         return poSrcFeature.release();
     }
 

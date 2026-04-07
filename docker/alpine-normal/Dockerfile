@@ -21,7 +21,7 @@ RUN apk add --no-cache curl unzip cmake make libtool autoconf automake pkgconfig
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 RUN \
     mkdir -p /build_projgrids/usr/share/proj \
-    && curl -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -LOs http://download.osgeo.org/proj/proj-datumgrid-latest.zip \
     && unzip -q -j -u -o proj-datumgrid-latest.zip  -d /build_projgrids/usr/share/proj \
     && rm -f *.zip
 
@@ -109,7 +109,7 @@ ARG HDF4_VERSION=4.3.1
 RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
     apk add --no-cache byacc flex libtirpc-dev \
     && mkdir hdf4 \
-    && curl -L -fsS https://github.com/HDFGroup/hdf4/archive/refs/tags/hdf${HDF4_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -L -fsS https://github.com/HDFGroup/hdf4/archive/refs/tags/hdf${HDF4_VERSION}.tar.gz \
         | tar xz -C hdf4 --strip-components=1 \
     && cd hdf4 \
     && CFLAGS="-std=c99" LDFLAGS=-ltirpc ./configure --prefix=/usr --enable-shared --disable-static \
@@ -127,7 +127,7 @@ RUN if test "${HDF4_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
 # Build libOpenDRIVE
 ARG OPENDRIVE_VERSION=0.6.0-gdal
 RUN if test "${OPENDRIVE_VERSION}" != ""; then ( \
-    curl -LO -fsS https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
     && rm -f ${OPENDRIVE_VERSION}.tar.gz \
     && cd libOpenDRIVE-${OPENDRIVE_VERSION} \
@@ -150,7 +150,7 @@ ARG WITH_CCACHE
 # Build PROJ
 ARG PROJ_VERSION=master
 RUN --mount=type=cache,id=alpine-normal-proj,target=$HOME/.cache \
-    curl -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -L -fsS https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz \
         | tar xz -C proj --strip-components=1 \
     && cd proj \
     && if test "${RSYNC_REMOTE}" != ""; then \
@@ -195,7 +195,7 @@ RUN --mount=type=cache,id=alpine-normal-proj,target=$HOME/.cache \
 ARG SPATIALITE_VERSION=5.1.0
 RUN --mount=type=cache,id=alpine-normal-spatialite,target=$HOME/.cache \
     if test "${SPATIALITE_VERSION}" != "" -a "$(uname -m)" = "x86_64"; then ( \
-    curl -LO -fsS https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${SPATIALITE_VERSION}.tar.gz \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://www.gaia-gis.it/gaia-sins/libspatialite-sources/libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && tar xzf libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && rm -f libspatialite-${SPATIALITE_VERSION}.tar.gz \
     && cd libspatialite-${SPATIALITE_VERSION} \
@@ -233,7 +233,7 @@ RUN --mount=type=cache,id=alpine-normal-spatialite,target=$HOME/.cache \
     fi
 
 # Download exprtk
-RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/release/exprtk.hpp \
+RUN curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/release/exprtk.hpp \
     && mv exprtk.hpp /usr/include
 
 # Build GDAL
@@ -247,14 +247,14 @@ COPY --link . gdal/
 RUN --mount=type=cache,id=alpine-normal-gdal,target=$HOME/.cache \
     cd gdal \
     && if test "${GDAL_VERSION}" = "master"; then \
-        export GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
+        export GDAL_VERSION=$(curl --retry 3 --retry-all-errors --retry-delay 3 -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha"); \
         export GDAL_RELEASE_DATE=$(date "+%Y%m%d"); \
     fi \
     && if test "${GDAL_VERSION}" = "local"; then \
         export GDAL_VERSION=$(git describe --match=BOGUSTAG --always --abbrev=40 --dirty); \
     else \
         rm -rf ./*; \
-        (curl -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
+        (curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz \
           | tar xz --strip-components=1) || exit 1; \
     fi \
     && if test "x${GDAL_BUILD_IS_RELEASE}" = "x"; then \

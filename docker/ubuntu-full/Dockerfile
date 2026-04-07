@@ -38,7 +38,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble-security main restricted universe" >> /etc/apt/sources.list \
     && dpkg --add-architecture ${TARGET_ARCH} \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-13-${GCC_ARCH}-linux-gnu \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends g++-13-${GCC_ARCH}-linux-gnu \
     && ln -s ${GCC_ARCH}-linux-gnu-gcc-13 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
     && ln -s ${GCC_ARCH}-linux-gnu-g++-13 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
     fi
@@ -90,7 +90,7 @@ ARG WITH_CCACHE
 ARG KEA_VERSION=1.6.2
 RUN --mount=type=cache,id=ubuntu-full-kealib,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
-    && curl -LO -fsS https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && unzip -q kealib-${KEA_VERSION}.zip \
     && rm -f kealib-${KEA_VERSION}.zip \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
@@ -126,7 +126,7 @@ ARG MONGO_C_DRIVER_VERSION=2.1.2
 RUN --mount=type=cache,id=ubuntu-full-mongo-c-driver,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir mongo-c-driver \
-    && curl -Lo - -fsS https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz \
         | tar xz -C mongo-c-driver --strip-components=1 \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
         echo "Downloading cache..."; \
@@ -162,7 +162,7 @@ ARG MONGOCXX_VERSION=4.1.4
 RUN --mount=type=cache,id=ubuntu-full-mongo-cxx-driver,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir mongocxx \
-    && curl -Lo - -fsS https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz \
         | tar xz -C mongocxx --strip-components=1 \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
         echo "Downloading cache..."; \
@@ -198,7 +198,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libspdlog-dev${APT_ARCH_SUFFIX} libmagic-dev${APT_ARCH_SUFFIX}
 
 COPY --link ./docker/ubuntu-full/tiledb-FindLZ4_EP.cmake.patch /buildscripts/tiledb-FindLZ4_EP.cmake.patch
@@ -217,7 +217,7 @@ RUN --mount=type=cache,id=ubuntu-full-tiledb,target=$HOME/.cache \
         ccache -M 100M; \
     fi \
     && mkdir tiledb \
-    && curl -Lo - -fsS https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz \
         | tar xz -C tiledb --strip-components=1 \
     && cd tiledb \
     && patch -p0 < /buildscripts/tiledb-FindLZ4_EP.cmake.patch \
@@ -247,7 +247,7 @@ ARG OPENDRIVE_VERSION=0.6.0-gdal
 RUN --mount=type=cache,id=ubuntu-full-libopendrive,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && if test "${OPENDRIVE_VERSION}" != ""; then ( \
-    curl -LO -fsS https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
     && rm -f ${OPENDRIVE_VERSION}.tar.gz \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
@@ -282,7 +282,7 @@ RUN --mount=type=cache,id=ubuntu-full-libopendrive,target=$HOME/.cache \
 ARG WITH_FILEGDB=
 RUN . /buildscripts/bh-set-envvars.sh \
   && if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  curl -LO -fsS https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.2/FileGDB_API-RHEL7-64gcc83.tar.gz \
+  curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.2/FileGDB_API-RHEL7-64gcc83.tar.gz \
   && tar -xzf FileGDB_API-RHEL7-64gcc83.tar.gz \
   && chown -R root:root FileGDB_API-RHEL7-64gcc83 \
   && mv FileGDB_API-RHEL7-64gcc83 /usr/local/FileGDB_API \
@@ -297,8 +297,8 @@ ARG WITH_ORACLE=
 RUN . /buildscripts/bh-set-envvars.sh \
   && if test "$(uname -p)" = "x86_64"; then \
   if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
-  curl -LO -fsS https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
-  && curl -LO -fsS https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
+  curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
+  && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
   && unzip -o instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
   && unzip -o instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
   && rm -f instantclient-basic-linux.x64-19.23.0.0.0dbru.zip instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
@@ -314,7 +314,7 @@ ARG WITH_ECW=
 RUN . /buildscripts/bh-set-envvars.sh \
   && if test "$(uname -p)" = "x86_64"; then \
   if echo "$WITH_ECW" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
-  curl -LO -fsS https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz \
+  curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz \
   && tar xzf install-libecwj2-3.3-ubuntu-20.04.tar.gz \
   && rm -f install-libecwj2-3.3-ubuntu-20.04.tar.gz \
   && mkdir -p /build_thirdparty/opt \
@@ -328,7 +328,7 @@ ARG WITH_MRSID=
 RUN . /buildscripts/bh-set-envvars.sh \
   && if test "$(uname -p)" = "x86_64"; then \
   if echo "$WITH_MRSID" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
-    curl -LO -fsS https://bin.extensis.com/download/developer/MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://bin.extensis.com/download/developer/MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
     && unzip MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
     && mv MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131 mrsid \
     && rm -f MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
@@ -377,7 +377,7 @@ ARG WITH_PDFIUM=yes
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
   if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  curl -LO -fsS https://github.com/rouault/pdfium_build_gdal_3_13/releases/download/pdfium_7724_v1/install-ubuntu2404-rev7724.tar.gz \
+  curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/rouault/pdfium_build_gdal_3_13/releases/download/pdfium_7724_v1/install-ubuntu2404-rev7724.tar.gz \
   && tar -xzf install-ubuntu2404-rev7724.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
@@ -432,18 +432,18 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -V ca-certificates lsb-release \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libparquet${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dataset${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libparquet-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-acero-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dataset-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-compute-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -V libarrow${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -V libparquet${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -V libarrow-dataset${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -V libarrow-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -V libparquet-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -V libarrow-acero-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -V libarrow-dataset-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -V libarrow-compute-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
     && rm apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
 
 # Manually build ADBC packages to have support for BigQuery
@@ -456,7 +456,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && if test "${TARGET_ARCH:-}" != ""; then \
         DEBIAN_FRONTEND=noninteractive apt-get install -y -V --no-install-recommends g++-13-${GCC_ARCH}-linux-gnu; \
     fi \
-    && curl -LO -fsS https://github.com/apache/arrow-adbc/archive/refs/tags/apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/apache/arrow-adbc/archive/refs/tags/apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
     && tar xzf apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
     && rm -f apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
     && cd arrow-adbc-apache-arrow-adbc-${ARROW_ADBC_VERSION}/c \
@@ -511,7 +511,7 @@ RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
     && /buildscripts/bh-proj.sh
 
 # Download exprtk
-RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/release/exprtk.hpp \
+RUN curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/release/exprtk.hpp \
     && mv exprtk.hpp /usr/include
 
 # Build GDAL
@@ -548,11 +548,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update -y \
     && apt-get upgrade -y \
     # PROJ dependencies
-    && apt-get install -y \
+    && apt-get install -y --no-install-recommends \
         libsqlite3-0 libtiff6 libcurl4 \
         unzip ca-certificates \
     # GDAL dependencies
-    && apt-get install -y \
+    && apt-get install -y --no-install-recommends \
         bash-completion libopenjp2-7 libcairo2 python3-numpy \
         libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos3.12.1 libgeos-c1v5 \
         libxml2 libexpat1 \
@@ -578,14 +578,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get install -y --no-install-recommends openjdk-"$JAVA_VERSION"-jre \
     # Install Arrow C++
     && apt-get install -y -V curl ca-certificates lsb-release \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get purge -y curl \
     && apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
-    && apt-get install -y -V libarrow${ARROW_SOVERSION} \
-    && apt-get install -y -V libparquet${ARROW_SOVERSION} \
-    && apt-get install -y -V libarrow-dataset${ARROW_SOVERSION} \
-    && apt-get install -y -V libarrow-compute${ARROW_SOVERSION}
+    && apt-get install -y --no-install-recommends -V libarrow${ARROW_SOVERSION} \
+    && apt-get install -y --no-install-recommends -V libparquet${ARROW_SOVERSION} \
+    && apt-get install -y --no-install-recommends -V libarrow-dataset${ARROW_SOVERSION} \
+    && apt-get install -y --no-install-recommends -V libarrow-compute${ARROW_SOVERSION}
 
 # Install libduckdb
 ARG DUCKDB_VERSION=v1.5.1
@@ -595,12 +595,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && if test "$(uname -p)" = "x86_64"; then \
-    curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-amd64.zip \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-amd64.zip \
     && unzip libduckdb-linux-amd64.zip libduckdb.so \
     && mv libduckdb.so /usr/lib/x86_64-linux-gnu \
     && rm -f libduckdb-linux-amd64.zip; \
     elif test "$(uname -p)" = "aarch64"; then \
-    curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-arm64.zip \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-arm64.zip \
     && unzip libduckdb-linux-arm64.zip libduckdb.so \
     && mv libduckdb.so /usr/lib/aarch64-linux-gnu \
     && rm -f libduckdb-linux-arm64.zip; \
@@ -614,7 +614,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
       export DEBIAN_FRONTEND=noninteractive \
       && apt-get update \
-      && apt-get install -y -V libaio1t64 \
+      && apt-get install -y --no-install-recommends -V libaio1t64 \
       && ln -s libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1 \
   ) ; fi \
   ; fi

@@ -375,14 +375,22 @@ bool OGRSchemaOverride::LoadFromJSON(const std::string &osJSON,
                                 const auto osSRS =
                                     oGeometryField.GetObj("coordinateSystem");
                                 if (!osSRS.GetString("wkt").empty() ||
-                                    !osSRS.GetString("projjson").empty())
+                                    !osSRS.GetString("projjson").empty() ||
+                                    !osSRS.GetString("authid").empty())
                                 {
                                     OGRSpatialReference oSRS;
                                     oSRS.SetAxisMappingStrategy(
                                         OAMS_TRADITIONAL_GIS_ORDER);
                                     std::string srs;
-                                    if (const auto wkt = osSRS.GetString("wkt");
-                                        !wkt.empty())
+                                    if (const auto authid =
+                                            osSRS.GetString("authid");
+                                        !authid.empty())
+                                    {
+                                        srs = authid;
+                                    }
+                                    else if (const auto wkt =
+                                                 osSRS.GetString("wkt");
+                                             !wkt.empty())
                                     {
                                         srs = wkt;
                                     }
@@ -825,9 +833,8 @@ OGRGeomFieldDefn OGRGeomFieldDefnOverride::ToGeometryFieldDefn(
 
     if (m_oSRS.has_value())
     {
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
-        poSRS.reset(
-            std::make_unique<OGRSpatialReference>(m_oSRS.value()).release());
+        auto poSRS =
+            OGRSpatialReferenceRefCountedPtr::makeClone(m_oSRS.value());
         oGeomFieldDefn.SetSpatialRef(poSRS.get());
     }
 

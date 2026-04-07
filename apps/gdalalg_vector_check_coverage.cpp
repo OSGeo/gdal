@@ -60,23 +60,16 @@ class GDALVectorCheckCoverageOutputLayer final
                                                 double maximumGapWidth,
                                                 bool includeValid)
         : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
-          m_defn(OGRFeatureDefn::CreateFeatureDefn(name.c_str())),
+          m_defn(OGRFeatureDefnRefCountedPtr::makeInstance(name.c_str())),
           m_maximumGapWidth(maximumGapWidth), m_includeValid(includeValid)
     {
-        m_defn->Reference();
-
         const OGRFeatureDefn *poSrcLayerDefn = srcLayer.GetLayerDefn();
         m_defn->SetGeomType(wkbMultiLineString);
         m_defn->GetGeomFieldDefn(0)->SetSpatialRef(
             poSrcLayerDefn->GetGeomFieldDefn(geomFieldIndex)->GetSpatialRef());
     }
 
-    ~GDALVectorCheckCoverageOutputLayer() override;
-
-    const OGRFeatureDefn *GetLayerDefn() const override
-    {
-        return m_defn;
-    }
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
     int TestCapability(const char *) const override
     {
@@ -118,19 +111,16 @@ class GDALVectorCheckCoverageOutputLayer final
     }
 
   private:
-    OGRFeatureDefn *m_defn;
+    const OGRFeatureDefnRefCountedPtr m_defn;
     const double m_maximumGapWidth;
     const bool m_includeValid;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorCheckCoverageOutputLayer)
 };
 
-GDALVectorCheckCoverageOutputLayer::~GDALVectorCheckCoverageOutputLayer()
+const OGRFeatureDefn *GDALVectorCheckCoverageOutputLayer::GetLayerDefn() const
 {
-    if (m_defn != nullptr)
-    {
-        m_defn->Release();
-    }
+    return m_defn.get();
 }
 
 bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

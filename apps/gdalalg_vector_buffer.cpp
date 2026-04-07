@@ -75,7 +75,6 @@ class GDALVectorBufferAlgorithmLayer final
               oSrcLayer, opts),
           m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
     {
-        m_poFeatureDefn->Reference();
         for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
         {
             if (IsSelectedGeomField(i))
@@ -95,14 +94,9 @@ class GDALVectorBufferAlgorithmLayer final
                                         m_opts.m_side != "both" ? "YES" : "NO");
     }
 
-    ~GDALVectorBufferAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
-    }
-
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
   protected:
@@ -113,7 +107,7 @@ class GDALVectorBufferAlgorithmLayer final
 
   private:
     CPLStringList m_aosBufferOptions{};
-    OGRFeatureDefn *const m_poFeatureDefn;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorBufferAlgorithmLayer)
 };
@@ -152,7 +146,7 @@ std::unique_ptr<OGRFeature> GDALVectorBufferAlgorithmLayer::TranslateFeature(
         }
     }
 
-    poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
+    poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
     return poSrcFeature;
 }
 

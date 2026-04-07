@@ -45,8 +45,6 @@ class GDALVectorConvexHullAlgorithmLayer final
               oSrcLayer, opts),
           m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
     {
-        m_poFeatureDefn->Reference();
-
         // Convex hull output type can be Point/LineString/Polygon depending on input.
         // To avoid schema/type conflicts, advertise unknown geometry type for
         // processed geometry fields.
@@ -57,14 +55,9 @@ class GDALVectorConvexHullAlgorithmLayer final
         }
     }
 
-    ~GDALVectorConvexHullAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
-    }
-
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
   protected:
@@ -96,12 +89,12 @@ class GDALVectorConvexHullAlgorithmLayer final
             }
         }
 
-        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
+        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
         return poSrcFeature;
     }
 
   private:
-    OGRFeatureDefn *const m_poFeatureDefn;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorConvexHullAlgorithmLayer)
 };

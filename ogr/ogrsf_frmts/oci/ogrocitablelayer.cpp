@@ -62,8 +62,6 @@ OGROCITableLayer::OGROCITableLayer(OGROCIDataSource *poDSIn,
         nSRID = LookupTableSRID();
 
     poSRS = poDSIn->FetchSRS(nSRID);
-    if (poSRS != nullptr)
-        poSRS->Reference();
 
     hOrdVARRAY = nullptr;
     hElemInfoVARRAY = nullptr;
@@ -122,9 +120,6 @@ OGROCITableLayer::~OGROCITableLayer()
 
     CPLFree(pszQuery);
     CPLFree(pszWHERE);
-
-    if (poSRS != nullptr && poSRS->Dereference() == 0)
-        delete poSRS;
 }
 
 /************************************************************************/
@@ -680,7 +675,7 @@ OGRFeature *OGROCITableLayer::GetFeature(GIntBig nFeatureId)
     poFeature = GetNextRawFeature();
 
     if (poFeature != nullptr && poFeature->GetGeometryRef() != nullptr)
-        poFeature->GetGeometryRef()->assignSpatialReference(poSRS);
+        poFeature->GetGeometryRef()->assignSpatialReference(poSRS.get());
 
     /* -------------------------------------------------------------------- */
     /*      Cleanup the statement.                                          */
@@ -735,7 +730,8 @@ OGRFeature *OGROCITableLayer::GetNextFeature()
         {
             nHits++;
             if (poFeature->GetGeometryRef() != nullptr)
-                poFeature->GetGeometryRef()->assignSpatialReference(poSRS);
+                poFeature->GetGeometryRef()->assignSpatialReference(
+                    poSRS.get());
             return poFeature;
         }
 

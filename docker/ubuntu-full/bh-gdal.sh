@@ -4,7 +4,7 @@ set -eu
 cd gdal
 
 if [ "${GDAL_VERSION}" = "master" ]; then
-    GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
+    GDAL_VERSION=$(curl --retry 3 --retry-all-errors --retry-delay 3 -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
     export GDAL_VERSION
     GDAL_RELEASE_DATE=$(date "+%Y%m%d")
     export GDAL_RELEASE_DATE
@@ -15,7 +15,7 @@ if [ "${GDAL_VERSION}" = "local" ]; then
     export GDAL_VERSION
 else
     rm -rf ./*
-    (curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
+    (curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
       | tar xz --strip-components=1) || exit 1
 fi
 

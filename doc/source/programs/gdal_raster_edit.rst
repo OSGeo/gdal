@@ -101,6 +101,36 @@ Program-Specific Options
     - specifying the color interpretation on a subset of bands with ``<BAND>=<COLOR-INTERPRETATION>``
       where band is the band number starting at 1.
 
+.. option:: --scale [<BAND>=]<SCALE>
+
+    .. versionadded:: 3.13
+
+    Set band scale factor. May be repeated.
+
+    Several syntaxes are supported:
+
+    - specifying one single ``<SCALE>``: set the scale on all bands.
+
+    - specifying as many ``<SCALE>`` as there are bands, starting from band 1 to the last band.
+
+    - specifying the scale on a subset of bands with ``<BAND>=<SCALE>``
+      where band is the band number starting at 1.
+
+.. option:: --offset [<BAND>=]<OFFSET>
+
+    .. versionadded:: 3.13
+
+    Set band offset constant. May be repeated.
+
+    Several syntaxes are supported:
+
+    - specifying one single ``<OFFSET>``: set the offset on all bands.
+
+    - specifying as many ``<OFFSET>`` as there are bands, starting from band 1 to the last band.
+
+    - specifying the offset on a subset of bands with ``<BAND>=<OFFSET>``
+      where band is the band number starting at 1.
+
 .. option:: --metadata <KEY>=<VALUE>
 
     Add/update metadata item, at the dataset level. May be repeated.

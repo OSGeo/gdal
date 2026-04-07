@@ -208,6 +208,9 @@ TileDBGroup::OpenGroup(const std::string &osName,
     if (!m_poTileDBGroup)
         return nullptr;
 
+    if (!EnsureOpenAs(TILEDB_READ))
+        return nullptr;
+
     // Try to match by member name property first, and if not use the
     // last part of their URI
     std::string osSubPath;
@@ -408,6 +411,9 @@ TileDBGroup::OpenMDArray(const std::string &osName,
         return oIter->second;
     }
     if (!m_poTileDBGroup)
+        return nullptr;
+
+    if (!EnsureOpenAs(TILEDB_READ))
         return nullptr;
 
     std::string osNamePrefix = osName;

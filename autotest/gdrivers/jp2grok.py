@@ -1069,6 +1069,97 @@ def test_jp2grok_multitile_multirow(tmp_vsimem):
 
 
 ###############################################################################
+# Test in-place rewrite of JP2 boxes via GA_Update
+
+
+def test_jp2grok_rewrite_boxes(tmp_path):
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    tmpfile = tmp_path / "jp2grok_rewrite.jp2"
+
+    sr = osr.SpatialReference()
+    sr.ImportFromEPSG(32631)
+
+    # Create a file with known pixel data and no georef
+    src_ds = gdal.GetDriverByName("MEM").Create("", 20, 20)
+
+    pixel_data = np.arange(20 * 20, dtype=np.uint8).reshape(20, 20)
+    src_ds.GetRasterBand(1).WriteArray(pixel_data)
+    out_ds = gdaltest.jp2grok_drv.CreateCopy(
+        tmpfile, src_ds, options=["REVERSIBLE=YES"]
+    )
+    del out_ds
+    del src_ds
+
+    # Add geotransform and projection
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    ds.SetSpatialRef(sr)
+    ds.SetGeoTransform([0, 1, 0, 3, 0, -1])
+    ds = None
+
+    # Check they were written into the file (not PAM)
+    assert gdal.VSIStatL(tmp_path / ".aux.xml") is None
+    ds = gdal.Open(tmpfile)
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    assert ds.GetGeoTransform() == (0, 1, 0, 3, 0, -1)
+    # Verify pixel data survived the transcode
+    got = ds.GetRasterBand(1).ReadAsArray()
+    assert np.array_equal(got, pixel_data)
+    ds = None
+
+    # Modify geotransform
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    ds.SetGeoTransform([1, 2, 0, 4, 0, -2])
+    ds = None
+    assert gdal.VSIStatL(tmp_path / ".aux.xml") is None
+
+    ds = gdal.Open(tmpfile)
+    assert ds.GetGeoTransform() == (1, 2, 0, 4, 0, -2)
+    assert np.array_equal(ds.GetRasterBand(1).ReadAsArray(), pixel_data)
+    ds = None
+
+    # Replace projection+geotransform with GCPs
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    gcps = [gdal.GCP(0, 1, 2, 3, 4)]
+    ds.SetGCPs(gcps, sr.ExportToWkt())
+    ds = None
+    assert gdal.VSIStatL(tmp_path / ".aux.xml") is None
+
+    ds = gdal.Open(tmpfile)
+    assert ds.GetGCPCount() == 1
+    got_gcp = ds.GetGCPs()[0]
+    assert got_gcp.GCPX == 0
+    assert got_gcp.GCPY == 1
+    assert got_gcp.GCPZ == 2
+    assert got_gcp.GCPPixel == 3
+    assert got_gcp.GCPLine == 4
+    assert ds.GetGCPSpatialRef().GetAuthorityCode(None) == "32631"
+    ds = None
+
+    # Add metadata
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    ds.SetMetadataItem("FOO", "BAR")
+    ds = None
+    assert gdal.VSIStatL(tmp_path / ".aux.xml") is None
+
+    ds = gdal.Open(tmpfile)
+    assert ds.GetMetadata() == {"FOO": "BAR"}
+    ds = None
+
+    # Add IPR box
+    ds = gdal.Open(tmpfile, gdal.GA_Update)
+    ds.SetMetadata(["<fake_ipr_box/>"], "xml:IPR")
+    ds = None
+    assert gdal.VSIStatL(tmp_path / ".aux.xml") is None
+
+    ds = gdal.Open(tmpfile)
+    assert ds.GetMetadata("xml:IPR")[0] == "<fake_ipr_box/>"
+    assert np.array_equal(ds.GetRasterBand(1).ReadAsArray(), pixel_data)
+    ds = None
+
+
+###############################################################################
 # Test driver metadata
 
 

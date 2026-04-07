@@ -337,7 +337,8 @@ std::shared_ptr<GDALDimension> ZarrGroupBase::CreateDimension(
     if (m_oMapDimensions.find(osName) != m_oMapDimensions.end())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "A dimension with same name already exists");
+                 "A dimension with same name (%s) already exists in group %s",
+                 osName.c_str(), GetFullName().c_str());
         return nullptr;
     }
     auto newDim(std::make_shared<ZarrDimension>(

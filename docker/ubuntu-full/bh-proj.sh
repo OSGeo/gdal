@@ -13,7 +13,7 @@ fi
 set -eu
 
 mkdir proj
-curl -Lo - -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
+curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
     | tar xz -C proj --strip-components=1
 
 (

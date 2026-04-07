@@ -254,7 +254,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     std::map<CPLString, GPKGContentsDesc> m_oMapTableToContents{};
     const std::map<CPLString, GPKGContentsDesc> &GetContents();
 
-    std::map<int, OGRSpatialReference *> m_oMapSrsIdToSrs{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oMapSrsIdToSrs{};
 
     OGRErr DeleteLayerCommon(const char *pszLayerName);
     OGRErr DeleteRasterLayer(const char *pszLayerName);
@@ -376,9 +376,11 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     int GetSrsId(const OGRSpatialReference *poSRS);
     static const char *GetSrsName(const OGRSpatialReference &oSRS);
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
+
+    OGRSpatialReferenceRefCountedPtr
     GetSpatialRef(int iSrsId, bool bFallbackToEPSG = false,
                   bool bEmitErrorIfNotFound = true);
+
     OGRErr CreateExtensionsTableIfNecessary();
     bool HasExtensionsTable();
 

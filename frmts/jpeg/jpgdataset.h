@@ -253,6 +253,8 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
                            GDALProgressFunc, void *,
                            CSLConstList papszOptions) override;
 
+    void ArtemisIIEasterEgg();
+
     CPL_DISALLOW_COPY_ASSIGN(JPGDatasetCommon)
 
   public:

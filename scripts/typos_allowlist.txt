@@ -250,7 +250,7 @@ static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DE
  *	 S       Le           ue       ve
     unsigned int Le, ue, ve;
         ue = 0;
-        ue = tiff_itrunc(UVSCALE * u, em);
+        ue = (unsigned int)tiff_itrunc(UVSCALE * u, em);
     if (ue > 255)
         ue = 255;
 	return (Le << 16 | ue << 8 | ve);

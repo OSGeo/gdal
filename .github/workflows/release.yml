@@ -66,7 +66,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Setup environment
         shell: bash -l {0}
         env:
@@ -188,7 +188,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/') && env.PRE_RELEASE != 'true'
         with:
           attestations: true
-      - uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+      - uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
         if: startsWith(github.ref, 'refs/tags/')
         name: Publish release as draft
         with:
@@ -224,7 +224,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Set up Docker
         uses: docker/setup-docker-action@1a6edb0ba9ac496f6850236981f15d8f9a82254d # v5.0.0
         with:

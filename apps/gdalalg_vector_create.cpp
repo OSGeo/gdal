@@ -367,12 +367,10 @@ bool GDALVectorCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
             {
                 OGRGeomFieldDefn oGeomFieldDefn(m_geometryFieldName.c_str(),
                                                 eDstType);
-                std::unique_ptr<OGRSpatialReference,
-                                OGRSpatialReferenceReleaser>
-                    poSRS;
-                poSRS.reset(std::make_unique<OGRSpatialReference>().release());
                 if (!m_crs.empty())
                 {
+                    auto poSRS =
+                        OGRSpatialReferenceRefCountedPtr::makeInstance();
                     if (poSRS->SetFromUserInput(m_crs.c_str()) != OGRERR_NONE)
                     {
                         ReportError(CE_Failure, CPLE_AppDefined,

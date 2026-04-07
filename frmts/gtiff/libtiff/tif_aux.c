@@ -138,7 +138,7 @@ static int TIFFDefaultTransferFunction(TIFF *tif, TIFFDirectory *td)
         return 0;
 
     n = ((tmsize_t)1) << td->td_bitspersample;
-    nbytes = n * sizeof(uint16_t);
+    nbytes = (tmsize_t)((uint64_t)n * sizeof(uint16_t));
     tf[0] = (uint16_t *)_TIFFmallocExt(tif, nbytes);
     if (tf[0] == NULL)
         return 0;
@@ -200,7 +200,7 @@ static int TIFFDefaultRefBlackWhite(TIFF *tif, TIFFDirectory *td)
         {
             td->td_refblackwhite[2 * i + 0] = 0;
             td->td_refblackwhite[2 * i + 1] =
-                (float)((1L << td->td_bitspersample) - 1L);
+                (float)((1UL << td->td_bitspersample) - 1);
         }
     }
     return 1;
@@ -258,8 +258,8 @@ int TIFFVGetFieldDefaulted(TIFF *tif, uint32_t tag, va_list ap)
                  * 65535 even if td_bitspersamle is > 16 */
                 if (td->td_bitspersample <= 16)
                 {
-                    maxsamplevalue = (1 << td->td_bitspersample) -
-                                     1; /* 2**(BitsPerSample) - 1 */
+                    maxsamplevalue = (uint16_t)((1 << td->td_bitspersample) -
+                                                1); /* 2**(BitsPerSample) - 1 */
                 }
                 else
                 {
@@ -295,7 +295,8 @@ int TIFFVGetFieldDefaulted(TIFF *tif, uint32_t tag, va_list ap)
         }
         case TIFFTAG_DOTRANGE:
             *va_arg(ap, uint16_t *) = 0;
-            *va_arg(ap, uint16_t *) = (1 << td->td_bitspersample) - 1;
+            *va_arg(ap, uint16_t *) =
+                (uint16_t)((1 << td->td_bitspersample) - 1);
             return (1);
         case TIFFTAG_INKSET:
             *va_arg(ap, uint16_t *) = INKSET_CMYK;

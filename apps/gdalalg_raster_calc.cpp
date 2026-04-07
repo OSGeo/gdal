@@ -185,8 +185,7 @@ struct SourceProperties
     int nY{0};
     bool hasGT{false};
     GDALGeoTransform gt{};
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> srs{
-        nullptr};
+    OGRSpatialReferenceRefCountedPtr srs{};
     std::vector<std::optional<double>> noData{};
     GDALDataType eDT{GDT_Unknown};
 };
@@ -790,8 +789,8 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
         out.nX = ds->GetRasterXSize();
         out.nY = ds->GetRasterYSize();
         out.nBands = 1;
-        out.srs.reset(ds->GetSpatialRef() ? ds->GetSpatialRef()->Clone()
-                                          : nullptr);
+        out.srs =
+            OGRSpatialReferenceRefCountedPtr::makeClone(ds->GetSpatialRef());
         out.hasGT = ds->GetGeoTransform(out.gt) == CE_None;
     }
 
