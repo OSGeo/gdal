@@ -45,8 +45,8 @@ Geographic Network Model
 
    gnm_api_tut
 
-Projections
------------
+Projections / CRS
+-----------------
 
 .. toctree::
    :maxdepth: 1
