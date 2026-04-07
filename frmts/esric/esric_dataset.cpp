@@ -1393,12 +1393,24 @@ GDALDataset *CreateCopy(const char* pszFilename,
     const char *pszFormat =
         CSLFetchNameValueDef(papszOptions, "TILE_FORMAT", "JPEG");
 
-    // Create temp directory for bundle files
-    const std::string osTempDir = CPLGenerateTempFilenameSafe("esric_tiles");
+    // Create temp directory for bundle files and metadata
+    const std::string osTempDir = CPLGenerateTempFilenameSafe("esric");
     if (VSIMkdirRecursive(osTempDir.c_str(), 0755) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "ESRIC: Failed to create temp directory %s", osTempDir.c_str());
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    // Create tile subdirectory
+    const std::string osTileDir =
+        CPLFormFilenameSafe(osTempDir.c_str(), "tile", nullptr);
+    if (VSIMkdir(osTileDir.c_str(), 0755) != 0)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "ESRIC: failed to create directory %s", osTileDir.c_str());
+        VSIRmdirRecursive(osTempDir.c_str());
         return nullptr;
     }
 
@@ -1526,7 +1538,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
 
         // Create LOD subdirectory
         const std::string osLODDir = CPLFormFilenameSafe(
-            osTempDir.c_str(), CPLSPrintf("L%02d", iLOD), nullptr);
+            osTileDir.c_str(), CPLSPrintf("L%02d", iLOD), nullptr);
         if (VSIMkdir(osLODDir.c_str(), 0755) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO,
