@@ -180,7 +180,8 @@ GDALAlgorithmArgDecl::GDALAlgorithmArgDecl(const std::string &longName,
       m_description(description), m_type(type),
       m_metaVar(CPLString(m_type == GAAT_BOOLEAN ? std::string() : longName)
                     .toupper()),
-      m_maxCount(GDALAlgorithmArgTypeIsList(type) ? UNBOUNDED : 1)
+      m_maxCount(GDALAlgorithmArgTypeIsList(type) ? UNBOUNDED : 1),
+      m_openForUpdateIfAnyOf(), m_openForUpdateUnlessAnyOf()
 {
     if (m_type == GAAT_BOOLEAN)
     {
@@ -6710,7 +6711,17 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         oRoot.Add("user_provided_arguments_allowed", true);
     }
 
-    const auto ProcessArg = [](const GDALAlgorithmArg *arg)
+    const auto GetFlags = [](int flags)
+    {
+        CPLJSONArray jAr;
+        if (flags & GADV_NAME)
+            jAr.Add("name");
+        if (flags & GADV_OBJECT)
+            jAr.Add("dataset");
+        return jAr;
+    };
+
+    const auto ProcessArg = [&GetFlags](const GDALAlgorithmArg *arg)
     {
         CPLJSONObject jArg;
         jArg.Add("name", arg->GetName());
@@ -6851,26 +6862,46 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         if (arg->GetType() == GAAT_DATASET ||
             arg->GetType() == GAAT_DATASET_LIST)
         {
+            CPLJSONArray jAr;
+            if (arg->GetDatasetType() & GDAL_OF_RASTER)
+                jAr.Add("raster");
+            if (arg->GetDatasetType() & GDAL_OF_VECTOR)
+                jAr.Add("vector");
+            if (arg->GetDatasetType() & GDAL_OF_MULTIDIM_RASTER)
+                jAr.Add("multidim_raster");
+            jArg.Add("dataset_type", jAr);
+
+            const bool bByDefault =
+                (arg->GetDatasetType() & GDAL_OF_UPDATE) != 0;
+            const auto &ifAnyOf =
+                arg->GetDeclaration().GetOpenForUpdateIfAnyOf();
+            const auto &unlessAnyOf =
+                arg->GetDeclaration().GetOpenForUpdateUnlessAnyOf();
+
+            CPLJSONObject jOpenForUpdate;
+            jOpenForUpdate.Add("by_default", bByDefault);
+
+            if (!ifAnyOf.empty())
             {
-                CPLJSONArray jAr;
-                if (arg->GetDatasetType() & GDAL_OF_RASTER)
-                    jAr.Add("raster");
-                if (arg->GetDatasetType() & GDAL_OF_VECTOR)
-                    jAr.Add("vector");
-                if (arg->GetDatasetType() & GDAL_OF_MULTIDIM_RASTER)
-                    jAr.Add("multidim_raster");
-                jArg.Add("dataset_type", jAr);
+                CPLJSONArray jIfAnyOf;
+                for (const auto &name : ifAnyOf)
+                {
+                    jIfAnyOf.Add(name);
+                }
+                jOpenForUpdate.Add("if_any_of", jIfAnyOf);
             }
 
-            const auto GetFlags = [](int flags)
+            if (!unlessAnyOf.empty())
             {
-                CPLJSONArray jAr;
-                if (flags & GADV_NAME)
-                    jAr.Add("name");
-                if (flags & GADV_OBJECT)
-                    jAr.Add("dataset");
-                return jAr;
-            };
+                CPLJSONArray jUnlessAnyOf;
+                for (const auto &name : unlessAnyOf)
+                {
+                    jUnlessAnyOf.Add(name);
+                }
+                jOpenForUpdate.Add("unless_any_of", jUnlessAnyOf);
+            }
+
+            jArg.Add("open_for_update", jOpenForUpdate);
 
             if (arg->IsInput())
             {
