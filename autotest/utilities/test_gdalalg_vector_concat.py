@@ -11,9 +11,12 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
+
 import gdaltest
 import ogrtest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
@@ -419,8 +422,6 @@ def test_gdalalg_vector_concat_source_layer_field(
 @pytest.mark.require_driver("GDALG")
 def test_gdalalg_vector_concat_test_ogrsf(tmp_path):
 
-    import test_cli_utilities
-
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
@@ -436,3 +437,21 @@ def test_gdalalg_vector_concat_test_ogrsf(tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+def test_gdalalg_vector_concat_json_usage():
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary not available")
+
+    out = gdaltest.runexternal(f"{gdal_path} vector concat --json-usage")
+    j = json.loads(out)
+
+    dataset_arg = next(
+        (arg for arg in j["input_output_arguments"] if arg["name"] == "output"), None
+    )
+    assert dataset_arg is not None
+    assert "open_for_update" in dataset_arg
+    assert dataset_arg["open_for_update"]["by_default"] is False
+    assert "update" in dataset_arg["open_for_update"]["if_any_of"]
