@@ -18,6 +18,8 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <random>
+#include <sstream>
 #include "cpl_json.h"
 #include "gdal_alg.h"
 #include "gdal_proxy.h"
@@ -27,6 +29,33 @@
 #include "tilematrixset.hpp"
 
 using namespace std;
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <sys/timeb.h>
+
+namespace
+{
+struct CPLTimeVal
+{
+    time_t tv_sec; /* seconds */
+    long tv_usec;  /* and microseconds */
+};
+}  // namespace
+
+static int CPLGettimeofday(struct CPLTimeVal *tp, void * /* timezonep*/)
+{
+    struct _timeb theTime;
+
+    _ftime(&theTime);
+    tp->tv_sec = static_cast<time_t>(theTime.time);
+    tp->tv_usec = theTime.millitm * 1000;
+    return 0;
+}
+#else
+#include <sys/time.h> /* for gettimeofday() */
+#define CPLTimeVal timeval
+#define CPLGettimeofday(t, u) gettimeofday(t, u)
+#endif
 
 CPL_C_START
 void CPL_DLL GDALRegister_ESRIC();
@@ -1280,6 +1309,60 @@ static bool BuildRootJSON(
 }
 
 /************************************************************************/
+/*                          GenerateUUID()                              */
+/************************************************************************/
+
+// Generate an RFC 4122 version-4 UUID.
+// Inspired by OFGDBGenerateUUID in the OpenFileGDB driver.
+static std::string GenerateUUID()
+{
+    static uint32_t nCounter = 0;
+    struct CPLTimeVal tv;
+    memset(&tv, 0, sizeof(tv));
+
+    std::stringstream ss;
+    ss << std::hex;
+
+    // First half: xxxxxxxx-xxxx-4xxx
+    {
+        CPLGettimeofday(&tv, nullptr);
+        ++nCounter;
+        std::mt19937 gen(nCounter +
+                         static_cast<unsigned>(tv.tv_sec ^ tv.tv_usec));
+        std::uniform_int_distribution<> dis(0, 15);
+
+        for (int i = 0; i < 8; i++)
+            ss << dis(gen);
+        ss << "-";
+        for (int i = 0; i < 4; i++)
+            ss << dis(gen);
+        ss << "-4";
+        for (int i = 0; i < 3; i++)
+            ss << dis(gen);
+    }
+
+    // Second half: {8-b}xxx-xxxxxxxxxxxx
+    {
+        CPLGettimeofday(&tv, nullptr);
+        ++nCounter;
+        std::mt19937 gen(nCounter +
+                         static_cast<unsigned>(tv.tv_sec ^ tv.tv_usec));
+        std::uniform_int_distribution<> dis(0, 15);
+        std::uniform_int_distribution<> dis2(8, 11);
+
+        ss << "-";
+        ss << dis2(gen);
+        for (int i = 0; i < 3; i++)
+            ss << dis(gen);
+        ss << "-";
+        for (int i = 0; i < 12; i++)
+            ss << dis(gen);
+    }
+
+    return ss.str();
+}
+
+/************************************************************************/
 /*                      BuildItemInfoJSON()                            */
 /************************************************************************/
 
@@ -1295,8 +1378,7 @@ static bool BuildItemInfoJSON(const CPLString& tempDir, const char* pszFilename)
     oRoot.Add("name", osBaseName);
     oRoot.Add("version", "1.0"); // Current version based on https://github.com/Esri/tile-package-spec/blob/master/docs/iteminfo.md
 
-    // TODO: Generate a UUID. How is this done elsewhere in gdal?
-    oRoot.Add("guid", "69d444a9-4ae1-4784-98be-000048230029");
+    oRoot.Add("guid", GenerateUUID());
 
     // Unix time in milliseconds
     oRoot.Add("created",
