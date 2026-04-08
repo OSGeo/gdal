@@ -167,26 +167,7 @@ Developer Forum <http://groups.google.com/group/kml-support>`__, in the
 stripes <http://groups.google.com/group/kml-support-getting-started/browse_thread/thread/e6995b8073e69c41>`__
 thread.
 
-Also note this driver is **not** KMZ-aware. You have been warned:
-
-   .. code-block:: bash
-   
-      $ ogr2ogr fake.kmz ... -of KML
-      $ ogr2ogr real.kmz ... -of LIBKML
-      $ file *.kmz
-      fake.kmz: XML 1.0 document
-      real.kmz: Zip archive data
-      $ ogrinfo fake.kmz -q -if KML
-      1: graticule_k (Line String)
-      $ ogrinfo real.kmz -q -if KML
-      ERROR 4: `real.kmz' not recognized as being in a supported file format.
-      $ ogrinfo fake.kmz -q -if LIBKML
-      ERROR 4: fake.kmz is not a valid kmz file
-      $ ogrinfo real.kmz -q -if LIBKML
-      1: graticule_k
-
-
-
+Also note this driver is **not** KMZ-aware.
 See Also
 --------
 
