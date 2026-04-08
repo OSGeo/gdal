@@ -224,6 +224,7 @@ void CPL_DLL GDALRegister_RCM(void);
 void CPL_DLL GDALRegister_MiraMon(void);
 void CPL_DLL GDALRegister_GDALG(void);
 void CPL_DLL GDALRegister_E57(void);
+void CPL_DLL GDALRegister_CPHD(void);
 CPL_C_END
 
 #endif /* ndef GDAL_FRMTS_H_INCLUDED */

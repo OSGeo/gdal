@@ -615,10 +615,6 @@ void CPL_STDCALL GDALAllRegister()
     GDALRegister_MRF();
 #endif
 
-#ifdef FRMT_tiledb
-    GDALRegister_TileDB();
-#endif
-
 #ifdef FRMT_rdb
     GDALRegister_RDB();
 #endif
@@ -631,6 +627,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_raw
     GDALRegister_raw_no_sidecar();
+#endif
+
+#ifdef FRMT_tiledb
+    GDALRegister_TileDB();
 #endif
 
     /* -------------------------------------------------------------------- */
