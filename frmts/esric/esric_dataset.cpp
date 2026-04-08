@@ -15,13 +15,15 @@
 
 #include "gdal_priv.h"
 #include <cassert>
-#include <vector>
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <random>
 #include <sstream>
+#include <vector>
 #include "cpl_json.h"
 #include "gdal_alg.h"
+#include "gdal_cpp_functions.h"
 #include "gdal_proxy.h"
 #include "gdal_utils.h"
 #include "gdalwarper.h"
@@ -1629,6 +1631,19 @@ GDALDataset *CreateCopy(const char* pszFilename,
     const double dfSrcNoData =
         poEffectiveSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
 
+    // Collect source overview datasets.
+    // Higher indices are progressively coarser.
+    std::vector<GDALDatasetUniquePtr> apoOverviewDS;
+    const int nOverviews =
+        poEffectiveSrcDS->GetRasterBand(1)->GetOverviewCount();
+    for (int i = 0; i < nOverviews; ++i)
+    {
+        GDALDatasetUniquePtr poOvrDS(
+            GDALCreateOverviewDataset(poEffectiveSrcDS, i, true));
+        if (poOvrDS)
+            apoOverviewDS.emplace_back(std::move(poOvrDS));
+    }
+
     // Count total tiles
     int nTotalTiles = 0;
     for (int iLOD = 0; iLOD <= nMaxLOD; iLOD++)
@@ -1683,6 +1698,27 @@ GDALDataset *CreateCopy(const char* pszFilename,
         const size_t nTilePixels =
             static_cast<size_t>(nTileW) * nTileH;
 
+        // Select the coarsest source overview whose resolution does
+        // not exceed the target. Fall back to the base dataset.
+        GDALDataset *poWarpSrcDS = poEffectiveSrcDS;
+        for (const auto &poOvrDS : apoOverviewDS)
+        {
+            GDALGeoTransform gtOvr;
+            if (poOvrDS->GetGeoTransform(gtOvr) != CE_None)
+                continue;
+            const double dfOvrRes = std::abs(gtOvr.xscale);
+            if (dfOvrRes <= dfResX * (1.0 + 1e-10))
+                poWarpSrcDS = poOvrDS.get();
+            else
+                break;
+        }
+
+        GDALGeoTransform gtSrc;
+        poWarpSrcDS->GetGeoTransform(gtSrc);
+        const double dfSrcRes = std::abs(gtSrc.xscale);
+        const bool bExactResolutionMatch =
+            std::abs(dfSrcRes - dfResX) <= 1e-10 * dfResX;
+
         // Compute tile range overlapping source extent
         const int nMinCol = std::max(
             0, static_cast<int>(
@@ -1726,8 +1762,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
                                dfAlignedMaxY, 0.0,   -dfResY};
 
         void *hLODTransform = GDALCreateGenImgProjTransformer2(
-            GDALDataset::ToHandle(poEffectiveSrcDS), nullptr,
-            aosTO.List());
+            GDALDataset::ToHandle(poWarpSrcDS), nullptr, aosTO.List());
         if (!hLODTransform)
         {
             eErr = CE_Failure;
@@ -1741,8 +1776,9 @@ GDALDataset *CreateCopy(const char* pszFilename,
         GDALApproxTransformerOwnsSubtransformer(hApproxTransform, TRUE);
 
         auto psWO = GDALCreateWarpOptions();
-        psWO->hSrcDS = GDALDataset::ToHandle(poEffectiveSrcDS);
-        psWO->eResampleAlg = GRA_Bilinear;
+        psWO->hSrcDS = GDALDataset::ToHandle(poWarpSrcDS);
+        psWO->eResampleAlg =
+            bExactResolutionMatch ? GRA_NearestNeighbour : GRA_Bilinear;
         psWO->eWorkingDataType = GDT_Byte;
 
         if (bSrcHasAlpha)
@@ -1789,7 +1825,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
         }
 
         GDALDatasetH hWarpedDS = GDALCreateWarpedVRT(
-            GDALDataset::ToHandle(poEffectiveSrcDS), nPixelsX,
+            GDALDataset::ToHandle(poWarpSrcDS), nPixelsX,
             nPixelsY, adfLODGT, psWO);
         GDALDestroyWarpOptions(psWO);
 
