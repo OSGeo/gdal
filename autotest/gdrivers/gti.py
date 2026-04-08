@@ -2999,9 +2999,11 @@ def test_gti_read_non_existing_source(tmp_vsimem):
 
     vrt_ds = gdal.Open(index_filename)
 
-    with gdal.config_option("GDAL_NUM_THREADS", "1"), gdaltest.error_raised(
-        gdal.CE_Failure
-    ), gdaltest.disable_exceptions():
+    with (
+        gdal.config_option("GDAL_NUM_THREADS", "1"),
+        gdaltest.error_raised(gdal.CE_Failure),
+        gdaltest.disable_exceptions(),
+    ):
         assert vrt_ds.ReadRaster() is None
 
 
@@ -3360,3 +3362,53 @@ def test_gti_band_interleave_rgba(tmp_vsimem):
     assert ds.ReadRaster(band_list=[4, 3, 2, 1]) == src_ds.ReadRaster(
         band_list=[4, 3, 2, 1]
     )
+
+
+###############################################################################
+
+
+def test_gti_srs_metadata_spatial_filter(tmp_vsimem):
+    """When output SRS differs from the index layer SRS (via SRS layer metadata),
+    spatial filters applied during raster reads must be transformed into the
+    layer's native CRS before querying the index.
+
+    byte.tif is EPSG:26711 (UTM zone 11N). Setting SRS=EPSG:3857 creates a
+    mismatch: without the fix, SetSpatialFilterRect receives EPSG:3857
+    coordinates but applies them directly to the UTM index layer, which finds
+    no matching tiles and returns an all-zero raster.
+    """
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
+    lyr.SetMetadataItem("SRS", "EPSG:3857")
+    del index_ds
+
+    ds = gdal.Open(index_filename)
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+
+###############################################################################
+
+
+def test_gti_srs_open_option_spatial_filter(tmp_vsimem):
+    """SRS specified via open option must also create the warped layer so that
+    spatial filters during raster reads are correctly transformed.
+
+    This exercises the same code path as test_gti_srs_metadata_spatial_filter
+    but uses the SRS open option instead of layer metadata, and also covers the
+    destructor fix: when a warped layer wraps the index layer, the destructor
+    must not pass the wrapper to ReleaseResultSet.
+    """
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, _ = create_basic_tileindex(index_filename, src_ds)
+    del index_ds
+
+    ds = gdal.OpenEx(index_filename, open_options=["SRS=EPSG:3857"])
+    assert ds is not None
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+    assert ds.GetRasterBand(1).Checksum() != 0

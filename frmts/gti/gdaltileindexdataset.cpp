@@ -259,7 +259,7 @@ class GDALTileIndexDataset final : public GDALPamDataset
     bool m_bIsSQLResultLayer = false;
 
     //! When the SRS of m_poLayer is not the one we expose
-    std::unique_ptr<OGRLayer> m_poWarpedLayerKeeper{};
+    std::unique_ptr<OGRWarpedLayer> m_poWarpedLayerKeeper{};
 
     //! Geotransform matrix of the tile index
     GDALGeoTransform m_gt{};
@@ -1472,6 +1472,32 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
+    // If the output SRS differs from the layer's geometry SRS and the STAC
+    // auto-detection path did not already create a warped layer, create one
+    // now.  This ensures that SetSpatialFilterRect() calls during raster reads
+    // operate in the output SRS coordinate space and are correctly transformed
+    // back to the layer's native SRS before being applied to the index.
+    if (!m_poWarpedLayerKeeper && !m_oSRS.IsEmpty())
+    {
+        const auto poLayerSRS = m_poLayer->GetSpatialRef();
+        if (poLayerSRS && !m_oSRS.IsSame(poLayerSRS))
+        {
+            auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                OGRCreateCoordinateTransformation(poLayerSRS, &m_oSRS));
+            auto poInvCT = std::unique_ptr<OGRCoordinateTransformation>(
+                poCT ? poCT->GetInverse() : nullptr);
+            if (poCT && poInvCT)
+            {
+                m_poWarpedLayerKeeper = std::make_unique<OGRWarpedLayer>(
+                    m_poLayer, /* iGeomField = */ 0,
+                    /* bTakeOwnership = */ false, std::move(poCT),
+                    std::move(poInvCT));
+                m_poLayer = m_poWarpedLayerKeeper.get();
+                poLayerDefn = m_poLayer->GetLayerDefn();
+            }
+        }
+    }
+
     OGREnvelope sEnvelope;
     if (nCountMinMaxXY == 4)
     {
@@ -2671,7 +2697,14 @@ static GDALDataset *GDALTileIndexDatasetOpen(GDALOpenInfo *poOpenInfo)
 GDALTileIndexDataset::~GDALTileIndexDataset()
 {
     if (m_poVectorDS && m_bIsSQLResultLayer)
-        m_poVectorDS->ReleaseResultSet(m_poLayer);
+    {
+        // If a warped layer was created, m_poLayer points to it rather than
+        // to the original SQL result layer, so retrieve the base layer.
+        OGRLayer *poLayerToRelease = m_poWarpedLayerKeeper
+                                         ? m_poWarpedLayerKeeper->GetBaseLayer()
+                                         : m_poLayer;
+        m_poVectorDS->ReleaseResultSet(poLayerToRelease);
+    }
 
     GDALTileIndexDataset::FlushCache(true);
 }
