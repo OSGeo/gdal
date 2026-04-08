@@ -1430,8 +1430,9 @@ static bool PackageTpkx(const char *pszFilename,
             VSI_ISDIR(sStat.st_mode))
             continue;  // skip directories
 
+        const char *const apszZipOptions[] = {"COMPRESSED=NO", nullptr};
         if (CPLAddFileInZip(hZIP, papszFiles[i], osSrcPath.c_str(),
-                            nullptr, nullptr, nullptr,
+                            nullptr, apszZipOptions, nullptr,
                             nullptr) != CE_None)
         {
             CPLError(CE_Failure, CPLE_FileIO,
