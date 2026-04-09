@@ -68,7 +68,7 @@ static GDALExtendedDataType ParsePVPDataType(const CPLXMLNode *psPvpXML,
             auto osElementName = osPrefix + std::string(psPvpChild->pszValue);
 
             if (osElementName == "AddedPVP")
-                osElementName = CPLGetXMLValue(psPvpChild, "Name", nullptr);
+                osElementName = CPLGetXMLValue(psPvpChild, "Name", "");
 
             auto pszFormat = CPLGetXMLValue(psPvpChild, "Format", nullptr);
             auto pszOffset = CPLGetXMLValue(psPvpChild, "Offset", nullptr);
