@@ -947,7 +947,6 @@ void GDALRegister_CPHD()
     GDALDriver *poDriver = new GDALDriver();
 
     poDriver->SetDescription("CPHD");
-    poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "Compensated Phase History Data Reader");
