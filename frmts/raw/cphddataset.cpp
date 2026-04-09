@@ -627,7 +627,7 @@ bool CPHDGroup::AddSupportArray(const CPLXMLNode *psDataSupportArray)
     auto psSupportXml =
         CPLGetXMLNode(m_poShared->m_poXMLTree.get(), "SupportArray");
     auto *psSupportChild = psSupportXml->psChild;
-    auto pszArrayName = CPLGetXMLValue(psDataSupportArray, "Identifier", "");
+    const auto pszArrayName = CPLGetXMLValue(psDataSupportArray, "Identifier", "");
 
     // process only known support arrays for now
     for (; psSupportChild != nullptr; psSupportChild = psSupportChild->psNext)
