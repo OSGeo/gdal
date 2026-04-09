@@ -19,7 +19,7 @@
 /*                             CPHDDataset                              */
 /************************************************************************/
 
-class CPL_DLL CPHDDataset CPL_FINAL : public GDALPamDataset
+class CPHDDataset final : public GDALPamDataset
 {
     CPL_DISALLOW_COPY_ASSIGN(CPHDDataset)
     std::shared_ptr<GDALGroup> m_poRootGroup{};
