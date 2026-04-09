@@ -198,12 +198,6 @@ class CPHDInternalDataset final : public RawDataset
 {
     friend class CPHDGroup;
 
-  protected:
-    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override
-    {
-        return CE_None;
-    }
-
   public:
     CPHDInternalDataset()
     {
