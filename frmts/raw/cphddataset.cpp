@@ -406,7 +406,7 @@ GDALDataset *CPHDDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
 
         const CPLStringList aosTokens(CSLTokenizeString2(pszLine, " := /", 0));
 
-        if (CSLCount(papszTokens) == 2)
+        if (aosTokens.size() == 2)
         {
             if EQUAL (papszTokens[0], "CPHD")
                 poRootGroup->m_apoAttributes.emplace_back(
