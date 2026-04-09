@@ -24,12 +24,6 @@ pytestmark = pytest.mark.require_driver("CPHD")
 pytestmark = pytest.mark.require_curl()
 
 
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
 
 @pytest.mark.parametrize(
     "file",
