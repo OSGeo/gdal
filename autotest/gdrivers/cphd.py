@@ -24,6 +24,8 @@ pytestmark = pytest.mark.require_driver("CPHD")
 
 
 
+@pytest.mark.require_curl()
+@pytest.mark.network
 @pytest.mark.parametrize(
     "file",
     [
