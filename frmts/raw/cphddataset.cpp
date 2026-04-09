@@ -210,10 +210,6 @@ class CPHDInternalDataset final : public RawDataset
     }
 
     CPHDInternalDataset(int nXSize, int nYSize, const std::string &osName);
-
-    ~CPHDInternalDataset() override
-    {
-    }
 };
 
 CPHDInternalDataset::CPHDInternalDataset(int nXSize, int nYSize,
