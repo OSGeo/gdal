@@ -29,10 +29,6 @@ class CPL_DLL CPHDDataset CPL_FINAL : public GDALPamDataset
     {
     }
 
-    virtual ~CPHDDataset()
-    {
-    }
-
     static GDALDataset *OpenMultiDim(GDALOpenInfo *poOpenInfo);
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override
