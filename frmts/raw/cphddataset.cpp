@@ -635,13 +635,13 @@ bool CPHDGroup::AddSupportArray(const CPLXMLNode *psDataSupportArray)
         if EQUAL (pszArrayName,
                   CPLGetXMLValue(psSupportChild, "Identifier", ""))
         {
-            auto pszElementName = psSupportChild->pszValue;
-            std::unique_ptr<CPHDInternalBand> poBand = nullptr;
-            auto pszSupportArrayWidth =
+            const auto pszElementName = psSupportChild->pszValue;
+            std::unique_ptr<CPHDInternalBand> poBand;
+            const auto pszSupportArrayWidth =
                 CPLGetXMLValue(psDataSupportArray, "NumCols", nullptr);
-            auto pszSupportArrayHeight =
+            const auto pszSupportArrayHeight =
                 CPLGetXMLValue(psDataSupportArray, "NumRows", nullptr);
-            auto pszArrayByteOffset =
+            const  auto pszArrayByteOffset =
                 CPLGetXMLValue(psDataSupportArray, "ArrayByteOffset", nullptr);
 
             if (!pszSupportArrayWidth || !pszSupportArrayHeight ||
