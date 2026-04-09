@@ -28,8 +28,6 @@ The following open options exist:
 Multidimensional API support
 ----------------------------
 
-.. versionadded:: 3.13
-
 The CPHD driver supports the :ref:`multidim_raster_data_model` for reading operations.
 
 The driver supports:
