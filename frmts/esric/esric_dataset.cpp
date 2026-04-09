@@ -1368,7 +1368,8 @@ static std::string GenerateUUID()
 /*                      BuildItemInfoJSON()                            */
 /************************************************************************/
 
-static bool BuildItemInfoJSON(const CPLString& tempDir, const char* pszFilename)
+static bool BuildItemInfoJSON(const CPLString& tempDir, const char* pszFilename,
+                              const char* pszSummary, const char* pszTags)
 {
     CPLJSONDocument oDoc;
     CPLJSONObject oRoot = oDoc.GetRoot();
@@ -1394,6 +1395,27 @@ static bool BuildItemInfoJSON(const CPLString& tempDir, const char* pszFilename)
     oKeywords.Add("Tile Package");
     oKeywords.Add("tpkx");
     oRoot.Add("typekeywords", oKeywords);
+
+    // summary
+    if (pszSummary && pszSummary[0] != '\0')
+    {
+        oRoot.Add("summary", pszSummary);
+    }
+
+    // tags
+    if (pszTags && pszTags[0] != '\0')
+    {
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(pszTags, ",",
+                               CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+        CPLJSONArray oTagsArray;
+        for (int i = 0; i < aosTokens.size(); i++)
+        {
+            if (aosTokens[i][0] != '\0')
+                oTagsArray.Add(aosTokens[i]);
+        }
+        oRoot.Add("tags", oTagsArray);
+    }
 
     return oDoc.Save(tempDir + "/iteminfo.json");
 }
@@ -1507,30 +1529,51 @@ GDALDataset *CreateCopy(const char* pszFilename,
     }
     const auto &aoTMList = poTMS->tileMatrixList();
 
-    // Determine finest LOD based on source pixel size.
-    // TODO: Add creation options to allow specifying min/maxLOD
-    GDALGeoTransform gt;
-    poSrcDS->GetGeoTransform(gt);
-    const double dfSrcPixelSize = std::abs(gt.xscale);
-
-    int nMaxLOD = 0;
-    for (int i = 0; i < static_cast<int>(aoTMList.size()); i++)
+    // MIN_LOD option
+    int nMinLOD = atoi(CSLFetchNameValueDef(papszOptions, "MIN_LOD", "0"));
+    if (nMinLOD < 0 || nMinLOD > 23)
     {
-        if (aoTMList[i].mResX >= dfSrcPixelSize)
-        {
-            nMaxLOD = i;
-        }
-        else
-        {
-            break;
-        }
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "ESRIC: MIN_LOD=%d is out of range [0,23], clamping",
+                 nMinLOD);
+        nMinLOD = std::clamp(nMinLOD, 0, 23);
     }
 
-    CPLDebug("ESRIC", "Writing LODs 0 to %d", nMaxLOD);
+    // MAX_LOD option
+    int nMaxLOD = atoi(CSLFetchNameValueDef(papszOptions, "MAX_LOD", "1"));
+    if (nMaxLOD < 0 || nMaxLOD > 23)
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "ESRIC: MAX_LOD=%d is out of range [0,23], clamping",
+                 nMaxLOD);
+        nMaxLOD = std::clamp(nMaxLOD, 0, 23);
+    }
+
+    if (nMinLOD > nMaxLOD)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "ESRIC: MIN_LOD (%d) must not exceed MAX_LOD (%d)",
+                 nMinLOD, nMaxLOD);
+        return nullptr;
+    }
+
+    CPLDebug("ESRIC", "Writing LODs %d to %d", nMinLOD, nMaxLOD);
 
     // Parse creation options
     const char *pszFormat =
         CSLFetchNameValueDef(papszOptions, "TILE_FORMAT", "JPEG");
+
+    int nQuality = atoi(CSLFetchNameValueDef(papszOptions, "QUALITY", "75"));
+    if (nQuality < 1 || nQuality > 100)
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "ESRIC: QUALITY=%d is out of range [1,100], clamping",
+                 nQuality);
+        nQuality = std::clamp(nQuality, 1, 100);
+    }
+
+    const char *pszSummary = CSLFetchNameValue(papszOptions, "SUMMARY");
+    const char *pszTags = CSLFetchNameValue(papszOptions, "TAGS");
 
     // Create temp directory for bundle files and metadata
     const std::string osTempDir = CPLGenerateTempFilenameSafe("esric");
@@ -1647,7 +1690,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
 
     // Count total tiles
     int nTotalTiles = 0;
-    for (int iLOD = 0; iLOD <= nMaxLOD; iLOD++)
+    for (int iLOD = nMinLOD; iLOD <= nMaxLOD; iLOD++)
     {
         const auto &oTM = aoTMList[iLOD];
         const double dfTileExtX = oTM.mTileWidth * oTM.mResX;
@@ -1683,11 +1726,16 @@ GDALDataset *CreateCopy(const char* pszFilename,
 
     CPLDebug("ESRIC", "Total tiles to process: %d", nTotalTiles);
 
+    // Prepare tile encoding options
+    CPLStringList aosTileOptions;
+    if (bJPEG)
+        aosTileOptions.SetNameValue("QUALITY", CPLSPrintf("%d", nQuality));
+
     // Generate tiles for each LOD
     int nTilesWritten = 0;
     eErr = CE_None;
 
-    for (int iLOD = 0; iLOD <= nMaxLOD && eErr == CE_None; iLOD++)
+    for (int iLOD = nMinLOD; iLOD <= nMaxLOD && eErr == CE_None; iLOD++)
     {
         const auto &oTM = aoTMList[iLOD];
         const int nTileW = oTM.mTileWidth;
@@ -1962,8 +2010,8 @@ GDALDataset *CreateCopy(const char* pszFilename,
                     VSIMemGenerateHiddenFilename("esric_tile"));
                 GDALDatasetH hOutDS =
                     GDALCreateCopy(hTileDriver, osMemFile.c_str(),
-                                   hMemDS, FALSE, nullptr, nullptr,
-                                   nullptr);
+                                   hMemDS, FALSE, aosTileOptions.List(),
+                                   nullptr, nullptr);
                 if (!hOutDS)
                 {
                     GDALClose(hMemDS);
@@ -2058,7 +2106,8 @@ GDALDataset *CreateCopy(const char* pszFilename,
     if (eErr == CE_None)
     {
         if (!BuildRootJSON(osTempDir, pszFilename, aoTMList,
-                           0, nMaxLOD, pszFormat, 75,
+                           nMinLOD, nMaxLOD, pszFormat,
+                           bJPEG ? nQuality : 0,
                            nEPSGCode, adfExtent))
         {
             CPLError(CE_Failure, CPLE_FileIO, "Failed to write root.json");
@@ -2068,7 +2117,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
 
     if (eErr == CE_None)
     {
-        if (!BuildItemInfoJSON(osTempDir, pszFilename))
+        if (!BuildItemInfoJSON(osTempDir, pszFilename, pszSummary, pszTags))
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed to write iteminfo.json");
@@ -2136,6 +2185,17 @@ void CPL_DLL GDALRegister_ESRIC()
         "    <Value>JPEG</Value>"
         "    <Value>PNG</Value>"
         "  </Option>"
+        "  <Option name='QUALITY' type='int' min='1' max='100' default='75' "
+        "description='JPEG compression quality'/>"
+        "  <Option name='MIN_LOD' type='int' min='0' max='23' default='0' "
+        "description='Minimum level of detail'/>"
+        "  <Option name='MAX_LOD' type='int' min='0' max='23' "
+        "description='Maximum level of detail. Defaults to finest LOD "
+        "matching source resolution'/>"
+        "  <Option name='SUMMARY' type='string' "
+        "description='Summary of the package stored in the metadata'/>"
+        "  <Option name='TAGS' type='string' "
+        "description='Comma-separated tags stored in package metadata'/>"
         "</CreationOptionList>");
 
     poDriver->pfnIdentify = ESRIC::Identify;
