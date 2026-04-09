@@ -956,18 +956,22 @@ def test_ogr_mvt_write_one_layer():
     )
 
     out_f = out_lyr.GetNextFeature()
-    try:
-        # GEOS > 3.8 (not sure which minimum version)
-        ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126,-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176)),((508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126,508764.860266134 1007745.78091176)))",
-        )
-    except AssertionError:
-        # Below result with GEOS 3.8
-        ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126)),((-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126,-508764.860266134 997961.84129126)))",
-        )
+    out_g = out_f.GetGeometryRef()
+    print(out_g)
+
+    ok = False
+    expected_wkt = (
+        "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126)),((-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126,-508764.860266134 997961.84129126)))",  # GEOS <= 3.8
+        "MULTIPOLYGON (((-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126,-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176)),((508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126,508764.860266134 1007745.78091176)))",  # GEOS 3.8 to 3.14
+        "MULTIPOLYGON (((-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126,-508764.860266134 997961.84129126)),((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126))),",  # GEOS 3.15
+    )
+    for wkt in expected_wkt:
+        try:
+            ogrtest.check_feature_geometry(out_f, wkt)
+            ok = True
+        except Exception:
+            pass
+    assert ok, f"Got {out_g.ExportToIsoWkt()}, expected {expected_wkt}"
 
     for _ in range(2):
         out_f = out_lyr.GetNextFeature()
@@ -1097,7 +1101,7 @@ def test_ogr_mvt_write_one_layer():
 
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
-def test_ogr_mvt_write_conf():
+def test_ogr_mvt_write_conf(tmp_vsimem):
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
@@ -1116,7 +1120,7 @@ def test_ogr_mvt_write_conf():
     }
     with gdaltest.tempfile("/vsimem/conf.json", json.dumps(conf)):
         out_ds = gdal.VectorTranslate(
-            "/vsimem/outmvt",
+            tmp_vsimem / "outmvt",
             src_ds,
             format="MVT",
             datasetCreationOptions=["CONF=/vsimem/conf.json"],
@@ -1124,16 +1128,16 @@ def test_ogr_mvt_write_conf():
     assert out_ds is not None
     out_ds = None
 
-    out_ds = ogr.Open("/vsimem/outmvt/1")
+    out_ds = ogr.Open(tmp_vsimem / "outmvt/1")
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName("TheLayer")
     assert out_lyr
     out_ds = None
 
-    gdal.RmdirRecursive("/vsimem/outmvt")
+    gdal.RmdirRecursive(tmp_vsimem / "outmvt")
 
     out_ds = gdal.VectorTranslate(
-        "/vsimem/outmvt",
+        tmp_vsimem / "outmvt",
         src_ds,
         format="MVT",
         datasetCreationOptions=["CONF=%s" % json.dumps(conf)],
@@ -1141,7 +1145,7 @@ def test_ogr_mvt_write_conf():
     assert out_ds is not None
     out_ds = None
 
-    out_ds = ogr.Open("/vsimem/outmvt/1")
+    out_ds = ogr.Open(tmp_vsimem / "outmvt/1")
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName("TheLayer")
     assert out_lyr
@@ -1150,7 +1154,7 @@ def test_ogr_mvt_write_conf():
         out_f, "MULTIPOINT (498980.920645632 997961.84129126)"
     )
 
-    f = gdal.VSIFOpenL("/vsimem/outmvt/metadata.json", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "outmvt/metadata.json", "rb")
     assert f is not None
     data = gdal.VSIFReadL(1, 100000, f).decode("ASCII")
     gdal.VSIFCloseL(f)
@@ -1181,8 +1185,6 @@ def test_ogr_mvt_write_conf():
     }
 
     assert json_json == expected_json_json, data_json["json"]
-
-    gdal.RmdirRecursive("/vsimem/outmvt")
 
 
 ###############################################################################

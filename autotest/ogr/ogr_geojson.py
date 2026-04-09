@@ -2757,6 +2757,13 @@ def test_ogr_geojson_57(tmp_vsimem):
 { "type": "Feature", "properties": { }, "bbox": [ 135.0, 88.6984598, -135.0, 90.0 ], "geometry": { "type": "MultiPolygon", "coordinates": [ [ [ [ 135.0, 88.6984598 ], [ 180.0, 89.0796531 ], [ 180.0, 90.0 ], [ 135.0, 88.6984598 ] ] ], [ [ [ -135.0, 88.6984598 ], [ -180.0, 90.0 ], [ -180.0, 89.0796531 ], [ -135.0, 88.6984598 ] ] ] ] } }
 ]
 }"""
+    expected_geos_3_15 = """{
+  "type": "FeatureCollection",
+  "bbox": [ 135.0000000, 88.6984598, -135.0000000, 90.0000000 ],
+  "features": [
+  {"type":"Feature","properties":{},"bbox":[135.0,88.6984598,-135.0,90.0],"geometry":{"type":"MultiPolygon","coordinates":[[[[180.0,89.0796531],[180.0,90.0],[135.0,88.6984598],[180.0,89.0796531]]],[[[-135.0,88.6984598],[-180.0,90.0],[-180.0,89.0796531],[-135.0,88.6984598]]]]}}
+  ]
+  }"""
     if (
         ogr.GetGEOSVersionMajor() * 10000
         + ogr.GetGEOSVersionMinor() * 100
@@ -2767,6 +2774,7 @@ def test_ogr_geojson_57(tmp_vsimem):
             json.loads(got) == json.loads(expected)
             or json.loads(got) == json.loads(expected_geos_overlay_ng)
             or json.loads(got) == json.loads(expected_geos_3_9_1)
+            or json.loads(got) == json.loads(expected_geos_3_15)
         ), got
 
     # Polar case: EPSG:3031: WGS 84 / Antarctic Polar Stereographic
@@ -4696,7 +4704,8 @@ def test_ogr_geojson_write_geometry_validity_fixing_rfc7946(tmp_vsimem):
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().IsValid()
-    assert "((6.3889058 51.3181847," in f.GetGeometryRef().ExportToWkt()
+    wkt = f.GetGeometryRef().ExportToWkt()
+    assert "((6.3889058 51.3181847," in wkt or "((6.3889005 51.3181831," in wkt
 
 
 ###############################################################################

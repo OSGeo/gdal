@@ -3238,7 +3238,7 @@ static void CutGeometryOnDateLineAndAddToMulti(OGRGeometryCollection *poMulti,
 /*                             RemovePoint()                            */
 /************************************************************************/
 
-static void RemovePoint(OGRGeometry *poGeom, OGRPoint *poPoint)
+static void RemovePoint(OGRGeometry *poGeom, const OGRPoint *poPoint)
 {
     const OGRwkbGeometryType eType = wkbFlatten(poGeom->getGeometryType());
     switch (eType)
@@ -3275,14 +3275,11 @@ static void RemovePoint(OGRGeometry *poGeom, OGRPoint *poPoint)
         case wkbPolygon:
         {
             OGRPolygon *poPoly = poGeom->toPolygon();
-            if (poPoly->getExteriorRing() != nullptr)
+            for (auto *poRing : *poPoly)
             {
-                RemovePoint(poPoly->getExteriorRing(), poPoint);
-                for (int i = 0; i < poPoly->getNumInteriorRings(); ++i)
-                {
-                    RemovePoint(poPoly->getInteriorRing(i), poPoint);
-                }
+                RemovePoint(poRing, poPoint);
             }
+            poPoly->closeRings();
             break;
         }
 
@@ -3291,9 +3288,9 @@ static void RemovePoint(OGRGeometry *poGeom, OGRPoint *poPoint)
         case wkbGeometryCollection:
         {
             OGRGeometryCollection *poGC = poGeom->toGeometryCollection();
-            for (int i = 0; i < poGC->getNumGeometries(); ++i)
+            for (auto *poPart : *poGC)
             {
-                RemovePoint(poGC->getGeometryRef(i), poPoint);
+                RemovePoint(poPart, poPoint);
             }
             break;
         }
