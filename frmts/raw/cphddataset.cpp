@@ -583,7 +583,7 @@ std::shared_ptr<CPHDGroup> CPHDGroup::AddChannel(const CPLXMLNode *psChannel)
 
     // add signal block
     auto poSignalDS =
-        new CPHDInternalDataset(nXSize, nYSize, osSignalBlockName);
+        std::make_unique<CPHDInternalDataset>(nXSize, nYSize, osSignalBlockName);
 
     auto poBand = new CPHDInternalBand(
         poSignalDS, 1, m_poShared->m_fp.get(),
