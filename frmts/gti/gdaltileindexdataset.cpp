@@ -257,8 +257,9 @@ class GDALTileIndexDataset final : public GDALPamDataset
     //! Vector layer with the sources
     OGRLayer *m_poLayer = nullptr;
 
-    //! Whether m_poLayer should be freed with m_poVectorDS->ReleaseResultSet()
-    bool m_bIsSQLResultLayer = false;
+    //! Non-null when m_poLayer was created with ExecuteSQL() and must be freed
+    //! with m_poVectorDS->ReleaseResultSet()
+    OGRLayer *m_poLayerToRelease = nullptr;
 
     //! When the SRS of m_poLayer is not the one we expose
     std::unique_ptr<OGRWarpedLayer> m_poWarpedLayerKeeper{};
@@ -912,7 +913,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                      m_osSQL.c_str());
             return false;
         }
-        m_bIsSQLResultLayer = true;
+        m_poLayerToRelease = m_poLayer;
     }
     else if (m_poVectorDS->GetLayerCount() == 1)
     {
@@ -2727,14 +2728,12 @@ static GDALDataset *GDALTileIndexDatasetOpen(GDALOpenInfo *poOpenInfo)
 
 GDALTileIndexDataset::~GDALTileIndexDataset()
 {
-    if (m_poVectorDS && m_bIsSQLResultLayer)
+    if (m_poVectorDS && m_poLayerToRelease)
     {
-        // If a warped layer was created, m_poLayer points to it rather than
-        // to the original SQL result layer, so retrieve the base layer.
-        OGRLayer *poLayerToRelease = m_poWarpedLayerKeeper
-                                         ? m_poWarpedLayerKeeper->GetBaseLayer()
-                                         : m_poLayer;
-        m_poVectorDS->ReleaseResultSet(poLayerToRelease);
+        // Reset the warped layer before releasing the SQL result layer, since
+        // the warped layer holds a reference to it.
+        m_poWarpedLayerKeeper.reset();
+        m_poVectorDS->ReleaseResultSet(m_poLayerToRelease);
     }
 
     GDALTileIndexDataset::FlushCache(true);
