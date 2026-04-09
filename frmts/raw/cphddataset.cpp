@@ -186,10 +186,6 @@ struct CPHDSharedResources
         : m_fp(fp), m_osFilename(osFilename)
     {
     }
-
-    ~CPHDSharedResources()
-    {
-    }
 };
 
 /************************************************************************/
