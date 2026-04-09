@@ -3004,11 +3004,9 @@ def test_gti_read_non_existing_source(tmp_vsimem):
 
     vrt_ds = gdal.Open(index_filename)
 
-    with (
-        gdal.config_option("GDAL_NUM_THREADS", "1"),
-        gdaltest.error_raised(gdal.CE_Failure),
-        gdaltest.disable_exceptions(),
-    ):
+    with gdal.config_option("GDAL_NUM_THREADS", "1"), gdaltest.error_raised(
+        gdal.CE_Failure
+    ), gdaltest.disable_exceptions():
         assert vrt_ds.ReadRaster() is None
 
 
