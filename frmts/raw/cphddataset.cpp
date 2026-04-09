@@ -21,7 +21,7 @@
 
 static int CPHDDatasetIdentify(GDALOpenInfo *poOpenInfo);
 
-static const std::string PVP_ARRAY_NAME = "PVP";
+constexpr const char* PVP_ARRAY_NAME = "PVP";
 
 /************************************************************************/
 /*                         ParseComplexDataType                         */
