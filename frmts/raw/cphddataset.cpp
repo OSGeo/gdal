@@ -585,13 +585,13 @@ std::shared_ptr<CPHDGroup> CPHDGroup::AddChannel(const CPLXMLNode *psChannel)
     auto poSignalDS =
         std::make_unique<CPHDInternalDataset>(nXSize, nYSize, osSignalBlockName);
 
-    auto poBand = new CPHDInternalBand(
-        poSignalDS, 1, m_poShared->m_fp.get(),
+    auto poBand = std::make_unique<CPHDInternalBand>(
+        poSignalDS.get(), 1, m_poShared->m_fp.get(),
         m_poShared->nSignalBlockByteOffset + atoi(pszSignalArrayByteOffset),
         GDALGetDataTypeSizeBytes(dt), GDALGetDataTypeSizeBytes(dt) * nXSize,
         dt);
 
-    poSignalDS->SetBand(1, poBand);
+    poSignalDS->SetBand(1, std::move(poBand));
     auto poSignalArray = CPHDMDArray::Create(
         poSignalDS, std::string(pszIdentifier), osSignalBlockName,
         GDALExtendedDataType::Create(dt));
