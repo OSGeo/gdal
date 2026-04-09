@@ -404,7 +404,7 @@ GDALDataset *CPHDDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         if EQUAL (pszLine, "\f")
             break;
 
-        char **papszTokens = CSLTokenizeString2(pszLine, " := /", 0);
+        const CPLStringList aosTokens(CSLTokenizeString2(pszLine, " := /", 0));
 
         if (CSLCount(papszTokens) == 2)
         {
