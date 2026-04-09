@@ -70,8 +70,8 @@ static GDALExtendedDataType ParsePVPDataType(const CPLXMLNode *psPvpXML,
             if (osElementName == "AddedPVP")
                 osElementName = CPLGetXMLValue(psPvpChild, "Name", "");
 
-            auto pszFormat = CPLGetXMLValue(psPvpChild, "Format", nullptr);
-            auto pszOffset = CPLGetXMLValue(psPvpChild, "Offset", nullptr);
+            const auto pszFormat = CPLGetXMLValue(psPvpChild, "Format", nullptr);
+            const auto pszOffset = CPLGetXMLValue(psPvpChild, "Offset", nullptr);
 
             if (pszFormat && pszOffset)
             {
