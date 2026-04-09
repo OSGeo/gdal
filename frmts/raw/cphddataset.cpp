@@ -633,7 +633,7 @@ bool CPHDGroup::AddSupportArray(const CPLXMLNode *psDataSupportArray)
     for (; psSupportChild != nullptr; psSupportChild = psSupportChild->psNext)
     {
         if EQUAL (pszArrayName,
-                  CPLGetXMLValue(psSupportChild, "Identifier", nullptr))
+                  CPLGetXMLValue(psSupportChild, "Identifier", ""))
         {
             auto pszElementName = psSupportChild->pszValue;
             std::unique_ptr<CPHDInternalBand> poBand = nullptr;
