@@ -35,9 +35,6 @@ The driver supports:
 - reading multidimensional dense arrays with a numeric data type
 - reading numeric or string attributes in groups and arrays
 
-The multidimensional API supports reading dense arrays created by the classic
-raster API of GDAL.
-
 See Also
 --------
 
