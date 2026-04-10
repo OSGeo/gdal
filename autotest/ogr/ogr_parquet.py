@@ -966,6 +966,34 @@ def test_ogr_parquet_missing_crs_member():
 
 
 ###############################################################################
+# Test reading a GeoParquet 1.1 file where the crs field is absent from the
+# geo metadata, which per the spec implies OGC:CRS84 (EPSG:4326).
+# The file has ARROW:extension:name = geoarrow.wkb in the Arrow IPC schema,
+# which is the condition that triggers a regression when built against
+# Arrow >= 21: the driver would detect the extension type and exit the geometry
+# column processing path before applying the GeoParquet default CRS, leaving
+# the layer SRS unknown.
+
+
+def test_ogr_parquet_geoparquet_1_1_absent_crs():
+
+    ds = ogr.Open("data/parquet/geoparquet_1_1_missing_crs_geoarrow_wkb.parquet")
+    assert ds is not None
+    lyr = ds.GetLayer(0)
+    assert lyr is not None
+
+    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+    assert geo is not None
+    j = json.loads(geo)
+    assert j["version"] == "1.1.0"
+    assert "crs" not in j["columns"]["geometry"]
+
+    srs = lyr.GetSpatialRef()
+    assert srs is not None, "SRS should default to EPSG:4326 when crs is absent"
+    assert srs.GetAuthorityCode(None) == "4326"
+
+
+###############################################################################
 # Test writing a CRS and automatically identifying it
 
 crs_84_wkt1 = """GEOGCS["WGS 84 (CRS84)",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["OGC","CRS84"]]"""
