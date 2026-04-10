@@ -19,14 +19,35 @@ namespace testapp
 
             XMLNode node = new XMLNode(XMLNodeType.CXT_Element, "TestElement");
             node.SetXMLValue(".", UnicodeString);
-            var serializedXml = node.SerializeXMLTree();
-            var expectedXml = $"<TestElement>{UnicodeString}</TestElement>";
-            AssertEqual(expectedXml, serializedXml?.TrimEnd('\n'), $"{nameof(XMLNode)}.{nameof(node.SerializeXMLTree)}");			
-			
-            var gcp = new GCP(0, 0, 0, 0, 0, UnicodeString, "Id");
+            string serializedXml = node.SerializeXMLTree();
+            string expectedXml = $"<TestElement>{UnicodeString}</TestElement>";
+            AssertEqual(expectedXml, serializedXml?.TrimEnd('\n'), $"{nameof(XMLNode)}.{nameof(node.SerializeXMLTree)}");
+
+            Console.WriteLine("Testing string property getters and setters");
+            GCP gcp = new GCP(0, 0, 0, 0, 0, UnicodeString, "Id");
             AssertEqual(gcp.Info, UnicodeString, $"{nameof(GCP)}.{nameof(gcp.Info)}");
             gcp.Id = UnicodeString;
             AssertEqual(gcp.Id, UnicodeString, $"{nameof(GCP)}.{nameof(gcp.Id)}");
+
+            Console.WriteLine("Testing 'out string' and 'ref string' parameters");
+            string wkText;
+            using (SpatialReference sr = new SpatialReference(null))
+            {
+                sr.ImportFromEPSG(4326); // WGS 84
+                sr.ExportToWkt(out wkText, null);
+                string name = sr.GetName();
+                int nameStart = wkText.IndexOf(name);
+                wkText = wkText.Substring(0, nameStart) + UnicodeString + wkText.Substring(nameStart + name.Length);
+            }
+
+            using (SpatialReference sr2 = new SpatialReference(null))
+            {
+                sr2.ImportFromWkt(ref wkText);
+                string name = sr2.GetName();
+                AssertEqual(UnicodeString, name, nameof(sr2.GetName));
+                sr2.ExportToWkt(out string wkTextImportExport, null);
+                AssertEqual(wkText, wkTextImportExport, $"{nameof(SpatialReference)}.{nameof(sr2.ExportToWkt)}");
+            }
         }
 
         private static void RunTest(string name, Func<string, string, string> getter, Action<string, string> setter)

@@ -308,9 +308,14 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
 /*
  * Typemap for char **argout.
  */
-%typemap(imtype) (char **argout), (char **username), (char **usrname), (char **type) "out string"
-%typemap(cstype) (char **argout), (char **username), (char **usrname), (char **type) "out string"
-%typemap(csin) (char** argout), (char **username), (char **usrname), (char **type) "out $csinput"
+%typemap(imtype) (char** argout), (char **username), (char **usrname), (char **type) "ref IntPtr"
+%typemap(cstype) (char** argout), (char **username), (char **usrname), (char **type) "out string"
+%typemap(csin, 
+         pre="    IntPtr temp$csinput = IntPtr.Zero;", 
+         post="    $csinput = temp$csinput == IntPtr.Zero ? null : $modulePINVOKE.LengthPrefixedUtf16UnmanagedToString(temp$csinput);",
+         cshin="out $csinput"
+        ) (char** argout), (char **username), (char **usrname), (char **type)
+         "ref temp$csinput"
 
 %typemap(in) (char **argout), (char **username), (char **usrname), (char **type)
 {
@@ -326,9 +331,9 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
 		CPLFree(*$1);
   *$1 = temp_string;
 }
-%typemap(argout) (char **staticstring), (char **username), (char **usrname), (char **type)
+%typemap(argout) (char **username), (char **usrname), (char **type)
 {
-  /* %typemap(argout) (char **staticstring) */
+  /* %typemap(argout) (char **username), (char **usrname), (char **type) */
   *$1 = SWIG_csharp_string_callback(*$1);
 }
 
@@ -336,9 +341,14 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
  * Typemap for char **ignorechange.
  */
 
-%typemap(imtype) (char **ignorechange) "ref string"
+%typemap(imtype) (char **ignorechange) "ref IntPtr"
 %typemap(cstype) (char **ignorechange) "ref string"
-%typemap(csin) (char** ignorechange) "ref $csinput"
+%typemap(csin, 
+         pre="    IntPtr temp$csinput = $modulePINVOKE.StringToUtf8Unmanaged($csinput);", 
+         post="    Marshal.FreeHGlobal(temp$csinput);",
+         cshin="ref $csinput"
+        ) (char** ignorechange)
+         "ref temp$csinput"
 
 %typemap(in, noblock="1") (char **ignorechange)
 {
