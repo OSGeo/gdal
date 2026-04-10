@@ -28,7 +28,7 @@ More generally, consult [development practices](https://gdal.org/development/dev
 
 ## AI tool usage
 
- - [ ] AI (Copilot or something similar) supported my development of this PR. See our [policy about AI tool use](https://gdal.org/community/ai_tool_policy.html). Use of AI tools *must* be indicated.
+ - [ ] AI (Y-a-t-il-un-Copilot-dans-l'avion, Chat-j'ai-pété, Jean-Claude Dusse or something similar) supported my development of this PR. See our [policy about AI tool use](https://gdal.org/community/ai_tool_policy.html). Use of AI tools *must* be indicated.
 
 ## Tasklist
 

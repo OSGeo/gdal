@@ -393,12 +393,15 @@ class GDALVectorPipelinePassthroughLayer /* non final */
     explicit GDALVectorPipelinePassthroughLayer(OGRLayer &oSrcLayer)
         : GDALVectorPipelineOutputLayer(oSrcLayer)
     {
+        SetDescription(oSrcLayer.GetDescription());
     }
 
     const OGRFeatureDefn *GetLayerDefn() const override;
 
     int TestCapability(const char *pszCap) const override
     {
+        if (EQUAL(pszCap, OLCFastFeatureCount))
+            return false;
         return m_srcLayer.TestCapability(pszCap);
     }
 
@@ -416,10 +419,7 @@ class GDALVectorPipelinePassthroughLayer /* non final */
 
     void TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
-        std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
-    {
-        apoOutFeatures.push_back(std::move(poSrcFeature));
-    }
+        std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override;
 };
 
 /************************************************************************/

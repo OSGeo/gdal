@@ -226,7 +226,7 @@ class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
         if (EQUAL(pszCap, OLCFastFeatureCount) ||
             EQUAL(pszCap, OLCFastGetExtent) ||
             EQUAL(pszCap, OLCFastGetExtent3D) ||
-            EQUAL(pszCap, OLCStringsAsUTF8) || EQUAL(pszCap, OLCIgnoreFields) ||
+            EQUAL(pszCap, OLCStringsAsUTF8) ||
             EQUAL(pszCap, OLCCurveGeometries) ||
             EQUAL(pszCap, OLCMeasuredGeometries) ||
             EQUAL(pszCap, OLCZGeometries))
@@ -245,6 +245,18 @@ class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
         }
 
         return OGRLayer::GetFeatureCount(bForce);
+    }
+
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override
+    {
+        return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
+    }
+
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                        bool bForce) override
+    {
+        return m_srcLayer.GetExtent3D(iGeomField, psExtent3D, bForce);
     }
 
     std::unique_ptr<OGRFeature> GetNextProcessedFeature() override

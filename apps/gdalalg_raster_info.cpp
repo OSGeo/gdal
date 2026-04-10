@@ -91,9 +91,27 @@ GDALRasterInfoAlgorithm::GDALRasterInfoAlgorithm(bool standaloneStep,
            &m_subDS)
         .SetCategory(GAAC_ESOTERIC)
         .SetMinValueIncluded(1);
+    AddArg("crs-format", 0, _("Which format to use to report CRS"),
+           &m_crsFormat)
+        .SetChoices("AUTO", "WKT2", "PROJJSON")
+        .SetDefault(m_crsFormat)
+        .SetCategory(GAAC_ESOTERIC);
 
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
+
+    AddValidationAction(
+        [this]()
+        {
+            if (m_crsFormat != "AUTO" && m_format == "json")
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "'crs-format' cannot be set when 'format' is set "
+                            "to 'json'");
+                return false;
+            }
+            return true;
+        });
 }
 
 /************************************************************************/
@@ -110,6 +128,8 @@ bool GDALRasterInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
         m_format = IsCalledFromCommandLine() ? "text" : "json";
 
     CPLStringList aosOptions;
+    aosOptions.AddString("--invoked-from=gdal-raster-info");
+    aosOptions.AddString("--crs-format=" + m_crsFormat);
     if (m_format == "json")
         aosOptions.AddString("-json");
     if (m_minMax)

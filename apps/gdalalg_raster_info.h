@@ -55,6 +55,7 @@ class GDALRasterInfoAlgorithm /* non final */
     bool m_listMDD = false;
     std::string m_mdd{};
     int m_subDS = 0;
+    std::string m_crsFormat = "AUTO";
 };
 
 /************************************************************************/

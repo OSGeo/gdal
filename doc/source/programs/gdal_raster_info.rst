@@ -27,7 +27,7 @@ The following items will be reported (when known):
 
 -  The format driver used to access the file.
 -  Raster size (in pixels and lines).
--  The coordinate system for the file (in OGC WKT).
+-  The coordinate system for the file (in short form AUTH_NAME:CODE when possible, or otherwise OGC WKT2:2019).
 -  The geotransform associated with the file (rotational coefficients
    are currently not reported).
 -  Corner coordinates in georeferenced, and if possible lat/long based
@@ -68,6 +68,20 @@ Program-Specific Options
 
     Which output format to use. Default is JSON, and starting with GDAL 3.12,
     text when invoked from command line.
+
+.. option:: --crs-format AUTO|WKT2|PROJJSON
+
+    .. versionadded:: 3.13
+
+    Which format to use to report the CRS. In AUTO default mode, if the CRS
+    can be captured with an authority name and code (known of PROJ), only
+    a summary of the CRS, including its name, ID, type and area of use will be
+    reported. Otherwise a full WKT2:2019 definition will be reported.
+
+    .. note::
+
+        :option:`--crs-format` can only be set when :option:`--output-format`
+        is set to ``text``.  The JSON text format includes both WKT2 and PROJJSON.
 
 .. option:: --hist
 

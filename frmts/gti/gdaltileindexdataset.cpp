@@ -80,6 +80,7 @@ constexpr const char *MD_XSIZE = "XSIZE";
 constexpr const char *MD_YSIZE = "YSIZE";
 constexpr const char *MD_COLOR_INTERPRETATION = "COLOR_INTERPRETATION";
 constexpr const char *MD_SRS = "SRS";
+constexpr const char *MD_SRS_BEHAVIOR = "SRS_BEHAVIOR";
 constexpr const char *MD_LOCATION_FIELD = "LOCATION_FIELD";
 constexpr const char *MD_SORT_FIELD = "SORT_FIELD";
 constexpr const char *MD_SORT_FIELD_ASC = "SORT_FIELD_ASC";
@@ -103,6 +104,7 @@ constexpr const char *const apszTIOptions[] = {MD_RESX,
                                                MD_YSIZE,
                                                MD_COLOR_INTERPRETATION,
                                                MD_SRS,
+                                               MD_SRS_BEHAVIOR,
                                                MD_LOCATION_FIELD,
                                                MD_SORT_FIELD,
                                                MD_SORT_FIELD_ASC,
@@ -255,11 +257,12 @@ class GDALTileIndexDataset final : public GDALPamDataset
     //! Vector layer with the sources
     OGRLayer *m_poLayer = nullptr;
 
-    //! Whether m_poLayer should be freed with m_poVectorDS->ReleaseResultSet()
-    bool m_bIsSQLResultLayer = false;
+    //! Non-null when m_poLayer was created with ExecuteSQL() and must be freed
+    //! with m_poVectorDS->ReleaseResultSet()
+    OGRLayer *m_poLayerToRelease = nullptr;
 
     //! When the SRS of m_poLayer is not the one we expose
-    std::unique_ptr<OGRLayer> m_poWarpedLayerKeeper{};
+    std::unique_ptr<OGRWarpedLayer> m_poWarpedLayerKeeper{};
 
     //! Geotransform matrix of the tile index
     GDALGeoTransform m_gt{};
@@ -910,7 +913,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                      m_osSQL.c_str());
             return false;
         }
-        m_bIsSQLResultLayer = true;
+        m_poLayerToRelease = m_poLayer;
     }
     else if (m_poVectorDS->GetLayerCount() == 1)
     {
@@ -1205,6 +1208,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     std::vector<GDALColorInterp> aeColorInterp;
 
     const char *pszSRS = GetOption(MD_SRS);
+    const char *pszSRSBehavior = GetOption(MD_SRS_BEHAVIOR);
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (pszSRS)
     {
@@ -1214,6 +1218,14 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             OGRERR_NONE)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid %s", MD_SRS);
+            return false;
+        }
+        if (pszSRSBehavior && !EQUAL(pszSRSBehavior, "OVERRIDE") &&
+            !EQUAL(pszSRSBehavior, "REPROJECT"))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid value for %s: must be OVERRIDE or REPROJECT",
+                     MD_SRS_BEHAVIOR);
             return false;
         }
     }
@@ -1469,6 +1481,52 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
                     }
                 }
             }
+        }
+    }
+
+    // When SRS was explicitly specified and differs from the layer's geometry
+    // SRS, apply the behavior requested via SRS_BEHAVIOR:
+    //   REPROJECT  - wrap the layer in an OGRWarpedLayer so that
+    //                SetSpatialFilterRect() calls during raster reads operate
+    //                in the output SRS and are correctly transformed back to
+    //                the layer's native SRS before being applied to the index.
+    //   OVERRIDE   - keep m_oSRS as-is without reprojecting the layer (the
+    //                caller asserts the SRS metadata was simply wrong/missing).
+    //   (unset)    - emit a warning asking the user to be explicit.
+    // If the layer has no SRS, we always use the specified SRS silently.
+    if (!m_poWarpedLayerKeeper && !m_oSRS.IsEmpty() && pszSRS)
+    {
+        const auto poLayerSRS = m_poLayer->GetSpatialRef();
+        if (poLayerSRS && !m_oSRS.IsSame(poLayerSRS))
+        {
+            if (pszSRSBehavior && EQUAL(pszSRSBehavior, "REPROJECT"))
+            {
+                auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                    OGRCreateCoordinateTransformation(poLayerSRS, &m_oSRS));
+                auto poInvCT = std::unique_ptr<OGRCoordinateTransformation>(
+                    poCT ? poCT->GetInverse() : nullptr);
+                if (poCT && poInvCT)
+                {
+                    m_poWarpedLayerKeeper = std::make_unique<OGRWarpedLayer>(
+                        m_poLayer, /* iGeomField = */ 0,
+                        /* bTakeOwnership = */ false, std::move(poCT),
+                        std::move(poInvCT));
+                    m_poLayer = m_poWarpedLayerKeeper.get();
+                    poLayerDefn = m_poLayer->GetLayerDefn();
+                }
+            }
+            else if (!pszSRSBehavior || !EQUAL(pszSRSBehavior, "OVERRIDE"))
+            {
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "%s is not consistent with the SRS of the vector layer. "
+                    "If you intend to override the dataset SRS without "
+                    "reprojection, specify %s=OVERRIDE. If you intend to "
+                    "reproject from the source layer SRS to the specified "
+                    "SRS, specify %s=REPROJECT.",
+                    MD_SRS, MD_SRS_BEHAVIOR, MD_SRS_BEHAVIOR);
+            }
+            // OVERRIDE: m_oSRS is already set; no warping needed.
         }
     }
 
@@ -2670,8 +2728,13 @@ static GDALDataset *GDALTileIndexDatasetOpen(GDALOpenInfo *poOpenInfo)
 
 GDALTileIndexDataset::~GDALTileIndexDataset()
 {
-    if (m_poVectorDS && m_bIsSQLResultLayer)
-        m_poVectorDS->ReleaseResultSet(m_poLayer);
+    if (m_poVectorDS && m_poLayerToRelease)
+    {
+        // Reset the warped layer before releasing the SQL result layer, since
+        // the warped layer holds a reference to it.
+        m_poWarpedLayerKeeper.reset();
+        m_poVectorDS->ReleaseResultSet(m_poLayerToRelease);
+    }
 
     GDALTileIndexDataset::FlushCache(true);
 }
@@ -5441,6 +5504,12 @@ void GDALRegister_GTI()
         "  <Option name='SORT_FIELD_ASC' type='boolean'/>"
         "  <Option name='FILTER' type='string'/>"
         "  <Option name='SRS' type='string'/>"
+        "  <Option name='SRS_BEHAVIOR' type='string-select' "
+        "description='How to handle a mismatch between SRS and the vector "
+        "layer SRS'>"
+        "    <Value>OVERRIDE</Value>"
+        "    <Value>REPROJECT</Value>"
+        "  </Option>"
         "  <Option name='RESX' type='float'/>"
         "  <Option name='RESY' type='float'/>"
         "  <Option name='MINX' type='float'/>"

@@ -13,6 +13,7 @@
 
 import random
 
+import gdaltest
 import ogrtest
 import pytest
 
@@ -240,3 +241,25 @@ def test_gdalalg_vector_sort_multiple_geom_fields(alg, geometry_field):
         assert f["EAS_ID"] == 158
     else:
         assert f["EAS_ID"] == 173
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_vector_sort_test_ogrsf(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+    open(gdalg_filename, "wb").write(
+        b'{"type": "gdal_streamed_alg","command_line": "gdal vector sort ../ogr/data/poly.shp --output-format=stream dummy_dataset_name","relative_paths_relative_to_this_file":false}'
+    )
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret

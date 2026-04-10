@@ -643,11 +643,14 @@ jobs:
         mv /opt/homebrew/share/man/man1/pkg-config.1 /opt/homebrew/share/man/man1/pkg-config.1.old
         brew install --overwrite python@3.11 python@3.12
         brew install postgresql || brew link postgresql
-        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec postgis poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libheif libarchive libkml boost
+        # Remove postgis as it depends on GDAL which draw libheif which is broken
+        brew install gdal || true
+        brew install pkg-config freexl libxml2 libspatialite geos proj libgeotiff openjpeg giflib libaec poppler doxygen unixodbc jpeg-turbo aom jpeg-xl libarchive libkml boost
         brew install ccache swig
         brew link --force sqlite
         # gdal is automatically installed as a dependency for postgis
-        brew uninstall --ignore-dependencies gdal
+        export HOMEBREW_NO_AUTOREMOVE=1
+        brew uninstall gdal
         # Workaround for https://github.com/Homebrew/homebrew-core/pull/170959#issuecomment-2379606442
         sed -i .bak 's/hdf5_hl;hdf5;/hdf5_hl-shared;hdf5-shared;/g' "$(brew --prefix netcdf)/lib/cmake/netCDF/netCDFTargets.cmake"
         mv /opt/homebrew/bin/pkg-config.old /opt/homebrew/bin/pkg-config

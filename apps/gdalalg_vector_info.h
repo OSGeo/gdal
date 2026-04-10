@@ -48,6 +48,7 @@ class GDALVectorInfoAlgorithm /* non final */
     std::string m_dialect{};
     int m_fid = -1;
     int m_limit = 0;
+    std::string m_crsFormat = "AUTO";
 };
 
 /************************************************************************/

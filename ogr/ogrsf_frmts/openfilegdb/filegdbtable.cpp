@@ -3796,7 +3796,8 @@ OGRGeometry *FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
     CPLAssert(nOffset <= nMaxSize);
 
     OGRGeometry *poRet = nullptr;
-    OGRCreateFromShapeBin(pabyExtShapeBuffer, &poRet, nOffset);
+    OGRCreateFromShapeBin(pabyExtShapeBuffer, &poRet, nOffset,
+                          /* pszOrganizePolygonsMethod = */ "DEFAULT");
     VSIFree(pabyExtShapeBuffer);
     return poRet;
 }

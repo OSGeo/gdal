@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import ogrtest
 import pytest
 
 from osgeo import gdal, ogr
@@ -589,7 +590,9 @@ def test_gdal_vector_layer_algebra_intersection():
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo"
         assert f["method_b"] == "bar"
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo2"
@@ -619,14 +622,15 @@ def test_gdal_vector_layer_algebra_sym_difference():
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo"
         assert f["method_b"] is None
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["input_a"] is None
         assert f["method_b"] == "bar"
-        assert (
-            f.GetGeometryRef().ExportToWkt()
-            == "POLYGON ((15 10,15 0,10 0,10 10,15 10))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((15 10,15 0,10 0,10 10,15 10))"
         )
 
         f = out_lyr.GetNextFeature()
@@ -657,12 +661,16 @@ def test_gdal_vector_layer_algebra_identity():
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo"
         assert f["method_b"] == "bar"
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo"
         assert f["method_b"] is None
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["input_a"] == "foo2"
@@ -690,11 +698,15 @@ def test_gdal_vector_layer_algebra_update():
 
         f = out_lyr.GetNextFeature()
         assert f["a"] == "foo"
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["a"] is None
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((5 0,15 0,15 10,5 10,5 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((5 0,15 0,15 10,5 10,5 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["a"] is None
@@ -725,7 +737,9 @@ def test_gdal_vector_layer_algebra_clip():
 
         f = out_lyr.GetNextFeature()
         assert f["a"] == "foo"
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((5 0,5 10,10 10,10 0,5 0))"
+        )
 
         f = out_lyr.GetNextFeature()
         assert f["a"] == "foo2"
@@ -752,4 +766,6 @@ def test_gdal_vector_layer_algebra_erase():
 
         f = out_lyr.GetNextFeature()
         assert f["a"] == "foo"
-        assert f.GetGeometryRef().ExportToWkt() == "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        ogrtest.check_feature_geometry(
+            f.GetGeometryRef(), "POLYGON ((0 0,0 10,5 10,5 0,0 0))"
+        )

@@ -82,6 +82,11 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
     AddArg("dialect", 0, _("SQL dialect"), &m_dialect);
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
+    AddArg("crs-format", 0, _("Which format to use to report CRS"),
+           &m_crsFormat)
+        .SetChoices("AUTO", "WKT2", "PROJJSON")
+        .SetDefault(m_crsFormat)
+        .SetCategory(GAAC_ESOTERIC);
 
     AddValidationAction(
         [this]()
@@ -92,6 +97,15 @@ GDALVectorInfoAlgorithm::GDALVectorInfoAlgorithm(bool standaloneStep)
                             "Option 'sql' and 'where' are mutually exclusive");
                 return false;
             }
+
+            if (m_crsFormat != "AUTO" && m_format == "json")
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "'crs-format' cannot be set when 'format' is set "
+                            "to 'json'");
+                return false;
+            }
+
             return true;
         });
 }
@@ -112,6 +126,7 @@ bool GDALVectorInfoAlgorithm::RunStep(GDALPipelineStepRunContext &)
     CPLStringList aosOptions;
 
     aosOptions.AddString("--cli");
+    aosOptions.AddString("--crs-format=" + m_crsFormat);
 
     if (m_format == "json")
     {

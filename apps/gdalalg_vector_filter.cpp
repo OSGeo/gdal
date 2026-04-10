@@ -150,13 +150,13 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         }
     }
 
-    if (ret && m_updateExtent)
+    if (ret)
     {
         auto outDS =
             std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
 
         int64_t nTotalFeatures = 0;
-        if (ctxt.m_pfnProgress)
+        if (m_updateExtent && ctxt.m_pfnProgress)
         {
             for (int i = 0; ret && i < nLayerCount; ++i)
             {
@@ -189,8 +189,9 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             ret = (poSrcLayer != nullptr);
             if (ret)
             {
-                if (m_activeLayer.empty() ||
-                    m_activeLayer == poSrcLayer->GetDescription())
+                if (m_updateExtent &&
+                    (m_activeLayer.empty() ||
+                     m_activeLayer == poSrcLayer->GetDescription()))
                 {
                     OGREnvelope3D sLayerEnvelope, sFeatureEnvelope;
                     for (auto &&poFeature : poSrcLayer)
@@ -232,10 +233,6 @@ bool GDALVectorFilterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
         if (ret)
             m_outputDataset.Set(std::move(outDS));
-    }
-    else if (ret)
-    {
-        m_outputDataset.Set(poSrcDS);
     }
 
     return ret;

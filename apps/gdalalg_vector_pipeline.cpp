@@ -576,6 +576,21 @@ const OGRFeatureDefn *GDALVectorPipelinePassthroughLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
+/*          GDALVectorPipelinePassthroughLayer::GetLayerDefn()          */
+/************************************************************************/
+
+void GDALVectorPipelinePassthroughLayer::TranslateFeature(
+    std::unique_ptr<OGRFeature> poSrcFeature,
+    std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures)
+{
+    if ((!m_poFilterGeom || FilterGeometry(poSrcFeature->GetGeometryRef())) &&
+        (!m_poAttrQuery || m_poAttrQuery->Evaluate(poSrcFeature.get())))
+    {
+        apoOutFeatures.push_back(std::move(poSrcFeature));
+    }
+}
+
+/************************************************************************/
 /*               GDALVectorNonStreamingAlgorithmDataset()               */
 /************************************************************************/
 

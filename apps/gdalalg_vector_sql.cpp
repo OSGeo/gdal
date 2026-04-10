@@ -103,6 +103,18 @@ class GDALVectorSQLAlgorithmDataset final : public GDALDataset
     {
         return idx >= 0 && idx < GetLayerCount() ? m_layers[idx] : nullptr;
     }
+
+    int TestCapability(const char *pszCap) const override
+    {
+        if (EQUAL(pszCap, ODsCCurveGeometries) ||
+            EQUAL(pszCap, ODsCMeasuredGeometries) ||
+            EQUAL(pszCap, ODsCZGeometries))
+        {
+            return true;
+        }
+
+        return false;
+    }
 };
 }  // namespace
 

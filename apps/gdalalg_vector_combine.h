@@ -35,11 +35,16 @@ class GDALVectorCombineAlgorithm : public GDALVectorPipelineStepAlgorithm
 
     explicit GDALVectorCombineAlgorithm(bool standaloneStep = false);
 
+    static constexpr const char *NO = "no";
+    static constexpr const char *SOMETIMES_IDENTICAL = "sometimes-identical";
+    static constexpr const char *ALWAYS_IDENTICAL = "always-identical";
+
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::vector<std::string> m_groupBy{};
     bool m_keepNested{false};
+    std::string m_addExtraFields{NO};
 };
 
 /************************************************************************/

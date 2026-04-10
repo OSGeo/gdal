@@ -163,13 +163,38 @@ PostGIS, ...), the following layer metadata items may be set:
   of the mosaic. Possible values are ``red``, ``green``, ``blue``, ``alpha``,
   ``undefined``
 
-* ``SRS=<string>``: defines the SRS of the virtual mosaic, using any value
+* ``SRS=<string>``: specifies the SRS of the virtual mosaic, using any value
   supported by the :cpp:func:`OGRSpatialReference::SetFromUserInput` call, which
   includes EPSG Projected, Geographic or Compound CRS (i.e. EPSG:4296), a
   well known text (WKT) CRS definition, PROJ.4 declarations, etc.
 
   It is not necessary to define this element if the virtual mosaic SRS is
   recorded as the SRS of the vector layer of the tile index.
+
+  When ``SRS`` is set and the vector layer already has a different SRS, a
+  warning is emitted unless ``SRS_BEHAVIOR`` is also set. See
+  ``SRS_BEHAVIOR`` below.
+
+* ``SRS_BEHAVIOR=OVERRIDE|REPROJECT``: controls how the ``SRS`` parameter
+  interacts with an existing SRS on the vector layer.
+
+  - ``OVERRIDE``: use the specified SRS as the dataset SRS without
+    reprojecting tile coordinates. Use this when the layer's SRS metadata is
+    missing or incorrect and you want to correct it.
+  - ``REPROJECT``: reproject tile coordinates from the layer's native SRS to
+    the specified SRS on the fly, including transforming spatial filters applied
+    during raster reads. Use this when you want the virtual mosaic in a
+    different projection than the tile index layer.
+
+  If ``SRS`` is set and differs from the vector layer's SRS and
+  ``SRS_BEHAVIOR`` is not specified, a warning is emitted. If the vector
+  layer has no SRS, the specified ``SRS`` is used silently regardless of this
+  option.
+
+  .. note::
+     For on-the-fly reprojection of the whole GTI mosaic output, wrapping
+     the GTI file in a warped VRT (e.g. via ``gdal raster reproject``) is
+     an alternative that does not require ``SRS_BEHAVIOR``.
 
 * ``LOCATION_FIELD=<string>``: name of the field where the tile location is
   stored. Defaults to ``location``.
@@ -515,8 +540,18 @@ also defined as layer metadata items or in the .gti XML file
 -  .. oo:: SRS
       :choices: <string>
 
-      Override/sets the Spatial Reference System in one of the formats supported
-      by :cpp:func:`OGRSpatialReference::SetFromUserInput`.
+      Specifies the Spatial Reference System in one of the formats supported
+      by :cpp:func:`OGRSpatialReference::SetFromUserInput`. When set and the
+      vector layer already has a different SRS, see ``SRS_BEHAVIOR``.
+
+-  .. oo:: SRS_BEHAVIOR
+      :choices: OVERRIDE, REPROJECT
+
+      Controls how ``SRS`` interacts with an existing SRS on the vector layer.
+      ``OVERRIDE`` sets the dataset SRS without reprojecting tile coordinates.
+      ``REPROJECT`` reprojects tile coordinates from the layer's native SRS to
+      the specified SRS on the fly. If ``SRS`` is set and differs from the
+      layer's SRS and this option is not specified, a warning is emitted.
 
 -  .. oo:: MINX
       :choices: <float>

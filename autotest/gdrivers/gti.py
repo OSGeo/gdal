@@ -25,6 +25,8 @@ from osgeo import gdal, ogr
 
 pytestmark = [pytest.mark.require_driver("GTI"), pytest.mark.require_driver("GPKG")]
 
+_UNSET = object()
+
 
 def create_basic_tileindex(
     index_filename,
@@ -35,6 +37,7 @@ def create_basic_tileindex(
     sort_values=None,
     lyr_name="index",
     add_to_existing=False,
+    lyr_srs=_UNSET,
 ):
     if isinstance(src_ds, list):
         src_ds_list = src_ds
@@ -44,9 +47,11 @@ def create_basic_tileindex(
         index_ds = ogr.Open(index_filename, update=1)
     else:
         index_ds = ogr.GetDriverByName("GPKG").CreateDataSource(index_filename)
-    lyr = index_ds.CreateLayer(
-        lyr_name, srs=(src_ds_list[0].GetSpatialRef() if src_ds_list else None)
-    )
+    if lyr_srs is _UNSET:
+        srs = src_ds_list[0].GetSpatialRef() if src_ds_list else None
+    else:
+        srs = lyr_srs
+    lyr = index_ds.CreateLayer(lyr_name, srs=srs)
     lyr.CreateField(ogr.FieldDefn(location_field_name))
     if sort_values:
         lyr.CreateField(ogr.FieldDefn(sort_field_name, sort_field_type))
@@ -3360,3 +3365,136 @@ def test_gti_band_interleave_rgba(tmp_vsimem):
     assert ds.ReadRaster(band_list=[4, 3, 2, 1]) == src_ds.ReadRaster(
         band_list=[4, 3, 2, 1]
     )
+
+
+###############################################################################
+
+
+def test_gti_srs_metadata_spatial_filter(tmp_vsimem):
+    """When output SRS differs from the index layer SRS (via SRS layer metadata),
+    spatial filters applied during raster reads must be transformed into the
+    layer's native CRS before querying the index.
+
+    byte.tif is EPSG:26711 (UTM zone 11N). Setting SRS=EPSG:3857 with
+    SRS_BEHAVIOR=REPROJECT creates a warped layer: without it,
+    SetSpatialFilterRect receives EPSG:3857 coordinates but applies them
+    directly to the UTM index layer, which finds no matching tiles and returns
+    an all-zero raster.
+    """
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, lyr = create_basic_tileindex(index_filename, src_ds)
+    lyr.SetMetadataItem("SRS", "EPSG:3857")
+    lyr.SetMetadataItem("SRS_BEHAVIOR", "REPROJECT")
+    del index_ds
+
+    ds = gdal.Open(index_filename)
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+
+###############################################################################
+
+
+def test_gti_srs_open_option_spatial_filter(tmp_vsimem):
+    """SRS specified via open option with SRS_BEHAVIOR=REPROJECT must create a
+    warped layer so that spatial filters during raster reads are correctly
+    transformed.
+
+    This exercises the same code path as test_gti_srs_metadata_spatial_filter
+    but uses open options instead of layer metadata, and also covers the
+    destructor fix: when a warped layer wraps the index layer, the destructor
+    must not pass the wrapper to ReleaseResultSet.
+    """
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, _ = create_basic_tileindex(index_filename, src_ds)
+    del index_ds
+
+    ds = gdal.OpenEx(
+        index_filename, open_options=["SRS=EPSG:3857", "SRS_BEHAVIOR=REPROJECT"]
+    )
+    assert ds is not None
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+
+###############################################################################
+
+
+def test_gti_srs_behavior_invalid(tmp_vsimem):
+    """SRS_BEHAVIOR with an unrecognized value must fail with a clear error."""
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, _ = create_basic_tileindex(index_filename, src_ds)
+    del index_ds
+
+    with pytest.raises(Exception, match="Invalid value for SRS_BEHAVIOR"):
+        gdal.OpenEx(
+            index_filename, open_options=["SRS=EPSG:3857", "SRS_BEHAVIOR=INVALID"]
+        )
+
+
+###############################################################################
+
+
+def test_gti_srs_mismatch_no_behavior_warns(tmp_vsimem):
+    """SRS set to a different CRS than the layer's CRS without SRS_BEHAVIOR
+    must emit a warning directing the user to set SRS_BEHAVIOR."""
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, _ = create_basic_tileindex(index_filename, src_ds)
+    del index_ds
+
+    with gdaltest.error_raised(gdal.CE_Warning, match="SRS_BEHAVIOR"):
+        ds = gdal.OpenEx(index_filename, open_options=["SRS=EPSG:3857"])
+    assert ds is not None
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+
+
+###############################################################################
+
+
+def test_gti_srs_behavior_override(tmp_vsimem):
+    """SRS_BEHAVIOR=OVERRIDE must apply the specified SRS without creating a
+    warped layer, so the dataset SRS is updated but no reprojection occurs."""
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    index_ds, _ = create_basic_tileindex(index_filename, src_ds)
+    del index_ds
+
+    with gdaltest.error_raised(gdal.CE_None):
+        ds = gdal.OpenEx(
+            index_filename, open_options=["SRS=EPSG:3857", "SRS_BEHAVIOR=OVERRIDE"]
+        )
+    assert ds is not None
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+
+
+###############################################################################
+
+
+def test_gti_srs_no_layer_srs_silent(tmp_vsimem):
+    """SRS specified via open option when the tile index layer has no SRS must
+    be applied silently without any warning."""
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    src_ds = gdal.Open(os.path.join(os.getcwd(), "data", "byte.tif"))
+    # Create tile index with no SRS on the layer
+    index_ds, _ = create_basic_tileindex(index_filename, src_ds, lyr_srs=None)
+    del index_ds
+
+    with gdaltest.error_raised(gdal.CE_None):
+        ds = gdal.OpenEx(index_filename, open_options=["SRS=EPSG:3857"])
+    assert ds is not None
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"

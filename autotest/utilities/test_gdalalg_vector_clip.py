@@ -187,9 +187,20 @@ def test_gdalalg_vector_clip_bbox_srs():
     assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
-    ogrtest.check_feature_geometry(
-        out_f, "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))"
+
+    out_g = out_f.GetGeometryRef()
+    ok = False
+    expected_wkt = (
+        "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))",
+        "POLYGON ((0.2 0.3,0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3))",  # GEOS 3.15
     )
+    for wkt in expected_wkt:
+        try:
+            ogrtest.check_feature_geometry(out_g, wkt)
+            ok = True
+        except Exception:
+            pass
+    assert ok, f"Got {out_g.ExportToIsoWkt()}, expected {expected_wkt}"
 
     assert out_lyr.GetNextFeature() is None
 
@@ -838,9 +849,19 @@ def test_gdalalg_vector_clip_like_raster():
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
-    ogrtest.check_feature_geometry(
-        out_f, "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))"
+    out_g = out_f.GetGeometryRef()
+    ok = False
+    expected_wkt = (
+        "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))",
+        "POLYGON ((0.2 0.3,0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3))",  # GEOS 3.15
     )
+    for wkt in expected_wkt:
+        try:
+            ogrtest.check_feature_geometry(out_g, wkt)
+            ok = True
+        except Exception:
+            pass
+    assert ok, f"Got {out_g.ExportToIsoWkt()}, expected {expected_wkt}"
 
     assert out_lyr.GetNextFeature() is None
 
@@ -879,9 +900,19 @@ def test_gdalalg_vector_clip_like_raster_srs():
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
-    ogrtest.check_feature_geometry(
-        out_f, "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))"
+    out_g = out_f.GetGeometryRef()
+    ok = False
+    expected_wkt = (
+        "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))",
+        "POLYGON ((0.2 0.3,0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3))",  # GEOS 3.15
     )
+    for wkt in expected_wkt:
+        try:
+            ogrtest.check_feature_geometry(out_g, wkt)
+            ok = True
+        except Exception:
+            pass
+    assert ok, f"Got {out_g.ExportToIsoWkt()}, expected {expected_wkt}"
 
     assert out_lyr.GetNextFeature() is None
 

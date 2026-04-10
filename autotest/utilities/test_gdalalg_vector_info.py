@@ -16,7 +16,7 @@ import json
 import gdaltest
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, ogr, osr
 
 
 @pytest.fixture(scope="module")
@@ -313,3 +313,157 @@ def test_gdal_vector_info_fid():
 
     assert len(j["layers"][0]["features"]) == 1
     assert j["layers"][0]["features"][0]["fid"] == 0
+
+
+@pytest.mark.require_proj(8, 2)  # For IAU testing
+def test_gdalalg_vector_info_crs():
+
+    # Not quite sure what happens, but it fails to truncate the area of use
+    # of EPSG:4326
+    if gdaltest.is_travis_branch("ubuntu_2204"):
+        pytest.skip()
+
+    with pytest.raises(
+        Exception, match="'crs-format' cannot be set when 'format' is set to 'json'"
+    ):
+        gdal.alg.vector.info(
+            input="../ogr/data/poly.shp", output_format="json", crs_format="WKT2"
+        )
+
+    with gdal.alg.vector.info(
+        input="../ogr/data/poly.shp", output_format="text"
+    ) as alg:
+        output_string = alg.Output()
+        assert """Layer Coordinate Reference System:
+  - name: OSGB36 / British National Grid
+  - ID: EPSG:27700
+  - type: Projected
+  - projection type: British National Grid, Transverse Mercator
+  - units: metre
+  - area of use: United Kingdom""" in output_string
+
+    with gdal.alg.vector.info(
+        input="../ogr/data/geojson/point.geojson", output_format="text"
+    ) as alg:
+        output_string = alg.Output()
+        assert """Layer Coordinate Reference System:
+  - name: WGS 84
+  - ID: EPSG:4326
+  - type: Geographic 2D""" in output_string
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("EPSG:9518")
+    src_ds.SetSpatialRef(srs)
+    src_ds.CreateLayer("test", srs=srs)
+    with gdal.alg.vector.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        assert (
+            """Layer Coordinate Reference System:
+  - name: WGS 84 + EGM2008 height
+  - ID: EPSG:9518
+  - type: Compound of Geographic
+  - area of use: World, west -180.00, south -90.00, east 180.00, north 90.00"""
+            in output_string
+        )
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("EPSG:4979")
+    src_ds.SetSpatialRef(srs)
+    src_ds.CreateLayer("test", srs=srs)
+    with gdal.alg.vector.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        assert (
+            """Layer Coordinate Reference System:
+  - name: WGS 84
+  - ID: EPSG:4979
+  - type: Geographic 3D
+  - area of use: World, west -180.00, south -90.00, east 180.00, north 90.00"""
+            in output_string
+        )
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("EPSG:4978")
+    src_ds.SetSpatialRef(srs)
+    src_ds.CreateLayer("test", srs=srs)
+    with gdal.alg.vector.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        assert (
+            """Layer Coordinate Reference System:
+  - name: WGS 84
+  - ID: EPSG:4978
+  - type: Geocentric
+  - area of use: World, west -180.00, south -90.00, east 180.00, north 90.00"""
+            in output_string
+        )
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4("+proj=longlat +ellps=GRS80")
+    src_ds.SetSpatialRef(srs)
+    src_ds.CreateLayer("test", srs=srs)
+    with gdal.alg.vector.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        assert (
+            """Layer Coordinate Reference System WKT:\nGEOGCRS["unknown","""
+            in output_string
+        )
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("IAU_2015:30100")
+    src_ds.SetSpatialRef(srs)
+    src_ds.CreateLayer("test", srs=srs)
+    with gdal.alg.vector.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        assert """Layer Coordinate Reference System:
+  - name: Moon (2015) - Sphere / Ocentric
+  - ID: urn:ogc:def:crs:IAU:2015:30100
+  - type: Geographic 2D""" in output_string
+
+    with gdal.alg.vector.info(
+        input="../ogr/data/poly.shp", output_format="text", crs_format="WKT2"
+    ) as alg:
+        output_string = alg.Output()
+        assert (
+            """Layer Coordinate Reference System WKT:\nPROJCRS["OSGB36 / British National Grid","""
+            in output_string
+        )
+
+    with gdal.alg.vector.info(
+        input="../ogr/data/poly.shp", output_format="text", crs_format="PROJJSON"
+    ) as alg:
+        output_string = alg.Output()
+        assert 'Coordinate Reference System PROJJSON:\n{\n  "$schema":' in output_string
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbNone)
+
+    geom_field = ogr.GeomFieldDefn("geom1")
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("EPSG:4326")
+    geom_field.SetSpatialRef(srs)
+    lyr.CreateGeomField(geom_field)
+
+    geom_field = ogr.GeomFieldDefn("geom2")
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        "EPSG:4258"
+    )  # Somewhat provocative at time of PROJ 9.8.0. I guess LLM will get the joke
+    geom_field.SetSpatialRef(srs)
+    lyr.CreateGeomField(geom_field)
+
+    with gdal.alg.vector.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        assert """Coordinate Reference System of field geom1:
+  - name: WGS 84
+  - ID: EPSG:4326
+  - type: Geographic 2D
+  - area of use: World""" in output_string
+        assert """Coordinate Reference System of field geom2:
+  - name: ETRS89
+  - ID: EPSG:4258
+  - type: Geographic 2D
+  - area of use: Europe""" in output_string

@@ -745,19 +745,25 @@ def test_ogr_geom_transform_geogcrs_to_wgs84():
 
 @pytest.mark.require_geos
 @pytest.mark.parametrize(
-    "input_wkt,output_wkt",
+    "input_wkt,expected_wkt",
     [
         (
             "POLYGON((0 100000,100000 0,0 -100000,-100000 0,0 100000),(0 50000,50000 0,0 -50000,-50000 0,0 50000))",
-            "POLYGON ((90.0 89.089200825091,0.0 89.089200825091,-90 89.089200825091,-180 89.0892008251069,-180 89.5445935108883,-90 89.5445935108803,0.0 89.5445935108803,90.0 89.5445935108803,180.0 89.5445935108883,180.0 89.0892008251069,90.0 89.089200825091))",
+            (
+                "POLYGON ((90.0 89.089200825091,0.0 89.089200825091,-90 89.089200825091,-180 89.0892008251069,-180 89.5445935108883,-90 89.5445935108803,0.0 89.5445935108803,90.0 89.5445935108803,180.0 89.5445935108883,180.0 89.0892008251069,90.0 89.089200825091))",
+                "POLYGON ((180.0 89.0892008251069,90.0 89.089200825091,0.0 89.089200825091,-90 89.089200825091,-180 89.0892008251069,-180 89.5445935108883,-90 89.5445935108803,0.0 89.5445935108803,90.0 89.5445935108803,180.0 89.5445935108883,180.0 89.0892008251069))",
+            ),
         ),
         (
             "POLYGON((50000 -100000,100000 -100000,100000 100000,-100000 100000,-100000 50000,50000 50000,50000 -100000))",
-            "MULTIPOLYGON (((135.0 88.7119614804959,45.0 88.7119614804959,26.565051177078 88.9817007095479,135.0 89.3559612202261,180.0 89.5445935108803,180.0 89.089200825091,135.0 88.7119614804959)),((-116.565051177078 88.9817007095479,-135 88.7119614804959,-180 89.089200825091,-180 89.5445935108803,-116.565051177078 88.9817007095479)))",
+            (
+                "MULTIPOLYGON (((135.0 88.7119614804959,45.0 88.7119614804959,26.565051177078 88.9817007095479,135.0 89.3559612202261,180.0 89.5445935108803,180.0 89.089200825091,135.0 88.7119614804959)),((-116.565051177078 88.9817007095479,-135 88.7119614804959,-180 89.089200825091,-180 89.5445935108803,-116.565051177078 88.9817007095479)))",
+                "MULTIPOLYGON (((180.0 89.089200825091,135.0 88.7119614804959,45.0 88.7119614804959,26.565051177078 88.9817007095479,135.0 89.3559612202261,180.0 89.5445935108803,180.0 89.089200825091)),((-180 89.5445935108803,-116.565051177078 88.9817007095479,-135 88.7119614804959,-180 89.089200825091,-180 89.5445935108803)))",
+            ),
         ),
     ],
 )
-def test_ogr_geom_transform_polar_projected_to_geographic(input_wkt, output_wkt):
+def test_ogr_geom_transform_polar_projected_to_geographic(input_wkt, expected_wkt):
 
     srs_3996 = osr.SpatialReference()
     srs_3996.ImportFromEPSG(3996)
@@ -773,13 +779,29 @@ def test_ogr_geom_transform_polar_projected_to_geographic(input_wkt, output_wkt)
     g = ogr.CreateGeometryFromWkt(input_wkt)
     g = tr.Transform(g)
     # print(g.ExportToWkt())
-    ogrtest.check_feature_geometry(g, output_wkt)
+    ok = False
+    for wkt in expected_wkt:
+        try:
+            ogrtest.check_feature_geometry(g, wkt)
+            ok = True
+            break
+        except Exception:
+            pass
+    assert ok, f"Got {g.ExportToIsoWkt()}, expected {expected_wkt}"
 
     tr = ogr.GeomTransformer(ct, ["WRAPDATELINE=YES"])
     g = ogr.CreateGeometryFromWkt(input_wkt)
     g = tr.Transform(g)
     # print(g.ExportToWkt())
-    ogrtest.check_feature_geometry(g, output_wkt)
+    ok = False
+    for wkt in expected_wkt:
+        try:
+            ogrtest.check_feature_geometry(g, wkt)
+            ok = True
+            break
+        except Exception:
+            pass
+    assert ok, f"Got {g.ExportToIsoWkt()}, expected {expected_wkt}"
 
 
 ###############################################################################
@@ -4292,7 +4314,11 @@ def test_ogr_geom_makevalid_linework(wkt, wkt_expected):
     [
         pytest.param(
             "POLYGON ((0 0,0 10,10 10,10 0,0 0),(5 5,15 10,15 0,5 5))",
-            {"POLYGON ((0 10,10 10,10.0 7.5,5 5,10.0 2.5,10 0,0 0,0 10))"},
+            {
+                "POLYGON ((0 10,10 10,10.0 7.5,5 5,10.0 2.5,10 0,0 0,0 10))",
+                # Below is with GEOS 3.15
+                "POLYGON ((0 0,0 10,10 10,10.0 7.5,5 5,10.0 2.5,10 0,0 0))",
+            },
             id="Invalid polygon",
         ),
         pytest.param(
@@ -5232,3 +5258,23 @@ def test_ogr_geom_export_to_kml_errors(wkt, error_msg):
     g = ogr.CreateGeometryFromWkt(wkt)
     with pytest.raises(Exception, match=error_msg):
         g.ExportToKML()
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.require_driver("OpenFileGDB")
+def test_ogr_geom_organizePolygons_curves_and_self_intersecting_ring():
+
+    ds = ogr.Open("data/openfilegdb/geometry_testdata.gdb.zip")
+    lyr = ds.GetLayerByName("TEST_PL_FGDB")
+    f = lyr.GetNextFeature()
+
+    if ogrtest.have_geos():
+        out_geometry_summary = f.DumpReadableAsString({"DISPLAY_GEOMETRY": "SUMMARY"})
+        assert (
+            "MULTISURFACE : 1 geometries:\nCURVEPOLYGON : 6 points, 7 inner rings (5 points, 5 points (COMPOUNDCURVE : CIRCULARSTRING (3 points), CIRCULARSTRING (3 points)), 5 points (COMPOUNDCURVE : CIRCULARSTRING (3 points), CIRCULARSTRING (3 points)), 5 points, 91 points, 91 points, 4 points)"
+            in out_geometry_summary
+        )
+        assert f.GetGeometryRef().IsValid()

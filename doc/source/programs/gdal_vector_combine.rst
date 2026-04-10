@@ -51,6 +51,90 @@ Program-Specific Options
    If input geometries have multiple parts, combine them into a GeometryCollection
    of the input geometries.
 
+.. option:: --add-extra-fields no|sometimes-identical|always-identical
+
+    Whether fields from source features that have the same value among the features
+    belonging to a same group are copied to the corresponding output feature.
+
+    By default, ``no``, only fields listed in :option:`--group-by` are copied to
+    the output layer.
+
+    When specifying ``sometimes-identical``, fields, for which all input
+    features within at least one output group have the same value, will be
+    copied to the output layer schema. The value of the field is the value that
+    is common for all input features of a group. If the input features within
+    some group are not identical, the field value in the output for this group
+    will be set to null.
+
+    When specifying ``always-identical``, fields for which all input features
+    within a given output group have the same value are copied to the output layer,
+    provided this condition holds for all output groups.
+
+    For example, let's suppose we have four input features with the following
+    content, and we group them by ``country``
+
+    .. list-table:: Input features
+        :header-rows: 1
+
+        * - name
+          - country
+          - country_fr
+          - type
+        * - Mainland France
+          - France
+          - France
+          - continental
+        * - Corsica
+          - France
+          - France
+          - island
+        * - Mainland USA
+          - USA
+          - Etats-Unis d'Amérique
+          - continental
+        * - Alaska
+          - USA
+          - Etats-Unis d'Amérique
+          - continental
+
+    With ``sometimes-identical``, the output will be:
+
+    .. list-table:: Output with ``sometimes-identical``
+       :header-rows: 1
+
+       * - country
+         - country_fr
+         - type
+       * - France
+         - France
+         -
+       * - USA
+         - Etats-Unis d'Amérique
+         - continental
+
+
+    The ``name`` field has been removed because it is distinct for each
+    input feature. The ``type`` field appears as an output field, because at
+    least for the USA, the two grouped input features that makes it have the
+    same value. For France, its content is set to null, because its value is
+    different in the two input features.
+
+    With ``always-identical``, the output will be:
+
+    .. list-table:: Output with ``always-identical``
+       :header-rows: 1
+
+       * - country
+         - country_fr
+       * - France
+         - France
+       * - USA
+         - Etats-Unis d'Amérique
+
+
+    The ``type`` field has been removed because its value is different in the two input
+    features of France.
+
 .. Return status code
 .. ------------------
 
@@ -85,3 +169,8 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+        Etats
+        d'Amérique

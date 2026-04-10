@@ -22,6 +22,15 @@ created by LLMs is acceptable in the GDAL codebase at all. This document only
 addresses the interaction aspects of LLM content, and should not be viewed as the
 project taking a position on whether or not LLM code contributions are acceptable.
 
+Grumpy maintainer effect
+------------------------
+
+Our initial feedback from receiving AI tools based contributions is that they
+have the effect of making maintainers more grumpy than usual. As fixing human
+behavior to play nicely with AI will involve natural selection over many generations,
+be prepared for not getting a very warm welcome if you misuse those tools.
+You have been warned!
+
 Policy
 ------
 

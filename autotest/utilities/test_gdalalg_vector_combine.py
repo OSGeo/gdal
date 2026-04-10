@@ -399,3 +399,97 @@ def test_gdalalg_vector_combine_test_ogrsf(tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+@pytest.mark.require_driver("SQLITE")
+@pytest.mark.parametrize(
+    "add_extra_fields", ["always-identical", "sometimes-identical"]
+)
+def test_gdalalg_vector_combine_extra_fields(add_extra_fields):
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_lyr = src_ds.CreateLayer(
+        "layer", srs=osr.SpatialReference(epsg=4326), geom_type=ogr.wkbPoint
+    )
+    src_lyr.CreateField(ogr.FieldDefn("name", ogr.OFTString))
+    src_lyr.CreateField(ogr.FieldDefn("country", ogr.OFTString))
+    src_lyr.CreateField(ogr.FieldDefn("country_fr", ogr.OFTString))
+    src_lyr.CreateField(ogr.FieldDefn("type", ogr.OFTString))
+    src_lyr.CreateField(ogr.FieldDefn("some_dt", ogr.OFTDateTime))
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["name"] = "Mainland France"
+    f["country"] = "France"
+    f["country_fr"] = "France"
+    f["type"] = "continental"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2.4 48.9)"))
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["name"] = "Corsica"
+    f["country"] = "France"
+    f["country_fr"] = "France"
+    f["type"] = "island"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(9.4 42.6)"))
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["name"] = "Mainland USA"
+    f["country"] = "USA"
+    f["country_fr"] = "Etats-Unis d'Amérique"
+    f["type"] = "continental"
+    f["some_dt"] = "2026-01-30T12:34:56.789Z"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(-77.0 38.9)"))
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f["name"] = "Alaska"
+    f["country"] = "USA"
+    f["country_fr"] = "Etats-Unis d'Amérique"
+    f["type"] = "continental"
+    f["some_dt"] = "2026-01-30T12:34:56.789Z"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(-149.9 61.2)"))
+    src_lyr.CreateFeature(f)
+
+    with gdal.alg.vector.combine(
+        input=src_ds,
+        output="",
+        output_format="MEM",
+        group_by="country",
+        add_extra_fields=add_extra_fields,
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
+
+        if add_extra_fields == "sometimes-identical":
+            assert lyr_defn.GetFieldCount() == 4
+            # Check that "name" is not present, since it is always non-identical
+            # within a same group of grouped features.
+            assert lyr_defn.GetFieldDefn(0).GetName() == "country"
+            assert lyr_defn.GetFieldDefn(1).GetName() == "country_fr"
+            assert lyr_defn.GetFieldDefn(2).GetName() == "type"
+            assert lyr_defn.GetFieldDefn(3).GetName() == "some_dt"
+            assert lyr_defn.GetFieldDefn(3).GetType() == ogr.OFTDateTime
+            assert lyr.GetFeatureCount() == 2
+
+            f = lyr.GetNextFeature()
+            assert f["country"] == "France"
+            assert f["country_fr"] == "France"
+            assert not f.IsFieldSet("type")
+            assert not f.IsFieldSet("some_dt")
+            assert f.GetGeometryRef().GetGeometryCount() == 2
+
+            f = lyr.GetNextFeature()
+            assert f["country"] == "USA"
+            assert f["country_fr"] == "Etats-Unis d'Amérique"
+            assert f["type"] == "continental"
+            assert f["some_dt"] == "2026/01/30 12:34:56.789+00"
+            assert f.GetGeometryRef().GetGeometryCount() == 2
+
+        else:
+            assert lyr_defn.GetFieldCount() == 3
+            assert lyr_defn.GetFieldDefn(0).GetName() == "country"
+            assert lyr_defn.GetFieldDefn(1).GetName() == "country_fr"
+            assert lyr_defn.GetFieldDefn(2).GetName() == "some_dt"
+            assert lyr_defn.GetFieldDefn(2).GetType() == ogr.OFTDateTime

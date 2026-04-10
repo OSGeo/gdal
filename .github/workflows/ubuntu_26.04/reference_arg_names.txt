@@ -6,6 +6,7 @@ active-geometry
 active-layer
 add
 add-alpha
+add-extra-fields
 add-mask
 algorithm
 all-input-field
@@ -55,6 +56,7 @@ copyright
 country-code
 creation-option
 crs
+crs-format
 curvature-coefficient
 curve
 dataset

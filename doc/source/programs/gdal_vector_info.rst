@@ -100,6 +100,20 @@ Program-Specific Options
     Feature identifier. Only the feature with the specified FID
     will be reported.
 
+.. option:: --crs-format AUTO|WKT2|PROJJSON
+
+    .. versionadded:: 3.13
+
+    Which format to use to report the CRS. In AUTO default mode, if the CRS
+    can be captured with an authority name and code (known of PROJ), only
+    a summary of the CRS, including its name, ID, type and area of use will be
+    reported. Otherwise a full WKT2:2019 definition will be reported.
+
+    .. note::
+
+        :option:`--crs-format` can only be set when :option:`--output-format`
+        is set to ``text``.  The JSON text format includes both WKT2 and PROJJSON.
+
 Standard Options
 ----------------
 

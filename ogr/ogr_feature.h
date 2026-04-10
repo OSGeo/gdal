@@ -559,22 +559,36 @@ class CPL_DLL OGRFeatureDefn
         {
           private:
             OwnerT m_poFDefn;
+            const int m_nFieldCount;
             int m_nIdx;
+            ChildT m_curValue{};
 
           public:
             inline Iterator(OwnerT poFDefn, int nIdx)
-                : m_poFDefn(poFDefn), m_nIdx(nIdx)
+                : m_poFDefn(poFDefn), m_nFieldCount(poFDefn->GetFieldCount()),
+                  m_nIdx(nIdx)
             {
+                if (m_nIdx < m_nFieldCount)
+                    m_curValue = m_poFDefn->GetFieldDefn(m_nIdx);
             }
 
-            inline ChildT operator*() const
+            inline const ChildT &operator*() const
             {
-                return m_poFDefn->GetFieldDefn(m_nIdx);
+                return m_curValue;
+            }
+
+            inline ChildT &operator*()
+            {
+                return m_curValue;
             }
 
             inline Iterator &operator++()
             {
                 m_nIdx++;
+                if (m_nIdx < m_nFieldCount)
+                    m_curValue = m_poFDefn->GetFieldDefn(m_nIdx);
+                else
+                    m_curValue = nullptr;
                 return *this;
             }
 
@@ -584,12 +598,12 @@ class CPL_DLL OGRFeatureDefn
             }
         };
 
-        inline Iterator begin()
+        inline Iterator begin() const
         {
             return Iterator(m_poFDefn, 0);
         }
 
-        inline Iterator end()
+        inline Iterator end() const
         {
             return Iterator(m_poFDefn, m_poFDefn->GetFieldCount());
         }

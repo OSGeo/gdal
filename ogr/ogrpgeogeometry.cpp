@@ -2029,7 +2029,7 @@ static OGRCurve *OGRShapeCreateCompoundCurve(int nPartStartIdx, int nPartPoints,
 /************************************************************************/
 
 OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
-                             int nBytes)
+                             int nBytes, const char *pszOrganizePolygonsMethod)
 
 {
     *ppoGeom = nullptr;
@@ -2737,10 +2737,13 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
                     if (!apoPolygons.empty())
                     {
                         bool isValidGeometry = false;
-                        const char *const apszOptions[] = {"METHOD=ONLY_CCW",
-                                                           nullptr};
+                        CPLStringList aosOptions;
+                        if (!pszOrganizePolygonsMethod)
+                            pszOrganizePolygonsMethod = "ONLY_CCW";
+                        aosOptions.SetNameValue("METHOD",
+                                                pszOrganizePolygonsMethod);
                         auto poOGR = OGRGeometryFactory::organizePolygons(
-                            apoPolygons, &isValidGeometry, apszOptions);
+                            apoPolygons, &isValidGeometry, aosOptions.List());
 
                         if (!isValidGeometry)
                         {

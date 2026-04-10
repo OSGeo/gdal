@@ -126,6 +126,12 @@ struct GDALInfoOptions
     std::string osWKTFormat = "WKT2";
 
     bool bStdoutOutput = false;
+
+    /*! May be set to "gdal-raster-info" */
+    std::string osInvokedFrom{};
+
+    /*! Only used when osInvokedFrom is set to "gdal-raster-info" */
+    std::string osCRSFormat{"AUTO"};
 };
 
 static int GDALInfoReportCorner(const GDALInfoOptions *psOptions,
@@ -222,6 +228,17 @@ GDALInfoAppOptionsGetParser(GDALInfoOptions *psOptions,
 
     argParser->add_epilog(
         _("For more details, consult https://gdal.org/programs/gdalinfo.html"));
+
+    // Hidden: only for gdal raster info
+    argParser->add_argument("--invoked-from")
+        .store_into(psOptions->osInvokedFrom)
+        .hidden();
+
+    // Hidden: only for gdal raster info
+    argParser->add_argument("--crs-format")
+        .choices("AUTO", "WKT2", "PROJJSON")
+        .store_into(psOptions->osCRSFormat)
+        .hidden();
 
     argParser->add_argument("-json")
         .flag()
@@ -374,6 +391,194 @@ std::string GDALInfoAppGetParserUsage()
         CPLError(CE_Failure, CPLE_AppDefined, "Unexpected exception: %s",
                  err.what());
         return std::string();
+    }
+}
+
+/************************************************************************/
+/*                        EmitTextDisplayOfCRS()                        */
+/************************************************************************/
+
+void EmitTextDisplayOfCRS(
+    const OGRSpatialReference *poSRS, const std::string &osCRSFormat,
+    const std::string &osIntroText,
+    std::function<void(const std::string &)> printFunction)
+{
+    const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+    const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
+
+    bool bCRSAlreadyEmitted = false;
+    if (pszAuthName && pszAuthCode && osCRSFormat == "AUTO")
+    {
+        OGRSpatialReference oSRSFromAuthCode;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        const char *const apszComparisonCriteria[] = {
+            "IGNORE_DATA_AXIS_TO_SRS_AXIS_MAPPING=YES",
+            "CRITERION=EQUIVALENT_EXCEPT_AXIS_ORDER_GEOGCRS",
+            "IGNORE_COORDINATE_EPOCH=YES", nullptr};
+        if (oSRSFromAuthCode.SetFromUserInput(std::string(pszAuthName)
+                                                  .append(":")
+                                                  .append(pszAuthCode)
+                                                  .c_str()) == OGRERR_NONE &&
+            oSRSFromAuthCode.IsSame(poSRS, apszComparisonCriteria))
+        {
+            std::string osCRSId;
+            if (STARTS_WITH_CI(pszAuthName, "IAU_"))
+            {
+                osCRSId = "urn:ogc:def:crs:IAU:";
+                osCRSId += pszAuthName + strlen("IAU_");
+                osCRSId += ':';
+                osCRSId += pszAuthCode;
+            }
+            else if (strchr(pszAuthName, '_') == nullptr)
+            {
+                osCRSId = pszAuthName;
+                osCRSId += ':';
+                osCRSId += pszAuthCode;
+            }
+
+            if (!osCRSId.empty())
+            {
+                bCRSAlreadyEmitted = true;
+                printFunction(osIntroText);
+                printFunction(":\n");
+                printFunction(CPLSPrintf("  - name: %s\n", poSRS->GetName()));
+
+                printFunction(CPLSPrintf("  - ID: %s\n", osCRSId.c_str()));
+
+                const char *pszHorizType = "Other";
+                if (poSRS->IsGeographic())
+                {
+                    if (poSRS->IsCompound())
+                        pszHorizType = "Geographic";
+                    else if (poSRS->GetAxesCount() == 3)
+                        pszHorizType = "Geographic 3D";
+                    else
+                        pszHorizType = "Geographic 2D";
+                }
+                else if (poSRS->IsGeocentric())
+                    pszHorizType = "Geocentric";
+                else if (poSRS->IsProjected())
+                    pszHorizType = "Projected";
+
+                if (poSRS->IsCompound())
+                {
+                    printFunction(
+                        CPLSPrintf("  - type: Compound of %s\n", pszHorizType));
+                }
+                else
+                {
+                    printFunction(CPLSPrintf("  - type: %s\n", pszHorizType));
+                }
+
+                if (poSRS->IsProjected())
+                {
+                    // Create a copy since we want to force the internal
+                    // WKT tree model to be WKT2 as we are going to
+                    // request CONVERSION
+                    OGRSpatialReference oSRS(*poSRS);
+                    const char *pszConversion = oSRS.GetAttrValue("CONVERSION");
+                    const std::string osConversion =
+                        pszConversion ? pszConversion : "";
+                    const char *pszMethod =
+                        oSRS.GetAttrValue("CONVERSION|METHOD");
+                    const std::string osMethod = pszMethod ? pszMethod : "";
+                    if (!osConversion.empty() && !osMethod.empty())
+                    {
+                        if (osConversion == osMethod)
+                        {
+                            printFunction(
+                                CPLSPrintf("  - projection type: %s\n",
+                                           osConversion.c_str()));
+                        }
+                        else
+                        {
+                            printFunction(CPLSPrintf(
+                                "  - projection type: %s, %s\n",
+                                osConversion.c_str(), osMethod.c_str()));
+                        }
+                    }
+                    const char *pszLinearUnits = nullptr;
+                    poSRS->GetLinearUnits(&pszLinearUnits);
+                    if (pszLinearUnits)
+                    {
+                        printFunction(CPLSPrintf("  - units: "
+                                                 "%s\n",
+                                                 pszLinearUnits));
+                    }
+                }
+                double dfWest = 0;
+                double dfSouth = 0;
+                double dfEast = 0;
+                double dfNorth = 0;
+                const char *pszAreaName = nullptr;
+                if (poSRS->GetAreaOfUse(&dfWest, &dfSouth, &dfEast, &dfNorth,
+                                        &pszAreaName))
+                {
+                    if (pszAreaName && pszAreaName[0])
+                    {
+                        std::string osAreaOfUse(pszAreaName);
+                        if (osAreaOfUse.back() == '.')
+                            osAreaOfUse.pop_back();
+                        if (osAreaOfUse.size() > 40)
+                        {
+                            auto nPos = osAreaOfUse.find(" - ");
+                            if (nPos == std::string::npos)
+                                nPos = osAreaOfUse.find(", ");
+                            if (nPos == std::string::npos)
+                                nPos = osAreaOfUse.find(' ');
+                            if (nPos == std::string::npos)
+                                nPos = 40;
+                            osAreaOfUse.resize(nPos);
+                            osAreaOfUse += "...";
+                        }
+                        printFunction(
+                            CPLSPrintf("  - area "
+                                       "of use: %s, west %.2f, south %.2f, "
+                                       "east %.2f, north %.2f\n",
+                                       osAreaOfUse.c_str(), dfWest, dfSouth,
+                                       dfEast, dfNorth));
+                    }
+                    else
+                    {
+                        printFunction(
+                            CPLSPrintf("  - area "
+                                       "of use: west %.2f, south %.2f, "
+                                       "east %.2f, north %.2f\n",
+                                       dfWest, dfSouth, dfEast, dfNorth));
+                    }
+                }
+            }
+        }
+    }
+    if (!bCRSAlreadyEmitted)
+    {
+        if (osCRSFormat == "PROJJSON")
+        {
+            char *pszProjJson = nullptr;
+            poSRS->exportToPROJJSON(&pszProjJson, nullptr);
+            printFunction(osIntroText);
+            printFunction(" PROJJSON:");
+            if (pszProjJson)
+            {
+                printFunction("\n");
+                printFunction(pszProjJson);
+                printFunction("\n");
+            }
+            else
+            {
+                printFunction(" ERROR while exporting it to PROJJSON!\n");
+            }
+            CPLFree(pszProjJson);
+        }
+        else
+        {
+            const char *const apszWKTOptions[] = {"FORMAT=WKT2_2019",
+                                                  "MULTILINE=YES", nullptr};
+            printFunction(osIntroText);
+            printFunction(" WKT:\n");
+            printFunction(poSRS->exportToWkt(apszWKTOptions));
+            printFunction("\n");
+        }
     }
 }
 
@@ -553,23 +758,25 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
     auto hSRS = GDALGetSpatialRef(hDataset);
     if (hSRS != nullptr)
     {
+        const OGRSpatialReference *poSRS =
+            OGRSpatialReference::FromHandle(hSRS);
+
         json_object *poCoordinateSystem = nullptr;
 
         if (bJson)
             poCoordinateSystem = json_object_new_object();
 
-        char *pszPrettyWkt = nullptr;
+        const std::string osWkt = poSRS->exportToWkt(apszWKTOptions);
 
-        OSRExportToWktEx(hSRS, &pszPrettyWkt, apszWKTOptions);
+        const std::vector<int> anAxes = poSRS->GetDataAxisToSRSAxisMapping();
 
-        int nAxesCount = 0;
-        const int *panAxes = OSRGetDataAxisToSRSAxisMapping(hSRS, &nAxesCount);
+        const double dfCoordinateEpoch = poSRS->GetCoordinateEpoch();
 
-        const double dfCoordinateEpoch = OSRGetCoordinateEpoch(hSRS);
-
+        const char *pszAuthCode = poSRS->GetAuthorityCode(nullptr);
+        const char *pszAuthName = poSRS->GetAuthorityName(nullptr);
         if (bJson)
         {
-            json_object *poWkt = json_object_new_string(pszPrettyWkt);
+            json_object *poWkt = json_object_new_string(osWkt.c_str());
             if (psOptions->osWKTFormat == "WKT2")
             {
                 json_object *poStacWkt = nullptr;
@@ -578,8 +785,6 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             }
             json_object_object_add(poCoordinateSystem, "wkt", poWkt);
 
-            const char *pszAuthCode = OSRGetAuthorityCode(hSRS, nullptr);
-            const char *pszAuthName = OSRGetAuthorityName(hSRS, nullptr);
             if (pszAuthCode && pszAuthName && EQUAL(pszAuthName, "EPSG"))
             {
                 json_object *poEPSG = json_object_new_int64(atoi(pszAuthCode));
@@ -593,12 +798,8 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                 json_object_object_add(poStac, "proj:epsg", nullptr);
             }
             {
-                // PROJJSON requires PROJ >= 6.2
-                CPLErrorStateBackuper oCPLErrorHandlerPusher(
-                    CPLQuietErrorHandler);
                 char *pszProjJson = nullptr;
-                OGRErr result =
-                    OSRExportToPROJJSON(hSRS, &pszProjJson, nullptr);
+                OGRErr result = poSRS->exportToPROJJSON(&pszProjJson, nullptr);
                 if (result == OGRERR_NONE)
                 {
                     json_object *poStacProjJson =
@@ -610,10 +811,10 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
             }
 
             json_object *poAxisMapping = json_object_new_array();
-            for (int i = 0; i < nAxesCount; i++)
+            for (int nMapping : anAxes)
             {
                 json_object_array_add(poAxisMapping,
-                                      json_object_new_int(panAxes[i]));
+                                      json_object_new_int(nMapping));
             }
             json_object_object_add(poCoordinateSystem,
                                    "dataAxisToSRSAxisMapping", poAxisMapping);
@@ -627,18 +828,31 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
         }
         else
         {
-            Concat(osStr, psOptions->bStdoutOutput,
-                   "Coordinate System is:\n%s\n", pszPrettyWkt);
+            if (psOptions->osInvokedFrom == "gdal-raster-info")
+            {
+                EmitTextDisplayOfCRS(poSRS, psOptions->osCRSFormat,
+                                     "Coordinate Reference System",
+                                     [&osStr, psOptions](const std::string &s)
+                                     {
+                                         Concat(osStr, psOptions->bStdoutOutput,
+                                                "%s", s.c_str());
+                                     });
+            }
+            else
+            {
+                Concat(osStr, psOptions->bStdoutOutput,
+                       "Coordinate System is:\n%s\n", osWkt.c_str());
+            }
 
             Concat(osStr, psOptions->bStdoutOutput,
                    "Data axis to CRS axis mapping: ");
-            for (int i = 0; i < nAxesCount; i++)
+            for (size_t i = 0; i < anAxes.size(); i++)
             {
                 if (i > 0)
                 {
                     Concat(osStr, psOptions->bStdoutOutput, ",");
                 }
-                Concat(osStr, psOptions->bStdoutOutput, "%d", panAxes[i]);
+                Concat(osStr, psOptions->bStdoutOutput, "%d", anAxes[i]);
             }
             Concat(osStr, psOptions->bStdoutOutput, "\n");
 
@@ -657,7 +871,6 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
                        "Coordinate epoch: %s\n", osCoordinateEpoch.c_str());
             }
         }
-        CPLFree(pszPrettyWkt);
 
         if (psOptions->bReportProj4)
         {

@@ -141,7 +141,7 @@ struct OGRSpatialReference::Private
     void setRoot(OGR_SRSNode *poRoot);
     void refreshProjObj();
     void nodesChanged();
-    void refreshRootFromProjObj();
+    void refreshRootFromProjObj(bool bForceWKT2);
     void invalidateNodes();
 
     void setMorphToESRI(bool b);
@@ -392,7 +392,7 @@ void OGRSpatialReference::Private::refreshProjObj()
     }
 }
 
-void OGRSpatialReference::Private::refreshRootFromProjObj()
+void OGRSpatialReference::Private::refreshRootFromProjObj(bool bForceWKT2)
 {
     CPLAssert(m_poRoot == nullptr);
 
@@ -406,7 +406,8 @@ void OGRSpatialReference::Private::refreshRootFromProjObj()
         }
         aosOptions.SetNameValue("STRICT", "NO");
 
-        const char *pszWKT;
+        const char *pszWKT = nullptr;
+        if (!bForceWKT2)
         {
             CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
             pszWKT = proj_as_wkt(getPROJContext(), m_pj_crs,
@@ -1181,7 +1182,7 @@ OGR_SRSNode *OGRSpatialReference::GetRoot()
 
     if (!d->m_poRoot)
     {
-        d->refreshRootFromProjObj();
+        d->refreshRootFromProjObj(false);
     }
     return d->m_poRoot;
 }
@@ -1192,7 +1193,7 @@ const OGR_SRSNode *OGRSpatialReference::GetRoot() const
 
     if (!d->m_poRoot)
     {
-        d->refreshRootFromProjObj();
+        d->refreshRootFromProjObj(false);
     }
     return d->m_poRoot;
 }
@@ -1246,6 +1247,12 @@ void OGRSpatialReference::SetRoot(OGR_SRSNode *poNewRoot)
 OGR_SRSNode *OGRSpatialReference::GetAttrNode(const char *pszNodePath)
 
 {
+    if (strstr(pszNodePath, "CONVERSION") && !d->m_bNodesWKT2)
+    {
+        d->invalidateNodes();
+        d->refreshRootFromProjObj(/* bForceWKT2 = */ true);
+    }
+
     if (strchr(pszNodePath, '|') == nullptr)
     {
         // Fast path

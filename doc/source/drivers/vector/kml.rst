@@ -167,6 +167,7 @@ Developer Forum <http://groups.google.com/group/kml-support>`__, in the
 stripes <http://groups.google.com/group/kml-support-getting-started/browse_thread/thread/e6995b8073e69c41>`__
 thread.
 
+Also note this driver is **not** KMZ-aware.
 See Also
 --------
 

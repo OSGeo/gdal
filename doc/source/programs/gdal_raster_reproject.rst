@@ -334,3 +334,16 @@ Examples
    .. code-block:: bash
 
         $ gdal raster reproject --dst-crs=EPSG:32632 in.tif out.tif --overwrite
+
+.. example::
+   :title: Converting a raster that uses an embedded CRS without a known identifier
+
+   In this example, the input file has an embedded CRS defined in WKT2 but without an associated identifier,
+   and it will be reprojected to the known `ESRI:54052 <https://spatialreference.org/ref/esri/54052/>`__ CRS identifier.
+
+   Using ``"PROFILE=BASELINE"`` creates a :term:`PAM` file that stores the CRS using the ``ESRI:54052`` identifier,
+   instead of embedding CRS information in GeoTIFF metadata tags. See :ref:`GTiff <raster.gtiff>` ``PROFILE``.
+
+   .. code-block:: bash
+
+        $ gdal raster reproject --creation-option "PROFILE=BASELINE" --dst-crs=ESRI:54052 input.tif output.tif --overwrite
