@@ -305,6 +305,35 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
                             eGeomType = computeGeometryTypeFun();
                             bSkipRowGroups = true;
                         }
+
+                        // Fall back to CRS from GeoParquet geo metadata if
+                        // present. Arrow >= 21 registers geoarrow.wkb as a
+                        // native extension type so the column may not carry a
+                        // Parquet Geometry/Geography logical type, even though
+                        // the file was written as a valid GeoParquet 1.1 file.
+                        // Per GeoParquet 1.1 spec an absent "crs" field implies
+                        // OGC:CRS84 (WGS 84, lon/lat).
+                        const auto oGeoColIter =
+                            m_oMapGeometryColumns.find(field->name());
+                        if (oGeoColIter != m_oMapGeometryColumns.end())
+                        {
+                            const auto oCRS = oGeoColIter->second["crs"];
+                            if (!oCRS.IsValid())
+                            {
+                                crs = "EPSG:4326";
+                            }
+                            else if (oCRS.GetType() ==
+                                     CPLJSONObject::Type::String)
+                            {
+                                crs = oCRS.ToString();
+                            }
+                            else if (oCRS.GetType() ==
+                                     CPLJSONObject::Type::Object)
+                            {
+                                crs = oCRS.Format(
+                                    CPLJSONObject::PrettyFormat::Plain);
+                            }
+                        }
                     }
 
                     // Cf https://github.com/apache/parquet-format/blob/master/Geospatial.md#crs-customization
