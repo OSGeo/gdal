@@ -58,6 +58,10 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         The date tied to spatial coordinates in a dynamic reference frame, used to account for positional changes over time (e.g., due to tectonic motion).
 
+    Coordinate System
+
+        The mathematical framework that defines how coordinates are measured and represented within a geometric coordinate space.
+
     CPL
 
         Common Portability Library. Part of the C API that provides convenience
@@ -74,8 +78,8 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
     CRS
 
-        Coordinate Reference System. Specifies how coordinates correspond to locations on Earth (or other celestial bodies!),
-        including the coordinate system, :term:`datum`, and, if applicable, a projection.
+        Coordinate Reference System. Specifies how coordinates correspond to locations on Earth (or other celestial bodies),
+        including the :term:`coordinate system`, :term:`datum`, and, if applicable, a projection.
 
     CSL
 
@@ -90,7 +94,8 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
     Datum
 
         A model of the Earth that specifies the size and shape of the reference :term:`ellipsoid` and its position and orientation
-        relative to the Earth, providing the basis for a :term:`CRS`.
+        relative to the Earth, providing the basis for a :term:`CRS`. In geodetic datums, this defines horizontal positioning.
+        Vertical datums define a reference surface for height values (e.g., mean sea level or a geoid) used for vertical coordinates in 3D operations.
 
     DEM
 

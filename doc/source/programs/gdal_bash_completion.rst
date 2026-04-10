@@ -97,6 +97,7 @@ Examples of completion
 
 .. example::
    :title: Auto-completion of EPSG CRS codes
+   :id: gdal-bash-completion-crs
 
    .. code-block:: console
 

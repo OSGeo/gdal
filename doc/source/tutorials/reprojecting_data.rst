@@ -86,7 +86,7 @@ a command-line tool to display and validate a CRS:
 
 .. code-block:: bash
 
-    gdalsrsinfo -V IAU_2015:30100
+    gdalsrsinfo -V EPSG:27561
 
 GDAL can work with the many different CRS formats supported by PROJ, see :example:`gdal-vector-reproject-crs`. See the full list
 of options at the `projinfo <https://proj.org/en/stable/apps/projinfo.html>`__ page.
@@ -97,6 +97,20 @@ Now let's reproject the raster dataset to Web Mercator, and look at the projecti
 
     gdal raster reproject --dst-crs=EPSG:3857 NE2_50M_SR.tif NE2_50M_SR_3857.tif
     gdal raster info NE2_50M_SR_3857.tif
+
+.. note::
+
+    If you are using ``bash`` you can take advantage of auto-completion for CRS codes, see :ref:`gdal_bash_completion`.
+    This suggests potential CRS codes, but taking advantage of this requires the input dataset to be specified first:
+
+    .. code-block:: bash
+
+        $ gdal raster reproject NE2_50M_SR.tif --dst-crs=EPSG:385<TAB>
+        3850 -- ETRS89-SWE [SWEREF 99] / RT90 5 gon O emulation  3852 -- RSRGD2000 / DGLC2000    3855 -- EGM2008 height
+        3851 -- NZGD2000 / NZCS2000                              3854 -- County ST74             3857 -- WGS 84 / Pseudo-Mercator
+
+     As this example uses a global raster, many CRS options are shown. When working with a more localized dataset,
+     auto-completion will suggest only CRSs relevant to the area covered by the data.
 
 The CRS output is shown below.
 
@@ -185,7 +199,7 @@ but also reduces the output resolution and may affect reprojection accuracy.
 
         gdal raster pipeline \
         ! read NE2_50M_SR.tif \
-        ! resize --size=10%,10% \
+        ! resize --size=10%,10% -r average \
         ! reproject --dst-crs ESRI:53009 \
         ! write NE2_50M_SR_53009.png --overwrite
 
@@ -193,7 +207,7 @@ but also reduces the output resolution and may affect reprojection accuracy.
 
         gdal raster pipeline `
         ! read NE2_50M_SR.tif `
-        ! resize --size=10%,10% `
+        ! resize --size=10%,10% -r average `
         ! reproject --dst-crs ESRI:53009 `
         ! write NE2_50M_SR_53009.png --overwrite
 

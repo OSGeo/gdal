@@ -60,3 +60,6 @@ Raster and Vector How do I...
 
 ... extract pixel values from a raster and apply them to a point dataset?
    :example:`gdal-raster-pixel-info-extract`
+
+... know which :term:`CRS`\s are suitable for reprojecting my dataset?
+   :example:`gdal-bash-completion-crs`

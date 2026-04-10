@@ -27,6 +27,7 @@ References and applicable standards
 -----------------------------------
 
 - |PROJ| documentation: projection methods and coordinate operations
+- `Spatial Reference <https://spatialreference.org>`_: an extensive database of spatial reference systems in standardized formats like Well-Known Text (WKT) or PROJJSON
 - `ISO:19111 and WKT standards <https://proj.org/development/reference/cpp/cpp_general.html#general_doc_1standards>`_
 - `GeoTIFF Projections Transform List <http://geotiff.maptools.org/proj_list>`_: understanding formulations of projections in WKT for GeoTIFF
 - `EPSG Geodesy web page <https://www.epsg.org>`_ is also a useful resource
