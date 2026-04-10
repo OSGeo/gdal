@@ -54,7 +54,8 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
                _("Dataset (to be updated in-place, unless --auxiliary)"),
                &m_dataset, GDAL_OF_RASTER | GDAL_OF_UPDATE)
             .SetPositional()
-            .SetRequired();
+            .SetRequired()
+            .SetOpenForUpdateUnlessAnyOf({"auxiliary"});
         AddOpenOptionsArg(&m_openOptions);
         AddArg("auxiliary", 0,
                _("Ask for an auxiliary .aux.xml file to be edited"),
