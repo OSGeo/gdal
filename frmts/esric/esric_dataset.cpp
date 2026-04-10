@@ -1670,7 +1670,6 @@ GDALDataset *CreateCopy(const char* pszFilename,
     }
 
     const bool bSrcHasAlpha = (nBands == 2 || nBands == 4);
-    const bool bAddAlpha = (!bJPEG && !bSrcHasAlpha);
     int bHasNoData = FALSE;
     const double dfSrcNoData =
         poEffectiveSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
@@ -1730,6 +1729,12 @@ GDALDataset *CreateCopy(const char* pszFilename,
     CPLStringList aosTileOptions;
     if (bJPEG)
         aosTileOptions.SetNameValue("QUALITY", CPLSPrintf("%d", nQuality));
+
+    // Fill value for transparent areas. Use nodata if set, else 253
+    // Manually setting 253 is not ideal but it matches the behaviour of ArcGIS Pro which fills
+    // empty JPEG tiles with RGBA(253, 253, 253, 255). Otherwise, we end up with black tiles since
+    // the reader interprets empty/missing tiles as 0
+    const int nFillVal = bHasNoData ? static_cast<int>(dfSrcNoData) : 253;
 
     // Generate tiles for each LOD
     int nTilesWritten = 0;
@@ -1837,17 +1842,11 @@ GDALDataset *CreateCopy(const char* pszFilename,
             psWO->nSrcAlphaBand = nBands;
             psWO->nDstAlphaBand = nBands;
         }
-        else if (bAddAlpha)
-        {
-            // PNG without source alpha. Warp all source bands
-            // and expand to alpha
-            psWO->nBandCount = nBands;
-            psWO->nDstAlphaBand = nBands + 1;
-        }
         else
         {
-            // JPEG. No alpha
+            // No source alpha. Warp all source bands and add an alpha band
             psWO->nBandCount = nBands;
+            psWO->nDstAlphaBand = nBands + 1;
         }
 
         psWO->panSrcBands = static_cast<int *>(
@@ -1861,8 +1860,15 @@ GDALDataset *CreateCopy(const char* pszFilename,
         }
         psWO->pTransformerArg = hApproxTransform;
         psWO->pfnTransformer = GDALApproxTransform;
+
+        // Initialise destination no data
+        psWO->padfDstNoDataReal = static_cast<double*>(
+            CPLMalloc(sizeof(double) * psWO->nBandCount));
+        for (int i = 0; i < psWO->nBandCount; i++)
+            psWO->padfDstNoDataReal[i] = nFillVal;
+
         psWO->papszWarpOptions =
-            CSLSetNameValue(nullptr, "INIT_DEST", "0");
+            CSLSetNameValue(nullptr, "INIT_DEST", "NO_DATA");
 
         // Set the source no data if it exists
         if (bHasNoData)
@@ -1894,8 +1900,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
         // Query the actual VRT band count
         const int nVRTBands = GDALGetRasterCount(hWarpedDS);
         // Number of color bands in the VRT
-        const int nColorBands =
-            (nTileBands == 4) ? nVRTBands - 1 : nVRTBands;
+        const int nColorBands = nVRTBands - 1;
 
         for (int nRow = nMinRow;
              nRow <= nMaxRow && eErr == CE_None; nRow++)
@@ -1922,26 +1927,17 @@ GDALDataset *CreateCopy(const char* pszFilename,
                     break;
                 }
 
-                // Skip empty tiles
-                // PNG: skip when alpha is all zero
-                // JPEG: skip when all bytes are zero (consistent with reader returning zeroed
-                //          pixels for missing tiles).
+                // Skip empty PNG tiles where alpha is all 0.
+                // For JPEG, we fill the tile with fill value so do not skip here. Otherwise, they
+                // will show up as black tiles due to the color values being all 0s
                 bool bEmpty = false;
-                if (nTileBands == 4)
+                if (!bJPEG)
                 {
                     const GByte *pabyAlpha =
                         abySrc.data() +
-                        static_cast<size_t>(nVRTBands - 1) *
-                            nTilePixels;
+                        static_cast<size_t>(nVRTBands - 1) * nTilePixels;
                     bEmpty = std::all_of(
                         pabyAlpha, pabyAlpha + nTilePixels,
-                        [](GByte b) { return b == 0; });
-                }
-                else
-                {
-                    // JPEG
-                    bEmpty = std::all_of(
-                        abySrc.begin(), abySrc.end(),
                         [](GByte b) { return b == 0; });
                 }
 
