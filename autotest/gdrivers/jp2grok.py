@@ -19,6 +19,7 @@ import sys
 
 import gdaltest
 import pytest
+import webserver
 from test_py_scripts import samples_path
 
 from osgeo import gdal, ogr, osr
@@ -1550,6 +1551,45 @@ def test_jp2grok_multitile_overview_decode():
 
 
 ###############################################################################
+# Test reading a remote JP2 via /vsicurl/ (handled natively by Grok's libcurl
+# backend when available).  Uses a real URL, so it is only run when slow
+# tests are enabled.
+
+
+def test_jp2grok_vsicurl_remote():
+
+    if not gdaltest.run_slow_tests():
+        pytest.skip("GDAL_RUN_SLOW_TESTS not set")
+    if "CURL_ENABLED=YES" not in gdal.VersionInfo("BUILD_INFO"):
+        pytest.skip("curl not enabled in this GDAL build")
+
+    url = (
+        "/vsicurl/https://www.opengeodata.nrw.de/produkte/geobasis/lusat/"
+        "akt/dop/dop_jp2_f10/dop10rgbi_32_280_5653_1_nw_2025.jp2"
+    )
+
+    gdal.VSICurlClearCache()
+    try:
+        ds = gdal.Open(url)
+        if ds is None:
+            pytest.skip("remote host unreachable: " + gdal.GetLastErrorMsg())
+        assert ds.RasterXSize > 0
+        assert ds.RasterYSize > 0
+        assert ds.RasterCount >= 1
+        # Read a small window from an overview (if any) or from the full-res
+        # upper-left corner to exercise the fetch path without pulling
+        # too much data.
+        band = ds.GetRasterBand(1)
+        w = min(64, ds.RasterXSize)
+        h = min(64, ds.RasterYSize)
+        data = band.ReadRaster(0, 0, w, h, w, h)
+        assert data is not None and len(data) > 0
+        ds = None
+    finally:
+        gdal.VSICurlClearCache()
+
+
+###############################################################################
 # Test driver metadata
 
 
@@ -1562,3 +1602,169 @@ def test_jp2grok_driver_metadata():
     assert drv.GetMetadataItem(gdal.DCAP_CREATECOPY) == "YES"
     assert "jp2" in drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
     assert "j2k" in drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
+
+
+###############################################################################
+# Webserver fixture for HTTP tests
+
+
+@pytest.fixture(scope="module")
+def server():
+
+    process, port = webserver.launch(handler=webserver.DispatcherHttpHandler)
+    if port == 0:
+        pytest.skip("cannot start HTTP server")
+
+    import collections
+
+    WebServer = collections.namedtuple("WebServer", "process port")
+
+    yield WebServer(process, port)
+
+    gdal.VSICurlClearCache()
+    webserver.server_stop(process, port)
+
+
+###############################################################################
+# Test: blocklisted HTTP settings force VSILFILE fallback.
+#
+# When an unsupported GDAL HTTP config option is set, GrokCanRead() should
+# return false for /vsicurl/ paths, causing the driver to use GDAL's VSILFILE
+# callbacks instead of Grok's native libcurl I/O.  The dataset should still
+# open successfully — just via the fallback path.
+
+
+# Each entry is (config_option, value) that should trigger VSILFILE fallback.
+_BLOCKLIST_CASES = [
+    ("GDAL_HTTP_AUTH", "NTLM"),
+    ("GDAL_HTTP_AUTH", "NEGOTIATE"),
+    ("GDAL_HTTP_SSLCERT", "/path/to/cert.pem"),
+    ("GDAL_HTTP_SSLKEY", "/path/to/key.pem"),
+    ("GDAL_HTTP_SSLCERTTYPE", "PEM"),
+    ("GDAL_HTTP_KEYPASSWD", "secret"),
+    ("GDAL_HTTP_SSL_VERIFYSTATUS", "YES"),
+    ("GDAL_CURL_CA_BUNDLE", "/path/to/ca-bundle.crt"),
+    ("GDAL_HTTP_CAPATH", "/etc/ssl/certs"),
+    ("GDAL_HTTP_HEADER_FILE", "/tmp/headers.txt"),
+    ("GDAL_HTTPS_PROXY", "http://proxy:8443"),
+    ("GDAL_PROXY_AUTH", "NTLM"),
+    ("GDAL_HTTP_LOW_SPEED_TIME", "30"),
+    ("GDAL_HTTP_LOW_SPEED_LIMIT", "1024"),
+    ("GDAL_GSSAPI_DELEGATION", "POLICY"),
+]
+
+
+@pytest.mark.require_curl()
+@pytest.mark.parametrize(
+    "option,value", _BLOCKLIST_CASES, ids=[c[0] for c in _BLOCKLIST_CASES]
+)
+def test_jp2grok_blocklist_fallback(server, option, value, tmp_path):
+    """Blocklisted HTTP settings should trigger VSILFILE fallback while still
+    allowing the dataset to open successfully via GDAL's VSI layer."""
+
+    # GDAL_HTTP_HEADER_FILE requires the file to actually exist, otherwise
+    # GDAL logs an error when it tries to read headers from it.
+    if option == "GDAL_HTTP_HEADER_FILE":
+        header_file = tmp_path / "headers.txt"
+        header_file.write_text("X-Test: FallbackValue\n")
+        value = str(header_file)
+
+    jp2_data = open("data/jpeg2000/byte.jp2", "rb").read()
+    gdal.VSICurlClearCache()
+
+    handler = webserver.FileHandler({"/byte.jp2": jp2_data})
+    url = "/vsicurl/http://localhost:%d/byte.jp2" % server.port
+
+    with gdal.config_option(option, value):
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open(url)
+            # The dataset should open successfully via the VSILFILE callback
+            # path — GDAL's own curl handles the request.
+            assert ds is not None
+            assert ds.RasterXSize == 100
+            assert ds.RasterYSize == 100
+            ds = None
+
+    gdal.VSICurlClearCache()
+
+
+###############################################################################
+# Test: BASIC and BEARER auth should NOT trigger fallback (Grok handles these).
+
+
+@pytest.mark.require_curl()
+@pytest.mark.parametrize("auth_scheme", ["BASIC", "BEARER"])
+def test_jp2grok_supported_auth_no_fallback(server, auth_scheme):
+    """BASIC and BEARER auth are handled by Grok natively and should not
+    trigger the VSILFILE fallback path."""
+
+    jp2_data = open("data/jpeg2000/byte.jp2", "rb").read()
+    gdal.VSICurlClearCache()
+
+    handler = webserver.FileHandler({"/byte.jp2": jp2_data})
+    url = "/vsicurl/http://localhost:%d/byte.jp2" % server.port
+
+    with gdal.config_option("GDAL_HTTP_AUTH", auth_scheme):
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open(url)
+            assert ds is not None
+            assert ds.RasterXSize == 100
+            assert ds.RasterYSize == 100
+            ds = None
+
+    gdal.VSICurlClearCache()
+
+
+###############################################################################
+# Test: GDAL_HTTP_HEADERS with a single custom header should be forwarded
+# to Grok's native I/O (no fallback).
+
+
+@pytest.mark.require_curl()
+def test_jp2grok_single_custom_header(server):
+    """A single GDAL_HTTP_HEADERS entry should be forwarded to Grok's
+    custom_headers[] without triggering VSILFILE fallback."""
+
+    jp2_data = open("data/jpeg2000/byte.jp2", "rb").read()
+    gdal.VSICurlClearCache()
+
+    handler = webserver.FileHandler({"/byte.jp2": jp2_data})
+    url = "/vsicurl/http://localhost:%d/byte.jp2" % server.port
+
+    with gdal.config_option("GDAL_HTTP_HEADERS", "X-Custom: TestValue"):
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open(url)
+            assert ds is not None
+            assert ds.RasterXSize == 100
+            assert ds.RasterYSize == 100
+            ds = None
+
+    gdal.VSICurlClearCache()
+
+
+###############################################################################
+# Test: GDAL_HTTP_HEADERS with multiple headers should still work
+# (forwarded to Grok's custom_headers[] array, up to GRK_MAX_CUSTOM_HEADERS).
+
+
+@pytest.mark.require_curl()
+def test_jp2grok_multiple_custom_headers(server):
+    """Multiple GDAL_HTTP_HEADERS entries should be forwarded to Grok's
+    custom_headers[] array."""
+
+    jp2_data = open("data/jpeg2000/byte.jp2", "rb").read()
+    gdal.VSICurlClearCache()
+
+    handler = webserver.FileHandler({"/byte.jp2": jp2_data})
+    url = "/vsicurl/http://localhost:%d/byte.jp2" % server.port
+
+    headers = "X-Custom1: Value1, X-Custom2: Value2, X-Custom3: Value3"
+    with gdal.config_option("GDAL_HTTP_HEADERS", headers):
+        with webserver.install_http_handler(handler):
+            ds = gdal.Open(url)
+            assert ds is not None
+            assert ds.RasterXSize == 100
+            assert ds.RasterYSize == 100
+            ds = None
+
+    gdal.VSICurlClearCache()
