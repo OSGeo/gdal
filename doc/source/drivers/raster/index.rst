@@ -43,6 +43,7 @@ Raster drivers
    cog
    cosar
    cpg
+   cphd
    ctg
    daas
    dds

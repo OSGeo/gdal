@@ -15,13 +15,11 @@
 from pathlib import Path
 
 import gdaltest
-import numpy as np
 import pytest
 
 from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("CPHD")
-
 
 
 @pytest.mark.require_curl()
@@ -40,6 +38,10 @@ pytestmark = pytest.mark.require_driver("CPHD")
     ],
 )
 def test_cphd_multidim_basic(file):
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
     bucket, obj = file
     options = {
         "AWS_S3_ENDPOINT": "https://s3.amazonaws.com",
