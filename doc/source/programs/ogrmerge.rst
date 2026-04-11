@@ -17,7 +17,7 @@ Synopsis
 
     ogrmerge [--help] [--help-general]
                 -o <out_dsname> <src_dsname> [<src_dsname>]...
-                [-f format] [-single] [-nln <layer_name_template>]
+                [-f format] [-of format] [-single] [-nln <layer_name_template>]
                 [-update | -overwrite_ds] [-append | -overwrite_layer]
                 [-src_geom_type <geom_type_name>[,<geom_type_name>]...]
                 [-dsco <NAME>=<VALUE>]... [-lco <NAME>=<VALUE>]...
@@ -74,7 +74,7 @@ potential manual editing of it and :program:`ogr2ogr` can be done.
 
     One or several input vector datasets. Required
 
-.. option:: -f <format>
+.. option:: -of <format_name>, -f <format_name>
 
     Select the output format. If not specified,
     the format is guessed from the extension (previously was ESRI
