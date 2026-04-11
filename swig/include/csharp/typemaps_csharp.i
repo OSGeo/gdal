@@ -600,9 +600,7 @@ CSHARP_OBJECT_ARRAYS_PINNED(GDALRasterBandShadow, Band)
       return ret;
     } %}
 %typemap(in) (GDALProgressFunc callback) %{ $1 = ($1_ltype)$input; %}
-%typemap(imtype) (void* callback_data) "string"
-%typemap(cstype) (void* callback_data) "string"
-%typemap(csin) (void* callback_data) "$csinput"
+%apply (const char *utf8_string) {(void* callback_data)};
 
 %ignore SWIGTYPE_p_GDALProgressFunc;
 

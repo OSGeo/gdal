@@ -1,6 +1,7 @@
 using System;
 
 using OSGeo.GDAL;
+using OSGeo.OSR;
 
 namespace testapp
 {
