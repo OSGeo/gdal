@@ -182,6 +182,7 @@ Examples
 
 .. example::
    :title: Return the CRS used by the raster using ``jq``
+   :id: gdal-raster-info-crs
 
    .. tabs::
 

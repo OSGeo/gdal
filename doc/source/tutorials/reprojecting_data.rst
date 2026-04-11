@@ -1,6 +1,7 @@
 Reprojecting Data with GDAL
 ===========================
 
+
 Reprojecting spatial data is a common task in GIS. Coordinate reference system (:term:`CRS`) transformations are handled by |PROJ|
 - a required dependency of GDAL. In this tutorial we'll walk through reprojecting both vector and raster data using data from the
 `Natural Earth <https://www.naturalearthdata.com/>`__ dataset.
@@ -14,11 +15,37 @@ We'll start by getting projection information from one of the Natural Earth rast
 
     gdal raster info NE2_50M_SR.tif
 
-:ref:`gdal_raster_info` returns the projection of the dataset in the WKT2 (Well-Known Text version 2) format.
-This format was defined by the |OGC| and represents a complete CRS definition, not just a projection.
+By default, :ref:`gdal_raster_info` returns a summary of the CRS in a human-readable format. The CRS information in the output is shown below:
+
+.. code-block::
+
+    Coordinate Reference System:
+      - name: WGS 84
+      - ID: EPSG:4326
+      - type: Geographic 2D
+      - area of use: World, west -180.00, south -90.00, east 180.00, north 90.00
+    Data axis to CRS axis mapping: 2,1
+
+These key details are explained below:
+
+- **name: WGS 84** - the name of the CRS. This is a human-readable name, and is not guaranteed to be unique.
+- **ID: EPSG:4326** - the unique identifier for the CRS in the :term:`EPSG` registry.
+- **type: Geographic 2D** - this indicates that the CRS is a geographic coordinate system (latitude and longitude), rather than a projected coordinate system (e.g. Web Mercator, UTM).
+  The "2D" indicates that the CRS has two dimensions (latitude and longitude), as opposed to a 3D CRS which would include a vertical component (e.g. height).
+- **area of use: World, west -180.00, south -90.00, east 180.00, north 90.00** - this indicates the area of the world where the CRS is intended to be used. In this case, it covers the entire world.
+- **Data axis to CRS axis mapping: 2,1** - this is a GDAL specific line showing how raster data axes map to the CRS axes.
+  Here, the raster uses (longitude, latitude) order, while the CRS defines axes as (latitude, longitude), so GDAL maps them accordingly.
+
+We can get more detailed information about the CRS by providing the ``--crs-format`` option.
+
+.. code-block:: bash
+
+    gdal raster info NE2_50M_SR.tif --crs-format=WKT2
+
+This shows the definition of the CRS in the WKT2 (Well-Known Text version 2). This format was defined by the |OGC| and represents a complete CRS definition, not just a projection.
 It includes everything GDAL needs to perform coordinate transformations - a full datum definition, the projection method
-and parameters, and axis definitions. The full specification is found at http://www.opengis.net/doc/is/crs-wkt/2.1.11,
-and latest version (and that used by GDAL) is ISO 19162:2019.
+and parameters (for projected CRSs), and axis definitions. The full specification is found at http://www.opengis.net/doc/is/crs-wkt/2.1.11,
+and the current widely adopted version is ISO 19162:2019, which GDAL supports.
 
 A breakdown of the WKT2 CRS contents is provided below.
 
@@ -62,11 +89,11 @@ A breakdown of the WKT2 CRS contents is provided below.
 
 - ``ENSEMBLEACCURACY[2.0]`` means all the different versions are considered equivalent within ~2 metres.
 
-- ``ELLIPSOID["WGS 84", 6378137, 298.257223563]`` defines the Earth's shape
+- ``ELLIPSOID["WGS 84", 6378137, 298.257223563]`` defines the Earth's shape.
 
-- ``PRIMEM["Greenwich",0...`` states the Prime meridian is at Greenwich (0° longitude)
+- ``PRIMEM["Greenwich",0...`` states the Prime meridian is at Greenwich (0° longitude).
 
-- ``CS[ellipsoidal,2],`` the Coordinate System is a 2-dimensional ellipsoidal
+- ``CS[ellipsoidal,2],`` the Coordinate System is a 2-dimensional ellipsoidal.
 
 - ``AXIS["geodetic longitude (Lon)",east, ORDER[2],`` details the axis order. In this case the CRS defines axis order as latitude, longitude.
   This differs from the traditional GIS display order (longitude, latitude), which can lead to confusion - for more discussion around this
@@ -75,10 +102,7 @@ A breakdown of the WKT2 CRS contents is provided below.
 - ``USAGE[...`` contains metadata associated with the coordinate system.
 
 - ``ID["EPSG",4326]`` - this is the familiar **EPSG:4326** code used to reference the CRS. This identifier links the WKT
-  definition to the EPSG registry, but the WKT itself is the authoritative, fully expanded definition used internally by GDAL.
-
-- ``Data axis to CRS axis mapping: 2,1`` - this is a GDAL specific line showing how raster data axes map to the CRS axes.
-  Here, the dataset stores coordinates as longitude, latitude, while the CRS defines them as latitude, longitude.
+  definition to the EPSG registry, but the WKT provides a fully expanded CRS definition that GDAL can use directly for coordinate transformations.
 
 You can look up the details for each coordinate system at https://spatialreference.org, for example https://spatialreference.org/ref/epsg/4326/.
 These pages also show coordinate systems in other formats. Alternatively, GDAL includes :ref:`gdalsrsinfo`,
@@ -91,7 +115,16 @@ a command-line tool to display and validate a CRS:
 GDAL can work with the many different CRS formats supported by PROJ, see :example:`gdal-vector-reproject-crs`. See the full list
 of options at the `projinfo <https://proj.org/en/stable/apps/projinfo.html>`__ page.
 
-Now let's reproject the raster dataset to Web Mercator, and look at the projection information.
+You can also use ``--output-crs=PROJJSON`` to return the CRS definition in PROJJSON format, which is a JSON-based format defined by PROJ for representing coordinate reference systems.
+This is generally easier to parse programmatically than WKT, and is also the format used when outputting dataset details in JSON (e.g. with ``--format=JSON``).
+See :example:`gdal-raster-info-crs` for an example of parsing CRS information from JSON output.
+
+.. code-block:: bash
+
+    gdal raster info NE2_50M_SR.tif --crs-format=PROJJSON
+    gdal raster info NE2_50M_SR.tif --format=JSON
+
+Now let's reproject the raster dataset to Web Mercator, and look at the CRS information.
 
 .. code-block:: bash
 
@@ -109,8 +142,37 @@ Now let's reproject the raster dataset to Web Mercator, and look at the projecti
         3850 -- ETRS89-SWE [SWEREF 99] / RT90 5 gon O emulation  3852 -- RSRGD2000 / DGLC2000    3855 -- EGM2008 height
         3851 -- NZGD2000 / NZCS2000                              3854 -- County ST74             3857 -- WGS 84 / Pseudo-Mercator
 
-     As this example uses a global raster, many CRS options are shown. When working with a more localized dataset,
-     auto-completion will suggest only CRSs relevant to the area covered by the data.
+   As this example uses a global raster, many CRS options are shown. When working with a more localized dataset,
+   auto-completion will suggest only CRSs relevant to the area covered by the data.
+
+The CRS information from the above command is shown below.
+
+.. code-block::
+
+    Coordinate Reference System:
+      - name: WGS 84 / Pseudo-Mercator
+      - ID: EPSG:3857
+      - type: Projected
+      - projection type: Popular Visualisation Pseudo-Mercator, Popular Visualisation Pseudo Mercator
+      - units: metre
+      - area of use: World between 85.06°S and 85.06°N, west -180.00, south -85.06, east 180.00, north 85.06
+    Data axis to CRS axis mapping: 1,2
+
+The key differences to note here are:
+
+- **type: Projected** - this indicates that the CRS is a projected coordinate system, which uses a map projection to convert geographic coordinates
+  (latitude and longitude) into planar coordinates (easting and northing).
+- **projection type: Popular Visualisation Pseudo-Mercator, Popular Visualisation Pseudo Mercator** - this shows both the projection conversion name and the EPSG method name.
+  They are identical here because the CRS uses the standard EPSG:1024 Web Mercator method, so both the conversion and method labels resolve to the same projection definition.
+- **units: metre** - the units of the projected coordinates are in metres, rather than degrees as in the original geographic CRS.
+- **Data axis to CRS axis mapping: 1,2** - this indicates that the data axis order matches the CRS axis order (X, Y). In contrast,
+  the original geographic CRS (EPSG:4326) defines axes as (latitude, longitude), requiring a mapping of 2,1.
+
+Let's also look at the full WKT definition for this CRS.
+
+.. code-block:: bash
+
+    gdal raster info NE2_50M_SR_3857.tif  --crs-format=WKT2
 
 The CRS output is shown below.
 
@@ -163,23 +225,19 @@ The CRS output is shown below.
         ID["EPSG",3857]]
     Data axis to CRS axis mapping: 1,2
 
-- ``PROJCRS["WGS 84 / Pseudo-Mercator",`` - this is a *projected* CRS rather than a *geographic* CRS
+- ``PROJCRS["WGS 84 / Pseudo-Mercator",`` - this is a *projected* CRS rather than a *geographic* CRS.
 
-- ``BASEGEOGCRS["WGS 84", ...]`` - the underlying coordinate reference system is based on WGS 84. The same properties as
-   above are listed here
+- ``BASEGEOGCRS["WGS 84", ...]`` - the underlying coordinate reference system is based on WGS 84. The same properties as above are listed here.
 
-- ``CONVERSION["Popular Visualisation Pseudo-Mercator", ...]`` this details the map projection itself
+- ``CONVERSION["Popular Visualisation Pseudo-Mercator", ...]`` this details the map projection itself.
 
-- ``CS[Cartesian,2]`` - the projected units are a 2D Cartesian system (X, Y)
+- ``CS[Cartesian,2]`` - the projected units are a 2D Cartesian system (X, Y).
 
-- ``AXIS["easting (X)",east] AXIS["northing (Y)",north]`` - X = easting, Y = northing
+- ``AXIS["easting (X)",east] AXIS["northing (Y)",north]`` - X = easting, Y = northing.
 
-- ``LENGTHUNIT["metre",1]`` - units are in metres
+- ``LENGTHUNIT["metre",1]`` - units are in metres.
 
-- ``USAGE[`` - the metadata indicating the CRS is intended for web mapping, and also that the ``BBOX`` does not cover the full extent of WGS84 and
-   does not handle data at the poles.
-
-- ``Data axis to CRS axis mapping: 1,2`` - this indicates that the data axis order matches the CRS axis order (X, Y).
+- ``USAGE[`` - the metadata indicating the CRS is intended for web mapping, and also that the ``BBOX`` does not cover the full extent of WGS84 and cannot represent data at the poles.
 
 In practice, you will often refer to a CRS using an EPSG code (e.g. EPSG:4326), but GDAL internally works with full WKT definitions like the one shown above.
 Next, we'll use this CRS information to reproject both raster and vector datasets.
@@ -188,7 +246,7 @@ Raster
 ------
 
 Reprojecting raster data is handled by :ref:`gdal_raster_reproject` (see this page for further examples). Let's try an example using Natural Earth raster data.
-The original data is in WGS 84 (EPSG:4326) and we'll reproject it to a CRS not defined in the EPSG registry, `ESRI:53009 <https://spatialreference.org/ref/esri/53009/>`__
+The original data is in WGS 84 (EPSG:4326) and we'll reproject it to a CRS defined outside the EPSG registry, `ESRI:53009 <https://spatialreference.org/ref/esri/53009/>`__
 - the Mollweide projection. As this is a large file we'll also resize it to 10% of the original size to speed up the reprojection. The order of operations in the
 pipeline matters, and in this case we want to resize before reprojecting - this changes the processing time from a few minutes to a few seconds,
 but also reduces the output resolution and may affect reprojection accuracy.
@@ -213,7 +271,7 @@ but also reduces the output resolution and may affect reprojection accuracy.
 
 .. image:: ../../images/tutorials/NE2_50M_SR_53009.png
 
-Note that the output is a PNG file, and the projection information is stored in a companion file with the same name, using the extension ``.aux.xml``.
+Note that the output is a PNG file, and the CRS information is stored in a companion file with the same name, using the extension ``.aux.xml``.
 GDAL refers to these as :term:`PAM` (Persistent Auxiliary Metadata) files. They are used to store metadata that cannot
 be stored in the file itself, such as the CRS for formats that do not support it (e.g. PNG, JPEG).
 
