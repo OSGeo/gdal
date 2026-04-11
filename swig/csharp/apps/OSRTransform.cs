@@ -30,6 +30,8 @@ using OSGeo.OSR;
 /// </summary>
 class OSRTransform
 {
+	
+    const string UnicodeString = "Ĥĕļĺō Ŵŏŕľď";
     public static void Main(string[] args)
     {
         try
@@ -61,11 +63,45 @@ class OSRTransform
                     Console.WriteLine("x:" + p[0] + " y:" + p[1] + " z:" + p[2]);
                 }
             }
+			
+			//Test unicode string input and output
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+			Console.WriteLine("Testing 'out string' and 'ref string' parameters");
+            string wkText;
+            using (SpatialReference sr = new SpatialReference(null))
+            {
+                sr.ImportFromEPSG(4326); // WGS 84
+                sr.ExportToWkt(out wkText, null);
+                string name = sr.GetName();
+                int nameStart = wkText.IndexOf(name);
+                wkText = wkText.Substring(0, nameStart) + UnicodeString + wkText.Substring(nameStart + name.Length);
+            }
+
+            using (SpatialReference sr2 = new SpatialReference(null))
+            {
+                sr2.ImportFromWkt(ref wkText);
+                string name = sr2.GetName();
+                AssertEqual(UnicodeString, name, nameof(sr2.GetName));
+                sr2.ExportToWkt(out string wkTextImportExport, null);
+                AssertEqual(wkText, wkTextImportExport, $"{nameof(SpatialReference)}.{nameof(sr2.ExportToWkt)}");
+            }
+			
         }
         catch (Exception e)
         {
             Console.WriteLine("Error occurred: " + e.Message);
             System.Environment.Exit(-1);
+        }
+    }
+	private static void AssertEqual(string expected, string actual, string funcName)
+    {
+        if (expected == actual)
+        {
+            Console.WriteLine($"    {funcName} returned the expected value: '{expected ?? "NULL"}'");
+        }
+        else
+        {
+            throw new Exception($"Expected '{expected}' but {funcName} returned '{actual ?? "NULL"}'");
         }
     }
 }

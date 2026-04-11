@@ -1,7 +1,6 @@
 using System;
 
 using OSGeo.GDAL;
-using OSGeo.OSR;
 
 namespace testapp
 {
@@ -29,26 +28,6 @@ namespace testapp
             AssertEqual(gcp.Info, UnicodeString, $"{nameof(GCP)}.{nameof(gcp.Info)}");
             gcp.Id = UnicodeString;
             AssertEqual(gcp.Id, UnicodeString, $"{nameof(GCP)}.{nameof(gcp.Id)}");
-
-            Console.WriteLine("Testing 'out string' and 'ref string' parameters");
-            string wkText;
-            using (SpatialReference sr = new SpatialReference(null))
-            {
-                sr.ImportFromEPSG(4326); // WGS 84
-                sr.ExportToWkt(out wkText, null);
-                string name = sr.GetName();
-                int nameStart = wkText.IndexOf(name);
-                wkText = wkText.Substring(0, nameStart) + UnicodeString + wkText.Substring(nameStart + name.Length);
-            }
-
-            using (SpatialReference sr2 = new SpatialReference(null))
-            {
-                sr2.ImportFromWkt(ref wkText);
-                string name = sr2.GetName();
-                AssertEqual(UnicodeString, name, nameof(sr2.GetName));
-                sr2.ExportToWkt(out string wkTextImportExport, null);
-                AssertEqual(wkText, wkTextImportExport, $"{nameof(SpatialReference)}.{nameof(sr2.ExportToWkt)}");
-            }
         }
 
         private static void RunTest(string name, Func<string, string, string> getter, Action<string, string> setter)
