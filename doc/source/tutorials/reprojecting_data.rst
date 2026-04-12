@@ -153,7 +153,7 @@ The CRS information from the above command is shown below.
       - name: WGS 84 / Pseudo-Mercator
       - ID: EPSG:3857
       - type: Projected
-      - projection type: Popular Visualisation Pseudo-Mercator, Popular Visualisation Pseudo Mercator
+      - projection type: Popular Visualisation Pseudo Mercator
       - units: metre
       - area of use: World between 85.06°S and 85.06°N, west -180.00, south -85.06, east 180.00, north 85.06
     Data axis to CRS axis mapping: 1,2
@@ -162,8 +162,8 @@ The key differences to note here are:
 
 - **type: Projected** - this indicates that the CRS is a projected coordinate system, which uses a map projection to convert geographic coordinates
   (latitude and longitude) into planar coordinates (easting and northing).
-- **projection type: Popular Visualisation Pseudo-Mercator, Popular Visualisation Pseudo Mercator** - this shows both the projection conversion name and the EPSG method name.
-  They are identical here because the CRS uses the standard EPSG:1024 Web Mercator method, so both the conversion and method labels resolve to the same projection definition.
+- **projection type: Popular Visualisation Pseudo Mercator** - this shows both the projection conversion name and method name. In this case the names
+  are identical, but in some cases they may differ (e.g. the conversion name may be "UTM zone 33N" while the method is "Transverse Mercator").
 - **units: metre** - the units of the projected coordinates are in metres, rather than degrees as in the original geographic CRS.
 - **Data axis to CRS axis mapping: 1,2** - this indicates that the data axis order matches the CRS axis order (X, Y). In contrast,
   the original geographic CRS (EPSG:4326) defines axes as (latitude, longitude), requiring a mapping of 2,1.
