@@ -2,7 +2,7 @@
  *
  * Name:     csharp_strings.i
  * Project:  GDAL CSharp Interface
- * Purpose:  Typemaps for C# marshalling to/from UTF-8.
+ * Purpose:  Typemaps for C# marshalling to/from UTF-8 strings and string lists
  * Authors:  Tamas Szekeres, szekerest@gmail.com
  *           Michael Bucari-Tovo, mbucari1@gmail.com
  *
@@ -12,16 +12,17 @@
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
-
-%insert(runtime) %{
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-%}
-
-
-/******************************************************************************
- * Marshaler for NULL terminated UTF-8 encoded strings                        *
+/*******************************************************************************
+ * Marshaler for NULL terminated UTF-8 encoded strings                         *
+ * Creates a callback function which is used from the native runtime to create *
+ * .NET strings. The managed Utf8StringHelper registers a callback function    *
+ * with the native runtime which is used by the native runtime to create .NET  *
+ * strings. When called by the native runtime, the .NET function allocates     *
+ * unmanaged memory and decodes the UTF-8 string into a length-prefixed UTF-16 *
+ * string into that buffer. A pointer to that buffer is returned. When the     *
+ * callback returns to managed .NET, a managed string is created from the      *
+ * unmanaged buffer using LengthPrefixedUtf16UnmanagedToString, which frees    *
+ * the unmanaged memory that was allocated by the callback function.           *
  ******************************************************************************/
 
 %insert(runtime) %{
@@ -44,9 +45,10 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
       RegisterUtf8StringCallback_$module(stringDelegate);
     }
   }
-  
+
+  //Instantiate the helper class so that the static constructor executes
   public static readonly Utf8StringHelper utf8StringHelper = new Utf8StringHelper();
-  
+
   public unsafe static IntPtr Utf8UnmanagedToLengthPrefixedUtf16Unmanaged(IntPtr pUtf8Bts)
   {
     if (pUtf8Bts == IntPtr.Zero)
@@ -105,7 +107,7 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
 
 %insert(runtime) %{
 #ifdef __cplusplus
-extern "C" 
+extern "C"
 #endif
 SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringHelperCallback callback) {
   SWIG_csharp_string_callback = callback;
@@ -115,8 +117,6 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 /******************************************************************************
  * Apply typemaps for all SWIG string types and for const char *utf8_string   *
  ******************************************************************************/
-
-/* Changing csin and imtype typemaps for string types defined by SWIG in csharp.swg */
 
 %typemap(cstype) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "string"
 %typemap(imtype) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "IntPtr"
@@ -129,12 +129,25 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
   $result = SWIG_csharp_string_callback((const char *)$1);
 %}
 
-%typemap(csin, 
-         pre="    IntPtr temp$csinput = $modulePINVOKE.StringToUtf8Unmanaged($csinput);", 
-         post="    Marshal.FreeHGlobal(temp$csinput);",
-         cshin="$csinput"
-        ) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
-         "temp$csinput"
+%typemap(csin,
+  pre="    IntPtr temp$csinput = $modulePINVOKE.StringToUtf8Unmanaged($csinput);",
+  post="    Marshal.FreeHGlobal(temp$csinput);",
+  cshin="$csinput"
+  ) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
+  "temp$csinput"
+
+%typemap(csout, excode=SWIGEXCODE) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
+{
+  /* %typemap(csout) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) */
+  IntPtr cPtr = $imcall;
+  string ret = $modulePINVOKE.LengthPrefixedUtf16UnmanagedToString(cPtr);
+  $excode
+  return ret;
+}
+
+/*
+ * Typemap for UTF-8 char* string properties.
+ */
 
 %typemap(csvarin, excode=SWIGEXCODE2) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
   /* %typemap(csvarin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) */
@@ -146,16 +159,8 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
     finally {
       Marshal.FreeHGlobal(temp$csinput);
     }
-  } %}
-
-%typemap(csout, excode=SWIGEXCODE) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
-  {
-    /* %typemap(csout) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) */
-    IntPtr cPtr = $imcall;
-    string ret = $modulePINVOKE.LengthPrefixedUtf16UnmanagedToString(cPtr);
-    $excode
-    return ret;
   }
+%}
 
 %typemap(csvarout, excode=SWIGEXCODE2) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
   get {
@@ -164,4 +169,174 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
     string ret = $modulePINVOKE.LengthPrefixedUtf16UnmanagedToString(cPtr);
     $excode
     return ret;
-  } %}
+  }
+%}
+
+/*
+ * Typemaps for  (retStringAndCPLFree*)
+ */
+
+%typemap(out) (retStringAndCPLFree*) %{
+  /* %typemap(out) (retStringAndCPLFree*) */
+  if($1)
+  {
+    $result = SWIG_csharp_string_callback((const char *)$1);
+    CPLFree($1);
+  }
+  else
+  {
+    $result = NULL;
+  }
+%}
+
+/*
+ * Typemap for char **argout. Used for 'out string' parameters.
+ */
+
+%typemap(imtype) (char** argout), (char **username), (char **usrname), (char **type) "ref IntPtr"
+%typemap(cstype) (char** argout), (char **username), (char **usrname), (char **type) "out string"
+%typemap(in) (char **argout), (char **username), (char **usrname), (char **type) %{ $1 = ($1_ltype)$input; %}
+%typemap(csin,
+  pre="    IntPtr temp$csinput = IntPtr.Zero;",
+  post="    $csinput = $modulePINVOKE.LengthPrefixedUtf16UnmanagedToString(temp$csinput);",
+  cshin="out $csinput"
+  ) (char** argout), (char **username), (char **usrname), (char **type)
+  "ref temp$csinput"
+
+%typemap(argout) (char **argout)
+{
+  /* %typemap(argout) (char **argout) */
+  char* temp_string;
+  temp_string = SWIG_csharp_string_callback(*$1);
+  if (*$1)
+    CPLFree(*$1);
+  *$1 = temp_string;
+}
+%typemap(argout) (char **username), (char **usrname), (char **type)
+{
+  /* %typemap(argout) (char **username), (char **usrname), (char **type) */
+  *$1 = SWIG_csharp_string_callback(*$1);
+}
+
+/*
+ * Typemap for char **ignorechange. Used for 'ref string' parameters where
+ * caller doesn't want to see changes.
+ */
+
+%typemap(imtype) (char **ignorechange) "ref IntPtr"
+%typemap(cstype) (char **ignorechange) "ref string"
+%typemap(csin,
+  pre="    IntPtr temp$csinput = $modulePINVOKE.StringToUtf8Unmanaged($csinput);",
+  post="    Marshal.FreeHGlobal(temp$csinput);",
+  cshin="ref $csinput"
+  ) (char** ignorechange)
+  "ref temp$csinput"
+
+%typemap(in, noblock="1") (char **ignorechange)
+{
+  /* %typemap(in) (char **ignorechange) */
+  $*1_type savearg = *(($1_type)$input);
+  $1 = ($1_ltype)$input;
+}
+%typemap(argout, noblock="1") (char **ignorechange)
+{
+  /* %typemap(argout) (char **ignorechange) */
+  if ((*$1 - savearg) > 0)
+     memmove(savearg, *$1, strlen(*$1)+1);
+  *$1 = savearg;
+}
+
+/******************************************************************************
+ * Marshaler for NULL terminated lists of NULL terminated UTF-8 strings.     *
+ *****************************************************************************/
+
+%pragma(csharp) imclasscode=%{
+  public class StringListMarshal : IDisposable {
+    public readonly IntPtr[] _ar;
+    public StringListMarshal(string[] ar) {
+      _ar = new IntPtr[ar.Length+1];
+      for (int cx = 0; cx < ar.Length; cx++) {
+	      _ar[cx] = $modulePINVOKE.StringToUtf8Unmanaged(ar[cx]);
+      }
+      _ar[ar.Length] = IntPtr.Zero;
+    }
+    public virtual void Dispose() {
+	  for (int cx = 0; cx < _ar.Length-1; cx++) {
+          System.Runtime.InteropServices.Marshal.FreeHGlobal(_ar[cx]);
+      }
+      GC.SuppressFinalize(this);
+    }
+  }
+%}
+
+/*
+ * Typemap for char** options, char **dict, char **dictAndCSLDestroy, char **CSL
+ */
+
+%typemap(imtype, out="IntPtr") char **options, char **dict, char **dictAndCSLDestroy, char **CSL "IntPtr[]"
+%typemap(cstype) char **options, char **dict, char **dictAndCSLDestroy, char **CSL "string[]"
+%typemap(in) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{ $1 = ($1_ltype)$input; %}
+%typemap(out) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{ $result = $1; %}
+%typemap(csin) char **options, char **dict, char **dictAndCSLDestroy, char **CSL "($csinput == null) ? null : new $modulePINVOKE.StringListMarshal($csinput)._ar"
+
+/*
+ * C# code to marshal NULL terminated lists of NULL terminated UTF-8 strings.
+ */
+
+%define CS_MARSHAL_STRING_LIST()
+  IntPtr cPtr = $imcall;
+  IntPtr objPtr;
+  int count = 0;
+  if (cPtr != IntPtr.Zero) {
+    while (Marshal.ReadIntPtr(cPtr, count*IntPtr.Size) != IntPtr.Zero)
+      ++count;
+  }
+  string[] ret = new string[count];
+  if (count > 0) {
+    for(int cx = 0; cx < count; cx++) {
+      objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
+      ret[cx]= (objPtr == IntPtr.Zero) ? null : $module.Utf8BytesToString(objPtr);
+    }
+  }
+%enddef
+
+/*
+ * Marshal char**options, char **dict to string[] and don't free the unmanaged
+ * string list.
+ */
+
+%typemap(csout, excode=SWIGEXCODE) char**options, char **dict
+{
+  /* %typemap(csout) char**options, char **dict */
+  CS_MARSHAL_STRING_LIST()
+  $excode
+  return ret;
+}
+
+/*
+ * Marshal char** CSL, char **dictAndCSLDestroy to string[] and then free the
+ * unmanaged string list.
+ */
+
+%typemap(csout, excode=SWIGEXCODE) char** CSL, char **dictAndCSLDestroy {
+  /* %typemap(csout) char** CSL, char **dictAndCSLDestroy */
+  CS_MARSHAL_STRING_LIST()
+  if (cPtr != IntPtr.Zero)
+    $modulePINVOKE.StringListDestroy(cPtr);
+  $excode
+  return ret;
+}
+
+/*
+ * Expose the CSLDestroy function to free string lists
+ */
+
+%typemap(imtype) void *string_list_ptr "IntPtr"
+%typemap(cstype) void *string_list_ptr "IntPtr"
+%typemap(csin) void *string_list_ptr "$csinput"
+%inline %{
+  #include "cpl_string.h"
+  void StringListDestroy(void *string_list_ptr) {
+    CSLDestroy((char**)string_list_ptr);
+  }
+%}
