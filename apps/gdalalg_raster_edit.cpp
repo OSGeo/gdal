@@ -257,7 +257,7 @@ bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         {
             // We can directly edit an anonymous input VRT file
             // and we actually need to do that since the generic code path
-            // in the other branch will try ot serialize and serialize a XML
+            // in the other branch will try to serialize and deserialize a XML
             // file pointing to an anonymous source.
             m_outputDataset.Set(poSrcDS);
         }
