@@ -1336,6 +1336,23 @@ def generate_parquet_list_binary():
     pq.write_table(table, HERE / "data/parquet/list_binary.parquet")
 
 
+def generate_parquet_largelist():
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    largelist = pa.array([[1]], pa.large_list(pa.int64()))
+
+    names = ["largelist"]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    HERE = pathlib.Path(__file__).parent
+    pq.write_table(table, HERE / "data/parquet/largelistint.parquet")
+
+
 if __name__ == "__main__":
     generate_test_parquet()
     generate_all_geoms_parquet()
@@ -1348,3 +1365,4 @@ if __name__ == "__main__":
     generate_arrow_listview()
     generate_arrow_largelistview()
     generate_parquet_list_binary()
+    generate_parquet_largelist()
