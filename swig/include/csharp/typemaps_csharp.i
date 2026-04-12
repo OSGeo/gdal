@@ -66,17 +66,23 @@ OGRErrMessages( int rc ) {
   case 0:
     return "OGR Error %d: None";
   case 1:
-    return "OGR Error %d: Not enough data";
+    return "OGR Error %d: Not enough data to deserialize";
   case 2:
-    return "OGR Error %d: Unsupported geometry type";
+    return "OGR Error %d: Not enough memory";
   case 3:
-    return "OGR Error %d: Unsupported operation";
+    return "OGR Error %d: Unsupported geometry type";
   case 4:
-    return "OGR Error %d: Corrupt data";
+    return "OGR Error %d: Unsupported operation";
   case 5:
-    return "OGR Error %d: General Error";
+    return "OGR Error %d: Corrupt data";
   case 6:
+    return "OGR Error %d: General Error";
+  case 7:
     return "OGR Error %d: Unsupported SRS";
+  case 8:
+    return "OGR Error %d: Invalid handle";
+  case 9:
+    return "OGR Error %d: Non existing feature";
   default:
     return "OGR Error %d: Unknown";
   }
