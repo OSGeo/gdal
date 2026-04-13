@@ -710,8 +710,12 @@ if (BUILD_TESTING)
       ${CMAKE_CURRENT_SOURCE_DIR}/apps/GDALTestUtf8.cs
       DEPENDS
       gdal_csharp
+      ogr_csharp
+      osr_csharp
       SYSTEM_DEPENDS
-      OSGeo.GDAL)
+      OSGeo.GDAL
+      OSGeo.OGR
+      OSGeo.OSR)
 
     gdal_build_csharp_sample(
       OUTPUT
