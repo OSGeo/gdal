@@ -99,6 +99,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   BYN -raster- (rov): Natural Resources Canada's Geoid (*.byn, *.err)
   NOAA_B -raster- (rov): NOAA GEOCON/NADCON5 .b format (*.b)
   NSIDCbin -raster- (rov): NSIDC Sea Ice Concentrations binary (.bin) (*.bin)
+  CPHD -raster,multidimensional raster- (ro): Compensated Phase History Data Reader
   RIK -raster- (rov): Swedish Grid RIK (.rik) (*.rik)
   USGSDEM -raster- (rov): USGS Optional ASCII DEM (and CDED) (*.dem)
   GXF -raster- (rov): GeoSoft Grid Exchange Format (*.gxf)

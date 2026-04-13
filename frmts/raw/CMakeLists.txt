@@ -33,7 +33,6 @@ add_gdal_driver(
           envidataset.cpp
           nsidcbindataset.cpp
           rawdrivers.cpp
-          cphddataset.h
           cphddataset.cpp
   PLUGIN_CAPABLE NO_DEPS)
 gdal_standard_includes(gdal_raw)

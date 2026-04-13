@@ -12,13 +12,13 @@
 #include <cmath>
 #include <functional>
 #include <iostream>
+#include <limits>
 
 #include "cpl_vsi_virtual.h"
 #include "gdal_frmts.h"
+#include "gdal_multidim.h"
 #include "memmultidim.h"
 #include "rawdataset.h"
-
-#include "cphddataset.h"
 
 static int CPHDDatasetIdentify(GDALOpenInfo *poOpenInfo);
 
@@ -214,15 +214,15 @@ struct CPHDSharedResources
     std::string m_osFilename;
     CPLXMLTreeCloser m_poXMLTree;
 
-    size_t nXmlBlockSize = 0;
-    size_t nXmlBlockByteOffset = 0;
-    size_t nSupportBlockSize = 0;
-    size_t nSupportBlockByteOffset = 0;
-    size_t nPVPBlockSize = 0;
-    size_t nPVPBlockByteOffset = 0;
-    size_t nPVPArrayByteOffset = 0;
-    size_t nSignalBlockSize = 0;
-    size_t nSignalBlockByteOffset = 0;
+    GIntBig nXmlBlockSize = 0;
+    vsi_l_offset nXmlBlockByteOffset = 0;
+    GIntBig nSupportBlockSize = 0;
+    vsi_l_offset nSupportBlockByteOffset = 0;
+    GIntBig nPVPBlockSize = 0;
+    vsi_l_offset nPVPBlockByteOffset = 0;
+    vsi_l_offset nPVPArrayByteOffset = 0;
+    GIntBig nSignalBlockSize = 0;
+    vsi_l_offset nSignalBlockByteOffset = 0;
 
     CPHDSharedResources(const std::string &osFilename, VSILFILE *fp)
         : m_fp(fp), m_osFilename(osFilename), m_poXMLTree(nullptr)
@@ -239,11 +239,18 @@ class CPHDInternalDataset final : public RawDataset
     friend class CPHDGroup;
 
   protected:
-    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override
-    {
-        return CE_None;
-    }
+    CPLErr Close(GDALProgressFunc = nullptr, void * = nullptr) override;
 };
+
+/************************************************************************/
+/*                                Close                                 */
+/************************************************************************/
+
+CPLErr CPHDInternalDataset::Close(GDALProgressFunc, void *)
+
+{
+    return CE_None;
+}
 
 /************************************************************************/
 /*                           CPHDInternalBand                           */
@@ -261,7 +268,18 @@ class CPHDInternalBand final : public RawRasterBand
                         RawRasterBand::OwnFP::NO)
     {
     }
+
+    ~CPHDInternalBand() override;
 };
+
+/************************************************************************/
+/*                          ~CPHDInternalBand                           */
+/************************************************************************/
+
+CPHDInternalBand::~CPHDInternalBand()
+
+{
+}
 
 /************************************************************************/
 /*                             CPHDMDArray                              */
@@ -359,7 +377,18 @@ class CPHDMDArray final : public GDALMDArray
     {
         return m_apoAttributes;
     }
+
+    ~CPHDMDArray() override;
 };
+
+/************************************************************************/
+/*                             ~CPHDMDArray                             */
+/************************************************************************/
+
+CPHDMDArray::~CPHDMDArray()
+
+{
+}
 
 /************************************************************************/
 /*                              CPHDGroup                               */
@@ -410,6 +439,39 @@ class CPHDGroup final : public GDALGroup
 /* ==================================================================== */
 /************************************************************************/
 
+class CPHDDataset final : public RawDataset
+{
+    CPL_DISALLOW_COPY_ASSIGN(CPHDDataset)
+    std::shared_ptr<GDALGroup> m_poRootGroup{};
+
+  protected:
+    CPLErr Close(GDALProgressFunc, void *) override;
+
+  public:
+    CPHDDataset()
+    {
+    }
+
+    static GDALDataset *OpenMultiDim(GDALOpenInfo *poOpenInfo);
+
+    std::shared_ptr<GDALGroup> GetRootGroup() const override
+    {
+        return m_poRootGroup;
+    }
+
+    static GDALDataset *Open(GDALOpenInfo *);
+};
+
+/************************************************************************/
+/*                                Close                                 */
+/************************************************************************/
+
+CPLErr CPHDDataset::Close(GDALProgressFunc, void *)
+
+{
+    return CE_None;
+}
+
 /************************************************************************/
 /*                            OpenMultiDim()                            */
 /************************************************************************/
@@ -452,19 +514,23 @@ GDALDataset *CPHDDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
             else if EQUAL (aosTokens[0], "XML_BLOCK_SIZE")
                 poShared->nXmlBlockSize = CPLAtoGIntBig(aosTokens[1]);
             else if EQUAL (aosTokens[0], "XML_BLOCK_BYTE_OFFSET")
-                poShared->nXmlBlockByteOffset = CPLAtoGIntBig(aosTokens[1]);
+                poShared->nXmlBlockByteOffset =
+                    static_cast<GUIntBig>(CPLAtoGIntBig(aosTokens[1]));
             else if EQUAL (aosTokens[0], "SUPPORT_BLOCK_SIZE")
                 poShared->nSupportBlockSize = CPLAtoGIntBig(aosTokens[1]);
             else if EQUAL (aosTokens[0], "SUPPORT_BLOCK_BYTE_OFFSET")
-                poShared->nSupportBlockByteOffset = CPLAtoGIntBig(aosTokens[1]);
+                poShared->nSupportBlockByteOffset =
+                    static_cast<GUIntBig>(CPLAtoGIntBig(aosTokens[1]));
             else if EQUAL (aosTokens[0], "PVP_BLOCK_SIZE")
                 poShared->nPVPBlockSize = CPLAtoGIntBig(aosTokens[1]);
             else if EQUAL (aosTokens[0], "PVP_BLOCK_BYTE_OFFSET")
-                poShared->nPVPBlockByteOffset = CPLAtoGIntBig(aosTokens[1]);
+                poShared->nPVPBlockByteOffset =
+                    static_cast<GUIntBig>(CPLAtoGIntBig(aosTokens[1]));
             else if EQUAL (aosTokens[0], "SIGNAL_BLOCK_SIZE")
                 poShared->nSignalBlockSize = CPLAtoGIntBig(aosTokens[1]);
             else if EQUAL (aosTokens[0], "SIGNAL_BLOCK_BYTE_OFFSET")
-                poShared->nSignalBlockByteOffset = CPLAtoGIntBig(aosTokens[1]);
+                poShared->nSignalBlockByteOffset =
+                    static_cast<GUIntBig>(CPLAtoGIntBig(aosTokens[1]));
             else
                 poRootGroup->m_apoAttributes.emplace_back(
                     std::make_shared<GDALAttributeString>(
@@ -490,29 +556,27 @@ GDALDataset *CPHDDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
                 VSIStatBufL sStat;
                 if (VSIStatL(poOpenInfo->pszFilename, &sStat) == 0)
                 {
-                    size_t nFileSize = static_cast<size_t>(sStat.st_size);
+                    GIntBig nFileSize = static_cast<GIntBig>(sStat.st_size);
                     if (poShared->nXmlBlockSize > nFileSize)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Request XML block size %li is too large for "
-                                 "file %s with size %li",
-                                 poShared->nXmlBlockSize,
-                                 poOpenInfo->pszFilename, nFileSize);
+                                 "XML block size is too large for file %s",
+                                 poOpenInfo->pszFilename);
                         return nullptr;
                     }
                 }
             }
 
-            osBuffer.resize(poShared->nXmlBlockSize);
+            osBuffer.resize(static_cast<size_t>(poShared->nXmlBlockSize));
         }
         catch (const std::exception &e)
         {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Out of memory allocating XML buffer");
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
             return nullptr;
         }
 
-        poShared->m_fp->Read(&osBuffer[0], poShared->nXmlBlockSize, 1);
+        poShared->m_fp->Read(&osBuffer[0],
+                             static_cast<size_t>(poShared->nXmlBlockSize), 1);
 
         poShared->m_poXMLTree.reset(CPLParseXMLString(osBuffer));
 
@@ -605,9 +669,6 @@ std::shared_ptr<CPHDGroup> CPHDGroup::AddChannel(const CPLXMLNode *psChannel)
     const auto pszPVPArrayByteOffset =
         CPLGetXMLValue(psChannel, "PVPArrayByteOffset", nullptr);
 
-    const auto nXSize = atoi(pszSignalArrayWidth);
-    const auto nYSize = atoi(pszSignalArrayHeight);
-
     if ((pszSignalBlockFormat == nullptr) ||
         (pszSignalArrayByteOffset == nullptr) ||
         (pszSignalArrayWidth == nullptr) || (pszSignalArrayHeight == nullptr))
@@ -628,6 +689,9 @@ std::shared_ptr<CPHDGroup> CPHDGroup::AddChannel(const CPLXMLNode *psChannel)
             m_poShared->m_osFilename.c_str());
         return nullptr;
     }
+
+    const auto nXSize = atoi(pszSignalArrayWidth);
+    const auto nYSize = atoi(pszSignalArrayHeight);
 
     if (nXSize < 0 || nYSize < 0)
     {
@@ -892,6 +956,15 @@ std::shared_ptr<GDALMDArray> CPHDGroup::OpenMDArray(const std::string &osName,
             {
                 const auto poPVPArray =
                     std::dynamic_pointer_cast<MEMMDArray>(poArray);
+
+                if (!poPVPArray)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Error opening PVP array : %s",
+                             m_poShared->m_osFilename.c_str());
+                    return nullptr;
+                }
+
                 if (poPVPArray->IsWritable())
                 {
                     // read PVP array
@@ -924,17 +997,14 @@ std::shared_ptr<GDALMDArray> CPHDGroup::OpenMDArray(const std::string &osName,
                             if (VSIStatL(m_poShared->m_osFilename.c_str(),
                                          &sStat) == 0)
                             {
-                                size_t nFileSize =
-                                    static_cast<size_t>(sStat.st_size);
+                                GIntBig nFileSize =
+                                    static_cast<GIntBig>(sStat.st_size);
                                 if (m_poShared->nPVPBlockSize > nFileSize)
                                 {
-                                    CPLError(
-                                        CE_Failure, CPLE_AppDefined,
-                                        "Request PVP block size %li is too "
-                                        "large for file %s with size %li",
-                                        m_poShared->nPVPBlockSize,
-                                        m_poShared->m_osFilename.c_str(),
-                                        nFileSize);
+                                    CPLError(CE_Failure, CPLE_AppDefined,
+                                             "PVP block size is too large for "
+                                             "file %s",
+                                             m_poShared->m_osFilename.c_str());
                                     return nullptr;
                                 }
                             }
@@ -946,7 +1016,8 @@ std::shared_ptr<GDALMDArray> CPHDGroup::OpenMDArray(const std::string &osName,
                                 return nullptr;
                             }
                         }
-                        m_abyPVPData.resize(m_poShared->nPVPBlockSize);
+                        m_abyPVPData.resize(
+                            static_cast<size_t>(m_poShared->nPVPBlockSize));
                     }
                     catch (const std::exception &)
                     {
@@ -954,9 +1025,10 @@ std::shared_ptr<GDALMDArray> CPHDGroup::OpenMDArray(const std::string &osName,
                                  "Out of memory allocating PVP buffer");
                         return nullptr;
                     }
-                    if (m_poShared->m_fp->Read(m_abyPVPData.data(),
-                                               m_poShared->nPVPBlockSize) !=
-                        m_poShared->nPVPBlockSize)
+                    if (m_poShared->m_fp->Read(
+                            m_abyPVPData.data(),
+                            static_cast<size_t>(m_poShared->nPVPBlockSize)) !=
+                        static_cast<size_t>(m_poShared->nPVPBlockSize))
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Unable to read PVPs from %s",
