@@ -1110,6 +1110,13 @@ void GDALRegister_CPHD()
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
                               "Compensated Phase History Data Reader");
     poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, "drivers/raster/cphd.html");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "<Option name='INCLUDE_XML' type='boolean' "
+        "description='Whether to include the XML string as a group attribute' "
+        "default='YES'/>"
+        "</OpenOptionList>");
     poDriver->pfnOpen = CPHDDataset::Open;
     poDriver->pfnIdentify = CPHDDatasetIdentify;
 
