@@ -393,6 +393,20 @@ def test_gdalalg_raster_pipeline_edit_metadata(tmp_vsimem):
         assert ds.GetMetadata() == {"AREA_OR_POINT": "Area", "bar": "baz"}
 
 
+def test_gdalalg_raster_pipeline_complex():
+    """Test case of https://github.com/OSGeo/gdal/issues/14331"""
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
+    ds = gdal.GetDriverByName("MEM").CreateCopy("", src_ds)
+    with gdal.alg.raster.pipeline(
+        input=ds,
+        pipeline="read ! reproject --dst-crs EPSG:4326 ! edit --metadata DESC=stuff",
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert ds.GetMetadataItem("DESC") == "stuff"
+
+
 def test_gdalalg_raster_edit_gcp_from_list_of_values():
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
