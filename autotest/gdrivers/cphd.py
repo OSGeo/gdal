@@ -21,6 +21,131 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("CPHD")
 
+attribute_names = [
+    "cphd_version",
+    "classification",
+    "collect_type",
+    "collector_name",
+    "core_name",
+    "radar_mode",
+    "xml",
+]
+
+
+def test_cphd_local():
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    # test CPHD file generated with sarkit and then edited, it does not contain valid data
+    filename = Path(__file__).parent / "data" / "cphd" / "test.cphd"
+    with gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER) as ds:
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        assert rg.GetGroupNames() == ["1"]
+        attrs = rg.GetAttributes()
+        assert attrs
+        attr_names = [a.GetName() for a in attrs]
+        assert sorted(list(set(attr_names) - set(attribute_names))) == [
+            "k",
+            "release_info",
+        ]
+
+        # test most used attributes
+        assert rg.GetAttribute("cphd_version").Read() == "1.1.0"
+        assert rg.GetAttribute("classification").Read() == "UNCLASSIFIED"
+        assert rg.GetAttribute("collect_type").Read() == "MONOSTATIC"
+        assert rg.GetAttribute("collector_name").Read() == "Synthetic"
+        assert rg.GetAttribute("core_name").Read() == "SyntheticCore"
+        assert rg.GetAttribute("radar_mode").Read() == "SPOTLIGHT"
+        xml = rg.GetAttribute("xml").Read()
+        assert xml.startswith("<CPHD ")
+
+        # test custom attribute
+        assert rg.GetAttribute("k").Read() == "V"
+
+        assert rg.GetMDArrayNames() == []
+
+        grp = rg.OpenGroup("1")
+        assert grp
+
+        # check array names
+        array_names = grp.GetMDArrayNames()
+        assert array_names
+        assert array_names == ["SignalBlock", "PVP"]
+
+        # check dimensions
+        pvp_array = grp.OpenMDArray("PVP")
+        assert pvp_array.GetDimensionCount() == 1
+        assert pvp_array.GetDimensions()[0].GetName() == "Vector"
+        assert pvp_array.GetDimensions()[0].GetSize() == 1
+
+        # check compound data type
+        cdt = pvp_array.GetDataType()
+        assert cdt.GetName() == "PVPDataType"
+        assert cdt.GetClass() == gdal.GEDTC_COMPOUND
+        assert cdt.GetSize() == 360
+        comps = cdt.GetComponents()
+        assert len(comps) == 25
+
+        # check first few components
+        assert comps[0].GetName() == "TxTime"
+        assert comps[0].GetOffset() == 0
+        assert comps[0].GetType().GetNumericDataType() == gdal.GDT_Float64
+
+        assert comps[1].GetName() == "TxPos"
+        assert comps[1].GetOffset() == 8
+        tx_dt = comps[1].GetType()
+        assert tx_dt.GetClass() == gdal.GEDTC_COMPOUND
+        assert len(tx_dt.GetComponents()) == 3
+        assert tx_dt.GetComponents()[0].GetName() == "X"
+        assert tx_dt.GetComponents()[1].GetName() == "Y"
+        assert tx_dt.GetComponents()[2].GetName() == "Z"
+
+        # read first few vector parameters, they are all zero
+        arr = pvp_array.ReadAsArray(array_start_idx=[0], count=[1])
+        assert arr["TxTime"][0] == 0
+        assert arr["TxPos"][0]["X"] == 0
+        assert arr["TxPos"][0]["Y"] == 0
+        assert arr["TxPos"][0]["Z"] == 0
+
+        # test TxAntenna.TxACX, TxAntenna.TxACY and TxAntenna.TxEB
+        assert arr["TxAntenna.TxACX"][0]["X"] == 0
+        assert arr["TxAntenna.TxACX"][0]["Y"] == 0
+        assert arr["TxAntenna.TxACX"][0]["Z"] == 0
+        assert arr["TxAntenna.TxACY"][0]["X"] == 0
+        assert arr["TxAntenna.TxACY"][0]["Y"] == 0
+        assert arr["TxAntenna.TxACY"][0]["Z"] == 0
+        assert arr["TxAntenna.TxEB"][0]["DCX"] == 0
+        assert arr["TxAntenna.TxEB"][0]["DCY"] == 0
+
+        # test RcvAntenna.RcvACX, RcvAntenna.RcvACY and RcvAntenna.RcvEB
+        assert arr["RcvAntenna.RcvACX"][0]["X"] == 0
+        assert arr["RcvAntenna.RcvACX"][0]["Y"] == 0
+        assert arr["RcvAntenna.RcvACX"][0]["Z"] == 0
+        assert arr["RcvAntenna.RcvACY"][0]["X"] == 0
+        assert arr["RcvAntenna.RcvACY"][0]["Y"] == 0
+        assert arr["RcvAntenna.RcvACY"][0]["Z"] == 0
+        assert arr["RcvAntenna.RcvEB"][0]["DCX"] == 0
+        assert arr["RcvAntenna.RcvEB"][0]["DCY"] == 0
+
+        # test AddedPVP MyPVP
+        assert arr["MyPVP"][0] == 0
+
+        # test signal block
+        signal_array = grp.OpenMDArray("SignalBlock")
+        assert signal_array.GetDimensionCount() == 2
+        assert signal_array.GetDimensions()[0].GetName() == "Y"
+        assert signal_array.GetDimensions()[1].GetName() == "X"
+        assert signal_array.GetDimensions()[0].GetSize() == 1
+        assert signal_array.GetDimensions()[1].GetSize() == 1
+
+        arr = signal_array.ReadAsArray(
+            array_start_idx=[0, 0],
+            count=[1, 1],
+        )
+        assert arr[0][0] == np.complex64(0 + 0j)
+
 
 @pytest.mark.require_curl()
 @pytest.mark.network
@@ -49,16 +174,6 @@ def test_cphd_multidim_basic(file):
         "AWS_VIRTUAL_HOSTING": "TRUE",
         "AWS_REGION": "us-west-2",
     }
-
-    attribute_names = [
-        "cphd_version",
-        "classification",
-        "collect_type",
-        "collector_name",
-        "core_name",
-        "radar_mode",
-        "xml",
-    ]
 
     with gdaltest.credentials("/vsis3/" + bucket, options):
         # check whether file is cached for local development

@@ -10,6 +10,7 @@
  ****************************************************************************/
 
 #include <cmath>
+#include <functional>
 #include <iostream>
 
 #include "cpl_vsi_virtual.h"
@@ -57,117 +58,147 @@ static GDALExtendedDataType ParsePVPDataType(const CPLXMLNode *psPvpXML,
                                              const char *pszFileName)
 {
     std::vector<std::unique_ptr<GDALEDTComponent>> comps;
-    auto *psPvpChild = psPvpXML->psChild;
-    std::string osPrefix{};
+    bool bSort = false;
     size_t nSize = 0;
+    int nLastOffset = 0;
+    auto *psPvpChild = psPvpXML->psChild;
 
-    for (; psPvpChild != nullptr; psPvpChild = psPvpChild->psNext)
+    std::function<bool(const CPLXMLNode *, const char *)> parseChildPVPDataType;
+    parseChildPVPDataType =
+        [&parseChildPVPDataType, &bSort, &comps, &nSize, &nLastOffset,
+         &pszFileName](const CPLXMLNode *psNode, const char *pszPrefix)
     {
-        if (psPvpChild->eType == CXT_Element)
+        if (psNode->eType != CXT_Element)
         {
-            auto osElementName = osPrefix + std::string(psPvpChild->pszValue);
-
-            if (osElementName == "AddedPVP")
-                osElementName = CPLGetXMLValue(psPvpChild, "Name", "");
-
-            const auto pszFormat =
-                CPLGetXMLValue(psPvpChild, "Format", nullptr);
-            const auto pszOffset =
-                CPLGetXMLValue(psPvpChild, "Offset", nullptr);
-
-            if (pszFormat && pszOffset)
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unexpected XML error parsing : %s", pszFileName);
+            return false;
+        }
+        auto osElementName =
+            (pszPrefix == nullptr)
+                ? std::string(psNode->pszValue)
+                : std::string(pszPrefix) + std::string(psNode->pszValue);
+        if ((osElementName == "TxAntenna") || (osElementName == "RcvAntenna"))
+        {
+            auto *psChild = psNode->psChild;
+            for (; psChild != nullptr; psChild = psChild->psNext)
             {
-                // all values are multiples of 8 bytes
-                auto nOffset = atoi(pszOffset);
-                if (nOffset < 0 ||
-                    nOffset > (std::numeric_limits<int>::max() / 8))
+                if (!parseChildPVPDataType(
+                        psChild, (std::string(psNode->pszValue) + ".").c_str()))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Invalid offset %s for %s in %s.", pszOffset,
+                             "Expected child elements for %s : %s",
                              osElementName.c_str(), pszFileName);
-                    return GDALExtendedDataType::Create(GDT_Unknown);
+                    return false;
                 }
-                nOffset = atoi(pszOffset) * 8;
+            }
+            return true;
+        }
+        else if (osElementName == "AddedPVP")
+        {
+            osElementName = CPLGetXMLValue(psNode, "Name", "");
+        }
 
-                if EQUAL (pszFormat, "X=F8;Y=F8;Z=F8;")
-                {
-                    std::vector<std::unique_ptr<GDALEDTComponent>> xyzComps;
-                    xyzComps.emplace_back(
-                        std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
-                            "X", 0,
-                            GDALExtendedDataType::Create(GDT_Float64))));
-                    xyzComps.emplace_back(
-                        std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
-                            "Y", 8,
-                            GDALExtendedDataType::Create(GDT_Float64))));
-                    xyzComps.emplace_back(
-                        std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
-                            "Z", 16,
-                            GDALExtendedDataType::Create(GDT_Float64))));
-                    auto dtXYZ(GDALExtendedDataType::Create(
-                        "XYZ", 24, std::move(xyzComps)));
-                    comps.emplace_back(std::unique_ptr<GDALEDTComponent>(
-                        new GDALEDTComponent(osElementName, nOffset, dtXYZ)));
-                    nSize += 24;
-                }
-                else if EQUAL (pszFormat, "DCX=F8;DCY=F8;")
-                {
-                    std::vector<std::unique_ptr<GDALEDTComponent>> xyComps;
-                    xyComps.emplace_back(
-                        std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
-                            "DCX", 0,
-                            GDALExtendedDataType::Create(GDT_Float64))));
-                    xyComps.emplace_back(
-                        std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
-                            "DCY", 8,
-                            GDALExtendedDataType::Create(GDT_Float64))));
-                    auto dtXY(GDALExtendedDataType::Create("DCXDCY", 16,
-                                                           std::move(xyComps)));
-                    comps.emplace_back(std::unique_ptr<GDALEDTComponent>(
-                        new GDALEDTComponent(osElementName, nOffset, dtXY)));
-                    nSize += 16;
-                }
-                else if EQUAL (pszFormat, "F8")
-                {
-                    comps.emplace_back(
-                        std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
-                            osElementName, nOffset,
-                            GDALExtendedDataType::Create(GDT_Float64))));
-                    nSize += 8;
-                }
-                else if EQUAL (pszFormat, "I8")
-                {
-                    comps.emplace_back(
-                        std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
-                            osElementName, nOffset,
-                            GDALExtendedDataType::Create(GDT_Int64))));
-                    nSize += 8;
-                }
-                else
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Unrecognized format %s for %s : %s.", pszFormat,
-                             osElementName.c_str(), pszFileName);
-                    return GDALExtendedDataType::Create(GDT_Unknown);
-                }
+        const auto pszFormat = CPLGetXMLValue(psNode, "Format", nullptr);
+        const auto pszOffset = CPLGetXMLValue(psNode, "Offset", nullptr);
 
-                osPrefix = "";
+        if (pszFormat && pszOffset)
+        {
+            // all values are multiples of 8 bytes
+            auto nOffset = atoi(pszOffset);
+            if (nOffset < 0 || nOffset > (std::numeric_limits<int>::max() / 8))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid offset %s for %s in %s.", pszOffset,
+                         osElementName.c_str(), pszFileName);
+                return false;
+            }
+            nOffset *= 8;
+
+            if (nOffset < nLastOffset)
+                bSort = true;
+            else
+                nLastOffset = nOffset;
+
+            if EQUAL (pszFormat, "X=F8;Y=F8;Z=F8;")
+            {
+                std::vector<std::unique_ptr<GDALEDTComponent>> xyzComps;
+                xyzComps.emplace_back(
+                    std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
+                        "X", 0, GDALExtendedDataType::Create(GDT_Float64))));
+                xyzComps.emplace_back(
+                    std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
+                        "Y", 8, GDALExtendedDataType::Create(GDT_Float64))));
+                xyzComps.emplace_back(
+                    std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
+                        "Z", 16, GDALExtendedDataType::Create(GDT_Float64))));
+                auto dtXYZ(GDALExtendedDataType::Create("XYZ", 24,
+                                                        std::move(xyzComps)));
+                comps.emplace_back(std::unique_ptr<GDALEDTComponent>(
+                    new GDALEDTComponent(osElementName, nOffset, dtXYZ)));
+                nSize += 24;
+            }
+            else if EQUAL (pszFormat, "DCX=F8;DCY=F8;")
+            {
+                std::vector<std::unique_ptr<GDALEDTComponent>> xyComps;
+                xyComps.emplace_back(
+                    std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
+                        "DCX", 0, GDALExtendedDataType::Create(GDT_Float64))));
+                xyComps.emplace_back(
+                    std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
+                        "DCY", 8, GDALExtendedDataType::Create(GDT_Float64))));
+                auto dtXY(GDALExtendedDataType::Create("DCXDCY", 16,
+                                                       std::move(xyComps)));
+                comps.emplace_back(std::unique_ptr<GDALEDTComponent>(
+                    new GDALEDTComponent(osElementName, nOffset, dtXY)));
+                nSize += 16;
+            }
+            else if EQUAL (pszFormat, "F8")
+            {
+                comps.emplace_back(
+                    std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
+                        osElementName, nOffset,
+                        GDALExtendedDataType::Create(GDT_Float64))));
+                nSize += 8;
+            }
+            else if EQUAL (pszFormat, "I8")
+            {
+                comps.emplace_back(
+                    std::unique_ptr<GDALEDTComponent>(new GDALEDTComponent(
+                        osElementName, nOffset,
+                        GDALExtendedDataType::Create(GDT_Int64))));
+                nSize += 8;
             }
             else
             {
-                if (osElementName == "TxAntenna")
-                    osPrefix = "TxAntenna.";
-                else if (osElementName == "RcvAntenna")
-                    osPrefix = "RcvAntenna.";
-                else
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Format, offset not found for %s : %s.",
-                             osElementName.c_str(), pszFileName);
-                    return GDALExtendedDataType::Create(GDT_Unknown);
-                }
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Unrecognized format %s for %s : %s.", pszFormat,
+                         osElementName.c_str(), pszFileName);
+                return false;
             }
         }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Expected offset or format for %s : %s",
+                     osElementName.c_str(), pszFileName);
+            return false;
+        }
+        return true;
+    };
+
+    for (; psPvpChild != nullptr; psPvpChild = psPvpChild->psNext)
+    {
+        if (!parseChildPVPDataType(psPvpChild, nullptr))
+            return GDALExtendedDataType::Create(GDT_Unknown);
+    }
+
+    if (bSort)
+    {
+        sort(comps.begin(), comps.end(),
+             [](const std::unique_ptr<GDALEDTComponent> &comp1,
+                const std::unique_ptr<GDALEDTComponent> &comp2)
+             { return comp1->GetOffset() < comp2->GetOffset(); });
     }
 
     return GDALExtendedDataType::Create("PVPDataType", nSize, std::move(comps));
@@ -434,6 +465,10 @@ GDALDataset *CPHDDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
                 poShared->nSignalBlockSize = CPLAtoGIntBig(aosTokens[1]);
             else if EQUAL (aosTokens[0], "SIGNAL_BLOCK_BYTE_OFFSET")
                 poShared->nSignalBlockByteOffset = CPLAtoGIntBig(aosTokens[1]);
+            else
+                poRootGroup->m_apoAttributes.emplace_back(
+                    std::make_shared<GDALAttributeString>(
+                        "/", CPLString(aosTokens[0]).tolower(), aosTokens[1]));
         }
     }
 
