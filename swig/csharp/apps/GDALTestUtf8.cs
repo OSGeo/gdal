@@ -109,14 +109,14 @@ namespace testapp
                 File.Delete(fileName);
             using (OSGeo.OGR.Driver shpDriver = Ogr.GetDriverByName("OpenFileGDB"))
             {
-                using DataSource shpSrc = shpDriver.CreateDataSource(fileName, null);
-                using Layer shpLyr = shpSrc.CreateLayer("图层", null, wkbGeometryType.wkbPoint, null);
+                using (DataSource shpSrc = shpDriver.CreateDataSource(fileName, null))
+                    shpSrc.CreateLayer("图层", null, wkbGeometryType.wkbPoint, null).Dispose();
             }
             using (DataSource shpSrc = Ogr.Open(fileName, 0))
             {
                 AssertEqual(fileName, shpSrc.GetName(), $"{nameof(DataSource)}.{nameof(shpSrc.GetName)}");
-                using Layer shpLyr = shpSrc.GetLayerByName("图层");
-                AssertEqual("图层", shpLyr.GetName(), $"{nameof(Layer)}.{nameof(shpSrc.GetName)}");
+                using (Layer shpLyr = shpSrc.GetLayerByName("图层"))
+                    AssertEqual("图层", shpLyr.GetName(), $"{nameof(Layer)}.{nameof(shpSrc.GetName)}");
             }
         }
         private static void TestUnicodeFieldDefs()
@@ -136,43 +136,43 @@ namespace testapp
 
             using (OSGeo.OGR.Driver shpDriver = Ogr.GetDriverByName("ESRI Shapefile"))
             {
-                using DataSource shpSrc = shpDriver.CreateDataSource(fileName, null);
-                using Layer shpLyr = shpSrc.CreateLayer(UnicodeString, null, wkbGeometryType.wkbPoint, new string[] { "ENCODING=UTF-8" });
-                using FeatureDefn layerDef = shpLyr.GetLayerDefn();
-                using FieldDefn fieldDef = new FieldDefn("图层", FieldType.OFTString);
-                if (shpLyr.CreateField(fieldDef, 1) != 0)
-                    throw new Exception("Failed to create a field definition on layer.");
-
-                foreach (string nameString in nameFieldValues)
+                using (DataSource shpSrc = shpDriver.CreateDataSource(fileName, null))
+                using (Layer shpLyr = shpSrc.CreateLayer(UnicodeString, null, wkbGeometryType.wkbPoint, new string[] { "ENCODING=UTF-8" }))
                 {
-                    using (Feature feature = new Feature(layerDef))
+                    using (FeatureDefn layerDef = shpLyr.GetLayerDefn())
                     {
-                        feature.SetField("图层", nameString);
-                        if (shpLyr.CreateFeature(feature) != 0)
-                            throw new Exception("Failed to create feature on layer.");
+                        using (FieldDefn fieldDef = new FieldDefn("图层", FieldType.OFTString))
+                            if (shpLyr.CreateField(fieldDef, 1) != 0)
+                                throw new Exception("Failed to create a field definition on layer.");
+
+                        foreach (string nameString in nameFieldValues)
+                        {
+                            using (Feature feature = new Feature(layerDef))
+                            {
+                                feature.SetField("图层", nameString);
+                                if (shpLyr.CreateFeature(feature) != 0)
+                                    throw new Exception("Failed to create feature on layer.");
+                            }
+                        }
                     }
                 }
-
             }
             using (DataSource shpSrc = Ogr.Open(fileName, 0))
             {
-                if (shpSrc is null)
+                if (shpSrc == null)
                     throw new Exception($"Failed to open dataset: {shpSrc}");
 
                 Layer shpLyr = shpSrc.GetLayerByName(UnicodeString)
                     ?? throw new Exception("Failed to get layer from shape file by name.");
 
                 int featureIndex = 0;
-                while (true)
+                while (true) using (Feature namFeat = shpLyr.GetNextFeature())
                 {
-                    using Feature namFeat = shpLyr.GetNextFeature();
-
                     if (namFeat == null)
                         break;
 
                     string fieldValue = namFeat.GetFieldAsString("图层");
                     AssertEqual(nameFieldValues[featureIndex++], fieldValue, $"{nameof(Layer)}.{nameof(shpSrc.GetName)}");
-
                 }
             }
         }
@@ -191,22 +191,23 @@ namespace testapp
             if (File.Exists(vrtFile))
                 File.Delete(vrtFile);
 
-            using SpatialReference webMerc = new SpatialReference("");
-            webMerc.ImportFromEPSG(3857);
-            using OSGeo.GDAL.Driver tifDriver = Gdal.GetDriverByName("GTiff");
-
-            using (Dataset ds1 = tifDriver.Create(fileName1, 100, 100, 3, DataType.GDT_Byte, null))
+            using (SpatialReference webMerc = new SpatialReference(""))
             {
-                ds1.SetSpatialRef(webMerc);
-                double[] xform = new double[] { 0, 1, 0, 0, 0, -1 };
-                ds1.SetGeoTransform(xform);
-            }
+                webMerc.ImportFromEPSG(3857);
+                using (OSGeo.GDAL.Driver tifDriver = Gdal.GetDriverByName("GTiff"))
+                {
+                    using (Dataset ds1 = tifDriver.Create(fileName1, 100, 100, 3, DataType.GDT_Byte, null))
+                    {
+                        ds1.SetSpatialRef(webMerc);
+                        ds1.SetGeoTransform(new double[] { 0, 1, 0, 0, 0, -1 });
+                    }
 
-            using (Dataset ds2 = tifDriver.Create(fileName2, 100, 100, 3, DataType.GDT_Byte, null))
-            {
-                ds2.SetSpatialRef(webMerc);
-                double[] xform = new double[] { 100, 1, 0, 0, 0, -1 };
-                ds2.SetGeoTransform(xform);
+                    using (Dataset ds2 = tifDriver.Create(fileName2, 100, 100, 3, DataType.GDT_Byte, null))
+                    {
+                        ds2.SetSpatialRef(webMerc);
+                        ds2.SetGeoTransform(new double[] { 100, 1, 0, 0, 0, -1 });
+                    }
+                }
             }
 
             Gdal.BuildVRT(vrtFile, new string[] { fileName1, fileName2 }, null, null, null).Dispose();
@@ -221,7 +222,6 @@ namespace testapp
                 string[] list = vrt.GetFileList();
                 if (list.Length != 3)
                     throw new Exception($"Expected 3 files in VRT file list, got {list.Length}");
-
 
                 AssertEqual(vrtFile, list[0], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[0]");
                 AssertEqual(fileName1, list[1], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[1]");
