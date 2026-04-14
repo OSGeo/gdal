@@ -1158,13 +1158,11 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
 };
 
 //! @cond Doxygen_Suppress
-bool GDALMDRasterIOFromBand(GDALRasterBand *poBand, GDALRWFlag eRWFlag,
-                            size_t iDimX, size_t iDimY,
-                            const GUInt64 *arrayStartIdx, const size_t *count,
-                            const GInt64 *arrayStep,
-                            const GPtrDiff_t *bufferStride,
-                            const GDALExtendedDataType &bufferDataType,
-                            void *pBuffer);
+bool CPL_DLL GDALMDRasterIOFromBand(
+    GDALRasterBand *poBand, GDALRWFlag eRWFlag, size_t iDimX, size_t iDimY,
+    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
+    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
+    void *pBuffer);
 
 //! @endcond
 
