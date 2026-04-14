@@ -1633,6 +1633,27 @@ GDALDataset *CreateCopy(const char* pszFilename,
         return nullptr;
     }
 
+    // Warn if MAX_LOD exceeds what source resolution can meaningfully populate
+    const double dfSrcResInTarget = std::abs(adfDstGT[1]);
+    int nComputedMaxLOD = 0;
+    for (int i = 0;
+            i < static_cast<int>(aoTMList.size()) && i <= 23; i++)
+    {
+        if (aoTMList[i].mResX >= dfSrcResInTarget * (1.0 - 1e-10))
+            nComputedMaxLOD = i;
+        else
+            break;
+    }
+    if (nMaxLOD > nComputedMaxLOD)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                    "ESRIC: MAX_LOD=%d exceeds finest LOD (%d) "
+                    "supported by source resolution (%.2f). "
+                    "Tiles beyond LOD %d will be upsampled.",
+                    nMaxLOD, nComputedMaxLOD, dfSrcResInTarget,
+                    nComputedMaxLOD);
+    }
+
     // Get tile encoder driver
     const bool bJPEG = EQUAL(pszFormat, "JPEG");
     const int nTileBands = bJPEG ? 3 : 4;
@@ -1688,7 +1709,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
     }
 
     // Count total tiles
-    int nTotalTiles = 0;
+    GIntBig nTotalTiles = 0;
     for (int iLOD = nMinLOD; iLOD <= nMaxLOD; iLOD++)
     {
         const auto &oTM = aoTMList[iLOD];
@@ -1711,8 +1732,8 @@ GDALDataset *CreateCopy(const char* pszFilename,
                 floor((oTM.mTopLeftY - adfExtent[1]) / dfTileExtY)));
 
         if (nMinCol <= nMaxCol && nMinRow <= nMaxRow)
-            nTotalTiles +=
-                (nMaxCol - nMinCol + 1) * (nMaxRow - nMinRow + 1);
+            nTotalTiles += static_cast<GIntBig>(nMaxCol - nMinCol + 1) *
+                           (nMaxRow - nMinRow + 1);
     }
 
     if (nTotalTiles == 0)
@@ -1723,7 +1744,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
         return nullptr;
     }
 
-    CPLDebug("ESRIC", "Total tiles to process: %d", nTotalTiles);
+    CPLDebug("ESRIC", "Total tiles to process: " CPL_FRMT_GIB, nTotalTiles);
 
     // Prepare tile encoding options
     CPLStringList aosTileOptions;
@@ -1737,7 +1758,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
     const int nFillVal = bHasNoData ? static_cast<int>(dfSrcNoData) : 253;
 
     // Generate tiles for each LOD
-    int nTilesWritten = 0;
+    GIntBig nTilesWritten = 0;
     eErr = CE_None;
 
     for (int iLOD = nMinLOD; iLOD <= nMaxLOD && eErr == CE_None; iLOD++)
@@ -1917,7 +1938,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
                         hWarpedDS, GF_Read, nXOff, nYOff, nTileW,
                         nTileH, abySrc.data(), nTileW, nTileH,
                         GDT_Byte, nVRTBands, nullptr, 1, nTileW,
-                        static_cast<GSpacing>(nTilePixels)) != CE_None)
+                        static_cast<int>(nTilePixels)) != CE_None)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "ESRIC: failed to read tile data at "
@@ -2176,7 +2197,7 @@ void CPL_DLL GDALRegister_ESRIC()
     poDriver->SetMetadataItem(
         GDAL_DMD_CREATIONOPTIONLIST,
         "<CreationOptionList>"
-        "  <Option name='TILE_FORMAT' type='string-select' default='JPEG' "
+        "  <Option name='TILE_FORMAT' type='string-select' default='PNG' "
         "description='Tile image encoding format'>"
         "    <Value>JPEG</Value>"
         "    <Value>PNG</Value>"
@@ -2185,9 +2206,8 @@ void CPL_DLL GDALRegister_ESRIC()
         "description='JPEG compression quality'/>"
         "  <Option name='MIN_LOD' type='int' min='0' max='23' default='0' "
         "description='Minimum level of detail'/>"
-        "  <Option name='MAX_LOD' type='int' min='0' max='23' "
-        "description='Maximum level of detail. Defaults to finest LOD "
-        "matching source resolution'/>"
+        "  <Option name='MAX_LOD' type='int' min='0' max='23' default='1' "
+        "description='Maximum level of detail'/>"
         "  <Option name='SUMMARY' type='string' "
         "description='Summary of the package stored in the metadata'/>"
         "  <Option name='TAGS' type='string' "
