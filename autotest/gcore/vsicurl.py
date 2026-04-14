@@ -1815,3 +1815,38 @@ def test_vsicurl_test_redirect_301_to_url_ending_slash_and_then_403(server):
             gdal.VSIStatL("/vsicurl/http://localhost:%d/test_redirect" % server.port)
             is None
         )
+
+
+###############################################################################
+# Test server returning a Accept-Range header on HEAD, but without Content-Length
+# https://github.com/qgis/QGIS/issues/65800
+
+
+def test_vsicurl_head_accept_ranges_but_no_content_length(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/test_head_accept_ranges_but_no_content_length",
+        200,
+        {
+            "Accept-ranges": "bytes",
+            "Transfer-encoding": "chunked",
+            "Content-Length": None,
+        },
+    )
+    handler.add(
+        "GET",
+        "/test_head_accept_ranges_but_no_content_length",
+        206,
+        {"Content-Range": "bytes 0-2/3"},
+        "foo",
+        expected_headers={"Range": "bytes=0-16383"},
+    )
+    with webserver.install_http_handler(handler):
+        gdal.VSIStatL(
+            "/vsicurl/http://localhost:%d/test_head_accept_ranges_but_no_content_length"
+            % server.port
+        ).size == 3

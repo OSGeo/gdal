@@ -1138,6 +1138,7 @@ vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
     std::string osURL(m_pszURL + m_osQueryString);
     int nTryCount = 0;
     bool bRetryWithGet = false;
+    bool bRetryWithLimitedRangeGet = false;
     bool bS3LikeRedirect = false;
     CPLHTTPRetryContext oRetryContext(m_oRetryParameters);
 
@@ -1180,13 +1181,14 @@ retry:
     std::string osRange;  // leave in this scope !
     int nRoundedBufSize = 0;
     const int knDOWNLOAD_CHUNK_SIZE = VSICURLGetDownloadChunkSize();
-    if (UseLimitRangeGetInsteadOfHead())
+    bool bHasUsedLimitedRangeGet = false;
+    if (bRetryWithLimitedRangeGet || UseLimitRangeGetInsteadOfHead())
     {
+        bHasUsedLimitedRangeGet = true;
         osVerb = "GET";
-        const int nBufSize = std::max(
-            1024, std::min(10 * 1024 * 1024,
-                           atoi(CPLGetConfigOption(
-                               "GDAL_INGESTED_BYTES_AT_OPEN", "1024"))));
+        const int nBufSize = std::clamp(
+            atoi(CPLGetConfigOption("GDAL_INGESTED_BYTES_AT_OPEN", "1024")),
+            1024, 10 * 1024 * 1024);
         nRoundedBufSize = cpl::div_round_up(nBufSize, knDOWNLOAD_CHUNK_SIZE) *
                           knDOWNLOAD_CHUNK_SIZE;
 
@@ -1212,6 +1214,8 @@ retry:
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_HEADER, 1);
         osVerb = "HEAD";
     }
+
+    bRetryWithLimitedRangeGet = false;
 
     if (!AllowAutomaticRedirection())
         unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_FOLLOWLOCATION, 0);
@@ -1401,6 +1405,40 @@ retry:
             }
         }
 
+        // Split a string with the raw HTTP response headers as a key/value
+        // CPLStringList
+        const auto TokenizeHeaders = [](const char *pszHeaders) -> CPLStringList
+        {
+            CPLStringList aosHeaders;
+            while (pszHeaders)
+            {
+                const char *pszDelim = strchr(pszHeaders, ':');
+                if (!pszDelim)
+                    break;
+                const char *pszValue = pszDelim + 1;
+
+                // Skip whitespace after colon
+                while (*pszValue == ' ' || *pszValue == '\t')
+                    ++pszValue;
+
+                // Find end of value
+                const char *pszEndOfValue = pszValue;
+                while (*pszEndOfValue &&
+                       !(*pszEndOfValue == '\r' && pszEndOfValue[1] == '\n'))
+                    ++pszEndOfValue;
+
+                aosHeaders.SetNameValue(
+                    std::string(pszHeaders, pszDelim - pszHeaders).c_str(),
+                    std::string(pszValue, pszEndOfValue - pszValue).c_str());
+
+                if (*pszEndOfValue == '\r' && pszEndOfValue[1] == '\n')
+                    pszHeaders = pszEndOfValue + 2;
+                else
+                    break;
+            }
+            return aosHeaders;
+        };
+
         if (response_code < 400)
         {
             curl_off_t nSizeTmp = 0;
@@ -1416,6 +1454,26 @@ retry:
                     if (osVerb == "HEAD" && !bRetryWithGet &&
                         response_code == 200)
                     {
+                        if (sWriteFuncHeaderData.pBuffer)
+                        {
+                            const CPLStringList aosHeaders(
+                                TokenizeHeaders(sWriteFuncHeaderData.pBuffer));
+                            if (strcmp(aosHeaders.FetchNameValueDef(
+                                           "accept-ranges", ""),
+                                       "bytes") == 0)
+                            {
+                                CPLDebug(
+                                    poFS->GetDebugKey(),
+                                    "HEAD did not provide file size. Retrying "
+                                    "with limited range GET");
+                                bRetryWithLimitedRangeGet = true;
+                                CPLFree(sWriteFuncData.pBuffer);
+                                CPLFree(sWriteFuncHeaderData.pBuffer);
+                                curl_easy_cleanup(hCurlHandle);
+                                goto retry;
+                            }
+                        }
+
                         CPLDebug(poFS->GetDebugKey(),
                                  "HEAD did not provide file size. Retrying "
                                  "with GET");
@@ -1436,89 +1494,86 @@ retry:
             (response_code == 200 || response_code == 206))
         {
             {
-                char **papszHeaders =
-                    CSLTokenizeString2(sWriteFuncHeaderData.pBuffer, "\r\n", 0);
-                for (int i = 0; papszHeaders[i]; ++i)
+                const CPLStringList aosHeaders(
+                    TokenizeHeaders(sWriteFuncHeaderData.pBuffer));
+                for (const auto &[pszKey, pszValue] :
+                     cpl::IterateNameValue(aosHeaders))
                 {
-                    char *pszKey = nullptr;
-                    const char *pszValue =
-                        CPLParseNameValue(papszHeaders[i], &pszKey);
-                    if (pszKey && pszValue)
+                    if (bGetHeaders)
                     {
-                        if (bGetHeaders)
-                        {
-                            m_aosHeaders.SetNameValue(pszKey, pszValue);
-                        }
-                        if (EQUAL(pszKey, "Cache-Control") &&
-                            EQUAL(pszValue, "no-cache") &&
-                            CPLTestBool(CPLGetConfigOption(
-                                "CPL_VSIL_CURL_HONOR_CACHE_CONTROL", "YES")))
-                        {
-                            m_bCached = false;
-                        }
+                        m_aosHeaders.SetNameValue(pszKey, pszValue);
+                    }
+                    if (EQUAL(pszKey, "Cache-Control") &&
+                        EQUAL(pszValue, "no-cache") &&
+                        CPLTestBool(CPLGetConfigOption(
+                            "CPL_VSIL_CURL_HONOR_CACHE_CONTROL", "YES")))
+                    {
+                        m_bCached = false;
+                    }
 
-                        else if (EQUAL(pszKey, "ETag"))
-                        {
-                            std::string osValue(pszValue);
-                            if (osValue.size() >= 2 && osValue.front() == '"' &&
-                                osValue.back() == '"')
-                                osValue = osValue.substr(1, osValue.size() - 2);
-                            oFileProp.ETag = std::move(osValue);
-                        }
+                    else if (EQUAL(pszKey, "ETag"))
+                    {
+                        std::string osValue(pszValue);
+                        if (osValue.size() >= 2 && osValue.front() == '"' &&
+                            osValue.back() == '"')
+                            osValue = osValue.substr(1, osValue.size() - 2);
+                        oFileProp.ETag = std::move(osValue);
+                    }
 
-                        // Azure Data Lake Storage
-                        else if (EQUAL(pszKey, "x-ms-resource-type"))
+                    // Azure Data Lake Storage
+                    else if (EQUAL(pszKey, "x-ms-resource-type"))
+                    {
+                        if (EQUAL(pszValue, "file"))
                         {
-                            if (EQUAL(pszValue, "file"))
-                            {
-                                oFileProp.nMode |= S_IFREG;
-                            }
-                            else if (EQUAL(pszValue, "directory"))
-                            {
-                                oFileProp.bIsDirectory = true;
-                                oFileProp.nMode |= S_IFDIR;
-                            }
+                            oFileProp.nMode |= S_IFREG;
                         }
-                        else if (EQUAL(pszKey, "x-ms-permissions"))
+                        else if (EQUAL(pszValue, "directory"))
                         {
-                            oFileProp.nMode |=
-                                VSICurlParseUnixPermissions(pszValue);
-                        }
-
-                        // https://overturemapswestus2.blob.core.windows.net/release/2024-11-13.0/theme%3Ddivisions/type%3Ddivision_area
-                        // returns a x-ms-meta-hdi_isfolder: true header
-                        else if (EQUAL(pszKey, "x-ms-meta-hdi_isfolder") &&
-                                 EQUAL(pszValue, "true"))
-                        {
-                            oFileProp.bIsAzureFolder = true;
                             oFileProp.bIsDirectory = true;
                             oFileProp.nMode |= S_IFDIR;
                         }
                     }
-                    CPLFree(pszKey);
+                    else if (EQUAL(pszKey, "x-ms-permissions"))
+                    {
+                        oFileProp.nMode |=
+                            VSICurlParseUnixPermissions(pszValue);
+                    }
+
+                    // https://overturemapswestus2.blob.core.windows.net/release/2024-11-13.0/theme%3Ddivisions/type%3Ddivision_area
+                    // returns a x-ms-meta-hdi_isfolder: true header
+                    else if (EQUAL(pszKey, "x-ms-meta-hdi_isfolder") &&
+                             EQUAL(pszValue, "true"))
+                    {
+                        oFileProp.bIsAzureFolder = true;
+                        oFileProp.bIsDirectory = true;
+                        oFileProp.nMode |= S_IFDIR;
+                    }
                 }
-                CSLDestroy(papszHeaders);
             }
         }
 
-        if (UseLimitRangeGetInsteadOfHead() && response_code == 206)
+        if (bHasUsedLimitedRangeGet && response_code == 206)
         {
             oFileProp.eExists = EXIST_NO;
             oFileProp.fileSize = 0;
             if (sWriteFuncHeaderData.pBuffer != nullptr)
             {
-                const char *pszContentRange = strstr(
-                    sWriteFuncHeaderData.pBuffer, "Content-Range: bytes ");
-                if (pszContentRange == nullptr)
-                    pszContentRange = strstr(sWriteFuncHeaderData.pBuffer,
-                                             "content-range: bytes ");
-                if (pszContentRange)
-                    pszContentRange = strchr(pszContentRange, '/');
-                if (pszContentRange)
+                const CPLStringList aosHeaders(
+                    TokenizeHeaders(sWriteFuncHeaderData.pBuffer));
+                const char *pszContentRange =
+                    aosHeaders.FetchNameValue("content-range");
+                // Trailing space in string intended
+                if (pszContentRange &&
+                    STARTS_WITH_CI(pszContentRange, "bytes "))
                 {
-                    oFileProp.eExists = EXIST_YES;
-                    oFileProp.fileSize = static_cast<GUIntBig>(
-                        CPLAtoGIntBig(pszContentRange + 1));
+                    pszContentRange += strlen("bytes ");
+                    pszContentRange = strchr(pszContentRange, '/');
+                    if (pszContentRange)
+                    {
+                        oFileProp.eExists = EXIST_YES;
+                        oFileProp.fileSize = static_cast<GUIntBig>(
+                            CPLAtoGIntBig(pszContentRange + 1));
+                    }
                 }
 
                 // Add first bytes to cache
