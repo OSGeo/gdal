@@ -2,8 +2,10 @@
 ###############################################################################
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test read functionality for Esri Compact Cache driver.
-# Author:   Lucian Plesea <lplesea at esri.com>
+# Purpose:  Test read and write functionality for Esri Compact Cache driver.
+# Author:
+#   Reader: Lucian Plesea <lplesea at esri.com>
+#   Writer: Husam Mohammad <husam.mohammad at safe.com
 #
 ###############################################################################
 # Copyright (c) 2020, Esri
@@ -11,9 +13,12 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
+import re
+
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 pytestmark = pytest.mark.require_driver("ESRIC")
 
@@ -271,3 +276,506 @@ def test_esric_ignores_oversized_lod(ignore_oversized_lods):
     assert ds is not None, "Dataset failed to open"
     assert ds.RasterXSize == 2147483647
     assert ds.RasterYSize == 2147483647
+
+
+###############################################################################
+#
+# Writer tests
+#
+###############################################################################
+
+
+def _read_json_from_tpkx(tpkx_path, json_file):
+    """Read and parse a JSON file from inside a .tpkx ZIP archive."""
+    f = gdal.VSIFOpenL(f"/vsizip/{{{tpkx_path}}}/{json_file}", "rb")
+    assert f is not None, f"failed to open {json_file} in {tpkx_path}"
+    data = gdal.VSIFReadL(1, 200000, f)
+    gdal.VSIFCloseL(f)
+    return json.loads(data)
+
+
+###############################################################################
+# Basic round-trip tests
+
+
+@pytest.mark.require_driver("JPEG")
+def test_esric_write_jpeg_roundtrip(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=JPEG", "MAX_LOD=0"]
+    )
+    assert ds is not None, "CreateCopy returned None"
+    ds = None
+
+    ds = gdal.Open(out)
+    assert ds is not None, "failed to reopen written tpkx"
+    assert ds.RasterCount == 3, "Expected 3 bands"
+    assert ds.GetRasterBand(1).DataType == gdal.GDT_UInt8
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetRasterBand(1).GetBlockSize() == [256, 256]
+    gt = ds.GetGeoTransform()
+    assert gt[2] == 0 and gt[4] == 0, "should have no rotation"
+    assert gt[1] > 0, "pixel width should be positive"
+    assert gt[5] < 0, "pixel height should be negative (north-up)"
+    assert ds.GetRasterBand(1).Checksum() != 0, "band 1 should have data"
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_png_roundtrip(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0"]
+    )
+    assert ds is not None, "CreateCopy returned None"
+    ds = None
+
+    ds = gdal.Open(out)
+    assert ds is not None, "failed to reopen written tpkx"
+    assert ds.RasterCount == 4
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetRasterBand(1).Checksum() != 0, "band 1 should have data"
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_from_existing_tpkx(tmp_path):
+    src = gdal.Open("data/esric/Usa.tpkx")
+    assert src is not None
+    out = str(tmp_path / "copy.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src, options=["TILE_FORMAT=PNG", "MIN_LOD=0", "MAX_LOD=1"]
+    )
+    assert ds is not None, "CreateCopy returned None"
+    ds = None
+
+    ds = gdal.Open(out)
+    assert ds is not None, "failed to reopen copied tpkx"
+    assert ds.RasterCount == 4
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+    assert ds.GetRasterBand(1).Checksum() != 0, "band 1 should have data"
+
+
+###############################################################################
+# Creation option tests
+
+
+@pytest.mark.require_driver("JPEG")
+@pytest.mark.parametrize("quality, output_quality", [(-5, 1), (55, 55), (110, 100)])
+def test_esric_write_quality(tmp_path, quality, output_quality):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=JPEG", f"QUALITY={quality}", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    root = _read_json_from_tpkx(out, "root.json")
+    assert root["tileImageInfo"]["compression"] == output_quality
+
+    ds = gdal.Open(out)
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+
+@pytest.mark.require_driver("PNG")
+@pytest.mark.parametrize(
+    "min_lod,max_lod",
+    [(0, 0), (0, 1), (1, 3)],
+)
+def test_esric_write_min_max_lod(tmp_path, min_lod, max_lod):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out,
+        src_ds,
+        options=["TILE_FORMAT=PNG", f"MIN_LOD={min_lod}", f"MAX_LOD={max_lod}"],
+    )
+    assert ds is not None
+    ds = None
+
+    root = _read_json_from_tpkx(out, "root.json")
+    assert root["minLOD"] == min_lod
+    assert root["maxLOD"] == max_lod
+    assert len(root["tileInfo"]["lods"]) == max_lod - min_lod + 1
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_summary(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0", "SUMMARY=Test summary text"]
+    )
+    assert ds is not None
+    ds = None
+
+    info = _read_json_from_tpkx(out, "iteminfo.json")
+    assert info["summary"] == "Test summary text"
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_tags(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0", "TAGS=tag1,tag2,tag3"]
+    )
+    assert ds is not None
+    ds = None
+
+    info = _read_json_from_tpkx(out, "iteminfo.json")
+    assert info["tags"] == ["tag1", "tag2", "tag3"]
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_tags_trimmed(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0", "TAGS= tag1 , tag2 , tag3 "]
+    )
+    assert ds is not None
+    ds = None
+
+    info = _read_json_from_tpkx(out, "iteminfo.json")
+    assert info["tags"] == ["tag1", "tag2", "tag3"]
+
+
+###############################################################################
+# Input band variations
+
+
+@pytest.mark.require_driver("JPEG")
+def test_esric_write_1band_jpeg(tmp_path):
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 1, gdal.GDT_Byte)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-20037508.34, 156543.03, 0, 20037508.34, 0, -156543.03])
+    src_ds.GetRasterBand(1).Fill(128)
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=JPEG", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    ds = gdal.Open(out)
+    assert ds is not None
+    assert ds.RasterCount == 3, "output should have 3 bands"
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_1band_png(tmp_path):
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 1, gdal.GDT_Byte)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-20037508.34, 156543.03, 0, 20037508.34, 0, -156543.03])
+    src_ds.GetRasterBand(1).Fill(128)
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    ds = gdal.Open(out)
+    assert ds is not None
+    assert ds.RasterCount == 4, "output should have 4 bands"
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+
+@pytest.mark.require_driver("JPEG")
+def test_esric_write_4band_rgba(tmp_path):
+    src_ds = gdal.GetDriverByName("MEM").Create("", 256, 256, 4, gdal.GDT_Byte)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    src_ds.SetGeoTransform([-20037508.34, 156543.03, 0, 20037508.34, 0, -156543.03])
+    for i in range(4):
+        src_ds.GetRasterBand(i + 1).Fill([100, 150, 200, 255][i])
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=JPEG", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    ds = gdal.Open(out)
+    assert ds is not None
+    assert ds.RasterCount == 3, "output should have 3 bands"
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+
+@pytest.mark.require_driver("JPEG")
+def test_esric_write_palette_jpeg(tmp_path):
+    src_ds = gdal.Open("data/small_world_pct.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=JPEG", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    ds = gdal.Open(out)
+    assert ds is not None
+    assert ds.RasterCount == 3, "output should have 3 bands"
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_palette_png(tmp_path):
+    src_ds = gdal.Open("data/small_world_pct.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    ds = gdal.Open(out)
+    assert ds is not None
+    assert ds.RasterCount == 4, "output should have 4 bands"
+    assert ds.GetRasterBand(1).Checksum() != 0
+
+
+###############################################################################
+# Metadata JSON verification
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_root_json_structure(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    root = _read_json_from_tpkx(out, "root.json")
+    for key in [
+        "name",
+        "version",
+        "tileBundlesPath",
+        "minLOD",
+        "maxLOD",
+        "spatialReference",
+        "tileInfo",
+        "storageInfo",
+        "tileImageInfo",
+        "fullExtent",
+        "initialExtent",
+    ]:
+        assert key in root, f"root.json missing key '{key}'"
+
+    assert root["version"] == "1.0"
+    assert root["tileBundlesPath"] == "tile"
+    assert root["storageInfo"]["packetSize"] == 128
+    assert (
+        root["storageInfo"]["storageFormat"]
+        == "esriMapCacheStorageModeCompactV2"
+    )
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_root_json_tile_info(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    root = _read_json_from_tpkx(out, "root.json")
+    ti = root["tileInfo"]
+    assert ti["rows"] == 256
+    assert ti["cols"] == 256
+    assert ti["dpi"] == 96
+    assert ti["origin"]["x"] == pytest.approx(-180, abs=1)
+    assert ti["origin"]["y"] == pytest.approx(90, abs=1)
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_root_json_extent(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    root = _read_json_from_tpkx(out, "root.json")
+    for extent_key in ["fullExtent", "initialExtent"]:
+        ext = root[extent_key]
+        assert ext["xmin"] < ext["xmax"], f"{extent_key} xmin >= xmax"
+        assert ext["ymin"] < ext["ymax"], f"{extent_key} ymin >= ymax"
+        assert "spatialReference" in ext
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_iteminfo_json_structure(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    info = _read_json_from_tpkx(out, "iteminfo.json")
+    for key in ["name", "version", "guid", "created", "title", "type", "typekeywords"]:
+        assert key in info, f"iteminfo.json missing key '{key}'"
+
+    assert info["type"] == "Compact Tile Package"
+    assert "tpkx" in info["typekeywords"]
+    assert "Tile Package" in info["typekeywords"]
+    assert info["name"] == "out"
+    assert info["title"] == "out"
+
+
+###############################################################################
+# Error handling
+
+
+def test_esric_write_error_too_many_bands(tmp_path):
+    src = gdal.GetDriverByName("MEM").Create("", 256, 256, 5, gdal.GDT_Byte)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src.SetSpatialRef(srs)
+    src.SetGeoTransform([-20037508.34, 156543.03, 0, 20037508.34, 0, -156543.03])
+    out = str(tmp_path / "out.tpkx")
+    with pytest.raises(RuntimeError):
+        gdal.GetDriverByName("ESRIC").CreateCopy(out, src)
+
+
+@pytest.mark.parametrize("epsg", [4269, 32632])
+def test_esric_write_error_wrong_srs(tmp_path, epsg):
+    src = gdal.GetDriverByName("MEM").Create("", 256, 256, 3, gdal.GDT_Byte)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(epsg)
+    src.SetSpatialRef(srs)
+    src.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    out = str(tmp_path / "out.tpkx")
+    with pytest.raises(RuntimeError):
+        gdal.GetDriverByName("ESRIC").CreateCopy(out, src)
+
+
+def test_esric_write_error_no_srs(tmp_path):
+    drv = gdal.GetDriverByName("MEM")
+    src = drv.Create("", 256, 256, 3, gdal.GDT_Byte)
+    src.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    for i in range(3):
+        src.GetRasterBand(i + 1).Fill(128)
+    out = str(tmp_path / "out.tpkx")
+    with pytest.raises(RuntimeError):
+        gdal.GetDriverByName("ESRIC").CreateCopy(out, src)
+
+
+@pytest.mark.require_driver("JPEG")
+def test_esric_write_error_min_exceeds_max_lod(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    with pytest.raises(RuntimeError):
+        gdal.GetDriverByName("ESRIC").CreateCopy(
+            out, src_ds, options=["TILE_FORMAT=JPEG", "MIN_LOD=5", "MAX_LOD=3"]
+        )
+
+
+###############################################################################
+# Miscellaneous
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_zip_contents(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MIN_LOD=0", "MAX_LOD=1"]
+    )
+    assert ds is not None
+    ds = None
+
+    files = gdal.ReadDirRecursive(f"/vsizip/{{{out}}}")
+    assert files is not None, "failed to list ZIP contents"
+    files_lower = [f.lower() for f in files]
+    assert "root.json" in files_lower, "root.json not found in ZIP"
+    assert "iteminfo.json" in files_lower, "iteminfo.json not found in ZIP"
+    # At least one bundle in L00 and L01
+    assert any("tile/l00/" in f and f.endswith(".bundle") for f in files_lower)
+    assert any("tile/l01/" in f and f.endswith(".bundle") for f in files_lower)
+
+    bundles = [f for f in files if f.endswith(".bundle")]
+    for b in bundles:
+        basename = b.split("/")[-1]
+        assert re.match(
+            r"^R[0-9a-fA-F]{4}C[0-9a-fA-F]{4}\.bundle$", basename
+        ), f"bundle name does not match expected pattern: {basename}"
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_nodata_from_source(tmp_path):
+    src = gdal.GetDriverByName("MEM").Create("", 256, 256, 3, gdal.GDT_Byte)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src.SetSpatialRef(srs)
+    src.SetGeoTransform([-20037508.34, 156543.03, 0, 20037508.34, 0, -156543.03])
+    for i in range(3):
+        band = src.GetRasterBand(i + 1)
+        band.Fill(128)
+        band.SetNoDataValue(0)
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src, options=["TILE_FORMAT=PNG", "MAX_LOD=0"]
+    )
+    assert ds is not None, "CreateCopy should succeed with NoData"
+    ds = None
+
+    ds = gdal.Open(out)
+    assert ds is not None
+
+
+@pytest.mark.require_driver("PNG")
+def test_esric_write_output_file_list(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0"]
+    )
+    assert ds is not None
+    ds = None
+
+    ds = gdal.Open(out)
+    assert ds is not None
+    file_list = ds.GetFileList()
+    assert file_list is not None
+    assert any(f.endswith("out.tpkx") for f in file_list)
+
+
+@pytest.mark.require_driver("JPEG")
+def test_esric_write_progress_callback(tmp_path):
+    src_ds = gdal.Open("data/small_world.tif")
+    out = str(tmp_path / "out.tpkx")
+    progress_values = []
+
+    def progress_cb(pct, msg, data):
+        data.append(pct)
+        return 1  # continue
+
+    ds = gdal.GetDriverByName("ESRIC").CreateCopy(
+        out,
+        src_ds,
+        options=["TILE_FORMAT=JPEG", "MAX_LOD=0"],
+        callback=progress_cb,
+        callback_data=progress_values,
+    )
+    assert ds is not None
+    ds = None
+
+    assert len(progress_values) > 0, "progress callback was never called"
+    assert progress_values[-1] == pytest.approx(1.0, abs=0.01)
