@@ -295,7 +295,7 @@
 #if defined(SWIGCSHARP)
 %csconst(1);
 #elif defined(SWIGJAVA)
-%javaconst(1);
+%javaconst(0);
 #endif
 
 #define DMD_LONGNAME "DMD_LONGNAME"

@@ -56,10 +56,11 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
 
     byte* pStringUtf8 = (byte*)pUtf8Bts;
     int len = 0;
-    while (pStringUtf8[len] != 0) len++;
+    while (pStringUtf8[len] != 0) len = checked(len + 1);
 
     var charCount = System.Text.Encoding.UTF8.GetCharCount(pStringUtf8, len);
-    var bstrDest = Marshal.AllocHGlobal(sizeof(int) + charCount * sizeof(char));
+    int size = checked(sizeof(int) + charCount * sizeof(char));
+    var bstrDest = System.Runtime.InteropServices.Marshal.AllocHGlobal(size);
     *(int*)bstrDest = charCount;
 
     System.Text.Encoding.UTF8.GetChars(pStringUtf8, len, (char*)IntPtr.Add(bstrDest, sizeof(int)), charCount);
@@ -81,7 +82,7 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
     }
     finally
     {
-      Marshal.FreeHGlobal(pBstr);
+      System.Runtime.InteropServices.Marshal.FreeHGlobal(pBstr);
     }
   }
 
@@ -91,7 +92,7 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
       return IntPtr.Zero;
 
     int byteCount = System.Text.Encoding.UTF8.GetByteCount(str);
-    IntPtr unmanagedString = Marshal.AllocHGlobal(byteCount + 1);
+    IntPtr unmanagedString = System.Runtime.InteropServices.Marshal.AllocHGlobal(byteCount + 1);
 
     byte* ptr = (byte*)unmanagedString.ToPointer();
     fixed (char *pStr = str)
@@ -131,7 +132,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 
 %typemap(csin,
   pre="    IntPtr temp$csinput = $modulePINVOKE.StringToUtf8Unmanaged($csinput);",
-  post="    Marshal.FreeHGlobal(temp$csinput);",
+  post="    System.Runtime.InteropServices.Marshal.FreeHGlobal(temp$csinput);",
   cshin="$csinput"
   ) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
   "temp$csinput"
@@ -157,7 +158,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
       $imcall;$excode
     }
     finally {
-      Marshal.FreeHGlobal(temp$csinput);
+      System.Runtime.InteropServices.Marshal.FreeHGlobal(temp$csinput);
     }
   }
 %}
@@ -227,7 +228,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(cstype) (char **ignorechange) "ref string"
 %typemap(csin,
   pre="    IntPtr temp$csinput = $modulePINVOKE.StringToUtf8Unmanaged($csinput);",
-  post="    Marshal.FreeHGlobal(temp$csinput);",
+  post="    System.Runtime.InteropServices.Marshal.FreeHGlobal(temp$csinput);",
   cshin="ref $csinput"
   ) (char** ignorechange)
   "ref temp$csinput"
@@ -253,16 +254,20 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %pragma(csharp) imclasscode=%{
   public class StringListMarshal : IDisposable {
     public readonly IntPtr[] _ar;
+    private int _isDisposed;
     public StringListMarshal(string[] ar) {
       _ar = new IntPtr[ar.Length+1];
       for (int cx = 0; cx < ar.Length; cx++) {
-	      _ar[cx] = $modulePINVOKE.StringToUtf8Unmanaged(ar[cx]);
+        _ar[cx] = $modulePINVOKE.StringToUtf8Unmanaged(ar[cx]);
       }
       _ar[ar.Length] = IntPtr.Zero;
     }
+    ~StringListMarshal() => Dispose();
     public virtual void Dispose() {
-	  for (int cx = 0; cx < _ar.Length-1; cx++) {
-          System.Runtime.InteropServices.Marshal.FreeHGlobal(_ar[cx]);
+      if (System.Threading.Interlocked.CompareExchange(ref _isDisposed, 1, 0) == 0) {
+        for (int cx = 0; cx < _ar.Length - 1; cx++) {
+            System.Runtime.InteropServices.Marshal.FreeHGlobal(_ar[cx]);
+        }
       }
       GC.SuppressFinalize(this);
     }
@@ -288,7 +293,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
   IntPtr objPtr;
   int count = 0;
   if (cPtr != IntPtr.Zero) {
-    while (Marshal.ReadIntPtr(cPtr, count*IntPtr.Size) != IntPtr.Zero)
+    while (System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, count*IntPtr.Size) != IntPtr.Zero)
       ++count;
   }
   string[] ret = new string[count];
