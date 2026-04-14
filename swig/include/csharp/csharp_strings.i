@@ -256,6 +256,8 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
     public readonly IntPtr[] _ar;
     private int _isDisposed;
     public StringListMarshal(string[] ar) {
+      if (ar == null)
+        return;
       _ar = new IntPtr[ar.Length+1];
       for (int cx = 0; cx < ar.Length; cx++) {
         _ar[cx] = $modulePINVOKE.StringToUtf8Unmanaged(ar[cx]);
@@ -264,7 +266,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
     }
     ~StringListMarshal() => Dispose();
     public virtual void Dispose() {
-      if (System.Threading.Interlocked.CompareExchange(ref _isDisposed, 1, 0) == 0) {
+      if (System.Threading.Interlocked.CompareExchange(ref _isDisposed, 1, 0) == 0 && _ar != null) {
         for (int cx = 0; cx < _ar.Length - 1; cx++) {
             System.Runtime.InteropServices.Marshal.FreeHGlobal(_ar[cx]);
         }
@@ -282,7 +284,12 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(cstype) char **options, char **dict, char **dictAndCSLDestroy, char **CSL "string[]"
 %typemap(in) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{ $1 = ($1_ltype)$input; %}
 %typemap(out) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{ $result = $1; %}
-%typemap(csin) char **options, char **dict, char **dictAndCSLDestroy, char **CSL "($csinput == null) ? null : new $modulePINVOKE.StringListMarshal($csinput)._ar"
+%typemap(csin,
+  pre="    using (var temp$csinput = new $modulePINVOKE.StringListMarshal($csinput)) { ",
+  terminator="    }",
+  cshin="$csinput"
+  ) char **options, char **dict, char **dictAndCSLDestroy, char **CSL
+  "temp$csinput._ar"
 
 /*
  * C# code to marshal NULL terminated lists of NULL terminated UTF-8 strings.
