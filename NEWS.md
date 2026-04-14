@@ -15,6 +15,7 @@ GDAL 3.12.x bugfix release.
 * Add E57 read-only raster driver to read 2D images from ASTM E2807 (E57) files
 * COG driver: implement GDALDriver::Create() for random write creation
 * S102/S104/S111 driver: add write support
+* ESRIC driver: add write support for Esri Tile Package (.tpkx)
 * Zarr: various improvements in Zarr V3 support (sharding), support for
   multiscales, spatial and proj extensions for EOPF Visualization products.
 * Various code linting, static code analyzer fixes, etc.
@@ -147,6 +148,7 @@ ENVI driver:
  * add handling of 'bbl' (bad band list) item
 
 ESRIC driver:
+ * Add write (CreateCopy()) support for Esri Tile Package (.tpkx) output
  * Remove record count header check (#13580)
  * Ignore levels with a dimension >= 2^31 pixel. Add IGNORE_OVERSIZED_LODS open
    option
