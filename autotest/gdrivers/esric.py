@@ -413,7 +413,9 @@ def test_esric_write_summary(tmp_path):
     src_ds = gdal.Open("data/small_world.tif")
     out = str(tmp_path / "out.tpkx")
     ds = gdal.GetDriverByName("ESRIC").CreateCopy(
-        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0", "SUMMARY=Test summary text"]
+        out,
+        src_ds,
+        options=["TILE_FORMAT=PNG", "MAX_LOD=0", "SUMMARY=Test summary text"],
     )
     assert ds is not None
     ds = None
@@ -441,7 +443,9 @@ def test_esric_write_tags_trimmed(tmp_path):
     src_ds = gdal.Open("data/small_world.tif")
     out = str(tmp_path / "out.tpkx")
     ds = gdal.GetDriverByName("ESRIC").CreateCopy(
-        out, src_ds, options=["TILE_FORMAT=PNG", "MAX_LOD=0", "TAGS= tag1 , tag2 , tag3 "]
+        out,
+        src_ds,
+        options=["TILE_FORMAT=PNG", "MAX_LOD=0", "TAGS= tag1 , tag2 , tag3 "],
     )
     assert ds is not None
     ds = None
@@ -595,10 +599,7 @@ def test_esric_write_root_json_structure(tmp_path):
     assert root["version"] == "1.0"
     assert root["tileBundlesPath"] == "tile"
     assert root["storageInfo"]["packetSize"] == 128
-    assert (
-        root["storageInfo"]["storageFormat"]
-        == "esriMapCacheStorageModeCompactV2"
-    )
+    assert root["storageInfo"]["storageFormat"] == "esriMapCacheStorageModeCompactV2"
 
 
 @pytest.mark.require_driver("PNG")
