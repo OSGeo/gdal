@@ -36,6 +36,12 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
 
     public delegate System.IntPtr Utf8StringDelegate(System.IntPtr message);
 
+   /*
+    * IMPORTANT:
+    * Every call to SWIG_csharp_string_callback MUST be followed by exactly one call
+    * to LengthPrefixedUtf16UnmanagedToString on the returned pointer.
+    * Failure to do so will result in memory leaks or double frees.
+    */
     static Utf8StringDelegate stringDelegate = new Utf8StringDelegate($modulePINVOKE.Utf8UnmanagedToLengthPrefixedUtf16Unmanaged);
 
     [global::System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint="RegisterUtf8StringCallback_$module")]
