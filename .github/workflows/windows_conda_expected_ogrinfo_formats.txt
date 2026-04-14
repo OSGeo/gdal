@@ -8,11 +8,11 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   JP2OpenJPEG -raster,vector- (rwv): JPEG-2000 driver based on JP2OpenJPEG library (*.jp2, *.j2k)
   PDF -raster,vector- (rw+uvs): Geospatial PDF (*.pdf)
   MBTiles -raster,vector- (rw+v): MBTiles (*.mbtiles)
-  TileDB -raster,multidimensional raster,vector- (rw+uvs): TileDB
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
   EEDA -vector- (ro): Earth Engine Data API
   OGCAPI -raster,vector- (rov): OGCAPI
   GDALG -raster,vector- (rov): GDAL Streamed Algorithm driver (*.gdalg.json)
+  TileDB -raster,multidimensional raster,vector- (rw+uvs): TileDB
   ESRI Shapefile -vector- (rw+uv): ESRI Shapefile (*.shp, *.dbf, *.shz, *.shp.zip)
   MapInfo File -vector- (rw+uv): MapInfo File (*.tab, *.mif, *.mid)
   UK .NTF -vector- (rov): UK .NTF
