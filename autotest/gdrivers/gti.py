@@ -2756,6 +2756,67 @@ def test_gti_xml(tmp_vsimem):
         vrt_ds.GetRasterBand(1).GetOverviewCount()
 
 
+@pytest.mark.parametrize("prefix", ["", "GTI:"])
+def test_gti_xml_relative_filename(tmp_vsimem, prefix):
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    tile_filename = str(tmp_vsimem / "byte.tif")
+    gdal.Translate(tile_filename, "data/byte.tif")
+
+    src_ds = gdal.Open(tile_filename)
+    index_ds, _ = create_basic_tileindex(index_filename, src_ds)
+    del index_ds
+
+    tile_ovr_filename = str(tmp_vsimem / "byte_ovr.tif")
+    gdal.Translate(tile_ovr_filename, "data/byte.tif", width=10)
+    with gdal.Open(tile_ovr_filename) as ds:
+        expected_cs_ovr = ds.GetRasterBand(1).Checksum()
+
+    index2_filename = str(tmp_vsimem / "index2.gti.gpkg")
+    create_basic_tileindex(index2_filename, gdal.Open(tile_ovr_filename))
+
+    xml_filename = str(tmp_vsimem / "index.xml")
+    xml_content = f"""<GDALTileIndexDataset>
+  <IndexDataset>index.gti.gpkg</IndexDataset>
+  <Overview>
+      <Dataset>{prefix}index2.gti.gpkg</Dataset>
+  </Overview>
+</GDALTileIndexDataset>"""
+    gdal.FileFromMemBuffer(xml_filename, xml_content)
+
+    gti_ds = gdal.Open(xml_filename)
+    assert gti_ds.GetRasterBand(1).Checksum() == 4672
+    assert gti_ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert gti_ds.GetRasterBand(1).GetOverview(0).Checksum() == expected_cs_ovr
+
+
+def test_gti_gpkg_relative_filename(tmp_vsimem):
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+
+    tile_filename = str(tmp_vsimem / "byte.tif")
+    gdal.Translate(tile_filename, "data/byte.tif")
+
+    tile_ovr_filename = str(tmp_vsimem / "byte_ovr.tif")
+    gdal.Translate(tile_ovr_filename, "data/byte.tif", width=10)
+    with gdal.Open(tile_ovr_filename) as ds:
+        expected_cs_ovr = ds.GetRasterBand(1).Checksum()
+
+    src_ds = gdal.Open(tile_filename)
+    index_ds, index_lyr = create_basic_tileindex(index_filename, src_ds)
+    index_lyr.SetMetadataItem("OVERVIEW_0_DATASET", "index2.gti.gpkg")
+    del index_ds
+
+    index2_filename = str(tmp_vsimem / "index2.gti.gpkg")
+    create_basic_tileindex(index2_filename, gdal.Open(tile_ovr_filename))
+
+    gti_ds = gdal.Open(index_filename)
+    assert gti_ds.GetRasterBand(1).Checksum() == 4672
+    assert gti_ds.GetRasterBand(1).GetOverviewCount() == 1
+    assert gti_ds.GetRasterBand(1).GetOverview(0).Checksum() == expected_cs_ovr
+
+
 def test_gti_open_options(tmp_vsimem):
 
     index_filename = str(tmp_vsimem / "index.gti.gpkg")
