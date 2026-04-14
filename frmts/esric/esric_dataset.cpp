@@ -1563,7 +1563,7 @@ GDALDataset *CreateCopy(const char* pszFilename,
 
     // Parse creation options
     const char *pszFormat =
-        CSLFetchNameValueDef(papszOptions, "TILE_FORMAT", "JPEG");
+        CSLFetchNameValueDef(papszOptions, "TILE_FORMAT", "PNG");
 
     int nQuality = atoi(CSLFetchNameValueDef(papszOptions, "QUALITY", "75"));
     if (nQuality < 1 || nQuality > 100)
