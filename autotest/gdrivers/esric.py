@@ -318,7 +318,9 @@ def test_esric_write_jpeg_roundtrip(tmp_path):
     assert gt[2] == 0 and gt[4] == 0, "should have no rotation"
     assert gt[1] > 0, "pixel width should be positive"
     assert gt[5] < 0, "pixel height should be negative (north-up)"
-    assert ds.GetRasterBand(1).Checksum() != 0, "band 1 should have data"
+    assert ds.GetRasterBand(1).Checksum() == 38702
+    assert ds.GetRasterBand(2).Checksum() == 43101
+    assert ds.GetRasterBand(3).Checksum() == 20103
 
 
 @pytest.mark.require_driver("PNG")
@@ -335,7 +337,10 @@ def test_esric_write_png_roundtrip(tmp_path):
     assert ds is not None, "failed to reopen written tpkx"
     assert ds.RasterCount == 4
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
-    assert ds.GetRasterBand(1).Checksum() != 0, "band 1 should have data"
+    assert ds.GetRasterBand(1).Checksum() == 42255
+    assert ds.GetRasterBand(2).Checksum() == 47336
+    assert ds.GetRasterBand(3).Checksum() == 24965
+    assert ds.GetRasterBand(4).Checksum() == 35707
 
 
 @pytest.mark.require_driver("PNG")
@@ -353,7 +358,10 @@ def test_esric_write_from_existing_tpkx(tmp_path):
     assert ds is not None, "failed to reopen copied tpkx"
     assert ds.RasterCount == 4
     assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
-    assert ds.GetRasterBand(1).Checksum() != 0, "band 1 should have data"
+    assert ds.GetRasterBand(1).Checksum() == 27310
+    assert ds.GetRasterBand(2).Checksum() == 28862
+    assert ds.GetRasterBand(3).Checksum() == 27977
+    assert ds.GetRasterBand(4).Checksum() == 52046
 
 
 ###############################################################################
@@ -464,7 +472,9 @@ def test_esric_write_1band_jpeg(tmp_path):
     ds = gdal.Open(out)
     assert ds is not None
     assert ds.RasterCount == 3, "output should have 3 bands"
-    assert ds.GetRasterBand(1).Checksum() != 0
+    assert ds.GetRasterBand(1).Checksum() == 23809
+    assert ds.GetRasterBand(2).Checksum() == 23809
+    assert ds.GetRasterBand(3).Checksum() == 23809
 
 
 @pytest.mark.require_driver("PNG")
@@ -485,7 +495,10 @@ def test_esric_write_1band_png(tmp_path):
     ds = gdal.Open(out)
     assert ds is not None
     assert ds.RasterCount == 4, "output should have 4 bands"
-    assert ds.GetRasterBand(1).Checksum() != 0
+    assert ds.GetRasterBand(1).Checksum() == 23809
+    assert ds.GetRasterBand(2).Checksum() == 23809
+    assert ds.GetRasterBand(3).Checksum() == 23809
+    assert ds.GetRasterBand(4).Checksum() == 17849
 
 
 @pytest.mark.require_driver("JPEG")
@@ -507,7 +520,9 @@ def test_esric_write_4band_rgba(tmp_path):
     ds = gdal.Open(out)
     assert ds is not None
     assert ds.RasterCount == 3, "output should have 3 bands"
-    assert ds.GetRasterBand(1).Checksum() != 0
+    assert ds.GetRasterBand(1).Checksum() == 47652
+    assert ds.GetRasterBand(2).Checksum() == 53598
+    assert ds.GetRasterBand(3).Checksum() == 23798
 
 
 @pytest.mark.require_driver("JPEG")
@@ -523,7 +538,9 @@ def test_esric_write_palette_jpeg(tmp_path):
     ds = gdal.Open(out)
     assert ds is not None
     assert ds.RasterCount == 3, "output should have 3 bands"
-    assert ds.GetRasterBand(1).Checksum() != 0
+    assert ds.GetRasterBand(1).Checksum() == 57466
+    assert ds.GetRasterBand(2).Checksum() == 50487
+    assert ds.GetRasterBand(3).Checksum() == 39098
 
 
 @pytest.mark.require_driver("PNG")
@@ -539,7 +556,10 @@ def test_esric_write_palette_png(tmp_path):
     ds = gdal.Open(out)
     assert ds is not None
     assert ds.RasterCount == 4, "output should have 4 bands"
-    assert ds.GetRasterBand(1).Checksum() != 0
+    assert ds.GetRasterBand(1).Checksum() == 13859
+    assert ds.GetRasterBand(2).Checksum() == 36640
+    assert ds.GetRasterBand(3).Checksum() == 29677
+    assert ds.GetRasterBand(4).Checksum() == 35707
 
 
 ###############################################################################
