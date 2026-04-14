@@ -4,9 +4,11 @@
  *           based on public documentation available at
  *           https://github.com/Esri/raster-tiles-compactcache
  *
- * Author : Lucian Plesea
+ * Author :
+ *          Reader: Lucian Plesea
+ *          Writer: Husam Mohammad
  *
- * Udate : 06 / 10 / 2020
+ * Update : 04 / 14 / 2026
  *
  *  Copyright 2020 Esri
  *
