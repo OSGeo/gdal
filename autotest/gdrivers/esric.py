@@ -5,7 +5,7 @@
 # Purpose:  Test read and write functionality for Esri Compact Cache driver.
 # Author:
 #   Reader: Lucian Plesea <lplesea at esri.com>
-#   Writer: Husam Mohammad <husam.mohammad at safe.com
+#   Writer: Husam Mohammad <husam.mohammad at safe.com>
 #
 ###############################################################################
 # Copyright (c) 2020, Esri
