@@ -244,7 +244,8 @@ class BaseMockedHttpHandler:
 
             request.send_response(req_resp.code)
             for k in req_resp.headers:
-                request.send_header(k, req_resp.headers[k])
+                if req_resp.headers[k] is not None:
+                    request.send_header(k, req_resp.headers[k])
             if (
                 req_resp.add_content_length_header
                 and "Content-Length" not in req_resp.headers
