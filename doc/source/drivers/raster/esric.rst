@@ -8,10 +8,16 @@ ESRIC -- Esri Compact Cache
 
 .. built_in_by_default::
 
-Read Esri Compact Cache V2 as a single raster
+Read and write Esri Compact Cache V2 as a single raster.
+
+.. versionadded:: 3.13
+
+   Write support (CreateCopy) for .tpkx output.
 
 Driver capabilities
 -------------------
+
+.. supports_createcopy::
 
 .. supports_georeferencing::
 
@@ -44,8 +50,15 @@ metadata stored in a JSON file.
     format for cache tiles. The spec for this package type is not
     available and it is not supported by GDAL.
 
+Starting from GDAL 3.13, the driver also supports writing .tpkx files
+using the CreateCopy() API (e.g. with :ref:`gdal_translate`). See
+`Creation issues`_ below for details.
+
 Usage examples
-______________
+--------------
+
+Reading
+~~~~~~~
 
 If the /path/Layers contains an Esri Compact Cache in V2 format in
 the normal Web Mercator tile grid, this command will copy the level 2
@@ -57,8 +70,25 @@ To convert a .tpkx file to a GeoTIFF:
 
 ``gdal_translate -outsize 1024 1024 /path/to/my.tpkx output.tif``
 
+Writing
+~~~~~~~
+
+.. versionadded:: 3.13
+
+To create a .tpkx tile package from a GeoTIFF in EPSG:3857 with PNG tiles:
+
+``gdal_translate input.tif output.tpkx -of ESRIC``
+
+To create a .tpkx with JPEG tiles, custom LOD range, and quality setting:
+
+``gdal_translate input.tif output.tpkx -of ESRIC -co TILE_FORMAT=JPEG -co QUALITY=85 -co MIN_LOD=0 -co MAX_LOD=5``
+
+To create a .tpkx with package metadata:
+
+``gdal_translate input.tif output.tpkx -of ESRIC -co SUMMARY="My tile cache" -co TAGS="tag1,tag2"``
+
 Features and Limitations
-________________________
+------------------------
 
 -  Only V2 Compact cache is supported.  This format is identified by
    the value **esriMapCacheStorageModeCompactV2** in the
@@ -136,6 +166,101 @@ ________________________
    is INT32_MAX, in either dimension. By default, the driver will
    return an error when opening such caches unless the following open 
    option is specified: ``IGNORE_OVERSIZED_LODS=YES``.
+
+Creation issues
+---------------
+
+.. versionadded:: 3.13
+
+The CreateCopy() API can be used to create Esri Tile Package (.tpkx) files.
+Only .tpkx output is supported; writing directly to Compact Cache V2
+exploded cache directory structures (conf.xml) is not supported.
+
+The source dataset must be in EPSG:3857 (Web Mercator) or EPSG:4326
+(WGS 84 Geographic). The tiling scheme used is
+GoogleMapsCompatible for EPSG:3857 sources and WorldCRS84Quad for
+EPSG:4326 sources.
+
+The source must have 1 to 4 bands.
+Paletted 1-band sources are automatically expanded to RGB (for JPEG
+tile format) or RGBA (for PNG tile format).
+
+Tile formats
+~~~~~~~~~~~~
+
+Tiles are encoded as JPEG or PNG. When using JPEG, tiles have 3 bands
+(RGB) and the alpha channel is not preserved. Transparent areas are
+filled with the source nodata value, or with the value 253 if no nodata
+is defined. When using PNG, tiles have 4 bands (RGBA).
+
+LOD levels
+~~~~~~~~~~
+
+LOD (Level of Detail) levels range from 0 (coarsest) to 23 (finest).
+If :co:`MAX_LOD` exceeds the finest level of detail that the source
+resolution can meaningfully populate, a warning is issued and tiles
+beyond that level will be upsampled.
+
+Bilinear resampling is used when warping source data to the target
+tiling grid. When the source resolution exactly matches the target LOD
+resolution, nearest neighbor resampling is used instead.
+
+Source dataset overviews, when available, are used for efficient
+multi-LOD creation. For each LOD, the coarsest source overview whose
+resolution does not exceed the target LOD resolution is selected.
+
+Output format
+~~~~~~~~~~~~~
+
+Tiles are stored in Compact Cache V2 bundle files (128 x 128 tiles per
+bundle). The .tpkx file is an uncompressed ZIP archive containing the
+bundle files under a ``tile/`` directory, along with ``root.json``
+and ``iteminfo.json`` metadata.
+
+Creation options
+----------------
+
+|about-creation-options|
+The following creation options are available:
+
+-  .. co:: TILE_FORMAT
+      :choices: JPEG, PNG
+      :default: PNG
+      :since: 3.13
+
+      Format used to encode tiles. Default is PNG.
+
+-  .. co:: QUALITY
+      :choices: 1-100
+      :default: 75
+      :since: 3.13
+
+      JPEG compression quality. Only used when :co:`TILE_FORMAT` is JPEG.
+
+-  .. co:: MIN_LOD
+      :choices: 0-23
+      :default: 0
+      :since: 3.13
+
+      Minimum level of detail to generate.
+
+-  .. co:: MAX_LOD
+      :choices: 0-23
+      :default: 1
+      :since: 3.13
+
+      Maximum level of detail to generate. A warning is emitted if this
+      exceeds the finest LOD supported by the source resolution.
+
+-  .. co:: SUMMARY
+      :since: 3.13
+
+      Package summary stored in the ``iteminfo.json`` package metadata.
+
+-  .. co:: TAGS
+      :since: 3.13
+
+      Comma-separated user tags stored in the ``iteminfo.json`` package metadata.
 
 Open options
 ------------

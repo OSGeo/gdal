@@ -4,9 +4,11 @@
  *           based on public documentation available at
  *           https://github.com/Esri/raster-tiles-compactcache
  *
- * Author : Lucian Plesea
+ * Author :
+ *          Reader: Lucian Plesea
+ *          Writer: Husam Mohammad
  *
- * Udate : 06 / 10 / 2020
+ * Update : 04 / 14 / 2026
  *
  *  Copyright 2020 Esri
  *
@@ -15,18 +17,58 @@
 
 #include "gdal_priv.h"
 #include <cassert>
-#include <vector>
 #include <algorithm>
+#include <cmath>
+#include <map>
+#include <random>
+#include <sstream>
+#include <vector>
 #include "cpl_json.h"
+#include "gdal_alg.h"
+#include "gdal_cpp_functions.h"
 #include "gdal_proxy.h"
 #include "gdal_utils.h"
+#include "gdalwarper.h"
 #include "cpl_vsi_virtual.h"
+#include "tilematrixset.hpp"
 
 using namespace std;
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <sys/timeb.h>
+
+namespace
+{
+struct CPLTimeVal
+{
+    time_t tv_sec; /* seconds */
+    long tv_usec;  /* and microseconds */
+};
+}  // namespace
+
+static int CPLGettimeofday(struct CPLTimeVal *tp, void * /* timezonep*/)
+{
+    struct _timeb theTime;
+
+    _ftime(&theTime);
+    tp->tv_sec = static_cast<time_t>(theTime.time);
+    tp->tv_usec = theTime.millitm * 1000;
+    return 0;
+}
+#else
+#include <sys/time.h> /* for gettimeofday() */
+#define CPLTimeVal timeval
+#define CPLGettimeofday(t, u) gettimeofday(t, u)
+#endif
 
 CPL_C_START
 void CPL_DLL GDALRegister_ESRIC();
 CPL_C_END
+
+constexpr int WBSZ = 128;           // tiles per bundle dimension
+constexpr int WBSZ2 = WBSZ * WBSZ;  // 16384 tiles per bundle
+constexpr int WIDXSZ = WBSZ2 * 8;   // 131072 byte index
+constexpr int WHEADER = 64;         // bundle header size
 
 namespace ESRIC
 {
@@ -1065,6 +1107,1027 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     return CE_None;
 }  // IReadBlock
 
+/************************************************************************/
+/*                             BundleWriter                             */
+/************************************************************************/
+
+// Compact Cache V2 bundle writer.
+// See https://github.com/Esri/raster-tiles-compactcache
+
+struct BundleWriter
+{
+    std::string osTempPath{};
+    VSIVirtualHandleUniquePtr fp{};
+    std::vector<GUInt64> aIndex{};
+    GUInt64 nCurrentOffset = 0;
+    GUInt32 nMaxTileSize = 0;
+
+    bool Init(const std::string &osPath)
+    {
+        osTempPath = osPath;
+        fp.reset(VSIFOpenL(osPath.c_str(), "wb"));
+        if (!fp)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to create bundle %s",
+                     osPath.c_str());
+            return false;
+        }
+
+        GByte abyHeader[WHEADER] = {};
+        auto setU32 = [&](int off, GUInt32 v)
+        {
+            CPL_LSBPTR32(&v);
+            memcpy(abyHeader + off, &v, 4);
+        };
+        auto setU64 = [&](int off, GUInt64 v)
+        {
+            CPL_LSBPTR64(&v);
+            memcpy(abyHeader + off, &v, 8);
+        };
+
+        // Write 64-byte header (little-endian)
+        setU32(0, 3);                  // version 32-byte
+        setU32(4, WBSZ2);              // record count 32-byte
+        setU32(8, 0);                  // maxRecordSize 32-byte
+        setU32(12, 5);                 // offset byte count 32-byte
+        setU64(16, 0);                 // slack space 64-byte
+        setU64(24, WHEADER + WIDXSZ);  // file size (initial) 64-byte
+        setU64(32, 40);                // user header offset 64-byte
+        setU32(40, 20 + WIDXSZ);       // user header size 32-byte
+        setU32(44, 3);                 // legacy 32-byte
+        setU32(48, 16);                // legacy 32-byte
+        setU32(52, WBSZ2);             // legacy 32-byte
+        setU32(56, 5);                 // legacy 32-byte
+        setU32(60, WIDXSZ);            // index size 32-byte
+        fp->Write(abyHeader, 1, WHEADER);
+
+        // Write empty index
+        aIndex.assign(WBSZ2, 0);
+        std::vector<GByte> zeros(WIDXSZ, 0);
+        fp->Write(zeros.data(), 1, WIDXSZ);
+
+        nCurrentOffset = WHEADER + WIDXSZ;
+        nMaxTileSize = 0;
+        return true;
+    }
+
+    bool WriteTile(int nRow, int nCol, const GByte *pabyData, GUInt32 nSize)
+    {
+        if (!fp || nSize == 0)
+            return false;
+
+        // Write 4-byte LE size prefix followed by tile data
+        GUInt32 nSizeLE = nSize;
+        CPL_LSBPTR32(&nSizeLE);
+        fp->Write(&nSizeLE, 1, 4);
+        fp->Write(pabyData, 1, nSize);
+
+        // Index offset points to the tile data, not the 4-byte size prefix
+        nCurrentOffset += 4;
+        const int nIdx = (nRow % WBSZ) * WBSZ + (nCol % WBSZ);
+        aIndex[nIdx] = nCurrentOffset | (static_cast<GUInt64>(nSize) << 40);
+        nCurrentOffset += nSize;
+
+        if (nSize > nMaxTileSize)
+            nMaxTileSize = nSize;
+        return true;
+    }
+
+    bool Finalize()
+    {
+        if (!fp)
+            return false;
+
+        // Update maxRecordSize at offset 8
+        GUInt32 nMaxLE = nMaxTileSize;
+        CPL_LSBPTR32(&nMaxLE);
+        fp->Seek(static_cast<vsi_l_offset>(8), SEEK_SET);
+        fp->Write(&nMaxLE, 1, 4);
+
+        // Update file size at offset 24
+        GUInt64 nFileSizeLE = nCurrentOffset;
+        CPL_LSBPTR64(&nFileSizeLE);
+        fp->Seek(static_cast<vsi_l_offset>(24), SEEK_SET);
+        fp->Write(&nFileSizeLE, 1, 8);
+
+        // Write completed index at offset 64
+        fp->Seek(static_cast<vsi_l_offset>(WHEADER), SEEK_SET);
+        if constexpr (!CPL_IS_LSB)
+        {
+            for (auto &v : aIndex)
+                CPL_LSBPTR64(&v);
+        }
+        fp->Write(aIndex.data(), 8, WBSZ2);
+
+        fp.reset();
+        return true;
+    }
+};
+
+/************************************************************************/
+/*                           BuildRootJSON()                            */
+/************************************************************************/
+
+static bool
+BuildRootJSON(const CPLString &tempDir, const char *pszFilename,
+              const std::vector<gdal::TileMatrixSet::TileMatrix> &aoTMList,
+              int nMinLOD, int nMaxLOD, const char *pszFormat, int nQuality,
+              int nEPSGCode, const double adfExtent[4])
+{
+    CPLJSONDocument oDoc;
+    CPLJSONObject oRoot = oDoc.GetRoot();
+
+    // Use the base filename as the item name and title
+    const std::string osBaseName = CPLGetBasenameSafe(pszFilename);
+
+    oRoot.Add("name", osBaseName);
+    oRoot.Add(
+        "version",
+        "1.0");  // Current version based on https://github.com/Esri/tile-package-spec/blob/master/docs/root.md
+
+    oRoot.Add("tileBundlesPath", "tile");
+    oRoot.Add("minLOD", nMinLOD);
+    oRoot.Add("maxLOD", nMaxLOD);
+
+    // spatialReference
+    const auto addSR = [&](CPLJSONObject &oParent)
+    {
+        CPLJSONObject oSR;
+        oSR.Add("wkid", nEPSGCode);
+        oSR.Add("latestWkid", nEPSGCode);
+        oParent.Add("spatialReference", oSR);
+    };
+
+    addSR(oRoot);
+
+    // tileInfo: origin, tile size, LODs
+    const auto &oTM0 = aoTMList[0];
+    CPLJSONObject oTileInfo;
+    oTileInfo.Add("rows", oTM0.mTileWidth);
+    oTileInfo.Add("cols", oTM0.mTileWidth);
+    oTileInfo.Add("dpi", 96);
+
+    CPLJSONObject oOrigin;
+    oOrigin.Add("x", oTM0.mTopLeftX);
+    oOrigin.Add("y", oTM0.mTopLeftY);
+    oTileInfo.Add("origin", oOrigin);
+    addSR(oTileInfo);
+
+    CPLJSONArray oLods;
+    for (int i = nMinLOD; i <= nMaxLOD; i++)
+    {
+        const double dfRes = aoTMList[i].mResX;
+        CPLJSONObject oLod;
+        oLod.Add("level", i);
+        oLod.Add("resolution", dfRes);
+        oLods.Add(oLod);
+    }
+    oTileInfo.Add("lods", oLods);
+    oRoot.Add("tileInfo", oTileInfo);
+
+    // storageInfo
+    CPLJSONObject oStorage;
+    oStorage.Add("storageFormat", "esriMapCacheStorageModeCompactV2");
+    oStorage.Add("packetSize", WBSZ);
+    oRoot.Add("storageInfo", oStorage);
+
+    // tileImageInfo
+    CPLJSONObject oImageInfo;
+    oImageInfo.Add("format", pszFormat);
+    oImageInfo.Add("compression", nQuality);
+    oRoot.Add("tileImageInfo", oImageInfo);
+
+    // fullExtent / initialExtent
+    for (const char *pszKey : {"fullExtent", "initialExtent"})
+    {
+        CPLJSONObject oExt;
+        oExt.Add("xmin", adfExtent[0]);
+        oExt.Add("ymin", adfExtent[1]);
+        oExt.Add("xmax", adfExtent[2]);
+        oExt.Add("ymax", adfExtent[3]);
+        addSR(oExt);
+        oRoot.Add(pszKey, oExt);
+    }
+
+    return oDoc.Save(tempDir + "/root.json");
+}
+
+/************************************************************************/
+/*                            GenerateUUID()                            */
+/************************************************************************/
+
+// Generate an RFC 4122 version-4 UUID.
+// Inspired by OFGDBGenerateUUID in the OpenFileGDB driver.
+static std::string GenerateUUID()
+{
+    static uint32_t nCounter = 0;
+    struct CPLTimeVal tv;
+    memset(&tv, 0, sizeof(tv));
+
+    std::stringstream ss;
+    ss << std::hex;
+
+    // First half: xxxxxxxx-xxxx-4xxx
+    {
+        CPLGettimeofday(&tv, nullptr);
+        ++nCounter;
+        std::mt19937 gen(nCounter +
+                         static_cast<unsigned>(tv.tv_sec ^ tv.tv_usec));
+        std::uniform_int_distribution<> dis(0, 15);
+
+        for (int i = 0; i < 8; i++)
+            ss << dis(gen);
+        ss << "-";
+        for (int i = 0; i < 4; i++)
+            ss << dis(gen);
+        ss << "-4";
+        for (int i = 0; i < 3; i++)
+            ss << dis(gen);
+    }
+
+    // Second half: {8-b}xxx-xxxxxxxxxxxx
+    {
+        CPLGettimeofday(&tv, nullptr);
+        ++nCounter;
+        std::mt19937 gen(nCounter +
+                         static_cast<unsigned>(tv.tv_sec ^ tv.tv_usec));
+        std::uniform_int_distribution<> dis(0, 15);
+        std::uniform_int_distribution<> dis2(8, 11);
+
+        ss << "-";
+        ss << dis2(gen);
+        for (int i = 0; i < 3; i++)
+            ss << dis(gen);
+        ss << "-";
+        for (int i = 0; i < 12; i++)
+            ss << dis(gen);
+    }
+
+    return ss.str();
+}
+
+/************************************************************************/
+/*                         BuildItemInfoJSON()                          */
+/************************************************************************/
+
+static bool BuildItemInfoJSON(const CPLString &tempDir, const char *pszFilename,
+                              const char *pszSummary, const char *pszTags)
+{
+    CPLJSONDocument oDoc;
+    CPLJSONObject oRoot = oDoc.GetRoot();
+
+    // Use the base filename as the item name and title
+    const std::string osBaseName = CPLGetBasenameSafe(pszFilename);
+
+    oRoot.Add("name", osBaseName);
+    oRoot.Add(
+        "version",
+        "1.0");  // Current version based on https://github.com/Esri/tile-package-spec/blob/master/docs/iteminfo.md
+
+    oRoot.Add("guid", GenerateUUID());
+
+    // Unix time in milliseconds
+    oRoot.Add("created", static_cast<GInt64>(time(nullptr)) * 1000);
+    oRoot.Add("title", osBaseName);
+    oRoot.Add("type", "Compact Tile Package");
+
+    // The following keywords are the minimum required to be recognized as a tile package
+    CPLJSONArray oKeywords;
+    oKeywords.Add("Compact Tile Package");
+    oKeywords.Add("Tile Package");
+    oKeywords.Add("tpkx");
+    oRoot.Add("typekeywords", oKeywords);
+
+    // summary
+    if (pszSummary && pszSummary[0] != '\0')
+    {
+        oRoot.Add("summary", pszSummary);
+    }
+
+    // tags
+    if (pszTags && pszTags[0] != '\0')
+    {
+        const CPLStringList aosTokens(CSLTokenizeString2(
+            pszTags, ",", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+        CPLJSONArray oTagsArray;
+        for (int i = 0; i < aosTokens.size(); i++)
+        {
+            if (aosTokens[i][0] != '\0')
+                oTagsArray.Add(aosTokens[i]);
+        }
+        oRoot.Add("tags", oTagsArray);
+    }
+
+    return oDoc.Save(tempDir + "/iteminfo.json");
+}
+
+/************************************************************************/
+/*                            PackageTpkx()                             */
+/************************************************************************/
+
+// Zip the contents of osTempDir into the .tpkx file at pszFilename.
+// A valid tpkx will contain a root.json, iteminfo.json, and a tile
+// subdirectory with LOD subdirectories the contain the bundle files.
+static bool PackageTpkx(const char *pszFilename, const std::string &osTempDir)
+{
+    void *hZIP = CPLCreateZip(pszFilename, nullptr);
+    if (!hZIP)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "ESRIC: cannot create %s",
+                 pszFilename);
+        return false;
+    }
+
+    bool bOK = true;
+
+    // Loop over all files in osTempDir and add them to the ZIP
+    char **papszFiles = VSIReadDirRecursive(osTempDir.c_str());
+    for (int i = 0; papszFiles && papszFiles[i] && bOK; i++)
+    {
+        const std::string osSrcPath =
+            CPLFormFilenameSafe(osTempDir.c_str(), papszFiles[i], nullptr);
+
+        VSIStatBufL sStat;
+        if (VSIStatL(osSrcPath.c_str(), &sStat) != 0 ||
+            VSI_ISDIR(sStat.st_mode))
+            continue;  // skip directories
+
+        const char *const apszZipOptions[] = {"COMPRESSED=NO",
+                                              "SOZIP_ENABLED=NO", nullptr};
+        if (CPLAddFileInZip(hZIP, papszFiles[i], osSrcPath.c_str(), nullptr,
+                            apszZipOptions, nullptr, nullptr) != CE_None)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "ESRIC: failed to add %s to archive", papszFiles[i]);
+            bOK = false;
+            break;
+        }
+    }
+    CSLDestroy(papszFiles);
+
+    if (CPLCloseZip(hZIP) != CE_None)
+    {
+        CPLError(CE_Failure, CPLE_FileIO, "ESRIC: failed to finalize %s",
+                 pszFilename);
+        bOK = false;
+    }
+
+    return bOK;
+}
+
+/************************************************************************/
+/*                             CreateCopy()                             */
+/************************************************************************/
+
+GDALDataset *CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
+                        int bStrict, CSLConstList papszOptions,
+                        GDALProgressFunc pfnProgress, void *pProgressData)
+{
+    if (!pfnProgress)
+        pfnProgress = GDALDummyProgress;
+
+    int nBands = poSrcDS->GetRasterCount();
+    if (nBands < 1 || nBands > 4)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ESRIC: source must have 1 to 4 bands, got %d", nBands);
+        return nullptr;
+    }
+
+    // Detect tiling scheme from source SRS
+    const OGRSpatialReference *poSrcSRS = poSrcDS->GetSpatialRef();
+    int nEPSGCode = 0;
+    if (poSrcSRS)
+    {
+        OGRSpatialReference oSRS(*poSrcSRS);
+        oSRS.AutoIdentifyEPSG();
+        const char *pszAuthName = oSRS.GetAuthorityName(nullptr);
+        const char *pszAuthCode = oSRS.GetAuthorityCode(nullptr);
+        if (pszAuthName && EQUAL(pszAuthName, "EPSG") && pszAuthCode)
+            nEPSGCode = atoi(pszAuthCode);
+    }
+
+    if (nEPSGCode != 3857 && nEPSGCode != 4326)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ESRIC: SRS is limited to EPSG:3857 (Web Mercator) or "
+                 "EPSG:4326 (WGS84 Geographic)");
+        return nullptr;
+    }
+
+    // Get the tiling scheme definition.
+    // TODO: Can we support custom tiling schemes?
+    const auto poTMS = gdal::TileMatrixSet::parse(
+        (nEPSGCode == 3857) ? "GoogleMapsCompatible" : "WorldCRS84Quad");
+    if (!poTMS)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ESRIC: failed to determine SRS definition");
+        return nullptr;
+    }
+    const auto &aoTMList = poTMS->tileMatrixList();
+
+    // MIN_LOD option
+    int nMinLOD = atoi(CSLFetchNameValueDef(papszOptions, "MIN_LOD", "0"));
+    if (nMinLOD < 0 || nMinLOD > 23)
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "ESRIC: MIN_LOD=%d is out of range [0,23], clamping", nMinLOD);
+        nMinLOD = std::clamp(nMinLOD, 0, 23);
+    }
+
+    // MAX_LOD option
+    int nMaxLOD = atoi(CSLFetchNameValueDef(papszOptions, "MAX_LOD", "1"));
+    if (nMaxLOD < 0 || nMaxLOD > 23)
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "ESRIC: MAX_LOD=%d is out of range [0,23], clamping", nMaxLOD);
+        nMaxLOD = std::clamp(nMaxLOD, 0, 23);
+    }
+
+    if (nMinLOD > nMaxLOD)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "ESRIC: MIN_LOD (%d) must not exceed MAX_LOD (%d)", nMinLOD,
+                 nMaxLOD);
+        return nullptr;
+    }
+
+    CPLDebug("ESRIC", "Writing LODs %d to %d", nMinLOD, nMaxLOD);
+
+    // Parse creation options
+    const char *pszFormat =
+        CSLFetchNameValueDef(papszOptions, "TILE_FORMAT", "PNG");
+
+    int nQuality = atoi(CSLFetchNameValueDef(papszOptions, "QUALITY", "75"));
+    if (nQuality < 1 || nQuality > 100)
+    {
+        CPLError(CE_Warning, CPLE_IllegalArg,
+                 "ESRIC: QUALITY=%d is out of range [1,100], clamping",
+                 nQuality);
+        nQuality = std::clamp(nQuality, 1, 100);
+    }
+
+    const char *pszSummary = CSLFetchNameValue(papszOptions, "SUMMARY");
+    const char *pszTags = CSLFetchNameValue(papszOptions, "TAGS");
+
+    // Create temp directory for bundle files and metadata
+    const std::string osTempDir = CPLGenerateTempFilenameSafe("esric");
+    if (VSIMkdirRecursive(osTempDir.c_str(), 0755) != 0)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "ESRIC: Failed to create temp directory %s",
+                 osTempDir.c_str());
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    // Create tile subdirectory
+    const std::string osTileDir =
+        CPLFormFilenameSafe(osTempDir.c_str(), "tile", nullptr);
+    if (VSIMkdir(osTileDir.c_str(), 0755) != 0)
+    {
+        CPLError(CE_Failure, CPLE_FileIO,
+                 "ESRIC: failed to create directory %s", osTileDir.c_str());
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    // Compute source extent in target CRS
+    OGRSpatialReference oTargetSRS;
+    oTargetSRS.importFromEPSG(nEPSGCode);
+    oTargetSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+    char *pszTargetWKTRaw = nullptr;
+    oTargetSRS.exportToWkt(&pszTargetWKTRaw);
+    const std::string osTargetWKT(pszTargetWKTRaw);
+    CPLFree(pszTargetWKTRaw);
+
+    CPLStringList aosTO;
+    aosTO.SetNameValue("DST_SRS", osTargetWKT.c_str());
+
+    void *hTransformArg = GDALCreateGenImgProjTransformer2(
+        GDALDataset::ToHandle(poSrcDS), nullptr, aosTO.List());
+    if (!hTransformArg)
+    {
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    double adfDstGT[6] = {};
+    int nDstPixels = 0;
+    int nDstLines = 0;
+    double adfExtent[4] = {};  // minx, miny, maxx, maxy
+    CPLErr eErr = GDALSuggestedWarpOutput2(
+        GDALDataset::ToHandle(poSrcDS), GDALGenImgProjTransform, hTransformArg,
+        adfDstGT, &nDstPixels, &nDstLines, adfExtent, 0);
+    GDALDestroyGenImgProjTransformer(hTransformArg);
+    hTransformArg = nullptr;
+
+    if (eErr != CE_None)
+    {
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    // Warn if MAX_LOD exceeds what source resolution can meaningfully populate
+    const double dfSrcResInTarget = std::abs(adfDstGT[1]);
+    int nComputedMaxLOD = 0;
+    for (int i = 0; i < static_cast<int>(aoTMList.size()) && i <= 23; i++)
+    {
+        if (aoTMList[i].mResX >= dfSrcResInTarget * (1.0 - 1e-10))
+            nComputedMaxLOD = i;
+        else
+            break;
+    }
+    if (nMaxLOD > nComputedMaxLOD)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "ESRIC: MAX_LOD=%d exceeds finest LOD (%d) "
+                 "supported by source resolution (%.2f). "
+                 "Tiles beyond LOD %d will be upsampled.",
+                 nMaxLOD, nComputedMaxLOD, dfSrcResInTarget, nComputedMaxLOD);
+    }
+
+    // Get tile encoder driver
+    const bool bJPEG = EQUAL(pszFormat, "JPEG");
+    const int nTileBands = bJPEG ? 3 : 4;
+    GDALDriverH hTileDriver = GDALGetDriverByName(bJPEG ? "JPEG" : "PNG");
+    if (!hTileDriver)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "ESRIC: %s driver not available",
+                 bJPEG ? "JPEG" : "PNG");
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    // Expand paletted 1-band sources to RGB(A) so that resampling operates on colour values
+    // instead of palette indices
+    GDALDataset *poEffectiveSrcDS = poSrcDS;
+    GDALDatasetH hExpandedDS = nullptr;
+    if (nBands == 1 && poSrcDS->GetRasterBand(1)->GetColorTable() != nullptr)
+    {
+        CPLStringList aosTranslateOpts;
+        aosTranslateOpts.AddString("-of");
+        aosTranslateOpts.AddString("VRT");
+        aosTranslateOpts.AddString("-expand");
+        aosTranslateOpts.AddString(bJPEG ? "rgb" : "rgba");
+        auto psTranslateOpts =
+            GDALTranslateOptionsNew(aosTranslateOpts.List(), nullptr);
+        hExpandedDS = GDALTranslate("", GDALDataset::ToHandle(poSrcDS),
+                                    psTranslateOpts, nullptr);
+        GDALTranslateOptionsFree(psTranslateOpts);
+        if (hExpandedDS)
+        {
+            poEffectiveSrcDS = GDALDataset::FromHandle(hExpandedDS);
+            nBands = poEffectiveSrcDS->GetRasterCount();
+        }
+    }
+
+    const bool bSrcHasAlpha = (nBands == 2 || nBands == 4);
+    int bHasNoData = FALSE;
+    const double dfSrcNoData =
+        poEffectiveSrcDS->GetRasterBand(1)->GetNoDataValue(&bHasNoData);
+
+    // Collect source overview datasets.
+    // Higher indices are progressively coarser.
+    std::vector<GDALDatasetUniquePtr> apoOverviewDS;
+    const int nOverviews =
+        poEffectiveSrcDS->GetRasterBand(1)->GetOverviewCount();
+    for (int i = 0; i < nOverviews; ++i)
+    {
+        GDALDatasetUniquePtr poOvrDS(
+            GDALCreateOverviewDataset(poEffectiveSrcDS, i, true));
+        if (poOvrDS)
+            apoOverviewDS.emplace_back(std::move(poOvrDS));
+    }
+
+    // Count total tiles
+    GIntBig nTotalTiles = 0;
+    for (int iLOD = nMinLOD; iLOD <= nMaxLOD; iLOD++)
+    {
+        const auto &oTM = aoTMList[iLOD];
+        const double dfTileExtX = oTM.mTileWidth * oTM.mResX;
+        const double dfTileExtY = oTM.mTileHeight * oTM.mResY;
+
+        const int nMinCol =
+            std::max(0, static_cast<int>(floor((adfExtent[0] - oTM.mTopLeftX) /
+                                               dfTileExtX)));
+        const int nMaxCol =
+            std::min(oTM.mMatrixWidth - 1,
+                     static_cast<int>(
+                         floor((adfExtent[2] - oTM.mTopLeftX) / dfTileExtX)));
+        const int nMinRow =
+            std::max(0, static_cast<int>(floor((oTM.mTopLeftY - adfExtent[3]) /
+                                               dfTileExtY)));
+        const int nMaxRow =
+            std::min(oTM.mMatrixHeight - 1,
+                     static_cast<int>(
+                         floor((oTM.mTopLeftY - adfExtent[1]) / dfTileExtY)));
+
+        if (nMinCol <= nMaxCol && nMinRow <= nMaxRow)
+            nTotalTiles += static_cast<GIntBig>(nMaxCol - nMinCol + 1) *
+                           (nMaxRow - nMinRow + 1);
+    }
+
+    if (nTotalTiles == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "ESRIC: source extent does not overlap any tiles");
+        VSIRmdirRecursive(osTempDir.c_str());
+        return nullptr;
+    }
+
+    CPLDebug("ESRIC", "Total tiles to process: " CPL_FRMT_GIB, nTotalTiles);
+
+    // Prepare tile encoding options
+    CPLStringList aosTileOptions;
+    if (bJPEG)
+        aosTileOptions.SetNameValue("QUALITY", CPLSPrintf("%d", nQuality));
+
+    // Fill value for transparent areas. Use nodata if set, else 253
+    // Manually setting 253 is not ideal but it matches the behaviour of ArcGIS Pro which fills
+    // empty JPEG tiles with RGBA(253, 253, 253, 255). Otherwise, we end up with black tiles since
+    // the reader interprets empty/missing tiles as 0
+    const int nFillVal = bHasNoData ? static_cast<int>(dfSrcNoData) : 253;
+
+    // Generate tiles for each LOD
+    GIntBig nTilesWritten = 0;
+    eErr = CE_None;
+
+    for (int iLOD = nMinLOD; iLOD <= nMaxLOD && eErr == CE_None; iLOD++)
+    {
+        const auto &oTM = aoTMList[iLOD];
+        const int nTileW = oTM.mTileWidth;
+        const int nTileH = oTM.mTileHeight;
+        const double dfResX = oTM.mResX;
+        const double dfResY = oTM.mResY;
+        const double dfTileExtX = nTileW * dfResX;
+        const double dfTileExtY = nTileH * dfResY;
+        const size_t nTilePixels = static_cast<size_t>(nTileW) * nTileH;
+
+        // Select the coarsest source overview whose resolution does
+        // not exceed the target. Fall back to the base dataset.
+        GDALDataset *poWarpSrcDS = poEffectiveSrcDS;
+        for (const auto &poOvrDS : apoOverviewDS)
+        {
+            GDALGeoTransform gtOvr;
+            if (poOvrDS->GetGeoTransform(gtOvr) != CE_None)
+                continue;
+            const double dfOvrRes = std::abs(gtOvr.xscale);
+            if (dfOvrRes <= dfResX * (1.0 + 1e-10))
+                poWarpSrcDS = poOvrDS.get();
+            else
+                break;
+        }
+
+        GDALGeoTransform gtSrc;
+        poWarpSrcDS->GetGeoTransform(gtSrc);
+        const double dfSrcRes = std::abs(gtSrc.xscale);
+        const bool bExactResolutionMatch =
+            std::abs(dfSrcRes - dfResX) <= 1e-10 * dfResX;
+
+        // Compute tile range overlapping source extent
+        const int nMinCol =
+            std::max(0, static_cast<int>(floor((adfExtent[0] - oTM.mTopLeftX) /
+                                               dfTileExtX)));
+        const int nMaxCol =
+            std::min(oTM.mMatrixWidth - 1,
+                     static_cast<int>(
+                         floor((adfExtent[2] - oTM.mTopLeftX) / dfTileExtX)));
+        const int nMinRow =
+            std::max(0, static_cast<int>(floor((oTM.mTopLeftY - adfExtent[3]) /
+                                               dfTileExtY)));
+        const int nMaxRow =
+            std::min(oTM.mMatrixHeight - 1,
+                     static_cast<int>(
+                         floor((oTM.mTopLeftY - adfExtent[1]) / dfTileExtY)));
+
+        if (nMinCol > nMaxCol || nMinRow > nMaxRow)
+            continue;
+
+        // Create LOD subdirectory
+        const std::string osLODDir = CPLFormFilenameSafe(
+            osTileDir.c_str(), CPLSPrintf("L%02d", iLOD), nullptr);
+        if (VSIMkdir(osLODDir.c_str(), 0755) != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "ESRIC: failed to create directory %s", osLODDir.c_str());
+            eErr = CE_Failure;
+            break;
+        }
+
+        // Build warped VRT covering the tiles at this LOD
+        const double dfAlignedMinX = oTM.mTopLeftX + nMinCol * dfTileExtX;
+        const double dfAlignedMaxY = oTM.mTopLeftY - nMinRow * dfTileExtY;
+        const int nPixelsX = (nMaxCol - nMinCol + 1) * nTileW;
+        const int nPixelsY = (nMaxRow - nMinRow + 1) * nTileH;
+
+        double adfLODGT[6] = {dfAlignedMinX, dfResX, 0.0,
+                              dfAlignedMaxY, 0.0,    -dfResY};
+
+        void *hLODTransform = GDALCreateGenImgProjTransformer2(
+            GDALDataset::ToHandle(poWarpSrcDS), nullptr, aosTO.List());
+        if (!hLODTransform)
+        {
+            eErr = CE_Failure;
+            break;
+        }
+        GDALSetGenImgProjTransformerDstGeoTransform(hLODTransform, adfLODGT);
+
+        void *hApproxTransform = GDALCreateApproxTransformer(
+            GDALGenImgProjTransform, hLODTransform, 0.125);
+        GDALApproxTransformerOwnsSubtransformer(hApproxTransform, TRUE);
+
+        auto psWO = GDALCreateWarpOptions();
+        psWO->hSrcDS = GDALDataset::ToHandle(poWarpSrcDS);
+        psWO->eResampleAlg =
+            bExactResolutionMatch ? GRA_NearestNeighbour : GRA_Bilinear;
+        psWO->eWorkingDataType = GDT_Byte;
+
+        if (bSrcHasAlpha)
+        {
+            // Source has alpha. Warp color bands only
+            psWO->nBandCount = nBands - 1;
+            psWO->nSrcAlphaBand = nBands;
+            psWO->nDstAlphaBand = nBands;
+        }
+        else
+        {
+            // No source alpha. Warp all source bands and add an alpha band
+            psWO->nBandCount = nBands;
+            psWO->nDstAlphaBand = nBands + 1;
+        }
+
+        psWO->panSrcBands =
+            static_cast<int *>(CPLMalloc(sizeof(int) * psWO->nBandCount));
+        psWO->panDstBands =
+            static_cast<int *>(CPLMalloc(sizeof(int) * psWO->nBandCount));
+        for (int i = 0; i < psWO->nBandCount; i++)
+        {
+            psWO->panSrcBands[i] = i + 1;
+            psWO->panDstBands[i] = i + 1;
+        }
+        psWO->pTransformerArg = hApproxTransform;
+        psWO->pfnTransformer = GDALApproxTransform;
+
+        psWO->papszWarpOptions =
+            CSLSetNameValue(nullptr, "INIT_DEST", CPLSPrintf("%d", nFillVal));
+
+        // Set the source no data if it exists
+        if (bHasNoData)
+        {
+            psWO->padfSrcNoDataReal = static_cast<double *>(
+                CPLMalloc(sizeof(double) * psWO->nBandCount));
+            for (int i = 0; i < psWO->nBandCount; i++)
+                psWO->padfSrcNoDataReal[i] = dfSrcNoData;
+        }
+
+        GDALDatasetH hWarpedDS =
+            GDALCreateWarpedVRT(GDALDataset::ToHandle(poWarpSrcDS), nPixelsX,
+                                nPixelsY, adfLODGT, psWO);
+        GDALDestroyWarpOptions(psWO);
+
+        if (!hWarpedDS)
+        {
+            GDALDestroyApproxTransformer(hApproxTransform);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ESRIC: failed to create warped VRT for LOD %d", iLOD);
+            eErr = CE_Failure;
+            break;
+        }
+
+        // Map of Bundle writers for this LOD. Key is the file path
+        std::map<std::string, BundleWriter> oBundles;
+
+        // Query the actual VRT band count
+        const int nVRTBands = GDALGetRasterCount(hWarpedDS);
+        // Number of color bands in the VRT
+        const int nColorBands = nVRTBands - 1;
+
+        for (int nRow = nMinRow; nRow <= nMaxRow && eErr == CE_None; nRow++)
+        {
+            for (int nCol = nMinCol; nCol <= nMaxCol && eErr == CE_None; nCol++)
+            {
+                const int nXOff = (nCol - nMinCol) * nTileW;
+                const int nYOff = (nRow - nMinRow) * nTileH;
+
+                // Read all VRT bands
+                std::vector<GByte> abySrc(nTilePixels * nVRTBands, 0);
+                if (GDALDatasetRasterIO(
+                        hWarpedDS, GF_Read, nXOff, nYOff, nTileW, nTileH,
+                        abySrc.data(), nTileW, nTileH, GDT_Byte, nVRTBands,
+                        nullptr, 1, nTileW,
+                        static_cast<int>(nTilePixels)) != CE_None)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "ESRIC: failed to read tile data at "
+                             "LOD %d row %d col %d",
+                             iLOD, nRow, nCol);
+                    eErr = CE_Failure;
+                    break;
+                }
+
+                // Skip empty PNG tiles where alpha is all 0.
+                // For JPEG, we fill the tile with fill value so do not skip here. Otherwise, they
+                // will show up as black tiles due to the color values being all 0s
+                bool bEmpty = false;
+                if (!bJPEG)
+                {
+                    const GByte *pabyAlpha =
+                        abySrc.data() +
+                        static_cast<size_t>(nVRTBands - 1) * nTilePixels;
+                    bEmpty = std::all_of(pabyAlpha, pabyAlpha + nTilePixels,
+                                         [](GByte b) { return b == 0; });
+                }
+
+                if (bEmpty)
+                {
+                    nTilesWritten++;
+                    if (!pfnProgress(static_cast<double>(nTilesWritten) /
+                                         nTotalTiles,
+                                     "", pProgressData))
+                    {
+                        eErr = CE_Failure;
+                    }
+                    continue;
+                }
+
+                // Create MEM dataset and map VRT bands to tile bands
+                GDALDriverH hMemDrv = GDALGetDriverByName("MEM");
+                GDALDatasetH hMemDS = GDALCreate(hMemDrv, "", nTileW, nTileH,
+                                                 nTileBands, GDT_Byte, nullptr);
+
+                for (int iBand = 0; iBand < nTileBands; iBand++)
+                {
+                    GDALRasterBandH hBand =
+                        GDALGetRasterBand(hMemDS, iBand + 1);
+
+                    if (iBand < 3)
+                    {
+                        // RGB. Pick VRT color band index
+                        const int nSrcIdx = (nColorBands >= 3) ? iBand : 0;
+                        GDALRasterIO(hBand, GF_Write, 0, 0, nTileW, nTileH,
+                                     abySrc.data() + nSrcIdx * nTilePixels,
+                                     nTileW, nTileH, GDT_Byte, 0, 0);
+                    }
+                    else
+                    {
+                        // Alpha band
+                        GDALRasterIO(hBand, GF_Write, 0, 0, nTileW, nTileH,
+                                     abySrc.data() +
+                                         static_cast<size_t>(nVRTBands - 1) *
+                                             nTilePixels,
+                                     nTileW, nTileH, GDT_Byte, 0, 0);
+                    }
+                }
+
+                // Set color interpretation for correct encoding
+                if (nTileBands >= 3)
+                {
+                    GDALSetRasterColorInterpretation(
+                        GDALGetRasterBand(hMemDS, 1), GCI_RedBand);
+                    GDALSetRasterColorInterpretation(
+                        GDALGetRasterBand(hMemDS, 2), GCI_GreenBand);
+                    GDALSetRasterColorInterpretation(
+                        GDALGetRasterBand(hMemDS, 3), GCI_BlueBand);
+                }
+                if (nTileBands == 4)
+                    GDALSetRasterColorInterpretation(
+                        GDALGetRasterBand(hMemDS, 4), GCI_AlphaBand);
+
+                // Encode tile to JPEG/PNG
+                const std::string osMemFile(
+                    VSIMemGenerateHiddenFilename("esric_tile"));
+                GDALDatasetH hOutDS = GDALCreateCopy(
+                    hTileDriver, osMemFile.c_str(), hMemDS, FALSE,
+                    aosTileOptions.List(), nullptr, nullptr);
+                if (!hOutDS)
+                {
+                    GDALClose(hMemDS);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "ESRIC: failed to encode tile at "
+                             "LOD %d row %d col %d",
+                             iLOD, nRow, nCol);
+                    eErr = CE_Failure;
+                    break;
+                }
+                GDALClose(hOutDS);
+                GDALClose(hMemDS);
+
+                // Retrieve encoded blob
+                vsi_l_offset nBlobSize = 0;
+                GByte *pabyBlob =
+                    VSIGetMemFileBuffer(osMemFile.c_str(), &nBlobSize, TRUE);
+
+                if (pabyBlob && nBlobSize > 0)
+                {
+                    // Determine which bundle this tile belongs to
+                    const int nBundleRow = (nRow / WBSZ) * WBSZ;
+                    const int nBundleCol = (nCol / WBSZ) * WBSZ;
+                    const std::string osBundlePath =
+                        CPLSPrintf("%s/R%04xC%04x.bundle", osLODDir.c_str(),
+                                   nBundleRow, nBundleCol);
+
+                    // Get or create bundle writer
+                    auto oIt = oBundles.find(osBundlePath);
+                    if (oIt == oBundles.end())
+                    {
+                        auto oRes =
+                            oBundles.emplace(osBundlePath, BundleWriter());
+                        oIt = oRes.first;
+                        if (!oIt->second.Init(osBundlePath))
+                        {
+                            CPLFree(pabyBlob);
+                            eErr = CE_Failure;
+                            break;
+                        }
+                    }
+
+                    if (!oIt->second.WriteTile(nRow, nCol, pabyBlob,
+                                               static_cast<GUInt32>(nBlobSize)))
+                    {
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                 "ESRIC: failed to write tile to bundle "
+                                 "at LOD %d row %d col %d",
+                                 iLOD, nRow, nCol);
+                        CPLFree(pabyBlob);
+                        eErr = CE_Failure;
+                        break;
+                    }
+                }
+
+                if (eErr == CE_None)
+                {
+                    CPLFree(pabyBlob);
+                }
+
+                nTilesWritten++;
+                if (!pfnProgress(static_cast<double>(nTilesWritten) /
+                                     nTotalTiles,
+                                 "", pProgressData))
+                {
+                    eErr = CE_Failure;
+                }
+            }
+        }
+
+        // Finalize all bundles for this LOD
+        for (auto &[osPath, oWriter] : oBundles)
+        {
+            oWriter.Finalize();
+        }
+
+        // VRTWarpedDataset::CloseDependentDatasets() destroys the
+        // transformer stored in the warper options, so we must not
+        // destroy it again here.
+        GDALClose(hWarpedDS);
+    }
+
+    if (hExpandedDS)
+        GDALClose(hExpandedDS);
+
+    // ----------------------------------------------------------------
+    // Write JSON metadata
+    // ----------------------------------------------------------------
+    if (eErr == CE_None)
+    {
+        if (!BuildRootJSON(osTempDir, pszFilename, aoTMList, nMinLOD, nMaxLOD,
+                           pszFormat, bJPEG ? nQuality : 0, nEPSGCode,
+                           adfExtent))
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to write root.json");
+            eErr = CE_Failure;
+        }
+    }
+
+    if (eErr == CE_None)
+    {
+        if (!BuildItemInfoJSON(osTempDir, pszFilename, pszSummary, pszTags))
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to write iteminfo.json");
+            eErr = CE_Failure;
+        }
+    }
+
+    // Package temp directory into .tpkx ZIP archive
+    if (eErr == CE_None)
+    {
+        if (!PackageTpkx(pszFilename, osTempDir))
+            eErr = CE_Failure;
+    }
+
+    // Clean up temp directory
+    VSIRmdirRecursive(osTempDir.c_str());
+
+    if (eErr != CE_None)
+        return nullptr;
+
+    // Open the created .tpkx and return it
+    GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+    return ECDataset::Open(&oOpenInfo);
+}
+
 }  // namespace ESRIC
 
 void CPL_DLL GDALRegister_ESRIC()
@@ -1097,8 +2160,31 @@ void CPL_DLL GDALRegister_ESRIC()
         "default='NO'>"
         "  </Option>"
         "</OpenOptionList>");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONDATATYPES, "Byte");
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='TILE_FORMAT' type='string-select' default='PNG' "
+        "description='Tile image encoding format'>"
+        "    <Value>JPEG</Value>"
+        "    <Value>PNG</Value>"
+        "  </Option>"
+        "  <Option name='QUALITY' type='int' min='1' max='100' default='75' "
+        "description='JPEG compression quality'/>"
+        "  <Option name='MIN_LOD' type='int' min='0' max='23' default='0' "
+        "description='Minimum level of detail'/>"
+        "  <Option name='MAX_LOD' type='int' min='0' max='23' default='1' "
+        "description='Maximum level of detail'/>"
+        "  <Option name='SUMMARY' type='string' "
+        "description='Summary of the package stored in the metadata'/>"
+        "  <Option name='TAGS' type='string' "
+        "description='Comma-separated tags stored in package metadata'/>"
+        "</CreationOptionList>");
+
     poDriver->pfnIdentify = ESRIC::Identify;
     poDriver->pfnOpen = ESRIC::ECDataset::Open;
+    poDriver->pfnCreateCopy = ESRIC::CreateCopy;
     poDriver->pfnDelete = ESRIC::Delete;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
