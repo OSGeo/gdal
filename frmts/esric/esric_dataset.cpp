@@ -1882,14 +1882,8 @@ GDALDataset *CreateCopy(const char* pszFilename,
         psWO->pTransformerArg = hApproxTransform;
         psWO->pfnTransformer = GDALApproxTransform;
 
-        // Initialise destination no data
-        psWO->padfDstNoDataReal = static_cast<double*>(
-            CPLMalloc(sizeof(double) * psWO->nBandCount));
-        for (int i = 0; i < psWO->nBandCount; i++)
-            psWO->padfDstNoDataReal[i] = nFillVal;
-
         psWO->papszWarpOptions =
-            CSLSetNameValue(nullptr, "INIT_DEST", "NO_DATA");
+            CSLSetNameValue(nullptr, "INIT_DEST", CPLSPrintf("%d", nFillVal));
 
         // Set the source no data if it exists
         if (bHasNoData)
