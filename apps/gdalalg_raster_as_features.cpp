@@ -281,6 +281,11 @@ class GDALRasterAsFeaturesLayer final
                 m_row++;
             }
 
+            if (m_row >= m_window.nYSize)
+            {
+                NextWindow();
+            }
+
             if (feature)
             {
                 return feature.release();
