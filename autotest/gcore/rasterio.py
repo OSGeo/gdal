@@ -3898,3 +3898,48 @@ def test_rasterio_gdt_unknown():
         # Caught at the SWIG level
         with pytest.raises(Exception, match="Illegal value for data type"):
             ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Unknown)
+
+
+@pytest.mark.parametrize("dt", [gdal.GDT_Float32, gdal.GDT_Float64])
+@pytest.mark.parametrize("factor", [2, 4, 8])
+@pytest.mark.parametrize(
+    "resample_alg",
+    [
+        gdal.GRIORA_Bilinear,
+        gdal.GRIORA_Cubic,
+        gdal.GRIORA_CubicSpline,
+        gdal.GRIORA_Lanczos,
+        gdal.GRIORA_Mode,
+        gdal.GRIORA_Average,
+        gdal.GRIORA_RMS,
+    ],
+)
+def test_rasterio_resampling_nan_nodata(dt, factor, resample_alg):
+    # Check that NaN, when declared as band nodata, and present in values
+    # does not "contaminate" the results.
+
+    w = 16
+    h = 16
+    src_ds = gdal.GetDriverByName("MEM").Create("", w, h, 1, dt)
+    src_ds.GetRasterBand(1).SetNoDataValue(float("nan"))
+    src_ds.GetRasterBand(1).Fill(1)
+    src_ds.GetRasterBand(1).WriteRaster(
+        7,
+        7,
+        1,
+        1,
+        (
+            struct.pack("f", float("nan"))
+            if dt == gdal.GDT_Float32
+            else struct.pack("d", float("nan"))
+        ),
+    )
+
+    buf_w = w // factor
+    buf_h = h // factor
+    buf = src_ds.ReadRaster(0, 0, w, h, buf_w, buf_h, resample_alg=resample_alg)
+    if dt == gdal.GDT_Float32:
+        buf = struct.unpack("f" * (buf_w * buf_h), buf)
+    else:
+        buf = struct.unpack("d" * (buf_w * buf_h), buf)
+    assert buf == pytest.approx((1.0,) * (buf_w * buf_h))
