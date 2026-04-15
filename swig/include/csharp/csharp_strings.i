@@ -56,7 +56,7 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
   }
   internal class DefaultStringEncoder : IStringEncoder {
     public string FromNullTerminated(IntPtr pStr) {
-#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+#if NETCOREAPP1_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
       return System.Runtime.InteropServices.Marshal.PtrToStringUTF8(pStr);
 #else
       if (pStr == IntPtr.Zero) return null;
