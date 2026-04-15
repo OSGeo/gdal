@@ -89,23 +89,6 @@ OGRErrMessages( int rc ) {
 }
 %}
 
-/*
- * Helper to marshal utf8 strings.
- */
-
-%pragma(csharp) modulecode=%{
-  internal unsafe static string Utf8BytesToString(IntPtr pNativeData)
-  {
-    if (pNativeData == IntPtr.Zero)
-        return null;
-
-    byte* pStringUtf8 = (byte*) pNativeData;
-    int len = 0;
-    while (pStringUtf8[len] != 0) len++;
-    return System.Text.Encoding.UTF8.GetString(pStringUtf8, len);
-  }
-%}
-
 %typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr
 {
   /* %typemap(out,fragment="OGRErrMessages",canthrow=1) OGRErr */
