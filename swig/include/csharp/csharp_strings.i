@@ -36,38 +36,39 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
 %}
 
 %pragma(csharp) modulecode=%{
-  /* Interface for marshalling string to/from Gdal unmanaged strings. */
-  public interface IStringMarshaller {
-    /* Convert a string to a null-terminated array of bytes to be sent to Gdal unmanaged */
+  /* Interface for encoding/decoding string to/from Gdal unmanaged strings. */
+  public interface IStringEncoder {
+    /* Encode a string to a null-terminated array of bytes to be sent to Gdal unmanaged */
     byte[] ToNullTerminated(string str);
-    /* Convert an unmanaged, null-terminated string from Gdal to a managed string */
+    /* Decode an unmanaged, null-terminated string from Gdal to a managed string */
     string FromNullTerminated(IntPtr pStr);
   }
-  internal static readonly IStringMarshaller s_DefaultStringMarshaller = new DefaultStringMarshaller();
-  internal static IStringMarshaller s_StringMarshaller;
-  public static IStringMarshaller StringMarshaller {
+  internal static readonly IStringEncoder s_DefaultStringEncoder = new DefaultStringEncoder();
+  internal static IStringEncoder s_StringEncoder;
+  public static IStringEncoder StringEncoder {
     get {
-      if (s_StringMarshaller == null)
-        s_StringMarshaller = s_DefaultStringMarshaller;
-      return s_StringMarshaller;
+      if (s_StringEncoder == null)
+        s_StringEncoder = s_DefaultStringEncoder;
+      return s_StringEncoder;
     }
     set {
-      s_StringMarshaller = value;
+      s_StringEncoder = value;
     }
   }
-  internal class DefaultStringMarshaller : IStringMarshaller {
-    public unsafe string FromNullTerminated(IntPtr pStr) {
-      if (pStr == IntPtr.Zero) return null;
-      byte* pBytes = (byte*)pStr.ToPointer();
-#if NET6_0_OR_GREATER
-      ReadOnlySpan<byte> nativeBytes = System.Runtime.InteropServices.MemoryMarshal.CreateReadOnlySpanFromNullTerminated(pBytes);
-      return System.Text.Encoding.UTF8.GetString(nativeBytes);
+  internal class DefaultStringEncoder : IStringEncoder {
+    public string FromNullTerminated(IntPtr pStr) {
+#if NETCOREAPP || NETSTANDARD2_1_OR_GREATER
+      return System.Runtime.InteropServices.Marshal.PtrToStringUTF8(pStr);
 #else
-      int len = 0;
-      checked {
-        while (pBytes[len] != 0) len++;
+      if (pStr == IntPtr.Zero) return null;
+      unsafe {
+        byte* pBytes = (byte*)pStr.ToPointer();
+        int len = 0;
+        checked {
+          while (pBytes[len] != 0) len++;
+        }
+        return System.Text.Encoding.UTF8.GetString(pBytes, len);
       }
-      return System.Text.Encoding.UTF8.GetString(pBytes, len);
 #endif
     }
     public byte[] ToNullTerminated(string str) {
@@ -94,21 +95,19 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
       RegisterUtf8StringCallback_$module(stringDelegate);
     }
 
-    public unsafe static IntPtr DecodeStringToPinnedGCHandle(IntPtr pUtf8Bts)
-    {
-      string value = $module.StringMarshaller?.FromNullTerminated(pUtf8Bts);
-	  if (value == null) return IntPtr.Zero;	  
+    public static IntPtr DecodeStringToPinnedGCHandle(IntPtr pUtf8Bts) {
+      string value = $module.StringEncoder?.FromNullTerminated(pUtf8Bts);
+      if (value == null) return IntPtr.Zero;
       var handle = System.Runtime.InteropServices.GCHandle.Alloc(value,
                      System.Runtime.InteropServices.GCHandleType.Pinned);
       return System.Runtime.InteropServices.GCHandle.ToIntPtr(handle);
     }
   }
 
-  //Instantiate the helper class so that the static constructor executes
+  /* Instantiate the helper class so that the static constructor executes */
   public static readonly Utf8StringHelper utf8StringHelper = new Utf8StringHelper();
 
-  internal static string StringFromPinnedGCHandle(IntPtr pinnedHandle)
-  {
+  internal static string StringFromPinnedGCHandle(IntPtr pinnedHandle){
     if (pinnedHandle == IntPtr.Zero) return null;
     var handle = System.Runtime.InteropServices.GCHandle.FromIntPtr(pinnedHandle);
     string value = handle.Target as string;
@@ -147,9 +146,9 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 
 %typemap(csin,
   pre="
-  byte[] bts$csinput = $module.StringMarshaller?.ToNullTerminated($csinput);
-  unsafe {
-    fixed (byte* pBts$csinput = bts$csinput) {",
+    byte[] bts$csinput = $module.StringEncoder?.ToNullTerminated($csinput);
+    unsafe {
+      fixed (byte* pBts$csinput = bts$csinput) {",
   terminator="    }}",
   cshin="$csinput"
   ) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
@@ -171,7 +170,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(csvarin, excode=SWIGEXCODE2) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
   /* %typemap(csvarin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) */
   set {
-    byte[] bts$csinput = $module.StringMarshaller?.ToNullTerminated($csinput);
+    byte[] bts$csinput = $module.StringEncoder?.ToNullTerminated($csinput);
     unsafe {
       fixed (byte* pBts$csinput = bts$csinput) {
         $imcall;$excode
@@ -254,8 +253,10 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(cstype) (char **ignorechange) "ref string"
 %typemap(csin,
   pre="
-    byte[] bts$csinput = $module.StringMarshaller?.ToNullTerminated($csinput);
-    unsafe { fixed (byte* pBts$csinput = bts$csinput) { IntPtr temp$csinput = (IntPtr)pBts$csinput;",
+    byte[] bts$csinput = $module.StringEncoder?.ToNullTerminated($csinput);
+    unsafe {
+      fixed (byte* pBts$csinput = bts$csinput) {
+        IntPtr temp$csinput = (IntPtr)pBts$csinput;",
   terminator="    }}",
   cshin="$csinput"
   ) (char** ignorechange)
@@ -290,7 +291,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
       _handles = new System.Runtime.InteropServices.GCHandle[ar.Length];
       _ar = new IntPtr[ar.Length + 1];
       for (int cx = 0; cx < ar.Length; cx++) {
-        byte[] bts = $module.StringMarshaller?.ToNullTerminated(ar[cx]);
+        byte[] bts = $module.StringEncoder?.ToNullTerminated(ar[cx]);
         _handles[cx] = System.Runtime.InteropServices.GCHandle.Alloc(bts, System.Runtime.InteropServices.GCHandleType.Pinned);
         _ar[cx] = _handles[cx].AddrOfPinnedObject();
       }
@@ -340,7 +341,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
   if (count > 0) {
     for(int cx = 0; cx < count; cx++) {
       objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-      ret[cx]= $module.StringMarshaller?.FromNullTerminated(objPtr);
+      ret[cx]= $module.StringEncoder?.FromNullTerminated(objPtr);
     }
   }
 %enddef
