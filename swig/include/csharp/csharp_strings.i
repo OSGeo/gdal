@@ -12,22 +12,21 @@
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
-/*******************************************************************************
- * Marshaller for NULL terminated UTF-8 encoded strings                        *
- * Creates a callback function which is used from the native runtime to create *
- * .NET strings. The managed Utf8StringHelper registers a callback function    *
- * with the native runtime which is used by the native runtime to create .NET  *
- * strings. When called by the native runtime, the .NET function decodes the   *
- * unmanaged memory into a managed string and returns a new pinned GCHandle    *
- * for that string. A pointer to that GCHandle is returned. When the callback  *
- * returns to managed .NET, the managed string is retrieved from the GCHandle  *
- * and the GCHandle is freed by calling StringFromPinnedGCHandle.              *
- *                                                                             *
- * IMPORTANT:                                                                  *
- * Every call to SWIG_csharp_string_callback MUST be followed by exactly       *
- * one call to StringFromPinnedGCHandle() on the returned pointer.             *
- * Failure to do so will result in memory leaks or double frees.               *
- ******************************************************************************/
+/******************************************************************************
+ * Marshaller for NULL terminated UTF-8 encoded strings                       *
+ * The managed Utf8StringHelper registers a callback function with the native *
+ * runtime which is used by the native runtime to create .NET strings. When   *
+ * called by the native runtime, the .NET function decodes the unmanaged      *
+ * memory into a managed string and returns a new pinned GCHandle for that    *
+ * string. A pointer to that GCHandle is returned. When the callback returns  *
+ * to managed .NET, the managed string is retrieved from the GCHandle and the *
+ * GCHandle is freed by calling StringFromPinnedGCHandle.                     *
+ *                                                                            *
+ * IMPORTANT:                                                                 *
+ * Every call to SWIG_csharp_string_callback MUST be followed by exactly      *
+ * one call to StringFromPinnedGCHandle() on the returned pointer.            *
+ * Failure to do so will result in memory leaks or double frees.              *
+ *****************************************************************************/
 
 %insert(runtime) %{
 /* Callback for returning strings to C# without leaking memory */
@@ -127,9 +126,9 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 }
 %}
 
-/******************************************************************************
- * Apply typemaps for all SWIG string types and for const char *utf8_string   *
- ******************************************************************************/
+/*****************************************************************************
+ * Apply typemaps for all SWIG string types and for const char *utf8_string  *
+ ****************************************************************************/
 
 %typemap(cstype) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "string"
 %typemap(imtype, out="IntPtr") (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "byte[]"
@@ -289,15 +288,13 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
     public static string[] DecodeStringArray(IntPtr pList) {
       int count = 0;
       if (pList != IntPtr.Zero) checked {
-        while (System.Runtime.InteropServices.Marshal.ReadIntPtr(pList, count*IntPtr.Size) != IntPtr.Zero)
+        while (System.Runtime.InteropServices.Marshal.ReadIntPtr(pList, count * IntPtr.Size) != IntPtr.Zero)
           count++;
       }
       string[] ret = new string[count];
-      if (count > 0) {
-        for(int cx = 0; cx < count; cx++) {
-          IntPtr objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(pList, cx * IntPtr.Size);
-          ret[cx]= $module.StringEncoder?.FromNullTerminated(objPtr);
-        }
+      for(int cx = 0; cx < count; cx++) {
+        IntPtr objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(pList, cx * IntPtr.Size);
+        ret[cx]= $module.StringEncoder?.FromNullTerminated(objPtr);
       }
       return ret;
     }
