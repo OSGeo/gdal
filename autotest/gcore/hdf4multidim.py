@@ -529,3 +529,14 @@ def test_hdf4multidim_gr_palette():
     assert got[255 * 3 + 0] == 255
     assert got[255 * 3 + 1] == 0
     assert got[255 * 3 + 2] == 1
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14356
+
+
+def test_hdf4_multidim_gh_14356():
+
+    ds = gdal.OpenEx("data/hdf4/issue_14356.he4", gdal.OF_MULTIDIM_RASTER)
+
+    gdal.MultiDimInfo(ds)
