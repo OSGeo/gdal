@@ -3147,7 +3147,10 @@ GDnentries(int32 gridID, int32 entrycode, int32 * strbufsize)
 		     * Get all string values Don't count quotes
 		     */
 		    EHgetmetavalue(metaptrs, &valName[i][0], utlstr);
-		    *strbufsize += (int32)strlen(utlstr) - 2;
+		    if( utlstr[0] == '"' && utlstr[strlen(utlstr)-1] == '"' )
+		        *strbufsize += (int32)strlen(utlstr) - 2;
+		    else
+		        *strbufsize += (int32)strlen(utlstr);
 		}
 		/* Increment number of entries */
 		nEntries++;

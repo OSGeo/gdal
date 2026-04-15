@@ -607,3 +607,15 @@ def test_hdf4_gh_14356():
         pytest.skip()
 
     gdal.Open("data/hdf4/issue_14356.he4")
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14363
+
+
+def test_hdf4_gh_14363():
+
+    if gdaltest.hdf4_drv is None:
+        pytest.skip()
+
+    gdal.Open("data/hdf4/issue_14363.he4")

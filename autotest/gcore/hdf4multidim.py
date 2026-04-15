@@ -540,3 +540,14 @@ def test_hdf4_multidim_gh_14356():
     ds = gdal.OpenEx("data/hdf4/issue_14356.he4", gdal.OF_MULTIDIM_RASTER)
 
     gdal.MultiDimInfo(ds)
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14363
+
+
+def test_hdf4_multidim_gh_14363():
+
+    ds = gdal.OpenEx("data/hdf4/issue_14363.he4", gdal.OF_MULTIDIM_RASTER)
+
+    gdal.MultiDimInfo(ds)
