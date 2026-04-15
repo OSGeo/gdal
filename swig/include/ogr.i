@@ -534,6 +534,7 @@ typedef int CPLErr;
 #define OGRNullFID            -1
 #define OGRUnsetMarker        -21121
 
+%csconst(1);
 #define OLCRandomRead          "RandomRead"
 #define OLCSequentialWrite     "SequentialWrite"
 #define OLCRandomWrite         "RandomWrite"
@@ -581,6 +582,7 @@ typedef int CPLErr;
 #define ODrCDeleteDataSource   "DeleteDataSource"
 
 #define OLMD_FID64             "OLMD_FID64"
+%csconst(0);
 
 #define GEOS_PREC_NO_TOPO          1
 #define GEOS_PREC_KEEP_COLLAPSED   2
