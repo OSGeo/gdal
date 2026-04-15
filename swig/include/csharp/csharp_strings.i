@@ -97,7 +97,8 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
 
     public static IntPtr DecodeStringToPinnedGCHandle(IntPtr pUtf8Bts) {
       string value = $module.StringEncoder?.FromNullTerminated(pUtf8Bts);
-      if (value == null) return IntPtr.Zero;
+      if (value == null)
+        return IntPtr.Zero;
       var handle = System.Runtime.InteropServices.GCHandle.Alloc(value,
                      System.Runtime.InteropServices.GCHandleType.Pinned);
       return System.Runtime.InteropServices.GCHandle.ToIntPtr(handle);
@@ -108,7 +109,8 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
   public static readonly Utf8StringHelper utf8StringHelper = new Utf8StringHelper();
 
   internal static string StringFromPinnedGCHandle(IntPtr pinnedHandle){
-    if (pinnedHandle == IntPtr.Zero) return null;
+    if (pinnedHandle == IntPtr.Zero)
+      return null;
     var handle = System.Runtime.InteropServices.GCHandle.FromIntPtr(pinnedHandle);
     string value = handle.Target as string;
     handle.Free();
@@ -130,7 +132,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
  ******************************************************************************/
 
 %typemap(cstype) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "string"
-%typemap(imtype) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "IntPtr"
+%typemap(imtype, out="IntPtr") (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "byte[]"
 
 %typemap(in) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
   $1 = ($1_ltype)$input;
@@ -144,15 +146,9 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
   $result = SWIG_csharp_string_callback((const char *)$1);
 %}
 
-%typemap(csin,
-  pre="
-    byte[] bts$csinput = $module.StringEncoder?.ToNullTerminated($csinput);
-    unsafe {
-      fixed (byte* pBts$csinput = bts$csinput) {",
-  terminator="    }}",
-  cshin="$csinput"
-  ) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
-  "(IntPtr)pBts$csinput"
+%typemap(csin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
+  $module.StringEncoder?.ToNullTerminated($csinput)
+%}
 
 %typemap(csout, excode=SWIGEXCODE) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
 {
@@ -166,18 +162,6 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 /*
  * Typemap for UTF-8 char* string properties.
  */
-
-%typemap(csvarin, excode=SWIGEXCODE2) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
-  /* %typemap(csvarin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) */
-  set {
-    byte[] bts$csinput = $module.StringEncoder?.ToNullTerminated($csinput);
-    unsafe {
-      fixed (byte* pBts$csinput = bts$csinput) {
-        $imcall;$excode
-      }
-    }
-  }
-%}
 
 %typemap(csvarout, excode=SWIGEXCODE2) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
   get {
@@ -249,18 +233,13 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
  * caller doesn't want to see changes.
  */
 
-%typemap(imtype) (char **ignorechange) "ref IntPtr"
+%typemap(imtype) (char **ignorechange) "ref byte[]"
 %typemap(cstype) (char **ignorechange) "ref string"
 %typemap(csin,
-  pre="
-    byte[] bts$csinput = $module.StringEncoder?.ToNullTerminated($csinput);
-    unsafe {
-      fixed (byte* pBts$csinput = bts$csinput) {
-        IntPtr temp$csinput = (IntPtr)pBts$csinput;",
-  terminator="    }}",
+  pre="    byte[] bts$csinput = $module.StringEncoder?.ToNullTerminated($csinput);",
   cshin="$csinput"
   ) (char** ignorechange)
-  "ref temp$csinput"
+  "ref bts$csinput"
 
 %typemap(in, noblock="1") (char **ignorechange)
 {
@@ -307,6 +286,21 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
       }
       GC.SuppressFinalize(this);
     }
+    public static string[] DecodeStringArray(IntPtr pList) {
+      int count = 0;
+      if (pList != IntPtr.Zero) checked {
+        while (System.Runtime.InteropServices.Marshal.ReadIntPtr(pList, count*IntPtr.Size) != IntPtr.Zero)
+          count++;
+      }
+      string[] ret = new string[count];
+      if (count > 0) {
+        for(int cx = 0; cx < count; cx++) {
+          IntPtr objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(pList, cx * IntPtr.Size);
+          ret[cx]= $module.StringEncoder?.FromNullTerminated(objPtr);
+        }
+      }
+      return ret;
+    }
   }
 %}
 
@@ -326,27 +320,6 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
   "temp$csinput._ar"
 
 /*
- * C# code to marshal NULL terminated lists of NULL terminated UTF-8 strings.
- */
-
-%define CS_MARSHAL_STRING_LIST()
-  IntPtr cPtr = $imcall;
-  IntPtr objPtr;
-  int count = 0;
-  if (cPtr != IntPtr.Zero) {
-    while (System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, count*IntPtr.Size) != IntPtr.Zero)
-      ++count;
-  }
-  string[] ret = new string[count];
-  if (count > 0) {
-    for(int cx = 0; cx < count; cx++) {
-      objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-      ret[cx]= $module.StringEncoder?.FromNullTerminated(objPtr);
-    }
-  }
-%enddef
-
-/*
  * Marshal char**options, char **dict to string[] and don't free the unmanaged
  * string list.
  */
@@ -354,7 +327,8 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(csout, excode=SWIGEXCODE) char**options, char **dict
 {
   /* %typemap(csout) char**options, char **dict */
-  CS_MARSHAL_STRING_LIST()
+  IntPtr cPtr = $imcall;
+  string[] ret = $modulePINVOKE.StringListMarshal.DecodeStringArray(cPtr);
   $excode
   return ret;
 }
@@ -366,11 +340,16 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 
 %typemap(csout, excode=SWIGEXCODE) char** CSL, char **dictAndCSLDestroy {
   /* %typemap(csout) char** CSL, char **dictAndCSLDestroy */
-  CS_MARSHAL_STRING_LIST()
-  if (cPtr != IntPtr.Zero)
-    $modulePINVOKE.StringListDestroy(cPtr);
-  $excode
-  return ret;
+  IntPtr cPtr = $imcall;
+  try {
+    string[] ret = $modulePINVOKE.StringListMarshal.DecodeStringArray(cPtr);
+    $excode
+    return ret;
+  }
+  finally {
+    if (cPtr != IntPtr.Zero)
+      $modulePINVOKE.StringListDestroy(cPtr);
+  }
 }
 
 /*
