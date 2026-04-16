@@ -95,7 +95,10 @@ def test_gdalalg_raster_scale_missing_srcmin():
     alg["output"] = ""
     alg["output-format"] = "MEM"
     alg["src-max"] = 0
-    with pytest.raises(Exception, match="scale: src-min must be specified"):
+    with pytest.raises(
+        Exception,
+        match=r"Argument\(s\) 'src-max' require\(s\) that the following argument\(s\) are also specified: src-min.",
+    ):
         alg.Run()
 
 
@@ -109,7 +112,10 @@ def test_gdalalg_raster_scale_missing_srcmax():
     alg["output"] = ""
     alg["output-format"] = "MEM"
     alg["src-min"] = 0
-    with pytest.raises(Exception, match="scale: src-max must be specified"):
+    with pytest.raises(
+        Exception,
+        match=r"Argument\(s\) 'src-min' require\(s\) that the following argument\(s\) are also specified: src-max.",
+    ):
         alg.Run()
 
 
@@ -123,7 +129,10 @@ def test_gdalalg_raster_scale_missing_dstmin():
     alg["output"] = ""
     alg["output-format"] = "MEM"
     alg["dst-max"] = 0
-    with pytest.raises(Exception, match="scale: dst-min must be specified"):
+    with pytest.raises(
+        Exception,
+        match=r"Argument\(s\) 'dst-max' require\(s\) that the following argument\(s\) are also specified: dst-min.",
+    ):
         alg.Run()
 
 
@@ -137,7 +146,10 @@ def test_gdalalg_raster_scale_missing_dstmax():
     alg["output"] = ""
     alg["output-format"] = "MEM"
     alg["dst-min"] = 0
-    with pytest.raises(Exception, match="scale: dst-max must be specified"):
+    with pytest.raises(
+        Exception,
+        match=r"Argument\(s\) 'dst-min' require\(s\) that the following argument\(s\) are also specified: dst-max.",
+    ):
         alg.Run()
 
 

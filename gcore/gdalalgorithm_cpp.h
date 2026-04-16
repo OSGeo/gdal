@@ -721,6 +721,35 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
+    /** Set the name of the mutual dependency group to which this argument
+     *  belongs to.
+     *  If at least one argument of the group is specified, all other arguments
+     *  will be required.
+     *  An argument can only belong to a single group.
+     */
+    GDALAlgorithmArgDecl &SetMutualDependencyGroup(const std::string &group)
+    {
+        m_mutualDependencyGroup = group;
+        return *this;
+    }
+
+    /** Returns the mutual dependency group name, or empty string if it doesn't belong to any group. */
+    inline const std::string &GetMutualDependencyGroup() const
+    {
+        return m_mutualDependencyGroup;
+    }
+
+    /**
+     * Adds a depdendency on another argument, meaning that if this argument is specified,
+     * the other argument must be specified too.
+     * Note that the dependency is not symmetric. If argument A depends on argument B, it doesn't mean that B depends on A.
+     */
+    GDALAlgorithmArgDecl &AddDependency(const std::string &otherArgName)
+    {
+        m_dependencies.push_back(otherArgName);
+        return *this;
+    }
+
     /** Set user-defined metadata item.
      */
     GDALAlgorithmArgDecl &
@@ -999,6 +1028,12 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return m_mutualExclusionGroup;
     }
 
+    /** Return the list of arguments that this argument depends on. */
+    inline const std::vector<std::string> &GetDependencies() const
+    {
+        return m_dependencies;
+    }
+
     /** Return if this (string) argument accepts the \@filename syntax to
      * mean that the content of the specified file should be used as the
      * value of the argument.
@@ -1159,6 +1194,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     std::string m_category = GAAC_BASE;
     std::string m_metaVar{};
     std::string m_mutualExclusionGroup{};
+    std::string m_mutualDependencyGroup{};
     int m_minCount = 0;
     int m_maxCount = 0;
     bool m_required = false;
@@ -1180,6 +1216,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     std::map<std::string, std::vector<std::string>> m_metadata{};
     std::vector<std::string> m_aliases{};
     std::vector<std::string> m_hiddenAliases{};
+    std::vector<std::string> m_dependencies{};
     std::vector<char> m_shortNameAliases{};
     std::vector<std::string> m_choices{};
     std::vector<std::string> m_hiddenChoices{};
@@ -1461,6 +1498,18 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
     inline const std::string &GetMutualExclusionGroup() const
     {
         return m_decl.GetMutualExclusionGroup();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::GetMutualDependencyGroup() */
+    inline const std::string &GetMutualDependencyGroup() const
+    {
+        return m_decl.GetMutualDependencyGroup();
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::GetDependencies() */
+    inline const std::vector<std::string> &GetDependencies() const
+    {
+        return m_decl.GetDependencies();
     }
 
     /** Alias for GDALAlgorithmArgDecl::GetMetadata() */
@@ -2135,6 +2184,22 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     SetMutualExclusionGroup(const std::string &group)
     {
         m_decl.SetMutualExclusionGroup(group);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetMutualDependencyGroup() */
+    GDALInConstructionAlgorithmArg &
+    SetMutualDependencyGroup(const std::string &group)
+    {
+        m_decl.SetMutualDependencyGroup(group);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::AddDependency() */
+    GDALInConstructionAlgorithmArg &
+    AddDependency(const std::string &otherArgName)
+    {
+        m_decl.AddDependency(otherArgName);
         return *this;
     }
 

@@ -3518,6 +3518,140 @@ TEST_F(test_gdal_algorithm, mutually_exclusive)
     }
 }
 
+TEST_F(test_gdal_algorithm, mutually_dependent)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        bool m_flag1 = false;
+        bool m_flag2 = false;
+        bool m_flag3 = false;
+
+        MyAlgorithm()
+        {
+            AddArg("flag1", 0, "", &m_flag1)
+                .SetMutualDependencyGroup("my_group");
+            AddArg("flag2", 0, "", &m_flag2)
+                .SetMutualDependencyGroup("my_group");
+            AddArg("flag3", 0, "", &m_flag3)
+                .SetMutualDependencyGroup("my_group");
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+        EXPECT_TRUE(alg.ParseCommandLineArguments({}));
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(
+            alg.ParseCommandLineArguments({"--flag1", "--flag2", "--flag3"}));
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--flag1"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "test: Argument(s) 'flag1' require(s) that the following "
+                     "argument(s) are also specified: flag2, flag3.");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--flag2"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "test: Argument(s) 'flag2' require(s) that the following "
+                     "argument(s) are also specified: flag1, flag3.");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--flag3"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "test: Argument(s) 'flag3' require(s) that the following "
+                     "argument(s) are also specified: flag1, flag2.");
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--flag1", "--flag2"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--flag2", "--flag3"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--flag1", "--flag3"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+    }
+}
+
+// Test dependencies
+TEST_F(test_gdal_algorithm, direct_dependencies)
+{
+    class MyAlgorithm : public MyAlgorithmWithDummyRun
+    {
+      public:
+        bool m_flag1 = false;
+        bool m_flag2 = false;
+
+        MyAlgorithm()
+        {
+            AddArg("flag1", 0, "", &m_flag1).AddDependency("flag2");
+            AddArg("flag2", 0, "", &m_flag2);
+        }
+    };
+
+    {
+        MyAlgorithm alg;
+        alg.GetUsageForCLI(false);
+        EXPECT_TRUE(alg.ParseCommandLineArguments({}));
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--flag2"}));
+    }
+
+    {
+        MyAlgorithm alg;
+        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+        CPLErrorReset();
+        EXPECT_FALSE(alg.ParseCommandLineArguments({"--flag1"}));
+        EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
+        EXPECT_STREQ(CPLGetLastErrorMsg(),
+                     "test: Argument 'flag1' depends on argument 'flag2' that "
+                     "has not been specified.");
+    }
+
+    {
+        MyAlgorithm alg;
+        EXPECT_TRUE(alg.ParseCommandLineArguments({"--flag1", "--flag2"}));
+    }
+}
+
 TEST_F(test_gdal_algorithm, invalid_input_format)
 {
     class MyAlgorithm : public MyAlgorithmWithDummyRun

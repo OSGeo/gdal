@@ -3148,11 +3148,13 @@ bool GDALAlgorithm::ValidateArguments()
     // The method may emit several errors if several constraints are not met.
     bool ret = true;
     std::map<std::string, std::string> mutualExclusionGroupUsed;
+    std::map<std::string, std::vector<std::string>> mutualDependencyGroupUsed;
     for (auto &arg : m_args)
     {
-        // Check mutually exclusive arguments
+        // Check mutually exclusive/dependent arguments
         if (arg->IsExplicitlySet())
         {
+
             const auto &mutualExclusionGroup = arg->GetMutualExclusionGroup();
             if (!mutualExclusionGroup.empty())
             {
@@ -3170,6 +3172,38 @@ bool GDALAlgorithm::ValidateArguments()
                 {
                     mutualExclusionGroupUsed[mutualExclusionGroup] =
                         arg->GetName();
+                }
+            }
+
+            const auto &mutualDependencyGroup = arg->GetMutualDependencyGroup();
+            if (!mutualDependencyGroup.empty())
+            {
+                if (mutualDependencyGroupUsed.find(mutualDependencyGroup) ==
+                    mutualDependencyGroupUsed.end())
+                {
+                    mutualDependencyGroupUsed[mutualDependencyGroup] = {
+                        arg->GetName()};
+                }
+                else
+                {
+                    mutualDependencyGroupUsed[mutualDependencyGroup].push_back(
+                        arg->GetName());
+                }
+            }
+
+            // Check direct dependencies
+            for (const auto &dependency : arg->GetDependencies())
+            {
+                auto depArg = GetArg(dependency);
+                CPLAssert(depArg);
+                if (!depArg->IsExplicitlySet())
+                {
+                    ret = false;
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Argument '%s' depends on argument '%s' that "
+                                "has not been specified.",
+                                arg->GetName().c_str(),
+                                depArg->GetName().c_str());
                 }
             }
         }
@@ -3285,6 +3319,50 @@ bool GDALAlgorithm::ValidateArguments()
         {
             ret = false;
         }
+    }
+
+    // Check mutual dependency groups
+    std::vector<std::string> processedGroups;
+    // Loop through group map and check there are not required args in the group that are not set
+    for (const auto &[groupName, argNames] : mutualDependencyGroupUsed)
+    {
+        if (std::find(processedGroups.begin(), processedGroups.end(),
+                      groupName) != processedGroups.end())
+            continue;
+        std::vector<std::string> missingArgs;
+        for (auto &arg : m_args)
+        {
+            const auto &mutualDependencyGroup = arg->GetMutualDependencyGroup();
+            if (mutualDependencyGroup == groupName &&
+                std::find(argNames.begin(), argNames.end(), arg->GetName()) ==
+                    argNames.end())
+            {
+                missingArgs.push_back(arg->GetName());
+            }
+        }
+        if (!missingArgs.empty())
+        {
+            ret = false;
+            std::string missingArgsStr;
+            for (const auto &missingArg : missingArgs)
+            {
+                if (!missingArgsStr.empty())
+                    missingArgsStr += ", ";
+                missingArgsStr += missingArg;
+            }
+            std::string givenArgsStr;
+            for (const auto &givenArg : argNames)
+            {
+                if (!givenArgsStr.empty())
+                    givenArgsStr += ", ";
+                givenArgsStr += givenArg;
+            }
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Argument(s) '%s' require(s) that the following "
+                        "argument(s) are also specified: %s.",
+                        givenArgsStr.c_str(), missingArgsStr.c_str());
+        }
+        processedGroups.push_back(groupName);
     }
 
     for (const auto &f : m_validationActions)
@@ -6569,6 +6647,36 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                     osRet += "  ";
                     osRet.append(maxOptLen, ' ');
                     osRet += "Mutually exclusive with ";
+                    osRet += otherArgs;
+                    osRet += '\n';
+                }
+            }
+
+            // Check mutual dependency
+            const auto &mutualDependencyGroup = arg->GetMutualDependencyGroup();
+            if (!mutualDependencyGroup.empty())
+            {
+                std::string otherArgs;
+                for (const auto &otherArg : m_args)
+                {
+                    if (otherArg->IsHidden() || otherArg->IsHiddenForCLI() ||
+                        otherArg.get() == arg)
+                        continue;
+                    if (otherArg->GetMutualDependencyGroup() ==
+                        mutualDependencyGroup)
+                    {
+                        if (!otherArgs.empty())
+                            otherArgs += ", ";
+                        otherArgs += "--";
+                        otherArgs += otherArg->GetName();
+                    }
+                }
+                if (!otherArgs.empty())
+                {
+                    osRet += "  ";
+                    osRet += "  ";
+                    osRet.append(maxOptLen, ' ');
+                    osRet += "Mutually dependent with ";
                     osRet += otherArgs;
                     osRet += '\n';
                 }
