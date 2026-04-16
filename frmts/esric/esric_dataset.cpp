@@ -25,7 +25,6 @@
 #include <vector>
 #include "cpl_json.h"
 #include "gdal_alg.h"
-#include "gdal_cpp_functions.h"
 #include "gdal_proxy.h"
 #include "gdal_utils.h"
 #include "gdalwarper.h"
@@ -1146,19 +1145,19 @@ struct BundleWriter
         };
 
         // Write 64-byte header (little-endian)
-        setU32(0, 3);                  // version 32-byte
-        setU32(4, WBSZ2);              // record count 32-byte
-        setU32(8, 0);                  // maxRecordSize 32-byte
-        setU32(12, 5);                 // offset byte count 32-byte
-        setU64(16, 0);                 // slack space 64-byte
-        setU64(24, WHEADER + WIDXSZ);  // file size (initial) 64-byte
-        setU64(32, 40);                // user header offset 64-byte
-        setU32(40, 20 + WIDXSZ);       // user header size 32-byte
-        setU32(44, 3);                 // legacy 32-byte
-        setU32(48, 16);                // legacy 32-byte
-        setU32(52, WBSZ2);             // legacy 32-byte
-        setU32(56, 5);                 // legacy 32-byte
-        setU32(60, WIDXSZ);            // index size 32-byte
+        setU32(0, 3);                  // version 32-bit
+        setU32(4, WBSZ2);              // record count 32-bit
+        setU32(8, 0);                  // maxRecordSize 32-bit
+        setU32(12, 5);                 // offset byte count 32-bit
+        setU64(16, 0);                 // slack space 64-bit
+        setU64(24, WHEADER + WIDXSZ);  // file size (initial) 64-bit
+        setU64(32, 40);                // user header offset 64-bit
+        setU32(40, 20 + WIDXSZ);       // user header size 32-bit
+        setU32(44, 3);                 // legacy 32-bit
+        setU32(48, 16);                // legacy 32-bit
+        setU32(52, WBSZ2);             // legacy 32-bit
+        setU32(56, 5);                 // legacy 32-bit
+        setU32(60, WIDXSZ);            // index size 32-bit
         fp->Write(abyHeader, 1, WHEADER);
 
         // Write empty index
