@@ -3619,8 +3619,8 @@ TEST_F(test_gdal_algorithm, direct_dependencies)
 
         MyAlgorithm()
         {
-            AddArg("flag1", 0, "", &m_flag1).AddDependency("flag2");
-            AddArg("flag2", 0, "", &m_flag2);
+            AddArg("flag1", 0, "", &m_flag1)
+                .AddDependency(AddArg("flag2", 0, "", &m_flag2));
         }
     };
 

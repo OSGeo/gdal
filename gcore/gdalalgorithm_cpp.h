@@ -2195,11 +2195,11 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
         return *this;
     }
 
-    /** Alias for GDALAlgorithmArgDecl::AddDependency() */
+    /** Add a dependency from an argument */
     GDALInConstructionAlgorithmArg &
-    AddDependency(const std::string &otherArgName)
+    AddDependency(const GDALAlgorithmArg &otherArg)
     {
-        m_decl.AddDependency(otherArgName);
+        m_decl.AddDependency(otherArg.GetName());
         return *this;
     }
 

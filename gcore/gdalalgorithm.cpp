@@ -3195,8 +3195,15 @@ bool GDALAlgorithm::ValidateArguments()
             for (const auto &dependency : arg->GetDependencies())
             {
                 auto depArg = GetArg(dependency);
-                CPLAssert(depArg);
-                if (!depArg->IsExplicitlySet())
+                if (!depArg)
+                {
+                    ret = false;
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "Argument '%s' depends on argument '%s' that "
+                                "is not defined.",
+                                arg->GetName().c_str(), dependency.c_str());
+                }
+                else if (!depArg->IsExplicitlySet())
                 {
                     ret = false;
                     ReportError(CE_Failure, CPLE_AppDefined,
