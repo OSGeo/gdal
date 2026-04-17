@@ -1301,8 +1301,12 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 
 	if (statmeta == 0)
 	{
-	    memmove(utlstr, utlstr + 1, strlen(utlstr) - 2);
-	    utlstr[strlen(utlstr) - 2] = 0;
+	    const size_t len = strlen(utlstr);
+	    if (len >= 2 && utlstr[0] == '(' && utlstr[len-1] == ')')
+	    {
+	        memmove(utlstr, utlstr + 1, len - 2);
+	        utlstr[len - 2] = '\0';
+	    }
 
 	    /* Parse trimmed DimList string and get rank */
 	    ndims = EHparsestr(utlstr, ',', ptr, slen);
