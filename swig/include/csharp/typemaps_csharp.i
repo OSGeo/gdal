@@ -181,6 +181,19 @@ OPTIONAL_POD(int, int);
 }
 
 /*
+ * Typemap for size_t native_size
+ */
+%typemap(ctype)  (size_t native_size), (const size_t &native_size) "size_t"
+%typemap(imtype) (size_t native_size), (const size_t &native_size) "IntPtr"
+%typemap(cstype) (size_t native_size), (const size_t &native_size) "IntPtr"
+%typemap(in)     (size_t native_size), (const size_t &native_size) "$1 = $input;"
+%typemap(out)    (size_t native_size), (const size_t &native_size) "$result = $1;"
+%typemap(csout, excode=SWIGEXCODE) (size_t native_size), (const size_t &native_size) {
+    IntPtr res = $imcall;$excode
+    return res;
+}
+
+/*
  * Typemap for PINNED arrays
  */
 

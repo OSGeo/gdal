@@ -751,7 +751,7 @@ void GDALDestroyDriverManager();
 %rename (ClearMemoryCaches) GDALClearMemoryCaches;
 void GDALClearMemoryCaches();
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
 %inline {
 GIntBig wrapper_GDALGetCacheMax()
 {

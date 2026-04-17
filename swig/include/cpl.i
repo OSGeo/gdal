@@ -593,9 +593,13 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 %apply Pointer NONNULL {const char * pszFilename};
 
 
+#if defined(SWIGPYTHON) || defined(SWIGCSHARP)
 #if defined(SWIGPYTHON)
 
 %apply (GIntBig nLen, char *pBuf) {( GIntBig nBytes, const char *pabyData )};
+#elif defined(SWIGCSHARP)
+%apply (void *buffer_ptr) { const char *pabyData };
+#endif
 %inline {
 VSI_RETVAL wrapper_VSIFileFromMemBuffer( const char* path, GIntBig nBytes, const char *pabyData)
 {
@@ -615,7 +619,15 @@ VSI_RETVAL wrapper_VSIFileFromMemBuffer( const char* path, GIntBig nBytes, const
     }
 }
 }
-%clear ( GIntBig nBytes, const GByte *pabyData );
+#if defined(SWIGPYTHON)
+%clear ( GIntBig nBytes, const char *pabyData );
+#elif defined(SWIGCSHARP)
+%csmethodmodifiers VSIFileFromMemBuffer "private";
+%inline {
+ VSILFILE *VSIFileFromMemBuffer(const char *path, GByte *pabyData, GUIntBig nDataLength, int bTakeOwnership);
+}
+%clear (const char *pabyData);
+#endif
 #else
 #if defined(SWIGJAVA)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
@@ -938,6 +950,8 @@ VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 %inline {
 #if defined(SWIGPYTHON)
 int wrapper_VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence) {
+#elif defined(SWIGCSHARP)
+VSI_RETVAL wrapper_VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence) {
 #else
 VSI_RETVAL wrapper_VSIFSeekL( VSILFILE* fp, long offset, int whence) {
 #endif
@@ -970,6 +984,9 @@ int     VSISupportsSparseFiles( const char* path );
 #define VSI_RANGE_STATUS_HOLE       2
 
 int     VSIFGetRangeStatusL( VSILFILE* fp, GIntBig offset, GIntBig length );
+#elif defined(SWIGCSHARP)
+GIntBig VSIFTellL( VSILFILE* fp );
+VSI_RETVAL VSIFTruncateL( VSILFILE* fp, GIntBig length );
 #else
 long    VSIFTellL( VSILFILE* fp );
 VSI_RETVAL VSIFTruncateL( VSILFILE* fp, long length );
@@ -988,8 +1005,14 @@ int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE* fp)
     return static_cast<int>(VSIFWriteL(pBuf, size, memb, fp));
 }
 }
+#elif defined(SWIGCSHARP)
+%apply (void *buffer_ptr) { (void *pBuffer) };
+%apply (size_t native_size) { (size_t nSize), (size_t nCount), (size_t VSIFWriteL), (size_t VSIFReadL)};
+size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp );
+size_t VSIFReadL ( void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp );
+%clear (void *pBuffer), (size_t nSize), (size_t nCount), (size_t VSIFWriteL), (size_t VSIFReadL);
 #else
-int     VSIFWriteL( const char *, int, int, VSILFILE *fp );
+int     VSIFWriteL( const char *pBuffer, int nSize, int nCount, VSILFILE *fp );
 #endif
 
 /* VSIFReadL() handled specially in python/gdal_python.i */
