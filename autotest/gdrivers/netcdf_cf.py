@@ -32,13 +32,32 @@ pytestmark = pytest.mark.require_driver("netCDF")
 ###############################################################################
 # check for necessary software
 
+_cfchecks_available = None
+
 
 def cfchecks_available():
-    try:
-        _, err = gdaltest.runexternal_out_and_err("cfchecks --help")
-        return err == ""
-    except OSError:
-        return False
+    global _cfchecks_available
+    if _cfchecks_available is None:
+
+        def f():
+            try:
+                _, err = gdaltest.runexternal_out_and_err("cfchecks --help")
+                if err != "":
+                    return False
+            except OSError:
+                return False
+
+            url = "https://cfconventions.org/Data/cf-standard-names/current/src/cf-standard-name-table.xml"
+            conn = gdaltest.gdalurlopen(url)
+            if conn is None:
+                print(f"cannot open {url}")
+                return False
+            conn.close()
+            return True
+
+        _cfchecks_available = f()
+
+    return _cfchecks_available
 
 
 @pytest.fixture(scope="module", autouse=True)
