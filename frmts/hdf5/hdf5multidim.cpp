@@ -9,6 +9,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
 #include "hdf5dataset.h"
 #include "hdf5eosparser.h"
 #include "s100.h"

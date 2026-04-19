@@ -22,7 +22,9 @@ add_gdal_driver(TARGET gdal_HDF5
                 SOURCES ${SOURCE}
                 CORE_SOURCES hdf5drivercore.cpp
                 PLUGIN_CAPABLE
-                NO_SHARED_SYMBOL_WITH_CORE)
+                NO_SHARED_SYMBOL_WITH_CORE
+                SKIP_GDAL_PRIV_HEADER  # Avoid issues with -D_POSIX_C_SOURCE redef with HDF5
+)
 
 if (NOT USE_ONLY_EMBEDDED_RESOURCE_FILES)
     set(GDAL_DATA_FILES
