@@ -767,6 +767,36 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return *this;
     }
 
+    /** Declare that dataset is opened for update if any of these arguments are used.
+     */
+    GDALAlgorithmArgDecl &
+    SetOpenForUpdateIfAnyOf(const std::vector<std::string> &argNames)
+    {
+        m_openForUpdateIfAnyOf = argNames;
+        return *this;
+    }
+
+    /** Declare that dataset is opened for update unless any of these arguments are used.
+     */
+    GDALAlgorithmArgDecl &
+    SetOpenForUpdateUnlessAnyOf(const std::vector<std::string> &argNames)
+    {
+        m_openForUpdateUnlessAnyOf = argNames;
+        return *this;
+    }
+
+    /** Return conditions for conditional opening of datasets for update. */
+    const std::vector<std::string> &GetOpenForUpdateIfAnyOf() const
+    {
+        return m_openForUpdateIfAnyOf;
+    }
+
+    /** Return conditions for conditional opening of datasets for update. */
+    const std::vector<std::string> &GetOpenForUpdateUnlessAnyOf() const
+    {
+        return m_openForUpdateUnlessAnyOf;
+    }
+
     /** Return the (long) name */
     inline const std::string &GetName() const
     {
@@ -1185,6 +1215,14 @@ class CPL_DLL GDALAlgorithmArgDecl final
      * output, when this argument serves as an output.
      */
     int m_datasetOutputFlags = GADV_OBJECT;
+
+    /** Arguments whose presence implies that the dataset should be opened for update.
+     */
+    std::vector<std::string> m_openForUpdateIfAnyOf{};
+
+    /** Arguments whose presence implies that the dataset should NOT be opened for update.
+     */
+    std::vector<std::string> m_openForUpdateUnlessAnyOf{};
 };
 
 /************************************************************************/
@@ -2127,6 +2165,22 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
     SetDatasetType(GDALArgDatasetType datasetType)
     {
         m_decl.SetDatasetType(datasetType);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetOpenForUpdateIfAnyOf() */
+    GDALInConstructionAlgorithmArg &
+    SetOpenForUpdateIfAnyOf(const std::vector<std::string> &argNames)
+    {
+        m_decl.SetOpenForUpdateIfAnyOf(argNames);
+        return *this;
+    }
+
+    /** Alias for GDALAlgorithmArgDecl::SetOpenForUpdateUnlessAnyOf() */
+    GDALInConstructionAlgorithmArg &
+    SetOpenForUpdateUnlessAnyOf(const std::vector<std::string> &argNames)
+    {
+        m_decl.SetOpenForUpdateUnlessAnyOf(argNames);
         return *this;
     }
 

@@ -204,6 +204,21 @@ void GDALPipelineStepAlgorithm::AddVectorOutputArgs(
                             /* positionalAndRequired = */ false)
             .SetHiddenForCLI(hiddenForCLI)
             .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
+
+    std::vector<std::string> updateTriggers;
+
+    if (m_constructorOptions.addUpdateArgument)
+        updateTriggers.push_back("update");
+    if (m_constructorOptions.addOverwriteLayerArgument)
+        updateTriggers.push_back("overwrite-layer");
+    if (m_constructorOptions.addAppendLayerArgument)
+        updateTriggers.push_back("append");
+    if (m_constructorOptions.addUpsertArgument)
+        updateTriggers.push_back("upsert");
+
+    if (!updateTriggers.empty())
+        outputDatasetArg.SetOpenForUpdateIfAnyOf(updateTriggers);
+
     if (!hiddenForCLI)
         outputDatasetArg.SetPositional();
     if (!hiddenForCLI && m_constructorOptions.outputDatasetRequired)

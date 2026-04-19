@@ -189,6 +189,31 @@
           },
           "$comment": "Type of accepted datasets. Only used for type=dataset or type=dataset_list."
         },
+        "open_for_update": {
+          "description": "Rules for determining if a dataset is opened for in-place update",
+          "type": "object",
+          "properties": {
+            "by_default": {
+              "type": "boolean"
+            },
+            "if_any_of": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "unless_any_of": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "by_default"
+          ],
+          "additionalProperties": false
+        },
         "input_flags": {
           "type": "array",
           "items": {

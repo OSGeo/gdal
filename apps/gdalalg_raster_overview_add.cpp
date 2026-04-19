@@ -53,7 +53,8 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd(
             /* positionalAndRequired = */ standaloneStep,
             _("Dataset (to be updated in-place, unless --external)"))
             .AddAlias("dataset")
-            .SetMaxCount(1);
+            .SetMaxCount(1)
+            .SetOpenForUpdateUnlessAnyOf({"external"});
     if (!standaloneStep)
     {
         datasetArg.SetPositional();

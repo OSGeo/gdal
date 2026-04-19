@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
+
 import gdaltest
 import pytest
 import test_cli_utilities
@@ -690,6 +692,24 @@ def test_gdalalg_raster_edit_color_interpretation_autocomplete():
     ).split(" ")
     assert "all=" not in out
     assert "Red" in out
+
+
+def test_gdalalg_raster_edit_json_usage():
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary not available")
+
+    out = gdaltest.runexternal(f"{gdal_path} raster edit --json-usage")
+    j = json.loads(out)
+
+    dataset_arg = next(
+        (arg for arg in j["input_arguments"] if arg["name"] == "dataset"), None
+    )
+    assert dataset_arg is not None
+    assert "open_for_update" in dataset_arg
+    assert dataset_arg["open_for_update"]["by_default"] is True
+    assert "auxiliary" in dataset_arg["open_for_update"]["unless_any_of"]
 
 
 def test_gdalalg_raster_edit_scale():

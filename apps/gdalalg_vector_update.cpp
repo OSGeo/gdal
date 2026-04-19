@@ -53,7 +53,7 @@ GDALVectorUpdateAlgorithm::GDALVectorUpdateAlgorithm(bool standaloneStep)
 
     AddProgressArg();
 
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
+    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR | GDAL_OF_UPDATE)
         .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
     AddOutputOpenOptionsArg(&m_outputOpenOptions);
     AddOutputLayerNameArg(&m_outputLayerName);
