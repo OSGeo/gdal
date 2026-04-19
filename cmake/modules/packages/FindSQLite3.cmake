@@ -73,6 +73,8 @@ if(SQLite3_INCLUDE_DIR)
 endif()
 
 if(SQLite3_INCLUDE_DIR AND SQLite3_LIBRARY)
+    include(CheckCSourceCompiles)
+    include(CheckCXXSourceCompiles)
     include(CheckSymbolExists)
     cmake_push_check_state(RESET)
     # check column metadata
