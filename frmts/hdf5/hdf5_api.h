@@ -27,7 +27,18 @@
                        fills the object with zeros */
 #endif
 
+// HDF5 headers define _POSIX_C_SOURCE ...
+#ifdef _POSIX_C_SOURCE
+#define POSIX_C_SOURCE_BACKUP _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
 #include "hdf5.h"
+
+#ifdef POSIX_C_SOURCE_BACKUP
+#define _POSIX_C_SOURCE POSIX_C_SOURCE_BACKUP
+#undef POSIX_C_SOURCE_BACKUP
+#endif
 
 #if defined(H5T_NATIVE_FLOAT16) && defined(H5_HAVE__FLOAT16)
 #define HDF5_HAVE_FLOAT16
