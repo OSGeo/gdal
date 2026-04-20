@@ -36,103 +36,120 @@ using OSGeo.GDAL;
 
 class VSIMem
 {
-
     public static void usage()
+        => ErrorAndQuit("usage example: vsimem [image file]");
 
+    private static void ErrorAndQuit(string errorMessage)
     {
-        Console.WriteLine("usage example: vsimem [image file]");
-        System.Environment.Exit(-1);
+        Console.Error.WriteLine(errorMessage);
+        Environment.Exit(-1);
     }
 
     public static void Main(string[] args)
     {
-
         if (args.Length != 1) usage();
 
-        byte[] imageBuffer;
-
-        try
-        {
-            IntPtr vfInput = Gdal.VSIFOpenL(args[0], "r");
-            if (vfInput == IntPtr.Zero)
-            {
-                Console.WriteLine($"Failed to {nameof(Gdal.VSIFOpenL)} input file");
-                System.Environment.Exit(-1);
-            }
-            if (!Gdal.VSIFSeekL(vfInput, 0, SeekOrigin.End))
-            {
-                Console.WriteLine($"{nameof(Gdal.VSIFSeekL)} failed to seek to end of input file");
-                System.Environment.Exit(-1);
-            }
-            long vfInputLength = Gdal.VSIFTellL(vfInput);
-            if (vfInputLength <= 0)
-            {
-                Console.WriteLine($"{nameof(Gdal.VSIFTellL)} reports incorrect location");
-                System.Environment.Exit(-1);
-            }
-            if (!Gdal.VSIFSeekL(vfInput, 0, SeekOrigin.Begin) || Gdal.VSIFTellL(vfInput) != 0)
-            {
-                Console.WriteLine($"{nameof(Gdal.VSIFSeekL)} failed to seek to beginning of input file");
-                System.Environment.Exit(-1);
-            }
-
-            imageBuffer = new byte[vfInputLength];
-            if (Gdal.VSIFReadL(imageBuffer, 0, imageBuffer.Length, vfInput) != imageBuffer.Length)
-            {
-                Console.WriteLine($"Failed to {nameof(Gdal.VSIFReadL)} from input file");
-                System.Environment.Exit(-1);
-            }
-            if (Gdal.VSIFCloseL(vfInput) != 0)
-            {
-                Console.WriteLine($"Failed to {nameof(Gdal.VSIFCloseL)} input file");
-                System.Environment.Exit(-1);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-            throw;
-        }
-
         Gdal.AllRegister();
-
         string memFilename = "/vsimem/inmemfile";
+
         try
         {
-            using (var file = Gdal.FileFromMemBufferNoCopy(memFilename, imageBuffer, 0, imageBuffer.Length))
+            byte[] imageBytes = ReadInputFile(args[0]);
+            CopyToInMemoryFile(memFilename, imageBytes);
+            using (Dataset ds = Gdal.Open(memFilename, Access.GA_ReadOnly))
             {
-                if (file == null)
+                if (ds == null)
                 {
-                    Console.WriteLine("Failed to open in-memory file.");
-                    System.Environment.Exit(-1);
+                    ErrorAndQuit("Can't open in-memory file.");
                 }
-                using (Dataset ds = Gdal.Open(memFilename, Access.GA_ReadOnly))
+                Console.WriteLine("Raster dataset parameters:");
+                Console.WriteLine("  RasterCount: " + ds.RasterCount);
+                Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
+
+                Driver drv = Gdal.GetDriverByName("GTiff");
+
+                if (drv == null)
                 {
-                    if (ds == null)
-                    {
-                        Console.WriteLine("Can't open in-memory file.");
-                        System.Environment.Exit(-1);
-                    }
-                    Console.WriteLine("Raster dataset parameters:");
-                    Console.WriteLine("  RasterCount: " + ds.RasterCount);
-                    Console.WriteLine("  RasterSize (" + ds.RasterXSize + "," + ds.RasterYSize + ")");
-
-                    Driver drv = Gdal.GetDriverByName("GTiff");
-
-                    if (drv == null)
-                    {
-                        Console.WriteLine("Can't get driver.");
-                        System.Environment.Exit(-1);
-                    }
-
-                    drv.CreateCopy("sample.tif", ds, 0, null, null, null).Dispose();
+                    ErrorAndQuit("Can't get driver.");
                 }
+
+                drv.CreateCopy("sample.tif", ds, 0, null, null, null).Dispose();
             }
         }
-        catch (Exception ex)
+        finally
         {
-            Console.WriteLine(ex.Message);
-            throw;
+            Gdal.Unlink(memFilename);
+        }
+    }
+
+    /// <summary> Test VSIFOpenL, VSIFSeekL, VSIFTellL, VSIFReadL, and VSIFCloseL. </summary>
+    private static byte[] ReadInputFile(string inputFilename)
+    {
+        IntPtr vfInput = Gdal.VSIFOpenL(inputFilename, "r");
+        if (vfInput == IntPtr.Zero)
+        {
+            ErrorAndQuit($"Failed to {nameof(Gdal.VSIFOpenL)} input file: '{inputFilename}'");
+        }
+        if (!Gdal.VSIFSeekL(vfInput, 0, SeekOrigin.End))
+        {
+            ErrorAndQuit($"{nameof(Gdal.VSIFSeekL)} failed to seek to end of input file");
+        }
+
+        long vfInputLength = Gdal.VSIFTellL(vfInput);
+        if (vfInputLength <= 0)
+        {
+            ErrorAndQuit($"{nameof(Gdal.VSIFTellL)} reports incorrect location");
+        }
+        if (!Gdal.VSIFSeekL(vfInput, 0, SeekOrigin.Begin) || Gdal.VSIFTellL(vfInput) != 0)
+        {
+            ErrorAndQuit($"{nameof(Gdal.VSIFSeekL)} failed to seek to beginning of input file");
+        }
+
+        byte[] inputFileBuffer = new byte[vfInputLength];
+        if (Gdal.VSIFReadL(inputFileBuffer, 0, inputFileBuffer.Length, vfInput) != inputFileBuffer.Length)
+        {
+            ErrorAndQuit($"Failed to {nameof(Gdal.VSIFReadL)} from input file");
+        }
+        if (Gdal.VSIFCloseL(vfInput) != 0)
+        {
+            ErrorAndQuit($"Failed to {nameof(Gdal.VSIFCloseL)} input file");
+        }
+        return inputFileBuffer;
+    }
+
+    /// <summary> Test in-memory file methods and VSIFWriteL </summary>
+    private static void CopyToInMemoryFile(string inMemFilename, byte[] data)
+    {
+        byte[] imageCopy = new byte[data.Length];
+        //Create an in-memory file from a managed buffer.
+        //The managed buffer is used to read/write and is not copied to GDAL.
+        //Must dispose of the file to unpin the managed buffer and unlink the filename.
+        using (var inMemFile = Gdal.FileFromMemBufferNoCopy(inMemFilename, imageCopy, 0, imageCopy.Length))
+        {
+            if (inMemFile == null)
+            {
+                ErrorAndQuit("Failed to create no-copy in-memory file.");
+            }
+            IntPtr fpCopy = Gdal.VSIFOpenL(inMemFilename, "w");
+            if (fpCopy == IntPtr.Zero)
+            {
+                ErrorAndQuit("Failed to open in-memory file.");
+            }
+            if (Gdal.VSIFWriteL(data, 0, data.Length, fpCopy) != data.Length)
+            {
+                ErrorAndQuit("Failed to write to in-memory file.");
+            }
+            if (Gdal.VSIFCloseL(fpCopy) != 0)
+            {
+                ErrorAndQuit("Failed to close in-memory file.");
+            }
+        }
+
+        //Create an in-memory file by copying the data into an unmanaged buffer owed by GDAL.
+        //Must call Gdal.Unlink() on the file to free the unmanaged buffer.
+        if (!Gdal.FileFromMemBuffer(inMemFilename, imageCopy))
+        {
+            ErrorAndQuit("Failed to create copied in-memory file.");
         }
     }
 }
