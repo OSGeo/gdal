@@ -1018,3 +1018,14 @@ def test_gdalalg_vector_pipeline_read_limit(tmp_vsimem):
     with gdal.OpenEx(dst_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 3
         assert ds.GetLayer(1).GetFeatureCount() == 3
+
+
+def test_gdalalg_vector_pipeline_read_ds_take_ref(tmp_vsimem):
+
+    gdal.alg.vector.pipeline(
+        pipeline=f'read ../ogr/data/poly.shp --layer poly ! sql --sql "select * from poly" ! write {tmp_vsimem}/out.shp'
+    )
+
+    ds = ogr.Open(f"{tmp_vsimem}/out.shp")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 10
