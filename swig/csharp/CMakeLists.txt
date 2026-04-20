@@ -594,8 +594,20 @@ if (CSHARP_BUILD_SAMPLES)
         OSGeo.OSR)
 
     gdal_build_csharp_sample(
-      OUTPUT OGRLayerAlg.exe
-      SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/apps/OGRLayerAlg.cs
+      OUTPUT
+      VSIMem.exe
+      SOURCE
+      ${CMAKE_CURRENT_SOURCE_DIR}/apps/VSIMem.cs
+      DEPENDS
+      gdal_csharp
+      SYSTEM_DEPENDS
+      OSGeo.GDAL)
+
+    gdal_build_csharp_sample(
+      OUTPUT
+      OGRLayerAlg.exe
+      SOURCE
+      ${CMAKE_CURRENT_SOURCE_DIR}/apps/OGRLayerAlg.cs
       DEPENDS
         osr_csharp
         ogr_csharp
@@ -655,6 +667,7 @@ if (CSHARP_BUILD_SAMPLES)
               OSGeo.GDAL.Samples.GDALTest
               OSGeo.GDAL.Samples.OGRLayerAlg
               OSGeo.GDAL.Samples.GDALCsharpWarp
+              OSGeo.GDAL.Samples.VSIMem
               OSGeo.GDAL.Samples.OGRFeatureEdit
               OSGeo.GDAL.Samples.GetCRSInfo.exe)
 
@@ -747,4 +760,10 @@ if (CSHARP_RUN_TESTS)
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       COMMAND ${CMAKE_CURRENT_BINARY_DIR}/GDALTestUtf8/GDALTestUtf8)
     set_property(TEST csharp_testutf8 PROPERTY ENVIRONMENT "${TEST_ENV}")
+    add_test(
+      NAME csharp_vsimem
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      COMMAND ${CSHARP_INTERPRETER} VSIMem/VSIMem${_ex} Data/sample.tif)
+    set_property(TEST csharp_vsimem PROPERTY ENVIRONMENT "${TEST_ENV}")
+    set_property(TEST csharp_vsimem PROPERTY DEPENDS csharp_createdata)
 endif(CSHARP_RUN_TESTS)
