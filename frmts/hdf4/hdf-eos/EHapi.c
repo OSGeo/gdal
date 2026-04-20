@@ -954,6 +954,8 @@ EHstrwithin(const char *target, const char *search, const char delim)
     /* Count number of entries in search string list */
     /* --------------------------------------------- */
     nentries = EHparsestr(search, delim, NULL, NULL);
+    if (nentries == 0)
+        return -1;
 
 
     /* Allocate string pointer and length arrays */
