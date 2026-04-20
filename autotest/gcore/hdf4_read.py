@@ -598,48 +598,24 @@ def test_hdf4_gcp_nodata():
 
 
 ###############################################################################
-# Test bugfix for https://github.com/OSGeo/gdal/issues/14356
+# Test bugfix for various crashes
 
 
-def test_hdf4_gh_14356():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
-    gdal.Open("data/hdf4/issue_14356.he4")
-
-
-###############################################################################
-# Test bugfix for https://github.com/OSGeo/gdal/issues/14363
-
-
-def test_hdf4_gh_14363():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
-    gdal.Open("data/hdf4/issue_14363.he4")
-
-
-###############################################################################
-# Test bugfix for https://github.com/OSGeo/gdal/issues/14378
-
-
-def test_hdf4_gh_14378():
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "data/hdf4/issue_14356.he4",
+        "data/hdf4/issue_14363.he4",
+        "data/hdf4/issue_14378.he4",
+        "data/hdf4/issue_14379.he4",
+        "data/hdf4/issue_14398.he4",
+        "data/hdf4/issue_14399.he4",
+    ],
+)
+def test_hdf4_gh_crashes(filename):
 
     if gdaltest.hdf4_drv is None:
         pytest.skip()
 
-    gdal.Open("data/hdf4/issue_14378.he4")
-
-
-###############################################################################
-# Test bugfix for https://github.com/OSGeo/gdal/issues/14379
-
-
-def test_hdf4_gh_14379():
-
-    if gdaltest.hdf4_drv is None:
-        pytest.skip()
-
-    gdal.Open("data/hdf4/issue_14379.he4")
+    with gdaltest.disable_exceptions(), gdal.quiet_errors():
+        gdal.Open(filename)

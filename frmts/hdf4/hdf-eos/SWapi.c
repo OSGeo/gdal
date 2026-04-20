@@ -3083,11 +3083,20 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 		    metaptrs[0] = strstr(oldmetaptr, utlstr);
 		}
 
-
-		/* Get field list and strip off leading and trailing quotes */
-		EHgetmetavalue(metaptrs, "FieldList", name);  /* not return status --xhua */
-		memmove(name, name + 1, strlen(name) - 2);
-		name[strlen(name) - 2] = 0;
+        /* Get field list and strip off leading and trailing quotes */
+        if (EHgetmetavalue(metaptrs, "FieldList", name) == 0)
+        {
+            const size_t len = strlen(name);
+            if (len >= 2 && name[0] == '"' && name[len-1] == '"')
+            {
+                memmove(name, name + 1, strlen(name) - 2);
+                name[strlen(name) - 2] = 0;
+            }
+        }
+        else
+        {
+            name[0] = '\0';
+        }
 
 		/* Search for desired field within merged field list */
 		snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"");

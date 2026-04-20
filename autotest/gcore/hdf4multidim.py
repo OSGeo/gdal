@@ -532,22 +532,24 @@ def test_hdf4multidim_gr_palette():
 
 
 ###############################################################################
-# Test bugfix for https://github.com/OSGeo/gdal/issues/14356
+# Test bugfix for various crashes
 
 
-def test_hdf4_multidim_gh_14356():
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "data/hdf4/issue_14356.he4",
+        "data/hdf4/issue_14363.he4",
+        "data/hdf4/issue_14378.he4",
+        "data/hdf4/issue_14379.he4",
+        "data/hdf4/issue_14398.he4",
+        "data/hdf4/issue_14399.he4",
+    ],
+)
+def test_hdf4multidim_gh_crashes(filename):
 
-    ds = gdal.OpenEx("data/hdf4/issue_14356.he4", gdal.OF_MULTIDIM_RASTER)
+    if gdaltest.hdf4_drv is None:
+        pytest.skip()
 
-    gdal.MultiDimInfo(ds)
-
-
-###############################################################################
-# Test bugfix for https://github.com/OSGeo/gdal/issues/14363
-
-
-def test_hdf4_multidim_gh_14363():
-
-    ds = gdal.OpenEx("data/hdf4/issue_14363.he4", gdal.OF_MULTIDIM_RASTER)
-
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
     gdal.MultiDimInfo(ds)

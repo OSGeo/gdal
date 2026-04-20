@@ -1979,12 +1979,21 @@ GDSDfldsrch(int32 gridID, int32 sdInterfaceID, const char *fieldname,
 		}
 #endif
 
-		/* Get field list and strip off leading and trailing quotes */
-		/* -------------------------------------------------------- */
-		EHgetmetavalue(metaptrs, "FieldList", name);
-		memmove(name, name + 1, strlen(name) - 2);
-		name[strlen(name) - 2] = 0;
-
+        /* Get field list and strip off leading and trailing quotes */
+        /* -------------------------------------------------------- */
+        if (EHgetmetavalue(metaptrs, "FieldList", name) == 0)
+        {
+            const size_t len = strlen(name);
+            if (len >= 2 && name[0] == '"' && name[len-1] == '"')
+            {
+                memmove(name, name + 1, strlen(name) - 2);
+                name[strlen(name) - 2] = 0;
+            }
+        }
+        else
+        {
+            name[0] = '\0';
+        }
 
 		/* Search for desired field within merged field list */
 		/* ------------------------------------------------- */
