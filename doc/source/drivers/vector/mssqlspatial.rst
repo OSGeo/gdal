@@ -316,8 +316,43 @@ Examples
 .. example::
    :title: Connecting with username/password stored in environment variables
 
-   .. code-block:: bash
+   The Microsoft SQL Server ODBC driver used in this example is available for both `Windows <https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server>`__
+   and `Linux <https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server>`__ platforms.
 
-      export MSSQLSPATIAL_UID=user
-      export MSSQLSPATIAL_PWD=pwd
-      ogrinfo -al   MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=no
+   .. tabs::
+
+      .. code-tab:: bash
+
+        export MSSQLSPATIAL_UID=user
+        export MSSQLSPATIAL_PWD=pwd
+        gdal vector info "MSSQL:DRIVER={ODBC Driver 18 for SQL Server};SERVER=SQL22;DATABASE=geodb;TrustServerCertificate=yes;" --summary
+
+      .. code-tab:: ps1
+
+        $env:MSSQLSPATIAL_UID="user"
+        $env:MSSQLSPATIAL_PWD="pwd"
+        gdal vector info "MSSQL:DRIVER={ODBC Driver 18 for SQL Server};SERVER=SQL22;DATABASE=geodb;TrustServerCertificate=yes;" --summary
+
+.. example::
+   :title: Selecting from a database table and writing to a GeoPackage file
+
+   When using :ref:`gdal_vector_sql` as part of a pipeline, do not provide a ``--layer`` to :ref:`gdal_vector_read`
+   or an error similar to the following will be returned ``# ERROR 1: Unable to open secondary datasource `geo' required by JOIN``.
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        conn="MSSQL:DRIVER={ODBC Driver 18 for SQL Server};SERVER=SQL22.mydomain.local;DATABASE=geodb;uid=user;pwd=pwd;TrustServerCertificate=yes;"
+        gdal vector pipeline \
+            ! read "$conn" \
+            ! sql --sql "SELECT oid, geom FROM geo.rivers WHERE hydroarea=10" \
+            ! write out.gpkg --overwrite
+
+      .. code-tab:: ps1
+
+        $conn="MSSQL:DRIVER={ODBC Driver 18 for SQL Server};SERVER=SQL22.mydomain.local;DATABASE=geodb;uid=user;pwd=pwd;TrustServerCertificate=yes;"
+        gdal vector pipeline `
+            ! read $conn `
+            ! sql --sql "SELECT oid, geom FROM geo.rivers WHERE hydroarea=10" `
+            ! write out.gpkg --overwrite
