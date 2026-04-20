@@ -453,6 +453,8 @@ static void VSI_TIFFSetOpenOptions(TIFFOpenOptions *opts)
         TIFFOpenOptionsSetMaxCumulatedMemAlloc(
             opts, static_cast<tmsize_t>(nMemLimit));
     }
+    TIFFOpenOptionsSetMaxSingleMemAlloc(
+        opts, static_cast<tmsize_t>(256 * 1024 * 1024));  // 256MB single alloc limit
 #endif
 }
 #endif
