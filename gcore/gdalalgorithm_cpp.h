@@ -740,7 +740,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     }
 
     /**
-     * Adds a depdendency on another argument, meaning that if this argument is specified,
+     * Adds a dependency on another argument, meaning that if this argument is specified,
      * the other argument must be specified too.
      * Note that the dependency is not symmetric. If argument A depends on argument B, it doesn't mean that B depends on A.
      */

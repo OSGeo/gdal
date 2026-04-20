@@ -154,6 +154,14 @@
           "type": "boolean",
           "$comment": "Whether this argument is required"
         },
+        "depends_on":
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "$comment": "List of other arguments that this argument depends on (if this argument is specified all other arguments in the list must be specified as well)."
+            },
         "packed_values_allowed": {
           "type": "boolean",
           "$comment": "For command-line specification, for multi-valued arguments (type: integer_list, real_list, string_list), whether comma-separated values are accepted. e.g. '--my-arg=first,second'"
@@ -177,6 +185,10 @@
         "mutual_exclusion_group": {
           "type": "string",
           "$comment": "Identifier shared by several arguments to mean they are mutually exclusive."
+        },
+        "mutual_dependency_group": {
+          "type": "string",
+          "$comment": "Identifier shared by several arguments to mean they are mutually dependant (if one is specified all other arguments in the same group must be specified as well)."
         },
         "metadata": {
           "type": "object",

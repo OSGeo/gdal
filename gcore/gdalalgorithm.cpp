@@ -6628,6 +6628,51 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 osRet += " [not available in pipelines]";
             }
 
+            const auto dependencies{arg->GetDependencies()};
+            if (!dependencies.empty())
+            {
+                std::string otherArgs;
+                int depsCount = 0;
+                for (const auto &dependencyArgumentName : dependencies)
+                {
+                    const auto otherArg{GetArg(dependencyArgumentName)};
+                    if (otherArg != nullptr)
+                    {
+                        if (otherArg->IsHidden() ||
+                            otherArg->IsHiddenForCLI() || otherArg == arg)
+                        {
+                            continue;
+                        }
+
+                        if (!otherArgs.empty())
+                        {
+                            otherArgs += ", ";
+                        }
+
+                        otherArgs += "--";
+                        otherArgs += otherArg->GetName();
+                        depsCount++;
+                    }
+                    else
+                    {
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Argument '%s' depends on unknown argument '%s'",
+                            arg->GetName().c_str(),
+                            dependencyArgumentName.c_str());
+                    }
+                }
+
+                if (depsCount > 0)
+                {
+                    osRet += " [";
+                    osRet += "requires ";
+                    osRet += depsCount > 1 ? "arguments " : "argument ";
+                    osRet += otherArgs;
+                    osRet += ']';
+                }
+            }
+
             osRet += '\n';
 
             const auto &mutualExclusionGroup = arg->GetMutualExclusionGroup();
@@ -6862,7 +6907,7 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
         oRoot.Add("user_provided_arguments_allowed", true);
     }
 
-    const auto ProcessArg = [](const GDALAlgorithmArg *arg)
+    const auto ProcessArg = [this](const GDALAlgorithmArg *arg)
     {
         CPLJSONObject jArg;
         jArg.Add("name", arg->GetName());
@@ -7003,6 +7048,35 @@ std::string GDALAlgorithm::GetUsageAsJSON() const
             jArg.Add("min_count", arg->GetMinCount());
             jArg.Add("max_count", arg->GetMaxCount());
         }
+
+        // Process dependencies
+        CPLJSONArray jDependencies;
+        const auto dependencies{arg->GetDependencies()};
+        for (const auto &dependencyArgumentName : dependencies)
+        {
+            jDependencies.Add(dependencyArgumentName);
+        }
+        // Add mutual dependencies as well, as they are effectively dependencies too
+        const auto &mutualDependencyGroup = arg->GetMutualDependencyGroup();
+        if (!mutualDependencyGroup.empty())
+        {
+            jArg.Add("mutual_dependency_group", mutualDependencyGroup);
+            for (const auto &otherArg : m_args)
+            {
+                if (otherArg.get() != arg &&
+                    otherArg->GetMutualDependencyGroup() ==
+                        mutualDependencyGroup)
+                {
+                    jDependencies.Add(otherArg->GetName());
+                }
+            }
+        }
+
+        if (jDependencies.Size() > 0)
+        {
+            jArg.Add("depends_on", jDependencies);
+        }
+
         jArg.Add("category", arg->GetCategory());
 
         if (arg->GetType() == GAAT_DATASET ||

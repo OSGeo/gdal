@@ -74,10 +74,16 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm(
                                 { return ParseAndValidateKeyValue(arg); });
         arg.AddHiddenAlias("mo");
     }
+
+    const auto inputArg = GetArg(GDAL_ARG_NAME_INPUT);
+    CPLAssertNotNull(inputArg);
+
     AddArg("copy-metadata", 0, _("Copy metadata from input dataset"),
-           &m_copyMetadata);
+           &m_copyMetadata)
+        .AddDependency(*inputArg);
     AddArg("copy-overviews", 0,
-           _("Create same overview levels as input dataset"), &m_copyOverviews);
+           _("Create same overview levels as input dataset"), &m_copyOverviews)
+        .AddDependency(*inputArg);
 }
 
 /************************************************************************/
@@ -353,13 +359,10 @@ bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     if (m_copyMetadata)
     {
-        if (!poSrcDS)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Argument 'copy-metadata' can only be set when an "
-                        "input dataset is set");
-            return false;
-        }
+
+        // This should never happen because of the dependency set
+        CPLAssertNotNull(poSrcDS);
+
         {
             const CPLStringList aosDomains(poSrcDS->GetMetadataDomainList());
             for (const char *domain : aosDomains)
@@ -412,13 +415,9 @@ bool GDALRasterCreateAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     if (m_copyOverviews && m_bandCount > 0)
     {
-        if (!poSrcDS)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Argument 'copy-overviews' can only be set when an "
-                        "input dataset is set");
-            return false;
-        }
+        // This should never happen because of the dependency set
+        CPLAssertNotNull(poSrcDS);
+
         if (poSrcDS->GetRasterXSize() != poRetDS->GetRasterXSize() ||
             poSrcDS->GetRasterYSize() != poRetDS->GetRasterYSize())
         {

@@ -250,7 +250,7 @@ def test_gdalalg_raster_create_copy_metadata_missing_input():
     alg["size"] = [1, 1]
     with pytest.raises(
         Exception,
-        match="Argument 'copy-metadata' can only be set when an input dataset is set",
+        match="Argument 'copy-metadata' depends on argument 'input' that has not been specified.",
     ):
         alg.Run()
 
@@ -277,7 +277,7 @@ def test_gdalalg_raster_create_copy_overviews_missing_input():
     alg["size"] = [1, 1]
     with pytest.raises(
         Exception,
-        match="Argument 'copy-overviews' can only be set when an input dataset is set",
+        match="Argument 'copy-overviews' depends on argument 'input' that has not been specified.",
     ):
         alg.Run()
 
