@@ -29,6 +29,7 @@
 #include "gdal_utils.h"
 #include "gdalwarper.h"
 #include "cpl_vsi_virtual.h"
+#include "memdataset.h"
 #include "tilematrixset.hpp"
 
 using namespace std;
@@ -1953,57 +1954,62 @@ GDALDataset *CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                 }
 
                 // Create MEM dataset and map VRT bands to tile bands
-                GDALDriverH hMemDrv = GDALGetDriverByName("MEM");
-                GDALDatasetH hMemDS = GDALCreate(hMemDrv, "", nTileW, nTileH,
-                                                 nTileBands, GDT_Byte, nullptr);
+                std::unique_ptr<MEMDataset> poMEMDS(MEMDataset::Create(
+                    "", nTileW, nTileH, 0, GDT_Byte, nullptr));
+                if (!poMEMDS)
+                {
+                    CPLError(CE_Failure, CPLE_OutOfMemory,
+                             "ESRIC: failed to allocate MEM tile dataset "
+                             "at LOD %d row %d col %d",
+                             iLOD, nRow, nCol);
+                    eErr = CE_Failure;
+                    break;
+                }
 
                 for (int iBand = 0; iBand < nTileBands; iBand++)
                 {
-                    GDALRasterBandH hBand =
-                        GDALGetRasterBand(hMemDS, iBand + 1);
-
+                    GByte *pabySrcBand = nullptr;
                     if (iBand < 3)
                     {
-                        // RGB. Pick VRT color band index
                         const int nSrcIdx = (nColorBands >= 3) ? iBand : 0;
-                        GDALRasterIO(hBand, GF_Write, 0, 0, nTileW, nTileH,
-                                     abySrc.data() + nSrcIdx * nTilePixels,
-                                     nTileW, nTileH, GDT_Byte, 0, 0);
+                        pabySrcBand = abySrc.data() + nSrcIdx * nTilePixels;
                     }
                     else
                     {
-                        // Alpha band
-                        GDALRasterIO(hBand, GF_Write, 0, 0, nTileW, nTileH,
-                                     abySrc.data() +
-                                         static_cast<size_t>(nVRTBands - 1) *
-                                             nTilePixels,
-                                     nTileW, nTileH, GDT_Byte, 0, 0);
+                        pabySrcBand =
+                            abySrc.data() +
+                            static_cast<size_t>(nVRTBands - 1) * nTilePixels;
                     }
+
+                    GDALRasterBandH hBand = MEMCreateRasterBandEx(
+                        poMEMDS.get(), iBand + 1, pabySrcBand, GDT_Byte, 0, 0,
+                        false);
+                    poMEMDS->AddMEMBand(hBand);
                 }
 
                 // Set color interpretation for correct encoding
                 if (nTileBands >= 3)
                 {
-                    GDALSetRasterColorInterpretation(
-                        GDALGetRasterBand(hMemDS, 1), GCI_RedBand);
-                    GDALSetRasterColorInterpretation(
-                        GDALGetRasterBand(hMemDS, 2), GCI_GreenBand);
-                    GDALSetRasterColorInterpretation(
-                        GDALGetRasterBand(hMemDS, 3), GCI_BlueBand);
+                    poMEMDS->GetRasterBand(1)->SetColorInterpretation(
+                        GCI_RedBand);
+                    poMEMDS->GetRasterBand(2)->SetColorInterpretation(
+                        GCI_GreenBand);
+                    poMEMDS->GetRasterBand(3)->SetColorInterpretation(
+                        GCI_BlueBand);
                 }
                 if (nTileBands == 4)
-                    GDALSetRasterColorInterpretation(
-                        GDALGetRasterBand(hMemDS, 4), GCI_AlphaBand);
+                    poMEMDS->GetRasterBand(4)->SetColorInterpretation(
+                        GCI_AlphaBand);
 
                 // Encode tile to JPEG/PNG
                 const std::string osMemFile(
                     VSIMemGenerateHiddenFilename("esric_tile"));
-                GDALDatasetH hOutDS = GDALCreateCopy(
-                    hTileDriver, osMemFile.c_str(), hMemDS, FALSE,
-                    aosTileOptions.List(), nullptr, nullptr);
+                GDALDatasetH hOutDS =
+                    GDALCreateCopy(hTileDriver, osMemFile.c_str(),
+                                   GDALDataset::ToHandle(poMEMDS.get()), FALSE,
+                                   aosTileOptions.List(), nullptr, nullptr);
                 if (!hOutDS)
                 {
-                    GDALClose(hMemDS);
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "ESRIC: failed to encode tile at "
                              "LOD %d row %d col %d",
@@ -2012,7 +2018,6 @@ GDALDataset *CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                     break;
                 }
                 GDALClose(hOutDS);
-                GDALClose(hMemDS);
 
                 // Retrieve encoded blob
                 vsi_l_offset nBlobSize = 0;
