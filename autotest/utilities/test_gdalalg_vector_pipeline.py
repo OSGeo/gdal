@@ -1029,3 +1029,18 @@ def test_gdalalg_vector_pipeline_read_ds_take_ref(tmp_vsimem):
     ds = ogr.Open(f"{tmp_vsimem}/out.shp")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 10
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_pipeline_read_execute_sql(tmp_vsimem):
+
+    tmp_filename = tmp_vsimem / "tmp.gpkg"
+    gdal.alg.vector.convert(input="../ogr/data/poly.shp", output=tmp_filename)
+
+    gdal.alg.vector.pipeline(
+        pipeline=f'read {tmp_filename} --layer poly ! sql --sql "select * from poly group by eas_id" ! write {tmp_vsimem}/out.shp'
+    )
+
+    ds = ogr.Open(f"{tmp_vsimem}/out.shp")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 10
