@@ -6628,51 +6628,6 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                 osRet += " [not available in pipelines]";
             }
 
-            const auto dependencies{arg->GetDependencies()};
-            if (!dependencies.empty())
-            {
-                std::string otherArgs;
-                int depsCount = 0;
-                for (const auto &dependencyArgumentName : dependencies)
-                {
-                    const auto otherArg{GetArg(dependencyArgumentName)};
-                    if (otherArg != nullptr)
-                    {
-                        if (otherArg->IsHidden() ||
-                            otherArg->IsHiddenForCLI() || otherArg == arg)
-                        {
-                            continue;
-                        }
-
-                        if (!otherArgs.empty())
-                        {
-                            otherArgs += ", ";
-                        }
-
-                        otherArgs += "--";
-                        otherArgs += otherArg->GetName();
-                        depsCount++;
-                    }
-                    else
-                    {
-                        CPLError(
-                            CE_Warning, CPLE_AppDefined,
-                            "Argument '%s' depends on unknown argument '%s'",
-                            arg->GetName().c_str(),
-                            dependencyArgumentName.c_str());
-                    }
-                }
-
-                if (depsCount > 0)
-                {
-                    osRet += " [";
-                    osRet += "requires ";
-                    osRet += depsCount > 1 ? "arguments " : "argument ";
-                    osRet += otherArgs;
-                    osRet += ']';
-                }
-            }
-
             osRet += '\n';
 
             const auto &mutualExclusionGroup = arg->GetMutualExclusionGroup();
@@ -6705,10 +6660,45 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
             }
 
             // Check mutual dependency
+            std::string dependencyArgs;
+            const auto dependencies{arg->GetDependencies()};
+
+            if (!dependencies.empty())
+            {
+                for (const auto &dependencyArgumentName : dependencies)
+                {
+                    const auto otherArg{GetArg(dependencyArgumentName)};
+                    if (otherArg != nullptr)
+                    {
+                        if (otherArg->IsHidden() ||
+                            otherArg->IsHiddenForCLI() || otherArg == arg)
+                        {
+                            continue;
+                        }
+
+                        if (!dependencyArgs.empty())
+                        {
+                            dependencyArgs += ", ";
+                        }
+
+                        dependencyArgs += "--";
+                        dependencyArgs += otherArg->GetName();
+                    }
+                    else
+                    {
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Argument '%s' depends on unknown argument '%s'",
+                            arg->GetName().c_str(),
+                            dependencyArgumentName.c_str());
+                    }
+                }
+            }
+
             const auto &mutualDependencyGroup = arg->GetMutualDependencyGroup();
             if (!mutualDependencyGroup.empty())
             {
-                std::string otherArgs;
+
                 for (const auto &otherArg : m_args)
                 {
                     if (otherArg->IsHidden() || otherArg->IsHiddenForCLI() ||
@@ -6717,21 +6707,22 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
                     if (otherArg->GetMutualDependencyGroup() ==
                         mutualDependencyGroup)
                     {
-                        if (!otherArgs.empty())
-                            otherArgs += ", ";
-                        otherArgs += "--";
-                        otherArgs += otherArg->GetName();
+                        if (!dependencyArgs.empty())
+                            dependencyArgs += ", ";
+
+                        dependencyArgs += "--";
+                        dependencyArgs += otherArg->GetName();
                     }
                 }
-                if (!otherArgs.empty())
-                {
-                    osRet += "  ";
-                    osRet += "  ";
-                    osRet.append(maxOptLen, ' ');
-                    osRet += "Mutually dependent with ";
-                    osRet += otherArgs;
-                    osRet += '\n';
-                }
+            }
+            if (!dependencyArgs.empty())
+            {
+                osRet += "  ";
+                osRet += "  ";
+                osRet.append(maxOptLen, ' ');
+                osRet += "Depends on ";
+                osRet += dependencyArgs;
+                osRet += '\n';
             }
         };
 
