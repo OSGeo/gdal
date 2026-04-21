@@ -2160,6 +2160,54 @@ def test_gti_mask_band_explicit(tmp_vsimem):
     assert vrt_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\xFF" * (20 * 20)
 
 
+def test_gti_mask_band_overview(tmp_vsimem):
+
+    index_filename = str(tmp_vsimem / "index.gti.gpkg")
+    w = 100
+    h = 100
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "src.tif", w, h, 1
+    ) as src_ds:
+        src_ds.SetGeoTransform([2, 1.0 / w, 0, 49, 0, -1.0 / h])
+        src_ds.GetRasterBand(1).Fill(255)
+        src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        # Mask set in *bottom* part
+        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
+            0, h // 2, w, h // 2, b"\xff" * (w * h // 2)
+        )
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "ovr.tif", w // 2, h // 2, 1
+    ) as src_ds:
+        src_ds.SetGeoTransform([2, 2.0 / w, 0, 49, 0, -2.0 / h])
+        src_ds.GetRasterBand(1).Fill(127)
+        src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        # Mask set in *upper* part
+        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
+            0, 0, w // 2, h // 4, b"\xff" * (w // 2 * h // 4)
+        )
+
+    index_ds, lyr = create_basic_tileindex(
+        index_filename, gdal.Open(tmp_vsimem / "src.tif")
+    )
+    lyr.SetMetadataItem("OVERVIEW_0_DATASET", str(tmp_vsimem / "ovr.tif"))
+    del index_ds
+
+    vrt_ds = gdal.Open(index_filename)
+    assert vrt_ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+    assert vrt_ds.GetRasterBand(1).ReadRaster() == b"\xff" * (w * h)
+    assert vrt_ds.GetRasterBand(1).GetMaskBand().ReadRaster() == b"\x00" * (
+        w * h // 2
+    ) + b"\xff" * (w * h // 2)
+    assert vrt_ds.GetRasterBand(1).ReadRaster(0, 0, w, h, w // 2, h // 2) == b"\x7f" * (
+        w // 2 * h // 2
+    )
+    assert vrt_ds.GetRasterBand(1).GetMaskBand().ReadRaster(
+        0, 0, w, h, w // 2, h // 2
+    ) == b"\xff" * (w // 2 * h // 4) + b"\x00" * (w // 2 * h // 4)
+
+
 def test_gti_flushcache(tmp_vsimem):
 
     filename1 = str(tmp_vsimem / "one.tif")

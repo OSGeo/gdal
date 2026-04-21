@@ -4883,12 +4883,27 @@ CPLErr GDALTileIndexDataset::IRasterIO(
     if (nBufXSize < nXSize && nBufYSize < nYSize && AreOverviewsEnabled())
     {
         int bTried = FALSE;
-        const CPLErr eErr = TryOverviewRasterIO(
-            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
-            eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace,
-            nBandSpace, psExtraArg, &bTried);
-        if (bTried)
-            return eErr;
+        if (nBandCount == 1 && panBandMap[0] == 0)
+        {
+            if (m_poMaskBand)
+            {
+                const CPLErr eErr = m_poMaskBand->TryOverviewRasterIO(
+                    eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+                    nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg,
+                    &bTried);
+                if (bTried)
+                    return eErr;
+            }
+        }
+        else
+        {
+            const CPLErr eErr = TryOverviewRasterIO(
+                eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+                nBufYSize, eBufType, nBandCount, panBandMap, nPixelSpace,
+                nLineSpace, nBandSpace, psExtraArg, &bTried);
+            if (bTried)
+                return eErr;
+        }
     }
 
     double dfXOff = nXOff;
