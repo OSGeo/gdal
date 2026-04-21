@@ -7763,6 +7763,7 @@ GDALAlgorithmArgH GDALAlgorithmGetArgNonConst(GDALAlgorithmH hAlg,
  *  This includes both regular dependencies and mutual dependencies.
  *
  * @param hAlg Handle to an algorithm. Must NOT be null.
+ * @param pszArgName Argument name. Must NOT be null.
  * @return a NULL terminated list of names, which must be destroyed with
  * CSLDestroy()
  * @since 3.11
