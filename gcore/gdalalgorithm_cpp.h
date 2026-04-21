@@ -2552,7 +2552,7 @@ class CPL_DLL GDALAlgorithmRegistry
     }
 
     /** Return a possibly empty list of names the specified argument
-     *  dependes on, this includes both direct and mutual dependencies */
+     *  depends on, this includes both direct and mutual dependencies */
     std::vector<std::string> GetArgDependencies(const std::string &osName) const
     {
         const auto arg = GetArg(osName, false);
