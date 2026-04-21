@@ -211,6 +211,16 @@ public:
     return GDALAlgorithmArgGetMutualExclusionGroup(self);
   }
 
+  const char* GetMutualDependencyGroup() {
+      return GDALAlgorithmArgGetMutualDependencyGroup(self);
+  }
+
+%apply (char **CSL) {char **};
+  char **GetDirectDependencies() {
+      return GDALAlgorithmArgGetDirectDependencies( self );
+}
+%clear char **;
+
   bool GetAsBoolean() {
     return GDALAlgorithmArgGetAsBoolean(self);
   }
@@ -358,6 +368,14 @@ public:
     return GDALAlgorithmParseCommandLineArguments(self, args);
   }
 %clear char** args;
+
+
+%apply (char **CSL) {char **};
+char **GetArgDependencies(const char* argName) {
+    return GDALAlgorithmGetArgDependencies( self, argName );
+}
+%clear char **;
+
 
 %newobject GetActualAlgorithm;
   GDALAlgorithmHS* GetActualAlgorithm() {

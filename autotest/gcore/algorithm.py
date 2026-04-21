@@ -519,3 +519,112 @@ def test_gdal_alg_module(tmp_vsimem):
     gdal.reregister_gdal_alg()
 
     assert gdal.alg.vsi.list(filename=tmp_vsimem).Output() == ["a"]
+
+
+###############################################################################
+# Test gdal algorithm with mutual dependencies between arguments
+
+
+def test_algorithm_mutual_dependencies(tmp_path):
+
+    reg = gdal.GetGlobalAlgorithmRegistry()
+
+    # Check no deps
+    alg = reg["raster"]["info"]
+    # We should really return an empty list here but SWIG CSLToList typemap returns PyNone
+    assert alg.GetArgDependencies("input") is None
+    assert alg.GetArg("input").GetMutualDependencyGroup() == ""
+    assert alg.GetArg("input").GetDirectDependencies() is None
+
+    alg = reg["raster"]["create"]
+
+    assert alg.GetArg("copy-metadata").GetDirectDependencies() == ["input"]
+    assert alg.GetArg("copy-overviews").GetDirectDependencies() == ["input"]
+    assert alg.GetArgDependencies("copy-metadata") == ["input"]
+    assert alg.GetArgDependencies("copy-overviews") == ["input"]
+
+    usage = json.loads(alg.GetUsageAsJSON())
+    copy_md = [a for a in usage["input_arguments"] if a["name"] == "copy-metadata"][0]
+    assert copy_md["depends_on"] == ["input"]
+
+    copy_ov = [a for a in usage["input_arguments"] if a["name"] == "copy-overviews"][0]
+    assert copy_ov["depends_on"] == ["input"]
+
+    alg["output"] = str(tmp_path / "out.tif")
+    alg["copy-metadata"] = True
+
+    with pytest.raises(
+        RuntimeError,
+        match=" Argument 'copy-metadata' depends on argument 'input' that has not been specified.",
+    ):
+        alg.Run()
+
+    alg = reg["raster"]["create"]
+    alg["output"] = str(tmp_path / "out.tif")
+    alg["copy-overviews"] = True
+
+    with pytest.raises(
+        RuntimeError,
+        match=" Argument 'copy-overviews' depends on argument 'input' that has not been specified.",
+    ):
+        alg.Run()
+
+    # Check mutual dependency group
+    alg = reg["raster"]["scale"]
+
+    usage = json.loads(alg.GetUsageAsJSON())
+    src_min = [a for a in usage["input_arguments"] if a["name"] == "src-min"][0]
+    src_max = [a for a in usage["input_arguments"] if a["name"] == "src-max"][0]
+    dst_min = [a for a in usage["input_arguments"] if a["name"] == "dst-min"][0]
+    dst_max = [a for a in usage["input_arguments"] if a["name"] == "dst-max"][0]
+
+    assert src_min["mutual_dependency_group"] == "src-max-min"
+    assert src_max["mutual_dependency_group"] == "src-max-min"
+    assert dst_min["mutual_dependency_group"] == "dst-max-min"
+    assert dst_max["mutual_dependency_group"] == "dst-max-min"
+
+    src_min_arg = alg.GetArg("src-min")
+    src_max_arg = alg.GetArg("src-max")
+    dst_min_arg = alg.GetArg("dst-min")
+    dst_max_arg = alg.GetArg("dst-max")
+
+    assert src_min_arg.GetMutualDependencyGroup() == "src-max-min"
+    assert src_max_arg.GetMutualDependencyGroup() == "src-max-min"
+    assert dst_min_arg.GetMutualDependencyGroup() == "dst-max-min"
+    assert dst_max_arg.GetMutualDependencyGroup() == "dst-max-min"
+
+    assert src_min["depends_on"] == ["src-max"]
+    assert src_max["depends_on"] == ["src-min"]
+    assert dst_min["depends_on"] == ["dst-max"]
+    assert dst_max["depends_on"] == ["dst-min"]
+
+    # This does not include mutual dependencies
+    assert src_min_arg.GetDirectDependencies() is None
+    assert src_max_arg.GetDirectDependencies() is None
+    assert dst_min_arg.GetDirectDependencies() is None
+    assert dst_max_arg.GetDirectDependencies() is None
+
+    # This includes both direct and mutual dependencies
+    assert alg.GetArgDependencies("src-max") == ["src-min"]
+    assert alg.GetArgDependencies("src-min") == ["src-max"]
+    assert alg.GetArgDependencies("dst-min") == ["dst-max"]
+    assert alg.GetArgDependencies("dst-max") == ["dst-min"]
+
+    alg["src-min"] = 1
+    alg["output"] = str(tmp_path / "out.tif")
+    alg["input"] = "data/byte.tif"
+    with pytest.raises(
+        RuntimeError,
+        match=r"Argument\(s\) 'src-min' require\(s\) that the following argument\(s\) are also specified: src-max.",
+    ):
+        alg.Run()
+
+    alg = reg["raster"]["scale"]
+    alg["src-max"] = 10
+    alg["input"] = "data/byte.tif"
+    alg["output"] = str(tmp_path / "out.tif")
+    with pytest.raises(
+        RuntimeError,
+        match=r"Argument\(s\) 'src-max' require\(s\) that the following argument\(s\) are also specified: src-min.",
+    ):
+        alg.Run()

@@ -3620,9 +3620,16 @@ TEST_F(test_gdal_algorithm, direct_dependencies)
         MyAlgorithm()
         {
             AddArg("flag1", 0, "", &m_flag1)
-                .AddDependency(AddArg("flag2", 0, "", &m_flag2));
+                .AddDirectDependency(AddArg("flag2", 0, "", &m_flag2));
         }
     };
+
+    {
+        MyAlgorithm alg;
+        EXPECT_EQ(alg.GetArgDependencies("flag1"),
+                  std::vector<std::string>{"flag2"});
+        EXPECT_EQ(alg.GetArgDependencies("flag2"), std::vector<std::string>{});
+    }
 
     {
         MyAlgorithm alg;

@@ -80,10 +80,10 @@ GDALRasterCreateAlgorithm::GDALRasterCreateAlgorithm(
 
     AddArg("copy-metadata", 0, _("Copy metadata from input dataset"),
            &m_copyMetadata)
-        .AddDependency(*inputArg);
+        .AddDirectDependency(*inputArg);
     AddArg("copy-overviews", 0,
            _("Create same overview levels as input dataset"), &m_copyOverviews)
-        .AddDependency(*inputArg);
+        .AddDirectDependency(*inputArg);
 }
 
 /************************************************************************/

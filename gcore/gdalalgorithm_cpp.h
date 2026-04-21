@@ -740,13 +740,13 @@ class CPL_DLL GDALAlgorithmArgDecl final
     }
 
     /**
-     * Adds a dependency on another argument, meaning that if this argument is specified,
+     * Adds a direct dependency on another argument, meaning that if this argument is specified,
      * the other argument must be specified too.
-     * Note that the dependency is not symmetric. If argument A depends on argument B, it doesn't mean that B depends on A.
+     * Note that the dependency is not mutual. If argument A depends on argument B, it doesn't mean that B depends on A.
      */
-    GDALAlgorithmArgDecl &AddDependency(const std::string &otherArgName)
+    GDALAlgorithmArgDecl &AddDirectDependency(const std::string &otherArgName)
     {
-        m_dependencies.push_back(otherArgName);
+        m_directDependencies.push_back(otherArgName);
         return *this;
     }
 
@@ -1028,10 +1028,19 @@ class CPL_DLL GDALAlgorithmArgDecl final
         return m_mutualExclusionGroup;
     }
 
-    /** Return the list of arguments that this argument depends on. */
-    inline const std::vector<std::string> &GetDependencies() const
+    /** Return the list of names of arguments that this argument directly depends on.
+     *
+     *  If argument A depends on argument B, it doesn't necessarily mean that B depends on A.
+     *
+     *  Mutual dependency groups are a special case of dependencies,
+     *  where all arguments of the group depend on each other and are not
+     *  returned by this method.
+     *
+     *  See also GetMutualDependencyGroup() and AddDirectDependency() methods.
+     */
+    inline const std::vector<std::string> &GetDirectDependencies() const
     {
-        return m_dependencies;
+        return m_directDependencies;
     }
 
     /** Return if this (string) argument accepts the \@filename syntax to
@@ -1216,7 +1225,7 @@ class CPL_DLL GDALAlgorithmArgDecl final
     std::map<std::string, std::vector<std::string>> m_metadata{};
     std::vector<std::string> m_aliases{};
     std::vector<std::string> m_hiddenAliases{};
-    std::vector<std::string> m_dependencies{};
+    std::vector<std::string> m_directDependencies{};
     std::vector<char> m_shortNameAliases{};
     std::vector<std::string> m_choices{};
     std::vector<std::string> m_hiddenChoices{};
@@ -1506,10 +1515,10 @@ class CPL_DLL GDALAlgorithmArg /* non-final */
         return m_decl.GetMutualDependencyGroup();
     }
 
-    /** Alias for GDALAlgorithmArgDecl::GetDependencies() */
-    inline const std::vector<std::string> &GetDependencies() const
+    /** Alias for GDALAlgorithmArgDecl::GetDirectDependencies() */
+    inline const std::vector<std::string> &GetDirectDependencies() const
     {
-        return m_decl.GetDependencies();
+        return m_decl.GetDirectDependencies();
     }
 
     /** Alias for GDALAlgorithmArgDecl::GetMetadata() */
@@ -2195,11 +2204,11 @@ class CPL_DLL GDALInConstructionAlgorithmArg final : public GDALAlgorithmArg
         return *this;
     }
 
-    /** Add a dependency from an argument */
+    /** Add a direct (not mutual) dependency from an argument */
     GDALInConstructionAlgorithmArg &
-    AddDependency(const GDALAlgorithmArg &otherArg)
+    AddDirectDependency(const GDALAlgorithmArg &otherArg)
     {
-        m_decl.AddDependency(otherArg.GetName());
+        m_decl.AddDirectDependency(otherArg.GetName());
         return *this;
     }
 
@@ -2540,6 +2549,33 @@ class CPL_DLL GDALAlgorithmRegistry
             return m_dummyArg;
         }
         return *alg;
+    }
+
+    /** Return a possibly empty list of names the specified argument
+     *  dependes on, this includes both direct and mutual dependencies */
+    std::vector<std::string> GetArgDependencies(const std::string &osName) const
+    {
+        const auto arg = GetArg(osName, false);
+        if (!arg)
+        {
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Argument '%s' does not exist", osName.c_str());
+            return {};
+        }
+        std::vector<std::string> dependencies = arg->GetDirectDependencies();
+        if (const auto mutualDependencyGroup = arg->GetMutualDependencyGroup();
+            !mutualDependencyGroup.empty())
+        {
+            for (const auto &otherArg : m_args)
+            {
+                if (otherArg.get() == arg ||
+                    mutualDependencyGroup.compare(
+                        otherArg->GetMutualDependencyGroup()) != 0)
+                    continue;
+                dependencies.push_back(otherArg->GetName());
+            }
+        }
+        return dependencies;
     }
 
     /** Set the calling path to this algorithm.
