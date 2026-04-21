@@ -436,7 +436,7 @@ bool GDALAlgorithmArg::Set(double value)
 
 static bool CheckCanSetDatasetObject(const GDALAlgorithmArg *arg)
 {
-    if (arg->GetDatasetInputFlags() == GADV_NAME &&
+    if (arg->IsOutput() && arg->GetDatasetInputFlags() == GADV_NAME &&
         arg->GetDatasetOutputFlags() == GADV_OBJECT)
     {
         CPLError(
@@ -449,8 +449,8 @@ static bool CheckCanSetDatasetObject(const GDALAlgorithmArg *arg)
     else if ((arg->GetDatasetInputFlags() & GADV_OBJECT) == 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "A dataset cannot be set as an input argument of '%s'.",
-                 arg->GetName().c_str());
+                 "Dataset%s '%s' must be provided by name, not as object.",
+                 arg->GetMaxCount() > 1 ? "s" : "", arg->GetName().c_str());
         return false;
     }
 
@@ -2572,6 +2572,12 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
         arg->GetName() == GDAL_ARG_NAME_INPUT && outputArg &&
         !outputArg->IsExplicitlySet() && !outputArg->IsRequired() && update &&
         !overwrite;
+
+    // Used for nested pipelines
+    const auto oIterDatasetNameToDataset =
+        val.IsNameSet() ? m_oMapDatasetNameToDataset.find(val.GetName())
+                        : m_oMapDatasetNameToDataset.end();
+
     if (!val.GetDatasetRef() && !val.IsNameSet())
     {
         ReportError(CE_Failure, CPLE_AppDefined,
@@ -2583,7 +2589,9 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
     {
         return false;
     }
-    else if (!val.GetDatasetRef() && arg->AutoOpenDataset() &&
+    else if (!val.GetDatasetRef() &&
+             (arg->AutoOpenDataset() ||
+              oIterDatasetNameToDataset != m_oMapDatasetNameToDataset.end()) &&
              (!arg->IsOutput() || (arg == outputArg && update && !overwrite) ||
               onlyInputSpecifiedInUpdateAndOutputNotRequired))
     {
@@ -2674,20 +2682,20 @@ bool GDALAlgorithm::ProcessDatasetArg(GDALAlgorithmArg *arg,
             }
         }
 
-        auto oIter = m_oMapDatasetNameToDataset.find(osDatasetName.c_str());
-        auto poDS = oIter != m_oMapDatasetNameToDataset.end()
-                        ? oIter->second
-                        : GDALDataset::Open(osDatasetName.c_str(), flags,
-                                            aosAllowedDrivers.List(),
-                                            aosOpenOptions.List());
+        auto poDS =
+            oIterDatasetNameToDataset != m_oMapDatasetNameToDataset.end()
+                ? oIterDatasetNameToDataset->second
+                : GDALDataset::Open(osDatasetName.c_str(), flags,
+                                    aosAllowedDrivers.List(),
+                                    aosOpenOptions.List());
         if (poDS)
         {
-            if (oIter != m_oMapDatasetNameToDataset.end())
+            if (oIterDatasetNameToDataset != m_oMapDatasetNameToDataset.end())
             {
                 if (arg->GetType() == GAAT_DATASET)
                     arg->Get<GDALArgDatasetValue>().Set(poDS->GetDescription());
                 poDS->Reference();
-                m_oMapDatasetNameToDataset.erase(oIter);
+                m_oMapDatasetNameToDataset.erase(oIterDatasetNameToDataset);
             }
 
             // A bit of a hack for situations like 'gdal raster clip --like "PG:..."'
@@ -2957,8 +2965,7 @@ bool GDALAlgorithm::ValidateArguments()
                 ret = false;
         }
 
-        if (arg->IsExplicitlySet() && arg->GetType() == GAAT_DATASET_LIST &&
-            arg->AutoOpenDataset())
+        if (arg->IsExplicitlySet() && arg->GetType() == GAAT_DATASET_LIST)
         {
             auto &listVal = arg->Get<std::vector<GDALArgDatasetValue>>();
             if (listVal.size() == 1)
@@ -2970,60 +2977,76 @@ bool GDALAlgorithm::ValidateArguments()
             {
                 for (auto &val : listVal)
                 {
-                    if (!val.GetDatasetRef() && val.GetName().empty())
+                    if (val.GetDatasetRef())
+                    {
+                        if (!CheckCanSetDatasetObject(arg.get()))
+                        {
+                            ret = false;
+                        }
+                        continue;
+                    }
+
+                    if (val.GetName().empty())
                     {
                         ReportError(CE_Failure, CPLE_AppDefined,
                                     "Argument '%s' has no dataset object or "
                                     "dataset name.",
                                     arg->GetName().c_str());
                         ret = false;
+                        continue;
                     }
-                    else if (!val.GetDatasetRef())
+
+                    auto oIter = m_oMapDatasetNameToDataset.find(val.GetName());
+                    if (oIter != m_oMapDatasetNameToDataset.end())
                     {
-                        int flags =
-                            arg->GetDatasetType() | GDAL_OF_VERBOSE_ERROR;
+                        auto poDS = oIter->second;
+                        val.SetDatasetOpenedByAlgorithm();
+                        val.Set(poDS);
+                        m_oMapDatasetNameToDataset.erase(oIter);
+                        continue;
+                    }
 
-                        CPLStringList aosOpenOptions;
-                        CPLStringList aosAllowedDrivers;
-                        if (arg->GetName() == GDAL_ARG_NAME_INPUT)
+                    if (!arg->AutoOpenDataset())
+                        continue;
+
+                    int flags = arg->GetDatasetType() | GDAL_OF_VERBOSE_ERROR;
+
+                    CPLStringList aosOpenOptions;
+                    CPLStringList aosAllowedDrivers;
+                    if (arg->GetName() == GDAL_ARG_NAME_INPUT)
+                    {
+                        const auto ooArg = GetArg(GDAL_ARG_NAME_OPEN_OPTION);
+                        if (ooArg && ooArg->GetType() == GAAT_STRING_LIST)
                         {
-                            const auto ooArg =
-                                GetArg(GDAL_ARG_NAME_OPEN_OPTION);
-                            if (ooArg && ooArg->GetType() == GAAT_STRING_LIST)
-                            {
-                                aosOpenOptions = CPLStringList(
-                                    ooArg->Get<std::vector<std::string>>());
-                            }
-
-                            const auto ifArg =
-                                GetArg(GDAL_ARG_NAME_INPUT_FORMAT);
-                            if (ifArg && ifArg->GetType() == GAAT_STRING_LIST)
-                            {
-                                aosAllowedDrivers = CPLStringList(
-                                    ifArg->Get<std::vector<std::string>>());
-                            }
-
-                            const auto updateArg = GetArg(GDAL_ARG_NAME_UPDATE);
-                            if (updateArg &&
-                                updateArg->GetType() == GAAT_BOOLEAN &&
-                                updateArg->Get<bool>())
-                            {
-                                flags |= GDAL_OF_UPDATE;
-                            }
+                            aosOpenOptions = CPLStringList(
+                                ooArg->Get<std::vector<std::string>>());
                         }
 
-                        auto poDS = std::unique_ptr<GDALDataset>(
-                            GDALDataset::Open(val.GetName().c_str(), flags,
-                                              aosAllowedDrivers.List(),
-                                              aosOpenOptions.List()));
-                        if (poDS)
+                        const auto ifArg = GetArg(GDAL_ARG_NAME_INPUT_FORMAT);
+                        if (ifArg && ifArg->GetType() == GAAT_STRING_LIST)
                         {
-                            val.Set(std::move(poDS));
+                            aosAllowedDrivers = CPLStringList(
+                                ifArg->Get<std::vector<std::string>>());
                         }
-                        else
+
+                        const auto updateArg = GetArg(GDAL_ARG_NAME_UPDATE);
+                        if (updateArg && updateArg->GetType() == GAAT_BOOLEAN &&
+                            updateArg->Get<bool>())
                         {
-                            ret = false;
+                            flags |= GDAL_OF_UPDATE;
                         }
+                    }
+
+                    auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                        val.GetName().c_str(), flags, aosAllowedDrivers.List(),
+                        aosOpenOptions.List()));
+                    if (poDS)
+                    {
+                        val.Set(std::move(poDS));
+                    }
+                    else
+                    {
+                        ret = false;
                     }
                 }
             }
@@ -6081,7 +6104,8 @@ GDALAlgorithm::GetUsageForCLI(bool shortUsage,
             if (arg->GetType() == GAAT_DATASET ||
                 arg->GetType() == GAAT_DATASET_LIST)
             {
-                if (arg->GetDatasetInputFlags() == GADV_NAME &&
+                if (arg->IsOutput() &&
+                    arg->GetDatasetInputFlags() == GADV_NAME &&
                     arg->GetDatasetOutputFlags() == GADV_OBJECT)
                 {
                     osRet += " (created by algorithm)";

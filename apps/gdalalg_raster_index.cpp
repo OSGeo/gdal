@@ -120,13 +120,7 @@ bool GDALRasterIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     CPLStringList aosSources;
     for (auto &srcDS : m_inputDatasets)
     {
-        if (srcDS.GetDatasetRef())
-        {
-            ReportError(
-                CE_Failure, CPLE_IllegalArg,
-                "Input datasets must be provided by name, not as object");
-            return false;
-        }
+        CPLAssert(!srcDS.GetDatasetRef());
         aosSources.push_back(srcDS.GetName());
     }
 

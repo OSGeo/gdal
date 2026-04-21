@@ -653,6 +653,7 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
     {
         GDALArgDatasetValue val;
         auto decl = GDALAlgorithmArgDecl("", 0, "", GAAT_DATASET);
+        decl.SetIsOutput();
         decl.SetDatasetInputFlags(GADV_NAME);
         decl.SetDatasetOutputFlags(GADV_OBJECT);
         auto arg = GDALAlgorithmArg(decl, &val);
@@ -706,7 +707,7 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
             arg.Set(static_cast<GDALDataset *>(nullptr));
             EXPECT_TRUE(
                 strstr(CPLGetLastErrorMsg(),
-                       "A dataset cannot be set as an input argument of"));
+                       "Dataset '' must be provided by name, not as object"));
             EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
         }
     }
@@ -729,9 +730,9 @@ TEST_F(test_gdal_algorithm, GDALAlgorithmArg_Set)
 
                 Run();
 
-                EXPECT_TRUE(
-                    strstr(CPLGetLastErrorMsg(),
-                           "A dataset cannot be set as an input argument of"));
+                EXPECT_TRUE(strstr(
+                    CPLGetLastErrorMsg(),
+                    "Dataset '' must be provided by name, not as object"));
                 EXPECT_EQ(CPLGetLastErrorType(), CE_Failure);
             }
         };

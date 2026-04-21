@@ -101,7 +101,7 @@ def test_gdalalg_vector_index_new_file_source_as_dataset(tmp_vsimem):
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
 
     with pytest.raises(
-        Exception, match="Input datasets must be provided by name, not as object"
+        Exception, match="Datasets 'input' must be provided by name, not as object"
     ):
         gdal.Run("vector", "index", input=src_ds, output_format="MEM")
 

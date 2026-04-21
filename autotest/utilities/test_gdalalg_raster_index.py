@@ -70,7 +70,7 @@ def test_gdalalg_raster_index_source_by_ref():
     alg["output-format"] = "MEM"
     alg["output-layer"] = "my_layer"
     with pytest.raises(
-        Exception, match="Input datasets must be provided by name, not as object"
+        Exception, match="Datasets 'input' must be provided by name, not as object"
     ):
         alg.Run()
 

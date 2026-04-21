@@ -434,3 +434,13 @@ def test_gdalalg_vector_concat_test_ogrsf(tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+def test_gdalalg_vector_concat_pipeline_nested():
+
+    with gdal.alg.vector.pipeline(
+        pipeline="concat [ read ../ogr/data/poly.shp ] [ read ../ogr/data/poly.shp ]"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 20
