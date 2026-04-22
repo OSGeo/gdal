@@ -98,6 +98,10 @@ Upcoming
 
  `FOSS4G Europe 2026 <https://2026.foss4g.org/>`__, 29 June - 3 July 2026, Timișoara, România
 
+ .. spelling:word-list::
+        Timișoara
+        România
+
 * International event:
 
  .. image::   ../../images/community/foss4g2026.png
