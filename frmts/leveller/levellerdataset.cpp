@@ -964,7 +964,7 @@ bool LevellerDataset::write_tag(const char *pszTag, const char *psz)
 {
     CPLAssert(strlen(pszTag) <= kMaxTagNameLen);
 
-    char sz[kMaxTagNameLen + 1];
+    char sz[kMaxTagNameLen + 2];
     snprintf(sz, sizeof(sz), "%sl", pszTag);
     const size_t len = strlen(psz);
 

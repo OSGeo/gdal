@@ -122,19 +122,19 @@ static void addURN(CPLXMLNode *psTarget, const char *pszAuthority,
     if (pszVersion == nullptr)
         pszVersion = "";
 
-    char szURN[200] = {};
-    CPLAssert(strlen(pszAuthority) + strlen(pszObjectType) <
-              sizeof(szURN) - 30);
-
-    snprintf(szURN, sizeof(szURN), "urn:ogc:def:%s:%s:%s:", pszObjectType,
-             pszAuthority, pszVersion);
+    std::string osURN("urn:ogc:def:");
+    osURN += pszObjectType;
+    osURN += ':';
+    osURN += pszAuthority;
+    osURN += ':';
+    osURN += pszVersion;
+    osURN += ':';
 
     if (nCode != 0)
-        snprintf(szURN + strlen(szURN), sizeof(szURN) - strlen(szURN), "%d",
-                 nCode);
+        osURN.append(std::to_string(nCode));
 
     CPLCreateXMLNode(CPLCreateXMLNode(psTarget, CXT_Attribute, "xlink:href"),
-                     CXT_Text, szURN);
+                     CXT_Text, osURN.c_str());
 }
 
 /************************************************************************/
@@ -178,12 +178,13 @@ static CPLXMLNode *addAuthorityIDBlock(CPLXMLNode *psTarget,
     if (pszVersion == nullptr)
         pszVersion = "";
 
-    char szURN[200] = {};
-    CPLAssert(strlen(pszAuthority) + strlen(pszObjectType) <
-              sizeof(szURN) - 30);
-
-    snprintf(szURN, sizeof(szURN), "urn:ogc:def:%s:%s:%s:", pszObjectType,
-             pszAuthority, pszVersion);
+    std::string osURN("urn:ogc:def:");
+    osURN += pszObjectType;
+    osURN += ':';
+    osURN += pszAuthority;
+    osURN += ':';
+    osURN += pszVersion;
+    osURN += ':';
 
     /* -------------------------------------------------------------------- */
     /*      Prepare the base name, eg. <srsID>.                             */
@@ -199,7 +200,7 @@ static CPLXMLNode *addAuthorityIDBlock(CPLXMLNode *psTarget,
     /*      Prepare the codespace attribute.                                */
     /* -------------------------------------------------------------------- */
     CPLCreateXMLNode(CPLCreateXMLNode(psName, CXT_Attribute, "codeSpace"),
-                     CXT_Text, szURN);
+                     CXT_Text, osURN.c_str());
 
     /* -------------------------------------------------------------------- */
     /*      Attach code value to name node.                                 */
@@ -911,7 +912,7 @@ static int getEPSGObjectCodeValue(CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                         getProjectionParam()                          */
+/*                         getProjectionParam()                         */
 /************************************************************************/
 
 static double getProjectionParam(CPLXMLNode *psRootNode, int nParameterCode,
