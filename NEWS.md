@@ -1,3 +1,106 @@
+# GDAL/OGR 3.12.4 Release Notes
+
+GDAL 3.12.4 is a bugfix release.
+
+## Build
+
+* Fix build with  -DGDAL_ENABLE_ALGORITHMS=OFF
+* Fix build against Poppler 26.04.00
+* FindSQLite3: Add missing cmake includes (CheckCXXSourceCompiles)
+
+## Resource files
+
+* Fix JSON Schema validation errors in gdalinfo and ogrinfo schemas (#14411)
+
+## GDAL 3.12.4
+
+### Port
+
+* CPLDefaultErrorHandler(): avoid potential use-after-free
+* Error handling: avoid potential crash when a debug message goes through the
+  global error handler while a thread-local error handler is in use with
+  CPLSetCurrentErrorHandlerCatchDebug(false) (#14262)
+* /vsicurl/: when initial HEAD returns Accept-ranges: bytes without
+  Content-Length, retry with a limited range GET (qgis/QGIS#65800)
+
+### Algorithms
+
+* Warper: more reliable progress interruption detection in multi-threaded case
+* Warper: avoid potential dead-lock, when warping is done from a worker thread
+  of the GDAL global thread pool (#14262)
+
+### Core
+
+* Resampling: fix wrong NaN handling for bilinear/cubic/cubicspline/lanczos
+  when the band nodata value is also NaN (#14353)
+
+### Utilities
+
+* gdal pipeline: display correct raster vs vector help message in mixed
+  pipelines (#14197)
+* gdal pipeline: make nested pipelines work when several input datasets are
+  possible (such as vector concat) (#14415)
+* gdal raster edit: avoid error when used within a pipeline and previous step
+  is anonymous VRT (#14331)
+* gdal raster as-features: avoid missing features with --skip-nodata (#14348)
+
+### Raster drivers
+
+GTI driver:
+ * make relative filenames in XML or .gti.gpkg relative to the main file (#14344)
+ * fix 'panBandMap[0] = 0, this band does not exist on dataset' error when doing
+   downsampled requests on dataset with mask band + overviews (#14409)
+
+HDF4 driver:
+ * fix various fix heap-buffer-overflow/nullptr-deref crashes on
+   corrupted/hostile dataset.
+
+HDF5 driver:
+ * workaround libhdf5 2.1 headers redefining _POSIX_C_SOURCE
+
+JP2OpenJPEG driver:
+ *writer: fix duplicate type/association pairs in CDEF box for 3 grey band+alpha
+  JP2 files (#14185)
+
+MiramonRaster driver:
+ * Fixing first section VERSION (#14166)
+
+VRT driver:
+ * VRTDerivedRasterBand: make it create correctly implicit overviews (#14165)
+
+## OGR 3.12.4
+
+### Core
+
+* Arrow interface: CompactValidityBuffer(): fix compliance with ArrowArray spec
+  when null_count == 0 (#14155)
+* OGRGeometryFactory::transformWithOptions(): make sure polygons are closed in
+  polar reprojection code (GEOS 3.15 compatibility)
+
+### Utilities
+
+* Fix crash with 'gdal vector pipeline read my.shp --layer my ! sql --sql ... ! ...'
+* gdal vector pipeline read --layer: make sure ExecuteSQL() forwards to the
+  source dataset
+
+### Vector drivers
+
+MiraMonVector driver:
+ * CreateLayer(): launder layer name for filename compatibility
+
+Parquet driver:
+ * add support for LargeList type
+
+PCIDSK driver:
+ * add 2 PCI datums
+
+WFS driver:
+ * WFS-T: fix formatting of xs:dateTime, xs:date and xs:boolean fields
+
+## Python bindings
+
+* Python error handling: some hardening
+
 # GDAL/OGR 3.12.3 Release Notes
 
 GDAL 3.12.3 is a bugfix release.
