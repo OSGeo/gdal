@@ -386,10 +386,10 @@ mentioned in the previous section.
             <Dataset>other.gti.gpkg</Dataset>
             <Layer>other_layer</Layer>
             <OpenOptions>                              <!-- optional -->
-                <OOI key="XMIN">0</OOI>
-                <OOI key="YMIN">1</OOI>
-                <OOI key="XMAX">2</OOI>
-                <OOI key="YMAX">3</OOI>
+                <OOI key="MINX">2</OOI>
+                <OOI key="MINY">49</OOI>
+                <OOI key="MAXX">3</OOI>
+                <OOI key="MAXY">50</OOI>
             </OpenOptions>
         </Overview>
 
