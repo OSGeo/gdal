@@ -1518,7 +1518,7 @@ GDALDataset *CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     // Get the tiling scheme definition.
     // TODO: Can we support custom tiling schemes?
     const auto poTMS = gdal::TileMatrixSet::parse(
-        (nEPSGCode == 3857) ? "GoogleMapsCompatible" : "WorldCRS84Quad");
+        (nEPSGCode == 3857) ? "GoogleMapsCompatible" : "InspireCRS84Quad");
     if (!poTMS)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
