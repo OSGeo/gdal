@@ -5246,28 +5246,36 @@ void GDALAlgorithm::SetAutoCompleteFunctionForLayerName(
 void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
     GDALInConstructionAlgorithmArg &fieldArg,
     const GDALAlgorithmArg *layerNameArg, bool attributeFields,
-    bool geometryFields, std::vector<GDALArgDatasetValue> &datasetArg)
+    bool geometryFields, std::vector<GDALArgDatasetValue> &datasetArg,
+    const std::vector<std::string> &extraValues,
+    std::function<bool(const OGRFieldDefn *)> filterFn)
 {
 
     fieldArg.SetAutoCompleteFunction(
-        [&datasetArg, layerNameArg, attributeFields,
-         geometryFields](const std::string &currentValue)
+        [&datasetArg, layerNameArg, attributeFields, geometryFields,
+         extraValues, filterFn](const std::string &currentValue)
         {
-            std::set<std::string> ret;
+            std::set<std::string> ret{};
             if (!datasetArg.empty())
             {
                 CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
                 const auto getLayerFields =
-                    [&ret, &currentValue, attributeFields,
-                     geometryFields](const OGRLayer *poLayer)
+                    [&ret, &currentValue, attributeFields, geometryFields,
+                     &extraValues, &filterFn](const OGRLayer *poLayer)
                 {
                     const auto poDefn = poLayer->GetLayerDefn();
                     if (attributeFields)
                     {
                         for (const auto poFieldDefn : poDefn->GetFields())
                         {
+                            if (filterFn && !filterFn(poFieldDefn))
+                            {
+                                continue;
+                            }
+
                             const char *fieldName = poFieldDefn->GetNameRef();
+
                             if (currentValue == fieldName)
                             {
                                 ret.clear();
@@ -5292,6 +5300,16 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
                             }
                             ret.insert(fieldName);
                         }
+                    }
+                    for (const auto &value : extraValues)
+                    {
+                        if (currentValue == value)
+                        {
+                            ret.clear();
+                            ret.insert(value);
+                            break;
+                        }
+                        ret.insert(value);
                     }
                 };
 

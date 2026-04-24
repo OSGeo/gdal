@@ -123,6 +123,7 @@ target_sources(appslib PRIVATE
   gdalalg_vector_limit.cpp
   gdalalg_vector_make_point.cpp
   gdalalg_vector_set_geom_type.cpp
+  gdalalg_vector_explode.cpp
   gdalalg_vector_explode_collections.cpp
   gdalalg_vector_make_valid.cpp
   gdalalg_vector_segmentize.cpp

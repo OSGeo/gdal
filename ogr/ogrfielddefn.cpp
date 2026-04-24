@@ -1130,11 +1130,11 @@ int OGR_AreTypeSubTypeCompatible(OGRFieldType eType, OGRFieldSubType eSubType)
  * \brief Return if a type represents a list type
  *
  * @param eType the field type.
- * @return TRUE if type and subtype are compatible
+ * @return TRUE if the type represents is a list type
  * @since GDAL 3.14
  */
 
-int OGR_GetFieldTypeIsList(OGRFieldType eType)
+bool OGR_GetFieldTypeIsList(OGRFieldType eType)
 {
     return eType == OFTIntegerList || eType == OFTInteger64List ||
            eType == OFTRealList || eType == OFTStringList;

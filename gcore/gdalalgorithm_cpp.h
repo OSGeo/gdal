@@ -32,6 +32,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -3046,7 +3047,9 @@ class CPL_DLL GDALAlgorithmRegistry
     static void SetAutoCompleteFunctionForFieldName(
         GDALInConstructionAlgorithmArg &fieldArg,
         const GDALAlgorithmArg *layerNameArg, bool attributeFields,
-        bool geometryFields, std::vector<GDALArgDatasetValue> &datasetArg);
+        bool geometryFields, std::vector<GDALArgDatasetValue> &datasetArg,
+        const std::vector<std::string> &extraValues = {},
+        std::function<bool(const OGRFieldDefn *)> filterFn = {});
 
     /** Add a field name argument */
     GDALInConstructionAlgorithmArg &
