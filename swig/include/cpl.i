@@ -1009,7 +1009,7 @@ int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE* fp)
 %apply (void *buffer_ptr) { (void *pBuffer) };
 %apply (size_t native_size) { (size_t nSize), (size_t nCount), (size_t VSIFWriteL), (size_t VSIFReadL)};
 size_t VSIFWriteL( const void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp );
-size_t VSIFReadL ( void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp );
+size_t VSIFReadL (       void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp );
 %clear (void *pBuffer), (size_t nSize), (size_t nCount), (size_t VSIFWriteL), (size_t VSIFReadL);
 #else
 int     VSIFWriteL( const char *pBuffer, int nSize, int nCount, VSILFILE *fp );

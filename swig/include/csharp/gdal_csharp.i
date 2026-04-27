@@ -308,7 +308,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
       throw new ArgumentOutOfRangeException(nameof(offset), "Non-negative number required");
     else if (count < 0)
       throw new ArgumentOutOfRangeException(nameof(count), "Non-negative number required");
-   else if (count > buffer.LongLength - offset)
+    else if (count > buffer.LongLength - offset)
       throw new ArgumentOutOfRangeException(nameof(offset), "Offset and length were out of bounds for the array or count is greater than the number of elements from index to the end of the source collection.");
   }
 
@@ -316,30 +316,38 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     => IntPtr.Size == sizeof(long) ? new IntPtr(checked(ptr.ToInt64() + offset))
      : new IntPtr(checked(ptr.ToInt32() + (int)offset));
 
-  private class OwnedMemoryFileHandle : Microsoft.Win32.SafeHandles.SafeHandleZeroOrMinusOneIsInvalid {
-    private readonly GCHandle dataHandle;
-    public string FileName { get; }
-    public OwnedMemoryFileHandle(string path, byte[] buffer, long offset, long count)
-      : base(ownsHandle: true) {
-      FileName = path;
-      dataHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-      ValidateBufferArgs(buffer, offset, count);
-      IntPtr ptr = AddOffset(dataHandle.AddrOfPinnedObject(), offset);
-      handle = VSIFileFromMemBuffer(FileName, ptr, (ulong)buffer.LongLength, bTakeOwnership: 0);
+  public sealed class OwnedMemoryFile : IDisposable {
+    private readonly GCHandle m_dataHandle;
+    private int m_disposed;
+    public string Filename { get; }
+    public bool IsDisposed => m_disposed != 0;
+    internal OwnedMemoryFile(string filename, GCHandle dataHandle) {
+      Filename = filename;
+      m_dataHandle = dataHandle;
     }
-    protected override void Dispose(bool disposing){
-      base.Dispose(disposing);
-      dataHandle.Free();
+    public void Dispose() {
+      if (System.Threading.Interlocked.CompareExchange(ref m_disposed, 1, 0) == 0) {
+        m_dataHandle.Free();
+        Unlink(Filename);
+      }
+      GC.SuppressFinalize(this);
     }
-    protected override bool ReleaseHandle() {
-      bool success = VSIFCloseL(handle) == 0;
-      success &= Unlink(FileName) == 0;
-      return success;
-    }
+    ~OwnedMemoryFile() => Dispose();
   }
 
-  public static SafeHandle FileFromMemBufferNoCopy(string utf8_string, byte[] buffer, long offset, long count)
-    => new OwnedMemoryFileHandle(utf8_string, buffer, offset, count);
+  public static OwnedMemoryFile FileFromMemBufferNoCopy(string utf8_string, byte[] buffer, long offset, long count) {
+    ValidateBufferArgs(buffer, offset, count);
+    GCHandle dataHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+    IntPtr ptr = AddOffset(dataHandle.AddrOfPinnedObject(), offset);
+    IntPtr fp = VSIFileFromMemBuffer(utf8_string, ptr, (ulong)buffer.LongLength, bTakeOwnership: 0);
+    if (fp == IntPtr.Zero) {
+      dataHandle.Free();
+      return null;
+    } else {
+      VSIFCloseL(fp);
+      return new OwnedMemoryFile(utf8_string, dataHandle);
+    }
+  }
 
   public static bool FileFromMemBuffer(string utf8_string, byte[] buffer, long offset, long count) {
     ValidateBufferArgs(buffer, offset, count);
@@ -347,8 +355,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     try {
       IntPtr addr = AddOffset(handle.AddrOfPinnedObject(), offset);
       return FileFromMemBuffer(utf8_string, count, addr) == 0;
-    }
-    finally {
+    } finally {
       handle.Free();
     }
   }
@@ -434,7 +441,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
   }
 
   /* To maintain compatability with old VSIFWriteL definition */
-  [Obsolete("Use VSIFWriteL(byte[] data, int offset, int count, IntPtr fp)")]
+  [Obsolete("Use VSIFWriteL(byte[] buffer, int offset, int count, IntPtr fp)")]
   public static int VSIFWriteL(string data, int objectSize, int numObjects, IntPtr fp) {
     IntPtr handle = Marshal.StringToHGlobalAnsi(data);
     try {
