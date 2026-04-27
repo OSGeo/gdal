@@ -127,7 +127,7 @@ class GDALVectorMakePointAlgorithmLayer final
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid value in field %s: %s ", pszFieldName,
                          pszValue);
-                FailTranslation();
+                m_fatalError = true;
             }
             return dfValue;
         }
@@ -145,7 +145,7 @@ class GDALVectorMakePointAlgorithmLayer final
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Specified %s field name '%s' does not exist", dim.c_str(),
                      fieldName.c_str());
-            FailTranslation();
+            m_fatalError = true;
             return false;
         }
 
@@ -158,7 +158,7 @@ class GDALVectorMakePointAlgorithmLayer final
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid %s field type: %s",
                      dim.c_str(), OGR_GetFieldTypeName(eType));
-            FailTranslation();
+            m_fatalError = true;
             return false;
         }
 
@@ -175,11 +175,12 @@ class GDALVectorMakePointAlgorithmLayer final
         return m_srcLayer.TestCapability(pszCap);
     }
 
-  private:
-    void TranslateFeature(
+  protected:
+    bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override;
 
+  private:
     const std::string m_xField;
     const std::string m_yField;
     const std::string m_zField;
@@ -190,6 +191,7 @@ class GDALVectorMakePointAlgorithmLayer final
     const int m_mFieldIndex;
     const bool m_hasZ;
     const bool m_hasM;
+    bool m_fatalError = false;
     bool m_xFieldIsString = false;
     bool m_yFieldIsString = false;
     bool m_zFieldIsString = false;
@@ -204,7 +206,7 @@ class GDALVectorMakePointAlgorithmLayer final
 /*                          TranslateFeature()                          */
 /************************************************************************/
 
-void GDALVectorMakePointAlgorithmLayer::TranslateFeature(
+bool GDALVectorMakePointAlgorithmLayer::TranslateFeature(
     std::unique_ptr<OGRFeature> poSrcFeature,
     std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures)
 {
@@ -214,6 +216,11 @@ void GDALVectorMakePointAlgorithmLayer::TranslateFeature(
         m_hasZ ? GetField(*poSrcFeature, m_zFieldIndex, m_zFieldIsString) : 0;
     const double m =
         m_hasM ? GetField(*poSrcFeature, m_mFieldIndex, m_mFieldIsString) : 0;
+
+    if (m_fatalError)
+    {
+        return false;
+    }
 
     std::unique_ptr<OGRPoint> poGeom;
 
@@ -245,6 +252,8 @@ void GDALVectorMakePointAlgorithmLayer::TranslateFeature(
     poDstFeature->SetGeometry(std::move(poGeom));
 
     apoOutFeatures.push_back(std::move(poDstFeature));
+
+    return true;
 }
 
 }  // namespace

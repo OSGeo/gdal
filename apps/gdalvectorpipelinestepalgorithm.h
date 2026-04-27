@@ -323,7 +323,7 @@ class GDALVectorPipelinePassthroughLayer /* non final */
         return m_srcLayer.GetExtent3D(iGeomField, psExtent, bForce);
     }
 
-    void TranslateFeature(
+    bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override;
 };

@@ -184,7 +184,7 @@ class GDALVectorSetFieldTypeAlgorithmLayer final
         return m_poFeatureDefn.get();
     }
 
-    void TranslateFeature(
+    bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
@@ -215,6 +215,8 @@ class GDALVectorSetFieldTypeAlgorithmLayer final
                 apoOutFeatures.push_back(std::move(poDstFeature));
             }
         }
+
+        return true;
     }
 
     int TestCapability(const char *pszCap) const override

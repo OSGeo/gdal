@@ -111,11 +111,12 @@ class GDALVectorSelectAlgorithmLayer final
         return poFeature;
     }
 
-    void TranslateFeature(
+    bool TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
         apoOutFeatures.push_back(TranslateFeature(std::move(poSrcFeature)));
+        return true;
     }
 
   public:
