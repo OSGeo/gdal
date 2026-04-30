@@ -23,6 +23,7 @@ namespace testapp
             TestUnicodeDatasetLayerName();
             TestUnicodeFieldDefs();
             TestUnicodeVrtFiles();
+            TestCSharpExceptions();
         }
 
         private static void AssertEqual(string expected, string actual, string funcName)
@@ -230,6 +231,19 @@ namespace testapp
                 AssertEqual(vrtFile, list[0], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[0]");
                 AssertEqual(fileName1, list[1], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[1]");
                 AssertEqual(fileName2, list[2], $"{nameof(Dataset)}.{nameof(vrt.GetFileList)}()[2]");
+            }
+        }
+        private static void TestCSharpExceptions()
+        {
+            Console.WriteLine("Testing C# exceptions with Unicode messages.");
+            try
+            {
+                Gdal.Error(CPLErr.CE_Failure, 0, UnicodeString);
+                throw new Exception($"{nameof(Gdal)}.{nameof(Gdal.Error)} did not throw an exception as expected.");
+            }
+            catch (ApplicationException ex)
+            {
+                AssertEqual(UnicodeString, ex.Message, $"{nameof(Gdal)}.{nameof(Gdal.Error)}");
             }
         }
     }
