@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup ccache cache
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/.ccache
           key: ${{ runner.os }}-ccache-${{ github.ref_name }}-${{ github.sha }}
@@ -41,14 +41,14 @@ jobs:
             ${{ runner.os }}-ccache-
 
       - name: Cache Conda packages
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ~/conda_pkgs_dir
           key: ${{ runner.os }}-conda-${{ hashFiles('ci/travis/osx/before_install.sh') }}
           restore-keys: |
             ${{ runner.os }}-conda-
 
-      - uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3.3.0
+      - uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
         with:
             channels: conda-forge
             auto-update-conda: true
