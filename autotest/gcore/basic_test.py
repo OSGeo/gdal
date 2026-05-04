@@ -176,11 +176,11 @@ def test_hint_s3():
         gdal.Open("s3://bucket/object")
 
     with pytest.raises(Exception):
-        gdal.Open("/vsis3/i_do_not_exist/at_all")
+        gdal.Open("/vsis3/i_do_not_exist/at_all.tif")
     assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
 
     with pytest.raises(Exception):
-        gdal.Open("/vsis3_streaming/i_do_not_exist/at_all")
+        gdal.Open("/vsis3_streaming/i_do_not_exist/at_all.tif")
     assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
 
 
@@ -194,11 +194,11 @@ def test_hint_gs():
         gdal.Open("gs://bucket/object")
 
     with pytest.raises(Exception):
-        gdal.Open("/vsigs/i_do_not_exist/at_all")
+        gdal.Open("/vsigs/i_do_not_exist/at_all.tif")
     assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
 
     with pytest.raises(Exception):
-        gdal.Open("/vsigs_streaming/i_do_not_exist/at_all")
+        gdal.Open("/vsigs_streaming/i_do_not_exist/at_all.tif")
     assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
 
 
@@ -212,11 +212,11 @@ def test_hint_az():
         gdal.Open("az://bucket/object")
 
     with pytest.raises(Exception):
-        gdal.Open("/vsiaz/i_do_not_exist/at_all")
+        gdal.Open("/vsiaz/i_do_not_exist/at_all.tif")
     assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
 
     with pytest.raises(Exception):
-        gdal.Open("/vsiaz_streaming/i_do_not_exist/at_all")
+        gdal.Open("/vsiaz_streaming/i_do_not_exist/at_all.tif")
     assert "may help it to be recognized" not in gdal.GetLastErrorMsg()
 
 
