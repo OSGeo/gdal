@@ -2328,12 +2328,15 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
         return false;
     }
 
+    const unsigned maxInlineTagBytes = m_image->isBigTIFF() ? 8 : 4;
+
     // Process GDAL_NODATA tag
     bool bHasNoData = false;
     double dfNoData = 0;
     const auto *tagNoData = m_image->tag(LIBERTIFF_NS::TagCode::GDAL_NODATA);
     if (tagNoData && tagNoData->type == LIBERTIFF_NS::TagType::ASCII &&
-        !(tagNoData->count > 4 && tagNoData->invalid_value_offset) &&
+        !(tagNoData->count > maxInlineTagBytes &&
+          tagNoData->invalid_value_offset) &&
         tagNoData->count < 256)
     {
         bool ok = true;
@@ -2737,12 +2740,14 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
         {LIBERTIFF_NS::TagCode::Copyright, "TIFFTAG_COPYRIGHT"},
     };
 
+    const unsigned maxInlineTagBytes = m_image->isBigTIFF() ? 8 : 4;
+
     for (const auto &strTag : strTags)
     {
         const auto *tag = m_image->tag(strTag.code);
         constexpr size_t ARBITRARY_MAX_SIZE = 65536;
         if (tag && tag->type == LIBERTIFF_NS::TagType::ASCII &&
-            !(tag->count > 4 && tag->invalid_value_offset) &&
+            !(tag->count > maxInlineTagBytes && tag->invalid_value_offset) &&
             tag->count < ARBITRARY_MAX_SIZE)
         {
             bool ok = true;
@@ -2763,7 +2768,7 @@ bool LIBERTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
     constexpr size_t ARBITRARY_MAX_SIZE_GDAL_METADATA = 10 * 1024 * 1024;
     if (psGDALMetadataTag &&
         psGDALMetadataTag->type == LIBERTIFF_NS::TagType::ASCII &&
-        !(psGDALMetadataTag->count > 4 &&
+        !(psGDALMetadataTag->count > maxInlineTagBytes &&
           psGDALMetadataTag->invalid_value_offset) &&
         psGDALMetadataTag->count < ARBITRARY_MAX_SIZE_GDAL_METADATA)
     {
