@@ -42,6 +42,7 @@ GDAL 3.12.x bugfix release.
 ## New installed files
 
 * Include files:
+  gdal_mem.h
   gdal_thread_pool.h
   ogr_refcountedptr.h
 
