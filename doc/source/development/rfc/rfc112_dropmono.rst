@@ -8,7 +8,7 @@ RFC 112: Drop Mono Support from CMAKE build system
 Author:        Paul Harwood
 Contact:       runette @ gmail.com
 Started:       2026-04-14
-Status:        draft
+Status:        Adopted, implemented
 ============== =============================================
 
 Summary
@@ -39,7 +39,8 @@ The CI tests will be updated to remove all Mono builds and confirm dotnet based 
 Voting history
 --------------
 
-TBD
++1 from PSC members EvenR, JukkaR, MikeS, JavierJS
+
 .. below is an allow-list for spelling checker.
 
 .. spelling:word-list::
