@@ -114,6 +114,8 @@ int VSICurlUninstallReadCbk(VSILFILE * /* fp */)
 
 constexpr const char *const VSICURL_PREFIXES[] = {"/vsicurl/", "/vsicurl?"};
 
+extern "C" bool CPL_DLL GDALIsInGlobalDestructorFromDLLMain();
+
 /***********************************************************ù************/
 /*                    VSICurlAuthParametersChanged()                    */
 /************************************************************************/
@@ -539,7 +541,7 @@ VSICurlHandle::~VSICurlHandle()
     }
     if (m_hCurlMultiHandleForAdviseRead)
     {
-        curl_multi_cleanup(m_hCurlMultiHandleForAdviseRead);
+        VSICURLMultiCleanup(m_hCurlMultiHandleForAdviseRead);
     }
 
     if (!m_bCached)
@@ -6455,6 +6457,16 @@ void VSICURLDestroyCacheFileProp()
 
 void VSICURLMultiCleanup(CURLM *hCurlMultiHandle)
 {
+#if defined(CURL_AT_LEAST_VERSION) && defined(_WIN32)
+    // Since curl 8.20.0, auxiliary threads are used for DNS resolution
+    // Trying to join them when detaching the DLL results in a hang.
+    // See https://github.com/curl/curl/issues/21466#issuecomment-4372138595
+#if CURL_AT_LEAST_VERSION(8, 20, 0)
+    if (GDALIsInGlobalDestructorFromDLLMain())
+        curl_multi_setopt(hCurlMultiHandle, CURLMOPT_QUICK_EXIT, 1L);
+#endif
+#endif
+
     void *old_handler = CPLHTTPIgnoreSigPipe();
     curl_multi_cleanup(hCurlMultiHandle);
     CPLHTTPRestoreSigPipeHandler(old_handler);
