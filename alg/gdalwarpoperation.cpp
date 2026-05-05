@@ -378,8 +378,8 @@ int GDALWarpOperation::ValidateOptions()
         aosWO.SetNameValue("ERROR_OUT_IF_EMPTY_SOURCE_WINDOW", nullptr);
         aosWO.SetNameValue("MULT_FACTOR_VERTICAL_SHIFT_PIPELINE", nullptr);
         aosWO.SetNameValue("SRC_FILL_RATIO_HEURISTICS", nullptr);
-        GDALValidateOptions(GDALWarpGetOptionList(), aosWO.List(), "option",
-                            "warp options");
+        GDALValidateOptions(nullptr, GDALWarpGetOptionList(), aosWO.List(),
+                            "option", "warp options");
     }
 
     const char *pszSampleSteps =

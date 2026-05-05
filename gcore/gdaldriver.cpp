@@ -393,8 +393,8 @@ GDALDriver::CreateMultiDimensional(const char *pszFilename,
             GetMetadataItem(GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST);
         CPLString osDriver;
         osDriver.Printf("driver %s", GetDescription());
-        GDALValidateOptions(pszOptionList, papszOptions, "creation option",
-                            osDriver);
+        GDALValidateOptions(GDALDriver::ToHandle(this), pszOptionList,
+                            papszOptions, "creation option", osDriver);
     }
 
     auto poDstDS = pfnCreateMultiDimensional(pszFilename, papszRootGroupOptions,
@@ -2318,8 +2318,9 @@ int CPL_STDCALL GDALValidateCreationOptions(GDALDriverH hDriver,
         papszOptionsToValidate = papszOptionsToFree;
     }
 
-    const bool bRet = CPL_TO_BOOL(GDALValidateOptions(
-        pszOptionList, papszOptionsToValidate, "creation option", osDriver));
+    const bool bRet = CPL_TO_BOOL(
+        GDALValidateOptions(hDriver, pszOptionList, papszOptionsToValidate,
+                            "creation option", osDriver));
     CSLDestroy(papszOptionsToFree);
     return bRet;
 }
@@ -2338,15 +2339,15 @@ int GDALValidateOpenOptions(GDALDriverH hDriver,
     CPLString osDriver;
     osDriver.Printf("driver %s",
                     GDALDriver::FromHandle(hDriver)->GetDescription());
-    return GDALValidateOptions(pszOptionList, papszOpenOptions, "open option",
-                               osDriver);
+    return GDALValidateOptions(hDriver, pszOptionList, papszOpenOptions,
+                               "open option", osDriver);
 }
 
 /************************************************************************/
 /*                        GDALValidateOptions()                         */
 /************************************************************************/
 
-int GDALValidateOptions(const char *pszOptionList,
+int GDALValidateOptions(GDALDriverH hDriver, const char *pszOptionList,
                         const char *const *papszOptionsToValidate,
                         const char *pszErrorMessageOptionType,
                         const char *pszErrorMessageContainerName)
@@ -2475,10 +2476,30 @@ int GDALValidateOptions(const char *pszOptionList,
                  CPLFetchBool(papszOptionsToValidate, "VALIDATE_OPEN_OPTIONS",
                               true)))
             {
+                const char *pszAdditionalMsg = "";
+                if (hDriver &&
+                    EQUAL(pszErrorMessageOptionType, "creation option"))
+                {
+                    const char *pszLCOList =
+                        GDALDriver::FromHandle(hDriver)->GetMetadataItem(
+                            GDAL_DS_LAYER_CREATIONOPTIONLIST);
+                    if (pszLCOList &&
+                        (CPLString(pszLCOList)
+                                 .ifind(CPLSPrintf("\"%s\"", pszKey)) !=
+                             std::string::npos ||
+                         CPLString(pszLCOList)
+                                 .ifind(CPLSPrintf("'%s'", pszKey)) !=
+                             std::string::npos))
+                    {
+                        pszAdditionalMsg = ", but a layer creation option of "
+                                           "that name exists.";
+                    }
+                }
+
                 CPLError(CE_Warning, CPLE_NotSupported,
-                         "%s does not support %s %s",
+                         "%s does not support %s %s%s",
                          pszErrorMessageContainerName,
-                         pszErrorMessageOptionType, pszKey);
+                         pszErrorMessageOptionType, pszKey, pszAdditionalMsg);
                 bRet = false;
             }
 
