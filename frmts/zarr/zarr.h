@@ -977,6 +977,9 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     mutable std::mutex m_oMutex{};
     CPLStringList m_aosCreationOptions{};
 
+    // Value of CRS_ATTRIBUTE_NAME attribute before removing it from m_oAttrGroup
+    CPLJSONObject m_oCRSAttribute{};
+
     struct CachedBlock
     {
         ZarrByteVectorQuickResize abyDecoded{};
@@ -1254,6 +1257,11 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     void SetCreationOptions(CSLConstList papszOptions)
     {
         m_aosCreationOptions = papszOptions;
+    }
+
+    void InvalidateGeoreferencing()
+    {
+        m_bSRSModified = true;
     }
 
     static void DecodeSourceElt(const std::vector<DtypeElt> &elts,

@@ -16,6 +16,7 @@
 
 #include "cpl_minixml.h"
 
+#include "gdalalgorithm.h"
 #include "gdal_frmts.h"
 
 #include <algorithm>
@@ -2209,6 +2210,92 @@ GDALDataset *ZarrDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
+/*               ZARRAddGeoreferencingConventionAlgorithm               */
+/************************************************************************/
+
+#ifndef _
+#define _(x) (x)
+#endif
+
+namespace
+{
+class ZARRAddGeoreferencingConventionAlgorithm final : public GDALAlgorithm
+{
+  public:
+    ZARRAddGeoreferencingConventionAlgorithm()
+        : GDALAlgorithm(
+              "add-georeferencing-convention",
+              std::string("Add a georeferencing convention to an existing ZARR "
+                          "dataset"),
+              "/programs/gdal_driver_zarr_add_georeferencing_convention.html")
+    {
+        AddInputDatasetArg(&m_dataset,
+                           GDAL_OF_MULTIDIM_RASTER | GDAL_OF_UPDATE);
+        AddArg("convention", 0, _("Georeferencing convention"),
+               &m_georeferencingConvention)
+            .SetRequired()
+            .SetPositional()
+            .SetChoices("GDAL", "spatial_proj");
+    }
+
+  protected:
+    bool RunImpl(GDALProgressFunc, void *) override;
+
+  private:
+    GDALArgDatasetValue m_dataset{};
+    std::string m_georeferencingConvention{};
+};
+
+bool ZARRAddGeoreferencingConventionAlgorithm::RunImpl(GDALProgressFunc, void *)
+{
+    auto poDS = dynamic_cast<ZarrDataset *>(m_dataset.GetDatasetRef());
+    if (!poDS)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "%s is not a ZARR dataset",
+                    m_dataset.GetName().c_str());
+        return false;
+    }
+
+    auto poRG = poDS->GetRootGroup();
+    CPLAssert(poRG);
+
+    poRG->RecursivelyVisitArrays(
+        [this](const std::shared_ptr<GDALMDArray> &poArray)
+        {
+            ZarrArray *poZarrArray = dynamic_cast<ZarrArray *>(poArray.get());
+            if (poZarrArray && poZarrArray->GetSpatialRef())
+            {
+                CPLStringList aosOptions;
+                aosOptions.SetNameValue("GEOREFERENCING_CONVENTION",
+                                        m_georeferencingConvention.c_str());
+                poZarrArray->SetCreationOptions(aosOptions.List());
+                poZarrArray->InvalidateGeoreferencing();
+            }
+        });
+
+    return true;
+}
+}  // namespace
+
+/************************************************************************/
+/*                   ZarrDriverInstantiateAlgorithm()                   */
+/************************************************************************/
+
+static GDALAlgorithm *
+ZarrDriverInstantiateAlgorithm(const std::vector<std::string> &aosPath)
+{
+    if (aosPath.size() == 1 && aosPath[0] == "add-georeferencing-convention")
+    {
+        return std::make_unique<ZARRAddGeoreferencingConventionAlgorithm>()
+            .release();
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
+/************************************************************************/
 /*                         GDALRegister_Zarr()                          */
 /************************************************************************/
 
@@ -2231,6 +2318,7 @@ void GDALRegister_Zarr()
     poDriver->pfnRename = ZarrDatasetRename;
     poDriver->pfnCopyFiles = ZarrDatasetCopyFiles;
     poDriver->pfnClearCaches = ZarrDriverClearCaches;
+    poDriver->pfnInstantiateAlgorithm = ZarrDriverInstantiateAlgorithm;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

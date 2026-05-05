@@ -21,6 +21,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <vector>
@@ -465,6 +466,9 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
 
     std::shared_ptr<GDALGroup>
     SubsetDimensionFromSelection(const std::string &osSelection) const;
+
+    void RecursivelyVisitArrays(
+        std::function<void(const std::shared_ptr<GDALMDArray> &)> visitor);
 
     //! @cond Doxygen_Suppress
     virtual void ParentRenamed(const std::string &osNewParentFullName);

@@ -220,6 +220,8 @@ Georeferencing encoding (CRS and geotransformation matrix)
 The Zarr specification has no provision for spatial reference system encoding.
 Several conventions
 
+.. _raster_zarr.gdal.convention:
+
 GDAL convention
 +++++++++++++++
 
@@ -750,6 +752,12 @@ The following options are creation options of the classic raster API only:
       default value is the value of the INTERLEAVE metadata item of the
       IMAGE_STRUCTURE metadata domain of the source dataset, if set.
       See :ref:`raster_data_model_interleave_mode` for more details.
+
+
+Add a georeferencing convention to an existing ZARR dataset
+-----------------------------------------------------------
+
+See :ref:`gdal_driver_zarr_add_georeferencing_convention`.
 
 
 Examples

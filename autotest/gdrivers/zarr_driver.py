@@ -9223,3 +9223,40 @@ def test_zarr_v3_read_sharded_too_small_input_buffer(tmp_vsimem):
         Exception, match="input buffer is too small to hold the shard index"
     ):
         ds.GetRasterBand(1).Checksum()
+
+
+###############################################################################
+#
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_add_georeferencing_convention_spatial_proj(tmp_vsimem):
+
+    gdal.alg.raster.convert(
+        input="data/byte.tif",
+        output=tmp_vsimem / "out.zarr",
+        creation_option={"FORMAT": "ZARR_V3", "GEOREFERENCING_CONVENTION": "GDAL"},
+    )
+
+    with gdal.VSIFile(tmp_vsimem / "out.zarr" / "out" / "zarr.json", "rb") as f:
+        data = f.read()
+    j = json.loads(data)
+    assert "_CRS" in j["attributes"]
+    assert "zarr_conventions" not in j["attributes"]
+
+    gdal.alg.driver.zarr.add_georeferencing_convention(
+        input=tmp_vsimem / "out.zarr", convention="spatial_proj"
+    )
+
+    with gdal.VSIFile(tmp_vsimem / "out.zarr" / "out" / "zarr.json", "rb") as f:
+        data = f.read()
+    j = json.loads(data)
+    assert "_CRS" in j["attributes"]
+    assert "zarr_conventions" in j["attributes"]
+    assert j["attributes"]["proj:code"] == "EPSG:26711"
+
+    with pytest.raises(Exception, match="is not a ZARR dataset"):
+        gdal.alg.driver.zarr.add_georeferencing_convention(
+            input=gdal.GetDriverByName("MEM").Create("", 1, 1),
+            convention="spatial_proj",
+        )

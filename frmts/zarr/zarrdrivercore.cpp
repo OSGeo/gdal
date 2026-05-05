@@ -170,6 +170,8 @@ void ZARRDriverSetCommonMetadata(GDALDriver *poDriver)
     poDriver->SetMetadataItem(GDAL_DCAP_CREATECOPY, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_MULTIDIMENSIONAL, "YES");
 
+    poDriver->DeclareAlgorithm({"add-georeferencing-convention"});
+
     poDriver->SetMetadataItem(GDAL_DCAP_UPDATE, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_UPDATE_ITEMS,
                               "GeoTransform SRS NoData "

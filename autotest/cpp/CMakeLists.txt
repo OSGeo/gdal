@@ -89,6 +89,7 @@ add_executable(
   test_gdal_algorithm.cpp
   test_gdal_dted.cpp
   test_gdal_gtiff.cpp
+  test_gdal_mdim.cpp
   test_gdal_minmax_element.cpp
   test_gdal_pixelfn.cpp
   test_gdal_typetraits.cpp
