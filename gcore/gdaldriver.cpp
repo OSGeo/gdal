@@ -2495,6 +2495,24 @@ int GDALValidateOptions(GDALDriverH hDriver, const char *pszOptionList,
                                            "that name exists.";
                     }
                 }
+                else if (hDriver && EQUAL(pszErrorMessageOptionType,
+                                          "layer creation option"))
+                {
+                    const char *pszLCOList =
+                        GDALDriver::FromHandle(hDriver)->GetMetadataItem(
+                            GDAL_DMD_CREATIONOPTIONLIST);
+                    if (pszLCOList &&
+                        (CPLString(pszLCOList)
+                                 .ifind(CPLSPrintf("\"%s\"", pszKey)) !=
+                             std::string::npos ||
+                         CPLString(pszLCOList)
+                                 .ifind(CPLSPrintf("'%s'", pszKey)) !=
+                             std::string::npos))
+                    {
+                        pszAdditionalMsg = ", but a creation option of "
+                                           "that name exists.";
+                    }
+                }
 
                 CPLError(CE_Warning, CPLE_NotSupported,
                          "%s does not support %s %s%s",

@@ -3118,3 +3118,19 @@ def test_ogr_mitab_mif_multilinestring_one_point(tmp_vsimem):
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
         assert f.GetGeometryRef().ExportToWkt() == "MULTILINESTRING ((1 2))"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mitab_used_layer_creation_option_instead_of_creation_option(tmp_vsimem):
+
+    with gdal.GetDriverByName("MapInfo File").CreateVector(
+        tmp_vsimem / "out.mif"
+    ) as ds:
+        with gdaltest.error_raised(
+            gdal.CE_Warning, match="but a creation option of that name exists"
+        ):
+            lyr = ds.CreateLayer("out", options=["FORMAT=TAB"])
+            lyr.CreateField(ogr.FieldDefn("x"))
