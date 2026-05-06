@@ -1013,3 +1013,9 @@ def test_libertiff_read_tiled_blockysize_larger_than_rasterysize():
 
     ds = libertiff_open("data/gtiff/tiled_blockysize_larger_than_rasterysize.tif")
     assert ds.ReadRaster() == array.array("B", [i for i in range(32)])
+
+
+def test_libertiff_read_uint16_nodata_65535_bigtiff():
+
+    ds = libertiff_open("data/gtiff/uint16_nodata_65535_bigtiff.tif")
+    assert ds.GetRasterBand(1).GetNoDataValue() == 65535
