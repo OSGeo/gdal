@@ -230,7 +230,7 @@ RUN curl -LO -fsS https://github.com/apache/arrow/archive/refs/heads/main.zip \
     && rm -rf arrow-main
 
 # Build Grok JPEG 2000 library
-ARG GROK_VERSION=v20.2.8
+ARG GROK_VERSION=v20.3.2
 
 RUN git clone --recursive --depth 1 --branch ${GROK_VERSION} \
     https://github.com/GrokImageCompression/grok.git grok-git && \

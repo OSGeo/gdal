@@ -277,7 +277,7 @@ def test_jp2grok_10():
     gdal.Unlink("/vsimem/jp2grok_10.jp2")
 
     # Quite a bit of difference...
-    assert maxdiff <= 35, "Image too different from reference"
+    assert maxdiff <= 38, "Image too different from reference"
 
 
 ###############################################################################
@@ -592,7 +592,7 @@ def test_jp2grok_22():
     assert fourth_band.GetMetadataItem("NBITS", "IMAGE_STRUCTURE") == "1"
     ds = None
     ds = gdal.Open("/vsimem/jp2grok_22.jp2")
-    assert ds.GetRasterBand(4).Checksum() == 22499
+    assert ds.GetRasterBand(4).Checksum() == 26477
     ds = None
     gdal.Unlink("/vsimem/jp2grok_22.jp2")
 
@@ -721,7 +721,7 @@ def test_jp2grok_24():
     ds = None
     ds = gdal.Open("/vsimem/jp2grok_24.jp2")
     assert ds.GetRasterBand(2).GetMetadataItem("NBITS", "IMAGE_STRUCTURE") is None
-    assert ds.GetRasterBand(2).Checksum() == 22499
+    assert ds.GetRasterBand(2).Checksum() == 27389
     ds = None
     gdal.Unlink("/vsimem/jp2grok_24.jp2")
 
