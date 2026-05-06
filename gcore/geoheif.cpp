@@ -107,7 +107,9 @@ CPLErr GeoHEIF::GetGeoTransform(GDALGeoTransform &gt) const
         gt.yscale = modelTransform[5];
         gt.yorig = modelTransform[3];
     }
-    return CE_None;
+    return gt.xscale != 0 || gt.yscale != 0 || gt.xrot != 0 || gt.yrot != 0
+               ? CE_None
+               : CE_Failure;
 }
 
 /************************************************************************/
