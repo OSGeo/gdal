@@ -2863,6 +2863,17 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             }
         }
 
+        // For CSV driver, automatically set *dataset* creation option GEOMETRY=AS_WKT
+        // if *layer* creation option is requested. This is required for the
+        // CSV driver to expose the ODsCCreateGeomFieldAfterCreateLayer capability
+        if (EQUAL(poDriver->GetDescription(), "CSV") &&
+            !aosDSCO.FetchNameValue("GEOMETRY") &&
+            EQUAL(psOptions->aosLCO.FetchNameValueDef("GEOMETRY", ""),
+                  "AS_WKT"))
+        {
+            aosDSCO.SetNameValue("GEOMETRY", "AS_WKT");
+        }
+
         /* --------------------------------------------------------------------
          */
         /*      Create the output data source. */

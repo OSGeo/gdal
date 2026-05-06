@@ -609,3 +609,63 @@ def test_gdalalg_vector_convert_overwrite_fails(tmp_vsimem):
             output=f"/vsizip/{tmp_vsimem}/out.zip/out.geojson",
             overwrite=True,
         )
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalalg_vector_convert_multiple_geometry_fields(tmp_vsimem):
+
+    src_fname = tmp_vsimem / "in"
+    dst_fname = tmp_vsimem / "out"
+
+    with gdal.GetDriverByName("CSV").CreateVector(src_fname) as src_ds:
+        src_lyr = src_ds.CreateLayer(
+            "test", geom_type=ogr.wkbNone, options={"GEOMETRY": "AS_WKT"}
+        )
+        src_lyr.CreateGeomField(ogr.GeomFieldDefn("geom1", ogr.wkbMultiPoint))
+        src_lyr.CreateGeomField(ogr.GeomFieldDefn("geom2", ogr.wkbMultiPoint))
+
+        f = ogr.Feature(src_lyr.GetLayerDefn())
+        f.SetGeomField(0, ogr.CreateGeometryFromWkt("MULTIPOINT (3 2, 4 7, 1 9)"))
+        f.SetGeomField(
+            1,
+            ogr.CreateGeometryFromWkt("MULTIPOINT (4 3, 2 2)"),
+        )
+
+        src_lyr.CreateFeature(f)
+
+    gdal.VectorTranslate(
+        dst_fname,
+        src_fname,
+        options=[
+            "-oo",
+            "KEEP_GEOM_COLUMNS=NO",
+            "-of",
+            "CSV",
+            "-lco",
+            "GEOMETRY=AS_WKT",
+        ],
+    )
+
+    with gdal.OpenEx(dst_fname) as dst_ds:
+        assert dst_ds.GetLayerCount() == 1
+        dst_lyr = dst_ds.GetLayer(0)
+
+        assert dst_lyr.GetLayerDefn().GetGeomFieldCount() == 2
+
+    gdal.alg.vector.convert(
+        input=src_fname,
+        open_option={"KEEP_GEOM_COLUMNS": "NO"},
+        output=dst_fname,
+        output_format="CSV",
+        layer_creation_option={"GEOMETRY": "AS_WKT"},
+        overwrite=True,
+    )
+
+    with gdal.OpenEx(dst_fname) as dst_ds:
+        assert dst_ds.GetLayerCount() == 1
+        dst_lyr = dst_ds.GetLayer(0)
+
+        assert dst_lyr.GetLayerDefn().GetGeomFieldCount() == 2
