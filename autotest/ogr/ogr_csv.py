@@ -3631,6 +3631,20 @@ def test_ogr_csv_creation_illegal_layer_name(tmp_vsimem):
 ###############################################################################
 
 
+@gdaltest.enable_exceptions()
+def test_ogr_csv_used_creation_option_instead_of_layer_creation_option(tmp_vsimem):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, match="but a layer creation option of that name exists"
+    ):
+        gdal.GetDriverByName("CSV").CreateVector(
+            tmp_vsimem / "out", options=["SEPARATOR=COMMA"]
+        )
+
+
+###############################################################################
+
+
 if __name__ == "__main__":
     gdal.UseExceptions()
     if len(sys.argv) != 2:

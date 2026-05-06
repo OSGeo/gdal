@@ -2516,8 +2516,9 @@ CPLErr GDALDataset::BuildOverviews(const char *pszResampling, int nOverviews,
 
             CPLString osDriver;
             osDriver.Printf("driver %s", poDriver->GetDescription());
-            GDALValidateOptions(pszOptionList, aosOptions.List(),
-                                "overview creation option", osDriver);
+            GDALValidateOptions(GDALDriver::ToHandle(poDriver), pszOptionList,
+                                aosOptions.List(), "overview creation option",
+                                osDriver);
         }
     }
 
@@ -6141,8 +6142,8 @@ int GDALDataset::ValidateLayerCreationOptions(const char *const *papszLCO)
     }
     CPLString osDataset;
     osDataset.Printf("dataset %s", GetDescription());
-    return GDALValidateOptions(pszOptionList, papszLCO, "layer creation option",
-                               osDataset);
+    return GDALValidateOptions(GDALDriver::ToHandle(poDriver), pszOptionList,
+                               papszLCO, "layer creation option", osDataset);
 }
 
 //! @endcond

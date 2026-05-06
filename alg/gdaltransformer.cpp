@@ -2237,8 +2237,8 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                                        CSLConstList papszOptions)
 
 {
-    GDALValidateOptions(GDALGetGenImgProjTranformerOptionList(), papszOptions,
-                        "option", "transformer options");
+    GDALValidateOptions(nullptr, GDALGetGenImgProjTranformerOptionList(),
+                        papszOptions, "option", "transformer options");
 
     double dfWestLongitudeDeg = 0.0;
     double dfSouthLatitudeDeg = 0.0;

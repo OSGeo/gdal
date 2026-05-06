@@ -245,7 +245,7 @@ CPLErr CPL_DLL EXIFExtractMetadata(char **&papszMetadata, void *fpL,
 
 int GDALValidateOpenOptions(GDALDriverH hDriver,
                             const char *const *papszOptionOptions);
-int GDALValidateOptions(const char *pszOptionList,
+int GDALValidateOptions(GDALDriverH hDriver, const char *pszOptionList,
                         const char *const *papszOptionsToValidate,
                         const char *pszErrorMessageOptionType,
                         const char *pszErrorMessageContainerName);
