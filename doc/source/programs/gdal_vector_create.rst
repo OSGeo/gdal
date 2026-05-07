@@ -157,7 +157,7 @@ Examples
        gdal vector create --update --geometry-type point --crs EPSG:4326 --field name:string --output-layer names2 points.gpkg
 
 .. example::
-    :title: Create a new vector dataset with a layer named `countries_new` based on the layer `countries` of an existing dataset
+   :title: Create a new vector dataset with a layer named `countries_new` based on the layer `countries` of an existing dataset
 
    .. code-block:: bash
 
