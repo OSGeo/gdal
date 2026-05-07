@@ -1849,7 +1849,8 @@ EditISIS3ForMetadataChanges(const char *pszJSON,
 
 static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                             const GDALWarpAppOptions *psOptions,
-                            const bool bEnableDstAlpha)
+                            const bool bEnableDstAlpha,
+                            bool bVerticalShiftApplied)
 {
     if (psOptions->bCopyMetadata)
     {
@@ -1956,7 +1957,7 @@ static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                         CSLDestroy(papszMetadataNew);
                     }
                     /* copy other info (Description, Unit Type) - what else? */
-                    if (psOptions->bCopyBandInfo)
+                    if (psOptions->bCopyBandInfo && !bVerticalShiftApplied)
                     {
                         pszSrcInfo = GDALGetDescription(hSrcBand);
                         if (pszSrcInfo != nullptr && strlen(pszSrcInfo) > 0)
@@ -2559,6 +2560,8 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if (hDstDS != nullptr)
         GDALReferenceDataset(hDstDS);
 
+    bool bVerticalShiftApplied = false;
+
 #if defined(USE_PROJ_BASED_VERTICAL_SHIFT_METHOD)
     if (psOptions->bNoVShift)
     {
@@ -2571,8 +2574,10 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         OGRSpatialReference oSRSSrc;
         OGRSpatialReference oSRSDst;
 
-        if (MustApplyVerticalShift(pahSrcDS[0], psOptions, oSRSSrc, oSRSDst,
-                                   bSrcHasVertAxis, bDstHasVertAxis))
+        bVerticalShiftApplied =
+            MustApplyVerticalShift(pahSrcDS[0], psOptions, oSRSSrc, oSRSDst,
+                                   bSrcHasVertAxis, bDstHasVertAxis);
+        if (bVerticalShiftApplied)
         {
             psOptions->aosTransformerOptions.SetNameValue("PROMOTE_TO_3D",
                                                           "YES");
@@ -2753,7 +2758,8 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
          */
         /* --------------------------------------------------------------------
          */
-        ProcessMetadata(iSrc, hSrcDS, hDstDS, psOptions, bEnableDstAlpha);
+        ProcessMetadata(iSrc, hSrcDS, hDstDS, psOptions, bEnableDstAlpha,
+                        bVerticalShiftApplied);
 
         /* --------------------------------------------------------------------
          */
