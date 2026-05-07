@@ -19,7 +19,6 @@ Common Portability Library C API
 - :ref:`c_cpl_port_h`
 - :ref:`c_cpl_progress_h`
 - :ref:`c_cpl_string_h`
-- :ref:`c_cpl_string_h`
 - :ref:`c_cpl_time_h`
 - :ref:`c_cpl_virtualmem_h`
 - :ref:`c_cpl_vsi_h`
