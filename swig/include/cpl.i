@@ -972,6 +972,21 @@ return VSIFSeekL(fp, (vsi_l_offset)offset, whence);
 }
 }
 
+#if defined(SWIGCSHARP)
+%rename (VSIStatExL) wrapper_VSIStatExL;
+%apply (long long *OUTPUT) { (GIntBig *size) };
+%apply (int *OUTPUT) { (unsigned short *mode) };
+%inline {
+bool wrapper_VSIStatExL( const char * pszFilename, GIntBig *size, unsigned short *mode, int nFlags = 0 ) {
+  VSIStatBufL stats{};
+  int result = VSIStatExL(pszFilename, &stats, nFlags);
+  *size = static_cast<GIntBig>(stats.st_size);
+  *mode = stats.st_mode;
+  return result == 0;
+}
+}
+%clear (GIntBig *size), (unsigned short *mode);
+#endif
 
 #if defined(SWIGPYTHON)
 GIntBig    VSIFTellL( VSILFILE* fp );
