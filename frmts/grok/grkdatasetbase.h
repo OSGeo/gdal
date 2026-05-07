@@ -476,8 +476,9 @@ struct GRKCodecWrapper
      */
     void allocComponentParams(int nBands)
     {
+        // need to zero-init the component structs
         pasBandParams = static_cast<grk_image_comp *>(
-            CPLMalloc(nBands * sizeof(grk_image_comp)));
+            CPLCalloc(nBands, sizeof(grk_image_comp)));
     }
 
     /**
@@ -2131,6 +2132,91 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         if (xStart >= xEnd || yStart >= yEnd)
             return CE_None;
 
+        // can use fast path when there is no sub-sampling, no alpha promotion
+        // and output pixels are contiguous
+        const int elemSize = GDALGetDataTypeSizeBytes(eBufType);
+        bool canFastCopy = (nPromoteAlphaBandIdx < 0 &&
+                            nPixelSpace == elemSize && elemSize > 0);
+        for (int i = 0; i < nBandCount && canFastCopy; ++i)
+        {
+            const int b = panBandMap[i] - 1;
+            if (b < 0 || b >= img->numcomps)
+                canFastCopy = false;
+            else
+            {
+                const auto &comp = img->comps[b];
+                if (comp.dx != 1 || comp.dy != 1 || !comp.data)
+                    canFastCopy = false;
+            }
+        }
+
+        if (canFastCopy)
+        {
+            const int copyWidth = xEnd - xStart;
+            for (int i = 0; i < nBandCount; ++i)
+            {
+                const int srcBandIdx = panBandMap[i] - 1;
+                const auto &comp = img->comps[srcBandIdx];
+                const int srcXStart = xStart - tileXOff;
+
+                for (int iY = yStart; iY < yEnd; ++iY)
+                {
+                    const int srcRow = iY - tileYOff;
+                    const int dstRow = iY - nYOff;
+                    const int dstX = xStart - nXOff;
+                    auto dst = static_cast<uint8_t *>(pData) +
+                               dstRow * nLineSpace + dstX * nPixelSpace +
+                               i * nBandSpace;
+
+                    if (comp.data_type == GRK_INT_16)
+                    {
+                        const auto src =
+                            static_cast<int16_t *>(comp.data) +
+                            srcRow * static_cast<int>(comp.stride) + srcXStart;
+                        if (eBufType == GDT_UInt16 || eBufType == GDT_Int16)
+                        {
+                            memcpy(dst, src, copyWidth * sizeof(int16_t));
+                        }
+                        else if (eBufType == GDT_Byte)
+                        {
+                            for (int x = 0; x < copyWidth; ++x)
+                                dst[x] = static_cast<GByte>(src[x]);
+                        }
+                        else if (eBufType == GDT_Int32 ||
+                                 eBufType == GDT_UInt32)
+                        {
+                            auto dst32 = reinterpret_cast<int32_t *>(dst);
+                            for (int x = 0; x < copyWidth; ++x)
+                                dst32[x] = src[x];
+                        }
+                    }
+                    else
+                    {
+                        const auto src =
+                            static_cast<int32_t *>(comp.data) +
+                            srcRow * static_cast<int>(comp.stride) + srcXStart;
+                        if (eBufType == GDT_Int32 || eBufType == GDT_UInt32)
+                        {
+                            memcpy(dst, src, copyWidth * sizeof(int32_t));
+                        }
+                        else if (eBufType == GDT_UInt16 ||
+                                 eBufType == GDT_Int16)
+                        {
+                            auto dst16 = reinterpret_cast<int16_t *>(dst);
+                            for (int x = 0; x < copyWidth; ++x)
+                                dst16[x] = static_cast<int16_t>(src[x]);
+                        }
+                        else if (eBufType == GDT_Byte)
+                        {
+                            for (int x = 0; x < copyWidth; ++x)
+                                dst[x] = static_cast<GByte>(src[x]);
+                        }
+                    }
+                }
+            }
+            return CE_None;
+        }
+
         // Scalar per-pixel loop that handles dx/dy subsampling, alpha promotion,
         // and all five output types.
         CPLErr eErr = CE_None;
@@ -2165,7 +2251,13 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                     const GPtrDiff_t dstOffset =
                         bufX * nPixelSpace + bufY * nLineSpace + i * nBandSpace;
 
-                    int32_t value = static_cast<int32_t *>(comp.data)[tileIdx];
+                    // Grok v20.3.x can use 16 bit storage for images with
+                    // precision ≤ 12 bits - we need to  cast to correct type
+                    int32_t value;
+                    if (comp.data_type == GRK_INT_16)
+                        value = static_cast<int16_t *>(comp.data)[tileIdx];
+                    else
+                        value = static_cast<int32_t *>(comp.data)[tileIdx];
                     if (srcBandIdx == nPromoteAlphaBandIdx)
                         value *= 255;
                     if (eBufType == GDT_Byte)
