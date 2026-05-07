@@ -10,7 +10,7 @@ Summary
 GDAL's policy is that contributors can make **very limited use** of
 AI (Artificial Intelligence) / Large Language Model (LLM) for their contributions,
 subject to details mentioned below, with the general principle that
-**there must be a human in the loop**.
+**the human must be the (primary) author**.
 
 Code contributions
 ------------------
