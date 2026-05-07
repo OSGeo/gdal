@@ -70,14 +70,20 @@ Layers
 
 If the user defines the environment variable
 :config:`MSSQLSPATIAL_LIST_ALL_TABLES=YES` (and does not specify Tables= in the
-connection string), all regular user tables will be treated as layers.
+connection string), all regular user tables and views will be treated as layers.
 This option is useful if you want tables with with no spatial data
 
 By default the MSSQL driver will only look for layers that are
 registered in the *geometry_columns* metadata table.
 If the user defines the environment variable
 :config:`MSSQLSPATIAL_USE_GEOMETRY_COLUMNS=NO` then the driver will look for all
-user spatial tables found in the system catalog
+user spatial tables and views found in the system catalog.
+
+When :config:`MSSQLSPATIAL_USE_GEOMETRY_COLUMNS=YES` (the default) is enabled,
+any datasets written by GDAL to the database are registered in the ``dbo.geometry_columns`` table.
+
+This has the advantage of storing the dataset's coordinate reference system (CRS) alongside its metadata.
+GDAL will automatically use this information when the dataset is accessed in the future.
 
 SQL statements
 --------------
@@ -219,18 +225,24 @@ Configuration options
 The following configuration options are available:
 
 -  .. config:: MSSQLSPATIAL_USE_BCP
+      :choices: YES, NO
       :since: 2.1.0
 
-      Enable bulk insert when
-      adding features. This option requires to to compile GDAL against a
-      bulk copy enabled ODBC driver like SQL Server Native Client 11.0. To
-      specify a BCP supported driver in the connection string, use the
-      driver parameter, like DRIVER={SQL Server Native Client 11.0}. If
-      GDAL is compiled against SQL Server Native Client 10.0 or 11.0 the
-      driver is selected automatically not requiring to specify that in the
-      connection string. If GDAL is compiled against SQL Server Native
-      Client 10.0 or 11.0 the default setting of this parameter is TRUE,
-      otherwise the parameter is ignored by the driver.
+      Enables bulk insert (BCP) mode when adding features.
+
+      This option requires GDAL to be compiled against a BCP-enabled ODBC driver,
+      such as ODBC Driver 18 for SQL Server.
+
+      To explicitly specify a BCP-capable driver in the connection string, use the
+      ``DRIVER`` parameter, for example::
+
+          DRIVER={ODBC Driver 18 for SQL Server}
+
+      If GDAL is compiled against SQL Server Native Client 10.0 or 11.0, the driver
+      is selected automatically and does not need to be specified in the connection string.
+
+      In these cases, the default value of this option is ``YES``. Otherwise, the
+      parameter is ignored by the driver.
 
 -  .. config:: MSSQLSPATIAL_BCP_SIZE
       :default: 1000
@@ -314,6 +326,23 @@ Examples
       ogrinfo -al   MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=no;UID=user;PWD=pwd
 
 .. example::
+   :title: Creating a layer from an OGR data source using the CLI
+
+   The user account must have permissions to create a new table in database.
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        conn="MSSQL:DRIVER={ODBC Driver 18 for SQL Server};SERVER=SQL22.mydomain.local;DATABASE=geodb;uid=user;pwd=pwd;TrustServerCertificate=yes;"
+        gdal vector convert in.geojson $conn --overwrite-layer
+
+      .. code-tab:: ps1
+
+        $conn="MSSQL:DRIVER={ODBC Driver 18 for SQL Server};SERVER=SQL22.mydomain.local;DATABASE=geodb;uid=user;pwd=pwd;TrustServerCertificate=yes;"
+        gdal vector convert in.geojson $conn --overwrite-layer
+
+.. example::
    :title: Connecting with username/password stored in environment variables
 
    The Microsoft SQL Server ODBC driver used in this example is available for both `Windows <https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server>`__
@@ -336,8 +365,8 @@ Examples
 .. example::
    :title: Selecting from a database table and writing to a GeoPackage file
 
-   When using :ref:`gdal_vector_sql` as part of a pipeline, do not provide a ``--layer`` to :ref:`gdal_vector_read`
-   or an error similar to the following will be returned ``# ERROR 1: Unable to open secondary datasource `geo' required by JOIN``.
+    In this example, the ``geo.rivers`` table is not registered in the ``dbo.geometry_columns`` table. As a result, the CRS must be specified manually
+    to ensure it is correctly applied in the output dataset.
 
    .. tabs::
 
@@ -347,6 +376,7 @@ Examples
         gdal vector pipeline \
             ! read "$conn" \
             ! sql --sql "SELECT oid, geom FROM geo.rivers WHERE hydroarea=10" \
+            ! edit --crs=EPSG:2157 --output-layer "lyr" \
             ! write out.gpkg --overwrite
 
       .. code-tab:: ps1
@@ -355,4 +385,22 @@ Examples
         gdal vector pipeline `
             ! read $conn `
             ! sql --sql "SELECT oid, geom FROM geo.rivers WHERE hydroarea=10" `
+            ! edit --crs=EPSG:2157 --output-layer "lyr" `
             ! write out.gpkg --overwrite
+
+.. example::
+   :title: Check if bulk insert (BCP) mode is available
+
+   BCP support is available if ``(BCP)`` is shown in the driver capabilities, for example::
+
+     MSSQLSpatial -vector- (rw+u): Microsoft SQL Server Spatial Database (BCP)
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector --formats | grep MSSQL
+
+      .. code-tab:: ps1
+
+        gdal vector --formats | Select-String "MSSQL"
