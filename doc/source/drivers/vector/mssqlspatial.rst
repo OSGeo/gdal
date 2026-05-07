@@ -404,3 +404,8 @@ Examples
       .. code-tab:: ps1
 
         gdal vector --formats | Select-String "MSSQL"
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    BCP
