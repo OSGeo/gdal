@@ -4860,3 +4860,17 @@ def test_gdalwarp_lib_RESET_DEST_PIXELS(dstNodata):
         assert out_ds.ReadRaster() == b"\x00\x00\x00\x00\x02\x03\x00\x00\x00"
     else:
         assert out_ds.ReadRaster() == b"\xff\xff\xff\xff\x02\x03\xff\xff\xff"
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14503
+
+
+def test_gdalwarp_vshift_us_survey_foot_to_metre():
+
+    ds = gdal.Warp(
+        "",
+        "data/input_epsg_6259_plus_6360_us_survey_foot.tif",
+        options="-f MEM -s_srs EPSG:6529+6360 -t_srs EPSG:6319",
+    )
+    assert ds.GetRasterBand(1).GetUnitType() == ""
