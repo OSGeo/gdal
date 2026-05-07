@@ -151,5 +151,20 @@ class VSIMem
         {
             ErrorAndQuit("Failed to create copied in-memory file.");
         }
+
+        if (!Gdal.VSIStatExL(inMemFilename, out long size, out int mode, nFlags: 0))
+        {
+            ErrorAndQuit("Failed to stat in-memory file.");
+        }
+
+        if (size != imageCopy.Length)
+        {
+            ErrorAndQuit("In-memory file size differs from source buffer size");
+        }
+
+        if ((mode & 0x8000) != 0x8000)
+        {
+            ErrorAndQuit("In-memory is not 'Regular'");
+        }
     }
 }
