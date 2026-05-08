@@ -5615,21 +5615,50 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         // For each field of the databes
         for (nIField = 0; nIField < hMMMD->pLayerDB->nNFields; nIField++)
         {
-            VSIFPrintfL(pF, LineReturn "[%s:%s]" LineReturn,
-                        SECTION_TAULA_PRINCIPAL,
-                        hMMMD->pLayerDB->pFields[nIField].pszFieldName);
+            bool bModifiedFieldName = false;
+            if (*hMMMD->pLayerDB->pFields[nIField].pszFieldModifName != '\0')
+                bModifiedFieldName = true;
+
+            // If exists a modified name we need to document that one.
+            VSIFPrintfL(
+                pF, LineReturn "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                bModifiedFieldName
+                    ? hMMMD->pLayerDB->pFields[nIField].pszFieldModifName
+                    : hMMMD->pLayerDB->pFields[nIField].pszFieldName);
 
             if (!MMIsEmptyString(
                     hMMMD->pLayerDB->pFields[nIField].pszFieldDescription) &&
                 !MMIsEmptyString(
                     hMMMD->pLayerDB->pFields[nIField].pszFieldName))
             {
-                MMWrite_ANSI_MetadataKeyDescriptor(
-                    hMMMD, pF,
-                    hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
-                    hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
-                    hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
-                    CPL_ENC_UTF8);
+                if (bModifiedFieldName)
+                {
+                    MMWrite_ANSI_MetadataKeyDescriptor(
+                        hMMMD, pF,
+                        hMMMD->pLayerDB->pFields[nIField]
+                            .pszFieldModifDescription,
+                        hMMMD->pLayerDB->pFields[nIField]
+                            .pszFieldModifDescription,
+                        hMMMD->pLayerDB->pFields[nIField]
+                            .pszFieldModifDescription,
+                        CPL_ENC_UTF8);
+                }
+                else
+                {
+                    MMWrite_ANSI_MetadataKeyDescriptor(
+                        hMMMD, pF,
+                        hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
+                        hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
+                        hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
+                        CPL_ENC_UTF8);
+                }
+            }
+
+            if (bModifiedFieldName &&
+                EQUAL(szMMNomCampIdGraficDefecte,
+                      hMMMD->pLayerDB->pFields[nIField].pszFieldName))
+            {
+                VSIFPrintfL(pF, "TractamentVariable=Ordinal" LineReturn);
             }
 
             // Exception in a particular case: "altura" is a catalan word that means
@@ -6068,6 +6097,49 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
             MM_DuplicateFieldDBXP(pBD_XP->pField + nIField, &MMField);
             MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(
                 pBD_XP->pField + nIField, pBD_XP, FALSE, 0);
+
+            if (!EQUAL(pBD_XP->pField[nIField].FieldName,
+                       hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                           .pszFieldName))
+            {
+                // We need to preserve the final given name to write
+                // metadata with the modified new name.
+                strcpy(hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                           .pszFieldModifName,
+                       pBD_XP->pField[nIField].FieldName);
+
+                // In this case we are going to use also the modified description in metadata
+                strcpy(
+                    hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                        .pszFieldModifDescription,
+                    pBD_XP->pField[nIField].FieldDescription[MM_DEF_LANGUAGE]);
+
+                switch (hMiraMonLayer->nMMLanguage)
+                {
+                    case MM_CAT_LANGUAGE:
+                        strncat(hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                                    .pszFieldModifDescription,
+                                " (previ)", MM_MAX_BYTES_FIELD_DESC);
+                        break;
+                    case MM_SPA_LANGUAGE:
+                        strncat(hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                                    .pszFieldModifDescription,
+                                " (previo)", MM_MAX_BYTES_FIELD_DESC);
+                        break;
+                    default:
+                    case MM_ENG_LANGUAGE:
+                        strncat(hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                                    .pszFieldModifDescription,
+                                " (previous)", MM_MAX_BYTES_FIELD_DESC);
+                        break;
+                }
+                hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                    .pszFieldModifDescription[MM_MAX_BYTES_FIELD_DESC] = '\0';
+            }
+            else
+                *hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                     .pszFieldModifName = '\0';
+
             if (pBD_XP->pField[nIField].FieldType == 'F')
                 pBD_XP->pField[nIField].FieldType = 'N';
         }

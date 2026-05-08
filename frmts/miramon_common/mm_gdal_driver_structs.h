@@ -355,7 +355,15 @@ struct MiraMonRecord
 struct MiraMonDataBaseField
 {
     char pszFieldName[MM_MAX_LON_FIELD_NAME_DBF + 1];
+    // A layer, when translated to MiraMon cannot have some
+    // specific field names (ID_GRAFIC, for instance).
+    // If pszFieldName is modified because of it
+    // we need to keep it somewhere in order to write metadata.
+    char pszFieldModifName[MM_MAX_LON_FIELD_NAME_DBF + 1];
     char pszFieldDescription[MM_MAX_BYTES_FIELD_DESC + 1];
+    // In the case of a modified field name, we also need
+    // to keep the description somewhere in order to write metadata.
+    char pszFieldModifDescription[MM_MAX_BYTES_FIELD_DESC + 1];
     enum FieldType eFieldType;   // See enum FieldType
     GUInt32 nFieldSize;          // MM_MAX_BYTES_IN_A_FIELD_EXT as maximum
     GUInt32 nNumberOfDecimals;   // MM_MAX_BYTES_IN_A_FIELD_EXT as maximum
