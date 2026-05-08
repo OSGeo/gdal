@@ -65,7 +65,11 @@ int TileDBDriverIdentifySimplified(GDALOpenInfo *poOpenInfo)
     {
         // HACK: probing a non existing object takes a lot of time, so avoid
         // doing that on filenames that are (hopefully) not TileDB.
-        if (poOpenInfo->IsExtensionEqualToCI("tif"))
+        // So we only accept /vsis3/path/to/something.tdb
+        // or /vsis3/path/to/something.long_suffix_that_is_not_an_extension
+        const std::string osExt = CPLGetExtensionSafe(poOpenInfo->pszFilename);
+        const size_t nExtLen = osExt.size();
+        if (nExtLen > 0 && nExtLen <= 4 && !EQUAL(osExt.c_str(), "tdb"))
             return false;
     }
     else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "/VSI"))
