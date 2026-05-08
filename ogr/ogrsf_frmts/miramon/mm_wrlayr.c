@@ -6108,30 +6108,34 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
                            .pszFieldModifName,
                        pBD_XP->pField[nIField].FieldName);
 
+                strcpy(
+                    hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                        .pszFieldModifDescription,
+                    pBD_XP->pField[nIField].FieldDescription[MM_DEF_LANGUAGE]);
+
                 // In this case we are going to use also the modified description in metadata
-                char szTemp[MM_MAX_BYTES_FIELD_DESC + 1];
                 switch (hMiraMonLayer->nMMLanguage)
                 {
                     case MM_CAT_LANGUAGE:
-                        snprintf(szTemp, sizeof(szTemp), "%s (previ)",
-                                 pBD_XP->pField[nIField]
-                                     .FieldDescription[MM_DEF_LANGUAGE]);
+                        CPLStrlcat(
+                            hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                                .pszFieldModifDescription,
+                            " (previ)", MM_MAX_BYTES_FIELD_DESC + 1);
                         break;
                     case MM_SPA_LANGUAGE:
-                        snprintf(szTemp, sizeof(szTemp), "%s (previo)",
-                                 pBD_XP->pField[nIField]
-                                     .FieldDescription[MM_DEF_LANGUAGE]);
+                        CPLStrlcat(
+                            hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                                .pszFieldModifDescription,
+                            " (previo)", MM_MAX_BYTES_FIELD_DESC + 1);
                         break;
                     default:
                     case MM_ENG_LANGUAGE:
-                        snprintf(szTemp, sizeof(szTemp), "%s (previous)",
-                                 pBD_XP->pField[nIField]
-                                     .FieldDescription[MM_DEF_LANGUAGE]);
+                        CPLStrlcat(
+                            hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                                .pszFieldModifDescription,
+                            " (previous)", MM_MAX_BYTES_FIELD_DESC + 1);
                         break;
                 }
-                strcpy(hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
-                           .pszFieldModifDescription,
-                       szTemp);
             }
             else
                 *hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
