@@ -5,6 +5,13 @@
 Past Releases
 =============
 
+* **2026-04-24** `gdal-3.12.4.tar.gz`_ `3.12.4 Release Notes`_ (`3.12.4 md5`_, `3.12.4 sig`_)
+
+.. _`3.12.4 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.12.4/NEWS.md
+.. _`gdal-3.12.4.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.12.4/gdal-3.12.4.tar.gz
+.. _`3.12.4 md5`: https://github.com/OSGeo/gdal/releases/download/v3.12.4/gdal-3.12.4.tar.gz.md5
+.. _`3.12.4 sig`: https://github.com/OSGeo/gdal/releases/download/v3.12.4/gdal-3.12.4.tar.gz.sig
+
 * **2026-03-20** `gdal-3.12.3.tar.gz`_ `3.12.3 Release Notes`_ (`3.12.3 md5`_, `3.12.3 sig`_)
 
 .. _`3.12.3 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.12.3/NEWS.md
