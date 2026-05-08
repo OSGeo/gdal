@@ -1596,7 +1596,7 @@ def test_ogr_miramon_vector_sql_select_preserve_reserved_fields():
     out_ds = None
     ds = None
 
-    rel_filename = out_filename[:-4] + ".rel"
+    rel_filename = out_filename[:-4] + "P.rel"
 
     with open(rel_filename, "rt", encoding="latin1") as f:
         rel_content = f.read()
