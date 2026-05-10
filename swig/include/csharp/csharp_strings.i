@@ -441,12 +441,12 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
       => SWIGPendingException.Set(new ArgumentException(Utf8UnmanagedToString(pMessage), Utf8UnmanagedToString(pParamName), SWIGPendingException.Retrieve()));
     static void SetPendingArgumentNullException(IntPtr pMessage, IntPtr pParamName) {
       Exception e = SWIGPendingException.Retrieve();
-	  string message = e == null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
+	  string message = e != null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
       SWIGPendingException.Set(new ArgumentNullException(Utf8UnmanagedToString(pParamName), message));
     }
     static void SetPendingArgumentOutOfRangeException(IntPtr pMessage, IntPtr pParamName) {
       Exception e = SWIGPendingException.Retrieve();
-	  string message = e == null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
+	  string message = e != null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
       SWIGPendingException.Set(new ArgumentOutOfRangeException(Utf8UnmanagedToString(pParamName), message));
     }
     unsafe static string Utf8UnmanagedToString(IntPtr pUtf8Bts) {
