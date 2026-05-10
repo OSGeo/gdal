@@ -1273,6 +1273,11 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 	}
     }
 
+    if (!metaptrs[0])
+    {
+        free(utlstr);
+        return -1;
+    }
 
     /* Search for field */
     snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"\n");

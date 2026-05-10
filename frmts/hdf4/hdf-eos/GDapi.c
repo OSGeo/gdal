@@ -1721,6 +1721,11 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
 	    return(-1);
 	}
 
+    if (!metaptrs[0])
+    {
+        free(utlstr);
+        return -1;
+    }
 
 	/* Search for field */
 	snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"\n");
