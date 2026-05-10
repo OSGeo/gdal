@@ -1724,6 +1724,7 @@ GDfieldinfo(int32 gridID, const char *fieldname, int32 * rank, int32 dims[],
     if (!metaptrs[0])
     {
         free(utlstr);
+        free(metabuf);
         return -1;
     }
 

@@ -1276,6 +1276,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
     if (!metaptrs[0])
     {
         free(utlstr);
+        free(metabuf);
         return -1;
     }
 
