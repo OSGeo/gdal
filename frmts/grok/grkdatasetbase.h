@@ -2736,18 +2736,50 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                     area_y1_ == 0)
                 {
                     // No AdviseRead region: use swath coordinates.
-                    // to trigger full image asynch decompress
-                    decompressParams.dw_x0 = swath_x0;
-                    decompressParams.dw_y0 = swath_y0;
-                    decompressParams.dw_x1 = swath_x0 + swath_width;
-                    decompressParams.dw_y1 = swath_y0 + swath_height;
+                    // The decode area must be expressed in full-resolution
+                    // canvas coordinates (grid reference).  For overview
+                    // datasets (iLevel > 0), swath coordinates are in the
+                    // reduced overview space and must be scaled up to
+                    // full resolution.
+                    if (iLevel > 0 && nParentXSize > 0 && nParentYSize > 0)
+                    {
+                        const int scale = 1 << iLevel;
+                        decompressParams.dw_x0 = swath_x0 * scale;
+                        decompressParams.dw_y0 = swath_y0 * scale;
+                        decompressParams.dw_x1 = std::min(
+                            (swath_x0 + swath_width) * scale, nParentXSize);
+                        decompressParams.dw_y1 = std::min(
+                            (swath_y0 + swath_height) * scale, nParentYSize);
+                    }
+                    else
+                    {
+                        decompressParams.dw_x0 = swath_x0;
+                        decompressParams.dw_y0 = swath_y0;
+                        decompressParams.dw_x1 = swath_x0 + swath_width;
+                        decompressParams.dw_y1 = swath_y0 + swath_height;
+                    }
                 }
                 else
                 {
-                    decompressParams.dw_x0 = area_x0_;
-                    decompressParams.dw_y0 = area_y0_;
-                    decompressParams.dw_x1 = area_x1_;
-                    decompressParams.dw_y1 = area_y1_;
+                    // AdviseRead region — also in dataset pixel space,
+                    // needs scaling for overview datasets.
+                    if (iLevel > 0 && nParentXSize > 0 && nParentYSize > 0)
+                    {
+                        const int scale = 1 << iLevel;
+                        decompressParams.dw_x0 = area_x0_ * scale;
+                        decompressParams.dw_y0 = area_y0_ * scale;
+                        decompressParams.dw_x1 = std::min(
+                            static_cast<int>(area_x1_) * scale, nParentXSize);
+                        decompressParams.dw_y1 = std::min(
+                            static_cast<int>(area_y1_) * scale, nParentYSize);
+                    }
+                    else
+                    {
+                        decompressParams.dw_x0 = area_x0_;
+                        decompressParams.dw_y0 = area_y0_;
+                        decompressParams.dw_x1 = area_x1_;
+                        decompressParams.dw_y1 = area_y1_;
+                    }
                 }
             }
 
