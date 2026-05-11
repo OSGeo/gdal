@@ -300,7 +300,14 @@ int EnvisatFile_Open(EnvisatFile **self_ptr, const char *filename,
         return FAILURE;
     }
 
-    sph_data = (char *)CPLMalloc(sph_size + 1);
+    if (sph_size < 0 || sph_size >= INT_MAX)
+    {
+        EnvisatFile_Close(self);
+        SendError("Invalid SPH_SIZE.");
+        return FAILURE;
+    }
+
+    sph_data = (char *)VSI_MALLOC_VERBOSE(sph_size + 1);
     if (sph_data == NULL)
     {
         EnvisatFile_Close(self);
@@ -344,9 +351,25 @@ int EnvisatFile_Open(EnvisatFile **self_ptr, const char *filename,
         EnvisatFile_Close(self);
         return FAILURE;
     }
+    if (num_dsd > 0 && dsd_size <= 0)
+    {
+        CPLFree(sph_data);
+        SendError("Invalid DSD_SIZE.");
+        EnvisatFile_Close(self);
+        return FAILURE;
+    }
+    const size_t ds_data_len = ds_data ? strlen(ds_data) : 0;
+    if (num_dsd < 0 ||
+        (dsd_size > 0 && (unsigned)num_dsd > ds_data_len / dsd_size))
+    {
+        CPLFree(sph_data);
+        SendError("Invalid NUM_DSD vs DSD_SIZE.");
+        EnvisatFile_Close(self);
+        return FAILURE;
+    }
 
-    self->ds_info =
-        (EnvisatDatasetInfo **)CPLCalloc(sizeof(EnvisatDatasetInfo *), num_dsd);
+    self->ds_info = (EnvisatDatasetInfo **)VSI_CALLOC_VERBOSE(
+        sizeof(EnvisatDatasetInfo *), num_dsd);
     if (self->ds_info == NULL)
     {
         CPLFree(sph_data);
