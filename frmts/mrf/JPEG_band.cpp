@@ -712,7 +712,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, const buf_mgr &isrc)
     //
     if (nbands != cinfo.num_components)
     {
-        switch (cinfo.num_components)
+        switch (nbands)
         {
             case 1:
                 cinfo.out_color_space = JCS_GRAYSCALE;
