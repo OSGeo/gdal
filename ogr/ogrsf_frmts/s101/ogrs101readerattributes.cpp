@@ -1165,3 +1165,500 @@ bool OGRS101Reader::FillFeatureAttributes(const DDFRecordIndex &oIndex,
 
     return true;
 }
+
+/************************************************************************/
+/*                               AttrNode                               */
+/************************************************************************/
+
+namespace
+{
+using AttrCode = OGRS101Reader::AttrCode;
+using AttrRepeat = OGRS101Reader::AttrRepeat;
+using AttrIndex = OGRS101Reader::AttrIndex;
+
+struct AttrNode
+{
+    AttrCode code = 0;
+    AttrRepeat indexOfSameCode = 0;
+    std::string value{};
+    std::vector<std::shared_ptr<AttrNode>> children{};
+
+    std::string Encode() const
+    {
+        std::string s;
+        AttrIndex thisIdx = 0;
+        AttrIndex curIdx = 0;
+        for (const auto &child : children)
+        {
+            child->Encode(s, thisIdx, curIdx, "");
+        }
+        return s;
+    }
+
+  private:
+    void Encode(std::string &s, AttrIndex parentIdx, AttrIndex &curIdx,
+                const std::string &indent);
+};
+
+void AttrNode::Encode(std::string &s, AttrIndex parentIdx, AttrIndex &curIdx,
+                      const std::string &indent)
+{
+    ++curIdx;
+    if constexpr (false)
+    {
+        const int idx = static_cast<int>(curIdx);
+        CPLDebug("S101", "%s[%d].code = %d", indent.c_str(), idx,
+                 static_cast<int>(code));
+        CPLDebug("S101", "%s[%d].indexOfSameCode = %d\n", indent.c_str(), idx,
+                 static_cast<int>(indexOfSameCode));
+        CPLDebug("S101", "%s[%d].parentIdx = %d", indent.c_str(), idx,
+                 static_cast<int>(parentIdx));
+        CPLDebug("S101", "%s[%d].value = %s", indent.c_str(), idx,
+                 value.c_str());
+    }
+    OGRS101Reader::AppendUInt16(s,
+                                static_cast<uint16_t>(static_cast<int>(code)));
+    OGRS101Reader::AppendUInt16(
+        s, static_cast<uint16_t>(static_cast<int>(indexOfSameCode)));
+    OGRS101Reader::AppendUInt16(
+        s, static_cast<uint16_t>(static_cast<int>(parentIdx)));
+    OGRS101Reader::AppendUInt8(s, static_cast<uint8_t>(INSTRUCTION_INSERT));
+    s.append(value);
+    OGRS101Reader::AppendUInt8(s, static_cast<uint8_t>(DDF_UNIT_TERMINATOR));
+
+    if (!children.empty())
+    {
+        const auto thisIdx = curIdx;
+        const std::string newIndent = indent + "  ";
+        for (const auto &child : children)
+        {
+            child->Encode(s, thisIdx, curIdx, newIndent);
+        }
+    }
+}
+
+}  // namespace
+
+/************************************************************************/
+/*                  ProcessUpdateAttributeLikeField()                   */
+/************************************************************************/
+
+/** Implement update of ATTR/INAS/FASC field described in 10a-5.1.2
+ * "Updating of the Attribute field"
+ */
+bool OGRS101Reader::ProcessUpdateAttributeLikeField(
+    const DDFRecord *poUpdateRecord, const DDFField *poUpdateField,
+    DDFRecord *poTargetRecord, DDFField *poTargetField,
+    int iFieldInstance) const
+{
+    const char *pszAttrFieldName = poUpdateField->GetFieldDefn()->GetName();
+    CPLAssert(EQUAL(pszAttrFieldName, ATTR_FIELD) ||
+              EQUAL(pszAttrFieldName, INAS_FIELD) ||
+              EQUAL(pszAttrFieldName, FASC_FIELD));
+
+    const auto poIDField = poUpdateRecord->GetField(0);
+    CPLAssert(poIDField);
+    const char *pszIDFieldName = poIDField->GetFieldDefn()->GetName();
+    CPLAssert(pszIDFieldName);
+
+    // Record name
+    const RecordName nRCNM =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCNM_SUBFIELD, 0);
+
+    // Record identifier
+    const int nRCID =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCID_SUBFIELD, 0);
+
+    AttrNode root;
+
+    auto poActualTargetField = poTargetField->GetParts().size() == 2
+                                   ? poTargetField->GetParts()[1].get()
+                                   : poTargetField;
+    const int nTargetRepeatCount = poActualTargetField->GetRepeatCount();
+
+    const auto poActualUpdateField = poUpdateField->GetParts().size() == 2
+                                         ? poUpdateField->GetParts()[1].get()
+                                         : poUpdateField;
+    const int nUpdateRepeatCount = poActualUpdateField->GetRepeatCount();
+
+    constexpr int PASS_TARGET = 0;
+    constexpr int PASS_UPDATE = 1;
+    for (int iPass = PASS_TARGET; iPass <= PASS_UPDATE; ++iPass)
+    {
+        const auto poCurRecord =
+            (iPass == PASS_TARGET) ? poTargetRecord : poUpdateRecord;
+        const auto poCurField =
+            (iPass == PASS_TARGET) ? poTargetField : poUpdateField;
+        const int nRepeatCount =
+            (iPass == PASS_TARGET) ? nTargetRepeatCount : nUpdateRepeatCount;
+
+        // mapAttributeIndexToNode and oSetNATC_ATIX_PAIX do need to be reset
+        // at each pass
+        std::map<AttrIndex, std::weak_ptr<AttrNode>> mapAttributeIndexToNode;
+        std::set<std::tuple<AttrCode, AttrRepeat, AttrIndex>>
+            oSetNATC_ATIX_PAIX;
+
+        for (int i = 0; i < nRepeatCount; ++i)
+        {
+            const AttrIndex curIdx = i + 1;
+            const int nInstruction =
+                poCurRecord->GetIntSubfield(poCurField, ATIN_SUBFIELD, i);
+            if (nInstruction != INSTRUCTION_INSERT &&
+                nInstruction != INSTRUCTION_UPDATE &&
+                nInstruction != INSTRUCTION_DELETE)
+            {
+                return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                    "%s, RCNM=%d, RCID=%d, %s field, instance %d, entry %d: "
+                    "invalid ATIN=%d",
+                    m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID,
+                    pszAttrFieldName, iFieldInstance, i, nInstruction));
+            }
+
+            auto poNode = std::make_shared<AttrNode>();
+            poNode->code =
+                poCurRecord->GetIntSubfield(poCurField, NATC_SUBFIELD, i);
+            poNode->indexOfSameCode =
+                poCurRecord->GetIntSubfield(poCurField, ATIX_SUBFIELD, i);
+            const AttrIndex parentIndex =
+                poCurRecord->GetIntSubfield(poCurField, PAIX_SUBFIELD, i);
+
+            // (NATC,ATIX,PAIX) tuple should be unique within a record
+            if (!oSetNATC_ATIX_PAIX
+                     .insert(
+                         {poNode->code, poNode->indexOfSameCode, parentIndex})
+                     .second)
+            {
+                return EMIT_ERROR_OR_WARNING(
+                    CPLSPrintf("%s, RCNM=%d, RCID=%d, %s field, instance %d: "
+                               "entry %d refers to (NATC,ATIX,PAIX)=(%d,%d,%d) "
+                               "already encountered.",
+                               m_osFilename.c_str(), static_cast<int>(nRCNM),
+                               nRCID, pszAttrFieldName, iFieldInstance, i,
+                               static_cast<int>(poNode->code),
+                               static_cast<int>(poNode->indexOfSameCode),
+                               static_cast<int>(parentIndex)));
+            }
+
+            const char *pszATVL =
+                poCurRecord->GetStringSubfield(poCurField, ATVL_SUBFIELD, i);
+            if (pszATVL)
+                poNode->value = pszATVL;
+
+            // Find the parent node (which is the root node if no parent)
+            std::shared_ptr<AttrNode> poParentNodeSharedPtr;
+            AttrNode *poParentNode = &root;
+            if (parentIndex > 0)
+            {
+                auto oIter = mapAttributeIndexToNode.find(parentIndex);
+                if (oIter == mapAttributeIndexToNode.end())
+                {
+                    return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                        "%s, RCNM=%d, RCID=%d, %s field, instance %d: entry %d "
+                        "refers to a PAIX=%d that does not exist",
+                        m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID,
+                        pszAttrFieldName, iFieldInstance, i,
+                        static_cast<int>(parentIndex)));
+                }
+                poParentNodeSharedPtr = oIter->second.lock();
+                if (!poParentNodeSharedPtr)
+                {
+                    // I don't think that can happen given the
+                    // (NATC,ATIX,PAIX) unicity check
+                    return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                        "%s, RCNM=%d, RCID=%d, %s field, instance %d: entry %d "
+                        "refers to a PAIX=%d that has been deleted",
+                        m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID,
+                        pszAttrFieldName, iFieldInstance, i,
+                        static_cast<int>(parentIndex)));
+                }
+                poParentNode = poParentNodeSharedPtr.get();
+            }
+
+            if (nInstruction == INSTRUCTION_INSERT)
+            {
+                // Find a sibling of same code and whose index is just one before
+                // the one to insert.
+                auto iterInsertion = poParentNode->children.begin();
+                for (; iterInsertion != poParentNode->children.end();
+                     ++iterInsertion)
+                {
+                    if ((*iterInsertion)->code == poNode->code &&
+                        (*iterInsertion)->indexOfSameCode >=
+                            poNode->indexOfSameCode)
+                    {
+                        break;
+                    }
+                }
+
+                if (iterInsertion != poParentNode->children.end())
+                {
+                    if (poCurRecord == poTargetRecord)
+                    {
+                        const auto iterNext = std::next(iterInsertion);
+                        if (iterNext != poParentNode->children.end() &&
+                            (*iterNext)->code == poNode->code &&
+                            (*iterNext)->indexOfSameCode ==
+                                poNode->indexOfSameCode)
+                        {
+                            return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                                "%s, RCNM=%d, RCID=%d, %s field, instance %d: "
+                                "entry %d collides with another entry of same "
+                                "(NATC, ATIX)=(%d,%d)",
+                                m_osFilename.c_str(), static_cast<int>(nRCNM),
+                                nRCID, pszAttrFieldName, iFieldInstance, i,
+                                static_cast<int>(poNode->code),
+                                static_cast<int>(poNode->indexOfSameCode)));
+                        }
+                    }
+                    else
+                    {
+                        // Renumber indexOfSameCode of children right to the inserted one
+                        for (auto iterChild = iterInsertion;
+                             iterChild != poParentNode->children.end();
+                             ++iterChild)
+                        {
+                            if ((*iterChild)->code == poNode->code &&
+                                (*iterChild)->indexOfSameCode >=
+                                    poNode->indexOfSameCode)
+                            {
+                                ++((*iterChild)->indexOfSameCode);
+                            }
+                        }
+                    }
+                }
+
+                mapAttributeIndexToNode[curIdx] = poNode;
+
+                poParentNode->children.insert(iterInsertion, poNode);
+            }
+            else
+            {
+                // Identify child with desired (code, indexOfSameCode)
+                auto iterChild = poParentNode->children.begin();
+                for (; iterChild != poParentNode->children.end(); ++iterChild)
+                {
+                    if ((*iterChild)->code == poNode->code &&
+                        (*iterChild)->indexOfSameCode ==
+                            poNode->indexOfSameCode)
+                    {
+                        break;
+                    }
+                }
+                if (iterChild == poParentNode->children.end())
+                {
+                    return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                        "%s, RCNM=%d, RCID=%d, %s field, instance %d: entry %d "
+                        "references unexisting entry (NATC, ATIX)=(%d,%d)",
+                        m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID,
+                        pszAttrFieldName, iFieldInstance, i,
+                        static_cast<int>(poNode->code),
+                        static_cast<int>(poNode->indexOfSameCode)));
+                }
+
+                if (nInstruction == INSTRUCTION_DELETE)
+                {
+                    poParentNode->children.erase(iterChild);
+                    // No need to explicitly modify mapAttributeIndexToNode
+                    // As it contains weak pointers, if the removed node or
+                    // one of its children was in the map, the weak pointer
+                    // will be invalidated.
+                }
+                else
+                {
+                    const auto &poModifiedNode = *iterChild;
+                    mapAttributeIndexToNode[curIdx] = poModifiedNode;
+                    poModifiedNode->value = poNode->value;
+                }
+            }
+        }
+    }
+
+    std::string s;
+    if (EQUAL(pszAttrFieldName, INAS_FIELD) ||
+        EQUAL(pszAttrFieldName, FASC_FIELD))
+    {
+        constexpr int SIZE_OF_NON_REPEATED_FIELDS = 1 + 4 + 2 + 2 + 1;
+        if (poUpdateField->GetDataSize() < SIZE_OF_NON_REPEATED_FIELDS)
+        {
+            // Should probably not occur given earlier checks, but...
+            return EMIT_ERROR_OR_WARNING(
+                CPLSPrintf("%s, RCNM=%d, RCID=%d, %s field, instance %d: "
+                           "invalid update field",
+                           m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID,
+                           pszAttrFieldName, iFieldInstance));
+        }
+        s.append(poUpdateField->GetData(), SIZE_OF_NON_REPEATED_FIELDS - 1);
+        AppendUInt8(s, INSTRUCTION_INSERT);
+    }
+    s += root.Encode();
+    AppendUInt8(s, DDF_FIELD_TERMINATOR);
+    poTargetRecord->SetFieldRaw(poTargetField, s.data(),
+                                static_cast<int>(s.size()));
+
+    return true;
+}
+
+/************************************************************************/
+/*                         ProcessUpdateATTR()                          */
+/************************************************************************/
+
+/** Update all instances of ATTR field
+ */
+bool OGRS101Reader::ProcessUpdateATTR(const DDFRecord *poUpdateRecord,
+                                      DDFRecord *poTargetRecord) const
+{
+    const auto poIDField = poUpdateRecord->GetField(0);
+    CPLAssert(poIDField);
+    const char *pszIDFieldName = poIDField->GetFieldDefn()->GetName();
+    CPLAssert(pszIDFieldName);
+
+    // Record name
+    const RecordName nRCNM =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCNM_SUBFIELD, 0);
+
+    // Record identifier
+    const int nRCID =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCID_SUBFIELD, 0);
+
+    auto apoUpdateFields = poUpdateRecord->GetFields(ATTR_FIELD);
+    if (apoUpdateFields.empty())
+        return true;
+    auto apoTargetFields = poTargetRecord->GetFields(ATTR_FIELD);
+    if (apoTargetFields.size() != apoUpdateFields.size())
+    {
+        return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+            "%s, RCNM=%d, RCID=%d, %s field: target record has %d field "
+            "instances, whereas update record has %d",
+            m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID, ATTR_FIELD,
+            static_cast<int>(apoTargetFields.size()),
+            static_cast<int>(apoUpdateFields.size())));
+    }
+
+    for (size_t i = 0; i < apoUpdateFields.size(); ++i)
+    {
+        if (!ProcessUpdateAttributeLikeField(poUpdateRecord, apoUpdateFields[i],
+                                             poTargetRecord, apoTargetFields[i],
+                                             static_cast<int>(i)))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                      ProcessUpdateINASOrFASC()                       */
+/************************************************************************/
+
+/** Update all instances of INAS or FASC field
+ */
+bool OGRS101Reader::ProcessUpdateINASOrFASC(const DDFRecord *poUpdateRecord,
+                                            DDFRecord *poTargetRecord,
+                                            const char *pszFieldName) const
+{
+    CPLAssert(EQUAL(pszFieldName, INAS_FIELD) ||
+              EQUAL(pszFieldName, FASC_FIELD));
+
+    const auto poIDField = poUpdateRecord->GetField(0);
+    CPLAssert(poIDField);
+    const char *pszIDFieldName = poIDField->GetFieldDefn()->GetName();
+    CPLAssert(pszIDFieldName);
+
+    // Record name
+    const RecordName nRCNM =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCNM_SUBFIELD, 0);
+
+    // Record identifier
+    const int nRCID =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCID_SUBFIELD, 0);
+
+    auto apoUpdateFields = poUpdateRecord->GetFields(pszFieldName);
+    if (apoUpdateFields.empty())
+        return true;
+
+    auto apoTargetFields = poTargetRecord->GetFields(pszFieldName);
+
+    for (int iUpdate = 0; iUpdate < static_cast<int>(apoUpdateFields.size());
+         ++iUpdate)
+    {
+        const auto poUpdateField = apoUpdateFields[iUpdate];
+        const int nInstruction = poUpdateRecord->GetIntSubfield(
+            poUpdateField,
+            EQUAL(pszFieldName, INAS_FIELD) ? IUIN_SUBFIELD : FAUI_SUBFIELD, 0);
+        if (nInstruction == INSTRUCTION_INSERT)
+        {
+            const auto poINASFieldDefn =
+                m_oMainModule.FindFieldDefn(pszFieldName);
+            if (!poINASFieldDefn)
+            {
+                return EMIT_ERROR(CPLSPrintf("Cannot find %s field definition",
+                                             pszFieldName));
+            }
+            auto poFieldTarget = poTargetRecord->AddField(poINASFieldDefn);
+            CPLAssert(poFieldTarget);
+
+            poTargetRecord->SetFieldRaw(poFieldTarget, poUpdateField->GetData(),
+                                        poUpdateField->GetDataSize());
+            apoTargetFields.push_back(poFieldTarget);
+        }
+        else if (nInstruction == INSTRUCTION_UPDATE ||
+                 nInstruction == INSTRUCTION_DELETE)
+        {
+            const RecordName RRNM =
+                poUpdateRecord->GetIntSubfield(poUpdateField, RRNM_SUBFIELD, 0);
+            const int RRID =
+                poUpdateRecord->GetIntSubfield(poUpdateField, RRID_SUBFIELD, 0);
+
+            bool bMatchFound = false;
+            for (size_t iTarget = 0; iTarget < apoTargetFields.size();
+                 ++iTarget)
+            {
+                auto poTargetField = apoTargetFields[iTarget];
+                const RecordName RRNMTarget = poTargetRecord->GetIntSubfield(
+                    poTargetField, RRNM_SUBFIELD, 0);
+                const int RRIDTarget = poTargetRecord->GetIntSubfield(
+                    poTargetField, RRID_SUBFIELD, 0);
+                if (RRNM == RRNMTarget && RRID == RRIDTarget)
+                {
+                    bMatchFound = true;
+                    if (nInstruction == INSTRUCTION_DELETE)
+                    {
+                        poTargetRecord->DeleteField(poTargetField);
+                        apoTargetFields.erase(apoTargetFields.begin() +
+                                              iTarget);
+                    }
+                    else
+                    {
+                        if (!ProcessUpdateAttributeLikeField(
+                                poUpdateRecord, poUpdateField, poTargetRecord,
+                                poTargetField, iUpdate))
+                        {
+                            return false;
+                        }
+                    }
+                    break;
+                }
+            }
+            if (!bMatchFound)
+            {
+                return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                    "%s, RCNM=%d, RCID=%d, %s field, %d instance: found no "
+                    "matching (RRNM,RRID)=(%d,%d) to %s",
+                    m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID,
+                    pszFieldName, iUpdate, static_cast<int>(RRNM), RRID,
+                    nInstruction == INSTRUCTION_UPDATE ? "update" : "delete"));
+            }
+        }
+        else
+        {
+            return EMIT_ERROR_OR_WARNING(
+                CPLSPrintf("%s, RCNM=%d, RCID=%d, %s field, %d instance: "
+                           "invalid instruction = %d",
+                           m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID,
+                           pszFieldName, iUpdate, nInstruction));
+        }
+    }
+
+    return true;
+}

@@ -687,11 +687,19 @@ class CPL_DLL DDFRecord
         return poModule;
     }
 
+    const DDFModule *GetModule() const
+    {
+        return poModule;
+    }
+
     int DeleteField(DDFField *poField);
-    DDFField *AddField(DDFFieldDefn *);
+    DDFField *AddField(const DDFFieldDefn *);
 
     int SetFieldRaw(DDFField *poField, int iIndexWithinField,
                     const char *pachRawData, int nRawDataSize);
+
+    int SetFieldRaw(DDFField *poField, const char *pachRawData,
+                    int nRawDataSize);
 
     int Write();
 

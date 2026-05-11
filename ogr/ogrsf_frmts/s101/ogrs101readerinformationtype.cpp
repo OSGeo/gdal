@@ -79,8 +79,6 @@ bool OGRS101Reader::FillFeatureInformationType(const DDFRecordIndex &oIndex,
     const auto poRecord = oIndex.GetByIndex(iRecord);
     CPLAssert(poRecord);
 
-    // Numeric Information Type Code
-    constexpr const char *NITC_SUBFIELD = "NITC";
     const InfoTypeCode nNITC(
         poRecord->GetIntSubfield(IRID_FIELD, 0, NITC_SUBFIELD, 0));
     const auto oIter = m_informationTypeCodes.find(nNITC);

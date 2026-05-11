@@ -97,7 +97,6 @@ OGRS101Reader::ReadSurfaceGeometry(const DDFRecord *poRecord, int iRecord,
                                                 iRing);
             };
 
-            constexpr const char *RAUI_SUBFIELD = "RAUI";
             const int nRAUI = GetIntSubfield(RAUI_SUBFIELD);
             if (nRAUI != INSTRUCTION_INSERT)
             {
@@ -199,7 +198,6 @@ OGRS101Reader::ReadSurfaceGeometry(const DDFRecord *poRecord, int iRecord,
                 return nullptr;
             }
 
-            constexpr const char *USAG_SUBFIELD = "USAG";
             constexpr int USAG_EXTERIOR = 1;  // Exterior ring
             constexpr int USAG_INTERIOR = 2;  // Interior ring
             const int nUSAG =
@@ -309,4 +307,146 @@ bool OGRS101Reader::FillFeatureSurface(const DDFRecordIndex &oIndex,
     return FillFeatureAttributes(oIndex, iRecord, INAS_FIELD, oFeature) &&
            FillFeatureWithNonAttrAssocSubfields(poRecord, iRecord, INAS_FIELD,
                                                 oFeature);
+}
+
+/************************************************************************/
+/*                     ProcessUpdateRecordSurface()                     */
+/************************************************************************/
+
+/** Updates the geometry part of poTargetRecord with poUpdateRecord */
+bool OGRS101Reader::ProcessUpdateRecordSurface(const DDFRecord *poUpdateRecord,
+                                               DDFRecord *poTargetRecord) const
+{
+    const auto poIDField = poUpdateRecord->GetField(0);
+    CPLAssert(poIDField);
+    const char *pszIDFieldName = poIDField->GetFieldDefn()->GetName();
+    CPLAssert(pszIDFieldName);
+
+    // Record name
+    const RecordName nRCNM =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCNM_SUBFIELD, 0);
+
+    // Record identifier
+    const int nRCID =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCID_SUBFIELD, 0);
+
+    // Ring Association Field field
+    const auto apoUpdateFields = poUpdateRecord->GetFields(RIAS_FIELD);
+    if (apoUpdateFields.empty())
+        return true;
+
+    struct Ring
+    {
+        int RRNM = 0;
+        int RRID = 0;
+        int ORNT = 0;
+        int USAG = 0;
+        int RAUI = 0;
+
+        static Ring Read(const DDFRecord *poRecord, const DDFField *poField,
+                         int i)
+        {
+            Ring ring;
+            ring.RRNM = poRecord->GetIntSubfield(poField, RRNM_SUBFIELD, i);
+            ring.RRID = poRecord->GetIntSubfield(poField, RRID_SUBFIELD, i);
+            ring.ORNT = poRecord->GetIntSubfield(poField, ORNT_SUBFIELD, i);
+            ring.USAG = poRecord->GetIntSubfield(poField, USAG_SUBFIELD, i);
+            ring.RAUI = poRecord->GetIntSubfield(poField, RAUI_SUBFIELD, i);
+            return ring;
+        }
+    };
+
+    std::vector<Ring> asTarget;
+    // Ingest the existing/target record(s)
+    auto apoTargetFields = poTargetRecord->GetFields(RIAS_FIELD);
+    for (auto *poTargetField : apoTargetFields)
+    {
+        const int nTargetRepeatCount = poTargetField->GetRepeatCount();
+        for (int i = 0; i < nTargetRepeatCount; ++i)
+        {
+            asTarget.push_back(Ring::Read(poTargetRecord, poTargetField, i));
+        }
+        poTargetRecord->DeleteField(poTargetField);
+    }
+
+    // Apply the update record(s)
+    for (auto *poUpdateField : apoUpdateFields)
+    {
+        const int nUpdateRepeatCount = poUpdateField->GetRepeatCount();
+        for (int i = 0; i < nUpdateRepeatCount; ++i)
+        {
+            Ring ring = Ring::Read(poUpdateRecord, poUpdateField, i);
+            if (ring.RAUI == INSTRUCTION_INSERT)
+            {
+                asTarget.push_back(std::move(ring));
+            }
+            else if (ring.RAUI == INSTRUCTION_DELETE)
+            {
+                bool bMatchFound = false;
+                for (size_t j = 0; j < asTarget.size(); ++j)
+                {
+                    if (asTarget[j].RRNM == ring.RRNM &&
+                        asTarget[j].RRID == ring.RRID)
+                    {
+                        bMatchFound = true;
+                        asTarget.erase(asTarget.begin() + j);
+                        break;
+                    }
+                }
+                if (!bMatchFound &&
+                    !EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                        "%s, RCNM=%d, RCID=%d, RIAS iSubField=%d: update "
+                        "field references RRNM=%d, RRID=%d which does not "
+                        "exist in initial or previous update",
+                        m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID, i,
+                        ring.RRNM, ring.RRID)))
+                {
+                    return false;
+                }
+            }
+            else if (!EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                         "%s, RCNM=%d, RCID=%d, SPAS iSubField=%d: invalid "
+                         "RAUI=%d",
+                         m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID,
+                         i, ring.RAUI)))
+            {
+                return false;
+            }
+        }
+    }
+
+    if (!asTarget.empty())
+    {
+        auto poRIASFieldDefn = m_oMainModule.FindFieldDefn(RIAS_FIELD);
+        if (!poRIASFieldDefn)
+        {
+            return EMIT_ERROR("Cannot find RIAS field definition");
+        }
+        auto poRIASFieldTarget = poTargetRecord->AddField(poRIASFieldDefn);
+        CPLAssert(poRIASFieldTarget);
+        const auto poRIASFieldUpdate = apoUpdateFields[0];
+        if (*(poRIASFieldTarget->GetFieldDefn()) !=
+            *(poRIASFieldUpdate->GetFieldDefn()))
+        {
+            return EMIT_ERROR("RIAS field definitions of update and target "
+                              "records are different");
+        }
+
+        // Compose raw target field
+        std::string s;
+        for (const auto &cc : asTarget)
+        {
+            AppendUInt8(s, static_cast<uint8_t>(cc.RRNM));
+            AppendInt32(s, cc.RRID);
+            AppendUInt8(s, static_cast<uint8_t>(cc.ORNT));
+            AppendUInt8(s, static_cast<uint8_t>(cc.USAG));
+            AppendUInt8(s, static_cast<uint8_t>(cc.RAUI));
+        }
+        AppendUInt8(s, DDF_FIELD_TERMINATOR);
+
+        poTargetRecord->SetFieldRaw(poRIASFieldTarget, s.data(),
+                                    static_cast<int>(s.size()));
+    }
+
+    return true;
 }

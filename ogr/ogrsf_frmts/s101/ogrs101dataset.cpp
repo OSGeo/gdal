@@ -48,6 +48,9 @@
     auto &poReader = poDS->m_poReader;
     poDS->SetMetadata(poReader->GetMetadata().List());
 
+    if (poReader->IsCancelled())
+        return poDS.release();
+
     {
         auto poFDefn = poReader->StealInformationTypeFeatureDefn();
         if (poFDefn)

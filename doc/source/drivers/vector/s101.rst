@@ -14,17 +14,19 @@ Charts (ENC) datasets are supported for read access.
 
 S-101 (ENC) files normally start with "101" and have the extension ".000".
 
-.. note::
-
-    Update files are not currently handled, but planned future enhancements
-    of this driver will bring support for them.
-
 The S-101 driver produces OGR features for all S-101 information (in a broad sense,
 this includes geometry primitives, Information Type, and Feature Type records) in the
 S-101 file.
 
 Georeferenced features are referenced to WGS 84 (EPSG:4326). Point and multipoint
 geometries may be referenced to a vertical datum (depth, in meters).
+
+S-101 update files contain information on how to update a distributed
+S-101 base data file. The base files normally have the extension .000
+while the update files have extensions like .001, .002 and so on. The
+S-101 reader will normally read and apply all update files to the in
+memory version of the base file on the fly. The feature data provided to
+the application therefore includes all the updates.
 
 Driver capabilities
 -------------------
@@ -47,6 +49,12 @@ The following open options are supported:
       the product against the specification and errors out as soon as an error is
       encountered. When setting this option to NO, warnings will be emitted
       instead and the parsing of the product will continue as much as possible.
+
+-  .. oo:: UPDATES
+      :choices: APPLY, IGNORE
+      :default: APPLY
+
+      Should update files be incorporated into the base data on the fly.
 
 Layers
 ------
@@ -235,8 +243,8 @@ Dataset metadata
 
 The following metadata items are reported at the dataset level:
 
-* ``APPLICATION_PROFILE``. Must be 1.
-* ``DATASET_EDITION``. Dataset version number.
+* ``APPLICATION_PROFILE``. 1 if only initial file .000 processed, 2 otherwise.
+* ``DATASET_EDITION``. Dataset version number. Set to 0 if dataset is cancelled
 * ``DATASET_IDENTIFIER``. The filename, including extension but excluding any path information.
 * ``DATASET_LANGUAGE``. Primary language used in the dataset. Must be ``EN`` (English).
 * ``DATASET_REFERENCE_DATE``. Reference date of the dataset. Format: YYYYMMDD according to ISO 8601.
@@ -245,6 +253,7 @@ The following metadata items are reported at the dataset level:
 * ``ENCODING_SPECIFICATION_EDITION``. Must be ``5.2``.
 * ``PRODUCT_EDITION``. Must be ``2.0``.
 * ``PRODUCT_IDENTIFIER``. Must be ``INT.IHO.S-101.2.0``.
+* ``STATUS``. ``VALID`` or ``CANCELLED``.
 
 Feature Catalog
 ---------------
@@ -277,9 +286,10 @@ Credits
 -------
 
 Initial development of this driver was funded by `Rijkswaterstaat <https://www.rijkswaterstaat.nl/en>`__.
-
+Support for reading update files was funded by `Zydromarine <https://zydromarine.com>`__.
 
 .. below is an allow-list for spelling checker.
 
 .. spelling:word-list::
     informationType
+    cancelled

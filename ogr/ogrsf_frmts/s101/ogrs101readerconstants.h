@@ -56,6 +56,7 @@ constexpr const char *CSID_FIELD = "CSID";     // Coordinate Reference System Re
     constexpr const char* VDAT_FIELD = "VDAT"; // Vertical Datum
 
 constexpr const char *IRID_FIELD = "IRID";     // Information Type Record Identifier
+    constexpr const char *NITC_SUBFIELD = "NITC"; // Numeric Information Type Code
   constexpr const char *ATTR_FIELD = "ATTR";   // Attribute field
   constexpr const char *INAS_FIELD = "INAS";   // Information Association
 
@@ -66,31 +67,46 @@ constexpr const char *PRID_FIELD = "PRID";     // Point Record Identifier
 
 constexpr const char *MRID_FIELD = "MRID";     // Multi Point Record Identifier field
   //constexpr const char *INAS_FIELD = "INAS"; // Information Association
+  constexpr const char *COCC_FIELD = "COCC";   // Coordinate Control
   constexpr const char *C2IL_FIELD = "C2IL";   // 2-D Integer Coordinate List
   constexpr const char *C3IL_FIELD = "C3IL";   // 3-D Integer Coordinate List
 
 constexpr const char *CRID_FIELD = "CRID";     // Curve Record Identifier
   //constexpr const char *INAS_FIELD = "INAS"; // Information Association
   constexpr const char *PTAS_FIELD = "PTAS";   // Point Association
+  constexpr const char *SECC_FIELD = "SECC";   // Segment Control field
   constexpr const char *SEGH_FIELD = "SEGH";   // Segment Header field
-     // constexpr const char *C2IL_FIELD = "C2IL";   // 2-D Integer Coordinate List
+  // constexpr const char *COCC_FIELD = "COCC";   // Coordinate Control
+  // constexpr const char *C2IL_FIELD = "C2IL";   // 2-D Integer Coordinate List
 
 constexpr const char *CCID_FIELD = "CCID";     // Composite Curve Record Identifier
   //constexpr const char *INAS_FIELD = "INAS"; // Information Association
   //constexpr const char *C2IL_FIELD = "C2IL"; // 2-D Integer Coordinate List
+  constexpr const char *CCOC_FIELD = "CCOC";   // Curve Component Control
   constexpr const char *CUCO_FIELD = "CUCO";   // Curve Component field
 
 constexpr const char *SRID_FIELD = "SRID";     // Surface Record Identifier
   //constexpr const char *INAS_FIELD = "INAS"; // Information Association
   constexpr const char *RIAS_FIELD = "RIAS";   // Ring Association
+    constexpr const char *USAG_SUBFIELD = "USAG";
+    constexpr const char *RAUI_SUBFIELD = "RAUI";
 
 constexpr const char *FRID_FIELD = "FRID";     // Feature Type Record Identifier
-  constexpr const char *FOID_FIELD = "FOID";   // Feature Object Identifier
+     constexpr const char *NFTC_SUBFIELD = "NFTC"; // Feature Type Numeric Code
+   constexpr const char *FOID_FIELD = "FOID";   // Feature Object Identifier
+     constexpr const char *AGEN_SUBFIELD = "AGEN";
+     constexpr const char *FIDN_SUBFIELD = "FIDN";
+     constexpr const char *FIDS_SUBFIELD = "FIDS";
   //constexpr const char *ATTR_FIELD = "ATTR"; // Attribute field
   //constexpr const char *INAS_FIELD = "INAS"; // Information Association
   constexpr const char *SPAS_FIELD = "SPAS";   // Spatial Association
+    constexpr const char *SMIN_SUBFIELD = "SMIN";
+    constexpr const char *SMAX_SUBFIELD = "SMAX";
+    constexpr const char *SAUI_SUBFIELD = "SAUI";
   constexpr const char *FASC_FIELD = "FASC";   // Feature Association
   constexpr const char *MASK_FIELD = "MASK";   // Masked Spatial Type
+    constexpr const char* MIND_SUBFIELD = "MIND";
+    constexpr const char* MUIN_SUBFIELD = "MUIN";
 // clang-format on
 
 // xxID subfields
@@ -133,8 +149,8 @@ constexpr const char *RVER_SUBFIELD = "RVER";  // Record version
 
 // Value of RUIN subfield or other update instruction subfields.
 constexpr int INSTRUCTION_INSERT = 1;
-constexpr int INSTRUCTION_UPDATE = 2;
-constexpr int INSTRUCTION_DELETE = 3;
+constexpr int INSTRUCTION_DELETE = 2;
+constexpr int INSTRUCTION_UPDATE = 3;
 
 // Orientation subfield used in composite curve and surface records
 constexpr const char *ORNT_SUBFIELD = "ORNT";

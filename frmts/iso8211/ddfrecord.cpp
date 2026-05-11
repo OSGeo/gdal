@@ -1358,7 +1358,7 @@ int DDFRecord::ResizeField(DDFField *poField, int nNewDataSize)
  * @return the field object on success, or NULL on failure.
  */
 
-DDFField *DDFRecord::AddField(DDFFieldDefn *poDefn)
+DDFField *DDFRecord::AddField(const DDFFieldDefn *poDefn)
 
 {
     /* -------------------------------------------------------------------- */
@@ -1502,6 +1502,42 @@ int DDFRecord::SetFieldRaw(DDFField *poField, int iIndexWithinField,
 
     memcpy(const_cast<char *>(poField->GetData()), osNewImage.data(),
            nNewFieldSize);
+
+    for (auto &poIterField : apoFields)
+        poIterField->InitializeParts();
+
+    return TRUE;
+}
+
+/************************************************************************/
+/*                            SetFieldRaw()                             */
+/************************************************************************/
+
+/**
+ * Set the raw contents of a field (all instances in case it is a repeated one)
+ *
+ * It must end with DDF_FIELD_TERMINATOR.
+ *
+ * @param poField the field to set data within.
+ * @param pachRawData the raw data to replace this field with.
+ * @param nRawDataSize the number of bytes pointed to by pachRawData.
+ *
+ * @return TRUE on success or FALSE on failure.
+ */
+
+int DDFRecord::SetFieldRaw(DDFField *poField, const char *pachRawData,
+                           int nRawDataSize)
+
+{
+    /* -------------------------------------------------------------------- */
+    /*      Resize the field to the desired new size.                       */
+    /* -------------------------------------------------------------------- */
+    if (!ResizeField(poField, nRawDataSize))
+        return FALSE;
+
+    CPLAssert(nRawDataSize > 0);
+    CPLAssert(pachRawData[nRawDataSize - 1] == DDF_FIELD_TERMINATOR);
+    memcpy(const_cast<char *>(poField->GetData()), pachRawData, nRawDataSize);
 
     for (auto &poIterField : apoFields)
         poIterField->InitializeParts();

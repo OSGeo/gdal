@@ -41,7 +41,6 @@ bool OGRS101Reader::CreateFeatureTypeFeatureDefns()
     for (int iRecord = 0; iRecord < nCount; ++iRecord)
     {
         const auto poRecord = m_oFeatureTypeRecordIndex.GetByIndex(iRecord);
-        constexpr const char *NFTC_SUBFIELD = "NFTC";
         FeatureTypeKey key;
         key.nFeatureTypeCode =
             poRecord->GetIntSubfield(FRID_FIELD, 0, NFTC_SUBFIELD, 0);
@@ -571,7 +570,7 @@ bool OGRS101Reader::FillFeatureTypeGeometry(const DDFRecord *poRecord,
                 CPLSPrintf("Feature type record index %d, SPAS instance %d",
                            iRecord, iSPAS);
 
-            const int nSAUI = GetIntSubfield("SAUI");
+            const int nSAUI = GetIntSubfield(SAUI_SUBFIELD);
             if (nSAUI != INSTRUCTION_INSERT)
             {
                 if (!EMIT_ERROR_OR_WARNING(
@@ -758,9 +757,9 @@ bool OGRS101Reader::FillFeatureTypeGeometry(const DDFRecord *poRecord,
             {
                 anRRID.push_back(nRRID);
 
-                anSMIN.push_back(GetIntSubfield("SMIN"));
+                anSMIN.push_back(GetIntSubfield(SMIN_SUBFIELD));
 
-                anSMAX.push_back(GetIntSubfield("SMAX"));
+                anSMAX.push_back(GetIntSubfield(SMAX_SUBFIELD));
             }
         }
     }
@@ -857,7 +856,7 @@ bool OGRS101Reader::FillFeatureTypeMask(const DDFRecord *poRecord, int iRecord,
                 CPLSPrintf("Feature type record index %d, MASK instance %d",
                            iRecord, iMASK);
 
-            const int nMUIN = GetIntSubfield("MUIN");
+            const int nMUIN = GetIntSubfield(MUIN_SUBFIELD);
             if (nMUIN != INSTRUCTION_INSERT)
             {
                 if (!EMIT_ERROR_OR_WARNING(
@@ -868,7 +867,7 @@ bool OGRS101Reader::FillFeatureTypeMask(const DDFRecord *poRecord, int iRecord,
                 }
             }
 
-            const int nMIND = GetIntSubfield("MIND");
+            const int nMIND = GetIntSubfield(MIND_SUBFIELD);
             constexpr int MASK_INDICATOR_TRUNCATED_BY_DATA_COVERAGE_LIMIT = 1;
             constexpr int MASK_INDICATOR_SUPPRESS_PORTRAYAL = 2;
             if (nMIND == MASK_INDICATOR_TRUNCATED_BY_DATA_COVERAGE_LIMIT)
@@ -993,13 +992,16 @@ bool OGRS101Reader::FillFeatureFeatureType(const DDFRecordIndex &oIndex,
 
     if (const auto poFOIDField = poRecord->FindField(FOID_FIELD))
     {
-        const int nAGEN = poRecord->GetIntSubfield(poFOIDField, "AGEN", 0);
+        const int nAGEN =
+            poRecord->GetIntSubfield(poFOIDField, AGEN_SUBFIELD, 0);
         oFeature.SetField(OGR_FIELD_NAME_AGEN, nAGEN);
 
-        const int nFIDN = poRecord->GetIntSubfield(poFOIDField, "FIDN", 0);
+        const int nFIDN =
+            poRecord->GetIntSubfield(poFOIDField, FIDN_SUBFIELD, 0);
         oFeature.SetField(OGR_FIELD_NAME_FIDN, nFIDN);
 
-        const int nFIDS = poRecord->GetIntSubfield(poFOIDField, "FIDS", 0);
+        const int nFIDS =
+            poRecord->GetIntSubfield(poFOIDField, FIDS_SUBFIELD, 0);
         oFeature.SetField(OGR_FIELD_NAME_FIDS, nFIDS);
     }
     else if (!EMIT_ERROR_OR_WARNING(CPLSPrintf(
@@ -1021,4 +1023,289 @@ bool OGRS101Reader::FillFeatureFeatureType(const DDFRecordIndex &oIndex,
                                                 oFeature) &&
            FillFeatureWithNonAttrAssocSubfields(poRecord, iRecord, FASC_FIELD,
                                                 oFeature);
+}
+
+/************************************************************************/
+/*                   ProcessUpdateRecordFeatureType()                   */
+/************************************************************************/
+
+bool OGRS101Reader::ProcessUpdateRecordFeatureType(
+    const DDFRecord *poUpdateRecord, DDFRecord *poTargetRecord) const
+{
+    const auto poIDField = poUpdateRecord->GetField(0);
+    CPLAssert(poIDField);
+    const char *pszIDFieldName = poIDField->GetFieldDefn()->GetName();
+    CPLAssert(pszIDFieldName);
+
+    // Record name
+    const RecordName nRCNM =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCNM_SUBFIELD, 0);
+
+    // Record identifier
+    const int nRCID =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCID_SUBFIELD, 0);
+
+    // Deal with FOID field updates
+    if (const auto poFOIDFieldUpdate = poUpdateRecord->FindField(FOID_FIELD))
+    {
+        auto poFOIDFieldTarget = poTargetRecord->FindField(FOID_FIELD);
+        if (!poFOIDFieldTarget)
+        {
+            return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                "%s, RCNM=%d, RCID=%d: missing FOID field in "
+                "target record",
+                m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID));
+        }
+
+        for (const char *pszSubFieldName :
+             {AGEN_SUBFIELD, FIDN_SUBFIELD, FIDS_SUBFIELD})
+        {
+            const int nVal = poUpdateRecord->GetIntSubfield(poFOIDFieldUpdate,
+                                                            pszSubFieldName, 0);
+            poTargetRecord->SetIntSubfield(FOID_FIELD, 0, pszSubFieldName, 0,
+                                           nVal);
+        }
+    }
+
+    // Deal with SPAS field updates
+    const auto apoSPASFieldUpdates = poUpdateRecord->GetFields(SPAS_FIELD);
+    if (!apoSPASFieldUpdates.empty())
+    {
+        struct SPASField
+        {
+            int RRNM = 0;
+            int RRID = 0;
+            int ORNT = 0;
+            int SMIN = 0;
+            int SMAX = 0;
+            int SAUI = 0;
+
+            static SPASField Read(const DDFRecord *poRecord,
+                                  const DDFField *poField, int i)
+            {
+                SPASField f;
+                f.RRNM = poRecord->GetIntSubfield(poField, RRNM_SUBFIELD, i);
+                f.RRID = poRecord->GetIntSubfield(poField, RRID_SUBFIELD, i);
+                f.ORNT = poRecord->GetIntSubfield(poField, ORNT_SUBFIELD, i);
+                f.SMIN = poRecord->GetIntSubfield(poField, SMIN_SUBFIELD, i);
+                f.SMAX = poRecord->GetIntSubfield(poField, SMAX_SUBFIELD, i);
+                f.SAUI = poRecord->GetIntSubfield(poField, SAUI_SUBFIELD, i);
+                return f;
+            }
+        };
+
+        std::vector<SPASField> asSPASFields;
+        // Ingest the existing/target record(s)
+        for (auto *poField : poTargetRecord->GetFields(SPAS_FIELD))
+        {
+            const int nRepeatCount = poField->GetRepeatCount();
+            for (int i = 0; i < nRepeatCount; ++i)
+            {
+                asSPASFields.push_back(
+                    SPASField::Read(poTargetRecord, poField, i));
+            }
+
+            poTargetRecord->DeleteField(poField);
+        }
+
+        // Apply the update record(s)
+        for (const auto *poSPASFieldUpdate : apoSPASFieldUpdates)
+        {
+            const int nUpdateRepeatCount = poSPASFieldUpdate->GetRepeatCount();
+            for (int i = 0; i < nUpdateRepeatCount; ++i)
+            {
+                SPASField updateFld =
+                    SPASField::Read(poUpdateRecord, poSPASFieldUpdate, i);
+                if (updateFld.SAUI == INSTRUCTION_INSERT)
+                {
+                    asSPASFields.push_back(updateFld);
+                }
+                else if (updateFld.SAUI == INSTRUCTION_DELETE)
+                {
+                    bool bMatchFound = false;
+                    for (size_t j = 0; j < asSPASFields.size(); ++j)
+                    {
+                        if (asSPASFields[j].RRNM == updateFld.RRNM &&
+                            asSPASFields[j].RRID == updateFld.RRID)
+                        {
+                            bMatchFound = true;
+                            asSPASFields.erase(asSPASFields.begin() + j);
+                            break;
+                        }
+                    }
+                    if (!bMatchFound &&
+                        !EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                            "%s, RCNM=%d, RCID=%d, SPAS iSubField=%d: update "
+                            "field references RRNM=%d, RRID=%d which does not "
+                            "exist in initial or previous update",
+                            m_osFilename.c_str(), static_cast<int>(nRCNM),
+                            nRCID, i, updateFld.RRNM, updateFld.RRID)))
+                    {
+                        return false;
+                    }
+                }
+                else if (!EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                             "%s, RCNM=%d, RCID=%d, SPAS iSubField=%d: invalid "
+                             "SAUI=%d",
+                             m_osFilename.c_str(), static_cast<int>(nRCNM),
+                             nRCID, i, updateFld.SAUI)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (!asSPASFields.empty())
+        {
+            const auto poSPASFieldDefn =
+                m_oMainModule.FindFieldDefn(SPAS_FIELD);
+            if (!poSPASFieldDefn)
+            {
+                return EMIT_ERROR("Cannot find SPAS field definition");
+            }
+            auto poSPASFieldTarget = poTargetRecord->AddField(poSPASFieldDefn);
+            CPLAssert(poSPASFieldTarget);
+            const auto *poSPASFieldUpdate = apoSPASFieldUpdates[0];
+            if (*(poSPASFieldTarget->GetFieldDefn()) !=
+                *(poSPASFieldUpdate->GetFieldDefn()))
+            {
+                return EMIT_ERROR("SPAS field definitions of update and target "
+                                  "records are different");
+            }
+
+            for (int i = 0; i < static_cast<int>(asSPASFields.size()); ++i)
+            {
+                poTargetRecord->SetIntSubfield(SPAS_FIELD, 0, RRNM_SUBFIELD, i,
+                                               asSPASFields[i].RRNM);
+                poTargetRecord->SetIntSubfield(SPAS_FIELD, 0, RRID_SUBFIELD, i,
+                                               asSPASFields[i].RRID);
+                poTargetRecord->SetIntSubfield(SPAS_FIELD, 0, ORNT_SUBFIELD, i,
+                                               asSPASFields[i].ORNT);
+                poTargetRecord->SetIntSubfield(SPAS_FIELD, 0, SMIN_SUBFIELD, i,
+                                               asSPASFields[i].SMIN);
+                poTargetRecord->SetIntSubfield(SPAS_FIELD, 0, SMAX_SUBFIELD, i,
+                                               asSPASFields[i].SMAX);
+                poTargetRecord->SetIntSubfield(SPAS_FIELD, 0, SAUI_SUBFIELD, i,
+                                               asSPASFields[i].SAUI);
+            }
+        }
+    }
+
+    // Deal with MASK field updates
+    const auto apoMASKFieldUpdates = poUpdateRecord->GetFields(MASK_FIELD);
+    if (!apoMASKFieldUpdates.empty())
+    {
+        struct MASKField
+        {
+            int RRNM = 0;
+            int RRID = 0;
+            int MIND = 0;
+            int MUIN = 0;
+
+            static MASKField Read(const DDFRecord *poRecord,
+                                  const DDFField *poField, int i)
+            {
+                MASKField f;
+                f.RRNM = poRecord->GetIntSubfield(poField, RRNM_SUBFIELD, i);
+                f.RRID = poRecord->GetIntSubfield(poField, RRID_SUBFIELD, i);
+                f.MIND = poRecord->GetIntSubfield(poField, MIND_SUBFIELD, i);
+                f.MUIN = poRecord->GetIntSubfield(poField, MUIN_SUBFIELD, i);
+                return f;
+            }
+        };
+
+        std::vector<MASKField> asMASKFields;
+        // Ingest the existing/target record(s)
+        for (auto *poField : poTargetRecord->GetFields(MASK_FIELD))
+        {
+            const int nRepeatCount = poField->GetRepeatCount();
+            for (int i = 0; i < nRepeatCount; ++i)
+            {
+                asMASKFields.push_back(
+                    MASKField::Read(poTargetRecord, poField, i));
+            }
+
+            poTargetRecord->DeleteField(poField);
+        }
+
+        // Apply the update record(s)
+        for (const auto *poMASKFieldUpdate : apoMASKFieldUpdates)
+        {
+            const int nUpdateRepeatCount = poMASKFieldUpdate->GetRepeatCount();
+            for (int i = 0; i < nUpdateRepeatCount; ++i)
+            {
+                MASKField updateFld =
+                    MASKField::Read(poUpdateRecord, poMASKFieldUpdate, i);
+                if (updateFld.MUIN == INSTRUCTION_INSERT)
+                {
+                    asMASKFields.push_back(updateFld);
+                }
+                else if (updateFld.MUIN == INSTRUCTION_DELETE)
+                {
+                    bool bMatchFound = false;
+                    for (size_t j = 0; j < asMASKFields.size(); ++j)
+                    {
+                        if (asMASKFields[j].RRNM == updateFld.RRNM &&
+                            asMASKFields[j].RRID == updateFld.RRID)
+                        {
+                            bMatchFound = true;
+                            asMASKFields.erase(asMASKFields.begin() + j);
+                            break;
+                        }
+                    }
+                    if (!bMatchFound &&
+                        !EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                            "%s, RCNM=%d, RCID=%d, MASK iSubField=%d: update "
+                            "field references RRNM=%d, RRID=%d which does not "
+                            "exist in initial or previous update",
+                            m_osFilename.c_str(), static_cast<int>(nRCNM),
+                            nRCID, i, updateFld.RRNM, updateFld.RRID)))
+                    {
+                        return false;
+                    }
+                }
+                else if (!EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                             "%s, RCNM=%d, RCID=%d, MASK iSubField=%d: invalid "
+                             "MUIN=%d",
+                             m_osFilename.c_str(), static_cast<int>(nRCNM),
+                             nRCID, i, updateFld.MUIN)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (!asMASKFields.empty())
+        {
+            const auto poMASKFieldDefn =
+                m_oMainModule.FindFieldDefn(MASK_FIELD);
+            if (!poMASKFieldDefn)
+            {
+                return EMIT_ERROR("Cannot find MASK field definition");
+            }
+            auto poMASKFieldTarget = poTargetRecord->AddField(poMASKFieldDefn);
+            CPLAssert(poMASKFieldTarget);
+            const auto *poMASKFieldUpdate = apoMASKFieldUpdates[0];
+            if (*(poMASKFieldTarget->GetFieldDefn()) !=
+                *(poMASKFieldUpdate->GetFieldDefn()))
+            {
+                return EMIT_ERROR("MASK field definitions of update and target "
+                                  "records are different");
+            }
+
+            for (int i = 0; i < static_cast<int>(asMASKFields.size()); ++i)
+            {
+                poTargetRecord->SetIntSubfield(MASK_FIELD, 0, RRNM_SUBFIELD, i,
+                                               asMASKFields[i].RRNM);
+                poTargetRecord->SetIntSubfield(MASK_FIELD, 0, RRID_SUBFIELD, i,
+                                               asMASKFields[i].RRID);
+                poTargetRecord->SetIntSubfield(MASK_FIELD, 0, MIND_SUBFIELD, i,
+                                               asMASKFields[i].MIND);
+                poTargetRecord->SetIntSubfield(MASK_FIELD, 0, MUIN_SUBFIELD, i,
+                                               asMASKFields[i].MUIN);
+            }
+        }
+    }
+
+    return true;
 }

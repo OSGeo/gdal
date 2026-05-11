@@ -56,14 +56,59 @@ class OGRS101Reader
     // a numeric value
     using RecordName = cpl::IntWrapper<RecordNameTag>;
 
+    // Type for NATC subfield (numeric attribute code)
+    struct AttrCodeTag
+    {
+    };
+
+    using AttrCode = cpl::IntWrapper<AttrCodeTag>;
+
+    // Type for PAIX subfield (parent index)
+    struct AttrIndexTag
+    {
+    };
+
+    using AttrIndex = cpl::IntWrapper<AttrIndexTag>;
+
+    // Type for ATIX subfield (attribute index)
+    struct AttrRepeatTag
+    {
+    };
+
+    using AttrRepeat = cpl::IntWrapper<AttrRepeatTag>;
+
+    inline static void AppendUInt8(std::string &s, uint8_t x)
+    {
+        s.append(reinterpret_cast<const char *>(&x), sizeof(x));
+    }
+
+    inline static void AppendUInt16(std::string &s, uint16_t x)
+    {
+        CPL_LSBPTR16(&x);
+        s.append(reinterpret_cast<const char *>(&x), sizeof(x));
+    }
+
+    inline static void AppendInt32(std::string &s, int32_t x)
+    {
+        CPL_LSBPTR32(&x);
+        s.append(reinterpret_cast<const char *>(&x), sizeof(x));
+    }
+
   private:
     /////////////////////////////////////////////////////////////////////////
     // Members
     /////////////////////////////////////////////////////////////////////////
 
     bool m_bStrict = true;
+
+    //! Whereas we are currently processing an update file (.001, .002, ...)
+    bool m_bInUpdate = false;
+
+    //! Whether an update file cancels the dataset.
+    bool m_bCancelled = false;
+
     std::string m_osFilename{};
-    std::unique_ptr<DDFModule> m_poModule{};
+    DDFModule m_oMainModule{};
 
     CPLStringList m_aosMetadata{};
 
@@ -86,13 +131,12 @@ class OGRS101Reader
     int m_nCountSurfaceRecord = 0;         // NOSN
     int m_nCountFeatureTypeRecord = 0;     // NOFR
 
-    struct AttrCodeTag
-    {
-    };
-
-    using AttrCode = cpl::IntWrapper<AttrCodeTag>;
     // from ATCS field
     std::map<AttrCode, std::string> m_attributeCodes{};
+
+    // Maps the AttrCode of the current update to the consolidated one of
+    // m_attributeCodes
+    std::map<AttrCode, AttrCode> m_attributeCodesRemapping{};
 
     struct InfoTypeCodeTag
     {
@@ -102,6 +146,10 @@ class OGRS101Reader
     // from ITCS field
     std::map<InfoTypeCode, std::string> m_informationTypeCodes{};
 
+    // Maps the AttrCode of the current update to the consolidated one of
+    // m_informationTypeCodes
+    std::map<InfoTypeCode, InfoTypeCode> m_informationTypeCodesRemapping{};
+
     struct FeatureTypeCodeTag
     {
     };
@@ -109,6 +157,10 @@ class OGRS101Reader
     using FeatureTypeCode = cpl::IntWrapper<FeatureTypeCodeTag>;
     // from FTCS field
     std::map<FeatureTypeCode, std::string> m_featureTypeCodes{};
+
+    // Maps the AttrCode of the current update to the consolidated one of
+    // m_featureTypeCodes
+    std::map<FeatureTypeCode, FeatureTypeCode> m_featureTypeCodesRemapping{};
 
     struct InfoAssocCodeTag
     {
@@ -118,6 +170,11 @@ class OGRS101Reader
     // from IACS field
     std::map<InfoAssocCode, std::string> m_informationAssociationCodes{};
 
+    // Maps the AttrCode of the current update to the consolidated one of
+    // m_informationAssociationCodes
+    std::map<InfoAssocCode, InfoAssocCode>
+        m_informationAssociationCodesRemapping{};
+
     struct FeatureAssocCodeTag
     {
     };
@@ -126,6 +183,11 @@ class OGRS101Reader
     // from FACS field
     std::map<FeatureAssocCode, std::string> m_featureAssociationCodes{};
 
+    // Maps the AttrCode of the current update to the consolidated one of
+    // m_featureAssociationCodes
+    std::map<FeatureAssocCode, FeatureAssocCode>
+        m_featureAssociationCodesRemapping{};
+
     struct AssocRoleCodeTag
     {
     };
@@ -133,6 +195,10 @@ class OGRS101Reader
     using AssocRoleCode = cpl::IntWrapper<AssocRoleCodeTag>;
     // from ARCS field
     std::map<AssocRoleCode, std::string> m_associationRoleCodes{};
+
+    // Maps the AttrCode of the current update to the consolidated one of
+    // m_featureAssociationCodes
+    std::map<AssocRoleCode, AssocRoleCode> m_associationRoleCodesRemapping{};
 
     static constexpr RecordName PSEUDO_RECORD_NAME_NO_GEOM{-1111111111};
 
@@ -201,19 +267,22 @@ class OGRS101Reader
     // Methods
     /////////////////////////////////////////////////////////////////////////
 
-    bool CheckFieldDefinitions() const;
-    bool CheckField0000Definition() const;
+    bool Load(const std::string &osFilename, VSILFILE *fp,
+              DDFModule *poCurModule);
+
+    bool CheckFieldDefinitions(const DDFModule *poCurModule) const;
+    bool CheckField0000Definition(const DDFModule *poCurModule) const;
 
     bool ReadDatasetGeneralInformationRecord(const DDFRecord *poRecord);
     bool ReadDSID(const DDFRecord *poRecord);
     bool ReadDSSI(const DDFRecord *poRecord);
 
     template <class CodeType>
-    bool ReadGenericCodeAssociation(const DDFRecord *poRecord,
-                                    const char *pszFieldName,
-                                    const char *pszSubField0Name,
-                                    const char *pszSubField1Name,
-                                    std::map<CodeType, std::string> &map) const;
+    bool ReadGenericCodeAssociation(
+        const DDFRecord *poRecord, const char *pszFieldName,
+        const char *pszSubField0Name, const char *pszSubField1Name,
+        std::map<CodeType, std::string> &map,
+        std::map<CodeType, CodeType> &mapRemapping) const;
 
     bool ReadATCS(const DDFRecord *poRecord);
     bool ReadITCS(const DDFRecord *poRecord);
@@ -224,21 +293,37 @@ class OGRS101Reader
 
     bool ReadCSID(const DDFRecord *poRecord);
 
-    bool IngestRecords(const DDFRecord *poRecordIn);
-
-    // Type for PAIX subfield (parent index)
-    struct AttrIndexTag
-    {
-    };
-
-    using AttrIndex = cpl::IntWrapper<AttrIndexTag>;
-
-    // Type for ATIX subfield (attribute index)
-    struct AttrRepeatTag
-    {
-    };
-
-    using AttrRepeat = cpl::IntWrapper<AttrRepeatTag>;
+    bool IngestInitialRecords(const DDFRecord *poRecordIn);
+    bool IngestUpdateRecords(const DDFRecord *poRecordIn,
+                             DDFModule *poCurModule);
+    bool UpdateCodesInRecord(DDFRecord *poRecord) const;
+    bool ProcessUpdateRecord(const DDFRecord *poUpdateRecord,
+                             DDFRecord *poTargetRecord) const;
+    bool ProcessUpdateATTR(const DDFRecord *poUpdateRecord,
+                           DDFRecord *poTargetRecord) const;
+    bool ProcessUpdateINASOrFASC(const DDFRecord *poUpdateRecord,
+                                 DDFRecord *poTargetRecord,
+                                 const char *pszFieldName) const;
+    bool ProcessUpdateAttributeLikeField(const DDFRecord *poUpdateRecord,
+                                         const DDFField *poUpdateField,
+                                         DDFRecord *poTargetRecord,
+                                         DDFField *poTargetField,
+                                         int iFieldInstance) const;
+    bool ProcessUpdateRecordPoint(const DDFRecord *poUpdateRecord,
+                                  DDFRecord *poTargetRecord) const;
+    bool ProcessUpdatePointList(const DDFRecord *poUpdateRecord,
+                                DDFRecord *poTargetRecord,
+                                bool bIs3DAllowed) const;
+    bool ProcessUpdateRecordMultiPoint(const DDFRecord *poUpdateRecord,
+                                       DDFRecord *poTargetRecord) const;
+    bool ProcessUpdateRecordCurve(const DDFRecord *poUpdateRecord,
+                                  DDFRecord *poTargetRecord) const;
+    bool ProcessUpdateRecordCompositeCurve(const DDFRecord *poUpdateRecord,
+                                           DDFRecord *poTargetRecord) const;
+    bool ProcessUpdateRecordSurface(const DDFRecord *poUpdateRecord,
+                                    DDFRecord *poTargetRecord) const;
+    bool ProcessUpdateRecordFeatureType(const DDFRecord *poUpdateRecord,
+                                        DDFRecord *poTargetRecord) const;
 
     using PathElement = std::pair<AttrCode, AttrRepeat>;
     using PathVector = std::vector<PathElement>;
@@ -278,6 +363,12 @@ class OGRS101Reader
             nullptr,
         const OGRS101FeatureCatalogTypes::FeatureType *psFeatureType =
             nullptr) const;
+
+    using NameOccMinOccMax = std::tuple<const char *, int, int>;
+    bool CheckFieldDefinitions(
+        const DDFRecord *poRecord, int iRecord, RecordName nRCNM, int nRCID,
+        const std::map<RecordName, std::vector<std::vector<NameOccMinOccMax>>>
+            &mapExpectedFields) const;
 
     bool IngestAttributes(const DDFRecord *poRecord, int iRecord,
                           const char *pszIDFieldName,
@@ -376,6 +467,12 @@ class OGRS101Reader
     ~OGRS101Reader();
 
     bool Load(GDALOpenInfo *poOpenInfo);
+
+    /** Return whether the dataset is cancelled. */
+    bool IsCancelled() const
+    {
+        return m_bCancelled;
+    }
 
     /** Return feature catalog, or null. */
     const OGRS101FeatureCatalog *GetFeatureCatalog() const

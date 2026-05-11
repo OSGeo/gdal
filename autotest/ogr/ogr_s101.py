@@ -14,6 +14,7 @@
 
 import glob
 import os
+import shutil
 import sys
 
 import gdaltest
@@ -107,8 +108,16 @@ def _alter_xml(
         new_xml = etree.tostring(tree, pretty_print=True)
         f.write(new_xml)
 
-    tmp_000 = out_path / "out.000"
-    gdaltest.runexternal(f"{create_from_xml_path} {tmp_xml} {tmp_000}")
+    if in_xml.endswith(".001.xml"):
+        in_000 = in_xml[0 : -len(".001.xml")] + ".000"
+        tmp_000 = out_path / "out.000"
+        shutil.copy(in_000, tmp_000)
+
+        tmp_001 = out_path / "out.001"
+        gdaltest.runexternal(f"{create_from_xml_path} {tmp_xml} {tmp_001}")
+    else:
+        tmp_000 = out_path / "out.000"
+        gdaltest.runexternal(f"{create_from_xml_path} {tmp_xml} {tmp_000}")
 
     if b"PLACEHOLDER_FF" in new_xml:
         bin_data = open(tmp_000, "rb").read()
@@ -191,6 +200,7 @@ def test_ogr_s101_read_minimal():
         "ENCODING_SPECIFICATION_EDITION": "5.2",
         "PRODUCT_EDITION": "2.0",
         "PRODUCT_IDENTIFIER": "INT.IHO.S-101.2.0",
+        "STATUS": "VALID",
     }
 
 
