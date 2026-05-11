@@ -649,6 +649,13 @@ bool ZarrV3CodecShardingIndexed::Decode(const ZarrByteVectorQuickResize &abySrc,
 
     const size_t nIndexEncodedSize = nInnerChunks * sizeof(Location) +
                                      (m_bIndexHasCRC32 ? sizeof(uint32_t) : 0);
+    if (abySrc.size() < nIndexEncodedSize)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ZarrV3CodecShardingIndexed::Decode(): input buffer is too "
+                 "small to hold the shard index");
+        return false;
+    }
     ZarrByteVectorQuickResize abyIndex;
     if (m_bIndexLocationAtEnd)
     {
