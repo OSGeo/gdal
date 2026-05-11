@@ -1043,8 +1043,7 @@ static bool ReadNode(const GByte *pabyData, const GByte *pabyDataLimit,
                 unsigned int nSize = 0;
                 READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-                if (!ReadOSMInfo(pabyData, pabyDataLimit + nSize, &sNode.sInfo,
-                                 psCtxt))
+                if (!ReadOSMInfo(pabyData, pabyDataLimit, &sNode.sInfo, psCtxt))
                     THROW_OSM_PARSING_EXCEPTION;
 
                 pabyData += nSize;
