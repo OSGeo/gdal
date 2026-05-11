@@ -265,9 +265,9 @@ bool OGRS101Reader::IngestRecords(const DDFRecord *poRecordIn)
         // from the spec. That is check there are no missing required field,
         // no duplicate field or unexpected field.
         std::vector<std::string> fieldsInRecord;
-        for (const auto &oField : poRecord->GetFields())
+        for (const auto &poIterField : poRecord->GetFields())
         {
-            fieldsInRecord.push_back(oField.GetFieldDefn()->GetName());
+            fieldsInRecord.push_back(poIterField->GetFieldDefn()->GetName());
         }
         const auto oIter = mapExpectedFields.find(nRCNM);
         if (oIter != mapExpectedFields.end())
