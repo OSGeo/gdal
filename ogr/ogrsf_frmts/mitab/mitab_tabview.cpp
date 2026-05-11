@@ -1503,7 +1503,8 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
         return nullptr;
     }
 
-    TABFeature *poCurFeature = poMainFeature->CloneTABFeature(m_poDefn);
+    auto poCurFeature =
+        std::unique_ptr<TABFeature>(poMainFeature->CloneTABFeature(m_poDefn));
 
     /*-----------------------------------------------------------------
      * Keep track of FID and copy the geometry
@@ -1531,6 +1532,9 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
             BuildFieldKey(poMainFeature, m_nMainFieldNo,
                           m_poMainTable->GetNativeFieldType(m_nMainFieldNo),
                           m_nRelFieldIndexNo);
+        if (!pKey)
+            return nullptr;
+
         int nRelFeatureId =
             m_poRelINDFileRef->FindFirst(m_nRelFieldIndexNo, pKey);
 
@@ -1565,7 +1569,7 @@ TABFeature *TABRelation::GetFeature(int nFeatureId)
         }
     }
 
-    return poCurFeature;
+    return poCurFeature.release();
 }
 
 /**********************************************************************
@@ -1915,8 +1919,8 @@ int TABRelation::WriteFeature(TABFeature *poFeature, int nFeatureId /*=-1*/)
         GByte *pKey = BuildFieldKey(
             poFeature, 0, m_poRelTable->GetNativeFieldType(0), nUniqueIndexNo);
 
-        if ((nRecordNo = m_poRelINDFileRef->FindFirst(nUniqueIndexNo, pKey)) ==
-            -1)
+        if (!pKey || (nRecordNo = m_poRelINDFileRef->FindFirst(nUniqueIndexNo,
+                                                               pKey)) == -1)
             return -1;
 
         if (nRecordNo == 0)
