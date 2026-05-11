@@ -1633,118 +1633,146 @@ def test_grib_grib2_write_data_encodings():
 # Test GRIB2 write support with warnings/errors
 
 
-def test_grib_grib2_write_data_encodings_warnings_and_errors():
-
-    # Cases where warnings are expected
-    tests = []
-    tests += [
-        [
+@pytest.mark.parametrize(
+    "src_fname,options,expected_warning,checksum",
+    (
+        (
             "data/byte.tif",
-            ["DATA_ENCODING=SIMPLE_PACKING", "DECIMAL_SCALE_FACTOR=1"],
+            {"DATA_ENCODING": "SIMPLE_PACKING", "DECIMAL_SCALE_FACTOR": 1},
+            "DECIMAL_SCALE_FACTOR > 0 makes no sense",
             4672,
-        ]
-    ]
-    tests += [
-        ["data/byte.tif", ["DATA_ENCODING=SIMPLE_PACKING", "JPEG2000_DRIVER=FOO"], 4672]
-    ]
-    tests += [
-        ["data/byte.tif", ["DATA_ENCODING=SIMPLE_PACKING", "JPEG2000_DRIVER=FOO"], 4672]
-    ]
-    tests += [
-        [
+        ),
+        (
             "data/byte.tif",
-            ["DATA_ENCODING=SIMPLE_PACKING", "SPATIAL_DIFFERENCING_ORDER=1"],
+            {"DATA_ENCODING": "SIMPLE_PACKING", "JPEG2000_DRIVER": "FOO"},
+            "",
             4672,
-        ]
-    ]
-    tests += [
-        ["data/grib/ds.mint.bin", ["DATA_ENCODING=SIMPLE_PACKING"], 41640]
-    ]  # should warn since simple packing doesn't support nodata
-    tests += [["data/byte.tif", ["NBITS=32"], 4672]]
-    tests += [["data/byte.tif", ["DATA_ENCODING=IEEE_FLOATING_POINT", "NBITS=8"], 4672]]
-    tests += [
-        [
+        ),
+        (
             "data/byte.tif",
-            ["DATA_ENCODING=IEEE_FLOATING_POINT", "DECIMAL_SCALE_FACTOR=-1"],
+            {"DATA_ENCODING": "SIMPLE_PACKING", "SPATIAL_DIFFERENCING_ORDER": "1"},
+            "SPATIAL_DIFFERENCING_ORDER option ignored",
             4672,
-        ]
-    ]
-    for filename, options, expected_cs in tests:
-        tmpfilename = "/vsimem/out.grb2"
-        src_ds = gdal.Open(filename)
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
-            out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
+        ),
+        (
+            "data/grib/ds.mint.bin",
+            {"DATA_ENCODING": "SIMPLE_PACKING"},
+            "cannot preserve nodata",
+            41640,
+        ),
+        ("data/byte.tif", {"NBITS": 32}, "NBITS clamped to 31", 4672),
+        (
+            "data/byte.tif",
+            {"DATA_ENCODING": "IEEE_FLOATING_POINT", "NBITS": 8},
+            "NBITS ignored",
+            4672,
+        ),
+        (
+            "data/byte.tif",
+            {"DATA_ENCODING": "IEEE_FLOATING_POINT", "DECIMAL_SCALE_FACTOR": -1},
+            "DECIMAL_SCALE_FACTOR ignored",
+            4672,
+        ),
+    ),
+)
+def test_grib_grib2_write_data_encodings_warnings(
+    tmp_vsimem, src_fname, options, checksum, expected_warning
+):
 
-        error_msg = gdal.GetLastErrorMsg()
-        assert error_msg != "", "expected warning for %s, %s" % (
-            str(filename),
-            str(options),
+    with gdal.Open(src_fname) as src_ds:
+        with gdaltest.error_raised(gdal.CE_Warning, expected_warning):
+            out_ds = gdal.GetDriverByName("GRIB").CreateCopy(
+                tmp_vsimem / "out.grb2", src_ds, options=options
+            )
+
+        assert out_ds.GetRasterBand(1).Checksum() == checksum
+
+
+@pytest.mark.parametrize(
+    "src_fname,options,exception",
+    (
+        pytest.param(
+            "data/byte.tif",
+            {"DATA_ENCODING": "FOO"},
+            "Unsupported DATA_ENCODING",
+            id="invalid_DATA_ENCODING",
+        ),
+        pytest.param(
+            "data/byte.tif",
+            {"JPEG2000_DRIVER": "FOO", "SPATIAL_DIFFERENCING_ORDER": "BAR"},
+            "are not compatible",
+            id="incompatible_options",
+        ),
+        pytest.param(
+            "data/byte.tif",
+            {"SPATIAL_DIFFERENCING_ORDER": "3"},
+            "Unsupported value for SPATIAL_DIFFERENCING_ORDER",
+            id="invalid_spatial_diff_order",
+        ),
+        pytest.param(
+            "data/byte.tif",
+            {"JPEG2000_DRIVER": "THIS_IS_NOT_A_J2K_DRIVER"},
+            "Cannot find JPEG2000 driver",
+            id="invalid_driver",
+        ),
+        pytest.param(
+            "data/byte.tif",
+            {"JPEG2000_DRIVER": "DERIVED"},
+            "Cannot find JPEG2000 driver",
+            id="read_only_driver",
+        ),
+        pytest.param(
+            "../gcore/data/cfloat32.tif",
+            {},
+            "Unsupported data type",
+            id="complex_data_type",
+        ),
+        pytest.param(
+            "data/aaigrid/float64.asc",
+            {},
+            "missing spatial reference system",
+            id="no_projection",
+        ),
+        pytest.param(
+            "data/test_nosrs.vrt", {}, "must have a geotransform", id="no_geotransform"
+        ),
+        pytest.param(
+            "../gcore/data/geomatrix.tif",
+            {},
+            "rotation terms not supported",
+            id="rotated_geotransform",
+        ),
+    ),
+)
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_data_encodings_errors(
+    tmp_vsimem, src_fname, options, exception
+):
+
+    with gdal.Open(src_fname) as src_ds:
+        with pytest.raises(Exception, match=exception):
+            gdal.GetDriverByName("GRIB").CreateCopy(
+                tmp_vsimem / "out.grb2", src_ds, options=options
+            )
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_error_too_large(tmp_vsimem):
+
+    with gdal.GetDriverByName("GTiff").Create(
+        tmp_vsimem / "huge.tif", 65535, 65535, 1, options=["SPARSE_OK=YES"]
+    ) as src_ds:
+        with pytest.raises(Exception, match="more than 2 billion pixels"):
+            gdal.GetDriverByName("GRIB").CreateCopy(tmp_vsimem / "out.grb2", src_ds)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_error_invalid_location(tmp_path):
+
+    with pytest.raises(Exception):
+        gdal.Translate(
+            f"{tmp_path}/i/do_not/exist.grb2", "data/byte.tif", format="GRIB"
         )
-        assert out_ds is not None, "did not expect null return for %s, %s" % (
-            str(filename),
-            str(options),
-        )
-
-        cs = out_ds.GetRasterBand(1).Checksum()
-
-        out_ds = None
-        gdal.Unlink(tmpfilename)
-        if not isinstance(expected_cs, tuple):
-            expected_cs = (expected_cs,)
-        assert cs in expected_cs, "did not get expected checksum for %s, %s" % (
-            str(filename),
-            str(options),
-        )
-
-    # Cases where errors are expected
-    tests = []
-    tests += [["data/byte.tif", ["DATA_ENCODING=FOO"]]]  # invalid DATA_ENCODING
-    tests += [
-        ["data/byte.tif", ["JPEG2000_DRIVER=FOO", "SPATIAL_DIFFERENCING_ORDER=BAR"]]
-    ]  # both cannot be used together
-    tests += [["data/byte.tif", ["SPATIAL_DIFFERENCING_ORDER=3"]]]
-    tests += [
-        ["data/byte.tif", ["JPEG2000_DRIVER=THIS_IS_NOT_A_J2K_DRIVER"]]
-    ]  # non-existing driver
-    tests += [["data/byte.tif", ["JPEG2000_DRIVER=DERIVED"]]]  # Read-only driver
-    tests += [["../gcore/data/cfloat32.tif", []]]  # complex data type
-    tests += [["data/aaigrid/float64.asc", []]]  # no projection
-    if gdaltest.vrt_has_open_support():
-        tests += [["data/test_nosrs.vrt", []]]  # no geotransform
-    tests += [["data/envi/rotation.img", []]]  # geotransform with rotation terms
-    gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/huge.tif", 65535, 65535, 1, options=["SPARSE_OK=YES"]
-    )
-    tests += [["/vsimem/huge.tif", []]]  # too many pixels
-
-    for (
-        filename,
-        options,
-    ) in tests:
-        tmpfilename = "/vsimem/out.grb2"
-        src_ds = gdal.Open(filename)
-        gdal.ErrorReset()
-        with gdal.quiet_errors():
-            out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
-
-        error_msg = gdal.GetLastErrorMsg()
-        assert error_msg != "", "expected warning for %s, %s" % (
-            str(filename),
-            str(options),
-        )
-        assert out_ds is None, "expected null return for %s, %s" % (
-            str(filename),
-            str(options),
-        )
-        out_ds = None
-        gdal.Unlink(tmpfilename)
-
-    gdal.Unlink("/vsimem/huge.tif")
-
-    with gdal.quiet_errors():
-        out_ds = gdal.Translate("/i/do_not/exist.grb2", "data/byte.tif", format="GRIB")
-    assert out_ds is None, "expected null return"
 
 
 ###############################################################################
