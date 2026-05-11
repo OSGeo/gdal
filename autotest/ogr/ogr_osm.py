@@ -955,3 +955,15 @@ def test_ogr_osm_parse_complex_multipolygon():
         f,
         "MULTIPOLYGON (((0 10,0 11,1 11,1 10,0 10),(0.1 10.1,0.1 10.4,0.9 10.4,0.9 10.6,0.1 10.1),(0.1 10.6,0.1 10.9,0.9 10.9,0.9 10.6,0.1 10.6)))",
     )
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14532
+
+
+def test_ogr_osm_parse_fix_gh14532():
+
+    ds = ogr.Open("data/osm/poc_14532.osm.pbf")
+    for lyr in ds:
+        for f in lyr:
+            pass
