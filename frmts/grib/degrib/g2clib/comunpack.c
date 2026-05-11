@@ -147,7 +147,7 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
       if (idrsnum == 3) {
          if (nbitsd != 0) {
 // one mistake here should be unsigned int
-              gbit(cpack,&ival1,iofst,nbitsd);
+              int ok = gbit2(cpack, cpack_length, &ival1, iofst,nbitsd) != -1;
               iofst=iofst+nbitsd;
 //              gbit(cpack,&isign,iofst,1);
 //              iofst=iofst+1
@@ -156,7 +156,7 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
 //              if (isign == 1) ival1=-ival1;
               if (idrstmpl[16] == 2) {
 // one mistake here should be unsigned int
-                 gbit(cpack,&ival2,iofst,nbitsd);
+                 ok = ok && gbit2(cpack, cpack_length, &ival2,iofst,nbitsd) != -1;
                  iofst=iofst+nbitsd;
 //                 gbit(cpack,&isign,iofst,1);
 //                 iofst=iofst+1;
@@ -164,10 +164,19 @@ int comunpack(unsigned char *cpack,g2int cpack_length,g2int lensec,g2int idrsnum
 //                 iofst=iofst+nbitsd-1;
 //                 if (isign == 1) ival2=-ival2;
               }
-              gbit(cpack,&isign,iofst,1);
+              ok = ok && gbit2(cpack, cpack_length, &isign,iofst,1) != -1;
               iofst=iofst+1;
-              gbit(cpack,&minsd,iofst,nbitsd-1);
+              ok = ok && gbit2(cpack, cpack_length, &minsd,iofst,nbitsd-1) != - 1;
               iofst=iofst+nbitsd-1;
+
+              if (!ok)
+              {
+                  free(ifld);
+                  free(gref);
+                  free(gwidth);
+                  return -1;
+              }
+
               if (isign == 1 && minsd != INT_MIN) minsd=-minsd;
          }
          else {

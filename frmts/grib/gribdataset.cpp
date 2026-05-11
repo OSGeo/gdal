@@ -847,7 +847,7 @@ CPLErr GRIBRasterBand::LoadData()
         ReadGribData(poGDS->fp, start, subgNum, &m_Grib_Data, &m_Grib_MetaData);
         if (!m_Grib_Data)
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Out of memory.");
+            CPLError(CE_Failure, CPLE_AppDefined, "Error reading GRIB data.");
             if (m_Grib_MetaData != nullptr)
             {
                 MetaFree(m_Grib_MetaData);
