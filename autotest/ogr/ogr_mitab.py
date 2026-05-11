@@ -2571,6 +2571,19 @@ def test_ogr_mitab_description(tmp_vsimem):
 
 
 ###############################################################################
+# Check write/read description
+
+
+def test_ogr_mitab_all_double_quotes(tmp_vsimem):
+    filename = tmp_vsimem / "test_description.tab"
+
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test_description", options=["DESCRIPTION=" + ('"' * 100)])
+    lyr.CreateField(ogr.FieldDefn("test", ogr.OFTInteger))
+    assert lyr.GetMetadataItem("DESCRIPTION") == ('"' * 100)
+
+
+###############################################################################
 # Test writing and reading back unset/null date, time, datetime
 
 

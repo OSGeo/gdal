@@ -60,7 +60,7 @@ static char *EscapeString(const char *pszInput,
     char *pszOutput = static_cast<char *>(CPLMalloc(nLength * 2 + 1));
     int iOut = 0;
     int nDoubleQuotesCount = 0;
-    for (int iIn = 0; iIn < static_cast<int>(nLength + 1); ++iIn)
+    for (int iIn = 0; iIn < static_cast<int>(nLength); ++iIn)
     {
         if (pszInput[iIn] == '"')
         {
