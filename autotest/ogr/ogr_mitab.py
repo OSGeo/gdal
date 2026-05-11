@@ -3134,3 +3134,16 @@ def test_ogr_mitab_used_layer_creation_option_instead_of_creation_option(tmp_vsi
         ):
             lyr = ds.CreateLayer("out", options=["FORMAT=TAB"])
             lyr.CreateField(ogr.FieldDefn("x"))
+
+
+###############################################################################
+
+
+@gdaltest.disable_exceptions()
+def test_ogr_mitab_gh_14529(tmp_vsimem):
+
+    with gdal.quiet_errors():
+        with ogr.Open("data/mitab/poc_14529") as ds:
+            for lyr in ds:
+                for f in lyr:
+                    pass
