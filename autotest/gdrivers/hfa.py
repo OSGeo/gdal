@@ -1375,3 +1375,8 @@ def test_hfa_rat_new_types(tmp_vsimem):
 
         rat.SetValueAsWKBGeometry(0, 2, wkb)
         assert rat.GetValueAsWKBGeometry(0, 2) == wkb
+
+
+def test_hfa_read_poc_14547():
+
+    gdal.Open("data/hfa/poc_14547.img")
