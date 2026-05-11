@@ -13,6 +13,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import base64
 import os
 import shutil
 import struct
@@ -2438,3 +2439,17 @@ def test_grib_grib2_tmerc_negative_false_easting_false_northing(tmp_vsimem):
             "+proj=tmerc +lat_0=-1 +lon_0=-2 +k=1 +x_0=-300000 +y_0=-400000"
             in ds.GetSpatialRef().ExportToProj4()
         )
+
+
+@gdaltest.enable_exceptions()
+def test_grib_complex_unpacking_invalid_bits_per_packed_value(tmp_vsimem):
+
+    with gdal.VSIFile(tmp_vsimem / "src.grib2", "wb") as infile:
+        infile.write(
+            base64.b64decode(
+                "R1JJQgAAAAIAAAAAAAAA4gAAABUBAAcAAAIBAQfoAQEAAAAAAQAAAEgDAAAAABAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAQAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACIEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAxBQAAABAAAwAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAQjyAAAAAAEAAAAQAAJbAAAABgb/AAAAGAcBookAAVwDBAUlBwgJCgUMDQ4PNzc3Nw=="
+            )
+        )
+
+    with pytest.raises(Exception, match="Error reading GRIB data"):
+        gdal.Translate("", tmp_vsimem / "src.grib2", format="MEM")
