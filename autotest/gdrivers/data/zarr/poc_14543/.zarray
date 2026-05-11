@@ -1,0 +1,1 @@
+{"chunks":[2],"compressor":null,"dtype":[["a","|S1"],["p0","<u8"],["p1","<u8"],["p2","<u8"],["b","|S79"]],"fill_value":null,"filters":null,"order":"C","shape":[2],"zarr_format":2}

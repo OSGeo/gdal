@@ -9199,3 +9199,13 @@ def test_zarr_v3_read_vlen_utf8_truncation(tmp_vsimem):
             ar = rg.OpenMDArray("ar")
             result = ar.Read()
             assert result[0] == "x" * 10  # truncated to max_length
+
+
+###############################################################################
+# Test Zarr v2 with a compound data type with 2 strings
+
+
+def test_zarr_v2_compound_two_strings(tmp_vsimem):
+
+    ds = gdal.OpenEx("data/zarr/poc_14543", gdal.OF_MULTIDIM_RASTER)
+    gdal.MultiDimInfo(ds, detailed=True, as_text=True)

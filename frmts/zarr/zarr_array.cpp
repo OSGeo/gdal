@@ -604,13 +604,13 @@ void ZarrArray::DeallocateDecodedBlockData()
     if (!m_abyDecodedBlockData.empty())
     {
         const size_t nDTSize = m_oType.GetSize();
-        GByte *pDst = &m_abyDecodedBlockData[0];
         const size_t nValues = m_abyDecodedBlockData.size() / nDTSize;
         for (const auto &elt : m_aoDtypeElts)
         {
             if (elt.nativeType == DtypeElt::NativeType::STRING_ASCII ||
                 elt.nativeType == DtypeElt::NativeType::STRING_UNICODE)
             {
+                GByte *pDst = &m_abyDecodedBlockData[0];
                 for (size_t i = 0; i < nValues; i++, pDst += nDTSize)
                 {
                     char *ptr;
