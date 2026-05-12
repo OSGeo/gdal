@@ -54,7 +54,7 @@ points are particularly relevant:
 
 * Vibe coding generally generates more code than what a human could come with.
   This tends to produce bloated code bases, which make them unmaintainable in
-  the long run, without forcing other contributor to use AI/LLM tools.
+  the long run, without forcing other contributors to use AI/LLM tools.
 
 Handling Violations
 -------------------
