@@ -162,6 +162,8 @@ Supporter
     .. note::
         Sponsors are listed in randomized order within their sponsorship level.
 
+.. _sponsorship_program:
+
 Sponsorship Program
 --------------------------------------------------------------------------------
 
