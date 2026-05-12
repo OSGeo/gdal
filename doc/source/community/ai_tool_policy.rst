@@ -29,6 +29,10 @@ degradation. Indiscriminate usage of LLM in open source projects *consume*
 maintenance, and the GDAL LLM tool policy attempts to conserve that
 resource.
 
+Courts (in particular the US ones) have not definitely determined whether
+LLM outputs are derived works of the training data, or whether LLM-written
+code can even be copyrighted by a human.
+
 Policy
 --------------------------------------------------------------------------------
 
@@ -41,7 +45,11 @@ subject to details mentioned below:
       should be fully understood by the author(s) submitting them to the
       project.
 
-    * Submission of unsupervised vibe-coded contributions is *banned*.
+    * Submission of vibe-coded contributions is *banned*.
+
+    * LLM use may only be used as an improved auto-completion mechanism, or
+      for repeated tasks (mechanical refactoring) that could potentially be
+      completed with a deterministic algorithm.
 
     * Human-coordinated or uncoordinated (OpenClaw, etc) use of agents for
       submission of contributions the GDAL repository is *banned*.
@@ -88,3 +96,5 @@ cost and disruption of LLMs in keystone projects such as GDAL.
 
 .. spelling:word-list::
     LLM
+    documenters
+    unmerged
