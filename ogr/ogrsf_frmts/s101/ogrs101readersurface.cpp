@@ -191,7 +191,7 @@ OGRS101Reader::ReadSurfaceGeometry(const DDFRecord *poRecord, int iRecord,
                                          poCurvePart->getNumPoints() - 1, 0);
             else
                 poRing->addSubLineString(poCurvePart.get());
-            if (!poRing->get_IsClosed())
+            if (poRing->getNumPoints() <= 2 || !poRing->get_IsClosed())
             {
                 CPL_IGNORE_RET_VAL(EMIT_ERROR_OR_WARNING(
                     CPLSPrintf("%s: Ring of index %d is not closed.",
