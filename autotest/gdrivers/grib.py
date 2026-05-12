@@ -108,12 +108,8 @@ def test_grib_2():
 def test_grib_read_different_sizes_messages():
 
     tst = gdaltest.GDALTest("GRIB", "grib/bug3246.grb", 4, 4081)
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "data access may be incomplete"):
         tst.testOpen()
-
-    msg = gdal.GetLastErrorMsg()
-    assert "data access may be incomplete" in msg, "did not get expected warning."
-    assert gdal.GetLastErrorType() == 2, "did not get expected warning."
 
 
 ###############################################################################
@@ -644,9 +640,11 @@ def test_grib_grib2_read_spatial_differencing_order_1():
 # Test GRIB2 creation options
 
 
-def test_grib_grib2_write_creation_options(tmp_vsimem):
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_1(tmp_vsimem):
 
-    tmpfilename = "/vsimem/out.grb2"
+    tmpfilename = tmp_vsimem / "out.grb2"
+
     gdal.Translate(
         tmpfilename,
         "data/byte.tif",
@@ -670,11 +668,15 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
     }
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
-    ds = None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_2(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with PDS_TEMPLATE_NUMBERS and more elements than needed (warning)
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "Extra bytes will be ignored"):
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -694,12 +696,16 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
     }
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
-    ds = None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_3(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES and insufficient number of elements
-    with gdal.quiet_errors():
-        out_ds = gdal.Translate(
+    with pytest.raises(Exception, match="requires 27 bytes in PDS_TEMPLATE_NUMBERS"):
+        gdal.Translate(
             tmpfilename,
             "data/byte.tif",
             format="GRIB",
@@ -708,8 +714,12 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
                 "PDS_TEMPLATE_NUMBERS=20 0 156 72 0 255 99 0 0 0 1 0 0 0 0 1 255 255 255 255 255 255 255 255 255 255",
             ],
         )
-    assert out_ds is None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_4(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES
     gdal.Translate(
@@ -729,20 +739,24 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
     }
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
-    ds = None
-    gdal.Unlink(tmpfilename)
 
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_5(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES and more elements than needed (warning)
-    with gdal.quiet_errors():
-        out_ds = gdal.Translate(
-            tmpfilename,
-            "data/byte.tif",
-            format="GRIB",
-            creationOptions=[
-                "PDS_PDTN=40",
-                "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647 0extra",
-            ],
-        )
+    # FIXME: Warning is not currently emitted
+    out_ds = gdal.Translate(
+        tmpfilename,
+        "data/byte.tif",
+        format="GRIB",
+        creationOptions=[
+            "PDS_PDTN=40",
+            "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647 0extra",
+        ],
+    )
+
     assert out_ds is not None
     out_ds = None
     ds = gdal.Open(tmpfilename)
@@ -753,12 +767,16 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
     }
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
-    ds = None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_6(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES and insufficient number of elements
-    with gdal.quiet_errors():
-        out_ds = gdal.Translate(
+    with pytest.raises(Exception, match="requires at least 16 elements"):
+        gdal.Translate(
             tmpfilename,
             "data/byte.tif",
             format="GRIB",
@@ -767,8 +785,12 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
                 "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127",
             ],
         )
-    assert out_ds is None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_7(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES with variable number of elements
     gdal.Translate(
@@ -788,12 +810,16 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
     }
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
-    ds = None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_8(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES with variable number of elements, and insufficient number of elements in the variable section
-    with gdal.quiet_errors():
-        out_ds = gdal.Translate(
+    with pytest.raises(Exception, match="requires 20 elements"):
+        gdal.Translate(
             tmpfilename,
             "data/byte.tif",
             format="GRIB",
@@ -802,11 +828,15 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
                 "PDS_TEMPLATE_ASSEMBLED_VALUES=5 7 2 0 0 0 0 1 0 2 31 285 17292 2 61145 31 285 17292 2",
             ],
         )
-    assert out_ds is None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_9(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES with variable number of elements, and extra elements
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "Extra elements will be ignored"):
         gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -824,8 +854,12 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
     }
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
-    ds = None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_10(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with PDS_TEMPLATE_NUMBERS with variable number of elements
     gdal.Translate(
@@ -845,11 +879,15 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
     }
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
-    ds = None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_11(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with unknown PDS_PDTN with PDS_TEMPLATE_NUMBERS
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "PDS_PDTN = 65535 is unknown"):
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -858,18 +896,22 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
         )
     assert out_ds is not None
     out_ds = None
-    with gdal.quiet_errors():
+    with gdal.quiet_warnings():
         ds = gdal.Open(tmpfilename)
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {"GRIB_PDS_PDTN": "65535", "GRIB_PDS_TEMPLATE_NUMBERS": "1 2 3 4 5"}
     for k in expected_md:
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
-    ds = None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_12(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with unknown PDS_PDTN with PDS_TEMPLATE_ASSEMBLED_VALUES
-    with gdal.quiet_errors():
-        out_ds = gdal.Translate(
+    with pytest.raises(Exception, match="PDS_PDTN = 65535 is unknown"):
+        gdal.Translate(
             tmpfilename,
             "data/byte.tif",
             format="GRIB",
@@ -878,19 +920,32 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
                 "PDS_TEMPLATE_ASSEMBLED_VALUES=1 2 3 4 5",
             ],
         )
-    assert out_ds is None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_13(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with PDS_PDTN != 0 without template numbers
-    with gdal.quiet_errors():
-        out_ds = gdal.Translate(
+    with pytest.raises(
+        Exception,
+        match="PDS_TEMPLATE_NUMBERS and PDS_TEMPLATE_ASSEMBLED_VALUES missing",
+    ):
+        gdal.Translate(
             tmpfilename, "data/byte.tif", format="GRIB", creationOptions=["PDS_PDTN=32"]
         )
-    assert out_ds is None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_14(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with invalid values in PDS_TEMPLATE_NUMBERS
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "Value -1 of index 0 in PDS should be in [0,255] range"
+    ):
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -898,11 +953,17 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
             creationOptions=["PDS_PDTN=254", "PDS_TEMPLATE_NUMBERS=-1 256 0 0 0 0"],
         )
     assert out_ds is not None
-    out_ds = None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_15(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with invalid values in PDS_TEMPLATE_ASSEMBLED_VALUES
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "Value -1 of index 0 in PDS should be in [0,255] range"
+    ):
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -914,12 +975,19 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
             ],
         )
     assert out_ds is not None
-    out_ds = None
-    gdal.Unlink(tmpfilename)
+
+
+@gdaltest.enable_exceptions()
+def test_grib_grib2_write_creation_options_16(tmp_vsimem):
+
+    tmpfilename = tmp_vsimem / "out.grb2"
 
     # Test with both PDS_TEMPLATE_NUMBERS and PDS_TEMPLATE_ASSEMBLED_VALUES
-    with gdal.quiet_errors():
-        out_ds = gdal.Translate(
+    with pytest.raises(
+        Exception,
+        match="PDS_TEMPLATE_NUMBERS and PDS_TEMPLATE_ASSEMBLED_VALUES are exclusive",
+    ):
+        gdal.Translate(
             tmpfilename,
             "data/byte.tif",
             format="GRIB",
@@ -929,8 +997,6 @@ def test_grib_grib2_write_creation_options(tmp_vsimem):
                 "PDS_TEMPLATE_ASSEMBLED_VALUES=20 0 40008 0 255 99 0 0 1 0 1 -127 -2147483647 255 -127 -2147483647",
             ],
         )
-    assert out_ds is None
-    gdal.Unlink(tmpfilename)
 
 
 ###############################################################################
