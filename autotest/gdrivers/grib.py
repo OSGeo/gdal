@@ -25,9 +25,12 @@ pytestmark = pytest.mark.require_driver("GRIB")
 
 
 ###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
+
+
+@pytest.fixture(autouse=True)
+def fail_on_warnings():
+
+    with gdaltest.error_raised(gdal.CE_None):
         yield
 
 
@@ -640,7 +643,6 @@ def test_grib_grib2_read_spatial_differencing_order_1():
 # Test GRIB2 creation options
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_1(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -670,7 +672,6 @@ def test_grib_grib2_write_creation_options_1(tmp_vsimem):
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_2(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -698,7 +699,6 @@ def test_grib_grib2_write_creation_options_2(tmp_vsimem):
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_3(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -716,7 +716,6 @@ def test_grib_grib2_write_creation_options_3(tmp_vsimem):
         )
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_4(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -741,7 +740,6 @@ def test_grib_grib2_write_creation_options_4(tmp_vsimem):
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_5(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -769,7 +767,6 @@ def test_grib_grib2_write_creation_options_5(tmp_vsimem):
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_6(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -787,7 +784,6 @@ def test_grib_grib2_write_creation_options_6(tmp_vsimem):
         )
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_7(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -812,7 +808,6 @@ def test_grib_grib2_write_creation_options_7(tmp_vsimem):
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_8(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -830,7 +825,6 @@ def test_grib_grib2_write_creation_options_8(tmp_vsimem):
         )
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_9(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -856,7 +850,6 @@ def test_grib_grib2_write_creation_options_9(tmp_vsimem):
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_10(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -881,7 +874,6 @@ def test_grib_grib2_write_creation_options_10(tmp_vsimem):
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_11(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -904,7 +896,6 @@ def test_grib_grib2_write_creation_options_11(tmp_vsimem):
         assert k in md and md[k] == expected_md[k], "Did not get expected metadata"
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_12(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -922,7 +913,6 @@ def test_grib_grib2_write_creation_options_12(tmp_vsimem):
         )
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_13(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -937,7 +927,6 @@ def test_grib_grib2_write_creation_options_13(tmp_vsimem):
         )
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_14(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -955,7 +944,6 @@ def test_grib_grib2_write_creation_options_14(tmp_vsimem):
     assert out_ds is not None
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_15(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -977,7 +965,6 @@ def test_grib_grib2_write_creation_options_15(tmp_vsimem):
     assert out_ds is not None
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_creation_options_16(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -1399,7 +1386,6 @@ def _grib_read_section5_template_number(fname):
         ),
     ),
 )
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_write_data_encodings(
     tmp_vsimem, filename, options, expected_cs, sec5_tn
 ):
@@ -1437,7 +1423,6 @@ def test_grib_grib2_write_data_encodings(
         ("../gcore/data/float32.tif", {}, 4672),
     ],
 )
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_write_data_png_encoding(tmp_vsimem, filename, options, expected_cs):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -1455,7 +1440,6 @@ def test_grib_grib2_write_data_png_encoding(tmp_vsimem, filename, options, expec
 @pytest.mark.parametrize(
     "dtype", ("int16", "uint16", "int32", "uint32", "float32", "float64")
 )
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_write_data_types(tmp_vsimem, dtype):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -1477,7 +1461,6 @@ def test_grib_grib2_write_data_types(tmp_vsimem, dtype):
 
 @pytest.mark.parametrize("dtype", ("float32", "float64"))
 @pytest.mark.parametrize("encoding", ("IEEE_FLOATING_POINT", "COMPLEX_PACKING"))
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_write_fp_encoding(tmp_vsimem, dtype, encoding):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -1500,7 +1483,6 @@ def test_grib_grib2_write_fp_encoding(tmp_vsimem, dtype, encoding):
 
 
 @pytest.mark.parametrize("encoding", (None, "COMPLEX_PACKING", "PNG", "JPEG2000"))
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_write_all_ones(tmp_vsimem, encoding, found_j2k_drivers):
 
     if encoding == "PNG" and gdal.GetDriverByName("PNG") is None:
@@ -1526,7 +1508,6 @@ def test_grib_grib2_write_all_ones(tmp_vsimem, encoding, found_j2k_drivers):
         assert out_ds.GetRasterBand(1).Checksum() == 1
 
 
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_write_nodata_never_hit(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -1544,7 +1525,6 @@ def test_grib_grib2_write_nodata_never_hit(tmp_vsimem):
         assert out_ds.GetRasterBand(1).Checksum() == 0
 
 
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_write_data_all_nodata(tmp_vsimem):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -1588,24 +1568,14 @@ def test_grib_grib2_write_data_encodings_dynamic_lt_1(
     test_ds.WriteRaster(0, 0, 2, 2, struct.pack(4 * "f", 1.23, 1.45, 1.56, 1.78))
 
     tmpfilename = tmp_vsimem / "out.grb2"
-    gdal.ErrorReset()
+
     options = {"DATA_ENCODING": encoding}
     if encoding == "COMPLEX_PACKING":
-        with gdal.quiet_errors():
-            success = gdal.Translate(
-                tmpfilename, test_ds, format="GRIB", creationOptions=options
-            )
-        assert not success, "expected error for %s, %s" % (
-            "floating point data with dynamic < 1",
-            str(options),
-        )
+        with pytest.raises(Exception, match="Error while packing"):
+            gdal.Translate(tmpfilename, test_ds, format="GRIB", creationOptions=options)
     else:
         gdal.Translate(tmpfilename, test_ds, format="GRIB", creationOptions=options)
-        error_msg = gdal.GetLastErrorMsg()
-        assert error_msg == "", "did not expect error for %s, %s" % (
-            "floating point data with dynamic < 1",
-            str(options),
-        )
+
         out_ds = gdal.Open(tmpfilename)
         got_vals = struct.unpack(4 * "d", out_ds.ReadRaster())
         out_ds = None
@@ -1624,7 +1594,6 @@ def test_grib_grib2_write_data_encodings_dynamic_lt_1(
 
 
 @pytest.mark.parametrize("encoding", ["SIMPLE_PACKING", "PNG", "JPEG2000"])
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_write_data_encodings_fp_large_dynamic(
     tmp_vsimem, encoding, found_j2k_drivers
 ):
@@ -1689,7 +1658,6 @@ def test_grib_grib2_write_data_encodings_fp_large_dynamic(
         ("data/float32.tif", {}, 4672),
     ],
 )
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_j2k_encoding(
     tmp_vsimem, filename, options, expected_cs, found_j2k_drivers
 ):
@@ -1712,7 +1680,6 @@ def test_grib_grib2_j2k_encoding(
         assert out_ds.GetRasterBand(1).Checksum() in expected_cs
 
 
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_write_j2k_drivers(tmp_vsimem, j2k_driver):
 
     tmpfilename = tmp_vsimem / "out.grb2"
@@ -1729,7 +1696,6 @@ def test_grib_grib2_write_j2k_drivers(tmp_vsimem, j2k_driver):
 
 
 # Test lossy J2K compression
-@gdaltest.enable_exceptions(include_warnings=True)
 def test_grib_grib2_write_j2k_lossy(tmp_vsimem, j2k_driver):
     tmpfilename = tmp_vsimem / "out.grb2"
 
@@ -1862,19 +1828,18 @@ def test_grib_grib2_write_data_encodings_warnings(
         ),
     ),
 )
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_data_encodings_errors(
     tmp_vsimem, src_fname, options, exception
 ):
 
     with gdal.Open(src_fname) as src_ds:
         with pytest.raises(Exception, match=exception):
-            gdal.GetDriverByName("GRIB").CreateCopy(
-                tmp_vsimem / "out.grb2", src_ds, options=options
-            )
+            with gdal.quiet_warnings():  # some options produce both a warning and an error
+                gdal.GetDriverByName("GRIB").CreateCopy(
+                    tmp_vsimem / "out.grb2", src_ds, options=options
+                )
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_error_too_large(tmp_vsimem):
 
     with gdal.GetDriverByName("GTiff").Create(
@@ -1884,7 +1849,6 @@ def test_grib_grib2_write_error_too_large(tmp_vsimem):
             gdal.GetDriverByName("GRIB").CreateCopy(tmp_vsimem / "out.grb2", src_ds)
 
 
-@gdaltest.enable_exceptions()
 def test_grib_grib2_write_error_invalid_location(tmp_path):
 
     with pytest.raises(Exception):
@@ -2410,7 +2374,11 @@ def test_grib_grib1_2_mix_sidecar():
     assert ds_idx.GetRasterBand(2).GetMetadataItem("GRIB_ELEMENT") == "REFD"
     assert ds_idx.GetRasterBand(18).GetMetadataItem("GRIB_ELEMENT") == "DIRSW"
     assert ds_idx.GetRasterBand(1).Checksum() == 59985
-    assert ds_idx.GetRasterBand(18).Checksum() == 4794
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "Georeferencing of band 18 may be incorrect"
+    ):
+        assert ds_idx.GetRasterBand(18).Checksum() == 4794
 
     ds_no_idx = gdal.OpenEx(
         "data/grib/broken_combined_grib2_grib1.grb2",
@@ -2426,18 +2394,21 @@ def test_grib_grib1_2_mix_sidecar():
         ds_no_idx.GetRasterBand(18).GetDescription()
         == "1[-] SFC (Ground or water surface)"
     ), "Description does not match, sidecar index is probably ignored"
-    for i in range(1, ds_no_idx.RasterCount):
-        assert (
-            ds_no_idx.GetRasterBand(i).Checksum() == ds_idx.GetRasterBand(i).Checksum()
-        )
-        assert (
-            ds_no_idx.GetRasterBand(i).GetMetadata().keys()
-            == ds_idx.GetRasterBand(i).GetMetadata().keys()
-        )
-        for key in ds_no_idx.GetRasterBand(i).GetMetadata().keys():
-            assert ds_no_idx.GetRasterBand(i).GetMetadataItem(
-                key
-            ) == ds_idx.GetRasterBand(i).GetMetadataItem(key)
+
+    with gdal.quiet_warnings():
+        for i in range(1, ds_no_idx.RasterCount):
+            assert (
+                ds_no_idx.GetRasterBand(i).Checksum()
+                == ds_idx.GetRasterBand(i).Checksum()
+            )
+            assert (
+                ds_no_idx.GetRasterBand(i).GetMetadata().keys()
+                == ds_idx.GetRasterBand(i).GetMetadata().keys()
+            )
+            for key in ds_no_idx.GetRasterBand(i).GetMetadata().keys():
+                assert ds_no_idx.GetRasterBand(i).GetMetadataItem(
+                    key
+                ) == ds_idx.GetRasterBand(i).GetMetadataItem(key)
 
 
 # Test reading a parameter that is only in WMO tables and not DEGRIB ones
@@ -2459,7 +2430,8 @@ def test_grib_grib2_parameter_in_wmo_tables_only():
 
 def test_grib_grib1_south_polar_stereographic():
 
-    ds = gdal.Open("/vsisparse/data/grib/south_polar_stereo_grib1.grb.xml")
+    with gdal.quiet_warnings():
+        ds = gdal.Open("/vsisparse/data/grib/south_polar_stereo_grib1.grb.xml")
     assert "+proj=stere +lat_0=-90 +lat_ts=-60" in ds.GetSpatialRef().ExportToProj4()
     assert ds.GetGeoTransform() == pytest.approx(
         (-3243994.6063763676, 7673.0, 0.0, 3286668.2989108698, 0.0, -7673.0)
@@ -2517,7 +2489,8 @@ def test_grib_grib2_template_5_42_CCDS_aes_decompression():
     if gdal.GetDriverByName("GRIB").GetMetadataItem("HAVE_AEC"):
         assert ds.GetRasterBand(1).Checksum() == 41970
     else:
-        assert ds.GetRasterBand(1).Checksum() == -1
+        with pytest.raises(Exception, match="Error reading GRIB data"):
+            ds.GetRasterBand(1).Checksum()
 
 
 # https://github.com/OSGeo/gdal/issues/10655
@@ -2561,7 +2534,6 @@ def test_grib_grib2_tmerc_negative_false_easting_false_northing(tmp_vsimem):
         )
 
 
-@gdaltest.enable_exceptions()
 def test_grib_complex_unpacking_invalid_bits_per_packed_value(tmp_vsimem):
 
     with gdal.VSIFile(tmp_vsimem / "src.grib2", "wb") as infile:

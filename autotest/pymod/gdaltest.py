@@ -1807,22 +1807,13 @@ def SetCacheMax(val):
 
 
 @contextlib.contextmanager
-def enable_exceptions(*, include_warnings=False):
+def enable_exceptions():
     from osgeo import ogr, osr
 
     with gdal.ExceptionMgr(useExceptions=True), osr.ExceptionMgr(
         useExceptions=True
     ), ogr.ExceptionMgr(useExceptions=True):
-        if include_warnings:
-
-            def handler(lvl, no, msg):
-                if lvl == gdal.CE_Warning:
-                    gdal.Error(gdal.CE_Failure, no, msg)
-
-            with error_handler(handler):
-                yield
-        else:
-            yield
+        yield
 
 
 ###############################################################################
