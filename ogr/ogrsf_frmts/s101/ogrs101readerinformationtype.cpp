@@ -105,5 +105,7 @@ bool OGRS101Reader::FillFeatureInformationType(const DDFRecordIndex &oIndex,
     // An IRID record might have a ATTR field, a INAS field (thus pointing
     // to another IRID record), both or none...
     return FillFeatureAttributes(oIndex, iRecord, ATTR_FIELD, oFeature) &&
-           FillFeatureAttributes(oIndex, iRecord, INAS_FIELD, oFeature);
+           FillFeatureAttributes(oIndex, iRecord, INAS_FIELD, oFeature) &&
+           FillFeatureWithNonAttrAssocSubfields(poRecord, iRecord, INAS_FIELD,
+                                                oFeature);
 }

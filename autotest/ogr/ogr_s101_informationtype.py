@@ -138,9 +138,9 @@ def test_ogr_s101_read_information_type_with_inas():
         "recordVersion": 1,
         "informationType": "SpatialQuality",
         "text": None,
-        "infoAssociationRecordId": None,
-        "infoAssociationCode": None,
-        "infoAssociationRoleCode": None,
+        "infoAssociationRecordId": 1,
+        "infoAssociationCode": "SpatialAssociation",
+        "infoAssociationRoleCode": "defines",
         "association_text": None,
     }
 
@@ -150,9 +150,9 @@ def test_ogr_s101_read_information_type_with_inas():
         "recordVersion": 1,
         "informationType": "SpatialQuality",
         "text": None,
-        "infoAssociationRecordId": None,
-        "infoAssociationCode": None,
-        "infoAssociationRoleCode": None,
+        "infoAssociationRecordId": 1,
+        "infoAssociationCode": "SpatialAssociation",
+        "infoAssociationRoleCode": "defines",
         "association_text": "INAS only",
     }
 
@@ -162,9 +162,9 @@ def test_ogr_s101_read_information_type_with_inas():
         "recordVersion": 1,
         "informationType": "SpatialQuality",
         "text": "ATTR",
-        "infoAssociationRecordId": None,
-        "infoAssociationCode": None,
-        "infoAssociationRoleCode": None,
+        "infoAssociationRecordId": 1,
+        "infoAssociationCode": "SpatialAssociation",
+        "infoAssociationRoleCode": "defines",
         "association_text": "INAS",
     }
 
