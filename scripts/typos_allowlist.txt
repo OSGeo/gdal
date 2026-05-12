@@ -385,3 +385,4 @@ for Bosnia and Herzegovina (country code "BA"), limited to the "county" subtype.
                   "RCNM!RCID!ENSP!ENED!PRSP!PRED!PROF!DSNM!DSTL!DSRD!DSLG!"
         {"ENED", "ENCODING_SPECIFICATION_EDITION"},
              {"RCNM!RCID!ENSP!ENED!PRSP!PRED!PROF!DSNM!DSTL!DSRD!DSLG!DSAB!"
+    assert rel_content.count("[TAULA_PRINCIPAL:PERIMETRE]") == 1
