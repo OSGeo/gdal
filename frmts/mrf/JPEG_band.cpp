@@ -722,7 +722,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, const buf_mgr &isrc)
                 break;
             default:
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "MRF: Input JPEG type missmatch");
+                         "MRF: Input JPEG type mismatch");
                 jpeg_destroy_decompress(&cinfo);
                 return CE_Failure;
         }
