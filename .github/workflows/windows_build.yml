@@ -35,7 +35,7 @@ jobs:
             PROJ_BRANCH: "9.3"
             LIBZSTD_URL: "https://github.com/facebook/zstd/releases/download/v1.4.5/zstd-v1.4.5-win32.zip"
             LIBDEFLATE_URL: "https://github.com/ebiggers/libdeflate/releases/download/v1.6/libdeflate-1.6-windows-i686-bin.zip"
-            SWIG_URL: "https://unlimited.dl.sourceforge.net/project/swig/swigwin/swigwin-4.4.1/swigwin-4.4.1.zip?viasf=1"
+            SWIG_URL: "https://raw.githubusercontent.com/rouault/downloads/refs/heads/main/swigwin-4.4.1.zip"
 
     env:
         VS_VERSION: ${{ matrix.VS_VERSION }}
