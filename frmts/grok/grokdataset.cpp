@@ -29,6 +29,11 @@
 JP2GRKDatasetBase::~JP2GRKDatasetBase()
 {
     delete m_codec;
+    if (m_ovFp)
+    {
+        VSIFCloseL(m_ovFp);
+        m_ovFp = nullptr;
+    }
 }
 
 /************************************************************************/
