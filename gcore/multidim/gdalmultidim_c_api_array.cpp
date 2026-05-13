@@ -1684,8 +1684,8 @@ CPLErr GDALMDArrayBuildOverviews(GDALMDArrayH hArray, const char *pszResampling,
  * @since GDAL 3.14
  */
 bool GDALMDArrayGuessGeoTransform(GDALMDArrayH hArray, size_t nDimX,
-                                 size_t nDimY, bool bPixelIsPoint,
-                                 double padfGeoTransform[6])
+                                  size_t nDimY, bool bPixelIsPoint,
+                                  double padfGeoTransform[6])
 {
     VALIDATE_POINTER1(hArray, __func__, false);
 
