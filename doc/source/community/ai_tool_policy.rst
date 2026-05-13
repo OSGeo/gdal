@@ -23,9 +23,9 @@ project at all.
 
 With the explosion of LLM usage in software development, the constrained
 resource is now "maintenance". It is the time to review your contribution, the
-time to make it concise, the time refactor it in to a larger system, and the
+time to make it concise, the time to refactor it in to a larger system, and the
 time to protect the larger software system from disruption, breakage, and
-performance degradation. Indiscriminate usage of LLM in open source projects
+performance degradation. Indiscriminate usage of LLMs in open source projects
 *consume* maintenance, and the GDAL LLM tool policy attempts to conserve that
 resource.
 
