@@ -2711,44 +2711,15 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
             if (dfTargetRatio > 1.0)
             {
-                // Note: keep this logic for overview selection in sync between
-                // gdalwarp_lib.cpp and rasterio.cpp
                 const char *pszOversampligThreshold = CPLGetConfigOption(
                     "GDALWARP_OVERSAMPLING_THRESHOLD", nullptr);
                 const double dfOversamplingThreshold =
                     pszOversampligThreshold ? CPLAtof(pszOversampligThreshold)
                                             : 1.0;
 
-                int iBestOvr = -1;
-                double dfBestRatio = 0;
-                for (int iOvr = -1; iOvr < nOvCount; iOvr++)
-                {
-                    const double dfOvrRatio =
-                        iOvr < 0
-                            ? 1.0
-                            : static_cast<double>(poSrcDS->GetRasterXSize()) /
-                                  poSrcDS->GetRasterBand(1)
-                                      ->GetOverview(iOvr)
-                                      ->GetXSize();
-
-                    // Is it nearly the requested factor and better (lower) than
-                    // the current best factor?
-                    // Use an epsilon because of numerical instability.
-                    constexpr double EPSILON = 1e-1;
-                    if (dfOvrRatio >=
-                            dfTargetRatio * dfOversamplingThreshold + EPSILON ||
-                        dfOvrRatio <= dfBestRatio)
-                    {
-                        continue;
-                    }
-
-                    iBestOvr = iOvr;
-                    dfBestRatio = dfOvrRatio;
-                    if (std::abs(dfTargetRatio - dfOvrRatio) < EPSILON)
-                    {
-                        break;
-                    }
-                }
+                const int iBestOvr = GDALBandGetBestOverviewLevel(
+                    poSrcDS->GetRasterBand(1), dfTargetRatio,
+                    dfOversamplingThreshold);
                 const int iOvr =
                     iBestOvr + (psOptions->nOvLevel - OVR_LEVEL_AUTO);
                 if (iOvr >= 0)

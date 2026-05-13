@@ -226,6 +226,10 @@ GDALGetThreadSafeDataset(std::unique_ptr<GDALDataset> poDS, int nScopeFlags);
 GDALDataset CPL_DLL *GDALGetThreadSafeDataset(GDALDataset *poDS,
                                               int nScopeFlags);
 
+int GDALBandGetBestOverviewLevel(GDALRasterBand *poBand,
+                                 double dfTargetDownsamplingRatio,
+                                 double dfOversamplingThreshold);
+
 void GDALNullifyOpenDatasetsList();
 CPLMutex **GDALGetphDMMutex();
 CPLMutex **GDALGetphDLMutex();
