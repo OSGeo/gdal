@@ -4630,7 +4630,6 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
     GPtrDiff_t iRowOffset =
         iSrcOffset + static_cast<GPtrDiff_t>(jMin - 1) * nSrcXSize + iMin;
 
-    int nCountValid = 0;
     const bool bIsNonComplex = !GDALDataTypeIsComplex(poWK->eWorkingDataType);
 
     for (int j = jMin; j <= jMax; ++j)
@@ -4656,8 +4655,6 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                 // Skip sampling if pixel has zero density.
                 if (padfRowDensity[i - iMin] < SRC_DENSITY_THRESHOLD_DOUBLE)
                     continue;
-
-                nCountValid++;
 
                 //  Use a cached set of weights for this row.
                 const double dfWeight2 = dfWeight1 * padfWeightsXShifted[i];
@@ -4700,13 +4697,36 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
         }
     }
 
-    if (dfAccumulatorWeight < 0.000001 ||
-        (padfRowDensity != nullptr &&
-         (dfAccumulatorDensity < 0.000001 ||
-          nCountValid < (jMax - jMin + 1) * (iMax - iMin + 1) / 2)))
+    if (dfAccumulatorWeight < 0.000001)
     {
         *pdfDensity = 0.0;
         return false;
+    }
+    else if (padfRowDensity)
+    {
+        if (dfAccumulatorDensity < 0.000001)
+        {
+            *pdfDensity = 0.0;
+            return false;
+        }
+
+        // TODO: previously we returned *pdfDensity when
+        // nCountValid < (jMax - jMin + 1) * (iMax - iMin + 1) / 2)
+        // that was initially introduced in
+        // https://github.com/OSGeo/gdal/commit/b68d31418f4826402dc44b52152c0493b682fea8
+        // but in scenarios like https://github.com/OSGeo/gdal/issues/14560
+        // this lead to almst full removal of text printed on transparent
+        // background. It is not clear what we should do.
+        //
+        // Wisdom from https://mastodon.social/@martinfleis@fosstodon.org/116568957538009577
+        // LJW: "It is a fundamental change of support problem with no closed
+        // solution. We looked into bootstrapping to solve it, but never
+        // published. Basic idea was to bootstrap a constant sample size, set
+        // the weight of candidates as a kernel function on the distance from
+        // the target, and set the bandwidth needed at each pixel as that
+        // which maximizes the entropy of a histogram of sample weights.
+        // Best you can do is define some loss and optimize the resampling
+        // against it."
     }
 
     // Calculate the output taking into account weighting.
