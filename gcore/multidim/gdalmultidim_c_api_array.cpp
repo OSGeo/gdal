@@ -1683,22 +1683,20 @@ CPLErr GDALMDArrayBuildOverviews(GDALMDArrayH hArray, const char *pszResampling,
  *
  * @since GDAL 3.14
  */
-int GDALMDArrayGuessGeoTransform(GDALMDArrayH hArray, size_t nDimX,
+bool GDALMDArrayGuessGeoTransform(GDALMDArrayH hArray, size_t nDimX,
                                  size_t nDimY, bool bPixelIsPoint,
                                  double padfGeoTransform[6])
 {
-    VALIDATE_POINTER1(hArray, __func__, 0);
+    VALIDATE_POINTER1(hArray, __func__, false);
 
     // Bounds check to prevent segfault see #14567
     const auto dims = hArray->m_poImpl->GetDimensions();
     if (nDimX >= dims.size() || nDimY >= dims.size())
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Dimension index out of range");
-        return 0;
+        return false;
     }
     // we allow nDimX and nDimY to be equal, harmless if not meaningful
     return hArray->m_poImpl->GuessGeoTransform(nDimX, nDimY, bPixelIsPoint,
-                                               padfGeoTransform)
-               ? 1
-               : 0;
+                                               padfGeoTransform);
 }
