@@ -61,7 +61,7 @@ subject to details mentioned below:
 
     * The contributing human author is ultimately responsible for every line of
       code, comment, or mailing list interaction they initiate, and all of it
-      are subject to the project's :ref:`code_of_conduct`.
+      is subject to the project's :ref:`code_of_conduct`.
 
     * The typical high verbosity of LLM code and text is actively discouraged.
       More code is more code to maintain. High verbosity contribution (tickets,
