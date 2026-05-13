@@ -482,6 +482,14 @@ MMRPalettes::GetPaletteColors_PAL_P25_P65(const CPLString &os_Color_Paleta_DBF)
     const char *pszLine;
     while ((pszLine = CPLReadLineL(fpColorTable)) != nullptr)
     {
+        if (nNReadPaletteColors >= m_nNPaletteColors)
+        {
+            VSIFCloseL(fpColorTable);
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid color table: \"%s\"",
+                     osColorTableFileName.c_str());
+            return CE_Failure;
+        }
+
         // Ignore empty lines
         if (pszLine[0] == '\0')
             continue;
