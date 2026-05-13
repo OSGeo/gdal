@@ -1141,7 +1141,7 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
         if (loc.nOffset == std::numeric_limits<uint64_t>::max() &&
             loc.nSize == std::numeric_limits<uint64_t>::max())
         {
-            // Empty chunk — fill with nodata
+            // Empty chunk - fill with nodata
             try
             {
                 aResults[iReq].resize(nExpectedDecodedChunkSize);
@@ -1181,10 +1181,17 @@ bool ZarrV3CodecShardingIndexed::BatchDecodePartial(
     // Validate against file size (same threshold as DecodePartial)
     constexpr size_t THRESHOLD = 10 * 1024 * 1024;
     {
-        size_t nMaxSize = 0;
-        for (const auto &s : anDataSizes)
-            nMaxSize = std::max(nMaxSize, s);
-        if (nMaxSize > THRESHOLD)
+        uint64_t nAccSize = 0;
+        for (const auto &nSize : anDataSizes)
+        {
+            if (nAccSize > std::numeric_limits<uint64_t>::max() - nSize)
+            {
+                nAccSize = std::numeric_limits<uint64_t>::max();
+                break;
+            }
+            nAccSize += nSize;
+        }
+        if (nAccSize > THRESHOLD)
         {
             poFile->Seek(0, SEEK_END);
             const auto nFileSize = poFile->Tell();
