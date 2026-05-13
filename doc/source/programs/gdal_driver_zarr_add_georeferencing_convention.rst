@@ -40,7 +40,7 @@ Add (but not replace) a georeferencing convention to an existing ZARR dataset.
 
 This has only effect on arrays for which georeferencing is recognized.
 
-This can for example been used to add the Zarr `spatial <https://github.com/zarr-conventions/spatial>`__
+This can been used for example to add the Zarr `spatial <https://github.com/zarr-conventions/spatial>`__
 and `geo-proj <https://github.com/zarr-conventions/geo-proj>`__ conventions
 by specifying :option:`--convention` to ``spatial_proj``.
 
