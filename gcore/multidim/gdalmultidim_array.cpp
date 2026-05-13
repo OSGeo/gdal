@@ -1322,8 +1322,8 @@ bool GDALMDArray::ReadUsingContiguousIRead(
 
 /** Returns whether 2 specified dimensions form a geotransform
  *
- * @param nDimX                Index of the X axis.
- * @param nDimY                Index of the Y axis.
+ * @param nDimX                Index of the X axis (in [0, GetDimensionCount()-1] range).
+ * @param nDimY                Index of the Y axis (in [0, GetDimensionCount()-1] range).
  * @param bPixelIsPoint        Whether the geotransform should be returned
  *                             with the pixel-is-point (pixel-center) convention
  *                             (bPixelIsPoint = true), or with the pixel-is-area
@@ -1363,8 +1363,8 @@ bool GDALMDArray::GuessGeoTransform(size_t nDimX, size_t nDimY,
 
 /** Returns whether 2 specified dimensions form a geotransform
  *
- * @param nDimX                Index of the X axis.
- * @param nDimY                Index of the Y axis.
+ * @param nDimX                Index of the X axis (in [0, GetDimensionCount()-1] range).
+ * @param nDimY                Index of the Y axis (in [0, GetDimensionCount()-1] range).
  * @param bPixelIsPoint        Whether the geotransform should be returned
  *                             with the pixel-is-point (pixel-center) convention
  *                             (bPixelIsPoint = true), or with the pixel-is-area
