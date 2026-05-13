@@ -486,6 +486,14 @@ MMRPalettes::GetPaletteColors_PAL_P25_P65(const CPLString &os_Color_Paleta_DBF)
         if (pszLine[0] == '\0')
             continue;
 
+        if (nNReadPaletteColors >= m_nNPaletteColors)
+        {
+            VSIFCloseL(fpColorTable);
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid color table: \"%s\"",
+                     osColorTableFileName.c_str());
+            return CE_Failure;
+        }
+
         const CPLStringList aosTokens(CSLTokenizeString2(pszLine, " \t", 0));
         if (aosTokens.size() != 4)
         {
