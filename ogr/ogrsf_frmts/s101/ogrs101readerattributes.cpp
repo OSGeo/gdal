@@ -721,7 +721,9 @@ bool OGRS101Reader::InferFeatureDefn(
                         sAttrDef.oReversedPath.front().first);
                     if (it != m_attributeCodes.end())
                     {
-                        if (cpl::ends_with(it->second, "Date"))
+                        if (cpl::ends_with(it->second, "Date") ||
+                            cpl::ends_with(it->second, "dateStart") ||
+                            cpl::ends_with(it->second, "dateEnd"))
                         {
                             eOGRType = OFTDate;
                         }
@@ -736,7 +738,8 @@ bool OGRS101Reader::InferFeatureDefn(
                         sAttrDef.oReversedPath.front().first);
                     if (it != m_attributeCodes.end())
                     {
-                        if (cpl::ends_with(it->second, "dateStart") ||
+                        if (cpl::ends_with(it->second, "Date") ||
+                            cpl::ends_with(it->second, "dateStart") ||
                             cpl::ends_with(it->second, "dateEnd"))
                         {
                             eOGRType = OFTDate;
