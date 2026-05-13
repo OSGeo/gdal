@@ -1301,6 +1301,21 @@ public:
   }
 %clear (int overviewlist, int *pOverviews);
 
+
+%apply (double argout[ANY]) {double padfGeoTransform[6]};
+#ifdef SWIGJAVA
+  int GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint, double padfGeoTransform[6]) {
+    return GDALMDArrayGuessGeoTransform(self, nDimX, nDimY, bPixelIsPoint, padfGeoTransform);
+  }
+#else
+  %apply (IF_FALSE_RETURN_NONE) { (RETURN_NONE) };
+  RETURN_NONE GuessGeoTransform(size_t nDimX, size_t nDimY, bool bPixelIsPoint, double padfGeoTransform[6]) {
+    return GDALMDArrayGuessGeoTransform(self, nDimX, nDimY, bPixelIsPoint, padfGeoTransform);
+  }
+  %clear (RETURN_NONE);
+#endif
+%clear (double padfGeoTransform[6]);
+
 } /* extend */
 }; /* GDALMDArrayH */
 

@@ -2869,6 +2869,10 @@ GDALMDArrayGetMeshGrid(const GDALMDArrayH *pahInputArrays,
                        size_t nCountInputArrays, size_t *pnCountOutputArrays,
                        CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
+bool CPL_DLL GDALMDArrayGuessGeoTransform(GDALMDArrayH hArray, size_t nDimX,
+                                          size_t nDimY, bool bPixelIsPoint,
+                                          double padfGeoTransform[6]);
+
 #ifdef __cplusplus
 extern "C++"
 {

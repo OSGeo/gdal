@@ -1998,3 +1998,77 @@ def test_multidim_array_as_dataset_error():
     </ArraySource>
   </VRTRasterBand>
 </VRTDataset>""")
+
+
+def test_multidim_guesstransform_no_indexing():
+    ## two dimensions, no indexing variables
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 2)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    gt = ar.GuessGeoTransform(1, 0, False)
+    assert gt is None
+
+
+def test_multidim_guesstransform_regular_2d():
+    ## two regular indexing variables
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds_ivars")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 4)
+    varY = rg.CreateMDArray(
+        dimY.GetName(), [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varY.Write(array.array("d", [90 - 0.9 - i for i in range(dimY.GetSize())]))
+    dimY.SetIndexingVariable(varY)
+    varX = rg.CreateMDArray(
+        dimX.GetName(), [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varX.Write(array.array("d", [-180 + 0.9 + i for i in range(dimX.GetSize())]))
+    dimX.SetIndexingVariable(varX)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    gt = ar.GuessGeoTransform(1, 0, False)
+    assert gt == pytest.approx((-179.6, 1.0, 0.0, 89.6, 0.0, -1.0))
+    gt = ar.GuessGeoTransform(0, 1, False)
+    assert gt == pytest.approx((89.6, -1.0, 0.0, -179.6, 0.0, 1.0))
+    gt = ar.GuessGeoTransform(0, 1, True)  # pixel-is-point
+    assert gt == pytest.approx((89.1, -1.0, 0.0, -179.1, 0.0, 1.0))
+    ## allowable, harmless
+    assert ar.GuessGeoTransform(0, 0, False) is not None  # same dim twice
+    assert (
+        ar.GuessGeoTransform(2, 1, False) is None
+    )  # dim out of bounds, but safe in C api
+
+
+def test_multidim_guessgeotransform_irregular_2d():
+    ## two indexing variables, Y is irregular
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds_irreg")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 8)
+    varY = rg.CreateMDArray(
+        dimY.GetName(), [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    # Irregularly spaced values - spacing increases from 1.0 to 6.0
+    varY.Write(array.array("d", [90, 89, 87.5, 85.5, 82.5, 78.5, 73.5, 67.5]))
+    dimY.SetIndexingVariable(varY)
+    varX = rg.CreateMDArray(
+        dimX.GetName(), [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varX.Write(array.array("d", [-180 + 0.9 + i for i in range(dimX.GetSize())]))
+    dimX.SetIndexingVariable(varX)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    gt = ar.GuessGeoTransform(1, 0, False)
+    assert gt is None
+    gt = ar.GuessGeoTransform(0, 1, False)
+    assert gt is None
