@@ -60,7 +60,7 @@ subject to details mentioned below:
       message indication and account for what was written by whom/what.
 
     * The contributing human author is ultimately responsible for every line of
-      code, comment, or mailing list interaction they initiate and all of it
+      code, comment, or mailing list interaction they initiate, and all of it
       are subject to the project's :ref:`code_of_conduct`.
 
     * The typical high verbosity of LLM code and text is actively discouraged.
@@ -95,8 +95,8 @@ Mitigation
 The GDAL :ref:`sponsorship_program` is one way your organization can help
 buffer the cost and disruption of LLMs in keystone projects such as GDAL. The
 constrained resource is maintenance, not adding more code/capability. The
-Sponsorship Program supports operation of GDAL as an ongoing open source
-software project. Without it, much of the activity GDAL users take for granted
+Sponsorship Program financially supports operation of GDAL as an ongoing open source
+software project, and without it, much of the activity GDAL users take for granted
 would simply not happen.
 
 .. below is an allow-list for spelling checker.
