@@ -350,6 +350,19 @@ class CPL_DLL DDFFieldDefn
     // val must be poModule->GetFieldControlLength() - 6 bytes long
     void SetEscapeSequence(const std::string &val);
 
+    bool operator==(const DDFFieldDefn &other) const
+    {
+        return osTag == other.osTag && _fieldName == other._fieldName &&
+               _arrayDescr == other._arrayDescr &&
+               _formatControls == other._formatControls &&
+               _escapeSequence == other._escapeSequence;
+    }
+
+    bool operator!=(const DDFFieldDefn &other) const
+    {
+        return !(operator==(other));
+    }
+
   private:
     static std::string ExtractSubstring(const char *);
 
@@ -601,7 +614,7 @@ class CPL_DLL DDFRecord
     /** Get the number of DDFFields on this record. */
     int GetFieldCount() const
     {
-        return static_cast<int>(aoFields.size());
+        return static_cast<int>(apoFields.size());
     }
 
     const DDFField *FindField(const char *, int = 0) const;
@@ -616,9 +629,11 @@ class CPL_DLL DDFRecord
 
     std::vector<const DDFField *> GetFields(const char *pszFieldName) const;
 
-    const std::vector<DDFField> &GetFields() const
+    std::vector<DDFField *> GetFields(const char *pszFieldName);
+
+    const std::vector<std::unique_ptr<DDFField>> &GetFields() const
     {
-        return aoFields;
+        return apoFields;
     }
 
     DDFField *GetField(int i)
@@ -672,11 +687,19 @@ class CPL_DLL DDFRecord
         return poModule;
     }
 
+    const DDFModule *GetModule() const
+    {
+        return poModule;
+    }
+
     int DeleteField(DDFField *poField);
-    DDFField *AddField(DDFFieldDefn *);
+    DDFField *AddField(const DDFFieldDefn *);
 
     int SetFieldRaw(DDFField *poField, int iIndexWithinField,
                     const char *pachRawData, int nRawDataSize);
+
+    int SetFieldRaw(DDFField *poField, const char *pachRawData,
+                    int nRawDataSize);
 
     int Write();
 
@@ -768,7 +791,7 @@ class CPL_DLL DDFRecord
 
     std::string osData{};  // Whole record except leader with header
 
-    std::vector<DDFField> aoFields{};
+    std::vector<std::unique_ptr<DDFField>> apoFields{};
 
     CPL_DISALLOW_COPY_ASSIGN(DDFRecord)
 };

@@ -100,9 +100,41 @@ bool OGRS101Reader::ReadDSID(const DDFRecord *poRecord)
                 return false;
             }
         }
-        else if (pszValue[0])
+        else
         {
-            m_aosMetadata.SetNameValue(item.pszGDALName, pszValue);
+            if (m_bInUpdate && EQUAL(item.pszS101Name, "DSED"))
+            {
+                const char *pszOldVal =
+                    m_aosMetadata.FetchNameValueDef(item.pszGDALName, "");
+                if (EQUAL(pszValue, pszOldVal) &&
+                    !EMIT_ERROR_OR_WARNING(
+                        CPLSPrintf("%s has the same DATASET_EDITION value '%s' "
+                                   "than the previous update/initial file.",
+                                   m_osFilename.c_str(), pszOldVal)))
+                {
+                    return false;
+                }
+            }
+            else if (m_bInUpdate && !EQUAL(item.pszS101Name, "PROF") &&
+                     !EQUAL(item.pszS101Name, "DSNM") &&
+                     !EQUAL(item.pszS101Name, "DSRD"))
+            {
+                const char *pszOldVal =
+                    m_aosMetadata.FetchNameValueDef(item.pszGDALName, "");
+                if (!EQUAL(pszValue, pszOldVal) &&
+                    !EMIT_ERROR_OR_WARNING(
+                        CPLSPrintf("%s has a different value %s='%s' than the "
+                                   "previous update/initial file ('%s').",
+                                   m_osFilename.c_str(), item.pszS101Name,
+                                   pszValue, pszOldVal)))
+                {
+                    return false;
+                }
+            }
+            if (pszValue[0] ||
+                (m_bInUpdate &&
+                 m_aosMetadata.FetchNameValueDef(item.pszGDALName, "")[0] != 0))
+                m_aosMetadata.SetNameValue(item.pszGDALName, pszValue);
         }
     }
 
@@ -129,7 +161,45 @@ bool OGRS101Reader::ReadDSID(const DDFRecord *poRecord)
         return false;
     }
 
-    if (!CheckFieldDefinitions())
+    const char *pszPROF =
+        m_aosMetadata.FetchNameValueDef("APPLICATION_PROFILE", "");
+    if (EQUAL(pszPROF, "1"))
+    {
+        if (m_bInUpdate &&
+            !EMIT_ERROR_OR_WARNING(
+                CPLSPrintf("Update file %s has APPLICATION_PROFILE=1 (Initial)",
+                           m_osFilename.c_str())))
+        {
+            return false;
+        }
+    }
+    else if (EQUAL(pszPROF, "2"))
+    {
+        if (!m_bInUpdate &&
+            !EMIT_ERROR_OR_WARNING(
+                "Direct opening of files with APPLICATION_PROFILE=2 (Update) "
+                "is not supported. Open the main .000 file"))
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if (!EMIT_ERROR_OR_WARNING(
+                CPLSPrintf("%s: APPLICATION_PROFILE='%s' is invalid",
+                           m_osFilename.c_str(), pszPROF)))
+            return false;
+    }
+
+    const char *pszDSED =
+        m_aosMetadata.FetchNameValueDef("DATASET_EDITION", "");
+    if (EQUAL(pszDSED, "0"))
+    {
+        m_aosMetadata.SetNameValue("STATUS", "CANCELLED");
+        m_bCancelled = true;
+    }
+
+    if (!CheckFieldDefinitions(poRecord->GetModule()))
         return false;
 
     return true;
@@ -141,9 +211,9 @@ bool OGRS101Reader::ReadDSID(const DDFRecord *poRecord)
 
 /** Check that field and subfield definitions conforms to the specification.
  */
-bool OGRS101Reader::CheckFieldDefinitions() const
+bool OGRS101Reader::CheckFieldDefinitions(const DDFModule *poCurModule) const
 {
-    bool bRet = CheckField0000Definition();
+    bool bRet = CheckField0000Definition(poCurModule);
 
     // Note the '\\\\' has 4 bytes instead of the '\\' that appears in the
     // spec, because of the escaping of backslash in C++
@@ -178,11 +248,14 @@ bool OGRS101Reader::CheckFieldDefinitions() const
             {C2IL_FIELD, {"*YCOO!XCOO", "(2b24)"}},
             {C3IL_FIELD, {"VCID\\\\*YCOO!XCOO!ZCOO", "(b11,(3b24))"}},
             {PRID_FIELD, {"RCNM!RCID!RVER!RUIN", "(b11,b14,b12,b11)"}},
+            {COCC_FIELD, {"COUI!COIX!NCOR", "(b11,2b12)"}},
             {MRID_FIELD, {"RCNM!RCID!RVER!RUIN", "(b11,b14,b12,b11)"}},
             {CRID_FIELD, {"RCNM!RCID!RVER!RUIN", "(b11,b14,b12,b11)"}},
             {PTAS_FIELD, {"*RRNM!RRID!TOPI", "(b11,b14,b11)"}},
+            {SECC_FIELD, {"SEUI!SEIX!NSEG", "(b11,2b12)"}},
             {SEGH_FIELD, {"INTP", "(b11)"}},
             {CCID_FIELD, {"RCNM!RCID!RVER!RUIN", "(b11,b14,b12,b11)"}},
+            {CCOC_FIELD, {"CCUI!CCIX!NCCO", "(b11,2b12)"}},
             {CUCO_FIELD, {"*RRNM!RRID!ORNT", "(b11,b14,b11)"}},
             {SRID_FIELD, {"RCNM!RCID!RVER!RUIN", "(b11,b14,b12,b11)"}},
             {RIAS_FIELD, {"*RRNM!RRID!ORNT!USAG!RAUI", "(b11,b14,3b11)"}},
@@ -196,7 +269,7 @@ bool OGRS101Reader::CheckFieldDefinitions() const
             {MASK_FIELD, {"*RRNM!RRID!MIND!MUIN", "(b11,b14,2b11)"}},
         };
 
-    for (const auto &poFieldDefn : m_poModule->GetFieldDefns())
+    for (const auto &poFieldDefn : poCurModule->GetFieldDefns())
     {
         const char *pszFieldName = poFieldDefn->GetName();
         if (strcmp(pszFieldName, _0000_FIELD) != 0)
@@ -295,11 +368,11 @@ bool OGRS101Reader::CheckFieldDefinitions() const
 
 /** Check that the special "0000" field conforms to the specification.
  */
-bool OGRS101Reader::CheckField0000Definition() const
+bool OGRS101Reader::CheckField0000Definition(const DDFModule *poCurModule) const
 {
     bool bRet = true;
 
-    const auto po0000FieldDefn = m_poModule->FindFieldDefn(_0000_FIELD);
+    const auto po0000FieldDefn = poCurModule->FindFieldDefn(_0000_FIELD);
     if (!po0000FieldDefn)
     {
         return EMIT_ERROR_OR_WARNING(
@@ -356,20 +429,20 @@ bool OGRS101Reader::CheckField0000Definition() const
         {CRSH_FIELD, {CSAX_FIELD, VDAT_FIELD}},
         {IRID_FIELD, {ATTR_FIELD, INAS_FIELD}},
         {PRID_FIELD, {INAS_FIELD, C2IT_FIELD, C3IT_FIELD}},
-        {MRID_FIELD, {INAS_FIELD, C2IL_FIELD, C3IL_FIELD}},
-        {CRID_FIELD, {INAS_FIELD, PTAS_FIELD, SEGH_FIELD}},
-        {SEGH_FIELD, {C2IL_FIELD}},
-        {CCID_FIELD, {INAS_FIELD, CUCO_FIELD}},
+        {MRID_FIELD, {INAS_FIELD, COCC_FIELD, C2IL_FIELD, C3IL_FIELD}},
+        {CRID_FIELD, {INAS_FIELD, PTAS_FIELD, SECC_FIELD, SEGH_FIELD}},
+        {SEGH_FIELD, {COCC_FIELD, C2IL_FIELD}},
+        {CCID_FIELD, {INAS_FIELD, CCOC_FIELD, CUCO_FIELD}},
         {SRID_FIELD, {INAS_FIELD, RIAS_FIELD}},
         {FRID_FIELD,
          {FOID_FIELD, ATTR_FIELD, INAS_FIELD, SPAS_FIELD, FASC_FIELD,
           MASK_FIELD}},
     };
 
-    const std::set<std::string> oSetUsedFieldNames = [this]
+    const std::set<std::string> oSetUsedFieldNames = [poCurModule]
     {
         std::set<std::string> s;
-        for (const auto &poFieldDefn : m_poModule->GetFieldDefns())
+        for (const auto &poFieldDefn : poCurModule->GetFieldDefns())
             s.insert(poFieldDefn->GetName());
         return s;
     }();
@@ -583,11 +656,13 @@ bool OGRS101Reader::ReadDSSI(const DDFRecord *poRecord)
     }
 
     // must NOT be set as static, as it depens on "this" !
-    const struct
+    struct KeyIntVal
     {
         const char *pszKey;
         int *pnVal;
-    } intFields[] = {
+    };
+
+    const KeyIntVal intFieldsInitial[] = {
         {"CMFX", &m_nXScale},
         {"CMFY", &m_nYScale},
         {"CMFZ", &m_nZScale},
@@ -599,9 +674,18 @@ bool OGRS101Reader::ReadDSSI(const DDFRecord *poRecord)
         {"NOSN", &m_nCountSurfaceRecord},
         {"NOFR", &m_nCountFeatureTypeRecord},
     };
-
-    for (const auto &field : intFields)
+    const KeyIntVal intFieldsUpdate[] = {
+        {"CMFX", &m_nXScale},
+        {"CMFY", &m_nYScale},
+        {"CMFZ", &m_nZScale},
+    };
+    const auto &begin = m_bInUpdate ? std::begin(intFieldsUpdate)
+                                    : std::begin(intFieldsInitial);
+    const auto &end =
+        m_bInUpdate ? std::end(intFieldsUpdate) : std::end(intFieldsInitial);
+    for (auto oIter = begin; oIter != end; ++oIter)
     {
+        const auto &field = *oIter;
         *(field.pnVal) =
             poRecord->GetIntSubfield(poField, field.pszKey, 0, &bSuccess);
         if (!bSuccess && !EMIT_ERROR_OR_WARNING(CPLSPrintf(
@@ -660,7 +744,8 @@ template <class CodeType>
 bool OGRS101Reader::ReadGenericCodeAssociation(
     const DDFRecord *poRecord, const char *pszFieldName,
     const char *pszSubField0Name, const char *pszSubField1Name,
-    std::map<CodeType, std::string> &map) const
+    std::map<CodeType, std::string> &map,
+    std::map<CodeType, CodeType> &mapRemapping) const
 {
     const auto poField = poRecord->FindField(pszFieldName);
     if (!poField)
@@ -669,6 +754,15 @@ bool OGRS101Reader::ReadGenericCodeAssociation(
         return true;
     }
 
+    // The remapping is only valid when processing the current update file
+    mapRemapping.clear();
+
+    // Map from string value to code (used when processing update files)
+    std::map<std::string, int> reversedMap;
+    for (const auto &[key, value] : map)
+        reversedMap[value] = static_cast<int>(key);
+
+    std::set<CodeType> setCodes;
     const int nRepeatCount = poField->GetRepeatCount();
     for (int i = 0; i < nRepeatCount; ++i)
     {
@@ -681,7 +775,7 @@ bool OGRS101Reader::ReadGenericCodeAssociation(
                 continue;
             return false;
         }
-        const int nCode =
+        const CodeType nCode =
             poRecord->GetIntSubfield(poField, pszSubField1Name, i, &bSuccess);
         if (!bSuccess)
         {
@@ -691,12 +785,48 @@ bool OGRS101Reader::ReadGenericCodeAssociation(
         }
         if (!pszVal)
             pszVal = "(invalid)";
-        if (!map.insert({CodeType(nCode), pszVal}).second &&
-            !EMIT_ERROR_OR_WARNING(
-                CPLSPrintf("%s: several definitions for %s %d.", pszFieldName,
-                           pszSubField1Name, nCode)))
+        if (!setCodes.insert(nCode).second)
         {
-            return false;
+            if (!EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                    "%s: several definitions for %s %d.", pszFieldName,
+                    pszSubField1Name, static_cast<int>(nCode))))
+            {
+                return false;
+            }
+        }
+        else if (m_bInUpdate)
+        {
+            // Update files may re-use codes that were used in the initial file
+            // but for a different string value ! So we must handle potential
+            // clashes.
+            const auto oReversedIter = reversedMap.find(pszVal);
+            if (oReversedIter != reversedMap.end())
+            {
+                const auto nOldCode = oReversedIter->second;
+                mapRemapping.insert({nCode, nOldCode});
+            }
+            else if (!map.insert({nCode, pszVal}).second)
+            {
+                const CodeType largestCode = map.rbegin()->first;
+                if (largestCode == INT_MAX)
+                {
+                    // Very unlikely to happen
+                    return EMIT_ERROR("Lack of available codes");
+                }
+                const CodeType newCode = static_cast<CodeType>(largestCode + 1);
+                map.insert({newCode, pszVal});
+                mapRemapping.insert({nCode, newCode});
+            }
+            else
+            {
+                mapRemapping.insert({nCode, nCode});
+            }
+        }
+        else
+        {
+            const bool bInserted = map.insert({nCode, pszVal}).second;
+            CPL_IGNORE_RET_VAL(bInserted);
+            CPLAssert(bInserted);
         }
     }
 
@@ -712,7 +842,8 @@ bool OGRS101Reader::ReadGenericCodeAssociation(
 bool OGRS101Reader::ReadATCS(const DDFRecord *poRecord)
 {
     return ReadGenericCodeAssociation<AttrCode>(poRecord, ATCS_FIELD, "ATCD",
-                                                "ANCD", m_attributeCodes);
+                                                "ANCD", m_attributeCodes,
+                                                m_attributeCodesRemapping);
 }
 
 /************************************************************************/
@@ -724,7 +855,8 @@ bool OGRS101Reader::ReadATCS(const DDFRecord *poRecord)
 bool OGRS101Reader::ReadITCS(const DDFRecord *poRecord)
 {
     return ReadGenericCodeAssociation<InfoTypeCode>(
-        poRecord, ITCS_FIELD, "ITCD", "ITNC", m_informationTypeCodes);
+        poRecord, ITCS_FIELD, "ITCD", "ITNC", m_informationTypeCodes,
+        m_informationTypeCodesRemapping);
 }
 
 /************************************************************************/
@@ -736,7 +868,8 @@ bool OGRS101Reader::ReadITCS(const DDFRecord *poRecord)
 bool OGRS101Reader::ReadFTCS(const DDFRecord *poRecord)
 {
     return ReadGenericCodeAssociation<FeatureTypeCode>(
-        poRecord, FTCS_FIELD, "FTCD", "FTNC", m_featureTypeCodes);
+        poRecord, FTCS_FIELD, "FTCD", "FTNC", m_featureTypeCodes,
+        m_featureTypeCodesRemapping);
 }
 
 /************************************************************************/
@@ -748,7 +881,8 @@ bool OGRS101Reader::ReadFTCS(const DDFRecord *poRecord)
 bool OGRS101Reader::ReadIACS(const DDFRecord *poRecord)
 {
     return ReadGenericCodeAssociation<InfoAssocCode>(
-        poRecord, IACS_FIELD, "IACD", "IANC", m_informationAssociationCodes);
+        poRecord, IACS_FIELD, "IACD", "IANC", m_informationAssociationCodes,
+        m_informationAssociationCodesRemapping);
 }
 
 /************************************************************************/
@@ -760,7 +894,8 @@ bool OGRS101Reader::ReadIACS(const DDFRecord *poRecord)
 bool OGRS101Reader::ReadFACS(const DDFRecord *poRecord)
 {
     return ReadGenericCodeAssociation<FeatureAssocCode>(
-        poRecord, FACS_FIELD, "FACD", "FANC", m_featureAssociationCodes);
+        poRecord, FACS_FIELD, "FACD", "FANC", m_featureAssociationCodes,
+        m_featureAssociationCodesRemapping);
 }
 
 /************************************************************************/
@@ -772,5 +907,6 @@ bool OGRS101Reader::ReadFACS(const DDFRecord *poRecord)
 bool OGRS101Reader::ReadARCS(const DDFRecord *poRecord)
 {
     return ReadGenericCodeAssociation<AssocRoleCode>(
-        poRecord, ARCS_FIELD, "ARCD", "ARNC", m_associationRoleCodes);
+        poRecord, ARCS_FIELD, "ARCD", "ARNC", m_associationRoleCodes,
+        m_associationRoleCodesRemapping);
 }

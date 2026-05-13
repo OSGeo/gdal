@@ -79,8 +79,6 @@ bool OGRS101Reader::FillFeatureInformationType(const DDFRecordIndex &oIndex,
     const auto poRecord = oIndex.GetByIndex(iRecord);
     CPLAssert(poRecord);
 
-    // Numeric Information Type Code
-    constexpr const char *NITC_SUBFIELD = "NITC";
     const InfoTypeCode nNITC(
         poRecord->GetIntSubfield(IRID_FIELD, 0, NITC_SUBFIELD, 0));
     const auto oIter = m_informationTypeCodes.find(nNITC);
@@ -105,5 +103,7 @@ bool OGRS101Reader::FillFeatureInformationType(const DDFRecordIndex &oIndex,
     // An IRID record might have a ATTR field, a INAS field (thus pointing
     // to another IRID record), both or none...
     return FillFeatureAttributes(oIndex, iRecord, ATTR_FIELD, oFeature) &&
-           FillFeatureAttributes(oIndex, iRecord, INAS_FIELD, oFeature);
+           FillFeatureAttributes(oIndex, iRecord, INAS_FIELD, oFeature) &&
+           FillFeatureWithNonAttrAssocSubfields(poRecord, iRecord, INAS_FIELD,
+                                                oFeature);
 }

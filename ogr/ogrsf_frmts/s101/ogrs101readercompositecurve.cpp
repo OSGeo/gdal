@@ -302,3 +302,179 @@ bool OGRS101Reader::FillFeatureCompositeCurve(const DDFRecordIndex &oIndex,
            FillFeatureWithNonAttrAssocSubfields(poRecord, iRecord, INAS_FIELD,
                                                 oFeature);
 }
+
+/************************************************************************/
+/*                 ProcessUpdateRecordCompositeCurve()                  */
+/************************************************************************/
+
+/** Updates the geometry part of poTargetRecord with poUpdateRecord */
+bool OGRS101Reader::ProcessUpdateRecordCompositeCurve(
+    const DDFRecord *poUpdateRecord, DDFRecord *poTargetRecord) const
+{
+    const auto poIDField = poUpdateRecord->GetField(0);
+    CPLAssert(poIDField);
+    const char *pszIDFieldName = poIDField->GetFieldDefn()->GetName();
+    CPLAssert(pszIDFieldName);
+
+    // Record name
+    const RecordName nRCNM =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCNM_SUBFIELD, 0);
+
+    // Record identifier
+    const int nRCID =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCID_SUBFIELD, 0);
+
+    // Composite Curve Control field
+    const auto poControlField = poUpdateRecord->FindField(CCOC_FIELD);
+    if (!poControlField)
+        return true;
+
+    // Curve Component update instruction
+    constexpr const char *CCUI_SUBFIELD = "CCUI";
+    const int nCCUI =
+        poUpdateRecord->GetIntSubfield(poControlField, CCUI_SUBFIELD, 0);
+    if (nCCUI != INSTRUCTION_INSERT && nCCUI != INSTRUCTION_DELETE &&
+        nCCUI != INSTRUCTION_UPDATE)
+    {
+        return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+            "%s, RCNM=%d, RCID=%d: invalid CCUI = %d", m_osFilename.c_str(),
+            static_cast<int>(nRCNM), nRCID, nCCUI));
+    }
+
+    // Curve Component index (1-based)
+    constexpr const char *CCIX_SUBFIELD = "CCIX";
+    const int nCCIX =
+        poUpdateRecord->GetIntSubfield(poControlField, CCIX_SUBFIELD, 0);
+
+    // Number of Curve Components
+    constexpr const char *NCCO_SUBFIELD = "NCCO";
+    const int nNCCO =
+        poUpdateRecord->GetIntSubfield(poControlField, NCCO_SUBFIELD, 0);
+
+    const auto poTargetField = poTargetRecord->FindField(CUCO_FIELD);
+    if (!poTargetField)
+    {
+        return EMIT_ERROR_OR_WARNING(
+            CPLSPrintf("%s, RCNM=%d, RCID=%d: missing CUCO field in "
+                       "target record",
+                       m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID));
+    }
+    const auto poUpdateField = poUpdateRecord->FindField(CUCO_FIELD);
+
+    if (poUpdateRecord->GetFields(CUCO_FIELD).size() > 1 ||
+        poTargetRecord->GetFields(CUCO_FIELD).size() > 1)
+    {
+        return EMIT_ERROR_OR_WARNING(
+            CPLSPrintf("%s: only one instance of CUCO supported for update",
+                       m_osFilename.c_str()));
+    }
+
+    const int nTargetRepeatCount = poTargetField->GetRepeatCount();
+
+    // Check that start index and count is consistent with update and
+    // target list of curve components
+    const int nMaxCCIXAllowed =
+        nTargetRepeatCount + (nCCUI == INSTRUCTION_INSERT ? 1 : 0);
+    if (nCCIX <= 0 || nCCIX > nMaxCCIXAllowed)
+    {
+        return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+            "%s, RCNM=%d, RCID=%d: invalid CCIX = %d. Must be in [1,%d].",
+            m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID, nCCIX,
+            nMaxCCIXAllowed));
+    }
+
+    const int nUpdateRepeatCount =
+        !poUpdateField ? 0 : poUpdateField->GetRepeatCount();
+
+    if (poUpdateField && nNCCO != nUpdateRepeatCount)
+    {
+        return EMIT_ERROR_OR_WARNING(
+            CPLSPrintf("%s, RCNM=%d, RCID=%d: invalid NCCO = %d. Expected %d",
+                       m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID,
+                       nNCCO, nUpdateRepeatCount));
+    }
+    else if (poUpdateField && nCCUI == INSTRUCTION_DELETE &&
+             !EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                 "%s, RCNM=%d, RCID=%d: unexpected CUCO field in "
+                 "update record in CCUI = %d (delete) mode",
+                 m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID, nCCUI)))
+    {
+        return false;
+    }
+
+    if (nCCUI == INSTRUCTION_UPDATE || nCCUI == INSTRUCTION_DELETE)
+    {
+        if (nCCIX + nNCCO > nTargetRepeatCount + 1)
+        {
+            return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                "%s, RCNM=%d, RCID=%d: invalid CCIX = %d and/or NCCO=%d",
+                m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID, nCCIX,
+                nNCCO));
+        }
+    }
+
+    struct CurveComponent
+    {
+        int RRNM = 0;
+        int RRID = 0;
+        int ORNT = 0;
+
+        void Read(const DDFRecord *poRecord, const DDFField *poField, int i)
+        {
+            RRNM = poRecord->GetIntSubfield(poField, RRNM_SUBFIELD, i);
+            RRID = poRecord->GetIntSubfield(poField, RRID_SUBFIELD, i);
+            ORNT = poRecord->GetIntSubfield(poField, ORNT_SUBFIELD, i);
+        }
+    };
+
+    std::vector<CurveComponent> asTarget;
+    // Ingest the existing/target record
+    for (int i = 0; i < nTargetRepeatCount; ++i)
+    {
+        CurveComponent cc;
+        cc.Read(poTargetRecord, poTargetField, i);
+        asTarget.push_back(cc);
+    }
+
+    // Apply the update record
+    std::vector<CurveComponent> asUpdate;
+    if (poUpdateField)
+    {
+        for (int i = 0; i < nUpdateRepeatCount; ++i)
+        {
+            CurveComponent cc;
+            cc.Read(poUpdateRecord, poUpdateField, i);
+            asUpdate.push_back(cc);
+        }
+    }
+
+    const auto oTargetBeginIter = asTarget.begin() + (nCCIX - 1);
+    if (nCCUI == INSTRUCTION_INSERT)
+    {
+        asTarget.insert(oTargetBeginIter, asUpdate.begin(), asUpdate.end());
+    }
+    else if (nCCUI == INSTRUCTION_UPDATE)
+    {
+        std::copy(asUpdate.begin(), asUpdate.end(), oTargetBeginIter);
+    }
+    else
+    {
+        CPLAssert(nCCUI == INSTRUCTION_DELETE);
+        asTarget.erase(oTargetBeginIter, oTargetBeginIter + nNCCO);
+    }
+
+    // Compose raw target field
+    std::string s;
+    for (const auto &cc : asTarget)
+    {
+        AppendUInt8(s, static_cast<uint8_t>(cc.RRNM));
+        AppendInt32(s, cc.RRID);
+        AppendUInt8(s, static_cast<uint8_t>(cc.ORNT));
+    }
+    AppendUInt8(s, DDF_FIELD_TERMINATOR);
+
+    poTargetRecord->SetFieldRaw(poTargetField, s.data(),
+                                static_cast<int>(s.size()));
+
+    return true;
+}

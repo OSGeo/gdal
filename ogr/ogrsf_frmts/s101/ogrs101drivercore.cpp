@@ -75,6 +75,12 @@ void OGRS101DriverSetCommonMetadata(GDALDriver *poDriver)
         "non-conformity with respect to the S-101 standard is detected. "
         "In non-strict mode, warnings will be emitted but processing will "
         "continue if the non-conformity is not fatal.'/>"
+        "  <Option name='UPDATES' type='string-select' "
+        "description='Should update files be "
+        "incorporated into the base data on the fly' default='APPLY'>"
+        "    <Value>APPLY</Value>"
+        "    <Value>IGNORE</Value>"
+        "  </Option>"
         "</OpenOptionList>");
 
     poDriver->pfnIdentify = OGRS101DriverIdentify;

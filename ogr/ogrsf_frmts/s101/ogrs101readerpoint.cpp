@@ -284,3 +284,78 @@ bool OGRS101Reader::FillFeaturePoint(const DDFRecordIndex &oIndex, int iRecord,
            FillFeatureWithNonAttrAssocSubfields(poRecord, iRecord, INAS_FIELD,
                                                 oFeature);
 }
+
+/************************************************************************/
+/*                      ProcessUpdateRecordPoint()                      */
+/************************************************************************/
+
+/** Updates the geometry part of poTargetRecord with poUpdateRecord */
+bool OGRS101Reader::ProcessUpdateRecordPoint(const DDFRecord *poUpdateRecord,
+                                             DDFRecord *poTargetRecord) const
+{
+    const auto poIDField = poUpdateRecord->GetField(0);
+    CPLAssert(poIDField);
+    const char *pszIDFieldName = poIDField->GetFieldDefn()->GetName();
+    CPLAssert(pszIDFieldName);
+
+    // Record name
+    const RecordName nRCNM =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCNM_SUBFIELD, 0);
+
+    // Record identifier
+    const int nRCID =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCID_SUBFIELD, 0);
+
+    if (const auto poC2ITFieldUpdate = poUpdateRecord->FindField(C2IT_FIELD))
+    {
+        auto poC2ITFieldTarget = poTargetRecord->FindField(C2IT_FIELD);
+        if (!poC2ITFieldTarget)
+        {
+            return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                "%s, RCNM=%d, RCID=%d: cannot find C2IT field in target "
+                "record",
+                m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID));
+        }
+        if (*(poC2ITFieldTarget->GetFieldDefn()) !=
+            *(poC2ITFieldUpdate->GetFieldDefn()))
+        {
+            return EMIT_ERROR("C2IT field definitions of update and target "
+                              "records are different");
+        }
+        for (const char *pszSubFieldName : {XCOO_SUBFIELD, YCOO_SUBFIELD})
+        {
+            poTargetRecord->SetIntSubfield(
+                C2IT_FIELD, 0, pszSubFieldName, 0,
+                poUpdateRecord->GetIntSubfield(C2IT_FIELD, 0, pszSubFieldName,
+                                               0));
+        }
+    }
+    else if (const auto poC3ITFieldUpdate =
+                 poUpdateRecord->FindField(C3IT_FIELD))
+    {
+        auto poC3ITFieldTarget = poTargetRecord->FindField(C3IT_FIELD);
+        if (!poC3ITFieldTarget)
+        {
+            return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                "%s, RCNM=%d, RCID=%d: cannot find C3IT field in target "
+                "record",
+                m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID));
+        }
+        if (*(poC3ITFieldTarget->GetFieldDefn()) !=
+            *(poC3ITFieldUpdate->GetFieldDefn()))
+        {
+            return EMIT_ERROR("C3IT field definitions of update and target "
+                              "records are different");
+        }
+        for (const char *pszSubFieldName :
+             {XCOO_SUBFIELD, YCOO_SUBFIELD, ZCOO_SUBFIELD})
+        {
+            poTargetRecord->SetIntSubfield(
+                C3IT_FIELD, 0, pszSubFieldName, 0,
+                poUpdateRecord->GetIntSubfield(C3IT_FIELD, 0, pszSubFieldName,
+                                               0));
+        }
+    }
+
+    return true;
+}

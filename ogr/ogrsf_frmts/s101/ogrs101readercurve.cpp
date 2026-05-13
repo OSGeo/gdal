@@ -268,3 +268,110 @@ bool OGRS101Reader::FillFeatureCurve(const DDFRecordIndex &oIndex, int iRecord,
            FillFeatureWithNonAttrAssocSubfields(poRecord, iRecord, INAS_FIELD,
                                                 oFeature);
 }
+
+/************************************************************************/
+/*                      ProcessUpdateRecordCurve()                      */
+/************************************************************************/
+
+/** Updates the geometry part of poTargetRecord with poUpdateRecord */
+bool OGRS101Reader::ProcessUpdateRecordCurve(const DDFRecord *poUpdateRecord,
+                                             DDFRecord *poTargetRecord) const
+{
+    const auto poIDField = poUpdateRecord->GetField(0);
+    CPLAssert(poIDField);
+    const char *pszIDFieldName = poIDField->GetFieldDefn()->GetName();
+    CPLAssert(pszIDFieldName);
+
+    // Record name
+    const RecordName nRCNM =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCNM_SUBFIELD, 0);
+
+    // Record identifier
+    const int nRCID =
+        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCID_SUBFIELD, 0);
+
+    const auto poUpdatePTASField = poUpdateRecord->FindField(PTAS_FIELD);
+    if (poUpdatePTASField)
+    {
+        const auto poTargetPTASField = poTargetRecord->FindField(PTAS_FIELD);
+        if (!poTargetPTASField)
+        {
+            return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+                "%s, RCNM=%d, RCID=%d: missing PTAS field in "
+                "target record",
+                m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID));
+        }
+
+        // Replace whole target PTAS field with update PTAS field
+        poTargetRecord->SetFieldRaw(poTargetPTASField,
+                                    poUpdatePTASField->GetData(),
+                                    poUpdatePTASField->GetDataSize());
+    }
+
+    // Segment Control field
+    // Update rules described at S-100 Ed 5.2 "10a-7.2.4.1 Encoding rules"
+    const auto poSECCField = poUpdateRecord->FindField(SECC_FIELD);
+    if (!poSECCField)
+        return true;
+
+    const auto poUpdateC2ILField = poUpdateRecord->FindField(C2IL_FIELD);
+    if (!poUpdateC2ILField)
+    {
+        return EMIT_ERROR_OR_WARNING(
+            CPLSPrintf("%s, RCNM=%d, RCID=%d: missing C2IL field in "
+                       "update record",
+                       m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID));
+    }
+
+    const auto poTargetC2ILField = poTargetRecord->FindField(C2IL_FIELD);
+    if (!poTargetC2ILField)
+    {
+        return EMIT_ERROR_OR_WARNING(
+            CPLSPrintf("%s, RCNM=%d, RCID=%d: missing C2IL field in "
+                       "target record",
+                       m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID));
+    }
+
+    // Segment update instruction
+    const int SEUI = poUpdateRecord->GetIntSubfield(poSECCField, "SEUI", 0);
+
+    if (SEUI == INSTRUCTION_INSERT)
+    {
+        return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+            "%s, RCNM=%d, RCID=%d: SEUI=%d (insert) not supported",
+            m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID, SEUI));
+    }
+    else if (SEUI == INSTRUCTION_DELETE)
+    {
+        return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+            "%s, RCNM=%d, RCID=%d: SEUI=%d (delete) not supported",
+            m_osFilename.c_str(), static_cast<int>(nRCNM), nRCID, SEUI));
+    }
+    else if (SEUI != INSTRUCTION_UPDATE)
+    {
+        return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+            "%s, RCNM=%d, RCID=%d: invalid SEUI = %d", m_osFilename.c_str(),
+            static_cast<int>(nRCNM), nRCID, SEUI));
+    }
+
+    // Segment index
+    const int SEIX = poUpdateRecord->GetIntSubfield(poSECCField, "SEIX", 0);
+    if (SEIX != 1)
+    {
+        return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+            "%s, RCNM=%d, RCID=%d: invalid SEIX = %d", m_osFilename.c_str(),
+            static_cast<int>(nRCNM), nRCID, SEIX));
+    }
+
+    // Number of segments
+    const int NSEG = poUpdateRecord->GetIntSubfield(poSECCField, "NSEG", 0);
+    if (NSEG != 1)
+    {
+        return EMIT_ERROR_OR_WARNING(CPLSPrintf(
+            "%s, RCNM=%d, RCID=%d: invalid NSEG = %d", m_osFilename.c_str(),
+            static_cast<int>(nRCNM), nRCID, NSEG));
+    }
+
+    return ProcessUpdatePointList(poUpdateRecord, poTargetRecord,
+                                  /* bIs3DAllowed = */ false);
+}
