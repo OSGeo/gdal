@@ -132,6 +132,12 @@ The following configuration options are available:
 
       Sets the name of the field to be used as the FID.
 
+-  .. config:: OCI_PREFETCH_ROWS
+      :default: 1000
+      :since: 3.14
+
+      Sets the number of rows to prefetch per round-trip.
+
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 

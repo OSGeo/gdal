@@ -248,6 +248,21 @@ CPLErr OGROCIStatement::Execute(const char *pszSQLStatement, int nMode)
     }
 
     /* -------------------------------------------------------------------- */
+    /*      Configure row prefetching.                                      */
+    /* -------------------------------------------------------------------- */
+    if (bSelect)
+    {
+        ub4 nPrefetchRows = static_cast<ub4>(
+            atoi(CPLGetConfigOption("OCI_PREFETCH_ROWS", "1000")));
+        if (poSession->Failed(OCIAttrSet(hStatement, OCI_HTYPE_STMT,
+                                         &nPrefetchRows, sizeof(ub4),
+                                         OCI_ATTR_PREFETCH_ROWS,
+                                         poSession->hError),
+                              "OCIAttrSet(OCI_ATTR_PREFETCH_ROWS)"))
+            return CE_Failure;
+    }
+
+    /* -------------------------------------------------------------------- */
     /*      Execute the statement.                                          */
     /* -------------------------------------------------------------------- */
     if (poSession->Failed(
