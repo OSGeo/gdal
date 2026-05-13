@@ -8,7 +8,7 @@ Rationale
 --------------------------------------------------------------------------------
 
 LLMs are changing software development in many ways. What was once scarce, the
-time and expertise to _write_ software, is now plentiful. This scarcity was a
+time and expertise to *write* software, is now plentiful. This scarcity was a
 choke point that limited consumption of related resources in open source
 projects. With that scarcity effectively gone in 2026, the dynamics and economics
 of a project like GDAL are being disrupted.
@@ -17,21 +17,23 @@ A project like GDAL is not simply code. It is also design, review, coordinated
 refactoring, deprecation scheduling, coordinated communication, distribution,
 and historical outlook. The plentiful convenience of code writing LLMs do not
 effectively replace the human maintainers, architects, and documenters doing
-these jobs who provide much of the value GDAL users actually derive. If they
+the jobs that provide much of the value GDAL users actually derive. If they
 did, LLM contributors would not need to bother to upstream activity to the
 project at all.
 
 With the explosion of LLM usage in software development, the constrained
-resource is now "maintenance". It is the time to review your contribution, the time to
-make it concise, the time refactor it in to a larger system, and the time to protect
-the larger software system from disruption, breakage, and performance
-degradation. Indiscriminate usage of LLM in open source projects *consume*
-maintenance, and the GDAL LLM tool policy attempts to conserve that
+resource is now "maintenance". It is the time to review your contribution, the
+time to make it concise, the time refactor it in to a larger system, and the
+time to protect the larger software system from disruption, breakage, and
+performance degradation. Indiscriminate usage of LLM in open source projects
+*consume* maintenance, and the GDAL LLM tool policy attempts to conserve that
 resource.
 
-Courts (in particular the US ones) have not definitely determined whether
-LLM outputs are derived works of the training data, or whether LLM-written
-code can even be copyrighted by a human.
+Additionally, legal systems across the world (including US and EU) have not
+definitely determined whether LLM outputs are derived works of training data or
+if LLM-written code can even be copyrighted by a human. This is despite it
+being latently extracted and originated from open source software in the first
+place.
 
 Policy
 --------------------------------------------------------------------------------
@@ -52,7 +54,7 @@ subject to details mentioned below:
       completed with a deterministic algorithm.
 
     * Human-coordinated or uncoordinated (OpenClaw, etc) use of agents for
-      submission of contributions the GDAL repository is *banned*.
+      submission of contributions to the GDAL repository is *banned*.
 
     * *Any* LLM usage must be indicated by ticket label, comment, or commit
       message indication and account for what was written by whom/what.
@@ -62,9 +64,10 @@ subject to details mentioned below:
       are subject to the project's :ref:`code_of_conduct`.
 
     * The typical high verbosity of LLM code and text is actively discouraged.
-      More code is more code to maintain. High verbosity contribution will be
-      seen as indication of LLM-generated content when not labeled otherwise and
-      may be ignored, closed, left unmerged, or removed at maintainers' discretion.
+      More code is more code to maintain. High verbosity contribution (tickets,
+      code, messages, etc) will be seen as indication of LLM-generated content
+      when not labeled otherwise and may be ignored, closed, left unmerged, or
+      removed at maintainers' discretion.
 
 
 Violations
@@ -89,8 +92,12 @@ the right to temporarily or permanently ban the infringing person/account.
 Mitigation
 --------------------------------------------------------------------------------
 
-The GDAL :ref:`sponsorship_program` is one way your organization can help buffer the
-cost and disruption of LLMs in keystone projects such as GDAL.
+The GDAL :ref:`sponsorship_program` is one way your organization can help
+buffer the cost and disruption of LLMs in keystone projects such as GDAL. The
+constrained resource is maintenance, not adding more code/capability. The
+Sponsorship Program supports operation of GDAL as an ongoing open source
+software project. Without it, much of the activity GDAL users take for granted
+would simply not happen.
 
 .. below is an allow-list for spelling checker.
 
