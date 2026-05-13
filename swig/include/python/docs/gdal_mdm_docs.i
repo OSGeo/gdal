@@ -134,9 +134,8 @@ bPixelIsPoint : bool
 
 Returns
 -------
-
-gt
-    A list of 6 geotransform coefficients if successful, or ``None`` on failure
+tuple
+    A tuple of 6 geotransform coefficients if successful, or ``None`` on failure
 
 Examples
 --------
