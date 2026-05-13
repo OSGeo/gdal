@@ -482,6 +482,10 @@ MMRPalettes::GetPaletteColors_PAL_P25_P65(const CPLString &os_Color_Paleta_DBF)
     const char *pszLine;
     while ((pszLine = CPLReadLineL(fpColorTable)) != nullptr)
     {
+        // Ignore empty lines
+        if (pszLine[0] == '\0')
+            continue;
+
         if (nNReadPaletteColors >= m_nNPaletteColors)
         {
             VSIFCloseL(fpColorTable);
@@ -489,10 +493,6 @@ MMRPalettes::GetPaletteColors_PAL_P25_P65(const CPLString &os_Color_Paleta_DBF)
                      osColorTableFileName.c_str());
             return CE_Failure;
         }
-
-        // Ignore empty lines
-        if (pszLine[0] == '\0')
-            continue;
 
         const CPLStringList aosTokens(CSLTokenizeString2(pszLine, " \t", 0));
         if (aosTokens.size() != 4)
