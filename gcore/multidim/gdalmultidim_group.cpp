@@ -1318,3 +1318,41 @@ bool GDALGroup::CheckValidAndErrorOutIfNot() const
 }
 
 //! @endcond
+
+/************************************************************************/
+/*                       RecursivelyVisitArrays()                       */
+/************************************************************************/
+
+/** Recursively visit arrays of this group and its subgroups.
+ *
+ * @param visitor Callback function called on visited arrays.
+ *
+ * @since GDAL 3.14
+ */
+void GDALGroup::RecursivelyVisitArrays(
+    std::function<void(const std::shared_ptr<GDALMDArray> &)> visitor)
+{
+    std::queue<std::shared_ptr<GDALGroup>> oQueue;
+    auto poSelf = m_pSelf.lock();
+    if (poSelf)
+        oQueue.push(poSelf);
+    while (!oQueue.empty())
+    {
+        auto poGroup = oQueue.front();
+        oQueue.pop();
+
+        for (const std::string &osName : poGroup->GetMDArrayNames())
+        {
+            auto poArray = poGroup->OpenMDArray(osName);
+            if (poArray)
+                visitor(poArray);
+        }
+
+        for (const std::string &osName : poGroup->GetGroupNames())
+        {
+            auto poSubGroup = poGroup->OpenGroup(osName);
+            if (poSubGroup)
+                oQueue.push(poSubGroup);
+        }
+    }
+}

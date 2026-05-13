@@ -369,6 +369,7 @@ Driver specific commands
    gdal_driver_openfilegdb_repack
    gdal_driver_parquet_create_metadata_file
    gdal_driver_pdf_list_layers
+   gdal_driver_zarr_add_georeferencing_convention
 
 .. only:: html
 
@@ -379,6 +380,7 @@ Driver specific commands
     - :ref:`gdal_driver_openfilegdb_repack`: Repack in-place a FileGeodatabase dataset
     - :ref:`gdal_driver_parquet_create_metadata_file`:  Create the _metadata file for a partitioned Parquet dataset
     - :ref:`gdal_driver_pdf_list_layers`: Return the list of layers of a PDF file.
+    - :ref:`gdal_driver_zarr_add_georeferencing_convention`: Add a georeferencing convention to an existing ZARR dataset.
 
 
 .. _programs_traditional:
