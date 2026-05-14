@@ -730,6 +730,10 @@ bool OGRS101Reader::ReadDSSI(const DDFRecord *poRecord)
         return false;
     }
 
+    if (m_nXScale == m_nYScale)
+        m_coordinatePrecision.dfXYResolution = 1.0 / m_nXScale;
+    m_coordinatePrecision.dfZResolution = 1.0 / m_nZScale;
+
     return true;
 }
 

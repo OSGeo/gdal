@@ -353,6 +353,8 @@ bool OGRS101Reader::CreateFeatureTypeFeatureDefns()
             CPLAssert(poSRS);
             poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(
                 OGRSpatialReferenceRefCountedPtr::makeClone(poSRS).get());
+            poFDefn->GetGeomFieldDefn(0)->SetCoordinatePrecision(
+                m_coordinatePrecision);
             const bool bList = def.bMultiSpatialAssociations ||
                                def.bPromotedToMultiPointFromPoint;
 

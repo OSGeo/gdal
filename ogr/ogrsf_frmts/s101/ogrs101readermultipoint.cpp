@@ -52,6 +52,8 @@ bool OGRS101Reader::CreateMultiPointFeatureDefns()
         poFDefn->SetGeomType(bIs2D ? wkbMultiPoint : wkbMultiPoint25D);
         poFDefn->GetGeomFieldDefn(0)->SetSpatialRef(
             OGRSpatialReferenceRefCountedPtr::makeClone(&oSRS).get());
+        poFDefn->GetGeomFieldDefn(0)->SetCoordinatePrecision(
+            m_coordinatePrecision);
         {
             OGRFieldDefn oFieldDefn(OGR_FIELD_NAME_RECORD_ID, OFTInteger);
             poFDefn->AddFieldDefn(&oFieldDefn);

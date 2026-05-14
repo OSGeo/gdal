@@ -122,7 +122,8 @@ class OGRS101Reader
     static constexpr int S101_YSCALE = 10000000;
     int m_nYScale = S101_YSCALE;  // CMFY
     static constexpr int S101_ZSCALE = 10;
-    int m_nZScale = S101_ZSCALE;           // CMFZ
+    int m_nZScale = S101_ZSCALE;  // CMFZ
+    OGRGeomCoordinatePrecision m_coordinatePrecision{};
     int m_nCountInformationRecord = 0;     // NOIR
     int m_nCountPointRecord = 0;           // NOPN
     int m_nCountMultiPointRecord = 0;      // NOMN

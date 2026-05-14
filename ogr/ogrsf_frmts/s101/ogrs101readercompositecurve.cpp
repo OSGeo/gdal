@@ -37,6 +37,8 @@ bool OGRS101Reader::CreateCompositeCurveFeatureDefn()
                 OGRSpatialReferenceRefCountedPtr::makeClone(&oSRSIter->second)
                     .get());
         }
+        m_poFeatureDefnCompositeCurve->GetGeomFieldDefn(0)
+            ->SetCoordinatePrecision(m_coordinatePrecision);
         {
             OGRFieldDefn oFieldDefn(OGR_FIELD_NAME_RECORD_ID, OFTInteger);
             m_poFeatureDefnCompositeCurve->AddFieldDefn(&oFieldDefn);
