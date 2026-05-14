@@ -628,6 +628,7 @@ def test_ogr_s101_read_information_type_time_field():
             "recordVersion": 1,
             "informationType": "ServiceHours",
             "fixedDateRange.timeIntervalsByDayOfWeek.timeOfDayStart": "12:34:56",
+            "fixedDateRange.timeIntervalsByDayOfWeek.timeOfDayEnd": "23:45:12",
         },
         "id": 1,
     }

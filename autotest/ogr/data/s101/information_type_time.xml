@@ -52,6 +52,9 @@
 
     <DDFSubfield name="ATCD" type="string">timeOfDayStart</DDFSubfield>
     <DDFSubfield name="ANCD" type="integer">3</DDFSubfield>
+
+    <DDFSubfield name="ATCD" type="string">timeOfDayEnd</DDFSubfield>
+    <DDFSubfield name="ANCD" type="integer">4</DDFSubfield>
   </DDFField>
   <DDFField name="ITCS">
     <DDFSubfield name="ITCD" type="string">ServiceHours</DDFSubfield>
@@ -103,6 +106,12 @@
             <DDFSubfield name="PAIX" type="integer">2</DDFSubfield>
             <DDFSubfield name="ATIN" type="integer">1</DDFSubfield>
             <DDFSubfield name="ATVL" type="string">123456</DDFSubfield>
+
+            <DDFSubfield name="NATC" type="integer">4</DDFSubfield>  <!-- timeOfDayEnd -->
+            <DDFSubfield name="ATIX" type="integer">1</DDFSubfield>
+            <DDFSubfield name="PAIX" type="integer">2</DDFSubfield>
+            <DDFSubfield name="ATIN" type="integer">1</DDFSubfield>
+            <DDFSubfield name="ATVL" type="string">234512+0645</DDFSubfield>
 
   </DDFField>
 </DDFRecord>
