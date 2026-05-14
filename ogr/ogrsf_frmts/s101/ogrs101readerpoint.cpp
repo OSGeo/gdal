@@ -297,16 +297,14 @@ bool OGRS101Reader::ProcessUpdateRecordPoint(const DDFRecord *poUpdateRecord,
 {
     const auto poIDField = poUpdateRecord->GetField(0);
     CPLAssert(poIDField);
-    const char *pszIDFieldName = poIDField->GetFieldDefn()->GetName();
-    CPLAssert(pszIDFieldName);
 
     // Record name
     const RecordName nRCNM =
-        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCNM_SUBFIELD, 0);
+        poUpdateRecord->GetIntSubfield(poIDField, RCNM_SUBFIELD, 0);
 
     // Record identifier
     const int nRCID =
-        poUpdateRecord->GetIntSubfield(pszIDFieldName, 0, RCID_SUBFIELD, 0);
+        poUpdateRecord->GetIntSubfield(poIDField, RCID_SUBFIELD, 0);
 
     if (const auto poC2ITFieldUpdate = poUpdateRecord->FindField(C2IT_FIELD))
     {
