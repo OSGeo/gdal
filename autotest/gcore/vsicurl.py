@@ -1927,7 +1927,53 @@ def test_vsicurl_head_accept_ranges_but_no_content_length(server):
         expected_headers={"Range": "bytes=0-16383"},
     )
     with webserver.install_http_handler(handler):
-        gdal.VSIStatL(
-            "/vsicurl/http://localhost:%d/test_head_accept_ranges_but_no_content_length"
-            % server.port
-        ).size == 3
+        assert (
+            gdal.VSIStatL(
+                "/vsicurl/http://localhost:%d/test_head_accept_ranges_but_no_content_length"
+                % server.port
+            ).size
+            == 3
+        )
+
+
+###############################################################################
+# Test server returning a Transfer-Encoding: chunked
+
+
+def test_vsicurl_transfer_encoding_chunked(server):
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/test_vsicurl_transfer_encoding_chunked",
+        200,
+        {
+            "Accept-ranges": "bytes",
+            "Transfer-encoding": "chunked",
+            "Content-Length": None,
+        },
+    )
+
+    def method(request):
+        request.protocol_version = "HTTP/1.1"
+        request.send_response(200)
+        response = "xxx"
+        response = "%x\r\n%s\r\n0\r\n\r\n" % (len(response), response)
+        request.send_header("Content-type", "application/xml")
+        request.send_header("Transfer-Encoding", "chunked")
+        request.send_header("Connection", "close")
+        request.end_headers()
+        request.wfile.write(response.encode("ascii"))
+
+    handler.add("GET", "/test_vsicurl_transfer_encoding_chunked", custom_method=method)
+    with webserver.install_http_handler(handler):
+        with gdaltest.disable_exceptions(), gdaltest.error_raised(
+            gdal.CE_Failure, match="Server does not seem to support range requests"
+        ):
+            assert (
+                gdal.VSIStatL(
+                    "/vsicurl/http://localhost:%d/test_vsicurl_transfer_encoding_chunked"
+                    % server.port
+                )
+                is None
+            )

@@ -1475,7 +1475,6 @@ retry:
             dfSize = static_cast<double>(nSizeTmp);
             if (code == 0)
             {
-                oFileProp.eExists = EXIST_YES;
                 if (dfSize < 0)
                 {
                     if (osVerb == "HEAD" && !bRetryWithGet &&
@@ -1510,10 +1509,26 @@ retry:
                         curl_easy_cleanup(hCurlHandle);
                         goto retry;
                     }
-                    oFileProp.fileSize = 0;
+
+                    const CPLStringList aosHeaders(
+                        TokenizeHeaders(sWriteFuncHeaderData.pBuffer));
+                    if (strcmp(aosHeaders.FetchNameValueDef("transfer-encoding",
+                                                            ""),
+                               "chunked") == 0)
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Server does not seem to support range requests. "
+                            "Maybe retry with /vsicurl_streaming/ if the read "
+                            "access pattern is compatible of sequential "
+                            "reading, or download the file entirely");
+                    }
                 }
                 else
+                {
+                    oFileProp.eExists = EXIST_YES;
                     oFileProp.fileSize = static_cast<GUIntBig>(dfSize);
+                }
             }
         }
 
