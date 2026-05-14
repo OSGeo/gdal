@@ -2551,14 +2551,9 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         // When reading a subset of bands, tile images must persist
         // across per-band reads.  Use CACHE_IMAGE so that tile row
         // release keeps the decoded pixels alive.
-        const int nTotalComps =
-            (m_codec && m_codec->psImage) ? m_codec->psImage->numcomps : 0;
-        const bool needPersistentTiles =
-            (!this->bSingleTiled && nBandCount < nTotalComps);
-
         auto postPreload =
             decompressAsynch(nullptr, nullptr, nXOff, nYOff, nXSize, nYSize,
-                             rowCopy, needPersistentTiles);
+                             rowCopy, nBandCount);
 
         try
         {
@@ -2640,7 +2635,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                                  int swath_x0, int swath_y0, int swath_width,
                                  int swath_height,
                                  RowCopyFunc rowCopy = nullptr,
-                                 bool needPersistentTiles = false)
+                                 int nBandCount = 0)
     {
         PostPreload rc;
 
@@ -2729,6 +2724,15 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
 
             return cached;
         }
+
+        // Compute needPersistentTiles after lazy codec init (m_codec is now
+        // guaranteed non-null).  When reading a subset of bands, tile images
+        // must persist across per-band reads so that subsequent band reads
+        // can extract their data from the cached tiles.
+        const int nTotalComps =
+            (m_codec && m_codec->psImage) ? m_codec->psImage->numcomps : 0;
+        const bool needPersistentTiles =
+            (!this->bSingleTiled && nBandCount > 0 && nBandCount < nTotalComps);
 
         if (!initializedAsync)
         {
