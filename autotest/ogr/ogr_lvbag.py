@@ -245,8 +245,8 @@ def test_ogr_lvbag_dataset_pnd():
 
     sr = lyr.GetSpatialRef()
 
-    assert sr.GetAuthorityName(None) == "EPSG"
-    assert sr.GetAuthorityCode(None) == "28992"
+    assert sr.GetAuthorityName() == "EPSG"
+    assert sr.GetAuthorityCode() == "28992"
 
     feat = lyr.GetNextFeature()
     if feat.GetField("oorspronkelijkBouwjaar") != 2009:

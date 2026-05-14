@@ -17,6 +17,11 @@ Synopsis
 
 .. program-output:: gdal raster overview --help-doc
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Available sub-commands
 ----------------------
 

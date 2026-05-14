@@ -15,9 +15,10 @@
 #include "cpl_port.h"
 #include "gdal_alg.h"
 
-// There's a plethora of bresenham implementations, all questionable production quality.
-// Bresenham optimizes for integer math, which makes sense for raster datasets in 2D.
-// For 3D, a 3D bresenham could be used if the altitude is also integer resolution.
+// There's a plethora of bresenham implementations, all questionable production
+// quality. Bresenham optimizes for integer math, which makes sense for raster
+// datasets in 2D. For 3D, a 3D bresenham could be used if the altitude is also
+// integer resolution.
 // 2D:
 // https://codereview.stackexchange.com/questions/77460/bresenhams-line-algorithm-optimization
 // https://gist.github.com/ssavi-ict/092501c69e2ffec65e96a8865470ad2f
@@ -30,9 +31,9 @@
 // https://gist.github.com/yamamushi/5823518
 
 // Run bresenham terrain checking from (x1, y1) to (x2, y2).
-// The callback is run at every point along the line,
-// which should return True if the point is above terrain.
-// Bresenham2D will return true if all points have LOS between the start and end.
+// The callback is run at every point along the line, which should return True
+// if the point is above terrain. Bresenham2D will return true if all points
+// have LOS between the start and end.
 static bool
 Bresenham2D(const int x1, const int y1, const int x2, const int y2,
             std::function<auto(const int, const int)->bool> OnBresenhamPoint)
@@ -117,14 +118,14 @@ static bool GetElevation(const GDALRasterBandH hBand, const int x, const int y,
                         0) == CE_None;
 }
 
-// Check a single location is above terrain.
+// Check a single location is above (or equal) to terrain height.
 static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
                            const int y, const double z)
 {
     double terrainHeight;
     if (GetElevation(hBand, x, y, terrainHeight))
     {
-        return z > terrainHeight;
+        return z >= terrainHeight;
     }
     else
     {
@@ -133,7 +134,7 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
 }
 
 /************************************************************************/
-/*                        GDALIsLineOfSightVisible()                    */
+/*                      GDALIsLineOfSightVisible()                      */
 /************************************************************************/
 
 /**
@@ -142,32 +143,37 @@ static bool IsAboveTerrain(const GDALRasterBandH hBand, const int x,
  *
  * This algorithm will check line of sight using a Bresenham algorithm.
  * https://www.researchgate.net/publication/2411280_Efficient_Line-of-Sight_Algorithms_for_Real_Terrain_Data
- * Line of sight is computed in raster coordinate space, and thus may not be appropriate.
- * For example, datasets referenced against geographic coordinate at high latitudes may have issues.
+ * Line of sight is computed in raster coordinate space, and thus may not be
+ * appropriate. For example, datasets referenced against geographic coordinate
+ * at high latitudes may have issues. A point exactly at the height of the DEM
+ * is treated as visible from above.
  *
  * @param hBand The band to read the DEM data from. This must NOT be null.
  *
- * @param xA The X location (raster column) of the first point to check on the raster.
+ * @param xA The X location (raster column) of the first point to check on the
+ * raster.
  *
- * @param yA The Y location (raster row) of the first point to check on the raster.
+ * @param yA The Y location (raster row) of the first point to check on the
+ * raster.
  *
  * @param zA The Z location (height) of the first point to check.
  *
- * @param xB The X location (raster column) of the second point to check on the raster.
+ * @param xB The X location (raster column) of the second point to check on the
+ * raster.
  *
- * @param yB The Y location (raster row) of the second point to check on the raster.
+ * @param yB The Y location (raster row) of the second point to check on the
+ * raster.
  *
  * @param zB The Z location (height) of the second point to check.
  *
  * @param[out] pnxTerrainIntersection The X location where the LOS line
- *             intersects with terrain, or nullptr if it does not intersect
- *             terrain.
+ * intersects with terrain, or nullptr if it does not intersect terrain.
  *
  * @param[out] pnyTerrainIntersection The Y location where the LOS line
- *             intersects with terrain, or nullptr if it does not intersect
- *             terrain.
+ * intersects with terrain, or nullptr if it does not intersect terrain.
  *
- * @param papszOptions Options for the line of sight algorithm (currently ignored).
+ * @param papszOptions Options for the line of sight algorithm (currently
+ * ignored).
  *
  * @return True if the two points are within Line of Sight.
  *
@@ -314,7 +320,8 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
         }
     };
 
-    // Handle special cases if it's a vertical or horizontal line (don't use bresenham).
+    // Handle special cases if it's a vertical or horizontal line
+    // (don't use bresenham).
     if (xA == xB)
     {
         return CheckVerticalLine();
@@ -329,23 +336,23 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
     // Lambda for computing the square of a number
     auto SQUARE = [](const double d) -> double { return d * d; };
 
-    // Lambda for getting Z test height given x-y input along the bresenham line.
+    // Lambda for getting Z test height given x-y input along bresenham line.
     auto GetZValueFromXY = [&](const int x, const int y) -> double
     {
         const auto rNum = SQUARE(static_cast<double>(x - xA)) +
                           SQUARE(static_cast<double>(y - yA));
         const auto rDenom = SQUARE(static_cast<double>(xB - xA)) +
                             SQUARE(static_cast<double>(yB - yA));
-        /// @todo In order to reduce CPU cost and avoid a sqrt operation, consider
-        /// the approach to just the ratio along x or y depending on whether
-        /// the line is steep or shallow.
+        /// @todo In order to reduce CPU cost and avoid a sqrt operation,
+        /// consider the approach to just the ratio along x or y depending on
+        /// whether the line is steep or shallow.
         /// See https://github.com/OSGeo/gdal/pull/9506#discussion_r1532459689.
         const double ratio =
             sqrt(static_cast<double>(rNum) / static_cast<double>(rDenom));
         return lerp(zA, zB, ratio);
     };
 
-    // Lambda to get elevation at a bresenham-computed location.
+    // Lambda to get if above terrain at a bresenham-computed location.
     auto OnBresenhamPoint = [&](const int x, const int y) -> bool
     {
         const auto z = GetZValueFromXY(x, y);
@@ -354,7 +361,7 @@ bool GDALIsLineOfSightVisible(const GDALRasterBandH hBand, const int xA,
         {
             SetXYIntersection(x, y);
         }
-        return IsAboveTerrain(hBand, x, y, z);
+        return isAbove;
     };
 
     return Bresenham2D(xA, yA, xB, yB, OnBresenhamPoint);

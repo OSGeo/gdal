@@ -67,6 +67,7 @@ class GDALRasterTileAlgorithm /* non final */
     std::string m_overviewResampling{};
     int m_minZoomLevel = -1;
     int m_maxZoomLevel = -1;
+    bool m_minZoomLevelSingleTile = false;
     bool m_noIntersectionIsOK = false;
     int m_minTileX = -1;
     int m_minTileY = -1;
@@ -143,7 +144,7 @@ class GDALRasterTileAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterTileAlgorithmStandalone                    */
+/*                  GDALRasterTileAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALRasterTileAlgorithmStandalone final : public GDALRasterTileAlgorithm

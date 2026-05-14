@@ -157,7 +157,7 @@ class TerragenDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
@@ -329,7 +329,7 @@ double TerragenRasterBand::GetOffset(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr TerragenRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
@@ -418,12 +418,12 @@ TerragenDataset::TerragenDataset()
     m_dLogSpan[0] = 0.0;
     m_dLogSpan[1] = 0.0;
 
-    m_gt[0] = 0.0;
-    m_gt[1] = m_dSCAL;
-    m_gt[2] = 0.0;
-    m_gt[3] = 0.0;
-    m_gt[4] = 0.0;
-    m_gt[5] = m_dSCAL;
+    m_gt.xorig = 0.0;
+    m_gt.xscale = m_dSCAL;
+    m_gt.xrot = 0.0;
+    m_gt.yorig = 0.0;
+    m_gt.yrot = 0.0;
+    m_gt.yscale = m_dSCAL;
     m_span_m[0] = 0.0;
     m_span_m[1] = 0.0;
     m_span_px[0] = 0.0;
@@ -503,16 +503,16 @@ bool TerragenDataset::write_header()
         */
 
         /* const double m_dDegLongPerPixel =
-              fabs(m_gt[1]); */
+              fabs(m_gt.xscale); */
 
-        const double m_dDegLatPerPixel = std::abs(m_gt[5]);
+        const double m_dDegLatPerPixel = std::abs(m_gt.yscale);
 
         /* const double m_dCenterLongitude =
-              m_gt[0] +
+              m_gt.xorig +
               (0.5 * m_dDegLongPerPixel * (nXSize-1)); */
 
         const double m_dCenterLatitude =
-            m_gt[3] + (0.5 * m_dDegLatPerPixel * (nYSize - 1));
+            m_gt.yorig + (0.5 * m_dDegLatPerPixel * (nYSize - 1));
 
         const double dLatCircum =
             kdEarthCircumEquat *
@@ -792,12 +792,12 @@ int TerragenDataset::LoadFromFile()
     // Make our projection to have origin at the
     // NW corner, and groundscale to match elev scale
     // (i.e., uniform voxels).
-    m_gt[0] = 0.0;
-    m_gt[1] = m_dSCAL;
-    m_gt[2] = 0.0;
-    m_gt[3] = 0.0;
-    m_gt[4] = 0.0;
-    m_gt[5] = m_dSCAL;
+    m_gt.xorig = 0.0;
+    m_gt.xscale = m_dSCAL;
+    m_gt.xrot = 0.0;
+    m_gt.yorig = 0.0;
+    m_gt.yrot = 0.0;
+    m_gt.yscale = m_dSCAL;
 
     /* -------------------------------------------------------------------- */
     /*      Set projection.                                                 */
@@ -853,7 +853,7 @@ CPLErr TerragenDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *TerragenDataset::GetSpatialRef() const
@@ -870,7 +870,7 @@ CPLErr TerragenDataset::SetGeoTransform(const GDALGeoTransform &gt)
     m_gt = gt;
 
     // Average the projection scales.
-    m_dGroundScale = average(fabs(m_gt[1]), fabs(m_gt[5]));
+    m_dGroundScale = average(fabs(m_gt.xscale), fabs(m_gt.yscale));
     return CE_None;
 }
 
@@ -885,11 +885,12 @@ CPLErr TerragenDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                                Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 GDALDataset *TerragenDataset::Create(const char *pszFilename, int nXSize,
                                      int nYSize, int nBandsIn,
-                                     GDALDataType eType, char **papszOptions)
+                                     GDALDataType eType,
+                                     CSLConstList papszOptions)
 {
     TerragenDataset *poDS = new TerragenDataset();
 
@@ -1025,7 +1026,7 @@ GDALDataset *TerragenDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GDALRegister_Terragen()                       */
+/*                       GDALRegister_Terragen()                        */
 /************************************************************************/
 
 void GDALRegister_Terragen()

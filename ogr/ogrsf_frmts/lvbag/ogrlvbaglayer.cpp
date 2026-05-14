@@ -27,12 +27,11 @@ constexpr const size_t nDefaultIdentifierSize = 16;
 
 OGRLVBAGLayer::OGRLVBAGLayer(const char *pszFilename, OGRLayerPool *poPoolIn,
                              char **papszOpenOptions)
-    : OGRAbstractProxiedLayer{poPoolIn},
-      poFeatureDefn{new OGRFeatureDefn{}}, fp{nullptr}, osFilename{pszFilename},
-      eFileDescriptorsState{FD_CLOSED}, oParser{nullptr}, bSchemaOnly{false},
-      bHasReadSchema{false}, bFixInvalidData{CPLFetchBool(
-                                 papszOpenOptions, "AUTOCORRECT_INVALID_DATA",
-                                 false)},
+    : OGRAbstractProxiedLayer{poPoolIn}, poFeatureDefn{new OGRFeatureDefn{}},
+      fp{nullptr}, osFilename{pszFilename}, eFileDescriptorsState{FD_CLOSED},
+      oParser{nullptr}, bSchemaOnly{false}, bHasReadSchema{false},
+      bFixInvalidData{
+          CPLFetchBool(papszOpenOptions, "AUTOCORRECT_INVALID_DATA", false)},
       bLegacyId{CPLFetchBool(papszOpenOptions, "LEGACY_ID", false)},
       nNextFID{0}, nCurrentDepth{0}, nGeometryElementDepth{0},
       nFeatureCollectionDepth{0}, nFeatureElementDepth{0},
@@ -132,7 +131,7 @@ void OGRLVBAGLayer::AddSpatialRef(OGRwkbGeometryType eTypeIn)
 }
 
 /************************************************************************/
-/*                      AddIdentifierFieldDefn()                        */
+/*                       AddIdentifierFieldDefn()                       */
 /************************************************************************/
 
 void OGRLVBAGLayer::AddIdentifierFieldDefn()
@@ -143,7 +142,7 @@ void OGRLVBAGLayer::AddIdentifierFieldDefn()
 }
 
 /************************************************************************/
-/*                       AddDocumentFieldDefn()                         */
+/*                        AddDocumentFieldDefn()                        */
 /************************************************************************/
 
 void OGRLVBAGLayer::AddDocumentFieldDefn()
@@ -161,7 +160,7 @@ void OGRLVBAGLayer::AddDocumentFieldDefn()
 }
 
 /************************************************************************/
-/*                      AddOccurrenceFieldDefn()                        */
+/*                       AddOccurrenceFieldDefn()                       */
 /************************************************************************/
 
 void OGRLVBAGLayer::AddOccurrenceFieldDefn()
@@ -334,7 +333,7 @@ void OGRLVBAGLayer::CreateFeatureDefn(const char *pszDataset)
 }
 
 /************************************************************************/
-/*                         StartDataCollect()                           */
+/*                          StartDataCollect()                          */
 /************************************************************************/
 
 void OGRLVBAGLayer::StartDataCollect()
@@ -345,7 +344,7 @@ void OGRLVBAGLayer::StartDataCollect()
 }
 
 /************************************************************************/
-/*                         StopDataCollect()                            */
+/*                          StopDataCollect()                           */
 /************************************************************************/
 
 void OGRLVBAGLayer::StopDataCollect()
@@ -368,7 +367,7 @@ void OGRLVBAGLayer::DataHandlerCbk(const char *data, int nLen)
 }
 
 /************************************************************************/
-/*                              TouchLayer()                            */
+/*                             TouchLayer()                             */
 /************************************************************************/
 
 bool OGRLVBAGLayer::TouchLayer()
@@ -415,7 +414,7 @@ void OGRLVBAGLayer::CloseUnderlyingLayer()
 }
 
 /************************************************************************/
-/*                        startElementCbk()                            */
+/*                          startElementCbk()                           */
 /************************************************************************/
 
 void OGRLVBAGLayer::StartElementCbk(const char *pszName, const char **ppszAttr)
@@ -812,7 +811,7 @@ void OGRLVBAGLayer::ConfigureParser()
 }
 
 /************************************************************************/
-/*                         IsParserFinished()                           */
+/*                          IsParserFinished()                          */
 /************************************************************************/
 
 bool OGRLVBAGLayer::IsParserFinished(XML_Status status)

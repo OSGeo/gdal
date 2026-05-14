@@ -16,7 +16,7 @@
 #include "ogr_idb.h"
 
 /************************************************************************/
-/*                          OGRIDBTableLayer()                         */
+/*                          OGRIDBTableLayer()                          */
 /************************************************************************/
 
 OGRIDBTableLayer::OGRIDBTableLayer(OGRIDBDataSource *poDSIn)
@@ -35,7 +35,7 @@ OGRIDBTableLayer::OGRIDBTableLayer(OGRIDBDataSource *poDSIn)
 }
 
 /************************************************************************/
-/*                          ~OGRIDBTableLayer()                          */
+/*                         ~OGRIDBTableLayer()                          */
 /************************************************************************/
 
 OGRIDBTableLayer::~OGRIDBTableLayer()
@@ -176,7 +176,7 @@ CPLErr OGRIDBTableLayer::Initialize(const char *pszTableName,
 }
 
 /************************************************************************/
-/*                           ClearQuery()                           */
+/*                             ClearQuery()                             */
 /************************************************************************/
 
 void OGRIDBTableLayer::ClearQuery()
@@ -191,7 +191,7 @@ void OGRIDBTableLayer::ClearQuery()
 }
 
 /************************************************************************/
-/*                            GetQuery()                            */
+/*                              GetQuery()                              */
 /************************************************************************/
 
 ITCursor *OGRIDBTableLayer::GetQuery()
@@ -204,7 +204,7 @@ ITCursor *OGRIDBTableLayer::GetQuery()
 }
 
 /************************************************************************/
-/*                           ResetQuery()                           */
+/*                             ResetQuery()                             */
 /************************************************************************/
 
 OGRErr OGRIDBTableLayer::ResetQuery()

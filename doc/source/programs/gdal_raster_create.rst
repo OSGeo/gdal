@@ -84,12 +84,17 @@ Program-Specific Options
 
     Note that the spatial extent is also left unchanged.
 
-.. option:: --like, --like <DATASET>
+.. option:: -i, --like, --input <TEMPLATE-DATASET>
 
     Name of GDAL input dataset that serves as a template for default values of
     options :option:`--size`, :option:`--band-count`, :option:`--datatype`,
     :option:`--crs`, :option:`--bbox` and :option:`--nodata`.
     Note that the pixel values will *not* be copied.
+
+    Since GDAL 3.13, if the input dataset is tiled, and for output formats
+    ``GTiff``, ``COG`` and ``GPKG``, its tile dimensions are replicated to
+    the output file, when they are compatible of its capabilities, and if the
+    user hasn't specified any creation option related to tiling.
 
 .. option:: --metadata <KEY>=<VALUE>
 
@@ -129,6 +134,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 
 Examples

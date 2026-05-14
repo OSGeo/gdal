@@ -23,6 +23,11 @@ Description
 Runs the a repack operation on a FileGeodatabase dataset to recover
 lost space due to updates or deletions.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

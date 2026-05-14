@@ -586,6 +586,8 @@ For example, if you want a field called 'Cities' to map to the
 `<name> <https://developers.google.com/kml/documentation/kmlreference#name>`__;
 tag in KML, you can set a configuration option. Note these are independent of layer
 creation and dataset creation options' `<name>`.
+Use an empty value to remove a field, e.g.,
+`LIBKML_EXTRUDE_FIELD=`
 
 -  .. config:: LIBKML_ID_FIELD
       :default: id

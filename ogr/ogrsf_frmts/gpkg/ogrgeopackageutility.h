@@ -18,8 +18,8 @@
 
 typedef struct
 {
-    OGRBoolean bEmpty;
-    OGRBoolean bExtended;
+    bool bEmpty;
+    bool bExtended;
     OGRwkbByteOrder eByteOrder;
     int iSrsId;
     bool bExtentHasXY;

@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*         GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm()        */
+/*         GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm()         */
 /************************************************************************/
 
 GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm(bool standaloneStep)
@@ -34,21 +34,29 @@ GDALRasterScaleAlgorithm::GDALRasterScaleAlgorithm(bool standaloneStep)
     AddOutputDataTypeArg(&m_type);
     AddBandArg(&m_band,
                _("Select band to restrict the scaling (1-based index)"));
-    AddArg("src-min", 0, _("Minimum value of the source range"), &m_srcMin);
-    AddArg("src-max", 0, _("Maximum value of the source range"), &m_srcMax);
-    AddArg("dst-min", 0, _("Minimum value of the destination range"),
-           &m_dstMin);
-    AddArg("dst-max", 0, _("Maximum value of the destination range"),
-           &m_dstMax);
+    AddArg("input-min", 0, _("Minimum value of the source range"), &m_srcMin)
+        .SetMutualDependencyGroup("input-max-min")
+        .AddHiddenAlias("src-min");
+    AddArg("input-max", 0, _("Maximum value of the source range"), &m_srcMax)
+        .SetMutualDependencyGroup("input-max-min")
+        .AddHiddenAlias("src-max");
+    AddArg("output-min", 0, _("Minimum value of the destination range"),
+           &m_dstMin)
+        .SetMutualDependencyGroup("output-max-min")
+        .AddHiddenAlias("dst-min");
+    AddArg("output-max", 0, _("Maximum value of the destination range"),
+           &m_dstMax)
+        .SetMutualDependencyGroup("output-max-min")
+        .AddHiddenAlias("dst-max");
     AddArg("exponent", 0,
            _("Exponent to apply non-linear scaling with a power function"),
            &m_exponent);
-    AddArg("no-clip", 0, _("Do not clip input values to [srcmin, srcmax]"),
-           &m_noClip);
+    AddArg("no-clip", 0,
+           _("Do not clip input values to [innput-min, input-max]"), &m_noClip);
 }
 
 /************************************************************************/
-/*               GDALRasterScaleAlgorithm::RunStep()                    */
+/*                 GDALRasterScaleAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterScaleAlgorithm::RunStep(GDALPipelineStepRunContext &)
@@ -68,32 +76,21 @@ bool GDALRasterScaleAlgorithm::RunStep(GDALPipelineStepRunContext &)
     }
     aosOptions.AddString(m_band > 0 ? CPLSPrintf("-scale_%d", m_band)
                                     : "-scale");
+
+    CPLAssert((std::isnan(m_srcMax) && std::isnan(m_srcMin)) ||
+              (!std::isnan(m_srcMax) && !std::isnan(m_srcMin)));
+
     if (!std::isnan(m_srcMin))
     {
-        if (std::isnan(m_srcMax))
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "src-max must be specified when src-min is specified");
-            return false;
-        }
+        CPLAssert(!std::isnan(m_srcMax));
         aosOptions.AddString(CPLSPrintf("%.17g", m_srcMin));
         aosOptions.AddString(CPLSPrintf("%.17g", m_srcMax));
     }
-    else if (!std::isnan(m_srcMax))
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "src-min must be specified when src-max is specified");
-        return false;
-    }
 
+    CPLAssert((std::isnan(m_dstMax) && std::isnan(m_dstMin)) ||
+              (!std::isnan(m_dstMax) && !std::isnan(m_dstMin)));
     if (!std::isnan(m_dstMin))
     {
-        if (std::isnan(m_dstMax))
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "dst-max must be specified when dst-min is specified");
-            return false;
-        }
         if (std::isnan(m_srcMin))
         {
             aosOptions.AddString("NaN");
@@ -101,12 +98,6 @@ bool GDALRasterScaleAlgorithm::RunStep(GDALPipelineStepRunContext &)
         }
         aosOptions.AddString(CPLSPrintf("%.17g", m_dstMin));
         aosOptions.AddString(CPLSPrintf("%.17g", m_dstMax));
-    }
-    else if (!std::isnan(m_dstMax))
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "dst-min must be specified when dst-max is specified");
-        return false;
     }
 
     if (!std::isnan(m_exponent))

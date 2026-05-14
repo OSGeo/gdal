@@ -110,7 +110,6 @@ atof
 atoi
 atomicity
 attr
-Attrbute
 attrib
 attrname
 attrvalue
@@ -580,6 +579,7 @@ Decompressor
 decompressors
 decrementing
 decrypted
+deduplicate
 Deegree
 defacto
 define'ed
@@ -870,7 +870,6 @@ FHelvetica
 fi
 fid
 FID
-fieds
 FieldDomain
 fieldname
 fieldName
@@ -1198,6 +1197,7 @@ gpx
 gradians
 Grantor
 graylevel
+graticule
 grayscale
 Grayscale
 grc
@@ -1333,6 +1333,9 @@ hSrcBand
 hSrcDataset
 hSrcDS
 hST
+hsv
+HSV
+hsv-value
 hTarget
 hTargetEDT
 hThenBand
@@ -1489,6 +1492,7 @@ jpips
 jportiz
 jpp
 jpx
+jq
 jratike
 js
 json
@@ -1732,7 +1736,6 @@ Maptech
 maptools
 Marek
 marshaller
-Matchine
 Mateusz
 MateuszL
 MateuzL
@@ -1889,6 +1892,7 @@ multiproc
 multiprocess
 multireadtest
 multirecords
+multiscales
 multispectral
 multistring
 multisurface
@@ -2118,7 +2122,6 @@ nullable
 Nullable
 NullFID
 nullptr
-nulptr
 num
 numaspects
 numbase
@@ -2374,6 +2377,7 @@ pathname
 PAux
 pauxdataset
 pbCannotBeExactlyRepresented
+pbError
 pbf
 pbHasNoData
 pbHasNoDataValue
@@ -2405,6 +2409,7 @@ perl
 Petr
 pFct
 pfnCachePage
+pfnClearCaches
 pfnCopy
 pfnCopyFiles
 pfnCreate
@@ -2454,6 +2459,7 @@ pkgconfig
 pkid
 Placemark
 plaintext
+planView
 Plessis
 plmosaic
 plscenes
@@ -2528,6 +2534,7 @@ posList
 poSrcDS
 poSrcFDefn
 poSrcFeature
+poSR
 poSRS
 Postel
 postfix
@@ -2553,6 +2560,7 @@ ppoReturn
 pppppppppppp
 pProgressArg
 ppszAreaName
+ppszData
 ppszDetailedFormat
 ppszDstText
 ppszFailureReason
@@ -2580,6 +2588,7 @@ predelete
 preinstalled
 preload
 premultiplication
+premultiplied
 Prepar
 preparse
 prepended
@@ -2724,6 +2733,7 @@ qtcreator
 quadkey
 Quadrilateralized
 quadtree
+quantile
 Quantile
 quantizeCoordinates
 quantized
@@ -2858,6 +2868,7 @@ rfc
 rgb
 RGB
 rgba
+RGBA
 rgdal
 rgx
 RHEL
@@ -2967,7 +2978,6 @@ setMeasured
 SetNonLinearGeometriesEnabledFlag
 setPoint
 setProperties
-severals
 sg
 sgillies
 sgrd
@@ -2980,6 +2990,7 @@ shapefiles
 Shapefiles
 shapelib
 Shapelib
+sharded
 shortname
 shortnames
 shp
@@ -3081,7 +3092,6 @@ Steinberg
 stepsize
 stereographic
 Stereographic
-Stereograpic
 Stigter
 sto
 storageCRS
@@ -3170,7 +3180,6 @@ subsettings
 substitutable
 substring
 subsubgroup
-subtelty
 subtiles
 subtree
 subtype
@@ -3200,7 +3209,6 @@ sxf
 sym
 symlinked
 syntaxes
-syntaxic
 sys
 sysconfdir
 Szekeres
@@ -3237,7 +3245,6 @@ thescale
 thf
 THH
 Thorne
-thorougful
 threadsafe
 threadsafety
 thresholding
@@ -3317,7 +3324,6 @@ tpkx
 tps
 trac
 Trac
-Traditonal
 transactional
 Transactional
 transcode
@@ -3365,6 +3371,7 @@ unary
 uncached
 uncalibrated
 unclamped
+unclosed
 uncoded
 uncomment
 Uncompress
@@ -3485,7 +3492,6 @@ Viewsheds
 virtualenv
 virtualized
 virtualmem
-visibiliy
 visualisation
 vmaplv
 vnd
@@ -3622,7 +3628,6 @@ worldfile
 worldfiles
 WriteArray
 WriteArrowBatch
-wwith
 www
 Wx
 xA

@@ -1,0 +1,270 @@
+<DDFModule _interchangeLevel="3" _leaderIden="L" _inlineCodeExtensionIndicator="E" _versionNumber="1" _appIndicator=" " _extendedCharSet=" ! " _fieldControlLength="9" _sizeFieldLength="3" _sizeFieldPos="4" _sizeFieldTag="4">
+<DDFFieldDefn tag="0000" fieldName="" dataStructCode="elementary" dataTypeCode="char_string" arrayDescr="DSIDDSSIDSIDATCSDSIDITCSDSIDIACSDSIDARCSCSIDCRSHCRSHCSAXCRSHVDATIRIDATTRMRIDINASMRIDC2ILMRIDC3IL" formatControls="" escapeSequence="   "/>
+<DDFFieldDefn tag="DSID" fieldName="Data Set Identification" dataStructCode="concatenated" dataTypeCode="mixed_data_type" arrayDescr="RCNM!RCID!ENSP!ENED!PRSP!PRED!PROF!DSNM!DSTL!DSRD!DSLG!DSAB!DSED\\*DSTC" formatControls="(b11,b14,7A,A(8),3A,(b11))" escapeSequence="%/G"/>
+<DDFFieldDefn tag="DSSI" fieldName="Data Set Structure Information" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="DCOX!DCOY!DCOZ!CMFX!CMFY!CMFZ!NOIR!NOPN!NOMN!NOCN!NOXN!NOSN!NOFR" formatControls="(3b48,10b14)" escapeSequence="   "/>
+<DDFFieldDefn tag="ATCS" fieldName="Attribute Codes" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*ATCD!ANCD" formatControls="(A,b12)" escapeSequence="   "/>
+<DDFFieldDefn tag="ITCS" fieldName="Information Type Codes" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*ITCD!ITNC" formatControls="(A,b12)" escapeSequence="   "/>
+<DDFFieldDefn tag="IACS" fieldName="Information Association Codes" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*IACD!IANC" formatControls="(A,b12)" escapeSequence="   "/>
+<DDFFieldDefn tag="ARCS" fieldName="Association Codes" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*ARCD!ARNC" formatControls="(A,b12)" escapeSequence="   "/>
+<DDFFieldDefn tag="CSID" fieldName="Coordinate Reference System Record Identifier" dataStructCode="vector" dataTypeCode="implicit_point" arrayDescr="RCNM!RCID!NCRC" formatControls="(b11,b14,b11)" escapeSequence="   "/>
+<DDFFieldDefn tag="CRSH" fieldName="Coordinate Reference System Header" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="CRIX!CRST!CSTY!CRNM!CRSI!CRSS!SCRI" formatControls="(3b11,2A,b11,A)" escapeSequence="%/G"/>
+<DDFFieldDefn tag="CSAX" fieldName="Coordinate System Axes" dataStructCode="array" dataTypeCode="implicit_point" arrayDescr="*AXTY!AXUM" formatControls="(2b11)" escapeSequence="   "/>
+<DDFFieldDefn tag="VDAT" fieldName="Vertical Datum" dataStructCode="vector" dataTypeCode="mixed_data_type" arrayDescr="DTNM!DTID!DTSR!SCRI" formatControls="(2A,b11,A)" escapeSequence="%/G"/>
+<DDFFieldDefn tag="IRID" fieldName="Information Type Record Identifier" dataStructCode="vector" dataTypeCode="implicit_point" arrayDescr="RCNM!RCID!NITC!RVER!RUIN" formatControls="(b11,b14,2b12,b11)" escapeSequence="   "/>
+<DDFFieldDefn tag="INAS" fieldName="Information Association" dataStructCode="concatenated" dataTypeCode="mixed_data_type" arrayDescr="RRNM!RRID!NIAC!NARC!IUIN\\*NATC!ATIX!PAIX!ATIN!ATVL" formatControls="(b11,b14,2b12,b11,(3b12,b11,A))"/>
+<DDFFieldDefn tag="C2IL" fieldName="2-D Integer Coordinate List" dataStructCode="array" dataTypeCode="implicit_point" arrayDescr="*YCOO!XCOO" formatControls="(2b24)" escapeSequence="   "/>
+<DDFFieldDefn tag="C3IL" fieldName="3-D Integer Coordinate List" dataStructCode="concatenated" dataTypeCode="implicit_point" arrayDescr="VCID\\*YCOO!XCOO!ZCOO" formatControls="(b11,(3b24))" escapeSequence="   "/>
+<DDFFieldDefn tag="MRID" fieldName="Multi Point Record Identifier" dataStructCode="vector" dataTypeCode="implicit_point" arrayDescr="RCNM!RCID!RVER!RUIN" formatControls="(b11,b14,b12,b11)" escapeSequence="   "/>
+<DDFFieldDefn tag="ATTR" fieldName="Attribute" dataStructCode="array" dataTypeCode="mixed_data_type" arrayDescr="*NATC!ATIX!PAIX!ATIN!ATVL" formatControls="(3b12,b11,A)" escapeSequence="%/G"/>
+<DDFRecord>
+  <DDFField name="DSID">
+    <DDFSubfield name="RCNM" type="integer">10</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="ENSP" type="string">S-100 Part 10a</DDFSubfield>
+    <DDFSubfield name="ENED" type="string">5.2</DDFSubfield>
+    <DDFSubfield name="PRSP" type="string">INT.IHO.S-101.2.0</DDFSubfield>
+    <DDFSubfield name="PRED" type="string">2.0</DDFSubfield>
+    <DDFSubfield name="PROF" type="string">1</DDFSubfield>
+    <DDFSubfield name="DSNM" type="string">file name</DDFSubfield>
+    <DDFSubfield name="DSTL" type="string">dataset title</DDFSubfield>
+    <DDFSubfield name="DSRD" type="string">20260401</DDFSubfield>
+    <DDFSubfield name="DSLG" type="string">EN</DDFSubfield>
+    <DDFSubfield name="DSAB" type="string"></DDFSubfield>
+    <DDFSubfield name="DSED" type="string">10.0</DDFSubfield>
+    <DDFSubfield name="DSTC" type="integer">14</DDFSubfield>
+    <DDFSubfield name="DSTC" type="integer">18</DDFSubfield>
+  </DDFField>
+  <DDFField name="DSSI">
+    <DDFSubfield name="DCOX" type="float">0.000000</DDFSubfield>
+    <DDFSubfield name="DCOY" type="float">0.000000</DDFSubfield>
+    <DDFSubfield name="DCOZ" type="float">0.000000</DDFSubfield>
+    <DDFSubfield name="CMFX" type="integer">10000000</DDFSubfield>
+    <DDFSubfield name="CMFY" type="integer">10000000</DDFSubfield>
+    <DDFSubfield name="CMFZ" type="integer">10</DDFSubfield>
+    <DDFSubfield name="NOIR" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NOPN" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOMN" type="integer">4</DDFSubfield>
+    <DDFSubfield name="NOCN" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOXN" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOSN" type="integer">0</DDFSubfield>
+    <DDFSubfield name="NOFR" type="integer">0</DDFSubfield>
+  </DDFField>
+
+  <DDFField name="ATCS">
+    <DDFSubfield name="ATCD" type="string">spatialAccuracy</DDFSubfield>
+    <DDFSubfield name="ANCD" type="integer">1</DDFSubfield>
+
+    <DDFSubfield name="ATCD" type="string">horizontalPositionUncertainty</DDFSubfield>
+    <DDFSubfield name="ANCD" type="integer">2</DDFSubfield>
+
+    <DDFSubfield name="ATCD" type="string">uncertaintyFixed</DDFSubfield>
+    <DDFSubfield name="ANCD" type="integer">3</DDFSubfield>
+
+    <DDFSubfield name="ATCD" type="string">verticalUncertainty</DDFSubfield>
+    <DDFSubfield name="ANCD" type="integer">4</DDFSubfield>
+
+    <DDFSubfield name="ATCD" type="string">lightSector</DDFSubfield>
+    <DDFSubfield name="ANCD" type="integer">5</DDFSubfield>
+
+    <DDFSubfield name="ATCD" type="string">sectorInformation</DDFSubfield>
+    <DDFSubfield name="ANCD" type="integer">6</DDFSubfield>
+
+    <DDFSubfield name="ATCD" type="string">language</DDFSubfield>
+    <DDFSubfield name="ANCD" type="integer">7</DDFSubfield>
+
+    <DDFSubfield name="ATCD" type="string">text</DDFSubfield>
+    <DDFSubfield name="ANCD" type="integer">8</DDFSubfield>
+
+    <DDFSubfield name="ATCD" type="string">colour</DDFSubfield>
+    <DDFSubfield name="ANCD" type="integer">9</DDFSubfield>
+
+  </DDFField>
+
+  <DDFField name="ITCS">
+    <DDFSubfield name="ITCD" type="string">SpatialQuality</DDFSubfield>
+    <DDFSubfield name="ITNC" type="integer">1</DDFSubfield>
+  </DDFField>
+
+  <DDFField name="IACS" repeatCount="2">
+    <DDFSubfield name="IACD" type="string">SpatialAssociation</DDFSubfield>
+    <DDFSubfield name="IANC" type="integer">1</DDFSubfield>
+    <DDFSubfield name="IACD" type="string">AdditionalInformation</DDFSubfield>
+    <DDFSubfield name="IANC" type="integer">2</DDFSubfield>
+  </DDFField>
+
+  <DDFField name="ARCS" repeatCount="4">
+    <DDFSubfield name="ARCD" type="string">defines</DDFSubfield>
+    <DDFSubfield name="ARNC" type="integer">1</DDFSubfield>
+    <DDFSubfield name="ARCD" type="string">providesInformation</DDFSubfield>
+    <DDFSubfield name="ARNC" type="integer">2</DDFSubfield>
+    <DDFSubfield name="ARCD" type="string">supports</DDFSubfield>
+    <DDFSubfield name="ARNC" type="integer">3</DDFSubfield>
+    <DDFSubfield name="ARCD" type="string">consistsOf</DDFSubfield>
+    <DDFSubfield name="ARNC" type="integer">4</DDFSubfield>
+  </DDFField>
+
+</DDFRecord>
+<DDFRecord>
+  <DDFField name="CSID">
+    <DDFSubfield name="RCNM" type="integer">15</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NCRC" type="integer">3</DDFSubfield>
+  </DDFField>
+
+  <DDFField name="CRSH">
+    <DDFSubfield name="CRIX" type="integer">1</DDFSubfield>
+    <DDFSubfield name="CRST" type="integer">1</DDFSubfield>
+    <DDFSubfield name="CSTY" type="integer">1</DDFSubfield>
+    <DDFSubfield name="CRNM" type="string">WGS84</DDFSubfield>
+    <DDFSubfield name="CRSI" type="string">4326</DDFSubfield>
+    <DDFSubfield name="CRSS" type="integer">2</DDFSubfield>
+    <DDFSubfield name="SCRI" type="string"></DDFSubfield>
+  </DDFField>
+
+  <DDFField name="CRSH">
+    <DDFSubfield name="CRIX" type="integer">2</DDFSubfield>
+    <DDFSubfield name="CRST" type="integer">5</DDFSubfield>
+    <DDFSubfield name="CSTY" type="integer">3</DDFSubfield>
+    <DDFSubfield name="CRNM" type="string">meanHighWaterSprings</DDFSubfield>
+    <DDFSubfield name="CRSI" type="string"></DDFSubfield>
+    <DDFSubfield name="CRSS" type="integer">255</DDFSubfield>
+    <DDFSubfield name="SCRI" type="string"></DDFSubfield>
+  </DDFField>
+  <DDFField name="CSAX">
+    <DDFSubfield name="AXTY" type="integer">12</DDFSubfield>
+    <DDFSubfield name="AXUM" type="integer">4</DDFSubfield>
+  </DDFField>
+  <DDFField name="VDAT">
+    <DDFSubfield name="DTNM" type="string">meanHighWaterSprings</DDFSubfield>
+    <DDFSubfield name="DTID" type="string">17</DDFSubfield>
+    <DDFSubfield name="DTSR" type="integer">2</DDFSubfield>
+    <DDFSubfield name="SCRI" type="string"></DDFSubfield>
+ </DDFField>
+
+  <DDFField name="CRSH">
+    <DDFSubfield name="CRIX" type="integer">3</DDFSubfield>
+    <DDFSubfield name="CRST" type="integer">5</DDFSubfield>
+    <DDFSubfield name="CSTY" type="integer">3</DDFSubfield>
+    <DDFSubfield name="CRNM" type="string">approximateLowestAstronomicalTide</DDFSubfield>
+    <DDFSubfield name="CRSI" type="string"></DDFSubfield>
+    <DDFSubfield name="CRSS" type="integer">255</DDFSubfield>
+    <DDFSubfield name="SCRI" type="string"></DDFSubfield>
+  </DDFField>
+  <DDFField name="CSAX">
+    <DDFSubfield name="AXTY" type="integer">12</DDFSubfield>
+    <DDFSubfield name="AXUM" type="integer">4</DDFSubfield>
+  </DDFField>
+  <DDFField name="VDAT">
+    <DDFSubfield name="DTNM" type="string">approximateLowestAstronomicalTide</DDFSubfield>
+    <DDFSubfield name="DTID" type="string">17</DDFSubfield>
+    <DDFSubfield name="DTSR" type="integer">2</DDFSubfield>
+    <DDFSubfield name="SCRI" type="string"></DDFSubfield>
+ </DDFField>
+</DDFRecord>
+
+<DDFRecord>
+  <DDFField name="IRID">
+    <DDFSubfield name="RCNM" type="integer">150</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NITC" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="ATTR">
+    <DDFSubfield name="NATC" type="integer">8</DDFSubfield>  <!-- text -->
+    <DDFSubfield name="ATIX" type="integer">1</DDFSubfield>
+    <DDFSubfield name="PAIX" type="integer">0</DDFSubfield>
+    <DDFSubfield name="ATIN" type="integer">1</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">my text</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+
+<DDFRecord>
+  <DDFField name="MRID">
+    <DDFSubfield name="RCNM" type="integer">115</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="C2IL">
+    <DDFSubfield name="YCOO" type="integer">490000000</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">20000000</DDFSubfield>
+
+    <DDFSubfield name="YCOO" type="integer">480000000</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">30000000</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+
+<DDFRecord>
+  <DDFField name="MRID">
+    <DDFSubfield name="RCNM" type="integer">115</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">2</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+  <DDFField name="C3IL">
+    <DDFSubfield name="VCID" type="integer">2</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">495000000</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">25000000</DDFSubfield>
+    <DDFSubfield name="ZCOO" type="integer">155</DDFSubfield>
+
+    <DDFSubfield name="YCOO" type="integer">485000000</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">35000000</DDFSubfield>
+    <DDFSubfield name="ZCOO" type="integer">-155</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+
+<DDFRecord>
+  <DDFField name="MRID">
+    <DDFSubfield name="RCNM" type="integer">115</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">3</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+
+  <DDFField name="INAS">
+    <DDFSubfield name="RRNM" type="integer">150</DDFSubfield>
+    <DDFSubfield name="RRID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NIAC" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NARC" type="integer">1</DDFSubfield>
+    <DDFSubfield name="IUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+
+  <DDFField name="C3IL">
+    <DDFSubfield name="VCID" type="integer">3</DDFSubfield>
+    <DDFSubfield name="YCOO" type="integer">-495000000</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">-25000000</DDFSubfield>
+    <DDFSubfield name="ZCOO" type="integer">-155</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+
+<DDFRecord>
+  <DDFField name="MRID">
+    <DDFSubfield name="RCNM" type="integer">115</DDFSubfield>
+    <DDFSubfield name="RCID" type="integer">4</DDFSubfield>
+    <DDFSubfield name="RVER" type="integer">1</DDFSubfield>
+    <DDFSubfield name="RUIN" type="integer">1</DDFSubfield>
+  </DDFField>
+
+  <DDFField name="INAS">
+    <DDFSubfield name="RRNM" type="integer">150</DDFSubfield>
+    <DDFSubfield name="RRID" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NIAC" type="integer">1</DDFSubfield>
+    <DDFSubfield name="NARC" type="integer">1</DDFSubfield>
+    <DDFSubfield name="IUIN" type="integer">1</DDFSubfield>
+
+    <DDFSubfield name="NATC" type="integer">9</DDFSubfield>  <!-- colour -->
+    <DDFSubfield name="ATIX" type="integer">1</DDFSubfield>
+    <DDFSubfield name="PAIX" type="integer">0</DDFSubfield>
+    <DDFSubfield name="ATIN" type="integer">1</DDFSubfield>
+    <DDFSubfield name="ATVL" type="string">2</DDFSubfield> <!-- Black -->
+
+  </DDFField>
+
+  <DDFField name="C2IL">
+    <DDFSubfield name="YCOO" type="integer">495000000</DDFSubfield>
+    <DDFSubfield name="XCOO" type="integer">25000000</DDFSubfield>
+  </DDFField>
+</DDFRecord>
+
+</DDFModule>

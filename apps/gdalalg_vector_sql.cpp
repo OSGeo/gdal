@@ -37,6 +37,7 @@ GDALVectorSQLAlgorithm::GetConstructorOptions(bool standaloneStep)
     opts.SetOutputDatasetRequired(false);
     opts.SetAddInputLayerNameArgument(false);
     opts.SetAddOutputLayerNameArgument(false);
+    opts.SetInputDatasetAlias("dataset");
     return opts;
 }
 
@@ -62,7 +63,7 @@ GDALVectorSQLAlgorithm::GDALVectorSQLAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                   GDALVectorSQLAlgorithmDataset                      */
+/*                    GDALVectorSQLAlgorithmDataset                     */
 /************************************************************************/
 
 namespace
@@ -102,6 +103,18 @@ class GDALVectorSQLAlgorithmDataset final : public GDALDataset
     {
         return idx >= 0 && idx < GetLayerCount() ? m_layers[idx] : nullptr;
     }
+
+    int TestCapability(const char *pszCap) const override
+    {
+        if (EQUAL(pszCap, ODsCCurveGeometries) ||
+            EQUAL(pszCap, ODsCMeasuredGeometries) ||
+            EQUAL(pszCap, ODsCZGeometries))
+        {
+            return true;
+        }
+
+        return false;
+    }
 };
 }  // namespace
 
@@ -114,7 +127,7 @@ namespace
 
 class ProxiedSQLLayer final : public OGRProxiedLayer
 {
-    mutable OGRFeatureDefn *m_poLayerDefn = nullptr;
+    mutable OGRFeatureDefnRefCountedPtr m_poLayerDefn{};
     mutable std::mutex m_oMutex{};
 
     CPL_DISALLOW_COPY_ASSIGN(ProxiedSQLLayer)
@@ -130,12 +143,6 @@ class ProxiedSQLLayer final : public OGRProxiedLayer
         SetDescription(osName.c_str());
     }
 
-    ~ProxiedSQLLayer() override
-    {
-        if (m_poLayerDefn)
-            m_poLayerDefn->Release();
-    }
-
     const char *GetName() const override
     {
         return GetDescription();
@@ -147,10 +154,10 @@ class ProxiedSQLLayer final : public OGRProxiedLayer
 
         if (!m_poLayerDefn)
         {
-            m_poLayerDefn = OGRProxiedLayer::GetLayerDefn()->Clone();
+            m_poLayerDefn.reset(OGRProxiedLayer::GetLayerDefn()->Clone());
             m_poLayerDefn->SetName(GetDescription());
         }
-        return m_poLayerDefn;
+        return m_poLayerDefn.get();
     }
 };
 
@@ -236,7 +243,7 @@ class GDALVectorSQLAlgorithmDatasetMultiLayer final : public GDALDataset
 }  // namespace
 
 /************************************************************************/
-/*                 GDALVectorSQLAlgorithm::RunStep()                    */
+/*                  GDALVectorSQLAlgorithm::RunStep()                   */
 /************************************************************************/
 
 bool GDALVectorSQLAlgorithm::RunStep(GDALPipelineStepRunContext &)
@@ -271,7 +278,7 @@ bool GDALVectorSQLAlgorithm::RunStep(GDALPipelineStepRunContext &)
                             "Execution of the SQL statement '%s' failed.%s",
                             sql.c_str(),
                             m_update ? ""
-                                     : " Perhaps you need to specify the "
+                                     : ".\nPerhaps you need to specify the "
                                        "'update' argument?");
                 return false;
             }

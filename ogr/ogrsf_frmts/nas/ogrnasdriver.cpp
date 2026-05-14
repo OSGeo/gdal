@@ -16,7 +16,7 @@
 #include "ogr_nas.h"
 
 /************************************************************************/
-/*                     OGRNASDriverIdentify()                           */
+/*                        OGRNASDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRNASDriverIdentify(GDALOpenInfo *poOpenInfo)

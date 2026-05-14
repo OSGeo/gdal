@@ -20,7 +20,7 @@
 #include <algorithm>
 
 /************************************************************************/
-/*                 XercesInitializer::XercesInitializer()               */
+/*                XercesInitializer::XercesInitializer()                */
 /************************************************************************/
 
 OGRGMLASDataSource::XercesInitializer::XercesInitializer()
@@ -29,7 +29,7 @@ OGRGMLASDataSource::XercesInitializer::XercesInitializer()
 }
 
 /************************************************************************/
-/*                 XercesInitializer::~XercesInitializer()              */
+/*               XercesInitializer::~XercesInitializer()                */
 /************************************************************************/
 
 OGRGMLASDataSource::XercesInitializer::~XercesInitializer()
@@ -38,7 +38,7 @@ OGRGMLASDataSource::XercesInitializer::~XercesInitializer()
 }
 
 /************************************************************************/
-/*                          OGRGMLASDataSource()                        */
+/*                         OGRGMLASDataSource()                         */
 /************************************************************************/
 
 OGRGMLASDataSource::OGRGMLASDataSource()
@@ -187,7 +187,7 @@ OGRGMLASDataSource::~OGRGMLASDataSource()
 }
 
 /************************************************************************/
-/*                            GetLayerCount()                           */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int OGRGMLASDataSource::GetLayerCount() const
@@ -197,7 +197,7 @@ int OGRGMLASDataSource::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                                GetLayer()                            */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 const OGRLayer *OGRGMLASDataSource::GetLayer(int i) const
@@ -218,7 +218,7 @@ const OGRLayer *OGRGMLASDataSource::GetLayer(int i) const
 }
 
 /************************************************************************/
-/*                             GetLayerByName()                         */
+/*                           GetLayerByName()                           */
 /************************************************************************/
 
 OGRLayer *OGRGMLASDataSource::GetLayerByName(const char *pszName)
@@ -248,7 +248,7 @@ OGRLayer *OGRGMLASDataSource::GetLayerByName(const char *pszName)
 }
 
 /************************************************************************/
-/*                           TranslateClasses()                         */
+/*                          TranslateClasses()                          */
 /************************************************************************/
 
 void OGRGMLASDataSource::TranslateClasses(OGRGMLASLayer *poParentLayer,
@@ -270,7 +270,7 @@ void OGRGMLASDataSource::TranslateClasses(OGRGMLASLayer *poParentLayer,
 }
 
 /************************************************************************/
-/*                         GMLASTopElementParser                        */
+/*                        GMLASTopElementParser                         */
 /************************************************************************/
 
 class GMLASTopElementParser : public DefaultHandler
@@ -356,7 +356,7 @@ void GMLASTopElementParser::Parse(const CPLString &osFilename,
 }
 
 /************************************************************************/
-/*                             startElement()                           */
+/*                            startElement()                            */
 /************************************************************************/
 
 void GMLASTopElementParser::startElement(const XMLCh *const /*uri*/,
@@ -425,7 +425,7 @@ void GMLASTopElementParser::startElement(const XMLCh *const /*uri*/,
 }
 
 /************************************************************************/
-/*                         FillOtherMetadataLayer()                     */
+/*                       FillOtherMetadataLayer()                       */
 /************************************************************************/
 
 void OGRGMLASDataSource::FillOtherMetadataLayer(
@@ -638,7 +638,7 @@ void OGRGMLASDataSource::FillOtherMetadataLayer(
 }
 
 /************************************************************************/
-/*                         BuildXSDVector()                             */
+/*                           BuildXSDVector()                           */
 /************************************************************************/
 
 std::vector<PairURIFilename>
@@ -1059,7 +1059,7 @@ int OGRGMLASDataSource::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           CreateReader()                             */
+/*                            CreateReader()                            */
 /************************************************************************/
 
 GMLASReader *
@@ -1255,7 +1255,7 @@ OGRGMLASLayer *OGRGMLASDataSource::GetLayerByXPath(const CPLString &osXPath)
 }
 
 /************************************************************************/
-/*                       PushUnusedGMLFilePointer()                     */
+/*                      PushUnusedGMLFilePointer()                      */
 /************************************************************************/
 
 void OGRGMLASDataSource::PushUnusedGMLFilePointer(
@@ -1272,7 +1272,7 @@ void OGRGMLASDataSource::PushUnusedGMLFilePointer(
 }
 
 /************************************************************************/
-/*                        PopUnusedGMLFilePointer()                     */
+/*                      PopUnusedGMLFilePointer()                       */
 /************************************************************************/
 
 std::shared_ptr<VSIVirtualHandle> OGRGMLASDataSource::PopUnusedGMLFilePointer()
@@ -1283,7 +1283,7 @@ std::shared_ptr<VSIVirtualHandle> OGRGMLASDataSource::PopUnusedGMLFilePointer()
 }
 
 /************************************************************************/
-/*                    InitReaderWithFirstPassElements()                 */
+/*                  InitReaderWithFirstPassElements()                   */
 /************************************************************************/
 
 void OGRGMLASDataSource::InitReaderWithFirstPassElements(GMLASReader *poReader)
@@ -1302,7 +1302,7 @@ void OGRGMLASDataSource::InitReaderWithFirstPassElements(GMLASReader *poReader)
 }
 
 /************************************************************************/
-/*                          RunFirstPassIfNeeded()                      */
+/*                        RunFirstPassIfNeeded()                        */
 /************************************************************************/
 
 bool OGRGMLASDataSource::RunFirstPassIfNeeded(GMLASReader *poReader,

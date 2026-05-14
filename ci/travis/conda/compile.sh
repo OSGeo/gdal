@@ -25,7 +25,9 @@ elif grep -q "macos-15-intel" <<< "$GHA_CI_PLATFORM"; then
     ARCH="64"
 fi
 
-conda build recipe --clobber-file recipe/recipe_clobber.yaml --output-folder packages -m ".ci_support/${CONDA_PLAT}_${ARCH}_.yaml"
+echo "CONDA_SUBDIR=${CONDA_PLAT}-${ARCH}" >> $GITHUB_ENV
+
+rattler-build build --recipe recipe/recipe_patched.yaml  --output-dir packages -m ".ci_support/${CONDA_PLAT}_${ARCH}_.yaml"
 conda create -y -n test -c ./packages/${CONDA_PLAT}-${ARCH} python libgdal gdal
 conda deactivate
 

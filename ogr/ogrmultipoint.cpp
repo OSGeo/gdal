@@ -36,7 +36,7 @@
 OGRMultiPoint::OGRMultiPoint(const OGRMultiPoint &) = default;
 
 /************************************************************************/
-/*                  operator=( const OGRMultiPoint&)                    */
+/*                   operator=( const OGRMultiPoint&)                   */
 /************************************************************************/
 
 /**
@@ -100,11 +100,10 @@ const char *OGRMultiPoint::getGeometryName() const
 }
 
 /************************************************************************/
-/*                          isCompatibleSubType()                       */
+/*                        isCompatibleSubType()                         */
 /************************************************************************/
 
-OGRBoolean
-OGRMultiPoint::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
+bool OGRMultiPoint::isCompatibleSubType(OGRwkbGeometryType eGeomType) const
 {
     return wkbFlatten(eGeomType) == wkbPoint;
 }
@@ -395,10 +394,10 @@ OGRErr OGRMultiPoint::importFromWkt_Bracketed(const char **ppszInput, int bHasM,
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRMultiPoint::hasCurveGeometry(int /* bLookForNonLinear */) const
+bool OGRMultiPoint::hasCurveGeometry(int /* bLookForNonLinear */) const
 {
     return FALSE;
 }

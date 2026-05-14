@@ -41,6 +41,8 @@ output coordinate system or even reprojecting the features during translation.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. include:: options/if.rst
 
 .. option:: -of <format_name>, -f <format_name>
@@ -130,11 +132,13 @@ output coordinate system or even reprojecting the features during translation.
     of the native SQL of an RDBMS by passing the ``OGRSQL`` dialect value.
     The :ref:`sql_sqlite_dialect` dialect can be chosen with the ``SQLITE``
     and ``INDIRECT_SQLITE`` dialect values, and this can be used with any datasource.
+    (:option:`-dialect` is ignored with :option:`-where`. Use :option:`-sql` instead.)
 
 .. option:: -where <restricted_where>|@<filename>
 
     Attribute query (like SQL WHERE). The ``@filename``
     syntax can be used to indicate that the content is in the pointed filename.
+    (:option:`-dialect` is ignored with :option:`-where`. Use :option:`-sql` instead.)
 
 .. option:: -skipfailures
 
@@ -689,6 +693,11 @@ classic algorithm using an iterative feature based approach. If that flag is
 needed with GDAL >= 3.9, please file an issue on the
 `GDAL issue tracker <https://github.com/OSGeo/gdal/issues>`__.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 C API
 -----
 
@@ -765,8 +774,8 @@ Advanced examples
 .. example::
    :title: Outputting geometries with the CSV driver.
 
-   By default, this driver does not preserve geometries on layer creation by
-   default. An explicit layer creation option is needed:
+   By default this driver does not preserve geometries upon layer creation.
+   An explicit layer creation option is needed:
 
     .. code-block:: bash
 

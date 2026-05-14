@@ -18,9 +18,9 @@
 #include <string>       // For std::string
 #include <algorithm>    // For std::max
 
-/****************************************************************************/
-/*                            OGRMiraMonLayer()                             */
-/****************************************************************************/
+/************************************************************************/
+/*                          OGRMiraMonLayer()                           */
+/************************************************************************/
 OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
                                  VSILFILE *fp, const OGRSpatialReference *poSRS,
                                  int bUpdateIn, CSLConstList papszOpenOptions,
@@ -538,9 +538,9 @@ OGRMiraMonLayer::OGRMiraMonLayer(GDALDataset *poDS, const char *pszFilename,
     bValidFile = true;
 }
 
-/****************************************************************************/
-/*                           ~OGRMiraMonLayer()                             */
-/****************************************************************************/
+/************************************************************************/
+/*                          ~OGRMiraMonLayer()                          */
+/************************************************************************/
 
 OGRMiraMonLayer::~OGRMiraMonLayer()
 
@@ -744,9 +744,9 @@ OGRMiraMonLayer::~OGRMiraMonLayer()
         CPLFree(pnInt64Values);
 }
 
-/****************************************************************************/
-/*                            ResetReading()                                */
-/****************************************************************************/
+/************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
 
 void OGRMiraMonLayer::ResetReading()
 
@@ -778,9 +778,9 @@ void OGRMiraMonLayer::ResetReading()
     }
 }
 
-/****************************************************************************/
-/*                         GetNextRawFeature()                              */
-/****************************************************************************/
+/************************************************************************/
+/*                         GetNextRawFeature()                          */
+/************************************************************************/
 
 void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
                                                 MM_EXT_DBF_N_RECORDS nIRecord,
@@ -799,9 +799,9 @@ void OGRMiraMonLayer::GoToFieldOfMultipleRecord(MM_INTERNAL_FID iFID,
               SEEK_SET);
 }
 
-/****************************************************************************/
-/*                         GetNextRawFeature()                              */
-/****************************************************************************/
+/************************************************************************/
+/*                         GetNextRawFeature()                          */
+/************************************************************************/
 
 OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
 {
@@ -821,9 +821,9 @@ OGRFeature *OGRMiraMonLayer::GetNextRawFeature()
     return poFeature;
 }
 
-/****************************************************************************/
-/*                         GetFeature()                                     */
-/****************************************************************************/
+/************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
 
 OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
 
@@ -1568,9 +1568,9 @@ OGRFeature *OGRMiraMonLayer::GetFeature(GIntBig nFeatureId)
     return poFeature.release();
 }
 
-/****************************************************************************/
-/*                         GetFeatureCount()                                */
-/****************************************************************************/
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
 GIntBig OGRMiraMonLayer::GetFeatureCount(int bForce)
 {
     if (!phMiraMonLayer || m_poFilterGeom != nullptr ||
@@ -1586,9 +1586,9 @@ GIntBig OGRMiraMonLayer::GetFeatureCount(int bForce)
     return static_cast<GIntBig>(phMiraMonLayer->TopHeader.nElemCount);
 }
 
-/****************************************************************************/
-/*                      MMProcessMultiGeometry()                            */
-/****************************************************************************/
+/************************************************************************/
+/*                       MMProcessMultiGeometry()                       */
+/************************************************************************/
 OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
                                                OGRFeature *poFeature)
 
@@ -1637,9 +1637,9 @@ OGRErr OGRMiraMonLayer::MMProcessMultiGeometry(OGRGeometryH hGeom,
     return MMProcessGeometry(OGRGeometry::ToHandle(poGeom), poFeature, TRUE);
 }
 
-/****************************************************************************/
-/*                           MMProcessGeometry()                            */
-/****************************************************************************/
+/************************************************************************/
+/*                         MMProcessGeometry()                          */
+/************************************************************************/
 OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
                                           OGRFeature *poFeature,
                                           MM_BOOLEAN bcalculateRecord)
@@ -1749,9 +1749,9 @@ OGRErr OGRMiraMonLayer::MMProcessGeometry(OGRGeometryH hGeom,
     return eErr;
 }
 
-/****************************************************************************/
-/*                           ICreateFeature()                               */
-/****************************************************************************/
+/************************************************************************/
+/*                           ICreateFeature()                           */
+/************************************************************************/
 
 OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
 
@@ -1813,9 +1813,9 @@ OGRErr OGRMiraMonLayer::ICreateFeature(OGRFeature *poFeature)
     return eErr;
 }
 
-/****************************************************************************/
-/*                          MMDumpVertices()                                */
-/****************************************************************************/
+/************************************************************************/
+/*                           MMDumpVertices()                           */
+/************************************************************************/
 
 OGRErr OGRMiraMonLayer::MMDumpVertices(OGRGeometryH hGeom,
                                        MM_BOOLEAN bExternalRing,
@@ -2291,7 +2291,7 @@ int OGRMiraMonLayer::MM_SprintfDoubleSignifFigures(char *szChain,
     /* This expression ensures that no garbage is written in
     the non-significant digits of the integer part, i.e., requesting 9E20
     with 16 significant digits does not print 90000000000000004905, where
-    "4905" is garbage generated by the print call with such a large value 
+    "4905" is garbage generated by the print call with such a large value
     and "%.16f", but rather writes 9.000000000000000E+20.
     At the same time, it ensures that 9000 requested with 4 significant
     digits is written as 9000 and that requested with 5 significant digits
@@ -2389,7 +2389,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = CSLCount(papszValues);
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords =
+                std::max(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2462,7 +2463,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = nCount;
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords =
+                std::max(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2542,7 +2544,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = nCount;
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords =
+                std::max(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2594,7 +2597,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
             nRealNumRecords = nNumRecords = nCount;
             if (nNumRecords == 0)
                 nNumRecords++;
-            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, nNumRecords);
+            hMMFeature.nNumMRecords =
+                std::max(hMMFeature.nNumMRecords, nNumRecords);
             if (MMResizeMiraMonRecord(
                     &hMMFeature.pRecords, &hMMFeature.nMaxMRecords,
                     hMMFeature.nNumMRecords, MM_INC_NUMBER_OF_RECORDS,
@@ -2656,7 +2660,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTString)
         {
-            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = std::max<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2704,7 +2709,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         {
             char szDate[15];
 
-            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = std::max<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2735,7 +2741,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTTime || eFType == OFTDateTime)
         {
-            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = std::max<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2760,7 +2767,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTInteger)
         {
-            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = std::max<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2815,7 +2823,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTInteger64)
         {
-            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = std::max<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2841,7 +2850,8 @@ OGRErr OGRMiraMonLayer::TranslateFieldsValuesToMM(OGRFeature *poFeature)
         }
         else if (eFType == OFTReal)
         {
-            hMMFeature.nNumMRecords = MAX(hMMFeature.nNumMRecords, 1);
+            hMMFeature.nNumMRecords = std::max<MM_EXT_DBF_N_MULTIPLE_RECORDS>(
+                hMMFeature.nNumMRecords, 1);
             hMMFeature.pRecords[0].nNumField = nNumFields;
             if (MMResizeMiraMonFieldValue(&(hMMFeature.pRecords[0].pField),
                                           &hMMFeature.pRecords[0].nMaxField,
@@ -2944,9 +2954,9 @@ OGRErr OGRMiraMonLayer::IGetExtent(int /* iGeomField*/, OGREnvelope *psExtent,
     return OGRERR_NONE;
 }
 
-/****************************************************************************/
-/*                           TestCapability()                               */
-/****************************************************************************/
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
 
 int OGRMiraMonLayer::TestCapability(const char *pszCap) const
 
@@ -2975,9 +2985,9 @@ int OGRMiraMonLayer::TestCapability(const char *pszCap) const
     return FALSE;
 }
 
-/****************************************************************************/
-/*                            CreateField()                                 */
-/****************************************************************************/
+/************************************************************************/
+/*                            CreateField()                             */
+/************************************************************************/
 
 OGRErr OGRMiraMonLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 
@@ -3030,7 +3040,7 @@ OGRErr OGRMiraMonLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 }
 
 /************************************************************************/
-/*                            AddToFileList()                           */
+/*                           AddToFileList()                            */
 /************************************************************************/
 
 void OGRMiraMonLayer::AddToFileList(CPLStringList &oFileList)

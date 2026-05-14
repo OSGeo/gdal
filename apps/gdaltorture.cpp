@@ -28,7 +28,7 @@ static void Usage()
 }
 
 /************************************************************************/
-/*                              TortureDS()                             */
+/*                             TortureDS()                              */
 /************************************************************************/
 
 static void TortureBand(GDALRasterBandH hBand, int /* bReadWriteOperations */,
@@ -111,7 +111,7 @@ static void TortureBand(GDALRasterBandH hBand, int /* bReadWriteOperations */,
 }
 
 /************************************************************************/
-/*                              TortureDS()                             */
+/*                             TortureDS()                              */
 /************************************************************************/
 
 static void TortureDS(const char *pszTarget, bool bReadWriteOperations)
@@ -171,7 +171,7 @@ static void TortureDS(const char *pszTarget, bool bReadWriteOperations)
 }
 
 /************************************************************************/
-/*                       ProcessTortureTarget()                         */
+/*                        ProcessTortureTarget()                        */
 /************************************************************************/
 
 static void ProcessTortureTarget(const char *pszTarget, char **papszSiblingList,

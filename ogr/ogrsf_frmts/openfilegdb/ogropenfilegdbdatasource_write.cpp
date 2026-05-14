@@ -35,9 +35,9 @@
 #include "filegdb_fielddomain.h"
 #include "filegdb_relationship.h"
 
-/***********************************************************************/
-/*                    GetExistingSpatialRef()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                       GetExistingSpatialRef()                        */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::GetExistingSpatialRef(
     const std::string &osWKT, double dfXOrigin, double dfYOrigin,
@@ -94,9 +94,9 @@ bool OGROpenFileGDBDataSource::GetExistingSpatialRef(
     return false;
 }
 
-/***********************************************************************/
-/*                       AddNewSpatialRef()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                          AddNewSpatialRef()                          */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::AddNewSpatialRef(
     const std::string &osWKT, double dfXOrigin, double dfYOrigin,
@@ -137,9 +137,9 @@ bool OGROpenFileGDBDataSource::AddNewSpatialRef(
     return oTable.CreateFeature(fields, nullptr) && oTable.Sync();
 }
 
-/***********************************************************************/
-/*                    RegisterLayerInSystemCatalog()                   */
-/***********************************************************************/
+/************************************************************************/
+/*                    RegisterLayerInSystemCatalog()                    */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::RegisterLayerInSystemCatalog(
     const std::string &osLayerName)
@@ -158,9 +158,9 @@ bool OGROpenFileGDBDataSource::RegisterLayerInSystemCatalog(
     return oTable.CreateFeature(fields, nullptr) && oTable.Sync();
 }
 
-/***********************************************************************/
-/*                    RegisterInItemRelationships()                    */
-/***********************************************************************/
+/************************************************************************/
+/*                    RegisterInItemRelationships()                     */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::RegisterInItemRelationships(
     const std::string &osOriginGUID, const std::string &osDestGUID,
@@ -187,9 +187,9 @@ bool OGROpenFileGDBDataSource::RegisterInItemRelationships(
     return oTable.CreateFeature(fields, nullptr) && oTable.Sync();
 }
 
-/***********************************************************************/
-/*              RegisterRelationshipInItemRelationships()              */
-/***********************************************************************/
+/************************************************************************/
+/*              RegisterRelationshipInItemRelationships()               */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::RegisterRelationshipInItemRelationships(
     const std::string &osRelationshipGUID, const std::string &osOriginGUID,
@@ -212,9 +212,9 @@ bool OGROpenFileGDBDataSource::RegisterRelationshipInItemRelationships(
     return true;
 }
 
-/***********************************************************************/
-/*              RemoveRelationshipFromItemRelationships()              */
-/***********************************************************************/
+/************************************************************************/
+/*              RemoveRelationshipFromItemRelationships()               */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::RemoveRelationshipFromItemRelationships(
     const std::string &osRelationshipGUID)
@@ -255,9 +255,9 @@ bool OGROpenFileGDBDataSource::RemoveRelationshipFromItemRelationships(
     return true;
 }
 
-/***********************************************************************/
-/*                      LinkDomainToTable()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                         LinkDomainToTable()                          */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::LinkDomainToTable(
     const std::string &osDomainName, const std::string &osLayerGUID)
@@ -298,9 +298,9 @@ bool OGROpenFileGDBDataSource::LinkDomainToTable(
                                        pszDomainInDatasetUUID);
 }
 
-/***********************************************************************/
-/*                      UnlinkDomainToTable()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                        UnlinkDomainToTable()                         */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::UnlinkDomainToTable(
     const std::string &osDomainName, const std::string &osLayerGUID)
@@ -337,9 +337,9 @@ bool OGROpenFileGDBDataSource::UnlinkDomainToTable(
     return true;
 }
 
-/***********************************************************************/
-/*                    UpdateXMLDefinition()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                        UpdateXMLDefinition()                         */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::UpdateXMLDefinition(
     const std::string &osLayerName, const char *pszXMLDefinition)
@@ -379,9 +379,9 @@ bool OGROpenFileGDBDataSource::UpdateXMLDefinition(
     return false;
 }
 
-/***********************************************************************/
-/*                    FindUUIDFromName()                               */
-/***********************************************************************/
+/************************************************************************/
+/*                          FindUUIDFromName()                          */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::FindUUIDFromName(const std::string &osName,
                                                 std::string &osUUIDOut)
@@ -414,9 +414,9 @@ bool OGROpenFileGDBDataSource::FindUUIDFromName(const std::string &osName,
     return false;
 }
 
-/***********************************************************************/
-/*                  RegisterFeatureDatasetInItems()                    */
-/***********************************************************************/
+/************************************************************************/
+/*                   RegisterFeatureDatasetInItems()                    */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::RegisterFeatureDatasetInItems(
     const std::string &osFeatureDatasetGUID, const std::string &osName,
@@ -452,9 +452,9 @@ bool OGROpenFileGDBDataSource::RegisterFeatureDatasetInItems(
     return oTable.CreateFeature(fields, nullptr) && oTable.Sync();
 }
 
-/***********************************************************************/
-/*                  RegisterFeatureClassInItems()                      */
-/***********************************************************************/
+/************************************************************************/
+/*                    RegisterFeatureClassInItems()                     */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::RegisterFeatureClassInItems(
     const std::string &osLayerGUID, const std::string &osLayerName,
@@ -501,9 +501,9 @@ bool OGROpenFileGDBDataSource::RegisterFeatureClassInItems(
     return oTable.CreateFeature(fields, nullptr) && oTable.Sync();
 }
 
-/***********************************************************************/
-/*                  RegisterASpatialTableInItems()                     */
-/***********************************************************************/
+/************************************************************************/
+/*                    RegisterASpatialTableInItems()                    */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::RegisterASpatialTableInItems(
     const std::string &osLayerGUID, const std::string &osLayerName,
@@ -541,9 +541,9 @@ bool OGROpenFileGDBDataSource::RegisterASpatialTableInItems(
     return oTable.CreateFeature(fields, nullptr) && oTable.Sync();
 }
 
-/***********************************************************************/
-/*                       CreateGDBSystemCatalog()                      */
-/***********************************************************************/
+/************************************************************************/
+/*                       CreateGDBSystemCatalog()                       */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::CreateGDBSystemCatalog()
 {
@@ -598,9 +598,9 @@ bool OGROpenFileGDBDataSource::CreateGDBSystemCatalog()
     return oTable.Sync();
 }
 
-/***********************************************************************/
-/*                       CreateGDBDBTune()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                          CreateGDBDBTune()                           */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::CreateGDBDBTune()
 {
@@ -696,9 +696,9 @@ bool OGROpenFileGDBDataSource::CreateGDBDBTune()
     return oTable.Sync();
 }
 
-/***********************************************************************/
-/*                       CreateGDBSpatialRefs()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                        CreateGDBSpatialRefs()                        */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::CreateGDBSpatialRefs()
 {
@@ -779,9 +779,9 @@ bool OGROpenFileGDBDataSource::CreateGDBSpatialRefs()
     return oTable.Sync();
 }
 
-/***********************************************************************/
-/*                       CreateGDBItems()                              */
-/***********************************************************************/
+/************************************************************************/
+/*                           CreateGDBItems()                           */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::CreateGDBItems()
 {
@@ -943,9 +943,9 @@ bool OGROpenFileGDBDataSource::CreateGDBItems()
     return oTable.CreateFeature(fields, nullptr) && oTable.Sync();
 }
 
-/***********************************************************************/
-/*                       CreateGDBItemTypes()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                         CreateGDBItemTypes()                         */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::CreateGDBItemTypes()
 {
@@ -1065,9 +1065,9 @@ bool OGROpenFileGDBDataSource::CreateGDBItemTypes()
     return oTable.Sync();
 }
 
-/***********************************************************************/
-/*                  CreateGDBItemRelationships()                       */
-/***********************************************************************/
+/************************************************************************/
+/*                     CreateGDBItemRelationships()                     */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::CreateGDBItemRelationships()
 {
@@ -1123,9 +1123,9 @@ bool OGROpenFileGDBDataSource::CreateGDBItemRelationships()
     return oTable.Sync();
 }
 
-/***********************************************************************/
-/*                 CreateGDBItemRelationshipTypes()                    */
-/***********************************************************************/
+/************************************************************************/
+/*                   CreateGDBItemRelationshipTypes()                   */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::CreateGDBItemRelationshipTypes()
 {
@@ -1270,9 +1270,9 @@ bool OGROpenFileGDBDataSource::CreateGDBItemRelationshipTypes()
     return oTable.Sync();
 }
 
-/***********************************************************************/
-/*                             Create()                                */
-/***********************************************************************/
+/************************************************************************/
+/*                               Create()                               */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::Create(const char *pszName)
 {
@@ -1336,7 +1336,7 @@ bool OGROpenFileGDBDataSource::Create(const char *pszName)
 }
 
 /************************************************************************/
-/*                             ICreateLayer()                           */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -1555,7 +1555,7 @@ CPLErr OGROpenFileGDBDataSource::FlushCache(bool /*bAtClosing*/)
 }
 
 /************************************************************************/
-/*                          AddFieldDomain()                            */
+/*                           AddFieldDomain()                           */
 /************************************************************************/
 
 bool OGROpenFileGDBDataSource::AddFieldDomain(
@@ -1735,7 +1735,7 @@ bool OGROpenFileGDBDataSource::DeleteFieldDomain(
 }
 
 /************************************************************************/
-/*                        UpdateFieldDomain()                           */
+/*                         UpdateFieldDomain()                          */
 /************************************************************************/
 
 bool OGROpenFileGDBDataSource::UpdateFieldDomain(
@@ -1863,7 +1863,7 @@ std::vector<std::string> OGROpenFileGDBDataSource::GetRelationshipNames(
 }
 
 /************************************************************************/
-/*                        GetRelationship()                             */
+/*                          GetRelationship()                           */
 /************************************************************************/
 
 const GDALRelationship *
@@ -2160,7 +2160,7 @@ bool OGROpenFileGDBDataSource::DeleteRelationship(const std::string &name,
 }
 
 /************************************************************************/
-/*                        UpdateRelationship()                          */
+/*                         UpdateRelationship()                         */
 /************************************************************************/
 
 bool OGROpenFileGDBDataSource::UpdateRelationship(
@@ -2339,7 +2339,7 @@ bool OGROpenFileGDBDataSource::UpdateRelationship(
 }
 
 /************************************************************************/
-/*                        StartTransaction()                            */
+/*                          StartTransaction()                          */
 /************************************************************************/
 
 OGRErr OGROpenFileGDBDataSource::StartTransaction(int bForce)
@@ -2387,7 +2387,7 @@ OGRErr OGROpenFileGDBDataSource::StartTransaction(int bForce)
 }
 
 /************************************************************************/
-/*                   BackupSystemTablesForTransaction()                 */
+/*                  BackupSystemTablesForTransaction()                  */
 /************************************************************************/
 
 bool OGROpenFileGDBDataSource::BackupSystemTablesForTransaction()
@@ -2423,7 +2423,7 @@ bool OGROpenFileGDBDataSource::BackupSystemTablesForTransaction()
 }
 
 /************************************************************************/
-/*                        CommitTransaction()                           */
+/*                         CommitTransaction()                          */
 /************************************************************************/
 
 OGRErr OGROpenFileGDBDataSource::CommitTransaction()
@@ -2448,7 +2448,7 @@ OGRErr OGROpenFileGDBDataSource::CommitTransaction()
 }
 
 /************************************************************************/
-/*                       RollbackTransaction()                          */
+/*                        RollbackTransaction()                         */
 /************************************************************************/
 
 OGRErr OGROpenFileGDBDataSource::RollbackTransaction()

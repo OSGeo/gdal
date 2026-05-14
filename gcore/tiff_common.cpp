@@ -61,7 +61,7 @@ char *PrepareTIFFErrorFormat(const char *module, const char *fmt)
 }
 
 /************************************************************************/
-/*                     TIFFColorMapTagToColorTable()                    */
+/*                    TIFFColorMapTagToColorTable()                     */
 /************************************************************************/
 
 std::unique_ptr<GDALColorTable> TIFFColorMapTagToColorTable(

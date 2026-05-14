@@ -43,6 +43,7 @@ Raster drivers
    cog
    cosar
    cpg
+   cphd
    ctg
    daas
    dds
@@ -81,6 +82,7 @@ Raster drivers
    gti
    gtiff
    gxf
+   gtx
    hdf4
    hdf5
    heif
@@ -95,6 +97,7 @@ Raster drivers
    isis3
    jdem
    jp2ecw
+   jp2grok
    jp2kak
    jp2mrsid
    jp2openjpeg
@@ -140,6 +143,7 @@ Raster drivers
    pds
    pds4
    plmosaic
+   pmtiles
    png
    pnm
    postgisraster

@@ -87,14 +87,14 @@ class OGRMSSQLSpatialDataSource;
 #define SMT_FIRSTARC 3
 
 /************************************************************************/
-/*                         OGRMSSQLAppendEscaped( )                     */
+/*                       OGRMSSQLAppendEscaped( )                       */
 /************************************************************************/
 
 void OGRMSSQLAppendEscaped(CPLODBCStatement *poStatement,
                            const char *pszStrValue);
 
 /************************************************************************/
-/*                           OGRMSSQLGeometryParser                     */
+/*                        OGRMSSQLGeometryParser                        */
 /************************************************************************/
 
 class OGRMSSQLGeometryValidator
@@ -145,7 +145,7 @@ class OGRMSSQLGeometryValidator
 };
 
 /************************************************************************/
-/*                           OGRMSSQLGeometryParser                     */
+/*                        OGRMSSQLGeometryParser                        */
 /************************************************************************/
 
 class OGRMSSQLGeometryParser
@@ -202,7 +202,7 @@ class OGRMSSQLGeometryParser
 };
 
 /************************************************************************/
-/*                           OGRMSSQLGeometryWriter                     */
+/*                        OGRMSSQLGeometryWriter                        */
 /************************************************************************/
 
 class OGRMSSQLGeometryWriter
@@ -266,7 +266,7 @@ class OGRMSSQLGeometryWriter
 };
 
 /************************************************************************/
-/*                             OGRMSSQLSpatialLayer                     */
+/*                         OGRMSSQLSpatialLayer                         */
 /************************************************************************/
 
 class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
@@ -353,7 +353,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
 };
 
 /************************************************************************/
-/*                       OGRMSSQLSpatialTableLayer                      */
+/*                      OGRMSSQLSpatialTableLayer                       */
 /************************************************************************/
 
 typedef union
@@ -550,7 +550,7 @@ class OGRMSSQLSpatialSelectLayer final : public OGRMSSQLSpatialLayer
 };
 
 /************************************************************************/
-/*                           OGRODBCDataSource                          */
+/*                          OGRODBCDataSource                           */
 /************************************************************************/
 
 class OGRMSSQLSpatialDataSource final : public GDALDataset
@@ -583,9 +583,7 @@ class OGRMSSQLSpatialDataSource final : public GDALDataset
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 
     OGRMSSQLSpatialTableLayer *poLayerInCopyMode;
 
@@ -648,10 +646,8 @@ class OGRMSSQLSpatialDataSource final : public GDALDataset
     static char *LaunderName(const char *pszSrcName);
     OGRErr InitializeMetadataTables();
 
-    OGRSpatialReference *AddSRIDToCache(
-        int nId,
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-            &&poSRS);
+    OGRSpatialReference *AddSRIDToCache(int nId,
+                                        OGRSpatialReferenceRefCountedPtr poSRS);
 
     OGRSpatialReference *FetchSRS(int nId);
     int FetchSRSId(const OGRSpatialReference *poSRS);

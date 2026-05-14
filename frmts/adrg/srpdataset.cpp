@@ -125,7 +125,7 @@ SRPRasterBand::SRPRasterBand(SRPDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                            GetNoDataValue()                          */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double SRPRasterBand::GetNoDataValue(int *pbSuccess)
@@ -323,7 +323,7 @@ CPLErr SRPRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                          SRPDataset()                               */
+/*                             SRPDataset()                             */
 /************************************************************************/
 
 SRPDataset::SRPDataset()
@@ -335,7 +335,7 @@ SRPDataset::SRPDataset()
 }
 
 /************************************************************************/
-/*                          ~SRPDataset()                              */
+/*                            ~SRPDataset()                             */
 /************************************************************************/
 
 SRPDataset::~SRPDataset()
@@ -369,7 +369,7 @@ CPLString SRPDataset::ResetTo01(const char *str)
 }
 
 /************************************************************************/
-/*                        GetSpatialRef()                               */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *SRPDataset::GetSpatialRef() const
@@ -378,7 +378,7 @@ const OGRSpatialReference *SRPDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                        GetGeoTransform()                             */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr SRPDataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -390,49 +390,49 @@ CPLErr SRPDataset::GetGeoTransform(GDALGeoTransform &gt) const
         if (ZNA == 9)
         {
             // North Polar Case
-            gt[0] = 111319.4907933 * (90.0 - PSO / 3600.0) *
-                    sin(LSO * M_PI / 648000.0);
-            gt[1] = 40075016.68558 / ARV;
-            gt[2] = 0.0;
-            gt[3] = -111319.4907933 * (90.0 - PSO / 3600.0) *
-                    cos(LSO * M_PI / 648000.0);
-            gt[4] = 0.0;
-            gt[5] = -40075016.68558 / ARV;
+            gt.xorig = 111319.4907933 * (90.0 - PSO / 3600.0) *
+                       sin(LSO * M_PI / 648000.0);
+            gt.xscale = 40075016.68558 / ARV;
+            gt.xrot = 0.0;
+            gt.yorig = -111319.4907933 * (90.0 - PSO / 3600.0) *
+                       cos(LSO * M_PI / 648000.0);
+            gt.yrot = 0.0;
+            gt.yscale = -40075016.68558 / ARV;
         }
         else if (ZNA == 18)
         {
             // South Polar Case
-            gt[0] = 111319.4907933 * (90.0 + PSO / 3600.0) *
-                    sin(LSO * M_PI / 648000.0);
-            gt[1] = 40075016.68558 / ARV;
-            gt[2] = 0.0;
-            gt[3] = 111319.4907933 * (90.0 + PSO / 3600.0) *
-                    cos(LSO * M_PI / 648000.0);
-            gt[4] = 0.0;
-            gt[5] = -40075016.68558 / ARV;
+            gt.xorig = 111319.4907933 * (90.0 + PSO / 3600.0) *
+                       sin(LSO * M_PI / 648000.0);
+            gt.xscale = 40075016.68558 / ARV;
+            gt.xrot = 0.0;
+            gt.yorig = 111319.4907933 * (90.0 + PSO / 3600.0) *
+                       cos(LSO * M_PI / 648000.0);
+            gt.yrot = 0.0;
+            gt.yscale = -40075016.68558 / ARV;
         }
         else
         {
             if (BRV == 0)
                 return CE_Failure;
-            gt[0] = LSO / 3600.0;
-            gt[1] = 360. / ARV;
-            gt[2] = 0.0;
-            gt[3] = PSO / 3600.0;
-            gt[4] = 0.0;
-            gt[5] = -360. / BRV;
+            gt.xorig = LSO / 3600.0;
+            gt.xscale = 360. / ARV;
+            gt.xrot = 0.0;
+            gt.yorig = PSO / 3600.0;
+            gt.yrot = 0.0;
+            gt.yscale = -360. / BRV;
         }
 
         return CE_None;
     }
     else if (EQUAL(osProduct, "USRP"))
     {
-        gt[0] = LSO;
-        gt[1] = LOD;
-        gt[2] = 0.0;
-        gt[3] = PSO;
-        gt[4] = 0.0;
-        gt[5] = -LAD;
+        gt.xorig = LSO;
+        gt.xscale = LOD;
+        gt.xrot = 0.0;
+        gt.yorig = PSO;
+        gt.yrot = 0.0;
+        gt.yscale = -LAD;
         return CE_None;
     }
 
@@ -913,7 +913,7 @@ CSLConstList SRPDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                      FindRecordInGENForIMG()                         */
+/*                       FindRecordInGENForIMG()                        */
 /************************************************************************/
 
 DDFRecord *SRPDataset::FindRecordInGENForIMG(DDFModule &module,
@@ -927,7 +927,7 @@ DDFRecord *SRPDataset::FindRecordInGENForIMG(DDFModule &module,
     CPLString osShortIMGFilename = CPLGetFilename(pszIMGFileName);
 
     DDFField *field = nullptr;
-    DDFFieldDefn *fieldDefn = nullptr;
+    const DDFFieldDefn *fieldDefn = nullptr;
 
     // Now finds the record.
     while (true)
@@ -971,11 +971,11 @@ DDFRecord *SRPDataset::FindRecordInGENForIMG(DDFModule &module,
             const char *pszBAD = record->GetStringSubfield("SPR", 0, "BAD", 0);
             if (pszBAD == nullptr || strlen(pszBAD) != 12)
                 continue;
-            const CPLString osBAD = pszBAD;
+            CPLString osBAD(pszBAD);
             {
-                char *c = (char *)strchr(osBAD.c_str(), ' ');
-                if (c)
-                    *c = 0;
+                const auto nSpacePos = osBAD.find(' ');
+                if (nSpacePos != std::string::npos)
+                    osBAD.resize(nSpacePos);
             }
 
             if (EQUAL(osShortIMGFilename.c_str(), osBAD.c_str()))
@@ -987,7 +987,7 @@ DDFRecord *SRPDataset::FindRecordInGENForIMG(DDFModule &module,
 }
 
 /************************************************************************/
-/*                           OpenDataset()                              */
+/*                            OpenDataset()                             */
 /************************************************************************/
 
 SRPDataset *SRPDataset::OpenDataset(const char *pszGENFileName,
@@ -1006,7 +1006,7 @@ SRPDataset *SRPDataset::OpenDataset(const char *pszGENFileName,
     DDFField *field = record->GetField(1);
     if (field == nullptr)
         return nullptr;
-    DDFFieldDefn *fieldDefn = field->GetFieldDefn();
+    const DDFFieldDefn *fieldDefn = field->GetFieldDefn();
 
     if (!(strcmp(fieldDefn->GetName(), "DSI") == 0 &&
           fieldDefn->GetSubfieldCount() == 2))
@@ -1028,7 +1028,7 @@ SRPDataset *SRPDataset::OpenDataset(const char *pszGENFileName,
     if (pszNAM == nullptr)
         return nullptr;
 
-    const CPLString osNAM = pszNAM;
+    const CPLString osNAM(pszNAM);
     CPLDebug("SRP", "osNAM=%s", osNAM.c_str());
     if (strlen(pszNAM) != 8)
     {
@@ -1054,7 +1054,7 @@ SRPDataset *SRPDataset::OpenDataset(const char *pszGENFileName,
 }
 
 /************************************************************************/
-/*                          GetGENListFromTHF()                         */
+/*                         GetGENListFromTHF()                          */
 /************************************************************************/
 
 char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
@@ -1062,7 +1062,7 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
     DDFModule module;
     DDFRecord *record = nullptr;
     DDFField *field = nullptr;
-    DDFFieldDefn *fieldDefn = nullptr;
+    const DDFFieldDefn *fieldDefn = nullptr;
     CPLStringList aosFilenames;
 
     if (!module.Open(pszFileName, TRUE))
@@ -1209,7 +1209,7 @@ char **SRPDataset::GetGENListFromTHF(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                          AddMetadatafromFromTHF()                         */
+/*                       AddMetadatafromFromTHF()                       */
 /************************************************************************/
 
 void SRPDataset::AddMetadatafromFromTHF(const char *pszFileName)
@@ -1217,7 +1217,7 @@ void SRPDataset::AddMetadatafromFromTHF(const char *pszFileName)
     DDFModule module;
     DDFRecord *record = nullptr;
     DDFField *field = nullptr;
-    DDFFieldDefn *fieldDefn = nullptr;
+    const DDFFieldDefn *fieldDefn = nullptr;
 
     int bSuccess = 0;
     if (!module.Open(pszFileName, TRUE))
@@ -1330,7 +1330,7 @@ void SRPDataset::AddMetadatafromFromTHF(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                          GetIMGListFromGEN()                         */
+/*                         GetIMGListFromGEN()                          */
 /************************************************************************/
 
 char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
@@ -1338,7 +1338,7 @@ char **SRPDataset::GetIMGListFromGEN(const char *pszFileName,
 {
     DDFRecord *record = nullptr;
     DDFField *field = nullptr;
-    DDFFieldDefn *fieldDefn = nullptr;
+    const DDFFieldDefn *fieldDefn = nullptr;
     int nFilenames = 0;
     char **papszFileNames = nullptr;
     int nRecordIndex = -1;
@@ -1675,7 +1675,7 @@ GDALDataset *SRPDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         GDALRegister_SRP()                          */
+/*                          GDALRegister_SRP()                          */
 /************************************************************************/
 
 void GDALRegister_SRP()

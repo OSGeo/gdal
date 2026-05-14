@@ -10,6 +10,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
 #include "cpl_error.h"
 #include "nasakeywordhandler.h"
 
@@ -156,7 +160,7 @@ bool HDF5EOSParser::Parse(hid_t hRoot)
 }
 
 /************************************************************************/
-/*                     GetGTCPProjectionCode()                          */
+/*                       GetGTCPProjectionCode()                        */
 /************************************************************************/
 
 static int GetGTCPProjectionCode(const std::string &osProjection)
@@ -187,7 +191,7 @@ static int GetGTCPProjectionCode(const std::string &osProjection)
 }
 
 /************************************************************************/
-/*                        ParseGridStructure()                          */
+/*                         ParseGridStructure()                         */
 /************************************************************************/
 
 void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
@@ -334,7 +338,7 @@ void HDF5EOSParser::ParseGridStructure(const CPLJSONObject &oGridStructure)
 }
 
 /************************************************************************/
-/*                        GetGridMetadata()                             */
+/*                          GetGridMetadata()                           */
 /************************************************************************/
 
 bool HDF5EOSParser::GetGridMetadata(const std::string &osGridName,
@@ -348,7 +352,7 @@ bool HDF5EOSParser::GetGridMetadata(const std::string &osGridName,
 }
 
 /************************************************************************/
-/*                     GetGridDataFieldMetadata()                       */
+/*                      GetGridDataFieldMetadata()                      */
 /************************************************************************/
 
 bool HDF5EOSParser::GetGridDataFieldMetadata(
@@ -688,7 +692,7 @@ void HDF5EOSParser::ParseSwathStructure(const CPLJSONObject &oSwathStructure)
 }
 
 /************************************************************************/
-/*                        GetSwathMetadata()                            */
+/*                          GetSwathMetadata()                          */
 /************************************************************************/
 
 bool HDF5EOSParser::GetSwathMetadata(const std::string &osSwathName,
@@ -702,7 +706,7 @@ bool HDF5EOSParser::GetSwathMetadata(const std::string &osSwathName,
 }
 
 /************************************************************************/
-/*                        GetSwathFieldMetadata()                       */
+/*                       GetSwathFieldMetadata()                        */
 /************************************************************************/
 
 bool HDF5EOSParser::GetSwathFieldMetadata(
@@ -718,7 +722,7 @@ bool HDF5EOSParser::GetSwathFieldMetadata(
 }
 
 /************************************************************************/
-/*                        GetGeoTransform()                             */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 bool HDF5EOSParser::GridMetadata::GetGeoTransform(GDALGeoTransform &gt) const
@@ -742,27 +746,29 @@ bool HDF5EOSParser::GridMetadata::GetGeoTransform(GDALGeoTransform &gt) const
             return false;
         if (nProjCode == 0)  // GEO
         {
-            gt[0] = CPLPackedDMSToDec(adfUpperLeftPointMeters[0]);
-            gt[1] = (CPLPackedDMSToDec(adfLowerRightPointMeters[0]) -
-                     CPLPackedDMSToDec(adfUpperLeftPointMeters[0])) /
-                    nRasterXSize;
-            gt[2] = 0;
-            gt[3] = CPLPackedDMSToDec(adfUpperLeftPointMeters[1]);
-            gt[4] = 0;
-            gt[5] = (CPLPackedDMSToDec(adfLowerRightPointMeters[1]) -
-                     CPLPackedDMSToDec(adfUpperLeftPointMeters[1])) /
-                    nRasterYSize;
+            gt.xorig = CPLPackedDMSToDec(adfUpperLeftPointMeters[0]);
+            gt.xscale = (CPLPackedDMSToDec(adfLowerRightPointMeters[0]) -
+                         CPLPackedDMSToDec(adfUpperLeftPointMeters[0])) /
+                        nRasterXSize;
+            gt.xrot = 0;
+            gt.yorig = CPLPackedDMSToDec(adfUpperLeftPointMeters[1]);
+            gt.yrot = 0;
+            gt.yscale = (CPLPackedDMSToDec(adfLowerRightPointMeters[1]) -
+                         CPLPackedDMSToDec(adfUpperLeftPointMeters[1])) /
+                        nRasterYSize;
         }
         else
         {
-            gt[0] = adfUpperLeftPointMeters[0];
-            gt[1] = (adfLowerRightPointMeters[0] - adfUpperLeftPointMeters[0]) /
-                    nRasterXSize;
-            gt[2] = 0;
-            gt[3] = adfUpperLeftPointMeters[1];
-            gt[4] = 0;
-            gt[5] = (adfLowerRightPointMeters[1] - adfUpperLeftPointMeters[1]) /
-                    nRasterYSize;
+            gt.xorig = adfUpperLeftPointMeters[0];
+            gt.xscale =
+                (adfLowerRightPointMeters[0] - adfUpperLeftPointMeters[0]) /
+                nRasterXSize;
+            gt.xrot = 0;
+            gt.yorig = adfUpperLeftPointMeters[1];
+            gt.yrot = 0;
+            gt.yscale =
+                (adfLowerRightPointMeters[1] - adfUpperLeftPointMeters[1]) /
+                nRasterYSize;
         }
         return true;
     }
@@ -770,7 +776,7 @@ bool HDF5EOSParser::GridMetadata::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                              GetSRS()                                */
+/*                               GetSRS()                               */
 /************************************************************************/
 
 std::unique_ptr<OGRSpatialReference> HDF5EOSParser::GridMetadata::GetSRS() const

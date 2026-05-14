@@ -39,7 +39,7 @@ static double g_dfTotalTimeCRStoCRS = 0;
 static double g_dfTotalTimeReprojection = 0;
 
 /************************************************************************/
-/*                        CPLGettimeofday()                             */
+/*                          CPLGettimeofday()                           */
 /************************************************************************/
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -126,7 +126,7 @@ OGRCoordinateTransformationOptions::Private::Private()
 }
 
 /************************************************************************/
-/*                              GetKey()                                */
+/*                               GetKey()                               */
 /************************************************************************/
 
 std::string OGRCoordinateTransformationOptions::Private::GetKey() const
@@ -152,7 +152,7 @@ std::string OGRCoordinateTransformationOptions::Private::GetKey() const
 }
 
 /************************************************************************/
-/*                       RefreshCheckWithInvertProj()                   */
+/*                     RefreshCheckWithInvertProj()                     */
 /************************************************************************/
 
 void OGRCoordinateTransformationOptions::Private::RefreshCheckWithInvertProj()
@@ -162,7 +162,7 @@ void OGRCoordinateTransformationOptions::Private::RefreshCheckWithInvertProj()
 }
 
 /************************************************************************/
-/*                       GetAsAProjRecognizableString()                 */
+/*                    GetAsAProjRecognizableString()                    */
 /************************************************************************/
 
 static char *GetAsAProjRecognizableString(const OGRSpatialReference *poSRS)
@@ -199,7 +199,7 @@ static char *GetAsAProjRecognizableString(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                        GetTextRepresentation()                       */
+/*                       GetTextRepresentation()                        */
 /************************************************************************/
 
 static char *GetTextRepresentation(const OGRSpatialReference *poSRS)
@@ -240,8 +240,8 @@ static char *GetTextRepresentation(const OGRSpatialReference *poSRS)
     // definition in case a trip to WKT1 has lost the area of use.
     // unless OGR_CT_PREFER_OFFICIAL_SRS_DEF=NO (see
     // https://github.com/OSGeo/PROJ/issues/2955)
-    const char *pszAuth = poSRS->GetAuthorityName(nullptr);
-    const char *pszCode = poSRS->GetAuthorityCode(nullptr);
+    const char *pszAuth = poSRS->GetAuthorityName();
+    const char *pszCode = poSRS->GetAuthorityCode();
     if (pszAuth && pszCode &&
         CPLTestBool(
             CPLGetConfigOption("OGR_CT_PREFER_OFFICIAL_SRS_DEF", "YES")))
@@ -254,8 +254,8 @@ static char *GetTextRepresentation(const OGRSpatialReference *poSRS)
         OGRSpatialReference oTmpSRS;
         if (oTmpSRS.SetFromUserInput(osAuthCode) == OGRERR_NONE)
         {
-            const char *pszAuthAfter = oTmpSRS.GetAuthorityName(nullptr);
-            const char *pszCodeAfter = oTmpSRS.GetAuthorityCode(nullptr);
+            const char *pszAuthAfter = oTmpSRS.GetAuthorityName();
+            const char *pszCodeAfter = oTmpSRS.GetAuthorityCode();
             if (pszAuthAfter && pszCodeAfter && EQUAL(pszAuthAfter, pszAuth) &&
                 EQUAL(pszCodeAfter, pszCode))
             {
@@ -281,7 +281,7 @@ static char *GetTextRepresentation(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                  OGRCoordinateTransformationOptions()                */
+/*                 OGRCoordinateTransformationOptions()                 */
 /************************************************************************/
 
 /** \brief Constructs a new OGRCoordinateTransformationOptions.
@@ -294,7 +294,7 @@ OGRCoordinateTransformationOptions::OGRCoordinateTransformationOptions()
 }
 
 /************************************************************************/
-/*                  OGRCoordinateTransformationOptions()                */
+/*                 OGRCoordinateTransformationOptions()                 */
 /************************************************************************/
 
 /** \brief Copy constructor
@@ -308,7 +308,7 @@ OGRCoordinateTransformationOptions::OGRCoordinateTransformationOptions(
 }
 
 /************************************************************************/
-/*                          operator =()                                */
+/*                             operator =()                             */
 /************************************************************************/
 
 /** \brief Assignment operator
@@ -327,7 +327,7 @@ OGRCoordinateTransformationOptions::operator=(
 }
 
 /************************************************************************/
-/*                  OGRCoordinateTransformationOptions()                */
+/*                 OGRCoordinateTransformationOptions()                 */
 /************************************************************************/
 
 /** \brief Destroys a OGRCoordinateTransformationOptions.
@@ -339,7 +339,7 @@ OGRCoordinateTransformationOptions::~OGRCoordinateTransformationOptions()
 }
 
 /************************************************************************/
-/*                   OCTNewCoordinateTransformationOptions()            */
+/*               OCTNewCoordinateTransformationOptions()                */
 /************************************************************************/
 
 /** \brief Create coordinate transformation options.
@@ -354,7 +354,7 @@ OGRCoordinateTransformationOptionsH OCTNewCoordinateTransformationOptions(void)
 }
 
 /************************************************************************/
-/*                  OCTDestroyCoordinateTransformationOptions()         */
+/*             OCTDestroyCoordinateTransformationOptions()              */
 /************************************************************************/
 
 /** \brief Destroy coordinate transformation options.
@@ -368,7 +368,7 @@ void OCTDestroyCoordinateTransformationOptions(
 }
 
 /************************************************************************/
-/*                        SetAreaOfInterest()                           */
+/*                         SetAreaOfInterest()                          */
 /************************************************************************/
 
 /** \brief Sets an area of interest.
@@ -423,7 +423,7 @@ bool OGRCoordinateTransformationOptions::SetAreaOfInterest(
 }
 
 /************************************************************************/
-/*           OCTCoordinateTransformationOptionsSetAreaOfInterest()      */
+/*        OCTCoordinateTransformationOptionsSetAreaOfInterest()         */
 /************************************************************************/
 
 /** \brief Sets an area of interest.
@@ -442,7 +442,7 @@ int OCTCoordinateTransformationOptionsSetAreaOfInterest(
 }
 
 /************************************************************************/
-/*                        SetCoordinateOperation()                      */
+/*                       SetCoordinateOperation()                       */
 /************************************************************************/
 
 /** \brief Sets a coordinate operation.
@@ -472,7 +472,7 @@ bool OGRCoordinateTransformationOptions::SetCoordinateOperation(
 }
 
 /************************************************************************/
-/*                         SetSourceCenterLong()                        */
+/*                        SetSourceCenterLong()                         */
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */
@@ -486,7 +486,7 @@ void OGRCoordinateTransformationOptions::SetSourceCenterLong(
 /*! @endcond */
 
 /************************************************************************/
-/*                         SetTargetCenterLong()                        */
+/*                        SetTargetCenterLong()                         */
 /************************************************************************/
 
 /*! @cond Doxygen_Suppress */
@@ -500,7 +500,7 @@ void OGRCoordinateTransformationOptions::SetTargetCenterLong(
 /*! @endcond */
 
 /************************************************************************/
-/*            OCTCoordinateTransformationOptionsSetOperation()          */
+/*           OCTCoordinateTransformationOptionsSetOperation()           */
 /************************************************************************/
 
 /** \brief Sets a coordinate operation.
@@ -563,7 +563,7 @@ int OCTCoordinateTransformationOptionsSetDesiredAccuracy(
 }
 
 /************************************************************************/
-/*                       SetBallparkAllowed()                           */
+/*                         SetBallparkAllowed()                         */
 /************************************************************************/
 
 /** \brief Sets whether ballpark transformations are allowed.
@@ -604,7 +604,7 @@ int OCTCoordinateTransformationOptionsSetBallparkAllowed(
 }
 
 /************************************************************************/
-/*                         SetOnlyBest()                                */
+/*                            SetOnlyBest()                             */
 /************************************************************************/
 
 /** \brief Sets whether only the "best" operation should be used.
@@ -641,7 +641,7 @@ bool OGRCoordinateTransformationOptions::SetOnlyBest(bool bOnlyBest)
 }
 
 /************************************************************************/
-/*        OCTCoordinateTransformationOptionsSetOnlyBest()               */
+/*           OCTCoordinateTransformationOptionsSetOnlyBest()            */
 /************************************************************************/
 
 /** \brief Sets whether only the "best" operation(s) should be used.
@@ -878,7 +878,7 @@ class OGRProjCT final : public OGRCoordinateTransformation
 };
 
 /************************************************************************/
-/*                   OGRProjCTDifferentOperationsStart()                */
+/*                 OGRProjCTDifferentOperationsStart()                  */
 /************************************************************************/
 
 void OGRProjCTDifferentOperationsStart(OGRCoordinateTransformation *poCT)
@@ -899,7 +899,7 @@ void OGRProjCTDifferentOperationsStart(OGRCoordinateTransformation *poCT)
 }
 
 /************************************************************************/
-/*                   OGRProjCTDifferentOperationsStop()                 */
+/*                  OGRProjCTDifferentOperationsStop()                  */
 /************************************************************************/
 
 void OGRProjCTDifferentOperationsStop(OGRCoordinateTransformation *poCT)
@@ -918,7 +918,7 @@ void OGRProjCTDifferentOperationsStop(OGRCoordinateTransformation *poCT)
 }
 
 /************************************************************************/
-/*                   OGRProjCTDifferentOperationsUsed()                 */
+/*                  OGRProjCTDifferentOperationsUsed()                  */
 /************************************************************************/
 
 bool OGRProjCTDifferentOperationsUsed(OGRCoordinateTransformation *poCT)
@@ -1160,7 +1160,7 @@ OGRCoordinateTransformationH CPL_STDCALL OCTNewCoordinateTransformation(
 }
 
 /************************************************************************/
-/*                   OCTNewCoordinateTransformationEx()                 */
+/*                  OCTNewCoordinateTransformationEx()                  */
 /************************************************************************/
 
 /**
@@ -1238,7 +1238,7 @@ OGRCoordinateTransformationH OCTClone(OGRCoordinateTransformationH hTransform)
 }
 
 /************************************************************************/
-/*                             OCTGetSourceCS()                         */
+/*                           OCTGetSourceCS()                           */
 /************************************************************************/
 
 /**
@@ -1265,7 +1265,7 @@ OGRSpatialReferenceH OCTGetSourceCS(OGRCoordinateTransformationH hTransform)
 }
 
 /************************************************************************/
-/*                             OCTGetTargetCS()                         */
+/*                           OCTGetTargetCS()                           */
 /************************************************************************/
 
 /**
@@ -1292,7 +1292,7 @@ OGRSpatialReferenceH OCTGetTargetCS(OGRCoordinateTransformationH hTransform)
 }
 
 /************************************************************************/
-/*                             OCTGetInverse()                          */
+/*                           OCTGetInverse()                            */
 /************************************************************************/
 
 /**
@@ -1317,7 +1317,7 @@ OCTGetInverse(OGRCoordinateTransformationH hTransform)
 }
 
 /************************************************************************/
-/*                             OGRProjCT()                             */
+/*                             OGRProjCT()                              */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -1359,7 +1359,7 @@ OGRProjCT::OGRProjCT(const OGRProjCT &other)
 }
 
 /************************************************************************/
-/*                            ~OGRProjCT()                             */
+/*                             ~OGRProjCT()                             */
 /************************************************************************/
 
 OGRProjCT::~OGRProjCT()
@@ -1398,7 +1398,7 @@ void OGRProjCT::ComputeThreshold()
 }
 
 /************************************************************************/
-/*                        DetectWebMercatorToWGS84()                    */
+/*                      DetectWebMercatorToWGS84()                      */
 /************************************************************************/
 
 void OGRProjCT::DetectWebMercatorToWGS84()
@@ -1416,10 +1416,10 @@ void OGRProjCT::DetectWebMercatorToWGS84()
         // Examine SRS ID before going to Proj4 string for faster execution
         // This assumes that the SRS definition is "not lying", that is, it
         // is equivalent to the resolution of the official EPSG code.
-        const char *pszSourceAuth = poSRSSource->GetAuthorityName(nullptr);
-        const char *pszSourceCode = poSRSSource->GetAuthorityCode(nullptr);
-        const char *pszTargetAuth = poSRSTarget->GetAuthorityName(nullptr);
-        const char *pszTargetCode = poSRSTarget->GetAuthorityCode(nullptr);
+        const char *pszSourceAuth = poSRSSource->GetAuthorityName();
+        const char *pszSourceCode = poSRSSource->GetAuthorityCode();
+        const char *pszTargetAuth = poSRSTarget->GetAuthorityName();
+        const char *pszTargetCode = poSRSTarget->GetAuthorityCode();
         if (pszSourceAuth && pszSourceCode && pszTargetAuth && pszTargetCode &&
             EQUAL(pszSourceAuth, "EPSG") && EQUAL(pszTargetAuth, "EPSG"))
         {
@@ -1836,7 +1836,7 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
 }
 
 /************************************************************************/
-/*                               op_to_pj()                             */
+/*                              op_to_pj()                              */
 /************************************************************************/
 
 static PJ *op_to_pj(PJ_CONTEXT *ctx, PJ *op,
@@ -1884,7 +1884,7 @@ static PJ *op_to_pj(PJ_CONTEXT *ctx, PJ *op,
 }
 
 /************************************************************************/
-/*                       ListCoordinateOperations()                     */
+/*                      ListCoordinateOperations()                      */
 /************************************************************************/
 
 bool OGRProjCT::ListCoordinateOperations(
@@ -2326,7 +2326,7 @@ int OGRCoordinateTransformation::TransformWithErrorCodes(size_t nCount,
 }
 
 /************************************************************************/
-/*                             Transform()                             */
+/*                             Transform()                              */
 /************************************************************************/
 
 int OGRProjCT::Transform(size_t nCount, double *x, double *y, double *z,
@@ -2347,7 +2347,7 @@ int OGRProjCT::Transform(size_t nCount, double *x, double *y, double *z,
 }
 
 /************************************************************************/
-/*                       TransformWithErrorCodes()                      */
+/*                      TransformWithErrorCodes()                       */
 /************************************************************************/
 
 #ifndef PROJ_ERR_COORD_TRANSFM_INVALID_COORD
@@ -2914,7 +2914,8 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
                             CPLDebug("OGRCT", "Reprojection failed, err = %d",
                                      err);
                         else
-                            CPLDebug("OGRCT", "%s", pszError);
+                            CPLDebug("OGRCT", "%s for xIn=%.10g yIn=%.10g",
+                                     pszError, xIn, yIn);
                     }
                 }
                 else if (nErrorCount == 20)
@@ -3043,7 +3044,7 @@ int OGRProjCT::TransformWithErrorCodes(size_t nCount, double *x, double *y,
 }
 
 /************************************************************************/
-/*                      TransformBounds()                       */
+/*                          TransformBounds()                           */
 /************************************************************************/
 
 // ---------------------------------------------------------------------------
@@ -3261,8 +3262,8 @@ bool OGRProjCT::ContainsNorthPole(const double xmin, const double ymin,
     if (!inverseCT)
         return false;
     CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-    const bool success = inverseCT->TransformWithErrorCodes(
-        1, &pole_x, &pole_y, nullptr, nullptr, nullptr);
+    const bool success = CPL_TO_BOOL(inverseCT->TransformWithErrorCodes(
+        1, &pole_x, &pole_y, nullptr, nullptr, nullptr));
     return success && xmin < pole_x && pole_x < xmax && ymax > pole_y &&
            pole_y > ymin;
 }
@@ -3286,8 +3287,8 @@ bool OGRProjCT::ContainsSouthPole(const double xmin, const double ymin,
     if (!inverseCT)
         return false;
     CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-    const bool success = inverseCT->TransformWithErrorCodes(
-        1, &pole_x, &pole_y, nullptr, nullptr, nullptr);
+    const bool success = CPL_TO_BOOL(inverseCT->TransformWithErrorCodes(
+        1, &pole_x, &pole_y, nullptr, nullptr, nullptr));
     return success && xmin < pole_x && pole_x < xmax && ymax > pole_y &&
            pole_y > ymin;
 }
@@ -3443,9 +3444,9 @@ int OGRProjCT::TransformBounds(const double xmin, const double ymin,
 
     {
         CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-        bool success = TransformWithErrorCodes(
+        bool success = CPL_TO_BOOL(TransformWithErrorCodes(
             boundary_len, &x_boundary_array[0], &y_boundary_array[0], nullptr,
-            nullptr, anErrorCodes.data());
+            nullptr, anErrorCodes.data()));
         if (!success)
         {
             for (int i = 0; i < boundary_len; ++i)
@@ -3661,7 +3662,7 @@ OGRCoordinateTransformation *OGRProjCT::Clone() const
 }
 
 /************************************************************************/
-/*                            GetInverse()                              */
+/*                             GetInverse()                             */
 /************************************************************************/
 
 OGRCoordinateTransformation *OGRProjCT::GetInverse() const
@@ -3726,7 +3727,7 @@ OGRCoordinateTransformation *OGRProjCT::GetInverse() const
 }
 
 /************************************************************************/
-/*                            OSRCTCleanCache()                         */
+/*                          OSRCTCleanCache()                           */
 /************************************************************************/
 
 void OSRCTCleanCache()
@@ -3737,7 +3738,7 @@ void OSRCTCleanCache()
 }
 
 /************************************************************************/
-/*                          MakeCacheKey()                              */
+/*                            MakeCacheKey()                            */
 /************************************************************************/
 
 CTCacheKey OGRProjCT::MakeCacheKey(
@@ -3771,7 +3772,7 @@ CTCacheKey OGRProjCT::MakeCacheKey(
 }
 
 /************************************************************************/
-/*                           InsertIntoCache()                          */
+/*                          InsertIntoCache()                           */
 /************************************************************************/
 
 void OGRProjCT::InsertIntoCache(OGRProjCT *poCT)
@@ -3797,7 +3798,7 @@ void OGRProjCT::InsertIntoCache(OGRProjCT *poCT)
 }
 
 /************************************************************************/
-/*                            FindFromCache()                           */
+/*                           FindFromCache()                            */
 /************************************************************************/
 
 OGRProjCT *OGRProjCT::FindFromCache(
@@ -3906,7 +3907,7 @@ int OCTTransform4D(OGRCoordinateTransformationH hTransform, int nCount,
 }
 
 /************************************************************************/
-/*                      OCTTransform4DWithErrorCodes()                  */
+/*                    OCTTransform4DWithErrorCodes()                    */
 /************************************************************************/
 
 /** Transform an array of points
@@ -3936,7 +3937,7 @@ int OCTTransform4DWithErrorCodes(OGRCoordinateTransformationH hTransform,
 }
 
 /************************************************************************/
-/*                           OCTTransformBounds()                       */
+/*                         OCTTransformBounds()                         */
 /************************************************************************/
 /** \brief Transform boundary.
  *
@@ -3987,7 +3988,7 @@ int CPL_STDCALL OCTTransformBounds(OGRCoordinateTransformationH hTransform,
 }
 
 /************************************************************************/
-/*                         OGRCTDumpStatistics()                        */
+/*                        OGRCTDumpStatistics()                         */
 /************************************************************************/
 
 void OGRCTDumpStatistics()

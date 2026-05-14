@@ -39,7 +39,7 @@
 inline IOGRArrowLayer::~IOGRArrowLayer() = default;
 
 /************************************************************************/
-/*                         OGRArrowLayer()                              */
+/*                           OGRArrowLayer()                            */
 /************************************************************************/
 
 inline OGRArrowLayer::OGRArrowLayer(OGRArrowDataset *poDS,
@@ -55,7 +55,7 @@ inline OGRArrowLayer::OGRArrowLayer(OGRArrowDataset *poDS,
 }
 
 /************************************************************************/
-/*                        ~OGRFeatherLayer()                            */
+/*                          ~OGRFeatherLayer()                          */
 /************************************************************************/
 
 inline OGRArrowLayer::~OGRArrowLayer()
@@ -71,7 +71,7 @@ inline OGRArrowLayer::~OGRArrowLayer()
 }
 
 /************************************************************************/
-/*                         LoadGDALSchema()                             */
+/*                           LoadGDALSchema()                           */
 /************************************************************************/
 
 inline std::map<std::string, std::unique_ptr<OGRFieldDefn>>
@@ -159,7 +159,7 @@ OGRArrowLayer::LoadGDALSchema(const arrow::KeyValueMetadata *kv_metadata)
 }
 
 /************************************************************************/
-/*                        LoadGDALMetadata()                            */
+/*                          LoadGDALMetadata()                          */
 /************************************************************************/
 
 inline void
@@ -215,7 +215,7 @@ OGRArrowLayer::LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata)
 }
 
 /************************************************************************/
-/*                        IsIntegerArrowType()                          */
+/*                         IsIntegerArrowType()                         */
 /************************************************************************/
 
 inline bool OGRArrowLayer::IsIntegerArrowType(arrow::Type::type typeId)
@@ -227,7 +227,7 @@ inline bool OGRArrowLayer::IsIntegerArrowType(arrow::Type::type typeId)
 }
 
 /************************************************************************/
-/*                         IsHandledListOrMapType()                     */
+/*                       IsHandledListOrMapType()                       */
 /************************************************************************/
 
 inline bool OGRArrowLayer::IsHandledListOrMapType(
@@ -291,7 +291,7 @@ OGRArrowLayer::IsHandledMapType(const std::shared_ptr<arrow::MapType> &mapType)
 }
 
 /************************************************************************/
-/*                        GetFieldExtensionName()                       */
+/*                       GetFieldExtensionName()                        */
 /************************************************************************/
 
 inline static std::string
@@ -328,7 +328,7 @@ GetFieldExtensionName(const std::shared_ptr<arrow::Field> &field,
 }
 
 /************************************************************************/
-/*                        MapArrowTypeToOGR()                           */
+/*                         MapArrowTypeToOGR()                          */
 /************************************************************************/
 
 inline bool OGRArrowLayer::MapArrowTypeToOGR(
@@ -471,6 +471,7 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         }
 
         case arrow::Type::LIST:
+        case arrow::Type::LARGE_LIST:
         case arrow::Type::FIXED_SIZE_LIST:
         {
             bTypeOK = true;
@@ -581,7 +582,6 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         case arrow::Type::DICTIONARY:
         case arrow::Type::EXTENSION:
         case arrow::Type::DURATION:
-        case arrow::Type::LARGE_LIST:
         case arrow::Type::INTERVAL_MONTH_DAY_NANO:
 #if ARROW_VERSION_MAJOR >= 12
         case arrow::Type::RUN_END_ENCODED:
@@ -654,7 +654,7 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
 }
 
 /************************************************************************/
-/*                         CreateFieldFromSchema()                      */
+/*                       CreateFieldFromSchema()                        */
 /************************************************************************/
 
 inline void OGRArrowLayer::CreateFieldFromSchema(
@@ -729,7 +729,7 @@ inline void OGRArrowLayer::CreateFieldFromSchema(
 }
 
 /************************************************************************/
-/*                       BuildDomainFromBatch()                         */
+/*                        BuildDomainFromBatch()                        */
 /************************************************************************/
 
 inline std::unique_ptr<OGRFieldDomain> OGRArrowLayer::BuildDomainFromBatch(
@@ -778,7 +778,7 @@ inline std::unique_ptr<OGRFieldDomain> OGRArrowLayer::BuildDomainFromBatch(
 }
 
 /************************************************************************/
-/*                         GetStorageArray()                            */
+/*                          GetStorageArray()                           */
 /************************************************************************/
 
 static const arrow::Array *GetStorageArray(const arrow::Array *array)
@@ -905,7 +905,7 @@ inline OGRwkbGeometryType OGRArrowLayer::ComputeGeometryColumnTypeProcessBatch(
 }
 
 /************************************************************************/
-/*                           IsPointType()                              */
+/*                            IsPointType()                             */
 /************************************************************************/
 
 static bool IsPointType(const std::shared_ptr<arrow::DataType> &type,
@@ -1014,7 +1014,7 @@ static bool IsPointStructType(const std::shared_ptr<arrow::DataType> &type,
 }
 
 /************************************************************************/
-/*                    IsListOfPointStructType()                         */
+/*                      IsListOfPointStructType()                       */
 /************************************************************************/
 
 static bool
@@ -1031,7 +1031,7 @@ IsListOfPointStructType(const std::shared_ptr<arrow::DataType> &type,
 }
 
 /************************************************************************/
-/*                        IsValidGeometryEncoding()                     */
+/*                      IsValidGeometryEncoding()                       */
 /************************************************************************/
 
 inline bool OGRArrowLayer::IsValidGeometryEncoding(
@@ -1271,7 +1271,7 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
 }
 
 /************************************************************************/
-/*                    GetGeometryTypeFromString()                       */
+/*                     GetGeometryTypeFromString()                      */
 /************************************************************************/
 
 inline OGRwkbGeometryType
@@ -1290,7 +1290,7 @@ static CPLJSONObject GetObjectAsJSON(const arrow::Array *array,
                                      const size_t nIdx);
 
 /************************************************************************/
-/*                               AddToArray()                           */
+/*                             AddToArray()                             */
 /************************************************************************/
 
 template <class Container>
@@ -1510,7 +1510,7 @@ void AddToContainer(Container &oContainer, const arrow::Array *array,
 }
 
 /************************************************************************/
-/*                               AddToArray()                           */
+/*                             AddToArray()                             */
 /************************************************************************/
 
 static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
@@ -1520,7 +1520,7 @@ static void AddToArray(CPLJSONArray &oArray, const arrow::Array *array,
 }
 
 /************************************************************************/
-/*                         GetListAsJSON()                              */
+/*                           GetListAsJSON()                            */
 /************************************************************************/
 
 template <class ArrowType>
@@ -1543,7 +1543,7 @@ static CPLJSONArray GetListAsJSON(const ArrowType *array,
 }
 
 /************************************************************************/
-/*                              AddToDict()                             */
+/*                             AddToDict()                              */
 /************************************************************************/
 
 namespace
@@ -1573,7 +1573,7 @@ static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
 }
 
 /************************************************************************/
-/*                         GetMapAsJSON()                               */
+/*                            GetMapAsJSON()                            */
 /************************************************************************/
 
 template <class KeyArrayType>
@@ -1619,7 +1619,7 @@ static CPLJSONObject GetMapAsJSON(const arrow::Array *array,
 }
 
 /************************************************************************/
-/*                        GetStructureAsJSON()                          */
+/*                         GetStructureAsJSON()                         */
 /************************************************************************/
 
 static CPLJSONObject GetStructureAsJSON(const arrow::Array *array,
@@ -1644,7 +1644,7 @@ static CPLJSONObject GetStructureAsJSON(const arrow::Array *array,
 }
 
 /************************************************************************/
-/*                        GetObjectAsJSON()                             */
+/*                          GetObjectAsJSON()                           */
 /************************************************************************/
 
 static CPLJSONObject GetObjectAsJSON(const arrow::Array *array,
@@ -1676,13 +1676,30 @@ static CPLJSONObject GetObjectAsJSON(const arrow::Array *array,
     }
 }
 
+template <class ArrowType>
+static int GetListLength(const ArrowType *array, int64_t nIdxInArray)
+{
+    const auto nCount = array->value_length(nIdxInArray);
+    if constexpr (!std::is_same_v<decltype(nCount), int>)
+    {
+        // Should be >, but >= makes coverity scan happy
+        if (nCount >= INT_MAX)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "More than %d values in list. Clamping to it", INT_MAX);
+            return INT_MAX;
+        }
+    }
+    return static_cast<int>(nCount);
+}
+
 template <class OGRType, class ArrowType, class ArrayType>
 static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
                      const ArrayType *array)
 {
     const auto values = std::static_pointer_cast<ArrowType>(array->values());
     const auto nIdxStart = array->value_offset(nIdxInArray);
-    const int nCount = array->value_length(nIdxInArray);
+    const int nCount = GetListLength(array, nIdxInArray);
     std::vector<OGRType> aValues;
     aValues.reserve(nCount);
     for (int k = 0; k < nCount; k++)
@@ -1699,7 +1716,7 @@ static void ReadListDouble(OGRFeature *poFeature, int i, int64_t nIdxInArray,
     const auto values = std::static_pointer_cast<ArrowType>(array->values());
     const auto rawValues = values->raw_values();
     const auto nIdxStart = array->value_offset(nIdxInArray);
-    const int nCount = array->value_length(nIdxInArray);
+    const int nCount = GetListLength(array, nIdxInArray);
     std::vector<double> aValues;
     aValues.reserve(nCount);
     for (int k = 0; k < nCount; k++)
@@ -1772,7 +1789,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             const auto values = std::static_pointer_cast<arrow::HalfFloatArray>(
                 array->values());
             const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
+            const int nCount = GetListLength(array, nIdxInArray);
             std::vector<double> aValues;
             aValues.reserve(nCount);
             for (int k = 0; k < nCount; k++)
@@ -1809,7 +1826,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             const auto values = std::static_pointer_cast<arrow::Decimal32Array>(
                 array->values());
             const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
+            const int nCount = GetListLength(array, nIdxInArray);
             std::vector<double> aValues;
             aValues.reserve(nCount);
             for (int k = 0; k < nCount; k++)
@@ -1829,7 +1846,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             const auto values = std::static_pointer_cast<arrow::Decimal64Array>(
                 array->values());
             const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
+            const int nCount = GetListLength(array, nIdxInArray);
             std::vector<double> aValues;
             aValues.reserve(nCount);
             for (int k = 0; k < nCount; k++)
@@ -1851,7 +1868,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
                 std::static_pointer_cast<arrow::Decimal128Array>(
                     array->values());
             const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
+            const int nCount = GetListLength(array, nIdxInArray);
             std::vector<double> aValues;
             aValues.reserve(nCount);
             for (int k = 0; k < nCount; k++)
@@ -1872,7 +1889,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
                 std::static_pointer_cast<arrow::Decimal256Array>(
                     array->values());
             const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
+            const int nCount = GetListLength(array, nIdxInArray);
             std::vector<double> aValues;
             aValues.reserve(nCount);
             for (int k = 0; k < nCount; k++)
@@ -1892,7 +1909,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             const auto values =
                 std::static_pointer_cast<arrow::StringArray>(array->values());
             const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
+            const int nCount = GetListLength(array, nIdxInArray);
             CPLStringList aosList;
             for (int k = 0; k < nCount; k++)
             {
@@ -1912,7 +1929,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
                 std::static_pointer_cast<arrow::LargeStringArray>(
                     array->values());
             const auto nIdxStart = array->value_offset(nIdxInArray);
-            const auto nCount = array->value_length(nIdxInArray);
+            const auto nCount = GetListLength(array, nIdxInArray);
             CPLStringList aosList;
             for (auto k = decltype(nCount){0}; k < nCount; k++)
             {
@@ -1933,7 +1950,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
                 std::static_pointer_cast<arrow::StringViewArray>(
                     array->values());
             const auto nIdxStart = array->value_offset(nIdxInArray);
-            const int nCount = array->value_length(nIdxInArray);
+            const int nCount = GetListLength(array, nIdxInArray);
             CPLStringList aosList;
             for (int k = 0; k < nCount; k++)
             {
@@ -1953,7 +1970,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
             const auto values =
                 std::static_pointer_cast<arrow::BinaryArray>(array->values());
             const auto nIdxStart = array->value_offset(nIdxInArray);
-            const auto nCount = array->value_length(nIdxInArray);
+            const auto nCount = GetListLength(array, nIdxInArray);
             CPLStringList aosList;
             for (auto k = decltype(nCount){0}; k < nCount; k++)
             {
@@ -2013,7 +2030,7 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
 }
 
 /************************************************************************/
-/*                         SetPointsOfLine()                            */
+/*                          SetPointsOfLine()                           */
 /************************************************************************/
 
 template <bool bHasZ, bool bHasM, int nDim>
@@ -2073,7 +2090,7 @@ static SetPointsOfLineType GetSetPointsOfLine(bool bHasZ, bool bHasM)
 }
 
 /************************************************************************/
-/*                        SetPointsOfLineStruct()                       */
+/*                       SetPointsOfLineStruct()                        */
 /************************************************************************/
 
 template <bool bHasZ, bool bHasM, int nDim>
@@ -2156,7 +2173,7 @@ static SetPointsOfLineStructType GetSetPointsOfLineStruct(bool bHasZ,
 }
 
 /************************************************************************/
-/*                            TimestampToOGR()                          */
+/*                           TimestampToOGR()                           */
 /************************************************************************/
 
 inline void
@@ -2229,6 +2246,26 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
             }
         }
     }
+
+    const auto ReadList =
+        [this, poFeature, nIdxInBatch](const auto *array, int iField)
+    {
+        const auto listType =
+            static_cast<const arrow::ListType *>(array->data()->type.get());
+
+        if (m_bListsAsStringJson)
+        {
+            poFeature->SetField(
+                iField, GetListAsJSON(array, static_cast<size_t>(nIdxInBatch))
+                            .Format(CPLJSONObject::PrettyFormat::Plain)
+                            .c_str());
+        }
+        else
+        {
+            ::ReadList(poFeature, iField, nIdxInBatch, array,
+                       listType->value_field()->type()->id());
+        }
+    };
 
     const int nFieldCount = m_poFeatureDefn->GetFieldCount();
     for (int i = 0; i < nFieldCount; ++i)
@@ -2598,48 +2635,20 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
 
             case arrow::Type::LIST:
             {
-                const auto castArray =
-                    static_cast<const arrow::ListArray *>(array);
-                const auto listType = static_cast<const arrow::ListType *>(
-                    array->data()->type.get());
+                ReadList(static_cast<const arrow::ListArray *>(array), i);
+                break;
+            }
 
-                if (m_bListsAsStringJson)
-                {
-                    poFeature->SetField(
-                        i, GetListAsJSON(castArray,
-                                         static_cast<size_t>(nIdxInBatch))
-                               .Format(CPLJSONObject::PrettyFormat::Plain)
-                               .c_str());
-                }
-                else
-                {
-                    ReadList(poFeature, i, nIdxInBatch, castArray,
-                             listType->value_field()->type()->id());
-                }
+            case arrow::Type::LARGE_LIST:
+            {
+                ReadList(static_cast<const arrow::LargeListArray *>(array), i);
                 break;
             }
 
             case arrow::Type::FIXED_SIZE_LIST:
             {
-                const auto castArray =
-                    static_cast<const arrow::FixedSizeListArray *>(array);
-                const auto listType =
-                    static_cast<const arrow::FixedSizeListType *>(
-                        array->data()->type.get());
-
-                if (m_bListsAsStringJson)
-                {
-                    poFeature->SetField(
-                        i, GetListAsJSON(castArray,
-                                         static_cast<size_t>(nIdxInBatch))
-                               .Format(CPLJSONObject::PrettyFormat::Plain)
-                               .c_str());
-                }
-                else
-                {
-                    ReadList(poFeature, i, nIdxInBatch, castArray,
-                             listType->value_field()->type()->id());
-                }
+                ReadList(static_cast<const arrow::FixedSizeListArray *>(array),
+                         i);
                 break;
             }
 
@@ -2694,7 +2703,6 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
             case arrow::Type::DICTIONARY:
             case arrow::Type::EXTENSION:
             case arrow::Type::DURATION:
-            case arrow::Type::LARGE_LIST:
             case arrow::Type::INTERVAL_MONTH_DAY_NANO:
 #if ARROW_VERSION_MAJOR >= 12
             case arrow::Type::RUN_END_ENCODED:
@@ -2759,7 +2767,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
 }
 
 /************************************************************************/
-/*                           ReadGeometry()                             */
+/*                            ReadGeometry()                            */
 /************************************************************************/
 
 inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
@@ -3397,7 +3405,7 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 inline void OGRArrowLayer::ResetReading()
@@ -3414,9 +3422,9 @@ inline void OGRArrowLayer::ResetReading()
     }
 }
 
-/***********************************************************************/
-/*                        GetColumnSubNode()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                          GetColumnSubNode()                          */
+/************************************************************************/
 
 /* static*/
 inline const swq_expr_node *
@@ -3432,9 +3440,9 @@ OGRArrowLayer::GetColumnSubNode(const swq_expr_node *poNode)
     return nullptr;
 }
 
-/***********************************************************************/
-/*                        GetConstantSubNode()                         */
-/***********************************************************************/
+/************************************************************************/
+/*                         GetConstantSubNode()                         */
+/************************************************************************/
 
 /* static */
 inline const swq_expr_node *
@@ -3450,9 +3458,9 @@ OGRArrowLayer::GetConstantSubNode(const swq_expr_node *poNode)
     return nullptr;
 }
 
-/***********************************************************************/
-/*                           IsComparisonOp()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                           IsComparisonOp()                           */
+/************************************************************************/
 
 /* static*/
 inline bool OGRArrowLayer::IsComparisonOp(int op)
@@ -3461,9 +3469,9 @@ inline bool OGRArrowLayer::IsComparisonOp(int op)
             op == SWQ_GT || op == SWQ_GE);
 }
 
-/***********************************************************************/
-/*                     FillTargetValueFromSrcExpr()                    */
-/***********************************************************************/
+/************************************************************************/
+/*                     FillTargetValueFromSrcExpr()                     */
+/************************************************************************/
 
 static bool FillTargetValueFromSrcExpr(const OGRFieldDefn *poFieldDefn,
                                        OGRArrowLayer::Constraint *psConstraint,
@@ -3547,9 +3555,9 @@ static bool FillTargetValueFromSrcExpr(const OGRFieldDefn *poFieldDefn,
     return true;
 }
 
-/***********************************************************************/
-/*                  ComputeConstraintsArrayIdx()                       */
-/***********************************************************************/
+/************************************************************************/
+/*                     ComputeConstraintsArrayIdx()                     */
+/************************************************************************/
 
 inline void OGRArrowLayer::ComputeConstraintsArrayIdx()
 {
@@ -3601,9 +3609,9 @@ inline void OGRArrowLayer::ComputeConstraintsArrayIdx()
     }
 }
 
-/***********************************************************************/
-/*                     ExploreExprNode()                               */
-/***********************************************************************/
+/************************************************************************/
+/*                          ExploreExprNode()                           */
+/************************************************************************/
 
 inline void OGRArrowLayer::ExploreExprNode(const swq_expr_node *poNode)
 {
@@ -3710,9 +3718,9 @@ inline void OGRArrowLayer::ExploreExprNode(const swq_expr_node *poNode)
     }
 }
 
-/***********************************************************************/
-/*                         SetAttributeFilter()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
 
 inline OGRErr OGRArrowLayer::SetAttributeFilter(const char *pszFilter)
 {
@@ -3876,7 +3884,7 @@ inline bool ConstraintEvaluator(const OGRArrowLayer::Constraint &constraint,
 }  // namespace
 
 /************************************************************************/
-/*                 SkipToNextFeatureDueToAttributeFilter()              */
+/*               SkipToNextFeatureDueToAttributeFilter()                */
 /************************************************************************/
 
 inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
@@ -4158,7 +4166,7 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
 }
 
 /************************************************************************/
-/*                           SetBatch()                                 */
+/*                              SetBatch()                              */
 /************************************************************************/
 
 inline void
@@ -4287,7 +4295,7 @@ OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
 }
 
 /************************************************************************/
-/*                      SanityCheckOfSetBatch()                         */
+/*                       SanityCheckOfSetBatch()                        */
 /************************************************************************/
 
 inline void OGRArrowLayer::SanityCheckOfSetBatch() const
@@ -4348,7 +4356,7 @@ inline void OGRArrowLayer::SanityCheckOfSetBatch() const
 }
 
 /************************************************************************/
-/*                        GetNextRawFeature()                           */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
@@ -5185,7 +5193,7 @@ OGRArrowLayer::GetExtentFromMetadata(const CPLJSONObject &oJSONDef,
 }
 
 /************************************************************************/
-/*                        ISetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 inline OGRErr OGRArrowLayer::ISetSpatialFilter(int iGeomField,
@@ -5209,7 +5217,7 @@ inline OGRErr OGRArrowLayer::ISetSpatialFilter(int iGeomField,
             if (FastGetExtent(iGeomField, &sLayerExtent))
             {
                 m_bSpatialFilterIntersectsLayerExtent =
-                    m_sFilterEnvelope.Intersects(sLayerExtent);
+                    CPL_TO_BOOL(m_sFilterEnvelope.Intersects(sLayerExtent));
             }
         }
     }
@@ -5219,7 +5227,7 @@ inline OGRErr OGRArrowLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                         FastGetExtent()                              */
+/*                           FastGetExtent()                            */
 /************************************************************************/
 
 inline bool OGRArrowLayer::FastGetExtent(int iGeomField,
@@ -5253,7 +5261,7 @@ inline bool OGRArrowLayer::FastGetExtent(int iGeomField,
 }
 
 /************************************************************************/
-/*                           IGetExtent()                               */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 inline OGRErr OGRArrowLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -5454,7 +5462,7 @@ inline OGRErr OGRArrowLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                        FastGetExtent3D()                             */
+/*                          FastGetExtent3D()                           */
 /************************************************************************/
 
 inline bool OGRArrowLayer::FastGetExtent3D(int iGeomField,
@@ -5487,7 +5495,7 @@ inline bool OGRArrowLayer::FastGetExtent3D(int iGeomField,
 }
 
 /************************************************************************/
-/*                          IGetExtent3D()                              */
+/*                            IGetExtent3D()                            */
 /************************************************************************/
 
 inline OGRErr OGRArrowLayer::IGetExtent3D(int iGeomField,
@@ -5502,7 +5510,7 @@ inline OGRErr OGRArrowLayer::IGetExtent3D(int iGeomField,
 }
 
 /************************************************************************/
-/*                  OverrideArrowSchemaRelease()                        */
+/*                     OverrideArrowSchemaRelease()                     */
 /************************************************************************/
 
 template <class T>
@@ -5542,7 +5550,7 @@ static void OverrideArrowRelease(OGRArrowDataset *poDS, T *obj)
 }
 
 /************************************************************************/
-/*                   UseRecordBatchBaseImplementation()                 */
+/*                  UseRecordBatchBaseImplementation()                  */
 /************************************************************************/
 
 inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
@@ -5633,7 +5641,7 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
 }
 
 /************************************************************************/
-/*                          GetArrowStream()                            */
+/*                           GetArrowStream()                           */
 /************************************************************************/
 
 inline bool OGRArrowLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
@@ -5647,7 +5655,7 @@ inline bool OGRArrowLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                         GetArrowSchema()                             */
+/*                           GetArrowSchema()                           */
 /************************************************************************/
 
 inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
@@ -5660,7 +5668,7 @@ inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                     GetArrowSchemaInternal()                         */
+/*                       GetArrowSchemaInternal()                       */
 /************************************************************************/
 
 static bool IsSilentlyIgnoredFormatForGetArrowSchemaArray(const char *format)
@@ -5864,7 +5872,7 @@ OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
 }
 
 /************************************************************************/
-/*                       GetNextArrowArray()                            */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
@@ -6064,7 +6072,7 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                    OGRArrowLayerAppendBuffer                         */
+/*                      OGRArrowLayerAppendBuffer                       */
 /************************************************************************/
 
 class OGRArrowLayerAppendBuffer : public OGRAppendBuffer
@@ -6117,7 +6125,7 @@ class OGRArrowLayerAppendBuffer : public OGRAppendBuffer
 };
 
 /************************************************************************/
-/*                    CreateWKBArrayFromWKTArray()                      */
+/*                     CreateWKBArrayFromWKTArray()                     */
 /************************************************************************/
 
 template <typename SourceOffset>
@@ -6222,7 +6230,7 @@ OGRArrowLayer::CreateWKBArrayFromWKTArray(const struct ArrowArray *sourceArray)
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 inline int OGRArrowLayer::TestCapability(const char *pszCap) const

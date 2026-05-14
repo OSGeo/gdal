@@ -22,6 +22,7 @@ from osgeo import gdal, ogr, osr
 require_ogr_sql_sqlite
 # to make pyflakes happy
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -569,7 +570,7 @@ def test_ogr_rfc41_6():
         ),
     ]
 
-    for (sql, error_msg) in wrong_sql_list:
+    for sql, error_msg in wrong_sql_list:
         gdal.ErrorReset()
         with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL(sql)
@@ -785,7 +786,7 @@ def test_ogr_rfc41_8(require_ogr_sql_sqlite):  # noqa
     assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef() is None
     assert sql_lyr.GetLayerDefn().GetGeomFieldDefn(1).GetType() == ogr.wkbPoint25D
     srs = sql_lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef()
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
     ds.ReleaseResultSet(sql_lyr)
 
     # Test INSERT INTO request

@@ -19,7 +19,7 @@
 #include <cmath>
 
 /************************************************************************/
-/*                    OGRGeomCoordinatePrecisionCreate()                */
+/*                  OGRGeomCoordinatePrecisionCreate()                  */
 /************************************************************************/
 
 /** Creates a new instance of OGRGeomCoordinatePrecision.
@@ -37,7 +37,7 @@ OGRGeomCoordinatePrecisionH OGRGeomCoordinatePrecisionCreate(void)
 }
 
 /************************************************************************/
-/*                    OGRGeomCoordinatePrecisionDestroy()               */
+/*                 OGRGeomCoordinatePrecisionDestroy()                  */
 /************************************************************************/
 
 /** Destroy a OGRGeomCoordinatePrecision.
@@ -52,7 +52,7 @@ void OGRGeomCoordinatePrecisionDestroy(
 }
 
 /************************************************************************/
-/*                 OGRGeomCoordinatePrecisionGetXYResolution()          */
+/*             OGRGeomCoordinatePrecisionGetXYResolution()              */
 /************************************************************************/
 
 /** Get the X/Y resolution of a OGRGeomCoordinatePrecision
@@ -71,7 +71,7 @@ double OGRGeomCoordinatePrecisionGetXYResolution(
 }
 
 /************************************************************************/
-/*                 OGRGeomCoordinatePrecisionGetZResolution()           */
+/*              OGRGeomCoordinatePrecisionGetZResolution()              */
 /************************************************************************/
 
 /** Get the Z resolution of a OGRGeomCoordinatePrecision
@@ -90,7 +90,7 @@ double OGRGeomCoordinatePrecisionGetZResolution(
 }
 
 /************************************************************************/
-/*                 OGRGeomCoordinatePrecisionGetMResolution()           */
+/*              OGRGeomCoordinatePrecisionGetMResolution()              */
 /************************************************************************/
 
 /** Get the M resolution of a OGRGeomCoordinatePrecision
@@ -109,7 +109,7 @@ double OGRGeomCoordinatePrecisionGetMResolution(
 }
 
 /************************************************************************/
-/*                  OGRGeomCoordinatePrecisionGetFormats()              */
+/*                OGRGeomCoordinatePrecisionGetFormats()                */
 /************************************************************************/
 
 /** Get the list of format names for coordinate precision format specific
@@ -139,7 +139,7 @@ OGRGeomCoordinatePrecisionGetFormats(OGRGeomCoordinatePrecisionH hGeomCoordPrec)
 }
 
 /************************************************************************/
-/*           OGRGeomCoordinatePrecisionGetFormatSpecificOptions()       */
+/*         OGRGeomCoordinatePrecisionGetFormatSpecificOptions()         */
 /************************************************************************/
 
 /** Get format specific coordinate precision options.
@@ -170,7 +170,7 @@ CSLConstList OGRGeomCoordinatePrecisionGetFormatSpecificOptions(
 }
 
 /************************************************************************/
-/*          OGRGeomCoordinatePrecisionSetFormatSpecificOptions()        */
+/*         OGRGeomCoordinatePrecisionSetFormatSpecificOptions()         */
 /************************************************************************/
 
 /** Set format specific coordinate precision options.
@@ -190,7 +190,7 @@ void OGRGeomCoordinatePrecisionSetFormatSpecificOptions(
 }
 
 /************************************************************************/
-/*                      OGRGeomCoordinatePrecisionSet()                 */
+/*                   OGRGeomCoordinatePrecisionSet()                    */
 /************************************************************************/
 
 /**
@@ -228,7 +228,7 @@ void OGRGeomCoordinatePrecisionSet(OGRGeomCoordinatePrecisionH hGeomCoordPrec,
 }
 
 /************************************************************************/
-/*                  OGRGeomCoordinatePrecisionSetFromMeter()            */
+/*               OGRGeomCoordinatePrecisionSetFromMeter()               */
 /************************************************************************/
 
 /**
@@ -260,7 +260,7 @@ void OGRGeomCoordinatePrecisionSetFromMeter(
 }
 
 /************************************************************************/
-/*                           GetConversionFactors()                     */
+/*                        GetConversionFactors()                        */
 /************************************************************************/
 
 static void GetConversionFactors(const OGRSpatialReference *poSRS,
@@ -288,7 +288,7 @@ static void GetConversionFactors(const OGRSpatialReference *poSRS,
 }
 
 /************************************************************************/
-/*                OGRGeomCoordinatePrecision::SetFromMeter()            */
+/*              OGRGeomCoordinatePrecision::SetFromMeter()              */
 /************************************************************************/
 
 /**
@@ -322,7 +322,7 @@ void OGRGeomCoordinatePrecision::SetFromMeter(const OGRSpatialReference *poSRS,
 }
 
 /************************************************************************/
-/*             OGRGeomCoordinatePrecision::ConvertToOtherSRS()          */
+/*           OGRGeomCoordinatePrecision::ConvertToOtherSRS()            */
 /************************************************************************/
 
 /**
@@ -365,7 +365,7 @@ OGRGeomCoordinatePrecision OGRGeomCoordinatePrecision::ConvertToOtherSRS(
 }
 
 /************************************************************************/
-/*           OGRGeomCoordinatePrecision::ResolutionToPrecision()        */
+/*         OGRGeomCoordinatePrecision::ResolutionToPrecision()          */
 /************************************************************************/
 
 /**

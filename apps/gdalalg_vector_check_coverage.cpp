@@ -28,8 +28,11 @@
 
 GDALVectorCheckCoverageAlgorithm::GDALVectorCheckCoverageAlgorithm(
     bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetNoCreateEmptyLayersArgument(standaloneStep))
 {
     AddArg("include-valid", 0,
            _("Include valid inputs in output, with empty geometry"),
@@ -57,23 +60,16 @@ class GDALVectorCheckCoverageOutputLayer final
                                                 double maximumGapWidth,
                                                 bool includeValid)
         : GDALGeosNonStreamingAlgorithmLayer(srcLayer, geomFieldIndex),
-          m_defn(OGRFeatureDefn::CreateFeatureDefn(name.c_str())),
+          m_defn(OGRFeatureDefnRefCountedPtr::makeInstance(name.c_str())),
           m_maximumGapWidth(maximumGapWidth), m_includeValid(includeValid)
     {
-        m_defn->Reference();
-
         const OGRFeatureDefn *poSrcLayerDefn = srcLayer.GetLayerDefn();
         m_defn->SetGeomType(wkbMultiLineString);
         m_defn->GetGeomFieldDefn(0)->SetSpatialRef(
             poSrcLayerDefn->GetGeomFieldDefn(geomFieldIndex)->GetSpatialRef());
     }
 
-    ~GDALVectorCheckCoverageOutputLayer() override;
-
-    const OGRFeatureDefn *GetLayerDefn() const override
-    {
-        return m_defn;
-    }
+    const OGRFeatureDefn *GetLayerDefn() const override;
 
     int TestCapability(const char *) const override
     {
@@ -115,25 +111,23 @@ class GDALVectorCheckCoverageOutputLayer final
     }
 
   private:
-    OGRFeatureDefn *m_defn;
+    const OGRFeatureDefnRefCountedPtr m_defn;
     const double m_maximumGapWidth;
     const bool m_includeValid;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorCheckCoverageOutputLayer)
 };
 
-GDALVectorCheckCoverageOutputLayer::~GDALVectorCheckCoverageOutputLayer()
+const OGRFeatureDefn *GDALVectorCheckCoverageOutputLayer::GetLayerDefn() const
 {
-    if (m_defn != nullptr)
-    {
-        m_defn->Release();
-    }
+    return m_defn.get();
 }
 
 bool GDALVectorCheckCoverageAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-    auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
+    auto poDstDS =
+        std::make_unique<GDALVectorNonStreamingAlgorithmDataset>(*poSrcDS);
 
     const bool bSingleLayerOutput = m_inputLayerNames.empty()
                                         ? poSrcDS->GetLayerCount() == 1

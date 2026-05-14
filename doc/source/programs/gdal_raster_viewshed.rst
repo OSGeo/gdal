@@ -91,14 +91,6 @@ Program-Specific Options
    ================  ==================  ===================  =====================
 
 
-.. option:: --dst-nodata <value>
-
-   The value to be set for the cells in the output raster that have no data.
-
-   .. note::
-        Currently, no special processing of input cells at a nodata
-        value is done (which may result in erroneous results).
-
 .. option:: --end-angle <value>
 
    .. versionadded:: 3.12
@@ -180,6 +172,14 @@ Program-Specific Options
    Pixel value to set for the cells that fall outside of the range specified by
    the observer location and the maximum distance. (Not supported in cumulative mode) Default: 0
 
+.. option:: --output-nodata <value>
+
+   The value to be set for the cells in the output raster that have no data.
+
+   .. note::
+        Currently, no special processing of input cells at a nodata
+        value is done (which may result in erroneous results).
+
 .. option:: -p, --pos, --position <X,Y> or <X,Y,H>
 
    The X,Y or X,Y,H(Height) position of the observer (in SRS units for X and Y,
@@ -231,6 +231,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create_copy.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

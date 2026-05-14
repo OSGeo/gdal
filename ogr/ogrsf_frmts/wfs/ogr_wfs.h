@@ -237,7 +237,7 @@ class OGRWFSLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                          OGRWFSJoinLayer                             */
+/*                           OGRWFSJoinLayer                            */
 /************************************************************************/
 
 class OGRWFSJoinLayer final : public OGRLayer
@@ -474,7 +474,7 @@ class OGRWFSDataSource final : public GDALDataset
 
     void SaveLayerSchema(const char *pszLayerName, const CPLXMLNode *psSchema);
 
-    CPLHTTPResult *HTTPFetch(const char *pszURL, char **papszOptions);
+    CPLHTTPResult *HTTPFetch(const char *pszURL, CSLConstList papszOptions);
 
     bool IsPagingAllowed() const
     {

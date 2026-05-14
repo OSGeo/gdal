@@ -149,6 +149,11 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -172,3 +177,20 @@ Examples
    .. code-block:: bash
 
         $ gdal raster clip --window=1000,2000,500,600 in.tif out.tif --overwrite
+
+.. example::
+   :title: Clip a GeoTIFF using a bounding box extending beyond the source extent, and write the result as a COG
+
+   Use ``--allow-bbox-outside-source`` to suppress the error
+   ``ERROR 1: Computed source window -180 2943 6269 6235 falls partially outside source raster extent``
+   when the bounding box exceeds the raster extent.
+
+   .. code-block:: bash
+
+      $ gdal raster clip \
+          --bbox=3757032.814272985,-626172.1357121654,4383204.9499851465,0 \
+          --bbox-crs=EPSG:3857 \
+          --allow-bbox-outside-source \
+          in.tif out.tif \
+          --overwrite \
+          --output-format COG

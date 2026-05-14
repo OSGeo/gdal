@@ -43,7 +43,7 @@ constexpr int anPrimes[] = {
     100663319, 201326611, 402653189, 805306457, 1610612741};
 
 /************************************************************************/
-/*                          CPLHashSetNew()                             */
+/*                           CPLHashSetNew()                            */
 /************************************************************************/
 
 /**
@@ -89,7 +89,7 @@ CPLHashSet *CPLHashSetNew(CPLHashSetHashFunc fnHashFunc,
 }
 
 /************************************************************************/
-/*                          CPLHashSetSize()                            */
+/*                           CPLHashSetSize()                           */
 /************************************************************************/
 
 /**
@@ -109,7 +109,7 @@ int CPLHashSetSize(const CPLHashSet *set)
 }
 
 /************************************************************************/
-/*                       CPLHashSetGetNewListElt()                      */
+/*                      CPLHashSetGetNewListElt()                       */
 /************************************************************************/
 
 static CPLList *CPLHashSetGetNewListElt(CPLHashSet *set)
@@ -127,7 +127,7 @@ static CPLList *CPLHashSetGetNewListElt(CPLHashSet *set)
 }
 
 /************************************************************************/
-/*                       CPLHashSetReturnListElt()                      */
+/*                      CPLHashSetReturnListElt()                       */
 /************************************************************************/
 
 static void CPLHashSetReturnListElt(CPLHashSet *set, CPLList *psList)
@@ -145,7 +145,7 @@ static void CPLHashSetReturnListElt(CPLHashSet *set, CPLList *psList)
 }
 
 /************************************************************************/
-/*                   CPLHashSetClearInternal()                          */
+/*                      CPLHashSetClearInternal()                       */
 /************************************************************************/
 
 static void CPLHashSetClearInternal(CPLHashSet *set, bool bFinalize)
@@ -171,7 +171,7 @@ static void CPLHashSetClearInternal(CPLHashSet *set, bool bFinalize)
 }
 
 /************************************************************************/
-/*                        CPLHashSetDestroy()                           */
+/*                         CPLHashSetDestroy()                          */
 /************************************************************************/
 
 /**
@@ -192,7 +192,7 @@ void CPLHashSetDestroy(CPLHashSet *set)
 }
 
 /************************************************************************/
-/*                        CPLHashSetClear()                             */
+/*                          CPLHashSetClear()                           */
 /************************************************************************/
 
 /**
@@ -218,7 +218,7 @@ void CPLHashSetClear(CPLHashSet *set)
 }
 
 /************************************************************************/
-/*                       CPLHashSetForeach()                            */
+/*                         CPLHashSetForeach()                          */
 /************************************************************************/
 
 /**
@@ -258,7 +258,7 @@ void CPLHashSetForeach(CPLHashSet *set, CPLHashSetIterEltFunc fnIterFunc,
 }
 
 /************************************************************************/
-/*                        CPLHashSetRehash()                            */
+/*                          CPLHashSetRehash()                          */
 /************************************************************************/
 
 static void CPLHashSetRehash(CPLHashSet *set)
@@ -298,7 +298,7 @@ static void CPLHashSetRehash(CPLHashSet *set)
 }
 
 /************************************************************************/
-/*                        CPLHashSetFindPtr()                           */
+/*                         CPLHashSetFindPtr()                          */
 /************************************************************************/
 
 static void **CPLHashSetFindPtr(CPLHashSet *set, const void *elt)
@@ -315,7 +315,7 @@ static void **CPLHashSetFindPtr(CPLHashSet *set, const void *elt)
 }
 
 /************************************************************************/
-/*                         CPLHashSetInsert()                           */
+/*                          CPLHashSetInsert()                          */
 /************************************************************************/
 
 /**
@@ -368,7 +368,7 @@ int CPLHashSetInsert(CPLHashSet *set, void *elt)
 }
 
 /************************************************************************/
-/*                        CPLHashSetLookup()                            */
+/*                          CPLHashSetLookup()                          */
 /************************************************************************/
 
 /**
@@ -392,7 +392,7 @@ void *CPLHashSetLookup(CPLHashSet *set, const void *elt)
 }
 
 /************************************************************************/
-/*                     CPLHashSetRemoveInternal()                       */
+/*                      CPLHashSetRemoveInternal()                      */
 /************************************************************************/
 
 static bool CPLHashSetRemoveInternal(CPLHashSet *set, const void *elt,
@@ -438,7 +438,7 @@ static bool CPLHashSetRemoveInternal(CPLHashSet *set, const void *elt,
 }
 
 /************************************************************************/
-/*                         CPLHashSetRemove()                           */
+/*                          CPLHashSetRemove()                          */
 /************************************************************************/
 
 /**
@@ -456,7 +456,7 @@ int CPLHashSetRemove(CPLHashSet *set, const void *elt)
 }
 
 /************************************************************************/
-/*                     CPLHashSetRemoveDeferRehash()                    */
+/*                    CPLHashSetRemoveDeferRehash()                     */
 /************************************************************************/
 
 /**
@@ -477,7 +477,7 @@ int CPLHashSetRemoveDeferRehash(CPLHashSet *set, const void *elt)
 }
 
 /************************************************************************/
-/*                    CPLHashSetHashPointer()                           */
+/*                       CPLHashSetHashPointer()                        */
 /************************************************************************/
 
 /**
@@ -495,7 +495,7 @@ unsigned long CPLHashSetHashPointer(const void *elt)
 }
 
 /************************************************************************/
-/*                   CPLHashSetEqualPointer()                           */
+/*                       CPLHashSetEqualPointer()                       */
 /************************************************************************/
 
 /**
@@ -513,7 +513,7 @@ int CPLHashSetEqualPointer(const void *elt1, const void *elt2)
 }
 
 /************************************************************************/
-/*                        CPLHashSetHashStr()                           */
+/*                         CPLHashSetHashStr()                          */
 /************************************************************************/
 
 /**
@@ -541,7 +541,7 @@ unsigned long CPLHashSetHashStr(const void *elt)
 }
 
 /************************************************************************/
-/*                     CPLHashSetEqualStr()                             */
+/*                         CPLHashSetEqualStr()                         */
 /************************************************************************/
 
 /**

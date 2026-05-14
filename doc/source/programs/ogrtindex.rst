@@ -89,6 +89,11 @@ independent records.
 If the tile index already exists it will be appended to, otherwise it
 will be created.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

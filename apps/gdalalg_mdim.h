@@ -18,7 +18,7 @@
 #include "gdalalgorithm.h"
 
 /************************************************************************/
-/*                         GDALMdimAlgorithm                            */
+/*                          GDALMdimAlgorithm                           */
 /************************************************************************/
 
 class GDALMdimAlgorithm final : public GDALAlgorithm

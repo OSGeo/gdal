@@ -15,7 +15,7 @@ import json
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 
 def get_info_alg():
@@ -185,3 +185,114 @@ def test_gdalalg_raster_info_pipeline():
     ) as alg:
         j = alg.Output()
         assert len(j["bands"]) == 3
+
+
+@pytest.mark.require_proj(8, 2)  # For IAU testing
+def test_gdalalg_raster_info_crs():
+
+    with pytest.raises(
+        Exception, match="'crs-format' cannot be set when 'format' is set to 'json'"
+    ):
+        gdal.alg.raster.info(
+            input="../gcore/data/byte.tif", output_format="json", crs_format="WKT2"
+        )
+
+    with gdal.alg.raster.info(
+        input="../gcore/data/byte.tif", output_format="text"
+    ) as alg:
+        output_string = alg.Output()
+        assert (
+            """Coordinate Reference System:
+  - name: NAD27 / UTM zone 11N
+  - ID: EPSG:26711
+  - type: Projected
+  - projection type: UTM zone 11N, Transverse Mercator
+  - units: metre
+  - area of use: North America..., west -120.00, south 26.93, east -114.00, north 78.13\n"""
+            in output_string
+        )
+
+    with gdal.alg.raster.info(input="data/utmsmall.tif", output_format="text") as alg:
+        output_string = alg.Output()
+        assert """Coordinate Reference System:
+  - name: NAD27 / UTM zone 11N
+  - ID: EPSG:26711
+  - type: Projected
+  - projection type: Transverse Mercator
+  - units: metre""" in output_string
+        assert "  - area of use" not in output_string
+
+    with gdal.alg.raster.info(
+        input="../gdrivers/data/small_world.tif", output_format="text"
+    ) as alg:
+        output_string = alg.Output()
+        assert (
+            """Coordinate Reference System:
+  - name: WGS 84
+  - ID: EPSG:4326
+  - type: Geographic 2D
+  - area of use: World, west -180.00, south -90.00, east 180.00, north 90.00"""
+            in output_string
+        )
+        assert "  - projection type" not in output_string
+        assert "  - units" not in output_string
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("EPSG:9518")
+    src_ds.SetSpatialRef(srs)
+    with gdal.alg.raster.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        assert "name: WGS 84 + EGM2008 height\n" in output_string
+        assert "ID: EPSG:9518\n" in output_string
+        assert "type: Compound of Geographic\n" in output_string
+        assert "projection type" not in output_string
+        assert "units" not in output_string
+        assert (
+            "area of use: World, west -180.00, south -90.00, east 180.00, north 90.00\n"
+            in output_string
+        )
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    srs = osr.SpatialReference()
+    srs.ImportFromProj4("+proj=longlat +ellps=GRS80")
+    src_ds.SetSpatialRef(srs)
+    with gdal.alg.raster.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        assert 'Coordinate Reference System WKT:\nGEOGCRS["unknown",' in output_string
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("IAU_2015:30100")
+    src_ds.SetSpatialRef(srs)
+    with gdal.alg.raster.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        assert "name: Moon (2015) - Sphere / Ocentric\n" in output_string
+        assert "ID: urn:ogc:def:crs:IAU:2015:30100\n" in output_string
+
+    with gdal.alg.raster.info(
+        input="data/utmsmall.tif", output_format="text", crs_format="WKT2"
+    ) as alg:
+        output_string = alg.Output()
+        assert (
+            'Coordinate Reference System WKT:\nPROJCRS["NAD27 / UTM zone 11N"'
+            in output_string
+        )
+
+    with gdal.alg.raster.info(
+        input="data/utmsmall.tif", output_format="text", crs_format="PROJJSON"
+    ) as alg:
+        output_string = alg.Output()
+        assert 'Coordinate Reference System PROJJSON:\n{\n  "$schema":' in output_string
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    srs.SetFromUserInput("EPSG:3857")
+    src_ds.SetSpatialRef(srs)
+    with gdal.alg.raster.info(input=src_ds, output_format="text") as alg:
+        output_string = alg.Output()
+        # Check we don't repeat twice the conversion and projection method name,
+        # that only differ by a hyphen.
+        assert (
+            "projection type: Popular Visualisation Pseudo Mercator\n"
+            in output_string.replace("-", " ")
+        )

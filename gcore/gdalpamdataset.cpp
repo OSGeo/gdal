@@ -154,7 +154,7 @@ GDALPamDataset::~GDALPamDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GDALPamDataset::Close(GDALProgressFunc, void *)
@@ -278,8 +278,8 @@ CPLXMLNode *GDALPamDataset::SerializeToXML(const char *pszUnused)
     {
         CPLString oFmt;
         oFmt.Printf("%24.16e,%24.16e,%24.16e,%24.16e,%24.16e,%24.16e",
-                    psPam->gt[0], psPam->gt[1], psPam->gt[2], psPam->gt[3],
-                    psPam->gt[4], psPam->gt[5]);
+                    psPam->gt.xorig, psPam->gt.xscale, psPam->gt.xrot,
+                    psPam->gt.yorig, psPam->gt.yrot, psPam->gt.yscale);
         CPLSetXMLValue(psDSTree, "GeoTransform", oFmt);
     }
 
@@ -637,27 +637,27 @@ CPLErr GDALPamDataset::XMLInit(const CPLXMLNode *psTree, const char *pszUnused)
                 }
                 if (adfCoeffX.size() == 3 && adfCoeffY.size() == 3)
                 {
-                    psPam->gt[0] = adfCoeffX[0];
-                    psPam->gt[1] = adfCoeffX[1];
+                    psPam->gt.xorig = adfCoeffX[0];
+                    psPam->gt.xscale = adfCoeffX[1];
                     // Looking at the example of https://github.com/qgis/QGIS/issues/53125#issuecomment-1567650082
                     // when comparing the .pgwx world file and .png.aux.xml file,
                     // it appears that the sign of the coefficients for the line
                     // terms must be negated (which is a bit in line with the
                     // negation of dfGCPLine in the above GCP case)
-                    psPam->gt[2] = -adfCoeffX[2];
-                    psPam->gt[3] = adfCoeffY[0];
-                    psPam->gt[4] = adfCoeffY[1];
-                    psPam->gt[5] = -adfCoeffY[2];
+                    psPam->gt.xrot = -adfCoeffX[2];
+                    psPam->gt.yorig = adfCoeffY[0];
+                    psPam->gt.yrot = adfCoeffY[1];
+                    psPam->gt.yscale = -adfCoeffY[2];
 
                     // Looking at the example of https://github.com/qgis/QGIS/issues/53125#issuecomment-1567650082
                     // when comparing the .pgwx world file and .png.aux.xml file,
                     // one can see that they have the same origin, so knowing
                     // that world file uses a center-of-pixel convention,
                     // correct from center of pixel to top left of pixel
-                    psPam->gt[0] -= 0.5 * psPam->gt[1];
-                    psPam->gt[0] -= 0.5 * psPam->gt[2];
-                    psPam->gt[3] -= 0.5 * psPam->gt[4];
-                    psPam->gt[3] -= 0.5 * psPam->gt[5];
+                    psPam->gt.xorig -= 0.5 * psPam->gt.xscale;
+                    psPam->gt.xorig -= 0.5 * psPam->gt.xrot;
+                    psPam->gt.yorig -= 0.5 * psPam->gt.yrot;
+                    psPam->gt.yorig -= 0.5 * psPam->gt.yscale;
 
                     psPam->bHaveGeoTransform = TRUE;
                 }
@@ -760,7 +760,7 @@ void GDALPamDataset::SetSubdatasetName(const char *pszSubdataset)
 }
 
 /************************************************************************/
-/*                        SetDerivedDatasetName()                        */
+/*                       SetDerivedDatasetName()                        */
 /************************************************************************/
 
 /* Mutually exclusive with SetSubdatasetName() */
@@ -833,7 +833,7 @@ const char *GDALPamDataset::BuildPamFilename()
 }
 
 /************************************************************************/
-/*                   IsPamFilenameAPotentialSiblingFile()               */
+/*                 IsPamFilenameAPotentialSiblingFile()                 */
 /************************************************************************/
 
 int GDALPamDataset::IsPamFilenameAPotentialSiblingFile()
@@ -1371,7 +1371,7 @@ const OGRSpatialReference *GDALPamDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                        GetSpatialRefRasterOnly()                     */
+/*                      GetSpatialRefRasterOnly()                       */
 /************************************************************************/
 
 const OGRSpatialReference *GDALPamDataset::GetSpatialRefRasterOnly() const
@@ -1440,7 +1440,7 @@ CPLErr GDALPamDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                        DeleteGeoTransform()                          */
+/*                         DeleteGeoTransform()                         */
 /************************************************************************/
 
 /** Remove geotransform from PAM.
@@ -1486,7 +1486,7 @@ const OGRSpatialReference *GDALPamDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *GDALPamDataset::GetGCPs()

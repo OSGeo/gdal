@@ -187,54 +187,9 @@ tmsize_t TIFFTileRowSize(TIFF *tif)
  */
 uint64_t TIFFVTileSize64(TIFF *tif, uint32_t nrows)
 {
-    static const char module[] = "TIFFVTileSize64";
-    TIFFDirectory *td = &tif->tif_dir;
-    if (td->td_tilelength == 0 || td->td_tilewidth == 0 ||
-        td->td_tiledepth == 0)
-        return (0);
-    if ((td->td_planarconfig == PLANARCONFIG_CONTIG) &&
-        (td->td_photometric == PHOTOMETRIC_YCBCR) &&
-        (td->td_samplesperpixel == 3) && (!isUpSampled(tif)))
-    {
-        /*
-         * Packed YCbCr data contain one Cb+Cr for every
-         * HorizontalSampling*VerticalSampling Y values.
-         * Must also roundup width and height when calculating
-         * since images that are not a multiple of the
-         * horizontal/vertical subsampling area include
-         * YCbCr data for the extended image.
-         */
-        uint16_t ycbcrsubsampling[2];
-        uint16_t samplingblock_samples;
-        uint32_t samplingblocks_hor;
-        uint32_t samplingblocks_ver;
-        uint64_t samplingrow_samples;
-        uint64_t samplingrow_size;
-        TIFFGetFieldDefaulted(tif, TIFFTAG_YCBCRSUBSAMPLING,
-                              ycbcrsubsampling + 0, ycbcrsubsampling + 1);
-        if ((ycbcrsubsampling[0] != 1 && ycbcrsubsampling[0] != 2 &&
-             ycbcrsubsampling[0] != 4) ||
-            (ycbcrsubsampling[1] != 1 && ycbcrsubsampling[1] != 2 &&
-             ycbcrsubsampling[1] != 4))
-        {
-            TIFFErrorExtR(tif, module, "Invalid YCbCr subsampling (%dx%d)",
-                          ycbcrsubsampling[0], ycbcrsubsampling[1]);
-            return 0;
-        }
-        samplingblock_samples = ycbcrsubsampling[0] * ycbcrsubsampling[1] + 2;
-        samplingblocks_hor =
-            TIFFhowmany_32(td->td_tilewidth, ycbcrsubsampling[0]);
-        samplingblocks_ver = TIFFhowmany_32(nrows, ycbcrsubsampling[1]);
-        samplingrow_samples = _TIFFMultiply64(tif, samplingblocks_hor,
-                                              samplingblock_samples, module);
-        samplingrow_size = TIFFhowmany8_64(_TIFFMultiply64(
-            tif, samplingrow_samples, td->td_bitspersample, module));
-        return (
-            _TIFFMultiply64(tif, samplingrow_size, samplingblocks_ver, module));
-    }
-    else
-        return (_TIFFMultiply64(tif, nrows, TIFFTileRowSize64(tif), module));
+    return _TIFFStrileSize64(tif, nrows, /* isStrip = */ FALSE);
 }
+
 tmsize_t TIFFVTileSize(TIFF *tif, uint32_t nrows)
 {
     static const char module[] = "TIFFVTileSize";

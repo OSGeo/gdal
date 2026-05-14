@@ -251,7 +251,7 @@ MAIN_START(nArgc, papszArgv)
 MAIN_END
 
 /************************************************************************/
-/*                        ThreadFunction()                              */
+/*                           ThreadFunction()                           */
 /************************************************************************/
 
 static void ThreadFunction(void *user_data)
@@ -273,7 +273,7 @@ static void ThreadFunction(void *user_data)
 }
 
 /************************************************************************/
-/*                     ThreadFunctionInternal()                         */
+/*                       ThreadFunctionInternal()                       */
 /************************************************************************/
 
 static void ThreadFunctionInternal(ThreadContext *psContext)
@@ -407,6 +407,29 @@ static int TestDataset(GDALDriver **ppoDriver)
         printf("FAILURE: Driver advertises GDAL_DCAP_CREATE_LAYER and "
                "GDAL_DCAP_MULTIPLE_VECTOR_LAYERS capability but dataset does "
                "not advertise ODsCCreateLayer!\n");
+        bRet = false;
+    }
+    else if (!bReadOnly &&
+             poDriver->GetMetadataItem(
+                 GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY) &&
+             poDriver->GetMetadataItem(GDAL_DCAP_CREATE_LAYER) &&
+             !poDS->TestCapability(ODsCCreateLayer))
+    {
+        printf("FAILURE: Driver advertises GDAL_DCAP_CREATE_LAYER and "
+               "GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY capability but "
+               "dataset does "
+               "not advertise ODsCCreateLayer!\n");
+        bRet = false;
+    }
+
+    if (poDriver->GetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS) &&
+        poDriver->GetMetadataItem(
+            GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY))
+    {
+        printf("FAILURE: Driver advertises both and "
+               "GDAL_DCAP_MULTIPLE_VECTOR_LAYERS"
+               "GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY capabilities. "
+               "Only one of them can be set\n");
         bRet = false;
     }
 
@@ -561,7 +584,7 @@ static int TestDataset(GDALDriver **ppoDriver)
 }
 
 /************************************************************************/
-/*                             GetWKT()                                 */
+/*                               GetWKT()                               */
 /************************************************************************/
 
 static const char *GetWKT(OGRwkbGeometryType eGeomType)
@@ -602,7 +625,7 @@ static const char *GetWKT(OGRwkbGeometryType eGeomType)
 }
 
 /************************************************************************/
-/*                         TestCreateLayer()                            */
+/*                          TestCreateLayer()                           */
 /************************************************************************/
 
 static int TestCreateLayer(GDALDriver *poDriver, OGRwkbGeometryType eGeomType)
@@ -1039,7 +1062,7 @@ static int TestCreateLayer(GDALDriver *poDriver, OGRwkbGeometryType eGeomType)
 }
 
 /************************************************************************/
-/*                           TestCreate()                               */
+/*                             TestCreate()                             */
 /************************************************************************/
 
 static int TestCreate(GDALDriver *poDriver, int bFromAllDrivers)
@@ -1123,7 +1146,7 @@ static void Usage()
 }
 
 /************************************************************************/
-/*                           TestBasic()                                */
+/*                             TestBasic()                              */
 /************************************************************************/
 
 static int TestBasic(GDALDataset *poDS, OGRLayer *poLayer)
@@ -1511,7 +1534,7 @@ bye:
 }
 
 /************************************************************************/
-/*                          GetLayerNameForSQL()                        */
+/*                         GetLayerNameForSQL()                         */
 /************************************************************************/
 
 static const char *GetLayerNameForSQL(GDALDataset *poDS,
@@ -1586,11 +1609,11 @@ static int TestOGRLayerFeatureCount(GDALDataset *poDS, OGRLayer *poLayer,
     int nGeomFieldCount = LOG_ACTION(poLayerDefn->GetGeomFieldCount());
 
     const bool bLayerHasMeasuredGeometriesCapability =
-        poLayer->TestCapability(ODsCMeasuredGeometries);
+        CPL_TO_BOOL(poLayer->TestCapability(ODsCMeasuredGeometries));
     const bool bLayerHasCurveGeometriesCapability =
-        poLayer->TestCapability(OLCCurveGeometries);
+        CPL_TO_BOOL(poLayer->TestCapability(OLCCurveGeometries));
     const bool bLayerHasZGeometriesCapability =
-        poLayer->TestCapability(OLCZGeometries);
+        CPL_TO_BOOL(poLayer->TestCapability(OLCZGeometries));
 
     CPLErrorReset();
 
@@ -2819,7 +2842,7 @@ static int TestSpatialFilter(OGRLayer *poLayer)
 }
 
 /************************************************************************/
-/*                  GetQuotedIfNeededIdentifier()                       */
+/*                    GetQuotedIfNeededIdentifier()                     */
 /************************************************************************/
 
 static std::string GetQuotedIfNeededIdentifier(const char *pszFieldName)
@@ -2842,7 +2865,7 @@ static std::string GetQuotedIfNeededIdentifier(const char *pszFieldName)
 }
 
 /************************************************************************/
-/*                       GetAttributeFilters()                         */
+/*                        GetAttributeFilters()                         */
 /************************************************************************/
 
 static bool GetAttributeFilters(OGRLayer *poLayer,
@@ -3101,7 +3124,7 @@ static int TestAttributeFilter(CPL_UNUSED GDALDataset *poDS, OGRLayer *poLayer)
 }
 
 /************************************************************************/
-/*                         TestOGRLayerUTF8()                           */
+/*                          TestOGRLayerUTF8()                          */
 /************************************************************************/
 
 static int TestOGRLayerUTF8(OGRLayer *poLayer)
@@ -3215,7 +3238,7 @@ static int TestOGRLayerUTF8(OGRLayer *poLayer)
 }
 
 /************************************************************************/
-/*                         TestGetExtent()                              */
+/*                           TestGetExtent()                            */
 /************************************************************************/
 
 static int TestGetExtent(OGRLayer *poLayer, int iGeomField)
@@ -3451,9 +3474,9 @@ end:
     return bRet;
 }
 
-/*************************************************************************/
-/*                         TestTransactions()                            */
-/*************************************************************************/
+/************************************************************************/
+/*                          TestTransactions()                          */
+/************************************************************************/
 
 static int TestTransactions(OGRLayer *poLayer)
 
@@ -3640,7 +3663,7 @@ static int TestTransactions(OGRLayer *poLayer)
 }
 
 /************************************************************************/
-/*                     TestOGRLayerIgnoreFields()                       */
+/*                      TestOGRLayerIgnoreFields()                      */
 /************************************************************************/
 
 static int TestOGRLayerIgnoreFields(OGRLayer *poLayer)
@@ -3828,13 +3851,14 @@ static int TestLayerSQL(GDALDataset *poDS, OGRLayer *poLayer)
                     {
                         OGRGeomFieldDefn *poGFldDefn =
                             poLayer->GetLayerDefn()->GetGeomFieldDefn(i);
+                        const char *pszSrcName = poGFldDefn->GetNameRef();
                         iOtherI = poSQLLyr->GetLayerDefn()->GetGeomFieldIndex(
-                            poGFldDefn->GetNameRef());
+                            pszSrcName[0] ? pszSrcName : "_ogr_geometry_");
                         if (iOtherI == -1)
                         {
                             printf("ERROR: Cannot find geom field in SQL "
                                    "matching %s.\n",
-                                   poGFldDefn->GetNameRef());
+                                   pszSrcName);
                             break;
                         }
                     }
@@ -4026,7 +4050,7 @@ static int TestLayerSQL(GDALDataset *poDS, OGRLayer *poLayer)
 }
 
 /************************************************************************/
-/*                  CountFeaturesUsingArrowStream()                     */
+/*                   CountFeaturesUsingArrowStream()                    */
 /************************************************************************/
 
 static int64_t CountFeaturesUsingArrowStream(OGRLayer *poLayer,
@@ -4110,7 +4134,7 @@ static int64_t CountFeaturesUsingArrowStream(OGRLayer *poLayer,
 }
 
 /************************************************************************/
-/*                   TestLayerGetArrowStream()                          */
+/*                      TestLayerGetArrowStream()                       */
 /************************************************************************/
 
 static int TestLayerGetArrowStream(OGRLayer *poLayer)
@@ -4537,7 +4561,7 @@ static int TestOGRLayer(GDALDataset *poDS, OGRLayer *poLayer, int bIsSQLLayer)
 }
 
 /************************************************************************/
-/*                        TestInterleavedReading()                      */
+/*                       TestInterleavedReading()                       */
 /************************************************************************/
 
 static int TestInterleavedReading(const char *pszDataSourceIn,
@@ -4702,7 +4726,7 @@ bye:
 }
 
 /************************************************************************/
-/*                          TestDSErrorConditions()                     */
+/*                       TestDSErrorConditions()                        */
 /************************************************************************/
 
 static int TestDSErrorConditions(GDALDataset *poDS)
@@ -4760,7 +4784,7 @@ bye:
 }
 
 /************************************************************************/
-/*                              TestVirtualIO()                         */
+/*                           TestVirtualIO()                            */
 /************************************************************************/
 
 static int TestVirtualIO(GDALDataset *poDS)

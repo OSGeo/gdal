@@ -64,15 +64,13 @@ int main(int argc, char **argv)
     int nRasterXSize, nRasterYSize;
     const char *pszSource = nullptr, *pszDest = nullptr, *pszFormat = "GTiff";
     GDALDriverH hDriver;
-    int *panBandList = nullptr, nBandCount = 0, bDefBands = TRUE;
+    int *panBandList = nullptr, nBandCount = 0;
     GDALDataType eOutputType = GDT_Unknown;
     int nOXSize = 0, nOYSize = 0;
     char **papszCreateOptions = nullptr;
     char **papszAsyncOptions = nullptr;
     int anSrcWin[4];
     int bQuiet = FALSE;
-    GDALProgressFunc pfnProgress = GDALTermProgress;
-    int iSrcFileArg = -1, iDstFileArg = -1;
     int bMulti = FALSE;
     double dfTimeout = -1.0;
     const char *pszOXSize = nullptr, *pszOYSize = nullptr;
@@ -118,18 +116,18 @@ int main(int argc, char **argv)
         else if (EQUAL(argv[i], "-quiet"))
         {
             bQuiet = TRUE;
-            pfnProgress = GDALDummyProgress;
         }
 
         else if (EQUAL(argv[i], "-ot") && i < argc - 1)
         {
             for (int iType = 1; iType < GDT_TypeCount; iType++)
             {
-                if (GDALGetDataTypeName((GDALDataType)iType) != nullptr &&
-                    EQUAL(GDALGetDataTypeName((GDALDataType)iType),
+                if (GDALGetDataTypeName(static_cast<GDALDataType>(iType)) !=
+                        nullptr &&
+                    EQUAL(GDALGetDataTypeName(static_cast<GDALDataType>(iType)),
                           argv[i + 1]))
                 {
-                    eOutputType = (GDALDataType)iType;
+                    eOutputType = static_cast<GDALDataType>(iType);
                 }
             }
 
@@ -157,9 +155,6 @@ int main(int argc, char **argv)
             panBandList = static_cast<int *>(
                 CPLRealloc(panBandList, sizeof(int) * nBandCount));
             panBandList[nBandCount - 1] = atoi(argv[++i]);
-
-            if (panBandList[nBandCount - 1] != nBandCount)
-                bDefBands = FALSE;
         }
         else if (EQUAL(argv[i], "-co") && i < argc - 1)
         {
@@ -203,13 +198,11 @@ int main(int argc, char **argv)
         }
         else if (pszSource == nullptr)
         {
-            iSrcFileArg = i;
             pszSource = argv[i];
         }
         else if (pszDest == nullptr)
         {
             pszDest = argv[i];
-            iDstFileArg = i;
         }
 
         else
@@ -240,7 +233,7 @@ int main(int argc, char **argv)
     /* -------------------------------------------------------------------- */
 
     hSrcDS = GDALOpenShared(pszSource, GA_ReadOnly);
-    poSrcDS = (GDALDataset *)hSrcDS;
+    poSrcDS = GDALDataset::FromHandle(hSrcDS);
 
     if (hSrcDS == nullptr)
     {
@@ -316,9 +309,6 @@ int main(int argc, char **argv)
                 exit(2);
             }
         }
-
-        if (nBandCount != GDALGetRasterCount(hSrcDS))
-            bDefBands = FALSE;
     }
 
     /* -------------------------------------------------------------------- */
@@ -359,7 +349,7 @@ int main(int argc, char **argv)
                "writing:\n");
         for (int iDr = 0; iDr < GDALGetDriverCount(); iDr++)
         {
-            GDALDriverH hDriver = GDALGetDriver(iDr);
+            hDriver = GDALGetDriver(iDr);
 
             if (GDALGetMetadataItem(hDriver, GDAL_DCAP_CREATE, nullptr) !=
                 nullptr)
@@ -445,28 +435,26 @@ int main(int argc, char **argv)
                 exit(1);
             }
 
-            poDstDS = (GDALDataset *)hDstDS;
+            poDstDS = GDALDataset::FromHandle(hDstDS);
 
             /* --------------------------------------------------------------------
              */
             /*      Copy georeferencing. */
             /* --------------------------------------------------------------------
              */
-            double adfGeoTransform[6];
+            GDALGeoTransform gt;
 
-            if (poSrcDS->GetGeoTransform(adfGeoTransform) == CE_None)
+            if (poSrcDS->GetGeoTransform(gt) == CE_None)
             {
-                adfGeoTransform[0] += anSrcWin[0] * adfGeoTransform[1] +
-                                      anSrcWin[1] * adfGeoTransform[2];
-                adfGeoTransform[3] += anSrcWin[0] * adfGeoTransform[4] +
-                                      anSrcWin[1] * adfGeoTransform[5];
+                gt[0] += anSrcWin[0] * gt[1] + anSrcWin[1] * gt[2];
+                gt[3] += anSrcWin[0] * gt[4] + anSrcWin[1] * gt[5];
 
-                adfGeoTransform[1] *= anSrcWin[2] / (double)nOXSize;
-                adfGeoTransform[2] *= anSrcWin[3] / (double)nOYSize;
-                adfGeoTransform[4] *= anSrcWin[2] / (double)nOXSize;
-                adfGeoTransform[5] *= anSrcWin[3] / (double)nOYSize;
+                gt[1] *= anSrcWin[2] / (1.0 * nOXSize);
+                gt[2] *= anSrcWin[3] / (1.0 * nOYSize);
+                gt[4] *= anSrcWin[2] / (1.0 * nOXSize);
+                gt[5] *= anSrcWin[3] / (1.0 * nOYSize);
 
-                poDstDS->SetGeoTransform(adfGeoTransform);
+                poDstDS->SetGeoTransform(gt);
             }
 
             poDstDS->SetProjection(poSrcDS->GetProjectionRef());
@@ -505,7 +493,8 @@ int main(int argc, char **argv)
         poAsyncReq->LockBuffer();
         eErr = poDstDS->RasterIO(
             GF_Write, nUpXOff, nUpYOff, nUpXSize, nUpYSize,
-            ((GByte *)pImage) + nUpXOff * nPixelSpace + nUpYOff * nLineSpace,
+            static_cast<GByte *>(pImage) + nUpXOff * nPixelSpace +
+                nUpYOff * nLineSpace,
             nUpXSize, nUpYSize, eOutputType, nBandCount, nullptr, nPixelSpace,
             nLineSpace, nBandSpace, nullptr);
         poAsyncReq->UnlockBuffer();

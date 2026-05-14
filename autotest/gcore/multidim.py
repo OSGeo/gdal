@@ -194,7 +194,7 @@ def test_multidim_getresampled(resampling):
     assert resampled_ar.GetDataType() == ar.GetDataType()
     srs = resampled_ar.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == srs_ds.GetAuthorityCode(None)
+    assert srs.GetAuthorityCode() == srs_ds.GetAuthorityCode()
     dims = resampled_ar.GetDimensions()
     assert len(dims) == 2
     assert dims[0].GetName() == "dimY"
@@ -276,7 +276,7 @@ def test_multidim_getresampled_new_dims_with_variables(
     assert resampled_ar
     srs = resampled_ar.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == srs_ds.GetAuthorityCode(None)
+    assert srs.GetAuthorityCode() == srs_ds.GetAuthorityCode()
     dims = resampled_ar.GetDimensions()
     assert len(dims) == 2
     assert dims[0].GetSize() == ds.RasterYSize // 2
@@ -301,7 +301,7 @@ def test_multidim_getresampled_with_srs():
     assert resampled_ar
     got_srs = resampled_ar.GetSpatialRef()
     assert got_srs is not None
-    assert got_srs.GetAuthorityCode(None) == srs.GetAuthorityCode(None)
+    assert got_srs.GetAuthorityCode() == srs.GetAuthorityCode()
     dims = resampled_ar.GetDimensions()
 
     expected_ds = gdal.Warp("", ds, options="-of MEM -t_srs EPSG:4267 -r nearest")
@@ -686,6 +686,8 @@ def test_multidim_asclassicdataset_single_dim():
 
     assert ar.AsClassicDataset(0, 0).ReadRaster() == array.array("d", [10.5, 20])
 
+    assert ar.AsClassicDataset(0, 0).AdviseRead(0, 0, 2, 1) == gdal.CE_None
+
     with pytest.raises(Exception, match="Invalid iXDim and/or iYDim"):
         ar.AsClassicDataset(0, 1)
 
@@ -729,6 +731,8 @@ def test_multidim_asclassicdataset_band_metadata():
         "aux_var", [dimOther], gdal.ExtendedDataType.CreateString()
     )
     aux_var.Write(["foo", "bar"])
+
+    assert ar.AsClassicDataset(2, 1).AdviseRead(0, 0, 2, 2) == gdal.CE_None
 
     with pytest.raises(
         Exception, match="Root group should be provided when BAND_METADATA is set"
@@ -1956,3 +1960,115 @@ def test_multidim_dataset_as_mdarray_errors():
     with pytest.raises(Exception, match="Illegal value for DIM_ORDER option"):
         with gdal.GetDriverByName("MEM").Create("", 1, 1, 1) as ds:
             ds.AsMDArray(["DIM_ORDER=invalid"])
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_array_as_dataset():
+
+    ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="1">
+  <VRTRasterBand dataType="Float64" band="1">
+    <ArraySource>
+        <Array name="test">
+            <DataType>Float64</DataType>
+            <Dimension name="Y" size="1"/>
+            <Dimension name="X" size="2147483647"/>
+            <ConstantValue>10</ConstantValue>
+        </Array>
+    </ArraySource>
+  </VRTRasterBand>
+</VRTDataset>""")
+    assert ds.GetRasterBand(1).Checksum() == 186
+
+
+@gdaltest.enable_exceptions()
+def test_multidim_array_as_dataset_error():
+
+    with pytest.raises(
+        Exception, match="Array is too large to be exposed as a GDAL dataset"
+    ):
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="1">
+  <VRTRasterBand dataType="Float64" band="1">
+    <ArraySource>
+        <Array name="test">
+            <DataType>Float64</DataType>
+            <Dimension name="Y" size="1"/>
+            <Dimension name="X" size="2147483648"/>
+            <ConstantValue>10</ConstantValue>
+        </Array>
+    </ArraySource>
+  </VRTRasterBand>
+</VRTDataset>""")
+
+
+def test_multidim_guesstransform_no_indexing():
+    ## two dimensions, no indexing variables
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 2)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    gt = ar.GuessGeoTransform(1, 0, False)
+    assert gt is None
+
+
+def test_multidim_guesstransform_regular_2d():
+    ## two regular indexing variables
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds_ivars")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 4)
+    varY = rg.CreateMDArray(
+        dimY.GetName(), [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varY.Write(array.array("d", [90 - 0.9 - i for i in range(dimY.GetSize())]))
+    dimY.SetIndexingVariable(varY)
+    varX = rg.CreateMDArray(
+        dimX.GetName(), [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varX.Write(array.array("d", [-180 + 0.9 + i for i in range(dimX.GetSize())]))
+    dimX.SetIndexingVariable(varX)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    gt = ar.GuessGeoTransform(1, 0, False)
+    assert gt == pytest.approx((-179.6, 1.0, 0.0, 89.6, 0.0, -1.0))
+    gt = ar.GuessGeoTransform(0, 1, False)
+    assert gt == pytest.approx((89.6, -1.0, 0.0, -179.6, 0.0, 1.0))
+    gt = ar.GuessGeoTransform(0, 1, True)  # pixel-is-point
+    assert gt == pytest.approx((89.1, -1.0, 0.0, -179.1, 0.0, 1.0))
+    ## allowable, harmless
+    assert ar.GuessGeoTransform(0, 0, False) is not None  # same dim twice
+    assert (
+        ar.GuessGeoTransform(2, 1, False) is None
+    )  # dim out of bounds, but safe in C api
+
+
+def test_multidim_guessgeotransform_irregular_2d():
+    ## two indexing variables, Y is irregular
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds_irreg")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 8)
+    varY = rg.CreateMDArray(
+        dimY.GetName(), [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    # Irregularly spaced values - spacing increases from 1.0 to 6.0
+    varY.Write(array.array("d", [90, 89, 87.5, 85.5, 82.5, 78.5, 73.5, 67.5]))
+    dimY.SetIndexingVariable(varY)
+    varX = rg.CreateMDArray(
+        dimX.GetName(), [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varX.Write(array.array("d", [-180 + 0.9 + i for i in range(dimX.GetSize())]))
+    dimX.SetIndexingVariable(varX)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    gt = ar.GuessGeoTransform(1, 0, False)
+    assert gt is None
+    gt = ar.GuessGeoTransform(0, 1, False)
+    assert gt is None

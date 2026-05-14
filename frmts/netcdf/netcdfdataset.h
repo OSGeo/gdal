@@ -468,16 +468,17 @@ class netCDFDataset final : public GDALPamDataset
     static double rint(double);
 
     double FetchCopyParam(const char *pszGridMappingValue, const char *pszParam,
-                          double dfDefault, bool *pbFound = nullptr);
+                          double dfDefault, bool *pbFound = nullptr) const;
 
     std::vector<std::string>
-    FetchStandardParallels(const char *pszGridMappingValue);
+    FetchStandardParallels(const char *pszGridMappingValue) const;
 
-    const char *FetchAttr(const char *pszVarFullName, const char *pszAttr);
-    const char *FetchAttr(int nGroupId, int nVarId, const char *pszAttr);
+    const char *FetchAttr(const char *pszVarFullName,
+                          const char *pszAttr) const;
+    const char *FetchAttr(int nGroupId, int nVarId, const char *pszAttr) const;
 
     void ProcessCreationOptions();
-    int DefVarDeflate(int nVarId, bool bChunkingArg = true);
+    int DefVarDeflate(int nVarId, bool bChunkingArg = true) const;
     CPLErr AddProjectionVars(bool bDefsOnly, GDALProgressFunc pfnProgress,
                              void *pProgressData);
     bool AddGridMappingRef();
@@ -597,13 +598,14 @@ class netCDFDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
 
     static netCDFDataset *CreateLL(const char *pszFilename, int nXSize,
-                                   int nYSize, int nBands, char **papszOptions);
+                                   int nYSize, int nBands,
+                                   CSLConstList papszOptions);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -714,7 +716,7 @@ class netCDFLayer final : public OGRLayer
                 OGRwkbGeometryType eGeomType, OGRSpatialReference *poSRS);
     ~netCDFLayer() override;
 
-    bool Create(char **papszOptions,
+    bool Create(CSLConstList papszOptions,
                 const netCDFWriterConfigLayer *poLayerConfig);
     void SetRecordDimID(int nRecordDimID);
     void SetXYZVars(int nXVarId, int nYVarId, int nZVarId);

@@ -25,7 +25,7 @@ CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
 #endif
 
 /************************************************************************/
-/*                          NITFDESAccess()                             */
+/*                           NITFDESAccess()                            */
 /************************************************************************/
 
 NITFDES *NITFDESAccess(NITFFile *psFile, int iSegment)
@@ -295,7 +295,7 @@ retry:
 }
 
 /************************************************************************/
-/*                           NITFDESDeaccess()                          */
+/*                          NITFDESDeaccess()                           */
 /************************************************************************/
 
 void NITFDESDeaccess(NITFDES *psDES)
@@ -312,7 +312,7 @@ void NITFDESDeaccess(NITFDES *psDES)
 }
 
 /************************************************************************/
-/*                              NITFDESGetTRE()                         */
+/*                           NITFDESGetTRE()                            */
 /************************************************************************/
 
 /**
@@ -424,7 +424,7 @@ int NITFDESGetTRE(NITFDES *psDES, int nOffset, char szTREName[7],
 }
 
 /************************************************************************/
-/*                           NITFDESFreeTREData()                       */
+/*                         NITFDESFreeTREData()                         */
 /************************************************************************/
 
 void NITFDESFreeTREData(char *pabyTREData)
@@ -433,7 +433,7 @@ void NITFDESFreeTREData(char *pabyTREData)
 }
 
 /************************************************************************/
-/*                        NITFDESExtractShapefile()                     */
+/*                      NITFDESExtractShapefile()                       */
 /************************************************************************/
 
 int NITFDESExtractShapefile(NITFDES *psDES, const char *pszRadixFileName)
@@ -547,7 +547,7 @@ end:
 }
 
 /************************************************************************/
-/*                              NITFDESGetXml()                         */
+/*                           NITFDESGetXml()                            */
 /************************************************************************/
 
 CPLXMLNode *NITFDESGetXml(NITFFile *psFile, int iSegment, bool bValidate,

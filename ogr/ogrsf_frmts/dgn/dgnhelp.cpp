@@ -167,7 +167,7 @@ int DGNGetShapeFillInfo(DGNHandle hDGN, DGNElemCore *psElem, int *pnColor)
 }
 
 /************************************************************************/
-/*                        DGNGetAssocID()                               */
+/*                           DGNGetAssocID()                            */
 /************************************************************************/
 
 /**

@@ -35,7 +35,7 @@
 #include "nitflib.h"
 
 /************************************************************************/
-/*                       NITFMakeColorTable()                           */
+/*                         NITFMakeColorTable()                         */
 /************************************************************************/
 
 static GDALColorTable *NITFMakeColorTable(NITFImage *psImage,
@@ -335,7 +335,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
                          (int nXOff, int nYOff, int nXSize, int nYSize,
                           int nBufXSize, int nBufYSize, GDALDataType eDT,
-                          char **papszOptions),
+                          CSLConstList papszOptions),
                          (nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                           eDT, papszOptions))
 
@@ -345,7 +345,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, CreateMaskBand, (int nFlagsIn),
                          (nFlagsIn))
 
 /************************************************************************/
-/*                 UnrefUnderlyingRasterBand()                        */
+/*                     UnrefUnderlyingRasterBand()                      */
 /************************************************************************/
 
 void NITFProxyPamRasterBand::UnrefUnderlyingRasterBand(
@@ -742,7 +742,7 @@ CPLErr NITFRasterBand::SetColorTable(GDALColorTable *poNewCT)
 }
 
 /************************************************************************/
-/*                           Unpack()                                   */
+/*                               Unpack()                               */
 /************************************************************************/
 
 void NITFRasterBand::Unpack(GByte *pData)
@@ -985,7 +985,7 @@ void NITFRasterBand::Unpack(GByte *pData)
 /************************************************************************/
 
 /************************************************************************/
-/*                      NITFWrapperRasterBand()                         */
+/*                       NITFWrapperRasterBand()                        */
 /************************************************************************/
 
 NITFWrapperRasterBand::NITFWrapperRasterBand(NITFDataset *poDSIn,
@@ -1004,7 +1004,7 @@ NITFWrapperRasterBand::NITFWrapperRasterBand(NITFDataset *poDSIn,
 }
 
 /************************************************************************/
-/*                      ~NITFWrapperRasterBand()                        */
+/*                       ~NITFWrapperRasterBand()                       */
 /************************************************************************/
 
 NITFWrapperRasterBand::~NITFWrapperRasterBand()
@@ -1014,7 +1014,7 @@ NITFWrapperRasterBand::~NITFWrapperRasterBand()
 }
 
 /************************************************************************/
-/*                     RefUnderlyingRasterBand()                        */
+/*                      RefUnderlyingRasterBand()                       */
 /************************************************************************/
 
 /* We don't need ref-counting. Just return the base band */
@@ -1024,7 +1024,7 @@ GDALRasterBand *NITFWrapperRasterBand::RefUnderlyingRasterBand()
 }
 
 /************************************************************************/
-/*                            GetColorTable()                           */
+/*                           GetColorTable()                            */
 /************************************************************************/
 
 GDALColorTable *NITFWrapperRasterBand::GetColorTable()
@@ -1033,7 +1033,7 @@ GDALColorTable *NITFWrapperRasterBand::GetColorTable()
 }
 
 /************************************************************************/
-/*                 SetColorTableFromNITFBandInfo()                      */
+/*                   SetColorTableFromNITFBandInfo()                    */
 /************************************************************************/
 
 void NITFWrapperRasterBand::SetColorTableFromNITFBandInfo()
@@ -1044,7 +1044,7 @@ void NITFWrapperRasterBand::SetColorTableFromNITFBandInfo()
 }
 
 /************************************************************************/
-/*                        GetColorInterpretation()                      */
+/*                       GetColorInterpretation()                       */
 /************************************************************************/
 
 GDALColorInterp NITFWrapperRasterBand::GetColorInterpretation()
@@ -1053,7 +1053,7 @@ GDALColorInterp NITFWrapperRasterBand::GetColorInterpretation()
 }
 
 /************************************************************************/
-/*                        SetColorInterpretation()                      */
+/*                       SetColorInterpretation()                       */
 /************************************************************************/
 
 CPLErr NITFWrapperRasterBand::SetColorInterpretation(GDALColorInterp eInterpIn)
@@ -1086,7 +1086,7 @@ int NITFWrapperRasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                             GetOverview()                            */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *NITFWrapperRasterBand::GetOverview(int iOverview)
@@ -1104,7 +1104,7 @@ GDALRasterBand *NITFWrapperRasterBand::GetOverview(int iOverview)
 }
 
 /************************************************************************/
-/*                      NITFComplexRasterBand()                         */
+/*                       NITFComplexRasterBand()                        */
 /************************************************************************/
 
 NITFComplexRasterBand::NITFComplexRasterBand(NITFDataset *poDSIn,
@@ -1166,42 +1166,23 @@ CPLErr NITFComplexRasterBand::IBlockIO(int nBlockXOff, int nBlockYOff,
                                        void *pImage, GDALRWFlag rwFlag)
 
 {
-    int nRequestYSize;
-    int nRequestXSize;
-    bool bMemset = false;
-
     /* -------------------------------------------------------------------- */
     /*      If the last strip is partial, we need to avoid                  */
     /*      over-requesting.  We also need to initialize the extra part     */
     /*      of the block to zero.                                           */
     /* -------------------------------------------------------------------- */
-    if ((nBlockYOff + 1) * nBlockYSize > nRasterYSize)
-    {
-        nRequestYSize = nRasterYSize - nBlockYOff * nBlockYSize;
-        if (rwFlag == GF_Read)
-            bMemset = true;
-    }
-    else
-    {
-        nRequestYSize = nBlockYSize;
-    }
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nRequestYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
     /*-------------------------------------------------------------------- */
     /*      If the input imagery is tiled, also need to avoid over-        */
     /*      requesting in the X-direction.                                 */
     /* ------------------------------------------------------------------- */
-    if ((nBlockXOff + 1) * nBlockXSize > nRasterXSize)
-    {
-        nRequestXSize = nRasterXSize - nBlockXOff * nBlockXSize;
-        if (rwFlag == GF_Read)
-            bMemset = true;
-    }
-    else
-    {
-        nRequestXSize = nBlockXSize;
-    }
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nRequestXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
 
-    if (bMemset)
+    if (rwFlag == GF_Read &&
+        (nRequestXSize < nBlockXSize || nRequestYSize < nBlockYSize))
     {
         memset(pImage, 0,
                static_cast<size_t>(GDALGetDataTypeSizeBytes(eDataType)) *

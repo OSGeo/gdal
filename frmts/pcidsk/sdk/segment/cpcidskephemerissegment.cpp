@@ -133,7 +133,7 @@ void CPCIDSKEphemerisSegment::Synchronize()
 }
 
 /************************************************************************/
-/*                              ConvertDeg()                            */
+/*                             ConvertDeg()                             */
 /************************************************************************/
 /**
  * if mode is 0, convert angle from 0 to 360 to 0 to 180 and 0 to -180
@@ -170,7 +170,7 @@ double CPCIDSKEphemerisSegment::ConvertDeg(double degree, int mode)
 }
 
 /************************************************************************/
-/*                      ReadAvhrrEphemerisSegment()                     */
+/*                     ReadAvhrrEphemerisSegment()                      */
 /************************************************************************/
 /**
  *  Read the contents of blocks 9, 11, and onwards from the orbit
@@ -327,7 +327,7 @@ CPCIDSKEphemerisSegment::ReadAvhrrScanlineRecord(int nPos,
 }
 
 /************************************************************************/
-/*                         ReadAvhrrInt32()                             */
+/*                           ReadAvhrrInt32()                           */
 /************************************************************************/
 /**
  * Read an integer from a given buffer of at least 4 bytes.
@@ -345,7 +345,7 @@ CPCIDSKEphemerisSegment::ReadAvhrrInt32(unsigned char* pbyBuf)
 }
 
 /************************************************************************/
-/*                    WriteAvhrrEphemerisSegment()                      */
+/*                     WriteAvhrrEphemerisSegment()                     */
 /************************************************************************/
 /**
  *  Write the contents of blocks 9, 10, and onwards to the orbit
@@ -470,7 +470,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrEphemerisSegment(int nStartBlock,
 }
 
 /************************************************************************/
-/*                       WriteAvhrrScanlineRecord()                     */
+/*                      WriteAvhrrScanlineRecord()                      */
 /************************************************************************/
 /**
  * Write a scanline record to a byte buffer.
@@ -511,7 +511,7 @@ CPCIDSKEphemerisSegment::WriteAvhrrScanlineRecord(
 }
 
 /************************************************************************/
-/*                         WriteAvhrrInt32()                            */
+/*                          WriteAvhrrInt32()                           */
 /************************************************************************/
 /**
  * Write an integer into a given buffer of at least 4 bytes.
@@ -529,7 +529,7 @@ void CPCIDSKEphemerisSegment::WriteAvhrrInt32(int nValue,
 
 
 /************************************************************************/
-/*                        BinaryToEphemeris()                           */
+/*                         BinaryToEphemeris()                          */
 /************************************************************************/
 /**
  * Read binary information from a binary buffer to create an
@@ -928,7 +928,7 @@ CPCIDSKEphemerisSegment::BinaryToEphemeris( int nStartBlock )
 }
 
 /************************************************************************/
-/*                        EphemerisToBinary()                           */
+/*                         EphemerisToBinary()                          */
 /************************************************************************/
 /**
  * Write an Orbit segment information into a binary buffer of size 4096.

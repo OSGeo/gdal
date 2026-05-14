@@ -23,7 +23,7 @@
 #endif
 
 /************************************************************************/
-/*              GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()          */
+/*            GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()            */
 /************************************************************************/
 
 GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()
@@ -37,10 +37,16 @@ GDALMdimInfoAlgorithm::GDALMdimInfoAlgorithm()
                          {GDAL_DCAP_MULTIDIM_RASTER});
     AddInputDatasetArg(&m_dataset, GDAL_OF_MULTIDIM_RASTER).AddAlias("dataset");
     AddOutputStringArg(&m_output);
+    AddArg("summary", 0,
+           _("Report only group and array hierarchy, without detailed "
+             "information on attributes or dimensions."),
+           &m_summary)
+        .SetMutualExclusionGroup("structure_detailed");
     AddArg(
         "detailed", 0,
         _("Most verbose output. Report attribute data types and array values."),
-        &m_detailed);
+        &m_detailed)
+        .SetMutualExclusionGroup("structure_detailed");
     AddArrayNameArg(&m_array, _("Name of the array, used to restrict the "
                                 "output to the specified array."));
 
@@ -97,7 +103,9 @@ bool GDALMdimInfoAlgorithm::RunImpl(GDALProgressFunc, void *)
 
     if (m_stdout)
         aosOptions.AddString("-stdout");
-    if (m_detailed)
+    if (m_summary)
+        aosOptions.AddString("-summary");
+    else if (m_detailed)
         aosOptions.AddString("-detailed");
     if (m_stats)
         aosOptions.AddString("-stats");

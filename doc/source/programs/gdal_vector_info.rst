@@ -21,7 +21,8 @@ Description
 -----------
 
 :program:`gdal vector info` lists various information about a GDAL supported
-vector dataset.
+vector dataset, and returns them on the standard output stream when used from the
+command line, or in the ``output`` parameter when used from the API.
 
 Starting with GDAL 3.12, :program:`gdal vector info` can be used as the last
 step of a pipeline.
@@ -93,6 +94,27 @@ Program-Specific Options
 
     This option is mutually exclusive with the :option:`--sql` option.
 
+.. option:: --fid <FID>
+
+    .. versionadded:: 3.13
+
+    Feature identifier. Only the feature with the specified FID
+    will be reported.
+
+.. option:: --crs-format AUTO|WKT2|PROJJSON
+
+    .. versionadded:: 3.13
+
+    Which format to use to report the CRS. In AUTO default mode, if the CRS
+    can be captured with an authority name and code (known of PROJ), only
+    a summary of the CRS, including its name, ID, type and area of use will be
+    reported. Otherwise a full WKT2:2019 definition will be reported.
+
+    .. note::
+
+        :option:`--crs-format` can only be set when :option:`--output-format`
+        is set to ``text``.  The JSON text format includes both WKT2 and PROJJSON.
+
 Standard Options
 ----------------
 
@@ -101,6 +123,11 @@ Standard Options
     .. include:: gdal_options/oo.rst
 
     .. include:: gdal_options/if.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -116,3 +143,41 @@ Examples
 
    .. command-output:: gdal vector info --format=JSON poly.gpkg
       :cwd: ../../data
+
+.. example::
+   :id: gdal-vector-info-list-layers
+   :title: List all layers in a dataset using ``jq``
+
+   .. code-block:: bash
+
+       gdal vector info av_2056.gpkg --format json | jq ".layers[].name"
+
+.. example::
+   :id: gdal-vector-info-geom-name
+   :title: List all layers and their geometry fields using ``jq``
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        $ gdal vector info counties-albers-10m.gpkg --output-format=JSON | jq -r '
+          .layers[]
+          | .name as $layer
+          | .geometryFields[]?
+          | "\($layer): \(.name) (\(.type))"'
+
+      .. code-tab:: ps1
+
+        gdal vector info counties-albers-10m.gpkg --output-format=JSON | jq -r '
+          .layers[]
+          | .name as $layer
+          | .geometryFields[]?
+          | \"\($layer): \(.name) (\(.type))\"'
+
+   returns:
+
+   .. code-block::
+
+    counties: geom (Geometry)
+    states: geom (MultiPolygon)
+    nation: geom (MultiPolygon)

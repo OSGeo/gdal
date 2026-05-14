@@ -27,22 +27,53 @@ jobs:
     runs-on: macos-14
     steps:
 
-      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
-      - uses: conda-incubator/setup-miniconda@835234971496cad1653abb28a638a281cf32541f # v3.2.0
+      - name: Setup ccache cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-${{ github.ref_name }}-
+            ${{ runner.os }}-ccache-
+
+      - name: Cache Conda packages
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/conda_pkgs_dir
+          key: ${{ runner.os }}-conda-${{ hashFiles('ci/travis/osx/before_install.sh') }}
+          restore-keys: |
+            ${{ runner.os }}-conda-
+
+      - uses: conda-incubator/setup-miniconda@8ee1f361103df19b6f8c8655fd3967a8ecb162d5 # v4.0.1
         with:
             channels: conda-forge
             auto-update-conda: true
+            use-mamba: true
 
       - name: Install Requirements
         shell: bash -l {0}
         run: |
           source ./ci/travis/osx/before_install.sh
 
+      - name: Configure ccache
+        shell: bash -l {0}
+        run: |
+          echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
+          echo "CCACHE_MAXSIZE=1G" >> $GITHUB_ENV
+          ccache -z
+
       - name: Build
         shell: bash -l {0}
         run: |
           source ./ci/travis/osx/install.sh
+
+      - name: Show ccache stats
+        shell: bash -l {0}
+        run: ccache -sv
 
       - name: Run tests
         shell: bash -l {0}

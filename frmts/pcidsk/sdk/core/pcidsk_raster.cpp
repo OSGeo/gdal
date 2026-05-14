@@ -14,7 +14,7 @@
 using namespace PCIDSK;
 
 /************************************************************************/
-/*                             RasterDataType()                         */
+/*                           RasterDataType()                           */
 /************************************************************************/
 raster::ChannelType PCIDSK::RasterDataType(eChanType eChanType)
 {
@@ -58,7 +58,7 @@ raster::ChannelType PCIDSK::RasterDataType(eChanType eChanType)
 }
 
 /************************************************************************/
-/*                             RasterDataType()                         */
+/*                           RasterDataType()                           */
 /************************************************************************/
 eChanType PCIDSK::RasterDataType(raster::ChannelType eChanType)
 {

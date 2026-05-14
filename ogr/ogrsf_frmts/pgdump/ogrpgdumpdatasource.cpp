@@ -18,11 +18,11 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                      OGRPGDumpDataSource()                           */
+/*                        OGRPGDumpDataSource()                         */
 /************************************************************************/
 
 OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
-                                         char **papszOptions)
+                                         CSLConstList papszOptions)
 {
     SetDescription(pszNameIn);
 
@@ -65,7 +65,7 @@ OGRPGDumpDataSource::OGRPGDumpDataSource(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                          ~OGRPGDumpDataSource()                          */
+/*                        ~OGRPGDumpDataSource()                        */
 /************************************************************************/
 
 OGRPGDumpDataSource::~OGRPGDumpDataSource()
@@ -83,7 +83,7 @@ OGRPGDumpDataSource::~OGRPGDumpDataSource()
 }
 
 /************************************************************************/
-/*                         LogStartTransaction()                        */
+/*                        LogStartTransaction()                         */
 /************************************************************************/
 
 void OGRPGDumpDataSource::LogStartTransaction()
@@ -109,7 +109,7 @@ void OGRPGDumpDataSource::LogCommit()
 }
 
 /************************************************************************/
-/*                         OGRPGCommonLaunderName()                     */
+/*                       OGRPGCommonLaunderName()                       */
 /************************************************************************/
 
 char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix,
@@ -186,7 +186,7 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix,
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -418,11 +418,11 @@ OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     {
         if (poSRS)
         {
-            const char *pszAuthorityName = poSRS->GetAuthorityName(nullptr);
+            const char *pszAuthorityName = poSRS->GetAuthorityName();
             if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
             {
                 /* Assume the EPSG Id is the SRS ID. Might be a wrong guess ! */
-                nSRSId = atoi(poSRS->GetAuthorityCode(nullptr));
+                nSRSId = atoi(poSRS->GetAuthorityCode());
             }
             else
             {
@@ -739,7 +739,7 @@ const OGRLayer *OGRPGDumpDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                                  Log()                               */
+/*                                Log()                                 */
 /************************************************************************/
 
 bool OGRPGDumpDataSource::Log(const char *pszStr, bool bAddSemiColumn)

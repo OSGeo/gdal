@@ -18,7 +18,7 @@
 struct VSIVirtualHandle;
 
 /************************************************************************/
-/*                        ZarrArrayMetadata                             */
+/*                          ZarrArrayMetadata                           */
 /************************************************************************/
 
 /** Array-related metadata needed for the good working of Zarr V3 codecs */
@@ -35,7 +35,7 @@ struct ZarrArrayMetadata
 };
 
 /************************************************************************/
-/*                            ZarrV3Codec                               */
+/*                             ZarrV3Codec                              */
 /************************************************************************/
 
 /** Abstract class for a Zarr V3 codec */
@@ -114,7 +114,7 @@ class ZarrV3Codec CPL_NON_FINAL
 };
 
 /************************************************************************/
-/*                      ZarrV3CodecAbstractCompressor                   */
+/*                    ZarrV3CodecAbstractCompressor                     */
 /************************************************************************/
 
 class ZarrV3CodecAbstractCompressor CPL_NON_FINAL : public ZarrV3Codec
@@ -171,7 +171,7 @@ class ZarrV3CodecGZip final : public ZarrV3CodecAbstractCompressor
 };
 
 /************************************************************************/
-/*                          ZarrV3CodecBlosc                            */
+/*                           ZarrV3CodecBlosc                           */
 /************************************************************************/
 
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/blosc/v1.0.html
@@ -195,7 +195,7 @@ class ZarrV3CodecBlosc final : public ZarrV3CodecAbstractCompressor
 };
 
 /************************************************************************/
-/*                          ZarrV3CodecZstd                             */
+/*                           ZarrV3CodecZstd                            */
 /************************************************************************/
 
 // Implements https://github.com/zarr-developers/zarr-specs/pull/256
@@ -254,11 +254,58 @@ class ZarrV3CodecBytes final : public ZarrV3Codec
 
     bool IsNoOp() const override
     {
+        // Byte-oriented string types have no endianness concept
+        if (m_oInputArrayMetadata.oElt.nativeType ==
+            DtypeElt::NativeType::STRING_ASCII)
+            return true;
         if constexpr (CPL_IS_LSB)
             return m_oInputArrayMetadata.oElt.nativeSize == 1 || m_bLittle;
         else
             return m_oInputArrayMetadata.oElt.nativeSize == 1 || !m_bLittle;
     }
+
+    std::unique_ptr<ZarrV3Codec> Clone() const override;
+
+    bool Encode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+    bool Decode(const ZarrByteVectorQuickResize &abySrc,
+                ZarrByteVectorQuickResize &abyDst) const override;
+};
+
+/************************************************************************/
+/*                         ZarrV3CodecVLenUTF8                          */
+/************************************************************************/
+
+/** Implements the vlen-utf8 array-to-bytes codec for variable-length
+ *  UTF-8 strings (zarr-extensions).
+ *
+ *  Binary format (little-endian):
+ *    [u32 item_count] [u32 len_0][bytes_0] [u32 len_1][bytes_1] ...
+ *
+ *  Decode produces a flat buffer of nElements * nativeSize bytes where
+ *  each slot is a null-padded string. Read-only for now.
+ */
+class ZarrV3CodecVLenUTF8 final : public ZarrV3Codec
+{
+  public:
+    static constexpr const char *NAME = "vlen-utf8";
+
+    ZarrV3CodecVLenUTF8();
+
+    IOType GetInputType() const override
+    {
+        return IOType::ARRAY;
+    }
+
+    IOType GetOutputType() const override
+    {
+        return IOType::BYTES;
+    }
+
+    bool InitFromConfiguration(const CPLJSONObject &configuration,
+                               const ZarrArrayMetadata &oInputArrayMetadata,
+                               ZarrArrayMetadata &oOutputArrayMetadata,
+                               bool bEmitWarnings) override;
 
     std::unique_ptr<ZarrV3Codec> Clone() const override;
 
@@ -360,7 +407,7 @@ class ZarrV3CodecTranspose final : public ZarrV3Codec
 };
 
 /************************************************************************/
-/*                           ZarrV3CodecCRC32C                          */
+/*                          ZarrV3CodecCRC32C                           */
 /************************************************************************/
 
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/crc32c/index.html
@@ -397,7 +444,7 @@ class ZarrV3CodecCRC32C final : public ZarrV3Codec
 };
 
 /************************************************************************/
-/*                       ZarrV3CodecShardingIndexed                     */
+/*                      ZarrV3CodecShardingIndexed                      */
 /************************************************************************/
 
 class ZarrV3CodecSequence;
@@ -450,12 +497,23 @@ class ZarrV3CodecShardingIndexed final : public ZarrV3Codec
                        std::vector<size_t> &anStartIdx,
                        std::vector<size_t> &anCount) override;
 
+    /** Batch-read multiple inner chunks from the same shard via two
+     *  ReadMultiRange() passes (index entries, then data), then decode.
+     *  pszFilename is used as a cache key for the shard index; pass nullptr
+     *  to bypass the cache.
+     */
+    bool BatchDecodePartial(
+        VSIVirtualHandle *poFile, const char *pszFilename,
+        const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+            &anRequests,
+        std::vector<ZarrByteVectorQuickResize> &aResults);
+
     std::vector<size_t>
     GetInnerMostBlockSize(const std::vector<size_t> &input) const override;
 };
 
 /************************************************************************/
-/*                          ZarrV3CodecSequence                         */
+/*                         ZarrV3CodecSequence                          */
 /************************************************************************/
 
 class ZarrV3CodecSequence
@@ -507,6 +565,17 @@ class ZarrV3CodecSequence
                        ZarrByteVectorQuickResize &abyBuffer,
                        const std::vector<size_t> &anStartIdx,
                        const std::vector<size_t> &anCount);
+
+    /** Batch-read multiple inner chunks via ReadMultiRange().
+     *  Delegates to the sharding codec if present, otherwise falls back
+     *  to sequential DecodePartial() calls.
+     *  pszFilename is forwarded to the sharding codec for index caching.
+     */
+    bool BatchDecodePartial(
+        VSIVirtualHandle *poFile, const char *pszFilename,
+        const std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+            &anRequests,
+        std::vector<ZarrByteVectorQuickResize> &aResults);
 
     std::vector<size_t>
     GetInnerMostBlockSize(const std::vector<size_t> &anOuterBlockSize) const;

@@ -38,7 +38,7 @@
 #endif
 
 /************************************************************************/
-/*          GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm()    */
+/*       GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm()       */
 /************************************************************************/
 
 GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
@@ -52,6 +52,11 @@ GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
 {
     AddProgressArg();
 
+    if (!standaloneStep)
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
+
     auto &referenceDatasetArg = AddArg("reference", 0, _("Reference dataset"),
                                        &m_referenceDataset, GDAL_OF_RASTER)
                                     .SetPositional()
@@ -63,10 +68,6 @@ GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
     {
         AddRasterInputArgs(/* openForMixedRasterVector = */ false,
                            /* hiddenForCLI = */ false);
-    }
-    else
-    {
-        AddRasterHiddenInputDatasetArg();
     }
 
     AddArg("skip-all-optional", 0, _("Skip all optional comparisons"),
@@ -92,7 +93,7 @@ GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*             GDALRasterCompareAlgorithm::BinaryComparison()           */
+/*            GDALRasterCompareAlgorithm::BinaryComparison()            */
 /************************************************************************/
 
 bool GDALRasterCompareAlgorithm::BinaryComparison(
@@ -204,7 +205,7 @@ bool GDALRasterCompareAlgorithm::BinaryComparison(
 }
 
 /************************************************************************/
-/*               GDALRasterCompareAlgorithm::CRSComparison()            */
+/*             GDALRasterCompareAlgorithm::CRSComparison()              */
 /************************************************************************/
 
 void GDALRasterCompareAlgorithm::CRSComparison(
@@ -243,7 +244,7 @@ void GDALRasterCompareAlgorithm::CRSComparison(
 }
 
 /************************************************************************/
-/*          GDALRasterCompareAlgorithm::GeotransformComparison()        */
+/*         GDALRasterCompareAlgorithm::GeotransformComparison()         */
 /************************************************************************/
 
 void GDALRasterCompareAlgorithm::GeoTransformComparison(
@@ -305,7 +306,7 @@ void GDALRasterCompareAlgorithm::GeoTransformComparison(
 #endif
 
 /************************************************************************/
-/*                                 Diff()                               */
+/*                                Diff()                                */
 /************************************************************************/
 
 template <class T> CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW static T Diff(T a, T b)
@@ -513,7 +514,7 @@ static void CompareVectors(size_t nValCount, const T *refValues,
 }
 
 /************************************************************************/
-/*                        DatasetPixelComparison()                      */
+/*                       DatasetPixelComparison()                       */
 /************************************************************************/
 
 template <class T, class Tdiff, bool bIsComplex>
@@ -616,7 +617,7 @@ static void DatasetPixelComparison(std::vector<std::string> &aosReport,
 }
 
 /************************************************************************/
-/*             GDALRasterCompareAlgorithm::DatasetComparison()          */
+/*           GDALRasterCompareAlgorithm::DatasetComparison()            */
 /************************************************************************/
 
 void GDALRasterCompareAlgorithm::DatasetComparison(
@@ -800,7 +801,7 @@ void GDALRasterCompareAlgorithm::DatasetComparison(
 }
 
 /************************************************************************/
-/*                          ComparePixels()                             */
+/*                           ComparePixels()                            */
 /************************************************************************/
 
 template <class T, class Tdiff, bool bIsComplex>
@@ -903,7 +904,7 @@ static void ComparePixels(std::vector<std::string> &aosReport,
 }
 
 /************************************************************************/
-/*                          ComparePixels()                             */
+/*                           ComparePixels()                            */
 /************************************************************************/
 
 static void ComparePixels(std::vector<std::string> &aosReport,
@@ -998,7 +999,7 @@ static void ComparePixels(std::vector<std::string> &aosReport,
 #endif
 
 /************************************************************************/
-/*              GDALRasterCompareAlgorithm::BandComparison()            */
+/*             GDALRasterCompareAlgorithm::BandComparison()             */
 /************************************************************************/
 
 void GDALRasterCompareAlgorithm::BandComparison(
@@ -1274,7 +1275,7 @@ void GDALRasterCompareAlgorithm::MetadataComparison(
 }
 
 /************************************************************************/
-/*                  GDALRasterCompareAlgorithm::RunStep()               */
+/*                GDALRasterCompareAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALRasterCompareAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -1419,7 +1420,7 @@ bool GDALRasterCompareAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*                  ~GDALRasterCompareAlgorithmStandalone()             */
+/*               ~GDALRasterCompareAlgorithmStandalone()                */
 /************************************************************************/
 
 GDALRasterCompareAlgorithmStandalone::~GDALRasterCompareAlgorithmStandalone() =

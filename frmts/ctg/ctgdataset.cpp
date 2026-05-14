@@ -160,7 +160,7 @@ CTGRasterBand::CTGRasterBand(CTGDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                          ~CTGRasterBand()                            */
+/*                           ~CTGRasterBand()                           */
 /************************************************************************/
 
 CTGRasterBand::~CTGRasterBand()
@@ -229,7 +229,7 @@ char **CTGRasterBand::GetCategoryNames()
 }
 
 /************************************************************************/
-/*                            ~CTGDataset()                            */
+/*                            ~CTGDataset()                             */
 /************************************************************************/
 
 CTGDataset::CTGDataset()
@@ -240,7 +240,7 @@ CTGDataset::CTGDataset()
 }
 
 /************************************************************************/
-/*                            ~CTGDataset()                            */
+/*                            ~CTGDataset()                             */
 /************************************************************************/
 
 CTGDataset::~CTGDataset()
@@ -252,7 +252,7 @@ CTGDataset::~CTGDataset()
 }
 
 /************************************************************************/
-/*                              ExtractField()                          */
+/*                            ExtractField()                            */
 /************************************************************************/
 
 const char *CTGDataset::ExtractField(char *szField, const char *pszBuffer,
@@ -332,7 +332,7 @@ int CTGDataset::ReadImagery()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int CTGDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -528,18 +528,18 @@ GDALDataset *CTGDataset::Open(GDALOpenInfo *poOpenInfo)
 CPLErr CTGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    gt[0] = static_cast<double>(nNWEasting) - nCellSize / 2;
-    gt[1] = nCellSize;
-    gt[2] = 0;
-    gt[3] = static_cast<double>(nNWNorthing) + nCellSize / 2;
-    gt[4] = 0.;
-    gt[5] = -nCellSize;
+    gt.xorig = static_cast<double>(nNWEasting) - nCellSize / 2;
+    gt.xscale = nCellSize;
+    gt.xrot = 0;
+    gt.yorig = static_cast<double>(nNWNorthing) + nCellSize / 2;
+    gt.yrot = 0.;
+    gt.yscale = -nCellSize;
 
     return CE_None;
 }
 
 /************************************************************************/
-/*                         GDALRegister_CTG()                           */
+/*                          GDALRegister_CTG()                          */
 /************************************************************************/
 
 void GDALRegister_CTG()

@@ -286,7 +286,7 @@ int GDALDitherRGB2PCTInternal(
         for (iColor = 0; iColor < 8 - nColorsMod8 && iDest < 256;
              iColor++, iDest++)
         {
-            anPCT[iDest] = anPCT[nColors - 1];
+            anPCT[iDest] = nDstNoData > 0 ? anPCT[0] : anPCT[nColors - 1];
         }
     }
 #endif

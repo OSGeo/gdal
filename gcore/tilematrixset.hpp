@@ -121,7 +121,8 @@ class CPL_DLL TileMatrixSet
 
     /** Return hardcoded tile matrix set names (such as GoogleMapsCompatible),
      * as well as XXX for each tms_XXXX.json in GDAL data directory */
-    static std::vector<std::string> listPredefinedTileMatrixSets();
+    static std::vector<std::string>
+    listPredefinedTileMatrixSets(bool includeHidden = false);
 
     bool haveAllLevelsSameTopLeft() const;
 

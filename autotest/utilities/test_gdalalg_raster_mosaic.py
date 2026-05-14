@@ -281,8 +281,8 @@ def test_gdalalg_raster_mosaic_srcnodata_dstnodata():
     alg = get_mosaic_alg()
     alg["input"] = [src1_ds]
     alg["output-format"] = "stream"
-    alg["src-nodata"] = [1]
-    alg["dst-nodata"] = [2]
+    alg["input-nodata"] = [1]
+    alg["output-nodata"] = [2]
     assert alg.Run()
     ds = alg["output"].GetDataset()
     assert ds.GetRasterBand(1).Checksum() == 2

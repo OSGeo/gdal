@@ -17,7 +17,7 @@
 // Implements https://github.com/zarr-developers/zarr-extensions/tree/main/codecs/zstd
 
 /************************************************************************/
-/*                        ZarrV3CodecZstd()                             */
+/*                          ZarrV3CodecZstd()                           */
 /************************************************************************/
 
 ZarrV3CodecZstd::ZarrV3CodecZstd() : ZarrV3CodecAbstractCompressor(NAME)
@@ -25,7 +25,7 @@ ZarrV3CodecZstd::ZarrV3CodecZstd() : ZarrV3CodecAbstractCompressor(NAME)
 }
 
 /************************************************************************/
-/*                           GetConfiguration()                         */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 /* static */ CPLJSONObject ZarrV3CodecZstd::GetConfiguration(int nLevel,
@@ -38,7 +38,7 @@ ZarrV3CodecZstd::ZarrV3CodecZstd() : ZarrV3CodecAbstractCompressor(NAME)
 }
 
 /************************************************************************/
-/*                   ZarrV3CodecZstd::InitFromConfiguration()           */
+/*               ZarrV3CodecZstd::InitFromConfiguration()               */
 /************************************************************************/
 
 bool ZarrV3CodecZstd::InitFromConfiguration(
@@ -122,7 +122,7 @@ bool ZarrV3CodecZstd::InitFromConfiguration(
 }
 
 /************************************************************************/
-/*                      ZarrV3CodecZstd::Clone()                        */
+/*                       ZarrV3CodecZstd::Clone()                       */
 /************************************************************************/
 
 std::unique_ptr<ZarrV3Codec> ZarrV3CodecZstd::Clone() const

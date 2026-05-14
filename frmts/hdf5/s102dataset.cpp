@@ -10,6 +10,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 
@@ -52,7 +56,7 @@ class S102Dataset final : public S100BaseDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -112,7 +116,7 @@ S102RasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
 }
 
 /************************************************************************/
-/*                   S102GeoreferencedMetadataRasterBand                */
+/*                 S102GeoreferencedMetadataRasterBand                  */
 /************************************************************************/
 
 class S102GeoreferencedMetadataRasterBand final : public GDALProxyRasterBand
@@ -584,7 +588,7 @@ GDALDataset *S102Dataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           OpenQuality()                              */
+/*                            OpenQuality()                             */
 /************************************************************************/
 
 bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
@@ -658,7 +662,9 @@ bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
     {
         const auto &oType = poValuesArray->GetDataType();
         if (oType.GetClass() == GEDTC_NUMERIC &&
-            oType.GetNumericDataType() == GDT_UInt32)
+            (oType.GetNumericDataType() == GDT_UInt32 ||
+             // Also accept Int32 as in /vsizip//vsicurl/https://services.data.shom.fr/static/jeux_test/S-102_FR.zip/S100_ROOT/S-102/DATASET_FILES/102FR0014581G013000/102FR0014581G013000.H5
+             oType.GetNumericDataType() == GDT_Int32))
         {
             // ok
         }
@@ -752,7 +758,7 @@ bool S102Dataset::OpenQuality(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                              S102Creator                             */
+/*                             S102Creator                              */
 /************************************************************************/
 
 class S102Creator final : public S100BaseWriter
@@ -791,7 +797,7 @@ class S102Creator final : public S100BaseWriter
 };
 
 /************************************************************************/
-/*                      S102Creator::~S102Creator()                     */
+/*                     S102Creator::~S102Creator()                      */
 /************************************************************************/
 
 S102Creator::~S102Creator()
@@ -800,7 +806,7 @@ S102Creator::~S102Creator()
 }
 
 /************************************************************************/
-/*                         S102Creator::Create()                        */
+/*                        S102Creator::Create()                         */
 /************************************************************************/
 
 // S102 v3.0 Table 10-8 - Elements of featureAttributeTable compound datatype
@@ -1186,7 +1192,7 @@ bool S102Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
 }
 
 /************************************************************************/
-/*            S102Creator::WriteFeatureGroupAttributes()                */
+/*              S102Creator::WriteFeatureGroupAttributes()              */
 /************************************************************************/
 
 bool S102Creator::WriteFeatureGroupAttributes(bool isQuality)
@@ -1233,7 +1239,7 @@ bool S102Creator::WriteFeatureGroupAttributes(bool isQuality)
 }
 
 /************************************************************************/
-/*               S102Creator::WriteFeatureAttributeTable()              */
+/*              S102Creator::WriteFeatureAttributeTable()               */
 /************************************************************************/
 
 bool S102Creator::WriteFeatureAttributeTable(
@@ -1539,7 +1545,7 @@ bool S102Creator::WriteFeatureAttributeTable(
 }
 
 /************************************************************************/
-/*                      S102Creator::CreateGroupF()                     */
+/*                     S102Creator::CreateGroupF()                      */
 /************************************************************************/
 
 // Per S-102 v3.0 spec
@@ -1580,7 +1586,7 @@ bool S102Creator::CreateGroupF(bool hasQualityOfBathymetryCoverage)
 }
 
 /************************************************************************/
-/*                       S102Creator::CopyValues()                      */
+/*                      S102Creator::CopyValues()                       */
 /************************************************************************/
 
 bool S102Creator::CopyValues(GDALProgressFunc pfnProgress, void *pProgressData)
@@ -1651,7 +1657,7 @@ bool S102Creator::CopyValues(GDALProgressFunc pfnProgress, void *pProgressData)
     const int nXBlocks = static_cast<int>(DIV_ROUND_UP(nXSize, nBlockXSize));
     std::vector<float> afValues(static_cast<size_t>(nBlockYSize) * nBlockXSize *
                                 nComponents);
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     float fMinDepth = std::numeric_limits<float>::infinity();
     float fMaxDepth = -std::numeric_limits<float>::infinity();
@@ -1705,7 +1711,8 @@ bool S102Creator::CopyValues(GDALProgressFunc pfnProgress, void *pProgressData)
 
             if (bRet)
             {
-                for (int i = 0; i < nReqCountY * nReqCountX; i++)
+                for (size_t i = 0;
+                     i < static_cast<size_t>(nReqCountY) * nReqCountX; i++)
                 {
                     {
                         float fVal = afValues[i * nComponents];
@@ -1793,7 +1800,7 @@ bool S102Creator::CopyValues(GDALProgressFunc pfnProgress, void *pProgressData)
 }
 
 /************************************************************************/
-/*                    S102Creator::CopyQualityValues()                  */
+/*                   S102Creator::CopyQualityValues()                   */
 /************************************************************************/
 
 bool S102Creator::CopyQualityValues(GDALDataset *poQualityDS,
@@ -1854,7 +1861,7 @@ bool S102Creator::CopyQualityValues(GDALDataset *poQualityDS,
     const int nXBlocks = static_cast<int>(DIV_ROUND_UP(nXSize, nBlockXSize));
     std::vector<uint32_t> anValues(static_cast<size_t>(nBlockYSize) *
                                    nBlockXSize);
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     int bHasSrcNoData = FALSE;
     const double dfSrcNoData =
@@ -1936,7 +1943,7 @@ bool S102Creator::CopyQualityValues(GDALDataset *poQualityDS,
 /* static */
 GDALDataset *S102Dataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /* bStrict*/,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

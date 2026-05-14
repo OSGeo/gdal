@@ -13,7 +13,7 @@ Vector drivers
 
     The following drivers have been removed in GDAL 3.5: AeronavFAA, BNA, HTF, OpenAir, REC, SEGUKOOA, SEGY, SUA, XPlane
 
-    The following drivers have been removed in GDAL 3.11: Geoconcept Export, OGDI (VPF/VMAP support), SDTS, SVG, Tiger, UK. NTF
+    The following drivers have been removed in GDAL 3.11: Geoconcept Export, OGDI (VPF/VMAP support), SDTS, SVG
 
 .. toctree::
    :maxdepth: 1
@@ -73,6 +73,7 @@ Vector drivers
    nas
    netcdf
    ngw
+   ntf
    oapif
    oci
    odbc
@@ -88,11 +89,13 @@ Vector drivers
    plscenes
    pmtiles
    s57
+   s101
    selafin
    shapefile
    sosi
    sqlite
    sxf
+   tiger
    tiledb
    topojson
    vdv

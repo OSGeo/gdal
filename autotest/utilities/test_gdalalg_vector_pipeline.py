@@ -13,6 +13,7 @@
 
 import json
 
+import gdaltest
 import ogrtest
 import pytest
 
@@ -181,7 +182,7 @@ def test_gdalalg_vector_pipeline_input_through_api_run_twice(tmp_vsimem):
     pipeline["pipeline"] = f"read ! write {out_filename}"
     assert pipeline.Run()
     with pytest.raises(
-        Exception, match=r"pipeline: Step nr 0 \(read\) has already an output dataset"
+        Exception, match="can be called only once per algorithm instance"
     ):
         pipeline.Run()
 
@@ -711,7 +712,7 @@ def test_gdalalg_vector_pipeline_reproject_no_arg(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="reproject: Required argument 'dst-crs' has not been specified",
+        match="reproject: Required argument 'output-crs' has not been specified",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -733,7 +734,7 @@ def test_gdalalg_vector_pipeline_reproject_invalid_src_crs(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="reproject: Invalid value for 'src-crs' argument",
+        match="reproject: Invalid value for 'input-crs' argument",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -741,8 +742,8 @@ def test_gdalalg_vector_pipeline_reproject_invalid_src_crs(tmp_vsimem):
                 "../ogr/data/poly.shp",
                 "!",
                 "reproject",
-                "--src-crs=invalid",
-                "--dst-crs=EPSG:4326",
+                "--input-crs=invalid",
+                "--output-crs=EPSG:4326",
                 "!",
                 "write",
                 out_filename,
@@ -757,7 +758,7 @@ def test_gdalalg_vector_pipeline_reproject_invalid_dst_crs(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="reproject: Invalid value for 'dst-crs' argument",
+        match="reproject: Invalid value for 'output-crs' argument",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -765,7 +766,7 @@ def test_gdalalg_vector_pipeline_reproject_invalid_dst_crs(tmp_vsimem):
                 "../ogr/data/poly.shp",
                 "!",
                 "reproject",
-                "--dst-crs=invalid",
+                "--output-crs=invalid",
                 "!",
                 "write",
                 out_filename,
@@ -781,9 +782,9 @@ def test_gdalalg_vector_pipeline_reproject_missing_layer_crs(tmp_vsimem):
     mem_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
     mem_ds.CreateLayer("layer")
     pipeline["input"] = mem_ds
-    pipeline[
-        "pipeline"
-    ] = f"read ! reproject --dst-crs=EPSG:4326 ! write {out_filename}"
+    pipeline["pipeline"] = (
+        f"read ! reproject --dst-crs=EPSG:4326 ! write {out_filename}"
+    )
     with pytest.raises(
         Exception, match="reproject: Layer 'layer' has no spatial reference system"
     ):
@@ -810,7 +811,7 @@ def test_gdalalg_vector_pipeline_reproject_nominal(tmp_vsimem):
     )
 
     with gdal.OpenEx(out_filename) as ds:
-        assert ds.GetLayer(0).GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert ds.GetLayer(0).GetSpatialRef().GetAuthorityCode() == "4326"
         assert ds.GetLayer(0).GetFeatureCount() == 10
 
 
@@ -836,7 +837,7 @@ def test_gdalalg_vector_pipeline_reproject_with_src_crs(tmp_vsimem):
 
     with gdal.OpenEx(out_filename) as ds:
         lyr = ds.GetLayer(0)
-        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
         f = lyr.GetNextFeature()
         assert f.GetGeometryRef().GetEnvelope() == pytest.approx(
             (2.750130423614134, 2.759262932833617, 43.0361359661472, 43.0429263707128)
@@ -897,6 +898,48 @@ def test_gdalalg_vector_pipeline_set_type():
     assert out_lyr.GetGeomType() == ogr.wkbPoint25D
     out_f = out_lyr.GetNextFeature()
     ogrtest.check_feature_geometry(out_f, "POINT Z (3 0 0)")
+
+
+def test_gdalalg_vector_pipeline_propagate_metadata():
+
+    src_ds = gdal.GetDriverByName("MEM").CreateVector("")
+    src_ds.SetMetadataItem("key", "value", "domain")
+    with gdal.alg.vector.pipeline(pipeline="read ! limit 1", input=src_ds) as alg:
+        ds = alg.Output()
+        assert ds.GetMetadata_Dict("domain") == {"key": "value"}
+        assert ds.GetMetadataItem("key", "domain") == "value"
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_pipeline_propagate_field_domain():
+
+    src_ds = ogr.Open("../ogr/data/gpkg/domains.gpkg")
+
+    with gdal.alg.vector.pipeline(
+        pipeline="read ../ogr/data/gpkg/domains.gpkg ! edit"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetFieldDomainNames() == src_ds.GetFieldDomainNames()
+        assert ds.GetFieldDomain(ds.GetFieldDomainNames()[0]) is not None
+
+    with gdal.alg.vector.pipeline(
+        pipeline="read ../ogr/data/gpkg/domains.gpkg --layer test ! edit"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetFieldDomainNames() == src_ds.GetFieldDomainNames()
+        assert ds.GetFieldDomain(ds.GetFieldDomainNames()[0]) is not None
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_pipeline_propagate_relationship():
+
+    src_ds = ogr.Open("../ogr/data/gpkg/relation_mapping_table.gpkg")
+    with gdal.alg.vector.pipeline(
+        pipeline="read ../ogr/data/gpkg/relation_mapping_table.gpkg ! edit"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetRelationshipNames() == src_ds.GetRelationshipNames()
+        assert ds.GetRelationship(ds.GetRelationshipNames()[0]) is not None
 
 
 def test_gdalalg_vector_pipeline_help():
@@ -999,3 +1042,111 @@ def test_gdalalg_vector_pipeline_read_limit(tmp_vsimem):
     with gdal.OpenEx(dst_filename) as ds:
         assert ds.GetLayer(0).GetFeatureCount() == 3
         assert ds.GetLayer(1).GetFeatureCount() == 3
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_pipeline_no_create_empty_layers(tmp_vsimem):
+
+    src_filename = tmp_vsimem / "src.gpkg"
+    dst_filename = tmp_vsimem / "dst.gpkg"
+
+    with gdal.GetDriverByName("GPKG").CreateVector(src_filename) as src_ds:
+        with gdal.OpenEx("../ogr/data/poly.shp") as poly_ds:
+            src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_1")
+            src_ds.CopyLayer(poly_ds.GetLayer(0), "poly_2")
+
+    pipeline = get_pipeline_alg()
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            src_filename,
+            "!",
+            "filter",
+            "--active-layer",
+            "poly_1",
+            "--where",
+            "EAS_ID=1234567",
+            "!",
+            "write",
+            dst_filename,
+            "--no-create-empty-layers",
+        ]
+    )
+
+    with gdal.OpenEx(dst_filename) as ds:
+        assert ds.GetLayerCount() == 1
+        assert ds.GetLayer(0).GetName() == "poly_2"
+        assert ds.GetLayer(0).GetFeatureCount() == 10
+
+
+# Test scenario of https://github.com/OSGeo/gdal/issues/14388
+def test_gdalalg_vector_pipeline_decorated_ds_take_ref(tmp_vsimem):
+
+    gdal.alg.vector.pipeline(
+        pipeline=f'read ../ogr/data/poly.shp ! rename-layer --output-layer layer ! sql --sql "SELECT * FROM layer LIMIT 1" ! write {tmp_vsimem}/out.shp'
+    )
+
+    ds = ogr.Open(f"{tmp_vsimem}/out.shp")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+
+
+def test_gdalalg_vector_pipeline_read_ds_take_ref(tmp_vsimem):
+
+    gdal.alg.vector.pipeline(
+        pipeline=f'read ../ogr/data/poly.shp --layer poly ! sql --sql "select * from poly" ! write {tmp_vsimem}/out.shp'
+    )
+
+    ds = ogr.Open(f"{tmp_vsimem}/out.shp")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 10
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_pipeline_read_execute_sql(tmp_vsimem):
+
+    tmp_filename = tmp_vsimem / "tmp.gpkg"
+    gdal.alg.vector.convert(input="../ogr/data/poly.shp", output=tmp_filename)
+
+    gdal.alg.vector.pipeline(
+        pipeline=f'read {tmp_filename} --layer poly ! sql --sql "select * from poly group by eas_id" ! write {tmp_vsimem}/out.shp'
+    )
+
+    ds = ogr.Open(f"{tmp_vsimem}/out.shp")
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 10
+
+
+@pytest.mark.parametrize("srid", ("", "SRID=4326;"))
+@gdaltest.enable_exceptions()
+def test_gdalalg_vector_pipeline_read_wkt(tmp_vsimem, srid):
+
+    gdal.alg.vector.pipeline(
+        f'read "{srid}LINESTRING (3 3, 4 4)" ! write {tmp_vsimem}/out.shp'
+    )
+
+    ds = gdal.OpenEx(tmp_vsimem / "out.shp")
+    assert ds.GetLayerCount() == 1
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetGeomType() == ogr.wkbLineString
+    assert lyr.GetFeatureCount() == 1
+
+    if srid:
+        assert lyr.GetSpatialRef().GetAttrValue("AUTHORITY", 1) == srid.replace(
+            "SRID=", ""
+        ).strip(";")
+    else:
+        assert lyr.GetSpatialRef() is None
+
+    assert lyr.GetNextFeature().GetGeometryRef().ExportToWkt() == "LINESTRING (3 3,4 4)"
+
+
+@pytest.mark.parametrize(
+    "wkt",
+    ("SRID=4326LINESTRING (3 3, 4 4)", "SRID=;LINESTRING (3 3, 4 4)", "POINT (3 3"),
+)
+def test_gdalalg_vector_pipeline_read_wkt_invalid(tmp_vsimem, wkt):
+
+    with pytest.raises(Exception, match="No such file or directory"):
+        gdal.alg.vector.pipeline(f'read "{wkt}" ! write {tmp_vsimem}/out.shp')

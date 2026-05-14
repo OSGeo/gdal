@@ -41,7 +41,7 @@ class GNMDatabaseNetwork final : public GNMGenericNetwork
     CPLErr Open(GDALOpenInfo *poOpenInfo) override;
     OGRErr DeleteLayer(int) override;
     virtual CPLErr Create(const char *pszFilename,
-                          char **papszOptions) override;
+                          CSLConstList papszOptions) override;
 
   protected:
     OGRLayer *ICreateLayer(const char *pszName,
@@ -49,7 +49,7 @@ class GNMDatabaseNetwork final : public GNMGenericNetwork
                            CSLConstList papszOptions) override;
 
     virtual int CheckNetworkExist(const char *pszFilename,
-                                  char **papszOptions) override;
+                                  CSLConstList papszOptions) override;
 
   protected:
     CPLErr DeleteMetadataLayer() override;
@@ -60,7 +60,7 @@ class GNMDatabaseNetwork final : public GNMGenericNetwork
     bool CheckStorageDriverSupport(const char *pszDriverName) override;
 
   protected:
-    CPLErr FormName(const char *pszFilename, char **papszOptions);
+    CPLErr FormName(const char *pszFilename, CSLConstList papszOptions);
     CPLErr DeleteLayerByName(const char *pszLayerName);
 
   protected:

@@ -86,10 +86,6 @@ class GDALFileFeatureStore : public GDALFeatureStore
 
     ~GDALFileFeatureStore() override
     {
-        if (m_defn != nullptr)
-        {
-            const_cast<OGRFeatureDefn *>(m_defn)->Release();
-        }
         if (m_file != nullptr)
         {
             VSIFCloseL(m_file);
@@ -112,7 +108,7 @@ class GDALFileFeatureStore : public GDALFeatureStore
             return nullptr;
         }
 
-        auto poFeature = std::make_unique<OGRFeature>(m_defn);
+        auto poFeature = std::make_unique<OGRFeature>(m_defn.get());
         if (!poFeature->DeserializeFromBinary(m_buf.data(), m_buf.size()))
         {
             return nullptr;
@@ -135,8 +131,7 @@ class GDALFileFeatureStore : public GDALFeatureStore
 
         if (m_defn == nullptr)
         {
-            m_defn = f->GetDefnRef();
-            const_cast<OGRFeatureDefn *>(m_defn)->Reference();
+            m_defn.reset(const_cast<OGRFeatureDefn *>(f->GetDefnRef()));
         }
 
         if (!f->SerializeToBinary(m_buf))
@@ -172,7 +167,7 @@ class GDALFileFeatureStore : public GDALFeatureStore
     };
 
     std::string m_fileName{};
-    const OGRFeatureDefn *m_defn{nullptr};
+    OGRFeatureDefnRefCountedPtr m_defn{};
     vsi_l_offset m_fileSize{0};
     VSILFILE *m_file{nullptr};
     std::vector<Loc> m_locs{};
@@ -231,7 +226,7 @@ class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
         if (EQUAL(pszCap, OLCFastFeatureCount) ||
             EQUAL(pszCap, OLCFastGetExtent) ||
             EQUAL(pszCap, OLCFastGetExtent3D) ||
-            EQUAL(pszCap, OLCStringsAsUTF8) || EQUAL(pszCap, OLCIgnoreFields) ||
+            EQUAL(pszCap, OLCStringsAsUTF8) ||
             EQUAL(pszCap, OLCCurveGeometries) ||
             EQUAL(pszCap, OLCMeasuredGeometries) ||
             EQUAL(pszCap, OLCZGeometries))
@@ -250,6 +245,18 @@ class GDALVectorSortedLayer : public GDALVectorNonStreamingAlgorithmLayer
         }
 
         return OGRLayer::GetFeatureCount(bForce);
+    }
+
+    OGRErr IGetExtent(int iGeomField, OGREnvelope *psExtent,
+                      bool bForce) override
+    {
+        return m_srcLayer.GetExtent(iGeomField, psExtent, bForce);
+    }
+
+    OGRErr IGetExtent3D(int iGeomField, OGREnvelope3D *psExtent3D,
+                        bool bForce) override
+    {
+        return m_srcLayer.GetExtent3D(iGeomField, psExtent3D, bForce);
     }
 
     std::unique_ptr<OGRFeature> GetNextProcessedFeature() override
@@ -552,7 +559,8 @@ class GDALVectorSTRTreeSortLayer : public GDALVectorSortedLayer
 bool GDALVectorSortAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 {
     auto poSrcDS = m_inputDataset[0].GetDatasetRef();
-    auto poDstDS = std::make_unique<GDALVectorNonStreamingAlgorithmDataset>();
+    auto poDstDS =
+        std::make_unique<GDALVectorNonStreamingAlgorithmDataset>(*poSrcDS);
 
     GDALVectorAlgorithmLayerProgressHelper progressHelper(ctxt);
 

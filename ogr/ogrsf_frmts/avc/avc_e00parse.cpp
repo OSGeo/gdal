@@ -78,6 +78,8 @@
 
 #include "avc.h"
 
+#include <algorithm>
+#include <cmath>
 #include <ctype.h> /* toupper() */
 
 /**********************************************************************
@@ -1364,8 +1366,8 @@ AVCTxt *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
              *--------------------------------------------------------*/
             psTxt->pszText = (GByte *)CPLRealloc(
                 psTxt->pszText, (psTxt->numChars + 1) * sizeof(GByte));
-            numVertices =
-                ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
+            numVertices = std::abs(psTxt->numVerticesLine) +
+                          std::abs(psTxt->numVerticesArrow);
             if (numVertices > 0)
                 psTxt->pasVertices = (AVCVertex *)CPLRealloc(
                     psTxt->pasVertices, numVertices * sizeof(AVCVertex));
@@ -1438,14 +1440,14 @@ AVCTxt *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
             }
             else if (iCurCoord >= 8 && iCurCoord < 11 &&
                      (iVertex = (iCurCoord - 8) % 3) <
-                         ABS(psTxt->numVerticesArrow))
+                         std::abs(psTxt->numVerticesArrow))
             {
                 psTxt->pasVertices[iVertex + psTxt->numVerticesLine].x =
                     CPLAtof(pszLine + i * nItemSize);
             }
             else if (iCurCoord >= 11 && iCurCoord < 14 &&
                      (iVertex = (iCurCoord - 8) % 3) <
-                         ABS(psTxt->numVerticesArrow))
+                         std::abs(psTxt->numVerticesArrow))
             {
                 psTxt->pasVertices[iVertex + psTxt->numVerticesLine].y =
                     CPLAtof(pszLine + i * nItemSize);
@@ -1483,12 +1485,12 @@ AVCTxt *AVCE00ParseNextTxtLine(AVCE00ParseInfo *psInfo, const char *pszLine)
         if (iLine == numLines - 1)
         {
             memcpy((char *)psTxt->pszText + (iLine * 80), pszLine,
-                   MIN((int)nLen, (psTxt->numChars - (iLine * 80))));
+                   std::min((int)nLen, (psTxt->numChars - (iLine * 80))));
         }
         else
         {
             memcpy((char *)psTxt->pszText + (iLine * 80), pszLine,
-                   MIN(nLen, 80));
+                   std::min<size_t>(nLen, 80));
         }
 
         psInfo->iCurItem++;
@@ -1602,8 +1604,8 @@ AVCTxt *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
             psTxt->pszText = (GByte *)CPLRealloc(
                 psTxt->pszText, (psTxt->numChars + 1) * sizeof(GByte));
 
-            numVertices =
-                ABS(psTxt->numVerticesLine) + ABS(psTxt->numVerticesArrow);
+            numVertices = std::abs(psTxt->numVerticesLine) +
+                          std::abs(psTxt->numVerticesArrow);
             if (numVertices > 0)
                 psTxt->pasVertices = (AVCVertex *)CPLRealloc(
                     psTxt->pasVertices, numVertices * sizeof(AVCVertex));
@@ -1692,8 +1694,8 @@ AVCTxt *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         psInfo->iCurItem++;
     }
     else if (psInfo->iCurItem >= 8 &&
-             psInfo->iCurItem < (8 + ABS(psTxt->numVerticesLine) +
-                                 ABS(psTxt->numVerticesArrow)) &&
+             psInfo->iCurItem < (8 + std::abs(psTxt->numVerticesLine) +
+                                 std::abs(psTxt->numVerticesArrow)) &&
              nLen >= 28)
     {
         /*-------------------------------------------------------------
@@ -1708,8 +1710,8 @@ AVCTxt *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         psInfo->iCurItem++;
     }
-    else if (psInfo->iCurItem >= (8 + ABS(psTxt->numVerticesLine) +
-                                  ABS(psTxt->numVerticesArrow)) &&
+    else if (psInfo->iCurItem >= (8 + std::abs(psTxt->numVerticesLine) +
+                                  std::abs(psTxt->numVerticesArrow)) &&
              psInfo->iCurItem < psInfo->numItems &&
              (psTxt->numChars - 1) / 80 + 1 -
                      (psInfo->numItems - psInfo->iCurItem) >=
@@ -1727,12 +1729,12 @@ AVCTxt *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         if (iLine == numLines - 1)
         {
             memcpy((char *)psTxt->pszText + (iLine * 80), pszLine,
-                   MIN((int)nLen, (psTxt->numChars - (iLine * 80))));
+                   std::min((int)nLen, (psTxt->numChars - (iLine * 80))));
         }
         else
         {
             memcpy((char *)psTxt->pszText + (iLine * 80), pszLine,
-                   MIN(nLen, 80));
+                   std::min<size_t>(nLen, 80));
         }
 
         psInfo->iCurItem++;
@@ -2253,8 +2255,8 @@ AVCField *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
         int nSrcLen, nLenToCopy;
 
         nSrcLen = (int)strlen(pszLine);
-        nLenToCopy =
-            MIN(80, MIN(nSrcLen, (psInfo->numItems - psInfo->iCurItem)));
+        nLenToCopy = std::min(
+            80, std::min(nSrcLen, (psInfo->numItems - psInfo->iCurItem)));
         strncpy(psInfo->pszBuf + psInfo->iCurItem, pszLine, nLenToCopy);
 
         psInfo->iCurItem += 80;

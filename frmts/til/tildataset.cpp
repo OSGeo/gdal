@@ -144,7 +144,7 @@ TILDataset::~TILDataset()
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int TILDataset::CloseDependentDatasets()
@@ -314,12 +314,12 @@ GDALDataset *TILDataset::Open(GDALOpenInfo *poOpenInfo)
         // https://www.digitalglobe.com/sites/default/files/ISD_External.pdf,
         // ulx=originX and is "Easting of the center of the upper left pixel of
         // the image."
-        gt[0] = CPLAtof(CSLFetchNameValueDef(
-                    papszIMD, "MAP_PROJECTED_PRODUCT.ULX", "0")) -
-                gt[1] / 2;
-        gt[3] = CPLAtof(CSLFetchNameValueDef(
-                    papszIMD, "MAP_PROJECTED_PRODUCT.ULY", "0")) -
-                gt[5] / 2;
+        gt.xorig = CPLAtof(CSLFetchNameValueDef(
+                       papszIMD, "MAP_PROJECTED_PRODUCT.ULX", "0")) -
+                   gt.xscale / 2;
+        gt.yorig = CPLAtof(CSLFetchNameValueDef(
+                       papszIMD, "MAP_PROJECTED_PRODUCT.ULY", "0")) -
+                   gt.yscale / 2;
         poDS->SetGeoTransform(gt);
     }
 

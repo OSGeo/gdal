@@ -75,7 +75,6 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   WMTS -raster- (rwv): OGC Web Map Tile Service
   SENTINEL2 -raster- (rovs): Sentinel 2
   MRF -raster- (rw+v): Meta Raster Format (*.mrf)
-  TileDB -raster,multidimensional raster,vector- (rw+uvs): TileDB
   PNM -raster- (rw+v): Portable Pixmap Format (netpbm) (*.pgm, *.ppm, *.pnm)
   DOQ1 -raster- (rov): USGS DOQ (Old Style)
   DOQ2 -raster- (rov): USGS DOQ (New Style)
@@ -134,12 +133,15 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   GDALG -raster,vector- (rov): GDAL Streamed Algorithm driver (*.gdalg.json)
   E57 -raster- (rovs): ASTM E57 3D file format (image part) (*.e57)
   NSIDCbin -raster- (rov): NSIDC Sea Ice Concentrations binary (.bin) (*.bin)
+  CPHD -multidimensional raster- (ro): Compensated Phase History Data Reader
+  TileDB -raster,multidimensional raster,vector- (rw+uvs): TileDB
   GPKG -raster,vector- (rw+uvs): GeoPackage (*.gpkg, *.gpkg.zip)
   OpenFileGDB -raster,vector- (rw+uv): ESRI FileGeodatabase (using OpenFileGDB) (*.gdb)
   CAD -raster,vector- (rovs): AutoCAD Driver (*.dwg)
   PLSCENES -raster,vector- (ro): Planet Labs Scenes API
   NGW -raster,vector- (rw+s): NextGIS Web
-  MiraMonRaster -raster- (rovs): MiraMon Raster Images (*.rel, *.img)
+  PMTiles -raster,vector- (rw+v): ProtoMap Tiles (*.pmtiles)
+  MiraMonRaster -raster- (rwvs): MiraMon Raster Images (*.rel, *.img)
   PAux -raster- (rov): PCI .aux Labelled
   GenBin -raster- (rov): Generic Binary (.hdr Labelled)
   ENVI -raster- (rw+uv): ENVI .hdr Labelled

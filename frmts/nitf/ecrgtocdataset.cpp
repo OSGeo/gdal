@@ -241,7 +241,7 @@ static int GetScaleFromString(const char *pszScale)
 }
 
 /************************************************************************/
-/*                            GetFromBase34()                           */
+/*                           GetFromBase34()                            */
 /************************************************************************/
 
 static GIntBig GetFromBase34(const char *pszVal, int nMaxSize)
@@ -394,7 +394,7 @@ static void GetExtent(const char *pszFrameName, int nScale, int nZone,
 }
 
 /************************************************************************/
-/*                          ECRGTOCSource                               */
+/*                            ECRGTOCSource                             */
 /************************************************************************/
 
 class ECRGTOCSource final : public VRTSimpleSource
@@ -424,7 +424,7 @@ class ECRGTOCSource final : public VRTSimpleSource
 };
 
 /************************************************************************/
-/*                       ValidateOpenedBand()                           */
+/*                         ValidateOpenedBand()                         */
 /************************************************************************/
 
 #define WARN_CHECK_DS(x)                                                       \
@@ -447,11 +447,11 @@ bool ECRGTOCSource::ValidateOpenedBand(GDALRasterBand *poBand) const
 
     GDALGeoTransform l_gt;
     poSourceDS->GetGeoTransform(l_gt);
-    WARN_CHECK_DS(fabs(l_gt[0] - m_dfMinX) < 1e-10);
-    WARN_CHECK_DS(fabs(l_gt[3] - m_dfMaxY) < 1e-10);
-    WARN_CHECK_DS(fabs(l_gt[1] - m_dfPixelXSize) < 1e-10);
-    WARN_CHECK_DS(fabs(l_gt[5] - (-m_dfPixelYSize)) < 1e-10);
-    WARN_CHECK_DS(l_gt[2] == 0 && l_gt[4] == 0);  // No rotation.
+    WARN_CHECK_DS(fabs(l_gt.xorig - m_dfMinX) < 1e-10);
+    WARN_CHECK_DS(fabs(l_gt.yorig - m_dfMaxY) < 1e-10);
+    WARN_CHECK_DS(fabs(l_gt.xscale - m_dfPixelXSize) < 1e-10);
+    WARN_CHECK_DS(fabs(l_gt.yscale - (-m_dfPixelYSize)) < 1e-10);
+    WARN_CHECK_DS(l_gt.xrot == 0 && l_gt.yrot == 0);  // No rotation.
     WARN_CHECK_DS(poSourceDS->GetRasterCount() == 3);
     WARN_CHECK_DS(poSourceDS->GetRasterXSize() == m_nRasterXSize);
     WARN_CHECK_DS(poSourceDS->GetRasterYSize() == m_nRasterYSize);
@@ -503,7 +503,7 @@ static std::string BuildFullName(const char *pszTOCFilename,
 }
 
 /************************************************************************/
-/*                              Build()                                 */
+/*                               Build()                                */
 /************************************************************************/
 
 /* Builds a ECRGTOCSubDataset from the set of files of the toc entry */
@@ -620,7 +620,7 @@ GDALDataset *ECRGTOCSubDataset::Build(
 }
 
 /************************************************************************/
-/*                             Build()                                  */
+/*                               Build()                                */
 /************************************************************************/
 
 GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
@@ -939,12 +939,12 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
         return poRetDS;
     }
 
-    poDS->m_gt[0] = dfGlobalMinX;
-    poDS->m_gt[1] = dfGlobalPixelXSize;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = dfGlobalMaxY;
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -dfGlobalPixelYSize;
+    poDS->m_gt.xorig = dfGlobalMinX;
+    poDS->m_gt.xscale = dfGlobalPixelXSize;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = dfGlobalMaxY;
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -dfGlobalPixelYSize;
 
     poDS->nRasterXSize = static_cast<int>(0.5 + (dfGlobalMaxX - dfGlobalMinX) /
                                                     dfGlobalPixelXSize);
@@ -1050,7 +1050,7 @@ GDALDataset *ECRGTOCDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         GDALRegister_ECRGTOC()                       */
+/*                        GDALRegister_ECRGTOC()                        */
 /************************************************************************/
 
 void GDALRegister_ECRGTOC()

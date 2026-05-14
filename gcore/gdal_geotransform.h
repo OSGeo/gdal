@@ -64,7 +64,7 @@ class CPL_DLL GDALGeoTransform
     /** Default constructor for an identity geotransformation matrix. */
     inline GDALGeoTransform() = default;
 
-    /** Constructor from a array of 6 double */
+    /** Constructor from an array of 6 doubles */
     inline explicit GDALGeoTransform(const double coeffs[6])
     {
         static_assert(sizeof(GDALGeoTransform) == 6 * sizeof(double),
@@ -229,6 +229,23 @@ class CPL_DLL GDALGeoTransform
     {
         return xrot == 0 && yrot == 0;
     }
+
+    /** Initialize a geotransform from a string.
+     *
+     * @param pszGT the string to parse
+     * @param pszSep string separating the elements of the geotransform
+     * @return true if the initialization was successful
+     * @since 3.13
+     */
+    bool Init(const char *pszGT, const char *pszSep = ",");
+
+    /** Return a string containing the six geotransform values
+     * separated by commas.
+     *
+     * @param pszSep characters to place between elements of the geotransform
+     * @since 3.13
+     */
+    std::string ToString(const char *pszSep = ", ") const;
 };
 
 #endif

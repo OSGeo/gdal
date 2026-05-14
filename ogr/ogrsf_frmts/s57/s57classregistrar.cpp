@@ -44,7 +44,7 @@ S57ClassRegistrar::~S57ClassRegistrar()
 }
 
 /************************************************************************/
-/*                        S57ClassContentExplorer()                     */
+/*                      S57ClassContentExplorer()                       */
 /************************************************************************/
 
 S57ClassContentExplorer::S57ClassContentExplorer(
@@ -55,7 +55,7 @@ S57ClassContentExplorer::S57ClassContentExplorer(
 }
 
 /************************************************************************/
-/*                        ~S57ClassContentExplorer()                    */
+/*                      ~S57ClassContentExplorer()                      */
 /************************************************************************/
 
 S57ClassContentExplorer::~S57ClassContentExplorer()
@@ -221,7 +221,7 @@ bool S57ClassRegistrar::LoadInfo(const char *pszDirectory,
                "\"Attribute_B\",\"Attribute_C\",\"Class\",\"Primitives\""))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "s57objectclasses columns don't match expected format!\n");
+                 "s57objectclasses columns don't match expected format!");
         if (fp != nullptr)
             VSIFCloseL(fp);
         return false;
@@ -296,7 +296,7 @@ bool S57ClassRegistrar::LoadInfo(const char *pszDirectory,
             "\"Code\",\"Attribute\",\"Acronym\",\"Attributetype\",\"Class\""))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "s57attributes columns don't match expected format!\n");
+                 "s57attributes columns don't match expected format!");
         if (fp != nullptr)
             VSIFCloseL(fp);
         return false;
@@ -401,7 +401,7 @@ bool S57ClassContentExplorer::SelectClassByIndex(int nNewIndex)
 }
 
 /************************************************************************/
-/*                             SelectClass()                            */
+/*                            SelectClass()                             */
 /************************************************************************/
 
 bool S57ClassContentExplorer::SelectClass(int nOBJL)

@@ -47,7 +47,7 @@ void GMLASConfiguration::Finalize()
 }
 
 /************************************************************************/
-/*                          CPLGetXMLBoolValue()                        */
+/*                         CPLGetXMLBoolValue()                         */
 /************************************************************************/
 
 static bool CPLGetXMLBoolValue(CPLXMLNode *psNode, const char *pszKey,
@@ -110,7 +110,7 @@ static bool IsValidXPath(const CPLString &osXPath)
 }
 
 /************************************************************************/
-/*                    GMLASConfigurationErrorHandler()                  */
+/*                   GMLASConfigurationErrorHandler()                   */
 /************************************************************************/
 
 static void CPL_STDCALL GMLASConfigurationErrorHandler(CPLErr /*eErr*/,
@@ -123,7 +123,7 @@ static void CPL_STDCALL GMLASConfigurationErrorHandler(CPLErr /*eErr*/,
 }
 
 /************************************************************************/
-/*                           ParseNamespaces()                          */
+/*                          ParseNamespaces()                           */
 /************************************************************************/
 
 static void ParseNamespaces(CPLXMLNode *psContainerNode,
@@ -162,7 +162,7 @@ static void ParseNamespaces(CPLXMLNode *psContainerNode,
 }
 
 /************************************************************************/
-/*                           GetDefaultConfFile()                       */
+/*                         GetDefaultConfFile()                         */
 /************************************************************************/
 
 /* static */
@@ -196,7 +196,7 @@ std::string GMLASConfiguration::GetDefaultConfFile(bool &bUnlinkAfterUse)
 }
 
 /************************************************************************/
-/*                                 Load()                               */
+/*                                Load()                                */
 /************************************************************************/
 
 bool GMLASConfiguration::Load(const char *pszFilename)
@@ -503,7 +503,7 @@ bool GMLASConfiguration::Load(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                               LoadFromXML()                          */
+/*                            LoadFromXML()                             */
 /************************************************************************/
 
 bool GMLASXLinkResolutionConf::LoadFromXML(CPLXMLNode *psRoot)

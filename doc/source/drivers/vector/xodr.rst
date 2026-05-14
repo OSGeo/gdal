@@ -77,23 +77,28 @@ The following open options can be specified
 Examples
 --------
 
-- Translate OpenDRIVE road *ReferenceLine* elements (``<planView>``) to :ref:`Shapefile <vector.shapefile>` using :program:`ogr2ogr`. The desired :ref:`layer type <layer types>` which is to be extracted from the dataset is specified as the last parameter of the function call.
+.. example::
+   :title: Translating OpenDRIVE road *ReferenceLine* elements (``<planView>``) to :ref:`Shapefile <vector.shapefile>` using :program:`ogr2ogr`.
+  
+   The desired :ref:`layer type <layer types>` which is to be extracted from the dataset is specified as the last parameter of the function call.
 
-  ::
+   .. code-block:: bash
 
-    ogr2ogr -f "ESRI Shapefile" CulDeSac.shp CulDeSac.xodr ReferenceLine
+     ogr2ogr -f "ESRI Shapefile" CulDeSac.shp CulDeSac.xodr ReferenceLine
 
-- Convert the whole OpenDRIVE dataset with all its different layers into a :ref:`GeoPackage <vector.gpkg>` using:
+.. example::
+   :title: Converting the whole OpenDRIVE dataset with all its different layers into a :ref:`GeoPackage <vector.gpkg>`
 
-  ::
+   .. code-block:: bash
 
-    ogr2ogr -f "GPKG" CulDeSac.gpkg CulDeSac.xodr
+      ogr2ogr -f "GPKG" CulDeSac.gpkg CulDeSac.xodr
 
-- Convert the whole OpenDRIVE dataset with custom parameters :oo:`EPSILON` and :oo:`DISSOLVE_TIN` into a :ref:`GeoPackage <vector.gpkg>`:
+.. example::
+   :title: Converting the whole OpenDRIVE dataset with custom parameters :oo:`EPSILON` and :oo:`DISSOLVE_TIN` into a :ref:`GeoPackage <vector.gpkg>`:
 
-  ::
+   .. code-block:: bash
 
-    ogr2ogr -f "GPKG" CulDeSac.gpkg CulDeSac.xodr -oo EPSILON=0.9 -oo DISSOLVE_TIN=YES
+       ogr2ogr -f "GPKG" CulDeSac.gpkg CulDeSac.xodr -oo EPSILON=0.9 -oo DISSOLVE_TIN=YES
 
 Convenient usage through docker image
 -------------------------------------

@@ -65,9 +65,9 @@ Program-Specific Options
     - ``tms``: from bottom, as in OSGeo Tile Map Service (TMS) Specification.
 
 
-.. option:: --dst-nodata <DSTNODATA>
+.. option:: --output-nodata <NODATA>
 
-    Destination nodata value.
+    Output nodata value.
 
 .. option:: -i, --input <INPUT>
 
@@ -318,6 +318,10 @@ Standard Options
 
         Defaults to PNG.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

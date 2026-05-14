@@ -147,7 +147,8 @@ CPLErr HFARenameReferences(HFAHandle, const char *, const char *);
 
 HFAHandle CPL_DLL HFACreateLL(const char *pszFilename);
 HFAHandle CPL_DLL HFACreate(const char *pszFilename, int nXSize, int nYSize,
-                            int nBands, EPTType eDataType, char **papszOptions);
+                            int nBands, EPTType eDataType,
+                            CSLConstList papszOptions);
 CPLErr CPL_DLL HFAFlush(HFAHandle);
 int CPL_DLL HFACreateOverview(HFAHandle hHFA, int nBand, int nOverviewLevel,
                               const char *pszResampling);

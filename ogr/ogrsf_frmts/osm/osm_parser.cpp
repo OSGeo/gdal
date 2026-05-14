@@ -30,6 +30,7 @@
 #include "cpl_string.h"
 #include "cpl_vsi.h"
 #include "cpl_worker_thread_pool.h"
+#include "gdal_thread_pool.h"
 
 #ifdef HAVE_EXPAT
 #include "ogr_expat.h"
@@ -82,7 +83,7 @@ const char *OSMParsingException::what() const noexcept
 #define THROW_OSM_PARSING_EXCEPTION throw OSMParsingException(__LINE__)
 
 /************************************************************************/
-/*                            INIT_INFO()                               */
+/*                             INIT_INFO()                              */
 /************************************************************************/
 
 static void INIT_INFO(OSMInfo *sInfo)
@@ -96,7 +97,7 @@ static void INIT_INFO(OSMInfo *sInfo)
 }
 
 /************************************************************************/
-/*                            _OSMContext                               */
+/*                             _OSMContext                              */
 /************************************************************************/
 
 typedef struct
@@ -192,7 +193,7 @@ struct _OSMContext
 };
 
 /************************************************************************/
-/*                          ReadBlobHeader()                            */
+/*                           ReadBlobHeader()                           */
 /************************************************************************/
 
 constexpr int BLOBHEADER_IDX_TYPE = 1;
@@ -266,7 +267,7 @@ static bool ReadBlobHeader(const GByte *pabyData, const GByte *pabyDataLimit,
 }
 
 /************************************************************************/
-/*                          ReadHeaderBBox()                            */
+/*                           ReadHeaderBBox()                           */
 /************************************************************************/
 
 constexpr int HEADERBBOX_IDX_LEFT = 1;
@@ -333,7 +334,7 @@ static bool ReadHeaderBBox(const GByte *pabyData, const GByte *pabyDataLimit,
 }
 
 /************************************************************************/
-/*                          ReadOSMHeader()                             */
+/*                           ReadOSMHeader()                            */
 /************************************************************************/
 
 constexpr int OSMHEADER_IDX_BBOX = 1;
@@ -439,7 +440,7 @@ static bool ReadOSMHeader(const GByte *pabyData, const GByte *pabyDataLimit,
 }
 
 /************************************************************************/
-/*                         ReadStringTable()                            */
+/*                          ReadStringTable()                           */
 /************************************************************************/
 
 constexpr int READSTRINGTABLE_IDX_STRING = 1;
@@ -522,7 +523,7 @@ static bool ReadStringTable(const GByte *pabyData, const GByte *pabyDataLimit,
 }
 
 /************************************************************************/
-/*                     AddWithOverflowAccepted()                        */
+/*                      AddWithOverflowAccepted()                       */
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
@@ -554,7 +555,7 @@ static unsigned AddWithOverflowAccepted(unsigned a, int b)
 }
 
 /************************************************************************/
-/*                         ReadDenseNodes()                             */
+/*                           ReadDenseNodes()                           */
 /************************************************************************/
 
 constexpr int DENSEINFO_IDX_VERSION = 1;
@@ -852,7 +853,7 @@ static bool ReadDenseNodes(const GByte *pabyData, const GByte *pabyDataLimit,
 }
 
 /************************************************************************/
-/*                           ReadOSMInfo()                              */
+/*                            ReadOSMInfo()                             */
 /************************************************************************/
 
 constexpr int INFO_IDX_VERSION = 1;
@@ -921,7 +922,7 @@ static bool ReadOSMInfo(const GByte *pabyData, const GByte *pabyDataLimit,
 }
 
 /************************************************************************/
-/*                             ReadNode()                               */
+/*                              ReadNode()                              */
 /************************************************************************/
 
 /* From
@@ -1042,8 +1043,7 @@ static bool ReadNode(const GByte *pabyData, const GByte *pabyDataLimit,
                 unsigned int nSize = 0;
                 READ_SIZE(pabyData, pabyDataLimit, nSize);
 
-                if (!ReadOSMInfo(pabyData, pabyDataLimit + nSize, &sNode.sInfo,
-                                 psCtxt))
+                if (!ReadOSMInfo(pabyData, pabyDataLimit, &sNode.sInfo, psCtxt))
                     THROW_OSM_PARSING_EXCEPTION;
 
                 pabyData += nSize;
@@ -1448,7 +1448,7 @@ static bool ReadRelation(const GByte *pabyData, const GByte *pabyDataLimit,
 }
 
 /************************************************************************/
-/*                          ReadPrimitiveGroup()                        */
+/*                         ReadPrimitiveGroup()                         */
 /************************************************************************/
 
 constexpr int PRIMITIVEGROUP_IDX_NODES = 1;
@@ -1504,7 +1504,7 @@ static bool ReadPrimitiveGroup(const GByte *pabyData,
 }
 
 /************************************************************************/
-/*                          ReadPrimitiveBlock()                        */
+/*                         ReadPrimitiveBlock()                         */
 /************************************************************************/
 
 constexpr int PRIMITIVEBLOCK_IDX_STRINGTABLE = 1;
@@ -1632,7 +1632,7 @@ static bool ReadPrimitiveBlock(const GByte *pabyData,
 }
 
 /************************************************************************/
-/*                          DecompressFunction()                        */
+/*                         DecompressFunction()                         */
 /************************************************************************/
 
 static void DecompressFunction(void *pDataIn)
@@ -1644,7 +1644,7 @@ static void DecompressFunction(void *pDataIn)
 }
 
 /************************************************************************/
-/*                      RunDecompressionJobs()                          */
+/*                        RunDecompressionJobs()                        */
 /************************************************************************/
 
 static bool RunDecompressionJobs(OSMContext *psCtxt)
@@ -1676,7 +1676,7 @@ static bool RunDecompressionJobs(OSMContext *psCtxt)
 }
 
 /************************************************************************/
-/*                          ProcessSingleBlob()                         */
+/*                         ProcessSingleBlob()                          */
 /************************************************************************/
 
 // cppcheck-suppress constParameterReference
@@ -1699,7 +1699,7 @@ static bool ProcessSingleBlob(OSMContext *psCtxt, DecompressionJob &sJob,
 }
 
 /************************************************************************/
-/*                   RunDecompressionJobsAndProcessAll()                */
+/*                 RunDecompressionJobsAndProcessAll()                  */
 /************************************************************************/
 
 static bool RunDecompressionJobsAndProcessAll(OSMContext *psCtxt,
@@ -2073,7 +2073,7 @@ static void EmptyNotifyWayFunc(OSMWay * /* psWay */, OSMContext * /* psCtxt */,
 }
 
 /************************************************************************/
-/*                       EmptyNotifyRelationFunc()                      */
+/*                      EmptyNotifyRelationFunc()                       */
 /************************************************************************/
 
 static void EmptyNotifyRelationFunc(OSMRelation * /* psRelation */,
@@ -2083,7 +2083,7 @@ static void EmptyNotifyRelationFunc(OSMRelation * /* psRelation */,
 }
 
 /************************************************************************/
-/*                         EmptyNotifyBoundsFunc()                      */
+/*                       EmptyNotifyBoundsFunc()                        */
 /************************************************************************/
 
 static void EmptyNotifyBoundsFunc(double /* dfXMin */, double /* dfYMin */,
@@ -2096,7 +2096,7 @@ static void EmptyNotifyBoundsFunc(double /* dfXMin */, double /* dfYMin */,
 #ifdef HAVE_EXPAT
 
 /************************************************************************/
-/*                          OSM_AddString()                             */
+/*                           OSM_AddString()                            */
 /************************************************************************/
 
 static const char *OSM_AddString(OSMContext *psCtxt, const char *pszStr)
@@ -2115,7 +2115,7 @@ static const char *OSM_AddString(OSMContext *psCtxt, const char *pszStr)
 }
 
 /************************************************************************/
-/*                            OSM_Atoi64()                              */
+/*                             OSM_Atoi64()                             */
 /************************************************************************/
 
 static GIntBig OSM_Atoi64(const char *pszString)
@@ -2773,16 +2773,13 @@ OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
         OSM_Close(psCtxt);
         return nullptr;
     }
-    const char *pszNumThreads =
-        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    int nNumCPUs = CPLGetNumCPUs();
-    if (pszNumThreads && !EQUAL(pszNumThreads, "ALL_CPUS"))
-        nNumCPUs = std::max(0, std::min(2 * nNumCPUs, atoi(pszNumThreads)));
-    if (nNumCPUs > 1)
+    const int nNumThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                              /* bDefaultToAllCPUs = */ true);
+    if (nNumThreads > 1)
     {
         psCtxt->poWTP = new CPLWorkerThreadPool();
         // coverity[tainted_data]
-        if (!psCtxt->poWTP->Setup(nNumCPUs, nullptr, nullptr))
+        if (!psCtxt->poWTP->Setup(nNumThreads, nullptr, nullptr))
         {
             delete psCtxt->poWTP;
             psCtxt->poWTP = nullptr;
@@ -2793,7 +2790,7 @@ OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
 }
 
 /************************************************************************/
-/*                              OSM_Close()                             */
+/*                             OSM_Close()                              */
 /************************************************************************/
 
 void OSM_Close(OSMContext *psCtxt)

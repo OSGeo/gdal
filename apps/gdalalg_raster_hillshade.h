@@ -51,7 +51,7 @@ class GDALRasterHillshadeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*               GDALRasterHillshadeAlgorithmStandalone                 */
+/*                GDALRasterHillshadeAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterHillshadeAlgorithmStandalone final

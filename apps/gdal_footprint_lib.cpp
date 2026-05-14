@@ -42,7 +42,7 @@
 constexpr const char *DEFAULT_LAYER_NAME = "footprint";
 
 /************************************************************************/
-/*                          GDALFootprintOptions                        */
+/*                         GDALFootprintOptions                         */
 /************************************************************************/
 
 struct GDALFootprintOptions
@@ -272,7 +272,7 @@ static std::unique_ptr<GDALArgumentParser> GDALFootprintAppOptionsGetParser(
 }
 
 /************************************************************************/
-/*                       GDALFootprintMaskBand                          */
+/*                        GDALFootprintMaskBand                         */
 /************************************************************************/
 
 class GDALFootprintMaskBand final : public GDALRasterBand
@@ -379,7 +379,7 @@ CPLErr GDALFootprintMaskBand::IRasterIO(
 }
 
 /************************************************************************/
-/*                   GDALFootprintCombinedMaskBand                      */
+/*                    GDALFootprintCombinedMaskBand                     */
 /************************************************************************/
 
 class GDALFootprintCombinedMaskBand final : public GDALRasterBand
@@ -660,16 +660,17 @@ GetOutputLayerAndUpdateDstDS(const char *pszDest, GDALDatasetH &hDstDS,
             }
         }
 
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+        OGRSpatialReferenceRefCountedPtr poSRS;
         if (psOptions->bOutCSGeoref)
         {
             if (!psOptions->oOutputSRS.IsEmpty())
             {
-                poSRS.reset(psOptions->oOutputSRS.Clone());
+                poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(
+                    psOptions->oOutputSRS);
             }
             else if (auto poSrcSRS = poSrcDS->GetSpatialRef())
             {
-                poSRS.reset(poSrcSRS->Clone());
+                poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSrcSRS);
             }
         }
 
@@ -730,8 +731,8 @@ class GeoTransformCoordinateTransformation final
     {
         for (size_t i = 0; i < nCount; ++i)
         {
-            const double X = m_gt[0] + x[i] * m_gt[1] + y[i] * m_gt[2];
-            const double Y = m_gt[3] + x[i] * m_gt[4] + y[i] * m_gt[5];
+            const double X = m_gt.xorig + x[i] * m_gt.xscale + y[i] * m_gt.xrot;
+            const double Y = m_gt.yorig + x[i] * m_gt.yrot + y[i] * m_gt.yscale;
             x[i] = X;
             y[i] = Y;
             if (pabSuccess)
@@ -748,7 +749,7 @@ GeoTransformCoordinateTransformation::GetSourceCS() const
 }
 
 /************************************************************************/
-/*                             CountPoints()                            */
+/*                            CountPoints()                             */
 /************************************************************************/
 
 static size_t CountPoints(const OGRGeometry *poGeom)
@@ -819,7 +820,7 @@ static double GetMinDistanceBetweenTwoPoints(const OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                       GDALFootprintProcess()                         */
+/*                        GDALFootprintProcess()                        */
 /************************************************************************/
 
 static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
@@ -997,10 +998,10 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
         // Transform from overview pixel coordinates to full resolution
         // pixel coordinates
         auto poMaskBand = apoSrcMaskBands[0];
-        gt[1] = double(poSrcDS->GetRasterXSize()) / poMaskBand->GetXSize();
-        gt[2] = 0;
-        gt[4] = 0;
-        gt[5] = double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize();
+        gt.xscale = double(poSrcDS->GetRasterXSize()) / poMaskBand->GetXSize();
+        gt.xrot = 0;
+        gt.yrot = 0;
+        gt.yscale = double(poSrcDS->GetRasterYSize()) / poMaskBand->GetYSize();
         poCT_GT = std::make_unique<GeoTransformCoordinateTransformation>(gt);
     }
 
@@ -1250,7 +1251,7 @@ static bool GDALFootprintProcess(GDALDataset *poSrcDS, OGRLayer *poDstLayer,
 }
 
 /************************************************************************/
-/*                  GDALFootprintAppGetParserUsage()                    */
+/*                   GDALFootprintAppGetParserUsage()                   */
 /************************************************************************/
 
 std::string GDALFootprintAppGetParserUsage()
@@ -1272,7 +1273,7 @@ std::string GDALFootprintAppGetParserUsage()
 }
 
 /************************************************************************/
-/*                             GDALFootprint()                          */
+/*                           GDALFootprint()                            */
 /************************************************************************/
 
 /* clang-format off */
@@ -1381,7 +1382,7 @@ GDALDatasetH GDALFootprint(const char *pszDest, GDALDatasetH hDstDS,
 }
 
 /************************************************************************/
-/*                           GDALFootprintOptionsNew()                  */
+/*                      GDALFootprintOptionsNew()                       */
 /************************************************************************/
 
 /**
@@ -1495,7 +1496,7 @@ GDALFootprintOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                       GDALFootprintOptionsFree()                     */
+/*                      GDALFootprintOptionsFree()                      */
 /************************************************************************/
 
 /**

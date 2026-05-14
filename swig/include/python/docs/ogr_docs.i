@@ -54,6 +54,38 @@ Examples
 'POLYGON ((424788 25211,424788 279799,581555 279799,581555 25211,424788 25211))'
 ";
 
+%feature("docstring")  CreateGeometryFromWkt "
+
+Creates a geometry from a well-known text (WKT) string. A spatial reference
+may optionally be specified.
+
+Since GDAL 3.14, PostGIS-style \"extended\" WKT inputs of the format
+``SRID=<EPSG_CODE>;<WKT>`` are supported. (The axis order of coordinates is
+assumed to follow the ``OAMS_TRADITIONAL_GIS_ORDER`` convention. 
+If a spatial reference argument is also provided, that value will override the SRS specified in the EWKT.
+
+Parameters
+----------
+val : str
+    WKT geometry string
+reference : SpatialReference, optional
+    optional spatial reference to assign to the geometry
+
+Returns
+-------
+Geometry
+
+Examples
+--------
+>>> g = ogr.CreateGeometryFromWkt('POINT (3 5)')
+>>> g.GetSpatialReference()
+>>> g.GetPoint_2D()
+(3.0, 5.0)
+>>> g = ogr.CreateGeometryFromWkt('SRID=4326;POINT (3 5)')
+>>> g.GetSpatialReference().ExportToWkt()
+'GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST],AUTHORITY[\"EPSG\",\"4326\"]]'
+";
+
 %feature("docstring")  CreateGlobFieldDomain "
 
 Creates a new glob field domain.
@@ -203,7 +235,7 @@ Equivalent to calling :py:func:`gdal.OpenEx` with the
 
 Parameters
 ----------
-utf8_path : str
+path : str
     name of the file to open
 
 Returns
@@ -230,7 +262,7 @@ opened in the current thread, return a reference to the already-opened
 
 Parameters
 ----------
-utf8_path : str
+path : str
     name of the file to open
 
 Returns

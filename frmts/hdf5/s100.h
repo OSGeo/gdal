@@ -25,7 +25,7 @@
 #include <array>
 
 /************************************************************************/
-/*                            S100BaseDataset                           */
+/*                           S100BaseDataset                            */
 /************************************************************************/
 
 class S100BaseDataset CPL_NON_FINAL : public GDALPamDataset

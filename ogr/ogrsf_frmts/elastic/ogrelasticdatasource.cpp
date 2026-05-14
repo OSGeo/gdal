@@ -64,7 +64,7 @@ int OGRElasticDataSource::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                             GetIndexList()                           */
+/*                            GetIndexList()                            */
 /************************************************************************/
 
 std::vector<std::string>
@@ -120,7 +120,7 @@ OGRElasticDataSource::GetIndexList(const char *pszQueriedIndexName)
 }
 
 /************************************************************************/
-/*                             GetLayerCount()                          */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int OGRElasticDataSource::GetLayerCount() const
@@ -237,7 +237,7 @@ void OGRElasticDataSource::FetchMapping(const char *pszIndexName)
 }
 
 /************************************************************************/
-/*                            GetLayerByName()                          */
+/*                           GetLayerByName()                           */
 /************************************************************************/
 
 OGRLayer *OGRElasticDataSource::GetLayerByName(const char *pszName)
@@ -395,7 +395,7 @@ OGRErr OGRElasticDataSource::DeleteLayer(int iLayer)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -633,7 +633,7 @@ OGRElasticDataSource::ICreateLayer(const char *pszLayerName,
 }
 
 /************************************************************************/
-/*                               HTTPFetch()                            */
+/*                             HTTPFetch()                              */
 /************************************************************************/
 
 CPLHTTPResult *OGRElasticDataSource::HTTPFetch(const char *pszURL,
@@ -670,7 +670,7 @@ CPLHTTPResult *OGRElasticDataSource::HTTPFetch(const char *pszURL,
 }
 
 /************************************************************************/
-/*                               RunRequest()                           */
+/*                             RunRequest()                             */
 /************************************************************************/
 
 json_object *
@@ -757,7 +757,7 @@ OGRElasticDataSource::RunRequest(const char *pszURL, const char *pszPostContent,
 }
 
 /************************************************************************/
-/*                           CheckVersion()                             */
+/*                            CheckVersion()                            */
 /************************************************************************/
 
 bool OGRElasticDataSource::CheckVersion()
@@ -796,7 +796,7 @@ bool OGRElasticDataSource::CheckVersion()
 }
 
 /************************************************************************/
-/*                           OpenAggregation()                          */
+/*                          OpenAggregation()                           */
 /************************************************************************/
 
 bool OGRElasticDataSource::OpenAggregation(const char *pszAggregation)
@@ -891,7 +891,7 @@ bool OGRElasticDataSource::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             Delete()                                 */
+/*                               Delete()                               */
 /************************************************************************/
 
 void OGRElasticDataSource::Delete(const CPLString &url)
@@ -907,7 +907,7 @@ void OGRElasticDataSource::Delete(const CPLString &url)
 }
 
 /************************************************************************/
-/*                            UploadFile()                              */
+/*                             UploadFile()                             */
 /************************************************************************/
 
 bool OGRElasticDataSource::UploadFile(const CPLString &url,
@@ -963,7 +963,7 @@ bool OGRElasticDataSource::UploadFile(const CPLString &url,
 /************************************************************************/
 
 int OGRElasticDataSource::Create(const char *pszFilename,
-                                 CPL_UNUSED char **papszOptions)
+                                 CPL_UNUSED CSLConstList papszOptions)
 {
     eAccess = GA_Update;
     m_pszName = CPLStrdup(pszFilename);

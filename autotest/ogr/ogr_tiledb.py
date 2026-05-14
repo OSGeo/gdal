@@ -144,7 +144,7 @@ def create_tiledb_dataset(nullable, batch_size, extra_feature=False):
     f["int64field"] = -1234567890123456
     f["doublefield"] = 1.2345
     f["floatfield"] = 1.5
-    f["binaryfield"] = b"\xDE\xAD\xBE\xEF"
+    f["binaryfield"] = b"\xde\xad\xbe\xef"
     f["intlistfield"] = [-123456789, 123]
     f["int16listfield"] = [-32768, 32767]
     f["boollistfield"] = [True, False]
@@ -178,7 +178,7 @@ def create_tiledb_dataset(nullable, batch_size, extra_feature=False):
     f["int64field"] = 1234567890123456
     f["doublefield"] = -1.2345
     f["floatfield"] = -1.5
-    f["binaryfield"] = b"\xBE\xEF\xDE\xAD"
+    f["binaryfield"] = b"\xbe\xef\xde\xad"
     f["intlistfield"] = [123456789, -123]
     f["int16listfield"] = [32767, -32768]
     f["boollistfield"] = [False, True]
@@ -204,7 +204,7 @@ def create_tiledb_dataset(nullable, batch_size, extra_feature=False):
         f["int64field"] = 9876543210123456
         f["doublefield"] = -1.2345
         f["floatfield"] = -1.5
-        f["binaryfield"] = b"\xDE\xAD\xBE\xEF"
+        f["binaryfield"] = b"\xde\xad\xbe\xef"
         f["intlistfield"] = [-123456789, -123]
         f["int16listfield"] = [32767, -32768]
         f["boollistfield"] = [False, True]
@@ -805,7 +805,7 @@ def test_ogr_tiledb_compression():
     lyr = ds.CreateLayer(
         "test", options=["BOUNDS=-1e4,-1e4,1e4,1e4", "COMPRESSION=ZSTD"]
     )
-    for (typ, subtype) in [
+    for typ, subtype in [
         (ogr.OFTInteger, ogr.OFSTNone),
         (ogr.OFTInteger, ogr.OFSTBoolean),
         (ogr.OFTInteger, ogr.OFSTInt16),
@@ -1628,9 +1628,9 @@ def test_ogr_tiledb_tiledb_geometry_type(
     with gdal.config_options(
         {
             "TILEDB_WKB_GEOMETRY_TYPE": TILEDB_WKB_GEOMETRY_TYPE,
-            "OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME": "YES"
-            if OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME
-            else "NO",
+            "OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME": (
+                "YES" if OGR_TILEDB_WRITE_GEOMETRY_ATTRIBUTE_NAME else "NO"
+            ),
         }
     ):
         filename = str(tmp_path / "test.tiledb")
@@ -1648,9 +1648,9 @@ def test_ogr_tiledb_tiledb_geometry_type(
             tiledb_md = json.loads(lyr.GetMetadata_List("json:TILEDB")[0])
             expected = {
                 "name": "wkb_geometry",
-                "type": TILEDB_WKB_GEOMETRY_TYPE
-                if TILEDB_WKB_GEOMETRY_TYPE
-                else "GEOM_WKB",
+                "type": (
+                    TILEDB_WKB_GEOMETRY_TYPE if TILEDB_WKB_GEOMETRY_TYPE else "GEOM_WKB"
+                ),
                 "cell_val_num": "variable",
                 "nullable": False,
                 "filter_list": [],

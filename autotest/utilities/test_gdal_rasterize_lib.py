@@ -815,6 +815,28 @@ def test_gdal_rasterize_no_options(tmp_vsimem):
 
 
 ###############################################################################
+# SRS warnings
+
+
+def test_gdal_rasterize_srs_warning_no_vector_srs():
+
+    dst_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    dst_ds.SetSpatialRef(osr.SpatialReference(epsg=4326))
+    src_ds = gdaltest.wkt_ds("LINESTRING (0 0, 1 1)")
+
+    with gdaltest.error_raised(gdal.CE_Warning, "input vector layer SRS is unknown"):
+        gdal.Rasterize(dst_ds, src_ds)
+
+
+def test_gdal_rasterize_srs_warning_no_raster_srs():
+    dst_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    src_ds = gdaltest.wkt_ds("LINESTRING (0 0, 1 1)", epsg=4326)
+
+    with gdaltest.error_raised(gdal.CE_Warning, "output raster dataset SRS is unknown"):
+        gdal.Rasterize(dst_ds, src_ds)
+
+
+###############################################################################
 # Error cases
 
 

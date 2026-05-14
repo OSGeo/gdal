@@ -44,7 +44,7 @@ class HFASpillFile;
 class HFAType;
 
 /************************************************************************/
-/*      Flag indicating read/write, or read-only access to data.        */
+/*       Flag indicating read/write, or read-only access to data.       */
 /************************************************************************/
 typedef enum
 {
@@ -113,7 +113,7 @@ int CPL_DLL HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
                            int nBlockSize, int bCreateCompressed,
                            int bCreateLargeRaster, int bDependentLayer,
                            int nXSize, int nYSize, EPTType eDataType,
-                           char **papszOptions,
+                           CSLConstList papszOptions,
 
                            // These are only related to external (large) files.
                            GIntBig nStackValidFlagsOffset,

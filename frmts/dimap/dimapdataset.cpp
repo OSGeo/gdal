@@ -99,7 +99,7 @@ class DIMAPDataset final : public GDALPamDataset
 /************************************************************************/
 
 /************************************************************************/
-/*                             DIMAPDataset()                            */
+/*                            DIMAPDataset()                            */
 /************************************************************************/
 
 DIMAPDataset::DIMAPDataset()
@@ -109,7 +109,7 @@ DIMAPDataset::DIMAPDataset()
 }
 
 /************************************************************************/
-/*                            ~DIMAPDataset()                           */
+/*                           ~DIMAPDataset()                            */
 /************************************************************************/
 
 DIMAPDataset::~DIMAPDataset()
@@ -135,7 +135,7 @@ DIMAPDataset::~DIMAPDataset()
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int DIMAPDataset::CloseDependentDatasets()
@@ -153,7 +153,7 @@ int DIMAPDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **DIMAPDataset::GetMetadataDomainList()
@@ -187,7 +187,7 @@ CSLConstList DIMAPDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *DIMAPDataset::GetSpatialRef() const
@@ -362,7 +362,7 @@ int DIMAPRasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                             GetOverview()                            */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *DIMAPRasterBand::GetOverview(int iOvr)
@@ -375,7 +375,7 @@ GDALRasterBand *DIMAPRasterBand::GetOverview(int iOvr)
 }
 
 /************************************************************************/
-/*                         ComputeRasterMinMax()                        */
+/*                        ComputeRasterMinMax()                         */
 /************************************************************************/
 
 CPLErr DIMAPRasterBand::ComputeRasterMinMax(int bApproxOK, double adfMinMax[2])
@@ -388,7 +388,7 @@ CPLErr DIMAPRasterBand::ComputeRasterMinMax(int bApproxOK, double adfMinMax[2])
 }
 
 /************************************************************************/
-/*                          ComputeStatistics()                         */
+/*                         ComputeStatistics()                          */
 /************************************************************************/
 
 CPLErr DIMAPRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
@@ -802,7 +802,7 @@ GDALDataset *DIMAPDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*               ReadImageInformation() DIMAP Version 1                 */
+/*                ReadImageInformation() DIMAP Version 1                */
 /************************************************************************/
 
 int DIMAPDataset::ReadImageInformation()
@@ -886,12 +886,12 @@ int DIMAPDataset::ReadImageInformation()
     if (psGeoLoc != nullptr)
     {
         bHaveGeoTransform = TRUE;
-        m_gt[0] = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULXMAP", "0"));
-        m_gt[1] = CPLAtof(CPLGetXMLValue(psGeoLoc, "XDIM", "0"));
-        m_gt[2] = 0.0;
-        m_gt[3] = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULYMAP", "0"));
-        m_gt[4] = 0.0;
-        m_gt[5] = -CPLAtof(CPLGetXMLValue(psGeoLoc, "YDIM", "0"));
+        m_gt.xorig = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULXMAP", "0"));
+        m_gt.xscale = CPLAtof(CPLGetXMLValue(psGeoLoc, "XDIM", "0"));
+        m_gt.xrot = 0.0;
+        m_gt.yorig = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULYMAP", "0"));
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -CPLAtof(CPLGetXMLValue(psGeoLoc, "YDIM", "0"));
     }
     else
     {
@@ -1058,7 +1058,7 @@ int DIMAPDataset::ReadImageInformation()
 }
 
 /************************************************************************/
-/*               ReadImageInformation() DIMAP Version 2                 */
+/*                ReadImageInformation() DIMAP Version 2                */
 /************************************************************************/
 
 int DIMAPDataset::ReadImageInformation2()
@@ -1468,27 +1468,27 @@ int DIMAPDataset::ReadImageInformation2()
     if (psGeoLoc != nullptr)
     {
         bHaveGeoTransform = TRUE;
-        m_gt[0] = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULXMAP", "0"));
-        m_gt[1] = CPLAtof(CPLGetXMLValue(psGeoLoc, "XDIM", "0"));
-        m_gt[2] = 0.0;
-        m_gt[3] = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULYMAP", "0"));
-        m_gt[4] = 0.0;
-        m_gt[5] = -CPLAtof(CPLGetXMLValue(psGeoLoc, "YDIM", "0"));
+        m_gt.xorig = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULXMAP", "0"));
+        m_gt.xscale = CPLAtof(CPLGetXMLValue(psGeoLoc, "XDIM", "0"));
+        m_gt.xrot = 0.0;
+        m_gt.yorig = CPLAtof(CPLGetXMLValue(psGeoLoc, "ULYMAP", "0"));
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -CPLAtof(CPLGetXMLValue(psGeoLoc, "YDIM", "0"));
     }
     else
     {
         // Try to get geotransform from underlying raster,
         // but make sure it is a real geotransform.
         if (poImageDS->GetGeoTransform(m_gt) == CE_None &&
-            !(m_gt[0] <= 1.5 && fabs(m_gt[3]) <= 1.5))
+            !(m_gt.xorig <= 1.5 && fabs(m_gt.yorig) <= 1.5))
         {
             bHaveGeoTransform = TRUE;
             // fix up the origin if we did not get the geotransform from the
             // top-left tile
-            m_gt[0] -= (nImageDSCol - 1) * m_gt[1] * nTileWidth +
-                       (nImageDSRow - 1) * m_gt[2] * nTileHeight;
-            m_gt[3] -= (nImageDSCol - 1) * m_gt[4] * nTileWidth +
-                       (nImageDSRow - 1) * m_gt[5] * nTileHeight;
+            m_gt.xorig -= (nImageDSCol - 1) * m_gt.xscale * nTileWidth +
+                          (nImageDSRow - 1) * m_gt.xrot * nTileHeight;
+            m_gt.yorig -= (nImageDSCol - 1) * m_gt.yrot * nTileWidth +
+                          (nImageDSRow - 1) * m_gt.yscale * nTileHeight;
         }
     }
 
@@ -1764,7 +1764,7 @@ int DIMAPDataset::ReadImageInformation2()
 }
 
 /************************************************************************/
-/*                          SetMetadataFromXML()                        */
+/*                         SetMetadataFromXML()                         */
 /************************************************************************/
 
 void DIMAPDataset::SetMetadataFromXML(
@@ -1882,7 +1882,7 @@ const OGRSpatialReference *DIMAPDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *DIMAPDataset::GetGCPs()

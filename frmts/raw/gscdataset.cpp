@@ -54,7 +54,7 @@ GSCDataset::~GSCDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GSCDataset::Close(GDALProgressFunc, void *)
@@ -165,12 +165,12 @@ GDALDataset *GSCDataset::Open(GDALOpenInfo *poOpenInfo)
         CPL_LSBPTR32(afHeaderInfo + i);
     }
 
-    poDS->m_gt[0] = afHeaderInfo[2];
-    poDS->m_gt[1] = afHeaderInfo[0];
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = afHeaderInfo[5];
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -afHeaderInfo[1];
+    poDS->m_gt.xorig = afHeaderInfo[2];
+    poDS->m_gt.xscale = afHeaderInfo[0];
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = afHeaderInfo[5];
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -afHeaderInfo[1];
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects.                                */

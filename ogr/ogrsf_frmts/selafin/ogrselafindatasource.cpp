@@ -20,7 +20,7 @@
 #include <ctime>
 
 /************************************************************************/
-/*                          Range                                       */
+/*                                Range                                 */
 /************************************************************************/
 Range::~Range()
 {
@@ -49,7 +49,7 @@ void Range::setRange(const char *pszStr)
     Range::List *poEnd = nullptr;
     if (pszStr == nullptr || pszStr[0] != '[')
     {
-        CPLError(CE_Warning, CPLE_IllegalArg, "Invalid range specified\n");
+        CPLError(CE_Warning, CPLE_IllegalArg, "Invalid range specified");
         return;
     }
     const char *pszc = pszStr;
@@ -78,7 +78,7 @@ void Range::setRange(const char *pszStr)
             if (*psze != ':' && *psze != ',' && *psze != ']')
             {
                 CPLError(CE_Warning, CPLE_IllegalArg,
-                         "Invalid range specified\n");
+                         "Invalid range specified");
                 deleteList(poVals);
                 poVals = nullptr;
                 return;
@@ -95,7 +95,7 @@ void Range::setRange(const char *pszStr)
                 if (*psze != ',' && *psze != ']')
                 {
                     CPLError(CE_Warning, CPLE_IllegalArg,
-                             "Invalid range specified\n");
+                             "Invalid range specified");
                     deleteList(poVals);
                     poVals = nullptr;
                     return;
@@ -127,7 +127,7 @@ void Range::setRange(const char *pszStr)
     }
     if (*pszc != ']')
     {
-        CPLError(CE_Warning, CPLE_IllegalArg, "Invalid range specified\n");
+        CPLError(CE_Warning, CPLE_IllegalArg, "Invalid range specified");
         deleteList(poVals);
         poVals = nullptr;
     }
@@ -273,7 +273,7 @@ size_t Range::getSize() const
 }
 
 /************************************************************************/
-/*                          OGRSelafinDataSource()                      */
+/*                        OGRSelafinDataSource()                        */
 /************************************************************************/
 
 OGRSelafinDataSource::OGRSelafinDataSource()
@@ -283,7 +283,7 @@ OGRSelafinDataSource::OGRSelafinDataSource()
 }
 
 /************************************************************************/
-/*                         ~OGRSelafinDataSource()                      */
+/*                       ~OGRSelafinDataSource()                        */
 /************************************************************************/
 
 OGRSelafinDataSource::~OGRSelafinDataSource()
@@ -416,7 +416,7 @@ int OGRSelafinDataSource::Open(const char *pszFilename, int bUpdateIn,
 }
 
 /************************************************************************/
-/*                              OpenTable()                             */
+/*                             OpenTable()                              */
 /************************************************************************/
 int OGRSelafinDataSource::OpenTable(const char *pszFilename)
 {
@@ -569,7 +569,7 @@ int OGRSelafinDataSource::OpenTable(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -665,14 +665,14 @@ OGRSelafinDataSource::ICreateLayer(const char *pszLayerName,
     nLayers += 2;
     papoLayers =
         (OGRSelafinLayer **)CPLRealloc(papoLayers, sizeof(void *) * nLayers);
-    CPLString szName = pszLayerName;
-    CPLString szNewLayerName = szName + "_p";
+    const CPLString osName(pszLayerName);
+    CPLString osNewLayerName(osName + "_p");
     papoLayers[nLayers - 2] =
-        new OGRSelafinLayer(this, szNewLayerName, bUpdate, poSpatialRef,
+        new OGRSelafinLayer(this, osNewLayerName, bUpdate, poSpatialRef,
                             poHeader, poHeader->nSteps - 1, POINTS);
-    szNewLayerName = szName + "_e";
+    osNewLayerName = osName + "_e";
     papoLayers[nLayers - 1] =
-        new OGRSelafinLayer(this, szNewLayerName, bUpdate, poSpatialRef,
+        new OGRSelafinLayer(this, osNewLayerName, bUpdate, poSpatialRef,
                             poHeader, poHeader->nSteps - 1, ELEMENTS);
     return papoLayers[nLayers - 2];
 }

@@ -9,9 +9,11 @@
 			       Behrmann Cylindrical Equal Area projection */
 #define DEFAULT_BCEA_LTRUESCALE 30.00  /*Latitude of true scale in DMS */
 #define BCEA_COS_PHI1 cos(DEFAULT_BCEA_LTRUESCALE * 3.141592653589793238 /180.0)
+#ifndef PI
 #define PI      3.141592653589793238
+#endif
 #define EASE_GRID_DEFAULT_UPLEFT_LON -180.0
-#define EASE_GRID_DEFAULT_UPLEFT_LAT  86.72 
+#define EASE_GRID_DEFAULT_UPLEFT_LAT  86.72
 #define EASE_GRID_DEFAULT_LOWRGT_LON  180.0
 #define EASE_GRID_DEFAULT_LOWRGT_LAT -86.72
 

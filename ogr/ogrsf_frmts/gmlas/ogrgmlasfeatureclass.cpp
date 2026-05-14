@@ -15,7 +15,7 @@
 #include "ogr_gmlas.h"
 
 /************************************************************************/
-/*                             GetTypeFromString()                      */
+/*                         GetTypeFromString()                          */
 /************************************************************************/
 
 GMLASFieldType GMLASField::GetTypeFromString(const CPLString &osType)
@@ -83,7 +83,7 @@ GMLASFieldType GMLASField::GetTypeFromString(const CPLString &osType)
 }
 
 /************************************************************************/
-/*                               SetType()                              */
+/*                              SetType()                               */
 /************************************************************************/
 
 void GMLASField::SetType(GMLASFieldType eType, const char *pszTypeName)
@@ -93,7 +93,7 @@ void GMLASField::SetType(GMLASFieldType eType, const char *pszTypeName)
 }
 
 /************************************************************************/
-/*                                 SetName()                            */
+/*                              SetName()                               */
 /************************************************************************/
 
 void GMLASFeatureClass::SetName(const CPLString &osName)
@@ -102,7 +102,7 @@ void GMLASFeatureClass::SetName(const CPLString &osName)
 }
 
 /************************************************************************/
-/*                                SetXPath()                            */
+/*                              SetXPath()                              */
 /************************************************************************/
 
 void GMLASFeatureClass::SetXPath(const CPLString &osXPath)
@@ -111,7 +111,7 @@ void GMLASFeatureClass::SetXPath(const CPLString &osXPath)
 }
 
 /************************************************************************/
-/*                                AddField()                            */
+/*                              AddField()                              */
 /************************************************************************/
 
 void GMLASFeatureClass::AddField(const GMLASField &oField)
@@ -120,7 +120,7 @@ void GMLASFeatureClass::AddField(const GMLASField &oField)
 }
 
 /************************************************************************/
-/*                            PrependFields()                           */
+/*                           PrependFields()                            */
 /************************************************************************/
 
 void GMLASFeatureClass::PrependFields(const std::vector<GMLASField> &aoFields)
@@ -129,7 +129,7 @@ void GMLASFeatureClass::PrependFields(const std::vector<GMLASField> &aoFields)
 }
 
 /************************************************************************/
-/*                             AppendFields()                           */
+/*                            AppendFields()                            */
 /************************************************************************/
 
 void GMLASFeatureClass::AppendFields(const std::vector<GMLASField> &aoFields)
@@ -138,7 +138,7 @@ void GMLASFeatureClass::AppendFields(const std::vector<GMLASField> &aoFields)
 }
 
 /************************************************************************/
-/*                             AddNestedClass()                         */
+/*                           AddNestedClass()                           */
 /************************************************************************/
 
 void GMLASFeatureClass::AddNestedClass(const GMLASFeatureClass &oNestedClass)

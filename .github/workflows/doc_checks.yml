@@ -24,7 +24,9 @@ jobs:
     container: ubuntu:24.04
 
     steps:
-    - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
     - name: Setup environment
       shell: bash -l {0}
       env:
@@ -54,6 +56,8 @@ jobs:
             -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF \
             -DOGR_BUILD_OPTIONAL_DRIVERS=OFF \
             -DGDAL_ENABLE_DRIVER_GTI=ON \
+            -DGDAL_ENABLE_DRIVER_NITF=ON \
+            -DOGR_ENABLE_DRIVER_CSV=ON \
             -DOGR_ENABLE_DRIVER_GPKG=ON \
             -DOGR_ENABLE_DRIVER_OPENFILEGDB=ON
           cmake --build . -j$(nproc)
@@ -74,6 +78,7 @@ jobs:
         if find . -name '*.rst' | xargs grep "\.\.note"; then echo 'Wrong annotation. Should be .. note'; false; fi
         if find . -name '*.rst' | xargs grep "\.\.warning"; then echo 'Wrong annotation. Should be .. warning'; false; fi
         if find . -name '*.rst' | xargs grep "\.\.codeblock"; then echo 'Wrong annotation. Should be .. codeblock'; false; fi
+        if find . -name '*.rst' | xargs grep -P "\r$"; then echo 'Windows line breaks detected'; false; fi
       working-directory: ./doc
 
     - name: Doxygen
@@ -108,7 +113,7 @@ jobs:
       working-directory: build
 
     - name: Upload man pages
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: manpages
         path: build/doc/build/man/
@@ -124,7 +129,7 @@ jobs:
       working-directory: build
 
     - name: Upload PDF
-      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: gdal.pdf
         path: build/doc/build/latex/gdal.pdf

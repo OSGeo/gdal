@@ -148,7 +148,7 @@ int OGRXLSDataSource::Open(const char *pszFilename, int bUpdateIn)
 }
 
 /************************************************************************/
-/*                           GetXLSHandle()                             */
+/*                            GetXLSHandle()                            */
 /************************************************************************/
 
 const void *OGRXLSDataSource::GetXLSHandle()

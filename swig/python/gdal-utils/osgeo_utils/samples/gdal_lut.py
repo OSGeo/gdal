@@ -46,8 +46,7 @@ def read_lut(filename):
 
 
 def Usage():
-    print(
-        """
+    print("""
 Usage: gdal_lut.py src_file [-srcband] [dst_file] [-dstband] -lutfile filename
                    [-of format] [-co name=value]...
 
@@ -66,8 +65,7 @@ would map input pixel values 0,1,2,3,4,5 to 0,5,11,12,12,13 respectively.
 Values not mapped by the lut file (for instance values 6-255 in the above
 case) will be left unaltered.  Sixteen bit (UInt16) output values are
 supported as well as luts of more than 256 input values.
-"""
-    )
+""")
     return 2
 
 

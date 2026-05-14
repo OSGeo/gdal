@@ -81,7 +81,7 @@ GXFRasterBand::GXFRasterBand(GXFDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                          */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double GXFRasterBand::GetNoDataValue(int *bGotNoDataValue)
@@ -180,20 +180,20 @@ CPLErr GXFDataset::GetGeoTransform(GDALGeoTransform &gt) const
     // Transform to radians.
     dfRotation = (dfRotation / 360.0) * 2.0 * M_PI;
 
-    gt[1] = dfXSize * cos(dfRotation);
-    gt[2] = dfYSize * sin(dfRotation);
-    gt[4] = dfXSize * sin(dfRotation);
-    gt[5] = -1 * dfYSize * cos(dfRotation);
+    gt.xscale = dfXSize * cos(dfRotation);
+    gt.xrot = dfYSize * sin(dfRotation);
+    gt.yrot = dfXSize * sin(dfRotation);
+    gt.yscale = -1 * dfYSize * cos(dfRotation);
 
     // take into account that GXF is point or center of pixel oriented.
-    gt[0] = dfXOrigin - 0.5 * gt[1] - 0.5 * gt[2];
-    gt[3] = dfYOrigin - 0.5 * gt[4] - 0.5 * gt[5];
+    gt.xorig = dfXOrigin - 0.5 * gt.xscale - 0.5 * gt.xrot;
+    gt.yorig = dfYOrigin - 0.5 * gt.yrot - 0.5 * gt.yscale;
 
     return CE_None;
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *GXFDataset::GetSpatialRef() const

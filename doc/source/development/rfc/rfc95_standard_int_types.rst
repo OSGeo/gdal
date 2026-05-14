@@ -124,7 +124,7 @@ Main impacts are:
   - :cpp:func:`OGR_F_GetFieldAsInteger64List`
   - :cpp:func:`OGR_F_SetFieldInteger64List`
 
-  C Multidimension API impacts (and equivalent C++ methods):
+  C Multidimensional API impacts (and equivalent C++ methods):
 
   - :cpp:func:`GDALGroupCreateDimension`
   - :cpp:func:`GDALGroupCreateAttribute`

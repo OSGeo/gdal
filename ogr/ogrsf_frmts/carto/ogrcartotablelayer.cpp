@@ -16,7 +16,7 @@
 #include "ogrlibjsonutils.h"
 
 /************************************************************************/
-/*                    OGRCARTOEscapeIdentifier( )                     */
+/*                     OGRCARTOEscapeIdentifier( )                      */
 /************************************************************************/
 
 CPLString OGRCARTOEscapeIdentifier(const char *pszStr)
@@ -39,7 +39,7 @@ CPLString OGRCARTOEscapeIdentifier(const char *pszStr)
 }
 
 /************************************************************************/
-/*                    OGRCARTOEscapeLiteralCopy( )                      */
+/*                     OGRCARTOEscapeLiteralCopy( )                     */
 /************************************************************************/
 
 CPLString OGRCARTOEscapeLiteralCopy(const char *pszStr)
@@ -68,7 +68,7 @@ CPLString OGRCARTOEscapeLiteralCopy(const char *pszStr)
 }
 
 /************************************************************************/
-/*                    OGRCARTOEscapeLiteral( )                        */
+/*                       OGRCARTOEscapeLiteral( )                       */
 /************************************************************************/
 
 CPLString OGRCARTOEscapeLiteral(const char *pszStr)
@@ -87,7 +87,7 @@ CPLString OGRCARTOEscapeLiteral(const char *pszStr)
 }
 
 /************************************************************************/
-/*                    OGRCARTOEscapeLiteral( )                          */
+/*                       OGRCARTOEscapeLiteral( )                       */
 /************************************************************************/
 
 char *OGRCARTOTableLayer::OGRCARTOGetHexGeometry(OGRGeometry *poGeom, int i)
@@ -115,7 +115,7 @@ char *OGRCARTOTableLayer::OGRCARTOGetHexGeometry(OGRGeometry *poGeom, int i)
 }
 
 /************************************************************************/
-/*                        OGRCARTOTableLayer()                          */
+/*                         OGRCARTOTableLayer()                         */
 /************************************************************************/
 
 OGRCARTOTableLayer::OGRCARTOTableLayer(OGRCARTODataSource *poDSIn,
@@ -138,7 +138,7 @@ OGRCARTOTableLayer::OGRCARTOTableLayer(OGRCARTODataSource *poDSIn,
 }
 
 /************************************************************************/
-/*                    ~OGRCARTOTableLayer()                           */
+/*                        ~OGRCARTOTableLayer()                         */
 /************************************************************************/
 
 OGRCARTOTableLayer::~OGRCARTOTableLayer()
@@ -151,7 +151,7 @@ OGRCARTOTableLayer::~OGRCARTOTableLayer()
 }
 
 /************************************************************************/
-/*                          GetLayerDefnInternal()                      */
+/*                        GetLayerDefnInternal()                        */
 /************************************************************************/
 
 OGRFeatureDefn *
@@ -373,7 +373,7 @@ OGRCARTOTableLayer::GetLayerDefnInternal(CPL_UNUSED json_object *poObjIn)
 }
 
 /************************************************************************/
-/*                        FetchNewFeatures()                            */
+/*                          FetchNewFeatures()                          */
 /************************************************************************/
 
 json_object *OGRCARTOTableLayer::FetchNewFeatures()
@@ -395,7 +395,7 @@ json_object *OGRCARTOTableLayer::FetchNewFeatures()
 }
 
 /************************************************************************/
-/*                           GetNextRawFeature()                        */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRCARTOTableLayer::GetNextRawFeature()
@@ -433,7 +433,7 @@ OGRErr OGRCARTOTableLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRCARTOTableLayer::ISetSpatialFilter(int iGeomField,
@@ -480,7 +480,7 @@ void OGRCARTOTableLayer::RunDeferredCartofy()
 }
 
 /************************************************************************/
-/*                        CARTOGeometryType()                           */
+/*                         CARTOGeometryType()                          */
 /************************************************************************/
 
 static CPLString OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField)
@@ -510,7 +510,7 @@ static CPLString OGRCARTOGeometryType(OGRCartoGeomFieldDefn *poGeomField)
 }
 
 /************************************************************************/
-/*                         FlushDeferredBuffer()                        */
+/*                        FlushDeferredBuffer()                         */
 /************************************************************************/
 
 OGRErr OGRCARTOTableLayer::FlushDeferredBuffer(bool bReset)
@@ -522,7 +522,7 @@ OGRErr OGRCARTOTableLayer::FlushDeferredBuffer(bool bReset)
 }
 
 /************************************************************************/
-/*                         FlushDeferredInsert()                        */
+/*                        FlushDeferredInsert()                         */
 /************************************************************************/
 
 OGRErr OGRCARTOTableLayer::FlushDeferredInsert(bool bReset)
@@ -795,7 +795,7 @@ OGRErr OGRCARTOTableLayer::DeleteField(int iField)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRCARTOTableLayer::ICreateFeature(OGRFeature *poFeature)
@@ -880,7 +880,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           ICreateFeatureCopy()                       */
+/*                         ICreateFeatureCopy()                         */
 /************************************************************************/
 
 OGRErr OGRCARTOTableLayer::ICreateFeatureCopy(OGRFeature *poFeature,
@@ -1085,7 +1085,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                           ICreateFeatureInsert()                      */
+/*                        ICreateFeatureInsert()                        */
 /************************************************************************/
 
 OGRErr OGRCARTOTableLayer::ICreateFeatureInsert(OGRFeature *poFeature,
@@ -1384,7 +1384,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureInsert(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                            ISetFeature()                              */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRCARTOTableLayer::ISetFeature(OGRFeature *poFeature)
@@ -1518,7 +1518,7 @@ OGRErr OGRCARTOTableLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          DeleteFeature()                             */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 OGRErr OGRCARTOTableLayer::DeleteFeature(GIntBig nFID)
@@ -1645,7 +1645,7 @@ void OGRCARTOTableLayer::BuildWhere()
 }
 
 /************************************************************************/
-/*                              GetFeature()                            */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRCARTOTableLayer::GetFeature(GIntBig nFeatureId)
@@ -1850,7 +1850,7 @@ int OGRCARTOTableLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                        SetDeferredCreation()                          */
+/*                        SetDeferredCreation()                         */
 /************************************************************************/
 
 void OGRCARTOTableLayer::SetDeferredCreation(OGRwkbGeometryType eGType,
@@ -1888,7 +1888,7 @@ void OGRCARTOTableLayer::SetDeferredCreation(OGRwkbGeometryType eGType,
 }
 
 /************************************************************************/
-/*                      RunDeferredCreationIfNecessary()                 */
+/*                   RunDeferredCreationIfNecessary()                   */
 /************************************************************************/
 
 OGRErr OGRCARTOTableLayer::RunDeferredCreationIfNecessary()

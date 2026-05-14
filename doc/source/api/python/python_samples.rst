@@ -9,6 +9,8 @@ The following are sample scripts intended to give an idea of how to use GDAL's P
 From GDAL 3.2, Python utility scripts :ref:`programs` are located inside the ``osgeo_utils`` module.
 From GDAL 3.3, Python sample scripts are located inside the ``osgeo_utils.samples`` sub-module.
 
+:ref:`gdal_python_utilities` provide both command-line tools and sample scripts. Refer to this page for instructions on installing them as a Python module.
+
 .. warning:: Several of the sample scripts on this page have not been updated since they were created and may use outdated coding styles or deprecated APIs.
 
 Python Sample Scripts
@@ -80,6 +82,33 @@ The scripts provide examples of both raster and vector usage of the GDAL Python 
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/vec_tr_spat.py`: Example of using Intersect() to filter based on only those features that truly intersect a given rectangle.
       Easily extended to general polygon!
     - :source_file:`swig/python/gdal-utils/osgeo_utils/samples/wcs_virtds_params.py`: Generates MapServer WCS layer definition from a tileindex with mixed SRS.
+
+Running the Sample Scripts
+--------------------------
+
+If you install GDAL using :ref:`conda`, the :ref:`gdal_python_utilities` are also installed, and the sample scripts above are available.
+The scripts can be executed using Python. For example:
+
+.. example::
+   :title: Make a graticule Shapefile
+   :id: python-samples-graticule
+
+   .. code-block:: bash
+
+        $ python -m osgeo_utils.samples.mkgraticule -t_srs EPSG:4326 grid4326.shp
+
+You can also inspect the available Python utilities and sample scripts using Python:
+
+.. code-block:: python
+
+    >>> import osgeo_utils
+    >>> help(osgeo_utils)
+
+    >>> from osgeo_utils import samples
+    >>> help(samples)
+
+    >>> from osgeo_utils.samples import validate_geoparquet
+    >>> help(validate_geoparquet)
 
 Legacy Python Sample Scripts
 ----------------------------

@@ -29,6 +29,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("netCDF")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -82,7 +83,7 @@ def netcdf_setup():
 
     # find out if we have ncdump
     try:
-        (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h")
+        ret, err = gdaltest.runexternal_out_and_err("ncdump -h")
     except OSError:
         err = None
 
@@ -243,7 +244,7 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
 
 def netcdf_ncdump(fname):
 
-    (out, err) = gdaltest.runexternal_out_and_err(f"ncdump -h {fname}")
+    out, err = gdaltest.runexternal_out_and_err(f"ncdump -h {fname}")
 
     return out
 
@@ -834,7 +835,7 @@ def test_netcdf_21():
         )
 
         try:
-            (ret, err) = gdaltest.runexternal_out_and_err(warp_cmd)
+            ret, err = gdaltest.runexternal_out_and_err(warp_cmd)
         except OSError:
             pytest.fail("gdalwarp execution failed")
 
@@ -1128,7 +1129,7 @@ def netcdf_test_4dfile(ofile):
     if not gdaltest.netcdf_have_ncdump:
         return
 
-    (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h " + ofile)
+    ret, err = gdaltest.runexternal_out_and_err("ncdump -h " + ofile)
     assert ret != "" and err == "", "ncdump failed"
 
     # simple dimension tests using ncdump output
@@ -1195,7 +1196,7 @@ def test_netcdf_29(tmp_path):
         ofile1,
     )
     try:
-        (ret, err) = gdaltest.runexternal_out_and_err(warp_cmd)
+        ret, err = gdaltest.runexternal_out_and_err(warp_cmd)
     except OSError:
         pytest.fail("gdalwarp execution failed")
 
@@ -3430,10 +3431,8 @@ def test_netcdf_open_empty_double_attr():
 
 
 @pytest.mark.slow()
+@pytest.mark.require_64bit()
 def test_netcdf_huge_block_size(tmp_path):
-
-    if sys.maxsize < 2**32:
-        pytest.skip("Test not available on 32 bit")
 
     import psutil
 
@@ -3653,6 +3652,7 @@ def test_netcdf_functions_2(filename, checksum, options, testfunction):
 
 ###############################################################################
 #  simple geometry tests
+
 
 #  basic tests
 def test_bad_cf1_8():
@@ -6298,7 +6298,7 @@ def test_netcdf_proj4string_geospatial_bounds_crs():
     assert ds.GetGeoTransform() == pytest.approx(
         (-5400000.0, 75000.0, 0.0, 5400000.0, 0.0, -75000.0)
     )
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "6931"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "6931"
 
 
 ###############################################################################
@@ -6367,6 +6367,8 @@ def test_netcdf_NASA_EMIT_L2B_MIN():
 @pytest.mark.parametrize(
     "filename,path_component,subdataset_component",
     (
+        ("NETCDF:data/hdf4/hdifftst2.hdf", "data/hdf4/hdifftst2.hdf", ""),
+        ('NETCDF:"data/hdf4/hdifftst2.hdf"', "data/hdf4/hdifftst2.hdf", ""),
         (
             'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
             "data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
@@ -6418,6 +6420,16 @@ def test_netcdf_NASA_EMIT_L2B_MIN():
             "",
         ),
         (
+            r"NETCDF:https://localhost:8080/data/sample.nc",
+            r"https://localhost:8080/data/sample.nc",
+            "",
+        ),
+        (
+            r"NETCDF:/vsicurl/https://www.ncei.noaa.gov:443/data/sample.nc:t2m",
+            r"/vsicurl/https://www.ncei.noaa.gov:443/data/sample.nc",
+            "t2m",
+        ),
+        (
             r'NETCDF:"data/netcdf/var_with_column.nc":"VAR:NAME"',
             r"data/netcdf/var_with_column.nc",
             "VAR:NAME",
@@ -6444,6 +6456,7 @@ def test_gdal_subdataset_get_filename(filename, path_component, subdataset_compo
 @pytest.mark.parametrize(
     "filename",
     (
+        "NETCDF:",
         'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
         "NETCDF:data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
         r'NETCDF:"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
@@ -6453,7 +6466,7 @@ def test_gdal_subdataset_get_filename(filename, path_component, subdataset_compo
 def test_gdal_subdataset_modify_filename(filename):
 
     info = gdal.GetSubdatasetInfo(filename)
-    if filename == "":
+    if filename == "" or filename == "NETCDF:":
         assert info is None
     else:
         assert (
@@ -6680,7 +6693,7 @@ def test_netcdf_var_extra_dim_unlimited_network():
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -6793,6 +6806,30 @@ def test_netcdf_geotransform_preserved_createcopy(tmp_path):
 
 
 ###############################################################################
+# Test that the GeoTransform attribute is ignored if it does not appear to
+# correspond with the dimension variables.
+# https://github.com/OSGeo/gdal/issues/13823
+
+
+def test_netcdf_geotranform_ignored_if_erroneous(tmp_path):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        "GeoTransform read from attribute of transverse_mercator variable differs from value calculated from dimension variables",
+    ):
+        ds = gdal.Open("data/netcdf/uint.nc")
+
+        assert (
+            ds.GetMetadataItem("transverse_mercator#GeoTransform")
+            == "440720 60 0 3751320 0 -60 "
+        )
+
+        gt = ds.GetGeoTransform()
+
+        assert gt == (440720.0, 60.0, 0.0, 3750240.0, 0.0, -60.0)
+
+
+###############################################################################
 #
 
 
@@ -6840,3 +6877,92 @@ def test_netcdf_open_bad_x_y_actual_range():
     assert [x for x in ds.GetGeoTransform()] == pytest.approx(
         [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
     )
+
+
+###############################################################################
+# Cf https://github.com/qgis/QGIS/issues/64873
+
+
+def test_netcdf_open_geotransform_gt5_positive():
+
+    with gdaltest.error_raised(gdal.CE_None):
+        ds = gdal.Open("data/netcdf/byte_geotransform_gt5_positive.nc")
+    assert [x for x in ds.GetGeoTransform()] == pytest.approx(
+        [440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0]
+    )
+    assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+###############################################################################
+#
+
+
+@pytest.mark.parametrize(
+    "options,expected_gt,expected_cs,expected_warp_gt,expected_warp_cs",
+    [
+        (
+            [],
+            (1841001.75, 1.5, -5.0, 1144003.25, -5.0, -1.5),
+            4672,
+            (1840901.75, 5.2201532544552744, 0.0, 1144003.25, 0.0, -5.2201532544552744),
+            4454,
+        ),
+        (
+            ["WRITE_LONLAT=YES"],
+            (1841001.75, 1.5, -5.0, 1144003.25, -5.0, -1.5),
+            4672,
+            (
+                1840898.6923189342,
+                5.245503735406323,
+                0.0,
+                1144003.2801153609,
+                0.0,
+                -5.245503735406323,
+            ),
+            4512,
+        ),
+        (
+            ["WRITE_BOTTOMUP=NO"],
+            (1840901.75, 1.5, 5.0, 1143973.25, -5.0, 1.5),
+            4855,
+            (1840901.75, 5.2201532544552744, 0.0, 1144003.25, 0.0, -5.2201532544552744),
+            4454,
+        ),
+        (
+            ["WRITE_LONLAT=YES", "WRITE_BOTTOMUP=NO"],
+            (1840901.75, 1.5, 5.0, 1143973.25, -5.0, 1.5),
+            4855,
+            (
+                1840901.2295569642,
+                5.249091373447578,
+                0.0,
+                1144004.0234124723,
+                0.0,
+                -5.249091373447578,
+            ),
+            4443,
+        ),
+    ],
+)
+def test_netcdf_write_non_axis_aligned_geotransform(
+    tmp_path, options, expected_gt, expected_cs, expected_warp_gt, expected_warp_cs
+):
+
+    src_ds = gdal.Open("../gcore/data/geomatrix.tif")
+    gdal.GetDriverByName("netCDF").CreateCopy(
+        tmp_path / "out.nc", src_ds, options=options
+    )
+    ds = gdal.Open(tmp_path / "out.nc")
+    assert ds.GetGeoTransform() == pytest.approx(expected_gt)
+    assert ds.GetRasterBand(1).Checksum() == expected_cs
+
+    if "WRITE_LONLAT=YES" in options:
+        warped_ds = gdal.Warp(
+            "", ds, options="-of MEM -to METHOD=GEOLOC_ARRAY -t_srs EPSG:32611"
+        )
+    else:
+        warped_ds = gdal.Warp(
+            "", ds, options="-of MEM -to METHOD=GEOTRANSFORM -t_srs EPSG:32611"
+        )
+    assert warped_ds.GetGeoTransform() == pytest.approx(expected_warp_gt)
+    assert warped_ds.GetRasterBand(1).Checksum() == expected_warp_cs

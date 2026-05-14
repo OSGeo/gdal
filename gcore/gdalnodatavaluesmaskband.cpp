@@ -26,7 +26,7 @@
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                   GDALNoDataValuesMaskBand()                         */
+/*                      GDALNoDataValuesMaskBand()                      */
 /************************************************************************/
 
 GDALNoDataValuesMaskBand::GDALNoDataValuesMaskBand(GDALDataset *poDSIn)
@@ -56,7 +56,7 @@ GDALNoDataValuesMaskBand::GDALNoDataValuesMaskBand(GDALDataset *poDSIn)
 }
 
 /************************************************************************/
-/*                    ~GDALNoDataValuesMaskBand()                       */
+/*                     ~GDALNoDataValuesMaskBand()                      */
 /************************************************************************/
 
 GDALNoDataValuesMaskBand::~GDALNoDataValuesMaskBand()
@@ -66,7 +66,7 @@ GDALNoDataValuesMaskBand::~GDALNoDataValuesMaskBand()
 }
 
 /************************************************************************/
-/*                            FillOutBuffer()                           */
+/*                           FillOutBuffer()                            */
 /************************************************************************/
 
 template <class T>
@@ -242,7 +242,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
 }
 
 /************************************************************************/
-/*                   EmitErrorMessageIfWriteNotSupported()              */
+/*                EmitErrorMessageIfWriteNotSupported()                 */
 /************************************************************************/
 
 bool GDALNoDataValuesMaskBand::EmitErrorMessageIfWriteNotSupported(

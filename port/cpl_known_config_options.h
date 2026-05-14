@@ -17,6 +17,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "AWS_CONTAINER_AUTHORIZATION_TOKEN", // from cpl_aws.cpp
    "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE", // from cpl_aws.cpp
    "AWS_CONTAINER_CREDENTIALS_FULL_URI", // from cpl_aws.cpp
+   "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", // from cpl_aws.cpp
    "AWS_DEFAULT_PROFILE", // from cpl_aws.cpp
    "AWS_DEFAULT_REGION", // from cpl_aws.cpp
    "AWS_HTTPS", // from cpl_aws.cpp
@@ -251,7 +252,6 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_DAAS_X_FORWARDED_USER", // from daasdataset.cpp
    "GDAL_DATA", // from cpl_csv.cpp, cpl_findfile.cpp, gdaldrivermanager.cpp
    "GDAL_DEBUG_BLOCK_CACHE", // from gdalrasterblock.cpp
-   "GDAL_DEBUG_CPU_COUNT", // from gdalalgorithm.cpp
    "GDAL_DEBUG_PROCESS_DYNAMIC_METADATA", // from gdaljp2metadata.cpp
    "GDAL_DEFAULT_CREATE_COPY", // from gdaldriver.cpp
    "GDAL_DEFAULT_WMS_CACHE_PATH", // from gdalwmscache.cpp
@@ -263,6 +263,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_ECW_PROMOTE_1BIT_ALPHA_AS_8BIT", // from ecwdataset.cpp
    "GDAL_ECW_WRITE_COMPANY", // from ecwcreatecopy.cpp
    "GDAL_ECW_WRITE_COMPRESSION_SOFTWARE", // from ecwcreatecopy.cpp
+   "GDAL_ENABLE_EXTERNAL", // from gdalalg_external.cpp
    "GDAL_ENABLE_PYTHON_PATH", // from gdalpython.cpp
    "GDAL_ENABLE_PYTHON_SYMLINK", // from gdalpython.cpp
    "GDAL_ENABLE_READ_WRITE_MUTEX", // from gdaldataset.cpp
@@ -333,7 +334,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_JPEG2000_STRUCTURE_MAX_LINES", // from gdaljp2structure.cpp
    "GDAL_JPEG_TO_RGB", // from jpgdataset.cpp
    "GDAL_JPEGXL_MAX_BOX_BUFFER_SIZE", // from jpegxl.cpp
-   "GDAL_LOAD_EXTRA_DIM_METADATA_DELAY", // from gdalmultidim.cpp
+   "GDAL_LOAD_EXTRA_DIM_METADATA_DELAY", // from gdalmultidim_array_bridge_classic.cpp
    "GDAL_LOCALE", // from gdaldllmain.cpp
    "GDAL_MAX_BAND_COUNT", // from gdal_misc.cpp, netcdfdataset.cpp, pcidskdataset2.cpp
    "GDAL_MAX_CONNECTIONS", // from gdalogcapidataset.cpp, gdalwmsdataset.cpp
@@ -341,6 +342,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_MAX_DATASET_POOL_SIZE", // from gdal_translate_bin.cpp, gdalproxypool.cpp, gdalwarp_bin.cpp
    "GDAL_MAX_RAW_BLOCK_CACHE_SIZE", // from gtiffdataset_read.cpp
    "GDAL_MEM_ENABLE_OPEN", // from memdataset.cpp
+   "GDAL_NAME_AND_SHAME", // from cpl_aws.cpp, cpl_azure.cpp, cpl_google_cloud.cpp
    "GDAL_NETCDF_ASSUME_LONGLAT", // from netcdfdataset.cpp
    "GDAL_NETCDF_BOTTOMUP", // from netcdfdataset.cpp
    "GDAL_NETCDF_CENTERLONG_180", // from netcdfdataset.cpp
@@ -349,7 +351,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_NETCDF_REPORT_EXTRA_DIM_VALUES", // from netcdfdataset.cpp
    "GDAL_NETCDF_VERIFY_DIMS", // from netcdfdataset.cpp
    "GDAL_NO_COSTLY_OVERVIEW", // from rasterio.cpp
-   "GDAL_NUM_THREADS", // from avifdataset.cpp, common.cpp, cpl_vsil_gzip.cpp, gdal_tps.cpp, gdalalgorithm.cpp, gdaldataset.cpp, gdalgrid.cpp, gdalpansharpen.cpp, gdalrasterband.cpp, gdaltileindexdataset.cpp, gdalwarpkernel.cpp, gtiffdataset_write.cpp, jpegxl.cpp, libertiffdataset.cpp, ogr2ogr_lib.cpp, ogrmvtdataset.cpp, ogrparquetlayer.cpp, osm_parser.cpp, overview.cpp, rmfdataset.cpp, vrtdataset.cpp, zarr_array.cpp
+   "GDAL_NUM_THREADS", // from gdal_thread_pool.cpp, gdalalgorithm.cpp, zarr_array.cpp
    "GDAL_OGCAPI_TILEMATRIXSET_LIMITS", // from gdalogcapidataset.cpp
    "GDAL_ONE_BIG_READ", // from jp2kakdataset.cpp, jpipkakdataset.cpp, mrsiddataset.cpp, rawdataset.cpp, wcsdataset.cpp
    "GDAL_OPEN_AFTER_COPY", // from jpgdataset.cpp, pngdataset.cpp
@@ -402,6 +404,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_READDIR_LIMIT_ON_OPEN", // from gdalopeninfo.cpp, gtiffdataset_read.cpp, tiledbdense.cpp
    "GDAL_REPORT_DIRTY_BLOCK_FLUSHING", // from gdalabstractbandblockcache.cpp
    "GDAL_RPC_DEM_OPTIM", // from gdal_rpc.cpp
+   "GDAL_S101_FEATURE_CATALOG", // from ogrs101featurecatalog.cpp
    "GDAL_SHARED_FILE", // from cpl_vsil_win32.cpp
    "GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND", // from gdalnodatamaskband.cpp
    "GDAL_SKIP", // from gdaldrivermanager.cpp
@@ -409,9 +412,10 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_STATS_USE_FLOAT32_OPTIM", // from gdalrasterband.cpp
    "GDAL_STATS_USE_FLOAT64_OPTIM", // from gdalrasterband.cpp
    "GDAL_STATS_USE_INTEGER_STATS", // from gdalrasterband.cpp
-   "GDAL_SWATH_SIZE", // from gdalmultidim.cpp, rasterio.cpp
+   "GDAL_SWATH_SIZE", // from gdalmultidim_array.cpp, rasterio.cpp
    "GDAL_TEMP_DRIVER_NAME", // from nearblack_lib_floodfill.cpp
    "GDAL_TERM_PROGRESS_OSC_9_4", // from cpl_progress.cpp
+   "GDAL_TEST_NAME_AND_SHAME", // from cpl_aws.cpp, cpl_azure.cpp, cpl_google_cloud.cpp
    "GDAL_THRESHOLD_MIN_THREADS_FOR_SPAWN", // from gdalalg_raster_tile.cpp
    "GDAL_THRESHOLD_MIN_TILES_PER_JOB", // from gdalalg_raster_tile.cpp
    "GDAL_TIFF_DEFLATE_SUBCODEC", // from gtiffdataset.cpp
@@ -436,7 +440,8 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "GDAL_WARP_USE_AFFINE_OPTIMIZATION", // from gdalwarpkernel.cpp
    "GDAL_WARP_USE_TRANSLATION_OPTIM", // from gdalwarpoperation.cpp
    "GDAL_WMS_MAX_CONNECTIONS", // from gdalogcapidataset.cpp
-   "GDAL_XML_VALIDATION", // from ogrgmlasconf.cpp, ogrvrtdriver.cpp, pdfcreatefromcomposition.cpp
+   "GDAL_XML_VALIDATION", // from gdaltileindexdataset.cpp, ogrgmlasconf.cpp, ogrvrtdriver.cpp, pdfcreatefromcomposition.cpp
+   "GDAL_ZARR_SHARD_INDEX_CACHE_MAX_BYTES", // from zarr_v3_codec_sharding.cpp
    "GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", // from zarr_array.cpp
    "GDALCUTLINE_SKIP_CONTAINMENT_TEST", // from gdalcutline.cpp
    "GDALWARP_DENSIFY_CUTLINE", // from gdalwarp_lib.cpp
@@ -696,6 +701,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "OGR2OGR_MIN_FEATURES_FOR_THREADED_REPROJ", // from ogr2ogr_lib.cpp
    "OGR2OGR_USE_ARROW_API", // from ogr2ogr_lib.cpp
    "OGR_ADBC_AUTO_LOAD_DUCKDB_SPATIAL", // from ogradbcdataset.cpp
+   "OGR_ADBC_LIBDUCKDB", // from ogradbcdataset.cpp
    "OGR_API_SPY_FILE", // from ograpispy.cpp
    "OGR_API_SPY_SNAPSHOT_PATH", // from ograpispy.cpp
    "OGR_APPLY_GEOM_SET_PRECISION", // from ogr2ogr_lib.cpp, ogrlayer.cpp
@@ -1030,10 +1036,12 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "SXF_RSC_FILENAME", // from ogrsxfdatasource.cpp
    "SXF_SET_VERTCS", // from ogrsxfdatasource.cpp
    "TAB_APPROX_GEOTRANSFORM", // from gdal_misc.cpp
-   "TEMP", // from cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
+   "TEMP", // from cpl_aws.cpp, cpl_azure.cpp, cpl_google_cloud.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
    "THRESHOLD", // from ogrct.cpp
    "TIFF_READ_STREAMING", // from gtiffdataset_read.cpp
    "TIFF_USE_OVR", // from gtiffdataset_write.cpp
+   "TIGER_LFIELD_AS_STRING", // from tigerfilebase.cpp
+   "TIGER_VERSION", // from ogrtigerdatasource.cpp
    "TILEDB_ATTRIBUTE", // from tiledbdense.cpp
    "TILEDB_BINARY_TYPE", // from tiledbsparse.cpp
    "TILEDB_BUG", // from tiledbsparse.cpp
@@ -1048,8 +1056,8 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "USE_SQLITE_DEBUG_MEMALLOC", // from ogrsqlitedatasource.cpp
    "USE_TEMPFILE", // from ogrgpsbabeldatasource.cpp, ogrgpsbabelwritedatasource.cpp
    "USE_TILE_AS_BLOCK", // from jp2kakdataset.cpp
-   "USER", // from gdal_misc.cpp, gdalwmscache.cpp, isis3dataset.cpp, wcsutils.cpp
-   "USERNAME", // from gdal_misc.cpp, gdalwmscache.cpp, isis3dataset.cpp, wcsutils.cpp
+   "USER", // from cpl_aws.cpp, cpl_azure.cpp, cpl_google_cloud.cpp, gdal_misc.cpp, gdalwmscache.cpp, isis3dataset.cpp, wcsutils.cpp
+   "USERNAME", // from cpl_aws.cpp, cpl_azure.cpp, cpl_google_cloud.cpp, gdal_misc.cpp, gdalwmscache.cpp, isis3dataset.cpp, wcsutils.cpp
    "USERPROFILE", // from cpl_aws.cpp, cpl_azure.cpp, cpl_conv.cpp, cpl_google_cloud.cpp, cpl_path.cpp, gdal_misc.cpp, gdalwmscache.cpp, wcsutils.cpp
    "VRT_ALLOW_MEM_DRIVER", // from vrtrasterband.cpp
    "VRT_MIN_MAX_FROM_SOURCES", // from vrtsourcedrasterband.cpp
@@ -1095,6 +1103,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "WMS_INFO_FORMAT", // from minidriver_wms.cpp
    "XDG_CACHE_HOME", // from gdal_misc.cpp, gdalwmscache.cpp
    "ZARR_ALLOW_BIG_TILE_SIZE", // from zarr_v2_array.cpp, zarr_v3_array.cpp
+   "ZARR_VLEN_STRING_MAX_LENGTH", // from zarr_v3_array.cpp, zarr_v3_group.cpp
    "ZLEVEL_OVERVIEW", // from gt_overview.cpp
    "ZMAP_EMIT_EOL_AT_END_OF_COLUMN", // from zmapdataset.cpp
    "ZMAP_PIXEL_IS_POINT", // from zmapdataset.cpp

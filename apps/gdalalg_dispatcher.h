@@ -258,7 +258,7 @@ bool GDALDispatcherAlgorithm<RasterDispatcher, VectorDispatcher>::
 }
 
 /************************************************************************/
-/*                 GDALDispatcherAlgorithm::GetUsageForCLI()            */
+/*              GDALDispatcherAlgorithm::GetUsageForCLI()               */
 /************************************************************************/
 
 template <class RasterDispatcher, class VectorDispatcher>

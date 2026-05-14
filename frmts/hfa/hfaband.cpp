@@ -1327,7 +1327,7 @@ CPLErr HFABand::GetRasterBlock(int nXBlock, int nYBlock, void *pData,
 }
 
 /************************************************************************/
-/*                           ReAllocBlock()                             */
+/*                            ReAllocBlock()                            */
 /************************************************************************/
 
 void HFABand::ReAllocBlock(int iBlock, int nSize)
@@ -2022,7 +2022,7 @@ CPLErr HFABand::SetPCT(int nColors, const double *padfRed,
 }
 
 /************************************************************************/
-/*                     HFAGetOverviewBlockSize()                        */
+/*                      HFAGetOverviewBlockSize()                       */
 /************************************************************************/
 
 static int HFAGetOverviewBlockSize()

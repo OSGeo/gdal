@@ -13,7 +13,7 @@
 #include "ogr_jsonfg.h"
 
 /************************************************************************/
-/*             OGRJSONFGStreamingParserGetMaxObjectSize()               */
+/*              OGRJSONFGStreamingParserGetMaxObjectSize()              */
 /************************************************************************/
 
 static size_t OGRJSONFGStreamingParserGetMaxObjectSize()
@@ -24,7 +24,7 @@ static size_t OGRJSONFGStreamingParserGetMaxObjectSize()
 }
 
 /************************************************************************/
-/*                     OGRJSONFGStreamingParser()                       */
+/*                      OGRJSONFGStreamingParser()                      */
 /************************************************************************/
 
 OGRJSONFGStreamingParser::OGRJSONFGStreamingParser(OGRJSONFGReader &oReader,
@@ -39,13 +39,13 @@ OGRJSONFGStreamingParser::OGRJSONFGStreamingParser(OGRJSONFGReader &oReader,
 }
 
 /************************************************************************/
-/*                   ~OGRJSONFGStreamingParser()                        */
+/*                     ~OGRJSONFGStreamingParser()                      */
 /************************************************************************/
 
 OGRJSONFGStreamingParser::~OGRJSONFGStreamingParser() = default;
 
 /************************************************************************/
-/*                OGRJSONFGStreamingParser::Clone()                     */
+/*                  OGRJSONFGStreamingParser::Clone()                   */
 /************************************************************************/
 
 std::unique_ptr<OGRJSONFGStreamingParser> OGRJSONFGStreamingParser::Clone()
@@ -57,7 +57,7 @@ std::unique_ptr<OGRJSONFGStreamingParser> OGRJSONFGStreamingParser::Clone()
 }
 
 /************************************************************************/
-/*                          GetNextFeature()                            */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 std::pair<std::unique_ptr<OGRFeature>, OGRLayer *>
@@ -77,7 +77,7 @@ OGRJSONFGStreamingParser::GetNextFeature()
 }
 
 /************************************************************************/
-/*                          AnalyzeFeature()                            */
+/*                           AnalyzeFeature()                           */
 /************************************************************************/
 
 void OGRJSONFGStreamingParser::GotFeature(json_object *poObj, bool bFirstPass,
@@ -103,7 +103,7 @@ void OGRJSONFGStreamingParser::GotFeature(json_object *poObj, bool bFirstPass,
 }
 
 /************************************************************************/
-/*                            TooComplex()                              */
+/*                             TooComplex()                             */
 /************************************************************************/
 
 void OGRJSONFGStreamingParser::TooComplex()

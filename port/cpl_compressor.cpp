@@ -28,7 +28,7 @@
 #ifdef HAVE_LIBDEFLATE
 #include "libdeflate.h"
 #else
-#include "zlib.h"
+#include "cpl_zlib_header.h"  // to avoid warnings when including zlib.h
 #endif
 
 #ifdef HAVE_LZMA
@@ -590,7 +590,7 @@ static bool CPLLZ4Compressor(const void *input_data, size_t input_size,
             return false;
         }
 
-        int32_t sizeLSB = CPL_LSBWORD32(static_cast<int>(input_size));
+        int32_t sizeLSB = CPL_AS_LSB(static_cast<int32_t>(input_size));
         memcpy(*output_data, &sizeLSB, sizeof(sizeLSB));
 
         *output_size = static_cast<size_t>(header_size + ret);
@@ -681,7 +681,7 @@ static bool CPLLZ4Decompressor(const void *input_data, size_t input_size,
     {
         if (bHeader)
         {
-            int nSize = CPL_LSBSINT32PTR(input_data);
+            int nSize = CPL_FROM_LSB<int32_t>(input_data);
             if (nSize < 0)
             {
                 *output_size = 0;
@@ -704,7 +704,7 @@ static bool CPLLZ4Decompressor(const void *input_data, size_t input_size,
     {
         if (bHeader)
         {
-            int nSize = CPL_LSBSINT32PTR(input_data);
+            int nSize = CPL_FROM_LSB<int32_t>(input_data);
             if (nSize <= 0)
             {
                 *output_size = 0;
@@ -964,58 +964,6 @@ static bool CPLZlibCompressor(const void *input_data, size_t input_size,
 
 namespace
 {
-template <class T> inline T swap(T x)
-{
-    return x;
-}
-
-template <> inline uint16_t swap<uint16_t>(uint16_t x)
-{
-    return CPL_SWAP16(x);
-}
-
-template <> inline int16_t swap<int16_t>(int16_t x)
-{
-    return CPL_SWAP16(x);
-}
-
-template <> inline uint32_t swap<uint32_t>(uint32_t x)
-{
-    return CPL_SWAP32(x);
-}
-
-template <> inline int32_t swap<int32_t>(int32_t x)
-{
-    return CPL_SWAP32(x);
-}
-
-template <> inline uint64_t swap<uint64_t>(uint64_t x)
-{
-    return CPL_SWAP64(x);
-}
-
-template <> inline int64_t swap<int64_t>(int64_t x)
-{
-    return CPL_SWAP64(x);
-}
-
-template <> inline float swap<float>(float x)
-{
-    float ret = x;
-    CPL_SWAP32PTR(&ret);
-    return ret;
-}
-
-template <> inline double swap<double>(double x)
-{
-    double ret = x;
-    CPL_SWAP64PTR(&ret);
-    return ret;
-}
-}  // namespace
-
-namespace
-{
 // Workaround -ftrapv
 template <class T>
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW inline T SubNoOverflow(T left, T right)
@@ -1068,7 +1016,8 @@ static bool DeltaCompressor(const void *input_data, size_t input_size,
         {
             if (bNeedSwap)
             {
-                pDst[i] = swap(SubNoOverflow(swap(pSrc[i]), swap(pSrc[i - 1])));
+                pDst[i] = CPL_SWAP(
+                    SubNoOverflow(CPL_SWAP(pSrc[i]), CPL_SWAP(pSrc[i - 1])));
             }
             else
             {
@@ -1565,7 +1514,8 @@ static bool DeltaDecompressor(const void *input_data, size_t input_size,
         {
             if (bNeedSwap)
             {
-                pDst[i] = swap(AddNoOverflow(swap(pDst[i - 1]), swap(pSrc[i])));
+                pDst[i] = CPL_SWAP(
+                    AddNoOverflow(CPL_SWAP(pDst[i - 1]), CPL_SWAP(pSrc[i])));
             }
             else
             {

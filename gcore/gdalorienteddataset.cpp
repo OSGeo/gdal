@@ -19,7 +19,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                      GDALOrientedRasterBand                          */
+/*                        GDALOrientedRasterBand                        */
 /************************************************************************/
 
 class GDALOrientedRasterBand : public GDALRasterBand
@@ -43,7 +43,7 @@ class GDALOrientedRasterBand : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                      GDALOrientedRasterBand()                        */
+/*                       GDALOrientedRasterBand()                       */
 /************************************************************************/
 
 GDALOrientedRasterBand::GDALOrientedRasterBand(GDALOrientedDataset *poDSIn,
@@ -64,7 +64,7 @@ GDALOrientedRasterBand::GDALOrientedRasterBand(GDALOrientedDataset *poDSIn,
 }
 
 /************************************************************************/
-/*                  FlipLineHorizontally()                              */
+/*                        FlipLineHorizontally()                        */
 /************************************************************************/
 
 static void FlipLineHorizontally(void *pLine, int nDTSize, int nBlockXSize)
@@ -99,7 +99,7 @@ static void FlipLineHorizontally(void *pLine, int nDTSize, int nBlockXSize)
 }
 
 /************************************************************************/
-/*                            IReadBlock()                              */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GDALOrientedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -228,7 +228,7 @@ CPLErr GDALOrientedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                         GDALOrientedDataset()                        */
+/*                        GDALOrientedDataset()                         */
 /************************************************************************/
 
 GDALOrientedDataset::GDALOrientedDataset(GDALDataset *poSrcDataset,
@@ -267,7 +267,7 @@ GDALOrientedDataset::GDALOrientedDataset(GDALDataset *poSrcDataset,
 }
 
 /************************************************************************/
-/*                         GDALOrientedDataset()                        */
+/*                        GDALOrientedDataset()                         */
 /************************************************************************/
 
 GDALOrientedDataset::GDALOrientedDataset(
@@ -279,7 +279,7 @@ GDALOrientedDataset::GDALOrientedDataset(
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList GDALOrientedDataset::GetMetadata(const char *pszDomain)
@@ -321,7 +321,7 @@ CSLConstList GDALOrientedDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                       GetMetadataItem()                              */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *GDALOrientedDataset::GetMetadataItem(const char *pszName,

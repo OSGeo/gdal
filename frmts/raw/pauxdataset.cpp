@@ -243,7 +243,7 @@ PAuxDataset::~PAuxDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr PAuxDataset::Close(GDALProgressFunc, void *)
@@ -450,12 +450,12 @@ CPLErr PAuxDataset::GetGeoTransform(GDALGeoTransform &gt) const
     const double dfLoRightY =
         CPLAtof(CSLFetchNameValue(papszAuxLines, "LoRightY"));
 
-    gt[0] = dfUpLeftX;
-    gt[1] = (dfLoRightX - dfUpLeftX) / GetRasterXSize();
-    gt[2] = 0.0;
-    gt[3] = dfUpLeftY;
-    gt[4] = 0.0;
-    gt[5] = (dfLoRightY - dfUpLeftY) / GetRasterYSize();
+    gt.xorig = dfUpLeftX;
+    gt.xscale = (dfLoRightX - dfUpLeftX) / GetRasterXSize();
+    gt.xrot = 0.0;
+    gt.yorig = dfUpLeftY;
+    gt.yrot = 0.0;
+    gt.yscale = (dfLoRightY - dfUpLeftY) / GetRasterYSize();
 
     return CE_None;
 }

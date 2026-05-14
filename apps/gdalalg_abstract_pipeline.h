@@ -56,7 +56,7 @@ class GDALPipelineStepRunContext
 };
 
 /************************************************************************/
-/*                     GDALPipelineStepAlgorithm                        */
+/*                      GDALPipelineStepAlgorithm                       */
 /************************************************************************/
 
 class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
@@ -140,15 +140,19 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         bool addDefaultArguments = true;
         bool autoOpenInputDatasets = true;
         bool inputDatasetRequired = true;
+        bool inputDatasetPositional = true;
         bool outputDatasetRequired = true;
-        bool addInputLayerNameArgument = true;   // only for vector input
-        bool addUpdateArgument = true;           // only for vector output
-        bool addAppendLayerArgument = true;      // only for vector output
-        bool addOverwriteLayerArgument = true;   // only for vector output
-        bool addUpsertArgument = true;           // only for vector output
-        bool addSkipErrorsArgument = true;       // only for vector output
-        bool addOutputLayerNameArgument = true;  // only for vector output
+        bool addInputLayerNameArgument = true;        // only for vector input
+        bool addUpdateArgument = true;                // only for vector output
+        bool addAppendLayerArgument = true;           // only for vector output
+        bool addNoCreateEmptyLayersArgument = false;  // only for vector output
+        bool addOverwriteLayerArgument = true;        // only for vector output
+        bool addUpsertArgument = true;                // only for vector output
+        bool addSkipErrorsArgument = true;            // only for vector output
+        bool addOutputLayerNameArgument = true;       // only for vector output
+        bool outputLayerNameAvailableInPipelineStep = false;
         int inputDatasetMaxCount = 1;
+        int inputDatasetInputFlags = GADV_NAME | GADV_OBJECT;
         std::string inputDatasetHelpMsg{};
         std::string inputDatasetAlias{};
         std::string inputDatasetMetaVar = "INPUT";
@@ -179,9 +183,21 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
             return *this;
         }
 
+        inline ConstructorOptions &SetInputDatasetPositional(bool b)
+        {
+            inputDatasetPositional = b;
+            return *this;
+        }
+
         inline ConstructorOptions &SetInputDatasetMaxCount(int maxCount)
         {
             inputDatasetMaxCount = maxCount;
+            return *this;
+        }
+
+        inline ConstructorOptions &SetInputDatasetInputFlags(int flags)
+        {
+            inputDatasetInputFlags = flags;
             return *this;
         }
 
@@ -252,6 +268,12 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
             return *this;
         }
 
+        inline ConstructorOptions &SetNoCreateEmptyLayersArgument(bool b)
+        {
+            addNoCreateEmptyLayersArgument = b;
+            return *this;
+        }
+
         inline ConstructorOptions &SetAddSkipErrorsArgument(bool b)
         {
             addSkipErrorsArgument = b;
@@ -261,6 +283,13 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
         inline ConstructorOptions &SetAddOutputLayerNameArgument(bool b)
         {
             addOutputLayerNameArgument = b;
+            return *this;
+        }
+
+        inline ConstructorOptions &
+        SetOutputLayerNameAvailableInPipelineStep(bool b)
+        {
+            outputLayerNameAvailableInPipelineStep = b;
             return *this;
         }
     };
@@ -355,14 +384,19 @@ class GDALPipelineStepAlgorithm /* non final */ : public GDALAlgorithm
     bool m_appendLayer = false;
     bool m_upsert = false;
     bool m_skipErrors = false;
+    bool m_noCreateEmptyLayers = false;
 
     void AddRasterInputArgs(bool openForMixedRasterVector, bool hiddenForCLI);
     void AddRasterOutputArgs(bool hiddenForCLI);
     void AddRasterHiddenInputDatasetArg();
 
     void AddVectorInputArgs(bool hiddenForCLI);
+    void AddVectorHiddenInputDatasetArg();
     void AddVectorOutputArgs(bool hiddenForCLI,
                              bool shortNameOutputLayerAllowed);
+    using GDALAlgorithm::AddOutputLayerNameArg;
+    void AddOutputLayerNameArg(bool hiddenForCLI,
+                               bool shortNameOutputLayerAllowed);
 
   private:
     bool RunImpl(GDALProgressFunc pfnProgress, void *pProgressData) override;
@@ -440,6 +474,7 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
 
     bool m_bInnerPipeline = false;
     bool m_bExpectReadStep = true;
+    int m_nFirstStepWithUnknownInputType = -1;
 
     enum class StepConstraint
     {

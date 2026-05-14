@@ -40,7 +40,7 @@ class GDALVectorClipAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                   GDALVectorClipAlgorithmStandalone                  */
+/*                  GDALVectorClipAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALVectorClipAlgorithmStandalone final : public GDALVectorClipAlgorithm

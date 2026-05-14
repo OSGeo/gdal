@@ -65,7 +65,7 @@ CPL_C_END
 /************************************************************************/
 
 /************************************************************************/
-/*                           UnshiftGeoX()                              */
+/*                            UnshiftGeoX()                             */
 /************************************************************************/
 
 // Renormalize longitudes to [-180,180] range
@@ -87,7 +87,7 @@ static double UnshiftGeoX(const GDALGeoLocTransformInfo *psTransform,
 }
 
 /************************************************************************/
-/*                           UpdateMinMax()                             */
+/*                            UpdateMinMax()                            */
 /************************************************************************/
 
 inline void UpdateMinMax(GDALGeoLocTransformInfo *psTransform, double dfGeoLocX,
@@ -116,7 +116,7 @@ inline void UpdateMinMax(GDALGeoLocTransformInfo *psTransform, double dfGeoLocX,
 }
 
 /************************************************************************/
-/*                                Clamp()                               */
+/*                               Clamp()                                */
 /************************************************************************/
 
 inline double Clamp(double v, double minV, double maxV)
@@ -125,7 +125,7 @@ inline double Clamp(double v, double minV, double maxV)
 }
 
 /************************************************************************/
-/*                    START_ITER_PER_BLOCK()                            */
+/*                        START_ITER_PER_BLOCK()                        */
 /************************************************************************/
 
 #define START_ITER_PER_BLOCK(_rasterXSize, _tileXSize, _rasterYSize,           \
@@ -1588,7 +1588,7 @@ bool GDALGeoLoc<Accessors>::GenerateBackMap(
 /*! @endcond */
 
 /************************************************************************/
-/*                       GDALGeoLocRescale()                            */
+/*                         GDALGeoLocRescale()                          */
 /************************************************************************/
 
 static void GDALGeoLocRescale(char **&papszMD, const char *pszItem,
@@ -1638,7 +1638,7 @@ static void *GDALCreateSimilarGeoLocTransformer(void *hTransformArg,
 }
 
 /************************************************************************/
-/*                  GDALCreateGeolocationMetadata()                     */
+/*                   GDALCreateGeolocationMetadata()                    */
 /************************************************************************/
 
 /** Synthesize the content of a GEOLOCATION metadata domain from a
@@ -2172,7 +2172,7 @@ CPLXMLNode *GDALSerializeGeoLocTransformer(void *pTransformArg)
 }
 
 /************************************************************************/
-/*                   GDALDeserializeGeoLocTransformer()                 */
+/*                  GDALDeserializeGeoLocTransformer()                  */
 /************************************************************************/
 
 void *GDALDeserializeGeoLocTransformer(CPLXMLNode *psTree)

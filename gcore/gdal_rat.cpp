@@ -80,7 +80,7 @@
  */
 
 /************************************************************************/
-/*                        GDALGetRATFieldTypeName()                     */
+/*                      GDALGetRATFieldTypeName()                       */
 /************************************************************************/
 
 /** Return the string representation of a GDALRATFieldType.
@@ -109,7 +109,7 @@ const char *GDALGetRATFieldTypeName(GDALRATFieldType eType)
 }
 
 /************************************************************************/
-/*                        GDALGetRATFieldUsageName()                    */
+/*                      GDALGetRATFieldUsageName()                      */
 /************************************************************************/
 
 /** Return the string representation of a GDALRATFieldUsage.
@@ -209,7 +209,7 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                       GDALRATValuesIOAsDouble()                      */
+/*                      GDALRATValuesIOAsDouble()                       */
 /************************************************************************/
 
 /**
@@ -275,7 +275,7 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                       GDALRATValuesIOAsInteger()                     */
+/*                      GDALRATValuesIOAsInteger()                      */
 /************************************************************************/
 
 /**
@@ -344,7 +344,7 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                       GDALRATValuesIOAsString()                      */
+/*                      GDALRATValuesIOAsString()                       */
 /************************************************************************/
 
 /**
@@ -366,7 +366,7 @@ CPLErr CPL_STDCALL GDALRATValuesIOAsString(GDALRasterAttributeTableH hRAT,
 }
 
 /************************************************************************/
-/*                                ValuesIO()                            */
+/*                              ValuesIO()                              */
 /************************************************************************/
 
 /**
@@ -415,7 +415,7 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                       GDALRATValuesIOAsBoolean()                     */
+/*                      GDALRATValuesIOAsBoolean()                      */
 /************************************************************************/
 
 /**
@@ -438,7 +438,7 @@ CPLErr GDALRATValuesIOAsBoolean(GDALRasterAttributeTableH hRAT,
 }
 
 /************************************************************************/
-/*                                ValuesIO()                            */
+/*                              ValuesIO()                              */
 /************************************************************************/
 
 /**
@@ -487,7 +487,7 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                       GDALRATValuesIOAsDateTime()                    */
+/*                     GDALRATValuesIOAsDateTime()                      */
 /************************************************************************/
 
 /**
@@ -510,7 +510,7 @@ CPLErr GDALRATValuesIOAsDateTime(GDALRasterAttributeTableH hRAT,
 }
 
 /************************************************************************/
-/*                                ValuesIO()                            */
+/*                              ValuesIO()                              */
 /************************************************************************/
 
 /**
@@ -576,7 +576,7 @@ CPLErr GDALRasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 }
 
 /************************************************************************/
-/*                     GDALRATValuesIOAsWKBGeometry()                   */
+/*                    GDALRATValuesIOAsWKBGeometry()                    */
 /************************************************************************/
 
 /**
@@ -604,7 +604,7 @@ CPLErr GDALRATValuesIOAsWKBGeometry(GDALRasterAttributeTableH hRAT,
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   ValuesIOBooleanFromIntoInt()                       */
+/*                     ValuesIOBooleanFromIntoInt()                     */
 /************************************************************************/
 
 CPLErr GDALRasterAttributeTable::ValuesIOBooleanFromIntoInt(
@@ -653,7 +653,7 @@ GDALRasterAttributeTable::DateTimeToString(const GDALRATDateTime &sDateTime)
 }
 
 /************************************************************************/
-/*                           StringToDateTime()                         */
+/*                          StringToDateTime()                          */
 /************************************************************************/
 
 /* static */
@@ -689,7 +689,7 @@ bool GDALRasterAttributeTable::StringToDateTime(const char *pszStr,
 }
 
 /************************************************************************/
-/*                  ValuesIODateTimeFromIntoString()                    */
+/*                   ValuesIODateTimeFromIntoString()                   */
 /************************************************************************/
 
 CPLErr GDALRasterAttributeTable::ValuesIODateTimeFromIntoString(
@@ -772,7 +772,7 @@ GDALRasterAttributeTable::WKTGeometryToWKB(const char *pszWKT)
 }
 
 /************************************************************************/
-/*                     ValuesIOWKBGeometryFromIntoString()              */
+/*                 ValuesIOWKBGeometryFromIntoString()                  */
 /************************************************************************/
 
 CPLErr GDALRasterAttributeTable::ValuesIOWKBGeometryFromIntoString(
@@ -1270,7 +1270,7 @@ CPLXMLNode *GDALRasterAttributeTable::Serialize() const
 }
 
 /************************************************************************/
-/*                             SerializeJSON()                           */
+/*                           SerializeJSON()                            */
 /************************************************************************/
 
 /** Serialize as a JSON object.
@@ -2276,7 +2276,7 @@ double CPL_STDCALL GDALRATGetValueAsDouble(GDALRasterAttributeTableH hRAT,
 }
 
 /************************************************************************/
-/*                        GetValueAsBoolean()                           */
+/*                         GetValueAsBoolean()                          */
 /************************************************************************/
 
 bool GDALDefaultRasterAttributeTable::GetValueAsBoolean(int iRow,
@@ -2323,7 +2323,7 @@ bool GDALDefaultRasterAttributeTable::GetValueAsBoolean(int iRow,
 }
 
 /************************************************************************/
-/*                       GDALRATGetValueAsBoolean()                     */
+/*                      GDALRATGetValueAsBoolean()                      */
 /************************************************************************/
 
 /**
@@ -2345,7 +2345,7 @@ bool GDALRATGetValueAsBoolean(GDALRasterAttributeTableH hRAT, int iRow,
 }
 
 /************************************************************************/
-/*                        GetValueAsDateTime()                          */
+/*                         GetValueAsDateTime()                         */
 /************************************************************************/
 
 GDALRATDateTime
@@ -2392,7 +2392,7 @@ GDALDefaultRasterAttributeTable::GetValueAsDateTime(int iRow, int iField) const
 }
 
 /************************************************************************/
-/*                      GDALRATGetValueAsDateTime()                     */
+/*                     GDALRATGetValueAsDateTime()                      */
 /************************************************************************/
 
 /**
@@ -2429,7 +2429,7 @@ CPLErr GDALRATGetValueAsDateTime(GDALRasterAttributeTableH hRAT, int iRow,
 }
 
 /************************************************************************/
-/*                        GetValueAsWKBGeometry()                       */
+/*                       GetValueAsWKBGeometry()                        */
 /************************************************************************/
 
 const GByte *
@@ -2490,7 +2490,7 @@ GDALDefaultRasterAttributeTable::GetValueAsWKBGeometry(int iRow, int iField,
 }
 
 /************************************************************************/
-/*                     GDALRATGetValueAsWKBGeometry()                   */
+/*                    GDALRATGetValueAsWKBGeometry()                    */
 /************************************************************************/
 
 /**
@@ -2950,7 +2950,7 @@ GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
 }
 
 /************************************************************************/
-/*                      GDALRATSetValueAsDateTime()                     */
+/*                     GDALRATSetValueAsDateTime()                      */
 /************************************************************************/
 
 /**
@@ -3035,7 +3035,7 @@ CPLErr GDALDefaultRasterAttributeTable::SetValue(int iRow, int iField,
 }
 
 /************************************************************************/
-/*                      GDALRATSetValueAsWKBGeometry()                  */
+/*                    GDALRATSetValueAsWKBGeometry()                    */
 /************************************************************************/
 
 /**
@@ -3058,7 +3058,7 @@ CPLErr GDALRATSetValueAsWKBGeometry(GDALRasterAttributeTableH hRAT, int iRow,
 }
 
 /************************************************************************/
-/*                       ChangesAreWrittenToFile()                      */
+/*                      ChangesAreWrittenToFile()                       */
 /************************************************************************/
 
 int GDALDefaultRasterAttributeTable::ChangesAreWrittenToFile()
@@ -3210,7 +3210,7 @@ int GDALDefaultRasterAttributeTable::GetLinearBinning(double *pdfRow0Min,
 }
 
 /************************************************************************/
-/*                          GetTableType()                              */
+/*                            GetTableType()                            */
 /************************************************************************/
 
 /**
@@ -3230,7 +3230,7 @@ GDALRATTableType GDALDefaultRasterAttributeTable::GetTableType() const
 }
 
 /************************************************************************/
-/*                          SetTableType()                              */
+/*                            SetTableType()                            */
 /************************************************************************/
 
 /**
@@ -3308,7 +3308,7 @@ GDALDefaultRasterAttributeTable::CreateColumn(const char *pszFieldName,
 }
 
 /************************************************************************/
-/*                            RemoveStatistics()                        */
+/*                          RemoveStatistics()                          */
 /************************************************************************/
 
 /**
@@ -3386,7 +3386,7 @@ GDALRATClone(const GDALRasterAttributeTableH hRAT)
 }
 
 /************************************************************************/
-/*                            GDALRATSerializeJSON()                    */
+/*                        GDALRATSerializeJSON()                        */
 /************************************************************************/
 
 /**
@@ -3404,7 +3404,7 @@ void *CPL_STDCALL GDALRATSerializeJSON(GDALRasterAttributeTableH hRAT)
 }
 
 /************************************************************************/
-/*                        GDALRATRemoveStatistics()                     */
+/*                      GDALRATRemoveStatistics()                       */
 /************************************************************************/
 
 /**

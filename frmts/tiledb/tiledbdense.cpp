@@ -273,7 +273,7 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
                  "Unable to write using band ordered IRasterIO when using "
-                 "interleave 'ATTRIBUTES'.\n");
+                 "interleave 'ATTRIBUTES'.");
         return CE_Failure;
     }
 
@@ -408,7 +408,7 @@ CPLErr TileDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr TileDBRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
@@ -418,7 +418,7 @@ CPLErr TileDBRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     if (eAccess == GA_ReadOnly)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to write block, dataset is opened read only.\n");
+                 "Unable to write block, dataset is opened read only.");
         return CE_Failure;
     }
 
@@ -641,7 +641,7 @@ CPLErr TileDBRasterBand::SetNoDataValue(double dfNoData)
 }
 
 /************************************************************************/
-/*                           GetOverviewCount()                         */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int TileDBRasterBand::GetOverviewCount()
@@ -655,7 +655,7 @@ int TileDBRasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                              GetOverview()                           */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *TileDBRasterBand::GetOverview(int nIdx)
@@ -679,7 +679,7 @@ GDALRasterBand *TileDBRasterBand::GetOverview(int nIdx)
 /************************************************************************/
 
 /************************************************************************/
-/*                     ~TileDBRasterDataset()                           */
+/*                        ~TileDBRasterDataset()                        */
 /************************************************************************/
 
 TileDBRasterDataset::~TileDBRasterDataset()
@@ -723,7 +723,7 @@ tiledb::Array &TileDBRasterDataset::GetArray(bool bForWrite,
 }
 
 /************************************************************************/
-/*                           IRasterio()                                */
+/*                             IRasterio()                              */
 /************************************************************************/
 
 CPLErr TileDBRasterDataset::IRasterIO(
@@ -812,7 +812,7 @@ CPLErr TileDBRasterDataset::IRasterIO(
 }
 
 /************************************************************************/
-/*                             AddDimensions()                          */
+/*                           AddDimensions()                            */
 /************************************************************************/
 
 CPLErr TileDBRasterDataset::AddDimensions(tiledb::Domain &domain,
@@ -856,7 +856,7 @@ CPLErr TileDBRasterDataset::AddDimensions(tiledb::Domain &domain,
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr TileDBRasterDataset::Close(GDALProgressFunc, void *)
@@ -928,7 +928,7 @@ CPLErr TileDBRasterDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                           TrySaveXML()                               */
+/*                             TrySaveXML()                             */
 /************************************************************************/
 
 CPLErr TileDBRasterDataset::TrySaveXML()
@@ -1108,7 +1108,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
 }
 
 /************************************************************************/
-/*                           TryLoadXML()                               */
+/*                             TryLoadXML()                             */
 /************************************************************************/
 
 CPLErr TileDBRasterDataset::TryLoadXML(CSLConstList papszSiblingFiles)
@@ -1118,7 +1118,7 @@ CPLErr TileDBRasterDataset::TryLoadXML(CSLConstList papszSiblingFiles)
 }
 
 /************************************************************************/
-/*                           TryLoadCachedXML()                               */
+/*                          TryLoadCachedXML()                          */
 /************************************************************************/
 
 CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
@@ -1277,7 +1277,7 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(CSLConstList /*papszSiblingFiles*/,
 }
 
 /************************************************************************/
-/*                             GetMetadata()                            */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList TileDBRasterDataset::GetMetadata(const char *pszDomain)
@@ -1334,7 +1334,7 @@ GDALDataset *TileDBRasterDataset::Open(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                             OpenInternal()                           */
+/*                            OpenInternal()                            */
 /************************************************************************/
 
 GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
@@ -1352,8 +1352,8 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
     const char *pszTimestamp =
         CSLFetchNameValue(poOpenInfo->papszOpenOptions, "TILEDB_TIMESTAMP");
 
-    poDS->bStats =
-        CSLFetchBoolean(poOpenInfo->papszOpenOptions, "STATS", FALSE);
+    poDS->bStats = CPL_TO_BOOL(
+        CSLFetchBoolean(poOpenInfo->papszOpenOptions, "STATS", FALSE));
 
     if (pszConfig != nullptr)
     {
@@ -1735,10 +1735,16 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                 // Create band information objects.
                 for (int i = 1; i <= poDS->nBands; ++i)
                 {
-                    CPLString osAttr =
-                        TILEDB_VALUES + CPLString().Printf("_%i", i);
-                    poDS->SetBand(i,
-                                  new TileDBRasterBand(poDS.get(), i, osAttr));
+                    tiledb::Attribute const &attr = schema.attribute(i - 1);
+                    std::string const &attr_name = attr.name();
+
+                    CPLDebug("TileDB", "Set attribute '%s' from TileDB schema",
+                             attr_name.c_str());
+
+                    GDALRasterBand *band =
+                        new TileDBRasterBand(poDS.get(), i, attr_name.c_str());
+
+                    poDS->SetBand(i, band);
                 }
             }
             else
@@ -1766,7 +1772,7 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                              CreateAttribute()                       */
+/*                          CreateAttribute()                           */
 /************************************************************************/
 
 template <class T, class NoDataT = T>
@@ -1796,7 +1802,7 @@ static tiledb::Attribute CreateAttribute(tiledb::Context &ctx,
 }
 
 /************************************************************************/
-/*                              CreateAttribute()                       */
+/*                          CreateAttribute()                           */
 /************************************************************************/
 
 CPLErr TileDBRasterDataset::CreateAttribute(GDALDataType eType,
@@ -2043,7 +2049,7 @@ CPLErr TileDBRasterDataset::CreateAttribute(GDALDataType eType,
 }
 
 /************************************************************************/
-/*                              SetBlockSize()                          */
+/*                            SetBlockSize()                            */
 /************************************************************************/
 
 void TileDBRasterDataset::SetBlockSize(GDALRasterBand *poBand,
@@ -2156,7 +2162,8 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
         const char *pszBlockYSize =
             CSLFetchNameValue(papszOptions, "BLOCKYSIZE");
         poDS->nBlockYSize = (pszBlockYSize) ? atoi(pszBlockYSize) : 256;
-        poDS->bStats = CSLFetchBoolean(papszOptions, "STATS", FALSE);
+        poDS->bStats =
+            CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "STATS", FALSE));
 
         const char *pszTimestamp =
             CSLFetchNameValue(papszOptions, "TILEDB_TIMESTAMP");
@@ -2336,7 +2343,7 @@ bool TileDBRasterDataset::DeferredCreate(bool bCreateArray)
 }
 
 /************************************************************************/
-/*                          CreateArray()                               */
+/*                            CreateArray()                             */
 /************************************************************************/
 
 void TileDBRasterDataset::CreateArray()
@@ -2573,14 +2580,14 @@ CPLErr TileDBRasterDataset::CopySubDatasets(GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
                                                  int nXSize, int nYSize,
                                                  int nBandsIn,
                                                  GDALDataType eType,
-                                                 char **papszOptions)
+                                                 CSLConstList papszOptions)
 
 {
     CPLString osArrayPath = TileDBDataset::VSI_to_tiledb_uri(pszFilename);
@@ -2640,12 +2647,12 @@ TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                              CreateCopy()                            */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
                                              GDALDataset *poSrcDS, int bStrict,
-                                             char **papszOptions,
+                                             CSLConstList papszOptions,
                                              GDALProgressFunc pfnProgress,
                                              void *pProgressData)
 
@@ -2719,7 +2726,7 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "TileDB driver does not support "
-                     "source dataset with zero bands.");
+                     "source datasets with zero bands.");
             return nullptr;
         }
     }
@@ -2808,7 +2815,7 @@ GDALDataset *TileDBRasterDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            LoadOverviews()                           */
+/*                           LoadOverviews()                            */
 /************************************************************************/
 
 void TileDBRasterDataset::LoadOverviews()
@@ -2859,7 +2866,7 @@ void TileDBRasterDataset::LoadOverviews()
 }
 
 /************************************************************************/
-/*                            IBuildOverviews()                         */
+/*                          IBuildOverviews()                           */
 /************************************************************************/
 
 CPLErr TileDBRasterDataset::IBuildOverviews(

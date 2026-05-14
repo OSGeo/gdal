@@ -119,6 +119,7 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DSQLITE_UTF8=1 \
         -DSQLITE_DETERMINISTIC=0x000000800 \
         -DSQLITE_INNOCUOUS=0x000200000 \
+        -DMBTILES_RASTER_CREATION_OPTIONS="" \
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
         -I "${CPL_CONFIG_H_DIR}" \
@@ -146,6 +147,9 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
 done
 
 ret_code=0
+
+grep -v "libdivide" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 grep -v "unmatchedSuppression" ${LOG_FILE} | grep -v -e " yacc.c" -e PublicDecompWT -e "kdu_cache_wrapper.h" > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
@@ -188,6 +192,14 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "ogrlinestring.cpp:.*warning,accessMoved"  ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "ogrgeometrycollection.cpp:.*warning,accessMoved"  ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
+# Ignore dangerousTypeCast in ntf
+grep -v -e "ogr/ogrsf_frmts/ntf/" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
+# Ignore port/cpl_port.h:176,error,syntaxError,syntax error
+grep -v "port/cpl_port.h:176,error,syntaxError,syntax error" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 if grep "null pointer" ${LOG_FILE} ; then

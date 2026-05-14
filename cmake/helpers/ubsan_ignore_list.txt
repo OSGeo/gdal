@@ -1,0 +1,6 @@
+[unsigned-integer-overflow]
+# std::from_chars() with integer output generates unsigned integer overflow
+fun:*from_chars*
+# std::string::compare() generates unsigned integer overflow
+fun:*basic_string*compare*
+fun:*__do_uninit_fill_n*

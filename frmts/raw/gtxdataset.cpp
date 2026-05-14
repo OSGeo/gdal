@@ -83,7 +83,7 @@ class GTXDataset final : public RawDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -107,7 +107,7 @@ class GTXRasterBand final : public RawRasterBand
 };
 
 /************************************************************************/
-/*                            GTXRasterBand()                           */
+/*                           GTXRasterBand()                            */
 /************************************************************************/
 
 GTXRasterBand::GTXRasterBand(GDALDataset *poDSIn, int nBandIn,
@@ -162,7 +162,7 @@ GTXDataset::~GTXDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GTXDataset::Close(GDALProgressFunc, void *)
@@ -225,11 +225,11 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Read the header.                                                */
     /* -------------------------------------------------------------------- */
-    double gt[6] = {0};
-    CPL_IGNORE_RET_VAL(VSIFReadL(&gt[3], 8, 1, poDS->fpImage));
-    CPL_IGNORE_RET_VAL(VSIFReadL(&gt[0], 8, 1, poDS->fpImage));
-    CPL_IGNORE_RET_VAL(VSIFReadL(&gt[5], 8, 1, poDS->fpImage));
-    CPL_IGNORE_RET_VAL(VSIFReadL(&gt[1], 8, 1, poDS->fpImage));
+    GDALGeoTransform gt;
+    CPL_IGNORE_RET_VAL(VSIFReadL(&gt.yorig, 8, 1, poDS->fpImage));
+    CPL_IGNORE_RET_VAL(VSIFReadL(&gt.xorig, 8, 1, poDS->fpImage));
+    CPL_IGNORE_RET_VAL(VSIFReadL(&gt.yscale, 8, 1, poDS->fpImage));
+    CPL_IGNORE_RET_VAL(VSIFReadL(&gt.xscale, 8, 1, poDS->fpImage));
 
     CPL_IGNORE_RET_VAL(VSIFReadL(&(poDS->nRasterYSize), 4, 1, poDS->fpImage));
     CPL_IGNORE_RET_VAL(VSIFReadL(&(poDS->nRasterXSize), 4, 1, poDS->fpImage));
@@ -237,27 +237,27 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
     CPL_MSBPTR32(&(poDS->nRasterYSize));
     CPL_MSBPTR32(&(poDS->nRasterXSize));
 
-    CPL_MSBPTR64(&gt[0]);
-    CPL_MSBPTR64(&gt[1]);
-    CPL_MSBPTR64(&gt[3]);
-    CPL_MSBPTR64(&gt[5]);
+    CPL_MSBPTR64(&gt.xorig);
+    CPL_MSBPTR64(&gt.xscale);
+    CPL_MSBPTR64(&gt.yorig);
+    CPL_MSBPTR64(&gt.yscale);
 
     poDS->m_gt = GDALGeoTransform(gt);
-    poDS->m_gt[3] +=
-        poDS->m_gt[5] * (static_cast<double>(poDS->nRasterYSize) - 1);
+    poDS->m_gt.yorig +=
+        poDS->m_gt.yscale * (static_cast<double>(poDS->nRasterYSize) - 1);
 
-    poDS->m_gt[0] -= poDS->m_gt[1] * 0.5;
-    poDS->m_gt[3] += poDS->m_gt[5] * 0.5;
+    poDS->m_gt.xorig -= poDS->m_gt.xscale * 0.5;
+    poDS->m_gt.yorig += poDS->m_gt.yscale * 0.5;
 
-    poDS->m_gt[5] *= -1;
+    poDS->m_gt.yscale *= -1;
 
     if (CPLFetchBool(poOpenInfo->papszOpenOptions,
                      "SHIFT_ORIGIN_IN_MINUS_180_PLUS_180", false))
     {
-        if (poDS->m_gt[0] < -180.0 - poDS->m_gt[1])
-            poDS->m_gt[0] += 360.0;
-        else if (poDS->m_gt[0] > 180.0)
-            poDS->m_gt[0] -= 360.0;
+        if (poDS->m_gt.xorig < -180.0 - poDS->m_gt.xscale)
+            poDS->m_gt.xorig += 360.0;
+        else if (poDS->m_gt.xorig > 180.0)
+            poDS->m_gt.xorig -= 360.0;
     }
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
@@ -329,7 +329,7 @@ CPLErr GTXDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 CPLErr GTXDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Attempt to write skewed or rotated geotransform to gtx.");
@@ -338,10 +338,10 @@ CPLErr GTXDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
     m_gt = gt;
 
-    const double dfXOrigin = m_gt[0] + 0.5 * m_gt[1];
-    const double dfYOrigin = m_gt[3] + (nRasterYSize - 0.5) * m_gt[5];
-    const double dfWidth = m_gt[1];
-    const double dfHeight = -m_gt[5];
+    const double dfXOrigin = m_gt.xorig + 0.5 * m_gt.xscale;
+    const double dfYOrigin = m_gt.yorig + (nRasterYSize - 0.5) * m_gt.yscale;
+    const double dfWidth = m_gt.xscale;
+    const double dfHeight = -m_gt.yscale;
 
     unsigned char header[32] = {'\0'};
     memcpy(header + 0, &dfYOrigin, 8);
@@ -373,7 +373,7 @@ CPLErr GTXDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 GDALDataset *GTXDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int /* nBands */, GDALDataType eType,
-                                char ** /* papszOptions */)
+                                CSLConstList /* papszOptions */)
 {
     if (eType != GDT_Float32)
     {

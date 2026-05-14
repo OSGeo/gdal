@@ -83,10 +83,11 @@ GDALDataset *PCRasterDataset::open(GDALOpenInfo *info)
   This function always writes rasters using CR_UINT1, CR_INT4 or CR_REAL4
   cell representations.
 */
-GDALDataset *
-PCRasterDataset::createCopy(char const *filename, GDALDataset *source,
-                            CPL_UNUSED int strict, CPL_UNUSED char **options,
-                            GDALProgressFunc progress, void *progressData)
+GDALDataset *PCRasterDataset::createCopy(char const *filename,
+                                         GDALDataset *source,
+                                         CPL_UNUSED int strict, CSLConstList,
+                                         GDALProgressFunc progress,
+                                         void *progressData)
 {
     // Checks.
     const int nrBands = source->GetRasterCount();
@@ -142,11 +143,11 @@ PCRasterDataset::createCopy(char const *filename, GDALDataset *source,
     GDALGeoTransform gt;
     if (source->GetGeoTransform(gt) == CE_None)
     {
-        if (gt[2] == 0.0 && gt[4] == 0.0)
+        if (gt.xrot == 0.0 && gt.yrot == 0.0)
         {
-            west = static_cast<REAL8>(gt[0]);
-            north = static_cast<REAL8>(gt[3]);
-            cellSize = static_cast<REAL8>(gt[1]);
+            west = static_cast<REAL8>(gt.xorig);
+            north = static_cast<REAL8>(gt.yorig);
+            cellSize = static_cast<REAL8>(gt.xscale);
         }
     }
 
@@ -344,14 +345,14 @@ PCRasterDataset::~PCRasterDataset()
 CPLErr PCRasterDataset::GetGeoTransform(GDALGeoTransform &gt) const
 {
     // x = west + nrCols * cellsize
-    gt[0] = d_west;
-    gt[1] = d_cellSize;
-    gt[2] = 0.0;
+    gt.xorig = d_west;
+    gt.xscale = d_cellSize;
+    gt.xrot = 0.0;
 
     // y = north + nrRows * -cellsize
-    gt[3] = d_north;
-    gt[4] = 0.0;
-    gt[5] = -1.0 * d_cellSize;
+    gt.yorig = d_north;
+    gt.yrot = 0.0;
+    gt.yscale = -1.0 * d_cellSize;
 
     return CE_None;
 }
@@ -398,7 +399,7 @@ double PCRasterDataset::defaultNoDataValue() const
 GDALDataset *PCRasterDataset::create(const char *filename, int nr_cols,
                                      int nr_rows, int nrBands,
                                      GDALDataType gdalType,
-                                     char **papszParamList)
+                                     CSLConstList papszParamList)
 {
     // Checks
     if (nrBands != 1)
@@ -497,7 +498,7 @@ GDALDataset *PCRasterDataset::create(const char *filename, int nr_cols,
 
 CPLErr PCRasterDataset::SetGeoTransform(const GDALGeoTransform &gt)
 {
-    if ((gt[2] != 0.0) || (gt[4] != 0.0))
+    if ((gt.xrot != 0.0) || (gt.yrot != 0.0))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "PCRaster driver: "
@@ -505,7 +506,7 @@ CPLErr PCRasterDataset::SetGeoTransform(const GDALGeoTransform &gt)
         return CE_Failure;
     }
 
-    if (gt[1] != gt[5] * -1.0)
+    if (gt.xscale != gt.yscale * -1.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "PCRaster driver: "
@@ -513,9 +514,9 @@ CPLErr PCRasterDataset::SetGeoTransform(const GDALGeoTransform &gt)
         return CE_Failure;
     }
 
-    d_west = gt[0];
-    d_north = gt[3];
-    d_cellSize = gt[1];
+    d_west = gt.xorig;
+    d_north = gt.yorig;
+    d_cellSize = gt.xscale;
     d_location_changed = true;
 
     return CE_None;

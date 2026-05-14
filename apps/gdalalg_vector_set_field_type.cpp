@@ -20,7 +20,7 @@
 #endif
 
 /************************************************************************/
-/*                      GDALVectorSetFieldTypeAlgorithm()               */
+/*                  GDALVectorSetFieldTypeAlgorithm()                   */
 /************************************************************************/
 
 GDALVectorSetFieldTypeAlgorithm::GDALVectorSetFieldTypeAlgorithm(
@@ -34,21 +34,23 @@ GDALVectorSetFieldTypeAlgorithm::GDALVectorSetFieldTypeAlgorithm(
                              .SetMutualExclusionGroup("name-or-type");
     SetAutoCompleteFunctionForFieldName(fieldNameArg, layerArg, m_inputDataset);
     AddFieldTypeSubtypeArg(&m_srcFieldType, &m_srcFieldSubType,
-                           &m_srcFieldTypeSubTypeStr, "src-field-type",
+                           &m_srcFieldTypeSubTypeStr, "input-field-type",
                            _("Source field type or subtype"))
+        .AddHiddenAlias("src-field-type")
         .SetRequired()
         .SetMutualExclusionGroup("name-or-type");
     AddFieldTypeSubtypeArg(&m_newFieldType, &m_newFieldSubType,
                            &m_newFieldTypeSubTypeStr, std::string(),
                            _("Target field type or subtype"))
-        .AddAlias("dst-field-type")
+        .AddHiddenAlias("dst-field-type")
+        .AddAlias("output-field-type")
         .SetRequired();
     AddValidationAction(
         [this] { return m_inputDataset.empty() || GlobalValidation(); });
 }
 
 /************************************************************************/
-/*                     Get_OGR_SCHEMA_OpenOption_Layer()                */
+/*                  Get_OGR_SCHEMA_OpenOption_Layer()                   */
 /************************************************************************/
 
 CPLJSONObject
@@ -81,7 +83,7 @@ GDALVectorSetFieldTypeAlgorithm::Get_OGR_SCHEMA_OpenOption_Layer() const
 }
 
 /************************************************************************/
-/*                            GlobalValidation()                        */
+/*                          GlobalValidation()                          */
 /************************************************************************/
 
 bool GDALVectorSetFieldTypeAlgorithm::GlobalValidation() const
@@ -109,7 +111,7 @@ bool GDALVectorSetFieldTypeAlgorithm::GlobalValidation() const
 }
 
 /************************************************************************/
-/*                     GDALVectorSetFieldTypeAlgorithmLayer             */
+/*                 GDALVectorSetFieldTypeAlgorithmLayer                 */
 /************************************************************************/
 
 namespace
@@ -125,12 +127,9 @@ class GDALVectorSetFieldTypeAlgorithmLayer final
                                          const OGRFieldSubType srcFieldSubType,
                                          const OGRFieldType newFieldType,
                                          const OGRFieldSubType newFieldSubType)
-        : GDALVectorPipelineOutputLayer(oSrcLayer)
+        : GDALVectorPipelineOutputLayer(oSrcLayer),
+          m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
     {
-
-        m_poFeatureDefn = oSrcLayer.GetLayerDefn()->Clone();
-        m_poFeatureDefn->Reference();
-
         if (activeLayer.empty() || activeLayer == GetDescription())
         {
             if (!fieldName.empty())
@@ -177,14 +176,9 @@ class GDALVectorSetFieldTypeAlgorithmLayer final
         }
     }
 
-    ~GDALVectorSetFieldTypeAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
-    }
-
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
     void TranslateFeature(
@@ -197,7 +191,8 @@ class GDALVectorSetFieldTypeAlgorithmLayer final
         }
         else
         {
-            auto poDstFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
+            auto poDstFeature =
+                std::make_unique<OGRFeature>(m_poFeatureDefn.get());
             const auto result{poDstFeature->SetFrom(
                 poSrcFeature.get(), m_identityMap.data(), false, true)};
             if (result != OGRERR_NONE)
@@ -230,7 +225,7 @@ class GDALVectorSetFieldTypeAlgorithmLayer final
     }
 
   private:
-    OGRFeatureDefn *m_poFeatureDefn = nullptr;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
     int m_fieldIndex{-1};
     bool m_passThrough = true;
     std::vector<int> m_identityMap{};

@@ -17,7 +17,11 @@
 
 #include <cstdint>
 #include <initializer_list>
+#include <iterator>
 #include <string>
+#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#include <string_view>
+#endif
 #include <vector>
 
 /**
@@ -114,6 +118,11 @@ class CPL_DLL CPLJSONObject
   public:
     // setters
     void Add(const std::string &osName, const std::string &osValue);
+#if defined(DOXYGEN_SKIP) || __cplusplus >= 201703L ||                         \
+    (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+
+    void Add(const std::string &osName, std::string_view svValue);
+#endif
     void Add(const std::string &osName, const char *pszValue);
     void Add(const std::string &osName, double dfValue);
     void Add(const std::string &osName, int nValue);
@@ -186,6 +195,7 @@ class CPL_DLL CPLJSONObject
     void DeleteNoSplitName(const std::string &osName);
     CPLJSONArray GetArray(const std::string &osName) const;
     CPLJSONObject GetObj(const std::string &osName) const;
+    CPLJSONObject GetObjNoSplitName(const std::string &osName) const;
     CPLJSONObject operator[](const std::string &osName) const;
     Type GetType() const;
 
@@ -246,9 +256,28 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
         mutable CPLJSONObject m_oObj{};
 
       public:
+        using iterator_category = std::input_iterator_tag;
+        using value_type = CPLJSONObject;
+        using difference_type = std::ptrdiff_t;
+        using pointer = CPLJSONObject *;
+        using reference = CPLJSONObject &;
+
         ConstIterator(const CPLJSONArray &oSelf, bool bStart)
             : m_oSelf(oSelf), m_nIdx(bStart ? 0 : oSelf.Size())
         {
+        }
+
+        ConstIterator(const ConstIterator &) = default;
+
+        ConstIterator &operator=(const ConstIterator &other)
+        {
+            if (this != &other)
+            {
+                CPLAssert(&m_oSelf == &(other.m_oSelf));
+                m_nIdx = other.m_nIdx;
+                m_oObj = other.m_oObj;
+            }
+            return *this;
         }
 
         ~ConstIterator() = default;
@@ -279,9 +308,21 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     /*! @endcond */
   public:
     int Size() const;
+
+    //! Return the size of the array
+    inline size_t size() const
+    {
+        return static_cast<size_t>(Size());
+    }
+
     void AddNull();
     void Add(const CPLJSONObject &oValue);
     void Add(const std::string &osValue);
+#if defined(DOXYGEN_SKIP) || __cplusplus >= 201703L ||                         \
+    (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+
+    void Add(std::string_view svValue);
+#endif
     void Add(const char *pszValue);
     void Add(double dfValue);
     void Add(int nValue);
@@ -291,6 +332,9 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
 
     CPLJSONObject operator[](int nIndex);
     const CPLJSONObject operator[](int nIndex) const;
+
+    CPLJSONObject operator[](size_t nIndex);
+    const CPLJSONObject operator[](size_t nIndex) const;
 
     /** Iterator to first element */
     ConstIterator begin() const

@@ -47,7 +47,9 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Login to GHCR
         if: env.CONTAINER_REGISTRY == 'ghcr.io'
@@ -107,13 +109,13 @@ jobs:
       # different architecture.
       - name: Restore build cache
         id: restore-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.run_id }}
+          key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}
-            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}
+            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-
+            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-
 
       - name: Prepare ccache
         run: |
@@ -147,7 +149,7 @@ jobs:
             ccache -s
 
       - name: Save build cache
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ${{ github.workspace }}/.ccache
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}

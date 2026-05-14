@@ -48,7 +48,7 @@ OGRSQLiteSingleFeatureLayer::OGRSQLiteSingleFeatureLayer(
 }
 
 /************************************************************************/
-/*                   ~OGRSQLiteSingleFeatureLayer()                     */
+/*                    ~OGRSQLiteSingleFeatureLayer()                    */
 /************************************************************************/
 
 OGRSQLiteSingleFeatureLayer::~OGRSQLiteSingleFeatureLayer()

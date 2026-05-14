@@ -18,6 +18,7 @@
 #include <string.h>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -38,9 +39,9 @@
 #include "filegdb_fielddomain.h"
 #include "filegdb_relationship.h"
 
-/***********************************************************************/
-/*                      OGROpenFileGDBGroup                            */
-/***********************************************************************/
+/************************************************************************/
+/*                         OGROpenFileGDBGroup                          */
+/************************************************************************/
 
 class OGROpenFileGDBGroup final : public GDALGroup
 {
@@ -96,7 +97,7 @@ OGROpenFileGDBDataSource::~OGROpenFileGDBDataSource()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr OGROpenFileGDBDataSource::Close(GDALProgressFunc, void *)
@@ -501,9 +502,9 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo,
     return true;
 }
 
-/***********************************************************************/
-/*                             AddLayer()                              */
-/***********************************************************************/
+/************************************************************************/
+/*                              AddLayer()                              */
+/************************************************************************/
 
 OGRLayer *OGROpenFileGDBDataSource::AddLayer(
     const CPLString &osName, int nInterestTable, int &nCandidateLayers,
@@ -647,9 +648,9 @@ OGRLayer *OGROpenFileGDBGroup::OpenVectorLayer(const std::string &osName,
     return nullptr;
 }
 
-/***********************************************************************/
-/*                         OpenFileGDBv10()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                           OpenFileGDBv10()                           */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::OpenFileGDBv10(
     int iGDBItems, int nInterestTable, const GDALOpenInfo *poOpenInfo,
@@ -698,10 +699,12 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
         oMapPathToFeatureDataset;
 
     // First pass to collect FeatureDatasets
+    std::set<int> oSetBrokenRos;
     for (int i = 0; i < oTable.GetTotalRecordCount(); i++)
     {
-        if (!oTable.SelectRow(i))
+        if (!oTable.SelectRow(i, /* bWarnOnlyOnDeletedRows = */ true))
         {
+            oSetBrokenRos.insert(i);
             if (oTable.HasGotError())
                 break;
             continue;
@@ -780,6 +783,9 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
     bool bRet = true;
     for (int i = 0; i < oTable.GetTotalRecordCount(); i++)
     {
+        if (cpl::contains(oSetBrokenRos, i))
+            continue;
+
         if (!oTable.SelectRow(i))
         {
             if (oTable.HasGotError())
@@ -968,9 +974,9 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
     return bRet;
 }
 
-/***********************************************************************/
-/*                         OpenFileGDBv9()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                           OpenFileGDBv9()                            */
+/************************************************************************/
 
 int OGROpenFileGDBDataSource::OpenFileGDBv9(
     int iGDBFeatureClasses, int iGDBObjectClasses, int nInterestTable,
@@ -1161,9 +1167,9 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(
     return bRet;
 }
 
-/***********************************************************************/
-/*                         TestCapability()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
 
 int OGROpenFileGDBDataSource::TestCapability(const char *pszCap) const
 {
@@ -1189,9 +1195,9 @@ int OGROpenFileGDBDataSource::TestCapability(const char *pszCap) const
     return FALSE;
 }
 
-/***********************************************************************/
-/*                            GetLayer()                               */
-/***********************************************************************/
+/************************************************************************/
+/*                              GetLayer()                              */
+/************************************************************************/
 
 const OGRLayer *OGROpenFileGDBDataSource::GetLayer(int iIndex) const
 {
@@ -1200,9 +1206,9 @@ const OGRLayer *OGROpenFileGDBDataSource::GetLayer(int iIndex) const
     return m_apoLayers[iIndex].get();
 }
 
-/***********************************************************************/
-/*                      BuildLayerFromName()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                         BuildLayerFromName()                         */
+/************************************************************************/
 
 std::unique_ptr<OGROpenFileGDBLayer>
 OGROpenFileGDBDataSource::BuildLayerFromName(const char *pszName)
@@ -1223,9 +1229,9 @@ OGROpenFileGDBDataSource::BuildLayerFromName(const char *pszName)
     return nullptr;
 }
 
-/***********************************************************************/
-/*                          GetLayerByName()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                           GetLayerByName()                           */
+/************************************************************************/
 
 OGROpenFileGDBLayer *
 OGROpenFileGDBDataSource::GetLayerByName(const char *pszName)
@@ -1251,9 +1257,9 @@ OGROpenFileGDBDataSource::GetLayerByName(const char *pszName)
     return nullptr;
 }
 
-/***********************************************************************/
-/*                          IsPrivateLayerName()                       */
-/***********************************************************************/
+/************************************************************************/
+/*                         IsPrivateLayerName()                         */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::IsPrivateLayerName(const CPLString &osName)
 {
@@ -1265,9 +1271,9 @@ bool OGROpenFileGDBDataSource::IsPrivateLayerName(const CPLString &osName)
                                          osLCTableName.substr(0, 4) == "vat_");
 }
 
-/***********************************************************************/
-/*                          IsLayerPrivate()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                           IsLayerPrivate()                           */
+/************************************************************************/
 
 bool OGROpenFileGDBDataSource::IsLayerPrivate(int iLayer) const
 {
@@ -1278,9 +1284,9 @@ bool OGROpenFileGDBDataSource::IsLayerPrivate(int iLayer) const
     return IsPrivateLayerName(osName);
 }
 
-/***********************************************************************/
-/*                           GetMetadata()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                            GetMetadata()                             */
+/************************************************************************/
 
 CSLConstList OGROpenFileGDBDataSource::GetMetadata(const char *pszDomain)
 {
@@ -1290,7 +1296,7 @@ CSLConstList OGROpenFileGDBDataSource::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                 OGROpenFileGDBSingleFeatureLayer()                   */
+/*                  OGROpenFileGDBSingleFeatureLayer()                  */
 /************************************************************************/
 
 OGROpenFileGDBSingleFeatureLayer::OGROpenFileGDBSingleFeatureLayer(
@@ -1331,9 +1337,9 @@ OGRFeature *OGROpenFileGDBSingleFeatureLayer::GetNextFeature()
     return poFeature;
 }
 
-/***********************************************************************/
-/*                     OGROpenFileGDBSimpleSQLLayer                    */
-/***********************************************************************/
+/************************************************************************/
+/*                     OGROpenFileGDBSimpleSQLLayer                     */
+/************************************************************************/
 
 class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
 {
@@ -1384,9 +1390,9 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
     GIntBig GetFeatureCount(int bForce) override;
 };
 
-/***********************************************************************/
-/*                    OGROpenFileGDBSimpleSQLLayer()                   */
-/***********************************************************************/
+/************************************************************************/
+/*                    OGROpenFileGDBSimpleSQLLayer()                    */
+/************************************************************************/
 
 OGROpenFileGDBSimpleSQLLayer::OGROpenFileGDBSimpleSQLLayer(
     OGRLayer *poBaseLayerIn, FileGDBIterator *poIterIn, int nColumns,
@@ -1435,9 +1441,9 @@ OGROpenFileGDBSimpleSQLLayer::OGROpenFileGDBSimpleSQLLayer(
     OGROpenFileGDBSimpleSQLLayer::ResetReading();
 }
 
-/***********************************************************************/
-/*                   ~OGROpenFileGDBSimpleSQLLayer()                   */
-/***********************************************************************/
+/************************************************************************/
+/*                   ~OGROpenFileGDBSimpleSQLLayer()                    */
+/************************************************************************/
 
 OGROpenFileGDBSimpleSQLLayer::~OGROpenFileGDBSimpleSQLLayer()
 {
@@ -1448,9 +1454,9 @@ OGROpenFileGDBSimpleSQLLayer::~OGROpenFileGDBSimpleSQLLayer()
     delete poIter;
 }
 
-/***********************************************************************/
-/*                          ResetReading()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
 
 void OGROpenFileGDBSimpleSQLLayer::ResetReading()
 {
@@ -1459,9 +1465,9 @@ void OGROpenFileGDBSimpleSQLLayer::ResetReading()
     m_nIterated = 0;
 }
 
-/***********************************************************************/
-/*                          GetFeature()                               */
-/***********************************************************************/
+/************************************************************************/
+/*                             GetFeature()                             */
+/************************************************************************/
 
 OGRFeature *OGROpenFileGDBSimpleSQLLayer::GetFeature(GIntBig nFeatureId)
 {
@@ -1481,9 +1487,9 @@ OGRFeature *OGROpenFileGDBSimpleSQLLayer::GetFeature(GIntBig nFeatureId)
     }
 }
 
-/***********************************************************************/
-/*                         GetNextFeature()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
 
 OGRFeature *OGROpenFileGDBSimpleSQLLayer::GetNextFeature()
 {
@@ -1517,9 +1523,9 @@ OGRFeature *OGROpenFileGDBSimpleSQLLayer::GetNextFeature()
     }
 }
 
-/***********************************************************************/
-/*                         GetFeatureCount()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
 
 GIntBig OGROpenFileGDBSimpleSQLLayer::GetFeatureCount(int bForce)
 {
@@ -1543,9 +1549,9 @@ GIntBig OGROpenFileGDBSimpleSQLLayer::GetFeatureCount(int bForce)
     return OGRLayer::GetFeatureCount(bForce);
 }
 
-/***********************************************************************/
-/*                         TestCapability()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
 
 int OGROpenFileGDBSimpleSQLLayer::TestCapability(const char *pszCap) const
 {
@@ -1570,9 +1576,9 @@ int OGROpenFileGDBSimpleSQLLayer::TestCapability(const char *pszCap) const
     return FALSE;
 }
 
-/***********************************************************************/
-/*                            ExecuteSQL()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                             ExecuteSQL()                             */
+/************************************************************************/
 
 OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
                                                OGRGeometry *poSpatialFilter,
@@ -2076,18 +2082,18 @@ OGRLayer *OGROpenFileGDBDataSource::ExecuteSQL(const char *pszSQLCommand,
     return GDALDataset::ExecuteSQL(pszSQLCommand, poSpatialFilter, pszDialect);
 }
 
-/***********************************************************************/
-/*                           ReleaseResultSet()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                          ReleaseResultSet()                          */
+/************************************************************************/
 
 void OGROpenFileGDBDataSource::ReleaseResultSet(OGRLayer *poResultsSet)
 {
     delete poResultsSet;
 }
 
-/***********************************************************************/
-/*                           GetFileList()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
 
 char **OGROpenFileGDBDataSource::GetFileList()
 {
@@ -2122,10 +2128,10 @@ char **OGROpenFileGDBDataSource::GetFileList()
 }
 
 /************************************************************************/
-/*                           BuildSRS()                                 */
+/*                              BuildSRS()                              */
 /************************************************************************/
 
-OGRSpatialReference *
+OGRSpatialReferenceRefCountedPtr
 OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
 {
     const char *pszWKT =
@@ -2137,7 +2143,7 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
     int nLatestWKID =
         atoi(CPLGetXMLValue(psInfo, "SpatialReference.LatestWKID", "0"));
 
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+    OGRSpatialReferenceRefCountedPtr poSRS;
     if (nWKID > 0 || nLatestWKID > 0)
     {
         const auto ImportFromCode =
@@ -2191,9 +2197,7 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
             return bSuccess;
         };
 
-        poSRS =
-            std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>(
-                new OGRSpatialReference());
+        poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         if (!ImportFromCode(*poSRS.get(), nLatestWKID, nWKID))
         {
@@ -2207,15 +2211,12 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
                 atoi(CPLGetXMLValue(psInfo, "SpatialReference.VCSWKID", "0"));
             if (nVCSWKID > 0 || nLatestVCSWKID > 0)
             {
-                auto poVertSRS = std::unique_ptr<OGRSpatialReference,
-                                                 OGRSpatialReferenceReleaser>(
-                    new OGRSpatialReference());
+                auto poVertSRS =
+                    OGRSpatialReferenceRefCountedPtr::makeInstance();
                 if (ImportFromCode(*poVertSRS.get(), nLatestVCSWKID, nVCSWKID))
                 {
                     auto poCompoundSRS =
-                        std::unique_ptr<OGRSpatialReference,
-                                        OGRSpatialReferenceReleaser>(
-                            new OGRSpatialReference());
+                        OGRSpatialReferenceRefCountedPtr::makeInstance();
                     if (poCompoundSRS->SetCompoundCS(
                             std::string(poSRS->GetName())
                                 .append(" + ")
@@ -2240,28 +2241,28 @@ OGROpenFileGDBDataSource::BuildSRS(const CPLXMLNode *psInfo)
         (poSRS == nullptr ||
          (strstr(pszWKT, "VERTCS") && !poSRS->IsCompound())))
     {
-        poSRS.reset(BuildSRS(pszWKT));
+        poSRS = BuildSRS(pszWKT);
     }
-    return poSRS.release();
+    return poSRS;
 }
 
 /************************************************************************/
-/*                           BuildSRS()                                 */
+/*                              BuildSRS()                              */
 /************************************************************************/
 
-OGRSpatialReference *OGROpenFileGDBDataSource::BuildSRS(const char *pszWKT)
+OGRSpatialReferenceRefCountedPtr
+OGROpenFileGDBDataSource::BuildSRS(const char *pszWKT)
 {
-    std::shared_ptr<OGRSpatialReference> poSharedObj;
-    m_oCacheWKTToSRS.tryGet(pszWKT, poSharedObj);
-    if (poSharedObj)
-        return poSharedObj->Clone();
+    OGRSpatialReferenceRefCountedPtr poSRS;
+    m_oCacheWKTToSRS.tryGet(pszWKT, poSRS);
+    if (poSRS)
+        return poSRS;
 
-    OGRSpatialReference *poSRS = new OGRSpatialReference();
+    poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (poSRS->importFromWkt(pszWKT) != OGRERR_NONE)
     {
-        delete poSRS;
-        poSRS = nullptr;
+        poSRS.reset();
     }
     if (poSRS != nullptr)
     {
@@ -2270,12 +2271,10 @@ OGRSpatialReference *OGROpenFileGDBDataSource::BuildSRS(const char *pszWKT)
             auto poSRSMatch = poSRS->FindBestMatch(100);
             if (poSRSMatch)
             {
-                poSRS->Release();
-                poSRS = poSRSMatch;
+                poSRS.reset(poSRSMatch, /* add_ref = */ false);
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             }
-            m_oCacheWKTToSRS.insert(
-                pszWKT, std::shared_ptr<OGRSpatialReference>(poSRS->Clone()));
+            m_oCacheWKTToSRS.insert(pszWKT, poSRS);
         }
         else
         {

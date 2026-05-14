@@ -157,7 +157,7 @@ Standard Options
     .. include:: gdal_options/if.rst
 
     .. include:: gdal_options/lco.rst
-       
+
     .. include:: gdal_options/oo.rst
 
     .. include:: gdal_options/of_vector.rst
@@ -174,12 +174,18 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 
 Examples
 --------
 
 .. example::
    :title: Compute a buffer of one km around input geometries (assuming the CRS is in meters)
+   :id: gdal-vector-buffer-1km
 
    .. code-block:: bash
 

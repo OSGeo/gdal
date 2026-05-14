@@ -187,7 +187,7 @@ static int mdl_LocalUnpack(unsigned char *local, sInt4 locallen,
       f_dataType = local[11];
       local += 12;
       BytesUsed += 12;
-      if (locallen < BytesUsed + ((numBits * numVal) + 7) / 8) {
+      if (locallen < BytesUsed + (((int64_t)numBits * numVal) + 7) / 8) {
 #ifdef DEBUG
          printf("Locallen is too small.\n");
 #endif
@@ -204,7 +204,7 @@ static int mdl_LocalUnpack(unsigned char *local, sInt4 locallen,
       bufLoc = 8;
       if (f_dataType == 0) {
          /* Floating point data. */
-         if (*nrdat < (curIndex + numVal + 3)) {
+         if (numVal > INT_MAX - 3 || *nrdat < numVal + 3) {
 #ifdef DEBUG
             printf("nrdat is not large enough.\n");
 #endif
@@ -225,7 +225,7 @@ static int mdl_LocalUnpack(unsigned char *local, sInt4 locallen,
          rdat[curIndex] = 0;
       } else {
          /* Integer point data. */
-         if (*nidat < (curIndex + numVal + 3)) {
+         if (numVal > INT_MAX - 3 || *nidat < numVal + 3) {
 #ifdef DEBUG
             printf("nidat is not large enough.\n");
 #endif

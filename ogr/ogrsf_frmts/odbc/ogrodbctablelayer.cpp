@@ -15,7 +15,7 @@
 #include "ogr_odbc.h"
 
 /************************************************************************/
-/*                          OGRODBCTableLayer()                         */
+/*                         OGRODBCTableLayer()                          */
 /************************************************************************/
 
 OGRODBCTableLayer::OGRODBCTableLayer(OGRODBCDataSource *poDSIn,
@@ -33,7 +33,7 @@ OGRODBCTableLayer::OGRODBCTableLayer(OGRODBCDataSource *poDSIn,
 }
 
 /************************************************************************/
-/*                          ~OGRODBCTableLayer()                          */
+/*                         ~OGRODBCTableLayer()                         */
 /************************************************************************/
 
 OGRODBCTableLayer::~OGRODBCTableLayer()

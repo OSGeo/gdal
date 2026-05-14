@@ -134,7 +134,7 @@ CPLErr ACE2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          ACE2RasterBand()                            */
+/*                           ACE2RasterBand()                           */
 /************************************************************************/
 
 ACE2RasterBand::ACE2RasterBand(VSILFILE *fpRawIn, GDALDataType eDataTypeIn,
@@ -146,7 +146,7 @@ ACE2RasterBand::ACE2RasterBand(VSILFILE *fpRawIn, GDALDataType eDataTypeIn,
 }
 
 /************************************************************************/
-/*                             GetUnitType()                            */
+/*                            GetUnitType()                             */
 /************************************************************************/
 
 const char *ACE2RasterBand::GetUnitType()
@@ -158,7 +158,7 @@ const char *ACE2RasterBand::GetUnitType()
 }
 
 /************************************************************************/
-/*                         GetCategoryNames()                           */
+/*                          GetCategoryNames()                          */
 /************************************************************************/
 
 char **ACE2RasterBand::GetCategoryNames()
@@ -179,7 +179,7 @@ char **ACE2RasterBand::GetCategoryNames()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int ACE2Dataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -316,12 +316,12 @@ GDALDataset *ACE2Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
 
-    poDS->m_gt[0] = southWestLon;
-    poDS->m_gt[1] = dfPixelSize;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = southWestLat + nYSize * dfPixelSize;
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -dfPixelSize;
+    poDS->m_gt.xorig = southWestLon;
+    poDS->m_gt.xscale = dfPixelSize;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = southWestLat + nYSize * dfPixelSize;
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -dfPixelSize;
 
     /* -------------------------------------------------------------------- */
     /*      Create band information objects                                 */
@@ -347,7 +347,7 @@ GDALDataset *ACE2Dataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GDALRegister_ACE2()                         */
+/*                         GDALRegister_ACE2()                          */
 /************************************************************************/
 
 void GDALRegister_ACE2()

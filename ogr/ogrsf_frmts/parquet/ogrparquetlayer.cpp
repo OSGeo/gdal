@@ -16,6 +16,7 @@
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
 #include "ogr_p.h"
+#include "gdal_thread_pool.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -31,7 +32,7 @@
 #include "../arrow_common/ograrrowdataset.hpp"
 
 /************************************************************************/
-/*                    OGRParquetLayerBase()                             */
+/*                        OGRParquetLayerBase()                         */
 /************************************************************************/
 
 OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset *poDS,
@@ -50,7 +51,7 @@ OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset *poDS,
 }
 
 /************************************************************************/
-/*                           GetDataset()                               */
+/*                             GetDataset()                             */
 /************************************************************************/
 
 GDALDataset *OGRParquetLayerBase::GetDataset()
@@ -59,7 +60,7 @@ GDALDataset *OGRParquetLayerBase::GetDataset()
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRParquetLayerBase::ResetReading()
@@ -72,7 +73,7 @@ void OGRParquetLayerBase::ResetReading()
 }
 
 /************************************************************************/
-/*                     InvalidateCachedBatches()                        */
+/*                      InvalidateCachedBatches()                       */
 /************************************************************************/
 
 void OGRParquetLayerBase::InvalidateCachedBatches()
@@ -129,7 +130,7 @@ void OGRParquetLayerBase::LoadGeoMetadata(
 }
 
 /************************************************************************/
-/*                   ParseGeometryColumnCovering()                      */
+/*                    ParseGeometryColumnCovering()                     */
 /************************************************************************/
 
 //! Parse bounding box column definition
@@ -189,407 +190,408 @@ bool OGRParquetLayerBase::ParseGeometryColumnCovering(
 }
 
 /************************************************************************/
-/*                      DealWithGeometryColumn()                        */
+/*            DealWithArrow21GeometryGeographyNativeTypes()             */
+/************************************************************************/
+
+#if PARQUET_VERSION_MAJOR >= 21
+
+/** Returns true if the passed field is detected to be a native Geometry/Geography
+ * column as introduced in libarrow >= 21.
+ *
+ * In that case, m_aeGeomEncoding, m_poFeatureDefn and m_anMapGeomFieldIndexToArrowColumn
+ * are updated with the new geometry column.
+ */
+bool OGRParquetLayerBase::DealWithArrow21GeometryGeographyNativeTypes(
+    int iFieldIdx, const std::shared_ptr<arrow::Field> &field,
+    const parquet::ColumnDescriptor *parquetColumn,
+    const parquet::FileMetaData *fileMetadata, int iColumn)
+{
+    std::shared_ptr<arrow::DataType> fieldType = field->type();
+    auto fieldTypeId = fieldType->id();
+
+    // Arrow >= 21 GEOMETRY/GEOGRAPHY logical type are seen as an extension
+    // because OGRParquetDriverOpen registers OGRGeoArrowWkbExtensionType
+    // as dealing with geoarrow.wkb
+    if (fieldTypeId != arrow::Type::EXTENSION)
+        return false;
+
+    auto extensionType =
+        cpl::down_cast<arrow::ExtensionType *>(fieldType.get());
+    if (extensionType->extension_name() != EXTENSION_NAME_GEOARROW_WKB)
+        return false;
+
+    fieldTypeId = extensionType->storage_type()->id();
+    if (fieldTypeId != arrow::Type::BINARY &&
+        fieldTypeId != arrow::Type::LARGE_BINARY)
+    {
+        return false;
+    }
+
+    const auto arrowWkb =
+        dynamic_cast<const OGRGeoArrowWkbExtensionType *>(extensionType);
+#ifdef DEBUG
+    if (arrowWkb)
+    {
+        CPLDebug("PARQUET", "arrowWkb = '%s'", arrowWkb->Serialize().c_str());
+    }
+#endif
+
+    OGRwkbGeometryType eGeomType = wkbUnknown;
+    bool bSkipRowGroups = false;
+
+    std::string crs(m_osCRS);
+    if (parquetColumn && crs.empty())
+    {
+        const auto &logicalType = parquetColumn->logical_type();
+        if (logicalType->is_geometry())
+        {
+            crs = static_cast<const parquet::GeometryLogicalType *>(
+                      logicalType.get())
+                      ->crs();
+            if (crs.empty())
+                crs = "EPSG:4326";
+            CPLDebugOnly("PARQUET", "GeometryLogicalType crs=%s", crs.c_str());
+        }
+        else if (logicalType->is_geography())
+        {
+            const auto *geographyType =
+                static_cast<const parquet::GeographyLogicalType *>(
+                    logicalType.get());
+            crs = geographyType->crs();
+            if (crs.empty())
+                crs = "EPSG:4326";
+
+            SetMetadataItem(
+                "EDGES", CPLString(std::string(geographyType->algorithm_name()))
+                             .toupper());
+            CPLDebugOnly("PARQUET", "GeographyLogicalType crs=%s", crs.c_str());
+        }
+        else
+        {
+            CPLDebug("PARQUET", "geoarrow.wkb column is neither a "
+                                "geometry or geography one");
+
+            return false;
+        }
+
+        // Cf https://github.com/apache/parquet-format/blob/master/Geospatial.md#crs-customization
+        // "projjson: PROJJSON, identifier is the name of a table property or a file property where the projjson string is stored."
+        // Here the property is interpreted as the key of a file metadata (as done in libarrow)
+        constexpr const char *PROJJSON_PREFIX = "projjson:";
+        if (cpl::starts_with(crs, PROJJSON_PREFIX) && fileMetadata)
+        {
+            auto projjson_value = fileMetadata->key_value_metadata()->Get(
+                crs.substr(strlen(PROJJSON_PREFIX)));
+            if (projjson_value.ok())
+            {
+                crs = *projjson_value;
+            }
+            else
+            {
+                CPLDebug("PARQUET", "Cannot find file metadata for %s",
+                         crs.c_str());
+            }
+        }
+    }
+    else if (!parquetColumn && arrowWkb)
+    {
+        // For a OGRParquetDatasetLayer for example
+        const std::string arrowWkbMetadata = arrowWkb->Serialize();
+        if (arrowWkbMetadata.empty() || arrowWkbMetadata == "{}")
+        {
+            crs = "EPSG:4326";
+        }
+        else if (arrowWkbMetadata[0] == '{')
+        {
+            CPLJSONDocument oDoc;
+            if (oDoc.LoadMemory(arrowWkbMetadata))
+            {
+                auto jCrs = oDoc.GetRoot()["crs"];
+                if (jCrs.GetType() == CPLJSONObject::Type::Object)
+                {
+                    crs = jCrs.Format(CPLJSONObject::PrettyFormat::Plain);
+                }
+                else if (jCrs.GetType() == CPLJSONObject::Type::String)
+                {
+                    crs = jCrs.ToString();
+                }
+                if (oDoc.GetRoot()["edges"].ToString() == "spherical")
+                {
+                    SetMetadataItem("EDGES", "SPHERICAL");
+                }
+            }
+        }
+    }
+
+    bool bGeomTypeInvalid = false;
+    bool bHasMulti = false;
+    bool bHasZ = false;
+    bool bHasM = false;
+    bool bFirst = true;
+    OGRwkbGeometryType eFirstType = wkbUnknown;
+    OGRwkbGeometryType eFirstTypeCollection = wkbUnknown;
+    const auto numRowGroups = fileMetadata ? fileMetadata->num_row_groups() : 0;
+    bool bEnvelopeValid = true;
+    OGREnvelope sEnvelope;
+    bool bEnvelope3DValid = true;
+    OGREnvelope3D sEnvelope3D;
+    for (int iRowGroup = 0; !bSkipRowGroups && iRowGroup < numRowGroups;
+         ++iRowGroup)
+    {
+        const auto columnChunk =
+            fileMetadata->RowGroup(iRowGroup)->ColumnChunk(iColumn);
+        if (auto geostats = columnChunk->geo_statistics())
+        {
+            double dfMinX = std::numeric_limits<double>::quiet_NaN();
+            double dfMinY = std::numeric_limits<double>::quiet_NaN();
+            double dfMinZ = std::numeric_limits<double>::quiet_NaN();
+            double dfMaxX = std::numeric_limits<double>::quiet_NaN();
+            double dfMaxY = std::numeric_limits<double>::quiet_NaN();
+            double dfMaxZ = std::numeric_limits<double>::quiet_NaN();
+            if (bEnvelopeValid && geostats->dimension_valid()[0] &&
+                geostats->dimension_valid()[1])
+            {
+                dfMinX = geostats->lower_bound()[0];
+                dfMaxX = geostats->upper_bound()[0];
+                dfMinY = geostats->lower_bound()[1];
+                dfMaxY = geostats->upper_bound()[1];
+
+                // Deal as best as we can with wrap around bounding box
+                if (dfMinX > dfMaxX && std::fabs(dfMinX) <= 180 &&
+                    std::fabs(dfMaxX) <= 180)
+                {
+                    dfMinX = -180;
+                    dfMaxX = 180;
+                }
+
+                if (std::isfinite(dfMinX) && std::isfinite(dfMaxX) &&
+                    std::isfinite(dfMinY) && std::isfinite(dfMaxY))
+                {
+                    sEnvelope.Merge(dfMinX, dfMinY);
+                    sEnvelope.Merge(dfMaxX, dfMaxY);
+                    if (bEnvelope3DValid && geostats->dimension_valid()[2])
+                    {
+                        dfMinZ = geostats->lower_bound()[2];
+                        dfMaxZ = geostats->upper_bound()[2];
+                        if (std::isfinite(dfMinZ) && std::isfinite(dfMaxZ))
+                        {
+                            sEnvelope3D.Merge(dfMinX, dfMinY, dfMinZ);
+                            sEnvelope3D.Merge(dfMaxX, dfMaxY, dfMaxZ);
+                        }
+                    }
+                }
+            }
+
+            bEnvelopeValid = bEnvelopeValid && std::isfinite(dfMinX) &&
+                             std::isfinite(dfMaxX) && std::isfinite(dfMinY) &&
+                             std::isfinite(dfMaxY);
+
+            bEnvelope3DValid = bEnvelope3DValid && std::isfinite(dfMinZ) &&
+                               std::isfinite(dfMaxZ);
+
+            if (auto geometry_types = geostats->geometry_types())
+            {
+                const auto PromoteToCollection = [](OGRwkbGeometryType eType)
+                {
+                    if (eType == wkbPoint)
+                        return wkbMultiPoint;
+                    if (eType == wkbLineString)
+                        return wkbMultiLineString;
+                    if (eType == wkbPolygon)
+                        return wkbMultiPolygon;
+                    return eType;
+                };
+
+                for (int nGeomType : *geometry_types)
+                {
+                    OGRwkbGeometryType eThisGeom = wkbUnknown;
+                    if ((nGeomType > 0 && nGeomType <= 17) ||
+                        (nGeomType > 2000 && nGeomType <= 2017) ||
+                        (nGeomType > 3000 && nGeomType <= 3017))
+                    {
+                        eThisGeom = static_cast<OGRwkbGeometryType>(nGeomType);
+                    }
+                    else if (nGeomType > 1000 && nGeomType <= 1017)
+                    {
+                        eThisGeom = OGR_GT_SetZ(
+                            static_cast<OGRwkbGeometryType>(nGeomType - 1000));
+                        ;
+                    }
+                    else
+                    {
+                        CPLDebug("PARQUET", "Unknown geometry type: %d",
+                                 nGeomType);
+                        bGeomTypeInvalid = true;
+                        break;
+                    }
+                    if (bFirst)
+                    {
+                        bFirst = false;
+                        eFirstType = eThisGeom;
+                        eFirstTypeCollection = PromoteToCollection(eFirstType);
+                    }
+                    else if (PromoteToCollection(OGR_GT_Flatten(eThisGeom)) !=
+                             eFirstTypeCollection)
+                    {
+                        bGeomTypeInvalid = true;
+                        break;
+                    }
+                    bHasZ |= OGR_GT_HasZ(eThisGeom) != FALSE;
+                    bHasM |= OGR_GT_HasM(eThisGeom) != FALSE;
+                    bHasMulti |=
+                        (PromoteToCollection(OGR_GT_Flatten(eThisGeom)) ==
+                         OGR_GT_Flatten(eThisGeom));
+                }
+            }
+        }
+        else
+        {
+            bEnvelopeValid = false;
+            bEnvelope3DValid = false;
+            bGeomTypeInvalid = true;
+        }
+    }
+
+    if (bEnvelopeValid && sEnvelope.IsInit())
+    {
+        CPLDebug("PARQUET", "Got bounding box from geo_statistics");
+        m_geoStatsWithBBOXAvailable.insert(
+            m_poFeatureDefn->GetGeomFieldCount());
+        m_oMapExtents[m_poFeatureDefn->GetGeomFieldCount()] =
+            std::move(sEnvelope);
+
+        if (bEnvelope3DValid && sEnvelope3D.IsInit())
+        {
+            CPLDebug("PARQUET", "Got bounding box 3D from geo_statistics");
+            m_oMapExtents3D[m_poFeatureDefn->GetGeomFieldCount()] =
+                std::move(sEnvelope3D);
+        }
+    }
+
+    if (!bSkipRowGroups && !bGeomTypeInvalid)
+    {
+        if (eFirstTypeCollection == wkbMultiPoint ||
+            eFirstTypeCollection == wkbMultiPolygon ||
+            eFirstTypeCollection == wkbMultiLineString)
+        {
+            if (bHasMulti)
+                eGeomType =
+                    OGR_GT_SetModifier(eFirstTypeCollection, bHasZ, bHasM);
+            else
+                eGeomType = OGR_GT_SetModifier(eFirstType, bHasZ, bHasM);
+        }
+    }
+
+    OGRGeomFieldDefn oField(field->name().c_str(), eGeomType);
+    oField.SetNullable(field->nullable());
+
+    if (!crs.empty())
+    {
+        // Cf https://github.com/apache/parquet-format/blob/master/Geospatial.md#crs-customization
+        // "srid: Spatial reference identifier, identifier is the SRID itself.."
+        constexpr const char *SRID_PREFIX = "srid:";
+        if (cpl::starts_with(crs, SRID_PREFIX))
+        {
+            // When getting the value from the GeometryLogicalType::crs() method
+            crs = crs.substr(strlen(SRID_PREFIX));
+        }
+        if (CPLGetValueType(crs.c_str()) == CPL_VALUE_INTEGER)
+        {
+            // Getting here from above if, or if reading the ArrowWkb
+            // metadata directly (typically from a OGRParquetDatasetLayer)
+
+            // Assumes a SRID code is an EPSG code...
+            crs = std::string("EPSG:") + crs;
+        }
+
+        auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
+        poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSRS->SetFromUserInput(
+                crs.c_str(),
+                OGRSpatialReference::SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
+            OGRERR_NONE)
+        {
+            const char *pszAuthName = poSRS->GetAuthorityName();
+            const char *pszAuthCode = poSRS->GetAuthorityCode();
+            if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "OGC") &&
+                EQUAL(pszAuthCode, "CRS84"))
+                poSRS->importFromEPSG(4326);
+            oField.SetSpatialRef(poSRS.get());
+        }
+    }
+
+    m_aeGeomEncoding.push_back(OGRArrowGeomEncoding::WKB);
+    m_poFeatureDefn->AddGeomFieldDefn(&oField);
+    m_anMapGeomFieldIndexToArrowColumn.push_back(iFieldIdx);
+
+    return true;
+}
+
+#endif
+
+/************************************************************************/
+/*                       DealWithGeometryColumn()                       */
 /************************************************************************/
 
 bool OGRParquetLayerBase::DealWithGeometryColumn(
     int iFieldIdx, const std::shared_ptr<arrow::Field> &field,
     std::function<OGRwkbGeometryType(void)> computeGeometryTypeFun,
     [[maybe_unused]] const parquet::ColumnDescriptor *parquetColumn,
-    [[maybe_unused]] const parquet::FileMetaData *metadata,
+    [[maybe_unused]] const parquet::FileMetaData *fileMetadata,
     [[maybe_unused]] int iColumn)
 {
+#if PARQUET_VERSION_MAJOR >= 21
+    if (DealWithArrow21GeometryGeographyNativeTypes(
+            iFieldIdx, field, parquetColumn, fileMetadata, iColumn))
+        return true;
+#endif
+
     const auto &field_kv_metadata = field->metadata();
     std::string osExtensionName;
     if (field_kv_metadata)
     {
+#ifdef DEBUG
+        const auto keyValueSortedPairs = field_kv_metadata->sorted_pairs();
+        if (!keyValueSortedPairs.empty())
+        {
+            CPLDebug("PARQUET",
+                     "Metadata for field '%s':", field->name().c_str());
+            for (const auto &keyValue : keyValueSortedPairs)
+            {
+                CPLDebug("PARQUET", "  '%s' = '%s'", keyValue.first.c_str(),
+                         keyValue.second.c_str());
+            }
+        }
+#endif
         auto extension_name = field_kv_metadata->Get(ARROW_EXTENSION_NAME_KEY);
         if (extension_name.ok())
         {
+            // This code is needed for geo'ish-parquet file that aren't GeoParquet 1.1,
+            // nor use Parquet new native geometry/geography field columns, but
+            // have a ARROW:extension:name == ogc.wkb field metadata,
+            // and when libarrow extension handling geoarrow.wkb is NOT loaded
+            // Such extension is automatically registered in OGRParquetDriverOpen()
+            // for libarrow >= 21. It may also be registered by Python geoarrow.pyarrow
             osExtensionName = *extension_name;
         }
-#ifdef DEBUG
-        CPLDebug("PARQUET", "Metadata field %s:", field->name().c_str());
-        for (const auto &keyValue : field_kv_metadata->sorted_pairs())
-        {
-            CPLDebug("PARQUET", "  %s = %s", keyValue.first.c_str(),
-                     keyValue.second.c_str());
-        }
-#endif
     }
 
     std::shared_ptr<arrow::DataType> fieldType = field->type();
-    auto fieldTypeId = fieldType->id();
+    const auto fieldTypeId = fieldType->id();
     if (osExtensionName.empty() && fieldTypeId == arrow::Type::EXTENSION)
     {
+        // This code is needed for geo'ish-parquet file that aren't GeoParquet 1.1,
+        // nor use Parquet new native geometry/geography field columns, but
+        // have a ARROW:extension:name == ogc.wkb field metadata,
+        // and when libarrow extension handling geoarrow.wkb is loaded
+        // Such extension is automatically registered in OGRParquetDriverOpen()
+        // for libarrow >= 21. It may also be registered by Python geoarrow.pyarrow
         auto extensionType =
             cpl::down_cast<arrow::ExtensionType *>(fieldType.get());
         osExtensionName = extensionType->extension_name();
     }
 
     bool bRegularField = true;
-
-#if PARQUET_VERSION_MAJOR >= 21
-    // Try to detect Arrow >= 21 GEOMETRY/GEOGRAPHY logical type
-    if (fieldTypeId == arrow::Type::EXTENSION)
-    {
-        auto extensionType =
-            cpl::down_cast<arrow::ExtensionType *>(fieldType.get());
-        osExtensionName = extensionType->extension_name();
-        if (osExtensionName == EXTENSION_NAME_GEOARROW_WKB)
-        {
-            const auto arrowWkb =
-                dynamic_cast<const OGRGeoArrowWkbExtensionType *>(
-                    extensionType);
-#ifdef DEBUG
-            if (arrowWkb)
-            {
-                CPLDebug("PARQUET", "arrowWkb = '%s'",
-                         arrowWkb->Serialize().c_str());
-            }
-#endif
-
-            fieldTypeId = extensionType->storage_type()->id();
-            if (fieldTypeId == arrow::Type::BINARY ||
-                fieldTypeId == arrow::Type::LARGE_BINARY)
-            {
-                OGRwkbGeometryType eGeomType = wkbUnknown;
-                bool bSkipRowGroups = false;
-
-                // m_aeGeomEncoding be filled before calling
-                // ComputeGeometryColumnType()
-                bRegularField = false;
-                m_aeGeomEncoding.push_back(OGRArrowGeomEncoding::WKB);
-
-                std::string crs(m_osCRS);
-                if (parquetColumn && crs.empty())
-                {
-                    const auto &logicalType = parquetColumn->logical_type();
-                    if (logicalType->is_geometry())
-                    {
-                        crs = static_cast<const parquet::GeometryLogicalType *>(
-                                  logicalType.get())
-                                  ->crs();
-                        if (crs.empty())
-                            crs = "EPSG:4326";
-                        CPLDebugOnly("PARQUET", "GeometryLogicalType crs=%s",
-                                     crs.c_str());
-                    }
-                    else if (logicalType->is_geography())
-                    {
-                        const auto *geographyType =
-                            static_cast<const parquet::GeographyLogicalType *>(
-                                logicalType.get());
-                        crs = geographyType->crs();
-                        if (crs.empty())
-                            crs = "EPSG:4326";
-
-                        SetMetadataItem(
-                            "EDGES",
-                            CPLString(
-                                std::string(geographyType->algorithm_name()))
-                                .toupper());
-                        CPLDebugOnly("PARQUET", "GeographyLogicalType crs=%s",
-                                     crs.c_str());
-                    }
-                    else
-                    {
-                        CPLDebug("PARQUET", "geoarrow.wkb column is neither a "
-                                            "geometry or geography one");
-
-                        // This might be an old geoarrow.wkb extension...
-                        if (CPLTestBool(CPLGetConfigOption(
-                                "OGR_PARQUET_COMPUTE_GEOMETRY_TYPE", "YES")))
-                        {
-                            eGeomType = computeGeometryTypeFun();
-                            bSkipRowGroups = true;
-                        }
-                    }
-
-                    // Cf https://github.com/apache/parquet-format/blob/master/Geospatial.md#crs-customization
-                    // "projjson: PROJJSON, identifier is the name of a table property or a file property where the projjson string is stored."
-                    // Here the property is interpreted as the key of a file metadata (as done in libarrow)
-                    constexpr const char *PROJJSON_PREFIX = "projjson:";
-                    if (cpl::starts_with(crs, PROJJSON_PREFIX) && metadata)
-                    {
-                        auto projjson_value =
-                            metadata->key_value_metadata()->Get(
-                                crs.substr(strlen(PROJJSON_PREFIX)));
-                        if (projjson_value.ok())
-                        {
-                            crs = *projjson_value;
-                        }
-                        else
-                        {
-                            CPLDebug("PARQUET",
-                                     "Cannot find file metadata for %s",
-                                     crs.c_str());
-                        }
-                    }
-                }
-                else if (!parquetColumn && arrowWkb)
-                {
-                    // For a OGRParquetDatasetLayer for example
-                    const std::string arrowWkbMetadata = arrowWkb->Serialize();
-                    if (arrowWkbMetadata.empty() || arrowWkbMetadata == "{}")
-                    {
-                        crs = "EPSG:4326";
-                    }
-                    else if (arrowWkbMetadata[0] == '{')
-                    {
-                        CPLJSONDocument oDoc;
-                        if (oDoc.LoadMemory(arrowWkbMetadata))
-                        {
-                            auto jCrs = oDoc.GetRoot()["crs"];
-                            if (jCrs.GetType() == CPLJSONObject::Type::Object)
-                            {
-                                crs = jCrs.Format(
-                                    CPLJSONObject::PrettyFormat::Plain);
-                            }
-                            else if (jCrs.GetType() ==
-                                     CPLJSONObject::Type::String)
-                            {
-                                crs = jCrs.ToString();
-                            }
-                            if (oDoc.GetRoot()["edges"].ToString() ==
-                                "spherical")
-                            {
-                                SetMetadataItem("EDGES", "SPHERICAL");
-                            }
-                        }
-                    }
-                }
-
-                bool bGeomTypeInvalid = false;
-                bool bHasMulti = false;
-                bool bHasZ = false;
-                bool bHasM = false;
-                bool bFirst = true;
-                OGRwkbGeometryType eFirstType = wkbUnknown;
-                OGRwkbGeometryType eFirstTypeCollection = wkbUnknown;
-                const auto numRowGroups =
-                    metadata ? metadata->num_row_groups() : 0;
-                bool bEnvelopeValid = true;
-                OGREnvelope sEnvelope;
-                bool bEnvelope3DValid = true;
-                OGREnvelope3D sEnvelope3D;
-                for (int iRowGroup = 0;
-                     !bSkipRowGroups && iRowGroup < numRowGroups; ++iRowGroup)
-                {
-                    const auto columnChunk =
-                        metadata->RowGroup(iRowGroup)->ColumnChunk(iColumn);
-                    if (auto geostats = columnChunk->geo_statistics())
-                    {
-                        double dfMinX =
-                            std::numeric_limits<double>::quiet_NaN();
-                        double dfMinY =
-                            std::numeric_limits<double>::quiet_NaN();
-                        double dfMinZ =
-                            std::numeric_limits<double>::quiet_NaN();
-                        double dfMaxX =
-                            std::numeric_limits<double>::quiet_NaN();
-                        double dfMaxY =
-                            std::numeric_limits<double>::quiet_NaN();
-                        double dfMaxZ =
-                            std::numeric_limits<double>::quiet_NaN();
-                        if (bEnvelopeValid && geostats->dimension_valid()[0] &&
-                            geostats->dimension_valid()[1])
-                        {
-                            dfMinX = geostats->lower_bound()[0];
-                            dfMaxX = geostats->upper_bound()[0];
-                            dfMinY = geostats->lower_bound()[1];
-                            dfMaxY = geostats->upper_bound()[1];
-
-                            // Deal as best as we can with wrap around bounding box
-                            if (dfMinX > dfMaxX && std::fabs(dfMinX) <= 180 &&
-                                std::fabs(dfMaxX) <= 180)
-                            {
-                                dfMinX = -180;
-                                dfMaxX = 180;
-                            }
-
-                            if (std::isfinite(dfMinX) &&
-                                std::isfinite(dfMaxX) &&
-                                std::isfinite(dfMinY) && std::isfinite(dfMaxY))
-                            {
-                                sEnvelope.Merge(dfMinX, dfMinY);
-                                sEnvelope.Merge(dfMaxX, dfMaxY);
-                                if (bEnvelope3DValid &&
-                                    geostats->dimension_valid()[2])
-                                {
-                                    dfMinZ = geostats->lower_bound()[2];
-                                    dfMaxZ = geostats->upper_bound()[2];
-                                    if (std::isfinite(dfMinZ) &&
-                                        std::isfinite(dfMaxZ))
-                                    {
-                                        sEnvelope3D.Merge(dfMinX, dfMinY,
-                                                          dfMinZ);
-                                        sEnvelope3D.Merge(dfMaxX, dfMaxY,
-                                                          dfMaxZ);
-                                    }
-                                }
-                            }
-                        }
-
-                        bEnvelopeValid =
-                            bEnvelopeValid && std::isfinite(dfMinX) &&
-                            std::isfinite(dfMaxX) && std::isfinite(dfMinY) &&
-                            std::isfinite(dfMaxY);
-
-                        bEnvelope3DValid = bEnvelope3DValid &&
-                                           std::isfinite(dfMinZ) &&
-                                           std::isfinite(dfMaxZ);
-
-                        if (auto geometry_types = geostats->geometry_types())
-                        {
-                            const auto PromoteToCollection =
-                                [](OGRwkbGeometryType eType)
-                            {
-                                if (eType == wkbPoint)
-                                    return wkbMultiPoint;
-                                if (eType == wkbLineString)
-                                    return wkbMultiLineString;
-                                if (eType == wkbPolygon)
-                                    return wkbMultiPolygon;
-                                return eType;
-                            };
-
-                            for (int nGeomType : *geometry_types)
-                            {
-                                OGRwkbGeometryType eThisGeom = wkbUnknown;
-                                if ((nGeomType > 0 && nGeomType <= 17) ||
-                                    (nGeomType > 2000 && nGeomType <= 2017) ||
-                                    (nGeomType > 3000 && nGeomType <= 3017))
-                                {
-                                    eThisGeom = static_cast<OGRwkbGeometryType>(
-                                        nGeomType);
-                                }
-                                else if (nGeomType > 1000 && nGeomType <= 1017)
-                                {
-                                    eThisGeom = OGR_GT_SetZ(
-                                        static_cast<OGRwkbGeometryType>(
-                                            nGeomType - 1000));
-                                    ;
-                                }
-                                else
-                                {
-                                    CPLDebug("PARQUET",
-                                             "Unknown geometry type: %d",
-                                             nGeomType);
-                                    bGeomTypeInvalid = true;
-                                    break;
-                                }
-                                if (bFirst)
-                                {
-                                    bFirst = false;
-                                    eFirstType = eThisGeom;
-                                    eFirstTypeCollection =
-                                        PromoteToCollection(eFirstType);
-                                }
-                                else if (PromoteToCollection(
-                                             OGR_GT_Flatten(eThisGeom)) !=
-                                         eFirstTypeCollection)
-                                {
-                                    bGeomTypeInvalid = true;
-                                    break;
-                                }
-                                bHasZ |= OGR_GT_HasZ(eThisGeom) != FALSE;
-                                bHasM |= OGR_GT_HasM(eThisGeom) != FALSE;
-                                bHasMulti |= (PromoteToCollection(
-                                                  OGR_GT_Flatten(eThisGeom)) ==
-                                              OGR_GT_Flatten(eThisGeom));
-                            }
-                        }
-                    }
-                    else
-                    {
-                        bEnvelopeValid = false;
-                        bEnvelope3DValid = false;
-                        bGeomTypeInvalid = true;
-                    }
-                }
-
-                if (bEnvelopeValid && sEnvelope.IsInit())
-                {
-                    CPLDebug("PARQUET", "Got bounding box from geo_statistics");
-                    m_geoStatsWithBBOXAvailable.insert(
-                        m_poFeatureDefn->GetGeomFieldCount());
-                    m_oMapExtents[m_poFeatureDefn->GetGeomFieldCount()] =
-                        std::move(sEnvelope);
-
-                    if (bEnvelope3DValid && sEnvelope3D.IsInit())
-                    {
-                        CPLDebug("PARQUET",
-                                 "Got bounding box 3D from geo_statistics");
-                        m_oMapExtents3D[m_poFeatureDefn->GetGeomFieldCount()] =
-                            std::move(sEnvelope3D);
-                    }
-                }
-
-                if (!bSkipRowGroups && !bGeomTypeInvalid)
-                {
-                    if (eFirstTypeCollection == wkbMultiPoint ||
-                        eFirstTypeCollection == wkbMultiPolygon ||
-                        eFirstTypeCollection == wkbMultiLineString)
-                    {
-                        if (bHasMulti)
-                            eGeomType = OGR_GT_SetModifier(eFirstTypeCollection,
-                                                           bHasZ, bHasM);
-                        else
-                            eGeomType =
-                                OGR_GT_SetModifier(eFirstType, bHasZ, bHasM);
-                    }
-                }
-
-                OGRGeomFieldDefn oField(field->name().c_str(), eGeomType);
-                oField.SetNullable(field->nullable());
-
-                if (!crs.empty())
-                {
-                    // Cf https://github.com/apache/parquet-format/blob/master/Geospatial.md#crs-customization
-                    // "srid: Spatial reference identifier, identifier is the SRID itself.."
-                    constexpr const char *SRID_PREFIX = "srid:";
-                    if (cpl::starts_with(crs, SRID_PREFIX))
-                    {
-                        // When getting the value from the GeometryLogicalType::crs() method
-                        crs = crs.substr(strlen(SRID_PREFIX));
-                    }
-                    if (CPLGetValueType(crs.c_str()) == CPL_VALUE_INTEGER)
-                    {
-                        // Getting here from above if, or if reading the ArrowWkb
-                        // metadata directly (typically from a OGRParquetDatasetLayer)
-
-                        // Assumes a SRID code is an EPSG code...
-                        crs = std::string("EPSG:") + crs;
-                    }
-
-                    auto poSRS = new OGRSpatialReference();
-                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    if (poSRS->SetFromUserInput(
-                            crs.c_str(),
-                            OGRSpatialReference::
-                                SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
-                        OGRERR_NONE)
-                    {
-                        const char *pszAuthName =
-                            poSRS->GetAuthorityName(nullptr);
-                        const char *pszAuthCode =
-                            poSRS->GetAuthorityCode(nullptr);
-                        if (pszAuthName && pszAuthCode &&
-                            EQUAL(pszAuthName, "OGC") &&
-                            EQUAL(pszAuthCode, "CRS84"))
-                            poSRS->importFromEPSG(4326);
-                        oField.SetSpatialRef(poSRS);
-                    }
-                    poSRS->Release();
-                }
-
-                m_poFeatureDefn->AddGeomFieldDefn(&oField);
-                m_anMapGeomFieldIndexToArrowColumn.push_back(iFieldIdx);
-            }
-        }
-    }
-#endif
 
     auto oIter = m_oMapGeometryColumns.find(field->name());
     // cppcheck-suppress knownConditionTrueFalse
@@ -842,7 +844,7 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRParquetLayerBase::TestCapability(const char *pszCap) const
@@ -867,19 +869,19 @@ int OGRParquetLayerBase::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                           GetNumCPUs()                               */
+/*                             GetNumCPUs()                             */
 /************************************************************************/
 
 /* static */
 int OGRParquetLayerBase::GetNumCPUs()
 {
-    const char *pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-    int nNumThreads = 0;
+    const char *pszNumThreads = nullptr;
+    int nNumThreads =
+        GDALGetNumThreads(pszNumThreads,
+                          /* nMaxVal = */ -1,
+                          /* bDefaultToAllCPUs = */ false, &pszNumThreads);
     if (pszNumThreads == nullptr)
         nNumThreads = std::min(4, CPLGetNumCPUs());
-    else
-        nNumThreads = EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                                       : atoi(pszNumThreads);
     if (nNumThreads > 1)
     {
         CPL_IGNORE_RET_VAL(arrow::SetCpuThreadPoolCapacity(nNumThreads));
@@ -888,7 +890,7 @@ int OGRParquetLayerBase::GetNumCPUs()
 }
 
 /************************************************************************/
-/*                        OGRParquetLayer()                             */
+/*                          OGRParquetLayer()                           */
 /************************************************************************/
 
 OGRParquetLayer::OGRParquetLayer(
@@ -1216,7 +1218,7 @@ void OGRParquetLayer::EstablishFeatureDefn()
 }
 
 /************************************************************************/
-/*                  ProcessGeometryColumnCovering()                     */
+/*                   ProcessGeometryColumnCovering()                    */
 /************************************************************************/
 
 /** Process GeoParquet JSON geometry field object to extract information about
@@ -1310,7 +1312,7 @@ void OGRParquetLayer::ProcessGeometryColumnCovering(
 }
 
 /************************************************************************/
-/*                               FindNode()                             */
+/*                              FindNode()                              */
 /************************************************************************/
 
 static const parquet::schema::Node *FindNode(const parquet::schema::Node *node,
@@ -1365,7 +1367,7 @@ static void CollectLeaveNodes(
 }
 
 /************************************************************************/
-/*                 GetParquetColumnIndicesForArrowField()               */
+/*                GetParquetColumnIndicesForArrowField()                */
 /************************************************************************/
 
 std::vector<int> OGRParquetLayer::GetParquetColumnIndicesForArrowField(
@@ -1400,7 +1402,7 @@ std::vector<int> OGRParquetLayer::GetParquetColumnIndicesForArrowField(
 }
 
 /************************************************************************/
-/*                CheckMatchArrowParquetColumnNames()                   */
+/*                 CheckMatchArrowParquetColumnNames()                  */
 /************************************************************************/
 
 bool OGRParquetLayer::CheckMatchArrowParquetColumnNames(
@@ -1437,7 +1439,7 @@ bool OGRParquetLayer::CheckMatchArrowParquetColumnNames(
 }
 
 /************************************************************************/
-/*                         CreateFieldFromSchema()                      */
+/*                       CreateFieldFromSchema()                        */
 /************************************************************************/
 
 void OGRParquetLayer::CreateFieldFromSchema(
@@ -1545,7 +1547,7 @@ void OGRParquetLayer::CreateFieldFromSchema(
 }
 
 /************************************************************************/
-/*                          BuildDomain()                               */
+/*                            BuildDomain()                             */
 /************************************************************************/
 
 std::unique_ptr<OGRFieldDomain>
@@ -1821,7 +1823,7 @@ OGRFeature *OGRParquetLayer::GetFeatureByIndex(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           GetFeature()                               */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRParquetLayer::GetFeature(GIntBig nFID)
@@ -1837,7 +1839,7 @@ OGRFeature *OGRParquetLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRParquetLayer::ResetReading()
@@ -1909,7 +1911,7 @@ bool OGRParquetLayer::CreateRecordBatchReader(
 }
 
 /************************************************************************/
-/*                       IsConstraintPossible()                         */
+/*                        IsConstraintPossible()                        */
 /************************************************************************/
 
 enum class IsConstraintPossibleRes
@@ -2466,7 +2468,7 @@ bool OGRParquetLayer::ReadNextBatch()
 }
 
 /************************************************************************/
-/*                     InvalidateCachedBatches()                        */
+/*                      InvalidateCachedBatches()                       */
 /************************************************************************/
 
 void OGRParquetLayer::InvalidateCachedBatches()
@@ -2476,7 +2478,7 @@ void OGRParquetLayer::InvalidateCachedBatches()
 }
 
 /************************************************************************/
-/*                        SetIgnoredFields()                            */
+/*                          SetIgnoredFields()                          */
 /************************************************************************/
 
 OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
@@ -2643,7 +2645,7 @@ OGRErr OGRParquetLayer::SetIgnoredFields(CSLConstList papszFields)
 }
 
 /************************************************************************/
-/*                        GetFeatureCount()                             */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRParquetLayer::GetFeatureCount(int bForce)
@@ -2658,7 +2660,7 @@ GIntBig OGRParquetLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                         FastGetExtent()                              */
+/*                           FastGetExtent()                            */
 /************************************************************************/
 
 bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
@@ -2727,7 +2729,7 @@ bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRParquetLayer::TestCapability(const char *pszCap) const
@@ -2805,7 +2807,7 @@ int OGRParquetLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                         GetMetadataItem()                            */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *OGRParquetLayer::GetMetadataItem(const char *pszName,
@@ -2882,7 +2884,7 @@ const char *OGRParquetLayer::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                           GetMetadata()                              */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList OGRParquetLayer::GetMetadata(const char *pszDomain)
@@ -2914,7 +2916,7 @@ CSLConstList OGRParquetLayer::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                          GetArrowStream()                            */
+/*                           GetArrowStream()                           */
 /************************************************************************/
 
 bool OGRParquetLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
@@ -2971,8 +2973,8 @@ OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
     m_iRecordBatch = 0;
     for (int iGroup = 0; iGroup < nNumGroups; ++iGroup)
     {
-        const int64_t nNextAccRows =
-            nAccRows + metadata->RowGroup(iGroup)->num_rows();
+        const auto nRowsInRowGroup = metadata->RowGroup(iGroup)->num_rows();
+        const int64_t nNextAccRows = nAccRows + nRowsInRowGroup;
         if (nIndex < nNextAccRows)
         {
             if (!CreateRecordBatchReader(iGroup))
@@ -3010,8 +3012,7 @@ OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
         }
         nAccRows = nNextAccRows;
         m_iRecordBatch +=
-            (metadata->RowGroup(iGroup)->num_rows() + nBatchSize - 1) /
-            nBatchSize;
+            static_cast<int>(cpl::div_round_up(nRowsInRowGroup, nBatchSize));
     }
 
     m_iRecordBatch = -1;
@@ -3019,9 +3020,9 @@ OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
     return OGRERR_FAILURE;
 }
 
-/***********************************************************************/
-/*                            GetStats()                               */
-/***********************************************************************/
+/************************************************************************/
+/*                              GetStats()                              */
+/************************************************************************/
 
 template <class STAT_TYPE> struct GetStats
 {
@@ -3233,7 +3234,7 @@ bool OGRParquetLayer::GetMinMaxForOGRField(int iRowGroup,  // -1 for all
 }
 
 /************************************************************************/
-/*                        GetMinMaxForParquetCol()                      */
+/*                       GetMinMaxForParquetCol()                       */
 /************************************************************************/
 
 bool OGRParquetLayer::GetMinMaxForParquetCol(

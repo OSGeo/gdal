@@ -16,7 +16,7 @@
 #include "ogrpgeogeometry.h"
 
 /************************************************************************/
-/*                          OGRPGeoTableLayer()                         */
+/*                         OGRPGeoTableLayer()                          */
 /************************************************************************/
 
 OGRPGeoTableLayer::OGRPGeoTableLayer(OGRPGeoDataSource *poDSIn,
@@ -31,7 +31,7 @@ OGRPGeoTableLayer::OGRPGeoTableLayer(OGRPGeoDataSource *poDSIn,
 }
 
 /************************************************************************/
-/*                          ~OGRPGeoTableLayer()                          */
+/*                         ~OGRPGeoTableLayer()                         */
 /************************************************************************/
 
 OGRPGeoTableLayer::~OGRPGeoTableLayer()
@@ -407,7 +407,7 @@ GIntBig OGRPGeoTableLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRPGeoTableLayer::IGetExtent(int /* iGeomField */,

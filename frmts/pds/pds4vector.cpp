@@ -40,7 +40,7 @@ PDS4TableBaseLayer::PDS4TableBaseLayer(PDS4Dataset *poDS, const char *pszName,
 }
 
 /************************************************************************/
-/*                       ~PDS4TableBaseLayer()                          */
+/*                        ~PDS4TableBaseLayer()                         */
 /************************************************************************/
 
 PDS4TableBaseLayer::~PDS4TableBaseLayer()
@@ -249,7 +249,7 @@ void PDS4TableBaseLayer::SetupGeomField()
 }
 
 /************************************************************************/
-/*                      AddGeometryFromFields()                         */
+/*                       AddGeometryFromFields()                        */
 /************************************************************************/
 
 OGRFeature *PDS4TableBaseLayer::AddGeometryFromFields(OGRFeature *poRawFeature)
@@ -307,7 +307,7 @@ OGRFeature *PDS4TableBaseLayer::AddGeometryFromFields(OGRFeature *poRawFeature)
 }
 
 /************************************************************************/
-/*                      AddFieldsFromGeometry()                         */
+/*                       AddFieldsFromGeometry()                        */
 /************************************************************************/
 
 OGRFeature *PDS4TableBaseLayer::AddFieldsFromGeometry(OGRFeature *poFeature)
@@ -356,7 +356,7 @@ OGRFeature *PDS4TableBaseLayer::AddFieldsFromGeometry(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                         MarkHeaderDirty()                            */
+/*                          MarkHeaderDirty()                           */
 /************************************************************************/
 
 void PDS4TableBaseLayer::MarkHeaderDirty()
@@ -366,7 +366,7 @@ void PDS4TableBaseLayer::MarkHeaderDirty()
 }
 
 /************************************************************************/
-/*              RefreshFileAreaObservationalBeginningCommon()           */
+/*            RefreshFileAreaObservationalBeginningCommon()             */
 /************************************************************************/
 
 CPLXMLNode *PDS4TableBaseLayer::RefreshFileAreaObservationalBeginningCommon(
@@ -437,7 +437,7 @@ CPLXMLNode *PDS4TableBaseLayer::RefreshFileAreaObservationalBeginningCommon(
 }
 
 /************************************************************************/
-/*                        ParseLineEndingOption()                       */
+/*                       ParseLineEndingOption()                        */
 /************************************************************************/
 
 void PDS4TableBaseLayer::ParseLineEndingOption(CSLConstList papszOptions)
@@ -814,7 +814,7 @@ OGRErr PDS4FixedWidthTable::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                              GetFeature()                            */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
@@ -1003,7 +1003,7 @@ OGRFeature *PDS4FixedWidthTable::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                     GetFieldTypeFromPDS4DataType()                   */
+/*                    GetFieldTypeFromPDS4DataType()                    */
 /************************************************************************/
 
 static OGRFieldType GetFieldTypeFromPDS4DataType(const char *pszDataType,
@@ -1345,7 +1345,7 @@ bool PDS4FixedWidthTable::ReadFields(const CPLXMLNode *psParent,
 }
 
 /************************************************************************/
-/*                      RefreshFileAreaObservational()                  */
+/*                    RefreshFileAreaObservational()                    */
 /************************************************************************/
 
 void PDS4FixedWidthTable::RefreshFileAreaObservational(CPLXMLNode *psFAO)
@@ -1493,7 +1493,7 @@ OGRErr PDS4FixedWidthTable::CreateField(const OGRFieldDefn *poFieldIn, int)
 }
 
 /************************************************************************/
-/*                          InitializeNewLayer()                        */
+/*                         InitializeNewLayer()                         */
 /************************************************************************/
 
 bool PDS4FixedWidthTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
@@ -1773,7 +1773,7 @@ PDS4DelimitedTable::PDS4DelimitedTable(PDS4Dataset *poDS, const char *pszName,
 }
 
 /************************************************************************/
-/*                          ~PDS4DelimitedTable()                       */
+/*                        ~PDS4DelimitedTable()                         */
 /************************************************************************/
 
 PDS4DelimitedTable::~PDS4DelimitedTable()
@@ -1783,7 +1783,7 @@ PDS4DelimitedTable::~PDS4DelimitedTable()
 }
 
 /************************************************************************/
-/*                             GenerateVRT()                            */
+/*                            GenerateVRT()                             */
 /************************************************************************/
 
 void PDS4DelimitedTable::GenerateVRT()
@@ -2019,7 +2019,7 @@ int PDS4DelimitedTable::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                            QuoteIfNeeded()                           */
+/*                           QuoteIfNeeded()                            */
 /************************************************************************/
 
 CPLString PDS4DelimitedTable::QuoteIfNeeded(const char *pszVal)
@@ -2346,7 +2346,7 @@ bool PDS4DelimitedTable::ReadFields(const CPLXMLNode *psParent,
 }
 
 /************************************************************************/
-/*                      RefreshFileAreaObservational()                  */
+/*                    RefreshFileAreaObservational()                    */
 /************************************************************************/
 
 void PDS4DelimitedTable::RefreshFileAreaObservational(CPLXMLNode *psFAO)
@@ -2477,7 +2477,7 @@ char **PDS4DelimitedTable::GetFileList() const
 }
 
 /************************************************************************/
-/*                          InitializeNewLayer()                        */
+/*                         InitializeNewLayer()                         */
 /************************************************************************/
 
 bool PDS4DelimitedTable::InitializeNewLayer(const OGRSpatialReference *poSRS,
@@ -2743,7 +2743,7 @@ PDS4EditableLayer::PDS4EditableLayer(
 PDS4EditableLayer::~PDS4EditableLayer() = default;
 
 /************************************************************************/
-/*                           GetBaseLayer()                             */
+/*                            GetBaseLayer()                            */
 /************************************************************************/
 
 PDS4TableBaseLayer *PDS4EditableLayer::GetBaseLayer() const
@@ -2753,7 +2753,7 @@ PDS4TableBaseLayer *PDS4EditableLayer::GetBaseLayer() const
 }
 
 /************************************************************************/
-/*                            SetSpatialRef()                           */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 void PDS4EditableLayer::SetSpatialRef(OGRSpatialReference *poSRS)

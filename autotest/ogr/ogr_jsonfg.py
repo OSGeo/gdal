@@ -300,7 +300,7 @@ def test_jsonfg_read_crs(
     lyr_srs = lyr.GetSpatialRef()
     if epsg_code_lyr:
         assert lyr_srs
-        assert lyr_srs.GetAuthorityCode(None) == str(epsg_code_lyr)
+        assert lyr_srs.GetAuthorityCode() == str(epsg_code_lyr)
         assert lyr_srs.GetDataAxisToSRSAxisMapping() == mapping_lyr
     else:
         assert lyr_srs is None
@@ -315,7 +315,7 @@ def test_jsonfg_read_crs(
                 assert geom_srs
                 assert geom_srs.IsSame(lyr_srs)
             elif epsg_code_lyr is None and epsg_code_feat is not None:
-                assert geom_srs.GetAuthorityCode(None) == str(epsg_code_feat[i])
+                assert geom_srs.GetAuthorityCode() == str(epsg_code_feat[i])
                 assert geom_srs.GetDataAxisToSRSAxisMapping() == mapping_feat[i]
 
     else:
@@ -329,7 +329,7 @@ def test_jsonfg_read_crs(
             assert geom_srs.IsSame(lyr_srs)
         elif epsg_code_feat is not None:
             assert geom_srs
-            assert geom_srs.GetAuthorityCode(None) == str(epsg_code_feat)
+            assert geom_srs.GetAuthorityCode() == str(epsg_code_feat)
             assert geom_srs.GetDataAxisToSRSAxisMapping() == mapping_feat
 
 
@@ -404,7 +404,7 @@ def test_jsonfg_read_GEOMETRY_ELEMENT_open_option(
     lyr = ds.GetLayer(0)
     lyr_srs = lyr.GetSpatialRef()
     assert lyr_srs
-    assert lyr_srs.GetAuthorityCode(None) == str(epsg_code_lyr)
+    assert lyr_srs.GetAuthorityCode() == str(epsg_code_lyr)
     assert lyr_srs.GetDataAxisToSRSAxisMapping() == mapping_lyr
     f = lyr.GetNextFeature()
     geom = f.GetGeometryRef()
@@ -472,9 +472,7 @@ def test_jsonfg_read_single_feature_large(tmp_vsimem):
       "properties": { "foo": 1 },
       "place": null,
       "time": null
-    }""" % (
-        " " * 100000
-    )
+    }""" % (" " * 100000)
 
     gdal.FileFromMemBuffer(tmp_file, content)
 
@@ -574,7 +572,7 @@ def test_jsonfg_read_time(time_values, expected_fields, expected_values_array):
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
-    for (field_name, field_type) in expected_fields:
+    for field_name, field_type in expected_fields:
         idx = lyr_defn.GetFieldIndex(field_name)
         assert idx >= 0, field_name
         assert lyr_defn.GetFieldDefn(idx).GetType() == field_type
@@ -1709,7 +1707,7 @@ def test_jsonfg_read_ogc_crs84():
     ds = gdal.OpenEx(json.dumps(j))
     assert ds.GetDriver().GetDescription() == "JSONFG"
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
     assert lyr.GetSpatialRef().GetDataAxisToSRSAxisMapping() == [2, 1]
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (2 49)"

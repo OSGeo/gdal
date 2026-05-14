@@ -1,13 +1,13 @@
 .. _gdal_cli_from_python:
 
 ================================================================================
-How to use "gdal" CLI algorithms from Python
+How to use ``gdal`` CLI algorithms from Python
 ================================================================================
 
 Principles
 ----------
 
-"gdal" CLI algorithms are available as :py:class:`osgeo.gdal.Algorithm` instances.
+``gdal`` CLI algorithms are available as :py:class:`osgeo.gdal.Algorithm` instances.
 
 A convenient way to access an algorithm and run it is to use the :py:func:`osgeo.gdal.Run`
 function.
@@ -28,8 +28,8 @@ function.
                   algorithm arguments directly as named parameters of gdal.Run().
                   If the named argument has dash characters in it, the corresponding
                   parameter must replace them with an underscore character.
-                  For example ``dst_crs`` as a a parameter of gdal.Run(), instead of
-                  ``dst-crs`` which is the name to use on the command line.
+                  For example ``output_crs`` as a a parameter of gdal.Run(), instead of
+                  ``output-crs`` which is the name to use on the command line.
    :rtype: a :py:class:`osgeo.gdal.Algorithm` instance
 
 
@@ -249,6 +249,6 @@ Pipeline examples
         from osgeo import gdal
 
         gdal.UseExceptions()
-        with gdal.alg.pipeline(pipeline="read byte.tif ! reproject --dst-crs EPSG:4326 --resampling cubic") as alg:
+        with gdal.alg.pipeline(pipeline="read byte.tif ! reproject --output-crs EPSG:4326 --resampling cubic") as alg:
             ds = alg.Output()
             # do something with the dataset

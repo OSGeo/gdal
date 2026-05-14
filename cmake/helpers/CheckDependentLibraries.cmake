@@ -521,3 +521,5 @@ find_package(CSharp)
 set_package_properties(CSharp PROPERTIES PURPOSE "SWIG_CSharp: CSharp binding")
 
 # vim: ts=4 sw=4 sts=4 et
+
+include(CheckDependentLibrariesGrok)

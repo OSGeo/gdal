@@ -44,7 +44,7 @@ def test_snap_tiff():
     assert ds.RasterCount == 1
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float32
     assert ds.GetGCPCount() == 4
-    assert ds.GetGCPSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetGCPSpatialRef().GetAuthorityCode() == "4326"
     gcps = ds.GetGCPs()
     assert len(gcps) == 4
     assert gcps[0].GCPPixel == 0.5

@@ -23,9 +23,9 @@ bool MM_IsDoubleInfinite(double x)
     return std::isinf(x);
 }
 
-/****************************************************************************/
-/*                    OGRMMDriverIdentify()                                 */
-/****************************************************************************/
+/************************************************************************/
+/*                        OGRMMDriverIdentify()                         */
+/************************************************************************/
 
 static int OGRMiraMonDriverIdentify(GDALOpenInfo *poOpenInfo)
 
@@ -65,9 +65,9 @@ static int OGRMiraMonDriverIdentify(GDALOpenInfo *poOpenInfo)
     return FALSE;
 }
 
-/****************************************************************************/
-/*                           OGRMiraMonDriverOpen()                         */
-/****************************************************************************/
+/************************************************************************/
+/*                        OGRMiraMonDriverOpen()                        */
+/************************************************************************/
 
 static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
 
@@ -91,14 +91,16 @@ static GDALDataset *OGRMiraMonDriverOpen(GDALOpenInfo *poOpenInfo)
     return poDS.release();
 }
 
-/****************************************************************************/
-/*                         OGRMiraMonDriverCreate()                              */
-/****************************************************************************/
+/************************************************************************/
+/*                       OGRMiraMonDriverCreate()                       */
+/************************************************************************/
 
-static GDALDataset *
-OGRMiraMonDriverCreate(const char *pszName, CPL_UNUSED int /*nBands*/,
-                       CPL_UNUSED int /*nXSize*/, CPL_UNUSED int /*nYSize*/,
-                       CPL_UNUSED GDALDataType /*eDT*/, char **papszOptions)
+static GDALDataset *OGRMiraMonDriverCreate(const char *pszName,
+                                           CPL_UNUSED int /*nBands*/,
+                                           CPL_UNUSED int /*nXSize*/,
+                                           CPL_UNUSED int /*nYSize*/,
+                                           CPL_UNUSED GDALDataType /*eDT*/,
+                                           CSLConstList papszOptions)
 {
     auto poDS = std::make_unique<OGRMiraMonDataSource>();
 
@@ -110,9 +112,9 @@ OGRMiraMonDriverCreate(const char *pszName, CPL_UNUSED int /*nBands*/,
     return poDS.release();
 }
 
-/****************************************************************************/
-/*                           RegisterOGRMM()                                */
-/****************************************************************************/
+/************************************************************************/
+/*                           RegisterOGRMM()                            */
+/************************************************************************/
 
 void RegisterOGRMiraMon()
 
@@ -123,6 +125,7 @@ void RegisterOGRMiraMon()
     GDALDriver *poDriver = new GDALDriver();
     poDriver->SetDescription("MiraMonVector");
     poDriver->SetMetadataItem(GDAL_DCAP_VECTOR, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME,
@@ -132,6 +135,8 @@ void RegisterOGRMiraMon()
                               "drivers/vector/miramon.html");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_Z_GEOMETRIES, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY,
+                              "YES");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

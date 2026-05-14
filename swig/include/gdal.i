@@ -336,8 +336,8 @@ $1;
 %}
 
 //************************************************************************
-// Apply NONNULL to all utf8_path's.
-%apply Pointer NONNULL { const char* utf8_path };
+// Apply NONNULL to all paths.
+%apply Pointer NONNULL { const char* path };
 
 //************************************************************************
 //
@@ -748,6 +748,8 @@ const char *GDALVersionInfo( const char *request = "VERSION_NUM" );
 void GDALAllRegister();
 
 void GDALDestroyDriverManager();
+%rename (ClearMemoryCaches) GDALClearMemoryCaches;
+void GDALClearMemoryCaches();
 
 #if defined(SWIGPYTHON)
 %inline {
@@ -854,13 +856,13 @@ char *CPLSerializeXMLTree( CPLXMLNode *xmlnode );
 
 #if defined(SWIGPYTHON)
 %newobject GDALGetJPEG2000Structure;
-CPLXMLNode *GDALGetJPEG2000Structure( const char* pszFilename, char** options = NULL );
+CPLXMLNode *GDALGetJPEG2000Structure( const char* path, char** options = NULL );
 #endif
 
 %inline {
-retStringAndCPLFree *GetJPEG2000StructureAsString( const char* pszFilename, char** options = NULL )
+retStringAndCPLFree *GetJPEG2000StructureAsString( const char* path, char** options = NULL )
 {
-    CPLXMLNode* psNode = GDALGetJPEG2000Structure(pszFilename, options);
+    CPLXMLNode* psNode = GDALGetJPEG2000Structure(path, options);
     if( psNode == NULL )
         return NULL;
     char* pszXML = CPLSerializeXMLTree(psNode);
@@ -905,9 +907,9 @@ GDALDriverShadow* GetDriver( int i ) {
 %newobject Open;
 %inline %{
 static
-GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess) {
+GDALDatasetShadow* Open( char const* path, GDALAccess eAccess) {
   CPLErrorReset();
-  GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
+  GDALDatasetShadow *ds = GDALOpen( path, eAccess );
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
       if ( GDALDereferenceDataset( ds ) <= 0 )
@@ -928,9 +930,9 @@ GDALDatasetShadow* Open( char const* name ) {
 #else
 %newobject Open;
 %inline %{
-GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly ) {
+GDALDatasetShadow* Open( char const* path, GDALAccess eAccess = GA_ReadOnly ) {
   CPLErrorReset();
-  GDALDatasetShadow *ds = GDALOpen( utf8_path, eAccess );
+  GDALDatasetShadow *ds = GDALOpen( path, eAccess );
 #ifndef SWIGPYTHON
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
@@ -953,7 +955,7 @@ GDALDatasetShadow* Open( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly
 %apply (char **options) {char** open_options};
 %apply (char **options) {char** sibling_files};
 %inline %{
-GDALDatasetShadow* OpenEx( char const* utf8_path, unsigned int nOpenFlags = 0,
+GDALDatasetShadow* OpenEx( char const* path, unsigned int nOpenFlags = 0,
                            char** allowed_drivers = NULL, char** open_options = NULL,
                            char** sibling_files = NULL ) {
   CPLErrorReset();
@@ -961,7 +963,7 @@ GDALDatasetShadow* OpenEx( char const* utf8_path, unsigned int nOpenFlags = 0,
   if( GetUseExceptions() )
       nOpenFlags |= GDAL_OF_VERBOSE_ERROR;
 #endif
-  GDALDatasetShadow *ds = GDALOpenEx( utf8_path, nOpenFlags, allowed_drivers,
+  GDALDatasetShadow *ds = GDALOpenEx( path, nOpenFlags, allowed_drivers,
                                       open_options, sibling_files );
 #ifndef SWIGPYTHON
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
@@ -980,9 +982,9 @@ GDALDatasetShadow* OpenEx( char const* utf8_path, unsigned int nOpenFlags = 0,
 
 %newobject OpenShared;
 %inline %{
-GDALDatasetShadow* OpenShared( char const* utf8_path, GDALAccess eAccess = GA_ReadOnly ) {
+GDALDatasetShadow* OpenShared( char const* path, GDALAccess eAccess = GA_ReadOnly ) {
   CPLErrorReset();
-  GDALDatasetShadow *ds = GDALOpenShared( utf8_path, eAccess );
+  GDALDatasetShadow *ds = GDALOpenShared( path, eAccess );
 #ifndef SWIGPYTHON
   if( ds != NULL && CPLGetLastErrorType() == CE_Failure )
   {
@@ -997,9 +999,9 @@ GDALDatasetShadow* OpenShared( char const* utf8_path, GDALAccess eAccess = GA_Re
 
 %apply (char **options) {char **papszSiblings};
 %inline %{
-GDALDriverShadow *IdentifyDriver( const char *utf8_path,
+GDALDriverShadow *IdentifyDriver( const char *path,
                                   char **papszSiblings = NULL ) {
-    return (GDALDriverShadow *) GDALIdentifyDriver( utf8_path,
+    return (GDALDriverShadow *) GDALIdentifyDriver( path,
                                                 papszSiblings );
 }
 %}
@@ -1013,12 +1015,12 @@ GDALDriverShadow *IdentifyDriver( const char *utf8_path,
 %feature( "kwargs" ) IdentifyDriverEx;
 #endif
 %inline %{
-GDALDriverShadow *IdentifyDriverEx( const char* utf8_path,
+GDALDriverShadow *IdentifyDriverEx( const char* path,
                                     unsigned int nIdentifyFlags = 0,
                                     char** allowed_drivers = NULL,
                                     char** sibling_files = NULL )
 {
-    return  (GDALDriverShadow *) GDALIdentifyDriverEx( utf8_path,
+    return  (GDALDriverShadow *) GDALIdentifyDriverEx( path,
                                                 nIdentifyFlags,
                                                 allowed_drivers,
                                                 sibling_files );
@@ -1141,7 +1143,8 @@ __version__ = _gdal.VersionInfo("RELEASE_NAME")
 #include "gdal_utils.h"
 %}
 
-%apply (const char* utf8_path) {(const char* dest)};
+%apply (const char* utf8_string) {(const char* dest)};
+%apply Pointer NONNULL {const char* dest};
 
 #ifdef SWIGPYTHON
 %{

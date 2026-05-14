@@ -52,7 +52,7 @@ enum class OGRArrowGeomEncoding
 };
 
 /************************************************************************/
-/*                        OGRArrowIsGeoArrowStruct()                    */
+/*                      OGRArrowIsGeoArrowStruct()                      */
 /************************************************************************/
 
 inline bool OGRArrowIsGeoArrowStruct(OGRArrowGeomEncoding eEncoding)
@@ -74,7 +74,7 @@ inline bool OGRArrowIsGeoArrowStruct(OGRArrowGeomEncoding eEncoding)
 }
 
 /************************************************************************/
-/*                             IOGRArrowLayer                           */
+/*                            IOGRArrowLayer                            */
 /************************************************************************/
 
 class OGRArrowLayer;
@@ -90,7 +90,7 @@ class IOGRArrowLayer CPL_NON_FINAL
 };
 
 /************************************************************************/
-/*                         OGRArrowLayer                                */
+/*                            OGRArrowLayer                             */
 /************************************************************************/
 
 class OGRArrowDataset;
@@ -196,7 +196,7 @@ class OGRArrowLayer CPL_NON_FINAL
         m_anMapFieldIndexToArrayIndex{};  // only valid when m_bIgnoredFields is
                                           // set
     std::vector<int> m_anMapGeomFieldIndexToArrayIndex{};  // only valid when
-        // m_bIgnoredFields is set
+    // m_bIgnoredFields is set
     int m_nRequestedFIDColumn = -1;  // only valid when m_bIgnoredFields is set
 
     int m_nExpectedBatchColumns =
@@ -357,7 +357,7 @@ class OGRArrowLayer CPL_NON_FINAL
 };
 
 /************************************************************************/
-/*                         OGRArrowDataset                              */
+/*                           OGRArrowDataset                            */
 /************************************************************************/
 
 class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
@@ -408,7 +408,7 @@ class OGRArrowDataset CPL_NON_FINAL : public GDALPamDataset
 };
 
 /************************************************************************/
-/*                        OGRArrowWriterLayer                           */
+/*                         OGRArrowWriterLayer                          */
 /************************************************************************/
 
 class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
@@ -448,7 +448,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     // Constraint: if not empty, m_apoFieldsBBOX.size() == m_poFeatureDefn->GetGeomFieldCount()
     std::vector<std::shared_ptr<arrow::Field>> m_apoFieldsBBOX{};
 
-    //! Array builers for bounding box of geometry columns.
+    //! Array builders for bounding box of geometry columns.
     // m_apoBuildersBBOXStruct is for the top-level field of type struct.
     // m_apoBuildersBBOX{XMin|YMin|XMax|YMax} are for the floating-point values
     // Constraint: if not empty, m_apoBuildersBBOX{Struct|XMin|YMin|XMax|YMax}.size() == m_poFeatureDefn->GetGeomFieldCount()

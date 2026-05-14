@@ -401,14 +401,14 @@ SafeNewStringUTF8(JNIEnv *jenv, const char* pszInput)
     return $jnicall;
   }
 
-
 /***************************************************************
- * Typemaps for  (const char *utf8_path, vsi_l_offset *length)
+ * Typemaps for  (const char *utf8_string, vsi_l_offset *length)
+ * Used only for wrapper_VSIGetMemFileBuffer
  ***************************************************************/
 
-%typemap(in) (const char *utf8_path, vsi_l_offset *length) (vsi_l_offset length)
+%typemap(in) (const char *utf8_string, vsi_l_offset *length) (vsi_l_offset length)
 {
-    /* %typemap(in) (const char *utf8_path, vsi_l_offset *length) */
+    /* %typemap(in) (const char *utf8_string, vsi_l_offset *length) */
     if ($input)
     {
         $1 = (char *)jenv->GetStringUTFChars($input, 0);
@@ -420,9 +420,9 @@ SafeNewStringUTF8(JNIEnv *jenv, const char* pszInput)
     $2 = &length;
 }
 
-%typemap(argout) (const char *utf8_path, vsi_l_offset *length)
+%typemap(argout) (const char *utf8_string, vsi_l_offset *length)
 {
-    /* %typemap(argout) (const char *utf8_path, vsi_l_offset *length) */
+    /* %typemap(argout) (const char *utf8_string, vsi_l_offset *length) */
     if ($input)
     {
         jenv->ReleaseStringUTFChars($input, (char*)$1);
@@ -432,11 +432,11 @@ SafeNewStringUTF8(JNIEnv *jenv, const char* pszInput)
     // Do not free result, as it is owned by the /vsimem/ file
 }
 
-%typemap(jni) (const char *utf8_path, vsi_l_offset *length) "jstring"
-%typemap(jtype) (const char *utf8_path, vsi_l_offset *length) "String"
-%typemap(jstype) (const char *utf8_path, vsi_l_offset *length) "String"
-%typemap(javain) (const char *utf8_path, vsi_l_offset *length) "$javainput"
-%typemap(javaout) (const char *utf8_path, vsi_l_offset *length) {
+%typemap(jni) (const char *utf8_string, vsi_l_offset *length) "jstring"
+%typemap(jtype) (const char *utf8_string, vsi_l_offset *length) "String"
+%typemap(jstype) (const char *utf8_string, vsi_l_offset *length) "String"
+%typemap(javain) (const char *utf8_string, vsi_l_offset *length) "$javainput"
+%typemap(javaout) (const char *utf8_string, vsi_l_offset *length) {
     return $jnicall;
   }
 

@@ -7,13 +7,14 @@ set(_SOURCES
     hdf-eos/GDapi.c
     hdf-eos/gctp_wrap.c
     hdf-eos/SWapi.c
+    hdf-eos/helper.c
     hdf4compat.h
     hdf4dataset.h
     hdf4dataset.cpp
     hdf4imagedataset.cpp
     hdf4multidim.cpp)
 
-set_property(SOURCE hdf-eos/EHapi.c hdf-eos/GDapi.c hdf-eos/SWapi.c PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
+set_property(SOURCE hdf-eos/EHapi.c hdf-eos/GDapi.c hdf-eos/SWapi.c hdf-eos/helper.c PROPERTY SKIP_UNITY_BUILD_INCLUSION ON)
 
 add_gdal_driver(TARGET gdal_HDF4
                 SOURCES ${_SOURCES}

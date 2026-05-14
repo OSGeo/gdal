@@ -13,11 +13,13 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 #include <algorithm>
+#include <limits>
+#include "gdal_rat.h"
 
 #include "miramon_rel.h"
 #include "miramon_band.h"
 
-#include "../miramon_common/mm_gdal_driver_structs.h"  // For SECTION_ATTRIBUTE_DATA
+#include "../miramon_common/mm_gdal_functions.h"  // For MM_CreateDBFHeader
 
 /************************************************************************/
 /*                              MMRBand()                               */
@@ -25,7 +27,6 @@
 MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
     : m_pfRel(&fRel), m_nWidth(0), m_nHeight(0),
       m_osBandSection(osBandSectionIn)
-
 {
     // Getting band and band file name from metadata.
     CPLString osNomFitxer;
@@ -47,8 +48,8 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
             m_osBandFileName = "";
         else
         {
-            m_osBandFileName =
-                m_pfRel->MMRGetFileNameFromRelName(m_pfRel->GetRELName());
+            m_osBandFileName = m_pfRel->MMRGetFileNameFromRelName(
+                m_pfRel->GetRELName(), pszExtRaster);
         }
 
         if (m_osBandFileName.empty())
@@ -71,6 +72,11 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
         CPLString osAux = CPLGetPathSafe(m_pfRel->GetRELNameChar());
         m_osBandFileName =
             CPLFormFilenameSafe(osAux.c_str(), m_osRawBandFileName.c_str(), "");
+
+        CPLString osExtension =
+            CPLString(CPLGetExtensionSafe(m_osBandFileName).c_str());
+        if (!EQUAL(osExtension, pszExtRaster + 1))
+            return;
     }
 
     // There is a band file documented?
@@ -127,6 +133,9 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
     // Getting min and max values
     UpdateMinMaxValuesFromREL(m_osBandSection);
 
+    // Getting unit type
+    UpdateUnitTypeValueFromREL(m_osBandSection);
+
     // Getting min and max values for simbolization
     UpdateMinMaxVisuValuesFromREL(m_osBandSection);
     if (!m_bMinVisuSet)
@@ -158,8 +167,14 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
     // Getting the bounding box: coordinates in the terrain
     UpdateBoundingBoxFromREL(m_osBandSection);
 
+    // Getting all information about simbolization
+    UpdateSimbolizationInfo(m_osBandSection);
+
+    // Getting all information about RAT
+    UpdateRATInfo(m_osBandSection);
+
     // MiraMon IMG files are efficient in going to an specified row.
-    // So le'ts configurate the blocks as line blocks.
+    // So let's configure the blocks as line blocks.
     m_nBlockXSize = m_nWidth;
     m_nBlockYSize = 1;
     m_nNRowsPerBlock = 1;
@@ -180,20 +195,97 @@ MMRBand::MMRBand(MMRRel &fRel, const CPLString &osBandSectionIn)
     m_bIsValid = true;
 }
 
+MMRBand::MMRBand(GDALProgressFunc pfnProgress, void *pProgressData,
+                 GDALDataset &oSrcDS, int nIBand, const CPLString &osDestPath,
+                 GDALRasterBand &papoBand, bool bCompress, bool bCategorical,
+                 const CPLString &osPattern, const CPLString &osBandSection,
+                 bool bNeedOfNomFitxer)
+    : m_pfnProgress(pfnProgress), m_pProgressData(pProgressData),
+      m_nIBand(nIBand), m_osBandSection(osBandSection),
+      m_osFriendlyDescription(papoBand.GetDescription()),
+      m_bIsCompressed(bCompress), m_bIsCategorical(bCategorical)
+{
+    // Getting the binary filename
+    if (bNeedOfNomFitxer)
+        m_osBandName = osPattern + "_" + osBandSection;
+    else
+        m_osBandName = osPattern;
+
+    m_osRawBandFileName = m_osBandName + pszExtRaster;
+    m_osBandFileName =
+        CPLFormFilenameSafe(osDestPath, m_osBandName, pszExtRaster);
+
+    // Getting essential metadata documented at
+    // https://www.miramon.cat/new_note/eng/notes/MiraMon_raster_file_format.pdf
+
+    // Getting number of columns and rows
+    m_nWidth = papoBand.GetXSize();
+    m_nHeight = papoBand.GetYSize();
+
+    if (m_nWidth <= 0 || m_nHeight <= 0)
+    {
+        m_nWidth = 0;
+        m_nHeight = 0;
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MMRBand::MMRBand : (nWidth <= 0 || nHeight <= 0)");
+        return;
+    }
+
+    // Getting units
+    m_osBandUnitType = papoBand.GetUnitType();
+
+    // Getting data type and compression from papoBand.
+    // If error, message given inside.
+    if (!UpdateDataTypeAndBytesPerPixelFromRasterBand(papoBand))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MMRBand::MMRBand : DataType not supported");
+        return;
+    }
+    m_nDataTypeSizeBytes = std::max(1, static_cast<int>(m_eMMBytesPerPixel));
+    m_bIsCompressed = bCompress;
+
+    // Getting NoData value and definition
+    UpdateNoDataValueFromRasterBand(papoBand);
+
+    if (WriteColorTable(oSrcDS))
+    {
+        m_osCTName.clear();
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "MMRBand::MMRBand : Existent color table but not imported"
+                 "due to some existent errors");
+    }
+
+    if (WriteAttributeTable(oSrcDS))
+    {
+        m_osRATDBFName.clear();
+        m_osRATRELName.clear();
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "MMRBand::MMRBand : Existent attribute table but not imported "
+                 "due to some existent errors");
+    }
+
+    // We have a valid MMRBand.
+    m_bIsValid = true;
+}
+
 /************************************************************************/
 /*                              ~MMRBand()                              */
 /************************************************************************/
 MMRBand::~MMRBand()
-
 {
-    if (m_pfIMG != nullptr)
-        CPL_IGNORE_RET_VAL(VSIFCloseL(m_pfIMG));
+    if (m_pfIMG == nullptr)
+        return;
+
+    CPL_IGNORE_RET_VAL(VSIFCloseL(m_pfIMG));
+    m_pfIMG = nullptr;
 }
 
-const CPLString MMRBand::GetRELFileName() const
+const CPLString &MMRBand::GetRELFileName() const
 {
+    static const CPLString osEmpty;
     if (!m_pfRel)
-        return "";
+        return osEmpty;
     return m_pfRel->GetRELName();
 }
 
@@ -265,16 +357,16 @@ CPLErr MMRBand::GetRasterBlock(int /*nXBlock*/, int nYBlock, void *pData,
 
 void MMRBand::UpdateGeoTransform()
 {
-    m_gt[0] = GetBoundingBoxMinX();
-    m_gt[1] = (GetBoundingBoxMaxX() - m_gt[0]) / GetWidth();
-    m_gt[2] = 0.0;  // No rotation in MiraMon rasters
-    m_gt[3] = GetBoundingBoxMaxY();
-    m_gt[4] = 0.0;
-    m_gt[5] = (GetBoundingBoxMinY() - m_gt[3]) / GetHeight();
+    m_gt.xorig = GetBoundingBoxMinX();
+    m_gt.xscale = (GetBoundingBoxMaxX() - m_gt.xorig) / GetWidth();
+    m_gt.xrot = 0.0;  // No rotation in MiraMon rasters
+    m_gt.yorig = GetBoundingBoxMaxY();
+    m_gt.yrot = 0.0;
+    m_gt.yscale = (GetBoundingBoxMinY() - m_gt.yorig) / GetHeight();
 }
 
 /************************************************************************/
-/*                      Other functions                                 */
+/*                           Other functions                            */
 /************************************************************************/
 
 // [ATTRIBUTE_DATA:xxxx] or [OVERVIEW:ASPECTES_TECNICS]
@@ -400,7 +492,7 @@ bool MMRBand::GetDataTypeAndBytesPerPixel(const char *pszCompType,
 }
 
 // Getting data type from metadata
-bool MMRBand::UpdateDataTypeFromREL(const CPLString osSection)
+bool MMRBand::UpdateDataTypeFromREL(const CPLString &osSection)
 {
     m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_UNDEFINED;
     m_eMMBytesPerPixel = MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_UNDEFINED;
@@ -470,10 +562,8 @@ void MMRBand::UpdateMinMaxValuesFromREL(const CPLString &osSection)
 
     CPLString osValue;
 
-    CPLString osAuxSection = SECTION_ATTRIBUTE_DATA;
-    osAuxSection.append(":");
-    osAuxSection.append(osSection);
-    if (m_pfRel->GetMetadataValue(osAuxSection, "min", osValue) &&
+    if (m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection, "min",
+                                  osValue) &&
         !osValue.empty())
     {
         if (1 == CPLsscanf(osValue, "%lf", &m_dfMin))
@@ -481,7 +571,8 @@ void MMRBand::UpdateMinMaxValuesFromREL(const CPLString &osSection)
     }
 
     m_bMaxSet = false;
-    if (m_pfRel->GetMetadataValue(osAuxSection, "max", osValue) &&
+    if (m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection, "max",
+                                  osValue) &&
         !osValue.empty())
     {
         if (1 == CPLsscanf(osValue, "%lf", &m_dfMax))
@@ -493,6 +584,18 @@ void MMRBand::UpdateMinMaxValuesFromREL(const CPLString &osSection)
     {
         m_bMinSet = false;
         m_bMaxSet = false;
+    }
+}
+
+void MMRBand::UpdateUnitTypeValueFromREL(const CPLString &osSection)
+{
+    CPLString osValue;
+
+    if (m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection, "unitats",
+                                  osValue) &&
+        !osValue.empty())
+    {
+        m_osBandUnitType = std::move(osValue);
     }
 }
 
@@ -526,7 +629,7 @@ void MMRBand::UpdateFriendlyDescriptionFromREL(const CPLString &osSection)
 {
     // This "if" is due to CID 1620830 in Coverity Scan
     if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection,
-                                   "descriptor", m_osFriendlyDescription))
+                                   KEY_descriptor, m_osFriendlyDescription))
         m_osFriendlyDescription = "";
 }
 
@@ -600,8 +703,94 @@ void MMRBand::UpdateBoundingBoxFromREL(const CPLString &osSection)
     }
 }
 
+void MMRBand::UpdateSimbolizationInfo(const CPLString &osSection)
+{
+    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osSection, "Color_Const",
+                              m_osColor_Const);
+
+    if (EQUAL(m_osColor_Const, "1"))
+    {
+        if (CE_None == m_pfRel->UpdateGDALColorEntryFromBand(
+                           osSection, m_sConstantColorRGB))
+            m_osValidColorConst = true;
+    }
+
+    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osSection, "Color_Paleta",
+                              m_osColor_Paleta);
+
+    // Treatment of the color variable
+    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osSection,
+                              "Color_TractamentVariable",
+                              m_osColor_TractamentVariable);
+
+    m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection,
+                              KEY_TractamentVariable, m_osTractamentVariable);
+
+    // Is categorical?
+    if (m_osTractamentVariable.empty())
+    {
+        m_bIsCategorical = false;
+    }
+    else
+    {
+        if (EQUAL(m_osTractamentVariable, "Categoric"))
+            m_bIsCategorical = true;
+        else
+            m_bIsCategorical = false;
+    }
+
+    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osSection,
+                              "Color_EscalatColor", m_osColor_EscalatColor);
+
+    m_pfRel->GetMetadataValue(SECTION_COLOR_TEXT, osSection,
+                              "Color_N_SimbolsALaTaula",
+                              m_osColor_N_SimbolsALaTaula);
+}
+
+void MMRBand::UpdateRATInfo(const CPLString &osSection)
+{
+    CPLString os_IndexJoin;
+
+    if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection,
+                                   "IndexsJoinTaula", os_IndexJoin) ||
+        os_IndexJoin.empty())
+    {
+        return;
+    }
+
+    // Let's see if there is any table that can ve converted to RAT
+    const CPLStringList aosTokens(CSLTokenizeString2(os_IndexJoin, ",", 0));
+    const int nTokens = CSLCount(aosTokens);
+    if (nTokens < 1)
+        return;
+
+    CPLString os_Join = "JoinTaula";
+    os_Join.append("_");
+    os_Join.append(aosTokens[0]);
+
+    CPLString osTableNameSection_value;
+    if (!m_pfRel->GetMetadataValue(SECTION_ATTRIBUTE_DATA, osSection, os_Join,
+                                   osTableNameSection_value) ||
+        osTableNameSection_value.empty())
+        return;
+
+    CPLString osTableNameSection = "TAULA_";
+    osTableNameSection.append(osTableNameSection_value);
+
+    if (!m_pfRel->GetMetadataValue(osTableNameSection, KEY_NomFitxer,
+                                   m_osShortRATName) ||
+        m_osShortRATName.empty())
+    {
+        m_osAssociateREL = "";
+        return;
+    }
+
+    CPL_IGNORE_RET_VAL(m_pfRel->GetMetadataValue(
+        osTableNameSection, "AssociatRel", m_osAssociateREL));
+}
+
 /************************************************************************/
-/*          Functions that read bytes from IMG file band                */
+/*             Functions that read bytes from IMG file band             */
 /************************************************************************/
 template <typename TYPE>
 CPLErr MMRBand::UncompressRow(void *rowBuffer, size_t nCompressedRawSize)
@@ -809,7 +998,7 @@ int MMRBand::PositionAtStartOfRowOffsetsInFile()
 {
     vsi_l_offset nFileSize, nHeaderOffset;
     char szChain[16];
-    short int nVersion, nSubVersion;
+    GInt16 nVersion, nSubVersion;
     int nOffsetSize, nOffsetsSectionType;
 
     if (VSIFSeekL(m_pfIMG, 0, SEEK_END))
@@ -962,7 +1151,7 @@ int MMRBand::PositionAtStartOfRowOffsetsInFile()
 }  // Fi de PositionAtStartOfRowOffsetsInFile()
 
 /************************************************************************/
-/*                              GetFileSize()                           */
+/*                            GetFileSize()                             */
 /************************************************************************/
 
 vsi_l_offset MMRBand::GetFileSize()
@@ -978,7 +1167,7 @@ vsi_l_offset MMRBand::GetFileSize()
 }
 
 /************************************************************************/
-/*                              FillRowOffsets()                        */
+/*                           FillRowOffsets()                           */
 /************************************************************************/
 
 bool MMRBand::FillRowOffsets()
@@ -1122,3 +1311,1135 @@ bool MMRBand::FillRowOffsets()
     return true;
 
 }  // End of FillRowOffsets()
+
+/************************************************************************/
+/*                              Writing part()                          */
+/* Indexing a compressed file increments the efficiency when reading it */
+/************************************************************************/
+bool MMRBand::WriteRowOffsets()
+{
+    if (m_aFileOffsets.empty() || m_nHeight == 0)
+        return true;
+
+    VSIFSeekL(m_pfIMG, 0, SEEK_END);
+
+    vsi_l_offset nStartOffset = VSIFTellL(m_pfIMG);
+    if (nStartOffset == 0)
+        return false;
+
+    if (VSIFWriteL("IMG 1.0\0", sizeof("IMG 1.0"), 1, m_pfIMG) != 1)
+        return false;
+
+    // Type of section
+    int nAux = 2;
+    if (VSIFWriteL(&nAux, 4, 1, m_pfIMG) != 1)
+        return false;
+
+    size_t nIndexOffset = static_cast<size_t>(m_nHeight);
+    int nOffsetSize;
+
+    if (m_aFileOffsets[nIndexOffset - 1] < static_cast<vsi_l_offset>(UCHAR_MAX))
+        nOffsetSize = 1;
+    else if (m_aFileOffsets[nIndexOffset - 1] <
+             static_cast<vsi_l_offset>(USHRT_MAX))
+        nOffsetSize = 2;
+    else if (m_aFileOffsets[nIndexOffset - 1] <
+             static_cast<vsi_l_offset>(UINT32_MAX))
+        nOffsetSize = 4;
+    else
+        nOffsetSize = 8;
+
+    if (VSIFWriteL(&nOffsetSize, 4, 1, m_pfIMG) != 1)
+        return false;
+
+    nAux = 0;
+    if (VSIFWriteL(&nAux, 4, 1, m_pfIMG) != 1)
+        return false;
+    if (VSIFWriteL(&nAux, 4, 1, m_pfIMG) != 1)
+        return false;
+
+    vsi_l_offset nUselessOffset = 0;
+    if (VSIFWriteL(&nUselessOffset, sizeof(vsi_l_offset), 1, m_pfIMG) != 1)
+        return false;
+
+    // The main part
+    size_t nSizeTOffsetSize = nOffsetSize;
+    if (nSizeTOffsetSize == sizeof(vsi_l_offset))
+    {
+        if (VSIFWriteL(&(m_aFileOffsets[0]), sizeof(vsi_l_offset), nIndexOffset,
+                       m_pfIMG) != nIndexOffset)
+            return false;
+    }
+    else
+    {
+        for (nIndexOffset = 0; nIndexOffset < m_aFileOffsets.size() - 1;
+             nIndexOffset++)
+        {
+            if (VSIFWriteL(&(m_aFileOffsets[nIndexOffset]), nSizeTOffsetSize, 1,
+                           m_pfIMG) != 1)
+                return false;
+        }
+    }
+
+    // End part of file
+    nAux = 0;
+    for (int nIndex = 0; nIndex < 4; nIndex++)
+    {
+        if (VSIFWriteL(&nAux, 4, 1, m_pfIMG) != 1)
+            return false;
+    }
+    if (VSIFWriteL("IMG 1.0\0", sizeof("IMG 1.0"), 1, m_pfIMG) != 1)
+        return false;
+
+    if (VSIFWriteL(&nStartOffset, sizeof(vsi_l_offset), 1, m_pfIMG) != 1)
+        return false;
+
+    return true;
+
+}  // End of WriteRowOffsets()
+
+// Getting data type from dataset
+bool MMRBand::UpdateDataTypeAndBytesPerPixelFromRasterBand(
+    GDALRasterBand &papoBand)
+{
+    switch (papoBand.GetRasterDataType())
+    {
+        case GDT_Byte:
+            if (m_bIsCompressed)
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_BYTE_RLE;
+            else
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_BYTE;
+
+            m_eMMBytesPerPixel =
+                MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_BYTE_I_RLE;
+            break;
+
+        case GDT_UInt16:
+            if (m_bIsCompressed)
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE;
+            else
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_UINTEGER;
+
+            m_eMMBytesPerPixel =
+                MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_INTEGER_I_RLE;
+            break;
+
+        case GDT_Int16:
+            if (m_bIsCompressed)
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_INTEGER_RLE;
+            else
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_INTEGER;
+
+            m_eMMBytesPerPixel =
+                MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_INTEGER_I_RLE;
+            break;
+
+        case GDT_Int32:
+            if (m_bIsCompressed)
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_LONG_RLE;
+            else
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_LONG;
+
+            m_eMMBytesPerPixel =
+                MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_LONG_REAL_I_RLE;
+            break;
+
+        case GDT_Float32:
+            if (m_bIsCompressed)
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_REAL_RLE;
+            else
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_REAL;
+
+            m_eMMBytesPerPixel =
+                MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_LONG_REAL_I_RLE;
+            break;
+
+        case GDT_Float64:
+            if (m_bIsCompressed)
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_DOUBLE_RLE;
+            else
+                m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_DOUBLE;
+
+            m_eMMBytesPerPixel =
+                MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_DOUBLE_I_RLE;
+            break;
+
+        default:
+            m_eMMDataType = MMDataType::DATATYPE_AND_COMPR_UNDEFINED;
+            m_eMMBytesPerPixel =
+                MMBytesPerPixel::TYPE_BYTES_PER_PIXEL_UNDEFINED;
+            m_nDataTypeSizeBytes = 0;
+            m_nWidth = 0;
+            m_nHeight = 0;
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "MiraMonRaster: data type unhandled");
+            return false;
+    }
+    return true;
+}
+
+// Getting nodata value from metadata
+void MMRBand::UpdateNoDataValueFromRasterBand(GDALRasterBand &papoBand)
+{
+    int pbSuccess;
+    m_dfNoData = papoBand.GetNoDataValue(&pbSuccess);
+    m_bNoDataSet = pbSuccess == 1 ? true : false;
+}
+
+CPLString MMRBand::GetRELDataType() const
+{
+    if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_BIT)
+        return "bit";
+    if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_BYTE ||
+        m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_BYTE_RLE)
+    {
+        if (m_bIsCompressed)
+            return "byte-RLE";
+        return "byte";
+    }
+    if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_INTEGER ||
+        m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_INTEGER_RLE)
+    {
+        if (m_bIsCompressed)
+            return "integer-RLE";
+        return "integer";
+    }
+
+    if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_UINTEGER ||
+        m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE)
+    {
+        if (m_bIsCompressed)
+            return "uinteger-RLE";
+        return "uinteger";
+    }
+
+    if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_LONG ||
+        m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_LONG_RLE)
+    {
+        if (m_bIsCompressed)
+            return "long-RLE";
+        return "long";
+    }
+
+    if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_REAL ||
+        m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_REAL_RLE)
+    {
+        if (m_bIsCompressed)
+            return "real-RLE";
+        return "real";
+    }
+
+    if (m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_DOUBLE ||
+        m_eMMDataType == MMDataType::DATATYPE_AND_COMPR_DOUBLE_RLE)
+    {
+        if (m_bIsCompressed)
+            return "double-RLE";
+        return "double";
+    }
+
+    return "";
+}
+
+void MMRBand::UpdateRowMinMax(const void *pBuffer)
+{
+    switch (m_eMMDataType)
+    {
+        case MMDataType::DATATYPE_AND_COMPR_BIT:
+        case MMDataType::DATATYPE_AND_COMPR_BYTE:
+        case MMDataType::DATATYPE_AND_COMPR_BYTE_RLE:
+            UpdateRowMinMax<unsigned char>(pBuffer);
+            break;
+
+        case MMDataType::DATATYPE_AND_COMPR_UINTEGER:
+        case MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE:
+            UpdateRowMinMax<GUInt16>(pBuffer);
+            break;
+
+        case MMDataType::DATATYPE_AND_COMPR_INTEGER:
+        case MMDataType::DATATYPE_AND_COMPR_INTEGER_RLE:
+        case MMDataType::DATATYPE_AND_COMPR_INTEGER_ASCII:
+            UpdateRowMinMax<GInt16>(pBuffer);
+            break;
+
+        case MMDataType::DATATYPE_AND_COMPR_LONG:
+        case MMDataType::DATATYPE_AND_COMPR_LONG_RLE:
+            UpdateRowMinMax<int>(pBuffer);
+            break;
+
+        case MMDataType::DATATYPE_AND_COMPR_REAL:
+        case MMDataType::DATATYPE_AND_COMPR_REAL_RLE:
+        case MMDataType::DATATYPE_AND_COMPR_REAL_ASCII:
+            UpdateRowMinMax<float>(pBuffer);
+            break;
+
+        case MMDataType::DATATYPE_AND_COMPR_DOUBLE:
+        case MMDataType::DATATYPE_AND_COMPR_DOUBLE_RLE:
+            UpdateRowMinMax<double>(pBuffer);
+            break;
+
+        default:
+            break;
+    }
+}
+
+bool MMRBand::WriteBandFile(GDALDataset &oSrcDS, int nNBands, int nIBand)
+{
+
+    GDALRasterBand *pRasterBand = oSrcDS.GetRasterBand(nIBand + 1);
+    if (!pRasterBand)
+        return false;
+
+    // Updating variable to suitable values
+    m_nBlockXSize = m_nWidth;
+    m_nBlockYSize = 1;
+    m_nNRowsPerBlock = 1;
+
+    // Opening the RAW file
+    m_pfIMG = VSIFOpenL(m_osBandFileName, "wb");
+    if (!m_pfIMG)
+    {
+        CPLError(CE_Failure, CPLE_OpenFailed,
+                 "Failed to create MiraMon band file `%s' with access 'wb'.",
+                 m_osBandFileName.c_str());
+        return false;
+    }
+
+    // Creating index information
+    if (m_bIsCompressed)
+    {
+        try
+        {
+            m_aFileOffsets.resize(static_cast<size_t>(m_nHeight) + 1);
+        }
+        catch (const std::bad_alloc &e)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return false;
+        }
+    }
+
+    GDALDataType eDT = pRasterBand->GetRasterDataType();
+
+    // Temporary buffer for one scanline
+    void *pBuffer =
+        VSI_MALLOC2_VERBOSE(m_nWidth, GDALGetDataTypeSizeBytes(eDT));
+    if (pBuffer == nullptr)
+        return false;
+
+    void *pRow =
+        VSI_MALLOC2_VERBOSE(m_nWidth, (GDALGetDataTypeSizeBytes(eDT) + 1));
+    if (pRow == nullptr)
+    {
+        VSIFree(pBuffer);
+        return false;
+    }
+
+    // Loop over each line
+    double dfComplete = nIBand * 1.0 / nNBands;
+    double dfIncr = 1.0 / (nNBands * m_nHeight);
+    if (!m_pfnProgress(dfComplete, nullptr, m_pProgressData))
+    {
+        VSIFree(pBuffer);
+        VSIFree(pRow);
+        return false;
+    }
+
+    m_bMinSet = false;
+    m_dfMin = std::numeric_limits<double>::max();
+    m_bMaxSet = false;
+    m_dfMax = -std::numeric_limits<double>::max();
+
+    for (int iLine = 0; iLine < m_nHeight; ++iLine)
+    {
+        // Read one line from the raster band
+        CPLErr err =
+            pRasterBand->RasterIO(GF_Read, 0, iLine, m_nWidth, 1, pBuffer,
+                                  m_nWidth, 1, eDT, 0, 0, nullptr);
+
+        if (err != CE_None)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Error reading line %d from raster band", iLine);
+            VSIFree(pBuffer);
+            VSIFree(pRow);
+            return false;
+        }
+
+        // MinMax calculation
+        UpdateRowMinMax(pBuffer);
+
+        if (m_bIsCompressed)
+            m_aFileOffsets[iLine] = VSIFTellL(m_pfIMG);
+
+        // Write the line to the MiraMon band file
+        size_t nWritten, nCompressed;
+        if (m_bIsCompressed)
+        {
+            nCompressed =
+                CompressRowType(m_eMMDataType, pBuffer, m_nWidth, pRow);
+            nWritten = VSIFWriteL(pRow, 1, nCompressed, m_pfIMG);
+            if (nWritten != nCompressed)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to write line %d to MiraMon band file", iLine);
+                VSIFree(pBuffer);
+                VSIFree(pRow);
+                return false;
+            }
+        }
+        else
+        {
+            nWritten = VSIFWriteL(pBuffer, GDALGetDataTypeSizeBytes(eDT),
+                                  m_nWidth, m_pfIMG);
+            if (nWritten != static_cast<size_t>(m_nWidth))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Failed to write line %d to MiraMon band file", iLine);
+                VSIFree(pBuffer);
+                VSIFree(pRow);
+                return false;
+            }
+        }
+
+        dfComplete += dfIncr;
+        if (!m_pfnProgress(dfComplete, nullptr, m_pProgressData))
+        {
+            VSIFree(pBuffer);
+            VSIFree(pRow);
+            return false;
+        }
+    }
+    VSIFree(pBuffer);
+    VSIFree(pRow);
+
+    // Updating min and max values for simbolization
+    m_dfVisuMin = m_dfMin;
+    m_bMinVisuSet = m_bMinSet;
+    m_dfVisuMax = m_dfMax;
+    m_bMaxVisuSet = m_bMaxSet;
+
+    // There is a final part that contain the indexes to every row
+    if (m_bIsCompressed)
+    {
+        if (WriteRowOffsets() == false)
+            return false;
+    }
+
+    dfComplete = (nIBand + 1.0) / nNBands;
+    if (!m_pfnProgress(dfComplete, nullptr, m_pProgressData))
+        return false;
+
+    return true;
+}
+
+constexpr uint8_t LIMIT = 255;
+
+template <typename T>
+size_t MMRBand::CompressRowTypeTpl(const T *pRow, int nNCol, void *pBufferVoid)
+{
+    uint8_t *pBuffer = static_cast<uint8_t *>(pBufferVoid);
+
+    T tPreviousValue = pRow[0];
+    uint8_t nByteCounter = 0;
+    size_t nRowBytes = 0;
+
+    for (int i = 0; i < nNCol; i++)
+    {
+        if (tPreviousValue == pRow[i] && nByteCounter < LIMIT)
+            nByteCounter++;
+        else  // I have found a different value or I have reached the limit of the counter
+        {
+            if (nByteCounter == 1)
+            {
+                //In cas of three consecutive different values, it's more efficient
+                // to write them as uncompressed values than as three RLE
+                if (i + 2 < nNCol && pRow[i] != pRow[i + 1] &&
+                    pRow[i + 1] != pRow[i + 2])
+                {
+                    // Indicates that the following values are
+                    // uncompressed, and how many of them are there
+                    *pBuffer++ = 0;
+                    uint8_t *pHowManyUncompressed = pBuffer++;
+                    nRowBytes += 2;
+
+                    // Writing first three
+                    memcpy(pBuffer, &tPreviousValue, sizeof(T));
+                    pBuffer += sizeof(T);
+
+                    tPreviousValue = pRow[i];
+                    memcpy(pBuffer, &tPreviousValue, sizeof(T));
+                    pBuffer += sizeof(T);
+                    i++;
+
+                    tPreviousValue = pRow[i];
+                    memcpy(pBuffer, &tPreviousValue, sizeof(T));
+                    pBuffer += sizeof(T);
+
+                    nRowBytes += 3 * sizeof(T);
+
+                    // nByteCounter is now the number of bytes of the three uncompressed values
+                    nByteCounter = 3;
+
+                    for (i++; i + 1 < nNCol && nByteCounter < LIMIT;
+                         i++, nByteCounter++)
+                    {
+                        if (pRow[i] == pRow[i + 1])
+                            break;
+
+                        memcpy(pBuffer, pRow + i, sizeof(T));
+                        pBuffer += sizeof(T);
+                        nRowBytes += sizeof(T);
+                    }
+
+                    if (i + 1 == nNCol && nByteCounter < LIMIT)
+                    {
+                        *pHowManyUncompressed = ++nByteCounter;
+                        memcpy(pBuffer, pRow + i, sizeof(T));
+                        nRowBytes += sizeof(T);
+                        return nRowBytes;
+                    }
+
+                    *pHowManyUncompressed = nByteCounter;
+                    tPreviousValue = pRow[i];
+                    nByteCounter = 1;
+                    continue;
+                }
+            }
+
+            // Normal RLE
+            *pBuffer++ = nByteCounter;
+            memcpy(pBuffer, &tPreviousValue, sizeof(T));
+            pBuffer += sizeof(T);
+            nRowBytes += 1 + sizeof(T);
+
+            tPreviousValue = pRow[i];
+            nByteCounter = 1;
+        }
+    }
+
+    // Last element
+    *pBuffer++ = nByteCounter;
+
+    memcpy(pBuffer, &tPreviousValue, sizeof(T));
+    nRowBytes += 1 + sizeof(T);
+
+    return nRowBytes;
+}
+
+size_t MMRBand::CompressRowType(MMDataType nDataType, const void *pRow,
+                                int nNCol, void *pBuffer)
+{
+    switch (nDataType)
+    {
+        case MMDataType::DATATYPE_AND_COMPR_BYTE_RLE:
+        case MMDataType::DATATYPE_AND_COMPR_BYTE:
+            return CompressRowTypeTpl<uint8_t>(
+                reinterpret_cast<const uint8_t *>(pRow), nNCol, pBuffer);
+
+        case MMDataType::DATATYPE_AND_COMPR_INTEGER_RLE:
+        case MMDataType::DATATYPE_AND_COMPR_INTEGER:
+            return CompressRowTypeTpl<GInt16>(
+                reinterpret_cast<const GInt16 *>(pRow), nNCol, pBuffer);
+
+        case MMDataType::DATATYPE_AND_COMPR_UINTEGER_RLE:
+        case MMDataType::DATATYPE_AND_COMPR_UINTEGER:
+            return CompressRowTypeTpl<GUInt16>(
+                reinterpret_cast<const GUInt16 *>(pRow), nNCol, pBuffer);
+
+        case MMDataType::DATATYPE_AND_COMPR_LONG_RLE:
+        case MMDataType::DATATYPE_AND_COMPR_LONG:
+            return CompressRowTypeTpl<GInt32>(
+                reinterpret_cast<const GInt32 *>(pRow), nNCol, pBuffer);
+
+        case MMDataType::DATATYPE_AND_COMPR_REAL_RLE:
+        case MMDataType::DATATYPE_AND_COMPR_REAL:
+            return CompressRowTypeTpl<float>(
+                reinterpret_cast<const float *>(pRow), nNCol, pBuffer);
+
+        case MMDataType::DATATYPE_AND_COMPR_DOUBLE_RLE:
+        case MMDataType::DATATYPE_AND_COMPR_DOUBLE:
+            return CompressRowTypeTpl<double>(
+                reinterpret_cast<const double *>(pRow), nNCol, pBuffer);
+
+        default:
+            // same treatment than the original
+            return 0;
+    }
+}
+
+int MMRBand::WriteColorTable(GDALDataset &oSrcDS)
+{
+    GDALRasterBand *pRasterBand = oSrcDS.GetRasterBand(m_nIBand + 1);
+    if (!pRasterBand)
+        return 0;
+
+    m_poCT = pRasterBand->GetColorTable();
+    if (!m_poCT)
+    {
+        // Perhaps the RAT contains colors and MiraMon can use them as a palette
+        return WriteColorTableFromRAT(oSrcDS);
+    }
+
+    if (!m_poCT->GetColorEntryCount())
+        return 0;
+
+    // Creating DBF table name
+    if (!cpl::ends_with(m_osBandFileName, pszExtRaster))
+        return 1;
+
+    // Extract .img
+    m_osCTName = m_osBandFileName;
+    m_osCTName.resize(m_osCTName.size() - strlen(".img"));
+    m_osCTName.append("_CT.dbf");
+
+    // Creating DBF
+    struct MM_DATA_BASE_XP *pBD_XP =
+        MM_CreateDBFHeader(4, MM_JOC_CARAC_UTF8_DBF);
+    if (!pBD_XP)
+        return 1;
+
+    // Assigning DBF table name
+    CPLStrlcpy(pBD_XP->szFileName, m_osCTName, sizeof(pBD_XP->szFileName));
+
+    // Initializing the table
+    MM_EXT_DBF_N_RECORDS nPaletteColors =
+        static_cast<MM_EXT_DBF_N_RECORDS>(m_poCT->GetColorEntryCount());
+    pBD_XP->nFields = 4;
+    pBD_XP->nRecords = nPaletteColors;
+    pBD_XP->FirstRecordOffset =
+        static_cast<MM_FIRST_RECORD_OFFSET_TYPE>(33 + (pBD_XP->nFields * 32));
+    pBD_XP->CharSet = MM_JOC_CARAC_ANSI_DBASE;
+    pBD_XP->dbf_version = MM_MARCA_DBASE4;
+    pBD_XP->BytesPerRecord = 1;
+
+    MM_ACCUMULATED_BYTES_TYPE_DBF nClauSimbolNBytes = 0;
+    do
+    {
+        nClauSimbolNBytes++;
+        nPaletteColors /= 10;
+    } while (nPaletteColors > 0);
+    nClauSimbolNBytes++;
+
+    // Fields of the DBF table
+    struct MM_FIELD MMField;
+    MM_InitializeField(&MMField);
+    MMField.FieldType = 'N';
+    CPLStrlcpy(MMField.FieldName, "CLAUSIMBOL", MM_MAX_LON_FIELD_NAME_DBF);
+    MMField.BytesPerField = nClauSimbolNBytes;
+    MM_DuplicateFieldDBXP(pBD_XP->pField, &MMField);
+
+    CPLStrlcpy(MMField.FieldName, "R_COLOR", MM_MAX_LON_FIELD_NAME_DBF);
+    MMField.BytesPerField = 3;
+    MM_DuplicateFieldDBXP(pBD_XP->pField + 1, &MMField);
+
+    CPLStrlcpy(MMField.FieldName, "G_COLOR", MM_MAX_LON_FIELD_NAME_DBF);
+    MMField.BytesPerField = 3;
+    MM_DuplicateFieldDBXP(pBD_XP->pField + 2, &MMField);
+
+    CPLStrlcpy(MMField.FieldName, "B_COLOR", MM_MAX_LON_FIELD_NAME_DBF);
+    MMField.BytesPerField = 3;
+    MM_DuplicateFieldDBXP(pBD_XP->pField + 3, &MMField);
+
+    // Opening the table
+    if (!MM_CreateAndOpenDBFFile(pBD_XP, pBD_XP->szFileName))
+    {
+        MM_ReleaseDBFHeader(&pBD_XP);
+        return 1;
+    }
+
+    // Writing records to the table
+    if (0 != VSIFSeekL(pBD_XP->pfDataBase,
+                       static_cast<vsi_l_offset>(pBD_XP->FirstRecordOffset),
+                       SEEK_SET))
+    {
+        MM_ReleaseDBFHeader(&pBD_XP);
+        return 1;
+    }
+
+    GDALColorEntry colorEntry;
+    int nIColor;
+    for (nIColor = 0; nIColor < static_cast<int>(pBD_XP->nRecords); nIColor++)
+    {
+        m_poCT->GetColorEntryAsRGB(nIColor, &colorEntry);
+
+        // Deletion flag
+        if (!VSIFPrintfL(pBD_XP->pfDataBase, " "))
+        {
+            MM_ReleaseDBFHeader(&pBD_XP);
+            return 1;
+        }
+
+        if (!VSIFPrintfL(pBD_XP->pfDataBase, "%*d",
+                         static_cast<int>(nClauSimbolNBytes), nIColor))
+        {
+            MM_ReleaseDBFHeader(&pBD_XP);
+            return 1;
+        }
+        if (colorEntry.c4 == 0)
+        {
+            if (!VSIFPrintfL(pBD_XP->pfDataBase, "%3d%3d%3d", -1, -1, -1))
+            {
+                MM_ReleaseDBFHeader(&pBD_XP);
+                return 1;
+            }
+        }
+        else
+        {
+            if (!VSIFPrintfL(pBD_XP->pfDataBase, "%3d%3d%3d",
+                             static_cast<int>(colorEntry.c1),
+                             static_cast<int>(colorEntry.c2),
+                             static_cast<int>(colorEntry.c3)))
+            {
+                MM_ReleaseDBFHeader(&pBD_XP);
+                return 1;
+            }
+        }
+    }
+
+    fclose_and_nullify(&pBD_XP->pfDataBase);
+    MM_ReleaseDBFHeader(&pBD_XP);
+    return 0;
+}
+
+// Writes DBF and REL attribute table in MiraMon format
+int MMRBand::WriteColorTableFromRAT(GDALDataset &oSrcDS)
+{
+    GDALRasterBand *pRasterBand = oSrcDS.GetRasterBand(m_nIBand + 1);
+    if (!pRasterBand)
+        return 0;
+
+    m_poRAT = pRasterBand->GetDefaultRAT();
+    if (!m_poRAT)
+        return 0;
+
+    // At least a value and RGB columns are required
+    if (m_poRAT->GetColumnCount() < 4)
+        return 0;
+
+    if (!m_poRAT->GetRowCount())
+        return 0;
+
+    // Getting the columns that can be converted to a MiraMon palette
+    int nIValueMinMax = m_poRAT->GetColOfUsage(GFU_MinMax);
+    int nIValueMin = m_poRAT->GetColOfUsage(GFU_Min);
+    int nIValueMax = m_poRAT->GetColOfUsage(GFU_Max);
+    int nIRed = m_poRAT->GetColOfUsage(GFU_Red);
+    int nIGreen = m_poRAT->GetColOfUsage(GFU_Green);
+    int nIBlue = m_poRAT->GetColOfUsage(GFU_Blue);
+    int nIAlpha = m_poRAT->GetColOfUsage(GFU_Alpha);
+
+    // If the RAT has no value type nor RGB colors, MiraMon can't handle that
+    // as a color table. MinMax or Min and Max are accepted as values.
+    if (!(nIValueMinMax != -1 || (nIValueMin != -1 && nIValueMax != -1) ||
+          nIRed == -1 || nIGreen == -1 || nIBlue == -1))
+        return 0;
+
+    // Creating DBF table name
+    if (!cpl::ends_with(m_osBandFileName, pszExtRaster))
+        return 1;
+
+    // Extract .img
+    m_osCTName = m_osBandFileName;
+    m_osCTName.resize(m_osCTName.size() - strlen(".img"));
+    m_osCTName.append("_CT.dbf");
+
+    // Creating DBF
+    struct MM_DATA_BASE_XP *pBD_XP =
+        MM_CreateDBFHeader(4, MM_JOC_CARAC_UTF8_DBF);
+    if (!pBD_XP)
+        return 1;
+
+    // Assigning DBF table name
+    CPLStrlcpy(pBD_XP->szFileName, m_osCTName, sizeof(pBD_XP->szFileName));
+
+    // Initializing the table
+    MM_EXT_DBF_N_RECORDS nPaletteColors =
+        static_cast<MM_EXT_DBF_N_RECORDS>(m_poRAT->GetRowCount());
+    pBD_XP->nFields = 4;
+    pBD_XP->nRecords = nPaletteColors;
+    pBD_XP->FirstRecordOffset =
+        static_cast<MM_FIRST_RECORD_OFFSET_TYPE>(33 + (pBD_XP->nFields * 32));
+    pBD_XP->CharSet = MM_JOC_CARAC_ANSI_DBASE;
+    pBD_XP->dbf_version = MM_MARCA_DBASE4;
+    pBD_XP->BytesPerRecord = 1;
+
+    MM_ACCUMULATED_BYTES_TYPE_DBF nClauSimbolNBytes = 0;
+    do
+    {
+        nClauSimbolNBytes++;
+        nPaletteColors /= 10;
+    } while (nPaletteColors > 0);
+    nClauSimbolNBytes++;
+
+    // Fields of the DBF table
+    struct MM_FIELD MMField;
+    MM_InitializeField(&MMField);
+    MMField.FieldType = 'N';
+    CPLStrlcpy(MMField.FieldName, "CLAUSIMBOL", MM_MAX_LON_FIELD_NAME_DBF);
+    MMField.BytesPerField = nClauSimbolNBytes;
+    MM_DuplicateFieldDBXP(pBD_XP->pField, &MMField);
+
+    CPLStrlcpy(MMField.FieldName, "R_COLOR", MM_MAX_LON_FIELD_NAME_DBF);
+    MMField.BytesPerField = 3;
+    MM_DuplicateFieldDBXP(pBD_XP->pField + 1, &MMField);
+
+    CPLStrlcpy(MMField.FieldName, "G_COLOR", MM_MAX_LON_FIELD_NAME_DBF);
+    MMField.BytesPerField = 3;
+    MM_DuplicateFieldDBXP(pBD_XP->pField + 2, &MMField);
+
+    CPLStrlcpy(MMField.FieldName, "B_COLOR", MM_MAX_LON_FIELD_NAME_DBF);
+    MMField.BytesPerField = 3;
+    MM_DuplicateFieldDBXP(pBD_XP->pField + 3, &MMField);
+
+    // Opening the table
+    if (!MM_CreateAndOpenDBFFile(pBD_XP, pBD_XP->szFileName))
+    {
+        MM_ReleaseDBFHeader(&pBD_XP);
+        return 1;
+    }
+
+    // Writing records to the table
+    if (0 != VSIFSeekL(pBD_XP->pfDataBase,
+                       static_cast<vsi_l_offset>(pBD_XP->FirstRecordOffset),
+                       SEEK_SET))
+    {
+        MM_ReleaseDBFHeader(&pBD_XP);
+        return 1;
+    }
+
+    int nIRow;
+    for (nIRow = 0; nIRow < static_cast<int>(pBD_XP->nRecords); nIRow++)
+    {
+        if (nIRow > 0 && nIValueMin != -1 && nIValueMax != -1)
+        {
+            if (m_poRAT->GetValueAsInt(nIRow, nIValueMin) ==
+                m_poRAT->GetValueAsInt(nIRow, nIValueMax))
+                break;
+        }
+        // Deletion flag
+        if (!VSIFPrintfL(pBD_XP->pfDataBase, " "))
+        {
+            MM_ReleaseDBFHeader(&pBD_XP);
+            return 1;
+        }
+
+        if (!VSIFPrintfL(pBD_XP->pfDataBase, "%*d",
+                         static_cast<int>(nClauSimbolNBytes), nIRow))
+        {
+            MM_ReleaseDBFHeader(&pBD_XP);
+            return 1;
+        }
+        if (nIAlpha != -1 && m_poRAT->GetValueAsInt(nIRow, nIAlpha) == 0)
+        {
+            if (!VSIFPrintfL(pBD_XP->pfDataBase, "%3d%3d%3d", -1, -1, -1))
+            {
+                MM_ReleaseDBFHeader(&pBD_XP);
+                return 1;
+            }
+        }
+        else
+        {
+            if (!VSIFPrintfL(pBD_XP->pfDataBase, "%3d%3d%3d",
+                             m_poRAT->GetValueAsInt(nIRow, nIRed),
+                             m_poRAT->GetValueAsInt(nIRow, nIGreen),
+                             m_poRAT->GetValueAsInt(nIRow, nIBlue)))
+            {
+                MM_ReleaseDBFHeader(&pBD_XP);
+                return 1;
+            }
+        }
+    }
+
+    // Nodata color
+    if (!VSIFPrintfL(pBD_XP->pfDataBase, " "))
+    {
+        MM_ReleaseDBFHeader(&pBD_XP);
+        return 1;
+    }
+    if (!VSIFPrintfL(pBD_XP->pfDataBase, "%*s",
+                     static_cast<int>(nClauSimbolNBytes), ""))
+    {
+        MM_ReleaseDBFHeader(&pBD_XP);
+        return 1;
+    }
+    if (!VSIFPrintfL(pBD_XP->pfDataBase, "%3d%3d%3d", -1, -1, -1))
+    {
+        MM_ReleaseDBFHeader(&pBD_XP);
+        return 1;
+    }
+    nIRow++;
+
+    if (nIRow != static_cast<int>(pBD_XP->nRecords))
+    {
+        pBD_XP->nRecords = nIRow;
+        MM_WriteNRecordsMMBD_XPFile(pBD_XP);
+    }
+
+    fclose_and_nullify(&pBD_XP->pfDataBase);
+    MM_ReleaseDBFHeader(&pBD_XP);
+    return 0;
+}
+
+// Writes DBF and REL attribute table in MiraMon format
+int MMRBand::WriteAttributeTable(GDALDataset &oSrcDS)
+{
+    GDALRasterBand *pRasterBand = oSrcDS.GetRasterBand(m_nIBand + 1);
+    if (!pRasterBand)
+        return 0;
+
+    m_poRAT = pRasterBand->GetDefaultRAT();
+    if (!m_poRAT)
+        return 0;
+
+    if (!m_poRAT->GetColumnCount())
+        return 0;
+
+    if (!m_poRAT->GetRowCount())
+        return 0;
+
+    // Getting the Value column
+    int nIField;
+    m_osValue = "";
+    int nIValue = m_poRAT->GetColOfUsage(GFU_MinMax);
+    // If the RAT has no value type, MiraMon can't handle that
+    // as a RAT
+    if (nIValue == -1)
+    {
+        nIValue = m_poRAT->GetColOfUsage(GFU_Min);
+        if (nIValue == -1)
+        {
+            GDALRATFieldType nType = m_poRAT->GetTypeOfCol(0);
+            if (nType == GFT_Integer)
+                nIValue = 0;
+            else
+                return 1;
+        }
+    }
+
+    m_osValue = m_poRAT->GetNameOfCol(nIValue);
+
+    // Creating DBF table name
+    if (!cpl::ends_with(m_osBandFileName, pszExtRaster))
+        return 1;
+
+    // Extract .img and create DBF file name
+    m_osRATDBFName = m_osBandFileName;
+    m_osRATDBFName.resize(m_osRATDBFName.size() - strlen(".img"));
+    m_osRATDBFName.append("_RAT.dbf");
+
+    // Extract .img and create REL file name
+    m_osRATRELName = m_osBandFileName;
+    m_osRATRELName.resize(m_osRATRELName.size() - strlen(".img"));
+    m_osRATRELName.append("_RAT.rel");
+
+    // Creating DBF
+    int nFields = m_poRAT->GetColumnCount();
+    struct MM_DATA_BASE_XP *pBD_XP =
+        MM_CreateDBFHeader(nFields, MM_JOC_CARAC_UTF8_DBF);
+    if (!pBD_XP)
+        return 1;
+
+    // Creating a simple REL that allows MiraMon user to
+    // document this RAT in case of need.
+    auto pRATRel = std::make_unique<MMRRel>(m_osRATRELName);
+    if (!pRATRel->OpenRELFile("wb"))
+    {
+        MM_ReleaseDBFHeader(&pBD_XP);
+        return 1;
+    }
+
+    pRATRel->AddSectionStart(SECTION_VERSIO);
+    pRATRel->AddKeyValue(KEY_Vers, "4");
+    pRATRel->AddKeyValue(KEY_SubVers, "3");
+    pRATRel->AddSectionEnd();
+
+    pRATRel->AddSectionStart(SECTION_TAULA_PRINCIPAL);
+    // Get path relative to REL file
+    pRATRel->AddKeyValue(KEY_NomFitxer, CPLGetFilename(m_osRATDBFName));
+    pRATRel->AddKeyValue(KEY_TipusRelacio, "RELACIO_N_1");
+    pRATRel->AddKeyValue("AssociatRel", m_osValue);
+    pRATRel->AddSectionEnd();
+
+    // Assigning DBF table name
+    CPLStrlcpy(pBD_XP->szFileName, m_osRATDBFName, sizeof(pBD_XP->szFileName));
+
+    // Initializing the table
+    MM_EXT_DBF_N_RECORDS nRecords =
+        static_cast<MM_EXT_DBF_N_RECORDS>(m_poRAT->GetRowCount());
+    pBD_XP->nFields = nFields;
+    pBD_XP->nRecords = nRecords;
+    pBD_XP->FirstRecordOffset =
+        static_cast<MM_FIRST_RECORD_OFFSET_TYPE>(33 + (pBD_XP->nFields * 32));
+    pBD_XP->CharSet = MM_JOC_CARAC_ANSI_DBASE;
+    pBD_XP->dbf_version = MM_MARCA_DBASE4;
+    pBD_XP->BytesPerRecord = 1;
+
+    // Fields of the DBF table
+    struct MM_FIELD MMField;
+    for (nIField = 0; nIField < m_poRAT->GetColumnCount(); nIField++)
+    {
+        // DBF part
+        MM_InitializeField(&MMField);
+        CPLStrlcpy(MMField.FieldName, m_poRAT->GetNameOfCol(nIField),
+                   sizeof(MMField.FieldName));
+
+        MMField.BytesPerField = 0;
+        for (int nIRow = 0; nIRow < m_poRAT->GetRowCount(); nIRow++)
+        {
+            if (m_poRAT->GetTypeOfCol(nIField) == GFT_DateTime)
+            {
+                MMField.FieldType = 'D';
+                MMField.DecimalsIfFloat = 0;
+                MMField.BytesPerField = MM_MAX_AMPLADA_CAMP_D_DBF;
+                break;
+            }
+            else if (m_poRAT->GetTypeOfCol(nIField) == GFT_Boolean)
+            {
+                MMField.FieldType = 'L';
+                MMField.DecimalsIfFloat = 0;
+                MMField.BytesPerField = 1;
+                break;
+            }
+            else
+            {
+                if (m_poRAT->GetTypeOfCol(nIField) == GFT_String ||
+                    m_poRAT->GetTypeOfCol(nIField) == GFT_WKBGeometry)
+                {
+                    MMField.FieldType = 'C';
+                    MMField.DecimalsIfFloat = 0;
+                }
+                else
+                {
+                    MMField.FieldType = 'N';
+                    if (m_poRAT->GetTypeOfCol(nIField) == GFT_Real)
+                    {
+                        MMField.BytesPerField = 20;
+                        MMField.DecimalsIfFloat = MAX_RELIABLE_SF_DOUBLE;
+                    }
+                    else
+                        MMField.DecimalsIfFloat = 0;
+                }
+                char *pszString =
+                    CPLRecode(m_poRAT->GetValueAsString(nIRow, nIField),
+                              CPL_ENC_UTF8, "CP1252");
+
+                if (strlen(pszString) > MMField.BytesPerField)
+                    MMField.BytesPerField =
+                        static_cast<MM_BYTES_PER_FIELD_TYPE_DBF>(
+                            strlen(pszString));
+
+                CPLFree(pszString);
+            }
+        }
+        MM_DuplicateFieldDBXP(pBD_XP->pField + nIField, &MMField);
+
+        // REL part
+        CPLString osSection = SECTION_TAULA_PRINCIPAL;
+        osSection.append(":");
+        osSection.append(MMField.FieldName);
+        pRATRel->AddSectionStart(osSection);
+
+        if (EQUAL(MMField.FieldName, m_osValue))
+        {
+            pRATRel->AddKeyValue("visible", "0");
+            pRATRel->AddKeyValue(KEY_TractamentVariable, "Categoric");
+        }
+        pRATRel->AddKeyValue(KEY_descriptor, "");
+        pRATRel->AddSectionEnd();
+    }
+
+    // Closing the REL
+    pRATRel->CloseRELFile();
+
+    // Opening the table
+    if (!MM_CreateAndOpenDBFFile(pBD_XP, pBD_XP->szFileName))
+    {
+        MM_ReleaseDBFHeader(&pBD_XP);
+        return 1;
+    }
+
+    // Writing records to the table
+    if (0 != VSIFSeekL(pBD_XP->pfDataBase,
+                       static_cast<vsi_l_offset>(pBD_XP->FirstRecordOffset),
+                       SEEK_SET))
+    {
+        MM_ReleaseDBFHeader(&pBD_XP);
+        return 1;
+    }
+
+    for (int nIRow = 0; nIRow < static_cast<int>(pBD_XP->nRecords); nIRow++)
+    {
+        // Deletion flag
+        if (!VSIFPrintfL(pBD_XP->pfDataBase, " "))
+        {
+            MM_ReleaseDBFHeader(&pBD_XP);
+            return 1;
+        }
+        for (nIField = 0; nIField < static_cast<int>(pBD_XP->nFields);
+             nIField++)
+        {
+            if (m_poRAT->GetTypeOfCol(nIRow) == GFT_DateTime)
+            {
+                char szDate[15];
+                const GDALRATDateTime osDT =
+                    m_poRAT->GetValueAsDateTime(nIRow, nIField);
+                if (osDT.nYear >= 0)
+                    snprintf(szDate, sizeof(szDate), "%04d%02d%02d", osDT.nYear,
+                             osDT.nMonth, osDT.nDay);
+                else
+                    snprintf(szDate, sizeof(szDate), "%04d%02d%02d", 0, 0, 0);
+
+                if (pBD_XP->pField[nIField].BytesPerField !=
+                    VSIFWriteL(szDate, 1, pBD_XP->pField[nIField].BytesPerField,
+                               pBD_XP->pfDataBase))
+                {
+                    MM_ReleaseDBFHeader(&pBD_XP);
+                    return 1;
+                }
+            }
+            else if (m_poRAT->GetTypeOfCol(nIRow) == GFT_Boolean)
+            {
+                if (pBD_XP->pField[nIField].BytesPerField !=
+                    VSIFWriteL(m_poRAT->GetValueAsBoolean(nIRow, nIField) ? "T"
+                                                                          : "F",
+                               1, pBD_XP->pField[nIField].BytesPerField,
+                               pBD_XP->pfDataBase))
+                {
+                    MM_ReleaseDBFHeader(&pBD_XP);
+                    return 1;
+                }
+            }
+            else if (m_poRAT->GetTypeOfCol(nIRow) == GFT_WKBGeometry)
+            {
+                if (pBD_XP->pField[nIField].BytesPerField !=
+                    VSIFWriteL(m_poRAT->GetValueAsString(nIRow, nIField), 1,
+                               pBD_XP->pField[nIField].BytesPerField,
+                               pBD_XP->pfDataBase))
+                {
+                    MM_ReleaseDBFHeader(&pBD_XP);
+                    return 1;
+                }
+            }
+            else
+            {
+                char *pszString =
+                    CPLRecode(m_poRAT->GetValueAsString(nIRow, nIField),
+                              CPL_ENC_UTF8, "CP1252");
+
+                if (pBD_XP->pField[nIField].BytesPerField !=
+                    VSIFWriteL(pszString, 1,
+                               pBD_XP->pField[nIField].BytesPerField,
+                               pBD_XP->pfDataBase))
+                {
+                    MM_ReleaseDBFHeader(&pBD_XP);
+                    return 1;
+                }
+                CPLFree(pszString);
+            }
+        }
+    }
+
+    fclose_and_nullify(&pBD_XP->pfDataBase);
+    MM_ReleaseDBFHeader(&pBD_XP);
+    return 0;
+}

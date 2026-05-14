@@ -30,7 +30,7 @@
 #endif
 
 /************************************************************************/
-/*                       GDALDatasetCheckAlgorithm()                    */
+/*                     GDALDatasetCheckAlgorithm()                      */
 /************************************************************************/
 
 GDALDatasetCheckAlgorithm::GDALDatasetCheckAlgorithm()
@@ -50,7 +50,7 @@ GDALDatasetCheckAlgorithm::GDALDatasetCheckAlgorithm()
 }
 
 /************************************************************************/
-/*                   GDALDatasetCheckAlgorithm::RunImpl()               */
+/*                 GDALDatasetCheckAlgorithm::RunImpl()                 */
 /************************************************************************/
 
 bool GDALDatasetCheckAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
@@ -108,7 +108,7 @@ bool GDALDatasetCheckAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                          GetGroupPixelCount()                         */
+/*                         GetGroupPixelCount()                         */
 /************************************************************************/
 
 static GIntBig GetGroupPixelCount(const GDALGroup *poGroup)
@@ -135,7 +135,7 @@ static GIntBig GetGroupPixelCount(const GDALGroup *poGroup)
 }
 
 /************************************************************************/
-/*                              ProgressStruct                          */
+/*                            ProgressStruct                            */
 /************************************************************************/
 
 namespace
@@ -159,7 +159,7 @@ struct ProgressStruct
 }  // namespace
 
 /************************************************************************/
-/*                           MDArrayProcessFunc()                       */
+/*                         MDArrayProcessFunc()                         */
 /************************************************************************/
 
 /** Read a chunk of a multidimensional array */
@@ -219,7 +219,7 @@ static bool MDArrayProcessFunc(GDALAbstractMDArray *array,
 }
 
 /************************************************************************/
-/*                GDALDatasetCheckAlgorithm::CheckGroup()               */
+/*               GDALDatasetCheckAlgorithm::CheckGroup()                */
 /************************************************************************/
 
 bool GDALDatasetCheckAlgorithm::CheckGroup(GDALGroup *poGroup,
@@ -282,7 +282,7 @@ bool GDALDatasetCheckAlgorithm::CheckGroup(GDALGroup *poGroup,
 }
 
 /************************************************************************/
-/*             GDALDatasetCheckAlgorithm::CheckDataset()                */
+/*              GDALDatasetCheckAlgorithm::CheckDataset()               */
 /************************************************************************/
 
 bool GDALDatasetCheckAlgorithm::CheckDataset(GDALDataset *poDS,

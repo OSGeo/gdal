@@ -25,7 +25,7 @@
 #include "ogr_geometry.h"
 
 /************************************************************************/
-/*                           Help functions                             */
+/*                            Help functions                            */
 /************************************************************************/
 
 std::string Nodetype2String(Nodetype const &type)
@@ -97,7 +97,7 @@ static Coordinate *ParseCoordinate(std::string const &text)
 }
 
 /************************************************************************/
-/*                         KMLNode methods                              */
+/*                           KMLNode methods                            */
 /************************************************************************/
 
 KMLNode::KMLNode()

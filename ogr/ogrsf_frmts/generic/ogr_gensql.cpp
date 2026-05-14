@@ -47,7 +47,7 @@ class OGRGenSQLGeomFieldDefn final : public OGRGeomFieldDefn
 OGRGenSQLGeomFieldDefn::~OGRGenSQLGeomFieldDefn() = default;
 
 /************************************************************************/
-/*               OGRGenSQLResultsLayerHasSpecialField()                 */
+/*                OGRGenSQLResultsLayerHasSpecialField()                */
 /************************************************************************/
 
 static bool OGRGenSQLResultsLayerHasSpecialField(swq_expr_node *expr,
@@ -463,8 +463,19 @@ OGRGenSQLResultsLayer::OGRGenSQLResultsLayer(
     /*      if there is one.                                                */
     /* -------------------------------------------------------------------- */
     if (poSpatFilter)
-        OGRGenSQLResultsLayer::SetSpatialFilter(
-            0, const_cast<OGRGeometry *>(poSpatFilter));
+    {
+        if (m_poDefn->GetGeomFieldCount() > 0)
+        {
+            OGRGenSQLResultsLayer::SetSpatialFilter(
+                0, const_cast<OGRGeometry *>(poSpatFilter));
+        }
+        else
+        {
+            m_bSpatialFilterSetOnSourceLayer = true;
+            m_poSrcLayer->SetSpatialFilter(
+                0, const_cast<OGRGeometry *>(poSpatFilter));
+        }
+    }
 
     OGRGenSQLResultsLayer::ResetReading();
 
@@ -509,12 +520,10 @@ void OGRGenSQLResultsLayer::ClearFilters()
     /* -------------------------------------------------------------------- */
     /*      Clear any filters installed on the target layer.                */
     /* -------------------------------------------------------------------- */
-    if (m_poSrcLayer != nullptr)
-    {
-        m_poSrcLayer->ResetReading();
-        m_poSrcLayer->SetAttributeFilter("");
+    m_poSrcLayer->ResetReading();
+    m_poSrcLayer->SetAttributeFilter("");
+    if (GetLayerDefn()->GetGeomFieldCount() > 0)
         m_poSrcLayer->SetSpatialFilter(nullptr);
-    }
 
     /* -------------------------------------------------------------------- */
     /*      Clear any attribute filter installed on the joined layers.      */
@@ -547,7 +556,7 @@ void OGRGenSQLResultsLayer::ClearFilters()
 }
 
 /************************************************************************/
-/*                    MustEvaluateSpatialFilterOnGenSQL()               */
+/*                 MustEvaluateSpatialFilterOnGenSQL()                  */
 /************************************************************************/
 
 int OGRGenSQLResultsLayer::MustEvaluateSpatialFilterOnGenSQL()
@@ -564,7 +573,7 @@ int OGRGenSQLResultsLayer::MustEvaluateSpatialFilterOnGenSQL()
 }
 
 /************************************************************************/
-/*                       ApplyFiltersToSource()                         */
+/*                        ApplyFiltersToSource()                        */
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::ApplyFiltersToSource()
@@ -660,7 +669,7 @@ OGRErr OGRGenSQLResultsLayer::SetNextByIndex(GIntBig nIndex)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRGenSQLResultsLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -814,7 +823,7 @@ int OGRGenSQLResultsLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                        ContainGeomSpecialField()                     */
+/*                      ContainGeomSpecialField()                       */
 /************************************************************************/
 
 int OGRGenSQLResultsLayer::ContainGeomSpecialField(
@@ -896,7 +905,7 @@ bool OGRGenSQLResultsLayer::PrepareSummary() const
     auto poSrcLayerDefn = m_poSrcLayer->GetLayerDefn();
     std::unique_ptr<TempGeomIgnoredSetter> oTempGeomIgnoredSetter;
 
-    if (m_poFilterGeom == nullptr &&
+    if (!m_bSpatialFilterSetOnSourceLayer && m_poFilterGeom == nullptr &&
         (psSelectInfo->where_expr == nullptr ||
          !ContainGeomSpecialField(psSelectInfo->where_expr)))
     {
@@ -1327,7 +1336,7 @@ static CPLString GetFilterForJoin(swq_expr_node *poExpr, OGRFeature *poSrcFeat,
     if (poExpr->eNodeType == SNT_CONSTANT)
     {
         char *pszRes = poExpr->Unparse(nullptr, '"');
-        CPLString osRes = pszRes;
+        CPLString osRes(pszRes);
         CPLFree(pszRes);
         return osRes;
     }
@@ -2075,7 +2084,7 @@ const OGRFeatureDefn *OGRGenSQLResultsLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                         FreeIndexFields()                            */
+/*                          FreeIndexFields()                           */
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::FreeIndexFields(OGRField *pasIndexFields,
@@ -2127,7 +2136,7 @@ void OGRGenSQLResultsLayer::FreeIndexFields(OGRField *pasIndexFields,
 }
 
 /************************************************************************/
-/*                         ReadIndexFields()                            */
+/*                          ReadIndexFields()                           */
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::ReadIndexFields(OGRFeature *poSrcFeat,
@@ -2467,7 +2476,7 @@ void OGRGenSQLResultsLayer::SortIndexSection(const OGRField *pasIndexFields,
 }
 
 /************************************************************************/
-/*                           ComparePrimitive()                         */
+/*                          ComparePrimitive()                          */
 /************************************************************************/
 
 template <class T> static inline int ComparePrimitive(const T &a, const T &b)
@@ -2630,7 +2639,7 @@ void OGRGenSQLResultsLayer::AddFieldDefnToSet(int iTable, int iColumn,
 }
 
 /************************************************************************/
-/*                   ExploreExprForIgnoredFields()                      */
+/*                    ExploreExprForIgnoredFields()                     */
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::ExploreExprForIgnoredFields(swq_expr_node *expr,
@@ -2648,7 +2657,7 @@ void OGRGenSQLResultsLayer::ExploreExprForIgnoredFields(swq_expr_node *expr,
 }
 
 /************************************************************************/
-/*                     FindAndSetIgnoredFields()                        */
+/*                      FindAndSetIgnoredFields()                       */
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
@@ -2706,17 +2715,21 @@ void OGRGenSQLResultsLayer::FindAndSetIgnoredFields()
                 //          poFDefn->GetNameRef(), poLayer->GetName());
             }
         }
-        const int nSrcGeomFieldCount = poSrcFDefn->GetGeomFieldCount();
-        for (int iSrcField = 0; iSrcField < nSrcGeomFieldCount; iSrcField++)
+        if (!m_bSpatialFilterSetOnSourceLayer)
         {
-            OGRGeomFieldDefn *poFDefn = poSrcFDefn->GetGeomFieldDefn(iSrcField);
-            if (CPLHashSetLookup(hSet, poFDefn) == nullptr)
+            const int nSrcGeomFieldCount = poSrcFDefn->GetGeomFieldCount();
+            for (int iSrcField = 0; iSrcField < nSrcGeomFieldCount; iSrcField++)
             {
-                papszIgnoredFields =
-                    CSLAddString(papszIgnoredFields, poFDefn->GetNameRef());
-                // CPLDebug("OGR", "Adding %s to the list of ignored fields of
-                // layer %s",
-                //          poFDefn->GetNameRef(), poLayer->GetName());
+                OGRGeomFieldDefn *poFDefn =
+                    poSrcFDefn->GetGeomFieldDefn(iSrcField);
+                if (CPLHashSetLookup(hSet, poFDefn) == nullptr)
+                {
+                    papszIgnoredFields =
+                        CSLAddString(papszIgnoredFields, poFDefn->GetNameRef());
+                    // CPLDebug("OGR", "Adding %s to the list of ignored fields of
+                    // layer %s",
+                    //          poFDefn->GetNameRef(), poLayer->GetName());
+                }
             }
         }
         poLayer->SetIgnoredFields(
@@ -2738,7 +2751,7 @@ void OGRGenSQLResultsLayer::InvalidateOrderByIndex()
 }
 
 /************************************************************************/
-/*                       SetAttributeFilter()                           */
+/*                         SetAttributeFilter()                         */
 /************************************************************************/
 
 OGRErr OGRGenSQLResultsLayer::SetAttributeFilter(const char *pszAttributeFilter)
@@ -2766,7 +2779,7 @@ OGRErr OGRGenSQLResultsLayer::SetAttributeFilter(const char *pszAttributeFilter)
 }
 
 /************************************************************************/
-/*                       ISetSpatialFilter()                            */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRGenSQLResultsLayer::ISetSpatialFilter(int iGeomField,
@@ -2777,7 +2790,7 @@ OGRErr OGRGenSQLResultsLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                  OGRGenSQLResultsLayerArrowStreamPrivateData         */
+/*             OGRGenSQLResultsLayerArrowStreamPrivateData              */
 /************************************************************************/
 
 // Structure whose instances are set on the ArrowArrayStream::private_data
@@ -2861,7 +2874,7 @@ struct OGRGenSQLResultsLayerArrowStreamPrivateData
 };
 
 /************************************************************************/
-/*                          GetArrowStream()                            */
+/*                           GetArrowStream()                           */
 /************************************************************************/
 
 bool OGRGenSQLResultsLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
@@ -2928,7 +2941,7 @@ bool OGRGenSQLResultsLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                          GetArrowSchema()                            */
+/*                           GetArrowSchema()                           */
 /************************************************************************/
 
 int OGRGenSQLResultsLayer::GetArrowSchema(struct ArrowArrayStream *stream,
@@ -3021,7 +3034,7 @@ int OGRGenSQLResultsLayer::GetArrowSchemaForwarded(
 }
 
 /************************************************************************/
-/*                      GetNextArrowArray()                             */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 int OGRGenSQLResultsLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
@@ -3038,7 +3051,7 @@ int OGRGenSQLResultsLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                  GetNextArrowArrayForwarded()                        */
+/*                     GetNextArrowArrayForwarded()                     */
 /************************************************************************/
 
 int OGRGenSQLResultsLayer::GetNextArrowArrayForwarded(

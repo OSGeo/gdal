@@ -135,6 +135,11 @@ Standard Options
 
     .. include:: gdal_options/oo.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -191,4 +196,4 @@ Examples
 
    .. code-block:: bash
 
-       gdal pipeline read input.tif ! reproject --dst-crs=EPSG:4326 ! add overview --levels 16,64,128 ! write output.tif --format=COG
+       gdal pipeline read input.tif ! reproject --output-crs=EPSG:4326 ! add overview --levels 16,64,128 ! write output.tif --format=COG

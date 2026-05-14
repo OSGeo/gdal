@@ -240,7 +240,7 @@ PostGISRasterDataset::~PostGISRasterDataset()
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int PostGISRasterDataset::CloseDependentDatasets()
@@ -268,7 +268,7 @@ int PostGISRasterDataset::CloseDependentDatasets()
 }
 
 /************************************************************************/
-/*                            FlushCache()                              */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr PostGISRasterDataset::FlushCache(bool bAtClosing)
@@ -279,7 +279,7 @@ CPLErr PostGISRasterDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                            HasSpatialIndex()                         */
+/*                          HasSpatialIndex()                           */
 /************************************************************************/
 
 GBool PostGISRasterDataset::HasSpatialIndex()
@@ -822,7 +822,7 @@ void PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset *poRTDS)
 }
 
 /************************************************************************/
-/*                         GetMatchingSourceRef()                       */
+/*                        GetMatchingSourceRef()                        */
 /************************************************************************/
 
 /**
@@ -851,7 +851,7 @@ PostGISRasterDataset::GetMatchingSourceRef(double dfUpperLeftX,
 }
 
 /************************************************************************/
-/*                           CacheTile()                                */
+/*                             CacheTile()                              */
 /************************************************************************/
 void PostGISRasterDataset::CacheTile(const char *pszMetadata,
                                      const char *pszRaster, const char *pszPKID,
@@ -1087,13 +1087,13 @@ bool PostGISRasterDataset::LoadOutdbRaster(int &nCurOffset, GDALDataType eDT,
     GDALGeoTransform gt;
     poDS->GetGeoTransform(gt);
     int nXOff =
-        static_cast<int>(std::round((dfTileUpperLeftX - gt[0]) / gt[1]));
+        static_cast<int>(std::round((dfTileUpperLeftX - gt.xorig) / gt.xscale));
     int nYOff =
-        static_cast<int>(std::round((dfTileUpperLeftY - gt[3]) / gt[5]));
+        static_cast<int>(std::round((dfTileUpperLeftY - gt.yorig) / gt.yscale));
     int nXOff2 = static_cast<int>(std::round(
-        (dfTileUpperLeftX + nTileXSize * dfTileResX - gt[0]) / gt[1]));
+        (dfTileUpperLeftX + nTileXSize * dfTileResX - gt.xorig) / gt.xscale));
     int nYOff2 = static_cast<int>(std::round(
-        (dfTileUpperLeftY + nTileYSize * dfTileResY - gt[3]) / gt[5]));
+        (dfTileUpperLeftY + nTileYSize * dfTileResY - gt.yorig) / gt.yscale));
     int nSrcXSize = nXOff2 - nXOff;
     int nSrcYSize = nYOff2 - nYOff;
     if (nXOff < 0 || nYOff < 0 || nXOff2 > poDS->GetRasterXSize() ||
@@ -1114,7 +1114,7 @@ bool PostGISRasterDataset::LoadOutdbRaster(int &nCurOffset, GDALDataType eDT,
 }
 
 /************************************************************************/
-/*                          LoadSources()                               */
+/*                            LoadSources()                             */
 /************************************************************************/
 
 GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize,
@@ -3299,7 +3299,7 @@ GDALDataset *PostGISRasterDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **PostGISRasterDataset::GetMetadataDomainList()
@@ -3474,7 +3474,7 @@ char **PostGISRasterDataset::GetFileList()
  ********************************************************/
 GDALDataset *PostGISRasterDataset::CreateCopy(
     CPL_UNUSED const char *pszFilename, GDALDataset *poGSrcDS,
-    CPL_UNUSED int bStrict, CPL_UNUSED char **papszOptions,
+    CPL_UNUSED int bStrict, CSLConstList,
     CPL_UNUSED GDALProgressFunc pfnProgress, CPL_UNUSED void *pProgressData)
 {
     char *pszSchema = nullptr;

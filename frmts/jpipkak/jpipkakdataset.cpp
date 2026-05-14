@@ -18,6 +18,8 @@
 
 #include "jpipkakdrivercore.h"
 
+#include <algorithm>
+
 /*
 ** The following are for testing premature stream termination support.
 ** This is a mechanism to test handling of failed or incomplete reads
@@ -186,7 +188,7 @@ JPIPKAKRasterBand::JPIPKAKRasterBand(int nBandIn, int nDiscardLevelsIn,
 }
 
 /************************************************************************/
-/*                         ~JPIPKAKRasterBand()                          */
+/*                         ~JPIPKAKRasterBand()                         */
 /************************************************************************/
 
 JPIPKAKRasterBand::~JPIPKAKRasterBand()
@@ -258,13 +260,13 @@ CPLErr JPIPKAKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     if (xOff + xSize > poBaseDS->GetRasterXSize())
     {
         xSize = poBaseDS->GetRasterXSize() - xOff;
-        nBufXSize = MAX(xSize / nZoom, 1);
+        nBufXSize = std::max(xSize / nZoom, 1);
     }
 
     if (yOff + ySize > poBaseDS->GetRasterYSize())
     {
         ySize = poBaseDS->GetRasterYSize() - yOff;
-        nBufYSize = MAX(ySize / nZoom, 1);
+        nBufYSize = std::max(ySize / nZoom, 1);
     }
 
     /* -------------------------------------------------------------------- */
@@ -1050,7 +1052,7 @@ int JPIPKAKDataset::ReadFromInput(GByte *pabyData, int nLen, int &bError)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *JPIPKAKDataset::GetSpatialRef() const
@@ -1090,7 +1092,7 @@ int JPIPKAKDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                           GetGCPSpatialRef()                         */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
 const OGRSpatialReference *JPIPKAKDataset::GetGCPSpatialRef() const
@@ -1208,14 +1210,14 @@ int JPIPKAKDataset::TestUseBlockIO(CPL_UNUSED int nXOff, CPL_UNUSED int nYOff,
     return bUseBlockedIO;
 }
 
-/*************************************************************************/
-/*                     BeginAsyncReader()                              */
-/*************************************************************************/
+/************************************************************************/
+/*                          BeginAsyncReader()                          */
+/************************************************************************/
 
 GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
     int xOff, int yOff, int xSize, int ySize, void *pBuf, int bufXSize,
     int bufYSize, GDALDataType bufType, int nBandCount, int *pBandMap,
-    int nPixelSpace, int nLineSpace, int nBandSpace, char **papszOptions)
+    int nPixelSpace, int nLineSpace, int nBandSpace, CSLConstList papszOptions)
 {
     CPLDebug("JPIP", "BeginAsyncReadeR(%d,%d,%d,%d -> %dx%d)", xOff, yOff,
              xSize, ySize, bufXSize, bufYSize);
@@ -1373,7 +1375,7 @@ GDALAsyncReader *JPIPKAKDataset::BeginAsyncReader(
 }
 
 /************************************************************************/
-/*                  EndAsyncReader()                                  */
+/*                           EndAsyncReader()                           */
 /************************************************************************/
 
 void JPIPKAKDataset::EndAsyncReader(GDALAsyncReader *poARIO)
@@ -1440,7 +1442,7 @@ void GDALRegister_JPIPKAK()
 }
 
 /************************************************************************/
-/*                         JPIPKAKAsyncReader                         */
+/*                          JPIPKAKAsyncReader                          */
 /************************************************************************/
 JPIPKAKAsyncReader::JPIPKAKAsyncReader()
 {
@@ -1458,7 +1460,7 @@ JPIPKAKAsyncReader::JPIPKAKAsyncReader()
 }
 
 /************************************************************************/
-/*                        ~JPIPKAKAsyncReader                         */
+/*                         ~JPIPKAKAsyncReader                          */
 /************************************************************************/
 JPIPKAKAsyncReader::~JPIPKAKAsyncReader()
 {
@@ -1735,8 +1737,8 @@ GDALAsyncStatusType JPIPKAKAsyncReader::GetNextUpdatedRegion(double dfTimeout,
         region.size.x = (int)ceil(region.size.x * x_ratio);
         region.size.y = (int)ceil(region.size.y * y_ratio);
 
-        region.size.x = MIN(region.size.x, nBufXSize);
-        region.size.y = MIN(region.size.y, nBufYSize);
+        region.size.x = std::min(region.size.x, nBufXSize);
+        region.size.y = std::min(region.size.y, nBufYSize);
 
         if (region.pos.x + region.size.x > view_dims.size.x)
             region.size.x = view_dims.size.x - region.pos.x;
@@ -2042,9 +2044,9 @@ static void JPIPWorkerFunc(void *req)
         long nEnd = clock();
 
         if ((nEnd - nStart) > 0)
-            nCurrentTransmissionLength =
-                (int)MAX(bytes / ((1.0 * (nEnd - nStart)) / CLOCKS_PER_SEC),
-                         nMinimumTransmissionLength);
+            nCurrentTransmissionLength = (int)std::max<double>(
+                bytes / ((1.0 * (nEnd - nStart)) / CLOCKS_PER_SEC),
+                nMinimumTransmissionLength);
 
         CPLAcquireMutex(poJDS->pGlobalMutex, 100.0);
 

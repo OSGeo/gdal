@@ -127,7 +127,7 @@ void PCIDSK::LibJPEG_DecompressBlock(
 }
 
 /************************************************************************/
-/*                      LibJPEG_CompressBlock()                         */
+/*                       LibJPEG_CompressBlock()                        */
 /************************************************************************/
 
 void PCIDSK::LibJPEG_CompressBlock(

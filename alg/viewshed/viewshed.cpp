@@ -186,11 +186,14 @@ GDALDatasetH GDALViewshedGenerate(
                  "dfInvisibleVal out of range. Must be [0, 255].");
         return nullptr;
     }
-    if (!GDALIsValueInRange<uint8_t>(dfOutOfRangeVal))
+    if (oOpts.outputMode == viewshed::OutputMode::Normal)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "dfOutOfRangeVal out of range. Must be [0, 255].");
-        return nullptr;
+        if (!GDALIsValueInRange<uint8_t>(dfOutOfRangeVal))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "dfOutOfRangeVal out of range. Must be [0, 255].");
+            return nullptr;
+        }
     }
     oOpts.visibleVal = dfVisibleVal;
     oOpts.invisibleVal = dfInvisibleVal;

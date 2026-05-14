@@ -16,7 +16,7 @@
 #include "cpl_vsi_virtual.h"
 
 /************************************************************************/
-/*                         VSIPDFFileStream                             */
+/*                           VSIPDFFileStream                           */
 /************************************************************************/
 
 #define BUFFER_SIZE 1024
@@ -29,7 +29,12 @@ class VSIPDFFileStream final : public BaseStream
                      bool limitedA, vsi_l_offset lengthA, Object &&dictA);
     ~VSIPDFFileStream() override;
 
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION >= 2)
+    std::unique_ptr<BaseStream> copy() override;
+#else
     BaseStream *copy() override;
+#endif
 
 #if POPPLER_MAJOR_VERSION > 25 ||                                              \
     (POPPLER_MAJOR_VERSION == 25 && POPPLER_MINOR_VERSION >= 5)

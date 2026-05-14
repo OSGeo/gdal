@@ -47,7 +47,7 @@ class ROIPACDataset final : public RawDataset
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     CPLErr FlushCache(bool bAtClosing) override;
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
@@ -100,7 +100,7 @@ static CPLString getRscFilename(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            ROIPACDataset()                           */
+/*                           ROIPACDataset()                            */
 /************************************************************************/
 
 ROIPACDataset::ROIPACDataset()
@@ -111,7 +111,7 @@ ROIPACDataset::ROIPACDataset()
 }
 
 /************************************************************************/
-/*                            ~ROIPACDataset()                          */
+/*                           ~ROIPACDataset()                           */
 /************************************************************************/
 
 ROIPACDataset::~ROIPACDataset()
@@ -120,7 +120,7 @@ ROIPACDataset::~ROIPACDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr ROIPACDataset::Close(GDALProgressFunc, void *)
@@ -388,12 +388,12 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
         aosRSC.FetchNameValue("Y_FIRST") != nullptr &&
         aosRSC.FetchNameValue("Y_STEP") != nullptr)
     {
-        poDS->m_gt[0] = CPLAtof(aosRSC.FetchNameValue("X_FIRST"));
-        poDS->m_gt[1] = CPLAtof(aosRSC.FetchNameValue("X_STEP"));
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = CPLAtof(aosRSC.FetchNameValue("Y_FIRST"));
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = CPLAtof(aosRSC.FetchNameValue("Y_STEP"));
+        poDS->m_gt.xorig = CPLAtof(aosRSC.FetchNameValue("X_FIRST"));
+        poDS->m_gt.xscale = CPLAtof(aosRSC.FetchNameValue("X_STEP"));
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = CPLAtof(aosRSC.FetchNameValue("Y_FIRST"));
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = CPLAtof(aosRSC.FetchNameValue("Y_STEP"));
         poDS->bValidGeoTransform = true;
     }
     if (aosRSC.FetchNameValue("PROJECTION") != nullptr)
@@ -492,7 +492,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int ROIPACDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -533,12 +533,12 @@ int ROIPACDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *ROIPACDataset::Create(const char *pszFilename, int nXSize,
                                    int nYSize, int nBandsIn, GDALDataType eType,
-                                   char ** /* papszOptions */)
+                                   CSLConstList /* papszOptions */)
 {
     /* -------------------------------------------------------------------- */
     /*      Verify input options.                                           */
@@ -730,7 +730,7 @@ CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
     }
     if (bValidGeoTransform)
     {
-        if (m_gt[2] != 0 || m_gt[4] != 0)
+        if (m_gt.xrot != 0 || m_gt.yrot != 0)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "ROI_PAC format do not support geotransform with "
@@ -738,10 +738,14 @@ CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
         }
         else
         {
-            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_FIRST", m_gt[0]) > 0;
-            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_STEP", m_gt[1]) > 0;
-            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_FIRST", m_gt[3]) > 0;
-            bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_STEP", m_gt[5]) > 0;
+            bOK &=
+                VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_FIRST", m_gt.xorig) > 0;
+            bOK &=
+                VSIFPrintfL(fpRsc, "%-40s %.16g\n", "X_STEP", m_gt.xscale) > 0;
+            bOK &=
+                VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_FIRST", m_gt.yorig) > 0;
+            bOK &=
+                VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Y_STEP", m_gt.yscale) > 0;
             bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Z_OFFSET",
                                band->GetOffset(nullptr)) > 0;
             bOK &= VSIFPrintfL(fpRsc, "%-40s %.16g\n", "Z_SCALE",
@@ -787,7 +791,7 @@ CPLErr ROIPACDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                         GetGeoTransform()                            */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr ROIPACDataset::GetGeoTransform(GDALGeoTransform &gt) const

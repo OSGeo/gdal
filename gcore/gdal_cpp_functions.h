@@ -203,7 +203,7 @@ int CPL_DLL GDALReadTabFile2(const char *pszBaseFilename,
                              char **ppszTabFileNameOut);
 
 void CPL_DLL GDALCopyRasterIOExtraArg(GDALRasterIOExtraArg *psDestArg,
-                                      GDALRasterIOExtraArg *psSrcArg);
+                                      const GDALRasterIOExtraArg *psSrcArg);
 
 void CPL_DLL GDALExpandPackedBitsToByteAt0Or1(
     const GByte *CPL_RESTRICT pabyInput, GByte *CPL_RESTRICT pabyOutput,
@@ -245,7 +245,7 @@ CPLErr CPL_DLL EXIFExtractMetadata(char **&papszMetadata, void *fpL,
 
 int GDALValidateOpenOptions(GDALDriverH hDriver,
                             const char *const *papszOptionOptions);
-int GDALValidateOptions(const char *pszOptionList,
+int GDALValidateOptions(GDALDriverH hDriver, const char *pszOptionList,
                         const char *const *papszOptionsToValidate,
                         const char *pszErrorMessageOptionType,
                         const char *pszErrorMessageContainerName);
@@ -258,8 +258,8 @@ void GDALRasterIOExtraArgSetResampleAlg(GDALRasterIOExtraArg *psExtraArg,
                                         int nXSize, int nYSize, int nBufXSize,
                                         int nBufYSize);
 
-GDALDataset *GDALCreateOverviewDataset(GDALDataset *poDS, int nOvrLevel,
-                                       bool bThisLevelOnly);
+GDALDataset CPL_DLL *GDALCreateOverviewDataset(GDALDataset *poDS, int nOvrLevel,
+                                               bool bThisLevelOnly);
 
 // Should cover particular cases of #3573, #4183, #4506, #6578
 // Behavior is undefined if fVal1 or fVal2 are NaN (should be tested before
@@ -395,6 +395,15 @@ CPLStringList CPL_DLL GDALENVISplitList(const char *pszCleanInput);
 void CPL_DLL GDALApplyENVIHeaders(GDALDataset *poDS,
                                   const CPLStringList &aosHeaders,
                                   CSLConstList papszOptions);
+
+class GDALAsyncReader;
+
+GDALAsyncReader *
+GDALGetDefaultAsyncReader(GDALDataset *poDS, int nXOff, int nYOff, int nXSize,
+                          int nYSize, void *pBuf, int nBufXSize, int nBufYSize,
+                          GDALDataType eBufType, int nBandCount,
+                          int *panBandMap, int nPixelSpace, int nLineSpace,
+                          int nBandSpace, CSLConstList papszOptions);
 
 //! @endcond
 

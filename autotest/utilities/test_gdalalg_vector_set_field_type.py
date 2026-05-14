@@ -422,8 +422,8 @@ def test_gdalalg_set_field_type_src_field_type():
         "vector",
         "set-field-type",
         input=src_ds,
-        src_field_type="String",
-        dst_field_type="Integer",
+        input_field_type="String",
+        output_field_type="Integer",
         output_format="MEM",
     )
     ds = alg.Output()

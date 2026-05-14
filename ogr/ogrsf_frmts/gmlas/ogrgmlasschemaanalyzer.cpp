@@ -25,6 +25,7 @@ static XSModel *getGrammarPool(XMLGrammarPool *pool)
 #include "ogr_gmlas.h"
 #include "ogr_pgdump.h"
 
+#include <algorithm>
 #include <list>
 
 static OGRwkbGeometryType GetOGRGeometryType(XSTypeDefinition *poTypeDef);
@@ -73,7 +74,7 @@ class GMLASPrefixMappingHander : public DefaultHandler
 };
 
 /************************************************************************/
-/*                           startElement()                             */
+/*                            startElement()                            */
 /************************************************************************/
 
 void GMLASPrefixMappingHander::startElement(const XMLCh *const uri,
@@ -145,7 +146,7 @@ void GMLASPrefixMappingHander::startPrefixMapping(const XMLCh *const prefix,
 }
 
 /************************************************************************/
-/*                        CollectNamespacePrefixes()                    */
+/*                      CollectNamespacePrefixes()                      */
 /************************************************************************/
 
 static void CollectNamespacePrefixes(
@@ -201,7 +202,7 @@ static void CollectNamespacePrefixes(
 }
 
 /************************************************************************/
-/*                       GMLASAnalyzerEntityResolver                    */
+/*                     GMLASAnalyzerEntityResolver                      */
 /************************************************************************/
 
 class GMLASAnalyzerEntityResolver final : public GMLASBaseEntityResolver
@@ -227,7 +228,7 @@ class GMLASAnalyzerEntityResolver final : public GMLASBaseEntityResolver
 };
 
 /************************************************************************/
-/*                         DoExtraSchemaProcessing()                    */
+/*                      DoExtraSchemaProcessing()                       */
 /************************************************************************/
 
 void GMLASAnalyzerEntityResolver::DoExtraSchemaProcessing(
@@ -268,7 +269,7 @@ GMLASSchemaAnalyzer::GMLASSchemaAnalyzer(
 }
 
 /************************************************************************/
-/*                               GetPrefix()                            */
+/*                             GetPrefix()                              */
 /************************************************************************/
 
 CPLString GMLASSchemaAnalyzer::GetPrefix(const CPLString &osNamespaceURI)
@@ -308,7 +309,7 @@ CPLString GMLASSchemaAnalyzer::GetPrefix(const CPLString &osNamespaceURI)
 }
 
 /************************************************************************/
-/*                               MakeXPath()                            */
+/*                             MakeXPath()                              */
 /************************************************************************/
 
 CPLString GMLASSchemaAnalyzer::MakeXPath(const CPLString &osNamespaceURI,
@@ -321,7 +322,7 @@ CPLString GMLASSchemaAnalyzer::MakeXPath(const CPLString &osNamespaceURI,
 }
 
 /************************************************************************/
-/*                         GetNSOfLastXPathComponent()                  */
+/*                     GetNSOfLastXPathComponent()                      */
 /************************************************************************/
 
 // Return the namespace (if any) of the last component of the XPath
@@ -580,7 +581,7 @@ bool GMLASSchemaAnalyzer::LaunderFieldNames(GMLASFeatureClass &oClass)
 }
 
 /************************************************************************/
-/*                       CollectClassesReferences()                     */
+/*                      CollectClassesReferences()                      */
 /************************************************************************/
 
 void GMLASSchemaAnalyzer::CollectClassesReferences(
@@ -662,7 +663,7 @@ void GMLASSchemaAnalyzer::LaunderClassNames()
 }
 
 /************************************************************************/
-/*                       GMLASUniquePtr()                               */
+/*                           GMLASUniquePtr()                           */
 /************************************************************************/
 
 // Poor-man std::unique_ptr
@@ -703,7 +704,7 @@ template <class T> class GMLASUniquePtr
 };
 
 /************************************************************************/
-/*                   GetTopElementDeclarationFromXPath()                */
+/*                 GetTopElementDeclarationFromXPath()                  */
 /************************************************************************/
 
 XSElementDeclaration *
@@ -788,7 +789,7 @@ IsEltCompatibleOfFC(XSElementDeclaration *poEltDecl)
 }
 
 /************************************************************************/
-/*                          DerivesFromGMLFeature()                     */
+/*                       DerivesFromGMLFeature()                        */
 /************************************************************************/
 
 bool GMLASSchemaAnalyzer::DerivesFromGMLFeature(XSElementDeclaration *poEltDecl)
@@ -817,7 +818,7 @@ bool GMLASSchemaAnalyzer::DerivesFromGMLFeature(XSElementDeclaration *poEltDecl)
 }
 
 /************************************************************************/
-/*                               Analyze()                              */
+/*                              Analyze()                               */
 /************************************************************************/
 
 bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache &oCache,
@@ -1208,7 +1209,7 @@ bool GMLASSchemaAnalyzer::Analyze(GMLASXSDCache &oCache,
 }
 
 /************************************************************************/
-/*                            GetAnnotationDoc()                        */
+/*                          GetAnnotationDoc()                          */
 /************************************************************************/
 
 static CPLString GetAnnotationDoc(const XSAnnotation *annotation)
@@ -1224,7 +1225,7 @@ static CPLString GetAnnotationDoc(const XSAnnotation *annotation)
 }
 
 /************************************************************************/
-/*                            GetAnnotationDoc()                        */
+/*                          GetAnnotationDoc()                          */
 /************************************************************************/
 
 static CPLString GetAnnotationDoc(const XSAnnotationList *annotationList)
@@ -1246,7 +1247,7 @@ static CPLString GetAnnotationDoc(const XSAnnotationList *annotationList)
 }
 
 /************************************************************************/
-/*                            GetAnnotationDoc()                        */
+/*                          GetAnnotationDoc()                          */
 /************************************************************************/
 
 static CPLString GetAnnotationDoc(const XSElementDeclaration *poEltDecl)
@@ -1287,7 +1288,7 @@ static CPLString GetAnnotationDoc(const XSElementDeclaration *poEltDecl)
 }
 
 /************************************************************************/
-/*                  InstantiateClassFromEltDeclaration()                */
+/*                 InstantiateClassFromEltDeclaration()                 */
 /************************************************************************/
 
 bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
@@ -1381,6 +1382,7 @@ bool GMLASSchemaAnalyzer::InstantiateClassFromEltDeclaration(
 /*                 SetFieldTypeAndWidthFromDefinition()                 */
 /************************************************************************/
 
+/* static */
 void GMLASSchemaAnalyzer::SetFieldTypeAndWidthFromDefinition(
     XSSimpleTypeDefinition *poST, GMLASField &oField)
 {
@@ -1399,7 +1401,7 @@ void GMLASSchemaAnalyzer::SetFieldTypeAndWidthFromDefinition(
                 XSSimpleTypeDefinition::FACET_MAXLENGTH);
         }
         if (maxLength != nullptr)
-            nMaxLength = MAX(nMaxLength, atoi(transcode(maxLength)));
+            nMaxLength = std::max(nMaxLength, atoi(transcode(maxLength)));
         poST = reinterpret_cast<XSSimpleTypeDefinition *>(poST->getBaseType());
     }
 
@@ -1521,7 +1523,7 @@ GMLASSchemaAnalyzer::GetGroupDefinition(const XSModelGroup *poModelGroup)
 }
 
 /************************************************************************/
-/*                              IsAnyType()                             */
+/*                             IsAnyType()                              */
 /************************************************************************/
 
 static bool IsAnyType(XSComplexTypeDefinition *poType)
@@ -1625,7 +1627,7 @@ bool GMLASSchemaAnalyzer::SetFieldFromAttribute(GMLASField &oField,
 }
 
 /************************************************************************/
-/*                      GetConcreteImplementationTypes()                */
+/*                   GetConcreteImplementationTypes()                   */
 /************************************************************************/
 
 void GMLASSchemaAnalyzer::GetConcreteImplementationTypes(
@@ -1651,7 +1653,7 @@ void GMLASSchemaAnalyzer::GetConcreteImplementationTypes(
 }
 
 /************************************************************************/
-/*                       GetConstraintChildrenElements()                */
+/*                   GetConstraintChildrenElements()                    */
 /************************************************************************/
 
 std::vector<XSElementDeclaration *>
@@ -1715,7 +1717,7 @@ GMLASSchemaAnalyzer::GetConstraintChildrenElements(const CPLString &osFullXPath)
 }
 
 /************************************************************************/
-/*                        GetOGRGeometryType()                          */
+/*                         GetOGRGeometryType()                         */
 /************************************************************************/
 
 static OGRwkbGeometryType GetOGRGeometryType(XSTypeDefinition *poTypeDef)
@@ -1770,7 +1772,7 @@ static OGRwkbGeometryType GetOGRGeometryType(XSTypeDefinition *poTypeDef)
 }
 
 /************************************************************************/
-/*                 GetOGRGeometryTypeFromGMLEltName()                   */
+/*                  GetOGRGeometryTypeFromGMLEltName()                  */
 /************************************************************************/
 
 static OGRwkbGeometryType
@@ -1809,7 +1811,7 @@ GetOGRGeometryTypeFromGMLEltName(const CPLString &osEltName)
 }
 
 /************************************************************************/
-/*                      CreateNonNestedRelationship()                  */
+/*                    CreateNonNestedRelationship()                     */
 /************************************************************************/
 
 void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
@@ -2014,7 +2016,7 @@ void GMLASSchemaAnalyzer::CreateNonNestedRelationship(
 }
 
 /************************************************************************/
-/*                          IsIgnoredXPath()                            */
+/*                           IsIgnoredXPath()                           */
 /************************************************************************/
 
 bool GMLASSchemaAnalyzer::IsIgnoredXPath(const CPLString &osXPath)
@@ -2024,7 +2026,7 @@ bool GMLASSchemaAnalyzer::IsIgnoredXPath(const CPLString &osXPath)
 }
 
 /************************************************************************/
-/*                     FindElementsWithMustBeToLevel()                  */
+/*                   FindElementsWithMustBeToLevel()                    */
 /************************************************************************/
 
 bool GMLASSchemaAnalyzer::FindElementsWithMustBeToLevel(
@@ -2530,7 +2532,7 @@ bool GMLASSchemaAnalyzer::IsGMLNamespace(const CPLString &osURI)
 }
 
 /************************************************************************/
-/*                    BuildMapCountOccurrencesOfSameName()               */
+/*                 BuildMapCountOccurrencesOfSameName()                 */
 /************************************************************************/
 
 void GMLASSchemaAnalyzer::BuildMapCountOccurrencesOfSameName(
@@ -2557,7 +2559,7 @@ void GMLASSchemaAnalyzer::BuildMapCountOccurrencesOfSameName(
 }
 
 /************************************************************************/
-/*                         ComposeMinOccurs()                           */
+/*                          ComposeMinOccurs()                          */
 /************************************************************************/
 
 static int ComposeMinOccurs(int nVal1, int nVal2)
@@ -2566,7 +2568,7 @@ static int ComposeMinOccurs(int nVal1, int nVal2)
 }
 
 /************************************************************************/
-/*                         ComposeMaxOccurs()                           */
+/*                          ComposeMaxOccurs()                          */
 /************************************************************************/
 
 static int ComposeMaxOccurs(int nVal1, int nVal2)

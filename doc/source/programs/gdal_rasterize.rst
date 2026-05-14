@@ -35,6 +35,8 @@ raster data is supported.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -b <band>
 
     The band(s) to burn values into.  Multiple -b arguments may be used to burn
@@ -195,10 +197,6 @@ raster data is supported.
 
     Source dataset open option (format specific)
 
-.. option:: -q
-
-    Suppress progress monitor and other non-error output.
-
 .. option:: <src_datasource>
 
     Any OGR supported readable datasource.
@@ -215,6 +213,11 @@ The program creates a new target raster image when any of the :option:`-of`,
 The resolution or size must be specified using the :option:`-tr` or :option:`-ts` option for all new
 rasters.  The target raster will be overwritten if it already exists and any of
 these creation-related options are used.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 C API
 -----

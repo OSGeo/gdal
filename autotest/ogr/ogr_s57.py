@@ -14,7 +14,6 @@
 ###############################################################################
 
 import os
-import shutil
 
 import gdaltest
 import ogrtest
@@ -23,12 +22,6 @@ import pytest
 from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("S57")
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
 
 
 ###############################################################################
@@ -322,52 +315,18 @@ def test_ogr_s57_online_1():
 
 
 ###############################################################################
-# Test with ENC 3.0 TDS - tile without updates.
-
-
-def test_ogr_s57_online_2(tmp_path):
-
-    gdaltest.download_or_skip(
-        "http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.000", "GB5X01SW.000"
-    )
-
-    gdaltest.clean_tmp()
-    shutil.copy("tmp/cache/GB5X01SW.000", tmp_path)
-    ds = ogr.Open(tmp_path / "GB5X01SW.000")
-    assert ds is not None
-
-    lyr = ds.GetLayerByName("LIGHTS")
-    feat = lyr.GetFeature(542)
-
-    assert feat is not None, "Did not get expected feature at all."
-
-    assert feat.rver == 1, "Did not get expected RVER value (%d)." % feat.rver
-
-    lyr = ds.GetLayerByName("BOYCAR")
-    feat = lyr.GetFeature(975)
-    assert feat is None, "unexpected got feature id 975 before update!"
-
-    feat = None
-
-    ds = None
-
-
-###############################################################################
 # Test with ENC 3.0 TDS - tile with updates.
 
 
-# This test appears to have had a typo since it was added in bf50149
-# In that commit, the file GB5X01SW.001 is added, but GB5X01SW.000 leftover
-# from the previous tests is opened.
-@pytest.mark.xfail()
-def test_ogr_s57_online_3(tmp_path):
+@pytest.mark.network
+@pytest.mark.require_curl()
+def test_ogr_s57_enc_3_tds():
 
-    gdaltest.download_or_skip(
-        "http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.001", "GB5X01SW.001"
-    )
+    url = "http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.000"
+    if gdaltest.gdalurlopen(url) is None:
+        pytest.skip(f"cannot access {url}")
 
-    shutil.copy("tmp/cache/GB5X01SW.001", tmp_path)
-    ds = ogr.Open(tmp_path / "GB5X01SW.001")
+    ds = ogr.Open("/vsicurl/" + url)
     assert ds is not None
 
     lyr = ds.GetLayerByName("LIGHTS")
@@ -376,16 +335,6 @@ def test_ogr_s57_online_3(tmp_path):
     assert feat is not None, "Did not get expected feature at all."
 
     assert feat.rver == 2, "Did not get expected RVER value (%d)." % feat.rver
-
-    lyr = ds.GetLayerByName("BOYCAR")
-    feat = lyr.GetFeature(975)
-    assert feat is not None, "unexpected did not get feature id 975 " "after update!"
-
-    feat = None
-
-    ds = None
-
-    gdaltest.clean_tmp()
 
 
 ###############################################################################
@@ -438,25 +387,18 @@ def test_ogr_s57_update_dsid():
 # Test fix for https://github.com/OSGeo/gdal/issues/5461#issuecomment-1075393495
 
 
+@pytest.mark.network
+@pytest.mark.require_curl()
 def test_ogr_s57_more_than_255_updates_to_feature():
 
-    gdaltest.download_or_skip(
-        "https://www.charts.noaa.gov/ENCs/US5ME51M.zip", "US5ME51M.zip"
-    )
+    url = "https://www.charts.noaa.gov/ENCs/US5ME51M.zip"
+    if gdaltest.gdalurlopen(url) is None:
+        pytest.skip(f"cannot access {url}")
 
-    try:
-        os.stat("tmp/cache/US5ME51M")
-    except OSError:
-        try:
-            gdaltest.unzip("tmp/cache/US5ME51M", "tmp/cache/US5ME51M.zip")
-            try:
-                os.stat("tmp/cache/US5ME51M")
-            except OSError:
-                pytest.skip()
-        except Exception:
-            pytest.skip()
-
-    gdal.ErrorReset()
-    ds = ogr.Open("tmp/cache/US5ME51M/ENC_ROOT/US5ME51M/US5ME51M.000")
-    assert ds is not None
-    assert gdal.GetLastErrorMsg() == ""
+    ds = ogr.Open(f"/vsizip//vsicurl/{url}/ENC_ROOT/US5ME51M/US5ME51M.000")
+    cnt = 0
+    with gdal.quiet_errors():
+        for lyr in ds:
+            for feat in lyr:
+                cnt += 1
+    assert cnt == 6863

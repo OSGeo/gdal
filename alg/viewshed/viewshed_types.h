@@ -78,7 +78,7 @@ struct Options
         90.0};  //!< maximum pitch (vertical angle) of observable points
     double curveCoeff{.85714};  //!< coefficient for atmospheric refraction
     OutputMode outputMode{OutputMode::Normal};  //!< Output information.
-        //!< Normal, Height from DEM or Height from ground
+    //!< Normal, Height from DEM or Height from ground
     std::string outputFormat{};         //!< output raster format
     std::string outputFilename{};       //!< output raster filename
     CPLStringList creationOpts{};       //!< options for output raster creation

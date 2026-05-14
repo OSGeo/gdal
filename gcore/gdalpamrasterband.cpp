@@ -35,7 +35,7 @@
 #include "gdal_rat.h"
 
 /************************************************************************/
-/*                           CopyFrom()                                 */
+/*                              CopyFrom()                              */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -354,7 +354,7 @@ void GDALPamRasterBand::PamInitialize()
 }
 
 /************************************************************************/
-/*                         PamInitializeNoParent()                      */
+/*                       PamInitializeNoParent()                        */
 /************************************************************************/
 
 /* This method is used by MEMRasterBand to just benefit for the nodata, scale,
@@ -897,7 +897,7 @@ CPLErr GDALPamRasterBand::SetNoDataValueAsInt64(int64_t nNewValue)
 }
 
 /************************************************************************/
-/*                      SetNoDataValueAsUInt64()                        */
+/*                       SetNoDataValueAsUInt64()                       */
 /************************************************************************/
 
 CPLErr GDALPamRasterBand::SetNoDataValueAsUInt64(uint64_t nNewValue)
@@ -918,7 +918,7 @@ CPLErr GDALPamRasterBand::SetNoDataValueAsUInt64(uint64_t nNewValue)
 }
 
 /************************************************************************/
-/*                          DeleteNoDataValue()                         */
+/*                         DeleteNoDataValue()                          */
 /************************************************************************/
 
 CPLErr GDALPamRasterBand::DeleteNoDataValue()
@@ -967,7 +967,7 @@ double GDALPamRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                        GetNoDataValueAsInt64()                       */
+/*                       GetNoDataValueAsInt64()                        */
 /************************************************************************/
 
 int64_t GDALPamRasterBand::GetNoDataValueAsInt64(int *pbSuccess)

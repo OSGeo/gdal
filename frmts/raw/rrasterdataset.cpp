@@ -68,10 +68,10 @@ class RRASTERDataset final : public RawDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -172,7 +172,7 @@ void RRASTERRasterBand::SetMinMax(double dfMin, double dfMax)
 }
 
 /************************************************************************/
-/*                            GetMinimum()                              */
+/*                             GetMinimum()                             */
 /************************************************************************/
 
 double RRASTERRasterBand::GetMinimum(int *pbSuccess)
@@ -187,7 +187,7 @@ double RRASTERRasterBand::GetMinimum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                            GetMaximum()                              */
+/*                             GetMaximum()                             */
 /************************************************************************/
 
 double RRASTERRasterBand::GetMaximum(int *pbSuccess)
@@ -240,7 +240,7 @@ GDALRasterAttributeTable *RRASTERRasterBand::GetDefaultRAT()
 }
 
 /************************************************************************/
-/*                            SetDefaultRAT()                           */
+/*                           SetDefaultRAT()                            */
 /************************************************************************/
 
 CPLErr RRASTERRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)
@@ -443,7 +443,7 @@ RRASTERDataset::~RRASTERDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr RRASTERDataset::Close(GDALProgressFunc, void *)
@@ -469,7 +469,7 @@ CPLErr RRASTERDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                        InitImageIfNeeded()                           */
+/*                         InitImageIfNeeded()                          */
 /************************************************************************/
 
 void RRASTERDataset::InitImageIfNeeded()
@@ -751,10 +751,10 @@ void RRASTERDataset::RewriteHeader()
     VSIFPrintfL(fp, "nrows=%d\n", nRasterYSize);
     VSIFPrintfL(fp, "ncols=%d\n", nRasterXSize);
 
-    VSIFPrintfL(fp, "xmin=%.17g\n", m_gt[0]);
-    VSIFPrintfL(fp, "ymin=%.17g\n", m_gt[3] + nRasterYSize * m_gt[5]);
-    VSIFPrintfL(fp, "xmax=%.17g\n", m_gt[0] + nRasterXSize * m_gt[1]);
-    VSIFPrintfL(fp, "ymax=%.17g\n", m_gt[3]);
+    VSIFPrintfL(fp, "xmin=%.17g\n", m_gt.xorig);
+    VSIFPrintfL(fp, "ymin=%.17g\n", m_gt.yorig + nRasterYSize * m_gt.yscale);
+    VSIFPrintfL(fp, "xmax=%.17g\n", m_gt.xorig + nRasterXSize * m_gt.xscale);
+    VSIFPrintfL(fp, "ymax=%.17g\n", m_gt.yorig);
 
     if (!m_oSRS.IsEmpty())
     {
@@ -821,7 +821,7 @@ CPLErr RRASTERDataset::SetGeoTransform(const GDALGeoTransform &gt)
     }
 
     // We only support non-rotated images with info in the .HDR file.
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "Rotated / skewed images not supported");
@@ -907,7 +907,7 @@ CPLErr RRASTERDataset::SetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int RRASTERDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -945,7 +945,7 @@ int RRASTERDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          ComputeSpacing()                            */
+/*                           ComputeSpacing()                           */
 /************************************************************************/
 
 bool RRASTERDataset::ComputeSpacings(const CPLString &osBandOrder, int nCols,
@@ -1150,11 +1150,11 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     bool bNativeOrder = true;
     if (EQUAL(osByteOrder, "little"))
     {
-        bNativeOrder = CPL_TO_BOOL(CPL_IS_LSB);
+        bNativeOrder = CPL_IS_LSB;
     }
     else if (EQUAL(osByteOrder, "big"))
     {
-        bNativeOrder = CPL_TO_BOOL(!CPL_IS_LSB);
+        bNativeOrder = !CPL_IS_LSB;
     }
     else if (!EQUAL(osByteOrder, ""))
     {
@@ -1215,12 +1215,12 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterXSize = nCols;
     poDS->nRasterYSize = nRows;
     poDS->m_bGeoTransformValid = true;
-    poDS->m_gt[0] = dfXMin;
-    poDS->m_gt[1] = (dfXMax - dfXMin) / nCols;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = dfYMax;
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -(dfYMax - dfYMin) / nRows;
+    poDS->m_gt.xorig = dfXMin;
+    poDS->m_gt.xscale = (dfXMax - dfXMin) / nCols;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = dfYMax;
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -(dfYMax - dfYMin) / nRows;
     poDS->m_fpImage = fpImage;
     poDS->m_bNativeOrder = bNativeOrder;
 
@@ -1396,7 +1396,8 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn,
-                                    GDALDataType eType, char **papszOptions)
+                                    GDALDataType eType,
+                                    CSLConstList papszOptions)
 
 {
     // Verify input options.
@@ -1484,7 +1485,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *RRASTERDataset::CreateCopy(const char *pszFilename,
                                         GDALDataset *poSrcDS, int bStrict,
-                                        char **papszOptions,
+                                        CSLConstList papszOptions,
                                         GDALProgressFunc pfnProgress,
                                         void *pProgressData)
 
@@ -1508,7 +1509,7 @@ GDALDataset *RRASTERDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                   GDALRegister_RRASTER()                             */
+/*                        GDALRegister_RRASTER()                        */
 /************************************************************************/
 
 void GDALRegister_RRASTER()

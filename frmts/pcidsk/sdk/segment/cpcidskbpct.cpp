@@ -93,7 +93,7 @@ void CPCIDSK_BPCT::ReadBPCT( std::vector<BPCTEntry>& vBPCT )
 }
 
 /************************************************************************/
-/*                              WriteBPCT()                             */
+/*                             WriteBPCT()                              */
 /************************************************************************/
 void CPCIDSK_BPCT::WriteBPCT( const std::vector<BPCTEntry>& vBPCT )
 

@@ -466,7 +466,7 @@ static void RPCTransformPoint(const GDALRPCTransformInfo *psRPCTransformInfo,
 }
 
 /************************************************************************/
-/*                     GDALSerializeRPCDEMResample()                    */
+/*                    GDALSerializeRPCDEMResample()                     */
 /************************************************************************/
 
 static const char *GDALSerializeRPCDEMResample(DEMResampleAlg eResampleAlg)
@@ -484,7 +484,7 @@ static const char *GDALSerializeRPCDEMResample(DEMResampleAlg eResampleAlg)
 }
 
 /************************************************************************/
-/*                   GDALCreateSimilarRPCTransformer()                  */
+/*                  GDALCreateSimilarRPCTransformer()                   */
 /************************************************************************/
 
 static void *GDALCreateSimilarRPCTransformer(void *hTransformArg,
@@ -539,7 +539,7 @@ static void *GDALCreateSimilarRPCTransformer(void *hTransformArg,
 }
 
 /************************************************************************/
-/*                      GDALRPCGetHeightAtLongLat()                     */
+/*                     GDALRPCGetHeightAtLongLat()                      */
 /************************************************************************/
 
 static int GDALRPCGetDEMHeight(GDALRPCTransformInfo *psTransform,
@@ -1402,7 +1402,7 @@ static int GDALRPCGetDEMHeight(GDALRPCTransformInfo *psTransform,
 }
 
 /************************************************************************/
-/*                           RPCIsValidLongLat()                        */
+/*                         RPCIsValidLongLat()                          */
 /************************************************************************/
 
 static bool RPCIsValidLongLat(const GDALRPCTransformInfo *psTransform,
@@ -1417,7 +1417,7 @@ static bool RPCIsValidLongLat(const GDALRPCTransformInfo *psTransform,
 }
 
 /************************************************************************/
-/*                    GDALRPCTransformWholeLineWithDEM()                */
+/*                  GDALRPCTransformWholeLineWithDEM()                  */
 /************************************************************************/
 
 static int

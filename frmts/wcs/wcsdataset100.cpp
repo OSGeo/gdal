@@ -41,10 +41,10 @@ std::vector<double> WCSDataset100::GetNativeExtent(int nXOff, int nYOff,
 {
     std::vector<double> extent;
     // WCS 1.0 extents are the outer edges of outer pixels.
-    extent.push_back(m_gt[0] + (nXOff)*m_gt[1]);
-    extent.push_back(m_gt[3] + (nYOff + nYSize) * m_gt[5]);
-    extent.push_back(m_gt[0] + (nXOff + nXSize) * m_gt[1]);
-    extent.push_back(m_gt[3] + (nYOff)*m_gt[5]);
+    extent.push_back(m_gt.xorig + (nXOff)*m_gt.xscale);
+    extent.push_back(m_gt.yorig + (nYOff + nYSize) * m_gt.yscale);
+    extent.push_back(m_gt.xorig + (nXOff + nXSize) * m_gt.xscale);
+    extent.push_back(m_gt.yorig + (nYOff)*m_gt.yscale);
     return extent;
 }
 
@@ -247,10 +247,10 @@ bool WCSDataset100::ExtractGridInfo()
     // MapServer have origin at pixel boundary
     if (CPLGetXMLBoolean(psService, "OriginAtBoundary"))
     {
-        m_gt[0] += m_gt[1] * 0.5;
-        m_gt[0] += m_gt[2] * 0.5;
-        m_gt[3] += m_gt[4] * 0.5;
-        m_gt[3] += m_gt[5] * 0.5;
+        m_gt.xorig += m_gt.xscale * 0.5;
+        m_gt.xorig += m_gt.xrot * 0.5;
+        m_gt.yorig += m_gt.yrot * 0.5;
+        m_gt.yorig += m_gt.yscale * 0.5;
     }
 
     /* -------------------------------------------------------------------- */
@@ -330,10 +330,10 @@ bool WCSDataset100::ExtractGridInfo()
     /* -------------------------------------------------------------------- */
     if (!m_oSRS.IsEmpty() && osCRS == "")
     {
-        const char *pszAuth = m_oSRS.GetAuthorityName(nullptr);
+        const char *pszAuth = m_oSRS.GetAuthorityName();
         if (pszAuth != nullptr && EQUAL(pszAuth, "EPSG"))
         {
-            pszAuth = m_oSRS.GetAuthorityCode(nullptr);
+            pszAuth = m_oSRS.GetAuthorityCode();
             if (pszAuth)
             {
                 osCRS = "EPSG:";
@@ -528,7 +528,7 @@ bool WCSDataset100::ExtractGridInfo()
 }
 
 /************************************************************************/
-/*                      ParseCapabilities()                             */
+/*                         ParseCapabilities()                          */
 /************************************************************************/
 
 CPLErr WCSDataset100::ParseCapabilities(CPLXMLNode *Capabilities,
@@ -540,7 +540,7 @@ CPLErr WCSDataset100::ParseCapabilities(CPLXMLNode *Capabilities,
     if (strcmp(Capabilities->pszValue, "WCS_Capabilities") != 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Error in capabilities document.\n");
+                 "Error in capabilities document.");
         return CE_Failure;
     }
 
@@ -645,7 +645,7 @@ CPLErr WCSDataset100::ParseCapabilities(CPLXMLNode *Capabilities,
             {
                 CSLDestroy(metadata);
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Error in capabilities document.\n");
+                         "Error in capabilities document.");
                 return CE_Failure;
             }
 
@@ -660,7 +660,7 @@ CPLErr WCSDataset100::ParseCapabilities(CPLXMLNode *Capabilities,
             {
                 CSLDestroy(metadata);
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Error in capabilities document.\n");
+                         "Error in capabilities document.");
                 return CE_Failure;
             }
 

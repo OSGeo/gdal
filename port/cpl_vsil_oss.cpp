@@ -43,7 +43,7 @@ namespace cpl
 {
 
 /************************************************************************/
-/*                         VSIOSSFSHandler                              */
+/*                           VSIOSSFSHandler                            */
 /************************************************************************/
 
 class VSIOSSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
@@ -96,7 +96,7 @@ class VSIOSSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
 };
 
 /************************************************************************/
-/*                            VSIOSSHandle                              */
+/*                             VSIOSSHandle                             */
 /************************************************************************/
 
 class VSIOSSHandle final : public IVSIS3LikeHandle
@@ -117,7 +117,7 @@ class VSIOSSHandle final : public IVSIS3LikeHandle
 };
 
 /************************************************************************/
-/*                       ~VSIOSSFSHandler()                             */
+/*                          ~VSIOSSFSHandler()                          */
 /************************************************************************/
 
 VSIOSSFSHandler::~VSIOSSFSHandler()
@@ -126,7 +126,7 @@ VSIOSSFSHandler::~VSIOSSFSHandler()
 }
 
 /************************************************************************/
-/*                          CreateWriteHandle()                         */
+/*                         CreateWriteHandle()                          */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -147,7 +147,7 @@ VSIOSSFSHandler::CreateWriteHandle(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            ClearCache()                              */
+/*                             ClearCache()                             */
 /************************************************************************/
 
 void VSIOSSFSHandler::ClearCache()
@@ -158,7 +158,7 @@ void VSIOSSFSHandler::ClearCache()
 }
 
 /************************************************************************/
-/*                           GetOptions()                               */
+/*                             GetOptions()                             */
 /************************************************************************/
 
 const char *VSIOSSFSHandler::GetOptions()
@@ -180,7 +180,7 @@ const char *VSIOSSFSHandler::GetOptions()
 }
 
 /************************************************************************/
-/*                           GetSignedURL()                             */
+/*                            GetSignedURL()                            */
 /************************************************************************/
 
 char *VSIOSSFSHandler::GetSignedURL(const char *pszFilename,
@@ -219,7 +219,7 @@ VSICurlHandle *VSIOSSFSHandler::CreateFileHandle(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                          GetURLFromFilename()                        */
+/*                         GetURLFromFilename()                         */
 /************************************************************************/
 
 std::string
@@ -243,7 +243,7 @@ VSIOSSFSHandler::GetURLFromFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                          CreateHandleHelper()                        */
+/*                         CreateHandleHelper()                         */
 /************************************************************************/
 
 IVSIS3LikeHandleHelper *VSIOSSFSHandler::CreateHandleHelper(const char *pszURI,
@@ -265,7 +265,7 @@ VSIOSSHandle::VSIOSSHandle(VSIOSSFSHandler *poFSIn, const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            ~VSIOSSHandle()                           */
+/*                           ~VSIOSSHandle()                            */
 /************************************************************************/
 
 VSIOSSHandle::~VSIOSSHandle()
@@ -284,7 +284,7 @@ struct curl_slist *VSIOSSHandle::GetCurlHeaders(const std::string &osVerb,
 }
 
 /************************************************************************/
-/*                          CanRestartOnError()                         */
+/*                         CanRestartOnError()                          */
 /************************************************************************/
 
 bool VSIOSSHandle::CanRestartOnError(const char *pszErrorMsg,

@@ -52,57 +52,57 @@ Supported stats
       - Description
 
     * - center_x
-      - Array with cell center x-coordinate for each cell that intersects the polygon. Each cell center 
+      - Array with cell center x-coordinate for each cell that intersects the polygon. Each cell center
         may or may not be inside the polygon.
-    * - center_y       
-      - Array with cell center y-coordinate for each cell that intersects the polygon. Each cell center may or may not be inside the polygon. 
-    * - count          
-      - Sum of all cell coverage fractions. 
-    * - coverage       
-      - Array with coverage fraction of each cell that intersects the polygon 
-    * - frac           
+    * - center_y
+      - Array with cell center y-coordinate for each cell that intersects the polygon. Each cell center may or may not be inside the polygon.
+    * - count
+      - Sum of all cell coverage fractions.
+    * - coverage
+      - Array with coverage fraction of each cell that intersects the polygon
+    * - frac
       - Fraction of covered cells that are occupied by each distinct raster value, as provided by ``unique``.
-    * - majority       
-      - The raster value occupying the greatest number of cells, taking into account cell coverage fractions but not weighting raster values. 
-    * - max            
-      - Maximum value of cells that intersect the polygon, not taking coverage fractions or weighting raster values into account.  
-    * - max_center_x   
-      - Cell center x-coordinate for the cell containing the maximum value intersected by the polygon. The center of this cell may or may not be inside the polygon. 
-    * - max_center_y   
-      - Cell center y-coordinate for the cell containing the maximum value intersected by the polygon. The center of this cell may or may not be inside the polygon. 
-    * - mean           
-      - Mean value of cells that intersect the polygon, weighted by the percent of each cell that is covered. 
-    * - min            
-      - Minimum value of cells that intersect the polygon, not taking coverage fractions or weighting raster values into account. 
-    * - min_center_x   
-      - Cell center x-coordinate for the cell containing the minimum value intersected by the polygon. The center of this cell may or may not be inside the polygon. 
-    * - min_center_y   
-      - Cell center y-coordinate for the cell containing the minimum value intersected by the polygon. The center of this cell may or may not be inside the polygon. 
-    * - minority       
-      - The raster value occupying the least number of cells, taking into account cell coverage fractions but not weighting raster values. 
-    * - stdev          
-      - Population standard deviation of cell values that intersect the polygon, taking into account coverage fraction. 
-    * - sum            
-      - Sum of values of raster cells that intersect the polygon, with each raster value weighted by its coverage fraction. 
-    * - unique         
-      - Array of unique raster values for cells that intersect the polygon 
-    * - values         
-      - Array of raster values for each cell that intersects the polygon 
-    * - variance       
-      - Population variance of cell values that intersect the polygon, taking into account coverage fraction. 
-    * - variety        
-      - The number of distinct raster values in cells wholly or partially covered by the polygon. 
-    * - weighted_frac  
+    * - max
+      - Maximum value of cells that intersect the polygon, not taking coverage fractions or weighting raster values into account.
+    * - max_center_x
+      - Cell center x-coordinate for the cell containing the maximum value intersected by the polygon. The center of this cell may or may not be inside the polygon.
+    * - max_center_y
+      - Cell center y-coordinate for the cell containing the maximum value intersected by the polygon. The center of this cell may or may not be inside the polygon.
+    * - mean
+      - Mean value of cells that intersect the polygon, weighted by the percent of each cell that is covered.
+    * - min
+      - Minimum value of cells that intersect the polygon, not taking coverage fractions or weighting raster values into account.
+    * - min_center_x
+      - Cell center x-coordinate for the cell containing the minimum value intersected by the polygon. The center of this cell may or may not be inside the polygon.
+    * - min_center_y
+      - Cell center y-coordinate for the cell containing the minimum value intersected by the polygon. The center of this cell may or may not be inside the polygon.
+    * - minority
+      - The raster value occupying the least number of cells, taking into account cell coverage fractions but not weighting raster values.
+    * - mode
+      - The raster value occupying the greatest number of cells, taking into account cell coverage fractions but not weighting raster values.
+    * - stdev
+      - Population standard deviation of cell values that intersect the polygon, taking into account coverage fraction.
+    * - sum
+      - Sum of values of raster cells that intersect the polygon, with each raster value weighted by its coverage fraction.
+    * - unique
+      - Array of unique raster values for cells that intersect the polygon
+    * - values
+      - Array of raster values for each cell that intersects the polygon
+    * - variance
+      - Population variance of cell values that intersect the polygon, taking into account coverage fraction.
+    * - variety
+      - The number of distinct raster values in cells wholly or partially covered by the polygon.
+    * - weighted_frac
       - Fraction of covered cells that are occupied by each distinct raster value, weighted by the value of a second weighting raster. Order corresponds to
         values returned by ``unique``.
-    * - weighted_mean  
-      - Mean value of cells that intersect the polygon, weighted by the product over the coverage fraction and the weighting raster. 
-    * - weighted_stdev 
-      - Weighted version of ``stdev``. 
-    * - weighted_variance 
-      - Weighted version of ``variance`` 
-    * - weights        
-      - Array of weight values for each cell that intersects the polygon 
+    * - weighted_mean
+      - Mean value of cells that intersect the polygon, weighted by the product over the coverage fraction and the weighting raster.
+    * - weighted_stdev
+      - Weighted version of ``stdev``.
+    * - weighted_variance
+      - Weighted version of ``variance``
+    * - weights
+      - Array of weight values for each cell that intersects the polygon
 
 This algorithm can be part of a :ref:`gdal_pipeline`.
 
@@ -121,7 +121,13 @@ Program-Specific Options
 .. option:: --include-field <INCLUDE-FIELD>
 
    Specifies one or more fields from the zones to be copied to the output. Only
-   available when vector zones are used.
+   available when vector zones are used. Since GDAL 3.13, the special values "ALL" and "NONE" can be used.
+
+.. option:: --include-geom
+
+   Include the zone geometry in the output feature. Only available when vector zones are used.
+
+   .. versionadded:: 3.13
 
 .. option:: --pixels <PIXELS>
 
@@ -186,18 +192,39 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
-       
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
 .. example::
    :title: Summarize mean elevation within 200m of points of interest
 
+   Using a nested pipeline for the zone dataset
+
    .. code-block:: bash
 
       gdal pipeline read dem.tif ! \
           zonal-stats \
             --zones [ read points.geojson ! buffer 200 ] \
+            --stat mean ! \
+          write \
+            --output-format CSV \
+            --output /vsistdout/
+
+    or, using the zone vector dataset as the piped dataset using the ``_`` placeholder dataset name:
+
+   .. code-block:: bash
+
+      gdal pipeline read points.geojson ! \
+          buffer 200 ! \
+          zonal-stats \
+            --input dem.tif
+            --zones _ \
             --stat mean ! \
           write \
             --output-format CSV \
@@ -213,9 +240,9 @@ Examples
           zonal-stats \
             --zones watersheds.shp \
             --stat max_center_x \
-            --stat max_center_y !
+            --stat max_center_y ! \
           make-point \
             --x max_center_x \
             --y max_center_y \
-            --dst-crs EPSG:4326 !
+            --output-crs EPSG:4326 ! \
           write out.geojson

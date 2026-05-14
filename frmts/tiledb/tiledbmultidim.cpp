@@ -13,22 +13,17 @@
 #include "tiledbmultidim.h"
 
 /************************************************************************/
-/*              TileDBSingleArrayGroup::SanitizeNameForPath()           */
+/*            TileDBSingleArrayGroup::SanitizeNameForPath()             */
 /************************************************************************/
 
 /* static */
 std::string TileDBSharedResource::SanitizeNameForPath(const std::string &osName)
 {
-    CPLString osSanitized(osName);
-    // Reserved characters on Windows
-    for (char ch : {'<', '>', ':', '"', '/', '\\', '|', '?', '*'})
-        osSanitized.replaceAll(ch, '_');
-    std::string osRet = std::move(osSanitized);
-    return osRet;
+    return CPLLaunderForFilenameSafe(osName);
 }
 
 /************************************************************************/
-/*                    TileDBArrayGroup::Create()                        */
+/*                      TileDBArrayGroup::Create()                      */
 /************************************************************************/
 
 std::shared_ptr<GDALGroup> TileDBArrayGroup::Create(
@@ -67,7 +62,7 @@ std::shared_ptr<GDALGroup> TileDBArrayGroup::Create(
 }
 
 /************************************************************************/
-/*                TileDBArrayGroup::GetMDArrayNames()                   */
+/*                 TileDBArrayGroup::GetMDArrayNames()                  */
 /************************************************************************/
 
 std::vector<std::string>
@@ -80,7 +75,7 @@ TileDBArrayGroup::GetMDArrayNames(CSLConstList /*papszOptions*/) const
 }
 
 /************************************************************************/
-/*                  TileDBArrayGroup::OpenMDArray()                     */
+/*                   TileDBArrayGroup::OpenMDArray()                    */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -96,7 +91,7 @@ TileDBArrayGroup::OpenMDArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                       OpenMultiDimensional()                         */
+/*                        OpenMultiDimensional()                        */
 /************************************************************************/
 
 GDALDataset *TileDBDataset::OpenMultiDimensional(GDALOpenInfo *poOpenInfo)
@@ -151,7 +146,7 @@ GDALDataset *TileDBDataset::OpenMultiDimensional(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     CreateMultiDimensional()                         */
+/*                       CreateMultiDimensional()                       */
 /************************************************************************/
 
 GDALDataset *
@@ -197,7 +192,7 @@ TileDBDataset::CreateMultiDimensional(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                 TileDBDimension::GetIndexingVariable()               */
+/*                TileDBDimension::GetIndexingVariable()                */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray> TileDBDimension::GetIndexingVariable() const
@@ -206,7 +201,7 @@ std::shared_ptr<GDALMDArray> TileDBDimension::GetIndexingVariable() const
 }
 
 /************************************************************************/
-/*                 TileDBMultiDimDataset::GetRootGroup()                */
+/*                TileDBMultiDimDataset::GetRootGroup()                 */
 /************************************************************************/
 
 std::shared_ptr<GDALGroup> TileDBMultiDimDataset::GetRootGroup() const

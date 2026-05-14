@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <new>  // bad_alloc
 #include <utility>
 
 #include "cpl_error.h"
@@ -420,7 +421,7 @@ static void VizGeorefSpline2DBase_func4(double *res, const double *pxy,
 }
 #endif  // defined(USE_OPTIMIZED_VizGeorefSpline2DBase_func4)
 
-int VizGeorefSpline2D::solve()
+int VizGeorefSpline2D::solve(bool bForceBuiltinMethod)
 {
     // No points at all.
     if (_nof_points < 1)
@@ -545,67 +546,76 @@ int VizGeorefSpline2D::solve()
         return 0;
     }
 
-    GDALMatrix A(_nof_eqs, _nof_eqs);
-    x_mean = 0;
-    y_mean = 0;
-    for (int c = 0; c < _nof_points; c++)
+    try
     {
-        x_mean += x[c];
-        y_mean += y[c];
-    }
-    x_mean /= _nof_points;
-    y_mean /= _nof_points;
-
-    for (int c = 0; c < _nof_points; c++)
-    {
-        x[c] -= x_mean;
-        y[c] -= y_mean;
-        A(0, c + 3) = 1.0;
-        A(1, c + 3) = x[c];
-        A(2, c + 3) = y[c];
-
-        A(c + 3, 0) = 1.0;
-        A(c + 3, 1) = x[c];
-        A(c + 3, 2) = y[c];
-    }
-
-    for (int r = 0; r < _nof_points; r++)
-        for (int c = r; c < _nof_points; c++)
+        GDALMatrix A(_nof_eqs, _nof_eqs);
+        x_mean = 0;
+        y_mean = 0;
+        for (int c = 0; c < _nof_points; c++)
         {
-            A(r + 3, c + 3) =
-                VizGeorefSpline2DBase_func(x[r], y[r], x[c], y[c]);
-            if (r != c)
-                A(c + 3, r + 3) = A(r + 3, c + 3);
+            x_mean += x[c];
+            y_mean += y[c];
         }
+        x_mean /= _nof_points;
+        y_mean /= _nof_points;
+
+        for (int c = 0; c < _nof_points; c++)
+        {
+            x[c] -= x_mean;
+            y[c] -= y_mean;
+            A(0, c + 3) = 1.0;
+            A(1, c + 3) = x[c];
+            A(2, c + 3) = y[c];
+
+            A(c + 3, 0) = 1.0;
+            A(c + 3, 1) = x[c];
+            A(c + 3, 2) = y[c];
+        }
+
+        for (int r = 0; r < _nof_points; r++)
+            for (int c = r; c < _nof_points; c++)
+            {
+                A(r + 3, c + 3) =
+                    VizGeorefSpline2DBase_func(x[r], y[r], x[c], y[c]);
+                if (r != c)
+                    A(c + 3, r + 3) = A(r + 3, c + 3);
+            }
 
 #if VIZ_GEOREF_SPLINE_DEBUG
 
-    for (r = 0; r < _nof_eqs; r++)
-    {
-        for (c = 0; c < _nof_eqs; c++)
-            fprintf(stderr, "%f", A(r, c)); /*ok*/
-        fprintf(stderr, "\n");              /*ok*/
-    }
+        for (r = 0; r < _nof_eqs; r++)
+        {
+            for (c = 0; c < _nof_eqs; c++)
+                fprintf(stderr, "%f", A(r, c)); /*ok*/
+            fprintf(stderr, "\n");              /*ok*/
+        }
 
 #endif
 
-    GDALMatrix RHS(_nof_eqs, _nof_vars);
-    for (int iRHS = 0; iRHS < _nof_vars; iRHS++)
-        for (int iRow = 0; iRow < _nof_eqs; iRow++)
-            RHS(iRow, iRHS) = rhs[iRHS][iRow];
+        GDALMatrix RHS(_nof_eqs, _nof_vars);
+        for (int iRHS = 0; iRHS < _nof_vars; iRHS++)
+            for (int iRow = 0; iRow < _nof_eqs; iRow++)
+                RHS(iRow, iRHS) = rhs[iRHS][iRow];
 
-    GDALMatrix Coef(_nof_eqs, _nof_vars);
+        GDALMatrix Coef(_nof_eqs, _nof_vars);
 
-    if (!GDALLinearSystemSolve(A, RHS, Coef))
+        if (!GDALLinearSystemSolve(A, RHS, Coef, bForceBuiltinMethod))
+        {
+            return 0;
+        }
+
+        for (int iRHS = 0; iRHS < _nof_vars; iRHS++)
+            for (int iRow = 0; iRow < _nof_eqs; iRow++)
+                coef[iRHS][iRow] = Coef(iRow, iRHS);
+
+        return 4;
+    }
+    catch (const std::bad_alloc &)
     {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "thinplatespline: out of memory allocating matrices");
         return 0;
     }
-
-    for (int iRHS = 0; iRHS < _nof_vars; iRHS++)
-        for (int iRow = 0; iRow < _nof_eqs; iRow++)
-            coef[iRHS][iRow] = Coef(iRow, iRHS);
-
-    return 4;
 }
 
 int VizGeorefSpline2D::get_point(const double Px, const double Py, double *vars)

@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -178,3 +179,38 @@ def test_gdalalg_vector_filter_update_extent(tmp_vsimem):
         assert lyr.GetExtent(force=False) == (3, 5, 4, 6)
         assert lyr.GetExtent3D(force=False) == (3, 5, 4, 6, 30, 40)
         assert lyr.GetFeatureCount() == 1
+
+
+@pytest.mark.require_driver("GDALG")
+def test_gdalalg_vector_filter_test_ogrsf(tmp_path):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+    open(gdalg_filename, "wb").write(
+        b'{"type": "gdal_streamed_alg","command_line": "gdal vector filter ../ogr/data/poly.shp --where 1=1 --output-format=stream dummy_dataset_name","relative_paths_relative_to_this_file":false}'
+    )
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+    open(gdalg_filename, "wb").write(
+        b'{"type": "gdal_streamed_alg","command_line": "gdal vector filter ../ogr/data/poly.shp --where EAS_ID=170 --output-format=stream dummy_dataset_name","relative_paths_relative_to_this_file":false}'
+    )
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret

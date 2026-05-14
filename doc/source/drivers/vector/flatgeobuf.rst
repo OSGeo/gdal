@@ -103,18 +103,22 @@ Creation Issues
 Examples
 --------
 
--  Simple translation of a single shapefile into a FlatGeobuf file. The file
+.. example::
+   :title: Simple translation of a shapefile into a FlatGeobuf file
+   
+   The file
    'filename.fgb' will be created with the features from abc.shp and attributes
    from abc.dbf. The file ``filename.fgb`` must **not** already exist,
    as it will be created.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f FlatGeobuf filename.fgb abc.shp
 
--  Conversion of a Geopackage file with multiple layers:
+.. example::
+   :title: Conversion of a Geopackage file with multiple layers
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -f FlatGeobuf my_fgb_dataset input.gpkg
 

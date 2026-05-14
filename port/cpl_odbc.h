@@ -105,7 +105,7 @@ class CPL_DLL CPLODBCDriverInstaller
     /** The usage count of the driver after this function has been called */
     int GetUsageCount() const
     {
-        return m_nUsageCount;
+        return static_cast<int>(m_nUsageCount);
     }
 
     /** Path of the target directory where the driver should be installed.

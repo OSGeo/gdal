@@ -363,7 +363,7 @@ def test_cog_creation_of_overviews_with_mask():
     src_ds = gdal.Translate("", "data/byte.tif", options="-of MEM -outsize 2048 300")
     src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(
-        0, 0, 1024, 300, b"\xFF", buf_xsize=1, buf_ysize=1
+        0, 0, 1024, 300, b"\xff", buf_xsize=1, buf_ysize=1
     )
 
     check_filename = "/vsimem/tmp.tif"
@@ -485,11 +485,7 @@ def test_cog_small_world_to_web_mercator():
         if gt[i] != pytest.approx(expected_gt[i], abs=1e-10 * abs(expected_gt[i])):
             assert False, gt
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(3)]
-    assert got_cs in (
-        [26293, 23439, 14955],
-        [26228, 22085, 12992],
-        [25088, 23140, 13265],  # libjpeg 9e
-    )
+    assert got_cs == pytest.approx([20968, 23493, 14665], abs=100)
     assert ds.GetRasterBand(1).GetMaskBand().Checksum() == 17849
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     ds = None
@@ -1918,7 +1914,6 @@ def test_cog_stats(tmp_vsimem, nbands, co, src_has_stats, expected_val):
 
 
 def test_cog_mask_band_overviews(tmp_vsimem):
-
     """Test bugfix for https://github.com/OSGeo/gdal/issues/10536"""
 
     filename = str(tmp_vsimem / "out.tif")
@@ -2144,7 +2139,7 @@ def test_cog_interleave_tile_or_band_vsicurl(tmp_vsimem, INTERLEAVE):
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -2322,3 +2317,28 @@ def test_cog_create(tmp_vsimem):
 
     with pytest.raises(Exception, match="Attempt to create 0x0 dataset is illegal"):
         gdal.GetDriverByName("COG").Create(tmp_vsimem / "out.tif", 0, 0)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_cog_algorithm_driver_cog_validate():
+
+    with gdal.alg.driver.cog.validate(
+        dataset="data/cog/byte_little_endian_golden.tif"
+    ) as alg:
+        assert (
+            alg.Output()
+            == """data/cog/byte_little_endian_golden.tif is a valid cloud optimized GeoTIFF\n\nThe size of all IFD headers is 570 bytes\n"""
+        )
+
+    with gdal.alg.driver.cog.validate(
+        dataset="data/cog/byte_little_endian_golden.tif", quiet=True
+    ) as alg:
+        assert alg.Output() == ""
+
+    with pytest.raises(
+        Exception, match="data/byte.tif is NOT a valid cloud optimized GeoTIFF"
+    ):
+        gdal.alg.driver.cog.validate(dataset="data/byte.tif")

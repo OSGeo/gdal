@@ -68,11 +68,11 @@ static bool IsLerc2(const char *s)
 #endif
 
 /************************************************************************/
-/*                     MRFDriverIdentify()                              */
+/*                         MRFDriverIdentify()                          */
 /************************************************************************/
 
 /**
- *\brief Idenfity a MRF file, lightweight
+ *\brief Identify a MRF file, lightweight
  *
  * Lightweight test, otherwise Open gets called.
  *
@@ -113,7 +113,7 @@ int MRFDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      MRFDriverSetCommonMetadata()                    */
+/*                     MRFDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void MRFDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -146,7 +146,7 @@ void MRFDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredMRFPlugin()                       */
+/*                      DeclareDeferredMRFPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

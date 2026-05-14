@@ -30,6 +30,8 @@ else()
     target_compile_definitions(gdal_vrt PRIVATE GDAL_VRT_DISABLE_RAWRASTERBAND)
 endif()
 
+gdal_target_link_libraries(gdal_vrt PRIVATE PROJ::proj)
+
 target_include_directories(gdal_vrt PRIVATE ${GDAL_RASTER_FORMAT_SOURCE_DIR}/raw
                                             $<TARGET_PROPERTY:ogrsf_generic,SOURCE_DIR>)
 

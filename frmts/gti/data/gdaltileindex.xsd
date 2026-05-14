@@ -61,6 +61,8 @@
 
                     <xs:element name="Band" type="BandType"/> <!-- may be repeated -->
                     <xs:element name="Overview" type="OverviewType"/>  <!-- may be repeated -->
+
+                    <xs:element name="Interleave" type="InterleaveType"/>
                 </xs:choice>
             </xs:sequence>
         </xs:complexType>
@@ -251,5 +253,12 @@
         </xs:sequence>
         <xs:attribute name="index" type="xs:unsignedInt" use="required"/>
     </xs:complexType>
+
+    <xs:simpleType name="InterleaveType">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="Band"/>
+            <xs:enumeration value="Pixel"/>
+        </xs:restriction>
+    </xs:simpleType>
 
 </xs:schema>

@@ -22,7 +22,13 @@ Description
 
 :program:`gdal vector rasterize` burns vector geometries into a raster.
 
-Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
+By default (unless :option:`--update` or :option:`--add`) is specified, a new
+raster is created with a specified resolution (:option:`--resolution`) or size
+(:option:`--size`). Pixel values will either be set to a constant (the value 1,
+or some other value specified with :option:`--burn`), the Z value of feature
+geometries (with :option:`--3d`), or the value of a field specified with
+:option:`--attribute-name`.
+
 
 .. only:: html
 
@@ -46,6 +52,8 @@ path are included.
 
 The right figure shows the effect of :option:`--all-touched`, where every pixel that touches the input polygons is
 included.
+
+Since GDAL 3.12, this algorithm can be part of a :ref:`gdal_pipeline`.
 
 The following options are available:
 
@@ -78,7 +86,7 @@ Program-Specific Options
 
 .. option:: -a, --attribute-name <ATTRIBUTE-NAME>
 
-    Attribute name.
+    Name of the attribute / field from which a burn value should be retrieved for each feature. GDAL will attempt to parse the field value as a number. If this is not successful, a value of zero will be written.
 
 .. option:: --band, -b <BAND>
 
@@ -144,6 +152,7 @@ Program-Specific Options
 .. option:: --tap, --target-aligned-pixels
 
     (target aligned pixels) Align the coordinates of the extent of the output file to the values of `--resolution`, such that the aligned extent includes the minimum extent. Alignment means that xmin / resx, ymin / resy, xmax / resx and ymax / resy are integer values.
+    :option:`--tap` requires :option:`--resolution`.
 
 .. option:: --transformer-option <NAME>=<VALUE>
 
@@ -170,11 +179,17 @@ Standard Options
 
     .. include:: gdal_options/update.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
 .. example::
    :title: Burn a shapefile into a raster
+   :id: gdal-vector-rasterize-burn
 
     The following would burn all polygons from :file:`mask.shp` into the RGB TIFF file :file:`work.tif` with the color red (RGB = 255,0,0).
 

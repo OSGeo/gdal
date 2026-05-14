@@ -214,7 +214,7 @@ def test_tpkx_default_full_extent(extent_source):
     assert ds.RasterXSize == 2533
     assert ds.RasterYSize == 1922
     assert ds.RasterCount == 4
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "3857"
     assert ds.GetGeoTransform() == pytest.approx(
         (
             -19841829.550377003848553,

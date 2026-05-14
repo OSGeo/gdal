@@ -118,6 +118,11 @@ add_custom_target(python_generated_files
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 function (symlink_or_copy source destination)
+    if (IS_SYMLINK ${destination})
+        # Otherwise on Windows, the recreation of the symlink might result
+        # in destroying the source content...
+        return()
+    endif()
     file(
       CREATE_LINK ${source} ${destination}
       RESULT res

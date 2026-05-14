@@ -49,7 +49,7 @@ OGRFeatureH CPL_DLL CPL_STDCALL GNMGetFeatureByGlobalFID(GNMNetworkH hNet,
 OGRLayerH CPL_DLL CPL_STDCALL GNMGetPath(GNMNetworkH hNet, GNMGFID nStartFID,
                                          GNMGFID nEndFID,
                                          GNMGraphAlgorithmType eAlgorithm,
-                                         char **papszOptions);
+                                         CSLConstList papszOptions);
 
 CPLErr CPL_DLL CPL_STDCALL GNMConnectFeatures(GNMGenericNetworkH hNet,
                                               GNMGFID nSrcFID, GNMGFID nTgtFID,

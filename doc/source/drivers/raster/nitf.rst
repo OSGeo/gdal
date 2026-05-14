@@ -1,7 +1,7 @@
 .. _raster.nitf:
 
 ================================================================================
-NITF -- National Imagery Transmission Format
+NITF -- National Imagery Transmission Format (also CIB, CADRG, ECRG, HRE)
 ================================================================================
 
 .. shortname:: NITF
@@ -15,7 +15,8 @@ NITF -- National Imagery Transmission Format
    nitf_advanced
 
 GDAL supports reading of several subtypes of NITF (National Imagery Transmission Format)
-image files, and writing simple NITF 2.1 files. NITF 1.1, NITF 2.0, NITF 2.1 and NSIF 1.0
+image files, and writing NITF 2.1 files, and limited writing support for NITF 2.0.
+NITF 1.1, NITF 2.0, NITF 2.1 and NSIF 1.0
 files with uncompressed, ARIDPCM (Adaptive Recursive Interpolated Differential Pulse Code Modulation),
 JPEG compressed, JPEG2000 (with Kakadu, ECW SDKs or other JPEG2000 capable driver)
 or VQ (Vector Quantized) compressed images should be readable.
@@ -24,6 +25,7 @@ The read support test has been tested on various products, including
 CIB (Controlled Image Base) and CADRG (Compressed ARC Digitized Raster Graphics)
 frames from RPF (Raster Product Format) products, ECRG (Enhanced Compressed
 Raster Graphics) frames, HRE (High Resolution Elevation) products.
+Write support for CADRG is available since GDAL 3.13.
 
 Color tables for pseudocolored images are read. In some cases nodata
 values may be identified.
@@ -114,7 +116,7 @@ reported when asking the metadata list.
 The following creation options are available:
 
 -  .. co:: IC
-      :choices: NC, C3, M3, C8
+      :choices: NC, C3, C4, M3, C8
       :default: NC
 
       Set the compression method.
@@ -126,6 +128,8 @@ The following creation options are available:
          Multi-block images can be written.
       -  M3 is a variation of C3. The only difference is that a block map
          is written, which allow for fast seeking to any block.
+      -  C4 means Vector Quantized (VQ) compression, and is only available when
+         PRODUCT_TYPE=CADRG.
       -  C8 means JPEG2000 compression (one block) and is available for
          CreateCopy() and/or Create() methods. See below paragraph for specificities.
 
@@ -204,11 +208,12 @@ The following creation options are available:
       interface. If specified, ICORDS must also be specified.
 
 -  .. co:: FHDR
-      :choices: NITF02.10, NSIF01.00
+      :choices: NITF02.10, NSIF01.00, NITF02.00
       :default: NITF02.10
 
-      File version can be selected though currently the only two
-      variations supported are "NITF02.10" (the default), and "NSIF01.00".
+      File version can be selected. "NITF02.10" (the default), and "NSIF01.00"
+      are fully supported. Support for NITF02.00 has been introduced in GDAL 3.13.
+      Note that for NITF02.00 writing UTM coordinates is not supported.
 
 -  .. co:: IREP
 
@@ -338,6 +343,233 @@ The following creation options are available:
       may needed to set this option to NO if changing the georeferencing of
       the input file.
 
+-  .. co:: PRODUCT_TYPE
+      :choices: REGULAR, CADRG
+      :default: REGULAR
+      :since: 3.13
+
+      Sub-specification the output dataset should respect
+
+
+The following options are only valid for PRODUCT_TYPE=CADRG.
+
+-  .. co:: COLOR_QUANTIZATION_BITS
+      :choices: 5, 6, 7, 8
+      :default: 5
+      :since: 3.13
+
+      Number of bits per R,G,B color component used during color palette
+      computation. The higher the better quality and slower computation time.
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: COLOR_TABLE_PER_FRAME
+      :choices: YES, NO
+      :default: NO
+      :since: 3.13
+
+      Whether the color table should be optimized on the whole input dataset,
+      or per output frame. The default is NO, that is optimized on the whole
+      input dataset, to reduce the risk of color seams across frames.
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: SCALE
+      :since: 3.13
+
+      Reciprocal scale to use when generating output frames.
+      Valid values are in the range from 1000 (1:1K) to 20000000 (1:20M).
+      Special value ``GUESS`` can be also used to infer the scale from the DPI,
+      either explicitly specified with the DPI creation option, or if the
+      TIFFTAG_YRESOLUTION / TIFFTAG_RESOLUTIONUNIT metadata items exist on the
+      source raster.
+      When not specified, the scale is inferred from the SERIES_CODE value from
+      data series that have a fixed scale. Otherwise it is required.
+
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: DPI
+      :choices: <float>
+      :since: 3.13
+
+      Dot-Per-Inch value for the input dataset, that may need to be specified
+      together with SCALE=GUESS. Valid values are in the range from 1 to 7200.
+      If SCALE is not specified to the GUESS value, DPI is ignored.
+
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: ZONE
+      :choices: <string>
+      :since: 3.13
+
+      ARC Zone to which restrict generation of CADRG frames (1 to 9, A to H, J).
+      If not specified, the driver automatically determines which zones the
+      extent of the source dataset intersects.
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: SERIES_CODE
+      :choices: GN,JN,ON,TP,LF,JG,JA,JR,TF,AT,TC,TL,HA,CO,OA,CG,CM,MM
+      :default: MM
+      :since: 3.13
+
+      Two-letter code specifying the map/chart type.
+      Used to infer the scale, when not specified, for some of the values where the map/chart type
+      has a single nominal scale, and for the first 2 letters of the extension
+      of frame files.
+      Only used when PRODUCT_TYPE=CADRG.
+
+      Below the codes from the initial version of MIL-STD-2411-1.
+      Full table available in `MIL-STD-2411/1 (W/CHANGE 3) <https://everyspec.com/MIL-STD/MIL-STD-2000-2999/MIL-STD-2411_1_CHG-3_26002/>`__, pages 9-13.
+
+      +------+----------------------------------------+--------------+
+      | Code | Data series                            | Scale        |
+      +======+========================================+==============+
+      | GN   | Global Navigation Chart (GNC)          | 1:5 million  |
+      +------+----------------------------------------+--------------+
+      | JN   | Jet Navigation Chart (JNC)             | 1:2 million  |
+      +------+----------------------------------------+--------------+
+      | ON   | Operational Navigation Chart (ONC)     | 1:1 million  |
+      +------+----------------------------------------+--------------+
+      | TP   | Tactical Pilotage Chart (TPC)          | 1:500 K      |
+      +------+----------------------------------------+--------------+
+      | LF   | Low Flying Chart (LFC) - UK            | 1:500 K      |
+      +------+----------------------------------------+--------------+
+      | JG   | Joint Operation Graphic (JOG)          | 1:250 K      |
+      +------+----------------------------------------+--------------+
+      | JA   | Joint Operation Graphic, Air (JOG-A)   | 1:250 K      |
+      +------+----------------------------------------+--------------+
+      | JR   | Joint Operation Graphic, Radar (JOG-R) | 1:250 K      |
+      +------+----------------------------------------+--------------+
+      | TF   | Transit Flying Chart (TFC) - UK        | 1:250 K      |
+      +------+----------------------------------------+--------------+
+      | AT   | Series 200 Air Target Chart (ATC)      | 1:200 K      |
+      +------+----------------------------------------+--------------+
+      | TC   | Topographic Line Map 100 (TLM 100)     | 1:100 K      |
+      +------+----------------------------------------+--------------+
+      | TL   | Topographic Line Map 50 (TLM 50)       | 1:50 K       |
+      +------+----------------------------------------+--------------+
+      | HA   | Harbor and Approach Charts  (HAC)      | Various      |
+      +------+----------------------------------------+--------------+
+      | CO   | Coastal Charts                         | Various      |
+      +------+----------------------------------------+--------------+
+      | OP   | Naval Range Operating Area Chart       | Various      |
+      +------+----------------------------------------+--------------+
+      | CG   | City Graphics                          | Various      |
+      +------+----------------------------------------+--------------+
+      | CM   | Combat Charts                          | Various      |
+      +------+----------------------------------------+--------------+
+      | MM   | Miscellaneous Maps and Charts          | Various      |
+      +------+----------------------------------------+--------------+
+
+-  .. co:: VERSION_NUMBER
+      :choices: <string>
+      :default: 01
+      :since: 3.13
+
+      Two letter version number (using letters among 0-9, A-H and J).
+      Used for the 6th and 7th letters of the file name of frame files.
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: PRODUCER_CODE_ID
+      :choices: <string>
+      :default: 0
+      :since: 3.13
+
+      One letter code indicating the data producer. This is a base-34 encoded
+      value with valid letters '0' to '9', 'A' to 'Z' (excluding 'I' and 'O').
+      Used for the last letter of the file name of frame files.
+      Only used when PRODUCT_TYPE=CADRG.
+
+      +----+--------------------------+--------------------------------------------------------------+
+      | ID | Producer code            | Producer                                                     |
+      +====+==========================+==============================================================+
+      | 1  | AFACC                    | Air Force Air Combat Command                                 |
+      +----+--------------------------+--------------------------------------------------------------+
+      | 2  | AFESC                    | Air Force Electronic Systems Center                          |
+      +----+--------------------------+--------------------------------------------------------------+
+      | 3  | NIMA                     | National Imagery and Mapping Agency, Primary                 |
+      +----+--------------------------+--------------------------------------------------------------+
+      | 4  | NIMA1                    | NIMA, Alternate Site 1                                       |
+      +----+--------------------------+--------------------------------------------------------------+
+      | 5  | NIMA2                    | NIMA, Alternate Site 2                                       |
+      +----+--------------------------+--------------------------------------------------------------+
+      | 6  | NIMA3                    | NIMA, Alternate Site 3                                       |
+      +----+--------------------------+--------------------------------------------------------------+
+      | 7  | SOCAF                    | Air Force Special Operations Command                         |
+      +----+--------------------------+--------------------------------------------------------------+
+      | 8  | SOCOM                    | United States Special Operations Command                     |
+      +----+--------------------------+--------------------------------------------------------------+
+      | 9  | PACAF                    | Pacific Air Forces                                           |
+      +----+--------------------------+--------------------------------------------------------------+
+      | A  | USAFE                    | United States Air Force, Europe                              |
+      +----+--------------------------+--------------------------------------------------------------+
+      | B  | Non-DoD (NonDD)          | US producer outside the Department of Defense                |
+      +----+--------------------------+--------------------------------------------------------------+
+      | C  | Non-US (NonUS)           | Non-US producer                                              |
+      +----+--------------------------+--------------------------------------------------------------+
+      | D  | NIMA DCHUM (DCHUM)       | NIMA produced Digital CHUM file                              |
+      +----+--------------------------+--------------------------------------------------------------+
+      | E  | Non-NIMA DCHUM (DCHMD)   | DoD producer of Digital CHUM file other than NIMA            |
+      +----+--------------------------+--------------------------------------------------------------+
+      | F  | Non-US DCHUM (DCHMF)     | Non-US (foreign) producer of Digital CHUM files              |
+      +----+--------------------------+--------------------------------------------------------------+
+      | G  | Non-DoD DCHUM (DCHMG)    | US producer of Digital CHUM files outside DoD                |
+      +----+--------------------------+--------------------------------------------------------------+
+      | H  | IMG2RPF                  | Non-specified, Imagery formatted to RPF                      |
+      +----+--------------------------+--------------------------------------------------------------+
+      | I–Z| Reserved                 | Reserved for future standardization                          |
+      +----+--------------------------+--------------------------------------------------------------+
+
+-  .. co:: SECURITY_COUNTRY_CODE
+      :choices: <string>
+      :since: 3.13
+
+      Two letter country ISO code of the security classification.
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: CURRENCY_DATE
+      :choices: <string>
+      :since: 3.13
+
+      Date of the most recent revision to the RPF product, as YYYYMMDD.
+      Can be set to empty to avoid writing it, or the special value NOW for the
+      current date, otherwise a default value of 20260101 is used.
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: PRODUCTION_DATE
+      :choices: <string>
+      :since: 3.13
+
+      Date that the source data was transferred to RPF format, as YYYYMMDD.
+      Can be set to empty to avoid writing it, or the special value NOW for the
+      current date, otherwise a default value of 20260101 is used.
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: SIGNIFICANT_DATE
+      :choices: <string>
+      :since: 3.13
+
+      Date describing the basic date of the source product, as YYYYMMDD.
+      Can be set to empty to avoid writing it, or the special value NOW for the
+      current date, otherwise a default value of 20260101 is used.
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: DATA_SERIES_DESIGNATION
+      :choices: <string>
+      :since: 3.13
+
+      Short title for the identification of a group of products usually having
+      the same scale and/or cartographic specification (e.g. JOG 1501A).
+      Up to 10 characters. Derived from SERIES_CODE and SCALE when not specified.
+      Only used when PRODUCT_TYPE=CADRG.
+
+-  .. co:: MAP_DESIGNATION
+      :choices: <string>
+      :since: 3.13
+
+      Designation, within the data series, of the hard-copy source (e.g. G18 if
+      the hard-copy source is ONC G18).
+      Up to 8 characters.
+      Only used when PRODUCT_TYPE=CADRG.
+
 
 The following creation options to set fields in the NITF file header are available:
 
@@ -349,7 +581,9 @@ The following creation options to set fields in the NITF file header are availab
 -  .. co:: FDT
       :choices: string of up to 14 characters
 
-      File Date and Time
+      File Date and Time.
+      Format is DDHHMMSSZMONYY for NITF 2.0 and CCYYMMDDhhmmss for NITF 2.1.
+      ``NOW`` is also accepted as a special value for the current date-time.
 
 -  .. co:: FTITLE
       :choices: string of up to 80 characters
@@ -359,17 +593,17 @@ The following creation options to set fields in the NITF file header are availab
 -  .. co:: FSCLAS
       :choices: string of 1 character
 
-      File Security Classification
+      File Security Classification (U/R/C/S/T)
 
 -  .. co:: FSCLSY
       :choices: string of up to 2 characters
 
-      File Classification Security System
+      File Classification Security System (NITF02.10/NSIF only)
 
 -  .. co:: FSCODE
       :choices: string of up to 11 characters
 
-      File Codewords
+      File Codewords (NITF02.10/NSIF only)
 
 -  .. co:: FSCTLH
       :choices: string of up to 2 characters
@@ -384,37 +618,47 @@ The following creation options to set fields in the NITF file header are availab
 -  .. co:: FSDCTP
       :choices: string of up to 2 characters
 
-      File Declassification Type
+      File Declassification Type (NITF02.10/NSIF only)
 
 -  .. co:: FSDCDT
       :choices: string of 8 characters
 
-      File Declassification Date
+      File Declassification Date (NITF02.10/NSIF only)
 
 -  .. co:: FSDCXM
       :choices: string of up to 4 characters
 
-      File Declassification Exemption
+      File Declassification Exemption (NITF02.10/NSIF only)
 
 -  .. co:: FSDG
       :choices: string of 1 character
 
-      File Downgrade
+      File Downgrade (NITF02.10/NSIF only)
 
 -  .. co:: FSDGDT
       :choices: string of 8 characters
 
-      File Downgrade Date
+      File Downgrade Date (NITF02.10/NSIF only)
+
+-  .. co:: FSDWNG
+      :choices: string of up to 6 characters
+
+      File Security Downgrade (NITF02.00 only)
+
+-  .. co:: FSDEVT
+      :choices: string of 40 characters
+
+      File Downgrading Event (NITF02.00 only)
 
 -  .. co:: FSCLTX
       :choices: string of up to 43 characters
 
-      File Classification Text
+      File Classification Text (NITF02.10/NSIF only)
 
 -  .. co:: FSCATP
       :choices: string of 1 character
 
-      File Classification Authority Type
+      File Classification Authority Type (NITF02.10/NSIF only)
 
 -  .. co:: FSCAUT
       :choices: string of up to 40 characters
@@ -429,12 +673,12 @@ The following creation options to set fields in the NITF file header are availab
 -  .. co:: FSSRDT
       :choices: string of 8 characters
 
-      File Security Source Date
+      File Security Source Date (NITF02.10/NSIF only)
 
 -  .. co:: FSCTLN
       :choices: string of up to 15 characters
 
-      File Security Control Number
+      File Security Control Number (NITF02.10/NSIF only)
 
 -  .. co:: FSCOP
       :choices: string of up to 5 characters
@@ -456,7 +700,8 @@ The following creation options to set fields in the NITF file header are availab
 
       Originator Phone Number
 
-The following creation options to set fields in the NITF image header are available:
+The following creation options to set fields in the NITF image header are available
+for NITF 02.10 and NSIF 1.0. For NITF 02.00, consult MIL-STD-2500A.
 
 -  .. co:: IID1
       :choices: string of up to 10 characters
@@ -466,7 +711,9 @@ The following creation options to set fields in the NITF image header are availa
 -  .. co:: IDATIM
       :choices: string of 14 characters
 
-      Image Date and Time
+      Image Date and Time.
+      Format is DDHHMMSSZMONYY for NITF 2.0 and CCYYMMDDhhmmss for NITF 2.1.
+      ``NOW`` is also accepted as a special value for the current date-time.
 
 -  .. co:: TGTID
       :choices: string of up to 17 characters
@@ -476,17 +723,22 @@ The following creation options to set fields in the NITF image header are availa
 -  .. co:: IID2
       :choices: string of up to 80 characters
 
-      Image Identifier 2
+      Image Identifier 2 (NITF02.10/NSIF only)
+
+-  .. co:: ITITLE
+      :choices: string of up to 80 characters
+
+      Image Title (NITF02.00 only)
 
 -  .. co:: ISCLAS
       :choices: string of 1 character
 
-      Image Security Classification
+      Image Security Classification (U/R/C/S/T)
 
 -  .. co:: ISCLSY
       :choices: string of up to 2 characters
 
-      Image Classification Security System
+      Image Classification Security System (NITF02.10/NSIF only)
 
 -  .. co:: ISCODE
       :choices: string of up to 11 characters
@@ -501,42 +753,52 @@ The following creation options to set fields in the NITF image header are availa
 -  .. co:: ISREL
       :choices: string of up to 20 characters
 
-      Image Releasing Instructions
+      Image Releasing Instructions (NITF02.10/NSIF only)
 
 -  .. co:: ISDCTP
       :choices: string of up to 2 characters
 
-      Image Declassification Type
+      Image Declassification Type (NITF02.10/NSIF only)
 
 -  .. co:: ISDCDT
       :choices: string of 8 characters
 
-      Image Declassification Date
+      Image Declassification Date (NITF02.10/NSIF only)
 
 -  .. co:: ISDCXM
       :choices: string of up to 4 characters
 
-      Image Declassification Exemption
+      Image Declassification Exemption (NITF02.10/NSIF only)
 
 -  .. co:: ISDG
       :choices: string of 1 character
 
-      Image Downgrade
+      Image Downgrade (NITF02.10/NSIF only)
 
 -  .. co:: ISDGDT
       :choices: string of 8 characters
 
-      Image Downgrade Date
+      Image Downgrade Date (NITF02.10/NSIF only)
+
+-  .. co:: ISDWNG
+      :choices: string of up to 6 characters
+
+      Image Security Downgrade (NITF02.00 only)
+
+-  .. co:: ISDEVT
+      :choices: string of 40 characters
+
+      Image Downgrading Event (NITF02.00 only)
 
 -  .. co:: ISCLTX
       :choices: string of up to 43 characters
 
-      Image Classification Text
+      Image Classification Text (NITF02.10/NSIF only)
 
 -  .. co:: ISCATP
       :choices: string of 1 character
 
-      Image Classification Authority Type
+      Image Classification Authority Type (NITF02.10/NSIF only)
 
 -  .. co:: ISCAUT
       :choices: string of up to 40 characters
@@ -546,17 +808,17 @@ The following creation options to set fields in the NITF image header are availa
 -  .. co:: ISCRSN
       :choices: string of 1 character
 
-      Image Classification Reason
+      Image Classification Reason (NITF02.10/NSIF only)
 
 -  .. co:: ISSRDT
       :choices: string of 8 characters
 
-      Image Security Source Date
+      Image Security Source Date (NITF02.10/NSIF only)
 
 -  .. co:: ISCTLN
       :choices: string of up to 15 characters
 
-      Image Security Control Number
+      Image Security Control Number (NITF02.10/NSIF only)
 
 -  .. co:: ISORCE
       :choices: string of up to 42 characters
@@ -649,6 +911,62 @@ the JPEG2000 capable driver to use.
   When those profiles are specified, the J2KLRA TRE will also be written, unless
   the ``J2KLRA=NO`` creation option is specified.
 
+CADRG (Compressed ARC Digitized Raster Graphics) (write support)
+----------------------------------------------------------------
+
+.. versionadded:: 3.13
+
+The driver supports generating CADRG frames from any georeferenced source dataset,
+which has a single band with a color table of up to 216 colors, a 3-band RGB
+source dataset or a 4-band RGBA datasets. It will automatically create the CADRG
+frames intersecting the source dataset extent in the appropriate Arc zones, at
+the target scale. The :co:`PRODUCT_TYPE` creation option must be set to
+``CADRG``. The output dataset name must be a directory name.
+
+The target scale is determined by decreasing order of priority:
+
+- from the value of the :co:`SCALE` creation option, if specified.
+
+- from the value of the :co:`DPI` creation option, if specified.
+
+- from the value of the :co:`SERIES_CODE` creation option, if a scale is associated
+  with it (which is the case of all valid codes except
+  ``HA``, ``CO``, ``OP``, ``CG``, ``CM`` and ``MM``)
+
+- from the value of the TIFFTAG_RESOLUTIONUNIT and TIFFTAG_YRESOLUTION metadata
+  items, if existing in the source dataset.
+
+By default, hard-coded values of dates/date-times are written in the file, so
+as to get binary reproducible outputs from a given input. It is possible to customize
+them by setting the :co:`FDT`, :co:`IDATIM`, :co:`CURRENCY_DATE`, :co:`PRODUCTION_DATE`
+and :co:`SIGNIFICANT_DATE` creation options. For all of them the special value ``NOW``
+can be specified to use the current timestamp.
+
+The frame index ``A.TOC`` file is automatically generated (it can also be
+generated manually with the :ref:`gdal driver rpftoc create <raster.rpftoc.create>` program).
+
+.. example::
+   :title: Create CADRG frames from a VRT mosaic, specifying it is an
+           Operational Navigation Chart (scale 1:1 million), using hard-coded dates
+
+   .. code-block:: bash
+
+        gdal raster convert input_mosaic.vrt output_directory \
+            --format=NITF --co PRODUCT_TYPE=CADRG --co SERIES_CODE=ON
+
+.. example::
+   :title: Create CADRG frames from a VRT mosaic, specifying it is a City Graphic
+           map at scale 1:5,000, with dates corresponding to the current timestamp.
+
+   .. code-block:: bash
+
+        gdal raster convert input_mosaic.vrt output_directory \
+            --format=NITF --co PRODUCT_TYPE=CADRG --co SERIES_CODE=CG --co SCALE=5000 \
+            --co OSTAID=MyCompany --co ONAME=Norway --co PRODUCER_CODE_ID=X --co SECURITY_COUNTRY_CODE=NO \
+            --co FDT=NOW --co IDATIM=NOW --co CURRENCY_DATE=NOW \
+            --co PRODUCTION_DATE=NOW --co SIGNIFICANT_DATE=NOW
+
+
 Links
 -----
 
@@ -670,3 +988,12 @@ The author wishes to thank `AUG Signals <http://www.augsignals.com/>`__
 and the `GeoConnections <http://geoconnections.org/>`__ program for
 supporting development of this driver, and to thank Steve Rawlinson
 (JPEG), Reiner Beck (BLOCKA) for assistance adding features.
+
+
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+        Pilotage
+        DoD
+        NIMA

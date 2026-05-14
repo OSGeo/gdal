@@ -30,7 +30,7 @@
 
 constexpr int SUBBLOCK_SIZE = 64;
 #define TO_SUBBLOCK(x) ((x) >> 6)
-#define WITHIN_SUBBLOCK(x) ((x)&0x3f)
+#define WITHIN_SUBBLOCK(x) ((x) & 0x3f)
 
 /* ******************************************************************** */
 /*                        GDALArrayBandBlockCache                       */
@@ -70,7 +70,7 @@ class GDALArrayBandBlockCache final : public GDALAbstractBandBlockCache
 };
 
 /************************************************************************/
-/*                     GDALArrayBandBlockCacheCreate()                 */
+/*                   GDALArrayBandBlockCacheCreate()                    */
 /************************************************************************/
 
 GDALAbstractBandBlockCache *
@@ -80,7 +80,7 @@ GDALArrayBandBlockCacheCreate(GDALRasterBand *poBand)
 }
 
 /************************************************************************/
-/*                       GDALArrayBandBlockCache()                      */
+/*                      GDALArrayBandBlockCache()                       */
 /************************************************************************/
 
 GDALArrayBandBlockCache::GDALArrayBandBlockCache(GDALRasterBand *poBandIn)
@@ -89,7 +89,7 @@ GDALArrayBandBlockCache::GDALArrayBandBlockCache(GDALRasterBand *poBandIn)
 }
 
 /************************************************************************/
-/*                      ~GDALArrayBandBlockCache()                     */
+/*                      ~GDALArrayBandBlockCache()                      */
 /************************************************************************/
 
 GDALArrayBandBlockCache::~GDALArrayBandBlockCache()
@@ -103,7 +103,7 @@ GDALArrayBandBlockCache::~GDALArrayBandBlockCache()
 }
 
 /************************************************************************/
-/*                                  Init()                              */
+/*                                Init()                                */
 /************************************************************************/
 
 bool GDALArrayBandBlockCache::Init()
@@ -165,7 +165,7 @@ bool GDALArrayBandBlockCache::Init()
 }
 
 /************************************************************************/
-/*                             IsInitOK()                               */
+/*                              IsInitOK()                              */
 /************************************************************************/
 
 bool GDALArrayBandBlockCache::IsInitOK()
@@ -175,7 +175,7 @@ bool GDALArrayBandBlockCache::IsInitOK()
 }
 
 /************************************************************************/
-/*                            AdoptBlock()                              */
+/*                             AdoptBlock()                             */
 /************************************************************************/
 
 CPLErr GDALArrayBandBlockCache::AdoptBlock(GDALRasterBlock *poBlock)
@@ -242,7 +242,7 @@ CPLErr GDALArrayBandBlockCache::AdoptBlock(GDALRasterBlock *poBlock)
 }
 
 /************************************************************************/
-/*                            FlushCache()                              */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr GDALArrayBandBlockCache::FlushCache()
@@ -323,7 +323,7 @@ CPLErr GDALArrayBandBlockCache::FlushCache()
 }
 
 /************************************************************************/
-/*                        UnreferenceBlock()                            */
+/*                          UnreferenceBlock()                          */
 /************************************************************************/
 
 CPLErr GDALArrayBandBlockCache::UnreferenceBlock(GDALRasterBlock *poBlock)
@@ -371,7 +371,7 @@ CPLErr GDALArrayBandBlockCache::UnreferenceBlock(GDALRasterBlock *poBlock)
 }
 
 /************************************************************************/
-/*                            FlushBlock()                              */
+/*                             FlushBlock()                             */
 /************************************************************************/
 
 CPLErr GDALArrayBandBlockCache::FlushBlock(int nXBlockOff, int nYBlockOff,

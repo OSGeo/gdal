@@ -84,7 +84,8 @@ struct GDALMatrix
     std::vector<double> v;
 };
 
-bool GDALLinearSystemSolve(GDALMatrix &A, GDALMatrix &RHS, GDALMatrix &X);
+bool GDALLinearSystemSolve(GDALMatrix &A, GDALMatrix &RHS, GDALMatrix &X,
+                           bool bForceBuiltinMethod = false);
 
 #endif /* #ifndef GDALLINEARSYSTEM_H_INCLUDED */
 

@@ -80,7 +80,7 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     /* -------------------------------------------------------------------- */
     /*      Create the '0000' definition.                                   */
     /* -------------------------------------------------------------------- */
-    DDFFieldDefn *poFDefn = new DDFFieldDefn();
+    auto poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("0000", "",
                     "0001DSIDDSIDDSSI0001DSPM0001VRIDVRIDATTVVRIDVRPCVRID"
@@ -88,22 +88,22 @@ bool S57Writer::CreateS57File(const char *pszFilename)
                     "FRIDNATFFRIDFFPCFRIDFFPTFRIDFSPCFRIDFSPT",
                     dsc_elementary, dtc_char_string);
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the '0001' definition.                                   */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("0001", "ISO 8211 Record Identifier", "", dsc_elementary,
                     dtc_bit_string, "(b12)");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the DSID field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("DSID", "Data set identification field", "", dsc_vector,
                     dtc_mixed_data_type);
@@ -125,12 +125,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("AGEN", "b12");
     poFDefn->AddSubfield("COMT", "A");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the DSSI field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("DSSI", "Data set structure information field", "",
                     dsc_vector, dtc_mixed_data_type);
@@ -147,12 +147,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("NOED", "b14");
     poFDefn->AddSubfield("NOFA", "b14");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the DSPM field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("DSPM", "Data set parameter field", "", dsc_vector,
                     dtc_mixed_data_type);
@@ -171,12 +171,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("SOMF", "b14");
     poFDefn->AddSubfield("COMT", "A");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the VRID field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("VRID", "Vector record identifier field", "", dsc_vector,
                     dtc_mixed_data_type);
@@ -186,12 +186,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("RVER", "b12");
     poFDefn->AddSubfield("RUIN", "b11");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the VRPC field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("VRPC", "Vector Record Pointer Control field", "",
                     dsc_vector, dtc_mixed_data_type);
@@ -200,12 +200,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("VPIX", "b12");
     poFDefn->AddSubfield("NVPT", "b12");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the VRPT field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("VRPT", "Vector record pointer field", "*", dsc_array,
                     dtc_mixed_data_type);
@@ -216,12 +216,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("TOPI", "b11");
     poFDefn->AddSubfield("MASK", "b11");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the ATTV field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("ATTV", "Vector record attribute field", "*", dsc_array,
                     dtc_mixed_data_type);
@@ -229,12 +229,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("ATTL", "b12");
     poFDefn->AddSubfield("ATVL", "A");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the SGCC field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("SGCC", "Coordinate Control Field", "", dsc_vector,
                     dtc_mixed_data_type);
@@ -243,12 +243,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("CCIX", "b12");
     poFDefn->AddSubfield("CCNC", "b12");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the SG2D field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("SG2D", "2-D coordinate field", "*", dsc_array,
                     dtc_bit_string);
@@ -256,12 +256,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("YCOO", "b24");
     poFDefn->AddSubfield("XCOO", "b24");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the SG3D field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("SG3D", "3-D coordinate (sounding array) field", "*",
                     dsc_array, dtc_bit_string);
@@ -270,12 +270,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("XCOO", "b24");
     poFDefn->AddSubfield("VE3D", "b24");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the FRID field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("FRID", "Feature record identifier field", "", dsc_vector,
                     dtc_mixed_data_type);
@@ -288,12 +288,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("RVER", "b12");
     poFDefn->AddSubfield("RUIN", "b11");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the FOID field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("FOID", "Feature object identifier field", "", dsc_vector,
                     dtc_mixed_data_type);
@@ -302,12 +302,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("FIDN", "b14");
     poFDefn->AddSubfield("FIDS", "b12");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the ATTF field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("ATTF", "Feature record attribute field", "*", dsc_array,
                     dtc_mixed_data_type);
@@ -315,12 +315,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("ATTL", "b12");
     poFDefn->AddSubfield("ATVL", "A");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the NATF field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("NATF", "Feature record national attribute field", "*",
                     dsc_array, dtc_mixed_data_type);
@@ -328,12 +328,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("ATTL", "b12");
     poFDefn->AddSubfield("ATVL", "A");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the FFPC field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("FFPC",
                     "Feature record to feature object pointer control field",
@@ -343,12 +343,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("FFIX", "b12");
     poFDefn->AddSubfield("NFPT", "b12");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the FFPT field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("FFPT", "Feature record to feature object pointer field",
                     "*", dsc_array, dtc_mixed_data_type);
@@ -357,12 +357,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("RIND", "b11");
     poFDefn->AddSubfield("COMT", "A");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the FSPC field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("FSPC",
                     "Feature record to spatial record pointer control field",
@@ -372,12 +372,12 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("FSIX", "b12");
     poFDefn->AddSubfield("NSPT", "b12");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create the FSPT field.                                          */
     /* -------------------------------------------------------------------- */
-    poFDefn = new DDFFieldDefn();
+    poFDefn = std::make_unique<DDFFieldDefn>();
 
     poFDefn->Create("FSPT", "Feature record to spatial record pointer field",
                     "*", dsc_array, dtc_mixed_data_type);
@@ -387,7 +387,7 @@ bool S57Writer::CreateS57File(const char *pszFilename)
     poFDefn->AddSubfield("USAG", "b11");
     poFDefn->AddSubfield("MASK", "b11");
 
-    poModule->AddField(poFDefn);
+    poModule->AddField(std::move(poFDefn));
 
     /* -------------------------------------------------------------------- */
     /*      Create file.                                                    */

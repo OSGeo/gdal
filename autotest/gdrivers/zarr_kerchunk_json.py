@@ -303,7 +303,7 @@ def test_zarr_kerchunk_json_gdal_open_remote_file_accessing_local_resources():
     webserver_process = None
     webserver_port = 0
 
-    (webserver_process, webserver_port) = webserver.launch(
+    webserver_process, webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if webserver_port == 0:
@@ -645,13 +645,14 @@ def test_vsikerchunk_json_ref_cache_cannot_create_cache_dir(tmp_vsimem, tmp_path
 
     with gdal.config_options(
         {
-            "VSIKERCHUNK_CACHE_DIR": "/i_do/not/exist",
+            # Pick-up a directory where we cannot even write as root
+            "VSIKERCHUNK_CACHE_DIR": "/proc/bus/i_cannot/create",
             "CPL_VSI_MEM_MTIME": "0",
         }
     ):
         with pytest.raises(
             Exception,
-            match="Cannot create directory /i_do/not/exist/test_vsikerchunk_json_ref_cache_cannot_create_cache_dir_",
+            match="Cannot create directory /proc/bus/i_cannot/create/test_vsikerchunk_json_ref_cache_cannot_create_cache_dir_",
         ):
             gdal.OpenEx(
                 json_filename,

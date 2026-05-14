@@ -43,9 +43,9 @@ def test_gdalalg_raster_reclassify_basic_1(
     reclassify["output"] = outfile
 
     if mapping_format == "text":
-        reclassify[
-            "mapping"
-        ] = "165 = 120; (-inf, 0) = 140; (0, 100] = 140; (100,  130] = PASS_THROUGH; DEFAULT = 160; NO_DATA = NO_DATA"
+        reclassify["mapping"] = (
+            "165 = 120; (-inf, 0) = 140; (0, 100] = 140; (100,  130] = PASS_THROUGH; DEFAULT = 160; NO_DATA = NO_DATA"
+        )
     else:
         gdal.FileFromMemBuffer(
             tmp_vsimem / "mapping.txt",

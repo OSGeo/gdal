@@ -17,7 +17,7 @@
 #include <time.h>
 
 /************************************************************************/
-/*                       OGRPLScenesDataV1Dataset()                     */
+/*                      OGRPLScenesDataV1Dataset()                      */
 /************************************************************************/
 
 OGRPLScenesDataV1Dataset::OGRPLScenesDataV1Dataset()
@@ -27,7 +27,7 @@ OGRPLScenesDataV1Dataset::OGRPLScenesDataV1Dataset()
 }
 
 /************************************************************************/
-/*                       ~OGRPLScenesDataV1Dataset()                    */
+/*                     ~OGRPLScenesDataV1Dataset()                      */
 /************************************************************************/
 
 OGRPLScenesDataV1Dataset::~OGRPLScenesDataV1Dataset()
@@ -71,7 +71,7 @@ int OGRPLScenesDataV1Dataset::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                          ParseItemType()                             */
+/*                           ParseItemType()                            */
 /************************************************************************/
 
 OGRLayer *OGRPLScenesDataV1Dataset::ParseItemType(json_object *poItemType)
@@ -121,7 +121,7 @@ OGRLayer *OGRPLScenesDataV1Dataset::ParseItemType(json_object *poItemType)
 }
 
 /************************************************************************/
-/*                          ParseItemTypes()                         */
+/*                           ParseItemTypes()                           */
 /************************************************************************/
 
 bool OGRPLScenesDataV1Dataset::ParseItemTypes(json_object *poObj,
@@ -158,7 +158,7 @@ bool OGRPLScenesDataV1Dataset::ParseItemTypes(json_object *poObj,
 }
 
 /************************************************************************/
-/*                          EstablishLayerList()                        */
+/*                         EstablishLayerList()                         */
 /************************************************************************/
 
 void OGRPLScenesDataV1Dataset::EstablishLayerList()
@@ -181,7 +181,7 @@ void OGRPLScenesDataV1Dataset::EstablishLayerList()
 }
 
 /************************************************************************/
-/*                          GetLayerByName()                            */
+/*                           GetLayerByName()                           */
 /************************************************************************/
 
 OGRLayer *OGRPLScenesDataV1Dataset::GetLayerByName(const char *pszName)
@@ -204,7 +204,7 @@ OGRLayer *OGRPLScenesDataV1Dataset::GetLayerByName(const char *pszName)
 }
 
 /************************************************************************/
-/*                          GetBaseHTTPOptions()                         */
+/*                         GetBaseHTTPOptions()                         */
 /************************************************************************/
 
 char **OGRPLScenesDataV1Dataset::GetBaseHTTPOptions()
@@ -222,7 +222,7 @@ char **OGRPLScenesDataV1Dataset::GetBaseHTTPOptions()
 }
 
 /************************************************************************/
-/*                               RunRequest()                           */
+/*                             RunRequest()                             */
 /************************************************************************/
 
 json_object *OGRPLScenesDataV1Dataset::RunRequest(const char *pszURL,
@@ -349,7 +349,7 @@ json_object *OGRPLScenesDataV1Dataset::RunRequest(const char *pszURL,
 }
 
 /************************************************************************/
-/*                           InsertAPIKeyInURL()                        */
+/*                         InsertAPIKeyInURL()                          */
 /************************************************************************/
 
 CPLString OGRPLScenesDataV1Dataset::InsertAPIKeyInURL(CPLString osURL)
@@ -367,12 +367,11 @@ CPLString OGRPLScenesDataV1Dataset::InsertAPIKeyInURL(CPLString osURL)
 }
 
 /************************************************************************/
-/*                            OpenRasterScene()                         */
+/*                          OpenRasterScene()                           */
 /************************************************************************/
 
-GDALDataset *OGRPLScenesDataV1Dataset::OpenRasterScene(GDALOpenInfo *poOpenInfo,
-                                                       CPLString osScene,
-                                                       char **papszOptions)
+GDALDataset *OGRPLScenesDataV1Dataset::OpenRasterScene(
+    GDALOpenInfo *poOpenInfo, CPLString osScene, CSLConstList papszOptions)
 {
     if (!(poOpenInfo->nOpenFlags & GDAL_OF_RASTER))
     {
@@ -384,24 +383,17 @@ GDALDataset *OGRPLScenesDataV1Dataset::OpenRasterScene(GDALOpenInfo *poOpenInfo,
     int nActivationTimeout = atoi(CSLFetchNameValueDef(
         poOpenInfo->papszOpenOptions, "ACTIVATION_TIMEOUT", "3600"));
 
-    for (char **papszIter = papszOptions; papszIter && *papszIter; papszIter++)
+    for (const auto &[pszKey, pszValue] : cpl::IterateNameValue(papszOptions))
     {
-        char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue(*papszIter, &pszKey);
-        if (pszValue != nullptr)
+        if (!EQUAL(pszKey, "api_key") && !EQUAL(pszKey, "scene") &&
+            !EQUAL(pszKey, "product_type") && !EQUAL(pszKey, "asset") &&
+            !EQUAL(pszKey, "catalog") && !EQUAL(pszKey, "itemtypes") &&
+            !EQUAL(pszKey, "version") && !EQUAL(pszKey, "follow_links") &&
+            !EQUAL(pszKey, "metadata"))
         {
-            if (!EQUAL(pszKey, "api_key") && !EQUAL(pszKey, "scene") &&
-                !EQUAL(pszKey, "product_type") && !EQUAL(pszKey, "asset") &&
-                !EQUAL(pszKey, "catalog") && !EQUAL(pszKey, "itemtypes") &&
-                !EQUAL(pszKey, "version") && !EQUAL(pszKey, "follow_links") &&
-                !EQUAL(pszKey, "metadata"))
-            {
-                CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s",
-                         pszKey);
-                CPLFree(pszKey);
-                return nullptr;
-            }
-            CPLFree(pszKey);
+            CPLError(CE_Failure, CPLE_NotSupported, "Unsupported option %s",
+                     pszKey);
+            return nullptr;
         }
     }
 

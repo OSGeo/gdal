@@ -31,6 +31,8 @@ tileindex, or as input for the :ref:`GTI <raster.gti>` driver.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -overwrite
 
     .. versionadded:: 3.9
@@ -327,6 +329,11 @@ Examples
    .. code-block:: bash
 
        gdaltindex tile_index.gti.gpkg -ot Byte -tr 60 60 -colorinterp Red,Green,Blue --optfile my_list.txt
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 C API
 -----

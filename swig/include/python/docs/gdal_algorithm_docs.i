@@ -251,8 +251,21 @@ Examples
                       'required': False,
                       'type': 'string'},
                      {'category': 'Base',
+                      'description': 'Feature identifier',
+                      'mutual_exclusion_group': 'layer-sql',
+                      'name': 'fid',
+                      'required': False,
+                      'type': 'integer'},
+                     {'category': 'Base',
                       'description': 'SQL dialect',
                       'name': 'dialect',
+                      'required': False,
+                      'type': 'string'},
+                     {'category': 'Esoteric',
+                      'choices': ['AUTO', 'WKT2', 'PROJJSON'],
+                      'default': 'AUTO',
+                      'description': 'Which format to use to report CRS',
+                      'name': 'crs-format',
                       'required': False,
                       'type': 'string'}],
  'input_output_arguments': [],
@@ -331,6 +344,8 @@ True
 %feature("docstring")  ParseRunAndFinalize {
 
 Convenience method that calls :py:meth:`ParseCommandLineArguments`, :py:meth:`Run`, and :py:meth:`Finalize`.
+
+This method must be called at most once per instance.
 
 Parameters
 ----------

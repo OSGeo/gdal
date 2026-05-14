@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='360.00pt' viewBox='0 0 504.00 360.00'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: none;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+</g>
+<defs>
+  <clipPath id='cpMTAzLjY2fDQ5OC41MnwyMi43OHwzMjkuMTA='>
+    <rect x='103.66' y='22.78' width='394.87' height='306.32' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMTAzLjY2fDQ5OC41MnwyMi43OHwzMjkuMTA=)'>
+<polyline points='183.56,329.10 183.56,22.78 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='307.48,329.10 307.48,22.78 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='431.40,329.10 431.40,22.78 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='103.66,299.46 498.52,299.46 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='103.66,200.64 498.52,200.64 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='103.66,101.83 498.52,101.83 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='103.66,151.24 498.52,151.24 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='103.66,52.43 498.52,52.43 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='103.66,250.05 498.52,250.05 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='121.60,329.10 121.60,22.78 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='245.52,329.10 245.52,22.78 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='369.44,329.10 369.44,22.78 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='493.36,329.10 493.36,22.78 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<rect x='121.60' y='277.22' width='358.97' height='44.47' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='121.60' y='178.41' width='277.83' height='44.47' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='121.60' y='79.60' width='152.44' height='44.47' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='121.60' y='129.01' width='245.87' height='44.47' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='121.60' y='30.19' width='140.15' height='44.47' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='121.60' y='227.82' width='341.76' height='44.47' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<text x='98.72' y='302.49' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Code review</text>
+<text x='98.72' y='203.67' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Bug/ticket review</text>
+<text x='98.72' y='104.86' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Format development</text>
+<text x='98.72' y='154.27' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Code refactoring</text>
+<text x='98.72' y='55.45' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Porting</text>
+<text x='98.72' y='253.08' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Test development</text>
+<polyline points='100.92,299.46 103.66,299.46 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='100.92,200.64 103.66,200.64 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='100.92,101.83 103.66,101.83 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='100.92,151.24 103.66,151.24 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='100.92,52.43 103.66,52.43 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='100.92,250.05 103.66,250.05 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='121.60,331.84 121.60,329.10 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='245.52,331.84 245.52,329.10 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='369.44,331.84 369.44,329.10 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='493.36,331.84 493.36,329.10 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<text x='121.60' y='340.09' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>0%</text>
+<text x='245.52' y='340.09' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>20%</text>
+<text x='369.44' y='340.09' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>40%</text>
+<text x='493.36' y='340.09' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>60%</text>
+<text x='301.09' y='352.23' text-anchor='middle' style='font-size: 11.00px; font-family: "Arimo";'>Percent of responses</text>
+<text transform='translate(13.05,175.94) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Arimo";'>Activity</text>
+<text x='103.66' y='14.56' style='font-size: 13.20px; font-family: "Arimo";'>I support LLM usage by GDAL in the following areas</text>
+</g>
+</g>
+</svg>

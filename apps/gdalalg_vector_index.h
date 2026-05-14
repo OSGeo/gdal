@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALVectorIndexAlgorithm                         */
+/*                       GDALVectorIndexAlgorithm                       */
 /************************************************************************/
 
 class CPL_DLL GDALVectorIndexAlgorithm final

@@ -18,7 +18,7 @@
 #include "gdal.h"
 
 /************************************************************************/
-/*                      ParseXMLFieldDomainDef()                        */
+/*                       ParseXMLFieldDomainDef()                       */
 /************************************************************************/
 
 inline std::unique_ptr<GDALRelationship>
@@ -538,7 +538,7 @@ BuildXMLRelationshipDef(const GDALRelationship *poRelationship, int iDsid,
 }
 
 /************************************************************************/
-/*                      BuildXMLRelationshipItemInfo()                  */
+/*                    BuildXMLRelationshipItemInfo()                    */
 /************************************************************************/
 
 inline std::string

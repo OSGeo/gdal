@@ -130,7 +130,7 @@ class FASTDataset final : public GDALPamDataset
 /************************************************************************/
 
 /************************************************************************/
-/*                           FASTDataset()                              */
+/*                            FASTDataset()                             */
 /************************************************************************/
 
 FASTDataset::FASTDataset()
@@ -173,7 +173,7 @@ CPLErr FASTDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                             GetFileList()                            */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 char **FASTDataset::GetFileList()
@@ -191,7 +191,7 @@ char **FASTDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                             OpenChannel()                            */
+/*                            OpenChannel()                             */
 /************************************************************************/
 
 int FASTDataset::OpenChannel(const char *pszFilenameIn, int iBand)
@@ -204,7 +204,7 @@ int FASTDataset::OpenChannel(const char *pszFilenameIn, int iBand)
 }
 
 /************************************************************************/
-/*                             FOpenChannel()                           */
+/*                            FOpenChannel()                            */
 /************************************************************************/
 
 VSILFILE *FASTDataset::FOpenChannel(const char *pszBandname, int iBand,
@@ -299,7 +299,7 @@ VSILFILE *FASTDataset::FOpenChannel(const char *pszBandname, int iBand,
 }
 
 /************************************************************************/
-/*                TryEuromap_IRS_1C_1D_ChannelNameConvention()          */
+/*             TryEuromap_IRS_1C_1D_ChannelNameConvention()             */
 /************************************************************************/
 
 void FASTDataset::TryEuromap_IRS_1C_1D_ChannelNameConvention(int &l_nBands)
@@ -449,7 +449,7 @@ void FASTDataset::TryEuromap_IRS_1C_1D_ChannelNameConvention(int &l_nBands)
 }
 
 /************************************************************************/
-/*                          GetValue()                                  */
+/*                              GetValue()                              */
 /************************************************************************/
 
 static char *GetValue(const char *pszString, const char *pszName,
@@ -473,7 +473,7 @@ static char *GetValue(const char *pszString, const char *pszName,
 }
 
 /************************************************************************/
-/*                        USGSMnemonicToCode()                          */
+/*                         USGSMnemonicToCode()                         */
 /************************************************************************/
 
 static long USGSMnemonicToCode(const char *pszMnemonic)
@@ -1119,7 +1119,7 @@ GDALDataset *FASTDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GDALRegister_FAST()                           */
+/*                         GDALRegister_FAST()                          */
 /************************************************************************/
 
 void GDALRegister_FAST()

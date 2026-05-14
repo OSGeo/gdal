@@ -1450,7 +1450,7 @@ int ParseSect4Time2sec (double refTime, sInt4 delt, int unit, double *ans)
  * 1) This algorithm will impact the possible range of values, by reducing it
  *    from -2^31..(2^31-1) to -2^30..(2^31-1).
  * 2) The NCEP change also impacted large positive values.  One originally
- *    could encode 0..2^32-1.  Some confusion could arrise if the value was
+ *    could encode 0..2^32-1.  Some confusion could arise if the value was
  *    originally encoded by 1.0.2 was in the range of 2^31..2^32-1.
  ****************************************************************************/
 sInt4 sbit_2Comp_fourByte(sInt4 data)
@@ -1502,7 +1502,7 @@ sInt4 sbit_2Comp_fourByte(sInt4 data)
  * 1) This algorithm will impact the possible range of values, by reducing it
  *    from -128..127 to -64...127.
  * 2) The NCEP change also impacted large positive values.  One originally
- *    could encode 0..255.  Some confusion could arrise if the value was
+ *    could encode 0..255.  Some confusion could arise if the value was
  *    originally encoded by 1.0.2 was in the range of 128..255.
  ****************************************************************************/
 sChar sbit_2Comp_oneByte(sChar data)
@@ -2297,7 +2297,7 @@ int MetaParse (grib_MetaData *meta, sInt4 *is0, sInt4 ns0,
    uChar statProcessID; /* Statistical process id or 255 for missing */
    uChar fstSurfType;   /* Type of the first fixed surface. */
    sInt4 value;         /* The scaled value from GRIB2 file. */
-   sChar scale;         /* Surface scale as opposed to probility factor. */
+   sChar scale;         /* Surface scale as opposed to probability factor. */
    double fstSurfValue; /* Value of first fixed surface. */
    sChar f_fstValue;    /* flag if FstValue is valid. */
    uChar sndSurfType;   /* Type of the second fixed surface. */

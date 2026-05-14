@@ -52,7 +52,7 @@ netCDFLayer::netCDFLayer(netCDFDataset *poDS, int nLayerCDFId,
 }
 
 /************************************************************************/
-/*                           ~netCDFLayer()                             */
+/*                            ~netCDFLayer()                            */
 /************************************************************************/
 
 netCDFLayer::~netCDFLayer()
@@ -114,7 +114,7 @@ void netCDFLayer::netCDFWriteAttributesFromConf(
 /*                               Create()                               */
 /************************************************************************/
 
-bool netCDFLayer::Create(char **papszOptions,
+bool netCDFLayer::Create(CSLConstList papszOptions,
                          const netCDFWriterConfigLayer *poLayerConfig)
 {
     m_poDS->SetDefineMode(true);
@@ -612,7 +612,7 @@ bool netCDFLayer::Create(char **papszOptions,
 }
 
 /************************************************************************/
-/*                          SetRecordDimID()                            */
+/*                           SetRecordDimID()                           */
 /************************************************************************/
 
 void netCDFLayer::SetRecordDimID(int nRecordDimID)
@@ -645,7 +645,7 @@ CPLErr netCDFLayer::GetFillValue(int nVarId, double *pdfValue)
 }
 
 /************************************************************************/
-/*                         GetNoDataValueForFloat()                     */
+/*                       GetNoDataValueForFloat()                       */
 /************************************************************************/
 
 void netCDFLayer::GetNoDataValueForFloat(int nVarId, NCDFNoDataUnion *puNoData)
@@ -658,7 +658,7 @@ void netCDFLayer::GetNoDataValueForFloat(int nVarId, NCDFNoDataUnion *puNoData)
 }
 
 /************************************************************************/
-/*                        GetNoDataValueForDouble()                     */
+/*                      GetNoDataValueForDouble()                       */
 /************************************************************************/
 
 void netCDFLayer::GetNoDataValueForDouble(int nVarId, NCDFNoDataUnion *puNoData)
@@ -671,7 +671,7 @@ void netCDFLayer::GetNoDataValueForDouble(int nVarId, NCDFNoDataUnion *puNoData)
 }
 
 /************************************************************************/
-/*                            GetNoDataValue()                          */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 void netCDFLayer::GetNoDataValue(int nVarId, nc_type nVarType,
@@ -746,7 +746,7 @@ void netCDFLayer::SetXYZVars(int nXVarId, int nYVarId, int nZVarId)
 }
 
 /************************************************************************/
-/*                       SetWKTGeometryField()                          */
+/*                        SetWKTGeometryField()                         */
 /************************************************************************/
 
 void netCDFLayer::SetWKTGeometryField(const char *pszWKTVarName)
@@ -792,7 +792,7 @@ void netCDFLayer::SetWKTGeometryField(const char *pszWKTVarName)
 }
 
 /************************************************************************/
-/*                          SetGridMapping()                            */
+/*                           SetGridMapping()                           */
 /************************************************************************/
 
 void netCDFLayer::SetGridMapping(const char *pszGridMapping)
@@ -801,7 +801,7 @@ void netCDFLayer::SetGridMapping(const char *pszGridMapping)
 }
 
 /************************************************************************/
-/*                            SetProfile()                              */
+/*                             SetProfile()                             */
 /************************************************************************/
 
 void netCDFLayer::SetProfile(int nProfileDimID, int nParentIndexVarID)
@@ -839,7 +839,7 @@ void netCDFLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                           Get1DVarAsDouble()                         */
+/*                          Get1DVarAsDouble()                          */
 /************************************************************************/
 
 double netCDFLayer::Get1DVarAsDouble(int nVarId, nc_type nVarType,
@@ -868,7 +868,7 @@ double netCDFLayer::Get1DVarAsDouble(int nVarId, nc_type nVarType,
 }
 
 /************************************************************************/
-/*                        GetNextRawFeature()                           */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *netCDFLayer::GetNextRawFeature()
@@ -937,7 +937,7 @@ OGRFeature *netCDFLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                           FillFeatureFromVar()                       */
+/*                         FillFeatureFromVar()                         */
 /************************************************************************/
 
 bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
@@ -1473,7 +1473,7 @@ OGRErr netCDFLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           FillVarFromFeature()                       */
+/*                         FillVarFromFeature()                         */
 /************************************************************************/
 
 bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
@@ -2366,7 +2366,7 @@ bool netCDFLayer::AddField(int nVarID)
 }
 
 /************************************************************************/
-/*                             CreateField()                            */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr netCDFLayer::CreateField(const OGRFieldDefn *poFieldDefn,
@@ -2767,7 +2767,7 @@ OGRErr netCDFLayer::CreateField(const OGRFieldDefn *poFieldDefn,
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                            */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig netCDFLayer::GetFeatureCount(int bForce)
@@ -2787,7 +2787,7 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                          TestCapability()                            */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int netCDFLayer::TestCapability(const char *pszCap) const

@@ -28,10 +28,11 @@ void InitCeosSARVolume(CeosSARVolume_t *volume, int32 file_name_convention)
 }
 
 void CalcCeosSARImageFilePosition(CeosSARVolume_t *volume, int channel,
-                                  int line, int *record, int *file_offset)
+                                  int line, int *record, uint64_t *file_offset)
 {
     struct CeosSARImageDesc *ImageDesc;
-    int TotalRecords = 0, TotalBytes = 0;
+    int TotalRecords = 0;
+    uint64_t TotalBytes = 0;
 
     if (record)
         *record = 0;
@@ -48,19 +49,22 @@ void CalcCeosSARImageFilePosition(CeosSARVolume_t *volume, int channel,
             {
                 case CEOS_IL_PIXEL:
                     TotalRecords = (line - 1) * ImageDesc->RecordsPerLine;
-                    TotalBytes = (TotalRecords) * (ImageDesc->BytesPerRecord);
+                    TotalBytes =
+                        (uint64_t)(TotalRecords) * (ImageDesc->BytesPerRecord);
                     break;
                 case CEOS_IL_LINE:
                     TotalRecords =
                         (ImageDesc->NumChannels * (line - 1) + (channel - 1)) *
                         ImageDesc->RecordsPerLine;
-                    TotalBytes = (TotalRecords) * (ImageDesc->BytesPerRecord);
+                    TotalBytes =
+                        (uint64_t)(TotalRecords) * (ImageDesc->BytesPerRecord);
                     break;
                 case CEOS_IL_BAND:
                     TotalRecords = (((channel - 1) * ImageDesc->Lines) *
                                     ImageDesc->RecordsPerLine) +
                                    (line - 1) * ImageDesc->RecordsPerLine;
-                    TotalBytes = (TotalRecords) * (ImageDesc->BytesPerRecord);
+                    TotalBytes =
+                        (uint64_t)(TotalRecords) * (ImageDesc->BytesPerRecord);
                     break;
             }
             if (file_offset)

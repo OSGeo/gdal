@@ -16,7 +16,7 @@
 #include "cpl_error.h"
 
 /************************************************************************/
-/*                             OGRTriangle()                            */
+/*                            OGRTriangle()                             */
 /************************************************************************/
 
 /**
@@ -27,7 +27,7 @@
 OGRTriangle::OGRTriangle(const OGRTriangle &) = default;
 
 /************************************************************************/
-/*                             OGRTriangle()                            */
+/*                            OGRTriangle()                             */
 /************************************************************************/
 
 /**
@@ -57,7 +57,7 @@ OGRTriangle::OGRTriangle(const OGRPolygon &other, OGRErr &eErr)
 }
 
 /************************************************************************/
-/*                             OGRTriangle()                            */
+/*                            OGRTriangle()                             */
 /************************************************************************/
 
 /**
@@ -138,7 +138,7 @@ OGRwkbGeometryType OGRTriangle::getGeometryType() const
 }
 
 /************************************************************************/
-/*                        quickValidityCheck()                          */
+/*                         quickValidityCheck()                         */
 /************************************************************************/
 
 bool OGRTriangle::quickValidityCheck() const
@@ -202,7 +202,7 @@ OGRErr OGRTriangle::importFromWKTListOnly(const char **ppszInput, int bHasZ,
 /*! @endcond */
 
 /************************************************************************/
-/*                           addRingDirectly()                          */
+/*                          addRingDirectly()                           */
 /************************************************************************/
 
 OGRErr OGRTriangle::addRingDirectly(OGRCurve *poNewRing)
@@ -215,7 +215,7 @@ OGRErr OGRTriangle::addRingDirectly(OGRCurve *poNewRing)
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                      GetCasterToPolygon()                            */
+/*                         GetCasterToPolygon()                         */
 /************************************************************************/
 
 OGRPolygon *OGRTriangle::CasterToPolygon(OGRSurface *poSurface)
@@ -232,7 +232,7 @@ OGRSurfaceCasterToPolygon OGRTriangle::GetCasterToPolygon() const
 }
 
 /************************************************************************/
-/*                        CastToPolygon()                               */
+/*                           CastToPolygon()                            */
 /************************************************************************/
 
 OGRGeometry *OGRTriangle::CastToPolygon(OGRGeometry *poGeom)

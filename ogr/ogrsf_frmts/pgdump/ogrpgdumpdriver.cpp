@@ -14,13 +14,13 @@
 #include "cpl_conv.h"
 
 /************************************************************************/
-/*                         OGRPGDumpDriverCreate()                      */
+/*                       OGRPGDumpDriverCreate()                        */
 /************************************************************************/
 
 static GDALDataset *
 OGRPGDumpDriverCreate(const char *pszName, CPL_UNUSED int nXSize,
                       CPL_UNUSED int nYSize, CPL_UNUSED int nBands,
-                      CPL_UNUSED GDALDataType eDT, char **papszOptions)
+                      CPL_UNUSED GDALDataType eDT, CSLConstList papszOptions)
 {
     if (strcmp(pszName, "/dev/stdout") == 0)
         pszName = "/vsistdout/";
@@ -36,7 +36,7 @@ OGRPGDumpDriverCreate(const char *pszName, CPL_UNUSED int nXSize,
 }
 
 /************************************************************************/
-/*                        RegisterOGRPGDump()                           */
+/*                         RegisterOGRPGDump()                          */
 /************************************************************************/
 
 void RegisterOGRPGDump()

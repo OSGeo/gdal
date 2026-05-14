@@ -14,12 +14,13 @@
 #include "gdal_frmts.h"
 #include "common.h"
 #include "include_basisu_sdk.h"
+#include "gdal_thread_pool.h"
 
 #include <algorithm>
 #include <mutex>
 
 /************************************************************************/
-/*                        GDALInitBasisUTranscoder()                    */
+/*                      GDALInitBasisUTranscoder()                      */
 /************************************************************************/
 
 void GDALInitBasisUTranscoder()
@@ -29,7 +30,7 @@ void GDALInitBasisUTranscoder()
 }
 
 /************************************************************************/
-/*                        GDALInitBasisUEncoder()                       */
+/*                       GDALInitBasisUEncoder()                        */
 /************************************************************************/
 
 void GDALInitBasisUEncoder()
@@ -52,7 +53,7 @@ void GDALRegister_BASISU_KTX2()
 }
 
 /************************************************************************/
-/*                     GDAL_KTX2_BASISU_CreateCopy()                    */
+/*                    GDAL_KTX2_BASISU_CreateCopy()                     */
 /************************************************************************/
 
 bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
@@ -264,11 +265,8 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         params.m_mip_srgb = params.m_perceptual;
     }
 
-    const int nNumThreads = std::max(
-        1, atoi(CSLFetchNameValueDef(
-               papszOptions, "NUM_THREADS",
-               CPLGetConfigOption("GDAL_NUM_THREADS",
-                                  CPLSPrintf("%d", CPLGetNumCPUs())))));
+    const int nNumThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                              /* bDefaultAllCPUs = */ true);
     CPLDebug("KTX2", "Using %d threads", nNumThreads);
     if (params.m_uastc)
     {

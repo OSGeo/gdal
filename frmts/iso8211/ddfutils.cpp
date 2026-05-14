@@ -61,12 +61,12 @@ int DDFScanVariable(const char *pszRecord, int nMaxChars, int nDelimChar)
 /************************************************************************/
 /*                          DDFFetchVariable()                          */
 /*                                                                      */
-/*      Fetch a variable length string from a record, and allocate      */
-/*      it as a new string (with CPLStrdup()).                          */
+/*      Fetch a variable length string from a record.                   */
 /************************************************************************/
 
-char *DDFFetchVariable(const char *pszRecord, int nMaxChars, int nDelimChar1,
-                       int nDelimChar2, int *pnConsumedChars)
+std::string DDFFetchVariable(const char *pszRecord, int nMaxChars,
+                             int nDelimChar1, int nDelimChar2,
+                             int *pnConsumedChars)
 
 {
     int i = 0;  // Used after for.
@@ -81,9 +81,5 @@ char *DDFFetchVariable(const char *pszRecord, int nMaxChars, int nDelimChar1,
         (pszRecord[i] == nDelimChar1 || pszRecord[i] == nDelimChar2))
         (*pnConsumedChars)++;
 
-    char *pszReturn = static_cast<char *>(CPLMalloc(i + 1));
-    pszReturn[i] = '\0';
-    strncpy(pszReturn, pszRecord, i);
-
-    return pszReturn;
+    return std::string(pszRecord, i);
 }

@@ -91,7 +91,7 @@ class CPGDataset final : public RawDataset
 };
 
 /************************************************************************/
-/*                            CPGDataset()                             */
+/*                             CPGDataset()                             */
 /************************************************************************/
 
 CPGDataset::CPGDataset()
@@ -103,7 +103,7 @@ CPGDataset::CPGDataset()
 }
 
 /************************************************************************/
-/*                            ~CPGDataset()                            */
+/*                            ~CPGDataset()                             */
 /************************************************************************/
 
 CPGDataset::~CPGDataset()
@@ -113,7 +113,7 @@ CPGDataset::~CPGDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr CPGDataset::Close(GDALProgressFunc, void *)
@@ -342,7 +342,7 @@ int CPGDataset::FindType3(const char *pszFilename)
 #endif
 
 /************************************************************************/
-/*                        LoadStokesLine()                              */
+/*                           LoadStokesLine()                           */
 /************************************************************************/
 
 CPLErr CPGDataset::LoadStokesLine(int iLine, int bNativeOrder)
@@ -705,10 +705,10 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
      */
     if (iUTMParamsFound == 7)
     {
-        poDS->m_gt[1] = 0.0;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = 0.0;
+        poDS->m_gt.xscale = 0.0;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = 0.0;
 
         double dfnorth_center;
         if (itransposed == 1)
@@ -716,20 +716,20 @@ GDALDataset *CPGDataset::InitializeType1Or2Dataset(const char *pszFilename)
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Did not have a convair SIRC-style test dataset\n"
                      "with transposed=1 for testing.  Georeferencing may be "
-                     "wrong.\n");
+                     "wrong.");
             dfnorth_center = dfnorth - nSamples * dfsample_size / 2.0;
-            poDS->m_gt[0] = dfeast;
-            poDS->m_gt[2] = dfsample_size_az;
-            poDS->m_gt[3] = dfnorth;
-            poDS->m_gt[4] = -1 * dfsample_size;
+            poDS->m_gt.xorig = dfeast;
+            poDS->m_gt.xrot = dfsample_size_az;
+            poDS->m_gt.yorig = dfnorth;
+            poDS->m_gt.yrot = -1 * dfsample_size;
         }
         else
         {
             dfnorth_center = dfnorth - nLines * dfsample_size / 2.0;
-            poDS->m_gt[0] = dfeast;
-            poDS->m_gt[1] = dfsample_size_az;
-            poDS->m_gt[3] = dfnorth;
-            poDS->m_gt[5] = -1 * dfsample_size;
+            poDS->m_gt.xorig = dfeast;
+            poDS->m_gt.xscale = dfsample_size_az;
+            poDS->m_gt.yorig = dfnorth;
+            poDS->m_gt.yscale = -1 * dfsample_size;
         }
 
         if (dfnorth_center < 0)
@@ -1050,12 +1050,12 @@ GDALDataset *CPGDataset::InitializeType3Dataset(const char *pszFilename)
     if (iUTMParamsFound == 8)
     {
         double dfnorth_center = dfnorth - nLines * dfysize / 2.0;
-        poDS->m_gt[0] = dfeast + dfOffsetX;
-        poDS->m_gt[1] = dfxsize;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = dfnorth + dfOffsetY;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -1 * dfysize;
+        poDS->m_gt.xorig = dfeast + dfOffsetX;
+        poDS->m_gt.xscale = dfxsize;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = dfnorth + dfOffsetY;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -1 * dfysize;
 
         OGRSpatialReference oUTM;
         if (dfnorth_center < 0)
@@ -1191,7 +1191,7 @@ int CPGDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                               GetGCPs()                               */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *CPGDataset::GetGCPs()
@@ -1212,7 +1212,7 @@ CPLErr CPGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                           SIRC_QSLCRasterBand()                      */
+/*                        SIRC_QSLCRasterBand()                         */
 /************************************************************************/
 
 SIRC_QSLCRasterBand::SIRC_QSLCRasterBand(CPGDataset *poGDSIn, int nBandIn,
@@ -1295,14 +1295,14 @@ CPLErr SIRC_QSLCRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
     /*      Initialize our power table if this is our first time through.   */
     /* -------------------------------------------------------------------- */
     static float afPowTable[256];
-    [[maybe_unused]] static bool bPowTableInitialized = []()
+    [[maybe_unused]] static bool bPowTableInitialized = [](bool ret)
     {
         for (int i = 0; i < 256; i++)
         {
             afPowTable[i] = static_cast<float>(pow(2.0, i - 128));
         }
-        return true;
-    }();
+        return ret;
+    }(true);
 
     /* -------------------------------------------------------------------- */
     /*      Copy the desired band out based on the size of the type, and    */
@@ -1645,7 +1645,7 @@ CPLErr CPG_STOKESRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 }
 
 /************************************************************************/
-/*                         GDALRegister_CPG()                           */
+/*                          GDALRegister_CPG()                          */
 /************************************************************************/
 
 void GDALRegister_CPG()

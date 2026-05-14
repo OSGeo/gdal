@@ -7,11 +7,13 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 using System;
+using System.Globalization;
 
 using OSGeo.OGR;
 using OSGeo.OSR;
@@ -31,195 +33,206 @@ using OSGeo.OSR;
 /// A C# based sample to dump information from a data source.
 /// </summary>
 
-class OGRInfo {
+class OGRInfo
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
-		Console.WriteLine("usage: ogrinfo {data source name}");
-		System.Environment.Exit(-1);
-	}
+    {
+        Console.WriteLine("usage: ogrinfo {data source name}");
+        System.Environment.Exit(-1);
+    }
 
-	public static void Main(string[] args) {
+    public static void Main(string[] args)
+    {
 
-		if (args.Length != 1) usage();
+        if (args.Length != 1) usage();
 
         // Using early initialization of System.Console
         Console.WriteLine("");
 
-		/* -------------------------------------------------------------------- */
-		/*      Register format(s).                                             */
-		/* -------------------------------------------------------------------- */
-		Ogr.RegisterAll();
+        /* -------------------------------------------------------------------- */
+        /*      Register format(s).                                             */
+        /* -------------------------------------------------------------------- */
+        Ogr.RegisterAll();
 
-		/* -------------------------------------------------------------------- */
-		/*      Open data source.                                               */
-		/* -------------------------------------------------------------------- */
-		DataSource ds = Ogr.Open( args[0], 0 );
-
-		if (ds == null) {
-			Console.WriteLine("Can't open " + args[0]);
-			System.Environment.Exit(-1);
-		}
-
-		/* -------------------------------------------------------------------- */
-		/*      Get driver                                                      */
-		/* -------------------------------------------------------------------- */
-		Driver drv = ds.GetDriver();
-
-		if (drv == null)
-		{
-			Console.WriteLine("Can't get driver.");
-			System.Environment.Exit(-1);
-		}
-        // TODO: drv.name is still unsafe with lazy initialization (Bug 1339)
-        Console.WriteLine("Using driver " + drv.name);
-
-		/* -------------------------------------------------------------------- */
-		/*      Iterating through the layers                                    */
-		/* -------------------------------------------------------------------- */
-
-		for( int iLayer = 0; iLayer < ds.GetLayerCount(); iLayer++ )
-		{
-			Layer layer = ds.GetLayerByIndex(iLayer);
-
-			if( layer == null )
-			{
-				Console.WriteLine( "FAILURE: Couldn't fetch advertised layer " + iLayer );
-				System.Environment.Exit(-1);
-			}
-			ReportLayer(layer);
-		}
-	}
-
-	public static void ReportLayer(Layer layer)
-	{
-		FeatureDefn def = layer.GetLayerDefn();
-		Console.WriteLine( "Layer name: " + def.GetName() );
-		Console.WriteLine( "Feature Count: " + layer.GetFeatureCount(1) );
-		Envelope ext = new Envelope();
-		layer.GetExtent(ext, 1);
-		Console.WriteLine( "Extent: " + ext.MinX + "," + ext.MaxX + "," +
-			ext.MinY + "," + ext.MaxY);
-
-		/* -------------------------------------------------------------------- */
-		/*      Reading the spatial reference                                   */
-		/* -------------------------------------------------------------------- */
-		OSGeo.OSR.SpatialReference sr = layer.GetSpatialRef();
-		string srs_wkt;
-		if ( sr != null )
-		{
-			sr.ExportToPrettyWkt( out srs_wkt, 1 );
-		}
-		else
-			srs_wkt = "(unknown)";
-
-
-        Console.WriteLine( "Layer SRS WKT: " + srs_wkt );
-
-		/* -------------------------------------------------------------------- */
-		/*      Reading the fields                                              */
-		/* -------------------------------------------------------------------- */
-		Console.WriteLine("Field definition:");
-		for( int iAttr = 0; iAttr < def.GetFieldCount(); iAttr++ )
-		{
-			FieldDefn fdef = def.GetFieldDefn( iAttr );
-
-			Console.WriteLine( fdef.GetNameRef() + ": " +
-				fdef.GetFieldTypeName( fdef.GetFieldType() ) + " (" +
-				fdef.GetWidth() + "." +
-				fdef.GetPrecision() + ")");
-		}
-
-		/* -------------------------------------------------------------------- */
-		/*      Reading the shapes                                              */
-		/* -------------------------------------------------------------------- */
-		Console.WriteLine( "" );
-		Feature feat;
-		while( (feat = layer.GetNextFeature()) != null )
-		{
-			ReportFeature(feat, def);
-			feat.Dispose();
-		}
-	}
-
-	public static void ReportFeature(Feature feat, FeatureDefn def)
-	{
-		Console.WriteLine( "Feature(" + def.GetName() + "): " + feat.GetFID() );
-		for( int iField = 0; iField < feat.GetFieldCount(); iField++ )
-		{
-			FieldDefn fdef = def.GetFieldDefn( iField );
-
-			Console.Write( fdef.GetNameRef() + " (" +
-				fdef.GetFieldTypeName(fdef.GetFieldType()) + ") = ");
-
-			if( feat.IsFieldSet( iField ) )
+        /* -------------------------------------------------------------------- */
+        /*      Open data source.                                               */
+        /* -------------------------------------------------------------------- */
+        using (DataSource ds = Ogr.Open(args[0], 0))
+        {
+            if (ds == null)
             {
-                if (fdef.GetFieldType() == FieldType.OFTStringList)
+                Console.WriteLine("Can't open " + args[0]);
+                System.Environment.Exit(-1);
+            }
+
+            /* -------------------------------------------------------------------- */
+            /*      Get driver                                                      */
+            /* -------------------------------------------------------------------- */
+            Driver drv = ds.GetDriver();
+
+            if (drv == null)
+            {
+                Console.WriteLine("Can't get driver.");
+                System.Environment.Exit(-1);
+            }
+            // TODO: drv.name is still unsafe with lazy initialization (Bug 1339)
+            Console.WriteLine("Using driver " + drv.name);
+
+            /* -------------------------------------------------------------------- */
+            /*      Iterating through the layers                                    */
+            /* -------------------------------------------------------------------- */
+
+            for (int iLayer = 0; iLayer < ds.GetLayerCount(); iLayer++)
+                using (Layer layer = ds.GetLayerByIndex(iLayer))
                 {
-                    string[] sList = feat.GetFieldAsStringList(iField);
-                    foreach (string s in sList)
+                    if (layer == null)
                     {
-                        Console.Write("\"" + s + "\" ");
+                        Console.WriteLine("FAILURE: Couldn't fetch advertised layer " + iLayer);
+                        System.Environment.Exit(-1);
                     }
-                    Console.WriteLine();
+                    ReportLayer(layer);
                 }
-                else if (fdef.GetFieldType() == FieldType.OFTIntegerList)
+        }
+    }
+
+    public static void ReportLayer(Layer layer)
+    {
+        using (FeatureDefn def = layer.GetLayerDefn())
+        {
+            using (Envelope ext = new Envelope())
+            {
+                Console.WriteLine("Layer name: " + def.GetName());
+                Console.WriteLine("Feature Count: " + layer.GetFeatureCount(1));
+                layer.GetExtent(ext, 1);
+                Console.WriteLine("Extent: " + ext.MinX + "," + ext.MaxX + "," +
+                    ext.MinY + "," + ext.MaxY);
+            }
+
+            /* -------------------------------------------------------------------- */
+            /*      Reading the spatial reference                                   */
+            /* -------------------------------------------------------------------- */
+            using (OSGeo.OSR.SpatialReference sr = layer.GetSpatialRef())
+            {
+                string srs_wkt;
+                if (sr != null)
                 {
-                    int count;
-                    int[] iList = feat.GetFieldAsIntegerList(iField, out count);
-                    for (int i = 0; i < count; i++)
-                    {
-                        Console.Write(iList[i] + " ");
-                    }
-                    Console.WriteLine();
-                }
-                else if (fdef.GetFieldType() == FieldType.OFTRealList)
-                {
-                    int count;
-                    double[] iList = feat.GetFieldAsDoubleList(iField, out count);
-                    for (int i = 0; i < count; i++)
-                    {
-                        Console.Write(iList[i].ToString() + " ");
-                    }
-                    Console.WriteLine();
+                    sr.ExportToPrettyWkt(out srs_wkt, 1);
                 }
                 else
-                    Console.WriteLine(feat.GetFieldAsString(iField));
+                    srs_wkt = "(unknown)";
+
+
+                Console.WriteLine("Layer SRS WKT: " + srs_wkt);
             }
-			else
-				Console.WriteLine( "(null)" );
 
-		}
+            /* -------------------------------------------------------------------- */
+            /*      Reading the fields                                              */
+            /* -------------------------------------------------------------------- */
+            Console.WriteLine("Field definition:");
+            for (int iAttr = 0; iAttr < def.GetFieldCount(); iAttr++)
+                using (FieldDefn fdef = def.GetFieldDefn(iAttr))
+                {
+                    Console.WriteLine(fdef.GetNameRef() + ": " +
+                        fdef.GetFieldTypeName(fdef.GetFieldType()) + " (" +
+                        fdef.GetWidth() + "." +
+                        fdef.GetPrecision() + ")");
+                }
 
-		if( feat.GetStyleString() != null )
-			Console.WriteLine( "  Style = " + feat.GetStyleString() );
+            /* -------------------------------------------------------------------- */
+            /*      Reading the shapes                                              */
+            /* -------------------------------------------------------------------- */
+            Console.WriteLine("");
+            Feature feat;
+            while ((feat = layer.GetNextFeature()) != null)
+            {
+                ReportFeature(feat, def);
+                feat.Dispose();
+            }
+        }
+    }
 
-		Geometry geom = feat.GetGeometryRef();
-		if( geom != null )
-		{
-			Console.WriteLine( "  " + geom.GetGeometryName() +
-				"(" + geom.GetGeometryType() + ")" );
-			Geometry sub_geom;
-			for (int i = 0; i < geom.GetGeometryCount(); i++)
-			{
-				sub_geom = geom.GetGeometryRef(i);
-				if ( sub_geom != null )
-				{
-					Console.WriteLine( "  subgeom" + i + ": " + sub_geom.GetGeometryName() +
-						"(" + sub_geom.GetGeometryType() + ")" );
-				}
-			}
-            Envelope env = new Envelope();
-            geom.GetEnvelope(env);
-            Console.WriteLine("   ENVELOPE: " + env.MinX + "," + env.MaxX + "," +
-                env.MinY + "," + env.MaxY);
+    public static void ReportFeature(Feature feat, FeatureDefn def)
+    {
+        Console.WriteLine("Feature(" + def.GetName() + "): " + feat.GetFID());
+        for (int iField = 0; iField < feat.GetFieldCount(); iField++)
+            using (FieldDefn fdef = def.GetFieldDefn(iField))
+            {
 
-            string geom_wkt;
-            geom.ExportToWkt(out geom_wkt);
-            Console.WriteLine("  " + geom_wkt);
-		}
+                Console.Write(fdef.GetNameRef() + " (" +
+                    fdef.GetFieldTypeName(fdef.GetFieldType()) + ") = ");
 
-		Console.WriteLine( "" );
-	}
+                if (feat.IsFieldSet(iField))
+                {
+                    if (fdef.GetFieldType() == FieldType.OFTStringList)
+                    {
+                        string[] sList = feat.GetFieldAsStringList(iField);
+                        foreach (string s in sList)
+                        {
+                            Console.Write("\"" + s + "\" ");
+                        }
+                        Console.WriteLine();
+                    }
+                    else if (fdef.GetFieldType() == FieldType.OFTIntegerList)
+                    {
+                        int count;
+                        int[] iList = feat.GetFieldAsIntegerList(iField, out count);
+                        for (int i = 0; i < count; i++)
+                        {
+                            Console.Write(iList[i] + " ");
+                        }
+                        Console.WriteLine();
+                    }
+                    else if (fdef.GetFieldType() == FieldType.OFTRealList)
+                    {
+                        int count;
+                        double[] iList = feat.GetFieldAsDoubleList(iField, out count);
+                        for (int i = 0; i < count; i++)
+                        {
+                            Console.Write(iList[i].ToString(CultureInfo.InvariantCulture) + " ");
+                        }
+                        Console.WriteLine();
+                    }
+                    else
+                        Console.WriteLine(feat.GetFieldAsString(iField));
+                }
+                else
+                    Console.WriteLine("(null)");
+            }
+
+        if (feat.GetStyleString() != null)
+            Console.WriteLine("  Style = " + feat.GetStyleString());
+
+        using (Geometry geom = feat.GetGeometryRef())
+        {
+            if (geom != null)
+            {
+                Console.WriteLine("  " + geom.GetGeometryName() +
+                    "(" + geom.GetGeometryType() + ")");
+
+                for (int i = 0; i < geom.GetGeometryCount(); i++)
+                    using (Geometry sub_geom = geom.GetGeometryRef(i))
+                    {
+                        if (sub_geom != null)
+                        {
+                            Console.WriteLine("  subgeom" + i + ": " + sub_geom.GetGeometryName() +
+                                "(" + sub_geom.GetGeometryType() + ")");
+                        }
+                    }
+                using (Envelope env = new Envelope())
+                {
+                    geom.GetEnvelope(env);
+                    Console.WriteLine("   ENVELOPE: " + env.MinX + "," + env.MaxX + "," +
+                        env.MinY + "," + env.MaxY);
+                }
+
+                string geom_wkt;
+                geom.ExportToWkt(out geom_wkt);
+                Console.WriteLine("  " + geom_wkt);
+            }
+        }
+
+        Console.WriteLine("");
+    }
 }

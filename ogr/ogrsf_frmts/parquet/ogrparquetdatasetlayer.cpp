@@ -35,7 +35,7 @@
 namespace cp = ::arrow::compute;
 
 /************************************************************************/
-/*                        OGRParquetLayer()                             */
+/*                          OGRParquetLayer()                           */
 /************************************************************************/
 
 OGRParquetDatasetLayer::OGRParquetDatasetLayer(
@@ -52,7 +52,7 @@ OGRParquetDatasetLayer::OGRParquetDatasetLayer(
 }
 
 /************************************************************************/
-/*                  ProcessGeometryColumnCovering()                     */
+/*                   ProcessGeometryColumnCovering()                    */
 /************************************************************************/
 
 /** Process GeoParquet JSON geometry field object to extract information about
@@ -294,7 +294,7 @@ class WKBGeometryOptionsType : public cp::FunctionOptionsType
 };
 
 /************************************************************************/
-/*                         WKBGeometryOptions                           */
+/*                          WKBGeometryOptions                          */
 /************************************************************************/
 
 class WKBGeometryOptions : public cp::FunctionOptions
@@ -376,7 +376,7 @@ template <typename OptionsType> struct OptionsWrapper : public cp::KernelState
 }  // namespace
 
 /************************************************************************/
-/*                       ExecOGRWKBIntersects()                         */
+/*                        ExecOGRWKBIntersects()                        */
 /************************************************************************/
 
 static arrow::Status ExecOGRWKBIntersects(cp::KernelContext *ctx,
@@ -448,7 +448,7 @@ static arrow::Status ExecOGRWKBIntersects(cp::KernelContext *ctx,
 }
 
 /************************************************************************/
-/*                    RegisterOGRWKBIntersectsIfNeeded()                */
+/*                  RegisterOGRWKBIntersectsIfNeeded()                  */
 /************************************************************************/
 
 static bool RegisterOGRWKBIntersectsIfNeeded()
@@ -480,7 +480,7 @@ static bool RegisterOGRWKBIntersectsIfNeeded()
 }
 
 /************************************************************************/
-/*                              BuildScanner()                          */
+/*                            BuildScanner()                            */
 /************************************************************************/
 
 void OGRParquetDatasetLayer::BuildScanner()
@@ -767,7 +767,7 @@ void OGRParquetDatasetLayer::BuildScanner()
 }
 
 /************************************************************************/
-/*                           BuildArrowFilter()                         */
+/*                          BuildArrowFilter()                          */
 /************************************************************************/
 
 cp::Expression
@@ -1024,7 +1024,7 @@ bool OGRParquetDatasetLayer::ReadNextBatch()
 }
 
 /************************************************************************/
-/*                        GetNextFeature()                              */
+/*                           GetNextFeature()                           */
 /************************************************************************/
 
 OGRFeature *OGRParquetDatasetLayer::GetNextFeature()
@@ -1048,7 +1048,7 @@ OGRFeature *OGRParquetDatasetLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                        GetFeatureCount()                             */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRParquetDatasetLayer::GetFeatureCount(int bForce)
@@ -1067,7 +1067,7 @@ GIntBig OGRParquetDatasetLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                         FastGetExtent()                              */
+/*                           FastGetExtent()                            */
 /************************************************************************/
 
 bool OGRParquetDatasetLayer::FastGetExtent(int iGeomField,
@@ -1084,7 +1084,7 @@ bool OGRParquetDatasetLayer::FastGetExtent(int iGeomField,
 }
 
 /************************************************************************/
-/*                           IGetExtent()                               */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRParquetDatasetLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -1154,7 +1154,7 @@ OGRErr OGRParquetDatasetLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                        ISetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRParquetDatasetLayer::ISetSpatialFilter(int iGeomField,
@@ -1171,7 +1171,7 @@ OGRErr OGRParquetDatasetLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                        SetIgnoredFields()                            */
+/*                          SetIgnoredFields()                          */
 /************************************************************************/
 
 OGRErr OGRParquetDatasetLayer::SetIgnoredFields(CSLConstList papszFields)
@@ -1295,7 +1295,7 @@ OGRErr OGRParquetDatasetLayer::SetIgnoredFields(CSLConstList papszFields)
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRParquetDatasetLayer::TestCapability(const char *pszCap) const
@@ -1318,9 +1318,9 @@ int OGRParquetDatasetLayer::TestCapability(const char *pszCap) const
     return OGRParquetLayerBase::TestCapability(pszCap);
 }
 
-/***********************************************************************/
-/*                         SetAttributeFilter()                        */
-/***********************************************************************/
+/************************************************************************/
+/*                         SetAttributeFilter()                         */
+/************************************************************************/
 
 OGRErr OGRParquetDatasetLayer::SetAttributeFilter(const char *pszFilter)
 {

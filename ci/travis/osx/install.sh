@@ -20,6 +20,7 @@ CFLAGS="-Wextra -Werror" CXXFLAGS="-Wextra -Werror" cmake .. \
          -DCMAKE_INSTALL_PREFIX=${CONDA_PREFIX} \
          -DCMAKE_PREFIX_PATH=${CONDA_PREFIX} \
          -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+         -DUSE_CCACHE=ON \
          -DGDAL_USE_GEOTIFF_INTERNAL=ON \
          -DGDAL_USE_PNG_INTERNAL=ON \
          -DGDAL_USE_POSTGRESQL=OFF \

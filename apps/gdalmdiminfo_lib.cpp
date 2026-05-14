@@ -27,7 +27,9 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
                       CPLJSonStreamingWriter &serializer,
                       const GDALMultiDimInfoOptions *psOptions,
                       std::set<std::string> &alreadyDumpedDimensions,
-                      bool bOutputObjType, bool bOutputName);
+                      std::set<std::string> &alreadyDumpedArrays,
+                      bool bOutputObjType, bool bOutputName,
+                      bool bOutputOverviews);
 
 /************************************************************************/
 /*                       GDALMultiDimInfoOptions                        */
@@ -36,6 +38,7 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
 struct GDALMultiDimInfoOptions
 {
     bool bStdoutOutput = false;
+    bool bSummary = false;
     bool bDetailed = false;
     bool bPretty = true;
     size_t nLimitValuesByDim = 0;
@@ -45,7 +48,7 @@ struct GDALMultiDimInfoOptions
 };
 
 /************************************************************************/
-/*                         HasUniqueNames()                             */
+/*                           HasUniqueNames()                           */
 /************************************************************************/
 
 static bool HasUniqueNames(const std::vector<std::string> &oNames)
@@ -63,7 +66,7 @@ static bool HasUniqueNames(const std::vector<std::string> &oNames)
 }
 
 /************************************************************************/
-/*                          DumpDataType()                              */
+/*                            DumpDataType()                            */
 /************************************************************************/
 
 static void DumpDataType(const GDALExtendedDataType &dt,
@@ -174,7 +177,7 @@ static void DumpDataType(const GDALExtendedDataType &dt,
 }
 
 /************************************************************************/
-/*                           DumpValue()                                */
+/*                             DumpValue()                              */
 /************************************************************************/
 
 template <typename T>
@@ -186,7 +189,7 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const void *bytes)
 }
 
 /************************************************************************/
-/*                         DumpComplexValue()                           */
+/*                          DumpComplexValue()                          */
 /************************************************************************/
 
 template <typename T>
@@ -201,7 +204,7 @@ static void DumpComplexValue(CPLJSonStreamingWriter &serializer,
 }
 
 /************************************************************************/
-/*                           DumpValue()                                */
+/*                             DumpValue()                              */
 /************************************************************************/
 
 static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
@@ -268,7 +271,7 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *values,
                       const GDALExtendedDataType &dt);
 
 /************************************************************************/
-/*                          DumpCompound()                              */
+/*                            DumpCompound()                            */
 /************************************************************************/
 
 static void DumpCompound(CPLJSonStreamingWriter &serializer,
@@ -285,7 +288,7 @@ static void DumpCompound(CPLJSonStreamingWriter &serializer,
 }
 
 /************************************************************************/
-/*                           DumpValue()                                */
+/*                             DumpValue()                              */
 /************************************************************************/
 
 static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *values,
@@ -314,7 +317,7 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *values,
 }
 
 /************************************************************************/
-/*                          SerializeJSON()                             */
+/*                           SerializeJSON()                            */
 /************************************************************************/
 
 static void SerializeJSON(const CPLJSONObject &obj,
@@ -389,7 +392,7 @@ static void SerializeJSON(const CPLJSONObject &obj,
 }
 
 /************************************************************************/
-/*                          DumpAttrValue()                             */
+/*                           DumpAttrValue()                            */
 /************************************************************************/
 
 static void DumpAttrValue(const std::shared_ptr<GDALAttribute> &attr,
@@ -558,7 +561,7 @@ static void DumpAttr(std::shared_ptr<GDALAttribute> attr,
 }
 
 /************************************************************************/
-/*                              DumpAttrs()                             */
+/*                             DumpAttrs()                              */
 /************************************************************************/
 
 static void DumpAttrs(const std::vector<std::shared_ptr<GDALAttribute>> &attrs,
@@ -699,7 +702,7 @@ static void DumpArrayRec(std::shared_ptr<GDALMDArray> array,
 }
 
 /************************************************************************/
-/*                        DumpDimensions()                               */
+/*                           DumpDimensions()                           */
 /************************************************************************/
 
 static void
@@ -760,20 +763,22 @@ DumpDimensions(const std::shared_ptr<GDALGroup> &rootGroup,
                 std::set<std::string> alreadyDumpedDimensionsLocal(
                     alreadyDumpedDimensions);
                 alreadyDumpedDimensionsLocal.insert(std::move(osFullname));
+                std::set<std::string> alreadyDumpedArrays;
 
                 auto indexingVariableContext(serializer.MakeObjectContext());
                 serializer.AddObjKey(poIndexingVariable->GetName());
                 DumpArray(rootGroup, poIndexingVariable, serializer, psOptions,
-                          alreadyDumpedDimensionsLocal,
+                          alreadyDumpedDimensionsLocal, alreadyDumpedArrays,
                           /* bOutputObjType = */ false,
-                          /* bOutputName = */ false);
+                          /* bOutputName = */ false,
+                          /* bOutputOverviews = */ false);
             }
         }
     }
 }
 
 /************************************************************************/
-/*                        DumpStructuralInfo()                          */
+/*                         DumpStructuralInfo()                         */
 /************************************************************************/
 
 static void DumpStructuralInfo(CSLConstList papszStructuralInfo,
@@ -806,8 +811,19 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
                       CPLJSonStreamingWriter &serializer,
                       const GDALMultiDimInfoOptions *psOptions,
                       std::set<std::string> &alreadyDumpedDimensions,
-                      bool bOutputObjType, bool bOutputName)
+                      std::set<std::string> &alreadyDumpedArrays,
+                      bool bOutputObjType, bool bOutputName,
+                      bool bOutputOverviews)
 {
+    // Protection against infinite recursion
+    if (cpl::contains(alreadyDumpedArrays, array->GetFullName()))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "%s already visited",
+                 array->GetFullName().c_str());
+        return;
+    }
+    alreadyDumpedArrays.insert(array->GetFullName());
+
     auto objectContext(serializer.MakeObjectContext());
     if (bOutputObjType)
     {
@@ -819,6 +835,14 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
         serializer.AddObjKey("name");
         serializer.Add(array->GetName());
     }
+    else
+    {
+        serializer.AddObjKey("full_name");
+        serializer.Add(array->GetFullName());
+    }
+
+    if (psOptions->bSummary)
+        return;
 
     serializer.AddObjKey("datatype");
     const auto &dt(array->GetDataType());
@@ -980,10 +1004,44 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
             serializer.Add(static_cast<std::uint64_t>(nValidCount));
         }
     }
+
+    if (bOutputOverviews)
+    {
+        const int nOverviews = array->GetOverviewCount();
+        if (nOverviews > 0)
+        {
+            serializer.AddObjKey("overviews");
+            auto overviewsContext(serializer.MakeArrayContext());
+            for (int i = 0; i < nOverviews; ++i)
+            {
+                if (auto poOvrArray = array->GetOverview(i))
+                {
+                    bool bIsStandalone = false;
+                    {
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                        bIsStandalone =
+                            rootGroup->OpenMDArrayFromFullname(
+                                poOvrArray->GetFullName()) == nullptr;
+                    }
+                    if (bIsStandalone)
+                    {
+                        DumpArray(rootGroup, poOvrArray, serializer, psOptions,
+                                  alreadyDumpedDimensions, alreadyDumpedArrays,
+                                  bOutputObjType, bOutputName,
+                                  bOutputOverviews);
+                    }
+                    else
+                    {
+                        serializer.Add(poOvrArray->GetFullName());
+                    }
+                }
+            }
+        }
+    }
 }
 
 /************************************************************************/
-/*                            DumpArrays()                              */
+/*                             DumpArrays()                             */
 /************************************************************************/
 
 static void DumpArrays(const std::shared_ptr<GDALGroup> &rootGroup,
@@ -991,7 +1049,8 @@ static void DumpArrays(const std::shared_ptr<GDALGroup> &rootGroup,
                        const std::vector<std::string> &arrayNames,
                        CPLJSonStreamingWriter &serializer,
                        const GDALMultiDimInfoOptions *psOptions,
-                       std::set<std::string> &alreadyDumpedDimensions)
+                       std::set<std::string> &alreadyDumpedDimensions,
+                       std::set<std::string> &alreadyDumpedArrays)
 {
     std::set<std::string> oSetNames;
     auto objectContext(serializer.MakeObjectContext());
@@ -1005,7 +1064,8 @@ static void DumpArrays(const std::shared_ptr<GDALGroup> &rootGroup,
         {
             serializer.AddObjKey(array->GetName());
             DumpArray(rootGroup, array, serializer, psOptions,
-                      alreadyDumpedDimensions, false, false);
+                      alreadyDumpedDimensions, alreadyDumpedArrays, false,
+                      false, /* bOutputOverviews = */ true);
         }
     }
 }
@@ -1020,6 +1080,7 @@ static void DumpGroup(const std::shared_ptr<GDALGroup> &rootGroup,
                       CPLJSonStreamingWriter &serializer,
                       const GDALMultiDimInfoOptions *psOptions,
                       std::set<std::string> &alreadyDumpedDimensions,
+                      std::set<std::string> &alreadyDumpedArrays,
                       bool bOutputObjType, bool bOutputName)
 {
     auto objectContext(serializer.MakeObjectContext());
@@ -1045,19 +1106,24 @@ static void DumpGroup(const std::shared_ptr<GDALGroup> &rootGroup,
             serializer.Add(group->GetFullName());
         }
     }
+    else if (psOptions->bSummary)
+    {
+        serializer.AddObjKey("full_name");
+        serializer.Add(group->GetFullName());
+    }
 
     CPLStringList aosOptionsGetAttr;
     if (psOptions->bDetailed)
         aosOptionsGetAttr.SetNameValue("SHOW_ALL", "YES");
     auto attrs = group->GetAttributes(aosOptionsGetAttr.List());
-    if (!attrs.empty())
+    if (!psOptions->bSummary && !attrs.empty())
     {
         serializer.AddObjKey("attributes");
         DumpAttrs(attrs, serializer, psOptions);
     }
 
     auto dims = group->GetDimensions();
-    if (!dims.empty())
+    if (!psOptions->bSummary && !dims.empty())
     {
         serializer.AddObjKey("dimensions");
         DumpDimensions(rootGroup, dims, serializer, psOptions,
@@ -1065,7 +1131,7 @@ static void DumpGroup(const std::shared_ptr<GDALGroup> &rootGroup,
     }
 
     const auto &types = group->GetDataTypes();
-    if (!types.empty())
+    if (!psOptions->bSummary && !types.empty())
     {
         serializer.AddObjKey("datatypes");
         auto arrayContext(serializer.MakeArrayContext());
@@ -1083,11 +1149,11 @@ static void DumpGroup(const std::shared_ptr<GDALGroup> &rootGroup,
     {
         serializer.AddObjKey("arrays");
         DumpArrays(rootGroup, group, arrayNames, serializer, psOptions,
-                   alreadyDumpedDimensions);
+                   alreadyDumpedDimensions, alreadyDumpedArrays);
     }
 
     auto papszStructuralInfo = group->GetStructuralInfo();
-    if (papszStructuralInfo)
+    if (!psOptions->bSummary && papszStructuralInfo)
     {
         serializer.AddObjKey("structural_info");
         DumpStructuralInfo(papszStructuralInfo, serializer);
@@ -1107,7 +1173,8 @@ static void DumpGroup(const std::shared_ptr<GDALGroup> &rootGroup,
                 {
                     serializer.AddObjKey(subgroupName);
                     DumpGroup(rootGroup, subgroup, nullptr, serializer,
-                              psOptions, alreadyDumpedDimensions, false, false);
+                              psOptions, alreadyDumpedDimensions,
+                              alreadyDumpedArrays, false, false);
                 }
             }
         }
@@ -1120,7 +1187,8 @@ static void DumpGroup(const std::shared_ptr<GDALGroup> &rootGroup,
                 if (subgroup)
                 {
                     DumpGroup(rootGroup, subgroup, nullptr, serializer,
-                              psOptions, alreadyDumpedDimensions, false, true);
+                              psOptions, alreadyDumpedDimensions,
+                              alreadyDumpedArrays, false, true);
                 }
             }
         }
@@ -1148,12 +1216,22 @@ static std::unique_ptr<GDALArgumentParser> GDALMultiDimInfoAppOptionsGetParser(
 
     argParser->add_epilog(_("For more details, consult "
                             "https://gdal.org/programs/gdalmdiminfo.html"));
+    {
+        auto &group = argParser->add_mutually_exclusive_group();
 
-    argParser->add_argument("-detailed")
-        .flag()
-        .store_into(psOptions->bDetailed)
-        .help(_("Most verbose output. Report attribute data types and array "
-                "values."));
+        group.add_argument("-summary")
+            .flag()
+            .store_into(psOptions->bSummary)
+            .help(_("Report only group and array hierarchy, without detailed "
+                    "information on attributes or dimensions."));
+
+        group.add_argument("-detailed")
+            .flag()
+            .store_into(psOptions->bDetailed)
+            .help(
+                _("Most verbose output. Report attribute data types and array "
+                  "values."));
+    }
 
     argParser->add_inverted_logic_flag(
         "-nopretty", &psOptions->bPretty,
@@ -1207,7 +1285,7 @@ static std::unique_ptr<GDALArgumentParser> GDALMultiDimInfoAppOptionsGetParser(
 }
 
 /************************************************************************/
-/*                  GDALMultiDimInfoAppGetParserUsage()                 */
+/*                 GDALMultiDimInfoAppGetParserUsage()                  */
 /************************************************************************/
 
 std::string GDALMultiDimInfoAppGetParserUsage()
@@ -1229,7 +1307,7 @@ std::string GDALMultiDimInfoAppGetParserUsage()
 }
 
 /************************************************************************/
-/*                         GDALMultiDimInfo()                           */
+/*                          GDALMultiDimInfo()                          */
 /************************************************************************/
 
 /* clang-format off */
@@ -1270,6 +1348,7 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
         return nullptr;
 
     std::set<std::string> alreadyDumpedDimensions;
+    std::set<std::string> alreadyDumpedArrays;
     try
     {
         if (psOptions->osArrayName.empty())
@@ -1279,7 +1358,7 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
             if (poDriver)
                 pszDriverName = poDriver->GetDescription();
             DumpGroup(group, group, pszDriverName, serializer, psOptions,
-                      alreadyDumpedDimensions, true, true);
+                      alreadyDumpedDimensions, alreadyDumpedArrays, true, true);
         }
         else
         {
@@ -1306,7 +1385,8 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
                 return nullptr;
             }
             DumpArray(group, array, serializer, psOptions,
-                      alreadyDumpedDimensions, true, true);
+                      alreadyDumpedDimensions, alreadyDumpedArrays, true, true,
+                      true);
         }
     }
     catch (const std::exception &e)
@@ -1327,7 +1407,7 @@ char *GDALMultiDimInfo(GDALDatasetH hDataset,
 }
 
 /************************************************************************/
-/*                       GDALMultiDimInfoOptionsNew()                   */
+/*                     GDALMultiDimInfoOptionsNew()                     */
 /************************************************************************/
 
 /**
@@ -1380,7 +1460,7 @@ GDALMultiDimInfoOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                         GDALMultiDimInfoOptionsFree()                */
+/*                    GDALMultiDimInfoOptionsFree()                     */
 /************************************************************************/
 
 /**

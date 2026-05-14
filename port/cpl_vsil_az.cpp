@@ -56,7 +56,7 @@ namespace cpl
 const char GDAL_MARKER_FOR_DIR[] = ".gdal_marker_for_dir";
 
 /************************************************************************/
-/*                             VSIDIRAz                                 */
+/*                               VSIDIRAz                               */
 /************************************************************************/
 
 struct VSIDIRAz final : public VSIDIRS3Like
@@ -361,7 +361,7 @@ bool VSIDIRAz::AnalyseAzureFileList(const std::string &osBaseURL,
 }
 
 /************************************************************************/
-/*                          IssueListDir()                              */
+/*                            IssueListDir()                            */
 /************************************************************************/
 
 bool VSIDIRAz::IssueListDir()
@@ -452,7 +452,7 @@ bool VSIDIRAz::IssueListDir()
 }
 
 /************************************************************************/
-/*                       VSIAzureFSHandler                              */
+/*                          VSIAzureFSHandler                           */
 /************************************************************************/
 
 class VSIAzureFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
@@ -654,10 +654,27 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
         return static_cast<GIntBig>(GetMaximumPartCount()) *
                GetMaximumPartSizeInMiB() * 1024 * 1024;
     }
+
+    std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath) override
+    {
+        if (!cpl::starts_with(osPath, m_osPrefix) &&
+            !cpl::starts_with(osPath, GetStreamingFilename(m_osPrefix)))
+        {
+            for (const char *pszPrefix : {"az://", "azure://"})
+            {
+                if (cpl::starts_with(osPath, pszPrefix))
+                {
+                    return GetFSPrefix() + osPath.substr(strlen(pszPrefix));
+                }
+            }
+        }
+        return std::string();
+    }
 };
 
 /************************************************************************/
-/*                          VSIAzureHandle                              */
+/*                            VSIAzureHandle                            */
 /************************************************************************/
 
 class VSIAzureHandle final : public VSICurlHandle
@@ -681,7 +698,7 @@ class VSIAzureHandle final : public VSICurlHandle
 };
 
 /************************************************************************/
-/*                          VSIAzureWriteHandle                         */
+/*                         VSIAzureWriteHandle                          */
 /************************************************************************/
 
 class VSIAzureWriteHandle final : public VSIAppendWriteHandle
@@ -719,7 +736,7 @@ VSICurlHandle *VSIAzureFSHandler::CreateFileHandle(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                          CreateWriteHandle()                         */
+/*                         CreateWriteHandle()                          */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -1150,7 +1167,7 @@ bool VSIAzureFSHandler::SetFileMetadata(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                      GetStreamingFilename()                          */
+/*                        GetStreamingFilename()                        */
 /************************************************************************/
 
 std::string
@@ -1162,7 +1179,7 @@ VSIAzureFSHandler::GetStreamingFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                       GetAzureAppendBufferSize()                     */
+/*                      GetAzureAppendBufferSize()                      */
 /************************************************************************/
 
 int GetAzureAppendBufferSize()
@@ -1185,7 +1202,7 @@ int GetAzureAppendBufferSize()
 }
 
 /************************************************************************/
-/*                       VSIAzureWriteHandle()                          */
+/*                        VSIAzureWriteHandle()                         */
 /************************************************************************/
 
 VSIAzureWriteHandle::VSIAzureWriteHandle(
@@ -1199,7 +1216,7 @@ VSIAzureWriteHandle::VSIAzureWriteHandle(
 }
 
 /************************************************************************/
-/*                      ~VSIAzureWriteHandle()                          */
+/*                        ~VSIAzureWriteHandle()                        */
 /************************************************************************/
 
 VSIAzureWriteHandle::~VSIAzureWriteHandle()
@@ -1208,7 +1225,7 @@ VSIAzureWriteHandle::~VSIAzureWriteHandle()
 }
 
 /************************************************************************/
-/*                    InvalidateParentDirectory()                       */
+/*                     InvalidateParentDirectory()                      */
 /************************************************************************/
 
 void VSIAzureWriteHandle::InvalidateParentDirectory()
@@ -1223,7 +1240,7 @@ void VSIAzureWriteHandle::InvalidateParentDirectory()
 }
 
 /************************************************************************/
-/*                             Send()                                   */
+/*                                Send()                                */
 /************************************************************************/
 
 bool VSIAzureWriteHandle::Send(bool bIsLastBlock)
@@ -1242,7 +1259,7 @@ bool VSIAzureWriteHandle::Send(bool bIsLastBlock)
 }
 
 /************************************************************************/
-/*                          SendInternal()                              */
+/*                            SendInternal()                            */
 /************************************************************************/
 
 bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
@@ -1382,7 +1399,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
 }
 
 /************************************************************************/
-/*                            ClearCache()                              */
+/*                             ClearCache()                             */
 /************************************************************************/
 
 void VSIAzureFSHandler::ClearCache()
@@ -1393,7 +1410,7 @@ void VSIAzureFSHandler::ClearCache()
 }
 
 /************************************************************************/
-/*                          GetURLFromFilename()                        */
+/*                         GetURLFromFilename()                         */
 /************************************************************************/
 
 std::string
@@ -1410,7 +1427,7 @@ VSIAzureFSHandler::GetURLFromFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                        CreateAzHandleHelper()                       */
+/*                        CreateAzHandleHelper()                        */
 /************************************************************************/
 
 VSIAzureBlobHandleHelper *
@@ -1421,7 +1438,7 @@ VSIAzureFSHandler::CreateAzHandleHelper(const char *pszURI, bool)
 }
 
 /************************************************************************/
-/*                         InvalidateRecursive()                        */
+/*                        InvalidateRecursive()                         */
 /************************************************************************/
 
 void VSIAzureFSHandler::InvalidateRecursive(const std::string &osDirnameIn)
@@ -1452,7 +1469,7 @@ int VSIAzureFSHandler::Unlink(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           UnlinkBatch()                              */
+/*                            UnlinkBatch()                             */
 /************************************************************************/
 
 int *VSIAzureFSHandler::UnlinkBatch(CSLConstList papszFiles)
@@ -1733,7 +1750,7 @@ int VSIAzureFSHandler::Mkdir(const char *pszDirname, long nMode)
 }
 
 /************************************************************************/
-/*                        CreateContainer()                             */
+/*                          CreateContainer()                           */
 /************************************************************************/
 
 int VSIAzureFSHandler::CreateContainer(const std::string &osDirname)
@@ -1892,7 +1909,7 @@ int VSIAzureFSHandler::Rmdir(const char *pszDirname)
 }
 
 /************************************************************************/
-/*                        DeleteContainer()                             */
+/*                          DeleteContainer()                           */
 /************************************************************************/
 
 int VSIAzureFSHandler::DeleteContainer(const std::string &osDirname)
@@ -1977,7 +1994,7 @@ int VSIAzureFSHandler::DeleteContainer(const std::string &osDirname)
 }
 
 /************************************************************************/
-/*                           CopyFile()                                 */
+/*                              CopyFile()                              */
 /************************************************************************/
 
 int VSIAzureFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
@@ -2013,7 +2030,7 @@ int VSIAzureFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
 }
 
 /************************************************************************/
-/*                            CopyObject()                              */
+/*                             CopyObject()                             */
 /************************************************************************/
 
 int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
@@ -2152,7 +2169,7 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
 }
 
 /************************************************************************/
-/*                             PutBlock()                               */
+/*                              PutBlock()                              */
 /************************************************************************/
 
 std::string VSIAzureFSHandler::PutBlock(
@@ -2263,7 +2280,7 @@ std::string VSIAzureFSHandler::PutBlock(
 }
 
 /************************************************************************/
-/*                           PutBlockList()                             */
+/*                            PutBlockList()                            */
 /************************************************************************/
 
 bool VSIAzureFSHandler::PutBlockList(
@@ -2362,7 +2379,7 @@ bool VSIAzureFSHandler::PutBlockList(
 }
 
 /************************************************************************/
-/*                           GetFileList()                              */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 char **VSIAzureFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
@@ -2408,7 +2425,7 @@ char **VSIAzureFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
 }
 
 /************************************************************************/
-/*                           GetOptions()                               */
+/*                             GetOptions()                             */
 /************************************************************************/
 
 const char *VSIAzureFSHandler::GetOptions()
@@ -2432,7 +2449,7 @@ const char *VSIAzureFSHandler::GetOptions()
 }
 
 /************************************************************************/
-/*                           GetSignedURL()                             */
+/*                            GetSignedURL()                            */
 /************************************************************************/
 
 char *VSIAzureFSHandler::GetSignedURL(const char *pszFilename,
@@ -2457,7 +2474,7 @@ char *VSIAzureFSHandler::GetSignedURL(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            OpenDir()                                 */
+/*                              OpenDir()                               */
 /************************************************************************/
 
 VSIDIR *VSIAzureFSHandler::OpenDir(const char *pszPath, int nRecurseDepth,
@@ -2531,7 +2548,7 @@ VSIAzureHandle::VSIAzureHandle(VSIAzureFSHandler *poFSIn,
 }
 
 /************************************************************************/
-/*                          GetCurlHeaders()                            */
+/*                           GetCurlHeaders()                           */
 /************************************************************************/
 
 struct curl_slist *VSIAzureHandle::GetCurlHeaders(const std::string &osVerb,
@@ -2541,7 +2558,7 @@ struct curl_slist *VSIAzureHandle::GetCurlHeaders(const std::string &osVerb,
 }
 
 /************************************************************************/
-/*                          CanRestartOnError()                         */
+/*                         CanRestartOnError()                          */
 /************************************************************************/
 
 bool VSIAzureHandle::CanRestartOnError(const char *pszErrorMsg,
@@ -2552,7 +2569,7 @@ bool VSIAzureHandle::CanRestartOnError(const char *pszErrorMsg,
 }
 
 /************************************************************************/
-/*                         IsDirectoryFromExists()                      */
+/*                       IsDirectoryFromExists()                        */
 /************************************************************************/
 
 bool VSIAzureHandle::IsDirectoryFromExists(const char * /*pszVerb*/,
@@ -2583,7 +2600,7 @@ bool VSIAzureHandle::IsDirectoryFromExists(const char * /*pszVerb*/,
 //! @endcond
 
 /************************************************************************/
-/*                      VSIInstallAzureFileHandler()                    */
+/*                     VSIInstallAzureFileHandler()                     */
 /************************************************************************/
 
 /*!

@@ -15,7 +15,7 @@
 #include "cpl_conv.h"
 
 /************************************************************************/
-/*                     OGRPGeoDriverIdentify()                          */
+/*                       OGRPGeoDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRPGeoDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -32,7 +32,7 @@ static int OGRPGeoDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                                OGRPGeoDriverOpen()                   */
+/*                         OGRPGeoDriverOpen()                          */
 /************************************************************************/
 
 static GDALDataset *OGRPGeoDriverOpen(GDALOpenInfo *poOpenInfo)
@@ -60,7 +60,7 @@ static GDALDataset *OGRPGeoDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           RegisterOGRPGeo()                          */
+/*                          RegisterOGRPGeo()                           */
 /************************************************************************/
 
 void RegisterOGRPGeo()

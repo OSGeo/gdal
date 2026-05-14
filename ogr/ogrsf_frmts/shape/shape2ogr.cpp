@@ -59,7 +59,7 @@ static void RingStartEnd(SHPObject *psShape, int ring, int *start, int *end)
 }
 
 /************************************************************************/
-/*                        CreateLinearRing                              */
+/*                           CreateLinearRing                           */
 /************************************************************************/
 static std::unique_ptr<OGRLinearRing>
 CreateLinearRing(SHPObject *psShape, int ring, bool bHasZ, bool bHasM)
@@ -473,7 +473,7 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
 }
 
 /************************************************************************/
-/*                      CheckNonFiniteCoordinates()                     */
+/*                     CheckNonFiniteCoordinates()                      */
 /************************************************************************/
 
 static bool CheckNonFiniteCoordinates(const double *v, size_t vsize)
@@ -595,7 +595,7 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
         const bool bHasZ = (hSHP->nShapeType == SHPT_MULTIPOINTM ||
                             hSHP->nShapeType == SHPT_MULTIPOINTZ);
         const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
-        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
+        const bool bIsGeomMeasured = poGeom->IsMeasured();
 
         std::vector<double> adfX;
         std::vector<double> adfY;
@@ -719,7 +719,7 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
         const bool bHasZ =
             (hSHP->nShapeType == SHPT_ARCM || hSHP->nShapeType == SHPT_ARCZ);
         const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
-        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
+        const bool bIsGeomMeasured = poGeom->IsMeasured();
 
         try
         {
@@ -854,9 +854,9 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
             // for PolyhedralSurface and TIN
             if (eType == wkbPolyhedralSurface || eType == wkbTIN)
             {
-                poGeomToDelete =
-                    std::unique_ptr<OGRGeometry>(OGRGeometryFactory::forceTo(
-                        poGeom->clone(), wkbMultiPolygon, nullptr));
+                poGeomToDelete = OGRGeometryFactory::forceTo(
+                    std::unique_ptr<OGRGeometry>(poGeom->clone()),
+                    wkbMultiPolygon, nullptr);
                 poGC = poGeomToDelete->toGeometryCollection();
             }
 
@@ -961,7 +961,7 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
         const bool bHasZ = (hSHP->nShapeType == SHPT_POLYGONM ||
                             hSHP->nShapeType == SHPT_POLYGONZ);
         const bool bHasM = wkbHasM(eLayerGeomType) && bHasZ;
-        const bool bIsGeomMeasured = CPL_TO_BOOL(poGeom->IsMeasured());
+        const bool bIsGeomMeasured = poGeom->IsMeasured();
 
         std::vector<int> anRingStart;
         std::vector<double> adfX;
@@ -994,8 +994,8 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
             const int nNumPoints = poRing->getNumPoints();
             // Exterior ring must be clockwise oriented in shapefiles
             const bool bInvertOrder =
-                !bRewind && CPL_TO_BOOL(bIsOuterRing ? !poRing->isClockwise()
-                                                     : poRing->isClockwise());
+                !bRewind &&
+                (bIsOuterRing ? !poRing->isClockwise() : poRing->isClockwise());
             for (int i = 0; i < nNumPoints; i++)
             {
                 const int iPoint = bInvertOrder ? nNumPoints - 1 - i : i;
@@ -1091,17 +1091,16 @@ static OGRErr SHPWriteOGRObject(SHPHandle hSHP, int iShape,
 /*                       SHPReadOGRFeatureDefn()                        */
 /************************************************************************/
 
-OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
-                                      DBFHandle hDBF, VSILFILE *fpSHPXML,
-                                      const char *pszSHPEncoding,
-                                      int bAdjustType)
+OGRFeatureDefnRefCountedPtr
+SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP, DBFHandle hDBF,
+                      VSILFILE *fpSHPXML, const char *pszSHPEncoding,
+                      int bAdjustType)
 
 {
     int nAdjustableFields = 0;
     const int nFieldCount = hDBF ? DBFGetFieldCount(hDBF) : 0;
 
-    OGRFeatureDefn *const poDefn = new OGRFeatureDefn(pszName);
-    poDefn->Reference();
+    auto poDefn = OGRFeatureDefnRefCountedPtr::makeInstance(pszName);
 
     // Parse .shp.xml side car if available, to get long field names and aliases
     // but only if they are consistent with the number of DBF fields and their

@@ -82,7 +82,7 @@ The :program:`sozip` utility can be used to:
     Validates a SOZip file. Baseline ZIP validation is done in a light way,
     limited to being able to browse through ZIP records with the InfoZIP-based
     ZIP reader used by GDAL. But validation of the SOZip-specific aspects is
-    done in a more thorougful way.
+    done more thoroughly.
 
 .. option:: -r
 .. option:: --recurse-paths
@@ -142,6 +142,11 @@ Multithreading
 The :config:`GDAL_NUM_THREADS` configuration option can be set to
 ``ALL_CPUS`` or a integer value to specify the number of threads to use for
 SOZip-compressed files. Defaults to ``ALL_CPUS``.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 C API
 -----

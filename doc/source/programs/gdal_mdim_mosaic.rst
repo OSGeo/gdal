@@ -122,6 +122,11 @@ Advanced options
 
 .. include:: gdal_options/if.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

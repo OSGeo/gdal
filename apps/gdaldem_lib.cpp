@@ -104,6 +104,7 @@
 #include "cpl_vsi_virtual.h"
 #include "gdal.h"
 #include "gdal_priv.h"
+#include "vrtdataset.h"
 
 #if defined(__x86_64__) || defined(_M_X64)
 #define HAVE_16_SSE_REG
@@ -180,7 +181,7 @@ struct GDALDEMProcessingOptions
 };
 
 /************************************************************************/
-/*                       AlgorithmParameters                            */
+/*                         AlgorithmParameters                          */
 /************************************************************************/
 
 struct AlgorithmParameters
@@ -199,7 +200,7 @@ struct AlgorithmParameters
 AlgorithmParameters::~AlgorithmParameters() = default;
 
 /************************************************************************/
-/*                          ComputeVal()                                */
+/*                             ComputeVal()                             */
 /************************************************************************/
 
 template <class T> struct GDALGeneric3x3ProcessingAlg
@@ -281,7 +282,7 @@ float ComputeVal(bool bSrcHasNoData, GInt32 fSrcNoDataValue,
 }
 
 /************************************************************************/
-/*                           INTERPOL()                                 */
+/*                              INTERPOL()                              */
 /************************************************************************/
 
 template <class T>
@@ -313,7 +314,7 @@ GInt32 INTERPOL(GInt32 a, GInt32 b, int bSrcHasNoData, GInt32 fSrcNoDataValue)
 }
 
 /************************************************************************/
-/*                  GDALGeneric3x3Processing()                          */
+/*                      GDALGeneric3x3Processing()                      */
 /************************************************************************/
 
 template <class T>
@@ -770,7 +771,7 @@ static CPLErr GDALGeneric3x3Processing(
 }
 
 /************************************************************************/
-/*                            GradientAlg                               */
+/*                             GradientAlg                              */
 /************************************************************************/
 
 template <class T, GradientAlg alg> struct Gradient
@@ -805,7 +806,7 @@ template <class T> struct Gradient<T, GradientAlg::ZEVENBERGEN_THORNE>
 };
 
 /************************************************************************/
-/*                         GDALHillshade()                              */
+/*                           GDALHillshade()                            */
 /************************************************************************/
 
 struct GDALHillshadeAlgData final : public AlgorithmParameters
@@ -1338,7 +1339,7 @@ GDALCreateHillshadeMultiDirectionalData(const double *adfGeoTransform, double z,
 }
 
 /************************************************************************/
-/*                         GDALSlope()                                  */
+/*                             GDALSlope()                              */
 /************************************************************************/
 
 struct GDALSlopeAlgData final : public AlgorithmParameters
@@ -1419,7 +1420,7 @@ GDALCreateSlopeData(double *adfGeoTransform, double xscale, double yscale,
 }
 
 /************************************************************************/
-/*                         GDALAspect()                                 */
+/*                             GDALAspect()                             */
 /************************************************************************/
 
 struct GDALAspectAlgData final : public AlgorithmParameters
@@ -1521,7 +1522,7 @@ GDALCreateAspectData(bool bAngleAsAzimuth)
 }
 
 /************************************************************************/
-/*                      GDALColorRelief()                               */
+/*                          GDALColorRelief()                           */
 /************************************************************************/
 
 static int GDALColorReliefSortColors(const GDALColorAssociation &pA,
@@ -2204,102 +2205,55 @@ GDALColorRelief(GDALRasterBandH hSrcBand, GDALRasterBandH hDstBand1,
 /*                     GDALGenerateVRTColorRelief()                     */
 /************************************************************************/
 
-static bool GDALGenerateVRTColorRelief(const char *pszDstFilename,
-                                       GDALDatasetH hSrcDataset,
-                                       GDALRasterBandH hSrcBand,
-                                       const char *pszColorFilename,
-                                       ColorSelectionMode eColorSelectionMode,
-                                       bool bAddAlpha)
+static std::unique_ptr<GDALDataset> GDALGenerateVRTColorRelief(
+    const char *pszDest, GDALDatasetH hSrcDataset, GDALRasterBandH hSrcBand,
+    const char *pszColorFilename, ColorSelectionMode eColorSelectionMode,
+    bool bAddAlpha)
 {
     const auto asColorAssociation = GDALColorReliefParseColorFile(
         hSrcBand, pszColorFilename, eColorSelectionMode);
     if (asColorAssociation.empty())
-        return false;
+        return nullptr;
 
-    VSILFILE *fp = VSIFOpenL(pszDstFilename, "wt");
-    if (fp == nullptr)
-    {
-        return false;
-    }
-
+    GDALDataset *poSrcDS = GDALDataset::FromHandle(hSrcDataset);
     const int nXSize = GDALGetRasterBandXSize(hSrcBand);
     const int nYSize = GDALGetRasterBandYSize(hSrcBand);
-
-    bool bOK =
-        VSIFPrintfL(fp, "<VRTDataset rasterXSize=\"%d\" rasterYSize=\"%d\">\n",
-                    nXSize, nYSize) > 0;
-    const char *pszProjectionRef = GDALGetProjectionRef(hSrcDataset);
-    if (pszProjectionRef && pszProjectionRef[0] != '\0')
-    {
-        char *pszEscapedString =
-            CPLEscapeString(pszProjectionRef, -1, CPLES_XML);
-        bOK &= VSIFPrintfL(fp, "  <SRS>%s</SRS>\n", pszEscapedString) > 0;
-        VSIFree(pszEscapedString);
-    }
-    GDALGeoTransform gt;
-    if (GDALDataset::FromHandle(hSrcDataset)->GetGeoTransform(gt) == CE_None)
-    {
-        bOK &= VSIFPrintfL(fp,
-                           "  <GeoTransform> %.16g, %.16g, %.16g, "
-                           "%.16g, %.16g, %.16g</GeoTransform>\n",
-                           gt[0], gt[1], gt[2], gt[3], gt[4], gt[5]) > 0;
-    }
 
     int nBlockXSize = 0;
     int nBlockYSize = 0;
     GDALGetBlockSize(hSrcBand, &nBlockXSize, &nBlockYSize);
 
-    int bRelativeToVRT = FALSE;
-    const CPLString osPath = CPLGetPathSafe(pszDstFilename);
-    char *pszSourceFilename = CPLStrdup(CPLExtractRelativePath(
-        osPath.c_str(), GDALGetDescription(hSrcDataset), &bRelativeToVRT));
+    auto poVRTDS =
+        std::make_unique<VRTDataset>(nXSize, nYSize, nBlockXSize, nBlockYSize);
+    poVRTDS->SetDescription(pszDest);
+    poVRTDS->SetSpatialRef(poSrcDS->GetSpatialRef());
+    GDALGeoTransform gt;
+    if (poSrcDS->GetGeoTransform(gt) == CE_None)
+    {
+        poVRTDS->SetGeoTransform(gt);
+    }
 
     const int nBands = 3 + (bAddAlpha ? 1 : 0);
 
     for (int iBand = 0; iBand < nBands; iBand++)
     {
-        bOK &=
-            VSIFPrintfL(fp, "  <VRTRasterBand dataType=\"Byte\" band=\"%d\">\n",
-                        iBand + 1) > 0;
-        bOK &= VSIFPrintfL(
-                   fp, "    <ColorInterp>%s</ColorInterp>\n",
-                   GDALGetColorInterpretationName(
-                       static_cast<GDALColorInterp>(GCI_RedBand + iBand))) > 0;
-        bOK &= VSIFPrintfL(fp, "    <ComplexSource>\n") > 0;
-        bOK &= VSIFPrintfL(fp,
-                           "      <SourceFilename "
-                           "relativeToVRT=\"%d\">%s</SourceFilename>\n",
-                           bRelativeToVRT, pszSourceFilename) > 0;
-        bOK &= VSIFPrintfL(fp, "      <SourceBand>%d</SourceBand>\n",
-                           GDALGetBandNumber(hSrcBand)) > 0;
-        bOK &= VSIFPrintfL(fp,
-                           "      <SourceProperties RasterXSize=\"%d\" "
-                           "RasterYSize=\"%d\" DataType=\"%s\" "
-                           "BlockXSize=\"%d\" BlockYSize=\"%d\"/>\n",
-                           nXSize, nYSize,
-                           GDALGetDataTypeName(GDALGetRasterDataType(hSrcBand)),
-                           nBlockXSize, nBlockYSize) > 0;
-        bOK &=
-            VSIFPrintfL(
-                fp,
-                "      "
-                "<SrcRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
-                nXSize, nYSize) > 0;
-        bOK &=
-            VSIFPrintfL(
-                fp,
-                "      "
-                "<DstRect xOff=\"0\" yOff=\"0\" xSize=\"%d\" ySize=\"%d\"/>\n",
-                nXSize, nYSize) > 0;
+        poVRTDS->AddBand(GDT_Byte, nullptr);
+        auto poVRTBand = cpl::down_cast<VRTSourcedRasterBand *>(
+            poVRTDS->GetRasterBand(iBand + 1));
+        poVRTBand->SetColorInterpretation(
+            static_cast<GDALColorInterp>(GCI_RedBand + iBand));
 
-        bOK &= VSIFPrintfL(fp, "      <LUT>") > 0;
+        auto poComplexSource = std::make_unique<VRTComplexSource>();
+        poVRTBand->ConfigureSource(poComplexSource.get(),
+                                   GDALRasterBand::FromHandle(hSrcBand), FALSE,
+                                   0, 0, nXSize, nYSize, 0, 0, nXSize, nYSize);
+
+        std::vector<double> adfInputLUT;
+        std::vector<double> adfOutputLUT;
 
         for (size_t iColor = 0; iColor < asColorAssociation.size(); iColor++)
         {
             const double dfVal = asColorAssociation[iColor].dfVal;
-            if (iColor > 0)
-                bOK &= VSIFPrintfL(fp, ",") > 0;
-
             if (iColor > 0 &&
                 eColorSelectionMode == COLOR_SELECTION_NEAREST_ENTRY &&
                 dfVal !=
@@ -2308,71 +2262,54 @@ static bool GDALGenerateVRTColorRelief(const char *pszDstFilename,
             {
                 const double dfMidVal =
                     (dfVal + asColorAssociation[iColor - 1].dfVal) / 2.0;
-                bOK &=
-                    VSIFPrintfL(
-                        fp, "%.18g:%d",
-                        std::nextafter(
-                            dfMidVal, -std::numeric_limits<double>::infinity()),
-                        (iBand == 0)   ? asColorAssociation[iColor - 1].nR
-                        : (iBand == 1) ? asColorAssociation[iColor - 1].nG
-                        : (iBand == 2) ? asColorAssociation[iColor - 1].nB
-                                       : asColorAssociation[iColor - 1].nA) > 0;
-                bOK &= VSIFPrintfL(
-                           fp, ",%.18g:%d", dfMidVal,
-                           (iBand == 0)   ? asColorAssociation[iColor].nR
-                           : (iBand == 1) ? asColorAssociation[iColor].nG
-                           : (iBand == 2) ? asColorAssociation[iColor].nB
-                                          : asColorAssociation[iColor].nA) > 0;
+                adfInputLUT.push_back(std::nextafter(
+                    dfMidVal, -std::numeric_limits<double>::infinity()));
+                adfOutputLUT.push_back(
+                    (iBand == 0)   ? asColorAssociation[iColor - 1].nR
+                    : (iBand == 1) ? asColorAssociation[iColor - 1].nG
+                    : (iBand == 2) ? asColorAssociation[iColor - 1].nB
+                                   : asColorAssociation[iColor - 1].nA);
+                adfInputLUT.push_back(dfMidVal);
+                adfOutputLUT.push_back(
+                    (iBand == 0)   ? asColorAssociation[iColor].nR
+                    : (iBand == 1) ? asColorAssociation[iColor].nG
+                    : (iBand == 2) ? asColorAssociation[iColor].nB
+                                   : asColorAssociation[iColor].nA);
             }
             else
             {
                 if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY)
                 {
-                    bOK &=
-                        VSIFPrintfL(
-                            fp, "%.18g:0,",
-                            std::nextafter(
-                                dfVal,
-                                -std::numeric_limits<double>::infinity())) > 0;
+                    adfInputLUT.push_back(std::nextafter(
+                        dfVal, -std::numeric_limits<double>::infinity()));
+                    adfOutputLUT.push_back(0);
                 }
-                if (dfVal != static_cast<double>(static_cast<int>(dfVal)))
-                    bOK &= VSIFPrintfL(fp, "%.18g", dfVal) > 0;
-                else
-                    bOK &= VSIFPrintfL(fp, "%d", static_cast<int>(dfVal)) > 0;
-                bOK &= VSIFPrintfL(
-                           fp, ":%d",
-                           (iBand == 0)   ? asColorAssociation[iColor].nR
-                           : (iBand == 1) ? asColorAssociation[iColor].nG
-                           : (iBand == 2) ? asColorAssociation[iColor].nB
-                                          : asColorAssociation[iColor].nA) > 0;
+                adfInputLUT.push_back(dfVal);
+                adfOutputLUT.push_back(
+                    (iBand == 0)   ? asColorAssociation[iColor].nR
+                    : (iBand == 1) ? asColorAssociation[iColor].nG
+                    : (iBand == 2) ? asColorAssociation[iColor].nB
+                                   : asColorAssociation[iColor].nA);
             }
 
             if (eColorSelectionMode == COLOR_SELECTION_EXACT_ENTRY)
             {
-                bOK &= VSIFPrintfL(
-                           fp, ",%.18g:0",
-                           std::nextafter(
-                               dfVal,
-                               std::numeric_limits<double>::infinity())) > 0;
+                adfInputLUT.push_back(std::nextafter(
+                    dfVal, std::numeric_limits<double>::infinity()));
+                adfOutputLUT.push_back(0);
             }
         }
-        bOK &= VSIFPrintfL(fp, "</LUT>\n") > 0;
 
-        bOK &= VSIFPrintfL(fp, "    </ComplexSource>\n") > 0;
-        bOK &= VSIFPrintfL(fp, "  </VRTRasterBand>\n") > 0;
+        poComplexSource->SetLUT(adfInputLUT, adfOutputLUT);
+
+        poVRTBand->AddSource(std::move(poComplexSource));
     }
 
-    CPLFree(pszSourceFilename);
-
-    bOK &= VSIFPrintfL(fp, "</VRTDataset>\n") > 0;
-
-    VSIFCloseL(fp);
-
-    return bOK;
+    return poVRTDS;
 }
 
 /************************************************************************/
-/*                         GDALTRIAlg()                                 */
+/*                             GDALTRIAlg()                             */
 /************************************************************************/
 
 // Implements Wilson et al. (2007), for bathymetric use cases
@@ -2408,7 +2345,7 @@ static float GDALTRIAlgRiley(const T *afWin, float /*fDstNoDataValue*/,
 }
 
 /************************************************************************/
-/*                         GDALTPIAlg()                                 */
+/*                             GDALTPIAlg()                             */
 /************************************************************************/
 
 template <class T>
@@ -2423,7 +2360,7 @@ static float GDALTPIAlg(const T *afWin, float /*fDstNoDataValue*/,
 }
 
 /************************************************************************/
-/*                     GDALRoughnessAlg()                               */
+/*                          GDALRoughnessAlg()                          */
 /************************************************************************/
 
 template <class T>
@@ -3066,7 +3003,7 @@ static Algorithm GetAlgorithm(const char *pszProcessing)
 }
 
 /************************************************************************/
-/*                    GDALDEMAppOptionsGetParser()                      */
+/*                     GDALDEMAppOptionsGetParser()                     */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser> GDALDEMAppOptionsGetParser(
@@ -3494,7 +3431,7 @@ static std::unique_ptr<GDALArgumentParser> GDALDEMAppOptionsGetParser(
 }
 
 /************************************************************************/
-/*                  GDALDEMAppGetParserUsage()                 */
+/*                      GDALDEMAppGetParserUsage()                      */
 /************************************************************************/
 
 std::string GDALDEMAppGetParserUsage(const std::string &osProcessingMode)
@@ -3530,7 +3467,7 @@ std::string GDALDEMAppGetParserUsage(const std::string &osProcessingMode)
 }
 
 /************************************************************************/
-/*                            GDALDEMProcessing()                       */
+/*                         GDALDEMProcessing()                          */
 /************************************************************************/
 
 /**
@@ -3752,7 +3689,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                     dfAngUnits * poSrcSRS->GetSemiMajor() / zunit;
                 // Take the center latitude to compute the xscale.
                 const double dfMeanLat =
-                    (gt[3] + nYSize * gt[5] / 2) * dfAngUnits;
+                    (gt.yorig + nYSize * gt.yscale / 2) * dfAngUnits;
                 if (std::fabs(dfMeanLat) / M_PI * 180 > 80)
                 {
                     CPLError(
@@ -4038,31 +3975,17 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
     {
         if (eUtilityMode == COLOR_RELIEF)
         {
-            const bool bTmpFile = pszDest[0] == 0;
-            const std::string osTmpFile =
-                VSIMemGenerateHiddenFilename("tmp.vrt");
-            if (bTmpFile)
-                pszDest = osTmpFile.c_str();
-            GDALDatasetH hDS = nullptr;
-            if (GDALGenerateVRTColorRelief(
-                    pszDest, hSrcDataset, hSrcBand, pszColorFilename,
-                    psOptions->eColorSelectionMode, psOptions->bAddAlpha))
+            auto poDS = GDALGenerateVRTColorRelief(
+                pszDest, hSrcDataset, hSrcBand, pszColorFilename,
+                psOptions->eColorSelectionMode, psOptions->bAddAlpha);
+            if (poDS && pszDest[0] != 0)
             {
-                if (bTmpFile)
-                {
-                    const GByte *pabyData =
-                        VSIGetMemFileBuffer(pszDest, nullptr, false);
-                    hDS = GDALOpen(reinterpret_cast<const char *>(pabyData),
-                                   GA_Update);
-                }
-                else
-                {
-                    hDS = GDALOpen(pszDest, GA_Update);
-                }
+                poDS.reset();
+                poDS.reset(GDALDataset::Open(
+                    pszDest,
+                    GDAL_OF_UPDATE | GDAL_OF_VERBOSE_ERROR | GDAL_OF_RASTER));
             }
-            if (bTmpFile)
-                VSIUnlink(pszDest);
-            return hDS;
+            return GDALDataset::ToHandle(poDS.release());
         }
         else
         {
@@ -4231,7 +4154,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 }
 
 /************************************************************************/
-/*                           GDALDEMProcessingOptionsNew()              */
+/*                    GDALDEMProcessingOptionsNew()                     */
 /************************************************************************/
 
 /**
@@ -4413,7 +4336,7 @@ GDALDEMProcessingOptions *GDALDEMProcessingOptionsNew(
 }
 
 /************************************************************************/
-/*                       GDALDEMProcessingOptionsFree()                 */
+/*                    GDALDEMProcessingOptionsFree()                    */
 /************************************************************************/
 
 /**
@@ -4430,7 +4353,7 @@ void GDALDEMProcessingOptionsFree(GDALDEMProcessingOptions *psOptions)
 }
 
 /************************************************************************/
-/*                 GDALDEMProcessingOptionsSetProgress()                */
+/*                GDALDEMProcessingOptionsSetProgress()                 */
 /************************************************************************/
 
 /**

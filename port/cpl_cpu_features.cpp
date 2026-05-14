@@ -60,7 +60,7 @@
 #if defined(HAVE_SSE_AT_COMPILE_TIME) && !defined(HAVE_INLINE_SSE)
 
 /************************************************************************/
-/*                          CPLHaveRuntimeSSE()                         */
+/*                         CPLHaveRuntimeSSE()                          */
 /************************************************************************/
 
 bool CPLHaveRuntimeSSE()
@@ -75,7 +75,7 @@ bool CPLHaveRuntimeSSE()
 #if defined(HAVE_SSSE3_AT_COMPILE_TIME) && !defined(HAVE_INLINE_SSSE3)
 
 /************************************************************************/
-/*                         CPLHaveRuntimeSSSE3()                        */
+/*                        CPLHaveRuntimeSSSE3()                         */
 /************************************************************************/
 
 static inline bool CPLDetectSSSE3()
@@ -109,7 +109,7 @@ bool CPLHaveRuntimeSSSE3()
 #if defined(HAVE_AVX_AT_COMPILE_TIME) && !defined(HAVE_INLINE_AVX)
 
 /************************************************************************/
-/*                          CPLHaveRuntimeAVX()                         */
+/*                         CPLHaveRuntimeAVX()                          */
 /************************************************************************/
 
 #if defined(__GNUC__)
@@ -146,43 +146,45 @@ static bool CPLDetectRuntimeAVX()
 }
 
 bool bCPLHasAVX = false;
-static void CPLHaveRuntimeAVXInitialize() __attribute__((constructor));
+static void CPLHaveRuntimeAVXInitialize() __attribute__((constructor(101)));
 
 static void CPLHaveRuntimeAVXInitialize()
 {
     bCPLHasAVX = CPLDetectRuntimeAVX();
 }
 
-#elif defined(_MSC_FULL_VER) && (_MSC_FULL_VER >= 160040219) &&                \
-    (defined(_M_IX86) || defined(_M_X64))
-// _xgetbv available only in Visual Studio 2010 SP1 or later
-
+#elif defined(_MSC_VER)
 bool CPLHaveRuntimeAVX()
 {
-    int cpuinfo[4] = {0, 0, 0, 0};
-    CPL_CPUID(1, cpuinfo);
-
-    // Check OSXSAVE feature.
-    if ((cpuinfo[REG_ECX] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0)
+    static const bool bHasAVX = []() -> bool
     {
-        return false;
-    }
+        int cpuinfo[4] = {0, 0, 0, 0};
+        CPL_CPUID(1, cpuinfo);
 
-    // Check AVX feature.
-    if ((cpuinfo[REG_ECX] & (1 << CPUID_AVX_ECX_BIT)) == 0)
-    {
-        return false;
-    }
+        // Check OSXSAVE feature.
+        if ((cpuinfo[REG_ECX] & (1 << CPUID_OSXSAVE_ECX_BIT)) == 0)
+        {
+            return false;
+        }
 
-    // Issue XGETBV and check the XMM and YMM state bit.
-    unsigned __int64 xcrFeatureMask = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
-    if ((xcrFeatureMask & (BIT_XMM_STATE | BIT_YMM_STATE)) !=
-        (BIT_XMM_STATE | BIT_YMM_STATE))
-    {
-        return false;
-    }
+        // Check AVX feature.
+        if ((cpuinfo[REG_ECX] & (1 << CPUID_AVX_ECX_BIT)) == 0)
+        {
+            return false;
+        }
 
-    return true;
+        // Issue XGETBV and check the XMM and YMM state bit.
+        unsigned __int64 xcrFeatureMask = _xgetbv(_XCR_XFEATURE_ENABLED_MASK);
+        if ((xcrFeatureMask & (BIT_XMM_STATE | BIT_YMM_STATE)) !=
+            (BIT_XMM_STATE | BIT_YMM_STATE))
+        {
+            return false;
+        }
+
+        return true;
+    }();
+
+    return bHasAVX;
 }
 
 #else
@@ -194,6 +196,47 @@ bool CPLHaveRuntimeAVX()
 
 #endif
 
-#endif  // defined(HAVE_AVX_AT_COMPILE_TIME) && !defined(CPLHaveRuntimeAVX)
+#endif  // defined(HAVE_AVX_AT_COMPILE_TIME) && !defined(HAVE_INLINE_AVX)
+
+#if defined(HAVE_AVX2_AT_COMPILE_TIME) && !defined(HAVE_INLINE_AVX2)
+
+#if defined(__GNUC__)
+
+bool bCPLHasAVX2 = false;
+// Use 102 because  CPLHaveRuntimeAVXInitialize() uses 101, so we are run
+// afterwards
+static void CPLHaveRuntimeAVX2Initialize() __attribute__((constructor(102)));
+
+static void CPLHaveRuntimeAVX2Initialize()
+{
+    bCPLHasAVX2 = CPLHaveRuntimeAVX() && __builtin_cpu_supports("avx2");
+}
+
+#else
+
+/************************************************************************/
+/*                         CPLHaveRuntimeAVX2()                         */
+/************************************************************************/
+
+bool CPLHaveRuntimeAVX2()
+{
+    static const bool bHasAVX2 = []() -> bool
+    {
+#if defined(_MSC_VER)
+        if (!CPLHaveRuntimeAVX())
+            return false;
+        int cpuInfo[4] = {};
+        __cpuidex(cpuInfo, 7, 0);
+        return (cpuInfo[REG_EBX] & (1 << 5)) != 0;  // EBX bit 5 = AVX2
+#else
+        return false;
+#endif
+    }();
+    return bHasAVX2;
+}
+
+#endif
+
+#endif  // defined(HAVE_AVX2_AT_COMPILE_TIME) && !defined(HAVE_INLINE_AVX2)
 
 //! @endcond

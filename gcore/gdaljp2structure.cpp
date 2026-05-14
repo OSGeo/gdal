@@ -1026,7 +1026,7 @@ static const char *GetMarkerName(GByte byVal)
 }
 
 /************************************************************************/
-/*                       DumpJPK2CodeStream()                           */
+/*                         DumpJPK2CodeStream()                         */
 /************************************************************************/
 
 static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
@@ -1530,14 +1530,16 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 READ_MARKER_FIELD_UINT8("SPcod_NumDecompositions");
                 READ_MARKER_FIELD_UINT8(
                     "SPcod_xcb_minus_2",
-                    [](GByte v) {
+                    [](GByte v)
+                    {
                         return std::string(v <= 8
                                                ? CPLSPrintf("%d", 1 << (2 + v))
                                                : "invalid");
                     });
                 READ_MARKER_FIELD_UINT8(
                     "SPcod_ycb_minus_2",
-                    [](GByte v) {
+                    [](GByte v)
+                    {
                         return std::string(v <= 8
                                                ? CPLSPrintf("%d", 1 << (2 + v))
                                                : "invalid");
@@ -1616,14 +1618,16 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 READ_MARKER_FIELD_UINT8("SPcoc_NumDecompositions");
                 READ_MARKER_FIELD_UINT8(
                     "SPcoc_xcb_minus_2",
-                    [](GByte v) {
+                    [](GByte v)
+                    {
                         return std::string(v <= 8
                                                ? CPLSPrintf("%d", 1 << (2 + v))
                                                : "invalid");
                     });
                 READ_MARKER_FIELD_UINT8(
                     "SPcoc_ycb_minus_2",
-                    [](GByte v) {
+                    [](GByte v)
+                    {
                         return std::string(v <= 8
                                                ? CPLSPrintf("%d", 1 << (2 + v))
                                                : "invalid");
@@ -1675,7 +1679,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 READ_MARKER_FIELD_UINT8("Ztlm");
                 auto Stlm = READ_MARKER_FIELD_UINT8(
                     "Stlm",
-                    [](GByte v) {
+                    [](GByte v)
+                    {
                         return std::string(CPLSPrintf(
                             "ST=%d SP=%d", (v >> 4) & 3, (v >> 6) & 1));
                     });
@@ -1806,7 +1811,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                     {
                         READ_MARKER_FIELD_UINT8(
                             CPLSPrintf("SPqcd%d", i),
-                            [](GByte v) {
+                            [](GByte v)
+                            {
                                 return std::string(
                                     CPLSPrintf("epsilon_b = %d", v >> 3));
                             });
@@ -1867,7 +1873,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                     {
                         READ_MARKER_FIELD_UINT8(
                             CPLSPrintf("SPqcc%d", i),
-                            [](GByte v) {
+                            [](GByte v)
+                            {
                                 return std::string(
                                     CPLSPrintf("epsilon_b = %d", v >> 3));
                             });
@@ -1988,7 +1995,8 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                     break;
                 auto RCom = READ_MARKER_FIELD_UINT16(
                     "Rcom",
-                    [](GUInt16 v) {
+                    [](GUInt16 v)
+                    {
                         return std::string((v == 0)   ? "Binary"
                                            : (v == 1) ? "LATIN1"
                                                       : "");
@@ -2020,7 +2028,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                      GDALGetJPEG2000StructureInternal()              */
+/*                  GDALGetJPEG2000StructureInternal()                  */
 /************************************************************************/
 
 static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
@@ -2323,7 +2331,7 @@ static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                        GDALGetJPEG2000Structure()                    */
+/*                      GDALGetJPEG2000Structure()                      */
 /************************************************************************/
 
 constexpr unsigned char jpc_header[] = {0xff, 0x4f};
@@ -2358,7 +2366,7 @@ CPLXMLNode *GDALGetJPEG2000Structure(const char *pszFilename,
 #ifndef DOXYGEN_SKIP
 
 /************************************************************************/
-/*                        GDALGetJPEG2000Structure()                    */
+/*                      GDALGetJPEG2000Structure()                      */
 /************************************************************************/
 
 CPLXMLNode *GDALGetJPEG2000Structure(const char *pszFilename, VSILFILE *fp,
@@ -2436,7 +2444,7 @@ CPLXMLNode *GDALGetJPEG2000Structure(const char *pszFilename, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                     GDALGetJPEG2000Reversibility()                   */
+/*                    GDALGetJPEG2000Reversibility()                    */
 /************************************************************************/
 
 const char *GDALGetJPEG2000Reversibility(const char *pszFilename, VSILFILE *fp)
@@ -2547,7 +2555,8 @@ const char *GDALGetJPEG2000Reversibility(const char *pszFilename, VSILFILE *fp)
                     pszReversibility = "LOSSY";
                 }
             }
-            else if (pszCOM && STARTS_WITH(pszCOM, "Created by OpenJPEG"))
+            else if ((pszCOM && STARTS_WITH(pszCOM, "Created by OpenJPEG")) ||
+                     (pszCOM && STARTS_WITH(pszCOM, "Created by Grok")))
             {
                 // Starting with GDAL 3.6, the JP2OpenJPEG driver will write
                 // if the encoding parameters are lossless/lossy (for 5x3

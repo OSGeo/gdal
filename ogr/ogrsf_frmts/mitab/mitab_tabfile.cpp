@@ -60,7 +60,7 @@ static char *EscapeString(const char *pszInput,
     char *pszOutput = static_cast<char *>(CPLMalloc(nLength * 2 + 1));
     int iOut = 0;
     int nDoubleQuotesCount = 0;
-    for (int iIn = 0; iIn < static_cast<int>(nLength + 1); ++iIn)
+    for (int iIn = 0; iIn < static_cast<int>(nLength); ++iIn)
     {
         if (pszInput[iIn] == '"')
         {
@@ -179,7 +179,7 @@ TABFile::~TABFile()
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig TABFile::GetFeatureCount(int bForce)
@@ -2017,9 +2017,8 @@ int TABFile::SetFeatureDefn(
      * Keep a reference to the OGRFeatureDefn... we'll have to take the
      * reference count into account when we are done with it.
      *----------------------------------------------------------------*/
-    if (m_poDefn && m_poDefn->Dereference() == 0)
-        delete m_poDefn;
-
+    if (m_poDefn)
+        m_poDefn->Release();
     m_poDefn = poFeatureDefn;
     m_poDefn->Reference();
 
@@ -2912,7 +2911,7 @@ OGRErr TABFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
 }
 
 /************************************************************************/
-/*                            SyncToDisk()                             */
+/*                             SyncToDisk()                             */
 /************************************************************************/
 
 OGRErr TABFile::SyncToDisk()

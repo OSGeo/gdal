@@ -15,7 +15,7 @@
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/bytes/index.html
 
 /************************************************************************/
-/*                       ZarrV3CodecBytes()                            */
+/*                          ZarrV3CodecBytes()                          */
 /************************************************************************/
 
 ZarrV3CodecBytes::ZarrV3CodecBytes() : ZarrV3Codec(NAME)
@@ -23,7 +23,7 @@ ZarrV3CodecBytes::ZarrV3CodecBytes() : ZarrV3Codec(NAME)
 }
 
 /************************************************************************/
-/*                           GetConfiguration()                         */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 /* static */ CPLJSONObject ZarrV3CodecBytes::GetConfiguration(bool bLittle)
@@ -34,7 +34,7 @@ ZarrV3CodecBytes::ZarrV3CodecBytes() : ZarrV3Codec(NAME)
 }
 
 /************************************************************************/
-/*                 ZarrV3CodecBytes::InitFromConfiguration()            */
+/*              ZarrV3CodecBytes::InitFromConfiguration()               */
 /************************************************************************/
 
 bool ZarrV3CodecBytes::InitFromConfiguration(
@@ -94,7 +94,7 @@ bool ZarrV3CodecBytes::InitFromConfiguration(
 }
 
 /************************************************************************/
-/*                     ZarrV3CodecBytes::Clone()                        */
+/*                      ZarrV3CodecBytes::Clone()                       */
 /************************************************************************/
 
 std::unique_ptr<ZarrV3Codec> ZarrV3CodecBytes::Clone() const
@@ -130,6 +130,19 @@ bool ZarrV3CodecBytes::Encode(const ZarrByteVectorQuickResize &abySrc,
     const GByte *pabySrc = abySrc.data();
     GByte *pabyDst = abyDst.data();
 
+    if (m_oInputArrayMetadata.oElt.nativeType ==
+        DtypeElt::NativeType::STRING_UNICODE)
+    {
+        // Swap each 4-byte UCS-4 character individually
+        const size_t nTotalBytes = nEltCount * nNativeSize;
+        for (size_t i = 0; i < nTotalBytes; i += 4)
+        {
+            const uint32_t val =
+                CPL_SWAP32(*reinterpret_cast<const uint32_t *>(pabySrc + i));
+            memcpy(pabyDst + i, &val, sizeof(val));
+        }
+        return true;
+    }
     if (m_oInputArrayMetadata.oElt.nativeType ==
         DtypeElt::NativeType::COMPLEX_IEEEFP)
     {

@@ -32,7 +32,9 @@ if (MSVC)
       /wd4245
       /wd4206
       /wd4351
-      /wd4611)
+      /wd4611
+      /w44800   # Enable Implicit conversion from 'type' to bool.
+  )
   set(GDAL_CXX_WARNING_FLAGS ${GDAL_C_WARNING_FLAGS})
   add_compile_options(/EHsc /Zc:__cplusplus)
 
@@ -169,6 +171,11 @@ else ()
       set(GDAL_CXX_WARNING_FLAGS ${GDAL_CXX_WARNING_FLAGS} -ftrapv)
     endif ()
   endif ()
+
+  check_c_compiler_flag(-fsanitize-ignorelist=${PROJECT_SOURCE_DIR}/cmake/helpers/ubsan_ignore_list.txt HAVE_SANITIZE_IGNORE_LIST)
+  if (HAVE_SANITIZE_IGNORE_LIST)
+      add_compile_options(-fsanitize-ignorelist=${PROJECT_SOURCE_DIR}/cmake/helpers/ubsan_ignore_list.txt)
+  endif()
 
 endif ()
 

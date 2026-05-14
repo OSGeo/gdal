@@ -556,6 +556,11 @@ int main(int nArgc, char **papszArgv)
                 printf(" %6.6s(%d)", szTREName, nThisTRESize);
                 if (strcmp(szTREName, "RPFDES") == 0)
                     nRPFDESOffset = nOffset + 11;
+                if (nThisTRESize == 0)
+                {
+                    printf("Invalid TRE size\n");
+                    break;
+                }
                 nOffset += 11 + nThisTRESize;
             }
             printf("\n");

@@ -13,6 +13,7 @@
 
 import json
 import os
+import shutil
 
 import gdaltest
 import pytest
@@ -277,19 +278,19 @@ def test_gdalalg_pipeline_help_doc(gdal_path):
 
 def test_gdal_pipeline_raster_output_to_gdalg(tmp_path, gdal_path):
 
-    src_filename = os.path.join(os.getcwd(), "../gcore/data/byte.tif").replace(
-        "\\", "/"
-    )
+    gdal.Mkdir(tmp_path / "src with space", 0o755)
+    shutil.copy("../gcore/data/byte.tif", tmp_path / "src with space")
+    src_filename = str(tmp_path / "src with space" / "byte.tif").replace("\\", "/")
     out_filename = str(tmp_path / "out.gdalg.json")
     gdaltest.runexternal(
-        f"{gdal_path} pipeline read {src_filename} ! write {out_filename}"
+        f'{gdal_path} pipeline read "{src_filename}" ! write {out_filename}'
     )
     # Test that configuration option is not serialized
     j = json.loads(gdal.VSIFile(out_filename, "rb").read())
     assert "gdal_version" in j
     del j["gdal_version"]
     assert j == {
-        "command_line": f"gdal pipeline read --input {src_filename}",
+        "command_line": f'gdal pipeline read --input "{src_filename}"',
         "type": "gdal_streamed_alg",
     }
 
@@ -300,17 +301,21 @@ def test_gdal_pipeline_raster_output_to_gdalg(tmp_path, gdal_path):
 
 def test_gdal_pipeline_vector_output_to_gdalg(tmp_path, gdal_path):
 
-    src_filename = os.path.join(os.getcwd(), "../ogr/data/poly.shp").replace("\\", "/")
+    gdal.Mkdir(tmp_path / "src with space", 0o755)
+    shutil.copy("../ogr/data/poly.shp", tmp_path / "src with space")
+    shutil.copy("../ogr/data/poly.shx", tmp_path / "src with space")
+    shutil.copy("../ogr/data/poly.dbf", tmp_path / "src with space")
+    src_filename = str(tmp_path / "src with space" / "poly.shp").replace("\\", "/")
     out_filename = str(tmp_path / "out.gdalg.json")
     gdaltest.runexternal(
-        f"{gdal_path} pipeline read {src_filename} ! write {out_filename}"
+        f'{gdal_path} pipeline read "{src_filename}" ! write {out_filename}'
     )
     # Test that configuration option is not serialized
     j = json.loads(gdal.VSIFile(out_filename, "rb").read())
     assert "gdal_version" in j
     del j["gdal_version"]
     assert j == {
-        "command_line": f"gdal pipeline read --input {src_filename}",
+        "command_line": f'gdal pipeline read --input "{src_filename}"',
         "type": "gdal_streamed_alg",
     }
 
@@ -968,7 +973,7 @@ def test_gdalalg_pipeline_tee_gdalg(tmp_vsimem):
     with gdaltest.error_raised(gdal.CE_Warning):
         gdal.Run(
             "pipeline",
-            pipeline=f"read {src_filename} ! tee [ write {out_filename} ] ! write {gdalg_filename}",
+            pipeline=f'read "{src_filename}" ! tee [ write {out_filename} ] ! write {gdalg_filename}',
         )
 
     assert gdal.VSIStatL(out_filename) is None
@@ -1102,3 +1107,42 @@ def test_gdalalg_pipeline_tee_output_to_stdout(tmp_vsimem):
 
     with gdal.Open(tmp_vsimem / "test.xyz") as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_gdalalg_pipeline_ossfuzz_485952614():
+
+    # Used to segfault
+    with pytest.raises(Exception):
+        gdal.alg.pipeline(pipeline="read -h")
+
+
+def test_gdalalg_pipeline_help_after_as_features(tmp_vsimem):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} pipeline read ../gcore/data/byte.tif ! as-features ! info --help"
+    )
+
+    assert "Return information on a vector dataset" in out
+
+
+def test_gdalalg_pipeline_help_after_rasterize(tmp_vsimem):
+
+    import gdaltest
+    import test_cli_utilities
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} pipeline read ../ogr/data/poly.shp ! rasterize ! info --help"
+    )
+
+    assert "Return information on a raster dataset" in out

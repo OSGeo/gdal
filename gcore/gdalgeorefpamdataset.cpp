@@ -21,7 +21,7 @@
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                       GDALGeorefPamDataset()                         */
+/*                        GDALGeorefPamDataset()                        */
 /************************************************************************/
 
 GDALGeorefPamDataset::GDALGeorefPamDataset()
@@ -50,7 +50,7 @@ GDALGeorefPamDataset::~GDALGeorefPamDataset()
 }
 
 /************************************************************************/
-/*                          GetMetadata()                               */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList GDALGeorefPamDataset::GetMetadata(const char *pszDomain)
@@ -100,7 +100,7 @@ CSLConstList GDALGeorefPamDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                         GetMetadataItem()                            */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *GDALGeorefPamDataset::GetMetadataItem(const char *pszName,
@@ -114,7 +114,7 @@ const char *GDALGeorefPamDataset::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                           TryLoadXML()                              */
+/*                             TryLoadXML()                             */
 /************************************************************************/
 
 CPLErr GDALGeorefPamDataset::TryLoadXML(CSLConstList papszSiblingFiles)

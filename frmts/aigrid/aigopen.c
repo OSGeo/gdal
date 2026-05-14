@@ -39,11 +39,12 @@ AIGInfo_t *AIGOpen(const char *pszInputName, const char *pszAccess)
     /*      name.                                                           */
     /* -------------------------------------------------------------------- */
     pszCoverName = CPLStrdup(pszInputName);
-    if (EQUAL(pszCoverName + strlen(pszCoverName) - 4, ".adf"))
+    const size_t nCoverNameLen = strlen(pszCoverName);
+    if (nCoverNameLen > 4 && EQUAL(pszCoverName + nCoverNameLen - 4, ".adf"))
     {
         int i;
 
-        for (i = (int)strlen(pszCoverName) - 1; i > 0; i--)
+        for (i = (int)nCoverNameLen - 1; i > 0; i--)
         {
             if (pszCoverName[i] == '\\' || pszCoverName[i] == '/')
             {

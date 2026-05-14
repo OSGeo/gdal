@@ -151,7 +151,7 @@ PostGIS, ...), the following layer metadata items may be set:
   those items is not needed.
 
 * ``GEOTRANSFORM=<gt0>,<gt1>,<gt2>,<gt3>,<gt4>,<gt5>``: defines the GeoTransform.
-  Used together with ``XSIZE`` and ``YSIZE``, this is an alternate way of
+  Used together with ``XSIZE`` and ``YSIZE``, this is an alternate way of
   defining the extent and resolution os the virtual mosaic.
 
   It is not necessary to define this item if ``RESX=`` and ``RESY`` are set
@@ -163,13 +163,38 @@ PostGIS, ...), the following layer metadata items may be set:
   of the mosaic. Possible values are ``red``, ``green``, ``blue``, ``alpha``,
   ``undefined``
 
-* ``SRS=<string>``: defines the SRS of the virtual mosaic, using any value
+* ``SRS=<string>``: specifies the SRS of the virtual mosaic, using any value
   supported by the :cpp:func:`OGRSpatialReference::SetFromUserInput` call, which
   includes EPSG Projected, Geographic or Compound CRS (i.e. EPSG:4296), a
   well known text (WKT) CRS definition, PROJ.4 declarations, etc.
 
   It is not necessary to define this element if the virtual mosaic SRS is
   recorded as the SRS of the vector layer of the tile index.
+
+  When ``SRS`` is set and the vector layer already has a different SRS, a
+  warning is emitted unless ``SRS_BEHAVIOR`` is also set. See
+  ``SRS_BEHAVIOR`` below.
+
+* ``SRS_BEHAVIOR=OVERRIDE|REPROJECT``: controls how the ``SRS`` parameter
+  interacts with an existing SRS on the vector layer.
+
+  - ``OVERRIDE``: use the specified SRS as the dataset SRS without
+    reprojecting tile coordinates. Use this when the layer's SRS metadata is
+    missing or incorrect and you want to correct it.
+  - ``REPROJECT``: reproject tile coordinates from the layer's native SRS to
+    the specified SRS on the fly, including transforming spatial filters applied
+    during raster reads. Use this when you want the virtual mosaic in a
+    different projection than the tile index layer.
+
+  If ``SRS`` is set and differs from the vector layer's SRS and
+  ``SRS_BEHAVIOR`` is not specified, a warning is emitted. If the vector
+  layer has no SRS, the specified ``SRS`` is used silently regardless of this
+  option.
+
+  .. note::
+     For on-the-fly reprojection of the whole GTI mosaic output, wrapping
+     the GTI file in a warped VRT (e.g. via ``gdal raster reproject``) is
+     an alternative that does not require ``SRS_BEHAVIOR``.
 
 * ``LOCATION_FIELD=<string>``: name of the field where the tile location is
   stored. Defaults to ``location``.
@@ -211,47 +236,23 @@ PostGIS, ...), the following layer metadata items may be set:
 
   Unit of the band.
 
-* ``OVERVIEW_<idx>_DATASET=<string>`` where idx is an integer index (starting at 0
-  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
+* ``OVERVIEW_<idx>_DATASET=<string>``. See :ref:`raster.gti.overview.mdi`
 
-  Name of the dataset to use as the first overview level. This may be a
-  raster dataset (for example a GeoTIFF file, or another GTI dataset).
-  This may also be a vector dataset with a GTI compatible layer, potentially
-  specified with ``OVERVIEW_<idx>_LAYER``.
+* ``OVERVIEW_<idx>_LAYER=<string>``. See :ref:`raster.gti.overview.mdi`
 
-  Starting with GDAL 3.9.2, overviews of ``OVERVIEW_<idx>_DATASET=<string>``
-  are also automatically added, unless ``OVERVIEW_<idx>_OPEN_OPTIONS=OVERVIEW_LEVEL=NONE``
-  is specified.
+* ``OVERVIEW_<idx>_OPEN_OPTIONS=<key1=value1>[,key2=value2]...``.
+  See :ref:`raster.gti.overview.mdi`
 
-* ``OVERVIEW_<idx>_OPEN_OPTIONS=<key1=value1>[,key2=value2]...`` where idx is an integer index (starting at 0
-  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
+* ``OVERVIEW_<idx>_FACTOR=<int>``. See  :ref:`raster.gti.overview.mdi`
 
-  Open options(s) to use to open ``OVERVIEW_<idx>_DATASET``.
-
-* ``OVERVIEW_<idx>_LAYER=<string>`` where idx is an integer index (starting at 0
-  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
-
-  Only taken into account if ``OVERVIEW_<idx>_DATASET=<string>`` is not specified,
-  or points to a GTI dataset.
-
-  Name of the vector layer to use as the first overview level, assuming
-  ``OVERVIEW_<idx>_DATASET`` points to a vector dataset. ``OVERVIEW_<idx>_DATASET``
-  may also not be specified, in which case the vector dataset of the full
-  resolution virtual mosaic is used.
-
-* ``OVERVIEW_<idx>_FACTOR=<int>`` where idx is an integer index (starting at 0
-  since GDAL 3.9.2, starting at 1 in GDAL 3.9.0 and 3.9.1)
-
-  Sub-sampling factor, strictly greater than 1.
-
-  Only taken into account if ``OVERVIEW_<idx>_DATASET=<string>`` is not specified,
-  or points to a GTI dataset.
-
-  If ``OVERVIEW_<idx>_DATASET`` and ``OVERVIEW_<idx>_LAYER`` are not specified, then all tiles of the full
-  resolution virtual mosaic are used, with the specified sub-sampling factor
-  (it is recommended, but not required, that those tiles do have a corresponding overview).
-  ``OVERVIEW_<idx>_DATASET`` and/or ``OVERVIEW_<idx>_LAYER`` may also be
-  specified to point to another tile index.
+* ``INTERLEAVE=<val>`` (starting with GDAL 3.13) where ``<val>`` can be
+  ``PIXEL`` or ``BAND`` specifies how pixels belonging to multiple bands are
+  grouped together. This setting affects performance, both how external code
+  accesses pixel values, and internal operation of the driver.
+  When using :ref:`gdal_driver_gti_create`, the value is automatically set to
+  match interleave mode among the input sources. Accessing sources whose
+  interleave mode differs from the exposed value may result in reduced performance.
+  See :ref:`raster_data_model_interleave_mode` for more details.
 
 All overviews *must* have exactly the same extent as the full resolution
 virtual mosaic. The GTI driver does not check that, and if that condition is
@@ -366,7 +367,10 @@ mentioned in the previous section.
             <MDI key="FOO">BAR</MDI>
         </Metadata>
 
-        <Overview>                                     <!-- optional -->
+        <!-- Overview specification.
+             Not required, but overviews must be explicitly specified if desired.
+        -->
+        <Overview>
             <!-- 1st overview level will reuse the tile index of the
                  IndexDataset and IndexLayer elements, with all tiles considered
                  downsampled by a factor of 2 -->
@@ -379,23 +383,46 @@ mentioned in the previous section.
             <Factor>4</Factor>
         </Overview>
         <Overview>                                     <!-- optional -->
-            <!-- 3rd overview level (and potentially 4th, 5th... depending on
-                 the number of overview levels in the pointed GeoTIFF file.
-                 Only since GDAL 3.9.2)
+            <!-- 3rd overview level using a GeoTIFF file. If that file has itself
+                 overviews, they will also be added.
+                 To only specify the full resolution of the designated dataset,
+                 explicitly add <Factor>1</Factor>
             -->
             <Dataset>some.tif</Dataset>
         </Overview>
         <Overview>                                     <!-- optional -->
+            <!-- 4th overview level. -->
+            <Dataset>another.tif</Dataset>
+            <! -- The reduction factor is relative to the size of the full
+                  resolution layer of the designated dataset,
+                  and *not* relative to the size of the full
+                  resolution layer of the GTI dataset.
+                  It is also possible to select a particular overview by
+                  using the OVERVIEW_LEVEL open option.
+            -->
+            <Factor>4</Factor>
+        </Overview>
+        <Overview>                                     <!-- optional -->
+            <!-- 5th overview level. -->
+            <Dataset>another.tif</Dataset>
+            <! -- Use the overview level of index 2 -->
+             <OpenOptions>
+                  <OOI key="OVERVIEW_LEVEL">2</OOI>
+             </OpenOptions>
+        </Overview>
+        <Overview>                                     <!-- optional -->
             <!-- Last overview level points to another GTI dataset -->
             <Dataset>other.gti.gpkg</Dataset>
-            <Layer>other_layer</Layer>
+            <Layer>other_layer</Layer>                 <!-- optional -->
             <OpenOptions>                              <!-- optional -->
-                <OOI key="XMIN">0</OOI>
-                <OOI key="YMIN">1</OOI>
-                <OOI key="XMAX">2</OOI>
-                <OOI key="YMAX">3</OOI>
+                <OOI key="MINX">2</OOI>
+                <OOI key="MINY">49</OOI>
+                <OOI key="MAXX">3</OOI>
+                <OOI key="MAXY">50</OOI>
             </OpenOptions>
         </Overview>
+
+        <Interleave>Band|Pixel</Interleave>            <!-- optional -->
 
     </GDALTileIndexDataset>
 
@@ -504,8 +531,18 @@ also defined as layer metadata items or in the .gti XML file
 -  .. oo:: SRS
       :choices: <string>
 
-      Override/sets the Spatial Reference System in one of the formats supported
-      by :cpp:func:`OGRSpatialReference::SetFromUserInput`.
+      Specifies the Spatial Reference System in one of the formats supported
+      by :cpp:func:`OGRSpatialReference::SetFromUserInput`. When set and the
+      vector layer already has a different SRS, see ``SRS_BEHAVIOR``.
+
+-  .. oo:: SRS_BEHAVIOR
+      :choices: OVERRIDE, REPROJECT
+
+      Controls how ``SRS`` interacts with an existing SRS on the vector layer.
+      ``OVERRIDE`` sets the dataset SRS without reprojecting tile coordinates.
+      ``REPROJECT`` reprojects tile coordinates from the layer's native SRS to
+      the specified SRS on the fly. If ``SRS`` is set and differs from the
+      layer's SRS and this option is not specified, a warning is emitted.
 
 -  .. oo:: MINX
       :choices: <float>
@@ -526,6 +563,208 @@ also defined as layer metadata items or in the .gti XML file
       :choices: <float>
 
       Maximum Y value for the virtual mosaic extent
+
+-  .. oo:: WARPING_MEMORY_SIZE.
+      :choices: <string>
+      :default: 64MB
+      :since: 3.12.3
+
+      Set the amount of memory that the warp API is allowed to use for caching
+      when on-the-fly reprojection occurs.
+      The value can be specified either as a fixed amount of memory (e.g.
+      ``200MB``, ``1G``) or as a percentage of usable RAM (``10%``).
+      Note that, in case of multi-threaded optimizations described in the
+      paragraph below, the value applies for each warped source.
+
+
+Overviews
+---------
+
+By default the minimal configuration of a GTI dataset does not expose explicit
+overviews. But downsampled pixel requests to a GTI dataset may use overviews
+of the source tiles referenced by the GTI dataset when they exist.
+
+It is possible to provide explicit overview levels that the GTI dataset will
+expose to external users (and of course use for downsampled pixel requests).
+This can be done through one or several ``<Overview>`` elements in the
+GTI XML format, or by using specific layer metadata keys starting with
+``OVERVIEW_{idx}`` when using a vector dataset as the GTI dataset.
+
+In both cases, each added overview level may be:
+- a downsampled version of the main GTI dataset
+- another GTI dataset, at its full resolution or at a subsampled one
+- any other GDAL recognized raster file, at its full resolution or at a subsampled one.
+
+The order of declaration may matter. Overview levels directly or indirectly
+specified by later XML or metadata items are only added if their size is smaller
+than the previously added overview.
+
+.. _raster.gti.overview.xml:
+
+Overviews in XML
+++++++++++++++++
+
+The general syntax for each overview level is:
+
+   .. code-block:: xml
+
+        <Overview>
+            <Dataset>other.gti.gpkg</Dataset>
+            <Layer>other_layer</Layer>
+            <Factor>numeric_value_larger_than_one>
+            <OpenOptions>
+                <OOI key="key">value</OOI>
+            </OpenOptions>
+        </Overview>
+
+All elements are optional, but at least one of ``Dataset``, ``Layer`` or ``Factor``
+must be specific. Note also that at most one of those child elements is allowed
+per ``<Overview>`` element. So typically if several levels from a same dataset are
+needed, one ``<Overview>`` element per level must be specified.
+
+.. example::
+
+   This example uses the tile index of the IndexDataset and IndexLayer elements,
+   with all source tiles downsampled by a factor of 2.
+
+   .. code-block:: xml
+
+        <Overview>
+            <Factor>2</Factor>
+        </Overview>
+
+.. example::
+
+   This example uses a GeoTIFF file, and all its potential overviews, as overviews
+   of the GTI dataset
+
+   .. code-block:: xml
+
+        <Overview>
+            <Dataset>some.tif</Dataset>
+        </Overview>
+
+.. example::
+
+   This example uses the overview level of a GeoTIFF file whose dimensions are
+   at least four times smaller than the full resolution layer of ``another.tif``.
+
+   .. code-block:: xml
+
+        <Overview>
+            <Dataset>another.tif</Dataset>
+            <Factor>4</Factor>
+        </Overview>
+
+.. example::
+
+   This example uses the overview of index 2 of a GeoTIFF file (so given that
+   overview indexing starts at 0, and the full resolution layer is not including
+   in this numbering, this is the 4th layer in size of the file)
+
+   .. code-block:: xml
+
+        <Overview>
+            <Dataset>another.tif</Dataset>
+             <OpenOptions>
+                  <OOI key="OVERVIEW_LEVEL">2</OOI>
+             </OpenOptions>
+        </Overview>
+
+.. example::
+
+   This example points to another GTI dataset, with an explicit layer name,
+   and by adjusting its extent to the one of the main GTI dataset (assuming
+   such extent is 2,49,3,50).
+
+   .. code-block:: xml
+
+        <Overview>
+            <Dataset>other.gti.gpkg</Dataset>
+            <Layer>other_layer</Layer>
+            <OpenOptions>
+                <OOI key="MINX">2</OOI>
+                <OOI key="MINY">49</OOI>
+                <OOI key="MAXX">3</OOI>
+                <OOI key="MAXY">50</OOI>
+            </OpenOptions>
+        </Overview>
+
+
+.. _raster.gti.overview.mdi:
+
+Overviews as metadata items of a GDAL vector layer
+++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The recognized metadata items all start with ``OVERVIEW_<idx>_`` where idx is
+an integer index (starting at 0 since GDAL 3.9.2, starting at 1 in previous versions
+
+* ``OVERVIEW_<idx>_DATASET=<string>``
+
+  Name of the dataset to use as an overview level. This may be a
+  raster dataset (for example a GeoTIFF file, or another GTI dataset).
+  This may also be a vector dataset with a GTI compatible layer, potentially
+  specified with ``OVERVIEW_<idx>_LAYER``.
+
+  Starting with GDAL 3.9.2, overviews of ``OVERVIEW_<idx>_DATASET=<string>``
+  are also automatically added, unless ``OVERVIEW_<idx>_OPEN_OPTIONS=OVERVIEW_LEVEL=NONE``
+  is specified (or, since 3.13, ``OVERVIEW_<idx>_FACTOR=1``)
+
+* ``OVERVIEW_<idx>_OPEN_OPTIONS=<key1=value1>[,key2=value2]...``
+
+  Open options(s) to use to open ``OVERVIEW_<idx>_DATASET``.
+
+* ``OVERVIEW_<idx>_LAYER=<string>``
+
+  Only taken into account if ``OVERVIEW_<idx>_DATASET=<string>`` is not specified,
+  or points to a GTI dataset.
+
+  Name of the vector layer to use as an overview level, assuming
+  ``OVERVIEW_<idx>_DATASET`` points to a vector dataset. ``OVERVIEW_<idx>_DATASET``
+  may also not be specified, in which case the vector dataset of the full
+  resolution virtual mosaic is used.
+
+* ``OVERVIEW_<idx>_FACTOR=<int>``
+
+  Sub-sampling factor, greater or equal to 1 (1 accepted only since GDAL 3.13)
+
+  Before GDAL 3.13, was only taken into account if ``OVERVIEW_<idx>_DATASET=<string>``
+  was not not specified, or pointed to a GTI dataset. Since GDAL 3.13,
+  ``OVERVIEW_<idx>_FACTOR`` is also accepted on any valid ``OVERVIEW_<idx>_DATASET``.
+
+  If ``OVERVIEW_<idx>_DATASET`` and ``OVERVIEW_<idx>_LAYER`` are not specified, then all tiles of the full
+  resolution virtual mosaic are used, with the specified sub-sampling factor
+  (it is recommended, but not required, that those tiles do have a corresponding overview).
+  ``OVERVIEW_<idx>_DATASET`` and/or ``OVERVIEW_<idx>_LAYER`` may also be
+  specified to point to another tile index.
+
+.. example::
+
+   This example is the equivalent of all the examples of the :ref:`raster.gti.overview.xml` section.
+
+   .. code-block::
+
+        # Use the sources of the current GTI file, downsampled by a factor of 2
+        OVERVIEW_0_FACTOR=2
+
+        # Use the full resolution of some.tif and all its potential overviews.
+        OVERVIEW_1_DATASET=some.tif
+
+        # Use the first overview level of another.tif that is at least smaller
+        # than the dimensions of its full resolution layer divided by a factor of 4.
+        OVERVIEW_2_DATASET=another.tif
+        OVERVIEW_2_FACTOR=4
+
+        # Use the overview of index 2 from another.tif
+        OVERVIEW_3_DATASET=another.tif
+        OVERVIEW_3_OPEN_OPTIONS=OVERVIEW_LEVEL=2
+
+        # Use 'other_layer' of 'other.gti.gpkg' and adjust its extent to the one
+        # of the main GTI dataset (assuming such extent is 2,49,3,50).
+        OVERVIEW_4_DATASET=other.gti.gpkg
+        OVERVIEW_4_LAYER=layer
+        OVERVIEW_4_OPEN_OPTIONS=MINX=2,MINY=49,MAXX=3,MAXY=50
+
 
 Multi-threading optimizations
 -----------------------------

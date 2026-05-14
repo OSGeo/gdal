@@ -40,11 +40,13 @@ jpeg2000_drv = None
 jp2ecw_drv = None
 jp2mrsid_drv = None
 jp2openjpeg_drv = None
+jp2grok_drv = None
 jp2kak_drv_unregistered = False
 jpeg2000_drv_unregistered = False
 jp2ecw_drv_unregistered = False
 jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
+jp2grok_drv_unregistered = False
 
 ###############################################################################
 
@@ -1275,8 +1277,8 @@ def compare_ds(ds1, ds2, xoff=0, yoff=0, width=0, height=0, verbose=1):
 
 
 def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv
-    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered
+    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv, jp2grok_drv
+    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered, jp2grok_drv_unregistered
 
     # Deregister other potential conflicting JPEG2000 drivers that will
     # be re-registered in the cleanup
@@ -1310,6 +1312,12 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
         jp2openjpeg_drv.Deregister()
         jp2openjpeg_drv_unregistered = True
 
+    jp2grok_drv = gdal.GetDriverByName("JP2Grok")
+    if name_of_driver_to_keep != "JP2Grok" and jp2grok_drv:
+        gdal.Debug("gdaltest.", "Deregistering JP2Grok")
+        jp2grok_drv.Deregister()
+        jp2grok_drv_unregistered = True
+
     return True
 
 
@@ -1319,8 +1327,8 @@ def deregister_all_jpeg2000_drivers_but(name_of_driver_to_keep):
 
 
 def reregister_all_jpeg2000_drivers():
-    global jp2kak_drv, jpeg2000_drv, jp2ecw_drv, jp2mrsid_drv, jp2openjpeg_drv
-    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered
+
+    global jp2kak_drv_unregistered, jpeg2000_drv_unregistered, jp2ecw_drv_unregistered, jp2mrsid_drv_unregistered, jp2openjpeg_drv_unregistered, jp2grok_drv_unregistered
 
     if jp2kak_drv_unregistered:
         jp2kak_drv.Register()
@@ -1347,6 +1355,11 @@ def reregister_all_jpeg2000_drivers():
         jp2openjpeg_drv_unregistered = False
         gdal.Debug("gdaltest", "Registering JP2OpenJPEG")
 
+    if jp2grok_drv_unregistered:
+        jp2grok_drv.Register()
+        jp2grok_drv_unregistered = False
+        gdal.Debug("gdaltest", "Registering JP2Grok")
+
     return True
 
 
@@ -1362,7 +1375,7 @@ def filesystem_supports_sparse_files(path):
         return False
 
     try:
-        (ret, err) = runexternal_out_and_err(f'stat -f -c "%T" {path}')
+        ret, err = runexternal_out_and_err(f'stat -f -c "%T" {path}')
     except OSError:
         return False
 
@@ -1839,7 +1852,7 @@ credential_keys = set()
 
 @contextlib.contextmanager
 def credentials(prefix, options):
-    global credential_keys
+
     # Special processing for nested with credentials() call on the same key
     clear_credentials = prefix not in credential_keys
     credential_keys.add(prefix)
@@ -2151,7 +2164,7 @@ def error_raised(type, match=""):
     else:
         assert any(
             [err["level"] == type and match in err["message"] for err in errors]
-        ), f'Did not receive an error of type {err_levels[type]} matching "{match}. Received: {received}'
+        ), f'Did not receive an error of type {err_levels[type]} matching "{match}". Received: {received}'
 
 
 ###############################################################################
@@ -2166,11 +2179,15 @@ def gdal_has_vrt_expression_dialect(dialect):
 ###############################################################################
 
 
-def importorskip_gdal_array():
+def importorskip(lib):
     pytest_version = [int(x) for x in pytest.__version__.split(".")]
     if pytest_version >= [8, 2, 0]:
-        return pytest.importorskip("osgeo.gdal_array", exc_type=ImportError)
-    return pytest.importorskip("osgeo.gdal_array")
+        return pytest.importorskip(lib, exc_type=ImportError)
+    return pytest.importorskip(lib)
+
+
+def importorskip_gdal_array():
+    return importorskip("osgeo.gdal_array")
 
 
 ###############################################################################

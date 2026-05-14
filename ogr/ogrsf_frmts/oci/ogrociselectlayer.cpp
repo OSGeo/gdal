@@ -16,7 +16,7 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                          OGROCISelectLayer()                         */
+/*                         OGROCISelectLayer()                          */
 /************************************************************************/
 
 OGROCISelectLayer::OGROCISelectLayer(OGROCIDataSource *poDSIn,
@@ -36,7 +36,7 @@ OGROCISelectLayer::OGROCISelectLayer(OGROCIDataSource *poDSIn,
 }
 
 /************************************************************************/
-/*                         ~OGROCISelectLayer()                          */
+/*                         ~OGROCISelectLayer()                         */
 /************************************************************************/
 
 OGROCISelectLayer::~OGROCISelectLayer()

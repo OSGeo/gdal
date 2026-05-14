@@ -47,13 +47,6 @@ Program-Specific Options
     Base URL for STAC-GeoParquet the ``href`` property of the `id` property in
     a STAC-GeoParquet index.
 
-.. option:: --dst-crs <DST-CRS>
-
-    Geometries of input files will be transformed to the desired target
-    coordinate reference system.
-    Default creates simple rectangular polygons in the same coordinate reference
-    system as the input rasters.
-
 .. option:: --filename-filter <FILENAME-FILTER>
 
     Pattern that the filenames contained in input directories should follow.
@@ -93,7 +86,7 @@ Program-Specific Options
     Maximum pixel size in term of geospatial extent per pixel (resolution) that
     a raster should have to be selected. The pixel size
     is evaluated after reprojection of its extent to the target CRS defined
-    by :option:`--dst-crs`.
+    by :option:`--output-crs`.
 
 .. option:: --metadata <KEY>=<VALUE>
 
@@ -106,7 +99,14 @@ Program-Specific Options
     Minimum pixel size in term of geospatial extent per pixel (resolution) that
     a raster should have to be selected. The pixel size
     is evaluated after reprojection of its extent to the target CRS defined
-    by :option:`--dst-crs`.
+    by :option:`--output-crs`.
+
+.. option:: --output-crs <OUTPUT-CRS>
+
+    Geometries of input files will be transformed to the desired target
+    coordinate reference system.
+    Default creates simple rectangular polygons in the same coordinate reference
+    system as the input rasters.
 
 .. option:: --profile none|STAC-GeoParquet
 
@@ -167,6 +167,11 @@ Standard Options
         Whether the output dataset must be opened in update mode. Implies that
         it already exists.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -183,12 +188,12 @@ Examples
 
 .. example::
 
-   The :option:`--dst-crs` option can also be used to transform all input raster
+   The :option:`--output-crs` option can also be used to transform all input raster
    geometries into the same output projection:
 
    .. code-block:: bash
 
-       gdal raster index --dst-crs EPSG:4326 --source-crs-field-name=src_srs *.tif tile_index_mixed_crs.gpkg
+       gdal raster index --output-crs EPSG:4326 --source-crs-field-name=src_srs *.tif tile_index_mixed_crs.gpkg
 
 .. example::
    :title: Creates a STAC-GeoParquet compliant index.

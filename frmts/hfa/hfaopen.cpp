@@ -497,7 +497,7 @@ static CPLErr HFARemove(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                              HFADelete()                             */
+/*                             HFADelete()                              */
 /************************************************************************/
 
 CPLErr HFADelete(const char *pszFilename)
@@ -759,7 +759,7 @@ CPLErr HFAGetOverviewRasterBlock(HFAHandle hHFA, int nBand, int iOverview,
 }
 
 /************************************************************************/
-/*                   HFAGetOverviewRasterBlockEx()                      */
+/*                    HFAGetOverviewRasterBlockEx()                     */
 /************************************************************************/
 
 CPLErr HFAGetOverviewRasterBlockEx(HFAHandle hHFA, int nBand, int iOverview,
@@ -810,7 +810,7 @@ CPLErr HFASetOverviewRasterBlock(HFAHandle hHFA, int nBand, int iOverview,
 }
 
 /************************************************************************/
-/*                         HFAGetBandName()                             */
+/*                           HFAGetBandName()                           */
 /************************************************************************/
 
 const char *HFAGetBandName(HFAHandle hHFA, int nBand)
@@ -822,7 +822,7 @@ const char *HFAGetBandName(HFAHandle hHFA, int nBand)
 }
 
 /************************************************************************/
-/*                         HFASetBandName()                             */
+/*                           HFASetBandName()                           */
 /************************************************************************/
 
 void HFASetBandName(HFAHandle hHFA, int nBand, const char *pszName)
@@ -1002,7 +1002,7 @@ const Eprj_MapInfo *HFAGetMapInfo(HFAHandle hHFA)
 }
 
 /************************************************************************/
-/*                        HFAInvGeoTransform()                          */
+/*                         HFAInvGeoTransform()                         */
 /************************************************************************/
 
 static bool HFAInvGeoTransform(const double *gt_in, double *gt_out)
@@ -2000,7 +2000,7 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
                    const char *pszLayerName, int bOverview, int nBlockSize,
                    int bCreateCompressed, int bCreateLargeRaster,
                    int bDependentLayer, int nXSize, int nYSize,
-                   EPTType eDataType, char ** /* papszOptions */,
+                   EPTType eDataType, CSLConstList /* papszOptions */,
                    // These are only related to external (large) files.
                    GIntBig nStackValidFlagsOffset, GIntBig nStackDataOffset,
                    int nStackCount, int nStackIndex)
@@ -2237,7 +2237,7 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
 /************************************************************************/
 
 HFAHandle HFACreate(const char *pszFilename, int nXSize, int nYSize, int nBands,
-                    EPTType eDataType, char **papszOptions)
+                    EPTType eDataType, CSLConstList papszOptions)
 
 {
     if (nXSize == 0 || nYSize == 0)
@@ -3655,7 +3655,7 @@ char **HFAReadCameraModel(HFAHandle hHFA)
 }
 
 /************************************************************************/
-/*                         HFAReadElevationUnit()                       */
+/*                        HFAReadElevationUnit()                        */
 /************************************************************************/
 
 const char *HFAReadElevationUnit(HFAHandle hHFA, int iBand)

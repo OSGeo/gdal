@@ -28,7 +28,7 @@ typedef struct
 #define ROTLEFT(a, b) ((a << b) | (a >> (32 - b)))
 
 /************************************************************************/
-/*                         sha1_transform()                             */
+/*                           sha1_transform()                           */
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
@@ -97,7 +97,7 @@ static void sha1_transform(CPL_SHA1Context *ctx, const GByte data[])
 }
 
 /************************************************************************/
-/*                           CPL_SHA1Init()                             */
+/*                            CPL_SHA1Init()                            */
 /************************************************************************/
 
 static void CPL_SHA1Init(CPL_SHA1Context *ctx)
@@ -112,7 +112,7 @@ static void CPL_SHA1Init(CPL_SHA1Context *ctx)
 }
 
 /************************************************************************/
-/*                          CPL_SHA1Update()                            */
+/*                           CPL_SHA1Update()                           */
 /************************************************************************/
 
 static void CPL_SHA1Update(CPL_SHA1Context *ctx, const GByte data[], size_t len)

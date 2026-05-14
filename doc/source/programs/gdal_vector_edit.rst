@@ -118,6 +118,11 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -127,3 +132,13 @@ Examples
    .. code-block:: bash
 
         $ gdal vector edit --crs=EPSG:4326 --geometry-type=POLYGONZM in.gpkg out.gpkg --overwrite
+
+.. example::
+   :title: Apply a CRS to a Shapefile
+
+   If a Shapefile is missing its associated ``.prj`` file, it can be created as follows:
+
+   .. code-block:: bash
+
+        $ gdal vector edit --crs=EPSG:3857 in.shp out.shp
+

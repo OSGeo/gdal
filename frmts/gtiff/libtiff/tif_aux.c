@@ -138,7 +138,7 @@ static int TIFFDefaultTransferFunction(TIFF *tif, TIFFDirectory *td)
         return 0;
 
     n = ((tmsize_t)1) << td->td_bitspersample;
-    nbytes = n * sizeof(uint16_t);
+    nbytes = (tmsize_t)((uint64_t)n * sizeof(uint16_t));
     tf[0] = (uint16_t *)_TIFFmallocExt(tif, nbytes);
     if (tf[0] == NULL)
         return 0;
@@ -186,10 +186,10 @@ static int TIFFDefaultRefBlackWhite(TIFF *tif, TIFFDirectory *td)
          * YCbCr (Class Y) images must have the ReferenceBlackWhite
          * tag set. Fix the broken images, which lacks that tag.
          */
-        td->td_refblackwhite[0] = 0.0F;
+        td->td_refblackwhite[0] = 0.0f;
         td->td_refblackwhite[1] = td->td_refblackwhite[3] =
-            td->td_refblackwhite[5] = 255.0F;
-        td->td_refblackwhite[2] = td->td_refblackwhite[4] = 128.0F;
+            td->td_refblackwhite[5] = 255.0f;
+        td->td_refblackwhite[2] = td->td_refblackwhite[4] = 128.0f;
     }
     else
     {
@@ -200,7 +200,7 @@ static int TIFFDefaultRefBlackWhite(TIFF *tif, TIFFDirectory *td)
         {
             td->td_refblackwhite[2 * i + 0] = 0;
             td->td_refblackwhite[2 * i + 1] =
-                (float)((1L << td->td_bitspersample) - 1L);
+                (float)((1UL << td->td_bitspersample) - 1);
         }
     }
     return 1;
@@ -258,8 +258,8 @@ int TIFFVGetFieldDefaulted(TIFF *tif, uint32_t tag, va_list ap)
                  * 65535 even if td_bitspersamle is > 16 */
                 if (td->td_bitspersample <= 16)
                 {
-                    maxsamplevalue = (1 << td->td_bitspersample) -
-                                     1; /* 2**(BitsPerSample) - 1 */
+                    maxsamplevalue = (uint16_t)((1 << td->td_bitspersample) -
+                                                1); /* 2**(BitsPerSample) - 1 */
                 }
                 else
                 {
@@ -295,7 +295,8 @@ int TIFFVGetFieldDefaulted(TIFF *tif, uint32_t tag, va_list ap)
         }
         case TIFFTAG_DOTRANGE:
             *va_arg(ap, uint16_t *) = 0;
-            *va_arg(ap, uint16_t *) = (1 << td->td_bitspersample) - 1;
+            *va_arg(ap, uint16_t *) =
+                (uint16_t)((1 << td->td_bitspersample) - 1);
             return (1);
         case TIFFTAG_INKSET:
             *va_arg(ap, uint16_t *) = INKSET_CMYK;
@@ -309,14 +310,14 @@ int TIFFVGetFieldDefaulted(TIFF *tif, uint32_t tag, va_list ap)
             return (1);
         case TIFFTAG_MATTEING:
             *va_arg(ap, uint16_t *) =
-                (td->td_extrasamples == 1 &&
+                (td->td_extrasamples == 1 && td->td_sampleinfo &&
                  td->td_sampleinfo[0] == EXTRASAMPLE_ASSOCALPHA);
             return (1);
         case TIFFTAG_TILEDEPTH:
             *va_arg(ap, uint32_t *) = td->td_tiledepth;
             return (1);
         case TIFFTAG_DATATYPE:
-            *va_arg(ap, uint16_t *) = td->td_sampleformat - 1;
+            *va_arg(ap, uint16_t *) = (uint16_t)(td->td_sampleformat - 1);
             return (1);
         case TIFFTAG_SAMPLEFORMAT:
             *va_arg(ap, uint16_t *) = td->td_sampleformat;
@@ -369,6 +370,8 @@ int TIFFVGetFieldDefaulted(TIFF *tif, uint32_t tag, va_list ap)
                 return (0);
             *va_arg(ap, const float **) = td->td_refblackwhite;
             return (1);
+        default:
+            break;
     }
     return 0;
 }
@@ -390,9 +393,9 @@ int TIFFGetFieldDefaulted(TIFF *tif, uint32_t tag, ...)
 
 float _TIFFClampDoubleToFloat(double val)
 {
-    if (val > FLT_MAX)
+    if (val > (double)FLT_MAX)
         return FLT_MAX;
-    if (val < -FLT_MAX)
+    if (val < -(double)FLT_MAX)
         return -FLT_MAX;
     return (float)val;
 }
@@ -401,7 +404,7 @@ uint32_t _TIFFClampDoubleToUInt32(double val)
 {
     if (val < 0)
         return 0;
-    if (val > 0xFFFFFFFFU || val != val)
+    if (val > 0xFFFFFFFFU || isnan(val))
         return 0xFFFFFFFFU;
     return (uint32_t)val;
 }

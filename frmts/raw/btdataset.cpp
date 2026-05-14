@@ -63,7 +63,7 @@ class BTDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -95,7 +95,7 @@ class BTRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           BTRasterBand()                             */
+/*                            BTRasterBand()                            */
 /************************************************************************/
 
 BTRasterBand::BTRasterBand(GDALDataset *poDSIn, VSILFILE *fp,
@@ -420,7 +420,7 @@ CPLErr BTDataset::SetGeoTransform(const GDALGeoTransform &gt)
     CPLErr eErr = CE_None;
 
     m_gt = gt;
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  ".bt format does not support rotational coefficients "
@@ -431,10 +431,10 @@ CPLErr BTDataset::SetGeoTransform(const GDALGeoTransform &gt)
     /* -------------------------------------------------------------------- */
     /*      Compute bounds, and update header info.                         */
     /* -------------------------------------------------------------------- */
-    const double dfLeft = m_gt[0];
-    const double dfRight = dfLeft + m_gt[1] * nRasterXSize;
-    const double dfTop = m_gt[3];
-    const double dfBottom = dfTop + m_gt[5] * nRasterYSize;
+    const double dfLeft = m_gt.xorig;
+    const double dfRight = dfLeft + m_gt.xscale * nRasterXSize;
+    const double dfTop = m_gt.yorig;
+    const double dfBottom = dfTop + m_gt.yscale * nRasterYSize;
 
     memcpy(abyHeader + 28, &dfLeft, 8);
     memcpy(abyHeader + 36, &dfRight, 8);
@@ -759,12 +759,12 @@ GDALDataset *BTDataset::Open(GDALOpenInfo *poOpenInfo)
         memcpy(&dfTop, poDS->abyHeader + 52, 8);
         CPL_LSBPTR64(&dfTop);
 
-        poDS->m_gt[0] = dfLeft;
-        poDS->m_gt[1] = (dfRight - dfLeft) / poDS->nRasterXSize;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = dfTop;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = (dfBottom - dfTop) / poDS->nRasterYSize;
+        poDS->m_gt.xorig = dfLeft;
+        poDS->m_gt.xscale = (dfRight - dfLeft) / poDS->nRasterXSize;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = dfTop;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = (dfBottom - dfTop) / poDS->nRasterYSize;
 
         poDS->bGeoTransformValid = TRUE;
     }
@@ -803,7 +803,7 @@ GDALDataset *BTDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *BTDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               CPL_UNUSED char **papszOptions)
+                               CPL_UNUSED CSLConstList papszOptions)
 {
 
     /* -------------------------------------------------------------------- */

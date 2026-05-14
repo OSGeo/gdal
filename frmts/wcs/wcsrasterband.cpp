@@ -16,6 +16,7 @@
 #include "gdal_rasterblock.h"
 
 #include <algorithm>
+#include <cassert>
 
 #include "wcsdataset.h"
 #include "wcsrasterband.h"
@@ -217,8 +218,16 @@ CPLErr WCSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             if (iOverview != -1)
                 poTargBand = poTargBand->GetOverview(iOverview);
 
+            assert(poTargBand);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
             GDALRasterBlock *poBlock =
                 poTargBand->GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
 
             if (poBlock != nullptr)
             {

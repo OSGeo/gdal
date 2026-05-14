@@ -1,26 +1,29 @@
 #!/bin/sh
 set -eu
 
+cd gdal
+
 if [ "${GDAL_VERSION}" = "master" ]; then
-    GDAL_VERSION=$(curl -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
+    GDAL_VERSION=$(curl --retry 3 --retry-all-errors --retry-delay 3 -Ls https://api.github.com/repos/${GDAL_REPOSITORY}/commits/HEAD -H "Accept: application/vnd.github.VERSION.sha")
     export GDAL_VERSION
     GDAL_RELEASE_DATE=$(date "+%Y%m%d")
     export GDAL_RELEASE_DATE
+fi
+
+if [ "${GDAL_VERSION}" = "local" ]; then
+    GDAL_VERSION=$(git describe --match=BOGUSTAG --always --abbrev=40 --dirty)
+    export GDAL_VERSION
+else
+    rm -rf ./*
+    (curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
+      | tar xz --strip-components=1) || exit 1
 fi
 
 if [ -z "${GDAL_BUILD_IS_RELEASE:-}" ]; then
     export GDAL_SHA1SUM=${GDAL_VERSION}
 fi
 
-mkdir gdal
-curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
-    | tar xz -C gdal --strip-components=1
-
-
-
 (
-    cd gdal
-
     if test "${RSYNC_REMOTE:-}" != ""; then
         echo "Downloading cache..."
         rsync -ra "${RSYNC_REMOTE}/gdal/${GCC_ARCH}/" "$HOME/.cache/" || /bin/true
@@ -38,9 +41,11 @@ curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.t
         ccache -M 1G
     fi
 
-    export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g"
+    # -fzero-init-padding-bits=unions: restore GCC < 15 behavior with respect
+    # to union initialization.
+    export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g -fzero-init-padding-bits=unions"
     # -Wno-psabi avoid 'note: parameter passing for argument of type 'std::pair<double, double>' when C++17 is enabled changed to match C++14 in GCC 10.1' on arm64
-    export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g -Wno-psabi"
+    export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g -Wno-psabi -fzero-init-padding-bits=unions"
     export LDFLAGS="-Wl,-rpath=${PROJ_INSTALL_PREFIX}/lib"
 
     mkdir build
@@ -110,7 +115,6 @@ curl -Lo - -fsS "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.t
     fi
 )
 
-rm -rf gdal
 mkdir -p /build_gdal_python/usr/lib
 mkdir -p /build_gdal_python/usr/bin
 mkdir -p /build_gdal_version_changing/usr/include

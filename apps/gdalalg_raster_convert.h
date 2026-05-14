@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterConvertAlgorithm                       */
+/*                      GDALRasterConvertAlgorithm                      */
 /************************************************************************/
 
 class GDALRasterConvertAlgorithm final : public GDALRasterPipelineStepAlgorithm

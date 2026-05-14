@@ -28,21 +28,27 @@ Starting with GDAL 3.1, the following open options can be specified:
 Examples
 ~~~~~~~~
 
--  This example will convert a sosi file to a shape a file where all duplicate fields in a feature will be appended with a comma between.
+.. example::
 
-   ::
+   This example will convert a sosi file to a shape a file where all duplicate fields in a feature will be appended with a comma between.
+
+   .. code-block:: bash
 
       ogr2ogr -t_srs EPSG:4258 test_poly.shp test_duplicate_fields.sos polygons
 
--  This example will convert a sosi file to a shape a file where only duplicates for BEITEBRUKERID and OPPHAV will appended with a comma between.
+.. example::
 
-   ::
+   This example will convert a sosi file to a shape a file where only duplicates for BEITEBRUKERID and OPPHAV will appended with a comma between.
+
+   .. code-block:: bash
 
       ogr2ogr -t_srs EPSG:4258  test_poly.shp test_duplicate_fields.sos polygons -oo appendFieldsMap="BEITEBRUKERID&OPPHAV"
 
--  This example will convert a sosi file to a shape a file where for BEITEBRUKERID and OPPHAV will be appended with a semicolon and comma between
+.. example::
 
-   ::
+   This example will convert a sosi file to a shape a file where for BEITEBRUKERID and OPPHAV will be appended with a semicolon and comma between
+
+   .. code-block:: bash
 
       ogr2ogr -t_srs EPSG:4258  test_poly.shp test_duplicate_fields.sos polygons -oo appendFieldsMap="BEITEBRUKERID:;&OPPHAV:,"
 

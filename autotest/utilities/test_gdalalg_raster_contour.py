@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -38,7 +39,7 @@ def get_contour_alg():
             [5.0, 15.0, 25.0, 35.0],
         ),
         (
-            ["--interval", "10", "--elevation-name", "ELEV", "--src-nodata", "4"],
+            ["--interval", "10", "--elevation-name", "ELEV", "--input-nodata", "4"],
             False,
             [20.0, 30.0],
         ),
@@ -223,3 +224,32 @@ def test_gdalalg_raster_contour_creation_options(tmp_vsimem):
         ) as sql_lyr:
             assert sql_lyr.GetFeatureCount() == 2
         assert ds.GetLayer(0).GetMetadata_Dict() == {"DESCRIPTION": "my_desc"}
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_contour_all_nodata(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    src_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
+    src_ds.GetRasterBand(1).SetNoDataValue(0)
+
+    out_filename = tmp_vsimem / "out.gpkg"
+    alg = get_contour_alg()
+    alg["input"] = src_ds
+    alg["output"] = out_filename
+    alg["interval"] = 10
+    with gdaltest.error_raised(gdal.CE_None):
+        alg.Run()
+
+    ds = alg.Output()
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 0
+
+
+def test_gdalalg_raster_contour_pipeline_output_layer(tmp_vsimem):
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! contour --interval 10 --output-layer foo"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetLayer(0).GetName() == "foo"

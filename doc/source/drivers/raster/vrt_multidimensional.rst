@@ -16,6 +16,27 @@ Here's an example of such a file:
 
     <VRTDataset>
         <Group name="/">
+            <Dimension name="Y" size="40"/>
+            <Dimension name="X" size="30"/>
+
+            <Array name="temperature">
+                <DataType>Float64</DataType>
+                <DimensionRef ref="Y"/>
+                <DimensionRef ref="X"/>
+                <Source>
+                    <SourceFilename>my.nc</SourceFilename>
+                    <SourceArray>temperature</SourceArray>
+                    <SourceSlab offset="1,1" count="10,10" step="2,1"/>
+                    <DestSlab offset="2,1"/>
+                </Source>
+
+                <Overviews>
+                    <ArrayFullName>/overview0/temperature</ArrayFullName>
+                </Overviews>
+            </Array>
+        </Group>
+
+        <Group name="/overview0">
             <Dimension name="Y" size="4"/>
             <Dimension name="X" size="3"/>
 
@@ -25,7 +46,7 @@ Here's an example of such a file:
                 <DimensionRef ref="X"/>
                 <Source>
                     <SourceFilename>my.nc</SourceFilename>
-                    <SourceArray>temperature</SourceArray>
+                    <SourceArray>temperature_overview</SourceArray>
                     <SourceSlab offset="1,1" count="2,2" step="2,1"/>
                     <DestSlab offset="2,1"/>
                 </Source>
@@ -84,7 +105,7 @@ Float32, Float64, CInt16, CInt32, CFloat32 or CFloat64.
 *name* attribute and a child *DataType* element. It may have 0 or more
 *DimensionRef* or *Dimension* child elements to define its dimensions. And
 the following elements may be optionally specified to define its properties.
-*SRS, *Unit*, *NoDataValue*, *Offset* and *Scale*.
+*SRS, *Unit*, *NoDataValue*, *Offset*, *Scale*, and optional *Overviews*
 To define its values, it may have one *RegularlySpacedValues* element,
 or zero, one or several elements among *ConstantValue*, *InlineValues*, *InlineValuesWithValueElement* or
 *Source*.
@@ -150,3 +171,37 @@ itself on the output of SourceTranspose if specified.
             <SourceSlab offset="1,1" count="2,2" step="2,1"/>
             <DestSlab offset="2,1"/>
         </Source>
+
+**Overviews**: An array may have zero, one or several associated reduced resolution
+arrays. There are two ways to define an overview array, either by a fully qualified
+name pointing to an array defined elsewhere in the hierarchy, or by putting its content
+inline. Overview arrays must have the same number of dimensions and the same
+data type as the full resolution array.
+
+.. code-block:: xml
+
+    <Array name="temperature">
+        <DataType>Float64</DataType>
+        <DimensionRef ref="Y"/>
+        <DimensionRef ref="X"/>
+        <Source>
+            <SourceFilename>my.nc</SourceFilename>
+            <SourceArray>temperature</SourceArray>
+        </Source>
+
+        <Overviews>
+            <!-- first way: fully qualified name to another array -->
+            <ArrayFullName>/temperature_level0</ArrayFullName>
+
+            <!-- second way: inline definition of the array -->
+            <Array name="temperature_level1">
+                <DataType>Float64</DataType>
+                <Dimension name="Y_level1"/>
+                <Dimension name="X_level1"/>
+                <Source>
+                    <SourceFilename>my.nc</SourceFilename>
+                    <SourceArray>temperature_level1</SourceArray>
+                </Source>
+            </Array>
+        </Overviews>
+    </Array>

@@ -13,7 +13,7 @@
 #include "commoncore.h"
 
 /************************************************************************/
-/*                  GDAL_KTX2_BASISU_GetCreationOptions()               */
+/*                GDAL_KTX2_BASISU_GetCreationOptions()                 */
 /************************************************************************/
 
 std::string GDAL_KTX2_BASISU_GetCreationOptions(bool bIsKTX2)

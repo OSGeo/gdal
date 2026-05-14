@@ -27,7 +27,7 @@
 #endif
 
 /************************************************************************/
-/*                           OGRWarpedLayer                             */
+/*                            OGRWarpedLayer                            */
 /************************************************************************/
 
 class CPL_DLL OGRWarpedLayer final : public OGRLayerDecorator,

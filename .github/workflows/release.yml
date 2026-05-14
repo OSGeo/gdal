@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  PROJ_VERSION: "9.7.0"
+  PROJ_VERSION: "9.8.1"
 
 jobs:
   safety_checks:
@@ -32,7 +32,7 @@ jobs:
       - name: extract tag info
         id: unpack_tag
         run: |
-          export TAG=${{ github.ref_name }}
+          export TAG="${GITHUB_REF_NAME}"
           export RC=$(python3 -c "print('' if 'rc' not in '$TAG'.lower() else ''.join('$TAG'.lower().rpartition('rc')[1:]).lower())")
           export BETA=$(python3 -c "print('' if 'beta' not in '$TAG'.lower() else ''.join('$TAG'.lower().rpartition('beta')[1:]).lower())")
           export VERSION=$(python3 -c "print('$TAG'.lower().lstrip('v').partition('rc')[0])")
@@ -66,7 +66,9 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Setup environment
         shell: bash -l {0}
         env:
@@ -110,40 +112,40 @@ jobs:
         id: mkgdaldist
         run: |
           if test "$RC" != ""; then
-            ./mkgdaldist.sh $VERSION -tag ${{ github.ref_name }} -rc $RC
+            ./mkgdaldist.sh "$VERSION" -tag "${GITHUB_REF_NAME}" -rc $RC
           else
-            ./mkgdaldist.sh $VERSION -tag ${{ github.ref_name }}
+            ./mkgdaldist.sh "$VERSION" -tag "${GITHUB_REF_NAME}"
           fi
       - name: Upload tar.gz
         id: upload_tar_gz
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
           path: |
             gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
       - name: Upload tar.xz
         id: upload_tar_xz
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
           path: |
             gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
       - name: Upload zip
         id: upload_zip
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           path: |
             gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
-      - uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
+      - uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.gz
           subject-digest: sha256:${{ steps.upload_tar_gz.outputs.artifact-digest }}
-      - uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
+      - uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-name: gdal-${{ env.VERSION }}${{ env.RC }}.tar.xz
           subject-digest: sha256:${{ steps.upload_tar_xz.outputs.artifact-digest }}
-      - uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8 # v3.1.0
+      - uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-name: gdal${{ env.COMPRESSED_VERSION }}${{ env.RC}}.zip
           subject-digest: sha256:${{ steps.upload_zip.outputs.artifact-digest }}
@@ -161,13 +163,13 @@ jobs:
           python3 setup.py bdist_wheel
           cp dist/* ${{ github.workspace }}/dist
       - name: Upload bdist_wheel
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: gdal-utils whl
           path: |
             dist/*
       - name: Publish gdal-utils bdist_wheel to PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         if: startsWith(github.ref, 'refs/tags/') && env.PRE_RELEASE != 'true'
         with:
           attestations: true
@@ -178,17 +180,17 @@ jobs:
           python3 setup.py sdist
           cp dist/* ${{ github.workspace }}/dist
       - name: Upload sdist
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: gdal sdist
           path: |
             dist/*
       - name: Publish gdal sdist to PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         if: startsWith(github.ref, 'refs/tags/') && env.PRE_RELEASE != 'true'
         with:
           attestations: true
-      - uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
+      - uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0   # zizmor: ignore[superfluous-actions]
         if: startsWith(github.ref, 'refs/tags/')
         name: Publish release as draft
         with:
@@ -224,9 +226,11 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Set up Docker
-        uses: docker/setup-docker-action@e61617a16c407a86262fb923c35a616ddbe070b3 # v4.6.0
+        uses: docker/setup-docker-action@b2189fbf2a6592b51fee7cdd93ee2bfaeba733db # v5.1.0
         with:
           daemon-config: |
             {
@@ -236,14 +240,14 @@ jobs:
               }
             }
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Extract container metadata
         id: meta
-        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf # v6.0.0
         with:
           images: |
             ghcr.io/osgeo/gdal
@@ -261,7 +265,7 @@ jobs:
           BUILDKIT_PROGRESS: plain
         run: |
           cd docker/${{ matrix.base }}
-          ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --push --gdal ${{ github.ref_name }} --tag ${{ env.VERSION }} --release --proj ${{ env.PROJ_VERSION }}
+          ./build.sh --platform linux/${{ matrix.platform }} --with-multi-arch --push --gdal "${GITHUB_REF_NAME}" --tag "${VERSION}" --release --proj "${PROJ_VERSION}"
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${VERSION_WITH_RC}-${{ matrix.platform }} gdalinfo --formats
           docker run --rm ghcr.io/osgeo/gdal:${{ matrix.base }}-${VERSION_WITH_RC}-${{ matrix.platform }} ogrinfo --formats
   create-docker-manifest:
@@ -280,7 +284,7 @@ jobs:
         tag: ["ubuntu-full", "ubuntu-small", "alpine-small", "alpine-normal"]
     steps:
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

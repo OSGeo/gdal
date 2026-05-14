@@ -42,9 +42,25 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         A data type representing one of two values: True or False, commonly used in logical operations and conditions.
 
+    BIL
+
+        Band Interleaved by Line multi-sample pixel organization. See :ref:`raster_data_model_interleave_mode` for more details.
+
+    BIP
+
+        Band Interleaved by Pixel multi-sample pixel organization. See :ref:`raster_data_model_interleave_mode` for more details.
+
+    BSQ
+
+        Band SeQuential multi-sample pixel organization. See :ref:`raster_data_model_interleave_mode` for more details.
+
     Coordinate Epoch
 
         The date tied to spatial coordinates in a dynamic reference frame, used to account for positional changes over time (e.g., due to tectonic motion).
+
+    Coordinate System
+
+        The mathematical framework that defines how coordinates are measured and represented within a geometric coordinate space.
 
     CPL
 
@@ -62,8 +78,8 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
     CRS
 
-        Coordinate Reference System. A system that maps spatial data coordinates to real-world locations,
-        combining a coordinate system with a reference surface like a projection or :term:`ellipsoid`.
+        Coordinate Reference System. Specifies how coordinates correspond to locations on Earth (or other celestial bodies),
+        including the :term:`coordinate system`, :term:`datum`, and, if applicable, a projection.
 
     CSL
 
@@ -74,6 +90,12 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
 
         A command-line tool and library for transferring data with URLs, supporting protocols such as HTTP, HTTPS, FTP, and more.
         Commonly used for testing and interacting with web services.
+
+    Datum
+
+        A model of the Earth that specifies the size and shape of the reference :term:`ellipsoid` and its position and orientation
+        relative to the Earth, providing the basis for a :term:`CRS`. In geodetic datums, this defines horizontal positioning.
+        Vertical datums define a reference surface for height values (e.g., mean sea level or a geoid) used for vertical coordinates in 3D operations.
 
     DEM
 

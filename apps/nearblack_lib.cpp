@@ -42,7 +42,7 @@ static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
                         int iLineFromTopOrBottom);
 
 /************************************************************************/
-/*                            GDALNearblack()                           */
+/*                           GDALNearblack()                            */
 /************************************************************************/
 
 /* clang-format off */
@@ -282,7 +282,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "-color args must have the same number of values as "
-                 "the non alpha input band count.\n");
+                 "the non alpha input band count.");
         if (bCloseOutDSOnError)
             GDALClose(hDstDS);
         return nullptr;
@@ -742,7 +742,7 @@ static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
 }
 
 /************************************************************************/
-/*                            IsInt()                                   */
+/*                               IsInt()                                */
 /************************************************************************/
 
 static bool IsInt(const char *pszArg)
@@ -764,7 +764,7 @@ static bool IsInt(const char *pszArg)
 }
 
 /************************************************************************/
-/*                    GDALNearblackOptionsGetParser()                   */
+/*                   GDALNearblackOptionsGetParser()                    */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -895,7 +895,7 @@ GDALNearblackOptionsGetParser(GDALNearblackOptions *psOptions,
 }
 
 /************************************************************************/
-/*                      GDALNearblackGetParserUsage()                   */
+/*                    GDALNearblackGetParserUsage()                     */
 /************************************************************************/
 
 std::string GDALNearblackGetParserUsage()
@@ -917,7 +917,7 @@ std::string GDALNearblackGetParserUsage()
 }
 
 /************************************************************************/
-/*                           GDALNearblackOptionsNew()                  */
+/*                      GDALNearblackOptionsNew()                       */
 /************************************************************************/
 
 /**
@@ -960,7 +960,7 @@ GDALNearblackOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                       GDALNearblackOptionsFree()                     */
+/*                      GDALNearblackOptionsFree()                      */
 /************************************************************************/
 
 /**

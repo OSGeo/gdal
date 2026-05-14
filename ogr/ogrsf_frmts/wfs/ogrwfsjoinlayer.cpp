@@ -206,7 +206,7 @@ OGRWFSJoinLayer::~OGRWFSJoinLayer()
 }
 
 /************************************************************************/
-/*                    OGRWFSRemoveReferenceToTableAlias()               */
+/*                 OGRWFSRemoveReferenceToTableAlias()                  */
 /************************************************************************/
 
 static void OGRWFSRemoveReferenceToTableAlias(swq_expr_node *poNode,
@@ -239,7 +239,7 @@ static void OGRWFSRemoveReferenceToTableAlias(swq_expr_node *poNode,
 }
 
 /************************************************************************/
-/*                             Build()                                  */
+/*                               Build()                                */
 /************************************************************************/
 
 OGRWFSJoinLayer *OGRWFSJoinLayer::Build(OGRWFSDataSource *poDS,
@@ -333,7 +333,7 @@ void OGRWFSJoinLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                       MakeGetFeatureURL()                            */
+/*                         MakeGetFeatureURL()                          */
 /************************************************************************/
 
 CPLString OGRWFSJoinLayer::MakeGetFeatureURL(int bRequestHits)
@@ -401,7 +401,7 @@ CPLString OGRWFSJoinLayer::MakeGetFeatureURL(int bRequestHits)
 }
 
 /************************************************************************/
-/*                         FetchGetFeature()                            */
+/*                          FetchGetFeature()                           */
 /************************************************************************/
 
 GDALDataset *OGRWFSJoinLayer::FetchGetFeature()
@@ -749,7 +749,7 @@ GIntBig OGRWFSJoinLayer::ExecuteGetFeatureResultTypeHits()
 }
 
 /************************************************************************/
-/*                           GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRWFSJoinLayer::GetFeatureCount(int bForce)
@@ -784,7 +784,7 @@ int OGRWFSJoinLayer::TestCapability(const char *) const
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRWFSJoinLayer::ISetSpatialFilter(int, const OGRGeometry *poGeom)
@@ -800,7 +800,7 @@ OGRErr OGRWFSJoinLayer::ISetSpatialFilter(int, const OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                          SetAttributeFilter()                        */
+/*                         SetAttributeFilter()                         */
 /************************************************************************/
 
 OGRErr OGRWFSJoinLayer::SetAttributeFilter(const char *pszFilter)

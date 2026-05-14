@@ -34,7 +34,7 @@ static void GDALExit(int nCode)
 }
 
 /************************************************************************/
-/*                     GDALCreateOptions                               */
+/*                          GDALCreateOptions                           */
 /************************************************************************/
 
 struct GDALCreateOptions
@@ -63,7 +63,7 @@ struct GDALCreateOptions
 };
 
 /************************************************************************/
-/*                   GDALCreateAppOptionsGetParser()                   */
+/*                   GDALCreateAppOptionsGetParser()                    */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -286,12 +286,12 @@ MAIN_START(argc, argv)
     GDALGeoTransform gt;
     if (sOptions.bGeoTransform && sOptions.nPixels > 0 && sOptions.nLines > 0)
     {
-        gt[0] = sOptions.dfULX;
-        gt[1] = (sOptions.dfLRX - sOptions.dfULX) / sOptions.nPixels;
-        gt[2] = 0;
-        gt[3] = sOptions.dfULY;
-        gt[4] = 0;
-        gt[5] = (sOptions.dfLRY - sOptions.dfULY) / sOptions.nLines;
+        gt.xorig = sOptions.dfULX;
+        gt.xscale = (sOptions.dfLRX - sOptions.dfULX) / sOptions.nPixels;
+        gt.xrot = 0;
+        gt.yorig = sOptions.dfULY;
+        gt.yrot = 0;
+        gt.yscale = (sOptions.dfLRY - sOptions.dfULY) / sOptions.nLines;
     }
 
     std::unique_ptr<GDALDataset> poInputDS;
@@ -336,7 +336,7 @@ MAIN_START(argc, argv)
                 int noData;
                 const auto nNoDataValue =
                     poInputDS->GetRasterBand(1)->GetNoDataValueAsInt64(&noData);
-                sOptions.bSetNoData = noData;
+                sOptions.bSetNoData = CPL_TO_BOOL(noData);
                 if (sOptions.bSetNoData)
                     sOptions.osNoData = CPLSPrintf(
                         CPL_FRMT_GIB, static_cast<GIntBig>(nNoDataValue));
@@ -347,7 +347,7 @@ MAIN_START(argc, argv)
                 const auto nNoDataValue =
                     poInputDS->GetRasterBand(1)->GetNoDataValueAsUInt64(
                         &noData);
-                sOptions.bSetNoData = noData;
+                sOptions.bSetNoData = CPL_TO_BOOL(noData);
                 if (sOptions.bSetNoData)
                     sOptions.osNoData = CPLSPrintf(
                         CPL_FRMT_GUIB, static_cast<GUIntBig>(nNoDataValue));
@@ -357,7 +357,7 @@ MAIN_START(argc, argv)
                 int noData;
                 const double dfNoDataValue =
                     poInputDS->GetRasterBand(1)->GetNoDataValue(&noData);
-                sOptions.bSetNoData = noData;
+                sOptions.bSetNoData = CPL_TO_BOOL(noData);
                 if (sOptions.bSetNoData)
                     sOptions.osNoData = CPLSPrintf("%.18g", dfNoDataValue);
             }

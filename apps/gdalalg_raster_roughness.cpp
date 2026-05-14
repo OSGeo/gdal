@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*       GDALRasterRoughnessAlgorithm::GDALRasterRoughnessAlgorithm()   */
+/*     GDALRasterRoughnessAlgorithm::GDALRasterRoughnessAlgorithm()     */
 /************************************************************************/
 
 GDALRasterRoughnessAlgorithm::GDALRasterRoughnessAlgorithm(bool standaloneStep)
@@ -41,7 +41,7 @@ GDALRasterRoughnessAlgorithm::GDALRasterRoughnessAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                GDALRasterRoughnessAlgorithm::RunStep()               */
+/*               GDALRasterRoughnessAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterRoughnessAlgorithm::RunStep(GDALPipelineStepRunContext &)

@@ -207,8 +207,7 @@ class GDALPolygonize(GDALScript):
     def __init__(self):
         super().__init__()
         self.title = "Produces a polygon feature layer from a raster"
-        self.description = textwrap.dedent(
-            """\
+        self.description = textwrap.dedent("""\
             This utility creates vector polygons for all connected regions of pixels in the raster
             sharing a common pixel value. Each polygon is created with an attribute indicating
             the pixel value of that polygon.
@@ -216,8 +215,7 @@ class GDALPolygonize(GDALScript):
             The utility will create the output vector datasource if it does not already exist,
             otherwise it will try to append to an existing one.
             The utility is based on the GDALPolygonize() function
-            which has additional details on the algorithm."""
-        )
+            which has additional details on the algorithm.""")
 
     def get_parser(self, argv) -> GDALArgumentParser:
         parser = self.parser

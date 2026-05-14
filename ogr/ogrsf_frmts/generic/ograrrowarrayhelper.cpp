@@ -19,7 +19,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                           GetMemLimit()                              */
+/*                            GetMemLimit()                             */
 /************************************************************************/
 
 /*static*/ uint32_t OGRArrowArrayHelper::GetMemLimit()
@@ -59,7 +59,7 @@ int OGRArrowArrayHelper::GetMaxFeaturesInBatch(
 }
 
 /************************************************************************/
-/*                       OGRArrowArrayHelper()                          */
+/*                        OGRArrowArrayHelper()                         */
 /************************************************************************/
 
 OGRArrowArrayHelper::OGRArrowArrayHelper(struct ArrowArray *out_array,
@@ -70,7 +70,7 @@ OGRArrowArrayHelper::OGRArrowArrayHelper(struct ArrowArray *out_array,
 }
 
 /************************************************************************/
-/*                       OGRArrowArrayHelper()                          */
+/*                        OGRArrowArrayHelper()                         */
 /************************************************************************/
 
 OGRArrowArrayHelper::OGRArrowArrayHelper(
@@ -401,7 +401,7 @@ error:
 }
 
 /************************************************************************/
-/*                             FillDict()                               */
+/*                              FillDict()                              */
 /************************************************************************/
 
 /* static */

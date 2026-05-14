@@ -42,8 +42,8 @@ struct GDALMultiDimTranslateOptions
     bool bNoOverwrite = false;
 };
 
-/*************************************************************************/
-/*             GDALMultiDimTranslateAppOptionsGetParser()                */
+/************************************************************************/
+/*              GDALMultiDimTranslateAppOptionsGetParser()              */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -155,7 +155,7 @@ GDALMultiDimTranslateAppOptionsGetParser(
 }
 
 /************************************************************************/
-/*            GDALMultiDimTranslateAppGetParserUsage()                  */
+/*               GDALMultiDimTranslateAppGetParserUsage()               */
 /************************************************************************/
 
 std::string GDALMultiDimTranslateAppGetParserUsage()
@@ -471,7 +471,7 @@ static void FindMinMaxIdxString(const GDALMDArray *var, const char **ppszTmp,
 }
 
 /************************************************************************/
-/*                             GetDimensionDesc()                       */
+/*                          GetDimensionDesc()                          */
 /************************************************************************/
 
 struct DimensionDesc
@@ -1198,7 +1198,7 @@ static bool TranslateArray(
                 {
                     GDALGeoTransform gt;
                     if (poSrcDS->GetGeoTransform(gt) == CE_None &&
-                        gt[2] == 0.0 && gt[4] == 0.0)
+                        gt.IsAxisAligned())
                     {
                         auto var = poDstGroup->CreateVRTMDArray(
                             newDimName, {dstDim},
@@ -1207,11 +1207,13 @@ static bool TranslateArray(
                         {
                             const double dfStart =
                                 srcIndexVar->GetName() == "X"
-                                    ? gt[0] + (range.m_nStartIdx + 0.5) * gt[1]
-                                    : gt[3] + (range.m_nStartIdx + 0.5) * gt[5];
+                                    ? gt.xorig +
+                                          (range.m_nStartIdx + 0.5) * gt.xscale
+                                    : gt.yorig +
+                                          (range.m_nStartIdx + 0.5) * gt.yscale;
                             const double dfIncr =
-                                (srcIndexVar->GetName() == "X" ? gt[1]
-                                                               : gt[5]) *
+                                (srcIndexVar->GetName() == "X" ? gt.xscale
+                                                               : gt.yscale) *
                                 range.m_nIncr;
                             auto poSource = std::make_unique<
                                 VRTMDArraySourceRegularlySpaced>(dfStart,
@@ -1414,7 +1416,7 @@ static bool TranslateArray(
 }
 
 /************************************************************************/
-/*                               GetGroup()                             */
+/*                              GetGroup()                              */
 /************************************************************************/
 
 static std::shared_ptr<GDALGroup>
@@ -1438,7 +1440,7 @@ GetGroup(const std::shared_ptr<GDALGroup> &poRootGroup,
 }
 
 /************************************************************************/
-/*                                CopyGroup()                           */
+/*                             CopyGroup()                              */
 /************************************************************************/
 
 static bool CopyGroup(
@@ -1597,7 +1599,7 @@ static bool ParseGroupSpec(const std::string &groupSpec, std::string &srcName,
 }
 
 /************************************************************************/
-/*                           TranslateInternal()                        */
+/*                         TranslateInternal()                          */
 /************************************************************************/
 
 static bool TranslateInternal(std::shared_ptr<VRTGroup> &poDstRootGroup,
@@ -1711,7 +1713,7 @@ static bool TranslateInternal(std::shared_ptr<VRTGroup> &poDstRootGroup,
 }
 
 /************************************************************************/
-/*                      CopyToNonMultiDimensionalDriver()               */
+/*                  CopyToNonMultiDimensionalDriver()                   */
 /************************************************************************/
 
 static GDALDatasetH
@@ -1810,7 +1812,7 @@ CopyToNonMultiDimensionalDriver(GDALDriver *poDriver, const char *pszDest,
 }
 
 /************************************************************************/
-/*                        GDALMultiDimTranslate()                       */
+/*                       GDALMultiDimTranslate()                        */
 /************************************************************************/
 
 /* clang-format off */
@@ -2017,7 +2019,7 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 }
 
 /************************************************************************/
-/*                     GDALMultiDimTranslateOptionsNew()                */
+/*                  GDALMultiDimTranslateOptionsNew()                   */
 /************************************************************************/
 
 /**
@@ -2092,7 +2094,7 @@ GDALMultiDimTranslateOptions *GDALMultiDimTranslateOptionsNew(
 }
 
 /************************************************************************/
-/*                     GDALMultiDimTranslateOptionsFree()               */
+/*                  GDALMultiDimTranslateOptionsFree()                  */
 /************************************************************************/
 
 /**
@@ -2109,7 +2111,7 @@ void GDALMultiDimTranslateOptionsFree(GDALMultiDimTranslateOptions *psOptions)
 }
 
 /************************************************************************/
-/*               GDALMultiDimTranslateOptionsSetProgress()              */
+/*              GDALMultiDimTranslateOptionsSetProgress()               */
 /************************************************************************/
 
 /**

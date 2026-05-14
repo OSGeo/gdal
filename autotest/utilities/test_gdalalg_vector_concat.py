@@ -49,7 +49,7 @@ def test_gdalalg_vector_concat(GDAL_VECTOR_CONCAT_MAX_OPENED_DATASETS):
     assert ds.GetLayer(-1) is None
     assert ds.GetLayer(1) is None
     lyr = ds.GetLayerByName("poly")
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "27700"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "27700"
     assert len(lyr) == 20
     f = lyr.GetNextFeature()
     assert lyr.GetLayerDefn().GetFieldCount() == 3
@@ -112,7 +112,7 @@ def test_gdalalg_vector_concat_dst_crs():
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("test")
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
     f = lyr.GetNextFeature()
@@ -122,11 +122,11 @@ def test_gdalalg_vector_concat_dst_crs():
     alg["input"] = [ds1, ds2]
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["dst-crs"] = "EPSG:4326"
+    alg["output-crs"] = "EPSG:4326"
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("test")
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
     f = lyr.GetNextFeature()
@@ -140,7 +140,7 @@ def test_gdalalg_vector_concat_dst_crs():
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("test")
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "32631"
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(f, "POINT (426857.9877172817 5427937.523464922)")
     f = lyr.GetNextFeature()
@@ -156,7 +156,7 @@ def test_gdalalg_vector_concat_dst_crs():
     alg["input"] = [ds3]
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["dst-crs"] = "EPSG:4326"
+    alg["output-crs"] = "EPSG:4326"
     with pytest.raises(
         Exception, match="concat: Layer 'test' of '' has no spatial reference system"
     ):
@@ -166,12 +166,12 @@ def test_gdalalg_vector_concat_dst_crs():
     alg["input"] = [ds3]
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["src-crs"] = "EPSG:32631"
+    alg["input-crs"] = "EPSG:32631"
     alg["dst-crs"] = "EPSG:4326"
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("test")
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
     f = lyr.GetNextFeature()
     ogrtest.check_feature_geometry(f, "POINT (3 0)")
 
@@ -353,7 +353,9 @@ def test_gdalalg_vector_concat_mode_single():
     alg["output-format"] = "MEM"
     alg["mode"] = "single"
     alg["output-layer"] = "my-output-layer"
-    assert alg.Run()
+    with gdaltest.disable_exceptions():
+        with gdaltest.error_raised(gdal.CE_None):
+            assert alg.Run()
     ds = alg["output"].GetDataset()
     assert ds.GetLayerCount() == 1
     assert ds.GetLayer(0).GetName() == "my-output-layer"
@@ -434,3 +436,13 @@ def test_gdalalg_vector_concat_test_ogrsf(tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+def test_gdalalg_vector_concat_pipeline_nested():
+
+    with gdal.alg.vector.pipeline(
+        pipeline="concat [ read ../ogr/data/poly.shp ] [ read ../ogr/data/poly.shp ]"
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 20

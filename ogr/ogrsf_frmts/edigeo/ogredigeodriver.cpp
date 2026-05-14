@@ -20,7 +20,7 @@ extern "C" void RegisterOGREDIGEO();
 // -Iogr/ogrsf_frmts/edigeo -L. -lgdal
 
 /************************************************************************/
-/*                        OGREDIGEODriverIdentify()                     */
+/*                      OGREDIGEODriverIdentify()                       */
 /************************************************************************/
 
 static int OGREDIGEODriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -53,7 +53,7 @@ static GDALDataset *OGREDIGEODriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           RegisterOGREDIGEO()                        */
+/*                         RegisterOGREDIGEO()                          */
 /************************************************************************/
 
 void RegisterOGREDIGEO()

@@ -2,28 +2,9 @@
 
 set -ex
 
-. ../scripts/setdevenv.sh
+export SOURCE_DIR="$PWD/.."
 
-export LD_LIBRARY_PATH=/usr/lib/llvm-18/lib/clang/18.0.0/lib/linux:${LD_LIBRARY_PATH}
-export PATH=/usr/lib/llvm-18/bin:${PATH}
-export SKIP_MEM_INTENSIVE_TEST=YES
-export SKIP_VIRTUALMEM=YES
-export LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
-export ASAN_OPTIONS=allocator_may_return_null=1:symbolize=1:suppressions=$PWD/../autotest/asan_suppressions.txt
-export LSAN_OPTIONS=detect_leaks=1,print_suppressions=0,suppressions=$PWD/../autotest/lsan_suppressions.txt
-export UBSAN_OPTIONS=print_stacktrace=1,suppressions=$PWD/../autotest/ubsan_suppressions.txt
-export PYTHONMALLOC=malloc
-
-gdalinfo autotest/gcore/data/byte.tif
-python3 -c "from osgeo import gdal; print('yes')"
-
-# Check fix for https://github.com/rasterio/rasterio/issues/3250
-mv ${GDAL_DRIVER_PATH}/gdal_PDF.so ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled
-echo "from osgeo import gdal" > register_many_times.py
-echo "for i in range(1000):" >> register_many_times.py
-echo "   gdal.AllRegister()" >> register_many_times.py
-python3 register_many_times.py
-mv ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled ${GDAL_DRIVER_PATH}/gdal_PDF.so
+. "${SOURCE_DIR}/scripts/setdevenv.sh"
 
 cd autotest
 
@@ -39,6 +20,32 @@ echo 'ARGS="$*"' >> pytest_wrapper.sh
 echo "python3 -m pytest --capture=no -ra -vv -p no:sugar --color=no -o console_output_style=classic \${ARGS} 2>&1" >> pytest_wrapper.sh
 cat pytest_wrapper.sh
 chmod +x pytest_wrapper.sh
+
+export LD_LIBRARY_PATH=/usr/lib/llvm-21/lib/clang/21.0.0/lib/linux:${LD_LIBRARY_PATH}
+export PATH=/usr/lib/llvm-21/bin:${PATH}
+export SKIP_MEM_INTENSIVE_TEST=YES
+export SKIP_VIRTUALMEM=YES
+export LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so)
+export ASAN_OPTIONS="allocator_may_return_null=1:symbolize=1:suppressions=${SOURCE_DIR}/autotest/asan_suppressions.txt"
+export LSAN_OPTIONS="detect_leaks=1,print_suppressions=0,suppressions=${SOURCE_DIR}/autotest/lsan_suppressions.txt"
+export UBSAN_OPTIONS="print_stacktrace=1,suppressions=${SOURCE_DIR}/autotest/ubsan_suppressions.txt"
+export PYTHONMALLOC=malloc
+
+gdalinfo gcore/data/byte.tif
+python3 -c "from osgeo import gdal; print('yes')"
+
+# Check fix for https://github.com/rasterio/rasterio/issues/3250
+mv ${GDAL_DRIVER_PATH}/gdal_PDF.so ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled
+echo "from osgeo import gdal" > register_many_times.py
+echo "for i in range(1000):" >> register_many_times.py
+echo "   gdal.AllRegister()" >> register_many_times.py
+python3 register_many_times.py
+mv ${GDAL_DRIVER_PATH}/gdal_PDF.so.disabled ${GDAL_DRIVER_PATH}/gdal_PDF.so
+
+# Avoid flaky test about memory leak in Xerces-C (when the GMLAS driver tries
+# to interrupt Xerces-C work by sending an exception, this may cause memleaks
+# in some parts of Xerces)
+export SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME=YES
 
 # NOTE: `find ... -exec` always exits with 0 even when the tests failed.
 # That turns out to be what we want here though, since we want
@@ -58,16 +65,16 @@ find -L \
     | tee ./test-output.txt
 
 # Check if the tests failed and error out.
-if grep -P '===.*\d+ failed' ./test-output.txt > /dev/null ; then
+if grep -C 3 -P '===.*\d+ failed' ./test-output.txt > /dev/null ; then
     echo 'Tests failed'
     exit 1
-elif grep '==ABORTING' ./test-output.txt; then
+elif grep -C 3 '==ABORTING' ./test-output.txt; then
     echo 'Tests crashed'
     exit 1
-elif grep 'UndefinedBehaviorSanitizer' ./test-output.txt; then
+elif grep -C 3 'UndefinedBehaviorSanitizer' ./test-output.txt; then
     echo 'UndefinedBehavior detected'
     exit 1
-elif grep 'ERROR: LeakSanitizer' ./test-output.txt; then
+elif grep -C 3 'ERROR: LeakSanitizer' ./test-output.txt; then
     echo 'Memory leak detected'
     exit 1
 else

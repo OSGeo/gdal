@@ -172,10 +172,8 @@ def test_ogr_geojsonseq_rs_auto():
 
 def test_ogr_geojsonseq_inline():
 
-    ds = ogr.Open(
-        """{"type":"Feature","properties":{},"geometry":null}
-{"type":"Feature","properties":{},"geometry":null}"""
-    )
+    ds = ogr.Open("""{"type":"Feature","properties":{},"geometry":null}
+{"type":"Feature","properties":{},"geometry":null}""")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2
 
@@ -190,10 +188,8 @@ def test_ogr_geojsonseq_prefix():
 def test_ogr_geojsonseq_seq_geometries():
 
     with gdaltest.config_option("OGR_GEOJSONSEQ_CHUNK_SIZE", "10"):
-        ds = ogr.Open(
-            """{"type":"Point","coordinates":[2,49]}
-    {"type":"Point","coordinates":[3,50]}"""
-        )
+        ds = ogr.Open("""{"type":"Point","coordinates":[2,49]}
+    {"type":"Point","coordinates":[3,50]}""")
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 2
         f = lyr.GetNextFeature()
@@ -206,15 +202,13 @@ def test_ogr_geojsonseq_seq_geometries():
 def test_ogr_geojsonseq_seq_geometries_with_errors():
 
     with gdal.quiet_errors():
-        ds = ogr.Open(
-            """{"type":"Point","coordinates":[2,49]}
+        ds = ogr.Open("""{"type":"Point","coordinates":[2,49]}
     {"type":"Point","coordinates":[3,50]}
     foo
     "bar"
     null
 
-    {"type":"Point","coordinates":[3,51]}"""
-        )
+    {"type":"Point","coordinates":[3,51]}""")
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 3
         f = lyr.GetNextFeature()

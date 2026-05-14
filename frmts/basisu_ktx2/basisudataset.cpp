@@ -21,7 +21,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                           BASISUDataset                              */
+/*                            BASISUDataset                             */
 /************************************************************************/
 
 class BASISUDataset final : public GDALPamDataset
@@ -53,13 +53,13 @@ class BASISUDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
 
 /************************************************************************/
-/*                          BASISURasterBand                            */
+/*                           BASISURasterBand                           */
 /************************************************************************/
 
 class BASISURasterBand final : public GDALPamRasterBand
@@ -112,7 +112,7 @@ BASISUDataset::~BASISUDataset()
 }
 
 /************************************************************************/
-/*                        GetDecodedData()                              */
+/*                           GetDecodedData()                           */
 /************************************************************************/
 
 void *BASISUDataset::GetDecodedData(uint32_t &nLineStride)
@@ -166,7 +166,7 @@ void *BASISUDataset::GetDecodedData(uint32_t &nLineStride)
 }
 
 /************************************************************************/
-/*                           BASISURasterBand()                         */
+/*                          BASISURasterBand()                          */
 /************************************************************************/
 
 BASISURasterBand::BASISURasterBand(BASISUDataset *poDSIn, int nBandIn)
@@ -202,7 +202,7 @@ CPLErr BASISURasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                           GetOverviewCount()                         */
+/*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int BASISURasterBand::GetOverviewCount()
@@ -212,7 +212,7 @@ int BASISURasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                             GetOverview()                            */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *BASISURasterBand::GetOverview(int nIdx)
@@ -355,12 +355,12 @@ GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            CreateCopy()                              */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *BASISUDataset::CreateCopy(const char *pszFilename,
                                        GDALDataset *poSrcDS, int /*bStrict*/,
-                                       char **papszOptions,
+                                       CSLConstList papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {

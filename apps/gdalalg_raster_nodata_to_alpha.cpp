@@ -37,7 +37,7 @@ GDALRasterNoDataToAlphaAlgorithm::GDALRasterNoDataToAlphaAlgorithm(
 }
 
 /************************************************************************/
-/*              GDALRasterNoDataToAlphaAlgorithm::RunStep()             */
+/*             GDALRasterNoDataToAlphaAlgorithm::RunStep()              */
 /************************************************************************/
 
 bool GDALRasterNoDataToAlphaAlgorithm::RunStep(GDALPipelineStepRunContext &)

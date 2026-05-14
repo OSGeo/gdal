@@ -57,7 +57,7 @@ class OGRGmtLayer final : public OGRLayer,
     bool bValidFile;
 
     OGRGmtLayer(GDALDataset *poDS, const char *pszFilename, VSILFILE *fp,
-                const OGRSpatialReference *poSRS, int bUpdate);
+                const OGRSpatialReference *poSRS, bool bUpdate);
     ~OGRGmtLayer() override;
 
     void ResetReading() override;
@@ -102,7 +102,7 @@ class OGRGmtDataSource final : public GDALDataset
     ~OGRGmtDataSource() override;
 
     int Open(const char *pszFilename, VSILFILE *fp,
-             const OGRSpatialReference *poSRS, int bUpdate);
+             const OGRSpatialReference *poSRS, bool bUpdate);
 
     int GetLayerCount() const override
     {

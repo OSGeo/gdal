@@ -24,6 +24,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("OpenFileGDB")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -183,7 +184,7 @@ def test_ogr_openfilegdb_write_field_types(tmp_vsimem, use_synctodisk):
         f.SetField("float32", 1.25)
         f.SetField("int64", 12345678912345)
         f.SetField("dt", "2022-11-04T12:34:56+02:00")
-        f.SetField("binary", b"\x00\xFF\x7F")
+        f.SetField("binary", b"\x00\xff\x7f")
         f.SetField("xml", "<some_elt/>")
         f.SetField("guid", "{12345678-9ABC-DEF0-1234-567890ABCDEF}")
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
@@ -1441,7 +1442,7 @@ def test_ogr_openfilegdb_write_feature_dataset_crs(tmp_vsimem):
     lyr = ds.GetLayerByName("inherited_srs")
     srs = lyr.GetSpatialRef()
     assert srs is not None
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
 
 
 ###############################################################################
@@ -2677,9 +2678,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
     )
     assert f["DatasetSubtype1"] == 1
     assert f["DatasetSubtype2"] == 0
-    assert (
-        f["Documentation"]
-        == """<metadata xml:lang="en">
+    assert f["Documentation"] == """<metadata xml:lang="en">
   <Esri>
     <CreaDate></CreaDate>
     <CreaTime></CreaTime>
@@ -2691,10 +2690,7 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
   </Esri>
 </metadata>
 """
-    )
-    assert (
-        f["ItemInfo"]
-        == """<ESRI_ItemInformation culture="">
+    assert f["ItemInfo"] == """<ESRI_ItemInformation culture="">
   <name>my_relationship</name>
   <catalogPath>\\my_relationship</catalogPath>
   <snippet></snippet>
@@ -2732,7 +2728,6 @@ def test_ogr_openfilegdb_write_relationships(tmp_vsimem):
   <propValues></propValues>
 </ESRI_ItemInformation>
 """
-    )
     # check item relationships have been created
     item_relationships_lyr = ds.GetLayerByName("GDB_ItemRelationships")
 
@@ -3901,7 +3896,7 @@ def test_ogr_openfilegdb_write_alter_geom_field_defn(tmp_vsimem):
     assert "WKID" in xml
 
     assert lyr.GetGeometryColumn() == "shape_renamed"
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
 
     # Set SRS to None
     fld_defn = ogr.GeomFieldDefn("shape_renamed", ogr.wkbLineString)
@@ -3958,13 +3953,13 @@ def test_ogr_openfilegdb_write_alter_geom_field_defn(tmp_vsimem):
         == ogr.OGRERR_NONE
     )
     assert lyr.GetSpatialRef() is not None
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4269"
     ds = None
 
     ds = ogr.Open(dirname, update=1)
     lyr = ds.GetLayer(0)
     assert lyr.GetSpatialRef() is not None
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4269"
 
     sql_lyr = ds.ExecuteSQL("GetLayerDefinition test")
     assert sql_lyr
@@ -4132,8 +4127,7 @@ def test_ogr_openfilegdb_write_compound_crs(tmp_vsimem, write_wkid, write_vcswki
 
     ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """COMPOUNDCRS["WGS_1984_Complex_UTM_Zone_22N + MSL height",
+    srs.SetFromUserInput("""COMPOUNDCRS["WGS_1984_Complex_UTM_Zone_22N + MSL height",
 PROJCRS["WGS_1984_Complex_UTM_Zone_22N",
     BASEGEOGCRS["WGS 84",
         DATUM["World Geodetic System 1984",
@@ -4181,8 +4175,7 @@ VERTCRS["MSL height",
         AREA["World."],
         BBOX[-90,-180,90,180]],
     ID["EPSG",5714]]]
-    """
-    )
+    """)
     d = {
         "OPENFILEGDB_WRITE_WKID": None if write_wkid else "FALSE",
         "OPENFILEGDB_WRITE_VCSWKID": None if write_vcswkid else "FALSE",

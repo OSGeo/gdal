@@ -7,6 +7,7 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
@@ -29,14 +30,15 @@ using OSGeo.GDAL;
 /// A C# based sample to write a GDAL raster using CreateCopy.
 /// </summary>
 
-class GDALWrite {
+class GDALWrite
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
-		Console.WriteLine("usage: gdalcreatecopy {dataset name} {out file name}");
-		System.Environment.Exit(-1);
-	}
+    {
+        Console.WriteLine("usage: gdalcreatecopy {dataset name} {out file name}");
+        System.Environment.Exit(-1);
+    }
 
     public static void Main(string[] args)
     {
@@ -68,21 +70,24 @@ class GDALWrite {
             /* -------------------------------------------------------------------- */
             /*      Open dataset.                                                   */
             /* -------------------------------------------------------------------- */
-            Dataset ds = Gdal.Open( args[0], Access.GA_ReadOnly );
+            string[] options = new string[] { "TILED=YES" };
 
-            if (ds == null)
+            using (Dataset ds = Gdal.Open(args[0], Access.GA_ReadOnly))
+            using (Dataset dso = drv.CreateCopy(
+                    args[1], ds, 0, options, new Gdal.GDALProgressFuncDelegate(ProgressFunc), "Sample Data"
+                ))
             {
-                Console.WriteLine("Can't open source dataset " + args[0]);
-                System.Environment.Exit(-1);
-            }
+                if (ds == null)
+                {
+                    Console.WriteLine("Can't open source dataset " + args[0]);
+                    System.Environment.Exit(-1);
+                }
 
-            string[] options = new string [] {"TILED=YES"};
-            Dataset dso = drv.CreateCopy(args[1], ds, 0, options, new Gdal.GDALProgressFuncDelegate(ProgressFunc), "Sample Data");
-
-            if (dso == null)
-            {
-                Console.WriteLine("Can't create dest dataset " + args[1]);
-                System.Environment.Exit(-1);
+                if (dso == null)
+                {
+                    Console.WriteLine("Can't create dest dataset " + args[1]);
+                    System.Environment.Exit(-1);
+                }
             }
         }
         catch (Exception e)

@@ -107,7 +107,7 @@ bool FileGDBTable::Create(const char *pszFilename, int nTablxOffsetSize,
 }
 
 /************************************************************************/
-/*                          SetTextUTF16()                              */
+/*                            SetTextUTF16()                            */
 /************************************************************************/
 
 bool FileGDBTable::SetTextUTF16()
@@ -124,7 +124,7 @@ bool FileGDBTable::SetTextUTF16()
 }
 
 /************************************************************************/
-/*                           WriteHeader()                              */
+/*                            WriteHeader()                             */
 /************************************************************************/
 
 bool FileGDBTable::WriteHeader(VSILFILE *fpTable)
@@ -174,7 +174,7 @@ bool FileGDBTable::WriteHeader(VSILFILE *fpTable)
 }
 
 /************************************************************************/
-/*                           WriteHeaderX()                             */
+/*                            WriteHeaderX()                            */
 /************************************************************************/
 
 bool FileGDBTable::WriteHeaderX(VSILFILE *fpTableX)
@@ -362,7 +362,7 @@ bool FileGDBTable::Sync(VSILFILE *fpTable, VSILFILE *fpTableX)
 }
 
 /************************************************************************/
-/*                          EncodeEnvelope()                            */
+/*                           EncodeEnvelope()                           */
 /************************************************************************/
 
 #define CHECK_CAN_BE_ENCODED_ON_VARUINT(v, msg)                                \
@@ -411,7 +411,7 @@ static bool EncodeEnvelope(std::vector<GByte> &abyBuffer,
 }
 
 /************************************************************************/
-/*                          EncodeGeometry()                            */
+/*                           EncodeGeometry()                           */
 /************************************************************************/
 
 bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
@@ -946,11 +946,8 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                     {
                         const int nNumPoints = poLS->getNumPoints();
                         m_anNumberPointsPerPart.push_back(nNumPoints);
-                        const bool bIsClockwise =
-                            CPL_TO_BOOL(poLS->isClockwise());
-                        const bool bReverseOrder =
-                            (bFirstRing && !bIsClockwise) ||
-                            (!bFirstRing && bIsClockwise);
+                        const bool bIsClockwise = poLS->isClockwise();
+                        const bool bReverseOrder = bFirstRing != bIsClockwise;
                         bFirstRing = false;
                         for (int i = 0; i < nNumPoints; ++i)
                         {
@@ -971,11 +968,8 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                     bool bFirstRing = true;
                     for (const auto *poRing : *poCurvePoly)
                     {
-                        const bool bIsClockwise =
-                            CPL_TO_BOOL(poRing->isClockwise());
-                        const bool bReverseOrder =
-                            (bFirstRing && !bIsClockwise) ||
-                            (!bFirstRing && bIsClockwise);
+                        const bool bIsClockwise = poRing->isClockwise();
+                        const bool bReverseOrder = bFirstRing != bIsClockwise;
                         bFirstRing = false;
                         if (auto poCC =
                                 dynamic_cast<const OGRCompoundCurve *>(poRing))
@@ -1284,7 +1278,7 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
 }
 
 /************************************************************************/
-/*                          EncodeFeature()                             */
+/*                           EncodeFeature()                            */
 /************************************************************************/
 
 bool FileGDBTable::EncodeFeature(const std::vector<OGRField> &asRawFields,
@@ -1580,7 +1574,7 @@ bool FileGDBTable::EncodeFeature(const std::vector<OGRField> &asRawFields,
 }
 
 /************************************************************************/
-/*                       SeekIntoTableXForNewFeature()                  */
+/*                    SeekIntoTableXForNewFeature()                     */
 /************************************************************************/
 
 bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
@@ -1748,7 +1742,7 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
 }
 
 /************************************************************************/
-/*                        WriteFeatureOffset()                          */
+/*                         WriteFeatureOffset()                         */
 /************************************************************************/
 
 void FileGDBTable::WriteFeatureOffset(uint64_t nFeatureOffset,
@@ -1759,7 +1753,7 @@ void FileGDBTable::WriteFeatureOffset(uint64_t nFeatureOffset,
 }
 
 /************************************************************************/
-/*                        WriteFeatureOffset()                          */
+/*                         WriteFeatureOffset()                         */
 /************************************************************************/
 
 bool FileGDBTable::WriteFeatureOffset(uint64_t nFeatureOffset)
@@ -1769,7 +1763,7 @@ bool FileGDBTable::WriteFeatureOffset(uint64_t nFeatureOffset)
 }
 
 /************************************************************************/
-/*                          CreateFeature()                             */
+/*                           CreateFeature()                            */
 /************************************************************************/
 
 bool FileGDBTable::CreateFeature(const std::vector<OGRField> &asRawFields,
@@ -1881,7 +1875,7 @@ bool FileGDBTable::CreateFeature(const std::vector<OGRField> &asRawFields,
 }
 
 /************************************************************************/
-/*                          UpdateFeature()                             */
+/*                           UpdateFeature()                            */
 /************************************************************************/
 
 bool FileGDBTable::UpdateFeature(int64_t nFID,
@@ -2035,7 +2029,7 @@ bool FileGDBTable::UpdateFeature(int64_t nFID,
 }
 
 /************************************************************************/
-/*                          DeleteFeature()                             */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 bool FileGDBTable::DeleteFeature(int64_t nFID)
@@ -2106,7 +2100,7 @@ FileGDBTable::WholeFileRewriter::~WholeFileRewriter()
 }
 
 /************************************************************************/
-/*                    WholeFileRewriter::Begin()                        */
+/*                      WholeFileRewriter::Begin()                      */
 /************************************************************************/
 
 bool FileGDBTable::WholeFileRewriter::Begin()
@@ -2254,7 +2248,7 @@ bool FileGDBTable::WholeFileRewriter::Begin()
 }
 
 /************************************************************************/
-/*                    WholeFileRewriter::Commit()                       */
+/*                     WholeFileRewriter::Commit()                      */
 /************************************************************************/
 
 bool FileGDBTable::WholeFileRewriter::Commit()
@@ -2369,7 +2363,7 @@ bool FileGDBTable::WholeFileRewriter::Commit()
 }
 
 /************************************************************************/
-/*                   WholeFileRewriter::Rollback()                      */
+/*                    WholeFileRewriter::Rollback()                     */
 /************************************************************************/
 
 void FileGDBTable::WholeFileRewriter::Rollback()
@@ -2422,7 +2416,7 @@ void FileGDBTable::WholeFileRewriter::Rollback()
 }
 
 /************************************************************************/
-/*                                Repack()                              */
+/*                               Repack()                               */
 /************************************************************************/
 
 bool FileGDBTable::Repack(GDALProgressFunc pfnProgress, void *pProgressData)

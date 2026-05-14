@@ -41,7 +41,7 @@ def test_gdal_footprint_basic(gdal_footprint_path, tmp_path):
 
     footprint_json = str(tmp_path / "out_footprint.json")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_footprint_path + f" -q -f GeoJSON ../gcore/data/byte.tif {footprint_json}"
     )
     assert err is None or err == "", "got error/warning"
@@ -66,12 +66,12 @@ def test_gdal_footprint_appending(gdal_footprint_path, tmp_path):
 
     footprint_shp = str(tmp_path / "out_footprint.shp")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_footprint_path + f" ../gcore/data/byte.tif {footprint_shp}"
     )
     assert err is None or err == "", "got error/warning"
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_footprint_path + f" ../gcore/data/byte.tif {footprint_shp}"
     )
     assert err is None or err == "", "got error/warning"
@@ -101,12 +101,12 @@ def test_gdal_footprint_overwrite(gdal_footprint_path, tmp_path):
 
     footprint_shp = str(tmp_path / "out_footprint.shp")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_footprint_path + f" ../gcore/data/byte.tif {footprint_shp}"
     )
     assert err is None or err == "", "got error/warning"
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_footprint_path + f" -overwrite ../gcore/data/byte.tif {footprint_shp}"
     )
     assert err is None or err == "", "got error/warning"
@@ -129,7 +129,7 @@ def test_gdal_footprint_overwrite(gdal_footprint_path, tmp_path):
 
 def test_gdal_footprint_wrong_input_dataset(gdal_footprint_path, tmp_vsimem):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_footprint_path} {tmp_vsimem}/in.tif {tmp_vsimem}/out.json"
     )
     assert "ret code = 1" in err
@@ -140,7 +140,7 @@ def test_gdal_footprint_wrong_input_dataset(gdal_footprint_path, tmp_vsimem):
 
 def test_gdal_footprint_wrong_output_dataset(gdal_footprint_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdal_footprint_path + " ../gcore/data/byte.tif /invalid/output/file.json"
     )
     assert "ret code = 1" in err

@@ -41,6 +41,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("PostgreSQL")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -402,11 +403,8 @@ def testgeom(pg_ds):
     pg_ds.ReleaseResultSet(sql_lyr)
 
     for i, geom in enumerate(testgeoms):
-        pg_ds.ExecuteSQL(
-            "INSERT INTO testgeom (ogc_fid,wkb_geometry) \
-                                    VALUES (%d,GeomFromEWKT('%s'))"
-            % (i, geom[0])
-        )
+        pg_ds.ExecuteSQL("INSERT INTO testgeom (ogc_fid,wkb_geometry) \
+                                    VALUES (%d,GeomFromEWKT('%s'))" % (i, geom[0]))
 
 
 ###############################################################################
@@ -2480,7 +2478,7 @@ def test_ogr_pg_47(pg_ds, pg_postgis_version, pg_postgis_schema):
     lyr = pg_ds.GetLayerByName("test_geog")
     assert lyr.GetExtent() == (2.0, 2.0, 49.0, 49.0), "bad extent for test_geog"
 
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == str(srid)
+    assert lyr.GetSpatialRef().GetAuthorityCode() == str(srid)
 
     feat = lyr.GetNextFeature()
     geom = feat.GetGeometryRef()
@@ -4209,26 +4207,26 @@ def test_ogr_pg_76(pg_ds, use_postgis):
 
 def ogr_pg_76_scenario1(pg_ds, lyr1, lyr2):
 
-    (_, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    _, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (level, savepoint, usertransac) == (0, 0, 0)
 
     f = lyr1.GetNextFeature()
     assert f is not None and f.GetFID() == 1
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("BEGIN", 1, 0, 0)
 
     lyr1.SetAttributeFilter("foo is NULL")
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("COMMIT", 0, 0, 0)
 
     f = lyr1.GetNextFeature()
     assert f is not None and f.GetFID() == 1
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("BEGIN", 1, 0, 0)
 
     f = lyr2.GetNextFeature()
     assert f is not None and f.GetFID() == 1
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 2, 0, 0)
 
     f = lyr1.GetNextFeature()
@@ -4242,16 +4240,16 @@ def ogr_pg_76_scenario1(pg_ds, lyr1, lyr2):
     assert f is not None and f.GetFID() == 3
     f = lyr2.GetNextFeature()
     assert f is not None and f.GetFID() == 2
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 2, 0, 0)
 
     lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
 
     lyr1.ResetReading()
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 1, 0, 0)
     lyr2.ResetReading()
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("COMMIT", 0, 0, 0)
     assert lyr1.GetFeatureCount() == 4
 
@@ -4260,7 +4258,7 @@ def ogr_pg_76_scenario1(pg_ds, lyr1, lyr2):
 def ogr_pg_76_scenario2(pg_ds, lyr1, lyr2):
 
     assert pg_ds.StartTransaction() == 0
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("BEGIN", 1, 0, 1)
 
     # Try to re-enter a transaction
@@ -4268,17 +4266,17 @@ def ogr_pg_76_scenario2(pg_ds, lyr1, lyr2):
     with gdal.quiet_errors():
         ret = pg_ds.StartTransaction()
     assert not (gdal.GetLastErrorMsg() == "" or ret == 0)
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 1, 0, 1)
 
     f = lyr1.GetNextFeature()
     assert f is not None and f.GetFID() == 1
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 2, 0, 1)
 
     f = lyr2.GetNextFeature()
     assert f is not None and f.GetFID() == 1
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 3, 0, 1)
 
     f = lyr1.GetNextFeature()
@@ -4287,27 +4285,27 @@ def ogr_pg_76_scenario2(pg_ds, lyr1, lyr2):
     assert f is not None and f.GetFID() == 3
     f = lyr2.GetNextFeature()
     assert f is not None and f.GetFID() == 2
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 3, 0, 1)
 
     lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
 
     lyr1.ResetReading()
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 2, 0, 1)
 
     lyr2.ResetReading()
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 1, 0, 1)
 
     assert pg_ds.CommitTransaction() == 0
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("COMMIT", 0, 0, 0)
 
     assert pg_ds.StartTransaction() == 0
 
     assert pg_ds.RollbackTransaction() == 0
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("ROLLBACK", 0, 0, 0)
 
     # Try to re-commit a transaction
@@ -4315,7 +4313,7 @@ def ogr_pg_76_scenario2(pg_ds, lyr1, lyr2):
     with gdal.quiet_errors():
         ret = pg_ds.CommitTransaction()
     assert not (gdal.GetLastErrorMsg() == "" or ret == 0)
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 0, 0, 0)
 
     # Try to rollback a non-transaction
@@ -4323,7 +4321,7 @@ def ogr_pg_76_scenario2(pg_ds, lyr1, lyr2):
     with gdal.quiet_errors():
         ret = pg_ds.RollbackTransaction()
     assert not (gdal.GetLastErrorMsg() == "" or ret == 0)
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 0, 0, 0)
 
 
@@ -4333,16 +4331,16 @@ def ogr_pg_76_scenario2(pg_ds, lyr1, lyr2):
 def ogr_pg_76_scenario3(pg_ds, lyr1, lyr2):
 
     assert pg_ds.StartTransaction() == 0
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("BEGIN", 1, 0, 1)
 
     f = lyr1.GetNextFeature()
     assert f is not None and f.GetFID() == 1
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 2, 0, 1)
 
     assert pg_ds.CommitTransaction() == 0
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("COMMIT", 0, 0, 0)
 
     gdal.ErrorReset()
@@ -4355,11 +4353,11 @@ def ogr_pg_76_scenario3(pg_ds, lyr1, lyr2):
 
     f = lyr1.GetNextFeature()
     assert f is not None and f.GetFID() == 1
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("BEGIN", 1, 0, 0)
 
     lyr1.ResetReading()
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("COMMIT", 0, 0, 0)
 
     lyr2.ResetReading()
@@ -4370,16 +4368,16 @@ def ogr_pg_76_scenario3(pg_ds, lyr1, lyr2):
 
 def ogr_pg_76_scenario4(pg_ds, lyr1, lyr2):
 
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 0, 0, 0)
 
     f = lyr1.GetNextFeature()
     assert f is not None and f.GetFID() == 1
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("BEGIN", 1, 0, 0)
 
     assert pg_ds.StartTransaction() == 0
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == (
         "SAVEPOINT ogr_savepoint",
         2,
@@ -4393,24 +4391,24 @@ def ogr_pg_76_scenario4(pg_ds, lyr1, lyr2):
     assert f is not None and f.GetFID() == 2
     f = lyr2.GetNextFeature()
     assert f is not None and f.GetFID() == 1
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 3, 1, 1)
 
     # Check that it doesn't commit the transaction
     lyr1.SetAttributeFilter("foo is NULL")
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 2, 1, 1)
 
     f = lyr1.GetNextFeature()
     assert f is not None and f.GetFID() == 1
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("", 3, 1, 1)
 
     f = lyr2.GetNextFeature()
     assert f is not None and f.GetFID() == 2
 
     assert pg_ds.CommitTransaction() == 0
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == (
         "RELEASE SAVEPOINT ogr_savepoint",
         2,
@@ -4423,7 +4421,7 @@ def ogr_pg_76_scenario4(pg_ds, lyr1, lyr2):
     assert pg_ds.StartTransaction() == 0
 
     assert pg_ds.RollbackTransaction() == 0
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == (
         "ROLLBACK TO SAVEPOINT ogr_savepoint",
         1,
@@ -4435,7 +4433,7 @@ def ogr_pg_76_scenario4(pg_ds, lyr1, lyr2):
     assert f is not None and f.GetFID() == 2
 
     lyr1.ResetReading()
-    (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(pg_ds)
+    lastcmd, level, savepoint, usertransac = ogr_pg_76_get_transaction_state(pg_ds)
     assert (lastcmd, level, savepoint, usertransac) == ("COMMIT", 0, 0, 0)
 
 
@@ -5503,14 +5501,14 @@ def test_ogr_pg_alter_geom_field_defn(pg_ds):
     )
     assert lyr.GetGeometryColumn() == "new_geomfield_name"
     assert lyr.GetGeomType() == ogr.wkbPoint
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4269"
     assert not lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable()
 
     test_ds = reconnect(pg_ds, update=0)
     test_lyr = test_ds.GetLayer("ogr_pg_alter_geom_field_defn")
     assert test_lyr.GetGeometryColumn() == "new_geomfield_name"
     assert test_lyr.GetGeomType() == ogr.wkbPoint
-    assert test_lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+    assert test_lyr.GetSpatialRef().GetAuthorityCode() == "4269"
     assert not test_lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable()
     test_ds = None
 
@@ -5540,13 +5538,13 @@ def test_ogr_pg_alter_geom_field_defn(pg_ds):
         )
         == ogr.OGRERR_NONE
     )
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4269"
 
     test_ds = reconnect(pg_ds, update=0)
     test_lyr = test_ds.GetLayer("ogr_pg_alter_geom_field_defn")
     assert test_lyr.GetGeometryColumn() == "new_geomfield_name"
     assert test_lyr.GetGeomType() == ogr.wkbPoint
-    assert test_lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+    assert test_lyr.GetSpatialRef().GetAuthorityCode() == "4269"
     assert test_lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable()
     test_ds = None
 
@@ -5587,7 +5585,7 @@ def test_ogr_pg_alter_geom_field_defn(pg_ds):
     test_lyr = test_ds.GetLayer("ogr_pg_alter_geom_field_defn")
     assert test_lyr.GetGeometryColumn() == "new_geomfield_name"
     assert test_lyr.GetGeomType() == ogr.wkbPoint
-    assert test_lyr.GetSpatialRef().GetAuthorityCode(None) == "4269"
+    assert test_lyr.GetSpatialRef().GetAuthorityCode() == "4269"
     assert test_lyr.GetLayerDefn().GetGeomFieldDefn(0).IsNullable()
     test_ds = None
 
@@ -6099,7 +6097,7 @@ def test_ogr_pg_schema_case_createlayer(pg_ds, tmp_schema):
 @gdaltest.enable_exceptions()
 def test_ogr_pg_LAUNDER_YES(pg_ds, tmp_schema):
 
-    eacute = b"\xC3\xA9".decode("utf-8")
+    eacute = b"\xc3\xa9".decode("utf-8")
     lyr = pg_ds.CreateLayer(f"{tmp_schema}.a" + eacute + "#", options=["LAUNDER=YES"])
     assert lyr.GetName() == f"{tmp_schema}.a" + eacute + "_"
     lyr.CreateField(ogr.FieldDefn("b" + eacute + "#"))
@@ -6113,7 +6111,7 @@ def test_ogr_pg_LAUNDER_YES(pg_ds, tmp_schema):
 @gdaltest.enable_exceptions()
 def test_ogr_pg_LAUNDER_NO(pg_ds, tmp_schema):
 
-    eacute = b"\xC3\xA9".decode("utf-8")
+    eacute = b"\xc3\xa9".decode("utf-8")
     lyr = pg_ds.CreateLayer(f"{tmp_schema}.a" + eacute + "#", options=["LAUNDER=NO"])
     assert lyr.GetName() == f"{tmp_schema}.a" + eacute + "#"
     lyr.CreateField(ogr.FieldDefn("b" + eacute + "#"))
@@ -6127,7 +6125,7 @@ def test_ogr_pg_LAUNDER_NO(pg_ds, tmp_schema):
 @gdaltest.enable_exceptions()
 def test_ogr_pg_LAUNDER_ASCII(pg_ds, tmp_schema):
 
-    eacute = b"\xC3\xA9".decode("utf-8")
+    eacute = b"\xc3\xa9".decode("utf-8")
     lyr = pg_ds.CreateLayer(f"{tmp_schema}.a" + eacute, options=["LAUNDER_ASCII=YES"])
     assert lyr.GetName() == f"{tmp_schema}.ae"
     lyr.CreateField(ogr.FieldDefn("b" + eacute))
@@ -6376,3 +6374,58 @@ def test_ogr_pg_field_truncation(pg_ds):
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     assert f["field"] == b"abcd\xc3\xa9".decode("UTF-8")
+
+
+###############################################################################
+# Test real geometry intersection in spatial filter
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("GEOM_TYPE", ["geometry", "geography"])
+@pytest.mark.parametrize(
+    "open_options", [None, ["SPATIAL_FILTER_INTERSECTION=DATABASE"]]
+)
+@pytest.mark.require_geos
+def test_ogr_pg_geometry_intersection_spatial_filter(
+    pg_ds, use_postgis, GEOM_TYPE, open_options
+):
+
+    ds = reconnect(pg_ds, open_options=open_options)
+
+    if use_postgis:
+        srs = osr.SpatialReference(epsg=4326)
+        lyr = ds.CreateLayer("test", srs, options=["GEOM_TYPE=" + GEOM_TYPE])
+    else:
+        lyr = ds.CreateLayer("test")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0.5 0.5)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0.9 0.5)"))
+    lyr.CreateFeature(f)
+
+    lyr.ResetReading()
+
+    # Pacman style polygon: almost a square except it doesn't include 0.9, 0.5
+    lyr.SetSpatialFilter(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((0 0,0 1,1 1,1 0.6,0.8 0.6,0.8 0.4,1 0.4,1 0,0 0))"
+        )
+    )
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (0.5 0.5)"
+    f = lyr.GetNextFeature()
+    assert f is None
+
+    lyr.SetSpatialFilter(None)
+
+    with ds.ExecuteSQL("SELECT * FROM test") as sql_lyr:
+        sql_lyr.SetSpatialFilter(
+            ogr.CreateGeometryFromWkt(
+                "POLYGON ((0 0,0 1,1 1,1 0.6,0.8 0.6,0.8 0.4,1 0.4,1 0,0 0))"
+            )
+        )
+        f = sql_lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "POINT (0.5 0.5)"
+        f = sql_lyr.GetNextFeature()
+        assert f is None

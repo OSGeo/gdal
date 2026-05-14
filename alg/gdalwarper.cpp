@@ -214,7 +214,7 @@ CPLErr CPL_STDCALL GDALReprojectImage(
 /************************************************************************/
 /*                    GDALCreateAndReprojectImage()                     */
 /*                                                                      */
-/*      This is a "quicky" reprojection API.                            */
+/*      This is a "quickie" reprojection API.                           */
 /************************************************************************/
 
 /** Reproject an image and create the target reprojected image */
@@ -265,12 +265,14 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
     int nPixels = 0;
     int nLines = 0;
 
-    if (GDALSuggestedWarpOutput(hSrcDS, GDALGenImgProjTransform, hTransformArg,
-                                adfDstGeoTransform, &nPixels,
-                                &nLines) != CE_None)
-        return CE_Failure;
+    CPLErr eErr =
+        GDALSuggestedWarpOutput(hSrcDS, GDALGenImgProjTransform, hTransformArg,
+                                adfDstGeoTransform, &nPixels, &nLines);
 
     GDALDestroyGenImgProjTransformer(hTransformArg);
+
+    if (eErr != CE_None)
+        return eErr;
 
     /* -------------------------------------------------------------------- */
     /*      Create the output file.                                         */
@@ -292,9 +294,9 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
     /* -------------------------------------------------------------------- */
     /*      Perform the reprojection.                                       */
     /* -------------------------------------------------------------------- */
-    CPLErr eErr = GDALReprojectImage(
-        hSrcDS, pszSrcWKT, hDstDS, pszDstWKT, eResampleAlg, dfWarpMemoryLimit,
-        dfMaxError, pfnProgress, pProgressArg, psOptions);
+    eErr = GDALReprojectImage(hSrcDS, pszSrcWKT, hDstDS, pszDstWKT,
+                              eResampleAlg, dfWarpMemoryLimit, dfMaxError,
+                              pfnProgress, pProgressArg, psOptions);
 
     GDALClose(hDstDS);
 
@@ -371,6 +373,11 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
                                          *ppImageData,  // Already a GByte *.
                                          panValidityMask, pbOutAllValid);
 
+        case GDT_Int8:
+            return GDALWarpNoDataMaskerT(
+                padfNoData, nPixels, reinterpret_cast<int8_t *>(*ppImageData),
+                panValidityMask, pbOutAllValid);
+
         case GDT_Int16:
             return GDALWarpNoDataMaskerT(
                 padfNoData, nPixels, reinterpret_cast<GInt16 *>(*ppImageData),
@@ -385,7 +392,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const float fNoData = static_cast<float>(padfNoData[0]);
             const float *pafData = reinterpret_cast<float *>(*ppImageData);
-            const bool bIsNoDataNan = CPL_TO_BOOL(std::isnan(fNoData));
+            const bool bIsNoDataNan = std::isnan(fNoData);
 
             // Nothing to do if value is out of range.
             if (padfNoData[1] != 0.0)
@@ -413,7 +420,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const double dfNoData = padfNoData[0];
             const double *padfData = reinterpret_cast<double *>(*ppImageData);
-            const bool bIsNoDataNan = CPL_TO_BOOL(std::isnan(dfNoData));
+            const bool bIsNoDataNan = std::isnan(dfNoData);
 
             // Nothing to do if value is out of range.
             if (padfNoData[1] != 0.0)
@@ -441,8 +448,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
         {
             const int nWordSize = GDALGetDataTypeSizeBytes(eType);
 
-            const bool bIsNoDataRealNan =
-                CPL_TO_BOOL(std::isnan(padfNoData[0]));
+            const bool bIsNoDataRealNan = std::isnan(padfNoData[0]);
 
             eErr = CE_Failure;
             double *padfWrk = static_cast<double *>(
@@ -451,13 +457,16 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
             {
                 eErr = CE_None;
                 bool bAllValid = true;
-                for (int iLine = 0; iLine < nYSize; iLine++)
+                for (size_t iLine = 0; iLine < static_cast<size_t>(nYSize);
+                     iLine++)
                 {
-                    GDALCopyWords((*ppImageData) + nWordSize * iLine * nXSize,
-                                  eType, nWordSize, padfWrk, GDT_CFloat64, 16,
-                                  nXSize);
+                    GDALCopyWords64((*ppImageData) + nWordSize * iLine * nXSize,
+                                    eType, nWordSize, padfWrk, GDT_CFloat64, 16,
+                                    nXSize);
 
-                    for (int iPixel = 0; iPixel < nXSize; ++iPixel)
+                    const size_t iOffsetLine = iLine * nXSize;
+                    for (size_t iPixel = 0;
+                         iPixel < static_cast<size_t>(nXSize); ++iPixel)
                     {
                         if (((bIsNoDataRealNan &&
                               std::isnan(padfWrk[iPixel * 2])) ||
@@ -465,8 +474,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
                               ARE_REAL_EQUAL(padfWrk[iPixel * 2],
                                              padfNoData[0]))))
                         {
-                            size_t iOffset =
-                                iPixel + static_cast<size_t>(iLine) * nXSize;
+                            const size_t iOffset = iOffsetLine + iPixel;
 
                             bAllValid = false;
                             CPLMaskClear(panValidityMask, iOffset);
@@ -1066,7 +1074,7 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
 }
 
 /************************************************************************/
-/*                      GDALWarpGetOptionList()                         */
+/*                       GDALWarpGetOptionList()                        */
 /************************************************************************/
 
 /** Return a XML string describing options accepted by
@@ -1647,7 +1655,7 @@ void InitNoData(int nBandCount, double **ppdNoDataReal, double dDataReal)
 }  // namespace
 
 /************************************************************************/
-/*                      GDALWarpInitDstNoDataReal()                     */
+/*                     GDALWarpInitDstNoDataReal()                      */
 /************************************************************************/
 
 /**
@@ -1666,7 +1674,7 @@ void CPL_STDCALL GDALWarpInitDstNoDataReal(GDALWarpOptions *psOptionsIn,
 }
 
 /************************************************************************/
-/*                      GDALWarpInitSrcNoDataReal()                     */
+/*                     GDALWarpInitSrcNoDataReal()                      */
 /************************************************************************/
 
 /**
@@ -1685,7 +1693,7 @@ void CPL_STDCALL GDALWarpInitSrcNoDataReal(GDALWarpOptions *psOptionsIn,
 }
 
 /************************************************************************/
-/*                      GDALWarpInitNoDataReal()                        */
+/*                       GDALWarpInitNoDataReal()                       */
 /************************************************************************/
 
 /**
@@ -1704,7 +1712,7 @@ void CPL_STDCALL GDALWarpInitNoDataReal(GDALWarpOptions *psOptionsIn,
 }
 
 /************************************************************************/
-/*                      GDALWarpInitDstNoDataImag()                     */
+/*                     GDALWarpInitDstNoDataImag()                      */
 /************************************************************************/
 
 /**
@@ -1723,7 +1731,7 @@ void CPL_STDCALL GDALWarpInitDstNoDataImag(GDALWarpOptions *psOptionsIn,
 }
 
 /************************************************************************/
-/*                      GDALWarpInitSrcNoDataImag()                     */
+/*                     GDALWarpInitSrcNoDataImag()                      */
 /************************************************************************/
 
 /**
@@ -1742,7 +1750,7 @@ void CPL_STDCALL GDALWarpInitSrcNoDataImag(GDALWarpOptions *psOptionsIn,
 }
 
 /************************************************************************/
-/*                      GDALWarpResolveWorkingDataType()                */
+/*                   GDALWarpResolveWorkingDataType()                   */
 /************************************************************************/
 
 /**
@@ -1769,8 +1777,6 @@ void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
     {
         return;
     }
-
-    psOptions->eWorkingDataType = GDT_UInt8;
 
     // If none of the provided input nodata values can be represented in the
     // data type of the corresponding source band, ignore them.
@@ -1857,6 +1863,9 @@ void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
         }
     }
 
+    if (psOptions->eWorkingDataType == GDT_Unknown)
+        psOptions->eWorkingDataType = GDT_UInt8;
+
     const bool bApplyVerticalShift = CPLFetchBool(
         psOptions->papszWarpOptions, "APPLY_VERTICAL_SHIFT", false);
     if (bApplyVerticalShift &&
@@ -1873,7 +1882,7 @@ void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
 }
 
 /************************************************************************/
-/*                      GDALWarpInitDefaultBandMapping()                */
+/*                   GDALWarpInitDefaultBandMapping()                   */
 /************************************************************************/
 
 /**
@@ -2451,7 +2460,7 @@ GDALWarpOptions *CPL_STDCALL GDALDeserializeWarpOptions(CPLXMLNode *psTree)
 }
 
 /************************************************************************/
-/*                        GDALGetWarpResampleAlg()                      */
+/*                       GDALGetWarpResampleAlg()                       */
 /************************************************************************/
 
 /** Return a GDALResampleAlg from a string */

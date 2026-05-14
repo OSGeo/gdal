@@ -146,7 +146,7 @@ static struct swathRegion *SWXRegion[NSWATHREGN];
 /* Swath Prototypes (internal routines) */
 static intn SWchkswid(int32, const char *, int32 *, int32 *, int32 *);
 static int32 SWfinfo(int32, const char *, const char *, int32 *,
-                     int32 [], int32 *, char *);
+                     int32 [], int32 *, char *, size_t dimlistsize);
 static intn SWwrrdattr(int32, const char *, int32, int32, const char *, VOIDP);
 static intn SW1dfldsrch(int32, int32, const char *, const char *, int32 *,
                         int32 *, int32 *);
@@ -301,7 +301,7 @@ SWattach(int32 fid, const char *swathname)
 		/* Get name and class of Vgroup */
 		/* ---------------------------- */
 		vgid[0] = Vattach(HDFfid, vgRef, "r");
-		Vgetname(vgid[0], name);
+		VgetnameSafe(vgid[0], name, sizeof(name));
 		Vgetclass(vgid[0], class);
 
 
@@ -363,7 +363,8 @@ SWattach(int32 fid, const char *swathname)
 		    /* -------------------- */
 		    status = SWchkswid(swathID, "SWattach", &dum,
 				       &sdInterfaceID, &dum);
-
+            if (status < 0)
+                return -1;
 
 		    /* Access swath "Geolocation" SDS */
 		    /* ------------------------------ */
@@ -681,7 +682,7 @@ SWdiminfo(int32 swathID, const char *dimname)
 	    free(utlstr);
 	    return -1;
 	}
-	Vgetname(SWXSwath[sID].IDTable, swathname);
+	VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 	/* Get pointers to "Dimension" section within SM */
 	metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -808,7 +809,7 @@ SWmapinfo(int32 swathID, const char *geodim, const char *datadim, int32 * offset
 	    free(utlstr);
 	    return -1;
 	}
-	Vgetname(SWXSwath[sID].IDTable, swathname);
+	VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 	/* Get pointers to "DimensionMap" section within SM */
 	metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -1031,7 +1032,7 @@ SWcompinfo(int32 swathID, const char *fieldname, int32 * compcode, intn compparm
 	    free(utlstr);
 	    return -1;
 	}
-	Vgetname(SWXSwath[sID].IDTable, swathname);
+	VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 	/* Get pointers to "DataField" section within SM */
 	metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -1196,7 +1197,7 @@ SWcompinfo(int32 swathID, const char *fieldname, int32 * compcode, intn compparm
 -----------------------------------------------------------------------------*/
 static int32
 SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
-        int32 *rank, int32 dims[], int32 *numbertype, char *dimlist)
+        int32 *rank, int32 dims[], int32 *numbertype, char *dimlist, size_t dimlistsize)
 
 {
     intn            i;		/* Loop index */
@@ -1204,8 +1205,8 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
     intn            status;	/* routine return status variable */
     intn            statmeta = 0;	/* EHgetmetavalue return status */
 
-    int32           fid;	/* HDF-EOS file ID */
-    int32           sdInterfaceID;	/* HDF SDS interface ID */
+    int32           fid = 0;	/* HDF-EOS file ID */
+    int32           sdInterfaceID = 0;	/* HDF SDS interface ID */
     int32           idOffset = SWIDOFFSET;	/* Swath ID offset */
     int32           fsize;	/* field size in bytes */
     int32           ndims = 0;	/* Number of dimensions */
@@ -1247,7 +1248,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
         free(utlstr);
         return -1;
     }
-    Vgetname(SWXSwath[sID].IDTable, swathname);
+    VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
     /* Get pointers to appropriate "Field" section within SM */
     if (strcmp(fieldtype, "Geolocation Fields") == 0)
@@ -1272,6 +1273,12 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 	}
     }
 
+    if (!metaptrs[0])
+    {
+        free(utlstr);
+        free(metabuf);
+        return -1;
+    }
 
     /* Search for field */
     snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"\n");
@@ -1301,11 +1308,22 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 
 	if (statmeta == 0)
 	{
-	    memmove(utlstr, utlstr + 1, strlen(utlstr) - 2);
-	    utlstr[strlen(utlstr) - 2] = 0;
+	    const size_t len = strlen(utlstr);
+	    if (len >= 2 && utlstr[0] == '(' && utlstr[len-1] == ')')
+	    {
+	        memmove(utlstr, utlstr + 1, len - 2);
+	        utlstr[len - 2] = '\0';
+	    }
 
 	    /* Parse trimmed DimList string and get rank */
-	    ndims = EHparsestr(utlstr, ',', ptr, slen);
+	    ndims = EHparsestr(utlstr, ',', ptr, CPL_ARRAYSIZE(ptr), slen, CPL_ARRAYSIZE(slen));
+        if (ndims < 0)
+        {
+            free(utlstr);
+            free(metabuf);
+            HEpush(DFE_NOSPACE, "SWfinfo", __FILE__, __LINE__);
+            return -1;
+        }
 	    *rank = ndims;
 	}
 	else
@@ -1326,21 +1344,44 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 	 * Get dimension sizes and concatenate dimension names to dimension
 	 * list
 	 */
-	for (i = 0; i < ndims; i++)
-	{
-	    memcpy(dimstr, ptr[i] + 1, slen[i] - 2);
-	    dimstr[slen[i] - 2] = 0;
-	    dims[i] = SWdiminfo(swathID, dimstr);
-	    if (dimlist != NULL)
-	    {
-		if (i > 0)
-		{
-		    strcat(dimlist, ",");
-		}
-		strcat(dimlist, dimstr);
-	    }
-
-	}
+    size_t dimlistlen = 0;
+    dims[0] = 0;
+    for (i = 0; i < ndims; i++)
+    {
+        if (slen[i] >= 2)
+        {
+            if ((size_t)(slen[i] - 2) >= sizeof(dimstr))
+            {
+                HEpush(DFE_GENAPP, "SWfinfo", __FILE__, __LINE__);
+                HEreport("Size of dimstr variable too short.\n");
+                return -1;
+            }
+            memcpy(dimstr, ptr[i] + 1, slen[i] - 2);
+            dimstr[slen[i] - 2] = 0;
+        }
+        else
+        {
+            dimstr[0] = 0;
+        }
+        dims[i] = SWdiminfo(swathID, dimstr);
+        if (dimlist != NULL)
+        {
+            const int spaceForComma = ((i > 0) ? 1 : 0);
+            if (dimlistlen + spaceForComma + strlen(dimstr) >= dimlistsize)
+            {
+                HEpush(DFE_GENAPP, "SWfinfo", __FILE__, __LINE__);
+                HEreport("Size of dimlist variable too short.\n");
+                return -1;
+            }
+            if (i > 0)
+            {
+                strcpy(dimlist + dimlistlen, ",");
+                ++dimlistlen;
+            }
+            strcpy(dimlist + dimlistlen, dimstr);
+            dimlistlen += strlen(dimstr);
+        }
+    }
 
 
 	/* Appendable Field Section */
@@ -1454,7 +1495,7 @@ SWfinfo(int32 swathID, const char *fieldtype, const char *fieldname,
 -----------------------------------------------------------------------------*/
 intn
 SWfieldinfo(int32 swathID, const char *fieldname, int32 * rank, int32 dims[],
-	    int32 * numbertype, char *dimlist)
+	    int32 * numbertype, char *dimlist, size_t dimlistsize)
 
 {
     intn            status;	/* routine return status variable */
@@ -1471,13 +1512,13 @@ SWfieldinfo(int32 swathID, const char *fieldname, int32 * rank, int32 dims[],
     {
 	/* Check for field within Geolocatation Fields */
 	status = SWfinfo(swathID, "Geolocation Fields", fieldname,
-			 rank, dims, numbertype, dimlist);
+			 rank, dims, numbertype, dimlist, dimlistsize);
 
 	/* If not there then check within Data Fields */
 	if (status == -1)
 	{
 	    status = SWfinfo(swathID, "Data Fields", fieldname,
-			     rank, dims, numbertype, dimlist);
+			     rank, dims, numbertype, dimlist, dimlistsize);
 	}
 
 	/* If not there either then can't be found */
@@ -1821,7 +1862,7 @@ SWinqdims(int32 swathID, char *dimnames, int32 dims[])
 	        free(utlstr);
 	        return -1;
 	    }
-	    Vgetname(SWXSwath[sID].IDTable, swathname);
+	    VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 	    /* Get pointers to "Dimension" section within SM */
 	    metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -1992,7 +2033,7 @@ SWinqmaps(int32 swathID, char *dimmaps, int32 offset[], int32 increment[])
 	        free(utlstr);
 	        return -1;
 	    }
-	    Vgetname(SWXSwath[sID].IDTable, swathname);
+	    VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 	    /* Get pointers to "DimensionMap" section within SM */
 	    metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -2164,7 +2205,7 @@ SWinqidxmaps(int32 swathID, char *idxmaps, int32 idxsizes[])
 	        free(utlstr);
 	        return -1;
 	    }
-	    Vgetname(SWXSwath[sID].IDTable, swathname);
+	    VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 	    /* Get pointers to "IndexDimensionMap" section within SM */
 	    metabuf = (char *) EHmetagroup(sdInterfaceID, swathname, "s",
@@ -2344,7 +2385,7 @@ SWinqfields(int32 swathID, const char *fieldtype, char *fieldlist, int32 rank[],
 	        free(utlstr2);
 	        return -1;
 	    }
-	    Vgetname(SWXSwath[sID].IDTable, swathname);
+	    VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 	    /* Get pointers to "GeoField" or "DataField" section within SM */
 	    if (strcmp(fieldtype, "Geolocation Fields") == 0)
@@ -2382,7 +2423,7 @@ SWinqfields(int32 swathID, const char *fieldtype, char *fieldlist, int32 rank[],
 
 	    /* Begin loop through mapping entries in metadata */
 	    /* ---------------------------------------------- */
-	    while (1)
+	    while (metaptrs[0])
 	    {
 		/* Search for OBJECT string */
 		metaptrs[0] = strstr(metaptrs[0], "\t\tOBJECT=");
@@ -2440,7 +2481,13 @@ SWinqfields(int32 swathID, const char *fieldtype, char *fieldlist, int32 rank[],
 		    if (rank != NULL)
 		    {
 			EHgetmetavalue(metaptrs, "DimList", utlstr);
-			rank[nFld] = EHparsestr(utlstr, ',', ptr, slen);
+			rank[nFld] = EHparsestr(utlstr, ',', ptr, CPL_ARRAYSIZE(ptr), slen, CPL_ARRAYSIZE(slen));
+            if (rank[nFld] < 0)
+            {
+                HEpush(DFE_NOSPACE, "SWinqfields", __FILE__, __LINE__);
+                status = -1;
+                break;
+            }
 		    }
 		    /* Increment number of fields */
 		    nFld++;
@@ -2646,7 +2693,7 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
 	    free(utlstr);
 	    return -1;
 	}
-	Vgetname(SWXSwath[sID].IDTable, swathname);
+	VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 	/* Zero out string buffer size */
 	*strbufsize = 0;
@@ -2753,11 +2800,10 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
 
             /* Begin loop through entries in metadata */
             /* -------------------------------------- */
-            while (1)
+            while (metaptrs[0])
             {
                 /* Search for first string */
-                strcpy(utlstr, &valName[0][0]);
-                strcat(utlstr, "=");
+                snprintf(utlstr, UTLSTR_MAX_SIZE, "%s=", &valName[0][0]);
                 metaptrs[0] = strstr(metaptrs[0], utlstr);
 
                 /* If found within relevant metadata section ... */
@@ -2769,7 +2815,11 @@ SWnentries(int32 swathID, int32 entrycode, int32 * strbufsize)
                          * Get all string values Don't count quotes
                          */
                         EHgetmetavalue(metaptrs, &valName[i][0], utlstr);
-                        *strbufsize += (int32)strlen(utlstr) - 2;
+                        const size_t len = strlen(utlstr);
+                        if( len >= 2 && utlstr[0] == '"' && utlstr[len-1] == '"' )
+                            *strbufsize += (int32)len - 2;
+                        else
+                            *strbufsize += (int32)len;
                     }
                     /* Increment number of entries */
                     nEntries++;
@@ -3043,7 +3093,7 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 	    {
 		/* Get swath name */
 		/* -------------- */
-		Vgetname(SWXSwath[sID].IDTable, swathname);
+		VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 
 		/* Get pointers to "MergedFields" section within SM */
@@ -3076,11 +3126,20 @@ SWSDfldsrch(int32 swathID, int32 sdInterfaceID, const char *fieldname,
 		    metaptrs[0] = strstr(oldmetaptr, utlstr);
 		}
 
-
-		/* Get field list and strip off leading and trailing quotes */
-		EHgetmetavalue(metaptrs, "FieldList", name);  /* not return status --xhua */
-		memmove(name, name + 1, strlen(name) - 2);
-		name[strlen(name) - 2] = 0;
+        /* Get field list and strip off leading and trailing quotes */
+        if (EHgetmetavalue(metaptrs, "FieldList", name) == 0)
+        {
+            const size_t len = strlen(name);
+            if (len >= 2 && name[0] == '"' && name[len-1] == '"')
+            {
+                memmove(name, name + 1, strlen(name) - 2);
+                name[strlen(name) - 2] = 0;
+            }
+        }
+        else
+        {
+            name[0] = '\0';
+        }
 
 		/* Search for desired field within merged field list */
 		snprintf(utlstr, UTLSTR_MAX_SIZE, "%s%s%s", "\"", fieldname, "\"");
@@ -3227,11 +3286,11 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
     int32           fldsize;	/* Field size */
     int32           nrec;	/* Number of records in Vdata */
 
-    int32           offset[8];	/* I/O offset (start) */
+    int32           offset[8] = {0};	/* I/O offset (start) */
     int32           incr[8];	/* I/O increment (stride) */
     int32           count[8];	/* I/O count (edge) */
     int32           dims[8];	/* Field/SDS dimensions */
-    int32           mrgOffset;	/* Merged field offset */
+    int32           mrgOffset = 0;	/* Merged field offset */
     int32           nflds;	/* Number of fields in Vdata */
     int32           strideOne;	/* Strides = 1 flag */
 
@@ -3242,6 +3301,8 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
     char           *ptr[64];	/* String pointer array */
     char            fieldlist[256];	/* Vdata field list */
 
+    for (i = 0; i < 8; ++i)
+        incr[i] = 1;
 
     /* Check for valid swath ID */
     /* ------------------------ */
@@ -3492,7 +3553,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 		    /* ---------------------------------------------- */
 		    VSgetfields(vdataID, fieldlist);
 		    dum = EHstrwithin(fieldname, fieldlist, ',');
-		    nflds = EHparsestr(fieldlist, ',', ptr, NULL);
+		    nflds = EHparsestr(fieldlist, ',', ptr, CPL_ARRAYSIZE(ptr), NULL, 0);
 
 
 		    /* Get Merged Field Offset (if any) */
@@ -3572,6 +3633,7 @@ SWwrrdfield(int32 swathID, const char *fieldname, const char *code,
 		    /* --------------------- */
 		    nrec = VSwrite(vdataID, buf, count[0] * incr[0],
 				   FULL_INTERLACE);
+            (void)nrec; // FIXME
 
 		    free(fillbuf);
                     if (status > 0)
@@ -3718,7 +3780,7 @@ SWgetfillvalue(int32 swathID, const char *fieldname, VOIDP fillval)
     if (status == 0)
     {
 	/* Get field info */
-	status = SWfieldinfo(swathID, fieldname, &dum, dims, &nt, NULL);
+	status = SWfieldinfo(swathID, fieldname, &dum, dims, &nt, NULL, 0);
 
 	if (status == 0)
 	{
@@ -3803,7 +3865,7 @@ SWdetach(int32 swathID)
 	{
 	    return -1;
 	}
-	Vgetname(SWXSwath[sID].IDTable, swathname);
+	VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 
 	/* Create 1D "orphaned" fields */
@@ -3866,7 +3928,7 @@ SWdetach(int32 swathID)
 	{
 	    if (SWX1dcomb[3 * i + 1] == SWXSwath[sID].IDTable)
 	    {
-		memcpy(&SWX1dcomb[3 * i],
+		memmove(&SWX1dcomb[3 * i],
 		       &SWX1dcomb[3 * (i + 1)],
 		       (512 - i - 1) * 3 * 4);
 	    }
@@ -4034,7 +4096,6 @@ SWgeomapinfo(int32 swathID, const char *geodim)
 	free(utlstrr);
 	return(-1);
     }
-    status = -1;
 
     /* Check for valid swath id */
     status = SWchkswid(swathID, "SWgeomapinfo", &fid, &sdInterfaceID, &swVgrpID);
@@ -4048,7 +4109,7 @@ SWgeomapinfo(int32 swathID, const char *geodim)
 	    free(utlstri);
 	    return -1;
 	}
-	Vgetname(SWXSwath[sID].IDTable, swathname);
+	VgetnameSafe(SWXSwath[sID].IDTable, swathname, sizeof(swathname));
 
 	/* Get pointers to "DimensionMap" section within SM */
 	metabufr = EHmetagroup(sdInterfaceID, swathname, "s",

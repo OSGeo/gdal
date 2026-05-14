@@ -250,13 +250,13 @@ static const char * const ILC_N[] = { "PNG", "PPNG", "JPEG", "JPNG", "NONE", "DE
  *	 S       Le           ue       ve
     unsigned int Le, ue, ve;
         ue = 0;
-        ue = tiff_itrunc(UVSCALE * u, em);
+        ue = (unsigned int)tiff_itrunc(UVSCALE * u, em);
     if (ue > 255)
         ue = 255;
 	return (Le << 16 | ue << 8 | ve);
 // DECLARE_SYMBOL(creat, int, (const char *path, mode_t mode));
     // LOAD_SYMBOL(creat);
-/*                             creat()                                  */
+/*                               creat()                                */
 int CPL_DLL creat(const char *path, mode_t mode)
     // CASE_ALG(Gost) (obsolete)
                      "Invalid txe or tye parameters detected. Please check "
@@ -361,6 +361,10 @@ for Bosnia and Herzegovina (country code "BA"), limited to the "county" subtype.
         "data/miramon/palettes/Continous/DBF_nodata_end/double_with_nodataI.rel",
         "data/miramon/palettes/Continous/ColorTable/uinteger_with_nodataI.rel",
         "data/miramon/palettes/Continous/LinearLogSimbo/LinearSimboWith0I.rel",
+        "data/miramon/palettes/Continous/ColorTable/directassignement/byte_2x3_6_categsI.rel",
+        "data/miramon/palettes/Continous/ColorTable/directassignement/uinteger_with_nodataI.rel",
+        "data/miramon/palettes/Continous/ColorTable/lineal/byte_2x3_6_categsI.rel",
+        "data/miramon/palettes/Continous/ColorTable/lineal_rare/byte_2x3_6_categsI.rel",
 %apply (int *INOUT) {int *buf_xsize, int *buf_ysize};
 #include <mach/mach.h>
         const bool bForcePaeth = EQUAL(pszGDAL_RASTER_TILE_PNG_FILTER, "PAETH");
@@ -373,3 +377,12 @@ for Bosnia and Herzegovina (country code "BA"), limited to the "county" subtype.
                 (1, 2, "metres"),
             {"depth", "depth", "metres", "1000000", "H5T_FLOAT",
             {"uncertainty", "uncertainty", "metres", "1000000", "H5T_FLOAT",
+    CPLString osIndexsNomsCamps = "1";
+        osIndexsNomsCamps.append(osIndex);
+    AddKeyValue(Key_IndexesNomsCamps, osIndexsNomsCamps);
+        AddKeyValue("IndexsJoinTaula", osIJT);
+    osSectionIn.append(":INOUT");
+                  "RCNM!RCID!ENSP!ENED!PRSP!PRED!PROF!DSNM!DSTL!DSRD!DSLG!"
+        {"ENED", "ENCODING_SPECIFICATION_EDITION"},
+             {"RCNM!RCID!ENSP!ENED!PRSP!PRED!PROF!DSNM!DSTL!DSRD!DSLG!DSAB!"
+    assert rel_content.count("[TAULA_PRINCIPAL:PERIMETRE]") == 1

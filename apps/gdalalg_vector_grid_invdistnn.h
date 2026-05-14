@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorGridInvdistNNAlgorithm                  */
+/*                   GDALVectorGridInvdistNNAlgorithm                   */
 /************************************************************************/
 
 class GDALVectorGridInvdistNNAlgorithm /* non final */

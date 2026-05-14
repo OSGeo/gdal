@@ -16,9 +16,9 @@
 #include <string>
 #include "ogr_api.h"
 
-/*************************************************************************/
-/*                            GDBToOGRFieldType()                        */
-/*************************************************************************/
+/************************************************************************/
+/*                         GDBToOGRFieldType()                          */
+/************************************************************************/
 
 // We could make this function far more robust by doing automatic coercion of
 // types, and/or skipping fields we do not know. But, for our purposes. this

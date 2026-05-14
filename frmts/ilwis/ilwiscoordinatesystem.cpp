@@ -293,7 +293,7 @@ static int fetchParams(const std::string &csyFileName, double *padfPrjParams)
 }
 
 /************************************************************************/
-/*                          mapTMParams                                  */
+/*                             mapTMParams                              */
 /************************************************************************/
 /**
  * fetch the parameters from ILWIS projection definition for
@@ -334,7 +334,7 @@ static int mapTMParams(const std::string &sProj, double dfZone,
 }
 
 /************************************************************************/
-/*                          scaleFromLATTS()                             */
+/*                           scaleFromLATTS()                           */
 /************************************************************************/
 /**
  * Compute the scale factor from Latitude_Of_True_Scale parameter.
@@ -368,7 +368,7 @@ static void scaleFromLATTS(const std::string &sEllips, double phits,
 }
 
 /************************************************************************/
-/*                          ReadProjection()                           */
+/*                           ReadProjection()                           */
 /************************************************************************/
 
 /**
@@ -1051,8 +1051,8 @@ CPLErr ILWISDataset::WriteProjection()
     /* -------------------------------------------------------------------- */
     /*  Determine to write a geo-referencing file for the dataset to create */
     /* -------------------------------------------------------------------- */
-    if (m_gt[0] != 0.0 || m_gt[1] != 1.0 || m_gt[2] != 0.0 || m_gt[3] != 0.0 ||
-        m_gt[4] != 0.0 || fabs(m_gt[5]) != 1.0)
+    if (m_gt.xorig != 0.0 || m_gt.xscale != 1.0 || m_gt.xrot != 0.0 ||
+        m_gt.yorig != 0.0 || m_gt.yrot != 0.0 || fabs(m_gt.yscale) != 1.0)
         WriteElement("GeoRef", "CoordSystem", grFileName, csy);
 
     /* -------------------------------------------------------------------- */

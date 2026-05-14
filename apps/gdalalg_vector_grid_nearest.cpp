@@ -17,7 +17,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*    GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm()  */
+/*   GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm()   */
 /************************************************************************/
 
 GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm(
@@ -32,7 +32,7 @@ GDALVectorGridNearestAlgorithm::GDALVectorGridNearestAlgorithm(
 }
 
 /************************************************************************/
-/*               GDALVectorGridNearestAlgorithm::RunImpl()              */
+/*              GDALVectorGridNearestAlgorithm::RunImpl()               */
 /************************************************************************/
 
 std::string GDALVectorGridNearestAlgorithm::GetGridAlgorithm() const

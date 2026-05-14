@@ -73,7 +73,7 @@ void GDALUnrolledCopy_GByte_3_1_SSSE3(GByte *CPL_RESTRICT pDest,
 }
 
 /************************************************************************/
-/*                  GDALDeinterleave3Byte_SSSE3()                       */
+/*                    GDALDeinterleave3Byte_SSSE3()                     */
 /************************************************************************/
 
 #if defined(__GNUC__) && !defined(__clang__)
@@ -143,7 +143,7 @@ void GDALDeinterleave3Byte_SSSE3(const GByte *CPL_RESTRICT pabySrc,
 #endif
 
 /************************************************************************/
-/*                     GDALTranspose4x4Int32()                          */
+/*                       GDALTranspose4x4Int32()                        */
 /************************************************************************/
 
 // Consider that the input registers for 4x4 words of size 4 bytes each,
@@ -172,7 +172,7 @@ inline void GDALTranspose4x4Int32(__m128i in0, __m128i in1, __m128i in2,
 }
 
 /************************************************************************/
-/*                  GDALDeinterleave4Byte_SSSE3()                       */
+/*                    GDALDeinterleave4Byte_SSSE3()                     */
 /************************************************************************/
 
 #if !defined(__GNUC__) || defined(__clang__)
@@ -221,7 +221,7 @@ void GDALDeinterleave4Byte_SSSE3(const GByte *CPL_RESTRICT pabySrc,
 #endif
 
 /************************************************************************/
-/*                  GDALDeinterleave3UInt16_SSSE3()                     */
+/*                   GDALDeinterleave3UInt16_SSSE3()                    */
 /************************************************************************/
 
 #if (defined(__GNUC__) && !defined(__clang__)) ||                              \
@@ -230,11 +230,11 @@ void GDALDeinterleave4Byte_SSSE3(const GByte *CPL_RESTRICT pabySrc,
 // GCC autovectorizer does an excellent job
 __attribute__((optimize("tree-vectorize")))
 #endif
-void GDALDeinterleave3UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
-                                  GUInt16* CPL_RESTRICT panDest0,
-                                  GUInt16* CPL_RESTRICT panDest1,
-                                  GUInt16* CPL_RESTRICT panDest2,
-                                  size_t nIters)
+void GDALDeinterleave3UInt16_SSSE3(const GUInt16 *CPL_RESTRICT panSrc,
+                                   GUInt16 *CPL_RESTRICT panDest0,
+                                   GUInt16 *CPL_RESTRICT panDest1,
+                                   GUInt16 *CPL_RESTRICT panDest2,
+                                   size_t nIters)
 {
     for (size_t i = 0; i < nIters; ++i)
     {
@@ -246,7 +246,7 @@ void GDALDeinterleave3UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
 #endif
 
 /************************************************************************/
-/*                  GDALDeinterleave4UInt16_SSSE3()                     */
+/*                   GDALDeinterleave4UInt16_SSSE3()                    */
 /************************************************************************/
 
 #if (defined(__GNUC__) && !defined(__clang__)) ||                              \
@@ -255,12 +255,12 @@ void GDALDeinterleave3UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
 // GCC autovectorizer does an excellent job
 __attribute__((optimize("tree-vectorize")))
 #endif
-void GDALDeinterleave4UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
-                                  GUInt16* CPL_RESTRICT panDest0,
-                                  GUInt16* CPL_RESTRICT panDest1,
-                                  GUInt16* CPL_RESTRICT panDest2,
-                                  GUInt16* CPL_RESTRICT panDest3,
-                                  size_t nIters)
+void GDALDeinterleave4UInt16_SSSE3(const GUInt16 *CPL_RESTRICT panSrc,
+                                   GUInt16 *CPL_RESTRICT panDest0,
+                                   GUInt16 *CPL_RESTRICT panDest1,
+                                   GUInt16 *CPL_RESTRICT panDest2,
+                                   GUInt16 *CPL_RESTRICT panDest3,
+                                   size_t nIters)
 {
     for (size_t i = 0; i < nIters; ++i)
     {
@@ -292,7 +292,7 @@ inline void storeu(uint8_t *pDst, size_t i, size_t dstStride, __m128i reg)
 }
 
 /************************************************************************/
-/*                      GDALInterleave3Byte_SSSE3()                     */
+/*                     GDALInterleave3Byte_SSSE3()                      */
 /************************************************************************/
 
 #if (!defined(__GNUC__) || defined(__INTEL_CLANG_COMPILER))
@@ -307,9 +307,8 @@ inline __m128i GDAL_mm_or_3_si128(__m128i r0, __m128i r1, __m128i r2)
 #if defined(__GNUC__)
 __attribute__((noinline))
 #endif
-static void
-GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
-                          uint8_t *CPL_RESTRICT pDst, size_t nIters)
+static void GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
+                                      uint8_t *CPL_RESTRICT pDst, size_t nIters)
 {
     size_t i = 0;
     constexpr size_t VALS_PER_ITER = 16;
@@ -425,9 +424,8 @@ __attribute__((noinline))
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wpass-failed"
 #endif
-static void
-GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
-                          uint8_t *CPL_RESTRICT pDst, size_t nIters)
+static void GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
+                                      uint8_t *CPL_RESTRICT pDst, size_t nIters)
 {
 #if defined(__clang__) && !defined(__INTEL_CLANG_COMPILER)
 #pragma clang loop vectorize(enable)
@@ -446,7 +444,7 @@ GDALInterleave3Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
 #endif
 
 /************************************************************************/
-/*                      GDALInterleave5Byte_SSSE3()                     */
+/*                     GDALInterleave5Byte_SSSE3()                      */
 /************************************************************************/
 
 inline __m128i GDAL_mm_or_5_si128(__m128i r0, __m128i r1, __m128i r2,
@@ -618,7 +616,7 @@ static void GDALInterleave5Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
 }
 
 /************************************************************************/
-/*                      GDALTranspose2D_Byte_SSSE3()                    */
+/*                     GDALTranspose2D_Byte_SSSE3()                     */
 /************************************************************************/
 
 // Given r = (b00, b01, b02, b03,
@@ -628,7 +626,7 @@ static void GDALInterleave5Byte_SSSE3(const uint8_t *CPL_RESTRICT pSrc,
 // Return    (b00, b10, b20, b30,
 //            b01, b11, b21, b31,
 //            b02, b12, b22, b32,
-//            b03, b13, b22, b33)
+//            b03, b13, b23, b33)
 inline void GDALReorderForTranspose4x4(__m128i &r)
 {
     const __m128i shuffle_mask =

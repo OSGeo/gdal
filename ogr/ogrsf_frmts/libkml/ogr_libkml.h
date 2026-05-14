@@ -263,7 +263,7 @@ class OGRLIBKMLDataSource final : public GDALDataset
     void SetStyleTable(OGRStyleTable *poStyleTable) override;
 
     int Open(const char *pszFilename, bool bUpdate);
-    int Create(const char *pszFilename, char **papszOptions);
+    int Create(const char *pszFilename, CSLConstList papszOptions);
 
     CPLErr FlushCache(bool bAtClosing) override;
     int TestCapability(const char *) const override;
@@ -328,9 +328,9 @@ class OGRLIBKMLDataSource final : public GDALDataset
     int OpenDir(const char *pszFilename, int bUpdate);
 
     /***** methods to create various datasource types *****/
-    int CreateKml(const char *pszFilename, char **papszOptions);
-    int CreateKmz(const char *pszFilename, char **papszOptions);
-    int CreateDir(const char *pszFilename, char **papszOptions);
+    int CreateKml(const char *pszFilename, CSLConstList papszOptions);
+    int CreateKmz(const char *pszFilename, CSLConstList papszOptions);
+    int CreateDir(const char *pszFilename, CSLConstList papszOptions);
 
     /***** methods to create layers on various datasource types *****/
     OGRLIBKMLLayer *CreateLayerKml(const char *pszLayerName,

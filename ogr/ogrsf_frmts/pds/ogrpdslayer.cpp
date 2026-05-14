@@ -22,7 +22,7 @@ namespace OGRPDS
 {
 
 /************************************************************************/
-/*                           OGRPDSLayer()                              */
+/*                            OGRPDSLayer()                             */
 /************************************************************************/
 
 OGRPDSLayer::OGRPDSLayer(const std::string &osTableIDIn,
@@ -96,7 +96,7 @@ OGRPDSLayer::OGRPDSLayer(const std::string &osTableIDIn,
 }
 
 /************************************************************************/
-/*                             ~OGRPDSLayer()                           */
+/*                            ~OGRPDSLayer()                            */
 /************************************************************************/
 
 OGRPDSLayer::~OGRPDSLayer()
@@ -785,12 +785,14 @@ OGRFeature *OGRPDSLayer::GetFeature(GIntBig nFID)
         return nullptr;
 
     nNextFID = (int)nFID;
-    VSIFSeekL(fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET);
+    VSIFSeekL(fpPDS,
+              nStartBytes + static_cast<uint64_t>(nNextFID) * nRecordSize,
+              SEEK_SET);
     return GetNextRawFeature();
 }
 
 /************************************************************************/
-/*                         SetNextByIndex()                             */
+/*                           SetNextByIndex()                           */
 /************************************************************************/
 
 OGRErr OGRPDSLayer::SetNextByIndex(GIntBig nIndex)
@@ -805,7 +807,9 @@ OGRErr OGRPDSLayer::SetNextByIndex(GIntBig nIndex)
     }
 
     nNextFID = (int)nIndex;
-    VSIFSeekL(fpPDS, nStartBytes + nNextFID * nRecordSize, SEEK_SET);
+    VSIFSeekL(fpPDS,
+              nStartBytes + static_cast<uint64_t>(nNextFID) * nRecordSize,
+              SEEK_SET);
     return OGRERR_NONE;
 }
 

@@ -19,7 +19,7 @@
 #include "tiffio.h"
 
 /************************************************************************/
-/*                           GTiffOddBitsBand()                         */
+/*                          GTiffOddBitsBand()                          */
 /************************************************************************/
 
 GTiffOddBitsBand::GTiffOddBitsBand(GTiffDataset *m_poGDSIn, int nBandIn)

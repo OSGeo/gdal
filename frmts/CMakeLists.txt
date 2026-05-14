@@ -193,6 +193,8 @@ include(mrsid/driver_declaration.cmake)
 include(georaster/driver_declaration.cmake)
 include(ecw/driver_declaration.cmake)
 
+include(grok/driver_declaration.cmake)
+
 # Register all frmt drivers according to FRMT_<driver> flags
 gdal_standard_includes(gdal_frmts)
 add_dependencies(gdal_frmts generate_gdal_version_h)

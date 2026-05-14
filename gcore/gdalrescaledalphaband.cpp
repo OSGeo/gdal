@@ -14,6 +14,7 @@
 #include "cpl_port.h"
 #include "gdal_priv.h"
 
+#include <algorithm>
 #include <cstddef>
 
 #include "cpl_error.h"
@@ -22,7 +23,7 @@
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                        GDALRescaledAlphaBand()                       */
+/*                       GDALRescaledAlphaBand()                        */
 /************************************************************************/
 
 GDALRescaledAlphaBand::GDALRescaledAlphaBand(GDALRasterBand *poParentIn)
@@ -42,7 +43,7 @@ GDALRescaledAlphaBand::GDALRescaledAlphaBand(GDALRasterBand *poParentIn)
 }
 
 /************************************************************************/
-/*                      ~GDALRescaledAlphaBand()                        */
+/*                       ~GDALRescaledAlphaBand()                       */
 /************************************************************************/
 
 GDALRescaledAlphaBand::~GDALRescaledAlphaBand()
@@ -57,18 +58,15 @@ GDALRescaledAlphaBand::~GDALRescaledAlphaBand()
 CPLErr GDALRescaledAlphaBand::IReadBlock(int nXBlockOff, int nYBlockOff,
                                          void *pImage)
 {
-    int nXSizeRequest = nBlockXSize;
-    if (nXBlockOff * nBlockXSize + nBlockXSize > nRasterXSize)
-        nXSizeRequest = nRasterXSize - nXBlockOff * nBlockXSize;
-    int nYSizeRequest = nBlockYSize;
-    if (nYBlockOff * nBlockYSize + nBlockYSize > nRasterYSize)
-        nYSizeRequest = nRasterYSize - nYBlockOff * nBlockYSize;
+    const int nXOff = nXBlockOff * nBlockXSize;
+    const int nXSizeRequest = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nYBlockOff * nBlockYSize;
+    const int nYSizeRequest = std::min(nBlockYSize, nRasterYSize - nYOff);
 
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
 
-    return IRasterIO(GF_Read, nXBlockOff * nBlockXSize,
-                     nYBlockOff * nBlockYSize, nXSizeRequest, nYSizeRequest,
+    return IRasterIO(GF_Read, nXOff, nYOff, nXSizeRequest, nYSizeRequest,
                      pImage, nXSizeRequest, nYSizeRequest, GDT_UInt8, 1,
                      nBlockXSize, &sExtraArg);
 }
@@ -127,7 +125,7 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
 }
 
 /************************************************************************/
-/*                   EmitErrorMessageIfWriteNotSupported()              */
+/*                EmitErrorMessageIfWriteNotSupported()                 */
 /************************************************************************/
 
 bool GDALRescaledAlphaBand::EmitErrorMessageIfWriteNotSupported(

@@ -133,7 +133,7 @@ int32 SWattach(int32, const char *);
 int32 SWdiminfo(int32, const char *);
 intn SWmapinfo(int32, const char *, const char *, int32 *, int32 *);
 int32 SWidxmapinfo(int32, const char *, const char *, int32 []);
-intn SWfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char *);
+intn SWfieldinfo(int32, const char *, int32 *, int32 [], int32 *, char *, size_t);
 intn SWcompinfo(int32, const char *, int32 *, intn []);
 intn SWreadattr(int32, const char *, VOIDP);
 intn SWattrinfo(int32, const char *, int32 *, int32 *);
@@ -183,7 +183,7 @@ intn GDsdid(int32, const char *, int32 *);
 /* EH Utility Prototypes */
 int32 EHnumstr(const char *);
 float64 EHconvAng(float64, intn);
-int32 EHparsestr(const char *, const char, char *[], int32 []);
+int32 EHparsestr(const char *, const char, char *[], size_t, int32 [], size_t);
 int32 EHstrwithin(const char *, const char *, const char);
 intn EHchkODL(const char *);
 intn EHloadliststr(char *[], int32, char *, char);
@@ -204,12 +204,15 @@ int32 EHattrcat(int32, int32, char *, int32 *);
 int32 EHinquire(const char *, const char *, char *, int32 *);
 intn EHclose(int32);
 
-
+int32 VgetnameSafe(int32 vkey, char *vgname, size_t vgnamesize);
 
 #ifdef __cplusplus
 }
 #endif
 
+#ifndef CPL_ARRAYSIZE
+#define CPL_ARRAYSIZE(array) (sizeof(array) / sizeof(array[0]))
+#endif
 
 #endif  /* #ifndef HDFEOSDEF_H_ */
 

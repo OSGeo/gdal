@@ -52,7 +52,7 @@ def test_gdalalg_vector_make_point_basic(make_point, use_z, use_m):
         make_point["z"] = "my_z"
     if use_m:
         make_point["m"] = "my_m"
-    make_point["dst-crs"] = "EPSG:6589"
+    make_point["output-crs"] = "EPSG:6589"
     make_point["output"] = ""
     make_point["output-format"] = "MEM"
 
@@ -108,8 +108,8 @@ def test_gdalalg_vector_make_point_basic(make_point, use_z, use_m):
 
 def test_gdalalg_vector_make_point_invalid_srs(make_point):
 
-    with pytest.raises(Exception, match="Invalid value for 'dst-crs'"):
-        make_point["dst-crs"] = "invalid"
+    with pytest.raises(Exception, match="Invalid value for 'output-crs'"):
+        make_point["output-crs"] = "invalid"
 
 
 @pytest.mark.parametrize("value", (" 40m", "", " "))

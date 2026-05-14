@@ -378,7 +378,7 @@ void CPCIDSKBitmap::SetMetadataValue( const std::string &key,
 }
 
 /************************************************************************/
-/*                   GetOverviewLevelMapping()                          */
+/*                      GetOverviewLevelMapping()                       */
 /************************************************************************/
 std::vector<int> CPCIDSKBitmap::GetOverviewLevelMapping() const
 {

@@ -53,9 +53,7 @@ def test_gdalalg_vector_make_valid():
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiPolygon
-    assert (
-        out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode(None) == "32631"
-    )
+    assert out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode() == "32631"
     out_f = out_lyr.GetNextFeature()
     assert out_f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
     out_f = out_lyr.GetNextFeature()

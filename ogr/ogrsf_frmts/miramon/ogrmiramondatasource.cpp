@@ -11,17 +11,17 @@
 
 #include "ogrmiramon.h"
 
-/****************************************************************************/
-/*                          OGRMiraMonDataSource()                          */
-/****************************************************************************/
+/************************************************************************/
+/*                        OGRMiraMonDataSource()                        */
+/************************************************************************/
 OGRMiraMonDataSource::OGRMiraMonDataSource()
 {
     memset(&m_MMMap, 0, sizeof(m_MMMap));
 }
 
-/****************************************************************************/
-/*                         ~OGRMiraMonDataSource()                          */
-/****************************************************************************/
+/************************************************************************/
+/*                       ~OGRMiraMonDataSource()                        */
+/************************************************************************/
 
 OGRMiraMonDataSource::~OGRMiraMonDataSource()
 
@@ -32,9 +32,9 @@ OGRMiraMonDataSource::~OGRMiraMonDataSource()
         VSIFCloseL(m_MMMap.fMMMap);
 }
 
-/****************************************************************************/
-/*                                Open()                                    */
-/****************************************************************************/
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
 
 bool OGRMiraMonDataSource::Open(const char *pszFilename, VSILFILE *fp,
                                 const OGRSpatialReference *poSRS,
@@ -125,9 +125,9 @@ bool OGRMiraMonDataSource::Create(const char *pszDataSetName,
     return true;
 }
 
-/****************************************************************************/
-/*                           ICreateLayer()                                 */
-/****************************************************************************/
+/************************************************************************/
+/*                            ICreateLayer()                            */
+/************************************************************************/
 
 OGRLayer *
 OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
@@ -181,8 +181,18 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     }
     else
     {
+        const std::string osFilename =
+            CPLLaunderForFilenameSafe(pszLayerName, nullptr);
+        if (osFilename != pszLayerName)
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "Layer name '%s' laundered as '%s' for filename compatibility",
+                pszLayerName, osFilename.c_str());
+        }
+
         osFullMMLayerName =
-            CPLFormFilenameSafe(m_osRootName.c_str(), pszLayerName, "");
+            CPLFormFilenameSafe(m_osRootName.c_str(), osFilename.c_str(), "");
 
         /* -------------------------------------------------------------------- */
         /*      Let's create the folder if it's not already created.            */
@@ -216,9 +226,9 @@ OGRMiraMonDataSource::ICreateLayer(const char *pszLayerName,
     return nullptr;
 }
 
-/****************************************************************************/
-/*                           TestCapability()                               */
-/****************************************************************************/
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
 
 int OGRMiraMonDataSource::TestCapability(const char *pszCap) const
 
@@ -231,9 +241,9 @@ int OGRMiraMonDataSource::TestCapability(const char *pszCap) const
     return FALSE;
 }
 
-/****************************************************************************/
-/*                              GetLayer()                                  */
-/****************************************************************************/
+/************************************************************************/
+/*                              GetLayer()                              */
+/************************************************************************/
 
 const OGRLayer *OGRMiraMonDataSource::GetLayer(int iLayer) const
 

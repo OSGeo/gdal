@@ -33,7 +33,7 @@ namespace PCIDSK
 {
 
 /************************************************************************/
-/*                             BlockTileLayer()                         */
+/*                           BlockTileLayer()                           */
 /************************************************************************/
 
 /**
@@ -59,7 +59,7 @@ BlockTileLayer::BlockTileLayer(BlockDir * poBlockDir, uint32 nLayer,
 }
 
 /************************************************************************/
-/*                            ~BlockTileLayer()                         */
+/*                          ~BlockTileLayer()                           */
 /************************************************************************/
 
 /**
@@ -71,7 +71,7 @@ BlockTileLayer::~BlockTileLayer(void)
 }
 
 /************************************************************************/
-/*                              GetTileInfo()                           */
+/*                            GetTileInfo()                             */
 /************************************************************************/
 
 /**
@@ -101,7 +101,7 @@ BlockTileLayer::GetTileInfo(uint32 nCol, uint32 nRow)
 }
 
 /************************************************************************/
-/*                                  Sync()                              */
+/*                                Sync()                                */
 /************************************************************************/
 
 /**
@@ -133,7 +133,7 @@ void BlockTileLayer::Sync(void)
 }
 
 /************************************************************************/
-/*                              IsCorrupted()                           */
+/*                            IsCorrupted()                             */
 /************************************************************************/
 bool BlockTileLayer::IsCorrupted(void) const
 {
@@ -145,14 +145,34 @@ bool BlockTileLayer::IsCorrupted(void) const
     if (GetXSize() == 0 || GetYSize() == 0)
         return true;
 
-    uint64 nTileSize =
-        static_cast<uint64>(GetTileXSize()) * GetTileYSize() * GetDataTypeSize();
+    // or the tile size is 0.
+    if (GetTileXSize() == 0 || GetTileYSize() == 0)
+        return true;
 
-    return nTileSize == 0 || nTileSize > std::numeric_limits<uint32>::max();
+    if (GetTileXSize() > std::numeric_limits<uint32>::max() / GetTileYSize())
+        return true;
+
+    const uint32_t nDTSize = GetDataTypeSize();
+    if (nDTSize == 0)
+        return true;
+
+    if (GetTileXSize() * GetTileYSize() >
+                                std::numeric_limits<uint32>::max() / nDTSize)
+        return true;
+
+    const uint32_t nTileXCount = DIV_ROUND_UP(GetXSize(), GetTileXSize());
+    const uint32_t nTileYCount = DIV_ROUND_UP(GetYSize(), GetTileYSize());
+    assert(nTileYCount != 0);
+    if (nTileXCount > std::numeric_limits<uint32>::max() / nTileYCount)
+        return true;
+
+    // CTiledChannel::ReadBlock() expects GetTileCount() to fit in a signed int.
+    return GetTileCount() >
+                static_cast<uint32_t>(std::numeric_limits<int>::max());
 }
 
 /************************************************************************/
-/*                              GetTileCount()                          */
+/*                            GetTileCount()                            */
 /************************************************************************/
 
 /**
@@ -167,7 +187,7 @@ uint32 BlockTileLayer::GetTileCount(void) const
 }
 
 /************************************************************************/
-/*                             GetTilePerRow()                          */
+/*                           GetTilePerRow()                            */
 /************************************************************************/
 
 /**
@@ -181,7 +201,7 @@ uint32 BlockTileLayer::GetTilePerRow(void) const
 }
 
 /************************************************************************/
-/*                             GetTilePerCol()                          */
+/*                           GetTilePerCol()                            */
 /************************************************************************/
 
 /**
@@ -195,7 +215,7 @@ uint32 BlockTileLayer::GetTilePerCol(void) const
 }
 
 /************************************************************************/
-/*                              GetTileSize()                           */
+/*                            GetTileSize()                             */
 /************************************************************************/
 
 /**
@@ -209,7 +229,7 @@ uint32 BlockTileLayer::GetTileSize(void) const
 }
 
 /************************************************************************/
-/*                            GetDataTypeSize()                         */
+/*                          GetDataTypeSize()                           */
 /************************************************************************/
 
 /**
@@ -223,7 +243,7 @@ uint32 BlockTileLayer::GetDataTypeSize(void) const
 }
 
 /************************************************************************/
-/*                              IsTileValid()                           */
+/*                            IsTileValid()                             */
 /************************************************************************/
 
 /**
@@ -243,7 +263,7 @@ bool BlockTileLayer::IsTileValid(uint32 nCol, uint32 nRow)
 }
 
 /************************************************************************/
-/*                            GetTileDataSize()                         */
+/*                          GetTileDataSize()                           */
 /************************************************************************/
 
 /**
@@ -262,7 +282,7 @@ uint32 BlockTileLayer::GetTileDataSize(uint32 nCol, uint32 nRow)
 }
 
 /************************************************************************/
-/*                            WriteSparseTile()                         */
+/*                          WriteSparseTile()                           */
 /************************************************************************/
 
 /**
@@ -351,7 +371,7 @@ bool BlockTileLayer::WriteSparseTile(const void * pData,
 }
 
 /************************************************************************/
-/*                               WriteTile()                            */
+/*                             WriteTile()                              */
 /************************************************************************/
 
 /**
@@ -406,7 +426,7 @@ void BlockTileLayer::WriteTile(const void * pData,
 }
 
 /************************************************************************/
-/*                             ReadSparseTile()                         */
+/*                           ReadSparseTile()                           */
 /************************************************************************/
 
 /**
@@ -456,7 +476,7 @@ bool BlockTileLayer::ReadSparseTile(void * pData, uint32 nCol, uint32 nRow)
 }
 
 /************************************************************************/
-/*                                ReadTile()                            */
+/*                              ReadTile()                              */
 /************************************************************************/
 
 /**
@@ -498,7 +518,7 @@ uint32 BlockTileLayer::ReadTile(void * pData, uint32 nCol, uint32 nRow, uint32 n
 }
 
 /************************************************************************/
-/*                         ReadPartialSparseTile()                      */
+/*                       ReadPartialSparseTile()                        */
 /************************************************************************/
 
 /**
@@ -580,7 +600,7 @@ bool BlockTileLayer::ReadPartialSparseTile(void * pData,
 }
 
 /************************************************************************/
-/*                            ReadPartialTile()                         */
+/*                          ReadPartialTile()                           */
 /************************************************************************/
 
 /**
@@ -618,7 +638,7 @@ bool BlockTileLayer::ReadPartialTile(void * pData, uint32 nCol, uint32 nRow,
 }
 
 /************************************************************************/
-/*                            SetTileLayerInfo()                        */
+/*                          SetTileLayerInfo()                          */
 /************************************************************************/
 
 /**
@@ -710,7 +730,7 @@ void BlockTileLayer::SetTileLayerInfo(uint32 nXSize, uint32 nYSize,
 }
 
 /************************************************************************/
-/*                              GetDataType()                           */
+/*                            GetDataType()                             */
 /************************************************************************/
 
 /**
@@ -736,7 +756,7 @@ const char * BlockTileLayer::GetDataType(void) const
 }
 
 /************************************************************************/
-/*                            GetCompressType()                         */
+/*                          GetCompressType()                           */
 /************************************************************************/
 
 /**

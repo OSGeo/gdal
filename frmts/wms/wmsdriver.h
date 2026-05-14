@@ -227,7 +227,7 @@ void WMSDeregisterMiniDrivers(GDALDriver *);
 void WMSDeregister(GDALDriver *);
 
 /************************************************************************/
-/*                            GDALWMSCache                              */
+/*                             GDALWMSCache                             */
 /************************************************************************/
 enum GDALWMSCacheItemStatus
 {
@@ -312,7 +312,7 @@ class GDALWMSDataset final : public GDALPamDataset
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
     CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy,
                       GDALDataType bdt, int band_count, int *band_map,
-                      char **options) override;
+                      CSLConstList options) override;
 
     char **GetMetadataDomainList() override;
     virtual const char *GetMetadataItem(const char *pszName,
@@ -448,7 +448,7 @@ class GDALWMSDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -516,7 +516,7 @@ class GDALWMSDataset final : public GDALPamDataset
 };
 
 /************************************************************************/
-/*                            GDALWMSRasterBand                         */
+/*                          GDALWMSRasterBand                           */
 /************************************************************************/
 
 class GDALWMSRasterBand final : public GDALPamRasterBand
@@ -539,7 +539,7 @@ class GDALWMSRasterBand final : public GDALPamRasterBand
     double GetMaximum(int *) override;
     GDALColorTable *GetColorTable() override;
     CPLErr AdviseRead(int x0, int y0, int sx, int sy, int bsx, int bsy,
-                      GDALDataType bdt, char **options) override;
+                      GDALDataType bdt, CSLConstList options) override;
 
     GDALColorInterp GetColorInterpretation() override;
     CPLErr SetColorInterpretation(GDALColorInterp) override;

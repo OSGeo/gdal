@@ -57,7 +57,7 @@ class ZMapDataset final : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -200,7 +200,7 @@ CPLErr ZMapRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                            */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double ZMapRasterBand::GetNoDataValue(int *pbSuccess)
@@ -230,7 +230,7 @@ ZMapDataset::~ZMapDataset()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int ZMapDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -452,20 +452,20 @@ GDALDataset *ZMapDataset::Open(GDALOpenInfo *poOpenInfo)
         const double dfStepX = (dfMaxX - dfMinX) / (nCols - 1);
         const double dfStepY = (dfMaxY - dfMinY) / (nRows - 1);
 
-        poDS->m_gt[0] = dfMinX - dfStepX / 2;
-        poDS->m_gt[1] = dfStepX;
-        poDS->m_gt[3] = dfMaxY + dfStepY / 2;
-        poDS->m_gt[5] = -dfStepY;
+        poDS->m_gt.xorig = dfMinX - dfStepX / 2;
+        poDS->m_gt.xscale = dfStepX;
+        poDS->m_gt.yorig = dfMaxY + dfStepY / 2;
+        poDS->m_gt.yscale = -dfStepY;
     }
     else
     {
         const double dfStepX = (dfMaxX - dfMinX) / nCols;
         const double dfStepY = (dfMaxY - dfMinY) / nRows;
 
-        poDS->m_gt[0] = dfMinX;
-        poDS->m_gt[1] = dfStepX;
-        poDS->m_gt[3] = dfMaxY;
-        poDS->m_gt[5] = -dfStepY;
+        poDS->m_gt.xorig = dfMinX;
+        poDS->m_gt.xscale = dfStepX;
+        poDS->m_gt.yorig = dfMaxY;
+        poDS->m_gt.yscale = -dfStepY;
     }
 
     /* -------------------------------------------------------------------- */
@@ -488,7 +488,7 @@ GDALDataset *ZMapDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       WriteRightJustified()                          */
+/*                        WriteRightJustified()                         */
 /************************************************************************/
 
 static void WriteRightJustified(VSIVirtualHandleUniquePtr &fp,
@@ -541,7 +541,7 @@ static void WriteRightJustified(VSIVirtualHandleUniquePtr &fp, double dfValue,
 
 GDALDataset *ZMapDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     CPL_UNUSED char **papszOptions,
+                                     CPL_UNUSED CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {
@@ -553,14 +553,14 @@ GDALDataset *ZMapDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "ZMap driver does not support source dataset with zero band.\n");
+            "ZMap driver does not support source datasets with zero bands.");
         return nullptr;
     }
 
     if (nBands != 1)
     {
         CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                 "ZMap driver only uses the first band of the dataset.\n");
+                 "ZMap driver only uses the first band of the dataset.");
         if (bStrict)
             return nullptr;
     }
@@ -581,11 +581,11 @@ GDALDataset *ZMapDataset::CreateCopy(const char *pszFilename,
 
     GDALGeoTransform gt;
     poSrcDS->GetGeoTransform(gt);
-    if (gt[2] != 0 || gt[4] != 0)
+    if (gt.xrot != 0 || gt.yrot != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "ZMap driver does not support CreateCopy() from skewed or "
-                 "rotated dataset.\n");
+                 "rotated dataset.");
         return nullptr;
     }
 
@@ -633,23 +633,25 @@ GDALDataset *ZMapDataset::CreateCopy(const char *pszFilename,
 
     if (CPLTestBool(CPLGetConfigOption("ZMAP_PIXEL_IS_POINT", "FALSE")))
     {
-        WriteRightJustified(fp, gt[0] + gt[1] / 2, 14, 7);
+        WriteRightJustified(fp, gt.xorig + gt.xscale / 2, 14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[0] + gt[1] * nXSize - gt[1] / 2, 14, 7);
+        WriteRightJustified(fp, gt.xorig + gt.xscale * nXSize - gt.xscale / 2,
+                            14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[3] + gt[5] * nYSize - gt[5] / 2, 14, 7);
+        WriteRightJustified(fp, gt.yorig + gt.yscale * nYSize - gt.yscale / 2,
+                            14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[3] + gt[5] / 2, 14, 7);
+        WriteRightJustified(fp, gt.yorig + gt.yscale / 2, 14, 7);
     }
     else
     {
-        WriteRightJustified(fp, gt[0], 14, 7);
+        WriteRightJustified(fp, gt.xorig, 14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[0] + gt[1] * nXSize, 14, 7);
+        WriteRightJustified(fp, gt.xorig + gt.xscale * nXSize, 14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[3] + gt[5] * nYSize, 14, 7);
+        WriteRightJustified(fp, gt.yorig + gt.yscale * nYSize, 14, 7);
         fp->Printf(",");
-        WriteRightJustified(fp, gt[3], 14, 7);
+        WriteRightJustified(fp, gt.yorig, 14, 7);
     }
 
     fp->Printf("\n");

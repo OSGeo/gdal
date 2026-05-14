@@ -254,6 +254,7 @@ MAIN_START(argc, argv)
         outputArg->IsOutput())
     {
         printf("%s", outputArg->Get<std::string>().c_str());
+        fflush(stdout);
     }
 
     const auto retCodeArg = alg->GetActualAlgorithm().GetArg("return-code");
@@ -262,6 +263,10 @@ MAIN_START(argc, argv)
     {
         ret = retCodeArg->Get<int>();
     }
+
+    alg.reset();
+
+    GDALDestroy();
 
     return ret;
 }

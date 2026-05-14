@@ -180,9 +180,7 @@ def test_ogr_plscenes_data_v1_nominal_vector(pl_url, handle_get, handle_post):
             }
         }
     ]
-}""".replace(
-            "PL_URL", pl_url
-        ),
+}""".replace("PL_URL", pl_url),
     )
 
     handle_get(
@@ -198,9 +196,7 @@ def test_ogr_plscenes_data_v1_nominal_vector(pl_url, handle_get, handle_post):
       "status": "active",
       "expires_at": "2016-02-11T12:34:56.789"
   }
-}""".replace(
-            "PL_URL", pl_url
-        ),
+}""".replace("PL_URL", pl_url),
     )
 
     with gdal.config_options(
@@ -337,9 +333,7 @@ def test_ogr_plscenes_data_v1_nominal_vector(pl_url, handle_get, handle_post):
             }
         }
     ]
-}""".replace(
-        "PL_URL", pl_url
-    )
+}""".replace("PL_URL", pl_url)
     handle_post(
         """/data_v1/quick-search?_page_size=1""",
         post_body="""{"item_types":["PSOrthoTile"],"filter":{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"NotFilter","config":{"type":"StringInFilter","field_name":"id","config":["a"]}},{"type":"DateRangeFilter","field_name":"acquired","config":{"gte":"2016-02-11T00:00:00Z"}}]},{"type":"AndFilter","config":[{"type":"DateRangeFilter","field_name":"acquired","config":{"lte":"2016-02-12T00:00:00Z"}},{"type":"DateRangeFilter","field_name":"acquired","config":{"gt":"1970-01-01T01:23:45Z"}}]}]},{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"DateRangeFilter","field_name":"acquired","config":{"lt":"2100-01-01T01:23:45Z"}},{"type":"RangeFilter","field_name":"anomalous_pixels","config":{"gte":1.234567,"lte":1.234567}}]},{"type":"AndFilter","config":[{"type":"NotFilter","config":{"type":"StringInFilter","field_name":"id","config":["b"]}},{"type":"RangeFilter","field_name":"columns","config":{"gt":0}}]}]}]},{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"AndFilter","config":[{"type":"RangeFilter","field_name":"columns","config":{"lt":2}},{"type":"NumberInFilter","field_name":"columns","config":[1]}]},{"type":"AndFilter","config":[{"type":"NumberInFilter","field_name":"columns","config":[1,2]},{"type":"OrFilter","config":[{"type":"StringInFilter","field_name":"id","config":["filtered_2"]},{"type":"StringInFilter","field_name":"id","config":["foo"]}]}]}]},{"type":"AndFilter","config":[{"type":"PermissionFilter","config":["download"]},{"type":"PermissionFilter","config":["download"]}]}]}]}]}}""",
@@ -458,9 +452,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_4(pl_url, handle_get, handle_post):
       "_permissions": ["download"],
       "status": "inactive",
   }
-}""".replace(
-            "PL_URL", pl_url
-        ),
+}""".replace("PL_URL", pl_url),
     )
     with gdal.config_option("PL_URL", f"{pl_url}/data_v1/"), gdal.quiet_errors():
         ds_raster = gdal.OpenEx(
@@ -563,9 +555,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_7(pl_url, handle_get, handle_post):
       "status": "active",
       "expires_at": "2016-02-11T12:34:56.789"
   }
-}""".replace(
-            "PL_URL", pl_url
-        ),
+}""".replace("PL_URL", pl_url),
     )
 
     # JSon content for /vsimem/data_v1/item-types/PSOrthoTile/items/id/assets/analytic/my.tiff
@@ -606,9 +596,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_8(pl_url, handle_get, handle_post):
       "status": "active",
       "expires_at": "2016-02-11T12:34:56.789"
   }
-}""".replace(
-            "PL_URL", pl_url
-        ),
+}""".replace("PL_URL", pl_url),
     )
 
     # Missing metadata
@@ -648,9 +636,7 @@ def test_ogr_plscenes_data_v1_nominal_raster_9(pl_url, handle_get, handle_post):
       "status": "active",
       "expires_at": "2016-02-11T12:34:56.789"
   }
-}""".replace(
-            "PL_URL", pl_url
-        ),
+}""".replace("PL_URL", pl_url),
     )
 
     # Failed filter by scene id

@@ -50,7 +50,7 @@ static CPLStringList GetAllowedDrivers()
 }
 
 /************************************************************************/
-/*                         STACTARasterBand()                           */
+/*                          STACTARasterBand()                          */
 /************************************************************************/
 
 STACTARasterBand::STACTARasterBand(STACTADataset *poDSIn, int nBandIn,
@@ -67,7 +67,7 @@ STACTARasterBand::STACTARasterBand(STACTADataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                           IReadBlock()                               */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr STACTARasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -79,7 +79,7 @@ CPLErr STACTARasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                           IRasterIO()                                */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr STACTARasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -147,7 +147,7 @@ int STACTARasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                             GetOverview()                            */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *STACTARasterBand::GetOverview(int nIdx)
@@ -228,7 +228,7 @@ double STACTARawRasterBand::GetNoDataValue(int *pbHasNoData)
 }
 
 /************************************************************************/
-/*                           IReadBlock()                               */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr STACTARawRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -247,7 +247,7 @@ CPLErr STACTARawRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                           IRasterIO()                                */
+/*                             IRasterIO()                              */
 /************************************************************************/
 
 CPLErr STACTARawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
@@ -303,7 +303,7 @@ CPLErr STACTARawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                     DoVSICLOUDSubstitution()                         */
+/*                       DoVSICLOUDSubstitution()                       */
 /************************************************************************/
 
 static std::string DoVSICLOUDSubstitution(const std::string &osFilename)
@@ -737,7 +737,7 @@ CPLErr STACTARawDataset::IRasterIO(
 }
 
 /************************************************************************/
-/*                           GetGeoTransform()                          */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr STACTARawDataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -747,7 +747,7 @@ CPLErr STACTARawDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int STACTADataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -811,7 +811,7 @@ int STACTADataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
@@ -1300,17 +1300,19 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            const double dfMinX = m_gt[0];
-            const double dfMaxX = m_gt[0] + GetRasterXSize() * m_gt[1];
-            const double dfMaxY = m_gt[3];
-            const double dfMinY = m_gt[3] + GetRasterYSize() * m_gt[5];
+            const double dfMinX = m_gt.xorig;
+            const double dfMaxX = m_gt.xorig + GetRasterXSize() * m_gt.xscale;
+            const double dfMaxY = m_gt.yorig;
+            const double dfMinY = m_gt.yorig + GetRasterYSize() * m_gt.yscale;
 
-            const double dfOvrMinX = poRawDS->m_gt[0];
+            const double dfOvrMinX = poRawDS->m_gt.xorig;
             const double dfOvrMaxX =
-                poRawDS->m_gt[0] + poRawDS->GetRasterXSize() * poRawDS->m_gt[1];
-            const double dfOvrMaxY = poRawDS->m_gt[3];
+                poRawDS->m_gt.xorig +
+                poRawDS->GetRasterXSize() * poRawDS->m_gt.xscale;
+            const double dfOvrMaxY = poRawDS->m_gt.yorig;
             const double dfOvrMinY =
-                poRawDS->m_gt[3] + poRawDS->GetRasterYSize() * poRawDS->m_gt[5];
+                poRawDS->m_gt.yorig +
+                poRawDS->GetRasterYSize() * poRawDS->m_gt.yscale;
 
             if (fabs(dfMinX - dfOvrMinX) < 1e-10 * fabs(dfMinX) &&
                 fabs(dfMinY - dfOvrMinY) < 1e-10 * fabs(dfMinY) &&
@@ -1454,7 +1456,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          ~STACTADataset()                            */
+/*                           ~STACTADataset()                           */
 /************************************************************************/
 
 STACTADataset::~STACTADataset()
@@ -1465,7 +1467,7 @@ STACTADataset::~STACTADataset()
 }
 
 /************************************************************************/
-/*                          FlushCache()                                */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr STACTADataset::FlushCache(bool bAtClosing)
@@ -1475,7 +1477,7 @@ CPLErr STACTADataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
-/*                            InitRaster()                              */
+/*                             InitRaster()                             */
 /************************************************************************/
 
 bool STACTARawDataset::InitRaster(GDALDataset *poProtoDS,
@@ -1529,17 +1531,19 @@ bool STACTARawDataset::InitRaster(GDALDataset *poProtoDS,
         return false;
     }
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-    m_gt[0] = oTM.mTopLeftX + m_nMinMetaTileCol * m_nMetaTileWidth * oTM.mResX;
-    m_gt[1] = oTM.mResX;
-    m_gt[3] = oTM.mTopLeftY - m_nMinMetaTileRow * m_nMetaTileHeight * oTM.mResY;
-    m_gt[5] = -oTM.mResY;
+    m_gt.xorig =
+        oTM.mTopLeftX + m_nMinMetaTileCol * m_nMetaTileWidth * oTM.mResX;
+    m_gt.xscale = oTM.mResX;
+    m_gt.yorig =
+        oTM.mTopLeftY - m_nMinMetaTileRow * m_nMetaTileHeight * oTM.mResY;
+    m_gt.yscale = -oTM.mResY;
     SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
 
     return true;
 }
 
 /************************************************************************/
-/*                            GetSpatialRef ()                          */
+/*                           GetSpatialRef ()                           */
 /************************************************************************/
 
 const OGRSpatialReference *STACTADataset::GetSpatialRef() const
@@ -1548,7 +1552,7 @@ const OGRSpatialReference *STACTADataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                           GetGeoTransform()                          */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr STACTADataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -1558,7 +1562,7 @@ CPLErr STACTADataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                            OpenStatic()                              */
+/*                             OpenStatic()                             */
 /************************************************************************/
 
 GDALDataset *STACTADataset::OpenStatic(GDALOpenInfo *poOpenInfo)
@@ -1572,7 +1576,7 @@ GDALDataset *STACTADataset::OpenStatic(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       GDALRegister_STACTA()                          */
+/*                        GDALRegister_STACTA()                         */
 /************************************************************************/
 
 void GDALRegister_STACTA()

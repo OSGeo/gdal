@@ -230,7 +230,7 @@ def test_openfilegb_raster_int8():
     assert ds.RasterYSize == 20
     assert ds.RasterCount == 1
     assert ds.GetGeoTransform() == (440720, 60, 0, 3751320, 0, -60)
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "26711"
     assert ds.GetMetadata("IMAGE_STRUCTURE") == {"COMPRESSION": "DEFLATE"}
     assert ds.GetMetadata("xml:definition")[0].startswith("<DERasterDataset ")
     assert ds.GetMetadata("xml:documentation")[0].startswith("<metadata ")
@@ -286,7 +286,7 @@ def test_openfilegb_raster_rat():
     assert ds.RasterYSize == 20
     assert ds.RasterCount == 1
     assert ds.GetGeoTransform() == (440720, 60, 0, 3751320, 0, -60)
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "26711"
     assert ds.GetMetadata("IMAGE_STRUCTURE") == {"COMPRESSION": "DEFLATE"}
     band = ds.GetRasterBand(1)
     assert band.DataType == gdal.GDT_Int8

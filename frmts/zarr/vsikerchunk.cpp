@@ -18,7 +18,7 @@
 #include "cpl_string.h"
 
 /************************************************************************/
-/*                    VSIInstallKerchunkFileSystems()                   */
+/*                   VSIInstallKerchunkFileSystems()                    */
 /************************************************************************/
 
 void VSIInstallKerchunkFileSystems()
@@ -28,7 +28,7 @@ void VSIInstallKerchunkFileSystems()
 }
 
 /************************************************************************/
-/*                    VSIKerchunkFileSystemsCleanCache()                */
+/*                  VSIKerchunkFileSystemsCleanCache()                  */
 /************************************************************************/
 
 void VSIKerchunkFileSystemsCleanCache()

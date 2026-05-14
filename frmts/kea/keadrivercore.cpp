@@ -14,7 +14,7 @@
 #include "libkea_headers.h"
 
 /************************************************************************/
-/*                     KEADriverIdentify()                              */
+/*                         KEADriverIdentify()                          */
 /************************************************************************/
 
 int KEADriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -35,7 +35,7 @@ int KEADriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      KEADriverSetCommonMetadata()                    */
+/*                     KEADriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void KEADriverSetCommonMetadata(GDALDriver *poDriver)
@@ -96,7 +96,7 @@ void KEADriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredKEAPlugin()                       */
+/*                      DeclareDeferredKEAPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

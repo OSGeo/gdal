@@ -33,7 +33,7 @@ OGRPGeoLayer::OGRPGeoLayer()
 }
 
 /************************************************************************/
-/*                            ~OGRPGeoLayer()                             */
+/*                           ~OGRPGeoLayer()                            */
 /************************************************************************/
 
 OGRPGeoLayer::~OGRPGeoLayer()
@@ -284,11 +284,13 @@ OGRFeature *OGRPGeoLayer::GetNextRawFeature()
         int iField = poStmt->GetColId(pszGeomColumn);
         GByte *pabyShape = (GByte *)poStmt->GetColData(iField);
         int nBytes = poStmt->GetColDataLength(iField);
-        OGRGeometry *poGeom = nullptr;
+        std::unique_ptr<OGRGeometry> poGeom;
 
         if (pabyShape != nullptr)
         {
-            err = OGRCreateFromShapeBin(pabyShape, &poGeom, nBytes);
+            OGRGeometry *poGeomRaw = nullptr;
+            err = OGRCreateFromShapeBin(pabyShape, &poGeomRaw, nBytes);
+            poGeom.reset(poGeomRaw);
             if (OGRERR_NONE != err)
             {
                 CPLDebug(
@@ -300,18 +302,20 @@ OGRFeature *OGRPGeoLayer::GetNextRawFeature()
 
         if (poGeom != nullptr && OGRERR_NONE == err)
         {
+            const auto eGeomType = poGeom->getGeometryType();
             // always promote polygon/linestring geometries to
             // multipolygon/multilinestring, so that the geometry types returned
             // for the layer are predictable and match the advertised layer
             // geometry type. See more details in OGRPGeoTableLayer::Initialize
-            const OGRwkbGeometryType eFlattenType =
-                wkbFlatten(poGeom->getGeometryType());
+            const OGRwkbGeometryType eFlattenType = wkbFlatten(eGeomType);
             if (eFlattenType == wkbPolygon || eFlattenType == wkbLineString)
+            {
                 poGeom = OGRGeometryFactory::forceTo(
-                    poGeom, OGR_GT_GetCollection(poGeom->getGeometryType()));
+                    std::move(poGeom), OGR_GT_GetCollection(eGeomType));
+            }
 
             poGeom->assignSpatialReference(poSRS);
-            poFeature->SetGeometryDirectly(poGeom);
+            poFeature->SetGeometry(std::move(poGeom));
         }
     }
 

@@ -2561,52 +2561,35 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
     }
 }
 
-%typemap(in) (const char *utf8_path) (int bToFree = 0)
+%typemap(in) (const char *utf8_string) (int bToFree = 0)
 {
-    /* %typemap(in) (const char *utf8_path) */
-    if (PyUnicode_Check($input) || PyBytes_Check($input))
-    {
-        $1 = GDALPythonObjectToCStr( $input, &bToFree );
-    }
-    else
-    {
-        $1 = GDALPythonPathToCStr($input, &bToFree);
-
-    }
-    if ($1 == NULL)
-    {
-        PyErr_SetString( PyExc_RuntimeError, "not a string or os.PathLike" );
-        SWIG_fail;
-    }
-}
-
-%typemap(freearg)(const char *utf8_path)
-{
-    /* %typemap(freearg) (const char *utf8_path) */
-    GDALPythonFreeCStr($1, bToFree$argnum);
-}
-
-%typemap(in) (const char *utf8_path_or_none) (int bToFree = 0)
-{
-    /* %typemap(in) (const char *utf8_path_or_none) */
+    /* %typemap(in) (const char *utf8_string) */
     if( $input == Py_None )
     {
         $1 = NULL;
     }
     else
     {
-        $1 = GDALPythonObjectToCStr( $input, &bToFree );
+        if (PyUnicode_Check($input) || PyBytes_Check($input))
+        {
+            $1 = GDALPythonObjectToCStr( $input, &bToFree );
+        }
+        else
+        {
+            $1 = GDALPythonPathToCStr($input, &bToFree);
+
+        }
         if ($1 == NULL)
         {
-            PyErr_SetString( PyExc_RuntimeError, "not a string" );
+            PyErr_SetString( PyExc_RuntimeError, "not a string or os.PathLike" );
             SWIG_fail;
         }
-        }
+    }
 }
 
-%typemap(freearg)(const char *utf8_path_or_none)
+%typemap(freearg)(const char *utf8_string)
 {
-    /* %typemap(freearg) (const char *utf8_path_or_none) */
+    /* %typemap(freearg) (const char *utf8_string) */
     if( $1 != NULL )
         GDALPythonFreeCStr($1, bToFree$argnum);
 }

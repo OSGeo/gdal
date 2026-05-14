@@ -741,7 +741,8 @@ Header *read_header(VSILFILE *fp, const char *pszFilename)
     // Read two arrays of nPoints floats with the coordinates of each point
     for (size_t i = 0; i < 2; ++i)
     {
-        read_floatarray(fp, poHeader->paadfCoords + i, poHeader->nFileSize);
+        nLength =
+            read_floatarray(fp, poHeader->paadfCoords + i, poHeader->nFileSize);
         if (nLength < poHeader->nPoints)
         {
             delete poHeader;

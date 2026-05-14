@@ -18,7 +18,7 @@
 #include <type_traits>
 
 /************************************************************************/
-/*                           CPLAutoClose                               */
+/*                             CPLAutoClose                             */
 /************************************************************************/
 
 /**
@@ -65,7 +65,7 @@ template <typename _Ty, typename _Dx> class CPLAutoClose
 
 #define CPL_AUTO_CLOSE_WARP(hObject, closeFunc)                                \
     CPLAutoClose<decltype(hObject), decltype(closeFunc) *>                     \
-        tAutoClose##hObject(hObject, closeFunc)
+    tAutoClose##hObject(hObject, closeFunc)
 
 #endif /* __cplusplus */
 

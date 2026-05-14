@@ -53,7 +53,7 @@ class DXFBlockDefinition
 };
 
 /************************************************************************/
-/*                         OGRDXFFeatureQueue                           */
+/*                          OGRDXFFeatureQueue                          */
 /************************************************************************/
 
 class OGRDXFFeatureQueue
@@ -218,7 +218,8 @@ class OGRDXFAffineTransform
     }
 
     double adfData[12];  // Column-major: adfMatrix[5] is column 2, row 3
-                         // Last 3 elements are translation
+
+    // Last 3 elements are translation
 
     // Left composition (composes oOther o this), modifying this
     void ComposeWith(const OGRDXFInsertTransformer &oCT)
@@ -962,7 +963,7 @@ class OGRDXFBlocksWriterLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRDXFWriterDS                             */
+/*                            OGRDXFWriterDS                            */
 /************************************************************************/
 
 class OGRDXFWriterDS final : public GDALDataset
@@ -1012,7 +1013,7 @@ class OGRDXFWriterDS final : public GDALDataset
     OGRDXFWriterDS();
     ~OGRDXFWriterDS() override;
 
-    int Open(const char *pszFilename, char **papszOptions);
+    int Open(const char *pszFilename, CSLConstList papszOptions);
 
     int GetLayerCount() const override;
     const OGRLayer *GetLayer(int) const override;

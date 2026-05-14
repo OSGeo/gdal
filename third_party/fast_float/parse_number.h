@@ -93,7 +93,7 @@ fastfloat_really_inline bool rounds_to_nearest() noexcept {
   // However, it is expected to be much faster than the fegetround()
   // function call.
   //
-  // The volatile keywoard prevents the compiler from computing the function
+  // The volatile keyword prevents the compiler from computing the function
   // at compile-time.
   // There might be other ways to prevent compile-time optimizations (e.g.,
   // asm). The value does not need to be std::numeric_limits<float>::min(), any

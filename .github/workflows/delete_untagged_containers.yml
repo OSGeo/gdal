@@ -21,7 +21,7 @@ jobs:
     - name: Delete all containers from gdal-deps without tags
       uses: Chizkiyahu/delete-untagged-ghcr-action@68758dd8caf1d9dbaed1fe9cc1a1f8fcea1c4cf0 # v6.1.0
       with:
-        token: ${{ secrets.PAT_TOKEN_DELETE_UNTAGGED_CONTAINERS }}
+        token: ${{ secrets.PAT_TOKEN_DELETE_UNTAGGED_CONTAINERS }}   # zizmor: ignore[secrets-outside-env]
         repository_owner: ${{ github.repository_owner }}
         repository: ${{ github.repository }}
         package_name: gdal-deps

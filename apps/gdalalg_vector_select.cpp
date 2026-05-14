@@ -25,37 +25,66 @@
 #endif
 
 /************************************************************************/
-/*         GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm()       */
+/*        GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm()        */
 /************************************************************************/
 
 GDALVectorSelectAlgorithm::GDALVectorSelectAlgorithm(bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetOutputLayerNameAvailableInPipelineStep(true))
 {
     AddActiveLayerArg(&m_activeLayer);
+    if (!standaloneStep)
+    {
+        AddOutputLayerNameArg(/* hiddenForCLI = */ false,
+                              /* shortNameOutputLayerAllowed = */ false);
+    }
     AddArg("fields", 0, _("Fields to select (or exclude if --exclude)"),
            &m_fields)
+        .SetDuplicateValuesAllowed(false)
         .SetPositional()
         .SetRequired();
     AddArg("exclude", 0, _("Exclude specified fields"), &m_exclude)
+        .SetDuplicateValuesAllowed(false)
         .SetMutualExclusionGroup("exclude-ignore");
     AddArg("ignore-missing-fields", 0, _("Ignore missing fields"),
            &m_ignoreMissingFields)
         .SetMutualExclusionGroup("exclude-ignore");
+
+    AddValidationAction(
+        [this]()
+        {
+            if (!m_outputLayerName.empty() && m_activeLayer.empty() &&
+                m_inputDataset.size() == 1)
+            {
+                auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+                if (poSrcDS && poSrcDS->GetLayerCount() > 1)
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Argument 'output-layer' cannot be used when "
+                                "the input dataset has multiple layers, unless "
+                                "argument 'active-layer' is specified");
+                    return false;
+                }
+            }
+            return true;
+        });
 }
 
 namespace
 {
 
 /************************************************************************/
-/*                   GDALVectorSelectAlgorithmLayer                     */
+/*                    GDALVectorSelectAlgorithmLayer                    */
 /************************************************************************/
 
 class GDALVectorSelectAlgorithmLayer final
     : public GDALVectorPipelineOutputLayer
 {
   private:
-    OGRFeatureDefn *const m_poFeatureDefn = nullptr;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
     std::vector<int> m_anMapSrcFieldsToDstFields{};
     std::vector<int> m_anMapDstGeomFieldsToSrcGeomFields{};
 
@@ -64,7 +93,7 @@ class GDALVectorSelectAlgorithmLayer final
     std::unique_ptr<OGRFeature>
     TranslateFeature(std::unique_ptr<OGRFeature> poSrcFeature) const
     {
-        auto poFeature = std::make_unique<OGRFeature>(m_poFeatureDefn);
+        auto poFeature = std::make_unique<OGRFeature>(m_poFeatureDefn.get());
         poFeature->SetFID(poSrcFeature->GetFID());
         const auto styleString = poSrcFeature->GetStyleString();
         if (styleString)
@@ -90,19 +119,16 @@ class GDALVectorSelectAlgorithmLayer final
     }
 
   public:
-    explicit GDALVectorSelectAlgorithmLayer(OGRLayer &oSrcLayer)
+    explicit GDALVectorSelectAlgorithmLayer(
+        OGRLayer &oSrcLayer, const std::string &osOutputLayerName)
         : GDALVectorPipelineOutputLayer(oSrcLayer),
-          m_poFeatureDefn(new OGRFeatureDefn(oSrcLayer.GetName()))
+          m_poFeatureDefn(OGRFeatureDefnRefCountedPtr::makeInstance(
+              osOutputLayerName.empty() ? oSrcLayer.GetName()
+                                        : osOutputLayerName.c_str()))
     {
-        SetDescription(oSrcLayer.GetDescription());
+        SetDescription(m_poFeatureDefn->GetName());
         SetMetadata(oSrcLayer.GetMetadata());
         m_poFeatureDefn->SetGeomType(wkbNone);
-        m_poFeatureDefn->Reference();
-    }
-
-    ~GDALVectorSelectAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
     }
 
     bool IncludeFields(const std::vector<std::string> &selectedFields,
@@ -240,7 +266,7 @@ class GDALVectorSelectAlgorithmLayer final
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
     GIntBig GetFeatureCount(int bForce) override
@@ -283,7 +309,7 @@ class GDALVectorSelectAlgorithmLayer final
 }  // namespace
 
 /************************************************************************/
-/*               GDALVectorSelectAlgorithm::RunStep()                   */
+/*                 GDALVectorSelectAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALVectorSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)
@@ -301,8 +327,8 @@ bool GDALVectorSelectAlgorithm::RunStep(GDALPipelineStepRunContext &)
         if (m_activeLayer.empty() ||
             m_activeLayer == poSrcLayer->GetDescription())
         {
-            auto poLayer =
-                std::make_unique<GDALVectorSelectAlgorithmLayer>(*poSrcLayer);
+            auto poLayer = std::make_unique<GDALVectorSelectAlgorithmLayer>(
+                *poSrcLayer, m_outputLayerName);
             if (m_exclude)
             {
                 poLayer->ExcludeFields(m_fields);

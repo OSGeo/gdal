@@ -93,7 +93,7 @@ GDALRasterResizeAlgorithm::GDALRasterResizeAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*              GDALRasterResizeAlgorithm::RunStep()                    */
+/*                 GDALRasterResizeAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALRasterResizeAlgorithm::RunStep(GDALPipelineStepRunContext &)

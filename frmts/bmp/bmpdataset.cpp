@@ -247,7 +247,7 @@ class BMPDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
     CPLErr SetGeoTransform(const GDALGeoTransform &gt) override;
@@ -701,7 +701,7 @@ class BMPComprRasterBand final : public BMPRasterBand
 };
 
 /************************************************************************/
-/*                           BMPComprRasterBand()                       */
+/*                         BMPComprRasterBand()                         */
 /************************************************************************/
 
 BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
@@ -928,7 +928,7 @@ BMPComprRasterBand::BMPComprRasterBand(BMPDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                           ~BMPComprRasterBand()                      */
+/*                        ~BMPComprRasterBand()                         */
 /************************************************************************/
 
 BMPComprRasterBand::~BMPComprRasterBand()
@@ -953,7 +953,7 @@ CPLErr BMPComprRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                           BMPDataset()                               */
+/*                             BMPDataset()                             */
 /************************************************************************/
 
 BMPDataset::BMPDataset()
@@ -1012,10 +1012,10 @@ CPLErr BMPDataset::GetGeoTransform(GDALGeoTransform &gt) const
     // See http://trac.osgeo.org/gdal/ticket/3578
     if (sInfoHeader.iXPelsPerMeter > 0 && sInfoHeader.iYPelsPerMeter > 0)
     {
-        gt[1] = sInfoHeader.iXPelsPerMeter;
-        gt[5] = -sInfoHeader.iYPelsPerMeter;
-        gt[0] = -0.5 * gt[1];
-        gt[3] = -0.5 * gt[5];
+        gt.xscale = sInfoHeader.iXPelsPerMeter;
+        gt.yscale = -sInfoHeader.iYPelsPerMeter;
+        gt.xorig = -0.5 * gt.xscale;
+        gt.yorig = -0.5 * gt.yscale;
         return CE_None;
     }
 #endif
@@ -1430,7 +1430,7 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 
 {
     if (eType != GDT_UInt8)
@@ -1679,7 +1679,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                        GDALRegister_BMP()                            */
+/*                          GDALRegister_BMP()                          */
 /************************************************************************/
 
 void GDALRegister_BMP()

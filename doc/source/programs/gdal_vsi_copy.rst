@@ -38,6 +38,11 @@ Options
 
     Skip errors that occur while while copying.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

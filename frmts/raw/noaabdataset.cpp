@@ -71,7 +71,7 @@ class NOAA_B_Dataset final : public RawDataset
 /************************************************************************/
 
 /************************************************************************/
-/*                           GetHeaderValues()                          */
+/*                          GetHeaderValues()                           */
 /************************************************************************/
 
 static void GetHeaderValues(const GDALOpenInfo *poOpenInfo, double &dfSWLat,
@@ -258,12 +258,12 @@ GDALDataset *NOAA_B_Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Convert from south-west center-of-pixel convention to
     // north-east pixel-corner convention
-    poDS->m_gt[0] = dfSWLon - dfDeltaLon / 2;
-    poDS->m_gt[1] = dfDeltaLon;
-    poDS->m_gt[2] = 0.0;
-    poDS->m_gt[3] = dfSWLat + (nRows - 1) * dfDeltaLat + dfDeltaLat / 2;
-    poDS->m_gt[4] = 0.0;
-    poDS->m_gt[5] = -dfDeltaLat;
+    poDS->m_gt.xorig = dfSWLon - dfDeltaLon / 2;
+    poDS->m_gt.xscale = dfDeltaLon;
+    poDS->m_gt.xrot = 0.0;
+    poDS->m_gt.yorig = dfSWLat + (nRows - 1) * dfDeltaLat + dfDeltaLat / 2;
+    poDS->m_gt.yrot = 0.0;
+    poDS->m_gt.yscale = -dfDeltaLat;
 
     /* -------------------------------------------------------------------- */
     /*      Create band information object.                                 */

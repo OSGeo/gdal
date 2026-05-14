@@ -197,7 +197,7 @@ GDALOpenInfo::GDALOpenInfo(const char *pszFilenameIn, int nOpenFlagsIn,
 }
 
 /************************************************************************/
-/*                                 Init()                               */
+/*                                Init()                                */
 /************************************************************************/
 
 void GDALOpenInfo::Init(const char *const *papszSiblingFilesIn,
@@ -206,9 +206,9 @@ void GDALOpenInfo::Init(const char *const *papszSiblingFilesIn,
     if (STARTS_WITH(pszFilename, "MVT:/vsi"))
         return;
 
-        /* -------------------------------------------------------------------- */
-        /*      Collect information about the file.                             */
-        /* -------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------- */
+    /*      Collect information about the file.                             */
+    /* -------------------------------------------------------------------- */
 
 #if !defined(_WIN32)
     bool bHasRetried = false;
@@ -422,7 +422,7 @@ GDALOpenInfo::~GDALOpenInfo()
 }
 
 /************************************************************************/
-/*                         GetSiblingFiles()                            */
+/*                          GetSiblingFiles()                           */
 /************************************************************************/
 
 /** Return sibling files.
@@ -480,7 +480,7 @@ char **GDALOpenInfo::StealSiblingFiles()
 }
 
 /************************************************************************/
-/*                        AreSiblingFilesLoaded()                       */
+/*                       AreSiblingFilesLoaded()                        */
 /************************************************************************/
 
 /** Return whether sibling files have been loaded.
@@ -492,7 +492,7 @@ bool GDALOpenInfo::AreSiblingFilesLoaded() const
 }
 
 /************************************************************************/
-/*                           TryToIngest()                              */
+/*                            TryToIngest()                             */
 /************************************************************************/
 
 /** Ingest bytes from the file.

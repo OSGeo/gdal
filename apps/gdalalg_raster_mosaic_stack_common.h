@@ -19,7 +19,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                  GDALRasterMosaicStackCommonAlgorithm                */
+/*                 GDALRasterMosaicStackCommonAlgorithm                 */
 /************************************************************************/
 
 class GDALRasterMosaicStackCommonAlgorithm /* non final */

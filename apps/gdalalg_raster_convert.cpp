@@ -15,7 +15,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*          GDALRasterConvertAlgorithm::GDALRasterConvertAlgorithm()    */
+/*       GDALRasterConvertAlgorithm::GDALRasterConvertAlgorithm()       */
 /************************************************************************/
 
 GDALRasterConvertAlgorithm::GDALRasterConvertAlgorithm(
@@ -32,7 +32,7 @@ GDALRasterConvertAlgorithm::GDALRasterConvertAlgorithm(
 }
 
 /************************************************************************/
-/*                  GDALRasterConvertAlgorithm::RunImpl()               */
+/*                GDALRasterConvertAlgorithm::RunImpl()                 */
 /************************************************************************/
 
 bool GDALRasterConvertAlgorithm::RunStep(GDALPipelineStepRunContext &)

@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                 GDALVectorGridDataMetricsAbstractAlgorithm           */
+/*              GDALVectorGridDataMetricsAbstractAlgorithm              */
 /************************************************************************/
 
 class GDALVectorGridDataMetricsAbstractAlgorithm /* non final */
@@ -43,7 +43,7 @@ class GDALVectorGridDataMetricsAbstractAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                      GDALVectorGridMinimumAlgorithm                  */
+/*                    GDALVectorGridMinimumAlgorithm                    */
 /************************************************************************/
 
 class GDALVectorGridMinimumAlgorithm /* non final */
@@ -81,7 +81,7 @@ class GDALVectorGridMinimumAlgorithmStandalone final
 };
 
 /************************************************************************/
-/*                      GDALVectorGridMaximumAlgorithm                  */
+/*                    GDALVectorGridMaximumAlgorithm                    */
 /************************************************************************/
 
 class GDALVectorGridMaximumAlgorithm /* non final */
@@ -119,7 +119,7 @@ class GDALVectorGridMaximumAlgorithmStandalone final
 };
 
 /************************************************************************/
-/*                       GDALVectorGridRangeAlgorithm                   */
+/*                     GDALVectorGridRangeAlgorithm                     */
 /************************************************************************/
 
 class GDALVectorGridRangeAlgorithm /* non final */
@@ -157,7 +157,7 @@ class GDALVectorGridRangeAlgorithmStandalone final
 };
 
 /************************************************************************/
-/*                       GDALVectorGridCountAlgorithm                   */
+/*                     GDALVectorGridCountAlgorithm                     */
 /************************************************************************/
 
 class GDALVectorGridCountAlgorithm /* non final */
@@ -195,7 +195,7 @@ class GDALVectorGridCountAlgorithmStandalone final
 };
 
 /************************************************************************/
-/*                 GDALVectorGridAverageDistanceAlgorithm               */
+/*                GDALVectorGridAverageDistanceAlgorithm                */
 /************************************************************************/
 
 class GDALVectorGridAverageDistanceAlgorithm /* non final */

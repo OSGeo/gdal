@@ -28,11 +28,17 @@
 
 GDALVectorCheckGeometryAlgorithm::GDALVectorCheckGeometryAlgorithm(
     bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetNoCreateEmptyLayersArgument(standaloneStep))
 {
     AddArg("include-field", 0,
-           _("Fields from input layer to include in output"), &m_includeFields);
+           _("Fields from input layer to include in output (special values: "
+             "ALL and NONE)"),
+           &m_includeFields)
+        .SetDefault("NONE");
 
     AddArg("include-valid", 0,
            _("Include valid inputs in output, with empty geometry"),
@@ -55,7 +61,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                              bool bSingleLayerOutput, int srcGeomField,
                              bool skipValid)
         : GDALVectorPipelineOutputLayer(layer),
-          m_defn(OGRFeatureDefn::CreateFeatureDefn(
+          m_defn(OGRFeatureDefnRefCountedPtr::makeInstance(
               bSingleLayerOutput ? "error_location"
                                  : std::string("error_location_")
                                        .append(layer.GetDescription())
@@ -63,8 +69,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
           m_geosContext(OGRGeometry::createGEOSContext()),
           m_srcGeomField(srcGeomField), m_skipValid(skipValid)
     {
-        m_defn->Reference();
-        m_defn->SetGeomType(wkbPoint);
+        m_defn->SetGeomType(wkbMultiPoint);
 
         if (!srcFieldIndices.empty())
         {
@@ -95,14 +100,19 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
         return false;
     }
 
+    const char *GetDescription() const override
+    {
+        return GetName();
+    }
+
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_defn;
+        return m_defn.get();
     }
 
     std::unique_ptr<OGRFeature> CreateFeatureFromLastError() const
     {
-        auto poErrorFeature = std::make_unique<OGRFeature>(m_defn);
+        auto poErrorFeature = std::make_unique<OGRFeature>(m_defn.get());
 
         std::string msg = CPLGetLastErrorMsg();
 
@@ -162,7 +172,11 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                         {
                             auto poPoint = std::make_unique<OGRPoint>();
                             poRing->StartPoint(poPoint.get());
-                            poErrorFeature->SetGeometry(std::move(poPoint));
+                            auto poMultiPoint =
+                                std::make_unique<OGRMultiPoint>();
+                            poMultiPoint->addGeometry(std::move(poPoint));
+                            poErrorFeature->SetGeometry(
+                                std::move(poMultiPoint));
                         }
                         else
                         {
@@ -214,7 +228,8 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                                 "because GEOS library version is < 3.14.");
                         }
 
-                        poErrorFeature = std::make_unique<OGRFeature>(m_defn);
+                        poErrorFeature =
+                            std::make_unique<OGRFeature>(m_defn.get());
                         if (pszReason == nullptr)
                         {
                             if (checkedSimple)
@@ -238,6 +253,15 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
                                     m_geosContext, location));
                             GEOSGeom_destroy_r(m_geosContext, location);
 
+                            if (poErrorGeom->getGeometryType() == wkbPoint)
+                            {
+                                auto poMultiPoint =
+                                    std::make_unique<OGRMultiPoint>();
+                                poMultiPoint->addGeometry(
+                                    std::move(poErrorGeom));
+                                poErrorGeom = std::move(poMultiPoint);
+                            }
+
                             poErrorGeom->assignSpatialReference(
                                 m_srcLayer.GetLayerDefn()
                                     ->GetGeomFieldDefn(m_srcGeomField)
@@ -256,7 +280,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
         if (!poErrorFeature && !m_skipValid)
         {
-            poErrorFeature = std::make_unique<OGRFeature>(m_defn);
+            poErrorFeature = std::make_unique<OGRFeature>(m_defn.get());
             // TODO Set geometry to POINT EMPTY ?
         }
 
@@ -276,7 +300,7 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
   private:
     std::vector<int> m_srcFieldMap{};
-    OGRFeatureDefn *const m_defn;
+    const OGRFeatureDefnRefCountedPtr m_defn;
     const GEOSContextHandle_t m_geosContext;
     const int m_srcGeomField;
     const bool m_skipValid;
@@ -284,7 +308,6 @@ class GDALInvalidLocationLayer final : public GDALVectorPipelineOutputLayer
 
 GDALInvalidLocationLayer::~GDALInvalidLocationLayer()
 {
-    m_defn->Release();
     finishGEOS_r(m_geosContext);
 }
 
@@ -335,19 +358,11 @@ bool GDALVectorCheckGeometryAlgorithm::RunStep(GDALPipelineStepRunContext &)
             }
 
             std::vector<int> includeFieldIndices;
-            for (const auto &fieldName : m_includeFields)
+            if (!GetFieldIndices(m_includeFields,
+                                 OGRLayer::ToHandle(poSrcLayer),
+                                 includeFieldIndices))
             {
-                auto iSrcField =
-                    poSrcLayerDefn->GetFieldIndex(fieldName.c_str());
-                if (iSrcField == -1)
-                {
-                    ReportError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Specified field '%s' does not exist in layer '%s'",
-                        fieldName.c_str(), poSrcLayer->GetDescription());
-                    return false;
-                }
-                includeFieldIndices.push_back(iSrcField);
+                return false;
             }
 
             outDS->AddLayer(*poSrcLayer,

@@ -115,3 +115,45 @@ Examples
 
 ";
 
+
+%feature("docstring") GuessGeoTransform "
+
+Returns whether 2 specified dimensions form a geotransform
+
+See :cpp:func:`GDALMDArray::GuessGeoTransform`.
+
+
+Parameters
+----------
+nDimX : int
+    Index of the X axis
+nDimY : int
+    Index of the Y axis
+bPixelIsPoint : bool
+    Whether the geotransform should be returned with the pixel-is-point (pixel-center) convention (bPixelIsPoint = True), or with the pixel-is-area (top left corner convention) (bPixelIsPoint = False)
+
+Returns
+-------
+tuple
+    A tuple of 6 geotransform coefficients if successful, or ``None`` on failure
+
+Examples
+--------
+>>> import array
+>>> drv = gdal.GetDriverByName('MEM')
+>>> mem_ds = drv.CreateMultiDimensional('myds')
+>>> rg = mem_ds.GetRootGroup()
+>>> dimX = rg.CreateDimension('X', None, None, 3)
+>>> dimY = rg.CreateDimension('Y', None, None, 2)
+>>> varY = rg.CreateMDArray(dimY.GetName(), [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+>>> _ = varY.Write(array.array('d', [90 - 0.9 - i for i in range(dimY.GetSize())]))
+>>> _ = dimY.SetIndexingVariable(varY)
+>>> varX = rg.CreateMDArray(dimX.GetName(), [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+>>> _ = varX.Write(array.array('d', [-180 + 0.9 + i for i in range(dimX.GetSize())]))
+>>> _ = dimX.SetIndexingVariable(varX)
+>>> ar = rg.CreateMDArray('ar', [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+>>> gt0 = ar.GuessGeoTransform(1, 0, False)  #(-179.6, 1.0, 0.0, 89.6, 0.0, -1.0)
+>>> gt1 = ar.GuessGeoTransform(0, 1, False)  #(89.6, -1.0, 0.0, -179.6, 0.0, 1.0)
+>>> gt2 = ar.GuessGeoTransform(1, 0, True)   #(-179.1, 1.0, 0.0, 89.1, 0.0, -1.0)
+
+";

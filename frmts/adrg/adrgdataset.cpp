@@ -101,7 +101,7 @@ class ADRGRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           ADRGRasterBand()                            */
+/*                           ADRGRasterBand()                           */
 /************************************************************************/
 
 ADRGRasterBand::ADRGRasterBand(ADRGDataset *poDSIn, int nBandIn)
@@ -117,7 +117,7 @@ ADRGRasterBand::ADRGRasterBand(ADRGDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                            GetNoDataValue()                          */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double ADRGRasterBand::GetNoDataValue(int *pbSuccess)
@@ -197,7 +197,7 @@ CPLErr ADRGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                          ADRGDataset()                               */
+/*                            ADRGDataset()                             */
 /************************************************************************/
 
 ADRGDataset::ADRGDataset()
@@ -208,7 +208,7 @@ ADRGDataset::ADRGDataset()
 }
 
 /************************************************************************/
-/*                          ~ADRGDataset()                              */
+/*                            ~ADRGDataset()                            */
 /************************************************************************/
 
 ADRGDataset::~ADRGDataset()
@@ -283,7 +283,7 @@ void ADRGDataset::AddSubDataset(const char *pszGENFileName,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **ADRGDataset::GetMetadataDomainList()
@@ -306,7 +306,7 @@ CSLConstList ADRGDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                        GetSpatialRef()                               */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *ADRGDataset::GetSpatialRef() const
@@ -315,7 +315,7 @@ const OGRSpatialReference *ADRGDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                        GetGeoTransform()                             */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr ADRGDataset::GetGeoTransform(GDALGeoTransform &gt) const
@@ -329,7 +329,7 @@ CPLErr ADRGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                     GetLongitudeFromString()                         */
+/*                       GetLongitudeFromString()                       */
 /************************************************************************/
 
 double ADRGDataset::GetLongitudeFromString(const char *str)
@@ -348,7 +348,7 @@ double ADRGDataset::GetLongitudeFromString(const char *str)
 }
 
 /************************************************************************/
-/*                      GetLatitudeFromString()                         */
+/*                       GetLatitudeFromString()                        */
 /************************************************************************/
 
 double ADRGDataset::GetLatitudeFromString(const char *str)
@@ -367,7 +367,7 @@ double ADRGDataset::GetLatitudeFromString(const char *str)
 }
 
 /************************************************************************/
-/*                      FindRecordInGENForIMG()                         */
+/*                       FindRecordInGENForIMG()                        */
 /************************************************************************/
 
 DDFRecord *ADRGDataset::FindRecordInGENForIMG(DDFModule &module,
@@ -393,7 +393,7 @@ DDFRecord *ADRGDataset::FindRecordInGENForIMG(DDFModule &module,
         if (record->GetFieldCount() >= 5)
         {
             DDFField *field = record->GetField(0);
-            DDFFieldDefn *fieldDefn = field->GetFieldDefn();
+            const DDFFieldDefn *fieldDefn = field->GetFieldDefn();
             if (!(strcmp(fieldDefn->GetName(), "001") == 0 &&
                   fieldDefn->GetSubfieldCount() == 2))
             {
@@ -438,7 +438,7 @@ DDFRecord *ADRGDataset::FindRecordInGENForIMG(DDFModule &module,
 }
 
 /************************************************************************/
-/*                           OpenDataset()                              */
+/*                            OpenDataset()                             */
 /************************************************************************/
 
 ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
@@ -470,7 +470,7 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
     DDFField *field = record->GetField(1);
     if (field == nullptr)
         return nullptr;
-    DDFFieldDefn *fieldDefn = field->GetFieldDefn();
+    const DDFFieldDefn *fieldDefn = field->GetFieldDefn();
 
     if (!(strcmp(fieldDefn->GetName(), "DSI") == 0 &&
           fieldDefn->GetSubfieldCount() == 2))
@@ -616,7 +616,7 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
     }
     CPLDebug("ADRG", "BAD=%s", osBAD.c_str());
 
-    const DDFSubfieldDefn *subfieldDefn = fieldDefn->GetSubfield(14);
+    const DDFSubfieldDefn *subfieldDefn = fieldDefn->GetSubfields()[14].get();
     if (!(strcmp(subfieldDefn->GetName(), "TIF") == 0 &&
           (subfieldDefn->GetFormat())[0] == 'A'))
     {
@@ -762,13 +762,14 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
     if (ZNA == 9)
     {
         // North Polar Case
-        poDS->m_gt[0] = 111319.4907933 * (90.0 - PSO) * sin(LSO * M_PI / 180.0);
-        poDS->m_gt[1] = 40075016.68558 / ARV;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] =
+        poDS->m_gt.xorig =
+            111319.4907933 * (90.0 - PSO) * sin(LSO * M_PI / 180.0);
+        poDS->m_gt.xscale = 40075016.68558 / ARV;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig =
             -111319.4907933 * (90.0 - PSO) * cos(LSO * M_PI / 180.0);
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -40075016.68558 / ARV;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -40075016.68558 / ARV;
         poDS->m_oSRS.importFromWkt(
             "PROJCS[\"ARC_System_Zone_09\",GEOGCS[\"GCS_Sphere\","
             "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
@@ -783,12 +784,14 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
     else if (ZNA == 18)
     {
         // South Polar Case
-        poDS->m_gt[0] = 111319.4907933 * (90.0 + PSO) * sin(LSO * M_PI / 180.0);
-        poDS->m_gt[1] = 40075016.68558 / ARV;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = 111319.4907933 * (90.0 + PSO) * cos(LSO * M_PI / 180.0);
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -40075016.68558 / ARV;
+        poDS->m_gt.xorig =
+            111319.4907933 * (90.0 + PSO) * sin(LSO * M_PI / 180.0);
+        poDS->m_gt.xscale = 40075016.68558 / ARV;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig =
+            111319.4907933 * (90.0 + PSO) * cos(LSO * M_PI / 180.0);
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -40075016.68558 / ARV;
         poDS->m_oSRS.importFromWkt(
             "PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\","
             "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
@@ -802,12 +805,12 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
     }
     else
     {
-        poDS->m_gt[0] = LSO;
-        poDS->m_gt[1] = 360. / ARV;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = PSO;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -360. / BRV;
+        poDS->m_gt.xorig = LSO;
+        poDS->m_gt.xscale = 360. / ARV;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = PSO;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -360. / BRV;
         poDS->m_oSRS.importFromWkt(SRS_WKT_WGS84_LAT_LONG);
     }
 
@@ -830,7 +833,7 @@ ADRGDataset *ADRGDataset::OpenDataset(const char *pszGENFileName,
 }
 
 /************************************************************************/
-/*                          GetGENListFromTHF()                         */
+/*                         GetGENListFromTHF()                          */
 /************************************************************************/
 
 char **ADRGDataset::GetGENListFromTHF(const char *pszFileName)
@@ -855,7 +858,7 @@ char **ADRGDataset::GetGENListFromTHF(const char *pszFileName)
         if (record->GetFieldCount() >= 2)
         {
             DDFField *field = record->GetField(0);
-            DDFFieldDefn *fieldDefn = field->GetFieldDefn();
+            const DDFFieldDefn *fieldDefn = field->GetFieldDefn();
             if (!(strcmp(fieldDefn->GetName(), "001") == 0 &&
                   fieldDefn->GetSubfieldCount() == 2))
             {
@@ -945,7 +948,7 @@ char **ADRGDataset::GetGENListFromTHF(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                          GetIMGListFromGEN()                         */
+/*                         GetIMGListFromGEN()                          */
 /************************************************************************/
 
 char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,
@@ -976,7 +979,7 @@ char **ADRGDataset::GetIMGListFromGEN(const char *pszFileName,
         if (record->GetFieldCount() >= 5)
         {
             DDFField *field = record->GetField(0);
-            DDFFieldDefn *fieldDefn = field->GetFieldDefn();
+            const DDFFieldDefn *fieldDefn = field->GetFieldDefn();
             if (!(strcmp(fieldDefn->GetName(), "001") == 0 &&
                   fieldDefn->GetSubfieldCount() == 2))
             {

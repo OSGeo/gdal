@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALMdimConvertAlgorithm                         */
+/*                       GDALMdimConvertAlgorithm                       */
 /************************************************************************/
 
 class GDALMdimConvertAlgorithm final : public GDALAlgorithm

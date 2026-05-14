@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*                 GDALDatasetCopyRenameCommonAlgorithm()               */
+/*                GDALDatasetCopyRenameCommonAlgorithm()                */
 /************************************************************************/
 
 GDALDatasetCopyRenameCommonAlgorithm::GDALDatasetCopyRenameCommonAlgorithm(
@@ -57,7 +57,8 @@ GDALDatasetCopyRenameCommonAlgorithm::GDALDatasetCopyRenameCommonAlgorithm(
         arg.AddValidationAction([this, &arg]()
                                 { return ValidateFormat(arg, false, false); });
         arg.SetAutoCompleteFunction(
-            [&arg](const std::string &) {
+            [&arg](const std::string &)
+            {
                 return GDALAlgorithm::FormatAutoCompleteFunction(arg, false,
                                                                  false);
             });
@@ -65,7 +66,7 @@ GDALDatasetCopyRenameCommonAlgorithm::GDALDatasetCopyRenameCommonAlgorithm(
 }
 
 /************************************************************************/
-/*              GDALDatasetCopyRenameCommonAlgorithm::RunImpl()         */
+/*           GDALDatasetCopyRenameCommonAlgorithm::RunImpl()            */
 /************************************************************************/
 
 bool GDALDatasetCopyRenameCommonAlgorithm::RunImpl(GDALProgressFunc, void *)
@@ -120,7 +121,7 @@ bool GDALDatasetCopyRenameCommonAlgorithm::RunImpl(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*      GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()            */
+/*         GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()         */
 /************************************************************************/
 
 GDALDatasetCopyAlgorithm::GDALDatasetCopyAlgorithm()

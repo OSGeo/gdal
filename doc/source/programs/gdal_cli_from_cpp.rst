@@ -1,12 +1,12 @@
 .. _gdal_cli_from_cpp:
 
 ================================================================================
-How to use "gdal" CLI algorithms from C++
+How to use ``gdal`` CLI algorithms from C++
 ================================================================================
 
 .. versionadded:: 3.12
 
-"gdal" CLI algorithms are available as :cpp:class:`GDALAlgorithm` instances,
+``gdal`` CLI algorithms are available as :cpp:class:`GDALAlgorithm` instances,
 and the include file to use is :file:`gdalalgorithm.h`.
 
 The first step is to get the instance of the ``GDALGlobalAlgorithmRegistry`` with

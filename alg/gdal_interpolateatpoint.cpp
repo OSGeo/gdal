@@ -409,7 +409,7 @@ bool GDALInterpolateAtPointImpl(GDALRasterBand *pBand,
 }
 
 /************************************************************************/
-/*                        GDALInterpolateAtPoint()                      */
+/*                       GDALInterpolateAtPoint()                       */
 /************************************************************************/
 
 bool GDALInterpolateAtPoint(GDALRasterBand *pBand,

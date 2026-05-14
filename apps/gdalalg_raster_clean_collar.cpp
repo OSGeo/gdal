@@ -104,7 +104,7 @@ GDALRasterCleanCollarAlgorithm::GDALRasterCleanCollarAlgorithm()
 }
 
 /************************************************************************/
-/*               GDALRasterCleanCollarAlgorithm::RunImpl()              */
+/*              GDALRasterCleanCollarAlgorithm::RunImpl()               */
 /************************************************************************/
 
 bool GDALRasterCleanCollarAlgorithm::RunImpl(GDALProgressFunc pfnProgress,

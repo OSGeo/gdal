@@ -63,6 +63,11 @@ function (copy_file_or_dir source dest)
 endfunction()
 
 function (symlink_or_copy source destination)
+    if (IS_SYMLINK ${destination})
+        # Otherwise on Windows, the recreation of the symlink might result
+        # in destroying the source content...
+        return()
+    endif()
     file(
       CREATE_LINK ${source} ${destination}
       RESULT res

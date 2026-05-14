@@ -20,6 +20,11 @@ Synopsis
 
 .. program-output:: gdal convert --help-doc
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

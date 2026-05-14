@@ -48,7 +48,7 @@ constexpr size_t SWITCH_THRESHOLD = 10000;
 constexpr size_t MAX_THRESHOLD = 100000;
 
 /************************************************************************/
-/*                          OGROSMLayer()                               */
+/*                            OGROSMLayer()                             */
 /************************************************************************/
 
 OGROSMLayer::OGROSMLayer(OGROSMDataSource *poDSIn, int nIdxLayerIn,
@@ -68,7 +68,7 @@ OGROSMLayer::OGROSMLayer(OGROSMDataSource *poDSIn, int nIdxLayerIn,
 }
 
 /************************************************************************/
-/*                          ~OGROSMLayer()                           */
+/*                            ~OGROSMLayer()                            */
 /************************************************************************/
 
 OGROSMLayer::~OGROSMLayer()
@@ -106,7 +106,7 @@ void OGROSMLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                        ForceResetReading()                           */
+/*                         ForceResetReading()                          */
 /************************************************************************/
 
 void OGROSMLayer::ForceResetReading()
@@ -117,7 +117,7 @@ void OGROSMLayer::ForceResetReading()
 }
 
 /************************************************************************/
-/*                        SetAttributeFilter()                          */
+/*                         SetAttributeFilter()                         */
 /************************************************************************/
 
 OGRErr OGROSMLayer::SetAttributeFilter(const char *pszAttrQuery)
@@ -323,7 +323,7 @@ bool OGROSMLayer::AddToArray(std::unique_ptr<OGRFeature> poFeature,
 }
 
 /************************************************************************/
-/*                        EvaluateAttributeFilter()                     */
+/*                      EvaluateAttributeFilter()                       */
 /************************************************************************/
 
 int OGROSMLayer::EvaluateAttributeFilter(OGRFeature *poFeature)
@@ -372,7 +372,7 @@ bool OGROSMLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature,
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGROSMLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
@@ -385,7 +385,7 @@ OGRErr OGROSMLayer::IGetExtent(int /* iGeomField */, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                          GetLaunderedFieldName()                     */
+/*                       GetLaunderedFieldName()                        */
 /************************************************************************/
 
 const char *OGROSMLayer::GetLaunderedFieldName(const char *pszName)
@@ -439,7 +439,7 @@ void OGROSMLayer::AddField(const char *pszName, OGRFieldType eFieldType,
 }
 
 /************************************************************************/
-/*                              GetFieldIndex()                         */
+/*                           GetFieldIndex()                            */
 /************************************************************************/
 
 int OGROSMLayer::GetFieldIndex(const char *pszName)
@@ -452,7 +452,7 @@ int OGROSMLayer::GetFieldIndex(const char *pszName)
 }
 
 /************************************************************************/
-/*                         AddInOtherOrAllTags()                        */
+/*                        AddInOtherOrAllTags()                         */
 /************************************************************************/
 
 int OGROSMLayer::AddInOtherOrAllTags(const char *pszK)
@@ -479,7 +479,7 @@ int OGROSMLayer::AddInOtherOrAllTags(const char *pszK)
 }
 
 /************************************************************************/
-/*                     OGROSMEscapeStringHSTORE()                       */
+/*                      OGROSMEscapeStringHSTORE()                      */
 /************************************************************************/
 
 static void OGROSMEscapeStringHSTORE(const char *pszV, std::string &sOut)
@@ -497,7 +497,7 @@ static void OGROSMEscapeStringHSTORE(const char *pszV, std::string &sOut)
 }
 
 /************************************************************************/
-/*                     OGROSMEscapeStringJSON()                         */
+/*                       OGROSMEscapeStringJSON()                       */
 /************************************************************************/
 
 static void OGROSMEscapeStringJSON(const char *pszV, std::string &sOut)
@@ -537,7 +537,7 @@ static void OGROSMEscapeStringJSON(const char *pszV, std::string &sOut)
 }
 
 /************************************************************************/
-/*                            GetValueOfTag()                           */
+/*                           GetValueOfTag()                            */
 /************************************************************************/
 
 static const char *GetValueOfTag(const char *pszKeyToSearch, unsigned int nTags,
@@ -555,7 +555,7 @@ static const char *GetValueOfTag(const char *pszKeyToSearch, unsigned int nTags,
 }
 
 /************************************************************************/
-/*                        SetFieldsFromTags()                           */
+/*                         SetFieldsFromTags()                          */
 /************************************************************************/
 
 void OGROSMLayer::SetFieldsFromTags(OGRFeature *poFeature, GIntBig nID,
@@ -939,7 +939,7 @@ void OGROSMLayer::AddInsignificantKey(const char *pszK)
 }
 
 /************************************************************************/
-/*                          AddIgnoreKey()                              */
+/*                            AddIgnoreKey()                            */
 /************************************************************************/
 
 void OGROSMLayer::AddIgnoreKey(const char *pszK)
@@ -950,7 +950,7 @@ void OGROSMLayer::AddIgnoreKey(const char *pszK)
 }
 
 /************************************************************************/
-/*                           AddWarnKey()                               */
+/*                             AddWarnKey()                             */
 /************************************************************************/
 
 void OGROSMLayer::AddWarnKey(const char *pszK)
@@ -959,7 +959,7 @@ void OGROSMLayer::AddWarnKey(const char *pszK)
 }
 
 /************************************************************************/
-/*                           AddWarnKey()                               */
+/*                             AddWarnKey()                             */
 /************************************************************************/
 
 void OGROSMLayer::AddComputedAttribute(const char *pszName, OGRFieldType eType,

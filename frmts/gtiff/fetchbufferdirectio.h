@@ -19,7 +19,7 @@
 #include "gdal.h"
 
 /************************************************************************/
-/*                        FetchBufferDirectIO                           */
+/*                         FetchBufferDirectIO                          */
 /************************************************************************/
 
 class FetchBufferDirectIO final

@@ -34,7 +34,7 @@
 #include "ogr_schema_override.h"
 
 /************************************************************************/
-/*                     OGRCSVEditableLayerSynchronizer                  */
+/*                   OGRCSVEditableLayerSynchronizer                    */
 /************************************************************************/
 
 class OGRCSVEditableLayerSynchronizer final
@@ -65,7 +65,7 @@ class OGRCSVEditableLayerSynchronizer final
 };
 
 /************************************************************************/
-/*                     ~OGRCSVEditableLayerSynchronizer()               */
+/*                  ~OGRCSVEditableLayerSynchronizer()                  */
 /************************************************************************/
 
 OGRCSVEditableLayerSynchronizer::~OGRCSVEditableLayerSynchronizer()
@@ -74,7 +74,7 @@ OGRCSVEditableLayerSynchronizer::~OGRCSVEditableLayerSynchronizer()
 }
 
 /************************************************************************/
-/*                       EditableSyncToDisk()                           */
+/*                         EditableSyncToDisk()                         */
 /************************************************************************/
 
 OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
@@ -297,7 +297,7 @@ OGRErr OGRCSVEditableLayerSynchronizer::EditableSyncToDisk(
 }
 
 /************************************************************************/
-/*                        OGRCSVEditableLayer                           */
+/*                         OGRCSVEditableLayer                          */
 /************************************************************************/
 
 class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
@@ -328,7 +328,7 @@ class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
 };
 
 /************************************************************************/
-/*                       OGRCSVEditableLayer()                          */
+/*                        OGRCSVEditableLayer()                         */
 /************************************************************************/
 
 OGRCSVEditableLayer::OGRCSVEditableLayer(OGRCSVLayer *poCSVLayer,
@@ -396,7 +396,7 @@ OGRErr OGRCSVEditableLayer::AlterFieldDefn(int iField,
 }
 
 /************************************************************************/
-/*                        GetFeatureCount()                             */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRCSVEditableLayer::GetFeatureCount(int bForce)
@@ -504,7 +504,7 @@ bool OGRCSVDataSource::Open(const char *pszFilename, bool bUpdateIn,
 
 {
     pszName = CPLStrdup(pszFilename);
-    bUpdate = CPL_TO_BOOL(bUpdateIn);
+    bUpdate = bUpdateIn;
 
     if (bUpdate && bForceOpen && EQUAL(pszFilename, "/vsistdout/"))
         return TRUE;
@@ -725,7 +725,7 @@ const std::vector<int> &OGRCSVDataSource::DeletedFieldIndexes() const
 }
 
 /************************************************************************/
-/*                      DealWithOgrSchemaOpenOption()                   */
+/*                    DealWithOgrSchemaOpenOption()                     */
 /************************************************************************/
 bool OGRCSVDataSource::DealWithOgrSchemaOpenOption(
     CSLConstList papszOpenOptionsIn)
@@ -757,8 +757,7 @@ bool OGRCSVDataSource::DealWithOgrSchemaOpenOption(
         }
 
         if (!oSchemaOverride.DefaultApply(
-                this, "CSV",
-                [this](OGRLayer *, int iField)
+                this, "CSV", [this](OGRLayer *, int iField)
                 { m_oDeletedFieldIndexes.push_back(iField); }))
         {
             return false;
@@ -768,7 +767,7 @@ bool OGRCSVDataSource::DealWithOgrSchemaOpenOption(
 }
 
 /************************************************************************/
-/*                              OpenTable()                             */
+/*                             OpenTable()                              */
 /************************************************************************/
 
 bool OGRCSVDataSource::OpenTable(const char *pszFilename,
@@ -958,7 +957,7 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -1143,13 +1142,19 @@ OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
                 return nullptr;
             }
         }
-        else
+        else if (!EQUAL(pszGeometry, "NONE"))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unsupported value %s for creation option GEOMETRY",
                      pszGeometry);
             return nullptr;
         }
+    }
+    else if (eGType != wkbUnknown && eGType != wkbNone)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Requested to create spatial CSV layer but GEOMETRY layer "
+                 "creation option not set. No geometry will be output.");
     }
 
     // Should we create a CSVT file?
@@ -1239,7 +1244,7 @@ OGRErr OGRCSVDataSource::DeleteLayer(int iLayer)
 }
 
 /************************************************************************/
-/*                       CreateForSingleFile()                          */
+/*                        CreateForSingleFile()                         */
 /************************************************************************/
 
 void OGRCSVDataSource::CreateForSingleFile(const char *pszDirname,

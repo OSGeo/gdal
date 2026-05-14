@@ -277,53 +277,59 @@ The following open options are supported:
 Examples
 --------
 
-List the contents of a local PBF file, with the original downloaded from https://download.geofabrik.de/europe/bosnia-herzegovina-latest.osm.pbf.
+.. example::
 
-.. tabs::
+   List the contents of a local PBF file, with the original downloaded from https://download.geofabrik.de/europe/bosnia-herzegovina-latest.osm.pbf.
+   
+   .. tabs::
+   
+      .. code-tab:: bash ogr2ogr
+   
+           ogrinfo bosnia-herzegovina-latest.osm.pbf
+   
+      .. code-tab:: bash gdal vector info
+   
+           gdal vector info bosnia-herzegovina-latest.osm.pbf
 
-   .. code-tab:: bash ogr2ogr
+.. example::
 
-        ogrinfo bosnia-herzegovina-latest.osm.pbf
+   Export all points tagged as trees (``"natural"=>"tree"``) to a GeoJSON file:
+   
+   .. tabs::
+   
+      .. code-tab:: bash
+   
+           ogr2ogr trees.geojson bosnia-herzegovina-latest.osm.pbf \
+             -sql "SELECT * FROM points WHERE other_tags LIKE '%\"natural\"=>\"tree\"%'" \
+             -dialect sqlite
+   
+      .. code-tab:: ps1
+   
+           ogr2ogr trees.geojson bosnia-herzegovina-latest.osm.pbf `
+             -sql "SELECT * FROM points WHERE other_tags LIKE '%\""natural\""=>\""tree\""%'" `
+             -dialect sqlite
 
-   .. code-tab:: bash gdal vector info
+.. example::
 
-        gdal vector info bosnia-herzegovina-latest.osm.pbf
-
-Export all points tagged as trees (``"natural"=>"tree"``) to a GeoJSON file:
-
-.. tabs::
-
-   .. code-tab:: bash
-
-        ogr2ogr trees.geojson bosnia-herzegovina-latest.osm.pbf \
-          -sql "SELECT * FROM points WHERE other_tags LIKE '%\"natural\"=>\"tree\"%'" \
-          -dialect sqlite
-
-   .. code-tab:: ps1
-
-        ogr2ogr trees.geojson bosnia-herzegovina-latest.osm.pbf `
-          -sql "SELECT * FROM points WHERE other_tags LIKE '%\""natural\""=>\""tree\""%'" `
-          -dialect sqlite
-
-As above, but using a :ref:`gdal_vector_pipeline` and with an additional bounding box filter for the Mostar region:
-
-.. tabs::
-
-   .. code-tab:: bash
-
-      gdal vector pipeline \
-        ! read --input bosnia-herzegovina-latest.osm.pbf \
-        ! filter --bbox 17.7789,43.3111,17.8379,43.3677 \
-        ! sql "SELECT * FROM points WHERE other_tags LIKE '%\"natural\"=>\"tree\"%'" --dialect sqlite \
-        ! write trees-filtered.geojson
-
-   .. code-tab:: ps1
-
-        gdal vector pipeline `
-          ! read --input bosnia-herzegovina-latest.osm.pbf `
-          ! filter --bbox 17.7789,43.3111,17.8379,43.3677 `
-          ! sql "SELECT * FROM points WHERE other_tags LIKE '%\""natural\""=>\""tree\""%'" --dialect sqlite `
-          ! write trees-filtered.geojson
+   As above, but using a :ref:`gdal_vector_pipeline` and with an additional bounding box filter for the Mostar region:
+   
+   .. tabs::
+   
+      .. code-tab:: bash
+   
+         gdal vector pipeline \
+           ! read --input bosnia-herzegovina-latest.osm.pbf \
+           ! filter --bbox 17.7789,43.3111,17.8379,43.3677 \
+           ! sql "SELECT * FROM points WHERE other_tags LIKE '%\"natural\"=>\"tree\"%'" --dialect sqlite \
+           ! write trees-filtered.geojson
+   
+      .. code-tab:: ps1
+   
+           gdal vector pipeline `
+             ! read --input bosnia-herzegovina-latest.osm.pbf `
+             ! filter --bbox 17.7789,43.3111,17.8379,43.3677 `
+             ! sql "SELECT * FROM points WHERE other_tags LIKE '%\""natural\""=>\""tree\""%'" --dialect sqlite `
+             ! write trees-filtered.geojson
 
 See Also
 --------

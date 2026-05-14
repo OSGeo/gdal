@@ -16,7 +16,7 @@
 #include "gdalplugindriverproxy.h"
 
 /************************************************************************/
-/*                     WMTSDriverIdentify()                             */
+/*                         WMTSDriverIdentify()                         */
 /************************************************************************/
 
 int WMTSDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -60,7 +60,7 @@ int WMTSDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      WMTSDriverSetCommonMetadata()                   */
+/*                    WMTSDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void WMTSDriverSetCommonMetadata(GDALDriver *poDriver)

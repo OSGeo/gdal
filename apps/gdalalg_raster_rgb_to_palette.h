@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALRasterRGBToPaletteAlgorithm                   */
+/*                   GDALRasterRGBToPaletteAlgorithm                    */
 /************************************************************************/
 
 class GDALRasterRGBToPaletteAlgorithm /* non final */
@@ -44,7 +44,7 @@ class GDALRasterRGBToPaletteAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                GDALRasterRGBToPaletteAlgorithmStandalone             */
+/*              GDALRasterRGBToPaletteAlgorithmStandalone               */
 /************************************************************************/
 
 class GDALRasterRGBToPaletteAlgorithmStandalone final

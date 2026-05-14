@@ -40,7 +40,7 @@ static CPLString EscapeNameAndQuoteIfNeeded(const char *pszName)
 #endif
 
 /************************************************************************/
-/*                            OpenRaster()                              */
+/*                             OpenRaster()                             */
 /************************************************************************/
 
 bool OGRSQLiteDataSource::OpenRaster()
@@ -748,7 +748,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
 #ifdef HAVE_RASTERLITE2
 
 /************************************************************************/
-/*                          ListOverviews()                             */
+/*                           ListOverviews()                            */
 /************************************************************************/
 
 void OGRSQLiteDataSource::ListOverviews()
@@ -830,7 +830,7 @@ void OGRSQLiteDataSource::ListOverviews()
 }
 
 /************************************************************************/
-/*                    CreateRL2OverviewDatasetIfNeeded()                   */
+/*                  CreateRL2OverviewDatasetIfNeeded()                  */
 /************************************************************************/
 
 void OGRSQLiteDataSource::CreateRL2OverviewDatasetIfNeeded(double dfXRes,
@@ -882,7 +882,7 @@ void OGRSQLiteDataSource::CreateRL2OverviewDatasetIfNeeded(double dfXRes,
 }
 
 /************************************************************************/
-/*                            RL2RasterBand()                           */
+/*                           RL2RasterBand()                            */
 /************************************************************************/
 
 RL2RasterBand::RL2RasterBand(int nBandIn, int nPixelType, GDALDataType eDT,
@@ -918,7 +918,7 @@ RL2RasterBand::RL2RasterBand(int nBandIn, int nPixelType, GDALDataType eDT,
 }
 
 /************************************************************************/
-/*                            RL2RasterBand()                           */
+/*                           RL2RasterBand()                            */
 /************************************************************************/
 
 RL2RasterBand::RL2RasterBand(const RL2RasterBand *poOther)
@@ -947,7 +947,7 @@ RL2RasterBand::~RL2RasterBand()
 }
 
 /************************************************************************/
-/*                          GetColorTable()                             */
+/*                           GetColorTable()                            */
 /************************************************************************/
 
 GDALColorTable *RL2RasterBand::GetColorTable()
@@ -1002,7 +1002,7 @@ int RL2RasterBand::GetOverviewCount()
 }
 
 /************************************************************************/
-/*                           GetOverview()                              */
+/*                            GetOverview()                             */
 /************************************************************************/
 
 GDALRasterBand *RL2RasterBand::GetOverview(int nIdx)
@@ -1019,7 +1019,7 @@ GDALRasterBand *RL2RasterBand::GetOverview(int nIdx)
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                            */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double RL2RasterBand::GetNoDataValue(int *pbSuccess)
@@ -1156,7 +1156,7 @@ CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                            */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 template <class T>
@@ -1171,7 +1171,7 @@ static T GetNoDataValue(GDALDataset *poSrcDS, int nBand, T nDefault)
 }
 
 /************************************************************************/
-/*                          CreateNoData()                              */
+/*                            CreateNoData()                            */
 /************************************************************************/
 
 static rl2PixelPtr CreateNoData(unsigned char nSampleType,
@@ -1332,7 +1332,7 @@ static rl2PixelPtr CreateNoData(unsigned char nSampleType,
 }
 
 /************************************************************************/
-/*                       RasterLite2Callback()                          */
+/*                        RasterLite2Callback()                         */
 /************************************************************************/
 
 struct RasterLite2CallbackData
@@ -1455,12 +1455,12 @@ static int RasterLite2Callback(void *data, double dfTileMinX, double dfTileMinY,
 }
 
 /************************************************************************/
-/*                    OGRSQLiteDriverCreateCopy()                       */
+/*                     OGRSQLiteDriverCreateCopy()                      */
 /************************************************************************/
 
 GDALDataset *OGRSQLiteDriverCreateCopy(const char *pszName,
                                        GDALDataset *poSrcDS, int /* bStrict */,
-                                       char **papszOptions,
+                                       CSLConstList papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {
@@ -2243,7 +2243,7 @@ CPLErr OGRSQLiteDataSource::IBuildOverviews(
 #endif  // HAVE_RASTERLITE2
 
 /************************************************************************/
-/*                             GetMetadata()                            */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList OGRSQLiteDataSource::GetMetadata(const char *pszDomain)
@@ -2257,7 +2257,7 @@ CSLConstList OGRSQLiteDataSource::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                           GetGeoTransform()                          */
+/*                          GetGeoTransform()                           */
 /************************************************************************/
 
 CPLErr OGRSQLiteDataSource::GetGeoTransform(GDALGeoTransform &gt) const
@@ -2271,7 +2271,7 @@ CPLErr OGRSQLiteDataSource::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                            GetSpatialRef()                           */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *OGRSQLiteDataSource::GetSpatialRef() const

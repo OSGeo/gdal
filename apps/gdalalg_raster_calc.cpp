@@ -183,9 +183,9 @@ struct SourceProperties
     int nBands{0};
     int nX{0};
     int nY{0};
+    bool hasGT{false};
     GDALGeoTransform gt{};
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> srs{
-        nullptr};
+    OGRSpatialReferenceRefCountedPtr srs{};
     std::vector<std::optional<double>> noData{};
     GDALDataType eDT{GDT_Unknown};
 };
@@ -257,27 +257,30 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
         dimensionMismatch = true;
     }
 
-    if (source.gt[0] != out.gt[0] || source.gt[2] != out.gt[2] ||
-        source.gt[3] != out.gt[3] || source.gt[4] != out.gt[4])
+    if (source.gt.xorig != out.gt.xorig || source.gt.xrot != out.gt.xrot ||
+        source.gt.yorig != out.gt.yorig || source.gt.yrot != out.gt.yrot)
     {
         extentMismatch = true;
     }
-    if (source.gt[1] != out.gt[1] || source.gt[5] != out.gt[5])
+    if (source.gt.xscale != out.gt.xscale || source.gt.yscale != out.gt.yscale)
     {
         // Resolutions are different. Are the extents the same?
-        double xmaxOut = out.gt[0] + out.nX * out.gt[1] + out.nY * out.gt[2];
-        double yminOut = out.gt[3] + out.nX * out.gt[4] + out.nY * out.gt[5];
+        double xmaxOut =
+            out.gt.xorig + out.nX * out.gt.xscale + out.nY * out.gt.xrot;
+        double yminOut =
+            out.gt.yorig + out.nX * out.gt.yrot + out.nY * out.gt.yscale;
 
-        double xmax =
-            source.gt[0] + source.nX * source.gt[1] + source.nY * source.gt[2];
-        double ymin =
-            source.gt[3] + source.nX * source.gt[4] + source.nY * source.gt[5];
+        double xmax = source.gt.xorig + source.nX * source.gt.xscale +
+                      source.nY * source.gt.xrot;
+        double ymin = source.gt.yorig + source.nX * source.gt.yrot +
+                      source.nY * source.gt.yscale;
 
         // Max allowable extent misalignment, expressed as fraction of a pixel
         constexpr double EXTENT_RTOL = 1e-3;
 
-        if (std::abs(xmax - xmaxOut) > EXTENT_RTOL * std::abs(source.gt[1]) ||
-            std::abs(ymin - yminOut) > EXTENT_RTOL * std::abs(source.gt[5]))
+        if (std::abs(xmax - xmaxOut) >
+                EXTENT_RTOL * std::abs(source.gt.xscale) ||
+            std::abs(ymin - yminOut) > EXTENT_RTOL * std::abs(source.gt.yscale))
         {
             extentMismatch = true;
         }
@@ -300,7 +303,7 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
     // Find a common resolution
     if (source.nX > out.nX)
     {
-        auto dx = CPLGreatestCommonDivisor(out.gt[1], source.gt[1]);
+        auto dx = CPLGreatestCommonDivisor(out.gt.xscale, source.gt.xscale);
         if (dx == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -308,12 +311,12 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
             return std::nullopt;
         }
         out.nX = static_cast<int>(
-            std::round(static_cast<double>(out.nX) * out.gt[1] / dx));
-        out.gt[1] = dx;
+            std::round(static_cast<double>(out.nX) * out.gt.xscale / dx));
+        out.gt.xscale = dx;
     }
     if (source.nY > out.nY)
     {
-        auto dy = CPLGreatestCommonDivisor(out.gt[5], source.gt[5]);
+        auto dy = CPLGreatestCommonDivisor(out.gt.yscale, source.gt.yscale);
         if (dy == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -321,8 +324,8 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
             return std::nullopt;
         }
         out.nY = static_cast<int>(
-            std::round(static_cast<double>(out.nY) * out.gt[5] / dy));
-        out.gt[5] = dy;
+            std::round(static_cast<double>(out.nY) * out.gt.yscale / dy));
+        out.gt.yscale = dy;
     }
 
     if (srsMismatch)
@@ -338,6 +341,7 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
 /** Create XML nodes for one or more derived bands resulting from the evaluation
  *  of a single expression
  *
+ * @param pszVRTFilename VRT filename
  * @param root VRTDataset node to which the band nodes should be added
  * @param bandType the type of the band(s) to create
  * @param nXOut Number of columns in VRT dataset
@@ -354,10 +358,10 @@ UpdateSourceProperties(SourceProperties &out, const std::string &dsn,
  * @return true if the band(s) were added, false otherwise
  */
 static bool
-CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
-                     GDALDataType bandType, const std::string &expression,
-                     const std::string &dialect, bool flatten,
-                     const std::string &noDataText,
+CreateDerivedBandXML(const char *pszVRTFilename, CPLXMLNode *root, int nXOut,
+                     int nYOut, GDALDataType bandType,
+                     const std::string &expression, const std::string &dialect,
+                     bool flatten, const std::string &noDataText,
                      const std::vector<std::string> &pixelFunctionArguments,
                      const std::map<std::string, std::string> &sources,
                      const std::map<std::string, SourceProperties> &sourceProps,
@@ -483,9 +487,18 @@ CreateDerivedBandXML(CPLXMLNode *root, int nXOut, int nYOut,
                     CPLCreateXMLNode(source, CXT_Element, "SourceFilename");
                 if (fakeSourceFilename.empty())
                 {
+                    std::string osSourceFilename = dsn;
+                    bool bRelativeToVRT = false;
+                    if (pszVRTFilename[0])
+                    {
+                        std::tie(osSourceFilename, bRelativeToVRT) =
+                            VRTSimpleSource::ComputeSourceNameAndRelativeFlag(
+                                CPLGetPathSafe(pszVRTFilename).c_str(), dsn);
+                    }
                     CPLAddXMLAttributeAndValue(sourceFilename, "relativeToVRT",
-                                               "0");
-                    CPLCreateXMLNode(sourceFilename, CXT_Text, dsn.c_str());
+                                               bRelativeToVRT ? "1" : "0");
+                    CPLCreateXMLNode(sourceFilename, CXT_Text,
+                                     osSourceFilename.c_str());
                 }
                 else
                 {
@@ -719,6 +732,7 @@ static bool ReadFileLists(const std::vector<GDALArgDatasetValue> &inputDS,
  * expression engine is concerned, the variables "X[1]" and "X[2]" have nothing
  * to do with each other.
  *
+ * @param pszVRTFilename VRT filename
  * @param inputs A list of sources, expressed as NAME=DSN
  * @param expressions A list of expressions to be evaluated
  * @param dialect Expression dialect
@@ -733,7 +747,7 @@ static bool ReadFileLists(const std::vector<GDALArgDatasetValue> &inputDS,
  * @return a newly created VRTDataset, or nullptr on error
  */
 static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
-    const std::vector<std::string> &inputs,
+    const char *pszVRTFilename, const std::vector<std::string> &inputs,
     const std::vector<std::string> &expressions, const std::string &dialect,
     bool flatten, const std::string &noData,
     const std::vector<std::vector<std::string>> &pixelFunctionArguments,
@@ -775,9 +789,9 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
         out.nX = ds->GetRasterXSize();
         out.nY = ds->GetRasterYSize();
         out.nBands = 1;
-        out.srs.reset(ds->GetSpatialRef() ? ds->GetSpatialRef()->Clone()
-                                          : nullptr);
-        ds->GetGeoTransform(out.gt);
+        out.srs =
+            OGRSpatialReferenceRefCountedPtr::makeClone(ds->GetSpatialRef());
+        out.hasGT = ds->GetGeoTransform(out.gt) == CE_None;
     }
 
     CPLXMLTreeCloser root(CPLCreateXMLNode(nullptr, CXT_Element, "VRTDataset"));
@@ -828,26 +842,31 @@ static std::unique_ptr<GDALDataset> GDALCalcCreateVRTDerived(
             }
         }
 
-        if (!CreateDerivedBandXML(root.get(), out.nX, out.nY, bandType,
-                                  origExpression, dialect, flatten, noData,
-                                  pixelFunctionArguments[iExpr], sources,
-                                  sourceProps, fakeSourceFilename))
+        if (!CreateDerivedBandXML(pszVRTFilename, root.get(), out.nX, out.nY,
+                                  bandType, origExpression, dialect, flatten,
+                                  noData, pixelFunctionArguments[iExpr],
+                                  sources, sourceProps, fakeSourceFilename))
         {
             return nullptr;
         }
         ++iExpr;
     }
 
-    //CPLDebug("VRT", "%s", CPLSerializeXMLTree(root.get()));
+    // CPLDebug("VRT", "%s", CPLSerializeXMLTree(root.get()));
 
     auto ds = fakeSourceFilename.empty()
                   ? std::make_unique<VRTDataset>(out.nX, out.nY)
                   : std::make_unique<VRTDataset>(1, 1);
-    if (ds->XMLInit(root.get(), "") != CE_None)
+    if (ds->XMLInit(root.get(), pszVRTFilename[0]
+                                    ? CPLGetPathSafe(pszVRTFilename).c_str()
+                                    : "") != CE_None)
     {
         return nullptr;
     };
-    ds->SetGeoTransform(out.gt);
+    if (out.hasGT)
+    {
+        ds->SetGeoTransform(out.gt);
+    }
     if (out.srs)
     {
         ds->SetSpatialRef(out.srs.get());
@@ -866,6 +885,7 @@ GDALRasterCalcAlgorithm::GDALRasterCalcAlgorithm(bool standaloneStep) noexcept
                                           .SetStandaloneStep(standaloneStep)
                                           .SetAddDefaultArguments(false)
                                           .SetAutoOpenInputDatasets(false)
+                                          .SetInputDatasetInputFlags(GADV_NAME)
                                           .SetInputDatasetMetaVar("INPUTS")
                                           .SetInputDatasetMaxCount(INT_MAX))
 {
@@ -947,7 +967,7 @@ bool GDALRasterCalcAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                GDALRasterCalcAlgorithm::RunStep()                    */
+/*                  GDALRasterCalcAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -1067,9 +1087,16 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     int maxSourceBands = 0;
-    auto vrt = GDALCalcCreateVRTDerived(inputFilenames, m_expr, m_dialect,
-                                        m_flatten, m_nodata, pixelFunctionArgs,
-                                        options, maxSourceBands);
+    const bool bIsVRT =
+        m_format == "VRT" ||
+        (m_format.empty() &&
+         EQUAL(CPLGetExtensionSafe(m_outputDataset.GetName().c_str()).c_str(),
+               "VRT"));
+
+    auto vrt = GDALCalcCreateVRTDerived(
+        bIsVRT ? m_outputDataset.GetName().c_str() : "", inputFilenames, m_expr,
+        m_dialect, m_flatten, m_nodata, pixelFunctionArgs, options,
+        maxSourceBands);
     if (vrt == nullptr)
     {
         return false;
@@ -1077,12 +1104,6 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (!m_noCheckExpression)
     {
-        const bool bIsVRT =
-            m_format == "VRT" ||
-            (m_format.empty() &&
-             EQUAL(
-                 CPLGetExtensionSafe(m_outputDataset.GetName().c_str()).c_str(),
-                 "VRT"));
         const bool bIsGDALG =
             m_format == "GDALG" ||
             (m_format.empty() &&
@@ -1107,7 +1128,7 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             if (!osTmpFilename.empty())
             {
                 auto fakeVRT = GDALCalcCreateVRTDerived(
-                    inputFilenames, m_expr, m_dialect, m_flatten, m_nodata,
+                    "", inputFilenames, m_expr, m_dialect, m_flatten, m_nodata,
                     pixelFunctionArgs, options, maxSourceBands, osTmpFilename);
                 if (fakeVRT &&
                     fakeVRT->RasterIO(GF_Read, 0, 0, 1, 1, dummyData.data(), 1,

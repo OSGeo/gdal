@@ -125,7 +125,7 @@ def extract_tile(ds, src_band_nbr, tile_x, tile_y, jpg_filename):
     srs = ds.GetProjectionRef()
     if srs is not None and srs != "":
         sub_gt = [gt[i] for i in range(6)]
-        (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
+        blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
         sub_gt[0] = gt[0] + tile_x * blockxsize * gt[1]
         sub_gt[3] = gt[3] + tile_y * blockysize * gt[5]
 
@@ -205,7 +205,7 @@ def jpeg_in_tiff_extract(argv):
         print("ERROR: %s is not a JPEG-compressed TIFF dataset." % tiff_filename)
         return 1
 
-    (blockxsize, blockysize) = ds.GetRasterBand(1).GetBlockSize()
+    blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
     if blockysize == 1:
         blockysize = ds.RasterYSize
     block_in_row = (ds.RasterXSize + blockxsize - 1) / blockxsize

@@ -550,30 +550,33 @@ Example:
 Examples
 --------
 
-How to dump content of .geojson file:
+.. example:: 
+   :title: Dumping content of a .geojson file
 
-::
+   .. code-block:: bash
+   
+      ogrinfo -ro point.geojson
 
-   ogrinfo -ro point.geojson
+.. example:: 
+   :title: Querying features from remote service with filtering by attribute
 
-How to query features from remote service with filtering by attribute:
+   .. code-block:: bash
+   
+      ogrinfo -ro http://featureserver/cities/.geojson OGRGeoJSON -where "name=Warsaw"
 
-::
+.. example:: 
+   :title: Translating number of features queried from FeatureServer to ESRI Shapefile
 
-   ogrinfo -ro http://featureserver/cities/.geojson OGRGeoJSON -where "name=Warsaw"
+   .. code-block:: bash
+   
+      ogr2ogr -f "ESRI Shapefile" cities.shp http://featureserver/cities/.geojson OGRGeoJSON
 
-How to translate number of features queried from FeatureServer to ESRI
-Shapefile:
+.. example::
+   :title: Converting a Shapefile into a RFC 7946 GeoJSON file
 
-::
-
-   ogr2ogr -f "ESRI Shapefile" cities.shp http://featureserver/cities/.geojson OGRGeoJSON
-
-How to translate a ESRI Shapefile into a RFC 7946 GeoJSON file:
-
-::
-
-   ogr2ogr -f GeoJSON cities.json cities.shp -lco RFC7946=YES
+   .. code-block:: bash
+   
+      ogr2ogr -f GeoJSON cities.json cities.shp -lco RFC7946=YES
 
 See Also
 --------

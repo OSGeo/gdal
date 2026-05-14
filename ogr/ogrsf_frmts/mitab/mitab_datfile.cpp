@@ -57,8 +57,8 @@ TABDATFile::TABDATFile(const char *pszEncoding)
       m_pasFieldDef(nullptr), m_poRecordBlock(nullptr), m_nBlockSize(0),
       m_nRecordSize(-1), m_nCurRecordId(-1), m_bCurRecordDeletedFlag(FALSE),
       m_numRecords(-1), m_nFirstRecordPtr(0), m_bWriteHeaderInitialized(FALSE),
-      m_bWriteEOF(FALSE), m_bUpdated(FALSE),
-      m_osEncoding(pszEncoding), m_szBuffer{}
+      m_bWriteEOF(FALSE), m_bUpdated(FALSE), m_osEncoding(pszEncoding),
+      m_szBuffer{}
 {
 }
 
@@ -309,7 +309,7 @@ int TABDATFile::Close()
 }
 
 /************************************************************************/
-/*                            SyncToDisk()                             */
+/*                             SyncToDisk()                             */
 /************************************************************************/
 
 int TABDATFile::SyncToDisk()
@@ -2491,8 +2491,7 @@ int TABDATFile::WriteTimeField(int nHour, int nMinute, int nSecond, int nMS,
  * block.
  *
  * A datetime field is a 8 bytes binary value in which the first byte is
- * the day, followe
-d by 1 byte for the month, and 2 bytes for the year.
+ * the day, followed by 1 byte for the month, and 2 bytes for the year.
  * After this the time value is stored as a 4 byte integer
  * (milliseconds since midnight)
  *

@@ -24,7 +24,7 @@
 #include "gdalalg_raster_overview_refresh.h"
 
 /************************************************************************/
-/*                      GDALRasterOverviewAlgorithm                     */
+/*                     GDALRasterOverviewAlgorithm                      */
 /************************************************************************/
 
 class GDALRasterOverviewAlgorithm /* non final */
@@ -60,7 +60,7 @@ class GDALRasterOverviewAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterOverviewAlgorithmStandalone                */
+/*                GDALRasterOverviewAlgorithmStandalone                 */
 /************************************************************************/
 
 class GDALRasterOverviewAlgorithmStandalone final

@@ -196,8 +196,8 @@ BuildBandDescArray(json_object *poBands,
             dfResX == 1.0 && dfResY == 1.0 )
         {
             // e.g. EEDAI:LT5_L1T_8DAY_EVI/19840109
-            const char* pszAuthorityName = oSRS.GetAuthorityName(nullptr);
-            const char* pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
+            const char* pszAuthorityName = oSRS.GetAuthorityName();
+            const char* pszAuthorityCode = oSRS.GetAuthorityCode();
             if( pszAuthorityName && pszAuthorityCode &&
                 EQUAL(pszAuthorityName, "EPSG") &&
                 EQUAL(pszAuthorityCode, "4326") )
@@ -232,7 +232,7 @@ BuildBandDescArray(json_object *poBands,
 }
 
 /************************************************************************/
-/*                      GDALEEDABaseDataset()                           */
+/*                        GDALEEDABaseDataset()                         */
 /************************************************************************/
 
 GDALEEDABaseDataset::GDALEEDABaseDataset()
@@ -241,7 +241,7 @@ GDALEEDABaseDataset::GDALEEDABaseDataset()
 }
 
 /************************************************************************/
-/*                     ~GDALEEDABaseDataset()                           */
+/*                        ~GDALEEDABaseDataset()                        */
 /************************************************************************/
 
 GDALEEDABaseDataset::~GDALEEDABaseDataset()
@@ -256,7 +256,7 @@ GDALEEDABaseDataset::~GDALEEDABaseDataset()
 }
 
 /************************************************************************/
-/*                          ConvertPathToName()                        */
+/*                         ConvertPathToName()                          */
 /************************************************************************/
 
 CPLString GDALEEDABaseDataset::ConvertPathToName(const CPLString &path)
@@ -298,7 +298,7 @@ CPLString GDALEEDABaseDataset::ConvertPathToName(const CPLString &path)
 }
 
 /************************************************************************/
-/*                          GetBaseHTTPOptions()                        */
+/*                         GetBaseHTTPOptions()                         */
 /************************************************************************/
 
 char **GDALEEDABaseDataset::GetBaseHTTPOptions()
@@ -464,7 +464,7 @@ static double EEDABackoffFactor(double base)
 /*                           EEDAHTTPFetch()                            */
 /************************************************************************/
 
-CPLHTTPResult *EEDAHTTPFetch(const char *pszURL, char **papszOptions)
+CPLHTTPResult *EEDAHTTPFetch(const char *pszURL, CSLConstList papszOptions)
 {
     CPLHTTPResult *psResult;
     const int RETRY_COUNT = 4;

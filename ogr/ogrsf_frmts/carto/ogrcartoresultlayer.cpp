@@ -13,7 +13,7 @@
 #include "ogr_carto.h"
 
 /************************************************************************/
-/*                          OGRCARTOResultLayer()                     */
+/*                        OGRCARTOResultLayer()                         */
 /************************************************************************/
 
 OGRCARTOResultLayer::OGRCARTOResultLayer(OGRCARTODataSource *poDSIn,
@@ -25,7 +25,7 @@ OGRCARTOResultLayer::OGRCARTOResultLayer(OGRCARTODataSource *poDSIn,
 }
 
 /************************************************************************/
-/*                       ~OGRCARTOResultLayer()                       */
+/*                        ~OGRCARTOResultLayer()                        */
 /************************************************************************/
 
 OGRCARTOResultLayer::~OGRCARTOResultLayer()
@@ -35,7 +35,7 @@ OGRCARTOResultLayer::~OGRCARTOResultLayer()
 }
 
 /************************************************************************/
-/*                          GetLayerDefnInternal()                      */
+/*                        GetLayerDefnInternal()                        */
 /************************************************************************/
 
 OGRFeatureDefn *OGRCARTOResultLayer::GetLayerDefnInternal(json_object *poObjIn)
@@ -49,7 +49,7 @@ OGRFeatureDefn *OGRCARTOResultLayer::GetLayerDefnInternal(json_object *poObjIn)
 }
 
 /************************************************************************/
-/*                           GetNextRawFeature()                        */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRCARTOResultLayer::GetNextRawFeature()

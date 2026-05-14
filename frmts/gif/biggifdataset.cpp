@@ -141,7 +141,7 @@ CPLErr BIGGifRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                            BIGGIFDataset()                            */
+/*                           BIGGIFDataset()                            */
 /************************************************************************/
 
 BIGGIFDataset::BIGGIFDataset() : nLastLineRead(-1), poWorkDS(nullptr)
@@ -149,7 +149,7 @@ BIGGIFDataset::BIGGIFDataset() : nLastLineRead(-1), poWorkDS(nullptr)
 }
 
 /************************************************************************/
-/*                           ~BIGGIFDataset()                            */
+/*                           ~BIGGIFDataset()                           */
 /************************************************************************/
 
 BIGGIFDataset::~BIGGIFDataset()
@@ -161,7 +161,7 @@ BIGGIFDataset::~BIGGIFDataset()
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int BIGGIFDataset::CloseDependentDatasets()
@@ -240,7 +240,7 @@ CPLErr BIGGIFDataset::ReOpen()
     if (hGifFile == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "DGifOpen() failed.  Perhaps the gif file is corrupt?\n");
+                 "DGifOpen() failed.  Perhaps the gif file is corrupt?");
 
         return CE_Failure;
     }

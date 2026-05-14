@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*        GDALRasterUnscaleAlgorithm::GDALRasterUnscaleAlgorithm()      */
+/*       GDALRasterUnscaleAlgorithm::GDALRasterUnscaleAlgorithm()       */
 /************************************************************************/
 
 GDALRasterUnscaleAlgorithm::GDALRasterUnscaleAlgorithm(bool standaloneStep)
@@ -33,7 +33,7 @@ GDALRasterUnscaleAlgorithm::GDALRasterUnscaleAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*               GDALRasterUnscaleAlgorithm::RunStep()                  */
+/*                GDALRasterUnscaleAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALRasterUnscaleAlgorithm::RunStep(GDALPipelineStepRunContext &)

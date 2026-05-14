@@ -192,7 +192,7 @@ GIntBig OGRFlatGeobufEditableLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRFlatGeobufEditableLayer::TestCapability(const char *pszCap) const

@@ -30,7 +30,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                          OGRGeoRSSDataSource()                          */
+/*                        OGRGeoRSSDataSource()                         */
 /************************************************************************/
 
 OGRGeoRSSDataSource::OGRGeoRSSDataSource()
@@ -48,7 +48,7 @@ OGRGeoRSSDataSource::OGRGeoRSSDataSource()
 }
 
 /************************************************************************/
-/*                         ~OGRGeoRSSDataSource()                          */
+/*                        ~OGRGeoRSSDataSource()                        */
 /************************************************************************/
 
 OGRGeoRSSDataSource::~OGRGeoRSSDataSource()
@@ -107,7 +107,7 @@ const OGRLayer *OGRGeoRSSDataSource::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -154,7 +154,7 @@ OGRGeoRSSDataSource::ICreateLayer(const char *pszLayerName,
 
 #ifdef HAVE_EXPAT
 /************************************************************************/
-/*                startElementValidateCbk()                             */
+/*                      startElementValidateCbk()                       */
 /************************************************************************/
 
 void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszNameIn,
@@ -194,7 +194,7 @@ void OGRGeoRSSDataSource::startElementValidateCbk(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                      dataHandlerValidateCbk()                        */
+/*                       dataHandlerValidateCbk()                       */
 /************************************************************************/
 
 void OGRGeoRSSDataSource::dataHandlerValidateCbk(const char * /* data */,
@@ -350,7 +350,8 @@ int OGRGeoRSSDataSource::Open(const char *pszFilename, int bUpdateIn)
 /*                               Create()                               */
 /************************************************************************/
 
-int OGRGeoRSSDataSource::Create(const char *pszFilename, char **papszOptions)
+int OGRGeoRSSDataSource::Create(const char *pszFilename,
+                                CSLConstList papszOptions)
 {
     if (fpOutput != nullptr)
     {

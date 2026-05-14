@@ -236,7 +236,7 @@ class STACTAHandler(BaseHTTPRequestHandler):
 @pytest.mark.require_curl
 def test_stacta_network():
 
-    (process, port) = webserver.launch(handler=STACTAHandler)
+    process, port = webserver.launch(handler=STACTAHandler)
     if port == 0:
         pytest.skip()
 

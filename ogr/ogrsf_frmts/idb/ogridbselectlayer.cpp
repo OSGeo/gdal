@@ -16,7 +16,7 @@
 #include "ogr_idb.h"
 
 /************************************************************************/
-/*                          OGRIDBSelectLayer()                         */
+/*                         OGRIDBSelectLayer()                          */
 /************************************************************************/
 
 OGRIDBSelectLayer::OGRIDBSelectLayer(OGRIDBDataSource *poDSIn,
@@ -36,7 +36,7 @@ OGRIDBSelectLayer::OGRIDBSelectLayer(OGRIDBDataSource *poDSIn,
 }
 
 /************************************************************************/
-/*                          ~OGRIDBSelectLayer()                          */
+/*                         ~OGRIDBSelectLayer()                         */
 /************************************************************************/
 
 OGRIDBSelectLayer::~OGRIDBSelectLayer()
@@ -46,7 +46,7 @@ OGRIDBSelectLayer::~OGRIDBSelectLayer()
 }
 
 /************************************************************************/
-/*                           ClearQuery()                           */
+/*                             ClearQuery()                             */
 /************************************************************************/
 
 void OGRIDBSelectLayer::ClearQuery()
@@ -60,7 +60,7 @@ void OGRIDBSelectLayer::ClearQuery()
 }
 
 /************************************************************************/
-/*                            GetQuery()                            */
+/*                              GetQuery()                              */
 /************************************************************************/
 
 ITCursor *OGRIDBSelectLayer::GetQuery()
@@ -73,7 +73,7 @@ ITCursor *OGRIDBSelectLayer::GetQuery()
 }
 
 /************************************************************************/
-/*                           ResetQuery()                           */
+/*                             ResetQuery()                             */
 /************************************************************************/
 
 OGRErr OGRIDBSelectLayer::ResetQuery()

@@ -47,7 +47,7 @@ namespace cpl
 {
 
 /************************************************************************/
-/*                       AnalyseSwiftFileList()                         */
+/*                        AnalyseSwiftFileList()                        */
 /************************************************************************/
 
 void VSICurlFilesystemHandlerBase::AnalyseSwiftFileList(
@@ -203,7 +203,7 @@ void VSICurlFilesystemHandlerBase::AnalyseSwiftFileList(
 }
 
 /************************************************************************/
-/*                         VSISwiftFSHandler                            */
+/*                          VSISwiftFSHandler                           */
 /************************************************************************/
 
 class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
@@ -270,7 +270,7 @@ class VSISwiftFSHandler final : public IVSIS3LikeFSHandler
 };
 
 /************************************************************************/
-/*                            VSISwiftHandle                              */
+/*                            VSISwiftHandle                            */
 /************************************************************************/
 
 class VSISwiftHandle final : public IVSIS3LikeHandle
@@ -291,7 +291,7 @@ class VSISwiftHandle final : public IVSIS3LikeHandle
 };
 
 /************************************************************************/
-/*                          CreateWriteHandle()                         */
+/*                         CreateWriteHandle()                          */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -308,7 +308,7 @@ VSISwiftFSHandler::CreateWriteHandle(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                       ~VSISwiftFSHandler()                           */
+/*                         ~VSISwiftFSHandler()                         */
 /************************************************************************/
 
 VSISwiftFSHandler::~VSISwiftFSHandler()
@@ -318,7 +318,7 @@ VSISwiftFSHandler::~VSISwiftFSHandler()
 }
 
 /************************************************************************/
-/*                            ClearCache()                              */
+/*                             ClearCache()                             */
 /************************************************************************/
 
 void VSISwiftFSHandler::ClearCache()
@@ -329,7 +329,7 @@ void VSISwiftFSHandler::ClearCache()
 }
 
 /************************************************************************/
-/*                           GetOptions()                               */
+/*                             GetOptions()                             */
 /************************************************************************/
 
 const char *VSISwiftFSHandler::GetOptions()
@@ -406,7 +406,7 @@ VSISwiftFSHandler::GetURLFromFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                          CreateHandleHelper()                        */
+/*                         CreateHandleHelper()                         */
 /************************************************************************/
 
 IVSIS3LikeHandleHelper *
@@ -505,7 +505,7 @@ int VSISwiftFSHandler::Stat(const char *pszFilename, VSIStatBufL *pStatBuf,
 }
 
 /************************************************************************/
-/*                           GetFileList()                              */
+/*                            GetFileList()                             */
 /************************************************************************/
 
 char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
@@ -679,7 +679,7 @@ char **VSISwiftFSHandler::GetFileList(const char *pszDirname, int nMaxFiles,
 }
 
 /************************************************************************/
-/*                            VSISwiftHandle()                            */
+/*                           VSISwiftHandle()                           */
 /************************************************************************/
 
 VSISwiftHandle::VSISwiftHandle(VSISwiftFSHandler *poFSIn,
@@ -691,7 +691,7 @@ VSISwiftHandle::VSISwiftHandle(VSISwiftFSHandler *poFSIn,
 }
 
 /************************************************************************/
-/*                            ~VSISwiftHandle()                           */
+/*                          ~VSISwiftHandle()                           */
 /************************************************************************/
 
 VSISwiftHandle::~VSISwiftHandle()
@@ -710,7 +710,7 @@ struct curl_slist *VSISwiftHandle::GetCurlHeaders(const std::string &osVerb,
 }
 
 /************************************************************************/
-/*                           Authenticate()                             */
+/*                            Authenticate()                            */
 /************************************************************************/
 
 bool VSISwiftHandle::Authenticate(const char *pszFilename)

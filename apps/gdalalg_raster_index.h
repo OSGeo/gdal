@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterIndexAlgorithm                         */
+/*                       GDALRasterIndexAlgorithm                       */
 /************************************************************************/
 
 class CPL_DLL GDALRasterIndexAlgorithm /* non final */

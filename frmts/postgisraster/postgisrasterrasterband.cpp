@@ -16,6 +16,8 @@
  **********************************************************************/
 #include "postgisraster.h"
 
+#include <algorithm>
+
 /**
  * \brief Constructor.
  *
@@ -34,7 +36,7 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDSIn,
     nBand = nBandIn;
 
     eDataType = eDataTypeIn;
-    m_bNoDataValueSet = bNoDataValueSetIn;
+    m_bNoDataValueSet = CPL_TO_BOOL(bNoDataValueSetIn);
     m_dfNoDataValue = dfNodata;
 
     nRasterXSize = poDS->GetRasterXSize();
@@ -53,10 +55,10 @@ PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDSIn,
      ******************************************************************/
     nBlockXSize = atoi(CPLGetConfigOption(
         "PR_BLOCKXSIZE",
-        CPLSPrintf("%d", MIN(MAX_BLOCK_SIZE, this->nRasterXSize))));
+        CPLSPrintf("%d", std::min(MAX_BLOCK_SIZE, this->nRasterXSize))));
     nBlockYSize = atoi(CPLGetConfigOption(
         "PR_BLOCKYSIZE",
-        CPLSPrintf("%d", MIN(MAX_BLOCK_SIZE, this->nRasterYSize))));
+        CPLSPrintf("%d", std::min(MAX_BLOCK_SIZE, this->nRasterYSize))));
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("PostGIS_Raster",
@@ -743,7 +745,7 @@ double PostGISRasterRasterBand::GetMaximum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                       ComputeRasterMinMax()                          */
+/*                        ComputeRasterMinMax()                         */
 /************************************************************************/
 
 CPLErr PostGISRasterRasterBand::ComputeRasterMinMax(int bApproxOK,

@@ -29,7 +29,7 @@ static bool BuildDataType(int gid, int varid, int nVarType,
                           bool &bPerfectDataTypeMatch);
 
 /************************************************************************/
-/*                         netCDFSharedResources                        */
+/*                        netCDFSharedResources                         */
 /************************************************************************/
 
 class netCDFSharedResources
@@ -176,7 +176,7 @@ int netCDFSharedResources::GetBelongingGroupOfDim(int startgid, int dimid)
 }
 
 /************************************************************************/
-/*                            SetDefineMode()                           */
+/*                           SetDefineMode()                            */
 /************************************************************************/
 
 bool netCDFSharedResources::SetDefineMode(bool bNewDefineMode)
@@ -223,7 +223,7 @@ class netCDFAttributeHolder CPL_NON_FINAL
 };
 
 /************************************************************************/
-/*                           netCDFGroup                                */
+/*                             netCDFGroup                              */
 /************************************************************************/
 
 class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
@@ -346,7 +346,7 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
 };
 
 /************************************************************************/
-/*                   netCDFVirtualGroupBySameDimension                  */
+/*                  netCDFVirtualGroupBySameDimension                   */
 /************************************************************************/
 
 class netCDFVirtualGroupBySameDimension final : public GDALGroup
@@ -373,7 +373,7 @@ class netCDFVirtualGroupBySameDimension final : public GDALGroup
 };
 
 /************************************************************************/
-/*                         netCDFDimension                              */
+/*                           netCDFDimension                            */
 /************************************************************************/
 
 class netCDFDimension final : public GDALDimension
@@ -432,7 +432,7 @@ class netCDFDimension final : public GDALDimension
 };
 
 /************************************************************************/
-/*                         netCDFAttribute                              */
+/*                           netCDFAttribute                            */
 /************************************************************************/
 
 class netCDFVariable;
@@ -502,7 +502,7 @@ class netCDFAttribute final : public GDALAttribute
 };
 
 /************************************************************************/
-/*                         netCDFVariable                               */
+/*                            netCDFVariable                            */
 /************************************************************************/
 
 class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
@@ -745,7 +745,7 @@ netCDFSharedResources::~netCDFSharedResources()
 }
 
 /************************************************************************/
-/*                     NCDFGetParentGroupName()                         */
+/*                       NCDFGetParentGroupName()                       */
 /************************************************************************/
 
 static CPLString NCDFGetParentGroupName(int gid)
@@ -757,7 +757,7 @@ static CPLString NCDFGetParentGroupName(int gid)
 }
 
 /************************************************************************/
-/*                             netCDFGroup()                            */
+/*                            netCDFGroup()                             */
 /************************************************************************/
 
 netCDFGroup::netCDFGroup(const std::shared_ptr<netCDFSharedResources> &poShared,
@@ -835,7 +835,7 @@ netCDFGroup::~netCDFGroup()
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 /* static */
@@ -850,7 +850,7 @@ netCDFGroup::Create(const std::shared_ptr<netCDFSharedResources> &poShared,
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 /* static */
@@ -867,7 +867,7 @@ netCDFGroup::Create(const std::shared_ptr<netCDFSharedResources> &poShared,
 }
 
 /************************************************************************/
-/*                             CreateGroup()                            */
+/*                            CreateGroup()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALGroup>
@@ -893,7 +893,7 @@ netCDFGroup::CreateGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                             CreateDimension()                        */
+/*                          CreateDimension()                           */
 /************************************************************************/
 
 std::shared_ptr<GDALDimension>
@@ -1000,7 +1000,7 @@ static int CreateOrGetCompoundDataType(int gid,
 }
 
 /************************************************************************/
-/*                         CreateOrGetType()                            */
+/*                          CreateOrGetType()                           */
 /************************************************************************/
 
 static int CreateOrGetType(int gid, const GDALExtendedDataType &oType)
@@ -1064,7 +1064,7 @@ static int CreateOrGetType(int gid, const GDALExtendedDataType &oType)
 }
 
 /************************************************************************/
-/*                            CreateMDArray()                           */
+/*                           CreateMDArray()                            */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray> netCDFGroup::CreateMDArray(
@@ -1264,7 +1264,7 @@ std::shared_ptr<GDALAttribute> netCDFGroup::CreateAttribute(
 }
 
 /************************************************************************/
-/*                         DeleteAttribute()                            */
+/*                          DeleteAttribute()                           */
 /************************************************************************/
 
 bool netCDFGroup::DeleteAttribute(const std::string &osName,
@@ -1289,7 +1289,7 @@ bool netCDFGroup::DeleteAttribute(const std::string &osName,
 }
 
 /************************************************************************/
-/*                            GetGroupNames()                           */
+/*                           GetGroupNames()                            */
 /************************************************************************/
 
 std::vector<std::string>
@@ -1382,7 +1382,7 @@ netCDFGroup::OpenGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                         GetMDArrayNames()                            */
+/*                          GetMDArrayNames()                           */
 /************************************************************************/
 
 std::vector<std::string>
@@ -1419,13 +1419,13 @@ netCDFGroup::GetMDArrayNames(CSLConstList papszOptions) const
     {
         for (const auto &varid : anVarIds)
         {
-            char **papszTokens = nullptr;
+            CPLStringList aosTokens;
             if (!bCoordinates)
             {
                 char *pszTemp = nullptr;
                 if (NCDFGetAttr(m_gid, varid, "coordinates", &pszTemp) ==
                     CE_None)
-                    papszTokens = NCDFTokenizeCoordinatesAttribute(pszTemp);
+                    aosTokens = NCDFTokenizeCoordinatesAttribute(pszTemp);
                 CPLFree(pszTemp);
             }
             if (!bBounds)
@@ -1433,12 +1433,11 @@ netCDFGroup::GetMDArrayNames(CSLConstList papszOptions) const
                 char *pszTemp = nullptr;
                 if (NCDFGetAttr(m_gid, varid, "bounds", &pszTemp) == CE_None &&
                     pszTemp != nullptr && !EQUAL(pszTemp, ""))
-                    papszTokens = CSLAddString(papszTokens, pszTemp);
+                    aosTokens.AddString(pszTemp);
                 CPLFree(pszTemp);
             }
-            for (char **iter = papszTokens; iter && iter[0]; ++iter)
-                ignoreList.insert(*iter);
-            CSLDestroy(papszTokens);
+            for (const char *pszToken : aosTokens)
+                ignoreList.insert(pszToken);
         }
     }
 
@@ -1495,7 +1494,7 @@ netCDFGroup::GetMDArrayNames(CSLConstList papszOptions) const
 }
 
 /************************************************************************/
-/*                              Rename()                                */
+/*                               Rename()                               */
 /************************************************************************/
 
 bool netCDFGroup::Rename(const std::string &osNewName)
@@ -1531,7 +1530,7 @@ bool netCDFGroup::Rename(const std::string &osNewName)
 }
 
 /************************************************************************/
-/*                       NotifyChildrenOfRenaming()                     */
+/*                      NotifyChildrenOfRenaming()                      */
 /************************************************************************/
 
 void netCDFGroup::NotifyChildrenOfRenaming()
@@ -1550,7 +1549,7 @@ void netCDFGroup::NotifyChildrenOfRenaming()
 }
 
 /************************************************************************/
-/*                           OpenMDArray()                              */
+/*                            OpenMDArray()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -1575,7 +1574,7 @@ netCDFGroup::OpenMDArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                         GetDimensions()                              */
+/*                           GetDimensions()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALDimension>>
@@ -1606,7 +1605,7 @@ netCDFGroup::GetDimensions(CSLConstList) const
 }
 
 /************************************************************************/
-/*                         GetAttribute()                               */
+/*                            GetAttribute()                            */
 /************************************************************************/
 
 static const char *const apszJSONMDKeys[] = {
@@ -1652,7 +1651,7 @@ netCDFGroup::GetAttribute(const std::string &osName) const
 }
 
 /************************************************************************/
-/*                         GetAttributes()                              */
+/*                           GetAttributes()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALAttribute>>
@@ -1719,7 +1718,7 @@ void netCDFGroup::ClearStatistics()
 }
 
 /************************************************************************/
-/*                   netCDFVirtualGroupBySameDimension()                */
+/*                 netCDFVirtualGroupBySameDimension()                  */
 /************************************************************************/
 
 netCDFVirtualGroupBySameDimension::netCDFVirtualGroupBySameDimension(
@@ -1730,7 +1729,7 @@ netCDFVirtualGroupBySameDimension::netCDFVirtualGroupBySameDimension(
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 /* static */ std::shared_ptr<netCDFVirtualGroupBySameDimension>
@@ -1744,7 +1743,7 @@ netCDFVirtualGroupBySameDimension::Create(
 }
 
 /************************************************************************/
-/*                         GetMDArrayNames()                            */
+/*                          GetMDArrayNames()                           */
 /************************************************************************/
 
 std::vector<std::string>
@@ -1769,7 +1768,7 @@ netCDFVirtualGroupBySameDimension::GetMDArrayNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                           OpenMDArray()                              */
+/*                            OpenMDArray()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray>
@@ -1780,7 +1779,7 @@ netCDFVirtualGroupBySameDimension::OpenMDArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                           netCDFDimension()                          */
+/*                          netCDFDimension()                           */
 /************************************************************************/
 
 netCDFDimension::netCDFDimension(
@@ -1875,7 +1874,7 @@ netCDFDimension::~netCDFDimension()
 }
 
 /************************************************************************/
-/*                             Create()                                 */
+/*                               Create()                               */
 /************************************************************************/
 
 /* static */
@@ -1894,7 +1893,7 @@ netCDFDimension::Create(const std::shared_ptr<netCDFSharedResources> &poShared,
 }
 
 /************************************************************************/
-/*                         GetIndexingVariable()                        */
+/*                        GetIndexingVariable()                         */
 /************************************************************************/
 
 namespace
@@ -2071,7 +2070,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
 }
 
 /************************************************************************/
-/*                              Rename()                                */
+/*                               Rename()                               */
 /************************************************************************/
 
 bool netCDFDimension::Rename(const std::string &osNewName)
@@ -2101,7 +2100,7 @@ bool netCDFDimension::Rename(const std::string &osNewName)
 }
 
 /************************************************************************/
-/*                          netCDFVariable()                            */
+/*                           netCDFVariable()                           */
 /************************************************************************/
 
 netCDFVariable::netCDFVariable(
@@ -2266,7 +2265,7 @@ netCDFVariable::~netCDFVariable()
 }
 
 /************************************************************************/
-/*                             GetDimensions()                          */
+/*                           GetDimensions()                            */
 /************************************************************************/
 
 const std::vector<std::shared_ptr<GDALDimension>> &
@@ -2307,7 +2306,7 @@ CSLConstList netCDFVariable::GetStructuralInfo() const
 }
 
 /************************************************************************/
-/*                          GetComplexDataType()                        */
+/*                         GetComplexDataType()                         */
 /************************************************************************/
 
 static GDALDataType GetComplexDataType(int gid, int nVarType)
@@ -2369,7 +2368,7 @@ static GDALDataType GetComplexDataType(int gid, int nVarType)
 }
 
 /************************************************************************/
-/*                       GetCompoundDataType()                          */
+/*                        GetCompoundDataType()                         */
 /************************************************************************/
 
 static bool GetCompoundDataType(int gid, int nVarType,
@@ -2427,7 +2426,7 @@ static bool GetCompoundDataType(int gid, int nVarType,
 }
 
 /************************************************************************/
-/*                            BuildDataType()                           */
+/*                           BuildDataType()                            */
 /************************************************************************/
 
 static bool BuildDataType(int gid, int varid, const int nVarTypeIn,
@@ -2635,7 +2634,7 @@ static bool BuildDataType(int gid, int varid, const int nVarTypeIn,
 }
 
 /************************************************************************/
-/*                             GetDataType()                            */
+/*                            GetDataType()                             */
 /************************************************************************/
 
 const GDALExtendedDataType &netCDFVariable::GetDataType() const
@@ -2684,7 +2683,7 @@ bool netCDFVariable::SetUnit(const std::string &osUnit)
 }
 
 /************************************************************************/
-/*                            GetSpatialRef()                           */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 std::shared_ptr<OGRSpatialReference> netCDFVariable::GetSpatialRef() const
@@ -2732,7 +2731,7 @@ std::shared_ptr<OGRSpatialReference> netCDFVariable::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                            SetSpatialRef()                           */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 static void WriteDimAttr(std::shared_ptr<GDALMDArray> &poVar,
@@ -2933,7 +2932,7 @@ bool netCDFVariable::SetStatistics(bool bApproxStats, double dfMin,
 }
 
 /************************************************************************/
-/*                             GetNCTypeSize()                          */
+/*                           GetNCTypeSize()                            */
 /************************************************************************/
 
 static size_t GetNCTypeSize(const GDALExtendedDataType &dt,
@@ -2966,7 +2965,7 @@ static size_t GetNCTypeSize(const GDALExtendedDataType &dt,
 }
 
 /************************************************************************/
-/*                   ConvertNCStringsToCPLStrings()                     */
+/*                    ConvertNCStringsToCPLStrings()                    */
 /************************************************************************/
 
 static void ConvertNCStringsToCPLStrings(GByte *pBuffer,
@@ -3008,7 +3007,7 @@ static void ConvertNCStringsToCPLStrings(GByte *pBuffer,
 }
 
 /************************************************************************/
-/*                            FreeNCStrings()                           */
+/*                           FreeNCStrings()                            */
 /************************************************************************/
 
 static void FreeNCStrings(GByte *pBuffer, const GDALExtendedDataType &dt)
@@ -3045,7 +3044,7 @@ static void FreeNCStrings(GByte *pBuffer, const GDALExtendedDataType &dt)
 }
 
 /************************************************************************/
-/*                          IReadWriteGeneric()                         */
+/*                         IReadWriteGeneric()                          */
 /************************************************************************/
 
 namespace
@@ -3240,7 +3239,7 @@ bool netCDFVariable::IReadWriteGeneric(
 }
 
 /************************************************************************/
-/*                          CheckNumericDataType()                      */
+/*                        CheckNumericDataType()                        */
 /************************************************************************/
 
 static bool CheckNumericDataType(const GDALExtendedDataType &dt)
@@ -3261,7 +3260,7 @@ static bool CheckNumericDataType(const GDALExtendedDataType &dt)
 }
 
 /************************************************************************/
-/*                            IReadWrite()                              */
+/*                             IReadWrite()                             */
 /************************************************************************/
 
 template <typename BufferType, typename NCGetPutVar1FuncType,
@@ -3551,7 +3550,7 @@ bool netCDFVariable::ReadOneElement(const GDALExtendedDataType &src_datatype,
 }
 
 /************************************************************************/
-/*                                   IRead()                            */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool netCDFVariable::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -3630,7 +3629,7 @@ bool netCDFVariable::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                             IAdviseRead()                            */
+/*                            IAdviseRead()                             */
 /************************************************************************/
 
 bool netCDFVariable::IAdviseRead(const GUInt64 *arrayStartIdx,
@@ -3742,7 +3741,7 @@ bool netCDFVariable::WriteOneElement(const GDALExtendedDataType &dst_datatype,
 }
 
 /************************************************************************/
-/*                                IWrite()                              */
+/*                               IWrite()                               */
 /************************************************************************/
 
 bool netCDFVariable::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -3793,7 +3792,7 @@ bool netCDFVariable::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                          GetRawNoDataValue()                         */
+/*                         GetRawNoDataValue()                          */
 /************************************************************************/
 
 const void *netCDFVariable::GetRawNoDataValue() const
@@ -3916,7 +3915,7 @@ const void *netCDFVariable::GetRawNoDataValue() const
 }
 
 /************************************************************************/
-/*                          SetRawNoDataValue()                         */
+/*                         SetRawNoDataValue()                          */
 /************************************************************************/
 
 bool netCDFVariable::SetRawNoDataValue(const void *pNoData)
@@ -3992,7 +3991,7 @@ bool netCDFVariable::SetRawNoDataValue(const void *pNoData)
 }
 
 /************************************************************************/
-/*                               SetScale()                             */
+/*                              SetScale()                              */
 /************************************************************************/
 
 bool netCDFVariable::SetScale(double dfScale, GDALDataType eStorageType)
@@ -4012,7 +4011,7 @@ bool netCDFVariable::SetScale(double dfScale, GDALDataType eStorageType)
 }
 
 /************************************************************************/
-/*                              SetOffset()                             */
+/*                             SetOffset()                              */
 /************************************************************************/
 
 bool netCDFVariable::SetOffset(double dfOffset, GDALDataType eStorageType)
@@ -4032,7 +4031,7 @@ bool netCDFVariable::SetOffset(double dfOffset, GDALDataType eStorageType)
 }
 
 /************************************************************************/
-/*                               GetScale()                             */
+/*                              GetScale()                              */
 /************************************************************************/
 
 double netCDFVariable::GetScale(bool *pbHasScale,
@@ -4053,7 +4052,7 @@ double netCDFVariable::GetScale(bool *pbHasScale,
 }
 
 /************************************************************************/
-/*                               GetOffset()                            */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 double netCDFVariable::GetOffset(bool *pbHasOffset,
@@ -4074,7 +4073,7 @@ double netCDFVariable::GetOffset(bool *pbHasOffset,
 }
 
 /************************************************************************/
-/*                           GetBlockSize()                             */
+/*                            GetBlockSize()                            */
 /************************************************************************/
 
 std::vector<GUInt64> netCDFVariable::GetBlockSize() const
@@ -4098,7 +4097,7 @@ std::vector<GUInt64> netCDFVariable::GetBlockSize() const
 }
 
 /************************************************************************/
-/*                         GetAttribute()                               */
+/*                            GetAttribute()                            */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute>
@@ -4114,7 +4113,7 @@ netCDFVariable::GetAttribute(const std::string &osName) const
 }
 
 /************************************************************************/
-/*                         GetAttributes()                              */
+/*                           GetAttributes()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALAttribute>>
@@ -4164,7 +4163,7 @@ std::shared_ptr<GDALAttribute> netCDFVariable::CreateAttribute(
 }
 
 /************************************************************************/
-/*                         DeleteAttribute()                            */
+/*                          DeleteAttribute()                           */
 /************************************************************************/
 
 bool netCDFVariable::DeleteAttribute(const std::string &osName,
@@ -4189,7 +4188,7 @@ bool netCDFVariable::DeleteAttribute(const std::string &osName,
 }
 
 /************************************************************************/
-/*                      GetCoordinateVariables()                        */
+/*                       GetCoordinateVariables()                       */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALMDArray>>
@@ -4257,7 +4256,7 @@ netCDFVariable::GetCoordinateVariables() const
 }
 
 /************************************************************************/
-/*                            Resize()                                  */
+/*                               Resize()                               */
 /************************************************************************/
 
 bool netCDFVariable::Resize(const std::vector<GUInt64> &anNewDimSizes,
@@ -4362,7 +4361,7 @@ bool netCDFVariable::Resize(const std::vector<GUInt64> &anNewDimSizes,
 }
 
 /************************************************************************/
-/*                              Rename()                                */
+/*                               Rename()                               */
 /************************************************************************/
 
 bool netCDFVariable::Rename(const std::string &osNewName)
@@ -4393,7 +4392,7 @@ bool netCDFVariable::Rename(const std::string &osNewName)
 }
 
 /************************************************************************/
-/*                       NotifyChildrenOfRenaming()                     */
+/*                      NotifyChildrenOfRenaming()                      */
 /************************************************************************/
 
 void netCDFVariable::NotifyChildrenOfRenaming()
@@ -4403,7 +4402,7 @@ void netCDFVariable::NotifyChildrenOfRenaming()
 }
 
 /************************************************************************/
-/*                    netCDFVariable::GetRawBlockInfo()                 */
+/*                  netCDFVariable::GetRawBlockInfo()                   */
 /************************************************************************/
 
 bool netCDFVariable::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
@@ -4555,7 +4554,7 @@ netCDFAttribute::netCDFAttribute(
 }
 
 /************************************************************************/
-/*                         ~netCDFAttribute()                           */
+/*                          ~netCDFAttribute()                          */
 /************************************************************************/
 
 netCDFAttribute::~netCDFAttribute()
@@ -4568,7 +4567,7 @@ netCDFAttribute::~netCDFAttribute()
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 std::shared_ptr<netCDFAttribute>
@@ -4626,7 +4625,7 @@ std::shared_ptr<netCDFAttribute> netCDFAttribute::Create(
 }
 
 /************************************************************************/
-/*                             GetDataType()                            */
+/*                            GetDataType()                             */
 /************************************************************************/
 
 const GDALExtendedDataType &netCDFAttribute::GetDataType() const
@@ -4652,7 +4651,7 @@ const GDALExtendedDataType &netCDFAttribute::GetDataType() const
 }
 
 /************************************************************************/
-/*                                   IRead()                            */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool netCDFAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -4821,7 +4820,7 @@ bool netCDFAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                                IWrite()                              */
+/*                               IWrite()                               */
 /************************************************************************/
 
 bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -5011,7 +5010,7 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                              Rename()                                */
+/*                               Rename()                               */
 /************************************************************************/
 
 bool netCDFAttribute::Rename(const std::string &osNewName)
@@ -5044,7 +5043,7 @@ bool netCDFAttribute::Rename(const std::string &osNewName)
 }
 
 /************************************************************************/
-/*                           OpenMultiDim()                             */
+/*                            OpenMultiDim()                            */
 /************************************************************************/
 
 GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
@@ -5234,7 +5233,7 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GetRootGroup()                              */
+/*                            GetRootGroup()                            */
 /************************************************************************/
 
 std::shared_ptr<GDALGroup> netCDFDataset::GetRootGroup() const
@@ -5243,7 +5242,7 @@ std::shared_ptr<GDALGroup> netCDFDataset::GetRootGroup() const
 }
 
 /************************************************************************/
-/*                      CreateMultiDimensional()                        */
+/*                       CreateMultiDimensional()                       */
 /************************************************************************/
 
 GDALDataset *

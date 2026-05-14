@@ -151,11 +151,9 @@ class PCT2RGB(GDALScript):
     def __init__(self):
         super().__init__()
         self.title = "Convert an 8bit paletted image to 24bit RGB"
-        self.description = textwrap.dedent(
-            """\
+        self.description = textwrap.dedent("""\
             This utility will convert a pseudo-color band on the input file
-            into an output RGB file of the desired format."""
-        )
+            into an output RGB file of the desired format.""")
 
     def get_parser(self, argv) -> GDALArgumentParser:
         parser = self.parser

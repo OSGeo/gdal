@@ -72,7 +72,7 @@
 #endif /* HAVE_INTERNAL_OR_EXTERNAL_QHULL*/
 
 /************************************************************************/
-/*                       GDALHasTriangulation()                         */
+/*                        GDALHasTriangulation()                        */
 /************************************************************************/
 
 /** Returns if GDAL is built with Delaunay triangulation support.
@@ -90,7 +90,7 @@ int GDALHasTriangulation()
 }
 
 /************************************************************************/
-/*                   GDALTriangulationCreateDelaunay()                  */
+/*                  GDALTriangulationCreateDelaunay()                   */
 /************************************************************************/
 
 /** Computes a Delaunay triangulation of the passed points
@@ -274,7 +274,7 @@ void GDALTriangulationFree(GDALTriangulation *psDT)
 }
 
 /************************************************************************/
-/*               GDALTriangulationComputeBarycentricCoefficients()      */
+/*          GDALTriangulationComputeBarycentricCoefficients()           */
 /************************************************************************/
 
 /** Computes barycentric coefficients for each triangles of the triangulation.
@@ -344,15 +344,15 @@ int GDALTriangulationComputeBarycentricCoefficients(GDALTriangulation *psDT,
 }
 
 /************************************************************************/
-/*               GDALTriangulationComputeBarycentricCoordinates()       */
+/*           GDALTriangulationComputeBarycentricCoordinates()           */
 /************************************************************************/
 
 #define BARYC_COORD_L1(psCoeffs, dfX, dfY)                                     \
-    (psCoeffs->dfMul1X * ((dfX)-psCoeffs->dfCstX) +                            \
-     psCoeffs->dfMul1Y * ((dfY)-psCoeffs->dfCstY))
+    (psCoeffs->dfMul1X * ((dfX) - psCoeffs->dfCstX) +                          \
+     psCoeffs->dfMul1Y * ((dfY) - psCoeffs->dfCstY))
 #define BARYC_COORD_L2(psCoeffs, dfX, dfY)                                     \
-    (psCoeffs->dfMul2X * ((dfX)-psCoeffs->dfCstX) +                            \
-     psCoeffs->dfMul2Y * ((dfY)-psCoeffs->dfCstY))
+    (psCoeffs->dfMul2X * ((dfX) - psCoeffs->dfCstX) +                          \
+     psCoeffs->dfMul2Y * ((dfY) - psCoeffs->dfCstY))
 #define BARYC_COORD_L3(l1, l2) (1 - (l1) - (l2))
 
 /** Computes the barycentric coordinates of a point.
@@ -391,7 +391,7 @@ int GDALTriangulationComputeBarycentricCoordinates(
 }
 
 /************************************************************************/
-/*               GDALTriangulationFindFacetBruteForce()                 */
+/*                GDALTriangulationFindFacetBruteForce()                */
 /************************************************************************/
 
 #define EPS 1e-10
@@ -483,7 +483,7 @@ int GDALTriangulationFindFacetBruteForce(const GDALTriangulation *psDT,
 }
 
 /************************************************************************/
-/*               GDALTriangulationFindFacetDirected()                   */
+/*                 GDALTriangulationFindFacetDirected()                 */
 /************************************************************************/
 
 #define EPS 1e-10

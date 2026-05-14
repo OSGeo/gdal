@@ -58,6 +58,8 @@ Program-Specific Options
    rings valid then merges shells and subtracts holes from shells to generate
    valid result. It assumes that holes and shells are correctly categorized.
 
+   For examples of the differences between these methods, see :ref:`geometry_validity`.
+
 Standard Options
 ----------------
 
@@ -94,6 +96,11 @@ Standard Options
     .. include:: gdal_options/update.rst
 
     .. include:: gdal_options/upsert.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

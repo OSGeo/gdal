@@ -143,7 +143,7 @@ static bool CreateDerivedBandXML(VRTDataset *poVRTDS, GDALRasterBand *poSrcBand,
 }
 
 /************************************************************************/
-/*                      GDALNeighborsCreateVRTDerived()                 */
+/*                   GDALNeighborsCreateVRTDerived()                    */
 /************************************************************************/
 
 static std::unique_ptr<GDALDataset>
@@ -192,7 +192,7 @@ GDALNeighborsCreateVRTDerived(GDALDataset *poSrcDS, int nBand,
 }
 
 /************************************************************************/
-/*       GDALRasterNeighborsAlgorithm::GDALRasterNeighborsAlgorithm()   */
+/*     GDALRasterNeighborsAlgorithm::GDALRasterNeighborsAlgorithm()     */
 /************************************************************************/
 
 GDALRasterNeighborsAlgorithm::GDALRasterNeighborsAlgorithm(
@@ -376,7 +376,7 @@ GDALRasterNeighborsAlgorithm::GDALRasterNeighborsAlgorithm(
 }
 
 /************************************************************************/
-/*                               GetKernelDef()                         */
+/*                            GetKernelDef()                            */
 /************************************************************************/
 
 static KernelDef GetKernelDef(const std::string &name, bool normalizeCoefs,
@@ -401,7 +401,7 @@ static KernelDef GetKernelDef(const std::string &name, bool normalizeCoefs,
 }
 
 /************************************************************************/
-/*                GDALRasterNeighborsAlgorithm::RunStep()               */
+/*               GDALRasterNeighborsAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterNeighborsAlgorithm::RunStep(GDALPipelineStepRunContext &)

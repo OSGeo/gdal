@@ -26,6 +26,7 @@ pytestmark = [
     ),
 ]
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -188,7 +189,7 @@ def test_rl2_5():
         ("RASTERLITE2:data/rasterlite2/multi_type.rl2:double", gdal.GDT_Float64, 4457),
         ("RASTERLITE2:data/rasterlite2/multi_type.rl2:1bit", gdal.GDT_UInt8, 4873),
     ]
-    for (subds_name, dt, expected_cs) in tests:
+    for subds_name, dt, expected_cs in tests:
         ds = gdal.Open(subds_name)
         assert ds.GetRasterBand(1).DataType == dt, subds_name
         cs = ds.GetRasterBand(1).Checksum()
@@ -379,7 +380,7 @@ def test_rl2_20():
         ("DATAGRID", 1, gdal.GDT_Int16, "CCITTFAX4", None, None),
     ]
 
-    for (pixel_type, band_count, dt, compress, nbits, pct) in tests:
+    for pixel_type, band_count, dt, compress, nbits, pct in tests:
         src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, band_count, dt)
         if pct is not None:
             src_ds.GetRasterBand(1).SetColorTable(pct)
@@ -423,7 +424,7 @@ def test_rl2_21():
     ]
 
     src_ds = gdal.Open("data/byte.tif")
-    for (compress, quality) in tests:
+    for compress, quality in tests:
 
         if (
             gdaltest.rl2_drv.GetMetadataItem("DMD_CREATIONOPTIONLIST").find(compress)

@@ -25,7 +25,7 @@
     (strLen >= strlen(end) && EQUAL(str + strLen - strlen(end), end))
 
 /************************************************************************/
-/*                 OGRFileGDBDriverIdentifyInternal()                   */
+/*                  OGRFileGDBDriverIdentifyInternal()                  */
 /************************************************************************/
 
 GDALIdentifyEnum OGRFileGDBDriverIdentifyInternal(GDALOpenInfo *poOpenInfo,
@@ -76,7 +76,7 @@ static int OGRFileGDBDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                OGRFileGDBDriverSetCommonMetadata()                   */
+/*                 OGRFileGDBDriverSetCommonMetadata()                  */
 /************************************************************************/
 
 void OGRFileGDBDriverSetCommonMetadata(GDALDriver *poDriver)

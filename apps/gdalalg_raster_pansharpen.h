@@ -50,7 +50,7 @@ class GDALRasterPansharpenAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                GDALRasterPansharpenAlgorithmStandalone               */
+/*               GDALRasterPansharpenAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterPansharpenAlgorithmStandalone final

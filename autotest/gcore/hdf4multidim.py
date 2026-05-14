@@ -20,6 +20,7 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("HDF4")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -350,7 +351,7 @@ def test_hdf4multidim_sds():
 def test_hdf4multidim_sds_unlimited_dim():
 
     # Generated with
-    # hhttps://support.hdfgroup.org/ftp/HDF/HDF_Current/src/unpacked/mfhdf/examples/SD_unlimited_sds.c
+    # https://support.hdfgroup.org/ftp/HDF/HDF_Current/src/unpacked/mfhdf/examples/SD_unlimited_sds.c
     ds = gdal.OpenEx("data/SDSUNLIMITED.hdf", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
@@ -529,3 +530,27 @@ def test_hdf4multidim_gr_palette():
     assert got[255 * 3 + 0] == 255
     assert got[255 * 3 + 1] == 0
     assert got[255 * 3 + 2] == 1
+
+
+###############################################################################
+# Test bugfix for various crashes
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "data/hdf4/issue_14356.he4",
+        "data/hdf4/issue_14363.he4",
+        "data/hdf4/issue_14378.he4",
+        "data/hdf4/issue_14379.he4",
+        "data/hdf4/issue_14398.he4",
+        "data/hdf4/issue_14399.he4",
+    ],
+)
+def test_hdf4multidim_gh_crashes(filename):
+
+    if gdaltest.hdf4_drv is None:
+        pytest.skip()
+
+    ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+    gdal.MultiDimInfo(ds)

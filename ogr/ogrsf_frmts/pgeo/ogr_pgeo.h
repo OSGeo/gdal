@@ -21,7 +21,7 @@
 #include <unordered_set>
 
 /************************************************************************/
-/*                            OGRPGeoLayer                              */
+/*                             OGRPGeoLayer                             */
 /************************************************************************/
 
 class OGRPGeoDataSource;
@@ -84,7 +84,7 @@ class OGRPGeoLayer CPL_NON_FINAL : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRPGeoTableLayer                            */
+/*                          OGRPGeoTableLayer                           */
 /************************************************************************/
 
 class OGRPGeoTableLayer final : public OGRPGeoLayer
@@ -157,7 +157,7 @@ class OGRPGeoSelectLayer final : public OGRPGeoLayer
 };
 
 /************************************************************************/
-/*                           OGRPGeoDataSource                          */
+/*                          OGRPGeoDataSource                           */
 /************************************************************************/
 
 class OGRPGeoDataSource final : public GDALDataset

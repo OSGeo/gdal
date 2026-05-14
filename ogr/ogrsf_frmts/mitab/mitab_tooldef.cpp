@@ -408,7 +408,7 @@ int TABToolDefTable::AddPenDefRef(TABPenDef *poNewPenDef)
             poDef->nPointWidth == poNewPenDef->nPointWidth &&
             poDef->rgbColor == poNewPenDef->rgbColor)
         {
-            nNewPenIndex = i + 1;  // Fount it!
+            nNewPenIndex = i + 1;  // Found it!
             poDef->nRefCount++;
         }
     }
@@ -497,7 +497,7 @@ int TABToolDefTable::AddBrushDefRef(TABBrushDef *poNewBrushDef)
             poDef->rgbFGColor == poNewBrushDef->rgbFGColor &&
             poDef->rgbBGColor == poNewBrushDef->rgbBGColor)
         {
-            nNewBrushIndex = i + 1;  // Fount it!
+            nNewBrushIndex = i + 1;  // Found it!
             poDef->nRefCount++;
         }
     }
@@ -577,7 +577,7 @@ int TABToolDefTable::AddFontDefRef(TABFontDef *poNewFontDef)
         TABFontDef *poDef = m_papsFont[i];
         if (EQUAL(poDef->szFontName, poNewFontDef->szFontName))
         {
-            nNewFontIndex = i + 1;  // Fount it!
+            nNewFontIndex = i + 1;  // Found it!
             poDef->nRefCount++;
         }
     }
@@ -660,7 +660,7 @@ int TABToolDefTable::AddSymbolDefRef(TABSymbolDef *poNewSymbolDef)
             poDef->_nUnknownValue_ == poNewSymbolDef->_nUnknownValue_ &&
             poDef->rgbColor == poNewSymbolDef->rgbColor)
         {
-            nNewSymbolIndex = i + 1;  // Fount it!
+            nNewSymbolIndex = i + 1;  // Found it!
             poDef->nRefCount++;
         }
     }

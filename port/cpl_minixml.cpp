@@ -115,7 +115,7 @@ static CPL_INLINE void UnreadChar(ParseContext *psContext, char chToUnread)
 }
 
 /************************************************************************/
-/*                           ReallocToken()                             */
+/*                            ReallocToken()                            */
 /************************************************************************/
 
 static bool ReallocToken(ParseContext *psContext)
@@ -1430,7 +1430,7 @@ void CPLDestroyXMLNode(CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*                           CPLSearchXMLNode()                         */
+/*                          CPLSearchXMLNode()                          */
 /************************************************************************/
 
 /**
@@ -1740,7 +1740,7 @@ void CPLAddXMLChild(CPLXMLNode *psParent, CPLXMLNode *psChild)
 }
 
 /************************************************************************/
-/*                        CPLRemoveXMLChild()                           */
+/*                         CPLRemoveXMLChild()                          */
 /************************************************************************/
 
 /**
@@ -2246,7 +2246,7 @@ void CPLCleanXMLElementName(char *pszTarget)
 }
 
 /************************************************************************/
-/*                     CPLXMLNodeGetRAMUsageEstimate()                  */
+/*                   CPLXMLNodeGetRAMUsageEstimate()                    */
 /************************************************************************/
 
 static size_t CPLXMLNodeGetRAMUsageEstimate(const CPLXMLNode *psNode,
@@ -2281,7 +2281,7 @@ size_t CPLXMLNodeGetRAMUsageEstimate(const CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*            CPLXMLTreeCloser::getDocumentElement()                    */
+/*                CPLXMLTreeCloser::getDocumentElement()                */
 /************************************************************************/
 
 CPLXMLNode *CPLXMLTreeCloser::getDocumentElement()

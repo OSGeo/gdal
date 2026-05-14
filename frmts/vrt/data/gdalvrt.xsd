@@ -709,6 +709,7 @@
                         </xs:sequence>
                     </xs:choice>
                     <xs:element name="Attribute" type="AttributeType" minOccurs="0" maxOccurs="unbounded"/>
+                    <xs:element name="Overviews" type="OverviewsType" minOccurs="0" maxOccurs="1"/>
                 </xs:sequence>
                 <xs:attribute name="name" type="xs:string" use="required"/>
             </xs:extension>
@@ -716,6 +717,16 @@
     </xs:complexType>
 
     <xs:element name="Array" substitutionGroup="AbstractArray" type="ArrayType"/>
+
+    <xs:complexType name="OverviewsType">
+        <xs:sequence>
+            <xs:choice minOccurs="1" maxOccurs="unbounded">
+                <xs:element name="Array" type="ArrayType"/>
+                <xs:element name="ArrayFullName" type="xs:string"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
 
     <xs:complexType name="RegularlySpacedValuesType">
         <xs:attribute name="start" type="xs:double" use="required"/>

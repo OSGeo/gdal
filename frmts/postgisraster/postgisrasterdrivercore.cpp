@@ -22,7 +22,7 @@
 #include "gdalsubdatasetinfo.h"
 
 /************************************************************************/
-/*                     PostGISRasterDriverIdentify()                    */
+/*                    PostGISRasterDriverIdentify()                     */
 /************************************************************************/
 
 int PostGISRasterDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -100,7 +100,7 @@ char **PostGISRasterParseConnectionString(const char *pszConnectionString)
 }
 
 /************************************************************************/
-/*                    PostGISRasterDriverGetSubdatasetInfo()            */
+/*                PostGISRasterDriverGetSubdatasetInfo()                */
 /************************************************************************/
 
 struct PostGISRasterDriverSubdatasetInfo final : public GDALSubdatasetInfo
@@ -200,7 +200,7 @@ void PostGISRasterDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredPostGISRasterPlugin()               */
+/*                 DeclareDeferredPostGISRasterPlugin()                 */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

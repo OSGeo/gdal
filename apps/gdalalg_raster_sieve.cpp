@@ -27,7 +27,7 @@
 #endif
 
 /************************************************************************/
-/*      GDALRasterSieveAlgorithm::GDALRasterSieveAlgorithm()            */
+/*         GDALRasterSieveAlgorithm::GDALRasterSieveAlgorithm()         */
 /************************************************************************/
 
 GDALRasterSieveAlgorithm::GDALRasterSieveAlgorithm(bool standaloneStep)

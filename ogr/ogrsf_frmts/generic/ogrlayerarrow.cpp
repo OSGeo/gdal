@@ -31,6 +31,8 @@
 #include <limits>
 #include <utility>
 #include <set>
+#include <string_view>
+#include <type_traits>
 
 constexpr const char *MD_GDAL_OGR_TYPE = "GDAL:OGR:type";
 constexpr const char *MD_GDAL_OGR_ALTERNATIVE_NAME =
@@ -61,6 +63,8 @@ constexpr char ARROW_LETTER_LARGE_BINARY = 'Z';
 constexpr char ARROW_LETTER_DECIMAL = 'd';
 constexpr char ARROW_2ND_LETTER_LIST = 'l';
 constexpr char ARROW_2ND_LETTER_LARGE_LIST = 'L';
+
+constexpr int N_VALUES_PER_STRING_VIEW = 4;
 
 static inline bool IsStructure(const char *format)
 {
@@ -174,6 +178,12 @@ static inline bool IsString(const char *format)
     return format[0] == ARROW_LETTER_STRING && format[1] == 0;
 }
 
+static inline bool IsStringView(const char *format)
+{
+    return format[0] == 'v' && format[1] == ARROW_LETTER_STRING &&
+           format[2] == 0;
+}
+
 static inline bool IsLargeString(const char *format)
 {
     return format[0] == ARROW_LETTER_LARGE_STRING && format[1] == 0;
@@ -227,7 +237,7 @@ static inline const char *GetTimestampTimezone(const char *format)
 }
 
 /************************************************************************/
-/*                            TestBit()                                 */
+/*                              TestBit()                               */
 /************************************************************************/
 
 inline bool TestBit(const uint8_t *pabyData, size_t nIdx)
@@ -236,7 +246,7 @@ inline bool TestBit(const uint8_t *pabyData, size_t nIdx)
 }
 
 /************************************************************************/
-/*                            SetBit()                                  */
+/*                               SetBit()                               */
 /************************************************************************/
 
 inline void SetBit(uint8_t *pabyData, size_t nIdx)
@@ -245,7 +255,7 @@ inline void SetBit(uint8_t *pabyData, size_t nIdx)
 }
 
 /************************************************************************/
-/*                           UnsetBit()                                 */
+/*                              UnsetBit()                              */
 /************************************************************************/
 
 inline void UnsetBit(uint8_t *pabyData, size_t nIdx)
@@ -254,7 +264,7 @@ inline void UnsetBit(uint8_t *pabyData, size_t nIdx)
 }
 
 /************************************************************************/
-/*                          DefaultReleaseSchema()                      */
+/*                        DefaultReleaseSchema()                        */
 /************************************************************************/
 
 static void OGRLayerReleaseSchema(struct ArrowSchema *schema,
@@ -316,7 +326,7 @@ void OGRLayer::ReleaseSchema(struct ArrowSchema *schema)
 }
 
 /************************************************************************/
-/*                        AddDictToSchema()                             */
+/*                          AddDictToSchema()                           */
 /************************************************************************/
 
 static void AddDictToSchema(struct ArrowSchema *psChild,
@@ -364,7 +374,7 @@ static void AddDictToSchema(struct ArrowSchema *psChild,
 }
 
 /************************************************************************/
-/*                     DefaultGetArrowSchema()                          */
+/*                       DefaultGetArrowSchema()                        */
 /************************************************************************/
 
 /** Default implementation of the ArrowArrayStream::get_schema() callback.
@@ -841,7 +851,7 @@ OGRLayer::CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn,
 }
 
 /************************************************************************/
-/*                         StaticGetArrowSchema()                       */
+/*                        StaticGetArrowSchema()                        */
 /************************************************************************/
 
 /** Default implementation of the ArrowArrayStream::get_schema() callback.
@@ -867,7 +877,7 @@ int OGRLayer::StaticGetArrowSchema(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                         DefaultReleaseArray()                        */
+/*                        DefaultReleaseArray()                         */
 /************************************************************************/
 
 static void OGRLayerDefaultReleaseArray(struct ArrowArray *array)
@@ -915,7 +925,7 @@ void OGRLayer::ReleaseArray(struct ArrowArray *array)
 }
 
 /************************************************************************/
-/*                          IsValidField()                              */
+/*                            IsValidField()                            */
 /************************************************************************/
 
 static inline bool IsValidField(const OGRField *psRawField)
@@ -929,7 +939,7 @@ static inline bool IsValidField(const OGRField *psRawField)
 }
 
 /************************************************************************/
-/*                    AllocValidityBitmap()                             */
+/*                        AllocValidityBitmap()                         */
 /************************************************************************/
 
 static uint8_t *AllocValidityBitmap(size_t nSize)
@@ -945,7 +955,7 @@ static uint8_t *AllocValidityBitmap(size_t nSize)
 }
 
 /************************************************************************/
-/*                           FillArray()                                */
+/*                             FillArray()                              */
 /************************************************************************/
 
 template <class T, typename TMember>
@@ -992,7 +1002,7 @@ static bool FillArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                         FillBoolArray()                              */
+/*                           FillBoolArray()                            */
 /************************************************************************/
 
 template <typename TMember>
@@ -1036,7 +1046,7 @@ static bool FillBoolArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                        FillListArray()                               */
+/*                           FillListArray()                            */
 /************************************************************************/
 
 struct GetFromIntegerList
@@ -1263,7 +1273,7 @@ FillListArrayBool(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                        FillStringArray()                             */
+/*                          FillStringArray()                           */
 /************************************************************************/
 
 template <class T>
@@ -1455,7 +1465,7 @@ after_loop:
 }
 
 /************************************************************************/
-/*                        FillBinaryArray()                             */
+/*                          FillBinaryArray()                           */
 /************************************************************************/
 
 template <class T>
@@ -1590,7 +1600,7 @@ FillFixedWidthBinaryArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                      FillWKBGeometryArray()                          */
+/*                        FillWKBGeometryArray()                        */
 /************************************************************************/
 
 template <class T>
@@ -1689,7 +1699,7 @@ FillWKBGeometryArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                        FillDateArray()                               */
+/*                           FillDateArray()                            */
 /************************************************************************/
 
 static bool FillDateArray(struct ArrowArray *psChild,
@@ -1741,7 +1751,7 @@ static bool FillDateArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                        FillTimeArray()                               */
+/*                           FillTimeArray()                            */
 /************************************************************************/
 
 static bool FillTimeArray(struct ArrowArray *psChild,
@@ -1790,7 +1800,7 @@ static bool FillTimeArray(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                       FillDateTimeArray()                            */
+/*                         FillDateTimeArray()                          */
 /************************************************************************/
 
 static bool
@@ -1951,7 +1961,7 @@ static bool FillDateTimeArrayWithTimeZone(
 }
 
 /************************************************************************/
-/*                   FillDateTimeArrayAsString()                        */
+/*                     FillDateTimeArrayAsString()                      */
 /************************************************************************/
 
 static size_t
@@ -2044,7 +2054,7 @@ FillDateTimeArrayAsString(struct ArrowArray *psChild,
 }
 
 /************************************************************************/
-/*                          GetNextArrowArray()                         */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 /** Default implementation of the ArrowArrayStream::get_next() callback.
@@ -2517,7 +2527,7 @@ error:
 }
 
 /************************************************************************/
-/*                       StaticGetNextArrowArray()                      */
+/*                      StaticGetNextArrowArray()                       */
 /************************************************************************/
 
 /** Default implementation of the ArrowArrayStream::get_next() callback.
@@ -2543,7 +2553,7 @@ int OGRLayer::StaticGetNextArrowArray(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                            ReleaseStream()                           */
+/*                           ReleaseStream()                            */
 /************************************************************************/
 
 /** Release a ArrowArrayStream.
@@ -2570,7 +2580,7 @@ void OGRLayer::ReleaseStream(struct ArrowArrayStream *stream)
 }
 
 /************************************************************************/
-/*                     GetLastErrorArrowArrayStream()                   */
+/*                    GetLastErrorArrowArrayStream()                    */
 /************************************************************************/
 
 /** Default implementation of the ArrowArrayStream::get_last_error() callback.
@@ -2587,7 +2597,7 @@ const char *OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream *)
 }
 
 /************************************************************************/
-/*                          GetArrowStream()                            */
+/*                           GetArrowStream()                           */
 /************************************************************************/
 
 /** Get a Arrow C stream.
@@ -2648,7 +2658,7 @@ const char *OGRLayer::GetLastErrorArrowArrayStream(struct ArrowArrayStream *)
     struct ArrowArrayStream stream;
     if( !poLayer->GetArrowStream(&stream, nullptr))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "GetArrowStream() failed\n");
+        CPLError(CE_Failure, CPLE_AppDefined, "GetArrowStream() failed");
         exit(1);
     }
     struct ArrowSchema schema;
@@ -2797,7 +2807,7 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                       OGR_L_GetArrowStream()                         */
+/*                        OGR_L_GetArrowStream()                        */
 /************************************************************************/
 
 /** Get a Arrow C stream.
@@ -2859,14 +2869,14 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
     if( !OGR_L_GetArrowStream(hLayer, &stream, nullptr))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "OGR_L_GetArrowStream() failed\n");
+                 "OGR_L_GetArrowStream() failed");
         exit(1);
     }
     struct ArrowSchema schema;
     if( stream.get_schema(&stream, &schema) == 0 )
     {
         // Do something useful
-        schema.release(schema);
+        schema.release(&schema);
     }
     while( true )
     {
@@ -2946,7 +2956,7 @@ YES.</li>
  * @since GDAL 3.6
  */
 bool OGR_L_GetArrowStream(OGRLayerH hLayer, struct ArrowArrayStream *out_stream,
-                          char **papszOptions)
+                          CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hLayer, "OGR_L_GetArrowStream", false);
     VALIDATE_POINTER1(out_stream, "OGR_L_GetArrowStream", false);
@@ -2956,7 +2966,7 @@ bool OGR_L_GetArrowStream(OGRLayerH hLayer, struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                     OGRParseArrowMetadata()                          */
+/*                       OGRParseArrowMetadata()                        */
 /************************************************************************/
 
 std::map<std::string, std::string>
@@ -2989,7 +2999,73 @@ OGRParseArrowMetadata(const char *pabyMetadata)
 }
 
 /************************************************************************/
-/*                        ParseDecimalFormat()                          */
+/*                       GetStringAsStringView()                        */
+/************************************************************************/
+
+template <typename OffsetType>
+static std::string_view GetStringAsStringView(const struct ArrowArray *array,
+                                              const size_t nIdx)
+{
+    const OffsetType *panOffsets =
+        static_cast<const OffsetType *>(array->buffers[1]) +
+        static_cast<size_t>(array->offset) + nIdx;
+    const char *pchStr = reinterpret_cast<const char *>(array->buffers[2]);
+    if constexpr (std::is_same_v<OffsetType, uint64_t>)
+    {
+        if (panOffsets[1] - panOffsets[0] >
+            std::numeric_limits<size_t>::max() - 1)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too large string");
+            return std::string_view();
+        }
+    }
+    return std::string_view(pchStr + static_cast<size_t>(panOffsets[0]),
+                            static_cast<size_t>(panOffsets[1] - panOffsets[0]));
+}
+
+/************************************************************************/
+/*                           GetStringView()                            */
+/************************************************************************/
+
+static std::string_view GetStringView(const struct ArrowArray *array,
+                                      const size_t nIdx)
+{
+    // Cf https://arrow.apache.org/docs/format/Columnar.html#variable-size-binary-view-layout
+    const uint32_t *panStringView =
+        static_cast<const uint32_t *>(array->buffers[1]) +
+        (static_cast<size_t>(array->offset) + nIdx) * N_VALUES_PER_STRING_VIEW;
+    constexpr int IDX_LENGTH = 0;
+    constexpr int IDX_PREFIX_OR_DATA = 1;
+    constexpr int IDX_BUFFER_IDX = 2;
+    constexpr int IDX_OFFSET = 3;
+    const uint32_t nLength = panStringView[IDX_LENGTH];
+    const char *pchPrefixOrStr =
+        reinterpret_cast<const char *>(panStringView + IDX_PREFIX_OR_DATA);
+    if (nLength <= 12)
+    {
+        return std::string_view(pchPrefixOrStr, nLength);
+    }
+    else
+    {
+        const uint32_t nBufferIdx = panStringView[IDX_BUFFER_IDX];
+        const uint32_t nOffset = panStringView[IDX_OFFSET];
+        constexpr int BASE_BUFFER_IDX = 2;
+        CPLAssert(BASE_BUFFER_IDX + nBufferIdx < array->n_buffers);
+        std::string_view s(static_cast<const char *>(
+                               array->buffers[BASE_BUFFER_IDX + nBufferIdx]) +
+                               nOffset,
+                           nLength);
+#ifdef DEBUG
+        // cppcheck-suppress unreadVariable
+        constexpr int PREFIX_LENGTH = 4;
+        CPLAssert(memcmp(s.data(), pchPrefixOrStr, PREFIX_LENGTH) == 0);
+#endif
+        return s;
+    }
+}
+
+/************************************************************************/
+/*                         ParseDecimalFormat()                         */
 /************************************************************************/
 
 static bool ParseDecimalFormat(const char *format, int &nPrecision, int &nScale,
@@ -3031,7 +3107,7 @@ static bool ParseDecimalFormat(const char *format, int &nPrecision, int &nScale,
 }
 
 /************************************************************************/
-/*                   GetErrorIfUnsupportedDecimal()                     */
+/*                    GetErrorIfUnsupportedDecimal()                    */
 /************************************************************************/
 
 static const char *GetErrorIfUnsupportedDecimal(int nWidthInBytes,
@@ -3053,7 +3129,7 @@ static const char *GetErrorIfUnsupportedDecimal(int nWidthInBytes,
 }
 
 /************************************************************************/
-/*                     IsArrowTimeStampWithOffsetField()                */
+/*                  IsArrowTimeStampWithOffsetField()                   */
 /************************************************************************/
 
 static bool IsArrowTimeStampWithOffsetField(const struct ArrowSchema *schema)
@@ -3075,7 +3151,7 @@ static bool IsArrowTimeStampWithOffsetField(const struct ArrowSchema *schema)
 }
 
 /************************************************************************/
-/*                            IsHandledSchema()                         */
+/*                          IsHandledSchema()                           */
 /************************************************************************/
 
 static bool IsHandledSchema(bool bTopLevel, const struct ArrowSchema *schema,
@@ -3198,7 +3274,7 @@ static bool IsHandledSchema(bool bTopLevel, const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                  OGRLayer::CanPostFilterArrowArray()                 */
+/*                 OGRLayer::CanPostFilterArrowArray()                  */
 /************************************************************************/
 
 /** Whether the PostFilterArrowArray() can work on the schema to remove
@@ -3287,7 +3363,7 @@ bool OGRLayer::CanPostFilterArrowArray(const struct ArrowSchema *schema) const
 
 #if 0
 /************************************************************************/
-/*                      CheckValidityBuffer()                           */
+/*                        CheckValidityBuffer()                         */
 /************************************************************************/
 
 static void CheckValidityBuffer(const struct ArrowArray *array)
@@ -3313,27 +3389,28 @@ static void CheckValidityBuffer(const struct ArrowArray *array)
 #endif
 
 /************************************************************************/
-/*                    CompactValidityBuffer()                           */
+/*                       CompactValidityBuffer()                        */
 /************************************************************************/
 
 static void CompactValidityBuffer(
     const struct ArrowSchema *, struct ArrowArray *array, size_t iStart,
     const std::vector<bool> &abyValidityFromFilters, size_t nNewLength)
 {
+    if (array->null_count <= 0)
+    {
+        return;
+    }
+
     // Invalidate null_count as the same validity buffer may be used when
     // scrolling batches, and this creates confusion if we try to set it
     // to different values among the batches
-    if (array->null_count <= 0)
-    {
-        array->null_count = -1;
-        return;
-    }
     array->null_count = -1;
 
     CPLAssert(static_cast<size_t>(array->length) >=
               iStart + abyValidityFromFilters.size());
     uint8_t *pabyValidity =
         static_cast<uint8_t *>(const_cast<void *>(array->buffers[0]));
+    CPLAssert(pabyValidity);
     const size_t nLength = abyValidityFromFilters.size();
     const size_t nOffset = static_cast<size_t>(array->offset);
     size_t j = iStart + nOffset;
@@ -3351,7 +3428,7 @@ static void CompactValidityBuffer(
 }
 
 /************************************************************************/
-/*                       CompactBoolArray()                             */
+/*                          CompactBoolArray()                          */
 /************************************************************************/
 
 static void CompactBoolArray(const struct ArrowSchema *schema,
@@ -3425,7 +3502,7 @@ static void CompactPrimitiveArray(
 }
 
 /************************************************************************/
-/*                    CompactStringOrBinaryArray()                      */
+/*                     CompactStringOrBinaryArray()                     */
 /************************************************************************/
 
 template <class OffsetType>
@@ -3477,7 +3554,47 @@ static void CompactStringOrBinaryArray(
 }
 
 /************************************************************************/
-/*                    CompactFixedWidthArray()                          */
+/*                       CompactStringViewArray()                       */
+/************************************************************************/
+
+static void CompactStringViewArray(
+    const struct ArrowSchema *schema, struct ArrowArray *array, size_t iStart,
+    const std::vector<bool> &abyValidityFromFilters, size_t nNewLength)
+{
+    CPLAssert(array->n_children == 0);
+    CPLAssert(array->n_buffers >= 2);
+    const size_t nLength = abyValidityFromFilters.size();
+    CPLAssert(static_cast<size_t>(array->length) >= iStart + nLength);
+
+    // We only compact the string view buffer, not the string content buffers.
+    const size_t nOffset = static_cast<size_t>(array->offset);
+    // Cf https://arrow.apache.org/docs/format/Columnar.html#variable-size-binary-view-layout
+    uint32_t *panStringView =
+        static_cast<uint32_t *>(const_cast<void *>(array->buffers[1])) +
+        nOffset * N_VALUES_PER_STRING_VIEW;
+    for (size_t i = 0, j = 0; i < nLength; ++i)
+    {
+        if (abyValidityFromFilters[i])
+        {
+            if (j < i)
+            {
+                memmove(panStringView + (j + iStart) * N_VALUES_PER_STRING_VIEW,
+                        panStringView + (i + iStart) * N_VALUES_PER_STRING_VIEW,
+                        sizeof(panStringView[0]) * N_VALUES_PER_STRING_VIEW);
+            }
+            ++j;
+        }
+    }
+
+    if (schema->flags & ARROW_FLAG_NULLABLE)
+        CompactValidityBuffer(schema, array, iStart, abyValidityFromFilters,
+                              nNewLength);
+
+    array->length = nNewLength;
+}
+
+/************************************************************************/
+/*                       CompactFixedWidthArray()                       */
 /************************************************************************/
 
 static void
@@ -3517,7 +3634,7 @@ CompactFixedWidthArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                       CompactStructArray()                           */
+/*                         CompactStructArray()                         */
 /************************************************************************/
 
 static bool CompactArray(const struct ArrowSchema *schema,
@@ -3575,7 +3692,7 @@ static bool CompactStructArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                     InvalidateNullCountRec()                         */
+/*                       InvalidateNullCountRec()                       */
 /************************************************************************/
 
 static void InvalidateNullCountRec(const struct ArrowSchema *schema,
@@ -3588,7 +3705,7 @@ static void InvalidateNullCountRec(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                       CompactListArray()                             */
+/*                          CompactListArray()                          */
 /************************************************************************/
 
 template <class OffsetType>
@@ -3745,7 +3862,7 @@ CompactFixedSizeListArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                       CompactMapArray()                              */
+/*                          CompactMapArray()                           */
 /************************************************************************/
 
 static bool CompactMapArray(const struct ArrowSchema *schema,
@@ -3758,7 +3875,7 @@ static bool CompactMapArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                           CompactArray()                             */
+/*                            CompactArray()                            */
 /************************************************************************/
 
 static bool CompactArray(const struct ArrowSchema *schema,
@@ -3841,6 +3958,11 @@ static bool CompactArray(const struct ArrowSchema *schema,
         CompactStringOrBinaryArray<uint64_t>(
             schema, array, iStart, abyValidityFromFilters, nNewLength);
     }
+    else if (IsStringView(format))
+    {
+        CompactStringViewArray(schema, array, iStart, abyValidityFromFilters,
+                               nNewLength);
+    }
     else if (IsFixedWidthBinary(format))
     {
         const int nWidth = GetFixedWithBinary(format);
@@ -3877,7 +3999,7 @@ static bool CompactArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                  FillValidityArrayFromWKBArray()                     */
+/*                   FillValidityArrayFromWKBArray()                    */
 /************************************************************************/
 
 template <class OffsetType>
@@ -3917,7 +4039,7 @@ FillValidityArrayFromWKBArray(struct ArrowArray *array, const OGRLayer *poLayer,
 }
 
 /************************************************************************/
-/*               ArrowTimestampToOGRDateTime()                          */
+/*                    ArrowTimestampToOGRDateTime()                     */
 /************************************************************************/
 
 static void ArrowTimestampToOGRDateTime(int64_t nTimestamp,
@@ -3968,7 +4090,7 @@ static void ArrowTimestampToOGRDateTime(int64_t nTimestamp,
 }
 
 /************************************************************************/
-/*                 BuildMapFieldNameToArrowPath()                       */
+/*                    BuildMapFieldNameToArrowPath()                    */
 /************************************************************************/
 
 static void
@@ -3998,7 +4120,7 @@ BuildMapFieldNameToArrowPath(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                      FillFieldList()                                 */
+/*                           FillFieldList()                            */
 /************************************************************************/
 
 template <typename ListOffsetType, typename ArrowType,
@@ -4024,7 +4146,7 @@ inline static void FillFieldList(const struct ArrowArray *array,
 }
 
 /************************************************************************/
-/*                      FillFieldListFromBool()                         */
+/*                       FillFieldListFromBool()                        */
 /************************************************************************/
 
 template <typename ListOffsetType>
@@ -4048,7 +4170,7 @@ FillFieldListFromBool(const struct ArrowArray *array, int iOGRFieldIdx,
 }
 
 /************************************************************************/
-/*                    FillFieldListFromHalfFloat()                      */
+/*                     FillFieldListFromHalfFloat()                     */
 /************************************************************************/
 
 template <typename ListOffsetType>
@@ -4060,22 +4182,19 @@ inline static void FillFieldListFromHalfFloat(
         static_cast<const ListOffsetType *>(array->buffers[1]) +
         nOffsettedIndex;
     std::vector<double> aValues;
-    const auto *paValues =
-        static_cast<const uint16_t *>(childArray->buffers[1]);
+    const auto *phfValues =
+        static_cast<const GFloat16 *>(childArray->buffers[1]);
     for (size_t i = static_cast<size_t>(panOffsets[0]);
          i < static_cast<size_t>(panOffsets[1]); ++i)
     {
-        const auto nFloat16AsUInt32 = CPLHalfToFloat(paValues[i]);
-        float f;
-        memcpy(&f, &nFloat16AsUInt32, sizeof(f));
-        aValues.push_back(static_cast<double>(f));
+        aValues.push_back(static_cast<double>(phfValues[i]));
     }
     oFeature.SetField(iOGRFieldIdx, static_cast<int>(aValues.size()),
                       aValues.data());
 }
 
 /************************************************************************/
-/*                    FillFieldListFromString()                         */
+/*                      FillFieldListFromString()                       */
 /************************************************************************/
 
 template <typename ListOffsetType, typename StringOffsetType>
@@ -4089,23 +4208,38 @@ inline static void FillFieldListFromString(const struct ArrowArray *array,
         static_cast<const ListOffsetType *>(array->buffers[1]) +
         nOffsettedIndex;
     CPLStringList aosVals;
-    const auto panSubOffsets =
-        static_cast<const StringOffsetType *>(childArray->buffers[1]);
-    const char *pszValues = static_cast<const char *>(childArray->buffers[2]);
-    std::string osTmp;
     for (size_t i = static_cast<size_t>(panOffsets[0]);
          i < static_cast<size_t>(panOffsets[1]); ++i)
     {
-        osTmp.assign(
-            pszValues + panSubOffsets[i],
-            static_cast<size_t>(panSubOffsets[i + 1] - panSubOffsets[i]));
-        aosVals.AddString(osTmp.c_str());
+        aosVals.push_back(
+            GetStringAsStringView<StringOffsetType>(childArray, i));
     }
     oFeature.SetField(iOGRFieldIdx, aosVals.List());
 }
 
 /************************************************************************/
-/*                         FillFieldFixedSizeList()                     */
+/*                    FillFieldListFromStringView()                     */
+/************************************************************************/
+
+template <typename ListOffsetType>
+inline static void FillFieldListFromStringView(
+    const struct ArrowArray *array, int iOGRFieldIdx, size_t nOffsettedIndex,
+    const struct ArrowArray *childArray, OGRFeature &oFeature)
+{
+    const auto panOffsets =
+        static_cast<const ListOffsetType *>(array->buffers[1]) +
+        nOffsettedIndex;
+    CPLStringList aosVals;
+    for (size_t i = static_cast<size_t>(panOffsets[0]);
+         i < static_cast<size_t>(panOffsets[1]); ++i)
+    {
+        aosVals.push_back(GetStringView(childArray, i));
+    }
+    oFeature.SetField(iOGRFieldIdx, aosVals.List());
+}
+
+/************************************************************************/
+/*                       FillFieldFixedSizeList()                       */
 /************************************************************************/
 
 template <typename ArrowType, typename OGRType = ArrowType>
@@ -4135,17 +4269,27 @@ inline static void FillFieldFixedSizeListString(
     const int nItems, const struct ArrowArray *childArray, OGRFeature &oFeature)
 {
     CPLStringList aosVals;
-    const auto panSubOffsets =
-        static_cast<const StringOffsetType *>(childArray->buffers[1]) +
-        childArray->offset + nOffsettedIndex * nItems;
-    const char *pszValues = static_cast<const char *>(childArray->buffers[2]);
-    std::string osTmp;
     for (int i = 0; i < nItems; ++i)
     {
-        osTmp.assign(
-            pszValues + panSubOffsets[i],
-            static_cast<size_t>(panSubOffsets[i + 1] - panSubOffsets[i]));
-        aosVals.AddString(osTmp.c_str());
+        aosVals.push_back(GetStringAsStringView<StringOffsetType>(
+            childArray, nOffsettedIndex * nItems + i));
+    }
+    oFeature.SetField(iOGRFieldIdx, aosVals.List());
+}
+
+/************************************************************************/
+/*                  FillFieldFixedSizeListStringView()                  */
+/************************************************************************/
+
+inline static void FillFieldFixedSizeListStringView(
+    const struct ArrowArray *, int iOGRFieldIdx, size_t nOffsettedIndex,
+    const int nItems, const struct ArrowArray *childArray, OGRFeature &oFeature)
+{
+    CPLStringList aosVals;
+    for (int i = 0; i < nItems; ++i)
+    {
+        aosVals.push_back(
+            GetStringView(childArray, nOffsettedIndex * nItems + i));
     }
     oFeature.SetField(iOGRFieldIdx, aosVals.List());
 }
@@ -4203,24 +4347,7 @@ static double GetValueDecimal(const struct ArrowArray *array,
 }
 
 /************************************************************************/
-/*                             GetString()                              */
-/************************************************************************/
-
-template <class OffsetType>
-static std::string GetString(const struct ArrowArray *array, const size_t nIdx)
-{
-    const OffsetType *panOffsets =
-        static_cast<const OffsetType *>(array->buffers[1]) +
-        static_cast<size_t>(array->offset) + nIdx;
-    const char *pabyStr = static_cast<const char *>(array->buffers[2]);
-    std::string osStr;
-    osStr.assign(pabyStr + static_cast<size_t>(panOffsets[0]),
-                 static_cast<size_t>(panOffsets[1] - panOffsets[0]));
-    return osStr;
-}
-
-/************************************************************************/
-/*                       GetBinaryAsBase64()                            */
+/*                         GetBinaryAsBase64()                          */
 /************************************************************************/
 
 template <class OffsetType>
@@ -4245,7 +4372,7 @@ static std::string GetBinaryAsBase64(const struct ArrowArray *array,
 }
 
 /************************************************************************/
-/*                   GetValueFixedWithBinaryAsBase64()                  */
+/*                  GetValueFixedWithBinaryAsBase64()                   */
 /************************************************************************/
 
 static std::string
@@ -4266,7 +4393,7 @@ static CPLJSONObject GetObjectAsJSON(const struct ArrowSchema *schema,
                                      const size_t nIdx);
 
 /************************************************************************/
-/*                               AddToArray()                           */
+/*                             AddToArray()                             */
 /************************************************************************/
 
 static void AddToArray(CPLJSONArray &oArray, const struct ArrowSchema *schema,
@@ -4297,9 +4424,11 @@ static void AddToArray(CPLJSONArray &oArray, const struct ArrowSchema *schema,
     else if (IsFloat64(schema->format))
         oArray.Add(GetValue<double>(array, nIdx));
     else if (IsString(schema->format))
-        oArray.Add(GetString<uint32_t>(array, nIdx));
+        oArray.Add(GetStringAsStringView<uint32_t>(array, nIdx));
     else if (IsLargeString(schema->format))
-        oArray.Add(GetString<uint64_t>(array, nIdx));
+        oArray.Add(GetStringAsStringView<uint64_t>(array, nIdx));
+    else if (IsStringView(schema->format))
+        oArray.Add(GetStringView(array, nIdx));
     else if (IsBinary(schema->format))
         oArray.Add(GetBinaryAsBase64<uint32_t>(array, nIdx));
     else if (IsLargeBinary(schema->format))
@@ -4324,7 +4453,7 @@ static void AddToArray(CPLJSONArray &oArray, const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                         GetListAsJSON()                              */
+/*                           GetListAsJSON()                            */
 /************************************************************************/
 
 template <class OffsetType>
@@ -4358,7 +4487,7 @@ static CPLJSONArray GetListAsJSON(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                     GetFixedSizeListAsJSON()                         */
+/*                       GetFixedSizeListAsJSON()                       */
 /************************************************************************/
 
 static CPLJSONArray GetFixedSizeListAsJSON(const struct ArrowSchema *schema,
@@ -4389,7 +4518,7 @@ static CPLJSONArray GetFixedSizeListAsJSON(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                              AddToDict()                             */
+/*                             AddToDict()                              */
 /************************************************************************/
 
 static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
@@ -4421,9 +4550,11 @@ static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
     else if (IsFloat64(schema->format))
         oDict.Add(osKey, GetValue<double>(array, nIdx));
     else if (IsString(schema->format))
-        oDict.Add(osKey, GetString<uint32_t>(array, nIdx));
+        oDict.Add(osKey, GetStringAsStringView<uint32_t>(array, nIdx));
     else if (IsLargeString(schema->format))
-        oDict.Add(osKey, GetString<uint64_t>(array, nIdx));
+        oDict.Add(osKey, GetStringAsStringView<uint64_t>(array, nIdx));
+    else if (IsStringView(schema->format))
+        oDict.Add(osKey, GetStringView(array, nIdx));
     else if (IsBinary(schema->format))
         oDict.Add(osKey, GetBinaryAsBase64<uint32_t>(array, nIdx));
     else if (IsLargeBinary(schema->format))
@@ -4449,7 +4580,7 @@ static void AddToDict(CPLJSONObject &oDict, const std::string &osKey,
 }
 
 /************************************************************************/
-/*                         GetMapAsJSON()                               */
+/*                            GetMapAsJSON()                            */
 /************************************************************************/
 
 static CPLJSONObject GetMapAsJSON(const struct ArrowSchema *schema,
@@ -4515,7 +4646,7 @@ static CPLJSONObject GetMapAsJSON(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                        GetStructureAsJSON()                          */
+/*                         GetStructureAsJSON()                         */
 /************************************************************************/
 
 static CPLJSONObject GetStructureAsJSON(const struct ArrowSchema *schema,
@@ -4545,7 +4676,7 @@ static CPLJSONObject GetStructureAsJSON(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                        GetObjectAsJSON()                             */
+/*                          GetObjectAsJSON()                           */
 /************************************************************************/
 
 static CPLJSONObject GetObjectAsJSON(const struct ArrowSchema *schema,
@@ -4812,6 +4943,12 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
                                                    nOffsettedIndex, nItems,
                                                    childArray, oFeature);
         }
+        else if (IsStringView(childFormat))
+        {
+            FillFieldFixedSizeListStringView(array, iOGRFieldIndex,
+                                             nOffsettedIndex, nItems,
+                                             childArray, oFeature);
+        }
     }
     else if (IsList(format) || IsLargeList(format))
     {
@@ -4971,6 +5108,18 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
                     array, iOGRFieldIndex, nOffsettedIndex, childArray,
                     oFeature);
         }
+        else if (IsStringView(childFormat))
+        {
+            if (format[1] == ARROW_2ND_LETTER_LIST)
+                FillFieldListFromStringView<uint32_t>(array, iOGRFieldIndex,
+                                                      nOffsettedIndex,
+                                                      childArray, oFeature);
+            else
+                FillFieldListFromStringView<uint64_t>(array, iOGRFieldIndex,
+                                                      nOffsettedIndex,
+                                                      childArray, oFeature);
+        }
+
         else if (format[1] == ARROW_2ND_LETTER_LIST)
         {
             const size_t iFeature =
@@ -5030,7 +5179,7 @@ static bool SetFieldForOtherFormats(OGRFeature &oFeature,
 }
 
 /************************************************************************/
-/*                 FillValidityArrayFromAttrQuery()                     */
+/*                   FillValidityArrayFromAttrQuery()                   */
 /************************************************************************/
 
 static size_t FillValidityArrayFromAttrQuery(
@@ -5344,6 +5493,21 @@ static size_t FillValidityArrayFromAttrQuery(
                     CPLFree(psField->String);
                 psField->String = pszStr;
             }
+            else if (IsStringView(format))
+            {
+                // Cf https://arrow.apache.org/docs/format/Columnar.html#variable-size-binary-view-layout
+                CPLAssert(oFeature.GetFieldDefnRef(iOGRFieldIndex)->GetType() ==
+                          OFTString);
+                const auto strView = GetStringView(psArray, iRow);
+                const auto nSize = strView.size();
+                char *pszStr = static_cast<char *>(CPLMalloc(nSize + 1));
+                memcpy(pszStr, strView.data(), nSize);
+                pszStr[nSize] = 0;
+                OGRField *psField = oFeature.GetRawFieldRef(iOGRFieldIndex);
+                if (IsValidField(psField))
+                    CPLFree(psField->String);
+                psField->String = pszStr;
+            }
             else if (IsLargeString(format))
             {
                 const auto nOffset = static_cast<const uint64_t *>(
@@ -5432,7 +5596,7 @@ static size_t FillValidityArrayFromAttrQuery(
 }
 
 /************************************************************************/
-/*                  OGRLayer::PostFilterArrowArray()                    */
+/*                   OGRLayer::PostFilterArrowArray()                   */
 /************************************************************************/
 
 /** Remove rows that aren't selected by the spatial or attribute filter.
@@ -5813,7 +5977,7 @@ bool OGRCloneArrowArray(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                     OGRCloneArrowMetadata()                          */
+/*                       OGRCloneArrowMetadata()                        */
 /************************************************************************/
 
 static void *OGRCloneArrowMetadata(const void *pMetadata)
@@ -5852,7 +6016,7 @@ static void *OGRCloneArrowMetadata(const void *pMetadata)
 }
 
 /************************************************************************/
-/*                          OGRCloneArrowSchema()                       */
+/*                        OGRCloneArrowSchema()                         */
 /************************************************************************/
 
 /** Full/deep copy of a schema.
@@ -5919,27 +6083,31 @@ const struct
     OGRFieldType eType;
     OGRFieldSubType eSubType;
 } gasArrowTypesToOGR[] = {
-    {"b", OFTInteger, OFSTBoolean}, {"c", OFTInteger, OFSTInt16},  // Int8
-    {"C", OFTInteger, OFSTInt16},                                  // UInt8
-    {"s", OFTInteger, OFSTInt16},                                  // Int16
-    {"S", OFTInteger, OFSTNone},                                   // UInt16
-    {"i", OFTInteger, OFSTNone},                                   // Int32
-    {"I", OFTInteger64, OFSTNone},                                 // UInt32
-    {"l", OFTInteger64, OFSTNone},                                 // Int64
-    {"L", OFTReal, OFSTNone},  // UInt64 (potentially lossy conversion if going through OGRFeature)
+    {"b", OFTInteger, OFSTBoolean},  // Boolean
+    {"c", OFTInteger, OFSTInt16},    // Int8
+    {"C", OFTInteger, OFSTInt16},    // UInt8
+    {"s", OFTInteger, OFSTInt16},    // Int16
+    {"S", OFTInteger, OFSTNone},     // UInt16
+    {"i", OFTInteger, OFSTNone},     // Int32
+    {"I", OFTInteger64, OFSTNone},   // UInt32
+    {"l", OFTInteger64, OFSTNone},   // Int64
+    {"L", OFTReal,
+     OFSTNone},  // UInt64 (potentially lossy conversion if going through OGRFeature)
     {"e", OFTReal, OFSTFloat32},  // float16
     {"f", OFTReal, OFSTFloat32},  // float32
     {"g", OFTReal, OFSTNone},     // float64
     {"z", OFTBinary, OFSTNone},   // binary
-    {"Z", OFTBinary, OFSTNone},  // large binary (will be limited to 32 bit length though if going through OGRFeature!)
-    {"u", OFTString, OFSTNone},  // string
-    {"U", OFTString, OFSTNone},  // large string
-    {"tdD", OFTDate, OFSTNone},  // date32[days]
-    {"tdm", OFTDate, OFSTNone},  // date64[milliseconds]
-    {"tts", OFTTime, OFSTNone},  // time32 [seconds]
-    {"ttm", OFTTime, OFSTNone},  // time32 [milliseconds]
-    {"ttu", OFTTime, OFSTNone},  // time64 [microseconds]
-    {"ttn", OFTTime, OFSTNone},  // time64 [nanoseconds]
+    {"Z", OFTBinary,
+     OFSTNone},  // large binary (will be limited to 32 bit length though if going through OGRFeature!)
+    {"u", OFTString, OFSTNone},   // string
+    {"U", OFTString, OFSTNone},   // large string
+    {"vu", OFTString, OFSTNone},  // string view
+    {"tdD", OFTDate, OFSTNone},   // date32[days]
+    {"tdm", OFTDate, OFSTNone},   // date64[milliseconds]
+    {"tts", OFTTime, OFSTNone},   // time32 [seconds]
+    {"ttm", OFTTime, OFSTNone},   // time32 [milliseconds]
+    {"ttu", OFTTime, OFSTNone},   // time64 [microseconds]
+    {"ttn", OFTTime, OFSTNone},   // time64 [nanoseconds]
 };
 
 const struct
@@ -5998,7 +6166,8 @@ static bool IsSupportForJSONObj(const struct ArrowSchema *schema)
         }
     }
 
-    if (IsBinary(format) || IsLargeBinary(format) || IsFixedWidthBinary(format))
+    if (IsBinary(format) || IsLargeBinary(format) ||
+        IsFixedWidthBinary(format) || IsStringView(format))
         return true;
 
     if (IsDecimal(format))
@@ -6083,6 +6252,8 @@ static bool IsArrowSchemaSupportedInternal(const struct ArrowSchema *schema,
                 return true;
             }
         }
+        if (IsStringView(childFormat))
+            return true;
 
         if (IsDecimal(childFormat))
         {
@@ -6207,7 +6378,7 @@ bool OGRLayer::IsArrowSchemaSupported(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                  OGR_L_IsArrowSchemaSupported()                      */
+/*                    OGR_L_IsArrowSchemaSupported()                    */
 /************************************************************************/
 
 /** Returns whether the provided ArrowSchema is supported for writing.
@@ -6230,7 +6401,8 @@ bool OGRLayer::IsArrowSchemaSupported(const struct ArrowSchema *schema,
  */
 bool OGR_L_IsArrowSchemaSupported(OGRLayerH hLayer,
                                   const struct ArrowSchema *schema,
-                                  char **papszOptions, char **ppszErrorMsg)
+                                  CSLConstList papszOptions,
+                                  char **ppszErrorMsg)
 {
     VALIDATE_POINTER1(hLayer, __func__, false);
     VALIDATE_POINTER1(schema, __func__, false);
@@ -6252,7 +6424,7 @@ bool OGR_L_IsArrowSchemaSupported(OGRLayerH hLayer,
 }
 
 /************************************************************************/
-/*                     IsKnownCodedFieldDomain()                        */
+/*                      IsKnownCodedFieldDomain()                       */
 /************************************************************************/
 
 static bool IsKnownCodedFieldDomain(OGRLayer *poLayer,
@@ -6509,6 +6681,11 @@ bool OGRLayer::CreateFieldFromArrowSchemaInternal(
             }
         }
 
+        if (IsStringView(childFormat))
+        {
+            return AddField(OFTStringList, OFSTNone, 0, 0);
+        }
+
         if (IsDecimal(childFormat))
         {
             int nPrecision = 0;
@@ -6667,7 +6844,7 @@ bool OGRLayer::CreateFieldFromArrowSchema(const struct ArrowSchema *schema,
  */
 bool OGR_L_CreateFieldFromArrowSchema(OGRLayerH hLayer,
                                       const struct ArrowSchema *schema,
-                                      char **papszOptions)
+                                      CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hLayer, __func__, false);
     VALIDATE_POINTER1(schema, __func__, false);
@@ -6677,7 +6854,7 @@ bool OGR_L_CreateFieldFromArrowSchema(OGRLayerH hLayer,
 }
 
 /************************************************************************/
-/*                           BuildOGRFieldInfo()                        */
+/*                         BuildOGRFieldInfo()                          */
 /************************************************************************/
 
 constexpr int FID_COLUMN_SPECIAL_OGR_FIELD_IDX = -2;
@@ -7014,6 +7191,31 @@ static bool BuildOGRFieldInfo(
                     }
                 }
 
+                if (!bTypeOK && IsStringView(childFormat))
+                {
+                    sInfo.eNominalFieldType = OFTStringList;
+                    if (eOGRType == sInfo.eNominalFieldType)
+                    {
+                        bTypeOK = true;
+                    }
+                    else if (eOGRType == OFTString)
+                    {
+                        bFallbackTypesUsed = true;
+                        bTypeOK = true;
+                    }
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "For field %s, OGR field type is %s "
+                                 "whereas "
+                                 "Arrow type implies %s",
+                                 sInfo.osName.c_str(),
+                                 OGR_GetFieldTypeName(eOGRType),
+                                 OGR_GetFieldTypeName(OFTStringList));
+                        return false;
+                    }
+                }
+
                 if (!bTypeOK && IsDecimal(childFormat))
                 {
                     if (!ParseDecimalFormat(childFormat, sInfo.nPrecision,
@@ -7252,7 +7454,7 @@ static inline uint64_t GetUInt64Value(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                         GetWorkingBufferSize()                       */
+/*                        GetWorkingBufferSize()                        */
 /************************************************************************/
 
 static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
@@ -7314,24 +7516,35 @@ static size_t GetWorkingBufferSize(const struct ArrowSchema *schema,
         iFeature = static_cast<size_t>(nDictIdx);
     }
 
+    constexpr size_t SZ_NUL_TERMINATOR = 1;
     if (IsString(format))
     {
         const auto *panOffsets =
             static_cast<const uint32_t *>(array->buffers[1]) + array->offset;
-        return 1 + (panOffsets[iFeature + 1] - panOffsets[iFeature]);
+        return (panOffsets[iFeature + 1] - panOffsets[iFeature]) +
+               SZ_NUL_TERMINATOR;
     }
     else if (IsLargeString(format))
     {
         const auto *panOffsets =
             static_cast<const uint64_t *>(array->buffers[1]) + array->offset;
-        return 1 + static_cast<size_t>(panOffsets[iFeature + 1] -
-                                       panOffsets[iFeature]);
+        return static_cast<size_t>(panOffsets[iFeature + 1] -
+                                   panOffsets[iFeature]) +
+               SZ_NUL_TERMINATOR;
+    }
+    else if (IsStringView(format))
+    {
+        const auto *panStringView =
+            static_cast<const uint32_t *>(array->buffers[1]) +
+            array->offset * N_VALUES_PER_STRING_VIEW;
+        return panStringView[iFeature * N_VALUES_PER_STRING_VIEW] +
+               SZ_NUL_TERMINATOR;
     }
     return 0;
 }
 
 /************************************************************************/
-/*                              FillField()                             */
+/*                             FillField()                              */
 /************************************************************************/
 
 template <typename ArrowType, typename OGRType = ArrowType>
@@ -7369,8 +7582,31 @@ FillFieldString(const struct ArrowArray *array, int iOGRFieldIdx,
     }
     else
     {
-        const std::string osTmp(pszStr, nLen);
-        oFeature.SetField(iOGRFieldIdx, osTmp.c_str());
+        oFeature.SetField(iOGRFieldIdx, std::string_view(pszStr, nLen));
+    }
+}
+
+/************************************************************************/
+/*                        FillFieldStringView()                         */
+/************************************************************************/
+
+inline static void
+FillFieldStringView(const struct ArrowArray *array, int iOGRFieldIdx,
+                    size_t iFeature, int iArrowIdx,
+                    const std::vector<FieldInfo> &asFieldInfo,
+                    std::string &osWorkingBuffer, OGRFeature &oFeature)
+{
+    const auto sv = GetStringView(array, iFeature);
+    if (asFieldInfo[iArrowIdx].bUseStringOptim)
+    {
+        oFeature.SetFieldSameTypeUnsafe(
+            iOGRFieldIdx, &osWorkingBuffer[0] + osWorkingBuffer.size());
+        osWorkingBuffer.append(sv);
+        osWorkingBuffer.push_back(0);  // append null character
+    }
+    else
+    {
+        oFeature.SetField(iOGRFieldIdx, sv);
     }
 }
 
@@ -7431,7 +7667,7 @@ FillFieldBinary(const struct ArrowArray *array, int iOGRFieldIdx,
 }
 
 /************************************************************************/
-/*                             FillFeature()                            */
+/*                            FillFeature()                             */
 /************************************************************************/
 
 static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
@@ -7691,6 +7927,12 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
                                   asFieldInfo, osWorkingBuffer, oFeature);
         return true;
     }
+    else if (IsStringView(format))
+    {
+        FillFieldStringView(array, iOGRFieldIdx, iFeature, iArrowIdx,
+                            asFieldInfo, osWorkingBuffer, oFeature);
+        return true;
+    }
     else if (IsBinary(format))
     {
         return FillFieldBinary<uint32_t>(array, iOGRFieldIdx, iFeature,
@@ -7785,7 +8027,7 @@ static bool FillFeature(OGRLayer *poLayer, const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                    OGRLayer::WriteArrowBatch()                       */
+/*                     OGRLayer::WriteArrowBatch()                      */
 /************************************************************************/
 
 // clang-format off
@@ -8022,29 +8264,23 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         }
     }
 
-    OGRFeatureDefn oLayerDefnTmp(poLayerDefn->GetName());
-
-    struct LayerDefnTmpRefReleaser
+    struct FeatureDefnReleaser
     {
-        OGRFeatureDefn &m_oDefn;
-
-        explicit LayerDefnTmpRefReleaser(OGRFeatureDefn &oDefn) : m_oDefn(oDefn)
+        void operator()(OGRFeatureDefn *poFDefn)
         {
-            m_oDefn.Reference();
-        }
-
-        ~LayerDefnTmpRefReleaser()
-        {
-            m_oDefn.Dereference();
+            if (poFDefn)
+                poFDefn->Release();
         }
     };
 
-    LayerDefnTmpRefReleaser oLayerDefnTmpRefReleaser(oLayerDefnTmp);
+    std::unique_ptr<OGRFeatureDefn, FeatureDefnReleaser> poLayerDefnTmp(
+        std::make_unique<OGRFeatureDefn>(poLayerDefn->GetName()).release());
+    poLayerDefnTmp->Reference();
 
     std::vector<int> anIdentityFieldMap;
     if (bFallbackTypesUsed)
     {
-        oLayerDefnTmp.SetGeomType(wkbNone);
+        poLayerDefnTmp->SetGeomType(wkbNone);
         for (int i = 0; i < poLayerDefn->GetFieldCount(); ++i)
         {
             anIdentityFieldMap.push_back(i);
@@ -8058,11 +8294,11 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
             if (oIter != oMapOGRFieldIndexToFieldInfoIndex.end())
                 asFieldInfo[oIter->second].eSetFeatureFieldType =
                     asFieldInfo[oIter->second].eNominalFieldType;
-            oLayerDefnTmp.AddFieldDefn(&oFieldDefn);
+            poLayerDefnTmp->AddFieldDefn(&oFieldDefn);
         }
         for (int i = 0; i < poLayerDefn->GetGeomFieldCount(); ++i)
         {
-            oLayerDefnTmp.AddGeomFieldDefn(poLayerDefn->GetGeomFieldDefn(i));
+            poLayerDefnTmp->AddGeomFieldDefn(poLayerDefn->GetGeomFieldDefn(i));
         }
     }
     else
@@ -8101,7 +8337,8 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
         }
     };
 
-    OGRFeature oFeature(bFallbackTypesUsed ? &oLayerDefnTmp : poLayerDefn);
+    OGRFeature oFeature(bFallbackTypesUsed ? poLayerDefnTmp.get()
+                                           : poLayerDefn);
     FeatureCleaner oCleaner(oFeature, abUseStringOptim);
     OGRFeature oFeatureTarget(poLayerDefn);
     OGRFeature *const poFeatureTarget =
@@ -8168,7 +8405,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                     }
                     bool bLossyConversion = false;
                     const auto eSrcType =
-                        oLayerDefnTmp.GetFieldDefnUnsafe(i)->GetType();
+                        poLayerDefnTmp->GetFieldDefnUnsafe(i)->GetType();
                     const auto eDstType =
                         poLayerDefn->GetFieldDefnUnsafe(i)->GetType();
 
@@ -8219,7 +8456,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
                                  "For feature " CPL_FRMT_GIB
                                  ", value of field %s cannot not preserved",
                                  oFeatureTarget.GetFID(),
-                                 oLayerDefnTmp.GetFieldDefn(i)->GetNameRef());
+                                 poLayerDefnTmp->GetFieldDefn(i)->GetNameRef());
                         if (bTransactionOK)
                             RollbackTransaction();
                         return false;
@@ -8325,7 +8562,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
 }
 
 /************************************************************************/
-/*                      OGR_L_WriteArrowBatch()                         */
+/*                       OGR_L_WriteArrowBatch()                        */
 /************************************************************************/
 
 // clang-format off
@@ -8478,7 +8715,7 @@ bool OGRLayer::WriteArrowBatch(const struct ArrowSchema *schema,
 // clang-format on
 
 bool OGR_L_WriteArrowBatch(OGRLayerH hLayer, const struct ArrowSchema *schema,
-                           struct ArrowArray *array, char **papszOptions)
+                           struct ArrowArray *array, CSLConstList papszOptions)
 {
     VALIDATE_POINTER1(hLayer, __func__, false);
     VALIDATE_POINTER1(schema, __func__, false);

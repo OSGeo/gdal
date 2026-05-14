@@ -113,7 +113,7 @@ struct BandProperty
 using namespace gdal::GDALBuildVRT;
 
 /************************************************************************/
-/*                         GetSrcDstWin()                               */
+/*                            GetSrcDstWin()                            */
 /************************************************************************/
 
 static int GetSrcDstWin(DatasetProperty *psDP, double we_res, double ns_res,
@@ -197,7 +197,7 @@ static int GetSrcDstWin(DatasetProperty *psDP, double we_res, double ns_res,
 }
 
 /************************************************************************/
-/*                            VRTBuilder                                */
+/*                              VRTBuilder                              */
 /************************************************************************/
 
 class VRTBuilder
@@ -295,7 +295,7 @@ class VRTBuilder
 };
 
 /************************************************************************/
-/*                          VRTBuilder()                                */
+/*                             VRTBuilder()                             */
 /************************************************************************/
 
 VRTBuilder::VRTBuilder(
@@ -383,7 +383,7 @@ VRTBuilder::VRTBuilder(
 }
 
 /************************************************************************/
-/*                         ~VRTBuilder()                                */
+/*                            ~VRTBuilder()                             */
 /************************************************************************/
 
 VRTBuilder::~VRTBuilder()
@@ -412,7 +412,7 @@ VRTBuilder::~VRTBuilder()
 }
 
 /************************************************************************/
-/*                           ProjAreEqual()                             */
+/*                            ProjAreEqual()                            */
 /************************************************************************/
 
 static int ProjAreEqual(const char *pszWKT1, const char *pszWKT2)
@@ -939,7 +939,16 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                     int nRefColorEntryCount =
                         asBandProperties[j].colorTable->GetColorEntryCount();
                     if (colorTable == nullptr ||
-                        colorTable->GetColorEntryCount() != nRefColorEntryCount)
+                        (colorTable->GetColorEntryCount() !=
+                             nRefColorEntryCount &&
+                         // For NITF CADRG tiles that may have 256 or 257 colors,
+                         // with the 257th color when present being transparent
+                         !(std::min(colorTable->GetColorEntryCount(),
+                                    nRefColorEntryCount) +
+                               1 ==
+                           std::max(colorTable->GetColorEntryCount(),
+                                    nRefColorEntryCount))))
+
                     {
                         return m_osProgramName +
                                " does not support rasters with "
@@ -951,7 +960,10 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                     /* We just warn and still process the file. It is not a
                      * technical no-go, but the user */
                     /* should check that the end result is OK for him. */
-                    for (int i = 0; i < nRefColorEntryCount; i++)
+                    for (int i = 0;
+                         i < std::min(nRefColorEntryCount,
+                                      colorTable->GetColorEntryCount());
+                         i++)
                     {
                         const GDALColorEntry *psEntry =
                             colorTable->GetColorEntry(i);
@@ -986,6 +998,32 @@ std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                             bFirstWarningPCT = FALSE;
                             break;
                         }
+                    }
+
+                    // For NITF CADRG tiles that may have 256 or 257 colors,
+                    // with the 257th color when present being transparent
+                    if (nRefColorEntryCount + 1 ==
+                            colorTable->GetColorEntryCount() &&
+                        colorTable->GetColorEntry(nRefColorEntryCount)->c1 ==
+                            0 &&
+                        colorTable->GetColorEntry(nRefColorEntryCount)->c2 ==
+                            0 &&
+                        colorTable->GetColorEntry(nRefColorEntryCount)->c3 ==
+                            0 &&
+                        colorTable->GetColorEntry(nRefColorEntryCount)->c4 == 0)
+                    {
+                        int bHasNoData = false;
+                        const double dfNoData =
+                            poBand->GetNoDataValue(&bHasNoData);
+                        if (bHasNoData && !asBandProperties[j].bHasNoData &&
+                            dfNoData == nRefColorEntryCount)
+                        {
+                            asBandProperties[j].bHasNoData = true;
+                            asBandProperties[j].noDataValue = dfNoData;
+                        }
+
+                        asBandProperties[j].colorTable.reset(
+                            colorTable->Clone());
                     }
                 }
 
@@ -1322,7 +1360,7 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
 }
 
 /************************************************************************/
-/*                       CreateVRTNonSeparate()                         */
+/*                        CreateVRTNonSeparate()                        */
 /************************************************************************/
 
 void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
@@ -1431,9 +1469,9 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
 
         if (bCanCollectOverviewFactors)
         {
-            if (std::abs(psDatasetProperties->gt[1] - we_res) >
+            if (std::abs(psDatasetProperties->gt.xscale - we_res) >
                     1e-8 * std::abs(we_res) ||
-                std::abs(psDatasetProperties->gt[5] - ns_res) >
+                std::abs(psDatasetProperties->gt.yscale - ns_res) >
                     1e-8 * std::abs(ns_res))
             {
                 bCanCollectOverviewFactors = false;
@@ -1667,7 +1705,7 @@ void VRTBuilder::CreateVRTNonSeparate(VRTDataset *poVRTDS)
 }
 
 /************************************************************************/
-/*                             Build()                                  */
+/*                               Build()                                */
 /************************************************************************/
 
 std::unique_ptr<GDALDataset> VRTBuilder::Build(GDALProgressFunc pfnProgress,
@@ -1894,7 +1932,7 @@ std::unique_ptr<GDALDataset> VRTBuilder::Build(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                        add_file_to_list()                            */
+/*                          add_file_to_list()                          */
 /************************************************************************/
 
 static bool add_file_to_list(const char *filename, const char *tile_index,
@@ -1960,7 +1998,7 @@ static bool add_file_to_list(const char *filename, const char *tile_index,
 }
 
 /************************************************************************/
-/*                        GDALBuildVRTOptions                           */
+/*                         GDALBuildVRTOptions                          */
 /************************************************************************/
 
 /** Options for use with GDALBuildVRT(). GDALBuildVRTOptions* must be allocated
@@ -2010,7 +2048,7 @@ struct GDALBuildVRTOptions
 };
 
 /************************************************************************/
-/*                           GDALBuildVRT()                             */
+/*                            GDALBuildVRT()                            */
 /************************************************************************/
 
 /* clang-format off */
@@ -2186,7 +2224,7 @@ static char *SanitizeSRS(const char *pszUserInput)
 }
 
 /************************************************************************/
-/*                     GDALBuildVRTOptionsGetParser()                    */
+/*                    GDALBuildVRTOptionsGetParser()                    */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -2282,7 +2320,7 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
         .help(_("Control the way the output resolution is computed."));
 
     argParser->add_argument("-tr")
-        .metavar("<xres> <yes>")
+        .metavar("<xres> <yres>")
         .nargs(2)
         .scan<'g', double>()
         .help(_("Set target resolution."));
@@ -2499,7 +2537,7 @@ GDALBuildVRTOptionsGetParser(GDALBuildVRTOptions *psOptions,
 }
 
 /************************************************************************/
-/*                       GDALBuildVRTGetParserUsage()                   */
+/*                     GDALBuildVRTGetParserUsage()                     */
 /************************************************************************/
 
 std::string GDALBuildVRTGetParserUsage()
@@ -2521,7 +2559,7 @@ std::string GDALBuildVRTGetParserUsage()
 }
 
 /************************************************************************/
-/*                             GDALBuildVRTOptionsNew()                  */
+/*                       GDALBuildVRTOptionsNew()                       */
 /************************************************************************/
 
 /**
@@ -2617,7 +2655,7 @@ GDALBuildVRTOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                        GDALBuildVRTOptionsFree()                     */
+/*                      GDALBuildVRTOptionsFree()                       */
 /************************************************************************/
 
 /**
@@ -2634,7 +2672,7 @@ void GDALBuildVRTOptionsFree(GDALBuildVRTOptions *psOptions)
 }
 
 /************************************************************************/
-/*                 GDALBuildVRTOptionsSetProgress()                    */
+/*                   GDALBuildVRTOptionsSetProgress()                   */
 /************************************************************************/
 
 /**

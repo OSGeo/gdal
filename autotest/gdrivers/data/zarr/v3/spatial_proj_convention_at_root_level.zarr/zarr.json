@@ -1,0 +1,264 @@
+{
+  "attributes": {
+    "zarr_conventions": [
+      {
+          "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
+          "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+          "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
+          "name": "proj:",
+          "description": "Coordinate reference system information for geospatial data"
+      },
+      {
+          "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+          "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+          "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+          "name": "spatial:",
+          "description": "Spatial coordinate information"
+      }
+    ]
+  },
+  "zarr_format": 3,
+  "consolidated_metadata": {
+    "kind": "inline",
+    "must_understand": false,
+    "metadata": {
+      "group": {
+         "zarr_format": 3,
+         "node_type": "group",
+         "attributes": {
+            "proj:projjson": {
+              "$schema": "https://proj.org/schemas/v0.7/projjson.schema.json",
+              "type": "ProjectedCRS",
+              "name": "WGS 84 / UTM zone 31N",
+              "base_crs": {
+                "type": "GeographicCRS",
+                "name": "WGS 84",
+                "datum_ensemble": {
+                  "name": "World Geodetic System 1984 ensemble",
+                  "members": [
+                    {
+                      "name": "World Geodetic System 1984 (Transit)",
+                      "id": {
+                        "authority": "EPSG",
+                        "code": 1166
+                      }
+                    },
+                    {
+                      "name": "World Geodetic System 1984 (G730)",
+                      "id": {
+                        "authority": "EPSG",
+                        "code": 1152
+                      }
+                    },
+                    {
+                      "name": "World Geodetic System 1984 (G873)",
+                      "id": {
+                        "authority": "EPSG",
+                        "code": 1153
+                      }
+                    },
+                    {
+                      "name": "World Geodetic System 1984 (G1150)",
+                      "id": {
+                        "authority": "EPSG",
+                        "code": 1154
+                      }
+                    },
+                    {
+                      "name": "World Geodetic System 1984 (G1674)",
+                      "id": {
+                        "authority": "EPSG",
+                        "code": 1155
+                      }
+                    },
+                    {
+                      "name": "World Geodetic System 1984 (G1762)",
+                      "id": {
+                        "authority": "EPSG",
+                        "code": 1156
+                      }
+                    },
+                    {
+                      "name": "World Geodetic System 1984 (G2139)",
+                      "id": {
+                        "authority": "EPSG",
+                        "code": 1309
+                      }
+                    },
+                    {
+                      "name": "World Geodetic System 1984 (G2296)",
+                      "id": {
+                        "authority": "EPSG",
+                        "code": 1383
+                      }
+                    }
+                  ],
+                  "ellipsoid": {
+                    "name": "WGS 84",
+                    "semi_major_axis": 6378137,
+                    "inverse_flattening": 298.257223563
+                  },
+                  "accuracy": "2.0",
+                  "id": {
+                    "authority": "EPSG",
+                    "code": 6326
+                  }
+                },
+                "coordinate_system": {
+                  "subtype": "ellipsoidal",
+                  "axis": [
+                    {
+                      "name": "Geodetic latitude",
+                      "abbreviation": "Lat",
+                      "direction": "north",
+                      "unit": "degree"
+                    },
+                    {
+                      "name": "Geodetic longitude",
+                      "abbreviation": "Lon",
+                      "direction": "east",
+                      "unit": "degree"
+                    }
+                  ]
+                },
+                "id": {
+                  "authority": "EPSG",
+                  "code": 4326
+                }
+              },
+              "conversion": {
+                "name": "UTM zone 31N",
+                "method": {
+                  "name": "Transverse Mercator",
+                  "id": {
+                    "authority": "EPSG",
+                    "code": 9807
+                  }
+                },
+                "parameters": [
+                  {
+                    "name": "Latitude of natural origin",
+                    "value": 0,
+                    "unit": "degree",
+                    "id": {
+                      "authority": "EPSG",
+                      "code": 8801
+                    }
+                  },
+                  {
+                    "name": "Longitude of natural origin",
+                    "value": 3,
+                    "unit": "degree",
+                    "id": {
+                      "authority": "EPSG",
+                      "code": 8802
+                    }
+                  },
+                  {
+                    "name": "Scale factor at natural origin",
+                    "value": 0.9996,
+                    "unit": "unity",
+                    "id": {
+                      "authority": "EPSG",
+                      "code": 8805
+                    }
+                  },
+                  {
+                    "name": "False easting",
+                    "value": 500000,
+                    "unit": "metre",
+                    "id": {
+                      "authority": "EPSG",
+                      "code": 8806
+                    }
+                  },
+                  {
+                    "name": "False northing",
+                    "value": 0,
+                    "unit": "metre",
+                    "id": {
+                      "authority": "EPSG",
+                      "code": 8807
+                    }
+                  }
+                ]
+              },
+              "coordinate_system": {
+                "subtype": "Cartesian",
+                "axis": [
+                  {
+                    "name": "Easting",
+                    "abbreviation": "E",
+                    "direction": "east",
+                    "unit": "metre"
+                  },
+                  {
+                    "name": "Northing",
+                    "abbreviation": "N",
+                    "direction": "north",
+                    "unit": "metre"
+                  }
+                ]
+              },
+              "scope": "Navigation and medium accuracy spatial referencing.",
+              "area": "Between 0°E and 6°E, northern hemisphere between equator and 84°N, onshore and offshore. Algeria. Andorra. Belgium. Benin. Burkina Faso. Denmark - North Sea. France. Germany - North Sea. Ghana. Luxembourg. Mali. Netherlands. Niger. Nigeria. Norway. Spain. Togo. United Kingdom (UK) - North Sea.",
+              "bbox": {
+                "south_latitude": 0,
+                "west_longitude": 0,
+                "north_latitude": 84,
+                "east_longitude": 6
+              },
+              "id": {
+                "authority": "EPSG",
+                "code": 32631
+              }
+            },
+            "spatial:dimensions": ["y", "x"],
+            "spatial:transform": [10, 0, 450000,
+                                  0, -10, 5000000]
+         }
+      },
+      "group/ar": {
+        "shape": [
+          200,
+          100
+        ],
+        "data_type": "float32",
+        "chunk_grid": {
+          "name": "regular",
+          "configuration": {
+            "chunk_shape": [
+              200,
+              100
+            ]
+          }
+        },
+        "chunk_key_encoding": {
+          "name": "default",
+          "configuration": {
+            "separator": "/"
+          }
+        },
+        "fill_value": "NaN",
+        "codecs": [
+          {
+              "name": "bytes",
+              "configuration": {
+                "endian": "little"
+              }
+          }
+        ],
+        "attributes": {
+        },
+        "dimension_names": [
+          "y",
+          "x"
+        ],
+        "zarr_format": 3,
+        "node_type": "array",
+        "storage_transformers": []
+      }
+    }
+  },
+  "node_type": "group"
+}

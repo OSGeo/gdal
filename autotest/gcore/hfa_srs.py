@@ -164,7 +164,7 @@ def test_hfa_srs(srs_def, failure_expected, read_with_pe_string):
     if (
         not isinstance(srs_def, str)
         and srs_def == 4326
-        and sr2.GetAuthorityCode(None) != "4326"
+        and sr2.GetAuthorityCode() != "4326"
     ) or sr.IsSame(sr2) != 1:
 
         if osr.GetPROJVersionMajor() * 100 + osr.GetPROJVersionMinor() < 630:
@@ -202,7 +202,7 @@ def test_hfa_srs_wisconsin_tmerc():
     wkt = ds.GetProjectionRef()
     sr = osr.SpatialReference()
     sr.SetFromUserInput(wkt)
-    assert sr.GetAuthorityCode(None) == "103300"
+    assert sr.GetAuthorityCode() == "103300"
 
 
 def test_hfa_srs_NAD83_UTM():
@@ -215,7 +215,7 @@ def test_hfa_srs_NAD83_UTM():
 
     ds = gdal.Open("/vsimem/TestHFASRS.img")
     wkt = ds.GetProjectionRef()
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "26915"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "26915"
     ds = None
 
     gdal.Unlink("/vsimem/TestHFASRS.img")
@@ -235,8 +235,8 @@ def test_hfa_srs_NAD83_CORS96_UTM():
 
     ds = gdal.Open("/vsimem/TestHFASRS.img")
     srs_got = ds.GetSpatialRef()
-    assert srs_got.GetAuthorityName(None) == "ESRI"
-    assert srs_got.GetAuthorityCode(None) == "102411"
+    assert srs_got.GetAuthorityName() == "ESRI"
+    assert srs_got.GetAuthorityCode() == "102411"
     assert srs_got.IsSame(sr), srs_got.ExportToWkt()
     ds = None
 
@@ -289,8 +289,8 @@ def test_hfa_srs_EPSG_2193(tmp_vsimem):
 
     ds = gdal.Open(filename)
     srs_got = ds.GetSpatialRef()
-    assert srs_got.GetAuthorityName(None) == "EPSG"
-    assert srs_got.GetAuthorityCode(None) == "2193"
+    assert srs_got.GetAuthorityName() == "EPSG"
+    assert srs_got.GetAuthorityCode() == "2193"
     assert srs_got.GetDataAxisToSRSAxisMapping() == [2, 1]
     assert srs_got.IsSame(sr)
     ds = None

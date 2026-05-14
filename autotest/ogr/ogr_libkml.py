@@ -1217,8 +1217,7 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
             </PolyStyle>
         </Style>"""
 
-    content = (
-        """<kml xmlns="http://www.opengis.net/kml/2.2">
+    content = """<kml xmlns="http://www.opengis.net/kml/2.2">
     <Document>
         %s
         <StyleMap id="styleMapExample">
@@ -1238,9 +1237,7 @@ def test_ogr_libkml_read_write_style(tmp_vsimem):
             </Pair>
         </StyleMap>
     </Document>
-    </kml>"""
-        % styles
-    )
+    </kml>""" % styles
 
     resolved_stylemap = """<Style id="styleMapExample">
       <IconStyle>
@@ -1874,7 +1871,7 @@ def test_ogr_libkml_write_folder(tmp_vsimem):
 
 
 ###############################################################################
-# Test writing datasource and layer container propreties
+# Test writing datasource and layer container properties
 
 
 def test_ogr_libkml_write_container_properties(tmp_vsimem):

@@ -217,8 +217,9 @@ class CPL_DLL OGRStyleTool
 
     void SetUnit(OGRSTUnitId,
                  double dfScale = 1.0);  // the dfScale will be
-                                         // used if we are working with Ground
-                                         // Unit ( ground = paper * scale);
+
+    // used if we are working with Ground
+    // Unit ( ground = paper * scale);
 
     OGRSTUnitId GetUnit()
     {

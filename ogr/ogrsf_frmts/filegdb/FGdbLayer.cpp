@@ -47,7 +47,7 @@ FGdbBaseLayer::FGdbBaseLayer()
 }
 
 /************************************************************************/
-/*                          ~FGdbBaseLayer()                            */
+/*                           ~FGdbBaseLayer()                           */
 /************************************************************************/
 FGdbBaseLayer::~FGdbBaseLayer()
 {
@@ -131,7 +131,7 @@ OGRFeature *FGdbBaseLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                              FGdbLayer()                             */
+/*                             FGdbLayer()                              */
 /************************************************************************/
 FGdbLayer::FGdbLayer()
     : m_pDS(nullptr), m_pTable(nullptr), m_wstrSubfields(L"*"),
@@ -145,7 +145,7 @@ FGdbLayer::FGdbLayer()
 }
 
 /************************************************************************/
-/*                            ~FGdbLayer()                              */
+/*                             ~FGdbLayer()                             */
 /************************************************************************/
 
 FGdbLayer::~FGdbLayer()
@@ -158,7 +158,7 @@ FGdbLayer::~FGdbLayer()
 }
 
 /************************************************************************/
-/*                        CloseGDBObjects()                             */
+/*                          CloseGDBObjects()                           */
 /************************************************************************/
 
 void FGdbLayer::CloseGDBObjects()
@@ -179,7 +179,7 @@ void FGdbLayer::CloseGDBObjects()
 #ifdef EXTENT_WORKAROUND
 
 /************************************************************************/
-/*                     UpdateRowWithGeometry()                          */
+/*                       UpdateRowWithGeometry()                        */
 /************************************************************************/
 
 bool FGdbLayer::UpdateRowWithGeometry(Row &row, OGRGeometry *poGeom)
@@ -354,7 +354,7 @@ void FGdbLayer::WorkAroundExtentProblem()
 #endif  // EXTENT_WORKAROUND
 
 /************************************************************************/
-/*                             GetRow()                                 */
+/*                               GetRow()                               */
 /************************************************************************/
 
 OGRErr FGdbLayer::GetRow(EnumRows &enumRows, Row &row, GIntBig nFID)
@@ -653,7 +653,7 @@ bool FGdbLayer::ParseGeometryDef(const CPLXMLNode *psRoot)
 }
 
 /************************************************************************/
-/*                        ParseSpatialReference()                       */
+/*                       ParseSpatialReference()                        */
 /************************************************************************/
 
 bool FGdbLayer::ParseSpatialReference(const CPLXMLNode *psSpatialRefNode,
@@ -700,7 +700,7 @@ bool FGdbLayer::ParseSpatialReference(const CPLXMLNode *psSpatialRefNode,
 }
 
 /************************************************************************/
-/*                          GDBToOGRFields()                           */
+/*                           GDBToOGRFields()                           */
 /************************************************************************/
 
 bool FGdbLayer::GDBToOGRFields(CPLXMLNode *psRoot)
@@ -1050,7 +1050,7 @@ OGRErr FGdbLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                           OGRFeatureFromGdbRow()                      */
+/*                        OGRFeatureFromGdbRow()                        */
 /************************************************************************/
 
 bool FGdbBaseLayer::OGRFeatureFromGdbRow(Row *pRow, OGRFeature **ppFeature)
@@ -1498,7 +1498,7 @@ GIntBig FGdbLayer::GetFeatureCount(CPL_UNUSED int bForce)
 }
 
 /************************************************************************/
-/*                         GetMetadataItem()                            */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *FGdbLayer::GetMetadataItem(const char *pszName,
@@ -1508,7 +1508,7 @@ const char *FGdbLayer::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr FGdbLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent, bool bForce)

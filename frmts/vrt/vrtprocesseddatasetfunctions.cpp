@@ -26,7 +26,7 @@
 #include <vector>
 
 /************************************************************************/
-/*                               GetDstValue()                          */
+/*                            GetDstValue()                             */
 /************************************************************************/
 
 /** Return a destination value given an initial value, the destination no data
@@ -62,7 +62,7 @@ static inline double GetDstValue(double dfVal, double dfDstNoData,
 }
 
 /************************************************************************/
-/*                    BandAffineCombinationData                         */
+/*                      BandAffineCombinationData                       */
 /************************************************************************/
 
 namespace
@@ -142,7 +142,7 @@ static std::vector<double> SetOutputValuesForInNoDataAndOutNoData(
 }
 
 /************************************************************************/
-/*                    BandAffineCombinationInit()                       */
+/*                     BandAffineCombinationInit()                      */
 /************************************************************************/
 
 /** Init function for 'BandAffineCombination' builtin function. */
@@ -292,7 +292,7 @@ static CPLErr BandAffineCombinationInit(
 }
 
 /************************************************************************/
-/*                    BandAffineCombinationFree()                       */
+/*                     BandAffineCombinationFree()                      */
 /************************************************************************/
 
 /** Free function for 'BandAffineCombination' builtin function. */
@@ -342,7 +342,7 @@ static CPLErr BandAffineCombinationProcess(
     const double *CPL_RESTRICT padfSrc = static_cast<const double *>(pInBuffer);
     double *CPL_RESTRICT padfDst = static_cast<double *>(pOutBuffer);
     const bool bDstIntendedDTIsInteger =
-        GDALDataTypeIsInteger(data->m_eIntendedDstDT);
+        CPL_TO_BOOL(GDALDataTypeIsInteger(data->m_eIntendedDstDT));
     const double dfClampMin = data->m_dfClampMin;
     const double dfClampMax = data->m_dfClampMax;
     for (size_t i = 0; i < nElts; ++i)
@@ -387,7 +387,7 @@ static CPLErr BandAffineCombinationProcess(
 }
 
 /************************************************************************/
-/*                                LUTData                               */
+/*                               LUTData                                */
 /************************************************************************/
 
 namespace
@@ -441,7 +441,7 @@ struct LUTData
 }  // namespace
 
 /************************************************************************/
-/*                                LUTInit()                             */
+/*                              LUTInit()                               */
 /************************************************************************/
 
 /** Init function for 'LUT' builtin function. */
@@ -458,7 +458,18 @@ static CPLErr LUTInit(const char * /*pszFuncName*/, void * /*pUserData*/,
     *peOutDT = eInDT;
     *ppWorkingData = nullptr;
 
-    if (!bIsFinalStep)
+    if (bIsFinalStep)
+    {
+        if (*pnOutBands != nInBands)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "LUT step: input band count (%d) is different from output "
+                     "band count (%d)",
+                     nInBands, *pnOutBands);
+            return CE_Failure;
+        }
+    }
+    else
     {
         *pnOutBands = nInBands;
     }
@@ -550,7 +561,7 @@ static CPLErr LUTInit(const char * /*pszFuncName*/, void * /*pUserData*/,
 }
 
 /************************************************************************/
-/*                                LUTFree()                             */
+/*                              LUTFree()                               */
 /************************************************************************/
 
 /** Free function for 'LUT' builtin function. */
@@ -615,7 +626,7 @@ LUTProcess(const char * /*pszFuncName*/, void * /*pUserData*/,
 }
 
 /************************************************************************/
-/*                        LocalScaleOffsetData                          */
+/*                         LocalScaleOffsetData                         */
 /************************************************************************/
 
 namespace
@@ -694,7 +705,18 @@ LocalScaleOffsetInit(const char * /*pszFuncName*/, void * /*pUserData*/,
     *peOutDT = eInDT;
     *ppWorkingData = nullptr;
 
-    if (!bIsFinalStep)
+    if (bIsFinalStep)
+    {
+        if (*pnOutBands != nInBands)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "LocalScaleOffset step: input band count (%d) is "
+                     "different from output band count (%d)",
+                     nInBands, *pnOutBands);
+            return CE_Failure;
+        }
+    }
+    else
     {
         *pnOutBands = nInBands;
     }
@@ -895,7 +917,7 @@ LocalScaleOffsetInit(const char * /*pszFuncName*/, void * /*pUserData*/,
 }
 
 /************************************************************************/
-/*                       LocalScaleOffsetFree()                         */
+/*                        LocalScaleOffsetFree()                        */
 /************************************************************************/
 
 /** Free function for 'LocalScaleOffset' builtin function. */
@@ -911,7 +933,7 @@ static void LocalScaleOffsetFree(const char * /*pszFuncName*/,
 }
 
 /************************************************************************/
-/*                          LoadAuxData()                               */
+/*                            LoadAuxData()                             */
 /************************************************************************/
 
 // Load auxiliary corresponding offset, gain or trimming data.
@@ -1100,7 +1122,7 @@ static CPLErr LocalScaleOffsetProcess(
 }
 
 /************************************************************************/
-/*                           TrimmingData                               */
+/*                             TrimmingData                             */
 /************************************************************************/
 
 namespace
@@ -1145,7 +1167,7 @@ struct TrimmingData
 }  // namespace
 
 /************************************************************************/
-/*                           TrimmingInit()                             */
+/*                            TrimmingInit()                            */
 /************************************************************************/
 
 /** Init function for 'Trimming' builtin function. */
@@ -1162,7 +1184,18 @@ static CPLErr TrimmingInit(const char * /*pszFuncName*/, void * /*pUserData*/,
     *peOutDT = eInDT;
     *ppWorkingData = nullptr;
 
-    if (!bIsFinalStep)
+    if (bIsFinalStep)
+    {
+        if (*pnOutBands != nInBands)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Trimming step: input band count (%d) is different from "
+                     "output band count (%d)",
+                     nInBands, *pnOutBands);
+            return CE_Failure;
+        }
+    }
+    else
     {
         *pnOutBands = nInBands;
     }
@@ -1295,7 +1328,7 @@ static CPLErr TrimmingInit(const char * /*pszFuncName*/, void * /*pUserData*/,
 }
 
 /************************************************************************/
-/*                           TrimmingFree()                             */
+/*                            TrimmingFree()                            */
 /************************************************************************/
 
 /** Free function for 'Trimming' builtin function. */
@@ -1309,7 +1342,7 @@ static void TrimmingFree(const char * /*pszFuncName*/, void * /*pUserData*/,
 }
 
 /************************************************************************/
-/*                         TrimmingProcess()                            */
+/*                          TrimmingProcess()                           */
 /************************************************************************/
 
 /** Processing function for 'Trimming' builtin function. */
@@ -1478,7 +1511,7 @@ static CPLErr TrimmingProcess(
 }
 
 /************************************************************************/
-/*                    ExpressionInit()                                  */
+/*                           ExpressionInit()                           */
 /************************************************************************/
 
 namespace
@@ -1747,7 +1780,7 @@ static CPLErr ExpressionProcess(
 }
 
 /************************************************************************/
-/*              GDALVRTRegisterDefaultProcessedDatasetFuncs()           */
+/*            GDALVRTRegisterDefaultProcessedDatasetFuncs()             */
 /************************************************************************/
 
 /** Register builtin functions that can be used in a VRTProcessedDataset.

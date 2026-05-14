@@ -39,7 +39,7 @@ std::unique_ptr<ZarrV3Codec> ZarrV3CodecCRC32C::Clone() const
 }
 
 /************************************************************************/
-/*               ZarrV3CodecCRC32C::InitFromConfiguration()             */
+/*              ZarrV3CodecCRC32C::InitFromConfiguration()              */
 /************************************************************************/
 
 bool ZarrV3CodecCRC32C::InitFromConfiguration(
@@ -87,7 +87,7 @@ bool ZarrV3CodecCRC32C::Encode(const ZarrByteVectorQuickResize &abySrc,
 }
 
 /************************************************************************/
-/*                        ZarrV3CodecCRC32C::Decode()                   */
+/*                     ZarrV3CodecCRC32C::Decode()                      */
 /************************************************************************/
 
 bool ZarrV3CodecCRC32C::Decode(const ZarrByteVectorQuickResize &abySrc,

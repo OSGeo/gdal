@@ -32,6 +32,7 @@ gdal_to_struct = {
     gdal.GDT_Float64: ("d", 8),
 }
 
+
 ###### Testing IMG/REL normal files
 def check_raster(ds, band_idx, expected, checksum, exp_min, exp_max, exp_gt):
     band = ds.GetRasterBand(band_idx)
@@ -451,7 +452,7 @@ def test_miramon_test_fails(name, message_substring):
 init_list_subdatasets = [
     (
         "data/miramon/multiband/byte_2x3_6_multibandI.rel",
-        3,
+        5,
         0,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -462,7 +463,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_6_categs.img",
-        3,
+        5,
         0,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -473,7 +474,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_6_multibandI.rel",
-        3,
+        5,
         1,
         1,
         [0, 1, 2, 3, 4, 255],
@@ -484,7 +485,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_0_to_4_categs_NoData_255.img",
-        3,
+        5,
         1,
         1,
         [0, 1, 2, 3, 4, 255],
@@ -495,7 +496,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_6_multibandI.rel",
-        3,
+        5,
         2,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -506,7 +507,7 @@ init_list_subdatasets = [
     ),
     (
         "data/miramon/multiband/byte_2x3_1_to_5_categs_NoData_0.img",
-        3,
+        5,
         2,
         1,
         [0, 1, 2, 3, 4, 5],
@@ -560,6 +561,30 @@ def test_miramon_subdatasets_detection(
     check_raster(subds, idx_bnd, expected, checksum, exp_min, exp_max, None)
 
 
+###### Testing number of subdatasets for a multiband file
+###### that has different characteristics.
+# Tested characteristics:
+# data type
+# compression
+# extension (minx and maxx)
+# extension amplidude
+# Categorical vs continuous
+# nodata value
+# existence of nodata value
+# existence of color table
+
+
+def test_miramon_subdatasets_number():
+    ds = gdal.OpenEx(
+        "data/miramon/subdatasets/byteI.rel", allowed_drivers=["MiraMonRaster"]
+    )
+    assert ds is not None, "Could not open file: data/miramon/subdatasets/byteI.rel"
+
+    subdatasets = ds.GetSubDatasets()
+    assert subdatasets is not None, "GetSubDatasets() returned None"
+    assert len(subdatasets) == 10, f"Expected 10 subdatasets, got {len(subdatasets)}"
+
+
 ###### Testing color table
 init_list_color_tables = [
     (
@@ -577,6 +602,19 @@ init_list_color_tables = [
     ),
     (
         "data/miramon/palettes/Constant/byte_2x3_6_categsI.rel",
+        1,  # band index
+        {  # color table
+            0: (255, 0, 255, 255),
+            1: (255, 0, 255, 255),
+            2: (255, 0, 255, 255),
+            3: (255, 0, 255, 255),
+            4: (255, 0, 255, 255),
+            5: (0, 0, 0, 0),
+        },
+        "25831",  # reference system
+    ),
+    (
+        "data/miramon/palettes/Constant/real_2x3_6_categsI.rel",
         1,  # band index
         {  # color table
             0: (255, 0, 255, 255),
@@ -652,6 +690,59 @@ init_list_color_tables = [
             3: (255, 255, 78, 255),
             4: (255, 0, 0, 255),
             5: (255, 0, 133, 255),
+        },
+        "25831",
+    ),
+    (
+        "data/miramon/palettes/Continous/ColorTable/directassignement/byte_2x3_6_categsI.rel",
+        1,  # band index
+        {
+            0: (0, 0, 125, 255),
+            1: (0, 134, 255, 255),
+            2: (0, 255, 0, 255),
+            3: (255, 255, 78, 255),
+            4: (255, 0, 0, 255),
+            5: (255, 0, 133, 255),
+        },
+        "25831",
+    ),
+    (
+        "data/miramon/palettes/Continous/ColorTable/directassignement/uinteger_with_nodataI.rel",
+        1,  # band index
+        {
+            0: (0, 0, 125, 255),
+            1: (0, 134, 255, 255),
+            2: (0, 255, 0, 255),
+            3: (255, 255, 78, 255),
+            4: (255, 0, 0, 255),
+            5: (255, 0, 133, 255),
+        },
+        "25831",
+    ),
+    (
+        "data/miramon/palettes/Continous/ColorTable/lineal/byte_2x3_6_categsI.rel",
+        1,  # band index
+        {
+            0: (0, 0, 125, 255),
+            1: (0, 134, 255, 255),
+            2: (0, 255, 0, 255),
+            3: (255, 255, 78, 255),
+            4: (255, 0, 0, 255),
+            5: (255, 0, 133, 255),
+        },
+        "25831",
+    ),
+    (
+        "data/miramon/palettes/Continous/ColorTable/lineal_rare/byte_2x3_6_categsI.rel",
+        1,  # band index
+        {
+            0: (0, 0, 125, 255),
+            1: (0, 134, 255, 255),
+            2: (0, 255, 0, 255),
+            3: (255, 255, 78, 255),
+            4: (255, 0, 0, 255),
+            5: (255, 0, 133, 255),
+            255: (255, 255, 255, 255),
         },
         "25831",
     ),
@@ -848,6 +939,22 @@ init_list_attribute_tables = [
         },
     ),
     (
+        "data/miramon/palettes/Constant/integer_2x3_6_categsI.rel",
+        1,  # band index
+        {
+            (0, "MIN"): -32768,
+            (0, "MAX"): -32768,
+            (0, "Red"): 0,
+            (0, "Green"): 0,
+            (0, "Blue"): 0,
+            (1, "MIN"): 0,
+            (1, "MAX"): 5,
+            (1, "Red"): 255,
+            (1, "Green"): 0,
+            (1, "Blue"): 255,
+        },
+    ),
+    (
         "data/miramon/palettes/Categorical/ThematicNoDataBeg/MUCSC_2002_30_m_v_6_retI.rel",
         1,  # band index
         {
@@ -938,82 +1045,6 @@ init_list_attribute_tables = [
         },
     ),
     (
-        "data/miramon/palettes/Constant/byte_2x3_6_categsI.rel",
-        1,  # band index
-        {
-            (0, "MIN"): 5,
-            (0, "MAX"): 5,
-            (0, "Red"): 0,
-            (0, "Green"): 0,
-            (0, "Blue"): 0,
-            (1, "MIN"): 0,
-            (1, "MAX"): 4,
-            (1, "Red"): 255,
-            (1, "Green"): 0,
-            (1, "Blue"): 255,
-        },
-    ),
-    (
-        "data/miramon/palettes/Categorical/Assigned/byte_2x3_6_categsI.rel",
-        1,  # band index
-        {
-            (0, "MIN_MAX"): 0,
-            (0, "Red"): 0,
-            (0, "Green"): 0,
-            (0, "Blue"): 125,
-            (1, "MIN_MAX"): 1,
-            (1, "Red"): 0,
-            (1, "Green"): 134,
-            (1, "Blue"): 255,
-            (2, "MIN_MAX"): 2,
-            (2, "Red"): 0,
-            (2, "Green"): 255,
-            (2, "Blue"): 0,
-            (3, "MIN_MAX"): 3,
-            (3, "Red"): 255,
-            (3, "Green"): 255,
-            (3, "Blue"): 78,
-            (4, "MIN_MAX"): 4,
-            (4, "Red"): 255,
-            (4, "Green"): 0,
-            (4, "Blue"): 0,
-            (5, "MIN_MAX"): 5,
-            (5, "Red"): 255,
-            (5, "Green"): 0,
-            (5, "Blue"): 133,
-        },
-    ),
-    (
-        "data/miramon/palettes/Categorical/Assigned/real_2x3_6_categsI.rel",
-        1,  # band index
-        {
-            (0, "MIN_MAX"): 0,
-            (0, "Red"): 0,
-            (0, "Green"): 0,
-            (0, "Blue"): 125,
-            (1, "MIN_MAX"): 1,
-            (1, "Red"): 0,
-            (1, "Green"): 134,
-            (1, "Blue"): 255,
-            (2, "MIN_MAX"): 2,
-            (2, "Red"): 0,
-            (2, "Green"): 255,
-            (2, "Blue"): 0,
-            (3, "MIN_MAX"): 3,
-            (3, "Red"): 255,
-            (3, "Green"): 255,
-            (3, "Blue"): 78,
-            (4, "MIN_MAX"): 4,
-            (4, "Red"): 255,
-            (4, "Green"): 0,
-            (4, "Blue"): 0,
-            (5, "MIN_MAX"): 5,
-            (5, "Red"): 255,
-            (5, "Green"): 0,
-            (5, "Blue"): 133,
-        },
-    ),
-    (
         "data/miramon/all_nodata/nodataI.rel",
         1,  # band index
         None,
@@ -1042,6 +1073,36 @@ init_list_attribute_tables = [
             (9, "Red"): 255,
             (9, "Green"): 202,
             (9, "Blue"): 0,
+        },
+    ),
+    (
+        "data/miramon/palettes/Categorical/Assigned/double_2x3_6I.rel",
+        1,  # band index
+        {
+            (0, "MIN_MAX"): 0,
+            (0, "Red"): 0,
+            (0, "Green"): 0,
+            (0, "Blue"): 125,
+            (1, "MIN_MAX"): 1,
+            (1, "Red"): 0,
+            (1, "Green"): 134,
+            (1, "Blue"): 255,
+            (2, "MIN_MAX"): 2,
+            (2, "Red"): 0,
+            (2, "Green"): 255,
+            (2, "Blue"): 0,
+            (3, "MIN_MAX"): 3,
+            (3, "Red"): 255,
+            (3, "Green"): 255,
+            (3, "Blue"): 78,
+            (4, "MIN_MAX"): 4,
+            (4, "Red"): 255,
+            (4, "Green"): 0,
+            (4, "Blue"): 0,
+            (5, "MIN_MAX"): 5,
+            (5, "Red"): 255,
+            (5, "Green"): 0,
+            (5, "Blue"): 133,
         },
     ),
 ]
@@ -1100,3 +1161,59 @@ def test_miramon_default_rat(filename, idx_bnd, expected_rat):
                     f"Value mismatch at row {row_idx}, column '{col_name}': "
                     f"got {val}, expected {expected_val}"
                 )
+
+
+# Let'ts test open options RAT_OR_CT
+init_list_rat_or_ct = [
+    (
+        "ALL",
+        True,
+        True,
+    ),
+    (
+        "CT",
+        False,
+        True,
+    ),
+    (
+        "RAT",
+        True,
+        False,
+    ),
+]
+
+
+@pytest.mark.parametrize(
+    "option,expect_rat,expect_ct",
+    init_list_rat_or_ct,
+    ids=[tup[0] for tup in init_list_rat_or_ct],
+)
+def test_miramon_rat_or_ct(option, expect_rat, expect_ct):
+    filename = "data/miramon/rat_or_ct/uinteger_imageI.rel"
+
+    options = f"RAT_OR_CT={option}"
+
+    ds_normal = gdal.OpenEx(
+        filename, allowed_drivers=["MiraMonRaster"], open_options=[options]
+    )
+    assert ds_normal is not None, f"Could not open file: {filename}"
+
+    band = ds_normal.GetRasterBand(1)
+    assert band is not None, f"Could not get band 1 from file {filename}"
+
+    rat = band.GetDefaultRAT()
+    ct = band.GetColorTable()
+
+    if expect_rat:
+        assert (
+            rat is not None
+        ), "Expected a Raster Attribute Table (RAT) but none was found"
+    else:
+        assert (
+            rat is None
+        ), "Did not expect a Raster Attribute Table (RAT) but one was found"
+
+    if expect_ct:
+        assert ct is not None, "Expected a Color Table (CT) but none was found"
+    else:
+        assert ct is None, "Did not expect a Color Table (CT) but one was found"

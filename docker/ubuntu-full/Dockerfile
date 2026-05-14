@@ -7,8 +7,8 @@
 # Public domain
 # or licensed under MIT (LICENSE.TXT) Copyright 2019 Even Rouault <even.rouault@spatialys.com>
 
-ARG BASE_IMAGE=ubuntu:24.04
-ARG TARGET_BASE_IMAGE=ubuntu:24.04
+ARG BASE_IMAGE=ubuntu:26.04
+ARG TARGET_BASE_IMAGE=ubuntu:26.04
 
 FROM $BASE_IMAGE AS builder
 
@@ -19,7 +19,7 @@ ENV HOME="/root"
 
 ARG TARGET_ARCH=
 RUN echo ${TARGET_ARCH}
-COPY ./bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
+COPY --link ./docker/ubuntu-full/bh-set-envvars.sh /buildscripts/bh-set-envvars.sh
 
 RUN rm -f /etc/apt/apt.conf.d/docker-clean \
     && echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache \
@@ -29,18 +29,18 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
     && if test "${TARGET_ARCH}" != ""; then \
     rm -f /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble-updates main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ noble-backports main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu noble-security main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble-updates main restricted universe" >> /etc/apt/sources.list \
-    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ noble-security main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ resolute main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ resolute-updates main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://us.archive.ubuntu.com/ubuntu/ resolute-backports main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=amd64] http://security.ubuntu.com/ubuntu resolute-security main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ resolute main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ resolute-updates main restricted universe" >> /etc/apt/sources.list \
+    && echo "deb [arch=${TARGET_ARCH}] http://ports.ubuntu.com/ubuntu-ports/ resolute-security main restricted universe" >> /etc/apt/sources.list \
     && dpkg --add-architecture ${TARGET_ARCH} \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y g++-13-${GCC_ARCH}-linux-gnu \
-    && ln -s ${GCC_ARCH}-linux-gnu-gcc-13 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
-    && ln -s ${GCC_ARCH}-linux-gnu-g++-13 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends g++-15-${GCC_ARCH}-linux-gnu \
+    && ln -s ${GCC_ARCH}-linux-gnu-gcc-15 /usr/bin/${GCC_ARCH}-linux-gnu-gcc \
+    && ln -s ${GCC_ARCH}-linux-gnu-g++-15 /usr/bin/${GCC_ARCH}-linux-gnu-g++; \
     fi
 
 # Setup build env for PROJ
@@ -54,7 +54,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
             git make ninja-build cmake unzip libtool automake \
             zlib1g-dev${APT_ARCH_SUFFIX} libsqlite3-dev${APT_ARCH_SUFFIX} pkg-config sqlite3 libcurl4-openssl-dev${APT_ARCH_SUFFIX} \
             libtiff-dev${APT_ARCH_SUFFIX} \
-            patchelf \
             rsync
 
 ARG JAVA_VERSION=17
@@ -69,10 +68,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libpng-dev${APT_ARCH_SUFFIX} libjpeg-dev${APT_ARCH_SUFFIX} libgif-dev${APT_ARCH_SUFFIX} liblzma-dev${APT_ARCH_SUFFIX} libgeos-dev${APT_ARCH_SUFFIX} \
        curl libxml2-dev${APT_ARCH_SUFFIX} libexpat-dev${APT_ARCH_SUFFIX} libxerces-c-dev${APT_ARCH_SUFFIX} \
        libnetcdf-dev${APT_ARCH_SUFFIX} libpoppler-dev${APT_ARCH_SUFFIX} libpoppler-private-dev${APT_ARCH_SUFFIX} \
-       libspatialite-dev${APT_ARCH_SUFFIX} librasterlite2-dev${APT_ARCH_SUFFIX} swig ant libhdf4-alt-dev${APT_ARCH_SUFFIX} libhdf5-serial-dev${APT_ARCH_SUFFIX} \
+       libspatialite-dev${APT_ARCH_SUFFIX} librasterlite2-dev${APT_ARCH_SUFFIX} swig ant libhdf4-dev${APT_ARCH_SUFFIX} libhdf5-serial-dev${APT_ARCH_SUFFIX} \
        libfreexl-dev${APT_ARCH_SUFFIX} unixodbc-dev${APT_ARCH_SUFFIX}  mdbtools-dev${APT_ARCH_SUFFIX} libwebp-dev${APT_ARCH_SUFFIX} \
-       liblcms2-2 libpcre3-dev${APT_ARCH_SUFFIX} libcrypto++-dev${APT_ARCH_SUFFIX} libfyba-dev${APT_ARCH_SUFFIX} \
-       libkml-dev${APT_ARCH_SUFFIX} libmysqlclient-dev${APT_ARCH_SUFFIX} \
+       liblcms2-2 libpcre2-dev${APT_ARCH_SUFFIX} libcrypto++-dev${APT_ARCH_SUFFIX} libfyba-dev${APT_ARCH_SUFFIX} \
+       libkml-dev${APT_ARCH_SUFFIX} libmariadb-dev${APT_ARCH_SUFFIX} \
        libcfitsio-dev${APT_ARCH_SUFFIX} openjdk-"$JAVA_VERSION"-jdk${APT_ARCH_SUFFIX} libzstd-dev${APT_ARCH_SUFFIX} \
        libpq-dev${APT_ARCH_SUFFIX} libssl-dev${APT_ARCH_SUFFIX} libboost-dev${APT_ARCH_SUFFIX} \
        autoconf automake bash-completion libarmadillo-dev${APT_ARCH_SUFFIX} \
@@ -82,7 +81,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
        libarchive-dev${APT_ARCH_SUFFIX} \
        libaec-dev${APT_ARCH_SUFFIX} \
        libavif-dev${APT_ARCH_SUFFIX} \
-       libmuparser-dev${APT_ARCH_SUFFIX}
+       libmuparser-dev${APT_ARCH_SUFFIX} \
+       libarrow-dev${APT_ARCH_SUFFIX} \
+       libarrow-acero-dev${APT_ARCH_SUFFIX} \
+       libarrow-dataset-dev${APT_ARCH_SUFFIX} \
+       libparquet-dev${APT_ARCH_SUFFIX}
 
 ARG RSYNC_REMOTE
 ARG WITH_CCACHE
@@ -91,7 +94,7 @@ ARG WITH_CCACHE
 ARG KEA_VERSION=1.6.2
 RUN --mount=type=cache,id=ubuntu-full-kealib,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
-    && curl -LO -fsS https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/ubarsc/kealib/archive/kealib-${KEA_VERSION}.zip \
     && unzip -q kealib-${KEA_VERSION}.zip \
     && rm -f kealib-${KEA_VERSION}.zip \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
@@ -127,7 +130,7 @@ ARG MONGO_C_DRIVER_VERSION=2.1.2
 RUN --mount=type=cache,id=ubuntu-full-mongo-c-driver,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir mongo-c-driver \
-    && curl -Lo - -fsS https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz \
         | tar xz -C mongo-c-driver --strip-components=1 \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
         echo "Downloading cache..."; \
@@ -163,7 +166,7 @@ ARG MONGOCXX_VERSION=4.1.4
 RUN --mount=type=cache,id=ubuntu-full-mongo-cxx-driver,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && mkdir mongocxx \
-    && curl -Lo - -fsS https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz \
         | tar xz -C mongocxx --strip-components=1 \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
         echo "Downloading cache..."; \
@@ -199,13 +202,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libspdlog-dev${APT_ARCH_SUFFIX} libmagic-dev${APT_ARCH_SUFFIX}
 
-COPY ./tiledb-FindLZ4_EP.cmake.patch /buildscripts/tiledb-FindLZ4_EP.cmake.patch
-COPY ./tiledb-FindOpenSSL_EP.cmake.patch /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch
+COPY --link ./docker/ubuntu-full/tiledb-FindLZ4_EP.cmake.patch /buildscripts/tiledb-FindLZ4_EP.cmake.patch
+COPY --link ./docker/ubuntu-full/tiledb-FindOpenSSL_EP.cmake.patch /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch
 # Commit from TileDB 2.27.
-COPY ./tiledb-cmake-ccache.patch /buildscripts/tiledb-cmake-ccache.patch
+COPY --link ./docker/ubuntu-full/tiledb-cmake-ccache.patch /buildscripts/tiledb-cmake-ccache.patch
+COPY --link ./docker/ubuntu-full/tiledb-filesystem-posix.patch /buildscripts/tiledb-filesystem-posix.patch
+COPY --link ./docker/ubuntu-full/tiledb-external-blosc-shuffle.patch /buildscripts/tiledb-external-blosc-shuffle.patch
 RUN --mount=type=cache,id=ubuntu-full-tiledb,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
@@ -218,9 +223,11 @@ RUN --mount=type=cache,id=ubuntu-full-tiledb,target=$HOME/.cache \
         ccache -M 100M; \
     fi \
     && mkdir tiledb \
-    && curl -Lo - -fsS https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz \
         | tar xz -C tiledb --strip-components=1 \
     && cd tiledb \
+    && patch -p0 < /buildscripts/tiledb-filesystem-posix.patch \
+    && patch -p0 < /buildscripts/tiledb-external-blosc-shuffle.patch \
     && patch -p0 < /buildscripts/tiledb-FindLZ4_EP.cmake.patch \
     && patch -p0 < /buildscripts/tiledb-FindOpenSSL_EP.cmake.patch \
     && patch -p1 < /buildscripts/tiledb-cmake-ccache.patch \
@@ -248,7 +255,7 @@ ARG OPENDRIVE_VERSION=0.6.0-gdal
 RUN --mount=type=cache,id=ubuntu-full-libopendrive,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     && if test "${OPENDRIVE_VERSION}" != ""; then ( \
-    curl -LO -fsS https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/DLR-TS/libOpenDRIVE/archive/refs/tags/${OPENDRIVE_VERSION}.tar.gz \
     && tar xzf ${OPENDRIVE_VERSION}.tar.gz \
     && rm -f ${OPENDRIVE_VERSION}.tar.gz \
     && if [ -n "${RSYNC_REMOTE:-}" ]; then \
@@ -283,7 +290,7 @@ RUN --mount=type=cache,id=ubuntu-full-libopendrive,target=$HOME/.cache \
 ARG WITH_FILEGDB=
 RUN . /buildscripts/bh-set-envvars.sh \
   && if echo "$WITH_FILEGDB" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  curl -LO -fsS https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.2/FileGDB_API-RHEL7-64gcc83.tar.gz \
+  curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/Esri/file-geodatabase-api/raw/master/FileGDB_API_1.5.2/FileGDB_API-RHEL7-64gcc83.tar.gz \
   && tar -xzf FileGDB_API-RHEL7-64gcc83.tar.gz \
   && chown -R root:root FileGDB_API-RHEL7-64gcc83 \
   && mv FileGDB_API-RHEL7-64gcc83 /usr/local/FileGDB_API \
@@ -296,10 +303,10 @@ RUN . /buildscripts/bh-set-envvars.sh \
 # Download Oracle InstantClient (proprietary) SDK if WITH_ORACLE=yes is passed
 ARG WITH_ORACLE=
 RUN . /buildscripts/bh-set-envvars.sh \
-  && if test "$(uname -p)" = "x86_64"; then \
+  && if test "$(uname -m)" = "x86_64"; then \
   if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
-  curl -LO -fsS https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
-  && curl -LO -fsS https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
+  curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
+  && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://download.oracle.com/otn_software/linux/instantclient/1923000/instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
   && unzip -o instantclient-basic-linux.x64-19.23.0.0.0dbru.zip \
   && unzip -o instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
   && rm -f instantclient-basic-linux.x64-19.23.0.0.0dbru.zip instantclient-sdk-linux.x64-19.23.0.0.0dbru.zip \
@@ -313,9 +320,9 @@ RUN . /buildscripts/bh-set-envvars.sh \
 # Download ECW (proprietary) SDK if WITH_ECW=yes is passed
 ARG WITH_ECW=
 RUN . /buildscripts/bh-set-envvars.sh \
-  && if test "$(uname -p)" = "x86_64"; then \
+  && if test "$(uname -m)" = "x86_64"; then \
   if echo "$WITH_ECW" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
-  curl -LO -fsS https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz \
+  curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/rouault/libecwj2-3.3-builds/releases/download/v1/install-libecwj2-3.3-ubuntu-20.04.tar.gz \
   && tar xzf install-libecwj2-3.3-ubuntu-20.04.tar.gz \
   && rm -f install-libecwj2-3.3-ubuntu-20.04.tar.gz \
   && mkdir -p /build_thirdparty/opt \
@@ -327,9 +334,9 @@ RUN . /buildscripts/bh-set-envvars.sh \
 # Download MrSID (proprietary) SDK if WITH_MRSID=yes is passed
 ARG WITH_MRSID=
 RUN . /buildscripts/bh-set-envvars.sh \
-  && if test "$(uname -p)" = "x86_64"; then \
+  && if test "$(uname -m)" = "x86_64"; then \
   if echo "$WITH_MRSID" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
-    curl -LO -fsS https://bin.extensis.com/download/developer/MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://bin.extensis.com/download/developer/MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
     && unzip MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
     && mv MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131 mrsid \
     && rm -f MrSID_DSDK-9.5.5.5244-rhel9.x86-64.gcc1131.zip \
@@ -378,12 +385,12 @@ ARG WITH_PDFIUM=yes
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
   if echo "$WITH_PDFIUM" | grep -Eiq "^(y(es)?|1|true)$"  ; then ( \
-  curl -LO -fsS https://github.com/rouault/pdfium_build_gdal_3_12/releases/download/pdfium_7391_v1/install-ubuntu2004-rev7391.tar.gz \
-  && tar -xzf install-ubuntu2004-rev7391.tar.gz \
+  curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/rouault/pdfium_build_gdal_3_13/releases/download/pdfium_7724_v1/install-ubuntu2404-rev7724.tar.gz \
+  && tar -xzf install-ubuntu2404-rev7724.tar.gz \
   && chown -R root:root install \
   && mv install/lib/* /usr/lib/ \
   && mv install/include/* /usr/include/ \
-  && rm -rf install-ubuntu2004-rev7391.tar.gz install \
+  && rm -rf install-ubuntu2404-rev7724.tar.gz install \
   && apt-get update -y \
   && apt-get install -y --fix-missing --no-install-recommends liblcms2-dev${APT_ARCH_SUFFIX} \
   ) ; fi
@@ -425,30 +432,8 @@ RUN --mount=type=cache,id=ubuntu-full-libjxl,target=$HOME/.cache \
     && cd ../.. \
     && rm -rf libjxl
 
-# Install Arrow C++
-ARG ARROW_VERSION=21.0.0-1
-# ARROW_SOVERSION to be updated in the "Build final image" section too
-ARG ARROW_SOVERSION=2100
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    . /buildscripts/bh-set-envvars.sh \
-    && apt-get update -y \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
-    && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libparquet${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dataset${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libparquet-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-acero-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dataset-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-compute-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
-    && rm apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb
-
 # Manually build ADBC packages to have support for BigQuery
-ARG ARROW_ADBC_VERSION=20
+ARG ARROW_ADBC_VERSION=22
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     . /buildscripts/bh-set-envvars.sh \
@@ -457,7 +442,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && if test "${TARGET_ARCH:-}" != ""; then \
         DEBIAN_FRONTEND=noninteractive apt-get install -y -V --no-install-recommends g++-13-${GCC_ARCH}-linux-gnu; \
     fi \
-    && curl -LO -fsS https://github.com/apache/arrow-adbc/archive/refs/tags/apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
+    && curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/apache/arrow-adbc/archive/refs/tags/apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
     && tar xzf apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
     && rm -f apache-arrow-adbc-${ARROW_ADBC_VERSION}.tar.gz \
     && cd arrow-adbc-apache-arrow-adbc-${ARROW_ADBC_VERSION}/c \
@@ -479,12 +464,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && cd ../../.. \
     && rm -rf arrow-adbc-apache-arrow-adbc-${ARROW_ADBC_VERSION}
 
+RUN mkdir gdal
+
 ARG WITH_DEBUG_SYMBOLS=no
 
 # Refresh grids
 ARG PROJ_DATUMGRID_LATEST_LAST_MODIFIED
 ARG PROJ_INSTALL_PREFIX=/usr/local/gdal-internal
-COPY ./bh-proj.sh /buildscripts/bh-proj.sh
+COPY --link ./docker/ubuntu-full/bh-proj.sh /buildscripts/bh-proj.sh
 # We build PROJ a first time, just to build the projsync utility if grids need
 # to be refreshed. We will rebuild just afterwards, but depending on the
 # PROJ_VERSION argument
@@ -510,7 +497,7 @@ RUN --mount=type=cache,id=ubuntu-full-proj,target=$HOME/.cache \
     && /buildscripts/bh-proj.sh
 
 # Download exprtk
-RUN curl -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/release/exprtk.hpp \
+RUN curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/ArashPartow/exprtk/raw/refs/heads/release/exprtk.hpp \
     && mv exprtk.hpp /usr/include
 
 # Build GDAL
@@ -519,7 +506,8 @@ ARG GDAL_RELEASE_DATE
 ARG GDAL_BUILD_IS_RELEASE
 ARG GDAL_REPOSITORY=OSGeo/gdal
 
-COPY ./bh-gdal.sh /buildscripts/bh-gdal.sh
+COPY --link ./docker/ubuntu-full/bh-gdal.sh /buildscripts/bh-gdal.sh
+COPY --link . gdal/
 RUN --mount=type=cache,id=ubuntu-full-gdal,target=$HOME/.cache \
     . /buildscripts/bh-set-envvars.sh \
     # Forcefully remove the development files for libproj so GDAL cannot
@@ -536,7 +524,7 @@ FROM $TARGET_BASE_IMAGE AS runner
 USER root
 RUN date
 ARG JAVA_VERSION=17
-ARG ARROW_SOVERSION=2100
+ARG ARROW_SOVERSION=2300
 
 ARG TARGET_ARCH=
 # Update distro
@@ -546,59 +534,53 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get update -y \
     && apt-get upgrade -y \
     # PROJ dependencies
-    && apt-get install -y \
+    && apt-get install -y --no-install-recommends \
         libsqlite3-0 libtiff6 libcurl4 \
         unzip ca-certificates \
     # GDAL dependencies
-    && apt-get install -y \
+    && apt-get install -y --no-install-recommends \
         bash-completion libopenjp2-7 libcairo2 python3-numpy \
-        libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos3.12.1 libgeos-c1v5 \
-        libxml2 libexpat1 \
-        libxerces-c3.2 libnetcdf-c++4-1 netcdf-bin libpoppler134 libspatialite8 librasterlite2-1 gpsbabel \
-        libhdf4-0-alt libhdf5-103-1 libhdf5-cpp-103-1 poppler-utils libfreexl1 unixodbc mdbtools libwebp7 \
-        liblcms2-2 libpcre3 libcrypto++8 libfyba0 \
+        libpng16-16 libjpeg-turbo8 libgif7 liblzma5 libgeos3.14.1 libgeos-c1v5 \
+        libxml2-16 libexpat1 \
+        libxerces-c3.2 libnetcdf-c++4-1 netcdf-bin libpoppler156 libspatialite8 librasterlite2-1 gpsbabel \
+        libhdf4-0 libhdf5-310 libhdf5-cpp-310 poppler-utils libfreexl1 unixodbc mdbtools libwebp7 \
+        liblcms2-2 libpcre2-8-0 libcrypto++8 libfyba0 \
         libkmlbase1 libkmlconvenience1 libkmldom1 libkmlengine1 libkmlregionator1 libkmlxsd1 \
-        libmysqlclient21 libcfitsio10 \
+        libmariadb3 libcfitsio10 \
         libzstd1 bash bash-completion libpq5 \
-        libarmadillo12 libpython3.12 libopenexr-3-1-30 libheif1 \
+        libarmadillo15 libpython3.14 libopenexr-3-1-30 libheif1 \
         libdeflate0 libblosc1 liblz4-1 \
         libbrotli1 \
         libarchive13 \
         libaec0 \
         libavif16 \
-        libspdlog1.12 libmagic1t64 \
+        libspdlog1.15 libmagic1t64 \
         libmuparser2v5 \
         libtcmalloc-minimal4 \
         python-is-python3 \
         # for validate_geoparquet.py (cf https://github.com/OSGeo/gdal/issues/11953)
         python3-jsonschema \
+        libarrow${ARROW_SOVERSION} \
+        libarrow-acero${ARROW_SOVERSION} \
+        libarrow-dataset${ARROW_SOVERSION} \
+        libparquet${ARROW_SOVERSION} \
     # Install JRE with --no-install-recommends, otherwise it draws default-jre, which draws systemd, which fails to install when running the arm64v8/ubuntu:24.04 image on a 64bit host
-    && apt-get install -y --no-install-recommends openjdk-"$JAVA_VERSION"-jre \
-    # Install Arrow C++
-    && apt-get install -y -V curl ca-certificates lsb-release \
-    && curl -LO -fsS https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
-    && apt-get purge -y curl \
-    && apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
-    && apt-get update \
-    && apt-get install -y -V libarrow${ARROW_SOVERSION} \
-    && apt-get install -y -V libparquet${ARROW_SOVERSION} \
-    && apt-get install -y -V libarrow-dataset${ARROW_SOVERSION} \
-    && apt-get install -y -V libarrow-compute${ARROW_SOVERSION}
+    && apt-get install -y --no-install-recommends openjdk-"$JAVA_VERSION"-jre
 
 # Install libduckdb
-ARG DUCKDB_VERSION=v1.4.3
+ARG DUCKDB_VERSION=v1.5.2
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install -y --no-install-recommends curl \
-    && if test "$(uname -p)" = "x86_64"; then \
-    curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-amd64.zip \
+    && if test "$(uname -m)" = "x86_64"; then \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-amd64.zip \
     && unzip libduckdb-linux-amd64.zip libduckdb.so \
     && mv libduckdb.so /usr/lib/x86_64-linux-gnu \
     && rm -f libduckdb-linux-amd64.zip; \
-    elif test "$(uname -p)" = "aarch64"; then \
-    curl -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-arm64.zip \
+    elif test "$(uname -m)" = "aarch64"; then \
+    curl --retry 3 --retry-all-errors --retry-delay 3 -LO -fsS https://github.com/duckdb/duckdb/releases/download/${DUCKDB_VERSION}/libduckdb-linux-arm64.zip \
     && unzip libduckdb-linux-arm64.zip libduckdb.so \
     && mv libduckdb.so /usr/lib/aarch64-linux-gnu \
     && rm -f libduckdb-linux-arm64.zip; \
@@ -608,34 +590,34 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 ARG WITH_ORACLE=
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  if test "$(uname -p)" = "x86_64"; then \
+  if test "$(uname -m)" = "x86_64"; then \
   if echo "$WITH_ORACLE" | grep -Eiq "^(y(es)?|1|true)$" ; then ( \
       export DEBIAN_FRONTEND=noninteractive \
       && apt-get update \
-      && apt-get install -y -V libaio1t64 \
+      && apt-get install -y --no-install-recommends -V libaio1t64 \
       && ln -s libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1 \
   ) ; fi \
   ; fi
 
 # Attempt to order layers starting with less frequently varying ones
 
-COPY --from=builder  /build_thirdparty/usr/ /usr/
-COPY --from=builder  /build_thirdparty/opt/ /opt/
+COPY --from=builder --link  /build_thirdparty/usr/ /usr/
+COPY --from=builder --link  /build_thirdparty/opt/ /opt/
 
 ARG PROJ_INSTALL_PREFIX=/usr/local/gdal-internal
-COPY --from=builder  /tmp/proj_grids/* ${PROJ_INSTALL_PREFIX}/share/proj/
+COPY --from=builder --link  /tmp/proj_grids/* ${PROJ_INSTALL_PREFIX}/share/proj/
 
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
-COPY --from=builder  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/share/proj/ ${PROJ_INSTALL_PREFIX}/share/proj/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/include/ ${PROJ_INSTALL_PREFIX}/include/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/bin/ ${PROJ_INSTALL_PREFIX}/bin/
+COPY --from=builder --link  /build${PROJ_INSTALL_PREFIX}/lib/ ${PROJ_INSTALL_PREFIX}/lib/
 
-COPY --from=builder  /build/usr/share/bash-completion/ /usr/share/bash-completion/
-COPY --from=builder  /build/usr/share/java /usr/share/java
-COPY --from=builder  /build/usr/share/gdal/ /usr/share/gdal/
-COPY --from=builder  /build/usr/include/ /usr/include/
-COPY --from=builder  /build_gdal_python/usr/ /usr/
-COPY --from=builder  /build_gdal_version_changing/usr/ /usr/
+COPY --from=builder --link  /build/usr/share/bash-completion/ /usr/share/bash-completion/
+COPY --from=builder --link  /build/usr/share/java /usr/share/java
+COPY --from=builder --link  /build/usr/share/gdal/ /usr/share/gdal/
+COPY --from=builder --link  /build/usr/include/ /usr/include/
+COPY --from=builder --link  /build_gdal_python/usr/ /usr/
+COPY --from=builder --link  /build_gdal_version_changing/usr/ /usr/
 
 RUN ldconfig
 

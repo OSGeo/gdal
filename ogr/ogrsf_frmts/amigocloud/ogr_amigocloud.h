@@ -70,7 +70,7 @@ class OGRAmigoCloudFID
 };
 
 /************************************************************************/
-/*                           OGRAmigoCloudLayer                            */
+/*                          OGRAmigoCloudLayer                          */
 /************************************************************************/
 class OGRAmigoCloudDataSource;
 
@@ -125,7 +125,7 @@ class OGRAmigoCloudLayer CPL_NON_FINAL : public OGRLayer
 };
 
 /************************************************************************/
-/*                        OGRAmigoCloudTableLayer                          */
+/*                       OGRAmigoCloudTableLayer                        */
 /************************************************************************/
 
 class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
@@ -212,7 +212,7 @@ class OGRAmigoCloudTableLayer final : public OGRAmigoCloudLayer
 };
 
 /************************************************************************/
-/*                       OGRAmigoCloudResultLayer                          */
+/*                       OGRAmigoCloudResultLayer                       */
 /************************************************************************/
 
 class OGRAmigoCloudResultLayer final : public OGRAmigoCloudLayer
@@ -233,7 +233,7 @@ class OGRAmigoCloudResultLayer final : public OGRAmigoCloudLayer
 };
 
 /************************************************************************/
-/*                           OGRAmigoCloudDataSource                    */
+/*                       OGRAmigoCloudDataSource                        */
 /************************************************************************/
 
 class OGRAmigoCloudDataSource final : public GDALDataset

@@ -1,0 +1,137 @@
+[VERSIO]
+VersMetaDades=5
+SubVersMetaDades=0
+Vers=4
+SubVers=3
+
+[METADADES]
+language=cat
+MDIdiom=cat
+dateStamp=20260218 10380785+0100
+characterSet=006
+nOrganismes=3
+FileIdentifier=34120df9-f302-49db-bbad-cb5682cfac01_integer_ext_min_conti_nodata_1_ct
+
+[METADADES:ORGANISME_1]
+role=009
+
+[METADADES:ORGANISME_2]
+role=009
+IndividualName=Abel Pau
+PositionName=GIS Developer
+OrganisationName=CREAF
+
+[METADADES:ORGANISME_3]
+role=009
+OrganisationName=Students and educational institutions
+
+[IDENTIFICATION]
+code=byte_13160
+codeSpace=
+DatasetTitle=byte
+
+[OVERVIEW:ASPECTES_TECNICS]
+columns=2
+rows=3
+
+[SPATIAL_REFERENCE_SYSTEM:HORIZONTAL]
+HorizontalSystemIdentifier=UTM-31N-ETRS89
+
+[QUALITY:LINEAGE:PROCESS1]
+nOrganismes=1
+history=IMGIMG.exe uinteger D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\rat_or_ct\integer_image.img D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\rat_or_ct\uinteger_image.img
+date=20260218 10380764+0100
+NomFitxer=C:\miramon\IMGIMG.exe
+
+[QUALITY:LINEAGE:PROCESS1:ORGANISME_1]
+IndividualName=Abel Pau
+PositionName=GIS Developer
+OrganisationName=CREAF
+
+[QUALITY:LINEAGE:PROCESS1:SOFTWARE_REFERENCE]
+Titol=
+Edition=
+CollectiveTitle=
+ISBN=
+ISSN=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT1]
+identifier=Param1
+TypeValues=C
+ResultValue=uinteger
+ResultUnits=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT2]
+identifier=Param2
+TypeValues=C
+ResultValue=D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\rat_or_ct\integer_image.img
+ResultUnits=
+
+[QUALITY:LINEAGE:PROCESS1:INOUT3]
+identifier=Param3
+TypeValues=C
+ResultValue=D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\rat_or_ct\uinteger_image.img
+ResultUnits=
+
+[QUALITY:LINEAGE]
+processes=1
+
+[EXTENT]
+MinX=516790
+MaxX=516798
+MinY=4638250
+MaxY=4638262
+toler_env=0
+
+[OVERVIEW]
+CreationDate=20260218 10380763+0100
+CoverageContentType=001
+
+[ATTRIBUTE_DATA]
+TipusCompressio=uinteger
+unitats=m
+NODATA=5
+NODATADef=Sense dades
+IndexsNomsCamps=9
+NomCamp_9=integer_ext_min_conti_nodata_1_ct
+TipusRelacio=RELACIO_1_1_DICC
+
+[ATTRIBUTE_DATA:integer_ext_min_conti_nodata_1_ct]
+descriptor=Al·leluia 1
+min=0
+max=4
+IndexsJoinTaula=G1_1_RAT
+JoinTaula_G1_1_RAT=G1_1_RAT
+
+[TAULA_G1_1_RAT]
+NomFitxer=RAT.rel
+
+[COLOR_TEXT]
+Simb_Vers=5
+Simb_SubVers=1
+UnificVisCons=1
+visualitzable=1
+consultable=1
+EscalaMaxima=0
+EscalaMinima=900000000
+Color_Const=0
+Color_TractamentVariable=QuantitatiuContinu
+Color_Paleta=CT.dbf
+Color_EscalatColor=AssigDirecta
+Color_ValorColor_0=0
+Color_ValorColor_n_1=4
+
+[VISU_LLEGENDA]
+LlegSimb_Vers=4
+LlegSimb_SubVers=5
+Color_VisibleALleg=1
+Color_TitolLlegenda=Al·leluia 1
+Color_CategAMostrar=N
+Color_N_ClassesLleg=6
+Color_InvertOrdPresentColorLleg=0
+Color_MostrarIndColorLleg=0
+Color_MostrarValColorLleg=1
+Color_MostrarCatColorLleg=0
+Color_MostrarNODATA=0
+Color_MostrarEntradesBuides=0
+Color_NovaColumnaLlegImpresa=0

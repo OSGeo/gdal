@@ -33,7 +33,7 @@ GDALPDFComposerWriter::SetLayerStateAction::~SetLayerStateAction() = default;
 GDALPDFComposerWriter::JavascriptAction::~JavascriptAction() = default;
 
 /************************************************************************/
-/*                         GDALPDFComposerWriter()                      */
+/*                       GDALPDFComposerWriter()                        */
 /************************************************************************/
 
 GDALPDFComposerWriter::GDALPDFComposerWriter(VSILFILE *fp)
@@ -43,7 +43,7 @@ GDALPDFComposerWriter::GDALPDFComposerWriter(VSILFILE *fp)
 }
 
 /************************************************************************/
-/*                        ~GDALPDFComposerWriter()                      */
+/*                       ~GDALPDFComposerWriter()                       */
 /************************************************************************/
 
 GDALPDFComposerWriter::~GDALPDFComposerWriter()
@@ -52,7 +52,7 @@ GDALPDFComposerWriter::~GDALPDFComposerWriter()
 }
 
 /************************************************************************/
-/*                                  Close()                             */
+/*                               Close()                                */
 /************************************************************************/
 
 void GDALPDFComposerWriter::Close()
@@ -70,7 +70,7 @@ void GDALPDFComposerWriter::Close()
 }
 
 /************************************************************************/
-/*                          CreateOCGOrder()                            */
+/*                           CreateOCGOrder()                           */
 /************************************************************************/
 
 GDALPDFArrayRW *GDALPDFComposerWriter::CreateOCGOrder(const TreeOfOCG *parent)
@@ -88,7 +88,7 @@ GDALPDFArrayRW *GDALPDFComposerWriter::CreateOCGOrder(const TreeOfOCG *parent)
 }
 
 /************************************************************************/
-/*                          CollectOffOCG()                             */
+/*                           CollectOffOCG()                            */
 /************************************************************************/
 
 void GDALPDFComposerWriter::CollectOffOCG(std::vector<GDALPDFObjectNum> &ar,
@@ -103,7 +103,7 @@ void GDALPDFComposerWriter::CollectOffOCG(std::vector<GDALPDFObjectNum> &ar,
 }
 
 /************************************************************************/
-/*                              WritePages()                            */
+/*                             WritePages()                             */
 /************************************************************************/
 
 void GDALPDFComposerWriter::WritePages()
@@ -298,7 +298,7 @@ bool GDALPDFComposerWriter::CreateLayerTree(const CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                             ParseActions()                           */
+/*                            ParseActions()                            */
 /************************************************************************/
 
 bool GDALPDFComposerWriter::ParseActions(
@@ -452,7 +452,7 @@ bool GDALPDFComposerWriter::CreateOutlineFirstPass(const CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                            SerializeActions()                        */
+/*                          SerializeActions()                          */
 /************************************************************************/
 
 GDALPDFDictionaryRW *GDALPDFComposerWriter::SerializeActions(
@@ -624,7 +624,7 @@ bool GDALPDFComposerWriter::CreateOutline(const CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*                        GenerateGeoreferencing()                      */
+/*                       GenerateGeoreferencing()                       */
 /************************************************************************/
 
 bool GDALPDFComposerWriter::GenerateGeoreferencing(
@@ -759,13 +759,13 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(
                      "Could not compute geotransform with approximate match.");
             return false;
         }
-        if (std::fabs(georeferencing.m_gt[2]) <
-                1e-5 * std::fabs(georeferencing.m_gt[1]) &&
-            std::fabs(georeferencing.m_gt[4]) <
-                1e-5 * std::fabs(georeferencing.m_gt[5]))
+        if (std::fabs(georeferencing.m_gt.xrot) <
+                1e-5 * std::fabs(georeferencing.m_gt.xscale) &&
+            std::fabs(georeferencing.m_gt.yrot) <
+                1e-5 * std::fabs(georeferencing.m_gt.yscale))
         {
-            georeferencing.m_gt[2] = 0;
-            georeferencing.m_gt[4] = 0;
+            georeferencing.m_gt.xrot = 0;
+            georeferencing.m_gt.yrot = 0;
         }
 
         georeferencing.m_osID = pszId;
@@ -780,7 +780,7 @@ bool GDALPDFComposerWriter::GenerateGeoreferencing(
 }
 
 /************************************************************************/
-/*                      GenerateISO32000_Georeferencing()               */
+/*                  GenerateISO32000_Georeferencing()                   */
 /************************************************************************/
 
 GDALPDFObjectNum GDALPDFComposerWriter::GenerateISO32000_Georeferencing(
@@ -906,7 +906,7 @@ GDALPDFObjectNum GDALPDFComposerWriter::GenerateISO32000_Georeferencing(
 }
 
 /************************************************************************/
-/*                         GeneratePage()                               */
+/*                            GeneratePage()                            */
 /************************************************************************/
 
 bool GDALPDFComposerWriter::GeneratePage(const CPLXMLNode *psPage)
@@ -1112,7 +1112,7 @@ bool GDALPDFComposerWriter::GeneratePage(const CPLXMLNode *psPage)
 }
 
 /************************************************************************/
-/*                          ExploreContent()                            */
+/*                           ExploreContent()                           */
 /************************************************************************/
 
 bool GDALPDFComposerWriter::ExploreContent(const CPLXMLNode *psNode,
@@ -1185,7 +1185,7 @@ bool GDALPDFComposerWriter::ExploreContent(const CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                          StartBlending()                             */
+/*                           StartBlending()                            */
 /************************************************************************/
 
 void GDALPDFComposerWriter::StartBlending(const CPLXMLNode *psNode,
@@ -1217,7 +1217,7 @@ void GDALPDFComposerWriter::StartBlending(const CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                          EndBlending()                             */
+/*                            EndBlending()                             */
 /************************************************************************/
 
 void GDALPDFComposerWriter::EndBlending(const CPLXMLNode *psNode,
@@ -1231,7 +1231,7 @@ void GDALPDFComposerWriter::EndBlending(const CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                           WriteRaster()                              */
+/*                            WriteRaster()                             */
 /************************************************************************/
 
 bool GDALPDFComposerWriter::WriteRaster(const CPLXMLNode *psNode,
@@ -1580,7 +1580,7 @@ bool GDALPDFComposerWriter::SetupVectorGeoreferencing(
 }
 
 /************************************************************************/
-/*                           WriteVector()                              */
+/*                            WriteVector()                             */
 /************************************************************************/
 
 bool GDALPDFComposerWriter::WriteVector(const CPLXMLNode *psNode,
@@ -1877,7 +1877,7 @@ bool GDALPDFComposerWriter::WriteVector(const CPLXMLNode *psNode,
 }
 
 /************************************************************************/
-/*                         WriteVectorLabel()                           */
+/*                          WriteVectorLabel()                          */
 /************************************************************************/
 
 bool GDALPDFComposerWriter::WriteVectorLabel(const CPLXMLNode *psNode,
@@ -1981,7 +1981,7 @@ bool GDALPDFComposerWriter::WriteVectorLabel(const CPLXMLNode *psNode,
 #ifdef HAVE_PDF_READ_SUPPORT
 
 /************************************************************************/
-/*                            EmitNewObject()                           */
+/*                           EmitNewObject()                            */
 /************************************************************************/
 
 GDALPDFObjectNum
@@ -2007,7 +2007,7 @@ GDALPDFComposerWriter::EmitNewObject(GDALPDFObject *poObj,
 }
 
 /************************************************************************/
-/*                         SerializeAndRenumber()                       */
+/*                        SerializeAndRenumber()                        */
 /************************************************************************/
 
 bool GDALPDFComposerWriter::SerializeAndRenumber(CPLString &osStr,
@@ -2040,7 +2040,7 @@ bool GDALPDFComposerWriter::SerializeAndRenumber(CPLString &osStr,
 }
 
 /************************************************************************/
-/*                    SerializeAndRenumberIgnoreRef()                   */
+/*                   SerializeAndRenumberIgnoreRef()                    */
 /************************************************************************/
 
 bool GDALPDFComposerWriter::SerializeAndRenumberIgnoreRef(
@@ -2115,7 +2115,7 @@ bool GDALPDFComposerWriter::SerializeAndRenumberIgnoreRef(
 }
 
 /************************************************************************/
-/*                         SerializeAndRenumber()                       */
+/*                        SerializeAndRenumber()                        */
 /************************************************************************/
 
 GDALPDFObjectNum
@@ -2126,7 +2126,7 @@ GDALPDFComposerWriter::SerializeAndRenumber(GDALPDFObject *poObj)
 }
 
 /************************************************************************/
-/*                             WritePDF()                               */
+/*                              WritePDF()                              */
 /************************************************************************/
 
 bool GDALPDFComposerWriter::WritePDF(const CPLXMLNode *psNode,
@@ -2308,7 +2308,7 @@ bool GDALPDFComposerWriter::Generate(const CPLXMLNode *psComposition)
 }
 
 /************************************************************************/
-/*                          GDALPDFErrorHandler()                       */
+/*                        GDALPDFErrorHandler()                         */
 /************************************************************************/
 
 static void CPL_STDCALL GDALPDFErrorHandler(CPL_UNUSED CPLErr eErr,
@@ -2321,7 +2321,7 @@ static void CPL_STDCALL GDALPDFErrorHandler(CPL_UNUSED CPLErr eErr,
 }
 
 /************************************************************************/
-/*                      GDALPDFCreateFromCompositionFile()              */
+/*                  GDALPDFCreateFromCompositionFile()                  */
 /************************************************************************/
 
 GDALDataset *GDALPDFCreateFromCompositionFile(const char *pszPDFFilename,

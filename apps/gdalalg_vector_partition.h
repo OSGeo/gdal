@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                  GDALVectorPartitionAlgorithm                        */
+/*                     GDALVectorPartitionAlgorithm                     */
 /************************************************************************/
 
 class GDALVectorPartitionAlgorithm /* non final */

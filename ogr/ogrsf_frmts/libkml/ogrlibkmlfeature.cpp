@@ -110,7 +110,7 @@ static CameraPtr feat2kmlcamera(const struct fieldconfig &oFC, int iHeading,
 }
 
 /************************************************************************/
-/*                 OGRLIBKMLReplaceXYLevelInURL()                       */
+/*                    OGRLIBKMLReplaceXYLevelInURL()                    */
 /************************************************************************/
 
 static CPLString OGRLIBKMLReplaceLevelXYInURL(const char *pszURL, int level,
@@ -133,7 +133,7 @@ static CPLString OGRLIBKMLReplaceLevelXYInURL(const char *pszURL, int level,
 }
 
 /************************************************************************/
-/*                        IsPowerOf2                                    */
+/*                              IsPowerOf2                              */
 /************************************************************************/
 
 static bool IsPowerOf2(int nVal)
@@ -147,7 +147,7 @@ static bool IsPowerOf2(int nVal)
 }
 
 /************************************************************************/
-/*                    OGRLIBKMLGetMaxDimensions()                       */
+/*                     OGRLIBKMLGetMaxDimensions()                      */
 /************************************************************************/
 
 static void OGRLIBKMLGetMaxDimensions(const char *pszURL, int nTileSize,
@@ -201,7 +201,7 @@ static void OGRLIBKMLGetMaxDimensions(const char *pszURL, int nTileSize,
 }
 
 /************************************************************************/
-/*                           feat2kml()                                 */
+/*                              feat2kml()                              */
 /************************************************************************/
 
 FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,

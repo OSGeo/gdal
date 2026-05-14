@@ -4,13 +4,42 @@
 Migration guide
 ================================================================================
 
+From GDAL 3.13 to GDAL 3.14
+---------------------------
+
+- Changes impacting C++ users:
+
+    * All methods accepting or returning ``OGRBoolean`` (aliased to ``int``)
+      have been changed to use ``bool`` instead.
+
 From GDAL 3.12 to GDAL 3.13
 ---------------------------
+
+- C API changes:
+
+  * the following functions now return a ``OGRErr`` whereas they returned void
+    before: :cpp:func:`OGR_G_SetPointCount`, :cpp:func:`OGR_G_SetPoint`,
+    :cpp:func:`OGR_G_SetPoint_2D`, :cpp:func:`OGR_G_SetPointM`,
+    :cpp:func:`OGR_G_SetPointZM`, :cpp:func:`OGR_G_AddPoint`,
+    :cpp:func:`OGR_G_AddPoint_2D`, :cpp:func:`OGR_G_AddPointM`,
+    :cpp:func:`OGR_G_AddPointZM`, :cpp:func:`OGR_G_SetPoints` and
+    :cpp:func:`OGR_G_SetPointsZM`.
+
+  * ``MIN``, ``MAX`` and ``ABS`` pre-processor macros defined in :source_file:`port/cpl_port.h`
+    have been renamed to ``CPL_MIN``, ``CPL_MAX`` and ``CPL_ABS``.
+
+  * ``M_PI`` is no longer exported. Users that would rely on this macro must now
+    include :file:`math.h`, with the ``_USE_MATH_DEFINES`` macro defined before.
 
 - Changes impacting out-of-tree vector drivers:
 
   * :cpp:func:`GDALDataset::Close` takes now 2 input parameters ``(GDALProgressFunc pfnProgress, void *pProgressData)``,
     which may be nullptr.
+  * :cpp:func:`GDALDataset::AddBand`, :cpp:func:`GDALDataset::AdviseRead`,
+    :cpp:func:`GDALDataset::BeginAsyncReader`, :cpp:func:`GDALDataset::CopyLayer`,
+    ``GDALDriver::pfnCreate``, ``GDALDriver::pfnCreateCopy``,
+    :cpp:func:`GDALRasterBand::AdviseRead` and :cpp:func:`GDALRasterBand::GetVirtualMemAuto`
+    now take a ``CSLConstList papszOptions`` parameter instead of ``char **``.
 
 - Changes impacting C++ users:
 
@@ -21,6 +50,22 @@ From GDAL 3.12 to GDAL 3.13
     This will require users that stored the return value of those functions in
     ``char **`` to use ``CSLConstList`` instead. Such change is compatible with
     earlier GDAL versions.
+
+- GDAL CLI changes:
+
+  * Several command-line arguments in the unified GDAL CLI were renamed from a
+    --src/--dst pattern to an --input/--output pattern. The old argument names
+    are still accepted by command line tools, C, C++ and Python API.
+
+- Behavior changes:
+
+  * RasterIO resampling/VRT: do it by default in the output buffer type
+    unless new field GDALRasterIOExtraArg::bOperateInBufType in set to false
+    (#14221).
+    For example, now by default is using non-nearest resampling in RasterIO()
+    to read a Byte band into a Float32 buffer, the result will generally be
+    non-integer values, matching what is assumed to be the default wished
+    behavior.
 
 From GDAL 3.11 to GDAL 3.12
 ---------------------------

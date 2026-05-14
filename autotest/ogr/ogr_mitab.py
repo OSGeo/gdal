@@ -41,6 +41,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("MapInfo File")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -448,8 +449,7 @@ def test_ogr_mitab_20(tmp_vsimem, tmp_path, fmt, i):
     )
     sr = osr.SpatialReference()
     if i == 1 or i == 2:  # French bounds
-        sr.SetFromUserInput(
-            """PROJCS["RGF93 / Lambert-93",
+        sr.SetFromUserInput("""PROJCS["RGF93 / Lambert-93",
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 80",6378137,298.257222101],
@@ -464,11 +464,9 @@ def test_ogr_mitab_20(tmp_vsimem, tmp_path, fmt, i):
     PARAMETER["false_easting",700000],
     PARAMETER["false_northing",6600000],
     UNIT["Meter",1.0],
-    AUTHORITY["EPSG","2154"]]"""
-        )
+    AUTHORITY["EPSG","2154"]]""")
     elif i == 5:  # European bounds
-        sr.SetFromUserInput(
-            """PROJCS["RGF93 / Lambert-93",
+        sr.SetFromUserInput("""PROJCS["RGF93 / Lambert-93",
     GEOGCS["RGF93",
         DATUM["Reseau_Geodesique_Francais_1993",
             SPHEROID["GRS 80",6378137,298.257222101],
@@ -483,8 +481,7 @@ def test_ogr_mitab_20(tmp_vsimem, tmp_path, fmt, i):
     PARAMETER["false_easting",700000],
     PARAMETER["false_northing",6600000],
     UNIT["Meter",1.0],
-    AUTHORITY["EPSG","2154"]]"""
-        )
+    AUTHORITY["EPSG","2154"]]""")
     else:
         sr.ImportFromEPSG(2154)
     if i == 4:
@@ -1142,7 +1139,7 @@ def test_ogr_mitab_28(tmp_vsimem):
     # Check sequential enumeration
     for f in lyr:
         g = f.GetGeometryRef()
-        (x, y, _) = g.GetPoint(0)
+        x, y, _ = g.GetPoint(0)
         n = permutation[i]
         x_ref = int(n / N2)
         y_ref = n % N2
@@ -1436,8 +1433,7 @@ def test_ogr_mitab_34(tmp_vsimem):
 def get_srs_from_coordsys(workdir, coordsys):
     mif_filename = workdir / "foo.mif"
     f = gdal.VSIFOpenL(mif_filename, "wb")
-    content = (
-        """Version 300
+    content = """Version 300
 Charset "Neutral"
 Delimiter ","
 %s
@@ -1446,9 +1442,7 @@ Columns 1
 Data
 
 NONE
-"""
-        % coordsys
-    )
+""" % coordsys
     content = content.encode("ascii")
     gdal.VSIFWriteL(content, 1, len(content), f)
     gdal.VSIFCloseL(f)
@@ -1622,7 +1616,7 @@ def test_ogr_mitab_35(tmp_vsimem):
         == 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000'
     )
     srs = get_srs_from_coordsys(tmp_vsimem, coordsys)
-    assert srs.GetAuthorityCode(None) == "2154"
+    assert srs.GetAuthorityCode() == "2154"
     coordsys = get_coordsys_from_srs(tmp_vsimem, srs)
     assert (
         coordsys
@@ -1654,13 +1648,11 @@ def test_ogr_mitab_35(tmp_vsimem):
     # We don't round-trip currently
 
     # MIF 999
-    srs = osr.SpatialReference(
-        """GEOGCS["unnamed",
+    srs = osr.SpatialReference("""GEOGCS["unnamed",
         DATUM["MIF 999,1,1,2,3",
             SPHEROID["WGS 72",6378135,298.26]],
         PRIMEM["Greenwich",0],
-        UNIT["degree",0.0174532925199433]]"""
-    )
+        UNIT["degree",0.0174532925199433]]""")
     coordsys = get_coordsys_from_srs(tmp_vsimem, srs)
     assert coordsys == "CoordSys Earth Projection 1, 999, 1, 1, 2, 3"
     srs = get_srs_from_coordsys(tmp_vsimem, coordsys)
@@ -1671,13 +1663,11 @@ def test_ogr_mitab_35(tmp_vsimem):
     )
 
     # MIF 9999
-    srs = osr.SpatialReference(
-        """GEOGCS["unnamed",
+    srs = osr.SpatialReference("""GEOGCS["unnamed",
         DATUM["MIF 9999,1,1,2,3,4,5,6,7,3",
             SPHEROID["WGS 72",6378135,298.26]],
         PRIMEM["Greenwich",0],
-        UNIT["degree",0.0174532925199433]]"""
-    )
+        UNIT["degree",0.0174532925199433]]""")
     coordsys = get_coordsys_from_srs(tmp_vsimem, srs)
     assert coordsys == "CoordSys Earth Projection 1, 9999, 1, 1, 2, 3, 4, 5, 6, 7, 3"
     srs = get_srs_from_coordsys(tmp_vsimem, coordsys)
@@ -2119,8 +2109,7 @@ def test_ogr_mitab_48(tmp_vsimem):
 
     ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(tmp_vsimem / "test.mif")
     sr = osr.SpatialReference()
-    sr.SetFromUserInput(
-        """PROJCS["NTF (Paris) / France IV (deprecated)",
+    sr.SetFromUserInput("""PROJCS["NTF (Paris) / France IV (deprecated)",
     GEOGCS["NTF (Paris)",
         DATUM["Nouvelle_Triangulation_Francaise_Paris",
             SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936269,
@@ -2142,8 +2131,7 @@ def test_ogr_mitab_48(tmp_vsimem):
         AUTHORITY["EPSG","9001"]],
     AXIS["X",EAST],
     AXIS["Y",NORTH],
-    AUTHORITY["EPSG","27584"]]"""
-    )
+    AUTHORITY["EPSG","27584"]]""")
     lyr = ds.CreateLayer("foo", srs=sr)
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     ds = None
@@ -2154,8 +2142,7 @@ def test_ogr_mitab_48(tmp_vsimem):
     ds = None
 
     sr_expected = osr.SpatialReference()
-    sr_expected.SetFromUserInput(
-        """PROJCS["unnamed",
+    sr_expected.SetFromUserInput("""PROJCS["unnamed",
     GEOGCS["unnamed",
         DATUM["NTF_Paris_Meridian",
             SPHEROID["Clarke 1880 (modified for IGN)",6378249.2,293.4660213],
@@ -2168,8 +2155,7 @@ def test_ogr_mitab_48(tmp_vsimem):
     PARAMETER["scale_factor",0.99994471],
     PARAMETER["false_easting",234.358],
     PARAMETER["false_northing",4185861.369],
-    UNIT["metre",1]]"""
-    )
+    UNIT["metre",1]]""")
 
     assert sr_got.IsSame(sr_expected) != 0, sr_got.ExportToPrettyWkt()
 
@@ -2585,6 +2571,19 @@ def test_ogr_mitab_description(tmp_vsimem):
 
 
 ###############################################################################
+# Check write/read description
+
+
+def test_ogr_mitab_all_double_quotes(tmp_vsimem):
+    filename = tmp_vsimem / "test_description.tab"
+
+    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test_description", options=["DESCRIPTION=" + ('"' * 100)])
+    lyr.CreateField(ogr.FieldDefn("test", ogr.OFTInteger))
+    assert lyr.GetMetadataItem("DESCRIPTION") == ('"' * 100)
+
+
+###############################################################################
 # Test writing and reading back unset/null date, time, datetime
 
 
@@ -2767,8 +2766,7 @@ def test_ogr_mitab_write_etrs89_from_crs_wkt2(tmp_vsimem):
 def test_ogr_mitab_write_etrs89_from_custom_wkt_geogcs_code(tmp_vsimem):
 
     srs = osr.SpatialReference()
-    srs.ImportFromWkt(
-        """PROJCS["ETRS89 / UTM zone 32N",
+    srs.ImportFromWkt("""PROJCS["ETRS89 / UTM zone 32N",
         GEOGCS["ETRS89",
             DATUM["European_Terrestrial_Reference_System_1989",
                 SPHEROID["GRS 1980",6378137,298.257222101,
@@ -2787,8 +2785,7 @@ def test_ogr_mitab_write_etrs89_from_custom_wkt_geogcs_code(tmp_vsimem):
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
         AXIS["Easting",EAST],
-        AXIS["Northing",NORTH]]"""
-    )
+        AXIS["Northing",NORTH]]""")
     _test_srs(tmp_vsimem, srs, "EPSG:25832")
 
 
@@ -2798,8 +2795,7 @@ def test_ogr_mitab_write_etrs89_from_custom_wkt_geogcs_code(tmp_vsimem):
 def test_ogr_mitab_write_etrs89_from_custom_wkt_no_geogcs_code(tmp_vsimem):
 
     srs = osr.SpatialReference()
-    srs.ImportFromWkt(
-        """PROJCS["ETRS89 / UTM zone 32N",
+    srs.ImportFromWkt("""PROJCS["ETRS89 / UTM zone 32N",
         GEOGCS["ETRS89",
             DATUM["European_Terrestrial_Reference_System_1989",
                 SPHEROID["GRS 1980",6378137,298.257222101,
@@ -2818,8 +2814,7 @@ def test_ogr_mitab_write_etrs89_from_custom_wkt_no_geogcs_code(tmp_vsimem):
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
         AXIS["Easting",EAST],
-        AXIS["Northing",NORTH]]"""
-    )
+        AXIS["Northing",NORTH]]""")
     _test_srs(tmp_vsimem, srs, "EPSG:25832")
 
 
@@ -3078,3 +3073,90 @@ def test_ogr_mitab_creation_illegal_layer_name(tmp_vsimem):
     ds = ogr.GetDriverByName("MapInfo File").CreateDataSource(tmp_vsimem / "out")
     with pytest.raises(Exception, match="Illegal character"):
         ds.CreateLayer("illegal/with/slash")
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mitab_mif_linestring_one_point(tmp_vsimem):
+
+    with gdal.GetDriverByName("MapInfo File").CreateVector(
+        tmp_vsimem / "out.mif"
+    ) as ds:
+        lyr = ds.CreateLayer("out")
+        lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING (1 2)"))
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(tmp_vsimem / "out.mif", "rb") as f:
+        data = f.read()
+
+    assert (
+        data
+        == b'Version 300\nCharset "Neutral"\nDelimiter ","\nColumns 1\n  ID Integer\nData\n\nPline 1\n1 2\n    Pen (1,2,0)\n'
+    )
+
+    with ogr.Open(tmp_vsimem / "out.mif") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "LINESTRING (1 2)"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mitab_mif_multilinestring_one_point(tmp_vsimem):
+
+    with gdal.GetDriverByName("MapInfo File").CreateVector(
+        tmp_vsimem / "out.mif"
+    ) as ds:
+        lyr = ds.CreateLayer("out")
+        lyr.CreateField(ogr.FieldDefn("ID", ogr.OFTInteger))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("MULTILINESTRING ((1 2))"))
+        lyr.CreateFeature(f)
+
+    with gdal.VSIFile(tmp_vsimem / "out.mif", "rb") as f:
+        data = f.read()
+
+    assert (
+        data
+        == b'Version 300\nCharset "Neutral"\nDelimiter ","\nColumns 1\n  ID Integer\nData\n\nPLINE MULTIPLE 1\n  1\n1 2\n    Pen (1,2,0)\n'
+    )
+
+    with ogr.Open(tmp_vsimem / "out.mif") as ds:
+        lyr = ds.GetLayer(0)
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToWkt() == "MULTILINESTRING ((1 2))"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mitab_used_layer_creation_option_instead_of_creation_option(tmp_vsimem):
+
+    with gdal.GetDriverByName("MapInfo File").CreateVector(
+        tmp_vsimem / "out.mif"
+    ) as ds:
+        with gdaltest.error_raised(
+            gdal.CE_Warning, match="but a creation option of that name exists"
+        ):
+            lyr = ds.CreateLayer("out", options=["FORMAT=TAB"])
+            lyr.CreateField(ogr.FieldDefn("x"))
+
+
+###############################################################################
+
+
+@gdaltest.disable_exceptions()
+def test_ogr_mitab_gh_14529(tmp_vsimem):
+
+    with gdal.quiet_errors():
+        with ogr.Open("data/mitab/poc_14529") as ds:
+            for lyr in ds:
+                for f in lyr:
+                    pass

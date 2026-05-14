@@ -110,9 +110,7 @@ class OGRArrowArrayStream
     }
 
   private:
-    struct ArrowArrayStream m_stream
-    {
-    };
+    struct ArrowArrayStream m_stream{};
 
     OGRArrowArrayStream(const OGRArrowArrayStream &) = delete;
     OGRArrowArrayStream(OGRArrowArrayStream &&) = delete;

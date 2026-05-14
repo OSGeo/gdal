@@ -56,7 +56,7 @@ VRTDriver::~VRTDriver()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **VRTDriver::GetMetadataDomainList()
@@ -172,7 +172,7 @@ VRTSource *VRTDriver::ParseSource(const CPLXMLNode *psSrc,
 /************************************************************************/
 
 static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                  int /* bStrict */, char **papszOptions,
+                                  int /* bStrict */, CSLConstList papszOptions,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData)
 {

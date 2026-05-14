@@ -43,7 +43,7 @@
 #endif  // ndef SQLColumns_TABLE_CAT
 
 /************************************************************************/
-/*                           CPLODBCDriverInstaller()                   */
+/*                       CPLODBCDriverInstaller()                       */
 /************************************************************************/
 
 CPLODBCDriverInstaller::CPLODBCDriverInstaller()
@@ -152,7 +152,7 @@ int CPLODBCDriverInstaller::InstallDriver(const char *pszDriver,
 }
 
 /************************************************************************/
-/*                      FindMdbToolsDriverLib()                         */
+/*                       FindMdbToolsDriverLib()                        */
 /************************************************************************/
 
 bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
@@ -224,14 +224,13 @@ bool CPLODBCDriverInstaller::FindMdbToolsDriverLib(CPLString &osDriverFile)
         }
     }
 
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "ODBC: MDB Tools driver not found!\n");
+    CPLError(CE_Failure, CPLE_AppDefined, "ODBC: MDB Tools driver not found!");
     // Driver not found!
     return false;
 }
 
 /************************************************************************/
-/*                              LibraryExists()                         */
+/*                           LibraryExists()                            */
 /************************************************************************/
 
 bool CPLODBCDriverInstaller::LibraryExists(const char *pszLibPath)
@@ -252,7 +251,7 @@ bool CPLODBCDriverInstaller::LibraryExists(const char *pszLibPath)
 }
 
 /************************************************************************/
-/*                      InstallMdbToolsDriver()                         */
+/*                       InstallMdbToolsDriver()                        */
 /************************************************************************/
 
 void CPLODBCDriverInstaller::InstallMdbToolsDriver()
@@ -312,7 +311,7 @@ void CPLODBCDriverInstaller::InstallMdbToolsDriver()
 }
 
 /************************************************************************/
-/*                           RemoveDriver()                             */
+/*                            RemoveDriver()                            */
 /************************************************************************/
 
 int CPLODBCDriverInstaller::RemoveDriver(const char *pszDriverName,
@@ -384,7 +383,7 @@ int CPLODBCSession::CloseSession()
 }
 
 /************************************************************************/
-/*                       ClearTransaction()                             */
+/*                          ClearTransaction()                          */
 /************************************************************************/
 
 /** Clear transaction */
@@ -419,7 +418,7 @@ int CPLODBCSession::ClearTransaction()
 }
 
 /************************************************************************/
-/*                       CommitTransaction()                            */
+/*                         CommitTransaction()                          */
 /************************************************************************/
 
 /** Begin transaction */
@@ -458,7 +457,7 @@ int CPLODBCSession::BeginTransaction()
 }
 
 /************************************************************************/
-/*                       CommitTransaction()                            */
+/*                         CommitTransaction()                          */
 /************************************************************************/
 
 /** Commit transaction */
@@ -481,7 +480,7 @@ int CPLODBCSession::CommitTransaction()
 }
 
 /************************************************************************/
-/*                       RollbackTransaction()                          */
+/*                        RollbackTransaction()                         */
 /************************************************************************/
 
 /** Rollback transaction */
@@ -567,7 +566,7 @@ int CPLODBCSession::Failed(int nRetCode, HSTMT hStmt)
 }
 
 /************************************************************************/
-/*                          ConnectToMsAccess()                          */
+/*                         ConnectToMsAccess()                          */
 /************************************************************************/
 
 /**
@@ -947,7 +946,7 @@ int CPLODBCStatement::CollectResultsInfo()
 }
 
 /************************************************************************/
-/*                            GetRowCountAffected()                     */
+/*                        GetRowCountAffected()                         */
 /************************************************************************/
 
 /** GetRowCountAffected */
@@ -1024,7 +1023,7 @@ short CPLODBCStatement::GetColType(int iCol)
 }
 
 /************************************************************************/
-/*                             GetColTypeName()                         */
+/*                           GetColTypeName()                           */
 /************************************************************************/
 
 /**
@@ -1113,7 +1112,7 @@ short CPLODBCStatement::GetColNullable(int iCol)
 }
 
 /************************************************************************/
-/*                             GetColColumnDef()                        */
+/*                          GetColColumnDef()                           */
 /************************************************************************/
 
 /**
@@ -1480,7 +1479,7 @@ int CPLODBCStatement::GetColDataLength(int iCol)
 }
 
 /************************************************************************/
-/*                        GetColDataAsDouble()                          */
+/*                         GetColDataAsDouble()                         */
 /************************************************************************/
 
 /**
@@ -1644,7 +1643,7 @@ void CPLODBCStatement::Append(const char *pszText)
 }
 
 /************************************************************************/
-/*                      Append(const std::string &)                     */
+/*                     Append(const std::string &)                      */
 /************************************************************************/
 
 /**
@@ -2233,7 +2232,7 @@ CPLString CPLODBCStatement::GetTypeName(int nTypeCode)
 }
 
 /************************************************************************/
-/*                            GetTypeMapping()                          */
+/*                           GetTypeMapping()                           */
 /************************************************************************/
 
 /**

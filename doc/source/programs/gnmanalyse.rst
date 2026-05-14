@@ -63,3 +63,8 @@ The :program:`gnmanalyse` program provides analysing capabilities of geographica
 .. option:: -alo <NAME>=<VALUE>
 
     Algorithm option (format specific)
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

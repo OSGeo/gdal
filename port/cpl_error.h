@@ -25,20 +25,43 @@
  =====================================================================*/
 
 /**
- * \file cpl_error.h
- *
- * CPL error handling services.
+ \file cpl_error.h
+
+ CPL error handling services.
+
+ \verbatim embed:rst
+ See :ref:`error handling <error_handling>` for an introduction.
+ \endverbatim
  */
 
 CPL_C_START
 
-/** Error category */
+/** Error category / error level.
+ *
+ * Can be used either as return code for a number of functions of the GDAL API,
+ * or as the error level in warning/errors raised by CPLError().
+ */
 typedef enum
 {
+    /** No error. Only used as the return value of a function */
     CE_None = 0,
+
+    /** Debug message. Emitted through CPLDebug(). */
     CE_Debug = 1,
+
+    /** Non-nominal situation that is worth bringing to the attention of the
+     * user, but that does not prevent the ongoing operation to complete.
+     */
     CE_Warning = 2,
+
+    /** Error that prevents the current operation to succeed. Other following
+     * GDAL operations might succeed.
+     */
     CE_Failure = 3,
+
+    /** Fatal unrecoverable error. The process is terminated with
+     * abort() after it is emitted.
+     */
     CE_Fatal = 4
 } CPLErr;
 
@@ -79,7 +102,7 @@ typedef enum
 /** Error number */
 typedef int CPLErrorNum;
 
-/** No error */
+/** No error. Category used by CPLDebug() */
 #define CPLE_None 0
 /** Application defined error */
 #define CPLE_AppDefined 1

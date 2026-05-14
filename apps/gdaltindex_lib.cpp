@@ -63,7 +63,7 @@ typedef enum
 } SrcSRSFormat;
 
 /************************************************************************/
-/*                        GDALTileIndexRasterMetadata                   */
+/*                     GDALTileIndexRasterMetadata                      */
 /************************************************************************/
 
 struct GDALTileIndexRasterMetadata
@@ -74,7 +74,7 @@ struct GDALTileIndexRasterMetadata
 };
 
 /************************************************************************/
-/*                          GDALTileIndexOptions                        */
+/*                         GDALTileIndexOptions                         */
 /************************************************************************/
 
 struct GDALTileIndexOptions
@@ -118,7 +118,7 @@ struct GDALTileIndexOptions
 };
 
 /************************************************************************/
-/*                             ReleaseArray()                           */
+/*                            ReleaseArray()                            */
 /************************************************************************/
 
 static void ReleaseArray(struct ArrowArray *array)
@@ -146,7 +146,7 @@ static void ReleaseArray(struct ArrowArray *array)
 }
 
 /************************************************************************/
-/*                     GDALTileIndexAppOptionsGetParser()               */
+/*                  GDALTileIndexAppOptionsGetParser()                  */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser> GDALTileIndexAppOptionsGetParser(
@@ -367,7 +367,7 @@ static std::unique_ptr<GDALArgumentParser> GDALTileIndexAppOptionsGetParser(
 }
 
 /************************************************************************/
-/*                  GDALTileIndexAppGetParserUsage()                    */
+/*                   GDALTileIndexAppGetParserUsage()                   */
 /************************************************************************/
 
 std::string GDALTileIndexAppGetParserUsage()
@@ -389,7 +389,7 @@ std::string GDALTileIndexAppGetParserUsage()
 }
 
 /************************************************************************/
-/*                        GDALTileIndexTileIterator                     */
+/*                      GDALTileIndexTileIterator                       */
 /************************************************************************/
 
 struct GDALTileIndexTileIterator
@@ -1191,6 +1191,7 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
         topSchema.children = topSchemasPointers.data();
     }
 
+    CPLXMLTreeCloser psRoot(nullptr);
     if (!psOptions->osGTIFilename.empty())
     {
         if (!psOptions->aosMetadata.empty())
@@ -1199,28 +1200,29 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                      "-mo is not supported when -gti_filename is used");
             return nullptr;
         }
-        CPLXMLNode *psRoot =
-            CPLCreateXMLNode(nullptr, CXT_Element, "GDALTileIndexDataset");
-        CPLCreateXMLElementAndValue(psRoot, "IndexDataset", pszDest);
-        CPLCreateXMLElementAndValue(psRoot, "IndexLayer", poLayer->GetName());
-        CPLCreateXMLElementAndValue(psRoot, "LocationField",
+        psRoot.reset(
+            CPLCreateXMLNode(nullptr, CXT_Element, "GDALTileIndexDataset"));
+        CPLCreateXMLElementAndValue(psRoot.get(), "IndexDataset", pszDest);
+        CPLCreateXMLElementAndValue(psRoot.get(), "IndexLayer",
+                                    poLayer->GetName());
+        CPLCreateXMLElementAndValue(psRoot.get(), "LocationField",
                                     psOptions->osLocationField.c_str());
         if (!std::isnan(psOptions->xres))
         {
-            CPLCreateXMLElementAndValue(psRoot, "ResX",
+            CPLCreateXMLElementAndValue(psRoot.get(), "ResX",
                                         CPLSPrintf("%.18g", psOptions->xres));
-            CPLCreateXMLElementAndValue(psRoot, "ResY",
+            CPLCreateXMLElementAndValue(psRoot.get(), "ResY",
                                         CPLSPrintf("%.18g", psOptions->yres));
         }
         if (!std::isnan(psOptions->xmin))
         {
-            CPLCreateXMLElementAndValue(psRoot, "MinX",
+            CPLCreateXMLElementAndValue(psRoot.get(), "MinX",
                                         CPLSPrintf("%.18g", psOptions->xmin));
-            CPLCreateXMLElementAndValue(psRoot, "MinY",
+            CPLCreateXMLElementAndValue(psRoot.get(), "MinY",
                                         CPLSPrintf("%.18g", psOptions->ymin));
-            CPLCreateXMLElementAndValue(psRoot, "MaxX",
+            CPLCreateXMLElementAndValue(psRoot.get(), "MaxX",
                                         CPLSPrintf("%.18g", psOptions->xmax));
-            CPLCreateXMLElementAndValue(psRoot, "MaxY",
+            CPLCreateXMLElementAndValue(psRoot.get(), "MaxY",
                                         CPLSPrintf("%.18g", psOptions->ymax));
         }
 
@@ -1260,7 +1262,7 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
 
         for (int i = 0; i < nBandCount; ++i)
         {
-            auto psBand = CPLCreateXMLNode(psRoot, CXT_Element, "Band");
+            auto psBand = CPLCreateXMLNode(psRoot.get(), CXT_Element, "Band");
             CPLAddXMLAttributeAndValue(psBand, "band", CPLSPrintf("%d", i + 1));
             if (!psOptions->osDataType.empty())
             {
@@ -1299,13 +1301,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
 
         if (psOptions->bMaskBand)
         {
-            CPLCreateXMLElementAndValue(psRoot, "MaskBand", "true");
+            CPLCreateXMLElementAndValue(psRoot.get(), "MaskBand", "true");
         }
-        int res =
-            CPLSerializeXMLTreeToFile(psRoot, psOptions->osGTIFilename.c_str());
-        CPLDestroyXMLNode(psRoot);
-        if (!res)
-            return nullptr;
     }
     else
     {
@@ -1791,6 +1788,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
 
     int iCur = 0;
     int nTotal = nSrcCount + 1;
+    int nBandInterleavedCount = 0;
+    int nPixelInterleavedCount = 0;
     while (true)
     {
         const std::string osSrcFilename = oGDALTileIndexTileIterator.next();
@@ -1849,6 +1848,19 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                 if (bFailOnErrors)
                     return nullptr;
                 continue;
+            }
+        }
+
+        if (poSrcDS->GetRasterCount() > 1)
+        {
+            const char *pszInterleaving =
+                poSrcDS->GetMetadataItem("INTERLEAVE", "IMAGE_STRUCTURE");
+            if (pszInterleaving)
+            {
+                if (EQUAL(pszInterleaving, "BAND"))
+                    ++nBandInterleavedCount;
+                else if (EQUAL(pszInterleaving, "PIXEL"))
+                    ++nPixelInterleavedCount;
             }
         }
 
@@ -1912,20 +1924,20 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
 
         double adfX[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
         double adfY[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
-        adfX[0] = gt[0] + 0 * gt[1] + 0 * gt[2];
-        adfY[0] = gt[3] + 0 * gt[4] + 0 * gt[5];
+        adfX[0] = gt.xorig + 0 * gt.xscale + 0 * gt.xrot;
+        adfY[0] = gt.yorig + 0 * gt.yrot + 0 * gt.yscale;
 
-        adfX[1] = gt[0] + nXSize * gt[1] + 0 * gt[2];
-        adfY[1] = gt[3] + nXSize * gt[4] + 0 * gt[5];
+        adfX[1] = gt.xorig + nXSize * gt.xscale + 0 * gt.xrot;
+        adfY[1] = gt.yorig + nXSize * gt.yrot + 0 * gt.yscale;
 
-        adfX[2] = gt[0] + nXSize * gt[1] + nYSize * gt[2];
-        adfY[2] = gt[3] + nXSize * gt[4] + nYSize * gt[5];
+        adfX[2] = gt.xorig + nXSize * gt.xscale + nYSize * gt.xrot;
+        adfY[2] = gt.yorig + nXSize * gt.yrot + nYSize * gt.yscale;
 
-        adfX[3] = gt[0] + 0 * gt[1] + nYSize * gt[2];
-        adfY[3] = gt[3] + 0 * gt[4] + nYSize * gt[5];
+        adfX[3] = gt.xorig + 0 * gt.xscale + nYSize * gt.xrot;
+        adfY[3] = gt.yorig + 0 * gt.yrot + nYSize * gt.yscale;
 
-        adfX[4] = gt[0] + 0 * gt[1] + 0 * gt[2];
-        adfY[4] = gt[3] + 0 * gt[4] + 0 * gt[5];
+        adfX[4] = gt.xorig + 0 * gt.xscale + 0 * gt.xrot;
+        adfY[4] = gt.yorig + 0 * gt.yrot + 0 * gt.yscale;
 
         const double dfMinXBeforeReproj =
             std::min(std::min(adfX[0], adfX[1]), std::min(adfX[2], adfX[3]));
@@ -1936,19 +1948,44 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
         const double dfMaxYBeforeReproj =
             std::max(std::max(adfY[0], adfY[1]), std::max(adfY[2], adfY[3]));
 
-        // If set target srs, do the forward transformation of all points.
+        // If set target srs, compute the reprojected extent.
+        // Use GDALWarp() with VRT output so the stored bounding box matches
+        // what the GTI reader computes in its Pass 1 (GetSourceDesc).
+        // A plain 4-corner transform or standalone GDALSuggestedWarpOutput2()
+        // can underestimate the extent because GDALWarp() may adjust the
+        // resolution after calling GDALSuggestedWarpOutput2(), producing a
+        // different pixel count and thus a different extent.
         if (!oTargetSRS.IsEmpty() && poSrcSRS)
         {
             if (!poSrcSRS->IsSame(&oTargetSRS))
             {
-                auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
-                    OGRCreateCoordinateTransformation(poSrcSRS, &oTargetSRS));
-                if (!poCT || !poCT->Transform(5, adfX, adfY, nullptr))
+                char *pszDstWKT = nullptr;
+                oTargetSRS.exportToWkt(&pszDstWKT);
+
+                CPLStringList aosWarpArgs;
+                aosWarpArgs.AddString("-of");
+                aosWarpArgs.AddString("VRT");
+                aosWarpArgs.AddString("-t_srs");
+                aosWarpArgs.AddString(pszDstWKT);
+                CPLFree(pszDstWKT);
+
+                GDALWarpAppOptions *psWarpOptions =
+                    GDALWarpAppOptionsNew(aosWarpArgs.List(), nullptr);
+                GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS.get());
+                GDALDatasetH ahSrcDS[] = {hSrcDS};
+                int bUsageError = false;
+                auto poWarpDS = std::unique_ptr<GDALDataset>(
+                    GDALDataset::FromHandle(GDALWarp(
+                        "", nullptr, 1, ahSrcDS, psWarpOptions, &bUsageError)));
+                GDALWarpAppOptionsFree(psWarpOptions);
+
+                if (!poWarpDS)
                 {
                     CPLError(bFailOnErrors ? CE_Failure : CE_Warning,
                              CPLE_AppDefined,
-                             "unable to transform points from source "
-                             "SRS `%s' to target SRS `%s' for file `%s'%s",
+                             "unable to compute reprojected extent from "
+                             "source SRS `%s' to target SRS `%s' for "
+                             "file `%s'%s",
                              poSrcDS->GetProjectionRef(),
                              psOptions->osTargetSRS.c_str(),
                              osFileNameToWrite.c_str(),
@@ -1957,6 +1994,29 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                         return nullptr;
                     continue;
                 }
+
+                GDALGeoTransform warpGT;
+                poWarpDS->GetGeoTransform(warpGT);
+                const int nDstPixels = poWarpDS->GetRasterXSize();
+                const int nDstLines = poWarpDS->GetRasterYSize();
+
+                const double dfDstMinX = warpGT.xorig;
+                const double dfDstMaxY = warpGT.yorig;
+                const double dfDstMaxX =
+                    warpGT.xorig + nDstPixels * warpGT.xscale;
+                const double dfDstMinY =
+                    warpGT.yorig + nDstLines * warpGT.yscale;
+
+                adfX[0] = dfDstMinX;
+                adfY[0] = dfDstMaxY;
+                adfX[1] = dfDstMaxX;
+                adfY[1] = dfDstMaxY;
+                adfX[2] = dfDstMaxX;
+                adfY[2] = dfDstMinY;
+                adfX[3] = dfDstMinX;
+                adfY[3] = dfDstMinY;
+                adfX[4] = dfDstMinX;
+                adfY[4] = dfDstMaxY;
             }
         }
         else if (bIsGTIContext && !oAlreadyExistingSRS.IsEmpty() &&
@@ -2527,9 +2587,9 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
             {
                 auto psArray = topArrays[iProjCode];
                 const char *pszSRSAuthName =
-                    poSrcSRS ? poSrcSRS->GetAuthorityName(nullptr) : nullptr;
+                    poSrcSRS ? poSrcSRS->GetAuthorityName() : nullptr;
                 const char *pszSRSAuthCode =
-                    poSrcSRS ? poSrcSRS->GetAuthorityCode(nullptr) : nullptr;
+                    poSrcSRS ? poSrcSRS->GetAuthorityCode() : nullptr;
                 if (pszSRSAuthName && pszSRSAuthCode)
                 {
                     std::string osCode(pszSRSAuthName);
@@ -2635,12 +2695,12 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                 double *values = static_cast<double *>(const_cast<void *>(
                     projTransformItems->buffers[ARROW_BUF_DATA]));
                 auto ptr = values + nBatchSize * NUM_ITEMS_PROJ_TRANSFORM;
-                ptr[0] = gt[1];
-                ptr[1] = gt[2];
-                ptr[2] = gt[0];
-                ptr[3] = gt[4];
-                ptr[4] = gt[5];
-                ptr[5] = gt[3];
+                ptr[0] = gt.xscale;
+                ptr[1] = gt.xrot;
+                ptr[2] = gt.xorig;
+                ptr[3] = gt.yrot;
+                ptr[4] = gt.yscale;
+                ptr[5] = gt.yorig;
                 ptr[6] = 0;
                 ptr[7] = 0;
                 ptr[8] = 1;
@@ -2673,10 +2733,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
 
             if (i_SrcSRSName >= 0 && poSrcSRS)
             {
-                const char *pszAuthorityCode =
-                    poSrcSRS->GetAuthorityCode(nullptr);
-                const char *pszAuthorityName =
-                    poSrcSRS->GetAuthorityName(nullptr);
+                const char *pszAuthorityCode = poSrcSRS->GetAuthorityCode();
+                const char *pszAuthorityName = poSrcSRS->GetAuthorityName();
                 if (psOptions->eSrcSRSFormat == FORMAT_AUTO)
                 {
                     if (pszAuthorityName != nullptr &&
@@ -2799,6 +2857,29 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
     if (psOptions->pfnProgress)
         psOptions->pfnProgress(1.0, "", psOptions->pProgressData);
 
+    if (nBandInterleavedCount > 0 &&
+        nBandInterleavedCount > nPixelInterleavedCount)
+    {
+        if (psRoot)
+            CPLCreateXMLElementAndValue(psRoot.get(), "Interleave", "Band");
+        else
+            poLayer->SetMetadataItem("INTERLEAVE", "BAND");
+    }
+    else if (nPixelInterleavedCount > 0)
+    {
+        if (psRoot)
+            CPLCreateXMLElementAndValue(psRoot.get(), "Interleave", "Pixel");
+        else
+            poLayer->SetMetadataItem("INTERLEAVE", "PIXEL");
+    }
+
+    if (!psOptions->osGTIFilename.empty())
+    {
+        if (!CPLSerializeXMLTreeToFile(psRoot.get(),
+                                       psOptions->osGTIFilename.c_str()))
+            return nullptr;
+    }
+
     if (bIsSTACGeoParquet && nBatchSize != 0 && !FlushArrays())
     {
         return nullptr;
@@ -2837,7 +2918,7 @@ static char *SanitizeSRS(const char *pszUserInput)
 }
 
 /************************************************************************/
-/*                          GDALTileIndexOptionsNew()                   */
+/*                      GDALTileIndexOptionsNew()                       */
 /************************************************************************/
 
 /**
@@ -2975,7 +3056,7 @@ GDALTileIndexOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                        GDALTileIndexOptionsFree()                    */
+/*                      GDALTileIndexOptionsFree()                      */
 /************************************************************************/
 
 /**
@@ -2992,7 +3073,7 @@ void GDALTileIndexOptionsFree(GDALTileIndexOptions *psOptions)
 }
 
 /************************************************************************/
-/*                 GDALTileIndexOptionsSetProgress()                    */
+/*                  GDALTileIndexOptionsSetProgress()                   */
 /************************************************************************/
 
 /**

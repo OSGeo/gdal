@@ -16,7 +16,7 @@
 #ifndef HAVE_LIBARCHIVE
 
 /************************************************************************/
-/*                    VSIInstall7zFileHandler()                         */
+/*                      VSIInstall7zFileHandler()                       */
 /************************************************************************/
 
 /*!
@@ -34,7 +34,7 @@ void VSIInstall7zFileHandler(void)
 }
 
 /************************************************************************/
-/*                    VSIInstallRarFileHandler()                         */
+/*                      VSIInstallRarFileHandler()                      */
 /************************************************************************/
 
 /*!
@@ -143,7 +143,7 @@ struct VSILibArchiveClientData
 };
 
 /************************************************************************/
-/*                    VSILibArchiveReadOpen()                           */
+/*                       VSILibArchiveReadOpen()                        */
 /************************************************************************/
 
 /**Open an archive, with the base handle being a VSIVirtualHandle* */
@@ -158,7 +158,7 @@ static int VSILibArchiveReadOpen(struct archive *pArchive,
 }
 
 /************************************************************************/
-/*                    VSICreateArchiveHandle()                          */
+/*                       VSICreateArchiveHandle()                       */
 /************************************************************************/
 
 static struct archive *VSICreateArchiveHandle(const std::string &osFSPrefix)
@@ -244,7 +244,7 @@ class VSILibArchiveReader final : public VSIArchiveReader
 };
 
 /************************************************************************/
-/*                       ~VSILibArchiveReader()                         */
+/*                        ~VSILibArchiveReader()                        */
 /************************************************************************/
 
 VSILibArchiveReader::~VSILibArchiveReader()
@@ -276,7 +276,7 @@ int VSILibArchiveReader::GotoFirstFile()
 }
 
 /************************************************************************/
-/*                           GotoNextFile()                             */
+/*                            GotoNextFile()                            */
 /************************************************************************/
 
 int VSILibArchiveReader::GotoNextFile()
@@ -297,7 +297,7 @@ int VSILibArchiveReader::GotoNextFile()
 }
 
 /************************************************************************/
-/*                      VSILibArchiveEntryFileOffset                    */
+/*                     VSILibArchiveEntryFileOffset                     */
 /************************************************************************/
 
 struct VSILibArchiveEntryFileOffset : public VSIArchiveEntryFileOffset
@@ -315,7 +315,7 @@ struct VSILibArchiveEntryFileOffset : public VSIArchiveEntryFileOffset
 VSILibArchiveEntryFileOffset::~VSILibArchiveEntryFileOffset() = default;
 
 /************************************************************************/
-/*                          GetFileOffset()                             */
+/*                           GetFileOffset()                            */
 /************************************************************************/
 
 VSIArchiveEntryFileOffset *VSILibArchiveReader::GetFileOffset()
@@ -324,7 +324,7 @@ VSIArchiveEntryFileOffset *VSILibArchiveReader::GetFileOffset()
 }
 
 /************************************************************************/
-/*                         GotoFileOffset()                             */
+/*                           GotoFileOffset()                           */
 /************************************************************************/
 
 int VSILibArchiveReader::GotoFileOffset(VSIArchiveEntryFileOffset *pOffset)
@@ -342,7 +342,7 @@ int VSILibArchiveReader::GotoFileOffset(VSIArchiveEntryFileOffset *pOffset)
 }
 
 /************************************************************************/
-/*                       GotoFileOffsetForced()                         */
+/*                        GotoFileOffsetForced()                        */
 /************************************************************************/
 
 int VSILibArchiveReader::GotoFileOffsetForced(
@@ -536,7 +536,7 @@ class VSILibArchiveFilesystemHandler final : public VSIArchiveFilesystemHandler
 };
 
 /************************************************************************/
-/*                                 Open()                               */
+/*                                Open()                                */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -552,15 +552,15 @@ VSILibArchiveFilesystemHandler::Open(const char *pszFilename,
     }
 
     CPLString osFileInArchive;
-    char *pszArchiveFileName =
+    auto pszArchiveFileName =
         SplitFilename(pszFilename, osFileInArchive, true, bSetError);
     if (pszArchiveFileName == nullptr)
         return nullptr;
 
     auto poReader = std::unique_ptr<VSILibArchiveReader>(
         cpl::down_cast<VSILibArchiveReader *>(
-            OpenArchiveFile(pszArchiveFileName, osFileInArchive).release()));
-    CPLFree(pszArchiveFileName);
+            OpenArchiveFile(pszArchiveFileName.get(), osFileInArchive)
+                .release()));
     if (poReader == nullptr)
     {
         return nullptr;
@@ -575,7 +575,7 @@ VSILibArchiveFilesystemHandler::Open(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                           CreateReader()                             */
+/*                            CreateReader()                            */
 /************************************************************************/
 
 std::unique_ptr<VSIArchiveReader>
@@ -597,7 +597,7 @@ VSILibArchiveFilesystemHandler::CreateReader(const char *pszArchiveFileName)
 //! @endcond
 
 /************************************************************************/
-/*                    VSIInstall7zFileHandler()                         */
+/*                      VSIInstall7zFileHandler()                       */
 /************************************************************************/
 
 /*!
@@ -616,7 +616,7 @@ void VSIInstall7zFileHandler(void)
 }
 
 /************************************************************************/
-/*                    VSIInstallRarFileHandler()                         */
+/*                      VSIInstallRarFileHandler()                      */
 /************************************************************************/
 
 /*!

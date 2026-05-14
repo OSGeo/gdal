@@ -684,8 +684,7 @@ def test_osr_esri_20():
 def test_osr_esri_24():
 
     srs = osr.SpatialReference()
-    srs.ImportFromWkt(
-        """PROJCS["Custom",
+    srs.ImportFromWkt("""PROJCS["Custom",
                              GEOGCS["GCS_WGS_1984",
                                  DATUM["WGS_1984",
                                      SPHEROID["WGS_1984",6378137.0,298.257223563]],
@@ -698,8 +697,7 @@ def test_osr_esri_24():
                              PARAMETER["Standard_Parallel_1",48.66666666666666],
                              PARAMETER["Standard_Parallel_2",53.66666666666666],
                              PARAMETER["Central_Parallel",51.0],
-                             UNIT["Meter",1.0]]"""
-    )
+                             UNIT["Meter",1.0]]""")
     srs.MorphFromESRI()
     assert (
         srs.GetProjParm(osr.SRS_PP_LATITUDE_OF_ORIGIN, 1000.0) != 1000.0
@@ -746,8 +744,8 @@ def test_osr_esri_25():
         pytest.fail("Expected: %s" % proj4_string)
 
     # test an actual conversion
-    (x, y, z) = transformer.TransformPoint(7000000, 7000000, 0)
-    (exp_x, exp_y, exp_z) = (62.882069888366, 53.091818769596, 0.0)
+    x, y, z = transformer.TransformPoint(7000000, 7000000, 0)
+    exp_x, exp_y, exp_z = (62.882069888366, 53.091818769596, 0.0)
     if (
         exp_x != pytest.approx(x, abs=0.00001)
         or exp_y != pytest.approx(y, abs=0.00001)
@@ -795,9 +793,7 @@ def test_osr_esri_27():
     srs.MorphFromESRI()
 
     got_wkt = srs.ExportToPrettyWkt()
-    assert (
-        got_wkt
-        == """PROJCS["Batavia / NEIEZ",
+    assert got_wkt == """PROJCS["Batavia / NEIEZ",
     GEOGCS["Batavia",
         DATUM["Batavia",
             SPHEROID["Bessel 1841",6377397.155,299.1528128,
@@ -814,13 +810,10 @@ def test_osr_esri_27():
         AUTHORITY["EPSG","9001"]],
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH]]"""
-    )
 
     srs.MorphToESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    assert (
-        got_wkt
-        == """PROJCS["Batavia_NEIEZ",
+    assert got_wkt == """PROJCS["Batavia_NEIEZ",
     GEOGCS["GCS_Batavia",
         DATUM["D_Batavia",
             SPHEROID["Bessel_1841",6377397.155,299.1528128]],
@@ -832,7 +825,6 @@ def test_osr_esri_27():
     PARAMETER["Central_Meridian",110.0],
     PARAMETER["Standard_Parallel_1",4.45405154589751],
     UNIT["Meter",1.0]]"""
-    )
 
 
 ###############################################################################
@@ -871,25 +863,19 @@ def test_osr_esri_28():
     srs.MorphToESRI()
     got_wkt = srs.ExportToPrettyWkt()
     # Do not do exact test because of subtle difference of precision among compilers and PROJ versions
-    assert (
-        """PROJECTION["Mercator"],
+    assert """PROJECTION["Mercator"],
     PARAMETER["False_Easting",3900000.0],
     PARAMETER["False_Northing",900000.0],
     PARAMETER["Central_Meridian",110.0],
-    PARAMETER["Standard_Parallel_1",4.45405154"""
-        in got_wkt
-    )
+    PARAMETER["Standard_Parallel_1",4.45405154""" in got_wkt
 
     srs = osr.SpatialReference()
     srs.SetFromUserInput(got_wkt)
     srs.MorphFromESRI()
     got_wkt = srs.ExportToPrettyWkt()
     # Do not do exact test because of subtle difference of precision among compilers and PROJ versions
-    assert (
-        """PROJECTION["Mercator_2SP"],
-    PARAMETER["standard_parallel_1",4.45405154"""
-        in got_wkt
-    )
+    assert """PROJECTION["Mercator_2SP"],
+    PARAMETER["standard_parallel_1",4.45405154""" in got_wkt
 
 
 ###############################################################################
@@ -903,9 +889,7 @@ def test_osr_esri_29():
 
     srs.MorphToESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    assert (
-        got_wkt
-        == """PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",
+    assert got_wkt == """PROJCS["WGS_1984_Web_Mercator_Auxiliary_Sphere",
     GEOGCS["GCS_WGS_1984",
         DATUM["D_WGS_1984",
             SPHEROID["WGS_1984",6378137.0,298.257223563]],
@@ -918,13 +902,10 @@ def test_osr_esri_29():
     PARAMETER["Standard_Parallel_1",0.0],
     PARAMETER["Auxiliary_Sphere_Type",0.0],
     UNIT["Meter",1.0]]"""
-    )
 
     srs.MorphFromESRI()
     got_wkt = srs.ExportToPrettyWkt()
-    assert (
-        got_wkt
-        == """PROJCS["WGS 84 / Pseudo-Mercator",
+    assert got_wkt == """PROJCS["WGS 84 / Pseudo-Mercator",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
             SPHEROID["WGS 84",6378137,298.257223563,
@@ -946,7 +927,6 @@ def test_osr_esri_29():
     AXIS["Northing",NORTH],
     EXTENSION["PROJ4","+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs"],
     AUTHORITY["EPSG","3857"]]"""
-    )
 
     # 6134
     srs.SetFromUserInput(
@@ -1141,9 +1121,11 @@ def test_osr_esri_lambert_azimutal_radius_of_sphere_of_reference(
         "Zunits        NO",
         "Xshift        0.0",
         "Yshift        0.0",
-        "Parameters    6378137.0  6378137.0"
-        if has_semi_major_and_minor_axis
-        else "Parameters",
+        (
+            "Parameters    6378137.0  6378137.0"
+            if has_semi_major_and_minor_axis
+            else "Parameters"
+        ),
         "6378137.0 /* radius of the sphere of reference",
         "  20  0  0.0 /* longitude of center of projection",
         "   5  0  0.0 /* latitude of center of projection",

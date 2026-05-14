@@ -90,7 +90,7 @@ class OGRSOSIDataSource final : public GDALDataset
     const char *pszEncoding;
     unsigned int nNumFeatures;
     OGRGeometry **papoBuiltGeometries; /* OGRSOSIDataSource prebuilds some
-                                        * features upon opening, te be used by
+                                        * features upon opening, to be used by
                                         * the more complex geometries later. */
     // FYBA specific
     LC_BASEADM *poBaseadm;
@@ -119,7 +119,7 @@ class OGRSOSIDataSource final : public GDALDataset
     OGRLayer *ICreateLayer(const char *pszName,
                            const OGRSpatialReference *poSpatialRef = NULL,
                            OGRwkbGeometryType eGType = wkbUnknown,
-                           char **papszOptions = NULL) override;
+                           CSLConstList papszOptions = NULL) override;
 #endif
 };
 

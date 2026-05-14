@@ -20,7 +20,7 @@
 #include <set>
 
 /************************************************************************/
-/*                      ZarrV3Group::Create()                           */
+/*                        ZarrV3Group::Create()                         */
 /************************************************************************/
 
 std::shared_ptr<ZarrV3Group>
@@ -35,7 +35,7 @@ ZarrV3Group::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
 }
 
 /************************************************************************/
-/*                             OpenZarrArray()                          */
+/*                           OpenZarrArray()                            */
 /************************************************************************/
 
 std::shared_ptr<ZarrArray> ZarrV3Group::OpenZarrArray(const std::string &osName,
@@ -70,7 +70,7 @@ std::shared_ptr<ZarrArray> ZarrV3Group::OpenZarrArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                   ZarrV3Group::LoadAttributes()                      */
+/*                    ZarrV3Group::LoadAttributes()                     */
 /************************************************************************/
 
 void ZarrV3Group::LoadAttributes() const
@@ -94,7 +94,7 @@ void ZarrV3Group::LoadAttributes() const
 }
 
 /************************************************************************/
-/*                        ExploreDirectory()                            */
+/*                          ExploreDirectory()                          */
 /************************************************************************/
 
 void ZarrV3Group::ExploreDirectory() const
@@ -186,7 +186,7 @@ ZarrV3Group::ZarrV3Group(
 }
 
 /************************************************************************/
-/*                      ZarrV3Group::~ZarrV3Group()                     */
+/*                     ZarrV3Group::~ZarrV3Group()                      */
 /************************************************************************/
 
 ZarrV3Group::~ZarrV3Group()
@@ -195,7 +195,287 @@ ZarrV3Group::~ZarrV3Group()
 }
 
 /************************************************************************/
-/*                            Close()                                   */
+/*                    GenerateMultiscalesMetadata()                     */
+/************************************************************************/
+
+void ZarrV3Group::GenerateMultiscalesMetadata(const char *pszResampling)
+{
+    const auto aosGroupNames = GetGroupNames();
+    if (aosGroupNames.empty())
+    {
+        // No child groups - remove stale multiscales metadata if present.
+        if (!m_bAttributesLoaded)
+            LoadAttributes();
+        if (m_oAttrGroup.GetAttribute("multiscales"))
+            m_oAttrGroup.DeleteAttribute("multiscales");
+        auto poExistingConv = m_oAttrGroup.GetAttribute("zarr_conventions");
+        if (poExistingConv)
+        {
+            // Preserve non-multiscales entries.
+            const char *pszExisting = poExistingConv->ReadAsString();
+            CPLJSONArray oFiltered;
+            if (pszExisting)
+            {
+                CPLJSONDocument oDoc;
+                if (oDoc.LoadMemory(pszExisting))
+                {
+                    for (const auto &oEntry : oDoc.GetRoot().ToArray())
+                    {
+                        if (oEntry.GetString("uuid") != ZARR_MULTISCALES_UUID)
+                            oFiltered.Add(oEntry);
+                    }
+                }
+            }
+            m_oAttrGroup.DeleteAttribute("zarr_conventions");
+            if (oFiltered.Size() > 0)
+            {
+                const auto oJsonDT =
+                    GDALExtendedDataType::CreateString(0, GEDTST_JSON);
+                auto poAttr = m_oAttrGroup.CreateAttribute("zarr_conventions",
+                                                           {}, oJsonDT);
+                if (poAttr)
+                    poAttr->Write(
+                        oFiltered.Format(CPLJSONObject::PrettyFormat::Plain)
+                            .c_str());
+            }
+        }
+        return;
+    }
+
+    // Collect {arrayName -> [(groupName, array)]} across child groups.
+    struct LevelInfo
+    {
+        std::string osGroupName;  // empty for base (this group)
+        std::shared_ptr<GDALMDArray> poArray;
+    };
+
+    std::map<std::string, std::vector<LevelInfo>> oMapArrayToLevels;
+
+    for (const auto &osGroupName : aosGroupNames)
+    {
+        auto poChildGroup = OpenZarrGroup(osGroupName);
+        if (!poChildGroup)
+            continue;
+        for (const auto &osArrayName : poChildGroup->GetMDArrayNames())
+        {
+            auto poArray = poChildGroup->OpenMDArray(osArrayName);
+            if (poArray)
+            {
+                oMapArrayToLevels[osArrayName].push_back(
+                    {osGroupName, std::move(poArray)});
+            }
+        }
+    }
+
+    if (oMapArrayToLevels.empty())
+        return;
+
+    // For each array found in child groups, check if the base (this group)
+    // also has an array with the same name. If so, prepend it as the base
+    // level with an empty group name (meaning "this group").
+    for (auto &[osArrayName, aoLevels] : oMapArrayToLevels)
+    {
+        auto poBaseArray = OpenMDArray(osArrayName);
+        if (poBaseArray)
+        {
+            aoLevels.insert(aoLevels.begin(),
+                            LevelInfo{"", std::move(poBaseArray)});
+        }
+    }
+
+    // Pick the first array name (alphabetical) with >= 2 levels
+    // (base + at least one overview) and >= 2 dimensions (skip 1D
+    // coordinate arrays).
+    //
+    // Expected hierarchy from BuildOverviews():
+    //   /group/
+    //     data        <- base array (e.g. 10980 x 10980)
+    //     y, x        <- 1D coordinate arrays (skipped)
+    //     ovr_2x/
+    //       data      <- 2x overview  (5490 x 5490)
+    //       y, x
+    //     ovr_4x/
+    //       data      <- 4x overview  (2745 x 2745)
+    //       y, x
+    //
+    // Multiple >=2D arrays sharing the same name across levels is
+    // possible but unusual; we use the first alphabetically.
+    std::string osCanonicalArrayName;
+    for (const auto &[osArrayName, aoLevels] : oMapArrayToLevels)
+    {
+        if (aoLevels.size() >= 2 &&
+            aoLevels[0].poArray->GetDimensionCount() >= 2)
+        {
+            osCanonicalArrayName = osArrayName;
+            break;
+        }
+    }
+
+    if (osCanonicalArrayName.empty())
+    {
+        CPLDebug("ZARR", "GenerateMultiscalesMetadata: no array with "
+                         ">=2 levels and >=2 dimensions found");
+        return;
+    }
+
+    auto &aoLevels = oMapArrayToLevels[osCanonicalArrayName];
+
+    // Sort by total element count, largest first (= full resolution).
+    std::stable_sort(aoLevels.begin(), aoLevels.end(),
+                     [](const LevelInfo &a, const LevelInfo &b)
+                     {
+                         const auto &dimsA = a.poArray->GetDimensions();
+                         const auto &dimsB = b.poArray->GetDimensions();
+                         GUInt64 sizeA = 1, sizeB = 1;
+                         for (const auto &d : dimsA)
+                             sizeA *= d->GetSize();
+                         for (const auto &d : dimsB)
+                             sizeB *= d->GetSize();
+                         return sizeA > sizeB;
+                     });
+
+    const auto &poBaseArray = aoLevels[0].poArray;
+    const size_t nBaseDimCount = poBaseArray->GetDimensionCount();
+    const auto &oBaseType = poBaseArray->GetDataType();
+
+    // Asset path for a level. Empty group name means the base array lives
+    // in this group - use the array name directly (LoadOverviews resolves
+    // single-component paths as array names in the parent group).
+    const auto assetPath =
+        [&osCanonicalArrayName](const std::string &osGroupName) -> std::string
+    { return osGroupName.empty() ? osCanonicalArrayName : osGroupName; };
+
+    // Base level: identity scale, no translation, no derived_from.
+    CPLJSONArray oLayout;
+    {
+        CPLJSONObject oBaseItem;
+        oBaseItem.Add("asset", assetPath(aoLevels[0].osGroupName));
+
+        CPLJSONArray oScale;
+        for (size_t iDim = 0; iDim < nBaseDimCount; ++iDim)
+            oScale.Add(1.0);
+        CPLJSONObject oTransform;
+        oTransform.Add("scale", oScale);
+        oBaseItem.Add("transform", oTransform);
+
+        oLayout.Add(oBaseItem);
+    }
+
+    // Overview levels: sequential derived_from chain.
+    for (size_t iLevel = 1; iLevel < aoLevels.size(); ++iLevel)
+    {
+        const auto &info = aoLevels[iLevel];
+        const auto &poArray = info.poArray;
+
+        if (poArray->GetDimensionCount() != nBaseDimCount ||
+            poArray->GetDataType() != oBaseType)
+        {
+            CPLDebug("ZARR",
+                     "GenerateMultiscalesMetadata: skipping level '%s' "
+                     "(dim count or data type mismatch with base)",
+                     info.osGroupName.c_str());
+            continue;
+        }
+
+        const auto &apoDims = poArray->GetDimensions();
+        // Previous valid level for sequential derived_from.
+        const auto &oPrevDims = aoLevels[iLevel - 1].poArray->GetDimensions();
+
+        CPLJSONObject oItem;
+        oItem.Add("asset", assetPath(info.osGroupName));
+        oItem.Add("derived_from", assetPath(aoLevels[iLevel - 1].osGroupName));
+
+        CPLJSONArray oScale;
+        CPLJSONArray oTranslation;
+        for (size_t iDim = 0; iDim < nBaseDimCount; ++iDim)
+        {
+            const auto nOvSize = apoDims[iDim]->GetSize();
+            const auto nPrevSize = oPrevDims[iDim]->GetSize();
+            const double dfScale = nOvSize > 0
+                                       ? static_cast<double>(nPrevSize) /
+                                             static_cast<double>(nOvSize)
+                                       : 0.0;
+            oScale.Add(dfScale);
+            oTranslation.Add(0.0);
+        }
+
+        CPLJSONObject oTransform;
+        oTransform.Add("scale", oScale);
+        oTransform.Add("translation", oTranslation);
+        oItem.Add("transform", oTransform);
+
+        if (pszResampling)
+            oItem.Add("resampling_method", pszResampling);
+
+        oLayout.Add(oItem);
+    }
+
+    if (oLayout.Size() < 2)
+        return;
+
+    CPLJSONObject oMultiscales;
+    oMultiscales.Add("layout", oLayout);
+
+    // Preserve existing zarr_conventions entries.
+    if (!m_bAttributesLoaded)
+        LoadAttributes();
+
+    CPLJSONArray oZarrConventions;
+    auto poExistingConv = m_oAttrGroup.GetAttribute("zarr_conventions");
+    if (poExistingConv)
+    {
+        const char *pszExisting = poExistingConv->ReadAsString();
+        if (pszExisting)
+        {
+            CPLJSONDocument oDoc;
+            if (oDoc.LoadMemory(pszExisting))
+            {
+                for (const auto &oEntry : oDoc.GetRoot().ToArray())
+                {
+                    if (oEntry.GetString("uuid") != ZARR_MULTISCALES_UUID)
+                        oZarrConventions.Add(oEntry);
+                }
+            }
+        }
+        m_oAttrGroup.DeleteAttribute("zarr_conventions");
+    }
+
+    {
+        CPLJSONObject oConv;
+        oConv.Set("uuid", ZARR_MULTISCALES_UUID);
+        oConv.Set("schema_url",
+                  "https://raw.githubusercontent.com/zarr-conventions/"
+                  "multiscales/refs/tags/v1/schema.json");
+        oConv.Set("spec_url", "https://github.com/zarr-conventions/"
+                              "multiscales/blob/v1/README.md");
+        oConv.Set("name", "multiscales");
+        oConv.Set("description", "Multiscale layout of zarr datasets");
+        oZarrConventions.Add(oConv);
+    }
+
+    if (m_oAttrGroup.GetAttribute("multiscales"))
+        m_oAttrGroup.DeleteAttribute("multiscales");
+
+    const auto oJsonDT = GDALExtendedDataType::CreateString(0, GEDTST_JSON);
+    {
+        auto poAttr =
+            m_oAttrGroup.CreateAttribute("zarr_conventions", {}, oJsonDT);
+        if (poAttr)
+            poAttr->Write(
+                oZarrConventions.Format(CPLJSONObject::PrettyFormat::Plain)
+                    .c_str());
+    }
+    {
+        auto poAttr = m_oAttrGroup.CreateAttribute("multiscales", {}, oJsonDT);
+        if (poAttr)
+            poAttr->Write(
+                oMultiscales.Format(CPLJSONObject::PrettyFormat::Plain)
+                    .c_str());
+    }
+}
+
+/************************************************************************/
+/*                               Close()                                */
 /************************************************************************/
 
 bool ZarrV3Group::Close()
@@ -232,7 +512,7 @@ bool ZarrV3Group::Close()
 }
 
 /************************************************************************/
-/*                   ZarrV3Group::GetOrCreateSubGroup()                 */
+/*                  ZarrV3Group::GetOrCreateSubGroup()                  */
 /************************************************************************/
 
 std::shared_ptr<ZarrV3Group>
@@ -273,7 +553,7 @@ ZarrV3Group::GetOrCreateSubGroup(const std::string &osSubGroupFullname)
 }
 
 /************************************************************************/
-/*                ZarrV3Group::InitFromConsolidatedMetadata()           */
+/*             ZarrV3Group::InitFromConsolidatedMetadata()              */
 /************************************************************************/
 
 void ZarrV3Group::InitFromConsolidatedMetadata(
@@ -404,7 +684,7 @@ void ZarrV3Group::InitFromConsolidatedMetadata(
 }
 
 /************************************************************************/
-/*                            OpenZarrGroup()                           */
+/*                           OpenZarrGroup()                            */
 /************************************************************************/
 
 std::shared_ptr<ZarrGroupBase>
@@ -480,7 +760,7 @@ ZarrV3Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
 }
 
 /************************************************************************/
-/*                   ZarrV3Group::CreateOnDisk()                        */
+/*                     ZarrV3Group::CreateOnDisk()                      */
 /************************************************************************/
 
 std::shared_ptr<ZarrV3Group> ZarrV3Group::CreateOnDisk(
@@ -569,7 +849,8 @@ ZarrV3Group::CreateGroup(const std::string &osName,
     if (cpl::contains(m_oSetGroupNames, osName))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "A group with same name already exists");
+                 "A group with same name (%s) already exists in group %s",
+                 osName.c_str(), GetFullName().c_str());
         return nullptr;
     }
 
@@ -587,7 +868,7 @@ ZarrV3Group::CreateGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                          FillDTypeElts()                             */
+/*                           FillDTypeElts()                            */
 /************************************************************************/
 
 static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
@@ -595,6 +876,21 @@ static CPLJSONObject FillDTypeElts(const GDALExtendedDataType &oDataType,
 {
     CPLJSONObject dtype;
     const std::string dummy("dummy");
+
+    if (oDataType.GetClass() == GEDTC_STRING)
+    {
+        const int nMaxLen = std::max(
+            2, atoi(CPLGetConfigOption("ZARR_VLEN_STRING_MAX_LENGTH", "256")));
+        DtypeElt elt;
+        elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
+        elt.nativeOffset = 0;
+        elt.nativeSize = static_cast<size_t>(nMaxLen);
+        elt.gdalOffset = 0;
+        elt.gdalSize = oDataType.GetSize();
+        aoDtypeElts.emplace_back(elt);
+        dtype.Set(dummy, "string");
+        return dtype;
+    }
 
     const auto eDT = oDataType.GetNumericDataType();
     DtypeElt elt;
@@ -743,7 +1039,8 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         return nullptr;
     }
 
-    if (oDataType.GetClass() != GEDTC_NUMERIC)
+    if (oDataType.GetClass() != GEDTC_NUMERIC &&
+        oDataType.GetClass() != GEDTC_STRING)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unsupported data type with Zarr V3");
@@ -767,7 +1064,8 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     if (cpl::contains(m_oSetArrayNames, osName))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "An array with same name already exists");
+                 "An array with same name (%s) already exists in group %s",
+                 osName.c_str(), GetFullName().c_str());
         return nullptr;
     }
 
@@ -800,9 +1098,11 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     std::unique_ptr<ZarrV3CodecSequence> poCodecs;
     CPLJSONArray oCodecs;
 
+    const bool bIsString = (oDataType.GetClass() == GEDTC_STRING);
+
     const bool bFortranOrder = EQUAL(
         CSLFetchNameValueDef(papszOptions, "CHUNK_MEMORY_LAYOUT", "C"), "F");
-    if (bFortranOrder && aoDimensions.size() > 1)
+    if (!bIsString && bFortranOrder && aoDimensions.size() > 1)
     {
         CPLJSONObject oCodec;
         oCodec.Add("name", "transpose");
@@ -817,10 +1117,18 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         oCodecs.Add(oCodec);
     }
 
-    // Not documented option, but 'bytes' codec is required
-    const char *pszEndian =
-        CSLFetchNameValueDef(papszOptions, "@ENDIAN", "little");
+    // Array-to-bytes codec: vlen-utf8 for strings, bytes for numeric
+    if (bIsString)
     {
+        CPLJSONObject oCodec;
+        oCodec.Add("name", "vlen-utf8");
+        oCodecs.Add(oCodec);
+    }
+    else
+    {
+        // Not documented option, but 'bytes' codec is required
+        const char *pszEndian =
+            CSLFetchNameValueDef(papszOptions, "@ENDIAN", "little");
         CPLJSONObject oCodec;
         oCodec.Add("name", "bytes");
         oCodec.Add("configuration", ZarrV3CodecBytes::GetConfiguration(
@@ -881,10 +1189,13 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
                   : (EQUAL(shuffle, "2") || EQUAL(shuffle, "BIT"))
                       ? "bitshuffle"
                       : "invalid";
-        const int typesize = atoi(CSLFetchNameValueDef(
-            papszOptions, "BLOSC_TYPESIZE",
-            CPLSPrintf("%d", GDALGetDataTypeSizeBytes(GDALGetNonComplexDataType(
-                                 oDataType.GetNumericDataType())))));
+        const int nDefaultTypeSize =
+            bIsString ? 1
+                      : GDALGetDataTypeSizeBytes(GDALGetNonComplexDataType(
+                            oDataType.GetNumericDataType()));
+        const int typesize =
+            atoi(CSLFetchNameValueDef(papszOptions, "BLOSC_TYPESIZE",
+                                      CPLSPrintf("%d", nDefaultTypeSize)));
         const int blocksize =
             atoi(CSLFetchNameValueDef(papszOptions, "BLOSC_BLOCKSIZE", "0"));
         oCodec.Add("configuration",
@@ -911,6 +1222,68 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         return nullptr;
     }
 
+    // Sharding: wrap inner codecs into a sharding_indexed codec
+    const char *pszShardChunkShape =
+        CSLFetchNameValue(papszOptions, "SHARD_CHUNK_SHAPE");
+    if (pszShardChunkShape != nullptr)
+    {
+
+        const CPLStringList aosChunkShape(
+            CSLTokenizeString2(pszShardChunkShape, ",", 0));
+        if (static_cast<size_t>(aosChunkShape.size()) != aoDimensions.size())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "SHARD_CHUNK_SHAPE has %d values, expected %d",
+                     aosChunkShape.size(),
+                     static_cast<int>(aoDimensions.size()));
+            return nullptr;
+        }
+
+        CPLJSONArray oChunkShapeArray;
+        for (int i = 0; i < aosChunkShape.size(); ++i)
+        {
+            const auto nInner = static_cast<GUInt64>(atoll(aosChunkShape[i]));
+            if (nInner == 0 || anOuterBlockSize[i] % nInner != 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "SHARD_CHUNK_SHAPE[%d]=%s must divide "
+                         "BLOCKSIZE[%d]=" CPL_FRMT_GUIB " evenly",
+                         i, aosChunkShape[i], i, anOuterBlockSize[i]);
+                return nullptr;
+            }
+            oChunkShapeArray.Add(static_cast<uint64_t>(nInner));
+        }
+
+        // Index codecs: always bytes(little) + crc32c
+        CPLJSONArray oIndexCodecs;
+        {
+            CPLJSONObject oBytesCodec;
+            oBytesCodec.Add("name", "bytes");
+            oBytesCodec.Add("configuration",
+                            ZarrV3CodecBytes::GetConfiguration(true));
+            oIndexCodecs.Add(oBytesCodec);
+        }
+        {
+            CPLJSONObject oCRC32CCodec;
+            oCRC32CCodec.Add("name", "crc32c");
+            oIndexCodecs.Add(oCRC32CCodec);
+        }
+
+        CPLJSONObject oShardingConfig;
+        oShardingConfig.Add("chunk_shape", oChunkShapeArray);
+        oShardingConfig.Add("codecs", oCodecs);
+        oShardingConfig.Add("index_codecs", oIndexCodecs);
+        oShardingConfig.Add("index_location", "end");
+
+        CPLJSONObject oShardingCodec;
+        oShardingCodec.Add("name", "sharding_indexed");
+        oShardingCodec.Add("configuration", oShardingConfig);
+
+        // Replace top-level codecs with just the sharding codec
+        oCodecs = CPLJSONArray();
+        oCodecs.Add(oShardingCodec);
+    }
+
     std::vector<GUInt64> anInnerBlockSize = anOuterBlockSize;
     if (oCodecs.Size() > 0)
     {
@@ -924,9 +1297,9 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         }
     }
 
-    auto poArray = ZarrV3Array::Create(
-        m_poSharedResource, GetFullName(), osName, aoDimensions, oDataType,
-        aoDtypeElts, anOuterBlockSize, anInnerBlockSize);
+    auto poArray = ZarrV3Array::Create(m_poSharedResource, Self(), osName,
+                                       aoDimensions, oDataType, aoDtypeElts,
+                                       anOuterBlockSize, anInnerBlockSize);
 
     if (!poArray)
         return nullptr;
@@ -936,14 +1309,19 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     poArray->SetFilename(osFilename);
     poArray->SetDimSeparator(pszDimSeparator);
     poArray->SetDtype(dtype);
-    if (oCodecs.Size() > 0 &&
-        oCodecs[oCodecs.Size() - 1].GetString("name") != "bytes")
+    const std::string osLastCodecName =
+        oCodecs.Size() > 0 ? oCodecs[oCodecs.Size() - 1].GetString("name")
+                           : std::string();
+    if (!osLastCodecName.empty() && osLastCodecName != "bytes" &&
+        osLastCodecName != "vlen-utf8")
     {
         poArray->SetStructuralInfo(
             "COMPRESSOR", oCodecs[oCodecs.Size() - 1].ToString().c_str());
     }
     if (poCodecs)
         poArray->SetCodecs(oCodecs, std::move(poCodecs));
+
+    poArray->SetCreationOptions(papszOptions);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     if (!cpl::starts_with(osFilename, "/vsi") && !poArray->Flush())

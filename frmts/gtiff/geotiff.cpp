@@ -52,7 +52,7 @@ int &GTIFFGetThreadLocalLibtiffError()
 }
 
 /************************************************************************/
-/*                         GTIFFSupportsPredictor()                     */
+/*                       GTIFFSupportsPredictor()                       */
 /************************************************************************/
 
 bool GTIFFSupportsPredictor(int nCompression)
@@ -63,7 +63,7 @@ bool GTIFFSupportsPredictor(int nCompression)
 }
 
 /************************************************************************/
-/*                     GTIFFSetThreadLocalInExternalOvr()               */
+/*                  GTIFFSetThreadLocalInExternalOvr()                  */
 /************************************************************************/
 
 void GTIFFSetThreadLocalInExternalOvr(bool b)
@@ -501,7 +501,7 @@ char **GTiffDatasetReadRPCTag(TIFF *hTIFF)
 }
 
 /************************************************************************/
-/*                  GTiffFormatGDALNoDataTagValue()                     */
+/*                   GTiffFormatGDALNoDataTagValue()                    */
 /************************************************************************/
 
 CPLString GTiffFormatGDALNoDataTagValue(double dfNoData)
@@ -515,7 +515,7 @@ CPLString GTiffFormatGDALNoDataTagValue(double dfNoData)
 }
 
 /************************************************************************/
-/*                       GTIFFUpdatePhotometric()                      */
+/*                       GTIFFUpdatePhotometric()                       */
 /************************************************************************/
 
 bool GTIFFUpdatePhotometric(const char *pszPhotometric,
@@ -767,7 +767,7 @@ static void GTiffErrorHandler(const char *module, const char *fmt, va_list ap)
 #else
 
 /************************************************************************/
-/*                      GTiffWarningHandlerExt()                        */
+/*                       GTiffWarningHandlerExt()                       */
 /************************************************************************/
 extern int GTiffWarningHandlerExt(TIFF *tif, void *user_data,
                                   const char *module, const char *fmt,
@@ -807,7 +807,7 @@ int GTiffWarningHandlerExt(TIFF *tif, void *user_data, const char *module,
 }
 
 /************************************************************************/
-/*                       GTiffErrorHandlerExt()                         */
+/*                        GTiffErrorHandlerExt()                        */
 /************************************************************************/
 extern int GTiffErrorHandlerExt(TIFF *tif, void *user_data, const char *module,
                                 const char *fmt, va_list ap);
@@ -939,9 +939,7 @@ static void GDALDeregister_GTiff(GDALDriver *)
 }
 
 #define COMPRESSION_ENTRY(x, bWriteSupported)                                  \
-    {                                                                          \
-        COMPRESSION_##x, STRINGIFY(x), bWriteSupported                         \
-    }
+    {COMPRESSION_##x, STRINGIFY(x), bWriteSupported}
 
 static const struct
 {
@@ -989,7 +987,7 @@ static const struct
 };
 
 /************************************************************************/
-/*                    GTIFFGetCompressionMethodName()                   */
+/*                   GTIFFGetCompressionMethodName()                    */
 /************************************************************************/
 
 const char *GTIFFGetCompressionMethodName(int nCompressionCode)
@@ -1005,7 +1003,7 @@ const char *GTIFFGetCompressionMethodName(int nCompressionCode)
 }
 
 /************************************************************************/
-/*                   GTIFFGetCompressionMethod()                        */
+/*                     GTIFFGetCompressionMethod()                      */
 /************************************************************************/
 
 int GTIFFGetCompressionMethod(const char *pszValue, const char *pszVariableName)
@@ -1042,7 +1040,7 @@ int GTIFFGetCompressionMethod(const char *pszValue, const char *pszVariableName)
 }
 
 /************************************************************************/
-/*                     GTiffGetCompressValues()                         */
+/*                       GTiffGetCompressValues()                       */
 /************************************************************************/
 
 CPLString GTiffGetCompressValues(bool &bHasLZW, bool &bHasDEFLATE,
@@ -1137,7 +1135,7 @@ CPLString GTiffGetCompressValues(bool &bHasLZW, bool &bHasDEFLATE,
 }
 
 /************************************************************************/
-/*                    OGRGTiffDriverGetSubdatasetInfo()                 */
+/*                  OGRGTiffDriverGetSubdatasetInfo()                   */
 /************************************************************************/
 
 struct GTiffDriverSubdatasetInfo final : public GDALSubdatasetInfo
@@ -1213,7 +1211,7 @@ static GDALSubdatasetInfo *GTiffDriverGetSubdatasetInfo(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                          GDALRegister_GTiff()                        */
+/*                         GDALRegister_GTiff()                         */
 /************************************************************************/
 
 void GDALRegister_GTiff()

@@ -26,10 +26,19 @@
 /************************************************************************/
 
 GDALVectorEditAlgorithm::GDALVectorEditAlgorithm(bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      standaloneStep)
+    : GDALVectorPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetOutputLayerNameAvailableInPipelineStep(true))
 {
     AddActiveLayerArg(&m_activeLayer);
+    if (!standaloneStep)
+    {
+        AddOutputLayerNameArg(/* hiddenForCLI = */ false,
+                              /* shortNameOutputLayerAllowed = */ false);
+    }
+
     AddGeometryTypeArg(&m_geometryType, _("Layer geometry type"));
 
     AddArg("crs", 0, _("Override CRS (without reprojection)"), &m_overrideCrs)
@@ -67,34 +76,56 @@ GDALVectorEditAlgorithm::GDALVectorEditAlgorithm(bool standaloneStep)
     AddArg("unset-fid", 0,
            _("Unset the identifier of each feature and the FID column name"),
            &m_unsetFID);
-}
 
-/************************************************************************/
-/*                   GDALVectorEditAlgorithmLayer                       */
-/************************************************************************/
+    AddValidationAction(
+        [this]()
+        {
+            if (!m_outputLayerName.empty() && m_activeLayer.empty() &&
+                m_inputDataset.size() == 1)
+            {
+                auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+                if (poSrcDS && poSrcDS->GetLayerCount() > 1)
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Argument 'output-layer' cannot be used when "
+                                "the input dataset has multiple layers, unless "
+                                "argument 'active-layer' is specified");
+                    return false;
+                }
+            }
+            return true;
+        });
+}
 
 namespace
 {
+
+/************************************************************************/
+/*                     GDALVectorEditAlgorithmLayer                     */
+/************************************************************************/
+
 class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 {
   public:
     GDALVectorEditAlgorithmLayer(
         OGRLayer &oSrcLayer, const std::string &activeLayer,
-        bool bChangeGeomType, OGRwkbGeometryType eType,
-        const std::string &overrideCrs,
+        const std::string &outputLayerName, bool bChangeGeomType,
+        OGRwkbGeometryType eType, const std::string &overrideCrs,
         const std::vector<std::string> &layerMetadata,
         const std::vector<std::string> &unsetLayerMetadata, bool unsetFID)
         : GDALVectorPipelineOutputLayer(oSrcLayer),
-          m_bOverrideCrs(!overrideCrs.empty()), m_unsetFID(unsetFID)
+          m_bOverrideCrs(!overrideCrs.empty()), m_unsetFID(unsetFID),
+          m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
     {
-        SetDescription(oSrcLayer.GetDescription());
         SetMetadata(oSrcLayer.GetMetadata());
 
-        m_poFeatureDefn = oSrcLayer.GetLayerDefn()->Clone();
-        m_poFeatureDefn->Reference();
-
-        if (activeLayer.empty() || activeLayer == GetDescription())
+        if (activeLayer.empty() || activeLayer == oSrcLayer.GetDescription())
         {
+            if (!outputLayerName.empty())
+            {
+                m_poFeatureDefn->SetName(outputLayerName.c_str());
+            }
+
             const CPLStringList aosMD(layerMetadata);
             for (const auto &[key, value] : cpl::IterateNameValue(aosMD))
             {
@@ -116,9 +147,9 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 
             if (bChangeGeomType)
             {
-                for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+                for (auto *poGeomFieldDefns : m_poFeatureDefn->GetGeomFields())
                 {
-                    m_poFeatureDefn->GetGeomFieldDefn(i)->SetType(eType);
+                    poGeomFieldDefns->SetType(eType);
                 }
             }
 
@@ -127,24 +158,20 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
                 if (!EQUAL(overrideCrs.c_str(), "null") &&
                     !EQUAL(overrideCrs.c_str(), "none"))
                 {
-                    m_poSRS = new OGRSpatialReference();
+                    m_poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
                     m_poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    m_poSRS->SetFromUserInput(overrideCrs.c_str());
+                    // already checked by GDALAlgorithmArg framework
+                    CPL_IGNORE_RET_VAL(
+                        m_poSRS->SetFromUserInput(overrideCrs.c_str()));
                 }
-                for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
+                for (auto *poGeomFieldDefns : m_poFeatureDefn->GetGeomFields())
                 {
-                    m_poFeatureDefn->GetGeomFieldDefn(i)->SetSpatialRef(
-                        m_poSRS);
+                    poGeomFieldDefns->SetSpatialRef(m_poSRS.get());
                 }
             }
         }
-    }
 
-    ~GDALVectorEditAlgorithmLayer() override
-    {
-        m_poFeatureDefn->Release();
-        if (m_poSRS)
-            m_poSRS->Release();
+        SetDescription(m_poFeatureDefn->GetName());
     }
 
     const char *GetFIDColumn() const override
@@ -156,21 +183,21 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
 
     const OGRFeatureDefn *GetLayerDefn() const override
     {
-        return m_poFeatureDefn;
+        return m_poFeatureDefn.get();
     }
 
     void TranslateFeature(
         std::unique_ptr<OGRFeature> poSrcFeature,
         std::vector<std::unique_ptr<OGRFeature>> &apoOutFeatures) override
     {
-        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn);
+        poSrcFeature->SetFDefnUnsafe(m_poFeatureDefn.get());
         if (m_bOverrideCrs)
         {
             for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); ++i)
             {
                 auto poGeom = poSrcFeature->GetGeomFieldRef(i);
                 if (poGeom)
-                    poGeom->assignSpatialReference(m_poSRS);
+                    poGeom->assignSpatialReference(m_poSRS.get());
             }
         }
         if (m_unsetFID)
@@ -189,16 +216,46 @@ class GDALVectorEditAlgorithmLayer final : public GDALVectorPipelineOutputLayer
   private:
     const bool m_bOverrideCrs;
     const bool m_unsetFID;
-    OGRFeatureDefn *m_poFeatureDefn = nullptr;
-    OGRSpatialReference *m_poSRS = nullptr;
+    const OGRFeatureDefnRefCountedPtr m_poFeatureDefn;
+    OGRSpatialReferenceRefCountedPtr m_poSRS{};
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorEditAlgorithmLayer)
 };
 
+/************************************************************************/
+/*                     GDALVectorEditOutputDataset                      */
+/************************************************************************/
+
+class GDALVectorEditOutputDataset final : public GDALVectorPipelineOutputDataset
+{
+  public:
+    explicit GDALVectorEditOutputDataset(GDALDataset &oSrcDS)
+        : GDALVectorPipelineOutputDataset(oSrcDS)
+    {
+    }
+
+    CSLConstList GetMetadata(const char *pszDomain) override;
+
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain) override
+    {
+        if (!pszDomain || pszDomain[0] == 0)
+            return GDALDataset::GetMetadataItem(pszName, pszDomain);
+        return m_srcDS.GetMetadataItem(pszName, pszDomain);
+    }
+};
+
+CSLConstList GDALVectorEditOutputDataset::GetMetadata(const char *pszDomain)
+{
+    if (!pszDomain || pszDomain[0] == 0)
+        return GDALDataset::GetMetadata(pszDomain);
+    return m_srcDS.GetMetadata(pszDomain);
+}
+
 }  // namespace
 
 /************************************************************************/
-/*                GDALVectorEditAlgorithm::RunStep()                    */
+/*                  GDALVectorEditAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALVectorEditAlgorithm::RunStep(GDALPipelineStepRunContext &)
@@ -219,7 +276,9 @@ bool GDALVectorEditAlgorithm::RunStep(GDALPipelineStepRunContext &)
         bChangeGeomType = true;
     }
 
-    auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
+    auto outDS = std::make_unique<GDALVectorEditOutputDataset>(*poSrcDS);
+
+    outDS->SetMetadata(poSrcDS->GetMetadata());
 
     const CPLStringList aosMD(m_metadata);
     for (const auto &[key, value] : cpl::IterateNameValue(aosMD))
@@ -251,9 +310,10 @@ bool GDALVectorEditAlgorithm::RunStep(GDALPipelineStepRunContext &)
         {
             outDS->AddLayer(*poSrcLayer,
                             std::make_unique<GDALVectorEditAlgorithmLayer>(
-                                *poSrcLayer, m_activeLayer, bChangeGeomType,
-                                eType, m_overrideCrs, m_layerMetadata,
-                                m_unsetLayerMetadata, m_unsetFID));
+                                *poSrcLayer, m_activeLayer, m_outputLayerName,
+                                bChangeGeomType, eType, m_overrideCrs,
+                                m_layerMetadata, m_unsetLayerMetadata,
+                                m_unsetFID));
         }
     }
 

@@ -23,14 +23,17 @@ Available sub-commands
 - :ref:`gdal_vector_clip`
 - :ref:`gdal_vector_concat`
 - :ref:`gdal_vector_convert`
+- :ref:`gdal_vector_create`
 - :ref:`gdal_vector_edit`
 - :ref:`gdal_vector_filter`
 - :ref:`gdal_vector_index`
 - :ref:`gdal_vector_info`
+- :ref:`gdal_vector_export_schema`
 - :ref:`gdal_vector_layer_algebra`
 - :ref:`gdal_vector_partition`
 - :ref:`gdal_vector_pipeline`
 - :ref:`gdal_vector_rasterize`
+- :ref:`gdal_vector_rename_layer`
 - :ref:`gdal_vector_reproject`
 - :ref:`gdal_vector_select`
 - :ref:`gdal_vector_set_field_type`
@@ -54,3 +57,17 @@ Examples
    .. code-block:: console
 
        $ gdal vector convert --format=OpenFileGDB poly.gpkg poly.gdb
+
+.. example::
+   :id: gdal-vector-drivers
+   :title: Check if the vector Parquet driver is installed
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector --formats | grep Parquet
+
+      .. code-tab:: ps1
+
+        gdal vector --formats | Select-String "Parquet"

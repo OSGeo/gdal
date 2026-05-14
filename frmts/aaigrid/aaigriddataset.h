@@ -102,7 +102,7 @@ class AAIGDataset CPL_NON_FINAL : public GDALPamDataset
     static CPLErr Remove(const char *pszFilename, int bRepError);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 

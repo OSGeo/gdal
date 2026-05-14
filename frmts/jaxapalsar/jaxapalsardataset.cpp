@@ -223,7 +223,7 @@ class PALSARJaxaRasterBand final : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                         PALSARJaxaRasterBand()                       */
+/*                        PALSARJaxaRasterBand()                        */
 /************************************************************************/
 
 PALSARJaxaRasterBand::PALSARJaxaRasterBand(PALSARJaxaDataset *poDSIn,
@@ -303,7 +303,7 @@ PALSARJaxaRasterBand::PALSARJaxaRasterBand(PALSARJaxaDataset *poDSIn,
 }
 
 /************************************************************************/
-/*                        ~PALSARJaxaRasterBand()                       */
+/*                       ~PALSARJaxaRasterBand()                        */
 /************************************************************************/
 
 PALSARJaxaRasterBand::~PALSARJaxaRasterBand()
@@ -354,7 +354,7 @@ CPLErr PALSARJaxaRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                          ReadMetadata()                              */
+/*                            ReadMetadata()                            */
 /************************************************************************/
 
 int PALSARJaxaDataset::GetGCPCount()
@@ -363,7 +363,7 @@ int PALSARJaxaDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                             GetGCPs()                                */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *PALSARJaxaDataset::GetGCPs()

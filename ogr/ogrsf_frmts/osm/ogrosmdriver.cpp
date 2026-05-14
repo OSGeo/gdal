@@ -26,7 +26,7 @@
  * -Iogr/ogrsf_frmts -shared -o ogr_OSM.so -L. -lgdal */
 
 /************************************************************************/
-/*                      OGROSMDriverIdentify()                          */
+/*                        OGROSMDriverIdentify()                        */
 /************************************************************************/
 
 static int OGROSMDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -79,7 +79,7 @@ static GDALDataset *OGROSMDriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        RegisterOGROSM()                           */
+/*                           RegisterOGROSM()                           */
 /************************************************************************/
 
 void RegisterOGROSM()

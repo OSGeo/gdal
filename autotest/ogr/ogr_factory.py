@@ -353,9 +353,9 @@ def test_ogr_factory_7():
 # Test forceTo()
 
 
-def test_ogr_factory_8():
-
-    tests = [
+@pytest.mark.parametrize(
+    "src_wkt,exp_wkt,target_type",
+    [
         ("POINT (2 5)", "POINT ZM (2 5 0 0)", ogr.wkbPointZM),
         ("POINT ZM (2 5 3 4)", "POINT ZM (2 5 3 4)", ogr.wkbPointZM),
         ("POINT ZM (2 5 3 4)", "MULTIPOINT ZM ((2 5 3 4))", ogr.wkbMultiPointZM),
@@ -866,23 +866,22 @@ def test_ogr_factory_8():
             ogr.wkbMultiCurve,
         ),
         ("MULTIPOINT (2 5)", "POINT(2 5)", ogr.wkbPoint),
-    ]
-    for (src_wkt, exp_wkt, target_type) in tests:
+    ],
+)
+def test_ogr_factory_force_to(src_wkt, exp_wkt, target_type):
 
-        src_geom = ogr.CreateGeometryFromWkt(src_wkt)
-        with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
-            dst_geom = ogr.ForceTo(src_geom, target_type)
+    src_geom = ogr.CreateGeometryFromWkt(src_wkt)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        dst_geom = ogr.ForceTo(src_geom, target_type)
 
-        if exp_wkt is None:
-            exp_wkt = src_wkt
-        elif (
-            target_type != ogr.wkbUnknown and dst_geom.GetGeometryType() != target_type
-        ):
-            print(target_type)
-            print(dst_geom.ExportToIsoWkt())
-            assert False, (src_wkt, exp_wkt, target_type)
+    if exp_wkt is None:
+        exp_wkt = src_wkt
+    elif target_type != ogr.wkbUnknown and dst_geom.GetGeometryType() != target_type:
+        print(target_type)
+        print(dst_geom.ExportToIsoWkt())
+        assert False, (src_wkt, exp_wkt, target_type)
 
-        ogrtest.check_feature_geometry(dst_geom, exp_wkt)
+    ogrtest.check_feature_geometry(dst_geom, exp_wkt)
 
 
 ###############################################################################
@@ -923,7 +922,7 @@ def test_ogr_factory_failed_forceTo():
             "POLYGON M ((0 0 0,0 0 0,0 0 0,0 0 0,0 0 0))",
         ),
     ]
-    for (src_wkt, target_type, exp_wkt) in tests:
+    for src_wkt, target_type, exp_wkt in tests:
         src_geom = ogr.CreateGeometryFromWkt(src_wkt)
         dst_geom = ogr.ForceTo(src_geom, target_type)
 

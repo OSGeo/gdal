@@ -98,9 +98,9 @@ def test_gdalalg_raster_tpi_vrt_output_from_filename():
 def test_gdalalg_raster_tpi_vrt_output_pipeline_from_format():
 
     alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
-    alg[
-        "pipeline"
-    ] = "read ../gdrivers/data/n43.tif ! tpi ! write i_do/not/exist/out.foo --output-format=vrt"
+    alg["pipeline"] = (
+        "read ../gdrivers/data/n43.tif ! tpi ! write i_do/not/exist/out.foo --output-format=vrt"
+    )
     with pytest.raises(
         Exception,
         match=r"tpi: VRT output is not supported. Consider using the GDALG driver instead \(files with \.gdalg\.json extension\)",
@@ -111,9 +111,9 @@ def test_gdalalg_raster_tpi_vrt_output_pipeline_from_format():
 def test_gdalalg_raster_tpi_vrt_output_pipeline_from_filename():
 
     alg = gdal.GetGlobalAlgorithmRegistry()["raster"]["pipeline"]
-    alg[
-        "pipeline"
-    ] = "read ../gdrivers/data/n43.tif ! tpi ! write i_do/not/exist/out.vrt"
+    alg["pipeline"] = (
+        "read ../gdrivers/data/n43.tif ! tpi ! write i_do/not/exist/out.vrt"
+    )
     with pytest.raises(
         Exception,
         match=r"tpi: VRT output is not supported. Consider using the GDALG driver instead \(files with \.gdalg\.json extension\)",

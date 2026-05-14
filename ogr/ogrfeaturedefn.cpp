@@ -122,8 +122,15 @@ void OGR_FD_Destroy(OGRFeatureDefnH hDefn)
 void OGRFeatureDefn::Release()
 
 {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     if (Dereference() <= 0)
         delete this;
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 }
 
 /************************************************************************/
@@ -373,7 +380,7 @@ OGRFieldDefnH OGR_FD_GetFieldDefn(OGRFeatureDefnH hDefn, int iField)
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                        ReserveSpaceForFields()                       */
+/*                       ReserveSpaceForFields()                        */
 /************************************************************************/
 
 void OGRFeatureDefn::ReserveSpaceForFields(int nFieldCountIn)
@@ -468,7 +475,7 @@ void OGR_FD_AddFieldDefn(OGRFeatureDefnH hDefn, OGRFieldDefnH hNewField)
 }
 
 /************************************************************************/
-/*                           DeleteFieldDefn()                          */
+/*                          DeleteFieldDefn()                           */
 /************************************************************************/
 
 /**
@@ -504,7 +511,7 @@ OGRErr OGRFeatureDefn::DeleteFieldDefn(int iField)
 }
 
 /************************************************************************/
-/*                          StealGeomFieldDefn()                       */
+/*                         StealGeomFieldDefn()                         */
 /************************************************************************/
 
 std::unique_ptr<OGRGeomFieldDefn> OGRFeatureDefn::StealGeomFieldDefn(int iField)
@@ -526,7 +533,7 @@ std::unique_ptr<OGRGeomFieldDefn> OGRFeatureDefn::StealGeomFieldDefn(int iField)
 }
 
 /************************************************************************/
-/*                          StealFieldDefn()                           */
+/*                           StealFieldDefn()                           */
 /************************************************************************/
 
 std::unique_ptr<OGRFieldDefn> OGRFeatureDefn::StealFieldDefn(int iField)
@@ -614,7 +621,7 @@ OGRErr OGRFeatureDefn::ReorderFieldDefns(const int *panMap)
 }
 
 /************************************************************************/
-/*                     OGR_FD_ReorderFieldDefns()                       */
+/*                      OGR_FD_ReorderFieldDefns()                      */
 /************************************************************************/
 
 /**
@@ -687,7 +694,7 @@ int OGR_FD_GetGeomFieldCount(OGRFeatureDefnH hDefn)
 }
 
 /************************************************************************/
-/*                           GetGeomFieldDefn()                         */
+/*                          GetGeomFieldDefn()                          */
 /************************************************************************/
 
 /**
@@ -865,7 +872,7 @@ void OGR_FD_AddGeomFieldDefn(OGRFeatureDefnH hDefn,
 }
 
 /************************************************************************/
-/*                         DeleteGeomFieldDefn()                        */
+/*                        DeleteGeomFieldDefn()                         */
 /************************************************************************/
 
 /**
@@ -1179,6 +1186,9 @@ int OGR_FD_Reference(OGRFeatureDefnH hDefn)
  *
  * \brief Decrements the reference count by one.
  *
+ * \warning This method does not destroy the object when the reference count
+ *          is zero. You generally want to use Release() instead.
+ *
  * This method is the same as the C function OGR_FD_Dereference().
  *
  * @return the updated reference count.
@@ -1191,6 +1201,9 @@ int OGR_FD_Reference(OGRFeatureDefnH hDefn)
 /**
  * \brief Decrements the reference count by one.
  *
+ * \warning This method does not destroy the object when the reference count
+ *          is zero. You generally want to use OGR_FD_Release() instead.
+
  * This function is the same as the C++ method OGRFeatureDefn::Dereference().
  *
  * @param hDefn handle to the feature definition on witch OGRFeature are
@@ -1201,7 +1214,14 @@ int OGR_FD_Reference(OGRFeatureDefnH hDefn)
 int OGR_FD_Dereference(OGRFeatureDefnH hDefn)
 
 {
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     return OGRFeatureDefn::FromHandle(hDefn)->Dereference();
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 }
 
 /************************************************************************/
@@ -1271,7 +1291,7 @@ int OGRFeatureDefn::GetFieldIndex(const char *pszFieldName) const
 }
 
 /************************************************************************/
-/*                      GetFieldIndexCaseSensitive()                    */
+/*                     GetFieldIndexCaseSensitive()                     */
 /************************************************************************/
 
 /**
@@ -1407,7 +1427,7 @@ void OGRFeatureDefn::SetGeometryIgnored(int bIgnore)
 }
 
 /************************************************************************/
-/*                      OGR_FD_SetGeometryIgnored()                     */
+/*                     OGR_FD_SetGeometryIgnored()                      */
 /************************************************************************/
 
 /**
@@ -1524,7 +1544,7 @@ void OGRFeatureDefn::DestroyFeatureDefn(OGRFeatureDefn *poDefn)
 }
 
 /************************************************************************/
-/*                             IsSame()                                 */
+/*                               IsSame()                               */
 /************************************************************************/
 
 /**
@@ -1591,7 +1611,7 @@ int OGR_FD_IsSame(OGRFeatureDefnH hFDefn, OGRFeatureDefnH hOtherFDefn)
 }
 
 /************************************************************************/
-/*                      ComputeMapForSetFrom()                          */
+/*                        ComputeMapForSetFrom()                        */
 /************************************************************************/
 
 /**
@@ -1681,7 +1701,7 @@ OGRFeatureDefn::ComputeMapForSetFrom(const OGRFeatureDefn *poSrcFDefn,
 }
 
 /************************************************************************/
-/*                       OGRFeatureDefn::Seal()                         */
+/*                        OGRFeatureDefn::Seal()                        */
 /************************************************************************/
 
 /** Seal a OGRFeatureDefn.
@@ -1760,7 +1780,7 @@ void OGRFeatureDefn::Unseal(bool bUnsealFields)
 }
 
 /************************************************************************/
-/*                  OGRFeatureDefn::GetTemporaryUnsealer()              */
+/*                OGRFeatureDefn::GetTemporaryUnsealer()                */
 /************************************************************************/
 
 /** Return an object that temporary unseals the OGRFeatureDefn
@@ -1830,7 +1850,7 @@ OGRFeatureDefn::TemporaryUnsealer::TemporaryUnsealer(
 }
 
 /************************************************************************/
-/*                TemporaryUnsealer::~TemporaryUnsealer()               */
+/*               TemporaryUnsealer::~TemporaryUnsealer()                */
 /************************************************************************/
 
 OGRFeatureDefn::TemporaryUnsealer::~TemporaryUnsealer()

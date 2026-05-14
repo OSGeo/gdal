@@ -22,7 +22,7 @@
 #endif
 
 /************************************************************************/
-/*                     PCRasterDriverIdentify()                         */
+/*                       PCRasterDriverIdentify()                       */
 /************************************************************************/
 
 int PCRasterDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -38,7 +38,7 @@ int PCRasterDriverIdentify(GDALOpenInfo *poOpenInfo)
 #undef CSF_SIZE_SIG
 
 /************************************************************************/
-/*                    PCRasterDriverSetCommonMetadata()                 */
+/*                  PCRasterDriverSetCommonMetadata()                   */
 /************************************************************************/
 
 void PCRasterDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -59,7 +59,7 @@ void PCRasterDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                  DeclareDeferredPCRasterPlugin()                     */
+/*                   DeclareDeferredPCRasterPlugin()                    */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

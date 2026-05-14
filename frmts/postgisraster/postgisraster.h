@@ -53,8 +53,8 @@
     (RASTER_BAND_HEADER_FIXED_SIZE + (nodatasize) + (datasize))
 
 #define GET_BAND_DATA(raster, nband, nodatasize, datasize)                     \
-    ((raster) + RASTER_HEADER_SIZE + (nband)*BAND_SIZE(nodatasize, datasize) - \
-     (datasize))
+    ((raster) + RASTER_HEADER_SIZE +                                           \
+     (nband) * BAND_SIZE(nodatasize, datasize) - (datasize))
 
 #define GEOTRSFRM_TOPLEFT_X 0
 #define GEOTRSFRM_WE_RES 1
@@ -295,8 +295,8 @@ class PostGISRasterDataset final : public VRTDataset
     PostGISRasterDataset();
     ~PostGISRasterDataset() override;
     static GDALDataset *Open(GDALOpenInfo *);
-    static GDALDataset *CreateCopy(const char *, GDALDataset *, int, char **,
-                                   GDALProgressFunc, void *);
+    static GDALDataset *CreateCopy(const char *, GDALDataset *, int,
+                                   CSLConstList, GDALProgressFunc, void *);
     static GBool InsertRaster(PGconn *, PostGISRasterDataset *, const char *,
                               const char *, const char *);
     static CPLErr Delete(const char *);

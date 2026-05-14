@@ -17,7 +17,7 @@
 #include <immintrin.h>
 
 /************************************************************************/
-/*         GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX()     */
+/*       GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX()       */
 /************************************************************************/
 
 CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(

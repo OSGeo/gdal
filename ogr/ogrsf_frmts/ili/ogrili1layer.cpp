@@ -20,7 +20,7 @@
 #include <vector>
 
 /************************************************************************/
-/*                           OGRILI1Layer()                              */
+/*                            OGRILI1Layer()                            */
 /************************************************************************/
 
 OGRILI1Layer::OGRILI1Layer(OGRFeatureDefn *poFeatureDefnIn,
@@ -35,7 +35,7 @@ OGRILI1Layer::OGRILI1Layer(OGRFeatureDefn *poFeatureDefnIn,
 }
 
 /************************************************************************/
-/*                           ~OGRILI1Layer()                           */
+/*                           ~OGRILI1Layer()                            */
 /************************************************************************/
 
 OGRILI1Layer::~OGRILI1Layer()
@@ -105,7 +105,7 @@ OGRFeature *OGRILI1Layer::GetNextFeatureRef()
 }
 
 /************************************************************************/
-/*                             GetFeatureRef()                          */
+/*                           GetFeatureRef()                            */
 /************************************************************************/
 
 OGRFeature *OGRILI1Layer::GetFeatureRef(GIntBig nFID)
@@ -170,7 +170,7 @@ int OGRILI1Layer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                         Internal routines                            */
+/*                          Internal routines                           */
 /************************************************************************/
 
 void OGRILI1Layer::JoinGeomLayers()

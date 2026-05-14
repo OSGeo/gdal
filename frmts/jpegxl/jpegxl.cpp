@@ -17,6 +17,7 @@
 #include "gdaljp2metadata.h"
 #include "gdaljp2abstractdataset.h"
 #include "gdalorienteddataset.h"
+#include "gdal_thread_pool.h"
 
 #include <algorithm>
 #include <cassert>
@@ -42,7 +43,7 @@ struct VSILFileReleaser
 constexpr float MIN_DISTANCE = 0.01f;
 
 /************************************************************************/
-/*                        JPEGXLDataset                                 */
+/*                            JPEGXLDataset                             */
 /************************************************************************/
 
 class JPEGXLDataset final : public GDALJP2AbstractDataset
@@ -104,13 +105,13 @@ class JPEGXLDataset final : public GDALJP2AbstractDataset
     static GDALDataset *OpenStatic(GDALOpenInfo *poOpenInfo);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
 
 /************************************************************************/
-/*                      JPEGXLRasterBand                                */
+/*                           JPEGXLRasterBand                           */
 /************************************************************************/
 
 class JPEGXLRasterBand final : public GDALPamRasterBand
@@ -129,7 +130,7 @@ class JPEGXLRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                         ~JPEGXLDataset()                             */
+/*                           ~JPEGXLDataset()                           */
 /************************************************************************/
 
 JPEGXLDataset::~JPEGXLDataset()
@@ -138,7 +139,7 @@ JPEGXLDataset::~JPEGXLDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr JPEGXLDataset::Close(GDALProgressFunc, void *)
@@ -159,7 +160,7 @@ CPLErr JPEGXLDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                         JPEGXLRasterBand()                           */
+/*                          JPEGXLRasterBand()                          */
 /************************************************************************/
 
 JPEGXLRasterBand::JPEGXLRasterBand(JPEGXLDataset *poDSIn, int nBandIn,
@@ -221,7 +222,7 @@ CPLErr JPEGXLRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                         Identify()                                   */
+/*                              Identify()                              */
 /************************************************************************/
 
 int JPEGXLDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -271,7 +272,7 @@ int JPEGXLDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             Open()                                   */
+/*                                Open()                                */
 /************************************************************************/
 
 bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -812,14 +813,9 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
 
 #ifdef HAVE_JXL_THREADS
-    const char *pszNumThreads =
-        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    uint32_t nMaxThreads = static_cast<uint32_t>(
-        EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                         : atoi(pszNumThreads));
-    if (nMaxThreads > 1024)
-        nMaxThreads = 1024;  // to please Coverity
-
+    const uint32_t nMaxThreads =
+        GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                          /* bDefaultAllCPUs = */ true);
     const uint32_t nThreads = std::min(
         nMaxThreads,
         JxlResizableParallelRunnerSuggestThreads(info.xsize, info.ysize));
@@ -933,7 +929,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GetDecodedImage()                             */
+/*                          GetDecodedImage()                           */
 /************************************************************************/
 
 const std::vector<GByte> &JPEGXLDataset::GetDecodedImage()
@@ -994,7 +990,7 @@ const std::vector<GByte> &JPEGXLDataset::GetDecodedImage()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **JPEGXLDataset::GetMetadataDomainList()
@@ -1048,7 +1044,7 @@ CPLStringList JPEGXLDataset::GetCompressionFormats(int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                       ReadCompressedData()                           */
+/*                         ReadCompressedData()                         */
 /************************************************************************/
 
 CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
@@ -1200,7 +1196,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                                     jpeg_data_chunk.size()))
                         {
                             CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Decoder failed to set JPEG Buffer\n");
+                                     "Decoder failed to set JPEG Buffer");
                             return CE_Failure;
                         }
                     }
@@ -1224,7 +1220,7 @@ CPLErr JPEGXLDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                                                     jpeg_data_chunk.size()))
                         {
                             CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Decoder failed to set JPEG Buffer\n");
+                                     "Decoder failed to set JPEG Buffer");
                             return CE_Failure;
                         }
                     }
@@ -1368,7 +1364,7 @@ const char *JPEGXLDataset::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                        GetDecodedImage()                             */
+/*                          GetDecodedImage()                           */
 /************************************************************************/
 
 void JPEGXLDataset::GetDecodedImage(void *pabyOutputData,
@@ -1691,7 +1687,7 @@ CPLErr JPEGXLRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                          OpenStaticPAM()                             */
+/*                           OpenStaticPAM()                            */
 /************************************************************************/
 
 GDALPamDataset *JPEGXLDataset::OpenStaticPAM(GDALOpenInfo *poOpenInfo)
@@ -1707,7 +1703,7 @@ GDALPamDataset *JPEGXLDataset::OpenStaticPAM(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          OpenStatic()                                */
+/*                             OpenStatic()                             */
 /************************************************************************/
 
 GDALDataset *JPEGXLDataset::OpenStatic(GDALOpenInfo *poOpenInfo)
@@ -1739,12 +1735,12 @@ GDALDataset *JPEGXLDataset::OpenStatic(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              CreateCopy()                            */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                                        GDALDataset *poSrcDS, int /*bStrict*/,
-                                       char **papszOptions,
+                                       CSLConstList papszOptions,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 
@@ -2297,15 +2293,9 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    const char *pszNumThreads = CSLFetchNameValue(papszOptions, "NUM_THREADS");
-    if (pszNumThreads == nullptr)
-        pszNumThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS");
-    uint32_t nMaxThreads = static_cast<uint32_t>(
-        EQUAL(pszNumThreads, "ALL_CPUS") ? CPLGetNumCPUs()
-                                         : atoi(pszNumThreads));
-    if (nMaxThreads > 1024)
-        nMaxThreads = 1024;  // to please Coverity
-
+    const uint32_t nMaxThreads = GDALGetNumThreads(
+        papszOptions, "NUM_THREADS", GDAL_DEFAULT_MAX_THREAD_COUNT,
+        /* bDefaultAllCPUs = */ true);
     const uint32_t nThreads =
         std::min(nMaxThreads, JxlResizableParallelRunnerSuggestThreads(
                                   basic_info.xsize, basic_info.ysize));

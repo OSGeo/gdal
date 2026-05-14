@@ -59,12 +59,8 @@
 #include "vrtdataset.h"
 #include "../frmts/gtiff/cogdriver.h"
 
-#if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 3
-#define USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
-#endif
-
 /************************************************************************/
-/*                        GDALWarpAppOptions                            */
+/*                          GDALWarpAppOptions                          */
 /************************************************************************/
 
 /** Options for use with GDALWarp(). GDALWarpAppOptions* must be allocated and
@@ -323,7 +319,7 @@ static double GetAverageSegmentLength(const OGRGeometry *poGeom)
 }
 
 /************************************************************************/
-/*                          FetchSrcMethod()                            */
+/*                           FetchSrcMethod()                           */
 /************************************************************************/
 
 static const char *FetchSrcMethod(CSLConstList papszTO,
@@ -414,7 +410,7 @@ static CPLString GetSrcDSProjection(GDALDatasetH hDS, CSLConstList papszTO)
 }
 
 /************************************************************************/
-/*                      CreateCTCutlineToSrc()                          */
+/*                        CreateCTCutlineToSrc()                        */
 /************************************************************************/
 
 static std::unique_ptr<OGRCoordinateTransformation> CreateCTCutlineToSrc(
@@ -643,8 +639,6 @@ static CPLErr CropToCutline(const OGRGeometry *poCutline, CSLConstList papszTO,
     return CE_None;
 }
 
-#ifdef USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
-
 static bool MustApplyVerticalShift(GDALDatasetH hWrkSrcDS,
                                    const GDALWarpAppOptions *psOptions,
                                    OGRSpatialReference &oSRSSrc,
@@ -694,7 +688,7 @@ static bool MustApplyVerticalShift(GDALDatasetH hWrkSrcDS,
 }
 
 /************************************************************************/
-/*                      ApplyVerticalShift()                            */
+/*                         ApplyVerticalShift()                         */
 /************************************************************************/
 
 static bool ApplyVerticalShift(GDALDatasetH hWrkSrcDS,
@@ -797,237 +791,8 @@ static bool ApplyVerticalShift(GDALDatasetH hWrkSrcDS,
     return bApplyVShift;
 }
 
-#else
-
 /************************************************************************/
-/*                      ApplyVerticalShiftGrid()                        */
-/************************************************************************/
-
-static GDALDatasetH ApplyVerticalShiftGrid(GDALDatasetH hWrkSrcDS,
-                                           const GDALWarpAppOptions *psOptions,
-                                           GDALDatasetH hVRTDS,
-                                           bool &bErrorOccurredOut)
-{
-    bErrorOccurredOut = false;
-    // Check if we must do vertical shift grid transform
-    OGRSpatialReference oSRSSrc;
-    OGRSpatialReference oSRSDst;
-    const char *pszSrcWKT =
-        psOptions->aosTransformerOptions.FetchNameValue("SRC_SRS");
-    if (pszSrcWKT)
-        oSRSSrc.SetFromUserInput(pszSrcWKT);
-    else
-    {
-        auto hSRS = GDALGetSpatialRef(hWrkSrcDS);
-        if (hSRS)
-            oSRSSrc = *(OGRSpatialReference::FromHandle(hSRS));
-    }
-
-    const char *pszDstWKT =
-        psOptions->aosTransformerOptions.FetchNameValue("DST_SRS");
-    if (pszDstWKT)
-        oSRSDst.SetFromUserInput(pszDstWKT);
-
-    double adfGT[6] = {};
-    if (GDALGetRasterCount(hWrkSrcDS) == 1 &&
-        GDALGetGeoTransform(hWrkSrcDS, adfGT) == CE_None &&
-        !oSRSSrc.IsEmpty() && !oSRSDst.IsEmpty())
-    {
-        if ((oSRSSrc.IsCompound() ||
-             (oSRSSrc.IsGeographic() && oSRSSrc.GetAxesCount() == 3)) ||
-            (oSRSDst.IsCompound() ||
-             (oSRSDst.IsGeographic() && oSRSDst.GetAxesCount() == 3)))
-        {
-            const char *pszSrcProj4Geoids =
-                oSRSSrc.GetExtension("VERT_DATUM", "PROJ4_GRIDS");
-            const char *pszDstProj4Geoids =
-                oSRSDst.GetExtension("VERT_DATUM", "PROJ4_GRIDS");
-
-            if (oSRSSrc.IsCompound() && pszSrcProj4Geoids == nullptr)
-            {
-                CPLDebug("GDALWARP", "Source SRS is a compound CRS but lacks "
-                                     "+geoidgrids");
-            }
-
-            if (oSRSDst.IsCompound() && pszDstProj4Geoids == nullptr)
-            {
-                CPLDebug("GDALWARP", "Target SRS is a compound CRS but lacks "
-                                     "+geoidgrids");
-            }
-
-            if (pszSrcProj4Geoids != nullptr && pszDstProj4Geoids != nullptr &&
-                EQUAL(pszSrcProj4Geoids, pszDstProj4Geoids))
-            {
-                pszSrcProj4Geoids = nullptr;
-                pszDstProj4Geoids = nullptr;
-            }
-
-            // Select how to go from input dataset units to meters
-            const char *pszUnit =
-                GDALGetRasterUnitType(GDALGetRasterBand(hWrkSrcDS, 1));
-            double dfToMeterSrc = 1.0;
-            if (pszUnit && (EQUAL(pszUnit, "m") || EQUAL(pszUnit, "meter") ||
-                            EQUAL(pszUnit, "metre")))
-            {
-            }
-            else if (pszUnit &&
-                     (EQUAL(pszUnit, "ft") || EQUAL(pszUnit, "foot")))
-            {
-                dfToMeterSrc = CPLAtof(SRS_UL_FOOT_CONV);
-            }
-            else if (pszUnit && (EQUAL(pszUnit, "US survey foot")))
-            {
-                dfToMeterSrc = CPLAtof(SRS_UL_US_FOOT_CONV);
-            }
-            else
-            {
-                if (pszUnit && !EQUAL(pszUnit, ""))
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined, "Unknown units=%s",
-                             pszUnit);
-                }
-                if (oSRSSrc.IsCompound())
-                {
-                    dfToMeterSrc = oSRSSrc.GetTargetLinearUnits("VERT_CS");
-                }
-                else if (oSRSSrc.IsProjected())
-                {
-                    dfToMeterSrc = oSRSSrc.GetLinearUnits();
-                }
-            }
-
-            double dfToMeterDst = 1.0;
-            if (oSRSDst.IsCompound())
-            {
-                dfToMeterDst = oSRSDst.GetTargetLinearUnits("VERT_CS");
-            }
-            else if (oSRSDst.IsProjected())
-            {
-                dfToMeterDst = oSRSDst.GetLinearUnits();
-            }
-
-            char **papszOptions = nullptr;
-            if (psOptions->eOutputType != GDT_Unknown)
-            {
-                papszOptions = CSLSetNameValue(
-                    papszOptions, "DATATYPE",
-                    GDALGetDataTypeName(psOptions->eOutputType));
-            }
-            papszOptions =
-                CSLSetNameValue(papszOptions, "ERROR_ON_MISSING_VERT_SHIFT",
-                                psOptions->aosTransformerOptions.FetchNameValue(
-                                    "ERROR_ON_MISSING_VERT_SHIFT"));
-            papszOptions = CSLSetNameValue(papszOptions, "SRC_SRS", pszSrcWKT);
-
-            if (pszSrcProj4Geoids != nullptr)
-            {
-                int bError = FALSE;
-                GDALDatasetH hGridDataset =
-                    GDALOpenVerticalShiftGrid(pszSrcProj4Geoids, &bError);
-                if (bError && hGridDataset == nullptr)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s.",
-                             pszSrcProj4Geoids);
-                    bErrorOccurredOut = true;
-                    CSLDestroy(papszOptions);
-                    return hWrkSrcDS;
-                }
-                else if (hGridDataset != nullptr)
-                {
-                    // Transform from source vertical datum to WGS84
-                    GDALDatasetH hTmpDS = GDALApplyVerticalShiftGrid(
-                        hWrkSrcDS, hGridDataset, FALSE, dfToMeterSrc, 1.0,
-                        papszOptions);
-                    GDALReleaseDataset(hGridDataset);
-                    if (hTmpDS == nullptr)
-                    {
-                        bErrorOccurredOut = true;
-                        CSLDestroy(papszOptions);
-                        return hWrkSrcDS;
-                    }
-                    else
-                    {
-                        if (hVRTDS)
-                        {
-                            CPLError(
-                                CE_Failure, CPLE_NotSupported,
-                                "Warping to VRT with vertical transformation "
-                                "not supported with PROJ < 6.3");
-                            bErrorOccurredOut = true;
-                            CSLDestroy(papszOptions);
-                            return hWrkSrcDS;
-                        }
-
-                        CPLDebug("GDALWARP",
-                                 "Adjusting source dataset "
-                                 "with source vertical datum using %s",
-                                 pszSrcProj4Geoids);
-                        GDALReleaseDataset(hWrkSrcDS);
-                        hWrkSrcDS = hTmpDS;
-                        dfToMeterSrc = 1.0;
-                    }
-                }
-            }
-
-            if (pszDstProj4Geoids != nullptr)
-            {
-                int bError = FALSE;
-                GDALDatasetH hGridDataset =
-                    GDALOpenVerticalShiftGrid(pszDstProj4Geoids, &bError);
-                if (bError && hGridDataset == nullptr)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s.",
-                             pszDstProj4Geoids);
-                    bErrorOccurredOut = true;
-                    CSLDestroy(papszOptions);
-                    return hWrkSrcDS;
-                }
-                else if (hGridDataset != nullptr)
-                {
-                    // Transform from WGS84 to target vertical datum
-                    GDALDatasetH hTmpDS = GDALApplyVerticalShiftGrid(
-                        hWrkSrcDS, hGridDataset, TRUE, dfToMeterSrc,
-                        dfToMeterDst, papszOptions);
-                    GDALReleaseDataset(hGridDataset);
-                    if (hTmpDS == nullptr)
-                    {
-                        bErrorOccurredOut = true;
-                        CSLDestroy(papszOptions);
-                        return hWrkSrcDS;
-                    }
-                    else
-                    {
-                        if (hVRTDS)
-                        {
-                            CPLError(
-                                CE_Failure, CPLE_NotSupported,
-                                "Warping to VRT with vertical transformation "
-                                "not supported with PROJ < 6.3");
-                            bErrorOccurredOut = true;
-                            CSLDestroy(papszOptions);
-                            return hWrkSrcDS;
-                        }
-
-                        CPLDebug("GDALWARP",
-                                 "Adjusting source dataset "
-                                 "with target vertical datum using %s",
-                                 pszDstProj4Geoids);
-                        GDALReleaseDataset(hWrkSrcDS);
-                        hWrkSrcDS = hTmpDS;
-                    }
-                }
-            }
-
-            CSLDestroy(papszOptions);
-        }
-    }
-    return hWrkSrcDS;
-}
-
-#endif
-
-/************************************************************************/
-/*                        CanUseBuildVRT()                              */
+/*                           CanUseBuildVRT()                           */
 /************************************************************************/
 
 static bool CanUseBuildVRT(int nSrcCount, GDALDatasetH *pahSrcDS)
@@ -1134,7 +899,7 @@ static bool CanUseBuildVRT(int nSrcCount, GDALDatasetH *pahSrcDS)
 #ifdef HAVE_TIFF
 
 /************************************************************************/
-/*                      DealWithCOGOptions()                            */
+/*                         DealWithCOGOptions()                         */
 /************************************************************************/
 
 static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
@@ -1258,7 +1023,7 @@ static bool DealWithCOGOptions(CPLStringList &aosCreateOptions, int nSrcCount,
 #endif
 
 /************************************************************************/
-/*                      GDALWarpIndirect()                              */
+/*                          GDALWarpIndirect()                          */
 /************************************************************************/
 
 static GDALDatasetH
@@ -1399,7 +1164,7 @@ static GDALDatasetH GDALWarpIndirect(const char *pszDest, GDALDriverH hDriver,
 }
 
 /************************************************************************/
-/*                             GDALWarp()                               */
+/*                              GDALWarp()                              */
 /************************************************************************/
 
 /**
@@ -1844,12 +1609,13 @@ EditISIS3ForMetadataChanges(const char *pszJSON,
 }
 
 /************************************************************************/
-/*                           ProcessMetadata()                          */
+/*                          ProcessMetadata()                           */
 /************************************************************************/
 
 static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                             const GDALWarpAppOptions *psOptions,
-                            const bool bEnableDstAlpha)
+                            const bool bEnableDstAlpha,
+                            bool bVerticalShiftApplied)
 {
     if (psOptions->bCopyMetadata)
     {
@@ -1956,7 +1722,7 @@ static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
                         CSLDestroy(papszMetadataNew);
                     }
                     /* copy other info (Description, Unit Type) - what else? */
-                    if (psOptions->bCopyBandInfo)
+                    if (psOptions->bCopyBandInfo && !bVerticalShiftApplied)
                     {
                         pszSrcInfo = GDALGetDescription(hSrcBand);
                         if (pszSrcInfo != nullptr && strlen(pszSrcInfo) > 0)
@@ -2013,7 +1779,7 @@ static void ProcessMetadata(int iSrc, GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
 }
 
 /************************************************************************/
-/*                             SetupNoData()                            */
+/*                            SetupNoData()                             */
 /************************************************************************/
 
 static CPLErr SetupNoData(const char *pszDest, int iSrc, GDALDatasetH hSrcDS,
@@ -2453,7 +2219,7 @@ static void SetupSkipNoSource(int iSrc, GDALDatasetH hDstDS,
 }
 
 /************************************************************************/
-/*                     AdjustOutputExtentForRPC()                       */
+/*                      AdjustOutputExtentForRPC()                      */
 /************************************************************************/
 
 /** Returns false if there's no intersection between source extent defined
@@ -2559,7 +2325,8 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
     if (hDstDS != nullptr)
         GDALReferenceDataset(hDstDS);
 
-#if defined(USE_PROJ_BASED_VERTICAL_SHIFT_METHOD)
+    bool bVerticalShiftApplied = false;
+
     if (psOptions->bNoVShift)
     {
         psOptions->aosTransformerOptions.SetNameValue("@STRIP_VERT_CS", "YES");
@@ -2571,16 +2338,15 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         OGRSpatialReference oSRSSrc;
         OGRSpatialReference oSRSDst;
 
-        if (MustApplyVerticalShift(pahSrcDS[0], psOptions, oSRSSrc, oSRSDst,
-                                   bSrcHasVertAxis, bDstHasVertAxis))
+        bVerticalShiftApplied =
+            MustApplyVerticalShift(pahSrcDS[0], psOptions, oSRSSrc, oSRSDst,
+                                   bSrcHasVertAxis, bDstHasVertAxis);
+        if (bVerticalShiftApplied)
         {
             psOptions->aosTransformerOptions.SetNameValue("PROMOTE_TO_3D",
                                                           "YES");
         }
     }
-#else
-    psOptions->aosTransformerOptions.SetNameValue("@STRIP_VERT_CS", "YES");
-#endif
 
     bool bVRT = false;
     if (!CheckOptions(pszDest, hDstDS, nSrcCount, pahSrcDS, psOptions, bVRT,
@@ -2753,7 +2519,8 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
          */
         /* --------------------------------------------------------------------
          */
-        ProcessMetadata(iSrc, hSrcDS, hDstDS, psOptions, bEnableDstAlpha);
+        ProcessMetadata(iSrc, hSrcDS, hDstDS, psOptions, bEnableDstAlpha,
+                        bVerticalShiftApplied);
 
         /* --------------------------------------------------------------------
          */
@@ -3026,21 +2793,6 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         GDALDatasetH hWrkSrcDS =
             poSrcOvrDS ? static_cast<GDALDatasetH>(poSrcOvrDS) : hSrcDS;
 
-#if !defined(USE_PROJ_BASED_VERTICAL_SHIFT_METHOD)
-        if (!psOptions->bNoVShift)
-        {
-            bool bErrorOccurred = false;
-            hWrkSrcDS = ApplyVerticalShiftGrid(
-                hWrkSrcDS, psOptions, bVRT ? hDstDS : nullptr, bErrorOccurred);
-            if (bErrorOccurred)
-            {
-                GDALReleaseDataset(hWrkSrcDS);
-                GDALReleaseDataset(hDstDS);
-                return nullptr;
-            }
-        }
-#endif
-
         /* --------------------------------------------------------------------
          */
         /*      Clear temporary INIT_DEST settings after the first image. */
@@ -3238,7 +2990,7 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
         }
 
         bool bUseApproxTransformer = psOptions->dfErrorThreshold != 0.0;
-#ifdef USE_PROJ_BASED_VERTICAL_SHIFT_METHOD
+
         if (!psOptions->bNoVShift)
         {
             // Can modify psWO->papszWarpOptions
@@ -3247,7 +2999,6 @@ GDALWarpDirect(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
                 bUseApproxTransformer = false;
             }
         }
-#endif
 
         /* --------------------------------------------------------------------
          */
@@ -3407,7 +3158,8 @@ static bool ValidateCutline(const OGRGeometry *poGeom, bool bVerbose)
     }
     else if (eType == wkbPolygon)
     {
-        if (OGRGeometryFactory::haveGEOS() && !poGeom->IsValid())
+        std::string osReason;
+        if (OGRGeometryFactory::haveGEOS() && !poGeom->IsValid(&osReason))
         {
             if (!bVerbose)
                 return false;
@@ -3433,12 +3185,14 @@ static bool ValidateCutline(const OGRGeometry *poGeom, bool bVerbose)
 
             if (CPLTestBool(
                     CPLGetConfigOption("GDALWARP_IGNORE_BAD_CUTLINE", "NO")))
+            {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Cutline polygon is invalid.");
+                         "Cutline polygon is invalid: %s.", osReason.c_str());
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cutline polygon is invalid.");
+                         "Cutline polygon is invalid: %s.", osReason.c_str());
                 return false;
             }
         }
@@ -3473,10 +3227,10 @@ static CPLErr LoadCutline(const std::string &osCutlineDSNameOrWKT,
         STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "MULTIPOLYGON(") ||
         STARTS_WITH_CI(osCutlineDSNameOrWKT.c_str(), "MULTIPOLYGON ("))
     {
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS;
+        OGRSpatialReferenceRefCountedPtr poSRS;
         if (!osSRS.empty())
         {
-            poSRS.reset(new OGRSpatialReference());
+            poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
             poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             poSRS->SetFromUserInput(osSRS.c_str());
         }
@@ -3570,8 +3324,7 @@ static CPLErr LoadCutline(const std::string &osCutlineDSNameOrWKT,
     /* -------------------------------------------------------------------- */
     if (!osSRS.empty())
     {
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> poSRS(
-            new OGRSpatialReference());
+        auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         poSRS->SetFromUserInput(osSRS.c_str());
         poMultiPolygon->assignSpatialReference(poSRS.get());
@@ -4394,7 +4147,7 @@ static GDALDatasetH GDALWarpCreateOutput(
                     oSrcSRS.DemoteTo2D(nullptr) == OGRERR_NONE &&
                     oDstSRS.DemoteTo2D(nullptr) == OGRERR_NONE)
                 {
-                    bIsSameHorizontal = oSrcSRS.IsSame(&oDstSRS);
+                    bIsSameHorizontal = CPL_TO_BOOL(oSrcSRS.IsSame(&oDstSRS));
                 }
             }
             if (bIsSameHorizontal)
@@ -5750,7 +5503,7 @@ static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
 }
 
 /************************************************************************/
-/*                             IsValidSRS                               */
+/*                              IsValidSRS                              */
 /************************************************************************/
 
 static bool IsValidSRS(const char *pszUserInput)
@@ -5771,7 +5524,7 @@ static bool IsValidSRS(const char *pszUserInput)
 }
 
 /************************************************************************/
-/*                     GDALWarpAppOptionsGetParser()                    */
+/*                    GDALWarpAppOptionsGetParser()                     */
 /************************************************************************/
 
 static std::unique_ptr<GDALArgumentParser>
@@ -6214,7 +5967,8 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
     argParser->add_argument("-cblend")
         .metavar("<distance>")
         .action(
-            [psOptions](const std::string &s) {
+            [psOptions](const std::string &s)
+            {
                 psOptions->aosWarpOptions.SetNameValue("CUTLINE_BLEND_DIST",
                                                        s.c_str());
             })
@@ -6338,7 +6092,7 @@ GDALWarpAppOptionsGetParser(GDALWarpAppOptions *psOptions,
 }
 
 /************************************************************************/
-/*                       GDALWarpAppGetParserUsage()                    */
+/*                     GDALWarpAppGetParserUsage()                      */
 /************************************************************************/
 
 std::string GDALWarpAppGetParserUsage()
@@ -6360,7 +6114,7 @@ std::string GDALWarpAppGetParserUsage()
 }
 
 /************************************************************************/
-/*                             GDALWarpAppOptionsNew()                  */
+/*                       GDALWarpAppOptionsNew()                        */
 /************************************************************************/
 
 #ifndef CheckHasEnoughAdditionalArgs_defined
@@ -6548,7 +6302,7 @@ GDALWarpAppOptionsNew(char **papszArgv,
 }
 
 /************************************************************************/
-/*                        GDALWarpAppOptionsFree()                    */
+/*                       GDALWarpAppOptionsFree()                       */
 /************************************************************************/
 
 /**
@@ -6565,7 +6319,7 @@ void GDALWarpAppOptionsFree(GDALWarpAppOptions *psOptions)
 }
 
 /************************************************************************/
-/*                 GDALWarpAppOptionsSetProgress()                    */
+/*                   GDALWarpAppOptionsSetProgress()                    */
 /************************************************************************/
 
 /**
@@ -6589,7 +6343,7 @@ void GDALWarpAppOptionsSetProgress(GDALWarpAppOptions *psOptions,
 }
 
 /************************************************************************/
-/*                    GDALWarpAppOptionsSetQuiet()                      */
+/*                     GDALWarpAppOptionsSetQuiet()                     */
 /************************************************************************/
 
 /**
@@ -6607,7 +6361,7 @@ void GDALWarpAppOptionsSetQuiet(GDALWarpAppOptions *psOptions, int bQuiet)
 }
 
 /************************************************************************/
-/*                 GDALWarpAppOptionsSetWarpOption()                    */
+/*                  GDALWarpAppOptionsSetWarpOption()                   */
 /************************************************************************/
 
 /**

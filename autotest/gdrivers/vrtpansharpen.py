@@ -606,8 +606,7 @@ def test_vrtpansharpen_1():
 
     # Hole in SpectralBand.dstBand numbering
     with gdal.quiet_errors():
-        vrt_ds = gdal.Open(
-            """<VRTDataset subClass="VRTPansharpenedDataset">
+        vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <Algorithm>WeightedBrovey</Algorithm>
             <AlgorithmOptions>
@@ -633,8 +632,7 @@ def test_vrtpansharpen_1():
                     <SourceBand>3</SourceBand>
             </SpectralBand>
         </PansharpeningOptions>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
     assert vrt_ds is None
 
     # Band 4 of type VRTPansharpenedRasterBand, but no corresponding SpectralBand
@@ -764,8 +762,7 @@ def test_vrtpansharpen_1():
 
     # Dimensions of input spectral band 1 different from first spectral band
     with gdal.quiet_errors():
-        vrt_ds = gdal.Open(
-            """<VRTDataset subClass="VRTPansharpenedDataset">
+        vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <PanchroBand>
                     <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
@@ -780,8 +777,7 @@ def test_vrtpansharpen_1():
                     <SourceBand>1</SourceBand>
             </SpectralBand>
         </PansharpeningOptions>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
     assert vrt_ds is None
 
     # Just warnings
@@ -790,8 +786,7 @@ def test_vrtpansharpen_1():
     # Georeferencing of bottom-right corner of pan dataset and data/byte.tif do not match
     gdal.ErrorReset()
     with gdal.quiet_errors():
-        vrt_ds = gdal.Open(
-            """<VRTDataset subClass="VRTPansharpenedDataset">
+        vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <SpatialExtentAdjustment>None</SpatialExtentAdjustment>
             <PanchroBand>
@@ -803,8 +798,7 @@ def test_vrtpansharpen_1():
                     <SourceBand>1</SourceBand>
             </SpectralBand>
         </PansharpeningOptions>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
     assert vrt_ds is not None
     assert gdal.GetLastErrorMsg() != ""
 
@@ -927,8 +921,7 @@ def test_vrtpansharpen_2():
     assert data == ref_data
 
     # Compact case
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
         <PanchroBand>
                 <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
@@ -947,8 +940,7 @@ def test_vrtpansharpen_2():
                 <SourceBand>3</SourceBand>
         </SpectralBand>
     </PansharpeningOptions>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     assert cs in expected_cs
@@ -1825,8 +1817,7 @@ def test_vrtpansharpen_8():
 def test_vrtpansharpen_9():
 
     # Explicit nodata
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
         <NoData>0</NoData>
         <PanchroBand>
@@ -1846,8 +1837,7 @@ def test_vrtpansharpen_9():
                 <SourceBand>3</SourceBand>
         </SpectralBand>
     </PansharpeningOptions>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     expected_cs_list = (
@@ -1878,8 +1868,7 @@ def test_vrtpansharpen_9():
     ds.WriteRaster(0, 0, 400, 200, src_ds.ReadRaster())
     ds = None
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
     <PansharpeningOptions>
         <PanchroBand>
                 <SourceFilename>/vsimem/small_world_pan_nodata.tif</SourceFilename>
@@ -1898,8 +1887,7 @@ def test_vrtpansharpen_9():
                 <SourceBand>3</SourceBand>
         </SpectralBand>
     </PansharpeningOptions>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     assert vrt_ds is not None
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     assert cs in expected_cs_list
@@ -1929,8 +1917,7 @@ def test_vrtpansharpen_10():
     ds = None
 
     # 4 bands
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <NumThreads>ALL_CPUS</NumThreads>
             <PanchroBand>
@@ -1954,8 +1941,7 @@ def test_vrtpansharpen_10():
                     <SourceBand>4</SourceBand>
             </SpectralBand>
         </PansharpeningOptions>
-    </VRTDataset>"""
-    )
+    </VRTDataset>""")
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     assert cs == [62009, 62009, 62009, 62009]
 
@@ -1971,8 +1957,7 @@ def test_vrtpansharpen_10():
     assert data == ref_data
 
     # 4 bands -> 3 bands
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <NumThreads>ALL_CPUS</NumThreads>
             <PanchroBand>
@@ -1996,8 +1981,7 @@ def test_vrtpansharpen_10():
                     <SourceBand>4</SourceBand>
             </SpectralBand>
         </PansharpeningOptions>
-    </VRTDataset>"""
-    )
+    </VRTDataset>""")
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     assert cs == [62009, 62009, 62009]
 
@@ -2013,8 +1997,7 @@ def test_vrtpansharpen_10():
     assert data == ref_data
 
     # 3 bands
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <NumThreads>ALL_CPUS</NumThreads>
             <PanchroBand>
@@ -2034,8 +2017,7 @@ def test_vrtpansharpen_10():
                     <SourceBand>3</SourceBand>
             </SpectralBand>
         </PansharpeningOptions>
-    </VRTDataset>"""
-    )
+    </VRTDataset>""")
     cs = [vrt_ds.GetRasterBand(i + 1).Checksum() for i in range(vrt_ds.RasterCount)]
     assert cs == [62009, 62009, 62009]
 
@@ -2197,8 +2179,7 @@ def test_vrtpansharpen_nodata_multiple_spectral_bands():
     gdal.Translate("/vsimem/b1.tif", "data/small_world.tif")
     gdal.Translate("/vsimem/b2.tif", "data/small_world.tif")
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
   <PansharpeningOptions>
       <NoData>0</NoData>
     <PanchroBand>
@@ -2214,8 +2195,7 @@ def test_vrtpansharpen_nodata_multiple_spectral_bands():
       <SourceBand>1</SourceBand>
     </SpectralBand>
   </PansharpeningOptions>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     assert vrt_ds
 
     gdal.Unlink("/vsimem/b1.tif")
@@ -2239,8 +2219,7 @@ def test_vrtpansharpen_nodata_overviews():
     ds.BuildOverviews("NEAR", [2])
     ds = None
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
   <PansharpeningOptions>
       <NoData>0</NoData>
     <PanchroBand>
@@ -2252,8 +2231,7 @@ def test_vrtpansharpen_nodata_overviews():
       <SourceBand>1</SourceBand>
     </SpectralBand>
   </PansharpeningOptions>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     assert vrt_ds
     assert vrt_ds.GetRasterBand(1).GetOverviewCount() == 1
     assert vrt_ds.GetRasterBand(1).GetOverview(0).GetNoDataValue() == 0
@@ -2336,8 +2314,7 @@ def test_vrtpansharpen_open_options_input_bands():
 
     msgs = []
     with gdaltest.error_handler(my_handler):
-        gdal.Open(
-            """<VRTDataset subClass="VRTPansharpenedDataset">
+        gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <PanchroBand>
                     <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
@@ -2359,15 +2336,13 @@ def test_vrtpansharpen_open_options_input_bands():
                     <SourceBand>3</SourceBand>
             </SpectralBand>
         </PansharpeningOptions>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
         # Not the prettiest way to check that open options are used, but that does the job...
         assert "small_world_pan.tif: Invalid value for NUM_THREADS: foo" in msgs
 
     msgs = []
     with gdaltest.error_handler(my_handler):
-        gdal.Open(
-            """<VRTDataset subClass="VRTPansharpenedDataset">
+        gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <PanchroBand>
                     <SourceFilename relativeToVRT="1">tmp/small_world_pan.tif</SourceFilename>
@@ -2389,8 +2364,7 @@ def test_vrtpansharpen_open_options_input_bands():
                     <SourceBand>3</SourceBand>
             </SpectralBand>
         </PansharpeningOptions>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
         # Not the prettiest way to check that open options are used, but that does the job...
         assert "small_world.tif: Invalid value for NUM_THREADS: foo" in msgs
 
@@ -2417,8 +2391,7 @@ def test_vrtpansharpen_slightly_different_extent(tmp_vsimem):
     ds.GetRasterBand(2).Fill(20)
     ds = None
 
-    vrt_ds = gdal.Open(
-        """<VRTDataset subClass="VRTPansharpenedDataset">
+    vrt_ds = gdal.Open("""<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
             <NumThreads>ALL_CPUS</NumThreads>
             <PanchroBand>
@@ -2434,8 +2407,7 @@ def test_vrtpansharpen_slightly_different_extent(tmp_vsimem):
                     <SourceBand>2</SourceBand>
             </SpectralBand>
         </PansharpeningOptions>
-    </VRTDataset>"""
-    )
+    </VRTDataset>""")
     mm = [
         vrt_ds.GetRasterBand(i + 1).ComputeRasterMinMax()
         for i in range(vrt_ds.RasterCount)

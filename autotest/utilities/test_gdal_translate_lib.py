@@ -568,7 +568,7 @@ def test_gdal_translate_lib_102():
     result = ds.GetRasterBand(1).ComputeRasterMinMax(False)
     assert result == (19018.0, 65535.0)
 
-    (approx_min, approx_max) = ds.GetRasterBand(1).ComputeRasterMinMax(True)
+    approx_min, approx_max = ds.GetRasterBand(1).ComputeRasterMinMax(True)
     ds2 = gdal.Translate(
         "",
         ds,
@@ -1566,7 +1566,7 @@ def test_gdal_translate_ovr_rpc():
 
 def test_gdal_translate_lib_raster_uint16_ct_0_255_range():
 
-    for (r, g, b, a) in [
+    for r, g, b, a in [
         (255 + 1, 255, 255, 255),
         (255, 255 + 1, 255, 255),
         (255, 255, 255 + 1, 255),

@@ -104,7 +104,7 @@ VSIUploadOnCloseHandle::~VSIUploadOnCloseHandle()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 int VSIUploadOnCloseHandle::Close()
@@ -140,7 +140,7 @@ int VSIUploadOnCloseHandle::Close()
 }
 
 /************************************************************************/
-/*                    VSICreateUploadOnCloseFile()                      */
+/*                     VSICreateUploadOnCloseFile()                     */
 /************************************************************************/
 
 VSIVirtualHandle *

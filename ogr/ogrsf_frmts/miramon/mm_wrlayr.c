@@ -1916,7 +1916,7 @@ int MMInitLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
 /* -------------------------------------------------------------------- */
 static int MMClose3DSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
                                  MM_INTERNAL_FID nElements, VSILFILE *pF,
-                                 VSILFILE *pF3d, const char *pszF3d,
+                                 VSILFILE **pF3d, const char *pszF3d,
                                  struct MM_ZSection *pZSection,
                                  MM_FILE_OFFSET FinalOffset)
 {
@@ -1926,7 +1926,7 @@ static int MMClose3DSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     // Avoid closing when it has no sense. But it's not an error.
     // Just return elegantly.
-    if (!pF || !pF3d || !pszF3d || !pZSection)
+    if (!pF || !pF3d || !(*pF3d) || !pszF3d || !pZSection)
         return 0;
 
     if (hMiraMonLayer->bIsReal3d)
@@ -1944,13 +1944,13 @@ static int MMClose3DSectionLayer(struct MiraMonVectLayerInfo *hMiraMonLayer,
         if (MMAppendBlockToBuffer(&pZSection->FlushZL))
             goto end_label;
 
-        if (MMMoveFromFileToFile(pF3d, pF, &pZSection->ZSectionOffset))
+        if (MMMoveFromFileToFile(*pF3d, pF, &pZSection->ZSectionOffset))
             goto end_label;
     }
 
     ret_code = 0;
 end_label:
-    fclose_and_nullify(&pF3d);
+    fclose_and_nullify(pF3d);
     if (pszF3d && *pszF3d != '\0')
         VSIUnlink(pszF3d);
 
@@ -2000,7 +2000,7 @@ static int MMClosePointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
         if (MMClose3DSectionLayer(
                 hMiraMonLayer, hMiraMonLayer->TopHeader.nElemCount,
-                hMiraMonLayer->MMPoint.pF, hMiraMonLayer->MMPoint.pF3d,
+                hMiraMonLayer->MMPoint.pF, &hMiraMonLayer->MMPoint.pF3d,
                 hMiraMonLayer->MMPoint.psz3DLayerName,
                 &hMiraMonLayer->MMPoint.pZSection, hMiraMonLayer->OffsetCheck))
         {
@@ -2013,6 +2013,7 @@ static int MMClosePointLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     ret_code = 0;
 end_label:
     fclose_and_nullify(&hMiraMonLayer->MMPoint.pF);
+    fclose_and_nullify(&hMiraMonLayer->MMPoint.pF3d);
     return ret_code;
 }
 
@@ -2128,7 +2129,7 @@ static int MMCloseArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
         // 3D Section
         if (MMClose3DSectionLayer(
                 hMiraMonLayer, pArcTopHeader->nElemCount, pMMArcLayer->pF,
-                pMMArcLayer->pF3d, pMMArcLayer->psz3DLayerName,
+                &pMMArcLayer->pF3d, pMMArcLayer->psz3DLayerName,
                 &pMMArcLayer->pZSection, hMiraMonLayer->OffsetCheck))
         {
             CPLError(CE_Failure, CPLE_NoWriteAccess, "Error writing to file %s",
@@ -2140,6 +2141,7 @@ static int MMCloseArcLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
     ret_code = 0;
 end_label:
     fclose_and_nullify(&pMMArcLayer->pF);
+    fclose_and_nullify(&pMMArcLayer->pF3d);
 
     fclose_and_nullify(&pMMArcLayer->pFAL);
 
@@ -2227,7 +2229,7 @@ static int MMClosePolygonLayer(struct MiraMonVectLayerInfo *hMiraMonLayer)
 
 end_label:
     fclose_and_nullify(&pMMPolygonLayer->pF);
-
+    fclose_and_nullify(&pMMPolygonLayer->pFPS);
     fclose_and_nullify(&pMMPolygonLayer->pFPAL);
 
     return ret_code;
@@ -2604,7 +2606,7 @@ int MMAppendBlockToBuffer(struct MM_FLUSH_INFO *FlushInfo)
 {
     if (FlushInfo->SizeOfBlockToBeSaved)
     {
-        // If all the bloc itself does not fit to the buffer,
+        // If all the block itself does not fit to the buffer,
         // then all the block is written directly to the disk
         if (FlushInfo->nNumBytes == 0 &&
             FlushInfo->SizeOfBlockToBeSaved >= FlushInfo->nBlockSize)
@@ -4844,7 +4846,7 @@ int MMResizeMiraMonFieldValue(struct MiraMonFieldValue **pFieldValue,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pFieldValue)))
     {
         return 1;
@@ -4879,7 +4881,7 @@ int MMResizeMiraMonPolygonArcs(struct MM_PAL_MEM **pFID,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pFID)))
     {
         return 1;
@@ -4914,7 +4916,7 @@ int MMResizeMiraMonRecord(struct MiraMonRecord **pMiraMonRecord,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pMiraMonRecord)))
     {
         return 1;
@@ -4949,7 +4951,7 @@ int MMResizeZSectionDescrPointer(struct MM_ZD **pZDescription, GUInt64 *nMax,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pZDescription)))
     {
         return 1;
@@ -4983,7 +4985,7 @@ int MMResizeNodeHeaderPointer(struct MM_NH **pNodeHeader, GUInt64 *nMax,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pNodeHeader)))
     {
         return 1;
@@ -5016,7 +5018,7 @@ int MMResizeArcHeaderPointer(struct MM_AH **pArcHeader, GUInt64 *nMax,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pArcHeader)))
     {
         return 1;
@@ -5049,7 +5051,7 @@ int MMResizePolHeaderPointer(struct MM_PH **pPolHeader, GUInt64 *nMax,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pPolHeader)))
     {
         return 1;
@@ -5085,7 +5087,7 @@ int MMResize_MM_N_VERTICES_TYPE_Pointer(MM_N_VERTICES_TYPE **pVrt,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pVrt)))
     {
         return 1;
@@ -5116,7 +5118,7 @@ int MMResizeVFGPointer(char **pInt, MM_INTERNAL_FID *nMax, MM_INTERNAL_FID nNum,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pInt)))
     {
         return 1;
@@ -5149,7 +5151,7 @@ int MMResizeMM_POINT2DPointer(struct MM_POINT_2D **pPoint2D,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pPoint2D)))
     {
         return 1;
@@ -5183,7 +5185,7 @@ int MMResizeDoublePointer(MM_COORD_TYPE **pDouble, MM_N_VERTICES_TYPE *nMax,
         return 0;
 
     nPrevMax = *nMax;
-    nNewMax = MAX(nNum + nIncr, nProposedMax);
+    nNewMax = CPL_MAX(nNum + nIncr, nProposedMax);
     if (MMCheckSize_t(nNewMax, sizeof(**pDouble)))
     {
         return 1;
@@ -5237,33 +5239,6 @@ int MMResizeStringToOperateIfNeeded(struct MiraMonVectLayerInfo *hMiraMonLayer,
 /* -------------------------------------------------------------------- */
 
 #define LineReturn "\r\n"
-
-// Generates an identifier that REL 4 MiraMon metadata needs.
-static void MMGenerateFileIdentifierFromMetadataFileName(char *pMMFN,
-                                                         char *aFileIdentifier)
-{
-    char aCharRand[8];
-    static const char aCharset[] =
-        "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    int i, len_charset;
-
-    memset(aFileIdentifier, '\0', MM_MAX_LEN_LAYER_IDENTIFIER);
-
-    aCharRand[0] = '_';
-    len_charset = (int)strlen(aCharset);
-    for (i = 1; i < 7; i++)
-    {
-#ifndef __COVERITY__
-        aCharRand[i] = aCharset[rand() % (len_charset - 1)];
-#else
-        aCharRand[i] = aCharset[i % (len_charset - 1)];
-#endif
-    }
-    aCharRand[7] = '\0';
-    CPLStrlcpy(aFileIdentifier, pMMFN, MM_MAX_LEN_LAYER_IDENTIFIER - 7);
-    strcat(aFileIdentifier, aCharRand);
-    return;
-}
 
 // Converts a string from UTF-8 to ANSI to be written in a REL 4 file
 static void MMWrite_ANSI_MetadataKeyDescriptor(
@@ -5640,21 +5615,50 @@ static int MMWriteMetadataFile(struct MiraMonVectorMetaData *hMMMD)
         // For each field of the databes
         for (nIField = 0; nIField < hMMMD->pLayerDB->nNFields; nIField++)
         {
-            VSIFPrintfL(pF, LineReturn "[%s:%s]" LineReturn,
-                        SECTION_TAULA_PRINCIPAL,
-                        hMMMD->pLayerDB->pFields[nIField].pszFieldName);
+            bool bModifiedFieldName = false;
+            if (*hMMMD->pLayerDB->pFields[nIField].pszFieldModifName != '\0')
+                bModifiedFieldName = true;
+
+            // If exists a modified name we need to document that one.
+            VSIFPrintfL(
+                pF, LineReturn "[%s:%s]" LineReturn, SECTION_TAULA_PRINCIPAL,
+                bModifiedFieldName
+                    ? hMMMD->pLayerDB->pFields[nIField].pszFieldModifName
+                    : hMMMD->pLayerDB->pFields[nIField].pszFieldName);
 
             if (!MMIsEmptyString(
                     hMMMD->pLayerDB->pFields[nIField].pszFieldDescription) &&
                 !MMIsEmptyString(
                     hMMMD->pLayerDB->pFields[nIField].pszFieldName))
             {
-                MMWrite_ANSI_MetadataKeyDescriptor(
-                    hMMMD, pF,
-                    hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
-                    hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
-                    hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
-                    CPL_ENC_UTF8);
+                if (bModifiedFieldName)
+                {
+                    MMWrite_ANSI_MetadataKeyDescriptor(
+                        hMMMD, pF,
+                        hMMMD->pLayerDB->pFields[nIField]
+                            .pszFieldModifDescription,
+                        hMMMD->pLayerDB->pFields[nIField]
+                            .pszFieldModifDescription,
+                        hMMMD->pLayerDB->pFields[nIField]
+                            .pszFieldModifDescription,
+                        CPL_ENC_UTF8);
+                }
+                else
+                {
+                    MMWrite_ANSI_MetadataKeyDescriptor(
+                        hMMMD, pF,
+                        hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
+                        hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
+                        hMMMD->pLayerDB->pFields[nIField].pszFieldDescription,
+                        CPL_ENC_UTF8);
+                }
+            }
+
+            if (bModifiedFieldName &&
+                EQUAL(szMMNomCampIdGraficDefecte,
+                      hMMMD->pLayerDB->pFields[nIField].pszFieldName))
+            {
+                VSIFPrintfL(pF, "TractamentVariable=Ordinal" LineReturn);
             }
 
             // Exception in a particular case: "altura" is a catalan word that means
@@ -6093,6 +6097,52 @@ int MMCreateMMDB(struct MiraMonVectLayerInfo *hMiraMonLayer,
             MM_DuplicateFieldDBXP(pBD_XP->pField + nIField, &MMField);
             MM_ModifyFieldNameAndDescriptorIfPresentBD_XP(
                 pBD_XP->pField + nIField, pBD_XP, FALSE, 0);
+
+            if (!EQUAL(pBD_XP->pField[nIField].FieldName,
+                       hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                           .pszFieldName))
+            {
+                // We need to preserve the final given name to write
+                // metadata with the modified new name.
+                CPLStrlcpy(hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                               .pszFieldModifName,
+                           pBD_XP->pField[nIField].FieldName,
+                           MM_MAX_LON_FIELD_NAME_DBF);
+
+                CPLStrlcpy(
+                    hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                        .pszFieldModifDescription,
+                    pBD_XP->pField[nIField].FieldDescription[MM_DEF_LANGUAGE],
+                    MM_MAX_LON_DESCRIPCIO_CAMP_DBF);
+
+                // In this case we are going to use also the modified description in metadata
+                switch (hMiraMonLayer->nMMLanguage)
+                {
+                    case MM_CAT_LANGUAGE:
+                        CPLStrlcat(
+                            hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                                .pszFieldModifDescription,
+                            " (previ)", MM_MAX_BYTES_FIELD_DESC + 1);
+                        break;
+                    case MM_SPA_LANGUAGE:
+                        CPLStrlcat(
+                            hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                                .pszFieldModifDescription,
+                            " (previo)", MM_MAX_BYTES_FIELD_DESC + 1);
+                        break;
+                    default:
+                    case MM_ENG_LANGUAGE:
+                        CPLStrlcat(
+                            hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                                .pszFieldModifDescription,
+                            " (previous)", MM_MAX_BYTES_FIELD_DESC + 1);
+                        break;
+                }
+            }
+            else
+                *hMiraMonLayer->pLayerDB->pFields[nIFieldLayer]
+                     .pszFieldModifName = '\0';
+
             if (pBD_XP->pField[nIField].FieldType == 'F')
                 pBD_XP->pField[nIField].FieldType = 'N';
         }
@@ -6162,7 +6212,7 @@ MMTestAndFixValueToRecordDBXP(struct MiraMonVectLayerInfo *hMiraMonLayer,
 
     if (nNewWidth > camp->BytesPerField)
     {
-        if (MM_WriteNRecordsMMBD_XPFile(pMMAdmDB))
+        if (MM_WriteNRecordsMMBD_XPFile(pMMAdmDB->pMMBDXP))
             return 1;
 
         // Flushing all to be flushed
@@ -6991,7 +7041,7 @@ static int MMCloseMMBD_XPFile(struct MiraMonVectLayerInfo *hMiraMonLayer,
             }
         }
 
-        if (MM_WriteNRecordsMMBD_XPFile(MMAdmDB))
+        if (MM_WriteNRecordsMMBD_XPFile(MMAdmDB->pMMBDXP))
             goto end_label;
 
         // Flushing all to be flushed

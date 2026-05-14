@@ -33,13 +33,14 @@
 #include "../frmts/vrt/vrtdataset.h"
 #include "gdal_priv.h"
 #include "gdal_priv_templates.hpp"
+#include "gdal_thread_pool.h"
 // #include "gdalsse_priv.h"
 
 // Limit types to practical use cases.
 #define LIMIT_TYPES 1
 
 /************************************************************************/
-/*                     GDALCreatePansharpenOptions()                    */
+/*                    GDALCreatePansharpenOptions()                     */
 /************************************************************************/
 
 /** Create pansharpening options.
@@ -59,7 +60,7 @@ GDALPansharpenOptions *GDALCreatePansharpenOptions()
 }
 
 /************************************************************************/
-/*                     GDALDestroyPansharpenOptions()                   */
+/*                    GDALDestroyPansharpenOptions()                    */
 /************************************************************************/
 
 /** Destroy pansharpening options.
@@ -80,7 +81,7 @@ void GDALDestroyPansharpenOptions(GDALPansharpenOptions *psOptions)
 }
 
 /************************************************************************/
-/*                      GDALClonePansharpenOptions()                    */
+/*                     GDALClonePansharpenOptions()                     */
 /************************************************************************/
 
 /** Clone pansharpening options.
@@ -134,7 +135,7 @@ GDALClonePansharpenOptions(const GDALPansharpenOptions *psOptions)
 }
 
 /************************************************************************/
-/*                        GDALPansharpenOperation()                     */
+/*                      GDALPansharpenOperation()                       */
 /************************************************************************/
 
 /** Pansharpening operation constructor.
@@ -144,7 +145,7 @@ GDALClonePansharpenOptions(const GDALPansharpenOptions *psOptions)
 GDALPansharpenOperation::GDALPansharpenOperation() = default;
 
 /************************************************************************/
-/*                       ~GDALPansharpenOperation()                     */
+/*                      ~GDALPansharpenOperation()                      */
 /************************************************************************/
 
 /** Pansharpening operation destructor.
@@ -159,7 +160,7 @@ GDALPansharpenOperation::~GDALPansharpenOperation()
 }
 
 /************************************************************************/
-/*                              Initialize()                            */
+/*                             Initialize()                             */
 /************************************************************************/
 
 /** Initialize the pansharpening operation.
@@ -461,15 +462,8 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
         nThreads = CPLGetNumCPUs();
     else if (nThreads == 0)
     {
-        const char *pszNumThreads =
-            CPLGetConfigOption("GDAL_NUM_THREADS", nullptr);
-        if (pszNumThreads)
-        {
-            if (EQUAL(pszNumThreads, "ALL_CPUS"))
-                nThreads = CPLGetNumCPUs();
-            else
-                nThreads = std::max(0, std::min(128, atoi(pszNumThreads)));
-        }
+        nThreads = GDALGetNumThreads(GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                     /* bDefaultAllCPUs = */ false);
     }
     if (nThreads > 1)
     {
@@ -505,7 +499,7 @@ GDALPansharpenOperation::Initialize(const GDALPansharpenOptions *psOptionsIn)
 }
 
 /************************************************************************/
-/*                    WeightedBroveyWithNoData()                        */
+/*                      WeightedBroveyWithNoData()                      */
 /************************************************************************/
 
 template <class WorkDataType, class OutDataType>
@@ -591,7 +585,7 @@ template <class T> static inline T ClampAndRound(double dfVal, T nMaxValue)
 }
 
 /************************************************************************/
-/*                         WeightedBrovey()                             */
+/*                           WeightedBrovey()                           */
 /************************************************************************/
 
 template <class WorkDataType, class OutDataType, int bHasBitDepth>
@@ -1119,7 +1113,7 @@ CPLErr GDALPansharpenOperation::WeightedBrovey(
 }
 
 /************************************************************************/
-/*                           ClampValues()                              */
+/*                            ClampValues()                             */
 /************************************************************************/
 
 template <class T>
@@ -1133,7 +1127,7 @@ static void ClampValues(T *panBuffer, size_t nValues, T nMaxVal)
 }
 
 /************************************************************************/
-/*                         ProcessRegion()                              */
+/*                           ProcessRegion()                            */
 /************************************************************************/
 
 /** Executes a pansharpening operation on a rectangular region of the
@@ -1628,7 +1622,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
 }
 
 /************************************************************************/
-/*                   PansharpenResampleJobThreadFunc()                  */
+/*                  PansharpenResampleJobThreadFunc()                   */
 /************************************************************************/
 
 void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
@@ -1723,7 +1717,7 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void *pUserData)
 }
 
 /************************************************************************/
-/*                           PansharpenChunk()                          */
+/*                          PansharpenChunk()                           */
 /************************************************************************/
 
 CPLErr GDALPansharpenOperation::PansharpenChunk(
@@ -1838,7 +1832,7 @@ GDALPansharpenOptions *GDALPansharpenOperation::GetOptions()
 }
 
 /************************************************************************/
-/*                     GDALCreatePansharpenOperation()                  */
+/*                   GDALCreatePansharpenOperation()                    */
 /************************************************************************/
 
 /** Instantiate a pansharpening operation.
@@ -1862,7 +1856,7 @@ GDALCreatePansharpenOperation(const GDALPansharpenOptions *psOptions)
 }
 
 /************************************************************************/
-/*                     GDALDestroyPansharpenOperation()                 */
+/*                   GDALDestroyPansharpenOperation()                   */
 /************************************************************************/
 
 /** Destroy a pansharpening operation.
@@ -1877,7 +1871,7 @@ void GDALDestroyPansharpenOperation(GDALPansharpenOperationH hOperation)
 }
 
 /************************************************************************/
-/*                       GDALPansharpenProcessRegion()                  */
+/*                    GDALPansharpenProcessRegion()                     */
 /************************************************************************/
 
 /** Executes a pansharpening operation on a rectangular region of the

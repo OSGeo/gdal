@@ -60,7 +60,7 @@ static void Usage(bool bIsError, const char *pszErrorMsg = nullptr,
 }
 
 /************************************************************************/
-/*                             IsValidSRS                               */
+/*                              IsValidSRS                              */
 /************************************************************************/
 
 static bool IsValidSRS(const char *pszUserInput)

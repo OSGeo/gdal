@@ -206,9 +206,7 @@ def test_srtmhgt_all_supported_sizes(tmp_vsimem, width, height, nb_bytes):
     assert ds.GetRasterBand(1).DataType == (
         gdal.GDT_UInt8
         if nb_bytes == 1
-        else gdal.GDT_Int16
-        if nb_bytes == 2
-        else gdal.GDT_Float32
+        else gdal.GDT_Int16 if nb_bytes == 2 else gdal.GDT_Float32
     )
 
     out_filename = str(tmp_vsimem / "create" / "n00e000.hgt")

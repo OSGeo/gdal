@@ -30,7 +30,7 @@ static int nAllBandsKeptAlivedBlocks = 0;
 #endif
 
 /************************************************************************/
-/*                       GDALArrayBandBlockCache()                      */
+/*                      GDALArrayBandBlockCache()                       */
 /************************************************************************/
 
 GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(GDALRasterBand *poBandIn)
@@ -42,7 +42,7 @@ GDALAbstractBandBlockCache::GDALAbstractBandBlockCache(GDALRasterBand *poBandIn)
 }
 
 /************************************************************************/
-/*                      ~GDALAbstractBandBlockCache()                   */
+/*                    ~GDALAbstractBandBlockCache()                     */
 /************************************************************************/
 
 GDALAbstractBandBlockCache::~GDALAbstractBandBlockCache()
@@ -108,7 +108,7 @@ void GDALAbstractBandBlockCache::AddBlockToFreeList(GDALRasterBlock *poBlock)
 }
 
 /************************************************************************/
-/*                      WaitCompletionPendingTasks()                    */
+/*                     WaitCompletionPendingTasks()                     */
 /************************************************************************/
 
 void GDALAbstractBandBlockCache::WaitCompletionPendingTasks()
@@ -128,7 +128,7 @@ void GDALAbstractBandBlockCache::WaitCompletionPendingTasks()
 }
 
 /************************************************************************/
-/*                           FreeDanglingBlocks()                       */
+/*                         FreeDanglingBlocks()                         */
 /************************************************************************/
 
 void GDALAbstractBandBlockCache::FreeDanglingBlocks()
@@ -185,7 +185,7 @@ GDALRasterBlock *GDALAbstractBandBlockCache::CreateBlock(int nXBlockOff,
 }
 
 /************************************************************************/
-/*                         IncDirtyBlocks()                             */
+/*                           IncDirtyBlocks()                           */
 /************************************************************************/
 
 /**
@@ -198,7 +198,7 @@ void GDALAbstractBandBlockCache::IncDirtyBlocks(int nInc)
 }
 
 /************************************************************************/
-/*                      StartDirtyBlockFlushingLog()                    */
+/*                     StartDirtyBlockFlushingLog()                     */
 /************************************************************************/
 
 void GDALAbstractBandBlockCache::StartDirtyBlockFlushingLog()
@@ -217,7 +217,7 @@ void GDALAbstractBandBlockCache::StartDirtyBlockFlushingLog()
 }
 
 /************************************************************************/
-/*                      UpdateDirtyBlockFlushingLog()                   */
+/*                    UpdateDirtyBlockFlushingLog()                     */
 /************************************************************************/
 
 void GDALAbstractBandBlockCache::UpdateDirtyBlockFlushingLog()
@@ -257,7 +257,7 @@ void GDALAbstractBandBlockCache::UpdateDirtyBlockFlushingLog()
 }
 
 /************************************************************************/
-/*                       EndDirtyBlockFlushingLog()                     */
+/*                      EndDirtyBlockFlushingLog()                      */
 /************************************************************************/
 
 void GDALAbstractBandBlockCache::EndDirtyBlockFlushingLog()

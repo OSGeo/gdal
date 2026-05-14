@@ -81,7 +81,7 @@ void CPCIDSK_BLUT::ReadBLUT( std::vector<BLUTEntry>& vBLUT )
 }
 
 /************************************************************************/
-/*                              WriteBLUT()                             */
+/*                             WriteBLUT()                              */
 /************************************************************************/
 void CPCIDSK_BLUT::WriteBLUT( const std::vector<BLUTEntry>& vBLUT )
 

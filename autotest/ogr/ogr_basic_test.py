@@ -156,14 +156,20 @@ def test_ogr_basic_5():
 
     ds = ogr.Open("data/poly.shp")
     lyr = ds.GetLayerByName("poly")
+    assert lyr.GetAttributeFilter() is None, "unexpected initial attribute filter."
 
     lyr.SetAttributeFilter("FID = 3")
     lyr.ResetReading()
+
+    assert (
+        lyr.GetAttributeFilter() == "FID = 3"
+    ), "GetAttributeFilter() returns wrong value."
 
     feat1 = lyr.GetNextFeature()
     feat2 = lyr.GetNextFeature()
 
     lyr.SetAttributeFilter(None)
+    assert lyr.GetAttributeFilter() is None, "unexpected attribute filter."
 
     assert feat1 is not None and feat2 is None, "unexpected result count."
 
@@ -941,7 +947,7 @@ def test_ogr_basic_test_future_warning_exceptions():
         "ogr.Open('data/poly.shp');" ' " '
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+        _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
     assert "FutureWarning: Neither ogr.UseExceptions()" in err
@@ -1287,14 +1293,14 @@ def test_ogr_basic_dataset_get_spatial_ref():
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     ds.CreateLayer("one", srs=srs)
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     lyr = ds.CreateLayer("one", srs=srs)
     geom_field_defn = ogr.GeomFieldDefn("second")
     geom_field_defn.SetSpatialRef(srs)
     lyr.CreateGeomField(geom_field_defn)
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     lyr = ds.CreateLayer("one", srs=srs)
@@ -1306,7 +1312,7 @@ def test_ogr_basic_dataset_get_spatial_ref():
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     ds.CreateLayer("one", srs=srs)
     ds.CreateLayer("two", srs=srs)
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
     ds.CreateLayer("one", srs=srs)
@@ -1322,3 +1328,33 @@ def test_ogr_basic_dataset_get_spatial_ref():
     ds.CreateLayer("one", srs=None)
     ds.CreateLayer("two", srs=None)
     assert ds.GetSpatialRef() is None
+
+
+###############################################################################
+# Test SetField with numpy types
+
+
+@pytest.mark.require_64bit()
+def test_ogr_basic_numpy():
+
+    np = pytest.importorskip("numpy")
+
+    defn = ogr.FeatureDefn()
+    defn.AddFieldDefn(ogr.FieldDefn("int", ogr.OFTIntegerList))
+    defn.AddFieldDefn(ogr.FieldDefn("int64", ogr.OFTInteger64List))
+    defn.AddFieldDefn(ogr.FieldDefn("real", ogr.OFTRealList))
+    defn.AddFieldDefn(ogr.FieldDefn("string", ogr.OFTStringList))
+
+    f = ogr.Feature(defn)
+    f["int"] = np.array([1, 2, 3], dtype=np.int32)
+    f["int64"] = 2**32 + np.array([1, 2, 3], dtype=np.int64)
+    f["real"] = np.sqrt(np.array([1, 2, 3], dtype=np.float64))
+    f["string"] = np.array(["abc", "def", "ghi"])
+
+    assert f["int"] == [1, 2, 3]
+    assert f["int64"] == (2**32 + np.array([1, 2, 3])).tolist()
+    assert f["real"] == [1.0, math.sqrt(2), math.sqrt(3)]
+    assert f["string"] == ["abc", "def", "ghi"]
+
+    with pytest.raises(Exception, match="Unsupported type"):
+        f["int"] = np.array([[1, 2, 3], [4, 5, 6]])

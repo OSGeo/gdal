@@ -94,6 +94,10 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

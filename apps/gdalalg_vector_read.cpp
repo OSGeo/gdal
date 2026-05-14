@@ -26,8 +26,9 @@
 /************************************************************************/
 
 GDALVectorReadAlgorithm::GDALVectorReadAlgorithm()
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      /* standaloneStep =*/false)
+    : GDALVectorPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions().SetAddDefaultArguments(false))
 {
     AddVectorInputArgs(/* hiddenForCLI = */ false);
 }
@@ -39,9 +40,9 @@ GDALVectorReadAlgorithm::GDALVectorReadAlgorithm()
 /** Class used by vector pipeline steps to create an output on-the-fly
  * dataset where they can store on-the-fly layers.
  */
-class GDALVectorPipelineReadOutputDataset final : public GDALDataset
+class GDALVectorPipelineReadOutputDataset final
+    : public GDALVectorDecoratedDataset
 {
-    GDALDataset &m_srcDS;
     std::vector<OGRLayer *> m_layers{};
 
     CPL_DISALLOW_COPY_ASSIGN(GDALVectorPipelineReadOutputDataset)
@@ -59,6 +60,10 @@ class GDALVectorPipelineReadOutputDataset final : public GDALDataset
 
     void ResetReading() override;
 
+    OGRLayer *ExecuteSQL(const char *pszStatement, OGRGeometry *poSpatialFilter,
+                         const char *pszDialect) override;
+    void ReleaseResultSet(OGRLayer *poResultsSet) override;
+
     OGRFeature *GetNextFeature(OGRLayer **ppoBelongingLayer,
                                double *pdfProgressPct,
                                GDALProgressFunc pfnProgress,
@@ -66,18 +71,18 @@ class GDALVectorPipelineReadOutputDataset final : public GDALDataset
 };
 
 /************************************************************************/
-/*                 GDALVectorPipelineReadOutputDataset()                */
+/*                GDALVectorPipelineReadOutputDataset()                 */
 /************************************************************************/
 
 GDALVectorPipelineReadOutputDataset::GDALVectorPipelineReadOutputDataset(
     GDALDataset &srcDS)
-    : m_srcDS(srcDS)
+    : GDALVectorDecoratedDataset(&srcDS)
 {
-    SetDescription(m_srcDS.GetDescription());
+    poDriver = m_srcDS.GetDriver();
 }
 
 /************************************************************************/
-/*            GDALVectorPipelineReadOutputDataset::AddLayer()           */
+/*           GDALVectorPipelineReadOutputDataset::AddLayer()            */
 /************************************************************************/
 
 void GDALVectorPipelineReadOutputDataset::AddLayer(OGRLayer &oSrcLayer)
@@ -86,7 +91,7 @@ void GDALVectorPipelineReadOutputDataset::AddLayer(OGRLayer &oSrcLayer)
 }
 
 /************************************************************************/
-/*          GDALVectorPipelineReadOutputDataset::GetLayerCount()        */
+/*         GDALVectorPipelineReadOutputDataset::GetLayerCount()         */
 /************************************************************************/
 
 int GDALVectorPipelineReadOutputDataset::GetLayerCount() const
@@ -104,7 +109,7 @@ OGRLayer *GDALVectorPipelineReadOutputDataset::GetLayer(int idx) const
 }
 
 /************************************************************************/
-/*         GDALVectorPipelineReadOutputDataset::TestCapability()        */
+/*        GDALVectorPipelineReadOutputDataset::TestCapability()         */
 /************************************************************************/
 
 int GDALVectorPipelineReadOutputDataset::TestCapability(
@@ -116,7 +121,7 @@ int GDALVectorPipelineReadOutputDataset::TestCapability(
 }
 
 /************************************************************************/
-/*           GDALVectorPipelineReadOutputDataset::ResetReading()        */
+/*         GDALVectorPipelineReadOutputDataset::ResetReading()          */
 /************************************************************************/
 
 void GDALVectorPipelineReadOutputDataset::ResetReading()
@@ -125,7 +130,29 @@ void GDALVectorPipelineReadOutputDataset::ResetReading()
 }
 
 /************************************************************************/
-/*          GDALVectorPipelineReadOutputDataset::GetNextFeature()       */
+/*          GDALVectorPipelineReadOutputDataset::ExecuteSQL()           */
+/************************************************************************/
+
+OGRLayer *
+GDALVectorPipelineReadOutputDataset::ExecuteSQL(const char *pszStatement,
+                                                OGRGeometry *poSpatialFilter,
+                                                const char *pszDialect)
+{
+    return m_srcDS.ExecuteSQL(pszStatement, poSpatialFilter, pszDialect);
+}
+
+/************************************************************************/
+/*       GDALVectorPipelineReadOutputDataset::ReleaseResultSet()        */
+/************************************************************************/
+
+void GDALVectorPipelineReadOutputDataset::ReleaseResultSet(
+    OGRLayer *poResultsSet)
+{
+    m_srcDS.ReleaseResultSet(poResultsSet);
+}
+
+/************************************************************************/
+/*        GDALVectorPipelineReadOutputDataset::GetNextFeature()         */
 /************************************************************************/
 
 OGRFeature *GDALVectorPipelineReadOutputDataset::GetNextFeature(

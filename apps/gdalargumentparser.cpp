@@ -100,7 +100,7 @@ void GDALArgumentParser::display_error_and_usage(const std::exception &err)
 }
 
 /************************************************************************/
-/*                                usage()                               */
+/*                               usage()                                */
 /************************************************************************/
 
 std::string GDALArgumentParser::usage() const
@@ -116,7 +116,7 @@ std::string GDALArgumentParser::usage() const
 }
 
 /************************************************************************/
-/*                          add_extra_usage_hint()                      */
+/*                        add_extra_usage_hint()                        */
 /************************************************************************/
 
 void GDALArgumentParser::add_extra_usage_hint(
@@ -144,7 +144,7 @@ Argument &GDALArgumentParser::add_quiet_argument(bool *pVar)
 }
 
 /************************************************************************/
-/*                      add_input_format_argument()                     */
+/*                     add_input_format_argument()                      */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_input_format_argument(CPLStringList *pvar)
@@ -170,7 +170,7 @@ Argument &GDALArgumentParser::add_input_format_argument(CPLStringList *pvar)
 }
 
 /************************************************************************/
-/*                      add_output_format_argument()                    */
+/*                     add_output_format_argument()                     */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_output_format_argument(std::string &var)
@@ -184,7 +184,7 @@ Argument &GDALArgumentParser::add_output_format_argument(std::string &var)
 }
 
 /************************************************************************/
-/*                     add_creation_options_argument()                  */
+/*                   add_creation_options_argument()                    */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_creation_options_argument(CPLStringList &var)
@@ -197,7 +197,7 @@ Argument &GDALArgumentParser::add_creation_options_argument(CPLStringList &var)
 }
 
 /************************************************************************/
-/*                   add_metadata_item_options_argument()               */
+/*                 add_metadata_item_options_argument()                 */
 /************************************************************************/
 
 Argument &
@@ -211,7 +211,7 @@ GDALArgumentParser::add_metadata_item_options_argument(CPLStringList &var)
 }
 
 /************************************************************************/
-/*                       add_open_options_argument()                    */
+/*                     add_open_options_argument()                      */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_open_options_argument(CPLStringList &var)
@@ -220,7 +220,7 @@ Argument &GDALArgumentParser::add_open_options_argument(CPLStringList &var)
 }
 
 /************************************************************************/
-/*                       add_open_options_argument()                    */
+/*                     add_open_options_argument()                      */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_open_options_argument(CPLStringList *pvar)
@@ -239,7 +239,7 @@ Argument &GDALArgumentParser::add_open_options_argument(CPLStringList *pvar)
 }
 
 /************************************************************************/
-/*                       add_output_type_argument()                     */
+/*                      add_output_type_argument()                      */
 /************************************************************************/
 
 Argument &GDALArgumentParser::add_output_type_argument(GDALDataType &eDT)
@@ -280,7 +280,7 @@ GDALArgumentParser::add_dataset_creation_options_argument(CPLStringList &var)
 }
 
 /************************************************************************/
-/*                     parse_args_without_binary_name()                 */
+/*                   parse_args_without_binary_name()                   */
 /************************************************************************/
 
 void GDALArgumentParser::parse_args_without_binary_name(CSLConstList papszArgs)
@@ -416,8 +416,7 @@ GDALArgumentParser::add_subparser(const std::string &description,
 GDALArgumentParser *GDALArgumentParser::get_subparser(const std::string &name)
 {
     auto it = std::find_if(
-        aoSubparsers.begin(), aoSubparsers.end(),
-        [&name](const auto &parser)
+        aoSubparsers.begin(), aoSubparsers.end(), [&name](const auto &parser)
         { return EQUAL(name.c_str(), parser->m_program_name.c_str()); });
     return it != aoSubparsers.end() ? it->get() : nullptr;
 }
@@ -440,8 +439,7 @@ bool GDALArgumentParser::is_used_globally(const std::string &name)
         // convert subparser name to lower case
         std::string subparser_name = subparser->m_program_name;
         std::transform(subparser_name.begin(), subparser_name.end(),
-                       subparser_name.begin(),
-                       [](int c) -> char
+                       subparser_name.begin(), [](int c) -> char
                        { return static_cast<char>(::tolower(c)); });
         if (m_subparser_used.find(subparser_name) != m_subparser_used.end())
         {
@@ -456,7 +454,7 @@ bool GDALArgumentParser::is_used_globally(const std::string &name)
 }
 
 /************************************************************************/
-/*                           parse_args()                               */
+/*                             parse_args()                             */
 /************************************************************************/
 
 void GDALArgumentParser::parse_args(const CPLStringList &aosArgs)

@@ -52,7 +52,7 @@ namespace cpl
 {
 
 /************************************************************************/
-/*                         VSIGSFSHandler                               */
+/*                            VSIGSFSHandler                            */
 /************************************************************************/
 
 class VSIGSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
@@ -130,10 +130,27 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandlerWithMultipartUpload
     {
         return true;
     }
+
+    std::string
+    GetHintForPotentiallyRecognizedPath(const std::string &osPath) override
+    {
+        if (!cpl::starts_with(osPath, m_osPrefix) &&
+            !cpl::starts_with(osPath, GetStreamingFilename(m_osPrefix)))
+        {
+            for (const char *pszPrefix : {"gs://", "gcs://"})
+            {
+                if (cpl::starts_with(osPath, pszPrefix))
+                {
+                    return GetFSPrefix() + osPath.substr(strlen(pszPrefix));
+                }
+            }
+        }
+        return std::string();
+    }
 };
 
 /************************************************************************/
-/*                            VSIGSHandle                               */
+/*                             VSIGSHandle                              */
 /************************************************************************/
 
 class VSIGSHandle final : public IVSIS3LikeHandle
@@ -162,7 +179,7 @@ VSIGSFSHandler::~VSIGSFSHandler()
 }
 
 /************************************************************************/
-/*                            ClearCache()                              */
+/*                             ClearCache()                             */
 /************************************************************************/
 
 void VSIGSFSHandler::ClearCache()
@@ -186,7 +203,7 @@ VSICurlHandle *VSIGSFSHandler::CreateFileHandle(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           GetOptions()                               */
+/*                             GetOptions()                             */
 /************************************************************************/
 
 const char *VSIGSFSHandler::GetOptions()
@@ -260,7 +277,7 @@ const char *VSIGSFSHandler::GetOptions()
 }
 
 /************************************************************************/
-/*                           GetSignedURL()                             */
+/*                            GetSignedURL()                            */
 /************************************************************************/
 
 char *VSIGSFSHandler::GetSignedURL(const char *pszFilename,
@@ -284,7 +301,7 @@ char *VSIGSFSHandler::GetSignedURL(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GetURLFromFilename()                         */
+/*                         GetURLFromFilename()                         */
 /************************************************************************/
 
 std::string
@@ -301,7 +318,7 @@ VSIGSFSHandler::GetURLFromFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                          CreateHandleHelper()                        */
+/*                         CreateHandleHelper()                         */
 /************************************************************************/
 
 IVSIS3LikeHandleHelper *VSIGSFSHandler::CreateHandleHelper(const char *pszURI,
@@ -311,7 +328,7 @@ IVSIS3LikeHandleHelper *VSIGSFSHandler::CreateHandleHelper(const char *pszURI,
 }
 
 /************************************************************************/
-/*                          CreateWriteHandle()                         */
+/*                         CreateWriteHandle()                          */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -646,7 +663,7 @@ bool VSIGSFSHandler::SetFileMetadata(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                           UnlinkBatch()                              */
+/*                            UnlinkBatch()                             */
 /************************************************************************/
 
 int *VSIGSFSHandler::UnlinkBatch(CSLConstList papszFiles)
@@ -889,7 +906,7 @@ int VSIGSFSHandler::RmdirRecursive(const char *pszDirname)
 }
 
 /************************************************************************/
-/*                      GetStreamingFilename()                          */
+/*                        GetStreamingFilename()                        */
 /************************************************************************/
 
 std::string
@@ -901,7 +918,7 @@ VSIGSFSHandler::GetStreamingFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                             VSIGSHandle()                            */
+/*                            VSIGSHandle()                             */
 /************************************************************************/
 
 VSIGSHandle::VSIGSHandle(VSIGSFSHandler *poFSIn, const char *pszFilename,
@@ -921,7 +938,7 @@ VSIGSHandle::~VSIGSHandle()
 }
 
 /************************************************************************/
-/*                          GetCurlHeaders()                            */
+/*                           GetCurlHeaders()                           */
 /************************************************************************/
 
 struct curl_slist *VSIGSHandle::GetCurlHeaders(const std::string &osVerb,

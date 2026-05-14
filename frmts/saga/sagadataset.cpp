@@ -67,10 +67,10 @@ class SAGADataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -200,14 +200,14 @@ CPLErr SAGARasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (VSIFSeekL(poGDS->fp, offset, SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to seek to beginning of grid row.\n");
+                 "Unable to seek to beginning of grid row.");
         return CE_Failure;
     }
     if (VSIFReadL(pImage, m_nBits / 8, nBlockXSize, poGDS->fp) !=
         static_cast<unsigned>(nBlockXSize))
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to read block from grid file.\n");
+                 "Unable to read block from grid file.");
         return CE_Failure;
     }
 
@@ -226,7 +226,7 @@ CPLErr SAGARasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (eAccess == GA_ReadOnly)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to write block, dataset opened read only.\n");
+                 "Unable to write block, dataset opened read only.");
         return CE_Failure;
     }
 
@@ -241,7 +241,7 @@ CPLErr SAGARasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (VSIFSeekL(poGDS->fp, offset, SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to seek to beginning of grid row.\n");
+                 "Unable to seek to beginning of grid row.");
         return CE_Failure;
     }
 
@@ -256,7 +256,7 @@ CPLErr SAGARasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (!bSuccess)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Unable to write block to grid file.\n");
+                 "Unable to write block to grid file.");
         return CE_Failure;
     }
 
@@ -284,7 +284,7 @@ CPLErr SAGARasterBand::SetNoDataValue(double dfNoData)
     if (eAccess == GA_ReadOnly)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to set no data value, dataset opened read only.\n");
+                 "Unable to set no data value, dataset opened read only.");
         return CE_Failure;
     }
 
@@ -352,7 +352,7 @@ char **SAGADataset::GetFileList()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *SAGADataset::GetSpatialRef() const
@@ -550,14 +550,14 @@ GDALDataset *SAGADataset::Open(GDALOpenInfo *poOpenInfo)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Currently the SAGA Binary Grid driver does not support\n"
-                 "SAGA grids written TOPTOBOTTOM.\n");
+                 "SAGA grids written TOPTOBOTTOM.");
         return nullptr;
     }
     if (dZFactor != 1.0)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Currently the SAGA Binary Grid driver does not support\n"
-                 "ZFACTORs other than 1.\n");
+                 "ZFACTORs other than 1.");
     }
 
     /* -------------------------------------------------------------------- */
@@ -717,15 +717,15 @@ CPLErr SAGADataset::GetGeoTransform(GDALGeoTransform &gt) const
     if (eErr == CE_None)
         return CE_None;
 
-    gt[1] = poGRB->m_Cellsize;
-    gt[5] = poGRB->m_Cellsize * -1.0;
-    gt[0] = poGRB->m_Xmin - poGRB->m_Cellsize / 2;
-    gt[3] = poGRB->m_Ymin + (nRasterYSize - 1) * poGRB->m_Cellsize +
-            poGRB->m_Cellsize / 2;
+    gt.xscale = poGRB->m_Cellsize;
+    gt.yscale = poGRB->m_Cellsize * -1.0;
+    gt.xorig = poGRB->m_Xmin - poGRB->m_Cellsize / 2;
+    gt.yorig = poGRB->m_Ymin + (nRasterYSize - 1) * poGRB->m_Cellsize +
+               poGRB->m_Cellsize / 2;
 
     /* tilt/rotation is not supported by SAGA grids */
-    gt[4] = 0.0;
-    gt[2] = 0.0;
+    gt.yrot = 0.0;
+    gt.xrot = 0.0;
 
     return CE_None;
 }
@@ -740,7 +740,7 @@ CPLErr SAGADataset::SetGeoTransform(const GDALGeoTransform &gt)
     if (eAccess == GA_ReadOnly)
     {
         CPLError(CE_Failure, CPLE_NoWriteAccess,
-                 "Unable to set GeoTransform, dataset opened read only.\n");
+                 "Unable to set GeoTransform, dataset opened read only.");
         return CE_Failure;
     }
 
@@ -749,27 +749,27 @@ CPLErr SAGADataset::SetGeoTransform(const GDALGeoTransform &gt)
     if (poGRB == nullptr)
         return CE_Failure;
 
-    if (gt[1] != gt[5] * -1.0)
+    if (gt.xscale != gt.yscale * -1.0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Unable to set GeoTransform, SAGA binary grids only support "
-                 "the same cellsize in x-y.\n");
+                 "the same cellsize in x-y.");
         return CE_Failure;
     }
 
-    const double dfMinX = gt[0] + gt[1] / 2;
-    const double dfMinY = gt[5] * (nRasterYSize - 0.5) + gt[3];
+    const double dfMinX = gt.xorig + gt.xscale / 2;
+    const double dfMinY = gt.yscale * (nRasterYSize - 0.5) + gt.yorig;
 
     poGRB->m_Xmin = dfMinX;
     poGRB->m_Ymin = dfMinY;
-    poGRB->m_Cellsize = gt[1];
+    poGRB->m_Cellsize = gt.xscale;
     headerDirty = true;
 
     return CE_None;
 }
 
 /************************************************************************/
-/*                             WriteHeader()                            */
+/*                            WriteHeader()                             */
 /************************************************************************/
 
 CPLErr SAGADataset::WriteHeader(const CPLString &osHDRFilename,
@@ -836,14 +836,14 @@ CPLErr SAGADataset::WriteHeader(const CPLString &osHDRFilename,
 
 GDALDataset *SAGADataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszParamList)
+                                 CSLConstList papszParamList)
 
 {
     if (nXSize <= 0 || nYSize <= 0)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
                  "Unable to create grid, both X and Y size must be "
-                 "non-negative.\n");
+                 "non-negative.");
 
         return nullptr;
     }
@@ -967,7 +967,7 @@ GDALDataset *SAGADataset::Create(const char *pszFilename, int nXSize,
                 VSIFCloseL(fp);
                 VSIFree(pabyNoDataBuf);
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Unable to write grid cell.  Disk full?\n");
+                         "Unable to write grid cell.  Disk full?");
                 return nullptr;
             }
         }
@@ -986,7 +986,7 @@ GDALDataset *SAGADataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *SAGADataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     CPL_UNUSED char **papszOptions,
+                                     CPL_UNUSED CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {
@@ -998,7 +998,7 @@ GDALDataset *SAGADataset::CreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "SAGA driver does not support source dataset with zero band.\n");
+            "SAGA driver does not support source datasets with zero bands.");
         return nullptr;
     }
     else if (nBands > 1)
@@ -1007,13 +1007,13 @@ GDALDataset *SAGADataset::CreateCopy(const char *pszFilename,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Unable to create copy, SAGA Binary Grid "
-                     "format only supports one raster band.\n");
+                     "format only supports one raster band.");
             return nullptr;
         }
         else
             CPLError(CE_Warning, CPLE_NotSupported,
                      "SAGA Binary Grid format only supports one "
-                     "raster band, first band will be copied.\n");
+                     "raster band, first band will be copied.");
     }
 
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
@@ -1059,7 +1059,7 @@ GDALDataset *SAGADataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          GDALRegister_SAGA()                         */
+/*                         GDALRegister_SAGA()                          */
 /************************************************************************/
 
 void GDALRegister_SAGA()

@@ -31,6 +31,11 @@ Options
 
     Dataset format. Helps if automatic detection does not work.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

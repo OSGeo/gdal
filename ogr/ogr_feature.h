@@ -25,6 +25,9 @@
 #include <exception>
 #include <memory>
 #include <string>
+#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#include <string_view>
+#endif
 #include <vector>
 
 /**
@@ -305,7 +308,7 @@ inline OGRFieldDefn::TemporaryUnsealer whileUnsealing(OGRFieldDefn *object)
 #endif
 
 /************************************************************************/
-/*                          OGRGeomFieldDefn                            */
+/*                           OGRGeomFieldDefn                           */
 /************************************************************************/
 
 /**
@@ -335,7 +338,7 @@ class CPL_DLL OGRGeomFieldDefn
     char *pszName = nullptr;
     OGRwkbGeometryType eGeomType =
         wkbUnknown; /* all values possible except wkbNone */
-    mutable const OGRSpatialReference *poSRS = nullptr;
+    mutable OGRSpatialReferenceRefCountedPtr poSRS = nullptr;
 
     int bIgnore = false;
     mutable int bNullable = true;
@@ -378,6 +381,7 @@ class CPL_DLL OGRGeomFieldDefn
 
     virtual const OGRSpatialReference *GetSpatialRef() const;
     void SetSpatialRef(const OGRSpatialReference *poSRSIn);
+    void SetSpatialRef(OGRSpatialReferenceRefCountedPtr poSRSIn);
 
     int IsIgnored() const
     {
@@ -453,6 +457,13 @@ class CPL_DLL OGRGeomFieldDefn
     /*! @endcond */
 
     TemporaryUnsealer GetTemporaryUnsealer();
+
+  private:
+    OGRSpatialReferenceRefCountedPtr &GetRefCountedSRS() const
+    {
+        GetSpatialRef();
+        return poSRS;
+    }
 };
 
 #ifdef GDAL_COMPILATION
@@ -556,22 +567,36 @@ class CPL_DLL OGRFeatureDefn
         {
           private:
             OwnerT m_poFDefn;
+            const int m_nFieldCount;
             int m_nIdx;
+            ChildT m_curValue{};
 
           public:
             inline Iterator(OwnerT poFDefn, int nIdx)
-                : m_poFDefn(poFDefn), m_nIdx(nIdx)
+                : m_poFDefn(poFDefn), m_nFieldCount(poFDefn->GetFieldCount()),
+                  m_nIdx(nIdx)
             {
+                if (m_nIdx < m_nFieldCount)
+                    m_curValue = m_poFDefn->GetFieldDefn(m_nIdx);
             }
 
-            inline ChildT operator*() const
+            inline const ChildT &operator*() const
             {
-                return m_poFDefn->GetFieldDefn(m_nIdx);
+                return m_curValue;
+            }
+
+            inline ChildT &operator*()
+            {
+                return m_curValue;
             }
 
             inline Iterator &operator++()
             {
                 m_nIdx++;
+                if (m_nIdx < m_nFieldCount)
+                    m_curValue = m_poFDefn->GetFieldDefn(m_nIdx);
+                else
+                    m_curValue = nullptr;
                 return *this;
             }
 
@@ -581,12 +606,12 @@ class CPL_DLL OGRFeatureDefn
             }
         };
 
-        inline Iterator begin()
+        inline Iterator begin() const
         {
             return Iterator(m_poFDefn, 0);
         }
 
-        inline Iterator end()
+        inline Iterator end() const
         {
             return Iterator(m_poFDefn, m_poFDefn->GetFieldCount());
         }
@@ -810,12 +835,37 @@ class CPL_DLL OGRFeatureDefn
 
     virtual OGRFeatureDefn *Clone() const;
 
+#ifdef DEPRECATE_OGRFEATUREDEFN_REF_COUNTING
+    int Reference()
+        CPL_WARN_DEPRECATED("Use OGRFeatureDefnRefCountedPtr instead")
+    {
+        return CPLAtomicInc(&nRefCount);
+    }
+
+    int Dereference()
+        CPL_WARN_DEPRECATED("Use OGRFeatureDefnRefCountedPtr instead")
+    {
+        return CPLAtomicDec(&nRefCount);
+    }
+
+    int GetReferenceCount() const
+        CPL_WARN_DEPRECATED("Use OGRFeatureDefnRefCountedPtr instead")
+    {
+        return nRefCount;
+    }
+
+    void Release()
+        CPL_WARN_DEPRECATED("Use OGRFeatureDefnRefCountedPtr instead");
+#else
     int Reference()
     {
         return CPLAtomicInc(&nRefCount);
     }
 
     int Dereference()
+#if defined(GDAL_COMPILATION) && !defined(DOXYGEN_XML)
+        CPL_WARN_DEPRECATED("Use Release() instead")
+#endif
     {
         return CPLAtomicDec(&nRefCount);
     }
@@ -826,6 +876,7 @@ class CPL_DLL OGRFeatureDefn
     }
 
     void Release();
+#endif
 
     virtual int IsGeometryIgnored() const;
     virtual void SetGeometryIgnored(int bIgnore);
@@ -900,6 +951,49 @@ class CPL_DLL OGRFeatureDefn
     CPL_DISALLOW_COPY_ASSIGN(OGRFeatureDefn)
 };
 
+/*! @cond Doxygen_Suppress */
+
+#include "ogr_refcountedptr.h"
+
+template <>
+struct OGRRefCountedPtr<OGRFeatureDefn>
+    : public OGRRefCountedPtrBase<OGRFeatureDefn>
+{
+    /** Constructs from a raw OGRFeatureDefn instance.
+     */
+    inline explicit OGRRefCountedPtr(OGRFeatureDefn *poFDefn = nullptr,
+                                     bool add_ref = true)
+        : OGRRefCountedPtrBase<OGRFeatureDefn>(poFDefn, add_ref)
+    {
+    }
+
+    /** Constructs with a null OGRFeatureDefn instance.
+     */
+    inline explicit OGRRefCountedPtr(std::nullptr_t)
+    {
+    }
+
+    /** Constructs with a new OGRFeatureDefn instance with the provided name
+     */
+    inline static OGRRefCountedPtr makeInstance(const char *pszName)
+    {
+        // Initial ref_count of OGRFeatureDefn is 0, so do add a ref
+        return OGRRefCountedPtr(new OGRFeatureDefn(pszName),
+                                /* add_ref = */ true);
+    }
+};
+
+/** Smart pointer around OGRFeatureDefn.
+ *
+ * It uses OGRFeatureDefn built-in reference counting, to increase the reference
+ * count when assigning a raw pointer to the smart pointer, and decrease it
+ * when releasing it.
+ * Somewhat similar to https://www.boost.org/doc/libs/latest/libs/smart_ptr/doc/html/smart_ptr.html#intrusive_ptr
+ */
+using OGRFeatureDefnRefCountedPtr = OGRRefCountedPtr<OGRFeatureDefn>;
+
+/*! @endcond */
+
 #ifdef GDAL_COMPILATION
 /** Return an object that temporary unseals the OGRFeatureDefn
  *
@@ -926,6 +1020,13 @@ inline OGRFeatureDefn::TemporaryUnsealer whileUnsealing(OGRFeatureDefn *object,
 {
     return object->GetTemporaryUnsealer(bSealFields);
 }
+
+inline OGRFeatureDefn::TemporaryUnsealer
+whileUnsealing(OGRFeatureDefnRefCountedPtr &object, bool bSealFields = true)
+{
+    return object->GetTemporaryUnsealer(bSealFields);
+}
+
 #endif
 
 /************************************************************************/
@@ -1276,7 +1377,7 @@ class CPL_DLL OGRFeature
     void Reset();
 
     OGRFeature *Clone() const CPL_WARN_UNUSED_RESULT;
-    virtual OGRBoolean Equal(const OGRFeature *poFeature) const;
+    virtual bool Equal(const OGRFeature *poFeature) const;
 
     int GetFieldCount() const
     {
@@ -1427,6 +1528,18 @@ class CPL_DLL OGRFeature
     void SetField(int i, GIntBig nValue);
     void SetField(int i, double dfValue);
     void SetField(int i, const char *pszValue);
+#if defined(DOXYGEN_SKIP) || __cplusplus >= 201703L ||                         \
+    (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+    void SetField(int i, std::string_view svValue);
+
+    //! @cond Doxygen_Suppress
+    inline void SetField(int i, const std::string &osValue)
+    {
+        SetField(i, osValue.c_str());
+    }
+
+    //! @endcond
+#endif
     void SetField(int i, int nCount, const int *panValues);
     void SetField(int i, int nCount, const GIntBig *panValues);
     void SetField(int i, int nCount, const double *padfValues);
@@ -1542,7 +1655,7 @@ class CPL_DLL OGRFeature
     //! @endcond
 
     int Validate(int nValidateFlags, int bEmitError) const;
-    void FillUnsetWithDefault(int bNotNullableOnly, char **papszOptions);
+    void FillUnsetWithDefault(int bNotNullableOnly, CSLConstList papszOptions);
 
     bool SerializeToBinary(std::vector<GByte> &abyBuffer) const;
     bool DeserializeFromBinary(const GByte *pabyBuffer, size_t nSize);
@@ -1638,7 +1751,7 @@ inline OGRFeature::ConstFieldIterator end(const OGRFeatureUniquePtr &poFeature)
 //! @endcond
 
 /************************************************************************/
-/*                           OGRFieldDomain                             */
+/*                            OGRFieldDomain                            */
 /************************************************************************/
 
 /* clang-format off */

@@ -33,7 +33,7 @@
 #include "ogrsf_frmts.h"
 
 /************************************************************************/
-/*                      IOGRMemLayerFeatureIterator                     */
+/*                     IOGRMemLayerFeatureIterator                      */
 /************************************************************************/
 
 class IOGRMemLayerFeatureIterator
@@ -53,10 +53,8 @@ IOGRMemLayerFeatureIterator::~IOGRMemLayerFeatureIterator() = default;
 OGRMemLayer::OGRMemLayer(const char *pszName,
                          const OGRSpatialReference *poSRSIn,
                          OGRwkbGeometryType eReqType)
-    : m_poFeatureDefn(new OGRFeatureDefn(pszName))
+    : m_poFeatureDefn(OGRFeatureDefnRefCountedPtr::makeInstance(pszName))
 {
-    m_poFeatureDefn->Reference();
-
     SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(eReqType);
 
@@ -74,8 +72,6 @@ OGRMemLayer::OGRMemLayer(const char *pszName,
 OGRMemLayer::OGRMemLayer(const OGRFeatureDefn &oFeatureDefn)
     : m_poFeatureDefn(oFeatureDefn.Clone())
 {
-    m_poFeatureDefn->Reference();
-
     SetDescription(m_poFeatureDefn->GetName());
 
     m_oMapFeaturesIter = m_oMapFeatures.begin();
@@ -83,7 +79,7 @@ OGRMemLayer::OGRMemLayer(const OGRFeatureDefn &oFeatureDefn)
 }
 
 /************************************************************************/
-/*                           ~OGRMemLayer()                           */
+/*                            ~OGRMemLayer()                            */
 /************************************************************************/
 
 OGRMemLayer::~OGRMemLayer()
@@ -104,9 +100,6 @@ OGRMemLayer::~OGRMemLayer()
         }
         CPLFree(m_papoFeatures);
     }
-
-    if (m_poFeatureDefn)
-        m_poFeatureDefn->Release();
 }
 
 /************************************************************************/
@@ -186,7 +179,7 @@ OGRErr OGRMemLayer::SetNextByIndex(GIntBig nIndex)
 }
 
 /************************************************************************/
-/*                         GetFeatureRef()                              */
+/*                           GetFeatureRef()                            */
 /************************************************************************/
 
 OGRFeature *OGRMemLayer::GetFeatureRef(GIntBig nFeatureId)
@@ -224,7 +217,7 @@ OGRFeature *OGRMemLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                            */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRMemLayer::ISetFeature(OGRFeature *poFeature)
@@ -482,7 +475,7 @@ OGRErr OGRMemLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                        ICreateFeatureUniqPtr()                       */
+/*                       ICreateFeatureUniqPtr()                        */
 /************************************************************************/
 
 OGRErr OGRMemLayer::ICreateFeatureUniqPtr(std::unique_ptr<OGRFeature> poFeature,
@@ -1034,7 +1027,7 @@ OGRErr OGRMemLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomField,
 }
 
 /************************************************************************/
-/*                        OGRMemLayerIteratorArray                      */
+/*                       OGRMemLayerIteratorArray                       */
 /************************************************************************/
 
 class OGRMemLayerIteratorArray final : public IOGRMemLayerFeatureIterator
@@ -1068,7 +1061,7 @@ OGRFeature *OGRMemLayerIteratorArray::Next()
 }
 
 /************************************************************************/
-/*                         OGRMemLayerIteratorMap                       */
+/*                        OGRMemLayerIteratorMap                        */
 /************************************************************************/
 
 class OGRMemLayerIteratorMap final : public IOGRMemLayerFeatureIterator

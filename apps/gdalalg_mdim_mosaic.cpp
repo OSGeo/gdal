@@ -28,7 +28,7 @@
 #endif
 
 /************************************************************************/
-/*            GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm()        */
+/*          GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm()          */
 /************************************************************************/
 
 GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm()
@@ -54,7 +54,7 @@ GDALMdimMosaicAlgorithm::GDALMdimMosaicAlgorithm()
 }
 
 /************************************************************************/
-/*                           GetDimensionDesc()                         */
+/*                          GetDimensionDesc()                          */
 /************************************************************************/
 
 std::optional<GDALMdimMosaicAlgorithm::DimensionDesc>
@@ -63,40 +63,45 @@ GDALMdimMosaicAlgorithm::GetDimensionDesc(
     const std::shared_ptr<GDALDimension> &poDim) const
 {
     auto poVar = poDim->GetIndexingVariable();
-    if (!poVar)
+    if (poVar)
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Dataset %s: dimension %s lacks an indexing variable",
-                    osDSName.c_str(), poDim->GetName().c_str());
-        return std::nullopt;
-    }
-    if (poVar->GetDimensionCount() != 1)
-    {
-        ReportError(
-            CE_Failure, CPLE_AppDefined,
-            "Dataset %s: indexing variable %s of dimension %s is not 1D",
-            osDSName.c_str(), poVar->GetName().c_str(),
-            poDim->GetName().c_str());
-        return std::nullopt;
-    }
-    if (poVar->GetDataType().GetClass() != GEDTC_NUMERIC)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Dataset %s: indexing variable %s of dimension %s has a "
-                    "non-numeric data type",
-                    osDSName.c_str(), poVar->GetName().c_str(),
-                    poDim->GetName().c_str());
-        return std::nullopt;
+        if (poVar->GetDimensionCount() != 1)
+        {
+            ReportError(
+                CE_Failure, CPLE_AppDefined,
+                "Dataset %s: indexing variable %s of dimension %s is not 1D",
+                osDSName.c_str(), poVar->GetName().c_str(),
+                poDim->GetName().c_str());
+            return std::nullopt;
+        }
+        if (poVar->GetDataType().GetClass() != GEDTC_NUMERIC)
+        {
+            ReportError(
+                CE_Failure, CPLE_AppDefined,
+                "Dataset %s: indexing variable %s of dimension %s has a "
+                "non-numeric data type",
+                osDSName.c_str(), poVar->GetName().c_str(),
+                poDim->GetName().c_str());
+            return std::nullopt;
+        }
     }
     DimensionDesc desc;
     desc.osName = poDim->GetName();
     desc.osType = poDim->GetType();
     desc.osDirection = poDim->GetDirection();
-    const auto nSize = poVar->GetDimensions()[0]->GetSize();
-    desc.attributes = poVar->GetAttributes();
+    const auto nSize = poDim->GetSize();
+    if (poVar)
+        desc.attributes = poVar->GetAttributes();
     CPLAssert(nSize > 0);
     desc.nSize = nSize;
-    if (nSize <= 2 || !poVar->IsRegularlySpaced(desc.dfStart, desc.dfIncrement))
+    desc.bHasIndexingVar = poVar != nullptr;
+    if (!poVar)
+    {
+        desc.dfStart = 0;
+        desc.dfIncrement = 1;
+    }
+    else if (nSize <= 2 ||
+             !poVar->IsRegularlySpaced(desc.dfStart, desc.dfIncrement))
     {
         constexpr uint64_t LIMIT = 100 * 1000 * 1000;
         if (nSize > LIMIT)
@@ -171,7 +176,7 @@ GDALMdimMosaicAlgorithm::GetDimensionDesc(
 }
 
 /************************************************************************/
-/*            GDALMdimMosaicAlgorithm::BuildArrayParameters()           */
+/*           GDALMdimMosaicAlgorithm::BuildArrayParameters()            */
 /************************************************************************/
 
 bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
@@ -348,7 +353,41 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                         return false;
                     auto &descThisDataset = descThisDatasetOpt.value();
                     AddToSourceShortDimDesc(descThisDataset, poDim->GetSize());
-                    if (desc.aaValues.empty())
+                    if (descThisDataset.bHasIndexingVar &&
+                        !desc.bHasIndexingVar)
+                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Dimension %s of array %s of dataset %s "
+                                    "has an indexing variable, contrary "
+                                    "to other datasets",
+                                    poDim->GetName().c_str(),
+                                    poArray->GetName().c_str(), pszDatasetName);
+                        return false;
+                    }
+                    else if (!descThisDataset.bHasIndexingVar &&
+                             desc.bHasIndexingVar)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Dimension %s of array %s of dataset %s "
+                            "does not have an indexing variable, contrary "
+                            "to other datasets",
+                            poDim->GetName().c_str(),
+                            poArray->GetName().c_str(), pszDatasetName);
+                        return false;
+                    }
+                    else if (!desc.bHasIndexingVar &&
+                             descThisDataset.nSize != desc.nSize)
+                    {
+                        ReportError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Dimension %s of array %s of dataset %s "
+                            "does not have the same size as in other datasets",
+                            poDim->GetName().c_str(),
+                            poArray->GetName().c_str(), pszDatasetName);
+                        return false;
+                    }
+                    else if (desc.bHasIndexingVar && desc.aaValues.empty())
                     {
                         if (!descThisDataset.aaValues.empty())
                         {
@@ -415,7 +454,7 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
                         }
                         desc.nSize = static_cast<uint64_t>(dfSize + 0.5);
                     }
-                    else
+                    else if (desc.bHasIndexingVar)
                     {
                         if (descThisDataset.aaValues.empty())
                         {
@@ -550,7 +589,7 @@ bool GDALMdimMosaicAlgorithm::BuildArrayParameters(
 }
 
 /************************************************************************/
-/*             GDALMdimMosaicAlgorithm::GetInputDatasetNames()          */
+/*           GDALMdimMosaicAlgorithm::GetInputDatasetNames()            */
 /************************************************************************/
 
 bool GDALMdimMosaicAlgorithm::GetInputDatasetNames(
@@ -599,7 +638,7 @@ bool GDALMdimMosaicAlgorithm::GetInputDatasetNames(
 }
 
 /************************************************************************/
-/*                   GDALMdimMosaicAlgorithm::RunImpl()                 */
+/*                  GDALMdimMosaicAlgorithm::RunImpl()                  */
 /************************************************************************/
 
 bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
@@ -697,66 +736,73 @@ bool GDALMdimMosaicAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                 if (!dstDim)
                     return false;
 
-                auto var = poDstGroup->CreateVRTMDArray(
-                    desc.osName, {dstDim},
-                    GDALExtendedDataType::Create(GDT_Float64));
-                if (!var)
-                    return false;
-
-                for (const auto &attr : desc.attributes)
+                if (desc.bHasIndexingVar)
                 {
-                    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
-                    auto dstAttr = var->CreateAttribute(
-                        attr->GetName(), attr->GetDimensionsSize(),
-                        attr->GetDataType());
-                    if (dstAttr)
+                    auto var = poDstGroup->CreateVRTMDArray(
+                        desc.osName, {dstDim},
+                        GDALExtendedDataType::Create(GDT_Float64));
+                    if (!var)
+                        return false;
+
+                    for (const auto &attr : desc.attributes)
                     {
-                        auto raw(attr->ReadAsRaw());
-                        CPL_IGNORE_RET_VAL(
-                            dstAttr->Write(raw.data(), raw.size()));
+                        CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                        auto dstAttr = var->CreateAttribute(
+                            attr->GetName(), attr->GetDimensionsSize(),
+                            attr->GetDataType());
+                        if (dstAttr)
+                        {
+                            auto raw(attr->ReadAsRaw());
+                            CPL_IGNORE_RET_VAL(
+                                dstAttr->Write(raw.data(), raw.size()));
+                        }
                     }
-                }
 
-                if (desc.aaValues.empty())
-                {
-                    auto poSource =
-                        std::make_unique<VRTMDArraySourceRegularlySpaced>(
-                            desc.dfStart, desc.dfIncrement);
-                    var->AddSource(std::move(poSource));
-                }
-                else
-                {
-                    const size_t nDimSize = static_cast<size_t>(nDimSize64);
-                    std::vector<GUInt64> anOffset = {0};
-                    std::vector<size_t> anCount = {nDimSize};
-                    std::vector<double> adfValues;
-                    adfValues.reserve(nDimSize);
-                    if (desc.nProgressionSign >= 0)
+                    if (desc.aaValues.empty())
                     {
-                        for (const auto &aValues : desc.aaValues)
-                            adfValues.insert(adfValues.end(), aValues.begin(),
-                                             aValues.end());
+                        auto poSource =
+                            std::make_unique<VRTMDArraySourceRegularlySpaced>(
+                                desc.dfStart, desc.dfIncrement);
+                        var->AddSource(std::move(poSource));
                     }
                     else
                     {
-                        for (auto oIter = desc.aaValues.rbegin();
-                             oIter != desc.aaValues.rend(); ++oIter)
+                        const size_t nDimSize = static_cast<size_t>(nDimSize64);
+                        std::vector<GUInt64> anOffset = {0};
+                        std::vector<size_t> anCount = {nDimSize};
+                        std::vector<double> adfValues;
+                        adfValues.reserve(nDimSize);
+                        if (desc.nProgressionSign >= 0)
                         {
-                            adfValues.insert(adfValues.end(), oIter->rbegin(),
-                                             oIter->rend());
+                            for (const auto &aValues : desc.aaValues)
+                                adfValues.insert(adfValues.end(),
+                                                 aValues.begin(),
+                                                 aValues.end());
                         }
+                        else
+                        {
+                            for (auto oIter = desc.aaValues.rbegin();
+                                 oIter != desc.aaValues.rend(); ++oIter)
+                            {
+                                adfValues.insert(adfValues.end(),
+                                                 oIter->rbegin(),
+                                                 oIter->rend());
+                            }
+                        }
+                        std::vector<GByte> abyValues(nDimSize * sizeof(double));
+                        memcpy(abyValues.data(), adfValues.data(),
+                               nDimSize * sizeof(double));
+                        auto poSource =
+                            std::make_unique<VRTMDArraySourceInlinedValues>(
+                                var.get(),
+                                /* bIsConstantValue = */ false,
+                                std::move(anOffset), std::move(anCount),
+                                std::move(abyValues));
+                        var->AddSource(std::move(poSource));
                     }
-                    std::vector<GByte> abyValues(nDimSize * sizeof(double));
-                    memcpy(abyValues.data(), adfValues.data(),
-                           nDimSize * sizeof(double));
-                    auto poSource =
-                        std::make_unique<VRTMDArraySourceInlinedValues>(
-                            var.get(),
-                            /* bIsConstantValue = */ false, std::move(anOffset),
-                            std::move(anCount), std::move(abyValues));
-                    var->AddSource(std::move(poSource));
+                    dstDim->SetIndexingVariable(std::move(var));
                 }
-                dstDim->SetIndexingVariable(std::move(var));
+
                 oMapAlreadyCreatedDims[dstDim->GetName()] = dstDim;
                 apoDstDims.push_back(std::move(dstDim));
             }

@@ -22,7 +22,7 @@
 constexpr int knSIZE_KEY = 1;
 
 /************************************************************************/
-/*                        MVTTileLayerValue()                           */
+/*                         MVTTileLayerValue()                          */
 /************************************************************************/
 
 MVTTileLayerValue::MVTTileLayerValue() : m_nUIntValue(0)
@@ -35,7 +35,7 @@ MVTTileLayerValue::MVTTileLayerValue(const MVTTileLayerValue &oOther)
 }
 
 /************************************************************************/
-/*                       ~MVTTileLayerValue()                           */
+/*                         ~MVTTileLayerValue()                         */
 /************************************************************************/
 
 MVTTileLayerValue::~MVTTileLayerValue()
@@ -44,7 +44,7 @@ MVTTileLayerValue::~MVTTileLayerValue()
 }
 
 /************************************************************************/
-/*                            operator=                                 */
+/*                              operator=                               */
 /************************************************************************/
 
 MVTTileLayerValue &MVTTileLayerValue::operator=(const MVTTileLayerValue &oOther)
@@ -70,7 +70,7 @@ MVTTileLayerValue &MVTTileLayerValue::operator=(const MVTTileLayerValue &oOther)
 }
 
 /************************************************************************/
-/*                            operator<                                 */
+/*                              operator<                               */
 /************************************************************************/
 
 bool MVTTileLayerValue::operator<(const MVTTileLayerValue &rhs) const
@@ -102,7 +102,7 @@ bool MVTTileLayerValue::operator<(const MVTTileLayerValue &rhs) const
 }
 
 /************************************************************************/
-/*                             unset()                                  */
+/*                               unset()                                */
 /************************************************************************/
 
 void MVTTileLayerValue::unset()
@@ -126,7 +126,7 @@ static size_t GetSizeMax8(const char achValue[8])
 }
 
 /************************************************************************/
-/*                        setStringValue()                              */
+/*                           setStringValue()                           */
 /************************************************************************/
 
 void MVTTileLayerValue::setStringValue(const std::string &osValue)
@@ -151,7 +151,7 @@ void MVTTileLayerValue::setStringValue(const std::string &osValue)
 }
 
 /************************************************************************/
-/*                          setValue()                                  */
+/*                              setValue()                              */
 /************************************************************************/
 
 void MVTTileLayerValue::setValue(double dfVal)
@@ -182,7 +182,7 @@ void MVTTileLayerValue::setValue(double dfVal)
 }
 
 /************************************************************************/
-/*                            getSize()                                 */
+/*                              getSize()                               */
 /************************************************************************/
 
 size_t MVTTileLayerValue::getSize() const
@@ -219,7 +219,7 @@ size_t MVTTileLayerValue::getSize() const
 }
 
 /************************************************************************/
-/*                             write()                                  */
+/*                               write()                                */
 /************************************************************************/
 
 void MVTTileLayerValue::write(GByte **ppabyData) const
@@ -295,7 +295,7 @@ void MVTTileLayerValue::write(GByte **ppabyData) const
 }
 
 /************************************************************************/
-/*                             read()                                   */
+/*                                read()                                */
 /************************************************************************/
 
 bool MVTTileLayerValue::read(const GByte **ppabyData,
@@ -361,7 +361,7 @@ bool MVTTileLayerValue::read(const GByte **ppabyData,
 }
 
 /************************************************************************/
-/*                           MVTTileLayer()                             */
+/*                            MVTTileLayer()                            */
 /************************************************************************/
 
 MVTTileLayerFeature::MVTTileLayerFeature()
@@ -369,7 +369,7 @@ MVTTileLayerFeature::MVTTileLayerFeature()
 }
 
 /************************************************************************/
-/*                             setOwner()                               */
+/*                              setOwner()                              */
 /************************************************************************/
 
 void MVTTileLayerFeature::setOwner(MVTTileLayer *poOwner)
@@ -380,7 +380,7 @@ void MVTTileLayerFeature::setOwner(MVTTileLayer *poOwner)
 }
 
 /************************************************************************/
-/*                       invalidateCachedSize()                         */
+/*                        invalidateCachedSize()                        */
 /************************************************************************/
 
 void MVTTileLayerFeature::invalidateCachedSize()
@@ -392,7 +392,7 @@ void MVTTileLayerFeature::invalidateCachedSize()
 }
 
 /************************************************************************/
-/*                        GetPackedArraySize()                          */
+/*                         GetPackedArraySize()                         */
 /************************************************************************/
 
 static size_t GetPackedArraySize(const std::vector<GUInt32> &anVals)
@@ -406,7 +406,7 @@ static size_t GetPackedArraySize(const std::vector<GUInt32> &anVals)
 }
 
 /************************************************************************/
-/*                            getSize()                                 */
+/*                              getSize()                               */
 /************************************************************************/
 
 size_t MVTTileLayerFeature::getSize() const
@@ -455,7 +455,7 @@ static void WriteUIntPackedArray(GByte **ppabyData, int nKey,
 }
 
 /************************************************************************/
-/*                             write()                                  */
+/*                               write()                                */
 /************************************************************************/
 
 void MVTTileLayerFeature::write(GByte **ppabyData) const
@@ -488,7 +488,7 @@ void MVTTileLayerFeature::write(GByte **ppabyData) const
 }
 
 /************************************************************************/
-/*                             read()                                   */
+/*                                read()                                */
 /************************************************************************/
 
 bool MVTTileLayerFeature::read(const GByte **ppabyData,
@@ -556,7 +556,7 @@ bool MVTTileLayerFeature::read(const GByte **ppabyData,
 }
 
 /************************************************************************/
-/*                           MVTTileLayer()                             */
+/*                            MVTTileLayer()                            */
 /************************************************************************/
 
 MVTTileLayer::MVTTileLayer()
@@ -564,7 +564,7 @@ MVTTileLayer::MVTTileLayer()
 }
 
 /************************************************************************/
-/*                             setOwner()                               */
+/*                              setOwner()                              */
 /************************************************************************/
 
 void MVTTileLayer::setOwner(MVTTile *poOwner)
@@ -575,7 +575,7 @@ void MVTTileLayer::setOwner(MVTTile *poOwner)
 }
 
 /************************************************************************/
-/*                       invalidateCachedSize()                         */
+/*                        invalidateCachedSize()                        */
 /************************************************************************/
 
 void MVTTileLayer::invalidateCachedSize()
@@ -587,7 +587,7 @@ void MVTTileLayer::invalidateCachedSize()
 }
 
 /************************************************************************/
-/*                          addFeature()                                */
+/*                             addFeature()                             */
 /************************************************************************/
 
 size_t MVTTileLayer::addFeature(std::shared_ptr<MVTTileLayerFeature> poFeature)
@@ -599,7 +599,7 @@ size_t MVTTileLayer::addFeature(std::shared_ptr<MVTTileLayerFeature> poFeature)
 }
 
 /************************************************************************/
-/*                            getSize()                                 */
+/*                              getSize()                               */
 /************************************************************************/
 
 size_t MVTTileLayer::getSize() const
@@ -632,7 +632,7 @@ size_t MVTTileLayer::getSize() const
 }
 
 /************************************************************************/
-/*                             write()                                  */
+/*                               write()                                */
 /************************************************************************/
 
 void MVTTileLayer::write(GByte **ppabyData) const
@@ -676,7 +676,7 @@ void MVTTileLayer::write(GByte **ppabyData) const
 }
 
 /************************************************************************/
-/*                             write()                                  */
+/*                               write()                                */
 /************************************************************************/
 
 void MVTTileLayer::write(GByte *pabyData) const
@@ -685,7 +685,7 @@ void MVTTileLayer::write(GByte *pabyData) const
 }
 
 /************************************************************************/
-/*                             write()                                  */
+/*                               write()                                */
 /************************************************************************/
 
 std::string MVTTileLayer::write() const
@@ -698,7 +698,7 @@ std::string MVTTileLayer::write() const
 }
 
 /************************************************************************/
-/*                             read()                                   */
+/*                                read()                                */
 /************************************************************************/
 
 bool MVTTileLayer::read(const GByte **ppabyData, const GByte *pabyDataLimit)
@@ -776,7 +776,7 @@ bool MVTTileLayer::read(const GByte **ppabyData, const GByte *pabyDataLimit)
 }
 
 /************************************************************************/
-/*                             read()                                   */
+/*                                read()                                */
 /************************************************************************/
 
 bool MVTTileLayer::read(const GByte *pabyData, const GByte *pabyEnd)
@@ -785,7 +785,7 @@ bool MVTTileLayer::read(const GByte *pabyData, const GByte *pabyEnd)
 }
 
 /************************************************************************/
-/*                             MVTTile()                                */
+/*                              MVTTile()                               */
 /************************************************************************/
 
 MVTTile::MVTTile()
@@ -793,7 +793,7 @@ MVTTile::MVTTile()
 }
 
 /************************************************************************/
-/*                            addLayer()                                */
+/*                              addLayer()                              */
 /************************************************************************/
 
 void MVTTile::addLayer(std::shared_ptr<MVTTileLayer> poLayer)
@@ -804,7 +804,7 @@ void MVTTile::addLayer(std::shared_ptr<MVTTileLayer> poLayer)
 }
 
 /************************************************************************/
-/*                            getSize()                                 */
+/*                              getSize()                               */
 /************************************************************************/
 
 size_t MVTTile::getSize() const
@@ -822,7 +822,7 @@ size_t MVTTile::getSize() const
 }
 
 /************************************************************************/
-/*                             write()                                  */
+/*                               write()                                */
 /************************************************************************/
 
 void MVTTile::write(GByte **ppabyData) const
@@ -841,7 +841,7 @@ void MVTTile::write(GByte **ppabyData) const
 }
 
 /************************************************************************/
-/*                             write()                                  */
+/*                               write()                                */
 /************************************************************************/
 
 void MVTTile::write(GByte *pabyData) const
@@ -850,7 +850,7 @@ void MVTTile::write(GByte *pabyData) const
 }
 
 /************************************************************************/
-/*                             write()                                  */
+/*                               write()                                */
 /************************************************************************/
 
 std::string MVTTile::write() const
@@ -868,7 +868,7 @@ std::string MVTTile::write() const
 #ifdef ADD_MVT_TILE_READ
 
 /************************************************************************/
-/*                             read()                                   */
+/*                                read()                                */
 /************************************************************************/
 
 bool MVTTile::read(const GByte **ppabyData, const GByte *pabyDataLimit)
@@ -907,7 +907,7 @@ bool MVTTile::read(const GByte **ppabyData, const GByte *pabyDataLimit)
 }
 
 /************************************************************************/
-/*                             read()                                   */
+/*                                read()                                */
 /************************************************************************/
 
 bool MVTTile::read(const GByte *pabyData, const GByte *pabyEnd)

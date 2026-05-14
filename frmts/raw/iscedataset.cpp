@@ -71,7 +71,7 @@ class ISCEDataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 };
 
 /************************************************************************/
@@ -138,7 +138,7 @@ static CPLString getXMLFilename(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                             ISCEDataset()                            */
+/*                            ISCEDataset()                             */
 /************************************************************************/
 
 ISCEDataset::ISCEDataset()
@@ -157,7 +157,7 @@ ISCEDataset::~ISCEDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr ISCEDataset::Close(GDALProgressFunc, void *)
@@ -185,7 +185,7 @@ CPLErr ISCEDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                            FlushCache()                              */
+/*                             FlushCache()                             */
 /************************************************************************/
 
 CPLErr ISCEDataset::FlushCache(bool bAtClosing)
@@ -340,7 +340,7 @@ CPLErr ISCEDataset::FlushCache(bool bAtClosing)
     GDALGeoTransform gt;
     if (GetGeoTransform(gt) == CE_None)
     {
-        if (gt[2] != 0 || gt[4] != 0)
+        if (gt.xrot != 0 || gt.yrot != 0)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "ISCE format do not support geotransform with "
@@ -348,25 +348,25 @@ CPLErr ISCEDataset::FlushCache(bool bAtClosing)
         }
         else
         {
-            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt[0]);
+            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt.xorig);
             psTmpNode =
                 CPLCreateXMLNode(psCoordinate1Node, CXT_Element, "property");
             CPLAddXMLAttributeAndValue(psTmpNode, "name", "startingValue");
             CPLCreateXMLElementAndValue(psTmpNode, "value", sBuf);
 
-            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt[1]);
+            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt.xscale);
             psTmpNode =
                 CPLCreateXMLNode(psCoordinate1Node, CXT_Element, "property");
             CPLAddXMLAttributeAndValue(psTmpNode, "name", "delta");
             CPLCreateXMLElementAndValue(psTmpNode, "value", sBuf);
 
-            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt[3]);
+            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt.yorig);
             psTmpNode =
                 CPLCreateXMLNode(psCoordinate2Node, CXT_Element, "property");
             CPLAddXMLAttributeAndValue(psTmpNode, "name", "startingValue");
             CPLCreateXMLElementAndValue(psTmpNode, "value", sBuf);
 
-            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt[5]);
+            CPLsnprintf(sBuf, sizeof(sBuf), "%g", gt.yscale);
             psTmpNode =
                 CPLCreateXMLNode(psCoordinate2Node, CXT_Element, "property");
             CPLAddXMLAttributeAndValue(psTmpNode, "name", "delta");
@@ -404,7 +404,7 @@ char **ISCEDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int ISCEDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -695,12 +695,14 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         aosXmlProps.FetchNameValue("Coordinate2delta") != nullptr)
     {
         GDALGeoTransform gt;
-        gt[0] = CPLAtof(aosXmlProps.FetchNameValue("Coordinate1startingValue"));
-        gt[1] = CPLAtof(aosXmlProps.FetchNameValue("Coordinate1delta"));
-        gt[2] = 0.0;
-        gt[3] = CPLAtof(aosXmlProps.FetchNameValue("Coordinate2startingValue"));
-        gt[4] = 0.0;
-        gt[5] = CPLAtof(aosXmlProps.FetchNameValue("Coordinate2delta"));
+        gt.xorig =
+            CPLAtof(aosXmlProps.FetchNameValue("Coordinate1startingValue"));
+        gt.xscale = CPLAtof(aosXmlProps.FetchNameValue("Coordinate1delta"));
+        gt.xrot = 0.0;
+        gt.yorig =
+            CPLAtof(aosXmlProps.FetchNameValue("Coordinate2startingValue"));
+        gt.yrot = 0.0;
+        gt.yscale = CPLAtof(aosXmlProps.FetchNameValue("Coordinate2delta"));
         poDS->SetGeoTransform(gt);
 
         /* ISCE format seems not to have a projection field, but uses   */
@@ -745,12 +747,12 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *ISCEDataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 {
     const char *sType = GDALGetDataTypeName(eType);
     const char *pszScheme = CSLFetchNameValueDef(papszOptions, "SCHEME", "BIP");
@@ -830,7 +832,7 @@ GDALDataset *ISCEDataset::Create(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                          ISCERasterBand()                            */
+/*                           ISCERasterBand()                           */
 /************************************************************************/
 
 ISCERasterBand::ISCERasterBand(GDALDataset *poDSIn, int nBandIn,

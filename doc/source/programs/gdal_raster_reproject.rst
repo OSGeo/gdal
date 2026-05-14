@@ -82,27 +82,18 @@ Program-Specific Options
 
     .. include:: options/srs_def_gdalwarp.rst
 
-    This must not be confused with :option:`--dst-crs` which is the target SRS of the output
+    This must not be confused with :option:`--output-crs` which is the target SRS of the output
     dataset. :option:`--bbox-crs` is a convenience e.g. when knowing the output coordinates in a
     geodetic long/lat SRS, but still wanting a result in a projected coordinate system.
 
-.. option:: -d, --dst-crs <SRC-CRS>
+.. option:: --like <DATASET>
 
-    Set source spatial reference. If not specified the SRS found in the input
-    dataset will be used.
-
-    .. include:: options/srs_def_gdalwarp.rst
-
-.. option:: --dst-nodata <DSTNODATA>
-
-    Set nodata values for output bands (different values can be supplied for each band).
-    If more than one value is supplied all values should be quoted to keep them together
-    as a single operating system argument.  New files will be initialized to this
-    value and if possible the nodata value will be recorded in the output
-    file. Use a value of ``None`` to ensure that nodata is not defined.
-    If this argument is not used then nodata values will be copied from the source dataset.
-    Note that a number of output formats, including GeoTIFF, do not support
-    different per-band nodata values, but a single one for all bands.
+    Name of GDAL input dataset that serves as a template for default values of
+    options :option:`--size`, :option:`--resolution`
+    :option:`--output-crs` and :option:`--bbox`
+    Note that the pixel values will *not* be copied, and that spatial registration of the
+    template dataset through mechanisms such as GCP, RPC or geolocation array is
+    ignored.
 
 .. option:: --et, --error-threshold <ERROR-THRESHOLD>
 
@@ -117,6 +108,49 @@ Program-Specific Options
 
     Number of jobs to run at once.
     Default: number of CPUs detected.
+
+.. option:: --input-crs, -s <INPUT-CRS>
+
+    Set input spatial reference. If not specified the SRS found in the input
+    dataset will be used.
+
+    .. include:: options/srs_def_gdalwarp.rst
+
+.. option:: --input-nodata <NODATA>
+
+    Set nodata masking values for input bands (different values can be supplied
+    for each band). If more than one value is supplied all values should be quoted
+    to keep them together as a single operating system argument.
+    Masked values will not be used in interpolation (details given in :ref:`gdalwarp_nodata`)
+
+    Use a value of ``None`` to ignore intrinsic nodata settings on the source dataset.
+
+    When this option is set to a non-``None`` value, it causes the ``UNIFIED_SRC_NODATA``
+    warping option (see :cpp:member:`GDALWarpOptions::papszWarpOptions`) to be
+    set to ``YES``, if it is not explicitly set.
+
+    If ``--input-nodata`` is not explicitly set, but the source dataset has nodata values,
+    they will be taken into account, with ``UNIFIED_SRC_NODATA`` at ``PARTIAL``
+    by default.
+
+.. option:: --output-crs, -d, <OUTPUT-CRS>
+
+    Set output spatial reference. If not specified the SRS found in the input
+    dataset will be used.
+
+    .. include:: options/srs_def_gdalwarp.rst
+
+.. option:: --output-nodata <NODATA>
+
+    Set nodata values for output bands (different values can be supplied for each band).
+    If more than one value is supplied all values should be quoted to keep them together
+    as a single operating system argument.  New files will be initialized to this
+    value and if possible the nodata value will be recorded in the output
+    file. Use a value of ``None`` to ensure that nodata is not defined.
+    If this argument is not used then nodata values will be copied from the source dataset.
+    Note that a number of output formats, including GeoTIFF, do not support
+    different per-band nodata values, but a single one for all bands.
+
 
 .. include:: gdal_options/warp_resampling.rst
 
@@ -140,30 +174,6 @@ Program-Specific Options
     the other dimension will be guessed from the computed resolution.
 
     Mutually exclusive with :option:`--resolution`.
-
-.. option:: -s, --src-crs <SRC-CRS>
-
-    Set source spatial reference. If not specified the SRS found in the input
-    dataset will be used.
-
-    .. include:: options/srs_def_gdalwarp.rst
-
-.. option:: --src-nodata <SRCNODATA>
-
-    Set nodata masking values for input bands (different values can be supplied
-    for each band). If more than one value is supplied all values should be quoted
-    to keep them together as a single operating system argument.
-    Masked values will not be used in interpolation (details given in :ref:`gdalwarp_nodata`)
-
-    Use a value of ``None`` to ignore intrinsic nodata settings on the source dataset.
-
-    When this option is set to a non-``None`` value, it causes the ``UNIFIED_SRC_NODATA``
-    warping option (see :cpp:member:`GDALWarpOptions::papszWarpOptions`) to be
-    set to ``YES``, if it is not explicitly set.
-
-    If ``--src-nodata`` is not explicitly set, but the source dataset has nodata values,
-    they will be taken into account, with ``UNIFIED_SRC_NODATA`` at ``PARTIAL``
-    by default.
 
 .. option:: --target-aligned-pixels
 
@@ -204,6 +214,7 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+    .. include:: gdal_options/quiet.rst
 
 Nodata / source validity mask handling
 --------------------------------------
@@ -211,7 +222,7 @@ Nodata / source validity mask handling
 Invalid values in source pixels, either identified through a nodata value
 metadata set on the source band, a mask band, an alpha band (for an alpha band,
 a value of 0 means invalid. Other values are used for blending values) or the use of
-:option:`--src-nodata` will not be used in interpolation.
+:option:`--input-nodata` will not be used in interpolation.
 The details of how it is taken into account depends on the resampling kernel:
 
 - for nearest resampling, for each target pixel, the coordinate of its center
@@ -267,48 +278,53 @@ use ``--error-threshold=0`` which disables this approximator entirely.
 Frequently Asked Questions
 --------------------------
 
-Q1. Why does the quality of the output looks so bad (no anti-aliasing)?
+.. rubric:: Q1. Why does the quality of the output looks so bad (no anti-aliasing)?
 
-A1. Did you specify a resampling method, with :option:`--resampling`, other than
-    the default nearest neighbour?
-
-
-Q2. Why do I get slightly different results whether the output dataset is tiled or not?
-
-A2. This is related to the fact that an approximate coordinate transformation is
-    used by default to speed-up computation. If you want to maximize the chances
-    to get the same results whether the output is tiled or not, set:option:`--error-threshold` to zero.
-    Note, however, that this will only work for relatively small images; other factors
-    can still result in different result. See following question (Q3).
+Did you specify a resampling method, with :option:`--resampling`, other than the
+default nearest neighbour?
 
 
-Q3. Why do I observe artifacts, that look like resolution changes and are aligned
-    with rectangular areas of the output raster, when warping sufficiently large
-    rasters, particularly in areas where the reprojection involves significant
-    deformation and only with non-nearest resampling ?
+.. rubric:: Q2. Why do I get slightly different results whether the output dataset is tiled or not?
 
-A3. The warping engine operates on rectangular areas of the output
-    dataset (generally aligned with tile boundaries for a compressed tile dataset).
+This is related to the fact that an approximate coordinate transformation is
+used by default to speed-up computation. If you want to get the same results
+whether the output is tiled or not, set :option:`--error-threshold` to zero.
+Note, however, that this will only work for relatively small images; other factors
+can still result in different result. See following question (Q3).
 
-    When reprojection happens, one source pixel does not generally correspond
-    to a single output pixel. The resampling method used must properly take that
-    into account and computes a ratio between the number of source and target pixels
-    in the horizontal/X and vertical/Y directions. Those ratios are computed per
-    warping chunk. This maximizes the local quality of the warping but has the
-    downside of creating visual discontinuities between warping chunks.
 
-    If you favor a seamless result, you may manually specify the
-    XSCALE and YSCALE warping options with :option:`--wo`.
-    The XSCALE (resp. YSCALE) value is the ratio expressing the resampling factor,
-    i.e. the number of destination pixels per source pixel, along the
-    horizontal (resp. vertical) axis. It equals to one for no resampling, is
-    below one for downsampling, and above one for upsampling.
+.. rubric:: Q3. Why do I observe artifacts, that look like resolution changes and are aligned
+   with rectangular areas of the output raster, when warping sufficiently large
+   rasters, particularly in areas where the reprojection involves significant
+   deformation and only with non-nearest resampling ?
+
+The warping engine operates on rectangular areas of the output
+dataset (generally aligned with tile boundaries for a compressed tile dataset).
+
+During reprojection, a single source pixel does not generally correspond to a
+single output pixel. The resampling method must therefore properly account for this
+and compute a ratio between the number of source and target pixels in the
+horizontal (X) and vertical (Y) directions. These ratios are computed per warping
+chunk. This maximizes the local quality of the warping but has the downside of
+creating visual discontinuities between warping chunks.
+
+If you favor a seamless result, you may manually specify the
+XSCALE and YSCALE warping options with :option:`--wo`.
+The XSCALE (resp. YSCALE) value is the ratio expressing the resampling factor,
+i.e. the number of destination pixels per source pixel, along the
+horizontal (resp. vertical) axis. It equals to one for no resampling, is
+below one for downsampling, and above one for upsampling.
 
 
 .. GDALG output (on-the-fly / streamed dataset)
 .. --------------------------------------------
 
 .. include:: gdal_cli_include/gdalg_raster_compatible.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -318,4 +334,17 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal raster reproject --dst-crs=EPSG:32632 in.tif out.tif --overwrite
+        $ gdal raster reproject --output-crs=EPSG:32632 in.tif out.tif --overwrite
+
+.. example::
+   :title: Converting a raster that uses an embedded CRS without a known identifier
+
+   In this example, the input file has an embedded CRS defined in WKT2 but without an associated identifier,
+   and it will be reprojected to the known `ESRI:54052 <https://spatialreference.org/ref/esri/54052/>`__ CRS identifier.
+
+   Using ``"PROFILE=BASELINE"`` creates a :term:`PAM` file that stores the CRS using the ``ESRI:54052`` identifier,
+   instead of embedding CRS information in GeoTIFF metadata tags. See :ref:`GTiff <raster.gtiff>` ``PROFILE``.
+
+   .. code-block:: bash
+
+        $ gdal raster reproject --creation-option "PROFILE=BASELINE" --output-crs=ESRI:54052 input.tif output.tif --overwrite

@@ -617,7 +617,7 @@ def test_ogr_mem_coordinate_epoch():
     ds = ogr.GetDriverByName("MEM").CreateDataSource("")
     lyr = ds.CreateLayer("foo", srs=srs)
     srs = lyr.GetSpatialRef()
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
     assert srs.GetCoordinateEpoch() == 2021.3
     assert srs.GetDataAxisToSRSAxisMapping() == [2, 1]
 
@@ -803,6 +803,26 @@ def test_ogr_mem_consume_arrow_array_pycapsule_interface():
 ###############################################################################
 
 
+def test_ogr_mem_arrow_stream_nanoarrow():
+
+    na = pytest.importorskip("nanoarrow")
+
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["foo"] = "bar"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+
+    na_stream = na.ArrayStream(lyr)
+    batch = next(na_stream.__iter__())
+    assert len(batch) == 1
+
+
+###############################################################################
+
+
 def test_ogr_mem_arrow_stream_numpy():
     gdaltest.importorskip_gdal_array()
     numpy = pytest.importorskip("numpy")
@@ -907,7 +927,7 @@ def test_ogr_mem_arrow_stream_numpy():
     f.SetField("float32list", "[-1.25,1.25]")
     f.SetField("float64list", "[-1.250123,1.250123]")
     f.SetField("strlist", '["abc","defghi"]')
-    f.SetField("binary", b"\xDE\xAD")
+    f.SetField("binary", b"\xde\xad")
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     lyr.CreateFeature(f)
 
@@ -957,7 +977,7 @@ def test_ogr_mem_arrow_stream_numpy():
     assert numpy.array_equal(
         batch["strlist"][1], numpy.array([b"abc", b"defghi"], dtype="|S6")
     )
-    assert batch["binary"][1] == b"\xDE\xAD"
+    assert batch["binary"][1] == b"\xde\xad"
     assert len(batch["wkb_geometry"][1]) == 21
 
     # Test fast FID filtering
@@ -1180,9 +1200,9 @@ def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
     f.SetField("float32list", "[-1.25,1.25]")
     f.SetField("float64list", "[-1.250123,1.250123]")
     f.SetField("strlist", '["abc","defghi"]')
-    f.SetField("binary", b"\xDE\xAD")
+    f.SetField("binary", b"\xde\xad")
     if limited_field == "binary_fixed_width":
-        f.SetField("binary_fixed_width", b"\xDE\xAD" * 25)
+        f.SetField("binary_fixed_width", b"\xde\xad" * 25)
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     lyr.CreateFeature(f)
 
@@ -1205,7 +1225,7 @@ def test_ogr_mem_arrow_stream_numpy_memlimit(limited_field):
     elif limited_field == "binary":
         f["binary"] = b"x" * 100
     elif limited_field == "binary_fixed_width":
-        f.SetField("binary_fixed_width", b"\xDE\xAD" * 25)
+        f.SetField("binary_fixed_width", b"\xde\xad" * 25)
     elif limited_field == "geometry":
         g = ogr.Geometry(ogr.wkbLineString)
         sizeof_first_point = 21
@@ -1578,7 +1598,7 @@ def test_ogr_mem_write_arrow():
     src_feature.SetField("field_real", 18.4)
     src_feature.SetField("field_string", "abc def")
     src_feature.SetFieldBinary("field_binary", b"\x00\x01")
-    src_feature.SetField("field_binary", b"\x01\x23\x46\x57\x89\xAB\xCD\xEF")
+    src_feature.SetField("field_binary", b"\x01\x23\x46\x57\x89\xab\xcd\xef")
     src_feature.SetField("field_date", "2011/11/11")
     src_feature.SetField("field_time", "14:10:35")
     src_feature.SetField("field_datetime", 2011, 11, 11, 14, 10, 35.123, 0)
@@ -1883,132 +1903,165 @@ def test_ogr_mem_write_pyarrow():
 
     list_boolean = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else True if (j % 2) == 0 else False for j in range(i)]
+            (
+                None
+                if i == 2
+                else [
+                    None if j == 0 else True if (j % 2) == 0 else False
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.bool_()),
     )
     list_uint8 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.uint8()),
     )
     list_int8 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.int8()),
     )
     list_uint16 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.uint16()),
     )
     list_int16 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.int16()),
     )
     list_uint32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.uint32()),
     )
     list_int32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.int32()),
     )
     list_uint64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.uint64()),
     )
     list_int64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.int64()),
     )
     list_float16 = pa.array(
         [
-            None
-            if i == 2
-            else [
-                None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
-                for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.float16()),
     )
     list_float32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.float32()),
     )
     list_float64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.float64()),
     )
     list_string = pa.array(
         [
-            None
-            if i == 2
-            else [
-                "".join(["%c" % (65 + j + k) for k in range(1 + j)]) for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    "".join(["%c" % (65 + j + k) for k in range(1 + j)])
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ]
     )
     list_large_string = pa.array(
         [
-            None
-            if i == 2
-            else [
-                "".join(["%c" % (65 + j + k) for k in range(1 + j)]) for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    "".join(["%c" % (65 + j + k) for k in range(1 + j)])
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.list_(pa.large_string()),
@@ -2016,133 +2069,166 @@ def test_ogr_mem_write_pyarrow():
 
     large_list_boolean = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else True if (j % 2) == 0 else False for j in range(i)]
+            (
+                None
+                if i == 2
+                else [
+                    None if j == 0 else True if (j % 2) == 0 else False
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.bool_()),
     )
     large_list_uint8 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.uint8()),
     )
     large_list_int8 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.int8()),
     )
     large_list_uint16 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.uint16()),
     )
     large_list_int16 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.int16()),
     )
     large_list_uint32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.uint32()),
     )
     large_list_int32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.int32()),
     )
     large_list_uint64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.uint64()),
     )
     large_list_int64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.int64()),
     )
     large_list_float16 = pa.array(
         [
-            None
-            if i == 2
-            else [
-                None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
-                for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    None if j == 0 else np.float16(0.5 + j + i * (i - 1) // 2)
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.float16()),
     )
     large_list_float32 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.float32()),
     )
     large_list_float64 = pa.array(
         [
-            None
-            if i == 2
-            else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            (
+                None
+                if i == 2
+                else [None if j == 0 else 0.5 + j + i * (i - 1) // 2 for j in range(i)]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.float64()),
     )
     large_list_string = pa.array(
         [
-            None
-            if i == 2
-            else [
-                "".join(["%c" % (65 + j + k) for k in range(1 + j)]) for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    "".join(["%c" % (65 + j + k) for k in range(1 + j)])
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.string()),
     )
     large_list_large_string = pa.array(
         [
-            None
-            if i == 2
-            else [
-                "".join(["%c" % (65 + j + k) for k in range(1 + j)]) for j in range(i)
-            ]
+            (
+                None
+                if i == 2
+                else [
+                    "".join(["%c" % (65 + j + k) for k in range(1 + j)])
+                    for j in range(i)
+                ]
+            )
             for i in range(5)
         ],
         type=pa.large_list(pa.large_string()),
@@ -2757,9 +2843,7 @@ def test_ogr_mem_write_pyarrow():
     assert f["map_uint8"] == "{}"
 
     f = lyr.GetFeature(4)
-    assert (
-        str(f)
-        == """OGRFeature(test):4
+    assert str(f) == """OGRFeature(test):4
   boolean (Integer(Boolean)) = 1
   int8 (Integer(Int16)) = 2
   uint8 (Integer(Int16)) = 5
@@ -2881,7 +2965,6 @@ def test_ogr_mem_write_pyarrow():
   POINT (4 2)
 
 """
-    )
 
 
 ###############################################################################
@@ -2915,13 +2998,10 @@ def test_ogr_mem_write_pyarrow_geometry_in_large_binary():
     assert lyr.WritePyArrow(table) == ogr.OGRERR_NONE
 
     f = lyr.GetFeature(4)
-    assert (
-        str(f)
-        == """OGRFeature(test):4
+    assert str(f) == """OGRFeature(test):4
   POINT (4 2)
 
 """
-    )
 
 
 ###############################################################################
@@ -3089,3 +3169,109 @@ def test_ogr_mem_timestamp_with_offset_arrow_api(tmp_vsimem):
     f = lyr.GetNextFeature()
     assert f["id"] == 4
     assert f["dt"] == "2025/12/20 22:30:56"
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_arrow_string_view():
+    pa = pytest.importorskip("pyarrow")
+    if not hasattr(pa, "string_view"):
+        pytest.skip("no string_view support: too old pyarrow version")
+
+    sv_values = ["foo", "foo", "longer than twelve char", "longer than twelve char bis"]
+    sv_list_values = [sv_values, None, ["bar"], None]
+    sv_fixed_size_list_values = [
+        ["foo", "bar"],
+        [None, None],
+        ["longer than twelve char", "baz"],
+        None,
+    ]
+    expected_sv_fixed_size_list_values = [
+        ["foo", "bar"],
+        ["", ""],
+        ["longer than twelve char", "baz"],
+        None,
+    ]
+
+    map_sv_values = [{"a": "b"}, None, None, None]
+    expected_map_sv_values = ['{"a":"b"}', None, None, None]
+
+    map_sv_list_values = [{"a": ["b", "c"]}, None, None, None]
+    expected_map_sv_list_values = ['{"a":["b","c"]}', None, None, None]
+
+    tab = pa.table(
+        {
+            "sv_field": pa.array(sv_values, pa.string_view()),
+            "sv_list_field": pa.array(sv_list_values, pa.list_(pa.string_view())),
+            "sv_large_list_field": pa.array(
+                sv_list_values, pa.large_list(pa.string_view())
+            ),
+            "sv_fixed_size_list_field": pa.array(
+                sv_fixed_size_list_values, pa.list_(pa.string_view(), 2)
+            ),
+            "map_sv_field": pa.array(
+                map_sv_values, pa.map_(pa.string(), pa.string_view())
+            ),
+            "map_sv_list_field": pa.array(
+                map_sv_list_values, pa.map_(pa.string(), pa.list_(pa.string_view()))
+            ),
+        }
+    )
+
+    ds = ogr.GetDriverByName("MEM").CreateDataSource("")
+    lyr = ds.CreateLayer("test")
+    py_schema = tab.schema
+    for i in range(len(py_schema)):
+        lyr.CreateFieldFromPyArrowSchema(py_schema[i])
+    lyr.WriteArrow(tab)
+
+    assert [f["sv_field"] for f in lyr] == sv_values
+    assert [f["sv_list_field"] for f in lyr] == sv_list_values
+    assert [f["sv_large_list_field"] for f in lyr] == sv_list_values
+    assert [
+        f["sv_fixed_size_list_field"] for f in lyr
+    ] == expected_sv_fixed_size_list_values
+    assert [f["map_sv_field"] for f in lyr] == expected_map_sv_values
+    assert [f["map_sv_list_field"] for f in lyr] == expected_map_sv_list_values
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_mem_relationships():
+
+    ds = gdal.GetDriverByName("MEM").CreateVector("")
+    assert ds.TestCapability(ogr.ODsCAddRelationship)
+    assert ds.TestCapability(ogr.ODsCUpdateRelationship)
+    assert ds.TestCapability(ogr.ODsCDeleteRelationship)
+
+    assert ds.GetRelationshipNames() is None
+    assert ds.GetRelationship("non_existing") is None
+    assert (
+        ds.UpdateRelationship(
+            gdal.Relationship(
+                "my_relationship", "origin_table", "dest_table", gdal.GRC_MANY_TO_MANY
+            )
+        )
+        is False
+    )
+    assert ds.DeleteRelationship("non_existing") is False
+
+    assert ds.AddRelationship(
+        gdal.Relationship(
+            "my_relationship", "origin_table", "dest_table", gdal.GRC_MANY_TO_MANY
+        )
+    )
+    assert ds.GetRelationshipNames() == ["my_relationship"]
+    assert ds.GetRelationship("my_relationship") is not None
+    assert ds.UpdateRelationship(
+        gdal.Relationship(
+            "my_relationship", "origin_table", "dest_table2", gdal.GRC_MANY_TO_MANY
+        )
+    )
+    assert ds.GetRelationship("my_relationship").GetRightTableName() == "dest_table2"
+    assert ds.DeleteRelationship("my_relationship")
+    assert ds.GetRelationship("my_relationship") is None

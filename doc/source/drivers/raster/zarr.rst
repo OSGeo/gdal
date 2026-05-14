@@ -13,19 +13,10 @@ Zarr
 
 Zarr is a format for the storage of chunked, compressed, N-dimensional arrays.
 This format is supported for read and write access, and using the traditional
-2D raster API or the newer multidimensional API
+2D raster API or the multidimensional API
 
-The driver supports the Zarr V2 specification, and has experimental support
-for the in-progress Zarr V3 specification. It also supports Kerchunk reference
+The driver supports the Zarr V2 an V3 specifications. It also supports Kerchunk reference
 files since GDAL 3.11.
-
-.. warning::
-
-    The current implementation of Zarr V3 before GDAL 3.8 is incompatible with
-    the latest evolutions of the Zarr V3 specification.
-    GDAL 3.8 is compatible with the Zarr V3 specification at date 2023-May-7,
-    and is not interoperable with Zarr V3 datasets produced by earlier GDAL
-    versions.
 
 Local and cloud storage (see :ref:`virtual_file_systems`) are supported in read and write.
 
@@ -93,7 +84,34 @@ Sharding support
 .. versionadded:: 3.13
 
 `Zarr v3 sharding <https://zarr-specs.readthedocs.io/en/latest/v3/codecs/sharding-indexed/index.html>`__
-is supported in read-only since GDAL 3.13.
+is supported since GDAL 3.13. Write support involves setting the
+:co:`SHARD_CHUNK_SHAPE` array creation option.
+
+Multiscales (overviews / pyramids)
+----------------------------------
+
+.. versionadded:: 3.13
+
+The driver supports reading the Zarr
+`multiscales convention <https://github.com/zarr-conventions/multiscales>`__
+for Zarr V3 datasets. This convention describes a pyramid of arrays at
+decreasing resolutions within a group hierarchy.
+
+When a Zarr V3 array has a parent (or grandparent) group whose
+attributes contain a ``zarr_conventions`` entry with the multiscales UUID and
+a ``multiscales`` attribute with a ``layout`` array, the driver exposes
+lower-resolution levels as overviews via :cpp:func:`GDALMDArray::GetOverview`
+and the classic raster band overview API.
+
+Overviews can be generated using :cpp:func:`GDALMDArray::BuildOverviews` or
+equivalently via :cpp:func:`GDALDataset::BuildOverviews` on datasets obtained
+through :cpp:func:`GDALMDArray::AsClassicDataset`. For arrays with more than
+two dimensions, only the spatial dimensions are downsampled; non-spatial
+dimensions (e.g., time) are preserved. Each overview level is resampled
+sequentially from the previous level (e.g., 4x from 2x, not from base).
+Codec settings are inherited from the source array. Calling
+``BuildOverviews`` replaces all existing overviews (unlike the default
+``GDALDataset::BuildOverviews`` behavior which adds new levels).
 
 Kerchunk reference stores
 -------------------------
@@ -196,15 +214,29 @@ The driver support the
 `NCZarr v2 <https://www.unidata.ucar.edu/software/netcdf/documentation/NUG/nczarr_head.html>`__
 extensions of storing the dimension names of an array (read-only)
 
-SRS encoding
-------------
+Georeferencing encoding (CRS and geotransformation matrix)
+----------------------------------------------------------
 
 The Zarr specification has no provision for spatial reference system encoding.
-GDAL uses a ``_CRS`` attribute that is a dictionary that may contain one or
+Several conventions
+
+.. _raster_zarr.gdal.convention:
+
+GDAL convention
++++++++++++++++
+
+Before GDAL 3.13, the only convention supported both in reading and writing was
+the ``GDAL`` one, using a ``_CRS`` attribute. The geotransformation matrix, when
+no rotation terms is present, is encoded as ``X`` and ``Y`` one-dimensional
+coordinate arrays.
+
+The ``_CRS`` attribute is a dictionary that may contain one or
 several of the following keys: ``url`` (using a OGC CRS URL), ``wkt`` (WKT:2019
 used by default on writing, WKT1 also supported on reading.), ``projjson``.
 On reading, it will use ``url`` by default, if not found will fallback to ``wkt``
 and then ``projjson``.
+
+Example:
 
 .. code-block:: json
 
@@ -333,6 +365,70 @@ and then ``projjson``.
       }
     }
 
+
+SPATIAL_PROJ convention
++++++++++++++++++++++++
+
+.. versionadded:: 3.13
+
+Since GDAL 3.13, the Zarr `spatial <https://github.com/zarr-conventions/spatial>`__
+and `geo-proj <https://github.com/zarr-conventions/geo-proj>`__ conventions
+are supported in reading, and in writing when the ``GEOREFERENCING_CONVENTION``
+creation option is set to ``SPATIAL_PROJ``. X and Y coordinate arrays are
+written only if the geotransformation matrix has no rotation terms.
+
+Example:
+
+.. code-block:: json
+
+    {
+        "attributes": {
+            "proj:code": "EPSG:26711",
+            "spatial:bbox": [
+                440720.0,
+                3750120.0,
+                441920.0,
+                3751320.0,
+            ],
+            "spatial:transform_type": "affine",
+            "spatial:transform": [
+                60.0,
+                0.0,
+                440720.0,
+                0.0,
+                -60.0,
+                3751320.0,
+            ],
+            "spatial:registration": "pixel",
+            "spatial:dimensions": ["Y", "X"],
+            "zarr_conventions": [
+                {
+                    "schema_url": "https://raw.githubusercontent.com/zarr-experimental/geo-proj/refs/tags/v1/schema.json",
+                    "spec_url": "https://github.com/zarr-experimental/geo-proj/blob/v1/README.md",
+                    "uuid": "f17cb550-5864-4468-aeb7-f3180cfb622f",
+                    "name": "proj:",
+                    "description": "Coordinate reference system information for geospatial data",
+                },
+                {
+                    "schema_url": "https://raw.githubusercontent.com/zarr-conventions/spatial/refs/tags/v1/schema.json",
+                    "spec_url": "https://github.com/zarr-conventions/spatial/blob/v1/README.md",
+                    "uuid": "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4",
+                    "name": "spatial:",
+                    "description": "Spatial coordinate information",
+                },
+            ]
+        }
+    }
+
+
+netCDF CF conventions
++++++++++++++++++++++
+
+.. versionadded:: 3.9
+
+The driver supports reading a CRS using the `CF conventions <https://cfconventions.org/>`__.
+
+
 Particularities of the classic raster API
 -----------------------------------------
 
@@ -426,8 +522,13 @@ The following dataset open options are available:
 Multi-threaded caching
 ----------------------
 
-The driver implements the :cpp:func:`GDALMDArray::AdviseRead` method. This
-proceed to multi-threaded decoding of the tiles that intersect the area of
+Starting with GDAL 3.13, when the :config:`GDAL_NUM_THREADS` configuration
+option is set and a read request spans multiple chunks, the driver automatically
+decodes chunks in parallel, similar to the GeoTIFF driver behavior
+(since GDAL 3.6). No application changes are needed.
+
+The driver also implements the :cpp:func:`GDALMDArray::AdviseRead` method for
+explicit multi-threaded pre-fetching of tiles that intersect the area of
 interest specified. A sufficient cache size must be specified. The call is
 blocking.
 
@@ -448,6 +549,18 @@ Creation options
 The following options are creation options of the classic raster API, or
 array-level creation options for the multidimensional API (must be prefixed
 with ``ARRAY:`` using :program:`gdalmdimtranslate`):
+
+-  .. co:: GEOREFERENCING_CONVENTION
+      :choices: GDAL, SPATIAL_PROJ
+      :default: GDAL
+
+      Which convention is used to write georeferencing information: geotransformation
+      and CRS.
+
+      The ``GDAL`` convention uses a ``_CRS`` attribute described above. The
+      ``SPATIAL_PROJ`` convention, added both in read and write support in GDAL 3.13,
+      uses the Zarr `spatial <https://github.com/zarr-conventions/spatial>`__
+      and `geo-proj <https://github.com/zarr-conventions/geo-proj>`__ conventions.
 
 -  .. co:: COMPRESS
       :choices: NONE, BLOSC, ZLIB, GZIP, LZMA, ZSTD, LZ4
@@ -470,6 +583,17 @@ with ``ARRAY:`` using :program:`gdalmdimtranslate`):
       Comma separated list of chunk size along each dimension.
       If not specified, the fastest varying 2 dimensions (the last ones) used a
       block size of 256 samples, and the other ones of 1.
+
+-  .. co:: SHARD_CHUNK_SHAPE
+      :choices: <string>
+      :since: 3.13
+
+      Comma-separated inner chunk dimensions for Zarr V3 sharded storage.
+      When set, :co:`BLOCKSIZE` defines the shard dimensions and this option
+      defines the inner chunk dimensions within each shard.
+      Each value must evenly divide the corresponding :co:`BLOCKSIZE`
+      dimension. For example, ``BLOCKSIZE=256,256`` with
+      ``SHARD_CHUNK_SHAPE=64,64`` creates shards of 4x4=16 inner chunks.
 
 -  .. co:: CHUNK_MEMORY_LAYOUT
       :choices: C, F
@@ -627,6 +751,13 @@ The following options are creation options of the classic raster API only:
       The default value is BAND in Create() mode. In CreateCopy() mode, the
       default value is the value of the INTERLEAVE metadata item of the
       IMAGE_STRUCTURE metadata domain of the source dataset, if set.
+      See :ref:`raster_data_model_interleave_mode` for more details.
+
+
+Add a georeferencing convention to an existing ZARR dataset
+-----------------------------------------------------------
+
+See :ref:`gdal_driver_zarr_add_georeferencing_convention`.
 
 
 Examples
@@ -679,3 +810,5 @@ See Also:
 .. spelling:word-list::
     Kerchunk
     Sharding
+    multiscales
+    Multiscales

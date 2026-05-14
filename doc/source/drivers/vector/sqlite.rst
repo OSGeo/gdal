@@ -577,32 +577,34 @@ Note that secure deletion does not recover potential lost space, so running
 a `VACUUM <https://sqlite.org/lang_vacuum.html>`__ query is recommended to fully
 optimized a database that has been subject to updates or deletions.
 
-Example
--------
+Examples
+--------
 
-- Convert a non-spatial SQLite table into a GeoPackage:
+.. example::
+   :title: Converting a non-spatial SQLite table into a GeoPackage
 
-.. code-block::
+   .. code-block:: bash
+   
+     ogr2ogr \
+       -f "GPKG" output.gpkg \
+       input.sqlite \
+       -sql \
+       "SELECT
+          *,
+          MakePoint(longitude, latitude, 4326) AS geometry
+        FROM
+          my_table" \
+       -nln "location" \
+       -s_srs "EPSG:4326"
 
-  ogr2ogr \
-    -f "GPKG" output.gpkg \
-    input.sqlite \
-    -sql \
-    "SELECT
-       *,
-       MakePoint(longitude, latitude, 4326) AS geometry
-     FROM
-       my_table" \
-    -nln "location" \
-    -s_srs "EPSG:4326"
+.. example::
+   :title: Performing a join between two SQLite/Spatialite databases
 
-- Perform a join between 2 SQLite/Spatialite databases:
-
-.. code-block::
-
-    ogrinfo my_spatial.db \
-        -sql "SELECT poly.id, other.foo FROM poly JOIN other_schema.other USING (id)" \
-        -oo PRELUDE_STATEMENTS="ATTACH DATABASE 'other.db' AS other_schema"
+   .. code-block:: bash
+   
+       ogrinfo my_spatial.db \
+           -sql "SELECT poly.id, other.foo FROM poly JOIN other_schema.other USING (id)" \
+           -oo PRELUDE_STATEMENTS="ATTACH DATABASE 'other.db' AS other_schema"
 
 Credits
 -------

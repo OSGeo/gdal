@@ -1034,3 +1034,24 @@ def test_hdf5_multimdim_eos_grid_VIIRS_Grid_IMG_2D_issue_12941():
     assert struct.unpack("d" * 4, xdim_var.Read())[0:2] == pytest.approx(
         (-972956.7047086251, -694969.0747918751)
     )
+
+
+##############################################################################
+# Test opening a HDF5EOS grid file whose arrays have a DIMENSION_LIST
+# https://github.com/OSGeo/gdal/issues/14287
+
+
+@pytest.mark.require_curl()
+@pytest.mark.network
+def test_hdf5_multimdim_eos_grid_dimension_list():
+
+    ds = gdal.OpenEx(
+        "/vsigzip//vsicurl/https://github.com/user-attachments/files/26440412/VNP19A2.A2024156.h28v06.002.2025276043605.h5.gz",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    ar = ds.GetRootGroup().OpenMDArrayFromFullname(
+        "/HDFEOS/GRIDS/grid750m/Data Fields/Optical_Depth_047"
+    )
+    srs = ar.GetSpatialRef()
+    assert srs
+    assert srs.GetDataAxisToSRSAxisMapping() == [3, 2]

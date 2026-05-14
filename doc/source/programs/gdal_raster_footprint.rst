@@ -38,7 +38,7 @@ Post-vectorization geometric operations are applied in the following order:
 
 * optional splitting (:option:`--split-multipolygons`)
 * optional densification (:option:`--densify-distance`)
-* optional reprojection (:option:`--dst-crs`)
+* optional reprojection (:option:`--output-crs`)
 * optional filtering by minimum ring area (:option:`--min-ring-area`)
 * optional application of convex hull (:option:`--convex-hull`)
 * optional simplification (:option:`--simplify-tolerance`)
@@ -81,7 +81,7 @@ Program-Specific Options
 
     Target coordinate system. By default if the input dataset is georeferenced,
     ``georeferenced`` is implied, that is the footprint geometry will be expressed
-    as coordinates in the CRS of the raster (or the one specified with :option:`--dst-crs`).
+    as coordinates in the CRS of the raster (or the one specified with :option:`--output-crs`).
     If specifying ``pixel``, the coordinates of the footprint geometry are
     column and line indices.
 
@@ -95,16 +95,17 @@ Program-Specific Options
     consecutive points of the output geometry.
     The unit of the distance is in pixels if :option:`--coordinate-system` equals ``pixel``,
     or otherwise in georeferenced units of the source raster.
-    This option is applied before the reprojection implied by :option:`--dst-crs`.
+    This option is applied before the reprojection implied by :option:`--output-crs`.
 
-.. option:: --dst-crs <CRS_DEF>
+.. option:: --input-nodata <value>
 
-    Target CRS of the output file.  The <CRS_DEF> may be any of
-    the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing
-    the WKT.
-    Specifying this option implies ``--coordinate-system=georeferenced``.
-    The footprint is reprojected from the CRS of the source raster to the
-    specified CRS.
+    Set nodata values for input bands (different values can be supplied for each band).
+    If a single value is specified, it applies to all selected bands.
+    If more than one value is supplied, there should be as many values as the number
+    of selected bands, and all values should be quoted to keep them
+    together as a single operating system argument.
+    If the option is not specified, the intrinsic mask band of each selected
+    bands will be used.
 
 .. option:: --location-field <field_name>
 
@@ -124,12 +125,21 @@ Program-Specific Options
     Minimum value for the area of a ring
     The unit of the area is in square pixels if :option:`--coordinate-system` equals ``pixel``,
     or otherwise in georeferenced units of the target vector dataset.
-    This option is applied after the reprojection implied by :option:`--dst-crs`
+    This option is applied after the reprojection implied by :option:`--output-crs`
 
 .. option:: --no-location-field
 
     Turns off the writing of the path of the input dataset as a field in the
     output vector dataset.
+
+.. option:: --output-crs <CRS_DEF>
+
+    Target CRS of the output file.  The <CRS_DEF> may be any of
+    the usual GDAL/OGR forms, complete WKT, PROJ.4, EPSG:n or a file containing
+    the WKT.
+    Specifying this option implies ``--coordinate-system=georeferenced``.
+    The footprint is reprojected from the CRS of the source raster to the
+    specified CRS.
 
 .. option:: --output-layer <OUTPUT-LAYER>
 
@@ -140,7 +150,7 @@ Program-Specific Options
    To specify which overview level of source file must be used, when overviews
    are available on the source raster. By default the full resolution level is
    used. The index is 0-based, that is 0 means the first overview level.
-   This option is mutually exclusive with :option:`--src-nodata`.
+   This option is mutually exclusive with :option:`--input-nodata`.
 
 .. option:: --simplify-tolerance <value>
 
@@ -149,22 +159,12 @@ Program-Specific Options
     :cpp:func:`OGRGeometry::Simplify` method.
     The unit of the distance is in pixels if :option:`--coordinate-system` equals ``pixel``,
     or otherwise in georeferenced units of the target vector dataset.
-    This option is applied after the reprojection implied by :option:`--dst-crs`.
+    This option is applied after the reprojection implied by :option:`--output-crs`.
 
 .. option:: --split-multipolygons
 
     When specified, multipolygons are split as several features each with one
     single polygon.
-
-.. option:: --src-nodata <value>
-
-    Set nodata values for input bands (different values can be supplied for each band).
-    If a single value is specified, it applies to all selected bands.
-    If more than one value is supplied, there should be as many values as the number
-    of selected bands, and all values should be quoted to keep them
-    together as a single operating system argument.
-    If the option is not specified, the intrinsic mask band of each selected
-    bands will be used.
 
 Standard Options
 ----------------
@@ -184,6 +184,11 @@ Standard Options
     .. include:: gdal_options/of_vector.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

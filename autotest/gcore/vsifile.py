@@ -1265,13 +1265,13 @@ def test_vsifile_vsizip_non_latin1_char(tmp_vsimem):
 
     gdal.ErrorReset()
     with gdal.VSIFile(
-        f"/vsizip/{tmp_vsimem}/test.zip/" + b"\xE5\xAE\x89.txt".decode("UTF-8"), "wb"
+        f"/vsizip/{tmp_vsimem}/test.zip/" + b"\xe5\xae\x89.txt".decode("UTF-8"), "wb"
     ) as f:
         f.close()
         assert gdal.GetLastErrorMsg() == ""
 
     assert gdal.ReadDir(f"/vsizip/{tmp_vsimem}/test.zip") == [
-        b"\xE5\xAE\x89.txt".decode("UTF-8")
+        b"\xe5\xae\x89.txt".decode("UTF-8")
     ]
 
     with gdal.VSIFile(f"{tmp_vsimem}/test.zip", "rb") as f:
@@ -1286,7 +1286,7 @@ def test_vsifile_vsimem_truncate_zeroize():
 
     filename = "/vsimem/test.bin"
     f = gdal.VSIFOpenL(filename, "wb+")
-    data = b"\xFF" * 10000
+    data = b"\xff" * 10000
     gdal.VSIFWriteL(data, 1, len(data), f)
     gdal.VSIFTruncateL(f, 0)
     gdal.VSIFSeekL(f, 10000, 0)
@@ -1391,6 +1391,35 @@ def test_vsifile_copyfile_error_on_input(tmp_vsimem):
         assert gdal.VSIStatL(dstfilename) is None
     finally:
         gdal.VSIFCloseL(fp)
+
+
+def test_vsifile_copyfile_errors(tmp_vsimem):
+
+    with gdal.ExceptionMgr():
+        with pytest.raises(
+            Exception, match="pszSource == nullptr && fpSource == nullptr"
+        ):
+            gdal.CopyFile(None, tmp_vsimem / "out")
+
+    with pytest.raises(Exception, match="NULL pointer"):
+        gdal.CopyFile(tmp_vsimem / "src", None)
+
+
+def test_vsifile_movefile(tmp_vsimem):
+
+    srcfilename = tmp_vsimem / "src.bin"
+    gdal.FileFromMemBuffer(srcfilename, b"foo")
+    dstfilename = str(tmp_vsimem / "out.bin")
+    assert gdal.MoveFile(srcfilename, dstfilename) == 0
+    assert gdal.VSIStatL(dstfilename).size == 3
+    assert gdal.VSIStatL(srcfilename) is None
+
+
+def test_vsifile_movefile_errors(tmp_vsimem):
+    with pytest.raises(Exception, match="NULL pointer"):
+        gdal.MoveFile(None, tmp_vsimem / "out")
+    with pytest.raises(Exception, match="NULL pointer"):
+        gdal.MoveFile(tmp_vsimem / "src", None)
 
 
 ###############################################################################
@@ -1908,3 +1937,12 @@ def test_vsifile_buffering(tmp_path):
         assert f.tell() == BUFFER_SIZE - 2 + 3 + 3 + BUFFER_SIZE + 3
         f.seek(-5, os.SEEK_CUR)
         assert f.read() == b"xxghi"
+
+
+###############################################################################
+def test_vsifile_mkdir_recursive_huge_filename(tmp_vsimem):
+
+    filename = str(tmp_vsimem)
+    filename += "a/" * ((4096 - len(filename)) // len("a/"))
+    assert gdal.MkdirRecursive(filename, 0o755) == 0
+    assert gdal.MkdirRecursive(filename + "a/", 0o755) < 0

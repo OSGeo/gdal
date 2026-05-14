@@ -36,14 +36,14 @@ Program-Specific Options
 
     The name of the field to modify.
 
-    Mutually exclusive with :option:`--src-field-type`. One of them is required.
+    Mutually exclusive with :option:`--input-field-type`. One of them is required.
 
-.. option:: --field-type, --dst-field-type <FIELD-TYPE>
+.. option:: --field-type, --output-field-type <FIELD-TYPE>
 
     The new field type. Valid values are: ``Integer``, ``IntegerList``, ``Real``, ``RealList``, ``String``, ``StringList``, ``Binary``,  ` ``Date``, ``Time``, ``DateTime``, ``Integer64``, ``Integer64List``.
     A field subtype can be specified instead of a field type. Valid values are: ``Boolean``, ``Int16``, ``Float32``, ``JSON``, ``UUID``. The field type will be derived from the subtype.
 
-.. option:: --src-field-type <FIELD-TYPE>
+.. option:: --input-field-type <FIELD-TYPE>
 
     The field type of the fields to modify.
     Valid values are: ``Integer``, ``IntegerList``, ``Real``, ``RealList``, ``String``, ``StringList``, ``Binary``,  ` ``Date``, ``Time``, ``DateTime``, ``Integer64``, ``Integer64List``.
@@ -86,6 +86,11 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -101,4 +106,4 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal vector set-field-type input.gpkg output.gpkg --src-field-type Date --dst-field-type DateTime
+        $ gdal vector set-field-type input.gpkg output.gpkg --input-field-type Date --output-field-type DateTime

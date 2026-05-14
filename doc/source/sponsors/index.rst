@@ -74,10 +74,10 @@ Bronze
 
     .. container:: horizontal-logo
 
-        .. image:: ../../images/sponsors/logo-sparkgeo.png
+        .. image:: ../../images/sponsors/logo-miramon.png
            :class: img-logos
            :width: 150 px
-           :target: https://www.sparkgeo.com
+           :target: https://www.miramon.cat/Index_eng.htm
 
     .. container:: horizontal-logo
 
@@ -94,10 +94,6 @@ Supporter
 
     .. container:: horizontal-logo
 
-        Myles Sutherland
-
-    .. container:: horizontal-logo
-
         `Dynamic Graphics, Inc. <https://www.dgi.com/>`__
 
     .. container:: horizontal-logo
@@ -106,27 +102,11 @@ Supporter
 
     .. container:: horizontal-logo
 
-        `Phoenix LiDAR Systems, LLC <https://phoenixlidar.com/>`__
-
-    .. container:: horizontal-logo
-
-        `PIX4D <https://www.pix4d.com/>`__
-
-    .. container:: horizontal-logo
-
-        `Regrid <https://regrid.com>`__
-
-    .. container:: horizontal-logo
-
-        `Route4Me, Inc. <https://route4me.com>`__
+        `Robin Wilson <https://www.rtwilson.com/>`__
 
     .. container:: horizontal-logo
 
         `Satelligence <https://satelligence.com/>`__
-
-    .. container:: horizontal-logo
-
-        `Space Intelligence <https://www.space-intelligence.com>`__
 
     .. container:: horizontal-logo
 
@@ -136,13 +116,6 @@ Supporter
 
         `UAV4GEO <https://uav4geo.com/>`__
 
-    .. container:: horizontal-logo
-
-        `Umbra <https://umbra.space/>`__
-
-    .. container:: horizontal-logo
-
-        `Vortex f.d.c. <https://vortexfdc.com/>`__
 
 .. raw:: html
 

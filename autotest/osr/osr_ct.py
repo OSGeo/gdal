@@ -222,8 +222,8 @@ def test_osr_ct_7():
 
     ct = osr.CoordinateTransformation(pm_srs, ll_srs)
 
-    (x, y, z) = ct.TransformPoint(7000000, 7000000, 0)
-    (exp_x, exp_y, exp_z) = (62.8820698884, 53.0918187696, 0.0)
+    x, y, z = ct.TransformPoint(7000000, 7000000, 0)
+    exp_x, exp_y, exp_z = (62.8820698884, 53.0918187696, 0.0)
     if (
         exp_x != pytest.approx(x, abs=0.00001)
         or exp_y != pytest.approx(y, abs=0.00001)
@@ -306,13 +306,13 @@ def test_osr_ct_towgs84_only_one_side():
     srs_just_ellps.SetFromUserInput("+proj=longlat +ellps=GRS80")
 
     ct = osr.CoordinateTransformation(srs_towgs84, srs_just_ellps)
-    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    x, y, z = ct.TransformPoint(0, 0, 0)
     assert x == 0
     assert y == 0
     assert z == 0
 
     ct = osr.CoordinateTransformation(srs_just_ellps, srs_towgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 0)
+    x, y, z = ct.TransformPoint(0, 0, 0)
     assert x == 0
     assert y == 0
     assert z == 0
@@ -331,7 +331,7 @@ def test_osr_ct_towgs84_both_side():
     srs_other_towgs84.SetFromUserInput("+proj=longlat +ellps=GRS80 +towgs84=0,0,0")
 
     ct = osr.CoordinateTransformation(srs_towgs84, srs_other_towgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 20)
+    x, y, z = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
     assert z == 20
@@ -340,13 +340,13 @@ def test_osr_ct_towgs84_both_side():
     srs_datum_wgs84.SetFromUserInput("+proj=longlat +datum=WGS84")
 
     ct = osr.CoordinateTransformation(srs_towgs84, srs_datum_wgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 20)
+    x, y, z = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
     assert z == 20
 
     ct = osr.CoordinateTransformation(srs_datum_wgs84, srs_towgs84)
-    (x, y, z) = ct.TransformPoint(0, 0, 20)
+    x, y, z = ct.TransformPoint(0, 0, 20)
     assert x != 0
     assert y != 0
     assert z == 20
@@ -663,8 +663,7 @@ def test_osr_ct_take_into_account_srs_coordinate_epoch():
 def test_osr_ct_only_axis_order_different():
 
     s_wrong_axis_order = osr.SpatialReference()
-    s_wrong_axis_order.SetFromUserInput(
-        """GEOGCS["WGS 84",
+    s_wrong_axis_order.SetFromUserInput("""GEOGCS["WGS 84",
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
             AUTHORITY["EPSG","7030"]],
@@ -674,8 +673,7 @@ def test_osr_ct_only_axis_order_different():
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9122"]],
     AXIS["Longitude",EAST],
-    AXIS["Latitude",NORTH]]"""
-    )
+    AXIS["Latitude",NORTH]]""")
 
     t = osr.SpatialReference()
     t.ImportFromEPSG(4326)
@@ -696,8 +694,7 @@ def test_osr_ct_only_axis_order_different():
 def test_osr_ct_wkt_non_consistent_with_epsg_definition():
 
     s_wrong_axis_order = osr.SpatialReference()
-    s_wrong_axis_order.SetFromUserInput(
-        """GEOGCS["WGS 84",
+    s_wrong_axis_order.SetFromUserInput("""GEOGCS["WGS 84",
     DATUM["WGS_1984",
         SPHEROID["WGS 84",6378137,298.257223563,
             AUTHORITY["EPSG","7030"]],
@@ -708,8 +705,7 @@ def test_osr_ct_wkt_non_consistent_with_epsg_definition():
         AUTHORITY["EPSG","9122"]],
     AXIS["Longitude",EAST],
     AXIS["Latitude",NORTH],
-    AUTHORITY["EPSG","4326"]]"""
-    )
+    AUTHORITY["EPSG","4326"]]""")
 
     t = osr.SpatialReference()
     t.ImportFromEPSG(4326)
@@ -896,8 +892,7 @@ def test_osr_ct_fix_9732():
     assert not s.IsDerivedProjected()
 
     t = osr.SpatialReference()
-    t.SetFromUserInput(
-        """DERIVEDPROJCRS["Ground for NAD83(2011) / Idaho West (ftUS)",
+    t.SetFromUserInput("""DERIVEDPROJCRS["Ground for NAD83(2011) / Idaho West (ftUS)",
     BASEPROJCRS["NAD83(2011) / Idaho West (ftUS)",
         BASEGEOGCRS["NAD83(2011)",
             DATUM["NAD83 (National Spatial Reference System 2011)",ELLIPSOID["GRS 1980",6378137,298.257222101,LENGTHUNIT["metre",1]]],
@@ -927,8 +922,7 @@ def test_osr_ct_fix_9732():
         LENGTHUNIT["US survey foot",0.304800609601219]],
     AXIS["northing (Y)",north,
         ORDER[2],
-        LENGTHUNIT["US survey foot",0.304800609601219]]]"""
-    )
+        LENGTHUNIT["US survey foot",0.304800609601219]]]""")
 
     assert t.IsDerivedProjected()
 

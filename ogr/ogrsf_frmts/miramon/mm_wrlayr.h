@@ -12,8 +12,7 @@
 #endif
 CPL_C_START  // Necessary for compiling in GDAL project
 
-    bool
-    MM_IsNANDouble(double x);
+    bool MM_IsNANDouble(double x);
 bool MM_IsDoubleInfinite(double x);
 
 /* -------------------------------------------------------------------- */

@@ -68,7 +68,8 @@ def test_gdalalg_vector_simplify_coverage(alg):
     assert alg.Finalize()
 
 
-def test_gdalalg_vector_simplify_coverage_active_layer(alg):
+@pytest.mark.parametrize("active_layer", ["bad", "poly2"])
+def test_gdalalg_vector_simplify_coverage_active_layer(alg, active_layer):
 
     src_ds = gdal.GetDriverByName("MEM").CreateVector("")
 
@@ -80,30 +81,30 @@ def test_gdalalg_vector_simplify_coverage_active_layer(alg):
     alg["output"] = ""
     alg["output-format"] = "stream"
     alg["tolerance"] = 2
-    alg["active-layer"] = "bad"
+    alg["active-layer"] = active_layer
 
-    with pytest.raises(RuntimeError, match="layer .* was not found"):
-        alg.Run()
+    if active_layer == "bad":
+        with pytest.raises(RuntimeError, match="layer .* was not found"):
+            alg.Run()
+    else:
+        assert alg.Run()
 
-    alg["active-layer"] = "poly2"
-    assert alg.Run()
+        dst_ds = alg["output"].GetDataset()
 
-    dst_ds = alg["output"].GetDataset()
+        assert dst_ds.GetLayerCount() == 2
 
-    assert dst_ds.GetLayerCount() == 2
+        assert (
+            dst_ds.GetLayerByName("poly1").GetFeatureCount()
+            == dst_ds.GetLayerByName("poly2").GetFeatureCount()
+        )
 
-    assert (
-        dst_ds.GetLayerByName("poly1").GetFeatureCount()
-        == dst_ds.GetLayerByName("poly2").GetFeatureCount()
-    )
+        assert count_points(dst_ds.GetLayerByName("poly2")) < count_points(
+            dst_ds.GetLayerByName("poly1")
+        )
 
-    assert count_points(dst_ds.GetLayerByName("poly2")) < count_points(
-        dst_ds.GetLayerByName("poly1")
-    )
+        assert dst_ds.GetLayerByName("poly1").TestCapability(ogr.OLCStringsAsUTF8)
 
-    assert dst_ds.GetLayerByName("poly1").TestCapability(ogr.OLCStringsAsUTF8)
-
-    assert alg.Finalize()
+        assert alg.Finalize()
 
 
 @pytest.mark.parametrize(
@@ -170,3 +171,17 @@ def test_gdalalg_vector_simplify_coverage_test_ogrsf(tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+def test_gdalalg_vector_simplify_coverage_on_aspatial_layer():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer", geom_type=ogr.wkbNone)
+    src_lyr.CreateFeature(ogr.Feature(src_lyr.GetLayerDefn()))
+
+    with gdal.alg.vector.simplify_coverage(
+        input=src_ds, output="", output_format="MEM", tolerance=1
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1

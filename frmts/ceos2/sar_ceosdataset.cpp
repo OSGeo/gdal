@@ -17,6 +17,7 @@
 #include "gdal_priv.h"
 #include "rawdataset.h"
 #include "ogr_srs_api.h"
+#include "cpl_vsi_virtual.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -32,7 +33,14 @@ static GInt16 CastToGInt16(float val)
     return static_cast<GInt16>(val);
 }
 
-static const char *const CeosExtension[][6] = {
+// CeosExtension[][i] ordered by i:
+// CEOS_VOLUME_DIR_FILE = 0
+// CEOS_LEADER_FILE     = 1
+// CEOS_IMAGRY_OPT_FILE = 2
+// CEOS_TRAILER_FILE    = 3
+// CEOS_NULL_VOL_FILE   = 4
+// and last item (idx 5) is the method to derive auxiliary filenames
+static const char *const CeosExtension[][CEOS_FILE_COUNT + 1] = {
     {"vol", "led", "img", "trl", "nul", "ext"},
     {"vol", "lea", "img", "trl", "nul", "ext"},
     {"vol", "led", "img", "tra", "nul", "ext"},
@@ -63,11 +71,15 @@ static const char *const CeosExtension[][6] = {
     /* Radarsat-1 ASF */
     {"", "L", "D", "", "", "ext"},
 
+    /* PALSAR-2 ALOS2 / PALSAR-3 ALOS4 */
+    {"VOL", "LED", "", "TRL", "", "ALOS2-ALOS4"},
+
     /* end marker */
     {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
 
 static int ProcessData(VSILFILE *fp, int fileid, CeosSARVolume_t *sar,
-                       int max_records, vsi_l_offset max_bytes);
+                       int max_records, vsi_l_offset max_bytes,
+                       bool bSilentWrongRecordNumber);
 
 static CeosTypeCode_t QuadToTC(int a, int b, int c, int d)
 {
@@ -89,8 +101,7 @@ static CeosTypeCode_t QuadToTC(int a, int b, int c, int d)
 #define LEADER_RADIOMETRIC_DATA_RECORD_TC QuadToTC(18, 50, 18, 20)
 #define LEADER_MAP_PROJ_RECORD_TC QuadToTC(10, 20, 31, 20)
 
-// TODO: recond?
-/* JERS from Japan has MAP_PROJ recond with different identifiers */
+/* JERS from Japan has MAP_PROJ record with different identifiers */
 /* see CEOS-SAR-CCT Iss/Rev: 2/0 February 10, 1989 */
 #define LEADER_MAP_PROJ_RECORD_JERS_TC QuadToTC(18, 20, 18, 20)
 
@@ -104,6 +115,15 @@ static CeosTypeCode_t QuadToTC(int a, int b, int c, int d)
 #define ERS_GENERAL_FACILITY_DATA_ALT_TC QuadToTC(10, 216, 31, 50)
 
 #define RSAT_PROC_PARAM_TC QuadToTC(18, 120, 18, 20)
+
+/* PALSAR-2 ALOS2 */
+// https://www.eorc.jaxa.jp/ALOS/en/alos-2/pdf/product_format_description/PALSAR-2_xx_Format_CEOS_E_g.pdf
+// Table 3.2-3 Record Type of Each Record
+#define LEADER_PLATFORM_POSITION_PALSAR_TC QuadToTC(18, 30, 18, 20)
+#define LEADER_ATTITUDE_PALSAR_TC QuadToTC(18, 40, 18, 20)
+#define LEADER_RADIOMETRIC_PALSAR_TC QuadToTC(18, 50, 18, 20)
+#define LEADER_FACILITY_RELATED_PALSAR_TC QuadToTC(18, 200, 18, 70)
+#define IMAGE_PROCESSED_DATA_RECORD_PALSAR_TC QuadToTC(50, 11, 18, 20)
 
 /************************************************************************/
 /* ==================================================================== */
@@ -127,6 +147,7 @@ class SAR_CEOSDataset final : public GDALPamDataset
 
     char **papszTempMD;
 
+    bool m_bHasScannedForGCP = false;
     OGRSpatialReference m_oSRS{};
     int nGCPCount;
     GDAL_GCP *pasGCPList;
@@ -227,11 +248,10 @@ CPLErr SAR_CEOSRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 
     struct CeosSARImageDesc *ImageDesc = &(poGDS->sVolume.ImageDesc);
 
-    int offsetStart = 0;
+    uint64_t offset = 0;
     CalcCeosSARImageFilePosition(&(poGDS->sVolume), nBand, nBlockYOff + 1,
-                                 nullptr, &offsetStart);
+                                 nullptr, &offset);
 
-    vsi_l_offset offset = offsetStart;
     offset += ImageDesc->ImageDataStart;
 
     /* -------------------------------------------------------------------- */
@@ -466,7 +486,7 @@ CPLErr CCPRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                           PALSARRasterBand()                         */
+/*                          PALSARRasterBand()                          */
 /************************************************************************/
 
 PALSARRasterBand::PALSARRasterBand(SAR_CEOSDataset *poGDSIn, int nBandIn)
@@ -714,6 +734,8 @@ SAR_CEOSDataset::~SAR_CEOSDataset()
 int SAR_CEOSDataset::GetGCPCount()
 
 {
+    if (!m_bHasScannedForGCP)
+        ScanForGCPs();
     return nGCPCount;
 }
 
@@ -724,6 +746,8 @@ int SAR_CEOSDataset::GetGCPCount()
 const OGRSpatialReference *SAR_CEOSDataset::GetGCPSpatialRef() const
 
 {
+    if (!m_bHasScannedForGCP)
+        const_cast<SAR_CEOSDataset *>(this)->ScanForGCPs();
     if (nGCPCount > 0)
         return &m_oSRS;
 
@@ -737,11 +761,13 @@ const OGRSpatialReference *SAR_CEOSDataset::GetGCPSpatialRef() const
 const GDAL_GCP *SAR_CEOSDataset::GetGCPs()
 
 {
+    if (!m_bHasScannedForGCP)
+        ScanForGCPs();
     return pasGCPList;
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **SAR_CEOSDataset::GetMetadataDomainList()
@@ -871,94 +897,43 @@ void SAR_CEOSDataset::ScanForMetadata()
     /* -------------------------------------------------------------------- */
     /*      Get the volume id (with the sensor name)                        */
     /* -------------------------------------------------------------------- */
-    CeosRecord_t *record =
+    const CeosRecord_t *record =
         FindCeosRecord(sVolume.RecordList, VOLUME_DESCRIPTOR_RECORD_TC,
                        CEOS_VOLUME_DIR_FILE, -1, -1);
 
-    char szVolId[128];
-    szVolId[0] = '\0';
+    struct FieldDef
+    {
+        const char *pszMetadataItemName;
+        int nOffsetInRecord;
+        const char *pszFormat;
+    };
+
+    CPLString osVolId;
     char szField[128];
     szField[0] = '\0';
     if (record != nullptr)
     {
-        szVolId[16] = '\0';
+        GetCeosField(record, 61, "A16", szField);
+        osVolId = szField;
+        osVolId.Trim();
+        SetMetadataItem("CEOS_LOGICAL_VOLUME_ID", osVolId.c_str());
 
-        GetCeosField(record, 61, "A16", szVolId);
-
-        SetMetadataItem("CEOS_LOGICAL_VOLUME_ID", szVolId);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Processing facility */
-        /* --------------------------------------------------------------------
-         */
-        szField[0] = '\0';
-        szField[12] = '\0';
-
-        GetCeosField(record, 149, "A12", szField);
-
-        if (!STARTS_WITH_CI(szField, "            "))
-            SetMetadataItem("CEOS_PROCESSING_FACILITY", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Agency */
-        /* --------------------------------------------------------------------
-         */
-        szField[8] = '\0';
-
-        GetCeosField(record, 141, "A8", szField);
-
-        if (!STARTS_WITH_CI(szField, "            "))
-            SetMetadataItem("CEOS_PROCESSING_AGENCY", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Country */
-        /* --------------------------------------------------------------------
-         */
-        szField[12] = '\0';
-
-        GetCeosField(record, 129, "A12", szField);
-
-        if (!STARTS_WITH_CI(szField, "            "))
-            SetMetadataItem("CEOS_PROCESSING_COUNTRY", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      software id. */
-        /* --------------------------------------------------------------------
-         */
-        szField[12] = '\0';
-
-        GetCeosField(record, 33, "A12", szField);
-
-        if (!STARTS_WITH_CI(szField, "            "))
-            SetMetadataItem("CEOS_SOFTWARE_ID", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      product identifier. */
-        /* --------------------------------------------------------------------
-         */
-        szField[8] = '\0';
-
-        GetCeosField(record, 261, "A8", szField);
-
-        if (!STARTS_WITH_CI(szField, "        "))
-            SetMetadataItem("CEOS_PRODUCT_ID", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      volume identifier. */
-        /* --------------------------------------------------------------------
-         */
-        szField[16] = '\0';
-
-        GetCeosField(record, 77, "A16", szField);
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_VOLSET_ID", szField);
+        constexpr FieldDef asFieldDefs[] = {
+            {"CEOS_PROCESSING_FACILITY", 149, "A12"},
+            {"CEOS_PROCESSING_AGENCY", 141, "A8"},
+            {"CEOS_PROCESSING_COUNTRY", 129, "A12"},
+            {"CEOS_SOFTWARE_ID", 33, "A12"},
+            {"CEOS_PRODUCT_ID", 261, "A8"},
+            {"CEOS_VOLSET_ID", 77, "A16"},
+        };
+        for (const auto &sDef : asFieldDefs)
+        {
+            GetCeosField(record, sDef.nOffsetInRecord, sDef.pszFormat, szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!osField.empty())
+                SetMetadataItem(sDef.pszMetadataItemName, osField.c_str());
+        }
     }
 
     /* ==================================================================== */
@@ -983,220 +958,41 @@ void SAR_CEOSDataset::ScanForMetadata()
 
     if (record != nullptr)
     {
-        /* --------------------------------------------------------------------
-         */
-        /*      Get the acquisition date. */
-        /* --------------------------------------------------------------------
-         */
-        szField[0] = '\0';
-        szField[32] = '\0';
-
-        GetCeosField(record, 69, "A32", szField);
-
-        SetMetadataItem("CEOS_ACQUISITION_TIME", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Ascending/Descending */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 101, "A16", szField);
-        szField[16] = '\0';
-
-        if (strstr(szVolId, "RSAT") != nullptr &&
-            !STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_ASC_DES", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      True heading - at least for ERS2. */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 149, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_TRUE_HEADING", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Ellipsoid */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 165, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_ELLIPSOID", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Semimajor, semiminor axis */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 181, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_SEMI_MAJOR", szField);
-
-        GetCeosField(record, 197, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_SEMI_MINOR", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      SCENE LENGTH KM */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 341, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_SCENE_LENGTH_KM", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      SCENE WIDTH KM */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 357, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_SCENE_WIDTH_KM", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      MISSION ID */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 397, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_MISSION_ID", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      SENSOR ID */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 413, "A32", szField);
-        szField[32] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                                "))
-            SetMetadataItem("CEOS_SENSOR_ID", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      ORBIT NUMBER */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 445, "A8", szField);
-        szField[8] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "        "))
-            SetMetadataItem("CEOS_ORBIT_NUMBER", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Platform latitude */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 453, "A8", szField);
-        szField[8] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "        "))
-            SetMetadataItem("CEOS_PLATFORM_LATITUDE", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Platform longitude */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 461, "A8", szField);
-        szField[8] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "        "))
-            SetMetadataItem("CEOS_PLATFORM_LONGITUDE", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Platform heading - at least for ERS2. */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 469, "A8", szField);
-        szField[8] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "        "))
-            SetMetadataItem("CEOS_PLATFORM_HEADING", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Look Angle. */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 477, "A8", szField);
-        szField[8] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "        "))
-            SetMetadataItem("CEOS_SENSOR_CLOCK_ANGLE", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Incidence angle */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 485, "A8", szField);
-        szField[8] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "        "))
-            SetMetadataItem("CEOS_INC_ANGLE", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Facility */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 1047, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_FACILITY", szField);
-        /* --------------------------------------------------------------------
-         */
-        /*      Pixel time direction indicator */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 1527, "A8", szField);
-        szField[8] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "        "))
-            SetMetadataItem("CEOS_PIXEL_TIME_DIR", szField);
-
-        /* --------------------------------------------------------------------
-         */
-        /*      Line spacing */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 1687, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_LINE_SPACING_METERS", szField);
-        /* --------------------------------------------------------------------
-         */
-        /*      Pixel spacing */
-        /* --------------------------------------------------------------------
-         */
-        GetCeosField(record, 1703, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_PIXEL_SPACING_METERS", szField);
+        constexpr FieldDef asFieldDefs[] = {
+            {"CEOS_ACQUISITION_TIME", 69, "A32"},
+            {"CEOS_ASC_DES", 101, "A16"},  // Ascending/Descending (RSAT only)
+            {"CEOS_TRUE_HEADING", 149, "A16"},  //  at least for ERS2
+            {"CEOS_ELLIPSOID", 165, "A16"},
+            {"CEOS_SEMI_MAJOR", 181, "A16"},
+            {"CEOS_SEMI_MINOR", 197, "A16"},
+            {"CEOS_SCENE_LENGTH_KM", 341, "A16"},
+            {"CEOS_SCENE_WIDTH_KM", 357, "A16"},
+            {"CEOS_MISSION_ID", 397, "A16"},
+            {"CEOS_SENSOR_ID", 413, "A32"},
+            {"CEOS_ORBIT_NUMBER", 445, "A8"},
+            {"CEOS_PLATFORM_LATITUDE", 453, "A8"},
+            {"CEOS_PLATFORM_LONGITUDE", 461, "A8"},
+            {"CEOS_PLATFORM_HEADING", 469, "A8"},    //  at least for ERS2
+            {"CEOS_SENSOR_CLOCK_ANGLE", 477, "A8"},  // Look Angle
+            {"CEOS_INC_ANGLE", 485, "A8"},           // Incidence Angle
+            {"CEOS_FACILITY", 1047, "A16"},
+            {"CEOS_PIXEL_TIME_DIR", 1527,
+             "A8"},  // Pixel time direction indicator
+            {"CEOS_LINE_SPACING_METERS", 1687, "A16"},
+            {"CEOS_PIXEL_SPACING_METERS", 1703, "A16"},
+        };
+        for (const auto &sDef : asFieldDefs)
+        {
+            GetCeosField(record, sDef.nOffsetInRecord, sDef.pszFormat, szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!osField.empty() &&
+                (osVolId.find("RSAT") != std::string::npos ||
+                 !EQUAL(sDef.pszMetadataItemName, "CEOS_ASC_DES")))
+            {
+                SetMetadataItem(sDef.pszMetadataItemName, osField.c_str());
+            }
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -1206,13 +1002,13 @@ void SAR_CEOSDataset::ScanForMetadata()
         FindCeosRecord(sVolume.RecordList, LEADER_RADIOMETRIC_COMPENSATION_TC,
                        CEOS_LEADER_FILE, -1, -1);
 
-    if (strstr(szVolId, "RSAT") != nullptr && record != nullptr)
+    if (osVolId.find("RSAT") != std::string::npos && record != nullptr)
     {
-        szField[16] = '\0';
-
         GetCeosField(record, 4189, "A16", szField);
+        CPLString osField(szField);
+        osField.Trim();
 
-        SetMetadataItem("CEOS_BEAM_TYPE", szField);
+        SetMetadataItem("CEOS_BEAM_TYPE", osField.c_str());
     }
 
     /* ==================================================================== */
@@ -1229,62 +1025,36 @@ void SAR_CEOSDataset::ScanForMetadata()
     if (record != nullptr)
     {
         GetCeosField(record, 13, "A64", szField);
-        szField[64] = '\0';
+        CPLString osField(szField);
+        osField.Trim();
 
         /* Avoid PCS records, which don't contain necessary info */
-        if (strstr(szField, "GENERAL") == nullptr)
+        if (osField.find("GENERAL") == std::string::npos)
             record = nullptr;
     }
 
     if (record != nullptr)
     {
-        GetCeosField(record, 583, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_INC_ANGLE_FIRST_RANGE", szField);
-
-        GetCeosField(record, 599, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_INC_ANGLE_CENTRE_RANGE", szField);
-
-        GetCeosField(record, 615, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_INC_ANGLE_LAST_RANGE", szField);
-
-        GetCeosField(record, 663, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_CALIBRATION_CONSTANT_K", szField);
-
-        GetCeosField(record, 1855, "A20", szField);
-        szField[20] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                    "))
-            SetMetadataItem("CEOS_GROUND_TO_SLANT_C0", szField);
-
-        GetCeosField(record, 1875, "A20", szField);
-        szField[20] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                    "))
-            SetMetadataItem("CEOS_GROUND_TO_SLANT_C1", szField);
-
-        GetCeosField(record, 1895, "A20", szField);
-        szField[20] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                    "))
-            SetMetadataItem("CEOS_GROUND_TO_SLANT_C2", szField);
-
-        GetCeosField(record, 1915, "A20", szField);
-        szField[20] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                    "))
-            SetMetadataItem("CEOS_GROUND_TO_SLANT_C3", szField);
+        constexpr FieldDef asFieldDefs[] = {
+            {"CEOS_INC_ANGLE_FIRST_RANGE", 583, "A16"},
+            {"CEOS_INC_ANGLE_CENTRE_RANGE", 599, "A16"},
+            {"CEOS_INC_ANGLE_LAST_RANGE", 615, "A16"},
+            {"CEOS_CALIBRATION_CONSTANT_K", 663, "A16"},
+            {"CEOS_GROUND_TO_SLANT_C0", 1855, "A20"},
+            {"CEOS_GROUND_TO_SLANT_C1", 1875, "A20"},
+            {"CEOS_GROUND_TO_SLANT_C2", 1895, "A20"},
+            {"CEOS_GROUND_TO_SLANT_C3", 1915, "A20"},
+        };
+        for (const auto &sDef : asFieldDefs)
+        {
+            GetCeosField(record, sDef.nOffsetInRecord, sDef.pszFormat, szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!osField.empty())
+            {
+                SetMetadataItem(sDef.pszMetadataItemName, osField.c_str());
+            }
+        }
     }
     /* -------------------------------------------------------------------- */
     /*      Detailed Processing Parameters (Radarsat)                       */
@@ -1298,107 +1068,35 @@ void SAR_CEOSDataset::ScanForMetadata()
 
     if (record != nullptr)
     {
-        GetCeosField(record, 192, "A21", szField);
-        szField[21] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                     "))
-            SetMetadataItem("CEOS_PROC_START", szField);
-
-        GetCeosField(record, 213, "A21", szField);
-        szField[21] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                     "))
-            SetMetadataItem("CEOS_PROC_STOP", szField);
-
-        GetCeosField(record, 4649, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_EPH_ORB_DATA_0", szField);
-
-        GetCeosField(record, 4665, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_EPH_ORB_DATA_1", szField);
-
-        GetCeosField(record, 4681, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_EPH_ORB_DATA_2", szField);
-
-        GetCeosField(record, 4697, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_EPH_ORB_DATA_3", szField);
-
-        GetCeosField(record, 4713, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_EPH_ORB_DATA_4", szField);
-
-        GetCeosField(record, 4729, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_EPH_ORB_DATA_5", szField);
-
-        GetCeosField(record, 4745, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_EPH_ORB_DATA_6", szField);
-
-        GetCeosField(record, 4908, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_GROUND_TO_SLANT_C0", szField);
-
-        GetCeosField(record, 4924, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_GROUND_TO_SLANT_C1", szField);
-
-        GetCeosField(record, 4940, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_GROUND_TO_SLANT_C2", szField);
-
-        GetCeosField(record, 4956, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_GROUND_TO_SLANT_C3", szField);
-
-        GetCeosField(record, 4972, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_GROUND_TO_SLANT_C4", szField);
-
-        GetCeosField(record, 4988, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_GROUND_TO_SLANT_C5", szField);
-
-        GetCeosField(record, 7334, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_INC_ANGLE_FIRST_RANGE", szField);
-
-        GetCeosField(record, 7350, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_INC_ANGLE_LAST_RANGE", szField);
+        constexpr FieldDef asFieldDefs[] = {
+            {"CEOS_PROC_START", 192, "A21"},
+            {"CEOS_PROC_STOP", 213, "A21"},
+            {"CEOS_EPH_ORB_DATA_0", 4649, "A16"},
+            {"CEOS_EPH_ORB_DATA_1", 4665, "A16"},
+            {"CEOS_EPH_ORB_DATA_2", 4681, "A16"},
+            {"CEOS_EPH_ORB_DATA_3", 4697, "A16"},
+            {"CEOS_EPH_ORB_DATA_4", 4713, "A16"},
+            {"CEOS_EPH_ORB_DATA_5", 4729, "A16"},
+            {"CEOS_EPH_ORB_DATA_6", 4745, "A16"},
+            {"CEOS_GROUND_TO_SLANT_C0", 4908, "A16"},
+            {"CEOS_GROUND_TO_SLANT_C1", 4924, "A16"},
+            {"CEOS_GROUND_TO_SLANT_C2", 4940, "A16"},
+            {"CEOS_GROUND_TO_SLANT_C3", 4956, "A16"},
+            {"CEOS_GROUND_TO_SLANT_C4", 4972, "A16"},
+            {"CEOS_GROUND_TO_SLANT_C5", 4988, "A16"},
+            {"CEOS_INC_ANGLE_FIRST_RANGE", 7334, "A16"},
+            {"CEOS_INC_ANGLE_LAST_RANGE", 7350, "A16"},
+        };
+        for (const auto &sDef : asFieldDefs)
+        {
+            GetCeosField(record, sDef.nOffsetInRecord, sDef.pszFormat, szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!osField.empty())
+            {
+                SetMetadataItem(sDef.pszMetadataItemName, osField.c_str());
+            }
+        }
     }
     /* -------------------------------------------------------------------- */
     /*      Get process-to-raw data coordinate translation values.  These   */
@@ -1409,59 +1107,27 @@ void SAR_CEOSDataset::ScanForMetadata()
 
     if (record != nullptr)
     {
-        GetCeosField(record, 449, "A4", szField);
-        szField[4] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "    "))
-            SetMetadataItem("CEOS_DM_CORNER", szField);
-
-        GetCeosField(record, 453, "A4", szField);
-        szField[4] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "    "))
-            SetMetadataItem("CEOS_DM_TRANSPOSE", szField);
-
-        GetCeosField(record, 457, "A4", szField);
-        szField[4] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "    "))
-            SetMetadataItem("CEOS_DM_START_SAMPLE", szField);
-
-        GetCeosField(record, 461, "A5", szField);
-        szField[5] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "     "))
-            SetMetadataItem("CEOS_DM_START_PULSE", szField);
-
-        GetCeosField(record, 466, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_DM_FAST_ALPHA", szField);
-
-        GetCeosField(record, 482, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_DM_FAST_BETA", szField);
-
-        GetCeosField(record, 498, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_DM_SLOW_ALPHA", szField);
-
-        GetCeosField(record, 514, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_DM_SLOW_BETA", szField);
-
-        GetCeosField(record, 530, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_DM_FAST_ALPHA_2", szField);
+        constexpr FieldDef asFieldDefs[] = {
+            {"CEOS_DM_CORNER", 449, "A4"},
+            {"CEOS_DM_TRANSPOSE", 453, "A4"},
+            {"CEOS_DM_START_SAMPLE", 457, "A4"},
+            {"CEOS_DM_START_PULSE", 461, "A5"},
+            {"CEOS_DM_FAST_ALPHA", 466, "A16"},
+            {"CEOS_DM_FAST_BETA", 482, "A16"},
+            {"CEOS_DM_SLOW_ALPHA", 498, "A16"},
+            {"CEOS_DM_SLOW_BETA", 514, "A16"},
+            {"CEOS_DM_FAST_ALPHA_2", 530, "A16"},
+        };
+        for (const auto &sDef : asFieldDefs)
+        {
+            GetCeosField(record, sDef.nOffsetInRecord, sDef.pszFormat, szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!osField.empty())
+            {
+                SetMetadataItem(sDef.pszMetadataItemName, osField.c_str());
+            }
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -1480,10 +1146,10 @@ void SAR_CEOSDataset::ScanForMetadata()
     if (record != nullptr)
     {
         GetCeosField(record, 8317, "A16", szField);
-        szField[16] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                "))
-            SetMetadataItem("CEOS_CALIBRATION_OFFSET", szField);
+        CPLString osField(szField);
+        osField.Trim();
+        if (!osField.empty())
+            SetMetadataItem("CEOS_CALIBRATION_OFFSET", osField.c_str());
     }
 
     /* -------------------------------------------------------------------- */
@@ -1496,17 +1162,20 @@ void SAR_CEOSDataset::ScanForMetadata()
                        CEOS_LEADER_FILE, -1, -1);
     if (record != nullptr)
     {
-        GetCeosField(record, 29, "A20", szField);
-        szField[20] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                    "))
-            SetMetadataItem("CEOS_OFFSET_A0", szField);
-
-        GetCeosField(record, 49, "A20", szField);
-        szField[20] = '\0';
-
-        if (!STARTS_WITH_CI(szField, "                    "))
-            SetMetadataItem("CEOS_GAIN_A1", szField);
+        constexpr FieldDef asFieldDefs[] = {
+            {"CEOS_OFFSET_A0", 29, "A20"},
+            {"CEOS_GAIN_A1", 49, "A20"},
+        };
+        for (const auto &sDef : asFieldDefs)
+        {
+            GetCeosField(record, sDef.nOffsetInRecord, sDef.pszFormat, szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!osField.empty())
+            {
+                SetMetadataItem(sDef.pszMetadataItemName, osField.c_str());
+            }
+        }
     }
 
     /* -------------------------------------------------------------------- */
@@ -1523,6 +1192,425 @@ void SAR_CEOSDataset::ScanForMetadata()
 
         if (szField[0] == 'H' || szField[0] == 'V')
             SetMetadataItem("CEOS_GAIN_SETTING", szField);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      PALSAR-2 ALOS2 Platform position data                           */
+    /* -------------------------------------------------------------------- */
+    record =
+        FindCeosRecord(sVolume.RecordList, LEADER_PLATFORM_POSITION_PALSAR_TC,
+                       CEOS_LEADER_FILE, -1, -1);
+    if (record && record->Length > 387)
+    {
+        // Table 3.3-7 Platform position data records
+        // of https://www.eorc.jaxa.jp/ALOS/en/alos-2/pdf/product_format_description/PALSAR-2_xx_Format_CEOS_E_g.pdf
+        constexpr FieldDef asFieldDefs[] = {
+            {"CEOS_PLATFORM_POS_ORBITAL_ELEMENTS_DESIGNATOR", 13, "A32"},
+            {"CEOS_PLATFORM_POS_ORBITAL_ELEMENT_1", 45, "A16"},
+            {"CEOS_PLATFORM_POS_ORBITAL_ELEMENT_2", 61, "A16"},
+            {"CEOS_PLATFORM_POS_ORBITAL_ELEMENT_3", 77, "A16"},
+            {"CEOS_PLATFORM_POS_ORBITAL_ELEMENT_4", 93, "A16"},
+            {"CEOS_PLATFORM_POS_ORBITAL_ELEMENT_5", 109, "A16"},
+            {"CEOS_PLATFORM_POS_ORBITAL_ELEMENT_6", 125, "A16"},
+            {"CEOS_PLATFORM_POS_NUMBER_POINTS", 141, "A4"},
+            {"CEOS_PLATFORM_POS_YEAR_POINT_1", 145, "A4"},
+            {"CEOS_PLATFORM_POS_MONTH_POINT_1", 149, "A4"},
+            {"CEOS_PLATFORM_POS_DAY_POINT_1", 153, "A4"},
+            {"CEOS_PLATFORM_POS_DAY_IN_YEAR_POINT_1", 157, "A4"},
+            {"CEOS_PLATFORM_POS_SECONDS_OF_DAY_POINT_1", 161, "A22"},
+            {"CEOS_PLATFORM_POS_TIME_INTERVAL_SECONDS", 183, "A22"},
+            {"CEOS_PLATFORM_POS_REF_COORD_SYS", 205, "A64"},
+            {"CEOS_PLATFORM_POS_GREENWICH_MEAN_HOUR_ANGLE_DEG", 269, "A22"},
+            {"CEOS_PLATFORM_POS_ALONG_TRACK_POS_ERROR_METERS", 291, "A16"},
+            {"CEOS_PLATFORM_POS_ACROSS_TRACK_POS_ERROR_METERS", 307, "A16"},
+            {"CEOS_PLATFORM_POS_RADIAL_POS_ERROR_METERS", 323, "A16"},
+            {"CEOS_PLATFORM_POS_ALONG_TRACK_VELOCITY_ERROR_METERS_PER_SEC", 339,
+             "A16"},
+            {"CEOS_PLATFORM_POS_ACROSS_TRACK_VELOCITY_ERROR_METERS_PER_SEC",
+             355, "A16"},
+            {"CEOS_PLATFORM_POS_RADIAL_VELOCITY_ERROR_METERS_PER_SEC", 371,
+             "A16"},
+        };
+        int nPoints = 0;
+        constexpr int OFFSET_POINT_1 = 387;
+        constexpr int POINT_SIZE = 6 * 22;
+        for (const auto &sDef : asFieldDefs)
+        {
+            GetCeosField(record, sDef.nOffsetInRecord, sDef.pszFormat, szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!osField.empty())
+            {
+                SetMetadataItem(sDef.pszMetadataItemName, osField.c_str());
+                if (EQUAL(sDef.pszMetadataItemName,
+                          "CEOS_PLATFORM_POS_NUMBER_POINTS"))
+                {
+                    nPoints = std::clamp(atoi(osField), 0,
+                                         (record->Length - OFFSET_POINT_1) /
+                                             POINT_SIZE);
+                }
+            }
+        }
+
+        constexpr FieldDef asPointFieldDefs[] = {
+            {"VECTOR_X_METERS", 0, "A22"},
+            {"VECTOR_Y_METERS", 22, "A22"},
+            {"VECTOR_Z_METERS", 44, "A22"},
+            {"VECTOR_X_DERIV_METERS_PER_SEC", 66, "A22"},
+            {"VECTOR_Y_DERIV_METERS_PER_SEC", 88, "A22"},
+            {"VECTOR_Z_DERIV_METERS_PER_SEC", 110, "A22"},
+        };
+        for (int iPnt = 0; iPnt < nPoints; ++iPnt)
+        {
+            for (const auto &sDef : asPointFieldDefs)
+            {
+                GetCeosField(record,
+                             sDef.nOffsetInRecord + OFFSET_POINT_1 +
+                                 iPnt * POINT_SIZE,
+                             sDef.pszFormat, szField);
+                CPLString osField(szField);
+                osField.Trim();
+                if (!osField.empty())
+                {
+                    SetMetadataItem(std::string("CEOS_PLATFORM_POS_")
+                                        .append(sDef.pszMetadataItemName)
+                                        .append("_POINT_")
+                                        .append(std::to_string(iPnt + 1))
+                                        .c_str(),
+                                    osField.c_str());
+                }
+            }
+        }
+
+        {
+            GetCeosField(record, 4101, "A1", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!osField.empty())
+            {
+                SetMetadataItem("CEOS_PLATFORM_POS_LEAP_SECOND",
+                                osField.c_str());
+            }
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      PALSAR-2 ALOS2 Attitude data                                    */
+    /* -------------------------------------------------------------------- */
+    record = FindCeosRecord(sVolume.RecordList, LEADER_ATTITUDE_PALSAR_TC,
+                            CEOS_LEADER_FILE, -1, -1);
+    if (record)
+    {
+        // Table 3.3-8 Attitude data records
+        // of https://www.eorc.jaxa.jp/ALOS/en/alos-2/pdf/product_format_description/PALSAR-2_xx_Format_CEOS_E_g.pdf
+
+        int nPoints = 0;
+        constexpr int OFFSET_POINT_1 = 17;
+        constexpr int POINT_SIZE = 120;
+        {
+            GetCeosField(record, 13, "A4", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!osField.empty())
+            {
+                SetMetadataItem("CEOS_PLATFORM_ATT_NUMBER_POINTS",
+                                osField.c_str());
+                nPoints =
+                    std::clamp(atoi(osField), 0,
+                               (record->Length - OFFSET_POINT_1) / POINT_SIZE);
+            }
+        }
+
+        constexpr FieldDef asFieldDefs[] = {
+            {"DAY_OF_YEAR", 17, "A4"},
+            {"MILLISECOND_OF_DAY", 21, "A8"},
+            {"PITCH_QUALITY_FLAG", 29, "A4"},
+            {"ROLL_QUALITY_FLAG", 33, "A4"},
+            {"YAW_QUALITY_FLAG", 37, "A4"},
+            {"PITCH_DEG", 41, "A14"},
+            {"ROLL_DEG", 55, "A14"},
+            {"YAW_DEG", 69, "A14"},
+            {"PITCH_RATE_QUALITY_FLAG", 83, "A4"},
+            {"ROL_RATE_QUALITY_FLAG", 87, "A4"},
+            {"YAW_RATE_QUALITY_FLAG", 91, "A4"},
+            {"PITCH_RATE", 95, "A14"},
+            {"ROLL_RATE", 109, "A14"},
+            {"YAW_RATE", 123, "A14"},
+        };
+        for (int iPnt = 0; iPnt < nPoints; ++iPnt)
+        {
+            for (const auto &sDef : asFieldDefs)
+            {
+                GetCeosField(record, sDef.nOffsetInRecord + iPnt * POINT_SIZE,
+                             sDef.pszFormat, szField);
+                CPLString osField(szField);
+                osField.Trim();
+                if (!osField.empty())
+                {
+                    SetMetadataItem(std::string("CEOS_PLATFORM_ATT_")
+                                        .append(sDef.pszMetadataItemName)
+                                        .append("_POINT_")
+                                        .append(std::to_string(iPnt + 1))
+                                        .c_str(),
+                                    osField.c_str());
+                }
+            }
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      PALSAR-2 ALOS2 Radiometric data                                 */
+    /* -------------------------------------------------------------------- */
+    record = FindCeosRecord(sVolume.RecordList, LEADER_RADIOMETRIC_PALSAR_TC,
+                            CEOS_LEADER_FILE, -1, -1);
+    if (record)
+    {
+        // Table 3.3-9 Radiometric data records
+        // of https://www.eorc.jaxa.jp/ALOS/en/alos-2/pdf/product_format_description/PALSAR-2_xx_Format_CEOS_E_g.pdf
+        constexpr FieldDef asFieldDefs[] = {
+            {"CEOS_RADIOMETRIC_CALIBRATION_FACTOR", 21, "A16"},
+            {"CEOS_RADIOMETRIC_DT_1_1_REAL", 37, "A16"},
+            {"CEOS_RADIOMETRIC_DT_1_1_IMAG", 53, "A16"},
+            {"CEOS_RADIOMETRIC_DT_1_2_REAL", 69, "A16"},
+            {"CEOS_RADIOMETRIC_DT_1_2_IMAG", 85, "A16"},
+            {"CEOS_RADIOMETRIC_DT_2_1_REAL", 101, "A16"},
+            {"CEOS_RADIOMETRIC_DT_2_1_IMAG", 117, "A16"},
+            {"CEOS_RADIOMETRIC_DT_2_2_REAL", 133, "A16"},
+            {"CEOS_RADIOMETRIC_DT_2_2_IMAG", 149, "A16"},
+            {"CEOS_RADIOMETRIC_DR_1_1_REAL", 165, "A16"},
+            {"CEOS_RADIOMETRIC_DR_1_1_IMAG", 181, "A16"},
+            {"CEOS_RADIOMETRIC_DR_1_2_REAL", 197, "A16"},
+            {"CEOS_RADIOMETRIC_DR_1_2_IMAG", 213, "A16"},
+            {"CEOS_RADIOMETRIC_DR_2_1_REAL", 229, "A16"},
+            {"CEOS_RADIOMETRIC_DR_2_1_IMAG", 245, "A16"},
+            {"CEOS_RADIOMETRIC_DR_2_2_REAL", 261, "A16"},
+            {"CEOS_RADIOMETRIC_DR_2_2_IMAG", 277, "A16"},
+        };
+        for (const auto &sDef : asFieldDefs)
+        {
+            GetCeosField(record, sDef.nOffsetInRecord, sDef.pszFormat, szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!osField.empty())
+            {
+                SetMetadataItem(sDef.pszMetadataItemName, osField.c_str());
+            }
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      PALSAR-2 ALOS2 Facility related data                            */
+    /* -------------------------------------------------------------------- */
+    constexpr int FACILITY_RELATED_DATA_5_LAT_LONG_CONV_FACTORS = 5;
+    record = FindCeosRecord(
+        sVolume.RecordList, LEADER_FACILITY_RELATED_PALSAR_TC, CEOS_LEADER_FILE,
+        -1, FACILITY_RELATED_DATA_5_LAT_LONG_CONV_FACTORS - 1);
+    if (record && record->Length == 5000)
+    {
+        // Table 3-17 Facility related data records 5
+        // of https://www.eorc.jaxa.jp/ALOS/en/alos-2/pdf/product_format_description/PALSAR-2_xx_Format_CEOS_E_g.pdf
+
+        std::string coeffs;
+        for (int i = 0; i < 10; ++i)
+        {
+            GetCeosField(record, 17 + i * 20, "A20", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!coeffs.empty())
+                coeffs += ' ';
+            coeffs += osField;
+        }
+        // 10 coefficients to convert from the map projection (E, N) to pixel (P)
+        SetMetadataItem("CEOS_FACILITY_5_XY_PROJECTED_TO_PIXEL_COEFFICIENTS",
+                        coeffs.c_str());
+
+        coeffs.clear();
+        for (int i = 0; i < 10; ++i)
+        {
+            GetCeosField(record, 17 + 10 * 20 + i * 20, "A20", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!coeffs.empty())
+                coeffs += ' ';
+            coeffs += osField;
+        }
+        // 10 coefficients to convert from the map projection (E, N) to line (L)
+        SetMetadataItem("CEOS_FACILITY_5_XY_PROJECTED_TO_LINE_COEFFICIENTS",
+                        coeffs.c_str());
+
+        coeffs.clear();
+        for (int i = 0; i < 25; ++i)
+        {
+            GetCeosField(record, 1025 + i * 20, "A20", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!coeffs.empty())
+                coeffs += ' ';
+            coeffs += osField;
+        }
+        // 25 coefficients of the 8th polynomial expression to convert from pixel (P) and line (L) to latitude (φ)
+        SetMetadataItem("CEOS_FACILITY_5_PIXEL_LINE_TO_LAT_COEFFICIENTS",
+                        coeffs.c_str());
+
+        coeffs.clear();
+        for (int i = 0; i < 25; ++i)
+        {
+            GetCeosField(record, 1525 + i * 20, "A20", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!coeffs.empty())
+                coeffs += ' ';
+            coeffs += osField;
+        }
+        // 25 coefficients of the 8th polynomial expression to convert from pixel (P) and line (L) to longitude (λ)
+        SetMetadataItem("CEOS_FACILITY_5_PIXEL_LINE_TO_LON_COEFFICIENTS",
+                        coeffs.c_str());
+
+        {
+            GetCeosField(record, 2025, "A20", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            SetMetadataItem("CEOS_FACILITY_5_ORIGIN_PIXEL", osField.c_str());
+        }
+
+        {
+            GetCeosField(record, 2045, "A20", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            SetMetadataItem("CEOS_FACILITY_5_ORIGIN_LINE", osField.c_str());
+        }
+
+        coeffs.clear();
+        for (int i = 0; i < 25; ++i)
+        {
+            GetCeosField(record, 2065 + i * 20, "A20", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!coeffs.empty())
+                coeffs += ' ';
+            coeffs += osField;
+        }
+        // 25 coefficients of the 8th polynomial expression to convert from latitude (Φ) and longitude (Λ) to pixel (p)
+        SetMetadataItem("CEOS_FACILITY_5_LAT_LON_TO_PIXEL_COEFFICIENTS",
+                        coeffs.c_str());
+
+        coeffs.clear();
+        for (int i = 0; i < 25; ++i)
+        {
+            GetCeosField(record, 2065 + 25 * 20 + i * 20, "A20", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            if (!coeffs.empty())
+                coeffs += ' ';
+            coeffs += osField;
+        }
+        // 25 coefficients of the 8th polynomial expression to convert from latitude (Φ) and longitude (Λ) to pixel (p)
+        SetMetadataItem("CEOS_FACILITY_5_LAT_LON_TO_LINE_COEFFICIENTS",
+                        coeffs.c_str());
+
+        {
+            GetCeosField(record, 3065, "A20", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            SetMetadataItem("CEOS_FACILITY_5_ORIGIN_LAT", osField.c_str());
+        }
+
+        {
+            GetCeosField(record, 3085, "A20", szField);
+            CPLString osField(szField);
+            osField.Trim();
+            SetMetadataItem("CEOS_FACILITY_5_ORIGIN_LON", osField.c_str());
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      PALSAR Level 1.5/Level 3.1 processed record metadata            */
+    /* -------------------------------------------------------------------- */
+    record = FindCeosRecord(sVolume.RecordList,
+                            IMAGE_PROCESSED_DATA_RECORD_PALSAR_TC,
+                            CEOS_IMAGRY_OPT_FILE, -1, 2);
+    constexpr int NEEDED_SIZE_IN_PROCESSED_DATA_RECORD_PALSAR = 128;
+    if (record && record->Length >= NEEDED_SIZE_IN_PROCESSED_DATA_RECORD_PALSAR)
+    {
+        const auto ReadProcessedDataRecord =
+            [this](const CeosRecord_t *curRecord,
+                   const char *pszMDNameSuffix = "")
+        {
+            int32_t nInt32 = 0;
+
+            GetCeosField(curRecord, 65, "B4", &nInt32);
+            SetMetadataItem(CPLSPrintf("CEOS_SLANT_RANGE_FIRST_PIXEL%s_METERS",
+                                       pszMDNameSuffix),
+                            CPLSPrintf("%d", nInt32));
+
+            GetCeosField(curRecord, 69, "B4", &nInt32);
+            SetMetadataItem(CPLSPrintf("CEOS_SLANT_RANGE_MID_PIXEL%s_METERS",
+                                       pszMDNameSuffix),
+                            CPLSPrintf("%d", nInt32));
+
+            GetCeosField(curRecord, 73, "B4", &nInt32);
+            SetMetadataItem(CPLSPrintf("CEOS_SLANT_RANGE_LAST_PIXEL%s_METERS",
+                                       pszMDNameSuffix),
+                            CPLSPrintf("%d", nInt32));
+
+            GetCeosField(curRecord, 77, "B4", &nInt32);
+            SetMetadataItem(CPLSPrintf("CEOS_DOPPLER_CENTROID_FIRST_PIXEL%s_HZ",
+                                       pszMDNameSuffix),
+                            CPLSPrintf("%.3f", nInt32 / 1000.0));
+
+            GetCeosField(curRecord, 81, "B4", &nInt32);
+            SetMetadataItem(CPLSPrintf("CEOS_DOPPLER_CENTROID_MID_PIXEL%s_HZ",
+                                       pszMDNameSuffix),
+                            CPLSPrintf("%.3f", nInt32 / 1000.0));
+
+            GetCeosField(curRecord, 85, "B4", &nInt32);
+            SetMetadataItem(CPLSPrintf("CEOS_DOPPLER_CENTROID_LAST_PIXEL%s_HZ",
+                                       pszMDNameSuffix),
+                            CPLSPrintf("%.3f", nInt32 / 1000.0));
+
+            GetCeosField(curRecord, 89, "B4", &nInt32);
+            SetMetadataItem(
+                CPLSPrintf("CEOS_AZIMUTH_FM_RATE_FIRST_PIXEL%s_HZ_PER_MS",
+                           pszMDNameSuffix),
+                CPLSPrintf("%d", nInt32));
+
+            GetCeosField(curRecord, 93, "B4", &nInt32);
+            SetMetadataItem(
+                CPLSPrintf("CEOS_AZIMUTH_FM_RATE_MID_PIXEL%s_HZ_PER_MS",
+                           pszMDNameSuffix),
+                CPLSPrintf("%d", nInt32));
+
+            GetCeosField(curRecord, 97, "B4", &nInt32);
+            SetMetadataItem(
+                CPLSPrintf("CEOS_AZIMUTH_FM_RATE_LAST_PIXEL%s_HZ_PER_MS",
+                           pszMDNameSuffix),
+                CPLSPrintf("%d", nInt32));
+        };
+
+        ReadProcessedDataRecord(record);
+
+        // The above values are per-record. In practice they seem to be constant
+        // among all records, but I could not find any statement on that, so
+        // also read and report them from the last record.
+        // We cannot use FindCeosRecord() to fetch it because ProcessData() limits
+        // to 4 records for the image file (for memory and performance reasons)
+        struct CeosSARImageDesc *ImageDesc = &(sVolume.ImageDesc);
+        const vsi_l_offset nOffsetToLastRecordStart =
+            ImageDesc->FileDescriptorLength +
+            static_cast<vsi_l_offset>(ImageDesc->BytesPerRecord) *
+                (nRasterYSize - 1);
+        CeosRecord_t lastRecord;
+        memset(&lastRecord, 0, sizeof(lastRecord));
+        std::vector<GByte> abyLeader(
+            NEEDED_SIZE_IN_PROCESSED_DATA_RECORD_PALSAR);
+        if (fpImage->Seek(nOffsetToLastRecordStart, SEEK_SET) == 0 &&
+            fpImage->Read(abyLeader.data(), abyLeader.size()) ==
+                abyLeader.size())
+        {
+            lastRecord.Buffer = abyLeader.data();
+            lastRecord.Length = static_cast<int>(abyLeader.size());
+            ReadProcessedDataRecord(&lastRecord, "_LAST_LINE");
+        }
     }
 }
 
@@ -1679,6 +1767,8 @@ int SAR_CEOSDataset::ScanForMapProjection()
 void SAR_CEOSDataset::ScanForGCPs()
 
 {
+    m_bHasScannedForGCP = true;
+
     /* -------------------------------------------------------------------- */
     /*      Do we have a standard 180 bytes of prefix data (192 bytes       */
     /*      including the record marker information)?  If not, it is        */
@@ -1699,6 +1789,18 @@ void SAR_CEOSDataset::ScanForGCPs()
         return;
     }
 
+    if (GetRasterBand(1)->GetRasterDataType() == GDT_CFloat32)
+    {
+        const char *pszVolSetId = GetMetadataItem("CEOS_VOLSET_ID");
+        if (pszVolSetId && (STARTS_WITH(pszVolSetId, "ALOS2  SAR") ||
+                            STARTS_WITH(pszVolSetId, "ALOS4  SAR")))
+        {
+            // No GCPs in those products. Helps for performance when
+            // reading in zip archives (particularly on network)
+            return;
+        }
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Just sample fix scanlines through the image for GCPs, to        */
     /*      return 15 GCPs.  That is an adequate coverage for most          */
@@ -1715,13 +1817,12 @@ void SAR_CEOSDataset::ScanForGCPs()
         if (nGCPCount > nGCPMax - 3)
             break;
 
-        int nFileOffset;
+        uint64_t nFileOffset;
         CalcCeosSARImageFilePosition(&sVolume, 1, iScanline + 1, nullptr,
                                      &nFileOffset);
 
         GInt32 anRecord[192 / 4];
-        if (VSIFSeekL(fpImage, static_cast<vsi_l_offset>(nFileOffset),
-                      SEEK_SET) != 0 ||
+        if (VSIFSeekL(fpImage, nFileOffset, SEEK_SET) != 0 ||
             VSIFReadL(anRecord, 1, 192, fpImage) != 192)
             break;
 
@@ -1819,8 +1920,8 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
 
     psVolume->ImagryOptionsFile = TRUE;
-    if (ProcessData(poDS->fpImage, CEOS_IMAGRY_OPT_FILE, psVolume, 4,
-                    VSI_L_OFFSET_MAX) != CE_None)
+    if (ProcessData(poDS->fpImage, CEOS_IMAGRY_OPT_FILE, psVolume,
+                    /* max_records = */ 4, VSI_L_OFFSET_MAX, false) != CE_None)
     {
         return nullptr;
     }
@@ -1840,52 +1941,87 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     else
         nBand = 0;
 
-    for (int iFile = 0; iFile < 5; iFile++)
+    const bool bIsALOS2Or4 =
+        strlen(pszBasename) >= strlen("IMG-HH-ALOS2") &&
+        EQUALN(pszBasename, "IMG-", strlen("IMG-")) &&
+        (EQUALN(pszBasename + strlen("IMG-HH"), "-ALOS2", strlen("-ALOS2")) ||
+         EQUALN(pszBasename + strlen("IMG-HH"), "-ALOS4", strlen("-ALOS4")));
+    if (bIsALOS2Or4 && strlen(pszExtension) >= 3 &&
+        pszExtension[strlen(pszExtension) - 3] == '-' &&
+        pszExtension[strlen(pszExtension) - 2] == 'F')
+    {
+        pszExtension[strlen(pszExtension) - 3] = 0;
+    }
+
+    for (int iFile = 0; iFile < CEOS_FILE_COUNT; iFile++)
     {
         /* skip image file ... we already did it */
-        if (iFile == 2)
+        if (iFile == CEOS_IMAGRY_OPT_FILE)
             continue;
 
-        int e = 0;
-        while (CeosExtension[e][iFile] != nullptr)
+        for (int e = 0; CeosExtension[e][iFile] != nullptr; ++e)
         {
             std::string osFilename;
 
+            const char *const pszMethod = CeosExtension[e][CEOS_FILE_COUNT];
+            const char *const pszFilePart = CeosExtension[e][iFile];
+
             /* build filename */
-            if (EQUAL(CeosExtension[e][5], "base"))
+            if (EQUAL(pszMethod, "base"))
             {
                 char szMadeBasename[32];
 
-                snprintf(szMadeBasename, sizeof(szMadeBasename),
-                         CeosExtension[e][iFile], nBand);
+                snprintf(szMadeBasename, sizeof(szMadeBasename), pszFilePart,
+                         nBand);
                 osFilename =
                     CPLFormFilenameSafe(pszPath, szMadeBasename, pszExtension);
             }
-            else if (EQUAL(CeosExtension[e][5], "ext"))
-            {
-                osFilename = CPLFormFilenameSafe(pszPath, pszBasename,
-                                                 CeosExtension[e][iFile]);
-            }
-            else if (EQUAL(CeosExtension[e][5], "whole"))
+            else if (EQUAL(pszMethod, "ext"))
             {
                 osFilename =
-                    CPLFormFilenameSafe(pszPath, CeosExtension[e][iFile], "");
+                    CPLFormFilenameSafe(pszPath, pszBasename, pszFilePart);
+            }
+            else if (EQUAL(pszMethod, "whole"))
+            {
+                osFilename = CPLFormFilenameSafe(pszPath, pszFilePart, "");
             }
 
             // This is for SAR SLC as per the SAR Toolbox (from ASF).
-            else if (EQUAL(CeosExtension[e][5], "ext2"))
+            else if (EQUAL(pszMethod, "ext2"))
             {
                 char szThisExtension[32];
 
                 if (strlen(pszExtension) > 3)
                     snprintf(szThisExtension, sizeof(szThisExtension), "%s%s",
-                             CeosExtension[e][iFile], pszExtension + 3);
+                             pszFilePart, pszExtension + 3);
                 else
                     snprintf(szThisExtension, sizeof(szThisExtension), "%s",
-                             CeosExtension[e][iFile]);
+                             pszFilePart);
 
                 osFilename =
                     CPLFormFilenameSafe(pszPath, pszBasename, szThisExtension);
+            }
+
+            else if (EQUAL(pszMethod, "ALOS2-ALOS4"))
+            {
+                if (bIsALOS2Or4 && CeosExtension[e][iFile][0] != 0)
+                {
+                    osFilename = CPLFormFilenameSafe(
+                        pszPath,
+                        std::string(pszFilePart)
+                            .append(pszBasename + strlen("IMG-HH"))
+                            .c_str(),
+                        pszExtension);
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            else
+            {
+                CPLError(CE_Fatal, CPLE_AppDefined, "should not happen");
             }
 
             /* try to open */
@@ -1913,21 +2049,24 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
                     CSLAddString(poDS->papszExtraFiles, osFilename.c_str());
 
                 CPL_IGNORE_RET_VAL(VSIFSeekL(process_fp, 0, SEEK_END));
+                const bool bSilentWrongRecordNumber =
+                    bIsALOS2Or4 && iFile == CEOS_TRAILER_FILE;
                 if (ProcessData(process_fp, iFile, psVolume, -1,
-                                VSIFTellL(process_fp)) == 0)
+                                VSIFTellL(process_fp),
+                                bSilentWrongRecordNumber) == CE_None)
                 {
                     switch (iFile)
                     {
-                        case 0:
+                        case CEOS_VOLUME_DIR_FILE:
                             psVolume->VolumeDirectoryFile = TRUE;
                             break;
-                        case 1:
+                        case CEOS_LEADER_FILE:
                             psVolume->SARLeaderFile = TRUE;
                             break;
-                        case 3:
+                        case CEOS_TRAILER_FILE:
                             psVolume->SARTrailerFile = TRUE;
                             break;
-                        case 4:
+                        case CEOS_NULL_VOL_FILE:
                             psVolume->NullVolumeDirectoryFile = TRUE;
                             break;
                     }
@@ -1938,8 +2077,6 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
 
                 CPL_IGNORE_RET_VAL(VSIFCloseL(process_fp));
             }
-
-            e++;
         }
     }
 
@@ -2083,20 +2220,21 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     else
     {
-        int StartData;
+        uint64_t StartData;
         CalcCeosSARImageFilePosition(psVolume, 1, 1, nullptr, &StartData);
 
         /*StartData += psImageDesc->ImageDataStart; */
 
-        int nLineSize, nLineSize2;
-        CalcCeosSARImageFilePosition(psVolume, 1, 1, nullptr, &nLineSize);
-        CalcCeosSARImageFilePosition(psVolume, 1, 2, nullptr, &nLineSize2);
+        uint64_t nLineOff1, nLineOff2;
+        CalcCeosSARImageFilePosition(psVolume, 1, 1, nullptr, &nLineOff1);
+        CalcCeosSARImageFilePosition(psVolume, 1, 2, nullptr, &nLineOff2);
 
-        nLineSize = nLineSize2 - nLineSize;
+        const int nLineSize = static_cast<int>(nLineOff2 - nLineOff1);
 
         for (int iBand = 0; iBand < psImageDesc->NumChannels; iBand++)
         {
-            int nStartData, nPixelOffset, nLineOffset;
+            uint64_t nStartData;
+            int nPixelOffset, nLineOffset;
 
             if (psImageDesc->ChannelInterleaving == CEOS_IL_PIXEL)
             {
@@ -2104,7 +2242,8 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
                                              &nStartData);
 
                 nStartData += psImageDesc->ImageDataStart;
-                nStartData += psImageDesc->BytesPerPixel * iBand;
+                nStartData +=
+                    cpl::fits_on<int>(psImageDesc->BytesPerPixel * iBand);
 
                 nPixelOffset =
                     psImageDesc->BytesPerPixel * psImageDesc->NumChannels;
@@ -2151,11 +2290,6 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->ScanForMetadata();
 
     /* -------------------------------------------------------------------- */
-    /*      Check for GCPs.                                                 */
-    /* -------------------------------------------------------------------- */
-    poDS->ScanForGCPs();
-
-    /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
     /* -------------------------------------------------------------------- */
     poDS->SetDescription(poOpenInfo->pszFilename);
@@ -2173,7 +2307,8 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                            ProcessData()                             */
 /************************************************************************/
 static int ProcessData(VSILFILE *fp, int fileid, CeosSARVolume_t *sar,
-                       int max_records, vsi_l_offset max_bytes)
+                       int max_records, vsi_l_offset max_bytes,
+                       bool bSilentWrongRecordNumber)
 
 {
     unsigned char temp_buffer[CEOS_HEADER_LENGTH];
@@ -2213,10 +2348,16 @@ static int ProcessData(VSILFILE *fp, int fileid, CeosSARVolume_t *sar,
                 CPLFree(temp_body);
                 return CE_Warning;
             }
+            else if (bSilentWrongRecordNumber && iThisRecord == 2)
+            {
+                CPLFree(record);
+                CPLFree(temp_body);
+                return CE_Warning;
+            }
             else
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Corrupt CEOS File - got record seq# %d instead of "
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Corrupted CEOS File - got record seq# %d instead of "
                          "the expected %d.",
                          record->Sequence, iThisRecord);
                 CPLFree(record);

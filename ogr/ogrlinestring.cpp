@@ -40,7 +40,7 @@ int DoubleToIntClamp(double dfValue)
 }  // namespace
 
 /************************************************************************/
-/*                OGRSimpleCurve( const OGRSimpleCurve& )               */
+/*               OGRSimpleCurve( const OGRSimpleCurve& )                */
 /************************************************************************/
 
 /**
@@ -56,7 +56,7 @@ OGRSimpleCurve::OGRSimpleCurve(const OGRSimpleCurve &other)
 }
 
 /************************************************************************/
-/*                OGRSimpleCurve( OGRSimpleCurve&& )                    */
+/*                  OGRSimpleCurve( OGRSimpleCurve&& )                  */
 /************************************************************************/
 
 /**
@@ -93,7 +93,7 @@ OGRSimpleCurve::~OGRSimpleCurve()
 }
 
 /************************************************************************/
-/*                 operator=(const OGRSimpleCurve &other)               */
+/*                operator=(const OGRSimpleCurve &other)                */
 /************************************************************************/
 
 /**
@@ -114,7 +114,7 @@ OGRSimpleCurve &OGRSimpleCurve::operator=(const OGRSimpleCurve &other)
 }
 
 /************************************************************************/
-/*                     operator=(OGRSimpleCurve &&other)                */
+/*                  operator=(OGRSimpleCurve &&other)                   */
 /************************************************************************/
 
 /**
@@ -186,7 +186,7 @@ bool OGRSimpleCurve::setCoordinateDimension(int nNewDimension)
     return true;
 }
 
-bool OGRSimpleCurve::set3D(OGRBoolean bIs3D)
+bool OGRSimpleCurve::set3D(bool bIs3D)
 
 {
     if (bIs3D)
@@ -196,7 +196,7 @@ bool OGRSimpleCurve::set3D(OGRBoolean bIs3D)
     return true;
 }
 
-bool OGRSimpleCurve::setMeasured(OGRBoolean bIsMeasured)
+bool OGRSimpleCurve::setMeasured(bool bIsMeasured)
 
 {
     if (bIsMeasured)
@@ -260,7 +260,7 @@ bool OGRSimpleCurve::Make3D()
 }
 
 /************************************************************************/
-/*                               RemoveM()                              */
+/*                              RemoveM()                               */
 /************************************************************************/
 
 void OGRSimpleCurve::RemoveM()
@@ -275,7 +275,7 @@ void OGRSimpleCurve::RemoveM()
 }
 
 /************************************************************************/
-/*                               AddM()                                 */
+/*                                AddM()                                */
 /************************************************************************/
 
 bool OGRSimpleCurve::AddM()
@@ -572,7 +572,7 @@ bool OGRSimpleCurve::setPoint(int iPoint, OGRPoint *poPoint)
 }
 
 /************************************************************************/
-/*                           CheckPointCount()                          */
+/*                          CheckPointCount()                           */
 /************************************************************************/
 
 static inline bool CheckPointCount(int iPoint)
@@ -1359,7 +1359,7 @@ bool OGRSimpleCurve::setPoints(int nPointsIn, const double *padfX,
 }
 
 /************************************************************************/
-/*                          getPoints()                                 */
+/*                             getPoints()                              */
 /************************************************************************/
 
 /**
@@ -2031,9 +2031,9 @@ std::string OGRSimpleCurve::exportToWkt(const OGRWktOptions &opts,
     {
         wkt += '(';
 
-        OGRBoolean hasZ = Is3D();
-        OGRBoolean hasM =
-            (opts.variant != wkbVariantIso ? FALSE : IsMeasured());
+        const bool hasZ = Is3D();
+        const bool hasM =
+            (opts.variant != wkbVariantIso ? false : IsMeasured());
 
         try
         {
@@ -2491,7 +2491,7 @@ void OGRSimpleCurve::getEnvelope(OGREnvelope3D *psEnvelope) const
 /*                               Equals()                               */
 /************************************************************************/
 
-OGRBoolean OGRSimpleCurve::Equals(const OGRGeometry *poOther) const
+bool OGRSimpleCurve::Equals(const OGRGeometry *poOther) const
 
 {
     if (poOther == this)
@@ -2633,10 +2633,10 @@ OGRErr OGRSimpleCurve::transform(OGRCoordinateTransformation *poCT)
 }
 
 /************************************************************************/
-/*                               IsEmpty()                              */
+/*                              IsEmpty()                               */
 /************************************************************************/
 
-OGRBoolean OGRSimpleCurve::IsEmpty() const
+bool OGRSimpleCurve::IsEmpty() const
 {
     return (nPointCount == 0);
 }
@@ -2834,7 +2834,7 @@ void OGRSimpleCurve::swapXY()
 }
 
 /************************************************************************/
-/*                       OGRSimpleCurvePointIterator                    */
+/*                     OGRSimpleCurvePointIterator                      */
 /************************************************************************/
 
 class OGRSimpleCurvePointIterator final : public OGRPointIterator
@@ -2850,14 +2850,14 @@ class OGRSimpleCurvePointIterator final : public OGRPointIterator
     {
     }
 
-    OGRBoolean getNextPoint(OGRPoint *p) override;
+    bool getNextPoint(OGRPoint *p) override;
 };
 
 /************************************************************************/
 /*                            getNextPoint()                            */
 /************************************************************************/
 
-OGRBoolean OGRSimpleCurvePointIterator::getNextPoint(OGRPoint *p)
+bool OGRSimpleCurvePointIterator::getNextPoint(OGRPoint *p)
 {
     if (iCurPoint >= poSC->getNumPoints())
         return FALSE;
@@ -2867,7 +2867,7 @@ OGRBoolean OGRSimpleCurvePointIterator::getNextPoint(OGRPoint *p)
 }
 
 /************************************************************************/
-/*                         getPointIterator()                           */
+/*                          getPointIterator()                          */
 /************************************************************************/
 
 OGRPointIterator *OGRSimpleCurve::getPointIterator() const
@@ -2876,7 +2876,7 @@ OGRPointIterator *OGRSimpleCurve::getPointIterator() const
 }
 
 /************************************************************************/
-/*                  OGRLineString( const OGRLineString& )               */
+/*                OGRLineString( const OGRLineString& )                 */
 /************************************************************************/
 
 /**
@@ -2886,7 +2886,7 @@ OGRPointIterator *OGRSimpleCurve::getPointIterator() const
 OGRLineString::OGRLineString(const OGRLineString &) = default;
 
 /************************************************************************/
-/*                  OGRLineString( OGRLineString&& )                    */
+/*                   OGRLineString( OGRLineString&& )                   */
 /************************************************************************/
 
 /**
@@ -2898,7 +2898,7 @@ OGRLineString::OGRLineString(const OGRLineString &) = default;
 OGRLineString::OGRLineString(OGRLineString &&) = default;
 
 /************************************************************************/
-/*                    operator=( const OGRLineString& )                 */
+/*                  operator=( const OGRLineString& )                   */
 /************************************************************************/
 
 /**
@@ -2915,7 +2915,7 @@ OGRLineString &OGRLineString::operator=(const OGRLineString &other)
 }
 
 /************************************************************************/
-/*                    operator=( OGRLineString&& )                      */
+/*                     operator=( OGRLineString&& )                     */
 /************************************************************************/
 
 /**
@@ -2961,7 +2961,7 @@ const char *OGRLineString::getGeometryName() const
 }
 
 /************************************************************************/
-/*                          curveToLine()                               */
+/*                            curveToLine()                             */
 /************************************************************************/
 
 OGRLineString *OGRLineString::CurveToLine(
@@ -2972,7 +2972,7 @@ OGRLineString *OGRLineString::CurveToLine(
 }
 
 /************************************************************************/
-/*                          get_LinearArea()                            */
+/*                           get_LinearArea()                           */
 /************************************************************************/
 
 /**
@@ -3012,7 +3012,7 @@ double OGRSimpleCurve::get_LinearArea() const
 }
 
 /************************************************************************/
-/*                             getCurveGeometry()                       */
+/*                          getCurveGeometry()                          */
 /************************************************************************/
 
 OGRGeometry *
@@ -3022,7 +3022,7 @@ OGRLineString::getCurveGeometry(const char *const *papszOptions) const
 }
 
 /************************************************************************/
-/*                      TransferMembersAndDestroy()                     */
+/*                     TransferMembersAndDestroy()                      */
 /************************************************************************/
 //! @cond Doxygen_Suppress
 OGRLineString *OGRLineString::TransferMembersAndDestroy(OGRLineString *poSrc,
@@ -3049,7 +3049,7 @@ OGRLineString *OGRLineString::TransferMembersAndDestroy(OGRLineString *poSrc,
 
 //! @endcond
 /************************************************************************/
-/*                         CastToLinearRing()                           */
+/*                          CastToLinearRing()                          */
 /************************************************************************/
 
 /**
@@ -3097,7 +3097,7 @@ OGRLineString *OGRLineString::clone() const
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GetCasterToLineString()                          */
+/*                       GetCasterToLineString()                        */
 /************************************************************************/
 
 static OGRLineString *CasterToLineString(OGRCurve *poCurve)
@@ -3111,7 +3111,7 @@ OGRCurveCasterToLineString OGRLineString::GetCasterToLineString() const
 }
 
 /************************************************************************/
-/*                        GetCasterToLinearRing()                       */
+/*                       GetCasterToLinearRing()                        */
 /************************************************************************/
 
 OGRLinearRing *OGRLineString::CasterToLinearRing(OGRCurve *poCurve)
@@ -3125,7 +3125,7 @@ OGRCurveCasterToLinearRing OGRLineString::GetCasterToLinearRing() const
 }
 
 /************************************************************************/
-/*                            get_Area()                                */
+/*                              get_Area()                              */
 /************************************************************************/
 
 double OGRLineString::get_Area() const
@@ -3134,7 +3134,7 @@ double OGRLineString::get_Area() const
 }
 
 /************************************************************************/
-/*                           GetGeodesicInputs()                        */
+/*                         GetGeodesicInputs()                          */
 /************************************************************************/
 
 static bool GetGeodesicInputs(const OGRLineString *poLS,
@@ -3221,7 +3221,7 @@ static bool GetGeodesicInputs(const OGRLineString *poLS,
 }
 
 /************************************************************************/
-/*                        get_GeodesicArea()                            */
+/*                          get_GeodesicArea()                          */
 /************************************************************************/
 
 double
@@ -3239,7 +3239,7 @@ OGRLineString::get_GeodesicArea(const OGRSpatialReference *poSRSOverride) const
 }
 
 /************************************************************************/
-/*                        get_GeodesicLength()                          */
+/*                         get_GeodesicLength()                         */
 /************************************************************************/
 
 double OGRLineString::get_GeodesicLength(
@@ -3262,7 +3262,7 @@ double OGRLineString::get_GeodesicLength(
 }
 
 /************************************************************************/
-/*                       get_AreaOfCurveSegments()                      */
+/*                      get_AreaOfCurveSegments()                       */
 /************************************************************************/
 
 double OGRLineString::get_AreaOfCurveSegments() const
@@ -3282,14 +3282,14 @@ double OGRLineString::get_AreaOfCurveSegments() const
  * @return TRUE if clockwise otherwise FALSE.
  */
 
-int OGRLineString::isClockwise() const
+bool OGRLineString::isClockwise() const
 
 {
     // WARNING: keep in sync OGRLineString::isClockwise(),
     // OGRCurve::isClockwise() and OGRWKBIsClockwiseRing()
 
     if (nPointCount < 2)
-        return TRUE;
+        return true;
 
     bool bUseFallback = false;
 
@@ -3359,9 +3359,9 @@ int OGRLineString::isClockwise() const
     if (!bUseFallback)
     {
         if (crossproduct > 0)  // CCW
-            return FALSE;
+            return false;
         else if (crossproduct < 0)  // CW
-            return TRUE;
+            return true;
     }
 
     // This is a degenerate case: the extent of the polygon is less than EPSILON

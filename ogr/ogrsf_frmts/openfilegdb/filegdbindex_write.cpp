@@ -26,7 +26,7 @@ namespace OpenFileGDB
 {
 
 /************************************************************************/
-/*                          RemoveIndices()                             */
+/*                           RemoveIndices()                            */
 /************************************************************************/
 
 void FileGDBTable::RemoveIndices()
@@ -70,7 +70,7 @@ void FileGDBTable::RemoveIndices()
 }
 
 /************************************************************************/
-/*                          RefreshIndices()                            */
+/*                           RefreshIndices()                           */
 /************************************************************************/
 
 void FileGDBTable::RefreshIndices()
@@ -113,7 +113,7 @@ void FileGDBTable::RefreshIndices()
 }
 
 /************************************************************************/
-/*                          CreateIndex()                               */
+/*                            CreateIndex()                             */
 /************************************************************************/
 
 bool FileGDBTable::CreateIndex(const std::string &osIndexName,
@@ -421,24 +421,25 @@ void FileGDBTable::ComputeOptimalSpatialIndexGridResolution()
 }
 
 /************************************************************************/
-/*                     SortByAscendingValuesAndOID()                    */
+/*                    SortByAscendingValuesAndOID()                     */
 /************************************************************************/
 
-// recent libc++ std::sort() involve unsigned integer overflow in some
-// situation
 template <class ValueOIDPair>
-CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW static void
-SortByAscendingValuesAndOID(std::vector<ValueOIDPair> &asValues)
+static void SortByAscendingValuesAndOID(std::vector<ValueOIDPair> &asValues)
 {
-    std::sort(asValues.begin(), asValues.end(),
-              [](const ValueOIDPair &a, const ValueOIDPair &b) {
-                  return a.first < b.first ||
-                         (a.first == b.first && a.second < b.second);
-              });
+    if (!asValues.empty())
+    {
+        std::sort(asValues.begin(), asValues.end(),
+                  [](const ValueOIDPair &a, const ValueOIDPair &b)
+                  {
+                      return a.first < b.first ||
+                             (a.first == b.first && a.second < b.second);
+                  });
+    }
 }
 
 /************************************************************************/
-/*                           WriteIndex()                               */
+/*                             WriteIndex()                             */
 /************************************************************************/
 
 template <class ValueOIDPair>
@@ -807,7 +808,7 @@ static bool WriteIndex(
 }
 
 /************************************************************************/
-/*                        CreateSpatialIndex()                          */
+/*                         CreateSpatialIndex()                         */
 /************************************************************************/
 
 bool FileGDBTable::CreateSpatialIndex()
@@ -1316,7 +1317,7 @@ bool FileGDBTable::CreateSpatialIndex()
 }
 
 /************************************************************************/
-/*                      CreateAttributeIndex()                          */
+/*                        CreateAttributeIndex()                        */
 /************************************************************************/
 
 bool FileGDBTable::CreateAttributeIndex(const FileGDBIndex *poIndex)

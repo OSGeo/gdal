@@ -43,6 +43,7 @@ static const PCIDatums asDatums[] = {
     {"D-03", 4267},  // NAD27 (Canada, NTv1)
     {"D-02", 4269},  // NAD83 (USA, NADCON)
     {"D-04", 4269},  // NAD83 (Canada, NTv1)
+    {"D-25", 7844},  // GDA2020 (Australia)
     {"D000", 4326},  // WGS 1984
     {"D001", 4322},  // WGS 1972
     {"D008", 4296},  // Sudan
@@ -85,6 +86,7 @@ static const PCIDatums asDatums[] = {
     {"D188", 4311},  // Zanderij (Suriname)
     {"D401", 4124},  // RT90 (Sweden)
     {"D501", 4312},  // MGI (Hermannskogel, Austria)
+    {"D536", 4283},  // GDA94 (Australia)
     {nullptr, 0}};
 
 static const PCIDatums asEllips[] = {
@@ -114,7 +116,7 @@ static const PCIDatums asEllips[] = {
     {nullptr, 0}};
 
 /************************************************************************/
-/*                         OSRImportFromPCI()                           */
+/*                          OSRImportFromPCI()                          */
 /************************************************************************/
 
 /**
@@ -134,7 +136,7 @@ OGRErr OSRImportFromPCI(OGRSpatialReferenceH hSRS, const char *pszProj,
 }
 
 /************************************************************************/
-/*                          importFromPCI()                             */
+/*                           importFromPCI()                            */
 /************************************************************************/
 
 /**
@@ -684,7 +686,7 @@ OGRErr OGRSpatialReference::importFromPCI(const char *pszProj,
 }
 
 /************************************************************************/
-/*                          OSRExportToPCI()                            */
+/*                           OSRExportToPCI()                           */
 /************************************************************************/
 /**
  * \brief Export coordinate system in PCI projection definition.
@@ -706,7 +708,7 @@ OGRErr OSRExportToPCI(OGRSpatialReferenceH hSRS, char **ppszProj,
 }
 
 /************************************************************************/
-/*                           exportToPCI()                              */
+/*                            exportToPCI()                             */
 /************************************************************************/
 
 /**

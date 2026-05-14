@@ -15,7 +15,7 @@
 #include "cpl_compressor.h"
 
 /************************************************************************/
-/*                      ZarrV3CodecAbstractCompressor()                 */
+/*                   ZarrV3CodecAbstractCompressor()                    */
 /************************************************************************/
 
 ZarrV3CodecAbstractCompressor::ZarrV3CodecAbstractCompressor(
@@ -25,7 +25,7 @@ ZarrV3CodecAbstractCompressor::ZarrV3CodecAbstractCompressor(
 }
 
 /************************************************************************/
-/*                 ZarrV3CodecAbstractCompressor::Encode()              */
+/*               ZarrV3CodecAbstractCompressor::Encode()                */
 /************************************************************************/
 
 bool ZarrV3CodecAbstractCompressor::Encode(
@@ -52,7 +52,7 @@ bool ZarrV3CodecAbstractCompressor::Encode(
 }
 
 /************************************************************************/
-/*                 ZarrV3CodecAbstractCompressor::Decode()              */
+/*               ZarrV3CodecAbstractCompressor::Decode()                */
 /************************************************************************/
 
 bool ZarrV3CodecAbstractCompressor::Decode(

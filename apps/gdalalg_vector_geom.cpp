@@ -23,7 +23,7 @@
 #endif
 
 /************************************************************************/
-/*                 GDALVectorGeomAbstractAlgorithm()                    */
+/*                  GDALVectorGeomAbstractAlgorithm()                   */
 /************************************************************************/
 
 GDALVectorGeomAbstractAlgorithm::GDALVectorGeomAbstractAlgorithm(
@@ -41,7 +41,7 @@ GDALVectorGeomAbstractAlgorithm::GDALVectorGeomAbstractAlgorithm(
 }
 
 /************************************************************************/
-/*               GDALVectorGeomAbstractAlgorithm::RunStep()             */
+/*              GDALVectorGeomAbstractAlgorithm::RunStep()              */
 /************************************************************************/
 
 bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &)
@@ -85,7 +85,7 @@ bool GDALVectorGeomAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &)
 #endif
 
 /************************************************************************/
-/*                    GDALGeosNonStreamingAlgorithmLayer              */
+/*                  GDALGeosNonStreamingAlgorithmLayer                  */
 /************************************************************************/
 
 GDALGeosNonStreamingAlgorithmLayer::GDALGeosNonStreamingAlgorithmLayer(
@@ -151,7 +151,8 @@ bool GDALGeosNonStreamingAlgorithmLayer::ConvertInputsToGeos(
         1.0 / std::max(1.0, static_cast<double>(nLayerFeatures));
     const double dfProgressRatio = dfInvLayerFeatures * 0.5;
 
-    const bool sameDefn = GetLayerDefn()->IsSame(srcLayer.GetLayerDefn());
+    const bool sameDefn =
+        CPL_TO_BOOL(GetLayerDefn()->IsSame(srcLayer.GetLayerDefn()));
 
     for (auto &feature : srcLayer)
     {
@@ -317,8 +318,8 @@ GDALGeosNonStreamingAlgorithmLayer::GetNextProcessedFeature()
         wkbFlatten(poResultGeom->getGeometryType()) !=
             wkbFlatten(eLayerGeomType))
     {
-        poResultGeom.reset(OGRGeometryFactory::forceTo(poResultGeom.release(),
-                                                       eLayerGeomType));
+        poResultGeom = OGRGeometryFactory::forceTo(std::move(poResultGeom),
+                                                   eLayerGeomType);
     }
 
     if (poResultGeom == nullptr)

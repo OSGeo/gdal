@@ -18,6 +18,8 @@
 #include "gdaljp2abstractdataset.h"
 #include "gdaljp2metadata.h"
 #include "ogr_spatialref.h"
+
+#include <algorithm>
 #include <string>
 
 #include "mrsiddrivercore.h"
@@ -263,7 +265,7 @@ class MrSIDDataset final : public GDALJP2AbstractDataset
 #ifdef MRSID_ESDK
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
 #endif
 };
 
@@ -313,7 +315,7 @@ class MrSIDRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           MrSIDRasterBand()                          */
+/*                          MrSIDRasterBand()                           */
 /************************************************************************/
 
 MrSIDRasterBand::MrSIDRasterBand(MrSIDDataset *poDSIn, int nBandIn)
@@ -473,7 +475,7 @@ MrSIDRasterBand::MrSIDRasterBand(MrSIDDataset *poDSIn, int nBandIn)
 }
 
 /************************************************************************/
-/*                            ~MrSIDRasterBand()                        */
+/*                          ~MrSIDRasterBand()                          */
 /************************************************************************/
 
 MrSIDRasterBand::~MrSIDRasterBand()
@@ -730,7 +732,7 @@ GDALRasterBand *MrSIDRasterBand::GetOverview(int i)
 }
 
 /************************************************************************/
-/*                           MrSIDDataset()                             */
+/*                            MrSIDDataset()                            */
 /************************************************************************/
 
 MrSIDDataset::MrSIDDataset(int bIsJPEG2000)
@@ -765,7 +767,7 @@ MrSIDDataset::MrSIDDataset(int bIsJPEG2000)
 }
 
 /************************************************************************/
-/*                            ~MrSIDDataset()                           */
+/*                           ~MrSIDDataset()                            */
 /************************************************************************/
 
 MrSIDDataset::~MrSIDDataset()
@@ -801,7 +803,7 @@ MrSIDDataset::~MrSIDDataset()
 }
 
 /************************************************************************/
-/*                      CloseDependentDatasets()                        */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int MrSIDDataset::CloseDependentDatasets()
@@ -879,7 +881,7 @@ CPLErr MrSIDDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     /* -------------------------------------------------------------------- */
     int iOverview = 0;
     double dfZoomMag =
-        MIN((nXSize / (double)nBufXSize), (nYSize / (double)nBufYSize));
+        std::min((nXSize / (double)nBufXSize), (nYSize / (double)nBufYSize));
 
     for (nZoomMag = 1; nZoomMag * 2 < (dfZoomMag + 0.1) &&
                        iOverview < poParentDS->nOverviewCount;
@@ -1042,7 +1044,7 @@ CPLErr MrSIDDataset::IBuildOverviews(const char *, int, const int *, int,
 {
     CPLError(CE_Warning, CPLE_AppDefined,
              "MrSID overviews are built-in, so building external "
-             "overviews is unnecessary. Ignoring.\n");
+             "overviews is unnecessary. Ignoring.");
 
     return CE_None;
 }
@@ -1111,7 +1113,7 @@ static CPLString SerializeMetadataRec(const LTIMetadataRecord *poMetadataRec)
 }
 
 /************************************************************************/
-/*                          GetMetadataElement()                        */
+/*                         GetMetadataElement()                         */
 /************************************************************************/
 
 int MrSIDDataset::GetMetadataElement(const char *pszKey, void *pValue,
@@ -1181,7 +1183,7 @@ char **MrSIDDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                             OpenZoomLevel()                          */
+/*                           OpenZoomLevel()                            */
 /************************************************************************/
 
 CPLErr MrSIDDataset::OpenZoomLevel(lt_int32 iZoom)
@@ -1267,10 +1269,11 @@ CPLErr MrSIDDataset::OpenZoomLevel(lt_int32 iZoom)
     if (!poImageReader->isGeoCoordImplicit())
     {
         const LTIGeoCoord &oGeo = poImageReader->getGeoCoord();
-        oGeo.get(m_gt[0], m_gt[3], m_gt[1], m_gt[5], m_gt[2], m_gt[4]);
+        oGeo.get(m_gt.xorig, m_gt.yorig, m_gt.xscale, m_gt.yscale, m_gt.xrot,
+                 m_gt.yrot);
 
-        m_gt[0] = m_gt[0] - m_gt[1] / 2;
-        m_gt[3] = m_gt[3] - m_gt[5] / 2;
+        m_gt.xorig = m_gt.xorig - m_gt.xscale / 2;
+        m_gt.yorig = m_gt.yorig - m_gt.yscale / 2;
         bGeoTransformValid = TRUE;
     }
     else if (iZoom == 0)
@@ -2799,7 +2802,7 @@ char *MrSIDDataset::GetOGISDefn(GTIFDefn *psDefnIn)
         double adfParam[10];
         int i;
 
-        for (i = 0; i < MIN(10, psDefnIn->nParms); i++)
+        for (i = 0; i < std::min(10, psDefnIn->nParms); i++)
             adfParam[i] = psDefnIn->ProjParm[i];
         for (; i < 10; i++)
             adfParam[i] = 0;
@@ -3008,7 +3011,7 @@ class MrSIDDummyImageReader : public LTIImageReader
 };
 
 /************************************************************************/
-/*                        MrSIDDummyImageReader()                       */
+/*                       MrSIDDummyImageReader()                        */
 /************************************************************************/
 
 MrSIDDummyImageReader::MrSIDDummyImageReader(GDALDataset *poSrcDS)
@@ -3018,7 +3021,7 @@ MrSIDDummyImageReader::MrSIDDummyImageReader(GDALDataset *poSrcDS)
 }
 
 /************************************************************************/
-/*                        ~MrSIDDummyImageReader()                      */
+/*                       ~MrSIDDummyImageReader()                       */
 /************************************************************************/
 
 MrSIDDummyImageReader::~MrSIDDummyImageReader()
@@ -3095,12 +3098,14 @@ LT_STATUS MrSIDDummyImageReader::initialize()
     if (poDS->GetGeoTransform(m_gt) == CE_None)
     {
 #ifdef MRSID_SDK_40
-        LTIGeoCoord oGeo(m_gt[0] + m_gt[1] / 2, m_gt[3] + m_gt[5] / 2, m_gt[1],
-                         m_gt[5], m_gt[2], m_gt[4], nullptr,
+        LTIGeoCoord oGeo(m_gt.xorig + m_gt.xscale / 2,
+                         m_gt.yorig + m_gt.yscale / 2, m_gt.xscale, m_gt.yscale,
+                         m_gt.xrot, m_gt.yrot, nullptr,
                          poDS->GetProjectionRef());
 #else
-        LTIGeoCoord oGeo(m_gt[0] + m_gt[1] / 2, m_gt[3] + m_gt[5] / 2, m_gt[1],
-                         m_gt[5], m_gt[2], m_gt[4], poDS->GetProjectionRef());
+        LTIGeoCoord oGeo(m_gt.xorig + m_gt.xscale / 2,
+                         m_gt.yorig + m_gt.yscale / 2, m_gt.xscale, m_gt.yscale,
+                         m_gt.xrot, m_gt.yrot, poDS->GetProjectionRef());
 #endif
         if (!LT_SUCCESS(setGeoCoord(oGeo)))
             return LT_STS_Failure;
@@ -3128,7 +3133,7 @@ LT_STATUS MrSIDDummyImageReader::initialize()
 }
 
 /************************************************************************/
-/*                             decodeStrip()                            */
+/*                            decodeStrip()                             */
 /************************************************************************/
 
 LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer &stripData,
@@ -3168,7 +3173,7 @@ LT_STATUS MrSIDDummyImageReader::decodeStrip(LTISceneBuffer &stripData,
 
 static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 
@@ -3193,7 +3198,7 @@ static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
                  "MrSID driver ignores color table. "
                  "The source raster band will be considered as grey level.\n"
                  "Consider using color table expansion (-expand option in "
-                 "gdal_translate)\n");
+                 "gdal_translate)");
         if (bStrict)
             return nullptr;
     }
@@ -3421,7 +3426,7 @@ static GDALDataset *MrSIDCreateCopy(const char *pszFilename,
 /************************************************************************/
 
 static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
-                                  int bStrict, char **papszOptions,
+                                  int bStrict, CSLConstList papszOptions,
                                   GDALProgressFunc pfnProgress,
                                   void *pProgressData)
 
@@ -3442,7 +3447,7 @@ static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
                  "MrSID driver ignores color table. "
                  "The source raster band will be considered as grey level.\n"
                  "Consider using color table expansion (-expand option in "
-                 "gdal_translate)\n");
+                 "gdal_translate)");
         if (bStrict)
             return nullptr;
     }
@@ -3550,7 +3555,7 @@ static GDALDataset *JP2CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 #endif /* MRSID_ESDK */
 
 /************************************************************************/
-/*                        GDALRegister_MrSID()                          */
+/*                         GDALRegister_MrSID()                         */
 /************************************************************************/
 
 void GDALRegister_MrSID()

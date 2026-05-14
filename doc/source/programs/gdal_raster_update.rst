@@ -84,6 +84,11 @@ Program-Specific Options
 
 .. include:: gdal_options/oo.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

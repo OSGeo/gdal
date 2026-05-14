@@ -41,7 +41,7 @@ typedef enum
 } OGRGeoRSSGeomDialect;
 
 /************************************************************************/
-/*                             OGRGeoRSSLayer                              */
+/*                            OGRGeoRSSLayer                            */
 /************************************************************************/
 
 class OGRGeoRSSLayer final : public OGRLayer
@@ -145,7 +145,7 @@ class OGRGeoRSSLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRGeoRSSDataSource                        */
+/*                         OGRGeoRSSDataSource                          */
 /************************************************************************/
 
 typedef enum
@@ -181,7 +181,7 @@ class OGRGeoRSSDataSource final : public GDALDataset
 
     int Open(const char *pszFilename, int bUpdate);
 
-    int Create(const char *pszFilename, char **papszOptions);
+    int Create(const char *pszFilename, CSLConstList papszOptions);
 
     int GetLayerCount() const override
     {

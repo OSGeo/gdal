@@ -50,15 +50,15 @@ Program-Specific Options
     The <FILENAME> must be either a raster file in a GDAL supported format with a palette
     or a color file in a supported format (.txt, QGIS .qml, QGIS .qlr).
 
-.. option:: --dst-nodata <VALUE>
+.. option:: --output-nodata <VALUE>
 
     .. versionadded:: 3.13
 
-    Specifies the destination nodata value, that will be used for input pixels
+    Specifies the output nodata value, that will be used for input pixels
     at the source nodata value or that are transparent due to a mask band, such
     as an alpha band. The destination nodata value must be between 0 and 255.
     If there is a source nodata value or a dataset-wide mask band is attached to
-    the source bands, and :option:`--dst-nodata` is not specified, it defaults to
+    the source bands, and :option:`--output-nodata` is not specified, it defaults to
     0.
 
 .. option:: --no-dither
@@ -88,6 +88,11 @@ Standard Options
     .. include:: gdal_options/of_raster_create_copy.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

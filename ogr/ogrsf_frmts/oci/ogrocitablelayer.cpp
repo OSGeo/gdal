@@ -62,8 +62,6 @@ OGROCITableLayer::OGROCITableLayer(OGROCIDataSource *poDSIn,
         nSRID = LookupTableSRID();
 
     poSRS = poDSIn->FetchSRS(nSRID);
-    if (poSRS != nullptr)
-        poSRS->Reference();
 
     hOrdVARRAY = nullptr;
     hElemInfoVARRAY = nullptr;
@@ -122,9 +120,6 @@ OGROCITableLayer::~OGROCITableLayer()
 
     CPLFree(pszQuery);
     CPLFree(pszWHERE);
-
-    if (poSRS != nullptr && poSRS->Dereference() == 0)
-        delete poSRS;
 }
 
 /************************************************************************/
@@ -509,7 +504,7 @@ OGRFeatureDefn *OGROCITableLayer::ReadTableDefinition(const char *pszTable)
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGROCITableLayer::ISetSpatialFilter(int, const OGRGeometry *poGeomIn)
@@ -680,7 +675,7 @@ OGRFeature *OGROCITableLayer::GetFeature(GIntBig nFeatureId)
     poFeature = GetNextRawFeature();
 
     if (poFeature != nullptr && poFeature->GetGeometryRef() != nullptr)
-        poFeature->GetGeometryRef()->assignSpatialReference(poSRS);
+        poFeature->GetGeometryRef()->assignSpatialReference(poSRS.get());
 
     /* -------------------------------------------------------------------- */
     /*      Cleanup the statement.                                          */
@@ -735,7 +730,8 @@ OGRFeature *OGROCITableLayer::GetNextFeature()
         {
             nHits++;
             if (poFeature->GetGeometryRef() != nullptr)
-                poFeature->GetGeometryRef()->assignSpatialReference(poSRS);
+                poFeature->GetGeometryRef()->assignSpatialReference(
+                    poSRS.get());
             return poFeature;
         }
 
@@ -933,7 +929,7 @@ OGRErr OGROCITableLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGROCITableLayer::ICreateFeature(OGRFeature *poFeature)
@@ -1364,7 +1360,7 @@ OGRErr OGROCITableLayer::UnboundCreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           IGetExtent()                               */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGROCITableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -1690,7 +1686,7 @@ void OGROCITableLayer::UpdateLayerExtents()
 }
 
 /************************************************************************/
-/*                   AllocAndBindForWrite()                             */
+/*                        AllocAndBindForWrite()                        */
 /************************************************************************/
 
 int OGROCITableLayer::AllocAndBindForWrite()
@@ -2228,9 +2224,9 @@ OGRErr OGROCITableLayer::SyncToDisk()
     return eErr;
 }
 
-/*************************************************************************/
-/*                         CreateSpatialIndex()                          */
-/*************************************************************************/
+/************************************************************************/
+/*                         CreateSpatialIndex()                         */
+/************************************************************************/
 
 void OGROCITableLayer::CreateSpatialIndex()
 

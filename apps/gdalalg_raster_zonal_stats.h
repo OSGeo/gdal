@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALRasterZonalStatsAlgorithm                      */
+/*                    GDALRasterZonalStatsAlgorithm                     */
 /************************************************************************/
 
 class GDALRasterZonalStatsAlgorithm /* non final */
@@ -54,6 +54,7 @@ class GDALRasterZonalStatsAlgorithm /* non final */
     std::vector<int> m_bands{};
     std::vector<std::string> m_stats{};
     std::vector<std::string> m_includeFields{};
+    bool m_includeZoneGeom{false};
     std::string m_strategy{};
     std::string m_memoryStr{"5%"};
     std::string m_pixels{"default"};
@@ -64,7 +65,7 @@ class GDALRasterZonalStatsAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                 GDALRasterZonalStatsAlgorithmStandalone              */
+/*               GDALRasterZonalStatsAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALRasterZonalStatsAlgorithmStandalone final

@@ -32,6 +32,8 @@ with control information.
 
 .. include:: options/help_and_help_general.rst
 
+.. include:: options/quiet.rst
+
 .. option:: -b <n>
 
 .. option:: -srcband <n>
@@ -175,7 +177,14 @@ with control information.
 
 .. option:: -tps
 
-    Force use of thin plate spline transformer based on available GCPs.
+    Force use of Thin Plate Spline transformer based on available GCPs.
+
+    .. warning::
+
+        Using a Thin Plate Spline transformer with more than a few
+        thousand GCPs requires significant RAM usage (at least ``numGCPs`` * ``numGCPs`` * 8 bytes)
+        and processing time.
+
 
 .. option:: -rpc
 
@@ -273,11 +282,11 @@ with control information.
 
     Resampling method to use. Available methods are:
 
-    ``near``: nearest neighbour resampling (default, fastest algorithm, worst interpolation quality).
+    ``near``: nearest neighbour resampling (default for non-COG drivers, fastest algorithm, worst interpolation quality).
 
     ``bilinear``: bilinear resampling.
 
-    ``cubic``: cubic resampling.
+    ``cubic``: cubic resampling (default for COG driver).
 
     ``cubicspline``: cubic spline resampling.
 
@@ -382,10 +391,6 @@ with control information.
     input/output operation simultaneously. Note that computation is not
     multithreaded itself. To do that, you can use the :option:`-wo` NUM_THREADS=val/ALL_CPUS
     option, which can be combined with :option:`-multi`
-
-.. option:: -q
-
-    Be quiet.
 
 .. include:: options/if.rst
 
@@ -738,42 +743,42 @@ real warping operation.
 Frequently Asked Questions
 --------------------------
 
-Q1. Why does the quality of the output looks so bad (no anti-aliasing)?
+.. rubric:: Q1. Why does the quality of the output looks so bad (no anti-aliasing)?
 
-A1. Did you specify a resampling method, with :option:`-r`, other than the
-    default nearest neighbour?
-
-
-Q2. Why do I get slightly different results whether the output dataset is tiled or not?
-
-A2. This is related to the fact that an approximate coordinate transformation is
-    used by default to speed-up computation. If you want to get the same results
-    whether the output is tiled or not, set :option:`-et` to zero.
-    Note, however, that this will only work for relatively small images; other factors
-    can still result in different result. See following question (Q3).
+Did you specify a resampling method, with :option:`-r`, other than the
+default nearest neighbour?
 
 
-Q3. Why do I observe artifacts, that look like resolution changes and are aligned
-    with rectangular areas of the output raster, when warping sufficiently large
-    rasters, particularly in areas where the reprojection involves significant
-    deformation and only with non-nearest resampling ?
+.. rubric:: Q2. Why do I get slightly different results whether the output dataset is tiled or not?
 
-A3. The warping engine operates on rectangular areas of the output
-    dataset (generally aligned with tile boundaries for a compressed tile dataset).
+This is related to the fact that an approximate coordinate transformation is
+used by default to speed-up computation. If you want to get the same results
+whether the output is tiled or not, set :option:`-et` to zero.
+Note, however, that this will only work for relatively small images; other factors
+can still result in different result. See following question (Q3).
 
-    During reprojection, a single source pixel does not generally correspond to a
-    single output pixel. The resampling method must therefore properly account for this
-    and compute a ratio between the number of source and target pixels in the
-    horizontal (X) and vertical (Y) directions. These ratios are computed per warping
-    chunk. This maximizes the local quality of the warping but has the downside of
-    creating visual discontinuities between warping chunks.
 
-    If you favor a seamless result, you may manually specify the
-    XSCALE and YSCALE warping options with :option:`-wo`.
-    The XSCALE (resp. YSCALE) value is the ratio expressing the resampling factor,
-    i.e. the number of destination pixels per source pixel, along the
-    horizontal (resp. vertical) axis. It equals to one for no resampling, is
-    below one for downsampling, and above one for upsampling.
+.. rubric:: Q3. Why do I observe artifacts, that look like resolution changes and are aligned
+   with rectangular areas of the output raster, when warping sufficiently large
+   rasters, particularly in areas where the reprojection involves significant
+   deformation and only with non-nearest resampling ?
+
+The warping engine operates on rectangular areas of the output
+dataset (generally aligned with tile boundaries for a compressed tile dataset).
+
+During reprojection, a single source pixel does not generally correspond to a
+single output pixel. The resampling method must therefore properly account for this
+and compute a ratio between the number of source and target pixels in the
+horizontal (X) and vertical (Y) directions. These ratios are computed per warping
+chunk. This maximizes the local quality of the warping but has the downside of
+creating visual discontinuities between warping chunks.
+
+If you favor a seamless result, you may manually specify the
+XSCALE and YSCALE warping options with :option:`-wo`.
+The XSCALE (resp. YSCALE) value is the ratio expressing the resampling factor,
+i.e. the number of destination pixels per source pixel, along the
+horizontal (resp. vertical) axis. It equals to one for no resampling, is
+below one for downsampling, and above one for upsampling.
 
 
 Examples
@@ -823,6 +828,10 @@ where cutline.csv content is like:
 
     gdalwarp -overwrite in_dem.tif out_dem.tif -s_srs EPSG:4326+5773 -t_srs EPSG:4979
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 C API
 -----

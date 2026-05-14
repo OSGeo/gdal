@@ -64,39 +64,44 @@ Driver capabilities
 Examples
 --------
 
--  The ogr2ogr utility can be used to dump the results of a LV BAG extract
-   to WGS84 in GeoJSON:
+.. example::
+   :title: Dumping the results of a LV BAG extract to WGS84 in GeoJSON
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -t_srs EPSG:4326 -f GeoJSON output.json 9999PND01012020_000001.xml
 
--  How to dump contents of extract file as OGR sees it:
+.. example::
+   :title: Dumping contents of extract file as OGR sees it
 
-   ::
+   .. code-block:: bash
 
       ogrinfo -ro 9999PND01012020_000001.xml
 
--  Insert repaired features from LV BAG extract archive into PostgreSQL as WGS84 geometries.
+.. example::
+   :title: Inserting repaired features from LV BAG extract archive into PostgreSQL as WGS84 geometries
+
    The table 'pand' will be created with the features from 9999PND18122019.zip. The
    database instance (lvbag) must already exist, and the table 'pand' must not already exist.
 
-   ::
+   .. code-block:: bash
 
       ogr2ogr -oo AUTOCORRECT_INVALID_DATA=YES -t_srs EPSG:4326 -f PostgreSQL PG:dbname=lvbag /vsizip/9999PND18122019.zip
 
-- Load a LV BAG extract directory into Postgres:
+.. example::
+   :title: Loading a LV BAG extract directory into Postgres
 
-   ::
+   .. code-block:: bash
 
      ogr2ogr \
        -f "PostgreSQL" PG:dbname="my_database" \
        9999PND18122019/ \
        -nln "name_of_new_table"
 
-- Create GeoPackage from 'Nummeraanduiding' dataset:
+.. example::
+   :title: Creating a  GeoPackage from 'Nummeraanduiding' dataset
 
-   ::
+   .. code-block:: bash
 
      ogr2ogr \
        -f "GPKG" nummeraanduiding.gpkg \

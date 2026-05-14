@@ -30,7 +30,7 @@
 #endif
 
 /************************************************************************/
-/*            GDALVectorGridAlgorithm::GDALVectorGridAlgorithm()        */
+/*          GDALVectorGridAlgorithm::GDALVectorGridAlgorithm()          */
 /************************************************************************/
 
 GDALVectorGridAlgorithm::GDALVectorGridAlgorithm(bool standaloneStep)
@@ -85,7 +85,7 @@ bool GDALVectorGridAlgorithm::RunStep(GDALPipelineStepRunContext &)
 }
 
 /************************************************************************/
-/*                GDALVectorGeomAlgorithm::RunImpl()                    */
+/*                  GDALVectorGeomAlgorithm::RunImpl()                  */
 /************************************************************************/
 
 bool GDALVectorGridAlgorithm::RunImpl(GDALProgressFunc, void *)
@@ -97,7 +97,7 @@ bool GDALVectorGridAlgorithm::RunImpl(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                 GDALVectorGridAbstractAlgorithm()                    */
+/*                  GDALVectorGridAbstractAlgorithm()                   */
 /************************************************************************/
 
 GDALVectorGridAbstractAlgorithm::GDALVectorGridAbstractAlgorithm(
@@ -120,6 +120,10 @@ GDALVectorGridAbstractAlgorithm::GDALVectorGridAbstractAlgorithm(
         AddInputDatasetArg(&m_inputDataset, GDAL_OF_VECTOR);
         AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER);
         AddCreationOptionsArg(&m_creationOptions);
+    }
+    else
+    {
+        AddVectorHiddenInputDatasetArg();
     }
     AddArg("extent", 0, _("Set the target georeferenced extent"),
            &m_targetExtent)
@@ -185,7 +189,7 @@ GDALVectorGridAbstractAlgorithm::GDALVectorGridAbstractAlgorithm(
 }
 
 /************************************************************************/
-/*               GDALVectorGridAbstractAlgorithm::RunStep()             */
+/*              GDALVectorGridAbstractAlgorithm::RunStep()              */
 /************************************************************************/
 
 bool GDALVectorGridAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -379,7 +383,7 @@ bool GDALVectorGridAbstractAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*               GDALVectorGridAbstractAlgorithm::RunImpl()             */
+/*              GDALVectorGridAbstractAlgorithm::RunImpl()              */
 /************************************************************************/
 
 bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
@@ -392,7 +396,7 @@ bool GDALVectorGridAbstractAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*            GDALVectorGridAbstractAlgorithm::AddRadiusArg()           */
+/*           GDALVectorGridAbstractAlgorithm::AddRadiusArg()            */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &GDALVectorGridAbstractAlgorithm::AddRadiusArg()
@@ -402,7 +406,7 @@ GDALInConstructionAlgorithmArg &GDALVectorGridAbstractAlgorithm::AddRadiusArg()
 }
 
 /************************************************************************/
-/*       GDALVectorGridAbstractAlgorithm::AddRadius1AndRadius2Arg()      */
+/*      GDALVectorGridAbstractAlgorithm::AddRadius1AndRadius2Arg()      */
 /************************************************************************/
 
 void GDALVectorGridAbstractAlgorithm::AddRadius1AndRadius2Arg()
@@ -445,7 +449,7 @@ GDALInConstructionAlgorithmArg &GDALVectorGridAbstractAlgorithm::AddAngleArg()
 }
 
 /************************************************************************/
-/*           GDALVectorGridAbstractAlgorithm::AddMinPointsArg()         */
+/*          GDALVectorGridAbstractAlgorithm::AddMinPointsArg()          */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -457,7 +461,7 @@ GDALVectorGridAbstractAlgorithm::AddMinPointsArg()
 }
 
 /************************************************************************/
-/*           GDALVectorGridAbstractAlgorithm::AddMaxPointsArg()         */
+/*          GDALVectorGridAbstractAlgorithm::AddMaxPointsArg()          */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &
@@ -469,7 +473,7 @@ GDALVectorGridAbstractAlgorithm::AddMaxPointsArg()
 }
 
 /************************************************************************/
-/*    GDALVectorGridAbstractAlgorithm::AddMinMaxPointsPerQuadrantArg()  */
+/*   GDALVectorGridAbstractAlgorithm::AddMinMaxPointsPerQuadrantArg()   */
 /************************************************************************/
 
 void GDALVectorGridAbstractAlgorithm::AddMinMaxPointsPerQuadrantArg()
@@ -485,7 +489,7 @@ void GDALVectorGridAbstractAlgorithm::AddMinMaxPointsPerQuadrantArg()
 }
 
 /************************************************************************/
-/*            GDALVectorGridAbstractAlgorithm::AddNodataArg()           */
+/*           GDALVectorGridAbstractAlgorithm::AddNodataArg()            */
 /************************************************************************/
 
 GDALInConstructionAlgorithmArg &GDALVectorGridAbstractAlgorithm::AddNodataArg()

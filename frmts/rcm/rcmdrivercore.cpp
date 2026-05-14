@@ -100,7 +100,7 @@ int RCMDatasetIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                    RCMDriverSetCommonMetadata()                      */
+/*                     RCMDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void RCMDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -117,7 +117,7 @@ void RCMDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredRCMPlugin()                       */
+/*                      DeclareDeferredRCMPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

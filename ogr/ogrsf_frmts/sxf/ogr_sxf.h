@@ -27,7 +27,7 @@ constexpr double TO_DEGREES = 180.0 / M_PI;
 constexpr double TO_RADIANS = M_PI / 180.0;
 
 /************************************************************************/
-/*                         OGRSXFLayer                                */
+/*                             OGRSXFLayer                              */
 /************************************************************************/
 class OGRSXFLayer final : public OGRLayer
 {

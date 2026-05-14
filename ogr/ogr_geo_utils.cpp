@@ -46,7 +46,7 @@ double OGR_GreatCircle_Distance(double LatA_deg, double LonA_deg,
 }
 
 /************************************************************************/
-/*                      OGR_GreatCircle_InitialHeading()                */
+/*                   OGR_GreatCircle_InitialHeading()                   */
 /************************************************************************/
 
 double OGR_GreatCircle_InitialHeading(double LatA_deg, double LonA_deg,
@@ -108,7 +108,7 @@ double OGR_GreatCircle_InitialHeading(double LatA_deg, double LonA_deg,
 }
 
 /************************************************************************/
-/*                     OGR_GreatCircle_ExtendPosition()                 */
+/*                   OGR_GreatCircle_ExtendPosition()                   */
 /************************************************************************/
 
 int OGR_GreatCircle_ExtendPosition(double dfLatA_deg, double dfLonA_deg,

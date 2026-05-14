@@ -16,6 +16,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#include <algorithm>
 #include <map>
 #include <utility>
 
@@ -25,11 +27,13 @@
 #include "cpl_minixml.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
+#include "cpl_vsi.h"  // CPLGetUsablePhysicalRAM()
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "gdal_alg_priv.h"
 #include "gdal_priv.h"
 #include "gdalgenericinverse.h"
+#include "gdal_thread_pool.h"
 
 CPL_C_START
 CPLXMLNode *GDALSerializeTPSTransformer(void *pTransformArg);
@@ -47,6 +51,7 @@ struct TPSTransformInfo
     double dfSrcApproxErrorReverse{};
 
     bool bReversed{};
+    bool bForceBuiltinMethod = false;
 
     std::vector<gdal::GCP> asGCPs{};
 
@@ -54,7 +59,7 @@ struct TPSTransformInfo
 };
 
 /************************************************************************/
-/*                   GDALCreateSimilarTPSTransformer()                  */
+/*                  GDALCreateSimilarTPSTransformer()                   */
 /************************************************************************/
 
 static void *GDALCreateSimilarTPSTransformer(void *hTransformArg,
@@ -130,7 +135,8 @@ void *GDALCreateTPSTransformer(int nGCPCount, const GDAL_GCP *pasGCPList,
 static void GDALTPSComputeForwardInThread(void *pData)
 {
     TPSTransformInfo *psInfo = static_cast<TPSTransformInfo *>(pData);
-    psInfo->bForwardSolved = psInfo->poForward->solve() != 0;
+    psInfo->bForwardSolved =
+        psInfo->poForward->solve(psInfo->bForceBuiltinMethod) != 0;
 }
 
 void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
@@ -233,33 +239,91 @@ void *GDALCreateTPSTransformerInt(int nGCPCount, const GDAL_GCP *pasGCPList,
         CSLFetchNameValueDef(papszOptions, "SRC_APPROX_ERROR_IN_PIXEL", "0"));
 
     int nThreads = 1;
+    bool bForceBuiltinMethod = false;
+    // Arbitrary threshold beyond which multithreading might be interesting,
+    // and checking memory usage too...
     if (nGCPCount > 100)
     {
-        const char *pszWarpThreads =
-            CSLFetchNameValue(papszOptions, "NUM_THREADS");
-        if (pszWarpThreads == nullptr)
-            pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
-        if (EQUAL(pszWarpThreads, "ALL_CPUS"))
-            nThreads = CPLGetNumCPUs();
-        else
-            nThreads = atoi(pszWarpThreads);
+        // We don't need more than 2 threads: one for forward transformation,
+        // and another one for reverse transformation.
+        nThreads = GDALGetNumThreads(papszOptions, "NUM_THREADS",
+                                     /* nMaxVal = */ 2,
+                                     /* bDefaultAllCPUs = */ false);
+
+        // Do sanity checks w.r.t. available RAM
+
+        const auto nRAM = CPLGetUsablePhysicalRAM();
+        if (nRAM > 0)
+        {
+            const int nMatrixSize = nGCPCount + 3;
+#ifdef HAVE_ARMADILLO
+            // Armadillo requires up to 3 matrices of size nMatrixSize x nMatrixSize
+            // for each transformation direction
+            constexpr int NUM_TEMP_MATRICES = 3;
+            if (nMatrixSize >
+                nRAM / (nThreads * NUM_TEMP_MATRICES * nMatrixSize *
+                        static_cast<int>(sizeof(double))))
+            {
+                if (nMatrixSize > nRAM / (NUM_TEMP_MATRICES * nMatrixSize *
+                                          static_cast<int>(sizeof(double))))
+                {
+                    CPLDebug("GDAL", "Not enough memory to use Armadillo "
+                                     "solver for thinplatespline. Falling back "
+                                     "to LU decomposition method");
+                    bForceBuiltinMethod = true;
+                }
+                else
+                {
+                    nThreads = 1;
+                }
+            }
+            if (bForceBuiltinMethod)
+#endif
+            {
+                if (nMatrixSize > nRAM / (nThreads * nMatrixSize *
+                                          static_cast<int>(sizeof(double))))
+                {
+                    nThreads = 1;
+                    if (nMatrixSize >
+                        nRAM / (nMatrixSize * static_cast<int>(sizeof(double))))
+                    {
+                        CPLError(CE_Failure, CPLE_OutOfMemory,
+                                 "thinplatespline: not enough memory. At least "
+                                 "%u MB are required",
+                                 static_cast<unsigned>(
+                                     static_cast<uint64_t>(nMatrixSize) *
+                                     nMatrixSize * sizeof(double) /
+                                     (1024 * 1024)));
+                        GDALDestroyTPSTransformer(psInfo);
+                        return nullptr;
+                    }
+                }
+            }
+        }
     }
 
-    if (nThreads > 1)
+    psInfo->bForceBuiltinMethod = bForceBuiltinMethod;
+
+    if (nThreads == 2)
     {
         // Compute direct and reverse transforms in parallel.
         CPLJoinableThread *hThread =
             CPLCreateJoinableThread(GDALTPSComputeForwardInThread, psInfo);
-        psInfo->bReverseSolved = psInfo->poReverse->solve() != 0;
+        psInfo->bReverseSolved =
+            psInfo->poReverse->solve(bForceBuiltinMethod) != 0;
         if (hThread != nullptr)
             CPLJoinThread(hThread);
         else
-            psInfo->bForwardSolved = psInfo->poForward->solve() != 0;
+            psInfo->bForwardSolved =
+                psInfo->poForward->solve(bForceBuiltinMethod) != 0;
     }
     else
     {
-        psInfo->bForwardSolved = psInfo->poForward->solve() != 0;
-        psInfo->bReverseSolved = psInfo->poReverse->solve() != 0;
+        psInfo->bForwardSolved =
+            psInfo->poForward->solve(bForceBuiltinMethod) != 0;
+        if (psInfo->bForwardSolved)
+            psInfo->bReverseSolved =
+                psInfo->poReverse->solve(bForceBuiltinMethod) != 0;
     }
 
     if (!psInfo->bForwardSolved || !psInfo->bReverseSolved)

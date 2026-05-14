@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*         GDALRasterAspectAlgorithm::GDALRasterAspectAlgorithm()       */
+/*        GDALRasterAspectAlgorithm::GDALRasterAspectAlgorithm()        */
 /************************************************************************/
 
 GDALRasterAspectAlgorithm::GDALRasterAspectAlgorithm(bool standaloneStep)
@@ -50,7 +50,7 @@ GDALRasterAspectAlgorithm::GDALRasterAspectAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                GDALRasterAspectAlgorithm::RunStep()                  */
+/*                 GDALRasterAspectAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALRasterAspectAlgorithm::RunStep(GDALPipelineStepRunContext &)

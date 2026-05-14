@@ -4,7 +4,7 @@
 Entry point for C++ Multi-dimensional Array API
 ================================================================================
 
-Since GDAL 3.12, :source_file:`gcore/gdal_multidim_cpp.h` is the include file
+Since GDAL 3.12, :source_file:`gcore/multidim/gdal_multidim_cpp.h` is the include file
 for all headers related to the C++ Multi-dimensional Array API.
 
 In earlier versions (and still available in the GDAL 3.x series), :file:`gdal_priv.h`

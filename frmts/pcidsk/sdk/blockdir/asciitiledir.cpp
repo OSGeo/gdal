@@ -41,7 +41,7 @@ struct SysBlockInfo
 typedef std::vector<SysBlockInfo> SysBlockInfoList;
 
 /************************************************************************/
-/*                              GetBlockList()                          */
+/*                            GetBlockList()                            */
 /************************************************************************/
 static BlockInfoList GetBlockList(const SysBlockInfoList & oBlockInfoList,
                                   uint32 iStartBlock)
@@ -98,7 +98,7 @@ static BlockInfoList GetBlockList(const SysBlockInfoList & oBlockInfoList,
 }
 
 /************************************************************************/
-/*                          GetOptimizedDirSize()                       */
+/*                        GetOptimizedDirSize()                         */
 /************************************************************************/
 size_t AsciiTileDir::GetOptimizedDirSize(BlockFile * poFile)
 {
@@ -144,7 +144,7 @@ size_t AsciiTileDir::GetOptimizedDirSize(BlockFile * poFile)
 }
 
 /************************************************************************/
-/*                              AsciiTileDir()                          */
+/*                            AsciiTileDir()                            */
 /************************************************************************/
 
 /**
@@ -255,7 +255,7 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment)
 }
 
 /************************************************************************/
-/*                              AsciiTileDir()                          */
+/*                            AsciiTileDir()                            */
 /************************************************************************/
 
 /**
@@ -285,7 +285,7 @@ AsciiTileDir::AsciiTileDir(BlockFile * poFile, uint16 nSegment,
 }
 
 /************************************************************************/
-/*                              GetTileLayer()                          */
+/*                            GetTileLayer()                            */
 /************************************************************************/
 
 /**
@@ -301,7 +301,7 @@ AsciiTileLayer * AsciiTileDir::GetTileLayer(uint32 iLayer)
 }
 
 /************************************************************************/
-/*                              GetBlockSize()                          */
+/*                            GetBlockSize()                            */
 /************************************************************************/
 
 /**
@@ -315,7 +315,7 @@ uint32 AsciiTileDir::GetBlockSize(void) const
 }
 
 /************************************************************************/
-/*                              ReadFullDir()                           */
+/*                            ReadFullDir()                             */
 /************************************************************************/
 void AsciiTileDir::ReadFullDir(void)
 {
@@ -411,7 +411,7 @@ void AsciiTileDir::ReadFullDir(void)
 }
 
 /************************************************************************/
-/*                             ReadPartialDir()                         */
+/*                           ReadPartialDir()                           */
 /************************************************************************/
 void AsciiTileDir::ReadPartialDir(void)
 {
@@ -526,7 +526,7 @@ void AsciiTileDir::ReadPartialDir(void)
 }
 
 /************************************************************************/
-/*                               GetDirSize()                           */
+/*                             GetDirSize()                             */
 /************************************************************************/
 
 /**
@@ -567,7 +567,7 @@ size_t AsciiTileDir::GetDirSize(void) const
 }
 
 /************************************************************************/
-/*                           GetLayerBlockCount()                       */
+/*                         GetLayerBlockCount()                         */
 /************************************************************************/
 uint32 AsciiTileDir::GetLayerBlockCount(void) const
 {
@@ -584,7 +584,7 @@ uint32 AsciiTileDir::GetLayerBlockCount(void) const
 }
 
 /************************************************************************/
-/*                           GetFreeBlockCount()                        */
+/*                         GetFreeBlockCount()                          */
 /************************************************************************/
 uint32 AsciiTileDir::GetFreeBlockCount(void) const
 {
@@ -592,7 +592,7 @@ uint32 AsciiTileDir::GetFreeBlockCount(void) const
 }
 
 /************************************************************************/
-/*                           UpdateBlockDirInfo()                       */
+/*                         UpdateBlockDirInfo()                         */
 /************************************************************************/
 void AsciiTileDir::UpdateBlockDirInfo(void)
 {
@@ -606,7 +606,7 @@ void AsciiTileDir::UpdateBlockDirInfo(void)
 }
 
 /************************************************************************/
-/*                             InitBlockList()                          */
+/*                           InitBlockList()                            */
 /************************************************************************/
 void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
 {
@@ -676,7 +676,7 @@ void AsciiTileDir::InitBlockList(AsciiTileLayer * poLayer)
 }
 
 /************************************************************************/
-/*                            ReadLayerBlocks()                         */
+/*                          ReadLayerBlocks()                           */
 /************************************************************************/
 void AsciiTileDir::ReadLayerBlocks(uint32 iLayer)
 {
@@ -684,7 +684,7 @@ void AsciiTileDir::ReadLayerBlocks(uint32 iLayer)
 }
 
 /************************************************************************/
-/*                           ReadFreeBlockLayer()                       */
+/*                         ReadFreeBlockLayer()                         */
 /************************************************************************/
 void AsciiTileDir::ReadFreeBlockLayer(void)
 {
@@ -695,7 +695,7 @@ void AsciiTileDir::ReadFreeBlockLayer(void)
 }
 
 /************************************************************************/
-/*                                WriteDir()                            */
+/*                              WriteDir()                              */
 /************************************************************************/
 void AsciiTileDir::WriteDir(void)
 {
@@ -859,7 +859,7 @@ void AsciiTileDir::WriteDir(void)
 }
 
 /************************************************************************/
-/*                              _CreateLayer()                          */
+/*                            _CreateLayer()                            */
 /************************************************************************/
 
 /**
@@ -904,7 +904,7 @@ BlockLayer * AsciiTileDir::_CreateLayer(uint16 nLayerType, uint32 iLayer)
 }
 
 /************************************************************************/
-/*                              _DeleteLayer()                          */
+/*                            _DeleteLayer()                            */
 /************************************************************************/
 
 /**
@@ -928,7 +928,7 @@ void AsciiTileDir::_DeleteLayer(uint32 iLayer)
 }
 
 /************************************************************************/
-/*                           GetDataSegmentName()                       */
+/*                         GetDataSegmentName()                         */
 /************************************************************************/
 std::string AsciiTileDir::GetDataSegmentName(void) const
 {
@@ -936,7 +936,7 @@ std::string AsciiTileDir::GetDataSegmentName(void) const
 }
 
 /************************************************************************/
-/*                           GetDataSegmentDesc()                       */
+/*                         GetDataSegmentDesc()                         */
 /************************************************************************/
 std::string AsciiTileDir::GetDataSegmentDesc(void) const
 {
@@ -944,7 +944,7 @@ std::string AsciiTileDir::GetDataSegmentDesc(void) const
 }
 
 /************************************************************************/
-/*                           ValidateNewBlocks()                        */
+/*                         ValidateNewBlocks()                          */
 /************************************************************************/
 void AsciiTileDir::ValidateNewBlocks(uint32 & nNewBlockCount, bool bFreeBlocks)
 {

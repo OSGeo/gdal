@@ -61,3 +61,8 @@ RGB file of the desired format.
     The output RGB file that will be created.
 
 The '-expand rgb|rgba' option of :ref:`gdal_translate` obsoletes that utility.
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst

@@ -38,6 +38,11 @@ Options
 
     Input vector, raster or multidimensional dataset. Required.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

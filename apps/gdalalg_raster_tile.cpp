@@ -90,7 +90,7 @@ struct BandMetadata
 }  // namespace
 
 /************************************************************************/
-/*                       GetThresholdMinTilesPerJob()                   */
+/*                     GetThresholdMinTilesPerJob()                     */
 /************************************************************************/
 
 static int GetThresholdMinThreadsForSpawn()
@@ -105,7 +105,7 @@ static int GetThresholdMinThreadsForSpawn()
 }
 
 /************************************************************************/
-/*                        GetThresholdMinTilesPerJob()                  */
+/*                     GetThresholdMinTilesPerJob()                     */
 /************************************************************************/
 
 static int GetThresholdMinTilesPerJob()
@@ -120,7 +120,7 @@ static int GetThresholdMinTilesPerJob()
 }
 
 /************************************************************************/
-/*           GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()         */
+/*          GDALRasterTileAlgorithm::GDALRasterTileAlgorithm()          */
 /************************************************************************/
 
 GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
@@ -188,7 +188,7 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
 
     std::vector<std::string> tilingSchemes{"raster"};
     for (const std::string &scheme :
-         gdal::TileMatrixSet::listPredefinedTileMatrixSets())
+         gdal::TileMatrixSet::listPredefinedTileMatrixSets(/* hidden = */ true))
     {
         auto poTMS = gdal::TileMatrixSet::parse(scheme.c_str());
         OGRSpatialReference oSRS_TMS;
@@ -208,11 +208,18 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
         .SetHiddenChoices(
             "GoogleMapsCompatible",  // equivalent of WebMercatorQuad
             "mercator",              // gdal2tiles equivalent of WebMercatorQuad
-            "geodetic"  // gdal2tiles (not totally) equivalent of WorldCRS84Quad
+            "GlobalGeodeticOriginLat270"  // gdal2tiles geodetic without --tmscompatible
         );
 
     AddArg("min-zoom", 0, _("Minimum zoom level"), &m_minZoomLevel)
         .SetMinValueIncluded(0);
+
+    // Only used by PMTiles driver for now
+    AddArg("min-zoom-single-tile", 0,
+           _("Determine minimum zoom level to produce a single tile"),
+           &m_minZoomLevelSingleTile)
+        .SetHidden();
+
     AddArg("max-zoom", 0, _("Maximum zoom level"), &m_maxZoomLevel)
         .SetMinValueIncluded(0);
 
@@ -258,7 +265,8 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
            &m_noalpha)
         .SetMutualExclusionGroup("alpha");
     auto &dstNoDataArg =
-        AddArg("dst-nodata", 0, _("Destination nodata value"), &m_dstNoData);
+        AddArg("output-nodata", 0, _("Output nodata value"), &m_dstNoData)
+            .AddHiddenAlias("dst-nodata");
     AddArg("skip-blank", 0, _("Do not generate blank tiles"), &m_skipBlank);
 
     {
@@ -376,7 +384,7 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
             {
                 ReportError(
                     CE_Failure, CPLE_IllegalArg,
-                    "'add-alpha' and 'dst-nodata' are mutually exclusive");
+                    "'add-alpha' and 'output-nodata' are mutually exclusive");
                 return false;
             }
 
@@ -408,7 +416,7 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                          GetTileIndices()                            */
+/*                           GetTileIndices()                           */
 /************************************************************************/
 
 static bool GetTileIndices(gdal::TileMatrixSet::TileMatrix &tileMatrix,
@@ -482,7 +490,7 @@ static bool GetTileIndices(gdal::TileMatrixSet::TileMatrix &tileMatrix,
 }
 
 /************************************************************************/
-/*                           GetFileY()                                 */
+/*                              GetFileY()                              */
 /************************************************************************/
 
 static int GetFileY(int iY, const gdal::TileMatrixSet::TileMatrix &tileMatrix,
@@ -492,7 +500,7 @@ static int GetFileY(int iY, const gdal::TileMatrixSet::TileMatrix &tileMatrix,
 }
 
 /************************************************************************/
-/*                          GenerateTile()                              */
+/*                            GenerateTile()                            */
 /************************************************************************/
 
 // Cf http://www.libpng.org/pub/png/spec/1.2/PNG-Filters.html
@@ -1404,14 +1412,14 @@ static bool GenerateTile(
     }
 
     GDALGeoTransform gt;
-    gt[0] =
+    gt.xorig =
         tileMatrix.mTopLeftX + iX * tileMatrix.mResX * tileMatrix.mTileWidth;
-    gt[1] = tileMatrix.mResX;
-    gt[2] = 0;
-    gt[3] =
+    gt.xscale = tileMatrix.mResX;
+    gt.xrot = 0;
+    gt.yorig =
         tileMatrix.mTopLeftY - iY * tileMatrix.mResY * tileMatrix.mTileHeight;
-    gt[4] = 0;
-    gt[5] = -tileMatrix.mResY;
+    gt.yrot = 0;
+    gt.yscale = -tileMatrix.mResY;
     memDS->SetGeoTransform(gt);
 
     memDS->SetSpatialRef(&oSRS_TMS);
@@ -1459,7 +1467,7 @@ static bool GenerateTile(
 }
 
 /************************************************************************/
-/*                    GenerateOverviewTile()                            */
+/*                        GenerateOverviewTile()                        */
 /************************************************************************/
 
 static bool
@@ -1775,7 +1783,7 @@ namespace
 {
 
 /************************************************************************/
-/*                     FakeMaxZoomRasterBand                            */
+/*                        FakeMaxZoomRasterBand                         */
 /************************************************************************/
 
 class FakeMaxZoomRasterBand : public GDALRasterBand
@@ -1850,7 +1858,7 @@ class FakeMaxZoomRasterBand : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                       FakeMaxZoomDataset                             */
+/*                          FakeMaxZoomDataset                          */
 /************************************************************************/
 
 // This class is used to create a fake output dataset for GDALWarpOperation.
@@ -1911,7 +1919,7 @@ class FakeMaxZoomDataset : public GDALDataset
 };
 
 /************************************************************************/
-/*                          MosaicRasterBand                            */
+/*                           MosaicRasterBand                           */
 /************************************************************************/
 
 class MosaicRasterBand : public GDALRasterBand
@@ -1973,7 +1981,7 @@ class MosaicRasterBand : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                         MosaicDataset                                */
+/*                            MosaicDataset                             */
 /************************************************************************/
 
 // This class is to expose the tiles of a given level as a mosaic that
@@ -2026,12 +2034,12 @@ class MosaicDataset : public GDALDataset
     {
         nRasterXSize = (nTileMaxX - nTileMinX + 1) * oTM.mTileWidth;
         nRasterYSize = (nTileMaxY - nTileMinY + 1) * oTM.mTileHeight;
-        m_gt[0] = oTM.mTopLeftX + nTileMinX * oTM.mResX * oTM.mTileWidth;
-        m_gt[1] = oTM.mResX;
-        m_gt[2] = 0;
-        m_gt[3] = oTM.mTopLeftY - nTileMinY * oTM.mResY * oTM.mTileHeight;
-        m_gt[4] = 0;
-        m_gt[5] = -oTM.mResY;
+        m_gt.xorig = oTM.mTopLeftX + nTileMinX * oTM.mResX * oTM.mTileWidth;
+        m_gt.xscale = oTM.mResX;
+        m_gt.xrot = 0;
+        m_gt.yorig = oTM.mTopLeftY - nTileMinY * oTM.mResY * oTM.mTileHeight;
+        m_gt.yrot = 0;
+        m_gt.yscale = -oTM.mResY;
         for (int i = 1; i <= nBandsIn; ++i)
         {
             const GDALColorInterp eColorInterp =
@@ -2076,7 +2084,7 @@ class MosaicDataset : public GDALDataset
 };
 
 /************************************************************************/
-/*                   MosaicRasterBand::IReadBlock()                     */
+/*                    MosaicRasterBand::IReadBlock()                    */
 /************************************************************************/
 
 CPLErr MosaicRasterBand::IReadBlock(int nXBlock, int nYBlock, void *pData)
@@ -2149,7 +2157,7 @@ static void ApplySubstitutions(CPLString &s,
 }
 
 /************************************************************************/
-/*                           GenerateLeaflet()                          */
+/*                          GenerateLeaflet()                           */
 /************************************************************************/
 
 static void GenerateLeaflet(const std::string &osDirectory,
@@ -2239,7 +2247,7 @@ GenerateMapML(const std::string &osDirectory, const std::string &mapmlTemplate,
         else
             substs["TILING_SCHEME"] = tms.identifier();
 
-        substs["URL"] = osURL.empty() ? "./" : osURL;
+        substs["URL"] = osURL.empty() ? "./" : osURL + "/";
         substs["MINTILEX"] = CPLSPrintf("%d", nMinTileX);
         substs["MINTILEY"] = CPLSPrintf("%d", nMinTileY);
         substs["MAXTILEX"] = CPLSPrintf("%d", nMaxTileX);
@@ -2455,8 +2463,8 @@ GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
         std::move(oTilesTileMatrixLink);
     oProperties["tiles:tile_matrix_links"] = std::move(oTilesTileMatrixLinks);
 
-    const char *pszAuthName = oSRS.GetAuthorityName(nullptr);
-    const char *pszAuthCode = oSRS.GetAuthorityCode(nullptr);
+    const char *pszAuthName = oSRS.GetAuthorityName();
+    const char *pszAuthCode = oSRS.GetAuthorityCode();
     if (pszAuthName && pszAuthCode)
     {
         oProperties["proj:code"] =
@@ -2625,7 +2633,7 @@ GenerateSTAC(const std::string &osDirectory, const std::string &osTitle,
 }
 
 /************************************************************************/
-/*                           GenerateOpenLayers()                       */
+/*                         GenerateOpenLayers()                         */
 /************************************************************************/
 
 static void GenerateOpenLayers(
@@ -2904,8 +2912,8 @@ static void GenerateOpenLayers(
     }
     else if (!oSRS_TMS.IsEmpty() && tms.identifier() != "GoogleMapsCompatible")
     {
-        const char *pszAuthName = oSRS_TMS.GetAuthorityName(nullptr);
-        const char *pszAuthCode = oSRS_TMS.GetAuthorityCode(nullptr);
+        const char *pszAuthName = oSRS_TMS.GetAuthorityName();
+        const char *pszAuthCode = oSRS_TMS.GetAuthorityCode();
         if (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "EPSG"))
         {
             substs["epsg_code"] = pszAuthCode;
@@ -2956,7 +2964,7 @@ static void GenerateOpenLayers(
 }
 
 /************************************************************************/
-/*                           GetTileBoundingBox()                       */
+/*                         GetTileBoundingBox()                         */
 /************************************************************************/
 
 static void GetTileBoundingBox(int nTileX, int nTileY, int nTileZ,
@@ -2998,7 +3006,7 @@ static void GetTileBoundingBox(int nTileX, int nTileY, int nTileZ,
 }
 
 /************************************************************************/
-/*                           GenerateKML()                              */
+/*                            GenerateKML()                             */
 /************************************************************************/
 
 namespace
@@ -3222,7 +3230,7 @@ namespace
 {
 
 /************************************************************************/
-/*                            ResourceManager                           */
+/*                           ResourceManager                            */
 /************************************************************************/
 
 // Generic cache managing resources
@@ -3273,7 +3281,7 @@ template <class Resource> class ResourceManager /* non final */
 };
 
 /************************************************************************/
-/*                         PerThreadMaxZoomResources                    */
+/*                      PerThreadMaxZoomResources                       */
 /************************************************************************/
 
 // Per-thread resources for generation of tiles at full resolution
@@ -3297,7 +3305,7 @@ struct PerThreadMaxZoomResources
 };
 
 /************************************************************************/
-/*                      PerThreadMaxZoomResourceManager                 */
+/*                   PerThreadMaxZoomResourceManager                    */
 /************************************************************************/
 
 // Manage a cache of PerThreadMaxZoomResources instances
@@ -3371,7 +3379,7 @@ class PerThreadMaxZoomResourceManager final
 };
 
 /************************************************************************/
-/*                       PerThreadLowerZoomResources                    */
+/*                     PerThreadLowerZoomResources                      */
 /************************************************************************/
 
 // Per-thread resources for generation of tiles at zoom level < max
@@ -3381,7 +3389,7 @@ struct PerThreadLowerZoomResources
 };
 
 /************************************************************************/
-/*                   PerThreadLowerZoomResourceManager                  */
+/*                  PerThreadLowerZoomResourceManager                   */
 /************************************************************************/
 
 // Manage a cache of PerThreadLowerZoomResources instances
@@ -3409,7 +3417,7 @@ class PerThreadLowerZoomResourceManager final
 }  // namespace
 
 /************************************************************************/
-/*            GDALRasterTileAlgorithm::ValidateOutputFormat()           */
+/*           GDALRasterTileAlgorithm::ValidateOutputFormat()            */
 /************************************************************************/
 
 bool GDALRasterTileAlgorithm::ValidateOutputFormat(GDALDataType eSrcDT) const
@@ -3440,7 +3448,7 @@ bool GDALRasterTileAlgorithm::ValidateOutputFormat(GDALDataType eSrcDT) const
         }
         const bool bUInt16Supported =
             strstr(m_poDstDriver->GetMetadataItem(GDAL_DMD_CREATIONDATATYPES),
-                   "UInt16");
+                   "UInt16") != nullptr;
         if (eSrcDT != GDT_UInt8 && !(eSrcDT == GDT_UInt16 && bUInt16Supported))
         {
             ReportError(
@@ -3600,7 +3608,7 @@ bool GDALRasterTileAlgorithm::IsCompatibleOfSpawn(const char *&pszErrorMsg)
 }
 
 /************************************************************************/
-/*                      GetProgressForChildProcesses()                  */
+/*                    GetProgressForChildProcesses()                    */
 /************************************************************************/
 
 static void GetProgressForChildProcesses(
@@ -3730,7 +3738,7 @@ static void GetProgressForChildProcesses(
 }
 
 /************************************************************************/
-/*                       WaitForSpawnedProcesses()                      */
+/*                      WaitForSpawnedProcesses()                       */
 /************************************************************************/
 
 void GDALRasterTileAlgorithm::WaitForSpawnedProcesses(
@@ -3822,7 +3830,7 @@ int GDALRasterTileAlgorithm::GetMaxChildCount(int nMaxJobCount) const
 }
 
 /************************************************************************/
-/*                           SendConfigOptions()                        */
+/*                         SendConfigOptions()                          */
 /************************************************************************/
 
 static void SendConfigOptions(CPLSpawnedProcess *hSpawnedProcess, bool &bRet)
@@ -3857,7 +3865,7 @@ static void SendConfigOptions(CPLSpawnedProcess *hSpawnedProcess, bool &bRet)
 }
 
 /************************************************************************/
-/*                        GenerateTilesForkMethod()                     */
+/*                      GenerateTilesForkMethod()                       */
 /************************************************************************/
 
 #ifdef FORK_ALLOWED
@@ -3903,7 +3911,7 @@ static int GenerateTilesForkMethod(CPL_FILE_HANDLE in, CPL_FILE_HANDLE out)
 #endif  // FORK_ALLOWED
 
 /************************************************************************/
-/*          GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod()     */
+/*       GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod()        */
 /************************************************************************/
 
 bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
@@ -4143,7 +4151,7 @@ bool GDALRasterTileAlgorithm::GenerateBaseTilesSpawnMethod(
 }
 
 /************************************************************************/
-/*      GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod()     */
+/*     GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod()      */
 /************************************************************************/
 
 bool GDALRasterTileAlgorithm::GenerateOverviewTilesSpawnMethod(
@@ -4401,7 +4409,7 @@ bool GDALRasterTileAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                          SpawnedErrorHandler()                       */
+/*                        SpawnedErrorHandler()                         */
 /************************************************************************/
 
 static void CPL_STDCALL SpawnedErrorHandler(CPLErr eErr, CPLErrorNum eNum,
@@ -4597,8 +4605,6 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     if (m_tilingScheme == "mercator")
         m_tilingScheme = "WebMercatorQuad";
-    else if (m_tilingScheme == "geodetic")
-        m_tilingScheme = "WorldCRS84Quad";
     else if (m_tilingScheme == "raster")
     {
         if (m_tileSize == 0)
@@ -4636,8 +4642,8 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         aosTO.SetNameValue("DST_SRS", oSRS_TMS.exportToWkt().c_str());
     }
 
-    const char *pszAuthName = oSRS_TMS.GetAuthorityName(nullptr);
-    const char *pszAuthCode = oSRS_TMS.GetAuthorityCode(nullptr);
+    const char *pszAuthName = oSRS_TMS.GetAuthorityName();
+    const char *pszAuthCode = oSRS_TMS.GetAuthorityCode();
     const int nEPSGCode =
         (pszAuthName && pszAuthCode && EQUAL(pszAuthName, "EPSG"))
             ? atoi(pszAuthCode)
@@ -4825,8 +4831,6 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 m_maxZoomLevel--;
         }
     }
-    if (m_minZoomLevel < 0)
-        m_minZoomLevel = m_maxZoomLevel;
 
     auto tileMatrix = tileMatrixList[m_maxZoomLevel];
     int nMinTileX = 0;
@@ -4927,6 +4931,17 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                nMinTileY * tileMatrix.mResY * tileMatrix.mTileHeight;
     dstGT[4] = 0;
     dstGT[5] = -tileMatrix.mResY;
+
+    if (m_minZoomLevelSingleTile)
+    {
+        const int nMaxDim = std::max(nXSize, nYSize);
+        const int nOvrCount = static_cast<int>(
+            std::ceil(std::max(0.0, std::log2(static_cast<double>(nMaxDim) /
+                                              tileMatrix.mTileWidth))));
+        m_minZoomLevel = std::max(0, m_maxZoomLevel - nOvrCount);
+    }
+    else if (m_minZoomLevel < 0)
+        m_minZoomLevel = m_maxZoomLevel;
 
     /* -------------------------------------------------------------------- */
     /*      Setup warp options.                                             */
@@ -6036,9 +6051,9 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     const auto IsWebViewerEnabled = [this](const char *name)
     {
         return std::find_if(m_webviewers.begin(), m_webviewers.end(),
-                            [name](const std::string &s) {
-                                return s == "all" || s == name;
-                            }) != m_webviewers.end();
+                            [name](const std::string &s)
+                            { return s == "all" || s == name; }) !=
+               m_webviewers.end();
     };
 
     if (m_ovrZoomLevel < 0 && bRet &&

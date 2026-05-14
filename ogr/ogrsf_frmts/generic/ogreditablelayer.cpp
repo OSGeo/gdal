@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                  ~IOGREditableLayerSynchronizer()                    */
+/*                   ~IOGREditableLayerSynchronizer()                   */
 /************************************************************************/
 
 IOGREditableLayerSynchronizer::~IOGREditableLayerSynchronizer()
@@ -69,7 +69,7 @@ OGREditableLayer::~OGREditableLayer()
 }
 
 /************************************************************************/
-/*                           SetNextFID()                               */
+/*                             SetNextFID()                             */
 /************************************************************************/
 
 void OGREditableLayer::SetNextFID(GIntBig nNextFID)
@@ -78,7 +78,7 @@ void OGREditableLayer::SetNextFID(GIntBig nNextFID)
 }
 
 /************************************************************************/
-/*                       SetSupportsCurveGeometries()                   */
+/*                     SetSupportsCurveGeometries()                     */
 /************************************************************************/
 
 void OGREditableLayer::SetSupportsCurveGeometries(bool bSupportsCurveGeometries)
@@ -87,7 +87,7 @@ void OGREditableLayer::SetSupportsCurveGeometries(bool bSupportsCurveGeometries)
 }
 
 /************************************************************************/
-/*                       SetSupportsCreateGeomField()                   */
+/*                     SetSupportsCreateGeomField()                     */
 /************************************************************************/
 
 void OGREditableLayer::SetSupportsCreateGeomField(bool bSupportsCreateGeomField)
@@ -116,7 +116,7 @@ void OGREditableLayer::DetectNextFID()
 }
 
 /************************************************************************/
-/*                         GetSrcGeomFieldIndex()                       */
+/*                        GetSrcGeomFieldIndex()                        */
 /************************************************************************/
 
 int OGREditableLayer::GetSrcGeomFieldIndex(int iGeomField)
@@ -285,7 +285,7 @@ OGRFeature *OGREditableLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                          SetNextByIndex()                            */
+/*                           SetNextByIndex()                           */
 /************************************************************************/
 
 OGRErr OGREditableLayer::SetNextByIndex(GIntBig nIndex)
@@ -300,7 +300,7 @@ OGRErr OGREditableLayer::SetNextByIndex(GIntBig nIndex)
 }
 
 /************************************************************************/
-/*                              GetFeature()                            */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGREditableLayer::GetFeature(GIntBig nFID)
@@ -371,7 +371,7 @@ OGRErr OGREditableLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGREditableLayer::ICreateFeature(OGRFeature *poFeature)
@@ -414,7 +414,7 @@ OGRErr OGREditableLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          IUpsertFeature()                            */
+/*                           IUpsertFeature()                           */
 /************************************************************************/
 
 OGRErr OGREditableLayer::IUpsertFeature(OGRFeature *poFeature)
@@ -432,7 +432,7 @@ OGRErr OGREditableLayer::IUpsertFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                            IUpdateFeature()                          */
+/*                           IUpdateFeature()                           */
 /************************************************************************/
 
 OGRErr OGREditableLayer::IUpdateFeature(OGRFeature *poFeature,
@@ -450,7 +450,7 @@ OGRErr OGREditableLayer::IUpdateFeature(OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                          DeleteFeature()                             */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 OGRErr OGREditableLayer::DeleteFeature(GIntBig nFID)
@@ -497,7 +497,7 @@ OGRErr OGREditableLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                             GetGeomType()                            */
+/*                            GetGeomType()                             */
 /************************************************************************/
 
 OGRwkbGeometryType OGREditableLayer::GetGeomType() const
@@ -506,7 +506,7 @@ OGRwkbGeometryType OGREditableLayer::GetGeomType() const
 }
 
 /************************************************************************/
-/*                             GetLayerDefn()                           */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGREditableLayer::GetLayerDefn() const
@@ -515,7 +515,7 @@ const OGRFeatureDefn *OGREditableLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                             GetSpatialRef()                          */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *OGREditableLayer::GetSpatialRef() const
@@ -524,7 +524,7 @@ const OGRSpatialReference *OGREditableLayer::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                           GetSpatialFilter()                         */
+/*                          GetSpatialFilter()                          */
 /************************************************************************/
 
 OGRGeometry *OGREditableLayer::GetSpatialFilter()
@@ -533,7 +533,7 @@ OGRGeometry *OGREditableLayer::GetSpatialFilter()
 }
 
 /************************************************************************/
-/*                           SetAttributeFilter()                       */
+/*                         SetAttributeFilter()                         */
 /************************************************************************/
 
 OGRErr OGREditableLayer::SetAttributeFilter(const char *poAttrFilter)
@@ -552,7 +552,7 @@ bool OGREditableLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGREditableLayer::ISetSpatialFilter(int iGeomField,
@@ -595,7 +595,7 @@ GIntBig OGREditableLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                              IGetExtent()                            */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGREditableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -623,7 +623,7 @@ OGRErr OGREditableLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                            TestCapability()                          */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGREditableLayer::TestCapability(const char *pszCap) const
@@ -683,7 +683,7 @@ OGRErr OGREditableLayer::CreateField(const OGRFieldDefn *poField, int bApproxOK)
 }
 
 /************************************************************************/
-/*                             DeleteField()                            */
+/*                            DeleteField()                             */
 /************************************************************************/
 
 OGRErr OGREditableLayer::DeleteField(int iField)
@@ -711,7 +711,7 @@ OGRErr OGREditableLayer::DeleteField(int iField)
 }
 
 /************************************************************************/
-/*                             ReorderFields()                          */
+/*                           ReorderFields()                            */
 /************************************************************************/
 
 OGRErr OGREditableLayer::ReorderFields(int *panMap)
@@ -731,7 +731,7 @@ OGRErr OGREditableLayer::ReorderFields(int *panMap)
 }
 
 /************************************************************************/
-/*                            AlterFieldDefn()                          */
+/*                           AlterFieldDefn()                           */
 /************************************************************************/
 
 OGRErr OGREditableLayer::AlterFieldDefn(int iField,
@@ -794,7 +794,7 @@ OGRErr OGREditableLayer::AlterGeomFieldDefn(
 }
 
 /************************************************************************/
-/*                          CreateGeomField()                          */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
 OGRErr OGREditableLayer::CreateGeomField(const OGRGeomFieldDefn *poField,

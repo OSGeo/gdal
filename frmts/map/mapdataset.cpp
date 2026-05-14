@@ -323,10 +323,10 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     const double x = CPLAtofM(aosTokens[2]);
                     const double y = CPLAtofM(aosTokens[3]);
-                    const double X =
-                        poDS->m_gt[0] + x * poDS->m_gt[1] + y * poDS->m_gt[2];
-                    const double Y =
-                        poDS->m_gt[3] + x * poDS->m_gt[4] + y * poDS->m_gt[5];
+                    const double X = poDS->m_gt.xorig + x * poDS->m_gt.xscale +
+                                     y * poDS->m_gt.xrot;
+                    const double Y = poDS->m_gt.yorig + x * poDS->m_gt.yrot +
+                                     y * poDS->m_gt.yscale;
                     poRing->addPoint(X, Y);
                     CPLDebug("CORNER MMPXY", "%f, %f, %f, %f", x, y, X, Y);
                 }
@@ -388,7 +388,7 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *MAPDataset::GetSpatialRef() const
@@ -409,7 +409,7 @@ CPLErr MAPDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                           GetGCPCount()                              */
+/*                            GetGCPCount()                             */
 /************************************************************************/
 
 int MAPDataset::GetGCPCount()
@@ -427,7 +427,7 @@ const OGRSpatialReference *MAPDataset::GetGCPSpatialRef() const
 }
 
 /************************************************************************/
-/*                               GetGCPs()                              */
+/*                              GetGCPs()                               */
 /************************************************************************/
 
 const GDAL_GCP *MAPDataset::GetGCPs()

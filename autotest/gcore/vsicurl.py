@@ -84,6 +84,7 @@ def test_vsicurl_3():
 
 @pytest.mark.slow()
 @gdaltest.disable_exceptions()
+@pytest.mark.network
 def test_vsicurl_4():
 
     ds = ogr.Open(
@@ -154,11 +155,12 @@ def test_vsicurl_8():
 
 
 @pytest.mark.slow()
+@pytest.mark.network
 def test_vsicurl_9():
 
     ds = gdal.Open(
         "/vsicurl/http://download.osgeo.org/gdal/data/gtiff/"
-        "xx\u4E2D\u6587.\u4E2D\u6587"
+        "xx\u4e2d\u6587.\u4e2d\u6587"
     )
     assert ds is not None
 
@@ -168,6 +170,7 @@ def test_vsicurl_9():
 
 
 @pytest.mark.slow()
+@pytest.mark.network
 def test_vsicurl_10():
 
     ds = gdal.Open(
@@ -181,6 +184,7 @@ def test_vsicurl_10():
 
 
 @pytest.mark.slow()
+@pytest.mark.network
 def test_vsicurl_11():
 
     f = gdal.VSIFOpenL(
@@ -271,9 +275,9 @@ def test_vsicurl_test_redirect(server, authorization_header_allowed):
 
     options = {"GDAL_HTTP_HEADERS": "Authorization: Bearer xxx"}
     if authorization_header_allowed:
-        options[
-            "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"
-        ] = authorization_header_allowed
+        options["CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"] = (
+            authorization_header_allowed
+        )
     with webserver.install_http_handler(handler), gdal.config_options(options):
         f = gdal.VSIFOpenL(
             "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
@@ -293,7 +297,10 @@ def test_vsicurl_test_redirect(server, authorization_header_allowed):
 @pytest.mark.parametrize(
     "authorization_header_allowed", [None, "YES", "NO", "IF_SAME_HOST"]
 )
-def test_vsicurl_test_redirect_different_server(server, authorization_header_allowed):
+@pytest.mark.parametrize("redirect_code", [301, 302])
+def test_vsicurl_test_redirect_different_server(
+    server, authorization_header_allowed, redirect_code
+):
 
     gdal.VSICurlClearCache()
 
@@ -309,18 +316,42 @@ def test_vsicurl_test_redirect_different_server(server, authorization_header_all
     handler.add(
         "HEAD",
         "/test_redirect/test.bin",
-        301,
+        redirect_code,
         {"Location": "http://127.0.0.1:%d/redirected/test.bin" % server.port},
         expected_headers={"Authorization": "Bearer xxx"},
     )
-    handler.add(
-        "HEAD",
-        "/redirected/test.bin",
-        200,
-        {"Content-Length": "3"},
-        expected_headers=expected_headers,
-        unexpected_headers=unexpected_headers,
-    )
+    if redirect_code == 302 and authorization_header_allowed is None:
+        handler.add(
+            "HEAD",
+            "/redirected/test.bin",
+            403,
+            expected_headers=expected_headers,
+            unexpected_headers=unexpected_headers,
+        )
+        handler.add(
+            "GET",
+            "/redirected/test.bin",
+            200,
+            {"Content-Length": "3"},
+            b"xyz",
+        )
+    else:
+        handler.add(
+            "HEAD",
+            "/redirected/test.bin",
+            200,
+            {"Content-Length": "3"},
+            expected_headers=expected_headers,
+            unexpected_headers=unexpected_headers,
+        )
+    if redirect_code == 302:
+        handler.add(
+            "GET",
+            "/test_redirect/test.bin",
+            redirect_code,
+            {"Location": "http://127.0.0.1:%d/redirected/test.bin" % server.port},
+            expected_headers={"Authorization": "Bearer xxx"},
+        )
     handler.add(
         "GET",
         "/redirected/test.bin",
@@ -333,9 +364,9 @@ def test_vsicurl_test_redirect_different_server(server, authorization_header_all
 
     options = {"GDAL_HTTP_HEADERS": "Authorization: Bearer xxx"}
     if authorization_header_allowed:
-        options[
-            "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"
-        ] = authorization_header_allowed
+        options["CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"] = (
+            authorization_header_allowed
+        )
     with webserver.install_http_handler(handler), gdal.config_options(options):
         f = gdal.VSIFOpenL(
             "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
@@ -398,9 +429,9 @@ def test_vsicurl_test_redirect_different_server_with_bearer(
 
     options = {"GDAL_HTTP_AUTH": "BEARER", "GDAL_HTTP_BEARER": "xxx"}
     if authorization_header_allowed:
-        options[
-            "CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"
-        ] = authorization_header_allowed
+        options["CPL_VSIL_CURL_AUTHORIZATION_HEADER_ALLOWED_IF_REDIRECT"] = (
+            authorization_header_allowed
+        )
     with webserver.install_http_handler(handler), gdal.config_options(options):
         f = gdal.VSIFOpenL(
             "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
@@ -590,6 +621,9 @@ def test_vsicurl_test_redirect_x_amz(server):
     current_time = 1500
 
     def method(request):
+
+        assert request.headers["Authorization"] == "Bearer xxx"
+
         response = "HTTP/1.1 302 Found\r\n"
         response += "Server: foo\r\n"
         response += (
@@ -598,7 +632,7 @@ def test_vsicurl_test_redirect_x_amz(server):
             + "\r\n"
         )
         response += "Location: %s\r\n" % (
-            "http://localhost:%d/foo.s3.amazonaws.com/test_redirected/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s"
+            "http://127.0.0.1:%d/foo.s3.amazonaws.com/test_redirected/test.bin?X-Amz-Signature=foo&X-Amz-Expires=30&X-Amz-Date=%s"
             % (
                 server.port,
                 time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(current_time)),
@@ -615,9 +649,13 @@ def test_vsicurl_test_redirect_x_amz(server):
         403,
         {"Server": "foo"},
         "",
+        unexpected_headers=["Authorization"],
     )
 
     def method(request):
+
+        assert "Authorization" not in request.headers
+
         if "Range" in request.headers:
             if request.headers["Range"] == "bytes=0-16383":
                 request.protocol_version = "HTTP/1.1"
@@ -660,10 +698,25 @@ def test_vsicurl_test_redirect_x_amz(server):
         custom_method=method,
     )
 
-    with webserver.install_http_handler(handler):
-        f = gdal.VSIFOpenL(
-            "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
-            "rb",
+    gdal.SetPathSpecificOption(
+        "/vsicurl/http://localhost:%d/test_redirect" % server.port,
+        "GDAL_HTTP_AUTH",
+        "BEARER",
+    )
+    gdal.SetPathSpecificOption(
+        "/vsicurl/http://localhost:%d/test_redirect" % server.port,
+        "GDAL_HTTP_BEARER",
+        "xxx",
+    )
+    try:
+        with webserver.install_http_handler(handler):
+            f = gdal.VSIFOpenL(
+                "/vsicurl/http://localhost:%d/test_redirect/test.bin" % server.port,
+                "rb",
+            )
+    finally:
+        gdal.ClearPathSpecificOptions(
+            "/vsicurl/http://localhost:%d/test_redirect" % server.port
         )
     assert f is not None
 
@@ -900,6 +953,83 @@ def test_vsicurl_retry_codes_no_match(server):
             data = gdal.VSIFReadL(1, 3, f).decode("ascii")
         gdal.VSIFCloseL(f)
         assert len(data) == 0
+
+
+###############################################################################
+# Test that ReadMultiRange retries on 429
+
+
+def test_vsicurl_readmultirange_retry(server):
+
+    gdal.VSICurlClearCache()
+
+    filesize = 262976
+
+    def serve_range(request):
+        if "Range" not in request.headers:
+            request.send_response(404)
+            request.end_headers()
+            return
+        rng = request.headers["Range"][len("bytes=") :]
+        start = int(rng.split("-")[0])
+        end = int(rng.split("-")[1])
+        request.protocol_version = "HTTP/1.1"
+        request.send_response(206)
+        request.send_header("Content-type", "application/octet-stream")
+        request.send_header("Content-Range", "bytes %d-%d/%d" % (start, end, filesize))
+        request.send_header("Content-Length", end - start + 1)
+        request.send_header("Connection", "close")
+        request.end_headers()
+        with open("../gdrivers/data/utm.tif", "rb") as f:
+            f.seek(start, 0)
+            request.wfile.write(f.read(end - start + 1))
+
+    def serve_429(request):
+        request.protocol_version = "HTTP/1.1"
+        request.send_response(429)
+        request.send_header("Connection", "close")
+        request.end_headers()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/readmultirange_retry.tif",
+        200,
+        {"Content-Length": "%d" % filesize},
+    )
+    # GETs 1-3: header/IFD reads + first tile strip (all succeed)
+    for i in range(3):
+        handler.add("GET", "/readmultirange_retry.tif", custom_method=serve_range)
+    # GET 4: second tile strip -> 429
+    handler.add("GET", "/readmultirange_retry.tif", custom_method=serve_429)
+    # GETs 5-6: remaining tile strips succeed
+    for i in range(2):
+        handler.add("GET", "/readmultirange_retry.tif", custom_method=serve_range)
+    # GET 7: retry of the failed tile strip
+    handler.add("GET", "/readmultirange_retry.tif", custom_method=serve_range)
+
+    with webserver.install_http_handler(handler):
+        with gdaltest.config_options(
+            {
+                "GTIFF_DIRECT_IO": "YES",
+                "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
+                "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+                "GDAL_HTTP_MAX_RETRY": "2",
+                "GDAL_HTTP_RETRY_DELAY": "0.01",
+            }
+        ):
+            ds = gdal.Open(
+                "/vsicurl/http://localhost:%d/readmultirange_retry.tif" % server.port
+            )
+            assert ds is not None
+            subsampled_data = ds.ReadRaster(0, 0, 512, 32, 128, 4)
+            ds = None
+            assert subsampled_data is not None
+            ds = gdal.GetDriverByName("MEM").Create("", 128, 4)
+            ds.WriteRaster(0, 0, 128, 4, subsampled_data)
+            cs = ds.GetRasterBand(1).Checksum()
+            ds = None
+            assert cs == 6429
 
 
 ###############################################################################
@@ -1457,7 +1587,7 @@ def test_vsicurl_NETRC_FILE():
         + '"'
     )
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+        _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
 
@@ -1766,3 +1896,38 @@ def test_vsicurl_test_redirect_301_to_url_ending_slash_and_then_403(server):
             gdal.VSIStatL("/vsicurl/http://localhost:%d/test_redirect" % server.port)
             is None
         )
+
+
+###############################################################################
+# Test server returning a Accept-Range header on HEAD, but without Content-Length
+# https://github.com/qgis/QGIS/issues/65800
+
+
+def test_vsicurl_head_accept_ranges_but_no_content_length(server):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/test_head_accept_ranges_but_no_content_length",
+        200,
+        {
+            "Accept-ranges": "bytes",
+            "Transfer-encoding": "chunked",
+            "Content-Length": None,
+        },
+    )
+    handler.add(
+        "GET",
+        "/test_head_accept_ranges_but_no_content_length",
+        206,
+        {"Content-Range": "bytes 0-2/3"},
+        "foo",
+        expected_headers={"Range": "bytes=0-16383"},
+    )
+    with webserver.install_http_handler(handler):
+        gdal.VSIStatL(
+            "/vsicurl/http://localhost:%d/test_head_accept_ranges_but_no_content_length"
+            % server.port
+        ).size == 3

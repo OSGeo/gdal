@@ -63,7 +63,7 @@ def test_ogrtindex_1(ogrtindex_path, tmp_path, srs):
         dst_feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(48 3)"))
         shape_lyr.CreateFeature(dst_feat)
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{ogrtindex_path} -skip_different_projection {tmp_path}/tileindex.shp {tmp_path}/point1.shp {tmp_path}/point2.shp {tmp_path}/point3.shp {tmp_path}/point4.shp"
     )
     assert err is None or err == "", "got error/warning"
@@ -151,7 +151,7 @@ def test_ogrtindex_3(ogrtindex_path, tmp_path, src_srs_format, expected_srss):
         output_filename = str(tmp_path / "tileindex.db")
         output_format = " -f SQLite"
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         ogrtindex_path
         + " -src_srs_name src_srs -t_srs EPSG:4326 "
         + output_filename
@@ -168,7 +168,7 @@ def test_ogrtindex_3(ogrtindex_path, tmp_path, src_srs_format, expected_srss):
     assert ds.GetLayer(0).GetFeatureCount() == 2, "did not get expected feature count"
 
     assert (
-        ds.GetLayer(0).GetSpatialRef().GetAuthorityCode(None) == "4326"
+        ds.GetLayer(0).GetSpatialRef().GetAuthorityCode() == "4326"
     ), "did not get expected spatial ref"
 
     expected_wkts = [
@@ -190,7 +190,7 @@ def test_ogrtindex_3(ogrtindex_path, tmp_path, src_srs_format, expected_srss):
 @pytest.mark.require_driver("GPKG")
 def test_ogrtindex_options(ogrtindex_path, tmp_path):
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{ogrtindex_path} -f GPKG -lnum 0 -lname poly -tileindex my_loc -accept_different_schemas {tmp_path}/out.gpkg ../ogr/data/poly.shp"
     )
     assert err is None or err == ""

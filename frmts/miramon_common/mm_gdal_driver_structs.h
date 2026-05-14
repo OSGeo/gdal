@@ -38,6 +38,7 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_MinY "MinY"
 #define KEY_MaxY "MaxY"
 #define KEY_CreationDate "CreationDate"
+#define KEY_CoverageContentType "CoverageContentType"
 #define SECTION_SPATIAL_REFERENCE_SYSTEM "SPATIAL_REFERENCE_SYSTEM"
 #define SECTION_HORIZONTAL "HORIZONTAL"
 #define SECTION_VERTICAL "VERTICAL"
@@ -48,12 +49,14 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define KEY_descriptor "descriptor"
 #define KEY_HorizontalSystemDefinition "HorizontalSystemDefinition"
 #define KEY_unitats "unitats"
+#define KEY_MostrarUnitats "MostrarUnitats"
 #define KEY_unitatsY "unitatsY"
 #define KEY_language "language"
 #define KEY_Value_eng "eng"
 #define KEY_MDIdiom "MDIdiom"
 #define KEY_characterSet "characterSet"
 #define KEY_Value_characterSet "006"
+#define KEY_TractamentVariable "TractamentVariable"
 
 // Raster
 #define SECTION_ATTRIBUTE_DATA "ATTRIBUTE_DATA"
@@ -62,6 +65,13 @@ CPL_C_START  // Necessary for compiling in GDAL project
 #define Key_IndexesNomsCamps "IndexsNomsCamps"
 #define KEY_NomCamp "NomCamp"
 #define SECTION_COLOR_TEXT "COLOR_TEXT"
+#define SECTION_VISU_LLEGENDA "VISU_LLEGENDA"
+#define SECTION_QUALITY_LINEAGE "QUALITY:LINEAGE"
+
+#define MetadataDomain "MIRAMON"
+#define SecKeySeparator "$$$"
+#define IntraSecKeySeparator "$$"
+#define MMEmptyValue "$$empty$$"
 
 // MiraMon feature field names
 #define szMMNomCampIdGraficDefecte "ID_GRAFIC"
@@ -345,7 +355,15 @@ struct MiraMonRecord
 struct MiraMonDataBaseField
 {
     char pszFieldName[MM_MAX_LON_FIELD_NAME_DBF + 1];
+    // A layer, when translated to MiraMon cannot have some
+    // specific field names (ID_GRAFIC, for instance).
+    // If pszFieldName is modified because of it
+    // we need to keep it somewhere in order to write metadata.
+    char pszFieldModifName[MM_MAX_LON_FIELD_NAME_DBF + 1];
     char pszFieldDescription[MM_MAX_BYTES_FIELD_DESC + 1];
+    // In the case of a modified field name, we also need
+    // to keep the description somewhere in order to write metadata.
+    char pszFieldModifDescription[MM_MAX_BYTES_FIELD_DESC + 1];
     enum FieldType eFieldType;   // See enum FieldType
     GUInt32 nFieldSize;          // MM_MAX_BYTES_IN_A_FIELD_EXT as maximum
     GUInt32 nNumberOfDecimals;   // MM_MAX_BYTES_IN_A_FIELD_EXT as maximum
@@ -626,7 +644,7 @@ struct MiraMonPolygonLayer
     }
 */
 
-// Information that allows to reuse memory stuff when
+// Information that allows reusing memory stuff when
 // features are being read
 struct MiraMonFeature
 {
@@ -650,11 +668,11 @@ struct MiraMonFeature
     // Number of reserved elements in *flag_VFG
     MM_INTERNAL_FID nMaxVFG;
     char *flag_VFG;  // In case of multipolygons, for each ring:
-        // if flag_VFG[i]|MM_EXTERIOR_ARC_SIDE: outer ring if set
-        // if flag_VFG[i]|MM_END_ARC_IN_RING: always set (every ring has only
-        //                                    one arc)
-        // if flag_VFG[i]|MM_ROTATE_ARC: coordinates are in the inverse order
-        //                               of the read ones
+    // if flag_VFG[i]|MM_EXTERIOR_ARC_SIDE: outer ring if set
+    // if flag_VFG[i]|MM_END_ARC_IN_RING: always set (every ring has only
+    //                                    one arc)
+    // if flag_VFG[i]|MM_ROTATE_ARC: coordinates are in the inverse order
+    //                               of the read ones
 
     // List of the Z-coordinates (as many as pCoord)
     // Number of reserved elements in *pZCoord

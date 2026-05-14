@@ -140,8 +140,8 @@ int GDALJP2Metadata::ReadAndParse(const char *pszFilename, int nGEOJP2Index,
          !m_bHaveGeoTransform))
     {
         m_bHaveGeoTransform =
-            CPL_TO_BOOL(GDALReadWorldFile(pszFilename, nullptr, m_gt.data()) ||
-                        GDALReadWorldFile(pszFilename, ".wld", m_gt.data()));
+            CPL_TO_BOOL(GDALReadWorldFile(pszFilename, nullptr, m_gt.data())) ||
+            CPL_TO_BOOL(GDALReadWorldFile(pszFilename, ".wld", m_gt.data()));
         bRet |= m_bHaveGeoTransform;
     }
 
@@ -631,8 +631,7 @@ int GDALJP2Metadata::ParseJP2GeoTIFF()
         bPixelIsPoint = CPL_TO_BOOL(abPixelIsPoint[iBestIndex]);
         papszRPCMD = apapszRPCMD[iBestIndex];
 
-        if (m_gt[0] != 0 || m_gt[1] != 1 || m_gt[2] != 0 || m_gt[3] != 0 ||
-            m_gt[4] != 0 || m_gt[5] != 1)
+        if (m_gt != GDALGeoTransform())
             m_bHaveGeoTransform = true;
 
         if (ahSRS[iBestIndex])
@@ -948,18 +947,18 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
     if (CSLCount(papszOffset1Tokens) >= 2 &&
         CSLCount(papszOffset2Tokens) >= 2 && poOriginGeometry != nullptr)
     {
-        m_gt[0] = poOriginGeometry->getX();
-        m_gt[1] = CPLAtof(papszOffset1Tokens[0]);
-        m_gt[2] = CPLAtof(papszOffset2Tokens[0]);
-        m_gt[3] = poOriginGeometry->getY();
-        m_gt[4] = CPLAtof(papszOffset1Tokens[1]);
-        m_gt[5] = CPLAtof(papszOffset2Tokens[1]);
+        m_gt.xorig = poOriginGeometry->getX();
+        m_gt.xscale = CPLAtof(papszOffset1Tokens[0]);
+        m_gt.xrot = CPLAtof(papszOffset2Tokens[0]);
+        m_gt.yorig = poOriginGeometry->getY();
+        m_gt.yrot = CPLAtof(papszOffset1Tokens[1]);
+        m_gt.yscale = CPLAtof(papszOffset2Tokens[1]);
 
         // offset from center of pixel.
-        m_gt[0] -= m_gt[1] * 0.5;
-        m_gt[0] -= m_gt[2] * 0.5;
-        m_gt[3] -= m_gt[4] * 0.5;
-        m_gt[3] -= m_gt[5] * 0.5;
+        m_gt.xorig -= m_gt.xscale * 0.5;
+        m_gt.xorig -= m_gt.xrot * 0.5;
+        m_gt.yorig -= m_gt.yrot * 0.5;
+        m_gt.yorig -= m_gt.yscale * 0.5;
 
         bSuccess = true;
         m_bHaveGeoTransform = true;
@@ -1101,7 +1100,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
         CPLDebug("GMLJP2",
                  "Flipping axis orientation in GMLJP2 coverage description.");
 
-        std::swap(m_gt[0], m_gt[3]);
+        std::swap(m_gt.xorig, m_gt.yorig);
 
         int swapWith1Index = 4;
         int swapWith2Index = 5;
@@ -1123,11 +1122,12 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
                      "GDAL_JP2K_ALT_OFFSETVECTOR_ORDER.");
         }
 
-        std::swap(m_gt[1], m_gt[swapWith1Index]);
-        std::swap(m_gt[2], m_gt[swapWith2Index]);
+        std::swap(m_gt.xscale, m_gt[swapWith1Index]);
+        std::swap(m_gt.xrot, m_gt[swapWith2Index]);
 
         /* Found in autotest/gdrivers/data/ll.jp2 */
-        if (m_gt[1] == 0.0 && m_gt[2] < 0.0 && m_gt[4] > 0.0 && m_gt[5] == 0.0)
+        if (m_gt.xscale == 0.0 && m_gt.xrot < 0.0 && m_gt.yrot > 0.0 &&
+            m_gt.yscale == 0.0)
         {
             CPLError(
                 CE_Warning, CPLE_AppDefined,
@@ -1143,7 +1143,7 @@ int GDALJP2Metadata::ParseGMLCoverageDesc()
 }
 
 /************************************************************************/
-/*                         SetSpatialRef()                              */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 void GDALJP2Metadata::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -1183,7 +1183,7 @@ void GDALJP2Metadata::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                             SetRPCMD()                               */
+/*                              SetRPCMD()                              */
 /************************************************************************/
 
 void GDALJP2Metadata::SetRPCMD(CSLConstList papszRPCMDIn)
@@ -1257,7 +1257,7 @@ bool GDALJP2Metadata::IsSRSCompatible(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                     GetGMLJP2GeoreferencingInfo()                    */
+/*                    GetGMLJP2GeoreferencingInfo()                     */
 /************************************************************************/
 
 void GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
@@ -1299,13 +1299,13 @@ void GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
     /*      Prepare coverage origin and offset vectors.  Take axis          */
     /*      order into account if needed.                                   */
     /* -------------------------------------------------------------------- */
-    adfOrigin[0] = m_gt[0] + m_gt[1] * 0.5 + m_gt[4] * 0.5;
-    adfOrigin[1] = m_gt[3] + m_gt[2] * 0.5 + m_gt[5] * 0.5;
-    adfXVector[0] = m_gt[1];
-    adfXVector[1] = m_gt[2];
+    adfOrigin[0] = m_gt.xorig + m_gt.xscale * 0.5 + m_gt.yrot * 0.5;
+    adfOrigin[1] = m_gt.yorig + m_gt.xrot * 0.5 + m_gt.yscale * 0.5;
+    adfXVector[0] = m_gt.xscale;
+    adfXVector[1] = m_gt.xrot;
 
-    adfYVector[0] = m_gt[4];
-    adfYVector[1] = m_gt[5];
+    adfYVector[0] = m_gt.yrot;
+    adfYVector[1] = m_gt.yscale;
 
     if (bNeedAxisFlip && CPLTestBool(CPLGetConfigOption(
                              "GDAL_IGNORE_AXIS_ORIENTATION", "FALSE")))
@@ -1386,7 +1386,7 @@ void GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
 }
 
 /************************************************************************/
-/*                          CreateGMLJP2()                              */
+/*                            CreateGMLJP2()                            */
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Metadata::CreateGMLJP2(int nXSize, int nYSize)
@@ -1451,14 +1451,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2(int nXSize, int nYSize)
                  "gmljp2://xml/CRSDictionary.gml#ogrcrs1");
 
     // Compute bounding box
-    double dfX1 = m_gt[0];
-    double dfX2 = m_gt[0] + nXSize * m_gt[1];
-    double dfX3 = m_gt[0] + nYSize * m_gt[2];
-    double dfX4 = m_gt[0] + nXSize * m_gt[1] + nYSize * m_gt[2];
-    double dfY1 = m_gt[3];
-    double dfY2 = m_gt[3] + nXSize * m_gt[4];
-    double dfY3 = m_gt[3] + nYSize * m_gt[5];
-    double dfY4 = m_gt[3] + nXSize * m_gt[4] + nYSize * m_gt[5];
+    double dfX1 = m_gt.xorig;
+    double dfX2 = m_gt.xorig + nXSize * m_gt.xscale;
+    double dfX3 = m_gt.xorig + nYSize * m_gt.xrot;
+    double dfX4 = m_gt.xorig + nXSize * m_gt.xscale + nYSize * m_gt.xrot;
+    double dfY1 = m_gt.yorig;
+    double dfY2 = m_gt.yorig + nXSize * m_gt.yrot;
+    double dfY3 = m_gt.yorig + nYSize * m_gt.yscale;
+    double dfY4 = m_gt.yorig + nXSize * m_gt.yrot + nYSize * m_gt.yscale;
     double dfLCX = std::min({dfX1, dfX2, dfX3, dfX4});
     double dfLCY = std::min({dfY1, dfY2, dfY3, dfY4});
     double dfUCX = std::max({dfX1, dfX2, dfX3, dfX4});
@@ -1567,7 +1567,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2(int nXSize, int nYSize)
 }
 
 /************************************************************************/
-/*                      GDALGMLJP2GetXMLRoot()                          */
+/*                        GDALGMLJP2GetXMLRoot()                        */
 /************************************************************************/
 
 static CPLXMLNode *GDALGMLJP2GetXMLRoot(CPLXMLNode *psNode)
@@ -1581,7 +1581,7 @@ static CPLXMLNode *GDALGMLJP2GetXMLRoot(CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*            GDALGMLJP2PatchFeatureCollectionSubstitutionGroup()       */
+/*         GDALGMLJP2PatchFeatureCollectionSubstitutionGroup()          */
 /************************************************************************/
 
 static void
@@ -1623,7 +1623,7 @@ GDALGMLJP2PatchFeatureCollectionSubstitutionGroup(CPLXMLNode *psRoot)
 }
 
 /************************************************************************/
-/*                          CreateGMLJP2V2()                            */
+/*                           CreateGMLJP2V2()                           */
 /************************************************************************/
 
 class GMLJP2V2GMLFileDesc
@@ -2467,14 +2467,14 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
                      "gmljp2://xml/CRSDictionary.gml#ogrcrs1");
 
         // Compute bounding box
-        double dfX1 = m_gt[0];
-        double dfX2 = m_gt[0] + nXSize * m_gt[1];
-        double dfX3 = m_gt[0] + nYSize * m_gt[2];
-        double dfX4 = m_gt[0] + nXSize * m_gt[1] + nYSize * m_gt[2];
-        double dfY1 = m_gt[3];
-        double dfY2 = m_gt[3] + nXSize * m_gt[4];
-        double dfY3 = m_gt[3] + nYSize * m_gt[5];
-        double dfY4 = m_gt[3] + nXSize * m_gt[4] + nYSize * m_gt[5];
+        double dfX1 = m_gt.xorig;
+        double dfX2 = m_gt.xorig + nXSize * m_gt.xscale;
+        double dfX3 = m_gt.xorig + nYSize * m_gt.xrot;
+        double dfX4 = m_gt.xorig + nXSize * m_gt.xscale + nYSize * m_gt.xrot;
+        double dfY1 = m_gt.yorig;
+        double dfY2 = m_gt.yorig + nXSize * m_gt.yrot;
+        double dfY3 = m_gt.yorig + nYSize * m_gt.yscale;
+        double dfY4 = m_gt.yorig + nXSize * m_gt.yrot + nYSize * m_gt.yscale;
         double dfLCX = std::min({dfX1, dfX2, dfX3, dfX4});
         double dfLCY = std::min({dfY1, dfY2, dfY3, dfY4});
         double dfUCX = std::max({dfX1, dfX2, dfX3, dfX4});
@@ -3245,7 +3245,7 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                 CreateGDALMultiDomainMetadataXML()                   */
+/*                  CreateGDALMultiDomainMetadataXML()                  */
 /************************************************************************/
 
 CPLXMLNode *
@@ -3346,7 +3346,7 @@ GDALJP2Metadata::CreateGDALMultiDomainMetadataXMLBox(GDALDataset *poSrcDS,
 }
 
 /************************************************************************/
-/*                         WriteXMLBoxes()                              */
+/*                           WriteXMLBoxes()                            */
 /************************************************************************/
 
 GDALJP2Box **GDALJP2Metadata::CreateXMLBoxes(GDALDataset *poSrcDS, int *pnBoxes)
@@ -3380,7 +3380,7 @@ GDALJP2Box **GDALJP2Metadata::CreateXMLBoxes(GDALDataset *poSrcDS, int *pnBoxes)
 }
 
 /************************************************************************/
-/*                          CreateXMPBox()                              */
+/*                            CreateXMPBox()                            */
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Metadata::CreateXMPBox(GDALDataset *poSrcDS)
@@ -3397,7 +3397,7 @@ GDALJP2Box *GDALJP2Metadata::CreateXMPBox(GDALDataset *poSrcDS)
 }
 
 /************************************************************************/
-/*                          CreateIPRBox()                              */
+/*                            CreateIPRBox()                            */
 /************************************************************************/
 
 GDALJP2Box *GDALJP2Metadata::CreateIPRBox(GDALDataset *poSrcDS)
@@ -3415,7 +3415,7 @@ GDALJP2Box *GDALJP2Metadata::CreateIPRBox(GDALDataset *poSrcDS)
 }
 
 /************************************************************************/
-/*                           IsUUID_MSI()                              */
+/*                             IsUUID_MSI()                             */
 /************************************************************************/
 
 int GDALJP2Metadata::IsUUID_MSI(const GByte *abyUUID)
@@ -3424,7 +3424,7 @@ int GDALJP2Metadata::IsUUID_MSI(const GByte *abyUUID)
 }
 
 /************************************************************************/
-/*                           IsUUID_XMP()                               */
+/*                             IsUUID_XMP()                             */
 /************************************************************************/
 
 int GDALJP2Metadata::IsUUID_XMP(const GByte *abyUUID)

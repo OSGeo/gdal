@@ -26,7 +26,7 @@ constexpr const char *PMTILES_HEADER_JSON = "pmtiles_header.json";
 constexpr const char *METADATA_JSON = "metadata.json";
 
 /************************************************************************/
-/*                   VSIPMTilesFilesystemHandler                        */
+/*                     VSIPMTilesFilesystemHandler                      */
 /************************************************************************/
 
 class VSIPMTilesFilesystemHandler final : public VSIFilesystemHandler
@@ -43,22 +43,24 @@ class VSIPMTilesFilesystemHandler final : public VSIFilesystemHandler
 };
 
 /************************************************************************/
-/*                   VSIPMTilesGetTileExtension()                       */
+/*                     VSIPMTilesGetTileExtension()                     */
 /************************************************************************/
 
-static const char *VSIPMTilesGetTileExtension(OGRPMTilesDataset *poDS)
+const char *VSIPMTilesGetTileExtension(OGRPMTilesDataset *poDS)
 {
     const auto &sHeader = poDS->GetHeader();
     switch (sHeader.tile_type)
     {
+        case pmtiles::TILETYPE_MVT:
+            return ".mvt";
         case pmtiles::TILETYPE_PNG:
             return ".png";
         case pmtiles::TILETYPE_JPEG:
             return ".jpg";
         case pmtiles::TILETYPE_WEBP:
             return ".webp";
-        case pmtiles::TILETYPE_MVT:
-            return ".mvt";
+        case pmtiles::TILETYPE_AVIF:
+            return ".avif";
     }
     if (sHeader.tile_compression == pmtiles::COMPRESSION_GZIP)
         return ".bin.gz";
@@ -68,7 +70,7 @@ static const char *VSIPMTilesGetTileExtension(OGRPMTilesDataset *poDS)
 }
 
 /************************************************************************/
-/*                  VSIPMTilesGetPMTilesHeaderJson()                    */
+/*                   VSIPMTilesGetPMTilesHeaderJson()                   */
 /************************************************************************/
 
 static std::string VSIPMTilesGetPMTilesHeaderJson(OGRPMTilesDataset *poDS)
@@ -133,9 +135,10 @@ VSIPMTilesOpen(const char *pszFilename, std::string &osSubfilename,
     nComponents = 0;
     std::string osPmtilesFilename;
 
-    const char *pszPmtilesExt = strstr(pszFilename, ".pmtiles");
-    if (!pszPmtilesExt)
+    const auto nPos = CPLString(pszFilename).ifind(".pmtiles");
+    if (nPos == std::string::npos)
         return nullptr;
+    const char *pszPmtilesExt = pszFilename + nPos;
 
     CPLStringList aosTokens;
     do
@@ -204,7 +207,7 @@ VSIPMTilesOpen(const char *pszFilename, std::string &osSubfilename,
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -265,7 +268,7 @@ VSIPMTilesFilesystemHandler::Open(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                               Stat()                                 */
+/*                                Stat()                                */
 /************************************************************************/
 
 int VSIPMTilesFilesystemHandler::Stat(const char *pszFilename,
@@ -326,7 +329,7 @@ int VSIPMTilesFilesystemHandler::Stat(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                            ReadDirEx()                               */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
 char **VSIPMTilesFilesystemHandler::ReadDirEx(const char *pszFilename,

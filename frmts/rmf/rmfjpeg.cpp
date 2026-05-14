@@ -20,7 +20,7 @@
 #include "memdataset.h"
 
 /************************************************************************/
-/*                          JPEGDecompress()                            */
+/*                           JPEGDecompress()                           */
 /************************************************************************/
 
 size_t RMFDataset::JPEGDecompress(const GByte *pabyIn, GUInt32 nSizeIn,

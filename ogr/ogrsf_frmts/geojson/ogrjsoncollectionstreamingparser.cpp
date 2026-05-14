@@ -51,7 +51,7 @@ const size_t ESTIMATE_OBJECT_SIZE =
     JSON_OBJECT_DEF_HASH_ENTRIES * ESTIMATE_OBJECT_ELT_SIZE;
 
 /************************************************************************/
-/*                     OGRJSONCollectionStreamingParser()                */
+/*                  OGRJSONCollectionStreamingParser()                  */
 /************************************************************************/
 
 OGRJSONCollectionStreamingParser::OGRJSONCollectionStreamingParser(
@@ -62,7 +62,7 @@ OGRJSONCollectionStreamingParser::OGRJSONCollectionStreamingParser(
 }
 
 /************************************************************************/
-/*                   ~OGRJSONCollectionStreamingParser()                */
+/*                 ~OGRJSONCollectionStreamingParser()                  */
 /************************************************************************/
 
 OGRJSONCollectionStreamingParser::~OGRJSONCollectionStreamingParser()
@@ -328,7 +328,7 @@ void OGRJSONCollectionStreamingParser::StartArrayMember()
 }
 
 /************************************************************************/
-/*                               EndArray()                             */
+/*                              EndArray()                              */
 /************************************************************************/
 
 void OGRJSONCollectionStreamingParser::EndArray()
@@ -357,7 +357,7 @@ void OGRJSONCollectionStreamingParser::EndArray()
 }
 
 /************************************************************************/
-/*                              String()                                */
+/*                               String()                               */
 /************************************************************************/
 
 void OGRJSONCollectionStreamingParser::String(std::string_view sValue)
@@ -398,7 +398,7 @@ void OGRJSONCollectionStreamingParser::String(std::string_view sValue)
 }
 
 /************************************************************************/
-/*                              Number()                                */
+/*                               Number()                               */
 /************************************************************************/
 
 // recent libc++ std::from_chars() involve unsigned integer overflow
@@ -520,7 +520,7 @@ void OGRJSONCollectionStreamingParser::Boolean(bool bVal)
 }
 
 /************************************************************************/
-/*                               Null()                                 */
+/*                                Null()                                */
 /************************************************************************/
 
 void OGRJSONCollectionStreamingParser::Null()

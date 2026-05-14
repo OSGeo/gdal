@@ -254,7 +254,7 @@ static const EXIFTagDesc IFD0Tags[] = {
     {0x0000, TIFF_NOTYPE, 0, "", COND_NOT_ALLOWED}};
 
 /************************************************************************/
-/*                         EXIFPrintData()                              */
+/*                           EXIFPrintData()                            */
 /************************************************************************/
 static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
                           const unsigned char *data)
@@ -859,7 +859,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, uint32_t nOffset,
 }
 
 /************************************************************************/
-/*                        WriteLEUInt16()                               */
+/*                           WriteLEUInt16()                            */
 /************************************************************************/
 
 static void WriteLEUInt16(GByte *pabyData, GUInt32 &nBufferOff, GUInt16 nVal)
@@ -870,7 +870,7 @@ static void WriteLEUInt16(GByte *pabyData, GUInt32 &nBufferOff, GUInt16 nVal)
 }
 
 /************************************************************************/
-/*                        WriteLEUInt32()                               */
+/*                           WriteLEUInt32()                            */
 /************************************************************************/
 
 static void WriteLEUInt32(GByte *pabyData, GUInt32 &nBufferOff, GUInt32 nVal)
@@ -883,7 +883,7 @@ static void WriteLEUInt32(GByte *pabyData, GUInt32 &nBufferOff, GUInt32 nVal)
 }
 
 /************************************************************************/
-/*                          GetHexValue()                               */
+/*                            GetHexValue()                             */
 /************************************************************************/
 
 static int GetHexValue(char ch)
@@ -899,7 +899,7 @@ static int GetHexValue(char ch)
 }
 
 /************************************************************************/
-/*                         ParseUndefined()                             */
+/*                           ParseUndefined()                           */
 /************************************************************************/
 
 static GByte *ParseUndefined(const char *pszVal, GUInt32 *pnLength)
@@ -966,7 +966,7 @@ static GByte *ParseUndefined(const char *pszVal, GUInt32 *pnLength)
 }
 
 /************************************************************************/
-/*                             TagValue                                 */
+/*                               TagValue                               */
 /************************************************************************/
 
 struct TagValue
@@ -994,7 +994,7 @@ struct TagValue
 };
 
 /************************************************************************/
-/*                        GetNumDenomFromDouble()                       */
+/*                       GetNumDenomFromDouble()                        */
 /************************************************************************/
 
 static bool GetNumDenomFromDouble(GDALEXIFTIFFDataType datatype, double dfVal,
@@ -1076,7 +1076,7 @@ static bool GetNumDenomFromDouble(GDALEXIFTIFFDataType datatype, double dfVal,
 }
 
 /************************************************************************/
-/*                       EXIFFormatTagValue()                           */
+/*                         EXIFFormatTagValue()                         */
 /************************************************************************/
 
 enum class EXIFLocation
@@ -1374,7 +1374,7 @@ static std::vector<TagValue> EXIFFormatTagValue(CSLConstList papszEXIFMetadata,
 }
 
 /************************************************************************/
-/*                            WriteTag()                                */
+/*                              WriteTag()                              */
 /************************************************************************/
 
 static void WriteTag(GByte *pabyData, GUInt32 &nBufferOff, GUInt16 nTag,
@@ -1387,7 +1387,7 @@ static void WriteTag(GByte *pabyData, GUInt32 &nBufferOff, GUInt16 nTag,
 }
 
 /************************************************************************/
-/*                            WriteTags()                               */
+/*                             WriteTags()                              */
 /************************************************************************/
 
 static void WriteTags(GByte *pabyData, GUInt32 &nBufferOff,
@@ -1414,7 +1414,7 @@ static void WriteTags(GByte *pabyData, GUInt32 &nBufferOff,
 }
 
 /************************************************************************/
-/*                          EXIFCreate()                                */
+/*                             EXIFCreate()                             */
 /************************************************************************/
 
 GByte *EXIFCreate(CSLConstList papszEXIFMetadata, GByte *pabyThumbnail,

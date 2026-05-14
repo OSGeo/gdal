@@ -22,11 +22,19 @@
 #include "ogr_api.h"
 
 static bool bInGDALGlobalDestructor = false;
+static bool bInGDALGlobalDestructorFromDLLMain = false;
+
 extern "C" int CPL_DLL GDALIsInGlobalDestructor();
+extern "C" bool CPL_DLL GDALIsInGlobalDestructorFromDLLMain();
 
 int GDALIsInGlobalDestructor()
 {
     return bInGDALGlobalDestructor;
+}
+
+bool GDALIsInGlobalDestructorFromDLLMain()
+{
+    return bInGDALGlobalDestructorFromDLLMain;
 }
 
 void CPLFinalizeTLS();
@@ -34,7 +42,7 @@ void CPLFinalizeTLS();
 static bool bGDALDestroyAlreadyCalled = FALSE;
 
 /************************************************************************/
-/*                           GDALDestroy()                              */
+/*                            GDALDestroy()                             */
 /************************************************************************/
 
 /** Finalize GDAL/OGR library.
@@ -130,6 +138,7 @@ extern "C" int WINAPI DllMain(HINSTANCE /* hInstance */, DWORD dwReason,
     }
     else if (dwReason == DLL_PROCESS_DETACH)
     {
+        bInGDALGlobalDestructorFromDLLMain = true;
         GDALDestroy();
     }
 

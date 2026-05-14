@@ -128,7 +128,7 @@ int OGRDWGDataSource::Open(OGRDWGServices *poServicesIn,
 }
 
 /************************************************************************/
-/*                        ReadAttDefinitions()                          */
+/*                         ReadAttDefinitions()                         */
 /************************************************************************/
 
 void OGRDWGDataSource::ReadAttDefinitions()
@@ -247,7 +247,7 @@ const char *OGRDWGDataSource::LookupLayerProperty(const char *pszLayer,
 }
 
 /************************************************************************/
-/*                       ReadLineTypeDefinitions()                      */
+/*                      ReadLineTypeDefinitions()                       */
 /************************************************************************/
 
 void OGRDWGDataSource::ReadLineTypeDefinitions()

@@ -43,6 +43,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("CSV")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -721,12 +722,9 @@ def test_ogr_csv_write_to_stdout():
         python_exe = python_exe.replace("\\", "/")
 
     ret = gdaltest.runexternal(python_exe + " ogr_csv.py ogr_csv_write_to_stdout")
-    assert (
-        ret.replace("\r\n", "\n")
-        == """my_geom,foo,bar
+    assert ret.replace("\r\n", "\n") == """my_geom,foo,bar
 "POINT (0 1)",bar,baz
 """
-    )
 
 
 def ogr_csv_write_to_stdout():
@@ -1109,9 +1107,9 @@ def test_ogr_csv_29(tmp_path):
     lyr = ds.GetLayerByName("test")
     assert lyr.GetLayerDefn().GetGeomFieldCount() == 2
     srs = lyr.GetLayerDefn().GetGeomFieldDefn(0).GetSpatialRef()
-    assert srs.GetAuthorityCode(None) == "4326"
+    assert srs.GetAuthorityCode() == "4326"
     srs = lyr.GetLayerDefn().GetGeomFieldDefn(1).GetSpatialRef()
-    assert srs.GetAuthorityCode(None) == "32632"
+    assert srs.GetAuthorityCode() == "32632"
     feat = lyr.GetNextFeature()
     geom = feat.GetGeomFieldRef("geom__WKT_lyr1_EPSG_4326")
     if geom.ExportToWkt() != "POINT (1 2)":
@@ -2630,6 +2628,7 @@ def test_ogr_csv_string_quoting_always(tmp_vsimem):
             "CREATE_CSVT=YES",
             "STRING_QUOTING=ALWAYS",
             "LINEFORMAT=LF",
+            "GEOMETRY=NONE",
         ],
     )
 
@@ -3584,7 +3583,9 @@ def test_ogr_csv_32_bit_integer_invalid_value(tmp_vsimem):
 def test_ogr_csv_do_not_write_header(tmp_vsimem):
 
     filename = tmp_vsimem / "test.csv"
-    gdal.VectorTranslate(filename, "data/poly.shp", layerCreationOptions=["HEADER=NO"])
+    gdal.VectorTranslate(
+        filename, "data/poly.shp", layerCreationOptions=["HEADER=NO", "GEOMETRY=NONE"]
+    )
     with ogr.Open(filename) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "field_1"
@@ -3600,7 +3601,9 @@ def test_ogr_csv_open_dir(tmp_vsimem):
     dirname = tmp_vsimem / "my_dir"
     gdal.Mkdir(dirname, 0o755)
     gdal.VectorTranslate(
-        dirname / "test.csv", "data/poly.shp", layerCreationOptions=["CREATE_CSVT=YES"]
+        dirname / "test.csv",
+        "data/poly.shp",
+        layerCreationOptions=["CREATE_CSVT=YES", "GEOMETRY=NONE"],
     )
 
     with ogr.Open(dirname) as ds:
@@ -3628,6 +3631,38 @@ def test_ogr_csv_creation_illegal_layer_name(tmp_vsimem):
     ds = ogr.GetDriverByName("CSV").CreateDataSource(tmp_vsimem / "out")
     with pytest.raises(Exception, match="Illegal character"):
         ds.CreateLayer("illegal/with/slash")
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_csv_used_creation_option_instead_of_layer_creation_option(tmp_vsimem):
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning, match="but a layer creation option of that name exists"
+    ):
+        gdal.GetDriverByName("CSV").CreateVector(
+            tmp_vsimem / "out", options=["SEPARATOR=COMMA"]
+        )
+
+
+###############################################################################
+
+
+def test_ogr_csv_ignored_geometry_warning(tmp_vsimem):
+
+    errors = []
+
+    def test_handler(*args):
+        errors.append(args)
+
+    with gdaltest.error_handler(test_handler):
+        gdal.VectorTranslate(tmp_vsimem / "poly.csv", "data/poly.shp")
+
+    assert len(errors) == 1
+    assert errors[0][0] == gdal.CE_Warning
+    assert "GEOMETRY layer creation option not set" in errors[0][2]
 
 
 ###############################################################################

@@ -1152,6 +1152,27 @@ class S104Checker:
             }
             self._validate_enumeration(WaterLevel, "dataCodingFormat", expected_values)
 
+        if "interpolationType" in WaterLevel.attrs:
+            expected_values = {
+                1: "nearestneighbor",
+                5: "bilinear",
+                6: "biquadratic",
+                7: "bicubic",
+                9: "barycentric",
+                10: "discrete",
+            }
+            self._validate_enumeration(WaterLevel, "interpolationType", expected_values)
+
+        if "dataOffsetCode" in WaterLevel.attrs:
+            expected_values = {
+                1: 'XMin, YMin ("Lower left") corner ("Cell origin")',
+                2: 'XMax, YMax ("Upper right") corner',
+                3: 'XMax, YMin ("Lower right") corner',
+                4: 'XMin, YMax ("Upper left") corner',
+                5: "Barycenter (centroid) of cell",
+            }
+            self._validate_enumeration(WaterLevel, "dataOffsetCode", expected_values)
+
         self._log_check("104_Dev2005")
         horizontalPositionUncertainty = _get_float_attr_or_none(
             WaterLevel, "horizontalPositionUncertainty"

@@ -40,11 +40,19 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+    .. include:: gdal_options/quiet.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
 .. example::
    :title: Converting file :file:`utm.tif` to a cloud-optimized GeoTIFF using JPEG compression
+   :id: gdal-raster-convert-cog
 
    .. code-block:: console
 

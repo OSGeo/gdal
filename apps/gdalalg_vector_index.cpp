@@ -29,7 +29,7 @@
 #endif
 
 /************************************************************************/
-/*          GDALVectorIndexAlgorithm::GDALVectorIndexAlgorithm()        */
+/*         GDALVectorIndexAlgorithm::GDALVectorIndexAlgorithm()         */
 /************************************************************************/
 
 GDALVectorIndexAlgorithm::GDALVectorIndexAlgorithm()
@@ -56,8 +56,9 @@ GDALVectorIndexAlgorithm::GDALVectorIndexAlgorithm()
         &m_writeAbsolutePaths,
         _("Whether the path to the input datasets should be stored as an "
           "absolute path"));
-    AddArg("dst-crs", 0, _("Destination CRS"), &m_crs)
+    AddArg(GDAL_ARG_NAME_OUTPUT_CRS, 0, _("Output CRS"), &m_crs)
         .SetIsCRSArg()
+        .AddHiddenAlias("dst-crs")
         .AddHiddenAlias("t_srs");
 
     {
@@ -140,7 +141,7 @@ GDALVectorIndexAlgorithm::GDALVectorIndexAlgorithm()
 }
 
 /************************************************************************/
-/*                        GDALVectorDatasetIterator                     */
+/*                      GDALVectorDatasetIterator                       */
 /************************************************************************/
 
 struct GDALVectorDatasetIterator
@@ -295,7 +296,7 @@ struct GDALVectorDatasetIterator
 };
 
 /************************************************************************/
-/*                   GDALVectorIndexAlgorithm::RunImpl()                */
+/*                 GDALVectorIndexAlgorithm::RunImpl()                  */
 /************************************************************************/
 
 bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
@@ -304,13 +305,7 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     CPLStringList aosSources;
     for (auto &srcDS : m_inputDatasets)
     {
-        if (srcDS.GetDatasetRef())
-        {
-            ReportError(
-                CE_Failure, CPLE_IllegalArg,
-                "Input datasets must be provided by name, not as object");
-            return false;
-        }
+        CPLAssert(!srcDS.GetDatasetRef());
         aosSources.push_back(srcDS.GetName());
     }
 
@@ -342,12 +337,12 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (m_outputLayerName.empty())
         m_outputLayerName = "tileindex";
 
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-        poTargetCRS{};
+    OGRSpatialReferenceRefCountedPtr poTargetCRS;
     if (!m_crs.empty())
     {
-        poTargetCRS.reset(std::make_unique<OGRSpatialReference>().release());
+        poTargetCRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
         poTargetCRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        // already checked by GDALAlgorithmArg framework
         CPL_IGNORE_RET_VAL(poTargetCRS->SetFromUserInput(m_crs.c_str()));
     }
 
@@ -365,16 +360,7 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     int nLocationFieldIdx = -1;
     int nSourceCRSFieldIdx = -1;
 
-    struct OGRFeatureDefnReleaser
-    {
-        void operator()(OGRFeatureDefn *poFDefn)
-        {
-            if (poFDefn)
-                poFDefn->Release();
-        }
-    };
-
-    std::unique_ptr<OGRFeatureDefn, OGRFeatureDefnReleaser> poRefFeatureDefn;
+    OGRFeatureDefnRefCountedPtr poRefFeatureDefn;
     if (poDstLayer)
     {
         nLocationFieldIdx =
@@ -404,7 +390,8 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         {
             const auto poSrcCRS = poDstLayer->GetSpatialRef();
             if (poSrcCRS)
-                poTargetCRS.reset(poSrcCRS->Clone());
+                poTargetCRS =
+                    OGRSpatialReferenceRefCountedPtr::makeClone(poSrcCRS);
         }
 
         for (auto &&poFeature : poDstLayer)
@@ -450,7 +437,8 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
             const auto poSrcCRS =
                 poSrcDS->GetLayer(anLayerIndices[0])->GetSpatialRef();
             if (poSrcCRS)
-                poTargetCRS.reset(poSrcCRS->Clone());
+                poTargetCRS =
+                    OGRSpatialReferenceRefCountedPtr::makeClone(poSrcCRS);
         }
 
         poDstLayer = setupRet.outDS->CreateLayer(m_outputLayerName.c_str(),
@@ -562,10 +550,8 @@ bool GDALVectorIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
             if (nSourceCRSFieldIdx >= 0 && poSrcCRS)
             {
-                const char *pszAuthorityCode =
-                    poSrcCRS->GetAuthorityCode(nullptr);
-                const char *pszAuthorityName =
-                    poSrcCRS->GetAuthorityName(nullptr);
+                const char *pszAuthorityCode = poSrcCRS->GetAuthorityCode();
+                const char *pszAuthorityName = poSrcCRS->GetAuthorityName();
                 const std::string osWKT = poSrcCRS->exportToWkt();
                 if (m_sourceCrsFormat == "auto")
                 {

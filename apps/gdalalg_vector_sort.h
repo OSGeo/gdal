@@ -21,7 +21,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                          GDALVectorSortAlgorithm                     */
+/*                       GDALVectorSortAlgorithm                        */
 /************************************************************************/
 
 class GDALVectorSortAlgorithm : public GDALVectorPipelineStepAlgorithm
@@ -48,7 +48,7 @@ class GDALVectorSortAlgorithm : public GDALVectorPipelineStepAlgorithm
 };
 
 /************************************************************************/
-/*                      GDALVectorSortAlgorithmStandalone               */
+/*                  GDALVectorSortAlgorithmStandalone                   */
 /************************************************************************/
 
 class GDALVectorSortAlgorithmStandalone final : public GDALVectorSortAlgorithm

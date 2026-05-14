@@ -304,7 +304,7 @@ For more control over how the file is opened, use :py:func:`OpenEx`.
 
 Parameters
 ----------
-utf8_path : str
+path : str
     name of the file to open
 eAccess : int, default = :py:const:`gdal.GA_ReadOnly`
 
@@ -328,7 +328,7 @@ See :cpp:func:`GDALOpenEx`.
 
 Parameters
 ----------
-utf8_path : str
+path : str
     name of the file to open
 flags : int
         Flags controlling how the Dataset is opened. Multiple ``gdal.OF_XXX`` flags
@@ -361,7 +361,7 @@ opened in the current thread, return a reference to the already-opened
 
 Parameters
 ----------
-utf8_path : str
+path : str
     name of the file to open
 eAccess : int, default = :py:const:`gdal.GA_ReadOnly`
 

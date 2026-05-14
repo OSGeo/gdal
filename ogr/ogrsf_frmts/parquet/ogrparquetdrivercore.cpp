@@ -22,7 +22,7 @@
 #include "ogrparquetdrivercore.h"
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 template <size_t N> constexpr int constexpr_length(const char (&)[N])
@@ -72,7 +72,7 @@ int OGRParquetDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                OGRParquetDriverSetCommonMetadata()                   */
+/*                 OGRParquetDriverSetCommonMetadata()                  */
 /************************************************************************/
 
 void OGRParquetDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -101,6 +101,10 @@ void OGRParquetDriverSetCommonMetadata(GDALDriver *poDriver)
                               "WidthPrecision Nullable Comment "
                               "AlternativeName Domain");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST,
+                              "<CreationOptionList>"
+                              "</CreationOptionList>");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,

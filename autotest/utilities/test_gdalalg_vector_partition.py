@@ -358,7 +358,7 @@ def test_gdalalg_vector_partition_errors(tmp_vsimem):
 
     with pytest.raises(
         Exception,
-        match="Invalid value for argument 'output-format'. Driver 'SXF' does not expose the required 'DCAP_CREATE' capability",
+        match="Invalid value for argument 'output-format'. Driver 'SXF' does not have write support",
     ):
         gdal.Run(
             "vector",
@@ -1062,7 +1062,7 @@ def test_gdalalg_vector_partition_pattern_error(tmp_vsimem):
         alg["pattern"] = "%5"
     with pytest.raises(
         Exception,
-        match=r"Number of digits in part number specifiation should be in \[1,10\] range",
+        match=r"Number of digits in part number specification should be in \[1,10\] range",
     ):
         alg["pattern"] = "%11d"
 
@@ -1210,3 +1210,40 @@ def test_gdalalg_vector_partition_geometry_multi_geom_fields(tmp_vsimem):
             lyr.GetFeature(1).GetGeomFieldRef(1).ExportToIsoWkt()
             == "LINESTRING (5 6,7 8)"
         )
+
+
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_partition_no_fields(tmp_vsimem):
+
+    with pytest.raises(
+        Exception,
+        match="When 'fields' argument is not specified, 'feature-limit' and/or 'max-file-size' must be specified",
+    ):
+        gdal.alg.vector.partition(
+            input=src_ds(), output=tmp_vsimem / "out", output_format="GPKG"
+        )
+
+    gdal.alg.vector.partition(
+        input=src_ds(), output=tmp_vsimem / "out", feature_limit=2, output_format="GPKG"
+    )
+
+    assert gdal.ReadDir(tmp_vsimem / "out" / "test") == [
+        "part_0000000001.gpkg",
+        "part_0000000002.gpkg",
+    ]
+
+    gdal.RmdirRecursive(tmp_vsimem / "out")
+
+    gdal.alg.vector.partition(
+        input=src_ds(),
+        output=tmp_vsimem / "out",
+        feature_limit=2,
+        output_format="GPKG",
+        scheme="flat",
+    )
+
+    assert gdal.ReadDir(tmp_vsimem / "out") == [
+        "non%20spatial_0000000001.gpkg",
+        "test_0000000001.gpkg",
+        "test_0000000002.gpkg",
+    ]

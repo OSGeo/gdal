@@ -15,7 +15,7 @@
 #include "exrdrivercore.h"
 
 /************************************************************************/
-/*                     EXRDriverIdentify()                              */
+/*                         EXRDriverIdentify()                          */
 /************************************************************************/
 
 int EXRDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -33,7 +33,7 @@ int EXRDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      EXRDriverSetCommonMetadata()                    */
+/*                     EXRDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void EXRDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -91,7 +91,7 @@ void EXRDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredEXRPlugin()                       */
+/*                      DeclareDeferredEXRPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

@@ -62,8 +62,8 @@ static void *GDALCreateSimilarHomographyTransformer(void *hTransformArg,
         double homography[9];
         for (int i = 0; i < 3; i++)
         {
-            homography[3 * i + 1] = psInfo->padfForward[3 * i + 1] / dfRatioX;
-            homography[3 * i + 2] = psInfo->padfForward[3 * i + 2] / dfRatioY;
+            homography[3 * i + 1] = psInfo->padfForward[3 * i + 1] * dfRatioX;
+            homography[3 * i + 2] = psInfo->padfForward[3 * i + 2] * dfRatioY;
             homography[3 * i] = psInfo->padfForward[3 * i];
         }
         psInfo = static_cast<HomographyTransformInfo *>(
@@ -74,7 +74,7 @@ static void *GDALCreateSimilarHomographyTransformer(void *hTransformArg,
 }
 
 /************************************************************************/
-/*                   GDALCreateHomographyTransformer()                  */
+/*                  GDALCreateHomographyTransformer()                   */
 /************************************************************************/
 
 /**
@@ -499,7 +499,7 @@ int GDALInvHomography(const double *padfHIn, double *padfHOut)
 }
 
 /************************************************************************/
-/*               GDALCreateHomographyTransformerFromGCPs()              */
+/*              GDALCreateHomographyTransformerFromGCPs()               */
 /************************************************************************/
 
 /**
@@ -555,7 +555,7 @@ void GDALDestroyHomographyTransformer(void *pTransformArg)
 }
 
 /************************************************************************/
-/*                       GDALHomographyTransform()                      */
+/*                      GDALHomographyTransform()                       */
 /************************************************************************/
 
 /**

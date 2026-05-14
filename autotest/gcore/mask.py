@@ -822,7 +822,7 @@ def test_mask_24():
     assert struct.unpack("B", mask.ReadRaster(0, 0, 1, 1))[0] == 255
 
     # IReadBlock() code path
-    (blockx, blocky) = mask.GetBlockSize()
+    blockx, blocky = mask.GetBlockSize()
     assert struct.unpack("B" * blockx * blocky, mask.ReadBlock(0, 0))[0] == 255
     mask.FlushCache()
 

@@ -25,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*       GDALRasterHillshadeAlgorithm::GDALRasterHillshadeAlgorithm()   */
+/*     GDALRasterHillshadeAlgorithm::GDALRasterHillshadeAlgorithm()     */
 /************************************************************************/
 
 GDALRasterHillshadeAlgorithm::GDALRasterHillshadeAlgorithm(bool standaloneStep)
@@ -76,7 +76,7 @@ bool GDALRasterHillshadeAlgorithm::CanHandleNextStep(
 }
 
 /************************************************************************/
-/*              GDALRasterHillshadeAlgorithm::RunStep()                 */
+/*               GDALRasterHillshadeAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterHillshadeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

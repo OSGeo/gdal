@@ -16,7 +16,7 @@
 #include <algorithm>
 
 /************************************************************************/
-/*               GDALMatrixMultiplyAByTransposeAUpperTriangle()         */
+/*            GDALMatrixMultiplyAByTransposeAUpperTriangle()            */
 /************************************************************************/
 
 // Compute res = A * A.transpose(), by filling only the upper triangle.
@@ -70,7 +70,8 @@ GDALMatrixMultiplyAByTransposeAUpperTriangle([[maybe_unused]] int nNumThreads,
                           dfSum3 = ZERO, dfSum4 = ZERO, dfSum5 = ZERO,
                           dfSum6 = ZERO, dfSum7 = ZERO;
 #ifdef HAVE_OPENMP_SIMD
-#pragma omp simd reduction(+ : dfSum0, dfSum1, dfSum2, dfSum3, dfSum4, dfSum5, dfSum6, dfSum7)
+#pragma omp simd reduction(+ : dfSum0, dfSum1, dfSum2, dfSum3, dfSum4, dfSum5, \
+                               dfSum6, dfSum7)
 #endif
                         for (size_t c = cc; c < c_end; ++c)
                         {

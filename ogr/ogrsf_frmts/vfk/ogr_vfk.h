@@ -22,7 +22,7 @@
 class OGRVFKDataSource;
 
 /************************************************************************/
-/*                            OGRVFKLayer                               */
+/*                             OGRVFKLayer                              */
 /************************************************************************/
 
 class OGRVFKLayer final : public OGRLayer

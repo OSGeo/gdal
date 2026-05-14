@@ -347,7 +347,7 @@ int CPLCreateOrAcquireMutexEx(CPLMutex **phMutex, double dfWaitInSeconds,
 #endif  // ndef MUTEX_NONE
 
 /************************************************************************/
-/*                   CPLCreateOrAcquireMutexInternal()                  */
+/*                  CPLCreateOrAcquireMutexInternal()                   */
 /************************************************************************/
 
 #ifdef MUTEX_NONE
@@ -405,7 +405,7 @@ static bool CPLCreateOrAcquireMutexInternal(CPLLock **phLock,
 #endif  // CPL_MULTIPROC_PTHREAD
 
 /************************************************************************/
-/*                      CPLCleanupMasterMutex()                         */
+/*                       CPLCleanupMasterMutex()                        */
 /************************************************************************/
 
 void CPLCleanupMasterMutex()
@@ -466,7 +466,7 @@ static void CPLCleanupTLSList(void **papTLSList)
 /************************************************************************/
 
 /************************************************************************/
-/*                             CPLGetNumCPUs()                          */
+/*                           CPLGetNumCPUs()                            */
 /************************************************************************/
 
 int CPLGetNumCPUs()
@@ -584,7 +584,7 @@ void CPLDestroyMutex(CPLMutex *hMutex)
 #endif
 
 /************************************************************************/
-/*                            CPLCreateCond()                           */
+/*                           CPLCreateCond()                            */
 /************************************************************************/
 
 CPLCond *CPLCreateCond()
@@ -601,7 +601,7 @@ void CPLCondWait(CPLCond * /* hCond */, CPLMutex * /* hMutex */)
 }
 
 /************************************************************************/
-/*                         CPLCondTimedWait()                           */
+/*                          CPLCondTimedWait()                          */
 /************************************************************************/
 
 CPLCondTimedWaitReason CPLCondTimedWait(CPLCond * /* hCond */,
@@ -611,7 +611,7 @@ CPLCondTimedWaitReason CPLCondTimedWait(CPLCond * /* hCond */,
 }
 
 /************************************************************************/
-/*                            CPLCondSignal()                           */
+/*                           CPLCondSignal()                            */
 /************************************************************************/
 
 void CPLCondSignal(CPLCond * /* hCond */)
@@ -619,7 +619,7 @@ void CPLCondSignal(CPLCond * /* hCond */)
 }
 
 /************************************************************************/
-/*                           CPLCondBroadcast()                         */
+/*                          CPLCondBroadcast()                          */
 /************************************************************************/
 
 void CPLCondBroadcast(CPLCond * /* hCond */)
@@ -627,7 +627,7 @@ void CPLCondBroadcast(CPLCond * /* hCond */)
 }
 
 /************************************************************************/
-/*                            CPLDestroyCond()                          */
+/*                           CPLDestroyCond()                           */
 /************************************************************************/
 
 void CPLDestroyCond(CPLCond * /* hCond */)
@@ -692,7 +692,7 @@ CPLJoinableThread *CPLCreateJoinableThread(CPLThreadFunc /* pfnMain */,
 }
 
 /************************************************************************/
-/*                          CPLJoinThread()                             */
+/*                           CPLJoinThread()                            */
 /************************************************************************/
 
 void CPLJoinThread(CPLJoinableThread * /* hJoinableThread */)
@@ -748,7 +748,7 @@ static void **CPLGetTLSList(int *pbMemoryErrorOccurred)
 }
 
 /************************************************************************/
-/*                             CPLFinalizeTLS()                         */
+/*                           CPLFinalizeTLS()                           */
 /************************************************************************/
 
 void CPLFinalizeTLS()
@@ -786,7 +786,7 @@ void CPLCleanupTLS()
 #include <windows.h>
 
 /************************************************************************/
-/*                             CPLGetNumCPUs()                          */
+/*                           CPLGetNumCPUs()                            */
 /************************************************************************/
 
 int CPLGetNumCPUs()
@@ -918,7 +918,7 @@ void CPLDestroyMutex(CPLMutex *hMutexIn)
 }
 
 /************************************************************************/
-/*                            CPLCreateCond()                           */
+/*                           CPLCreateCond()                            */
 /************************************************************************/
 
 struct _WaiterItem
@@ -965,7 +965,7 @@ void CPLCondWait(CPLCond *hCond, CPLMutex *hClientMutex)
 }
 
 /************************************************************************/
-/*                         CPLCondTimedWait()                           */
+/*                          CPLCondTimedWait()                          */
 /************************************************************************/
 
 CPLCondTimedWaitReason CPLCondTimedWait(CPLCond *hCond, CPLMutex *hClientMutex,
@@ -1018,7 +1018,7 @@ CPLCondTimedWaitReason CPLCondTimedWait(CPLCond *hCond, CPLMutex *hClientMutex,
 }
 
 /************************************************************************/
-/*                            CPLCondSignal()                           */
+/*                           CPLCondSignal()                            */
 /************************************************************************/
 
 void CPLCondSignal(CPLCond *hCond)
@@ -1040,7 +1040,7 @@ void CPLCondSignal(CPLCond *hCond)
 }
 
 /************************************************************************/
-/*                           CPLCondBroadcast()                         */
+/*                          CPLCondBroadcast()                          */
 /************************************************************************/
 
 void CPLCondBroadcast(CPLCond *hCond)
@@ -1064,7 +1064,7 @@ void CPLCondBroadcast(CPLCond *hCond)
 }
 
 /************************************************************************/
-/*                            CPLDestroyCond()                          */
+/*                           CPLDestroyCond()                           */
 /************************************************************************/
 
 void CPLDestroyCond(CPLCond *hCond)
@@ -1219,7 +1219,7 @@ CPLJoinableThread *CPLCreateJoinableThread(CPLThreadFunc pfnMain,
 }
 
 /************************************************************************/
-/*                          CPLJoinThread()                             */
+/*                           CPLJoinThread()                            */
 /************************************************************************/
 
 void CPLJoinThread(CPLJoinableThread *hJoinableThread)
@@ -1304,7 +1304,7 @@ static void **CPLGetTLSList(int *pbMemoryErrorOccurred)
 }
 
 /************************************************************************/
-/*                             CPLFinalizeTLS()                         */
+/*                           CPLFinalizeTLS()                           */
 /************************************************************************/
 
 void CPLFinalizeTLS()
@@ -1353,7 +1353,7 @@ void CPLCleanupTLS()
 /************************************************************************/
 
 /************************************************************************/
-/*                             CPLGetNumCPUs()                          */
+/*                           CPLGetNumCPUs()                            */
 /************************************************************************/
 
 int CPLGetNumCPUs()
@@ -1422,7 +1422,7 @@ int CPLCreateOrAcquireMutexEx(CPLMutex **phMutex, double dfWaitInSeconds,
 }
 
 /************************************************************************/
-/*                   CPLCreateOrAcquireMutexInternal()                  */
+/*                  CPLCreateOrAcquireMutexInternal()                   */
 /************************************************************************/
 
 static bool CPLCreateOrAcquireMutexInternal(CPLLock **phLock,
@@ -1648,7 +1648,7 @@ void CPLDestroyMutex(CPLMutex *hMutexIn)
 }
 
 /************************************************************************/
-/*                          CPLReinitAllMutex()                         */
+/*                         CPLReinitAllMutex()                          */
 /************************************************************************/
 
 // Used by gdalclientserver.cpp just after forking, to avoid
@@ -1675,7 +1675,7 @@ void CPLReinitAllMutex()
 }
 
 /************************************************************************/
-/*                            CPLCreateCond()                           */
+/*                           CPLCreateCond()                            */
 /************************************************************************/
 
 CPLCond *CPLCreateCond()
@@ -1702,7 +1702,7 @@ void CPLCondWait(CPLCond *hCond, CPLMutex *hMutex)
 }
 
 /************************************************************************/
-/*                         CPLCondTimedWait()                           */
+/*                          CPLCondTimedWait()                          */
 /************************************************************************/
 
 CPLCondTimedWaitReason CPLCondTimedWait(CPLCond *hCond, CPLMutex *hMutex,
@@ -1731,7 +1731,7 @@ CPLCondTimedWaitReason CPLCondTimedWait(CPLCond *hCond, CPLMutex *hMutex,
 }
 
 /************************************************************************/
-/*                            CPLCondSignal()                           */
+/*                           CPLCondSignal()                            */
 /************************************************************************/
 
 void CPLCondSignal(CPLCond *hCond)
@@ -1741,7 +1741,7 @@ void CPLCondSignal(CPLCond *hCond)
 }
 
 /************************************************************************/
-/*                           CPLCondBroadcast()                         */
+/*                          CPLCondBroadcast()                          */
 /************************************************************************/
 
 void CPLCondBroadcast(CPLCond *hCond)
@@ -1751,7 +1751,7 @@ void CPLCondBroadcast(CPLCond *hCond)
 }
 
 /************************************************************************/
-/*                            CPLDestroyCond()                          */
+/*                           CPLDestroyCond()                           */
 /************************************************************************/
 
 void CPLDestroyCond(CPLCond *hCond)
@@ -1843,7 +1843,7 @@ static pthread_key_t oTLSKey;
 static pthread_once_t oTLSKeySetup = PTHREAD_ONCE_INIT;
 
 /************************************************************************/
-/*                             CPLMake_key()                            */
+/*                            CPLMake_key()                             */
 /************************************************************************/
 
 static void CPLCleanupTLSListWrapper(void *papszList)
@@ -2117,7 +2117,7 @@ CPLJoinableThread *CPLCreateJoinableThread(CPLThreadFunc pfnMain,
 }
 
 /************************************************************************/
-/*                          CPLJoinThread()                             */
+/*                           CPLJoinThread()                            */
 /************************************************************************/
 
 void CPLJoinThread(CPLJoinableThread *hJoinableThread)
@@ -2150,7 +2150,7 @@ void CPLSleep(double dfWaitInSeconds)
 }
 
 /************************************************************************/
-/*                             CPLFinalizeTLS()                         */
+/*                           CPLFinalizeTLS()                           */
 /************************************************************************/
 
 void CPLFinalizeTLS()
@@ -2161,7 +2161,7 @@ void CPLFinalizeTLS()
 }
 
 /************************************************************************/
-/*                             CPLCleanupTLS()                          */
+/*                           CPLCleanupTLS()                            */
 /************************************************************************/
 
 void CPLCleanupTLS()
@@ -2177,7 +2177,7 @@ void CPLCleanupTLS()
 }
 
 /************************************************************************/
-/*                          CPLCreateSpinLock()                         */
+/*                         CPLCreateSpinLock()                          */
 /************************************************************************/
 
 #if defined(HAVE_PTHREAD_SPIN_LOCK)
@@ -2206,7 +2206,7 @@ CPLSpinLock *CPLCreateSpinLock()
 }
 
 /************************************************************************/
-/*                        CPLAcquireSpinLock()                          */
+/*                         CPLAcquireSpinLock()                         */
 /************************************************************************/
 
 int CPLAcquireSpinLock(CPLSpinLock *psSpin)
@@ -2215,7 +2215,7 @@ int CPLAcquireSpinLock(CPLSpinLock *psSpin)
 }
 
 /************************************************************************/
-/*                   CPLCreateOrAcquireSpinLockInternal()               */
+/*                 CPLCreateOrAcquireSpinLockInternal()                 */
 /************************************************************************/
 
 int CPLCreateOrAcquireSpinLockInternal(CPLLock **ppsLock)
@@ -2241,7 +2241,7 @@ int CPLCreateOrAcquireSpinLockInternal(CPLLock **ppsLock)
 }
 
 /************************************************************************/
-/*                       CPLReleaseSpinLock()                           */
+/*                         CPLReleaseSpinLock()                         */
 /************************************************************************/
 
 void CPLReleaseSpinLock(CPLSpinLock *psSpin)
@@ -2250,7 +2250,7 @@ void CPLReleaseSpinLock(CPLSpinLock *psSpin)
 }
 
 /************************************************************************/
-/*                        CPLDestroySpinLock()                          */
+/*                         CPLDestroySpinLock()                         */
 /************************************************************************/
 
 void CPLDestroySpinLock(CPLSpinLock *psSpin)
@@ -2303,7 +2303,7 @@ void CPLSetTLS(int nIndex, void *pData, int bFreeOnExit)
 }
 
 /************************************************************************/
-/*                      CPLSetTLSWithFreeFunc()                         */
+/*                       CPLSetTLSWithFreeFunc()                        */
 /************************************************************************/
 
 // Warning: The CPLTLSFreeFunc must not in any case directly or indirectly
@@ -2341,7 +2341,7 @@ void CPLSetTLSWithFreeFuncEx(int nIndex, void *pData, CPLTLSFreeFunc pfnFree,
 // No spinlock specific API? Fallback to mutex.
 
 /************************************************************************/
-/*                          CPLCreateSpinLock()                         */
+/*                         CPLCreateSpinLock()                          */
 /************************************************************************/
 
 CPLSpinLock *CPLCreateSpinLock(void)
@@ -2362,7 +2362,7 @@ int CPLCreateOrAcquireSpinLockInternal(CPLLock **ppsLock)
 }
 
 /************************************************************************/
-/*                        CPLAcquireSpinLock()                          */
+/*                         CPLAcquireSpinLock()                         */
 /************************************************************************/
 
 int CPLAcquireSpinLock(CPLSpinLock *psSpin)
@@ -2371,7 +2371,7 @@ int CPLAcquireSpinLock(CPLSpinLock *psSpin)
 }
 
 /************************************************************************/
-/*                       CPLReleaseSpinLock()                           */
+/*                         CPLReleaseSpinLock()                         */
 /************************************************************************/
 
 void CPLReleaseSpinLock(CPLSpinLock *psSpin)
@@ -2380,7 +2380,7 @@ void CPLReleaseSpinLock(CPLSpinLock *psSpin)
 }
 
 /************************************************************************/
-/*                        CPLDestroySpinLock()                          */
+/*                         CPLDestroySpinLock()                         */
 /************************************************************************/
 
 void CPLDestroySpinLock(CPLSpinLock *psSpin)
@@ -2391,7 +2391,7 @@ void CPLDestroySpinLock(CPLSpinLock *psSpin)
 #endif  // HAVE_SPINLOCK_IMPL
 
 /************************************************************************/
-/*                            CPLCreateLock()                           */
+/*                           CPLCreateLock()                            */
 /************************************************************************/
 
 CPLLock *CPLCreateLock(CPLLockType eType)
@@ -2494,7 +2494,7 @@ int CPLCreateOrAcquireLock(CPLLock **ppsLock, CPLLockType eType)
 }
 
 /************************************************************************/
-/*                          CPLAcquireLock()                            */
+/*                           CPLAcquireLock()                           */
 /************************************************************************/
 
 int CPLAcquireLock(CPLLock *psLock)
@@ -2521,7 +2521,7 @@ int CPLAcquireLock(CPLLock *psLock)
 }
 
 /************************************************************************/
-/*                         CPLReleaseLock()                             */
+/*                           CPLReleaseLock()                           */
 /************************************************************************/
 
 void CPLReleaseLock(CPLLock *psLock)
@@ -2561,7 +2561,7 @@ void CPLReleaseLock(CPLLock *psLock)
 }
 
 /************************************************************************/
-/*                          CPLDestroyLock()                            */
+/*                           CPLDestroyLock()                           */
 /************************************************************************/
 
 void CPLDestroyLock(CPLLock *psLock)
@@ -2574,7 +2574,7 @@ void CPLDestroyLock(CPLLock *psLock)
 }
 
 /************************************************************************/
-/*                       CPLLockSetDebugPerf()                          */
+/*                        CPLLockSetDebugPerf()                         */
 /************************************************************************/
 
 #ifdef DEBUG_CONTENTION
@@ -2659,7 +2659,7 @@ CPLLockHolder::CPLLockHolder(CPLLock *hLockIn, const char *pszFileIn,
 }
 
 /************************************************************************/
-/*                          ~CPLLockHolder()                            */
+/*                           ~CPLLockHolder()                           */
 /************************************************************************/
 
 CPLLockHolder::~CPLLockHolder()

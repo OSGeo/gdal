@@ -107,7 +107,7 @@ void CTiledChannel::Synchronize()
 }
 
 /************************************************************************/
-/*                                ReadTile()                            */
+/*                              ReadTile()                              */
 /************************************************************************/
 void CTiledChannel::ReadTile(void * buffer, uint32 nCol, uint32 nRow)
 {

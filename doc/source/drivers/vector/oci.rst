@@ -319,38 +319,46 @@ The following open options are supported:
 
       Define what user workspace to use.
 
-Example
-~~~~~~~
+Examples
+--------
 
-Simple translation of a shapefile into Oracle. The table 'ABC' will be
-created with the features from abc.shp and attributes from abc.dbf.
+.. example::
 
-::
+   Simple translation of a shapefile into Oracle. The table 'ABC' will be
+   created with the features from abc.shp and attributes from abc.dbf.
+   
+   .. code-block:: bash
+   
+      ogr2ogr -f OCI OCI:warmerda/password@gdal800.dreadfest.com abc.shp
 
-   % ogr2ogr -f OCI OCI:warmerda/password@gdal800.dreadfest.com abc.shp
+.. example::
 
-This example shows using ogrinfo to evaluate an SQL query statement
-within Oracle. More sophisticated Oracle Spatial specific queries may
-also be used via the -sql commandline switch to ogrinfo.
+   This example shows using ogrinfo to evaluate an SQL query statement
+   within Oracle. More sophisticated Oracle Spatial specific queries may
+   also be used via the -sql commandline switch to ogrinfo.
 
-::
+   .. code-block:: bash
+   
+      ogrinfo -ro OCI:warmerda/password -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
 
-   ogrinfo -ro OCI:warmerda/password -sql "SELECT pop_1994 from canada where province_name = 'Alberta'"
+.. example::
 
-This example shows hows to list information about an Oracle view.
+   This example shows hows to list information about an Oracle view.
+   
+   .. code-block:: bash
+   
+      ogrinfo -ro -so OCI:username/password@host_name:port_number/service_name:MY_SCHEMA.MY_VIEW MY_SCHEMA.MY_VIEW
 
-::
+.. example::
 
-   ogrinfo -ro -so OCI:username/password@host_name:port_number/service_name:MY_SCHEMA.MY_VIEW MY_SCHEMA.MY_VIEW
-
-This example shows hows to convert certain columns from an Oracle view
-to a GeoPackage file, explicitly assigning the layer name and the
-coordinate reference system, and converting timestamps to UTC.
-
-::
-
-   ogr2ogr -f GPKG output.gpkg -nln new_layer_name -nlt POLYGON -s_srs EPSG:25832 -t_srs EPSG:25832 -dsco DATETIME_FORMAT=UTC OCI:username/password@host_name:port_number/service_name:MY_SCHEMA.MY_VIEW -sql "SELECT COLUMN_A, COLUMN_B, GEOMETRY FROM MY_SCHEMA.MY_VIEW"
-
+   This example shows hows to convert certain columns from an Oracle view
+   to a GeoPackage file, explicitly assigning the layer name and the
+   coordinate reference system, and converting timestamps to UTC.
+   
+   .. code-block:: bash
+   
+      ogr2ogr -f GPKG output.gpkg -nln new_layer_name -nlt POLYGON -s_srs EPSG:25832 -t_srs EPSG:25832 -dsco DATETIME_FORMAT=UTC OCI:username/password@host_name:port_number/service_name:MY_SCHEMA.MY_VIEW -sql "SELECT COLUMN_A, COLUMN_B, GEOMETRY FROM MY_SCHEMA.MY_VIEW"
+   
 Standalone plugin compilation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -373,7 +381,7 @@ For example, from a "build_oci" directory under the root of the GDAL source tree
 
 Note that such a plugin, when used against a libgdal not aware of it, will be
 systematically loaded at GDAL driver initialization time, and will not benefit from
-`deferred plugin loading capabilities <rfc-96>`. For that, libgdal itself must be built with the
+:ref:`rfc-96`. For that, libgdal itself must be built with the
 CMake variable OGR_REGISTER_DRIVER_OCI_FOR_LATER_PLUGIN=ON set.
 
 Credits

@@ -17,7 +17,7 @@
 #include "pngdrivercore.h"
 
 /************************************************************************/
-/*                     PNGDriverIdentify()                              */
+/*                         PNGDriverIdentify()                          */
 /************************************************************************/
 
 int PNGDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -36,7 +36,7 @@ int PNGDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      PNGDriverSetCommonMetadata()                    */
+/*                     PNGDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void PNGDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -91,7 +91,7 @@ void PNGDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     DeclareDeferredPNGPlugin()                       */
+/*                      DeclareDeferredPNGPlugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

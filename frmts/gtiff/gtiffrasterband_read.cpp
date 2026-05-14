@@ -88,7 +88,7 @@ GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 }
 
 /************************************************************************/
-/*                           GetHistogram()                             */
+/*                            GetHistogram()                            */
 /************************************************************************/
 
 CPLErr GTiffRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
@@ -104,7 +104,7 @@ CPLErr GTiffRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
 }
 
 /************************************************************************/
-/*                       GetDefaultHistogram()                          */
+/*                        GetDefaultHistogram()                         */
 /************************************************************************/
 
 CPLErr GTiffRasterBand::GetDefaultHistogram(
@@ -118,7 +118,7 @@ CPLErr GTiffRasterBand::GetDefaultHistogram(
 }
 
 /************************************************************************/
-/*                           DirectIO()                                 */
+/*                              DirectIO()                              */
 /************************************************************************/
 
 // Reads directly bytes from the file using ReadMultiRange(), and by-pass
@@ -345,13 +345,13 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                           GetVirtualMemAuto()                        */
+/*                         GetVirtualMemAuto()                          */
 /************************************************************************/
 
 CPLVirtualMem *GTiffRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                   int *pnPixelSpace,
                                                   GIntBig *pnLineSpace,
-                                                  char **papszOptions)
+                                                  CSLConstList papszOptions)
 {
     const char *pszImpl = CSLFetchNameValueDef(
         papszOptions, "USE_DEFAULT_IMPLEMENTATION", "AUTO");
@@ -382,7 +382,7 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                     DropReferenceVirtualMem()                        */
+/*                      DropReferenceVirtualMem()                       */
 /************************************************************************/
 
 void GTiffRasterBand::DropReferenceVirtualMem(void *pUserData)
@@ -410,10 +410,9 @@ void GTiffRasterBand::DropReferenceVirtualMem(void *pUserData)
 /*                     GetVirtualMemAutoInternal()                      */
 /************************************************************************/
 
-CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
-                                                          int *pnPixelSpace,
-                                                          GIntBig *pnLineSpace,
-                                                          char **papszOptions)
+CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(
+    GDALRWFlag eRWFlag, int *pnPixelSpace, GIntBig *pnLineSpace,
+    CSLConstList papszOptions)
 {
     int nLineSize = nBlockXSize * GDALGetDataTypeSizeBytes(eDataType);
     if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG)
@@ -919,7 +918,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 }
 
 /************************************************************************/
-/*                           CacheMaskForBlock()                       */
+/*                         CacheMaskForBlock()                          */
 /************************************************************************/
 
 void GTiffRasterBand::CacheMaskForBlock(int nBlockXOff, int nBlockYOff)
@@ -1056,7 +1055,7 @@ const char *GTiffRasterBand::GetUnitType()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **GTiffRasterBand::GetMetadataDomainList()
@@ -1097,17 +1096,6 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
                                              const char *pszDomain)
 
 {
-    if (pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
-    {
-        m_poGDS->LoadGeoreferencingAndPamIfNeeded();
-
-        m_poGDS->LoadENVIHdrIfNeeded();
-    }
-    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
-    {
-        m_poGDS->LoadENVIHdrIfNeeded();
-    }
-
     if (pszName != nullptr && pszDomain != nullptr && EQUAL(pszDomain, "TIFF"))
     {
         int nBlockXOff = 0;
@@ -1186,6 +1174,16 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
     {
         if (EQUAL(pszName, "HAS_BLOCK_CACHE"))
             return HasBlockCache() ? "1" : "0";
+    }
+    else if (pszDomain == nullptr || !EQUAL(pszDomain, "IMAGE_STRUCTURE"))
+    {
+        m_poGDS->LoadGeoreferencingAndPamIfNeeded();
+
+        m_poGDS->LoadENVIHdrIfNeeded();
+    }
+    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
+    {
+        m_poGDS->LoadENVIHdrIfNeeded();
     }
 
     const char *pszRet = m_oGTiffMDMD.GetMetadataItem(pszName, pszDomain);
@@ -1357,7 +1355,7 @@ int64_t GTiffRasterBand::GetNoDataValueAsInt64(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                      GetNoDataValueAsUInt64()                        */
+/*                       GetNoDataValueAsUInt64()                       */
 /************************************************************************/
 
 uint64_t GTiffRasterBand::GetNoDataValueAsUInt64(int *pbSuccess)
@@ -1475,7 +1473,7 @@ GDALRasterBand *GTiffRasterBand::GetOverview(int i)
 }
 
 /************************************************************************/
-/*                           GetMaskFlags()                             */
+/*                            GetMaskFlags()                            */
 /************************************************************************/
 
 int GTiffRasterBand::GetMaskFlags()
@@ -1549,7 +1547,7 @@ GDALRasterBand *GTiffRasterBand::GetMaskBand()
 }
 
 /************************************************************************/
-/*                            IsMaskBand()                              */
+/*                             IsMaskBand()                             */
 /************************************************************************/
 
 bool GTiffRasterBand::IsMaskBand() const

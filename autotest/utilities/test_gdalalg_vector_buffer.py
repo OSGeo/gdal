@@ -104,8 +104,6 @@ def test_gdalalg_vector_buffer(input_wkt, options, output_wkt):
     assert out_lyr.GetGeomType() == out_f.GetGeometryRef().GetGeometryType()
     # print(out_f.GetGeometryRef().ExportToIsoWkt())
     ogrtest.check_feature_geometry(out_f, output_wkt)
-    assert (
-        out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode(None) == "32631"
-    )
+    assert out_f.GetGeometryRef().GetSpatialReference().GetAuthorityCode() == "32631"
     out_f = out_lyr.GetNextFeature()
     assert out_f.GetGeometryRef() is None

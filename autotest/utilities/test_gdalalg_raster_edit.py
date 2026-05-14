@@ -11,7 +11,9 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal, ogr
 
@@ -47,7 +49,7 @@ def test_gdalalg_raster_edit_crs(tmp_vsimem):
     )
 
     with gdal.OpenEx(tmp_filename) as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "32611"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32611"
 
 
 def test_gdalalg_raster_edit_crs_none(tmp_vsimem):
@@ -275,7 +277,7 @@ def test_gdalalg_raster_pipeline_edit_crs(tmp_vsimem):
     )
 
     with gdal.OpenEx(out_filename) as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "32611"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32611"
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
@@ -393,6 +395,17 @@ def test_gdalalg_raster_pipeline_edit_metadata(tmp_vsimem):
         assert ds.GetMetadata() == {"AREA_OR_POINT": "Area", "bar": "baz"}
 
 
+def test_gdalalg_raster_pipeline_complex():
+    """Test case of https://github.com/OSGeo/gdal/issues/14331"""
+
+    with gdal.alg.raster.pipeline(
+        pipeline="create --size=1,1 --crs EPSG:4269 --bbox=-126,22,-65,50 ! reproject --dst-crs EPSG:4326 ! edit --metadata DESC=stuff"
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
+        assert ds.GetMetadataItem("DESC") == "stuff"
+
+
 def test_gdalalg_raster_edit_gcp_from_list_of_values():
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
@@ -406,7 +419,7 @@ def test_gdalalg_raster_edit_gcp_from_list_of_values():
     )
 
     assert mem_ds.GetGCPCount() == 2
-    assert mem_ds.GetGCPSpatialRef().GetAuthorityCode(None) == "4326"
+    assert mem_ds.GetGCPSpatialRef().GetAuthorityCode() == "4326"
 
     assert mem_ds.GetGCPs()[0].GCPPixel == 1.5
     assert mem_ds.GetGCPs()[0].GCPLine == 2.5
@@ -539,3 +552,337 @@ def test_gdalalg_raster_edit_gcp_output_fromat_does_not_support(tmp_vsimem):
 
     with pytest.raises(Exception, match="Setting GCPs failed"):
         gdal.Run("raster", "edit", dataset=ds, gcp=[[1.5, 2.5, 3.5, 4.5]])
+
+
+@pytest.mark.require_driver("COG")
+def test_gdalalg_raster_edit_cog(tmp_vsimem):
+
+    gdal.alg.raster.convert(
+        input="../gcore/data/byte.tif",
+        output=tmp_vsimem / "out.tif",
+        output_format="COG",
+    )
+    with pytest.raises(
+        Exception, match=r"has C\(loud\) O\(ptimized\) G\(eoTIFF\) layout"
+    ):
+        gdal.alg.raster.edit(dataset=tmp_vsimem / "out.tif", crs="EPSG:32611")
+    with gdal.quiet_errors():
+        gdal.alg.raster.edit(
+            dataset=tmp_vsimem / "out.tif",
+            crs="EPSG:32611",
+            open_option={"IGNORE_COG_LAYOUT_BREAK": "YES"},
+        )
+
+
+def test_gdalalg_raster_edit_color_interpretation_single_band():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+
+    gdal.alg.raster.edit(dataset=ds, color_interpretation="Red")
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+
+    gdal.alg.raster.edit(dataset=ds, color_interpretation="all=Green")
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GreenBand
+
+    gdal.alg.raster.edit(dataset=ds, color_interpretation="1=Blue")
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_BlueBand
+
+    with pytest.raises(Exception, match="Unsupported color interpretation: invalid"):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation="invalid")
+
+    with pytest.raises(Exception, match="Unsupported color interpretation: invalid"):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation="all=invalid")
+
+    with pytest.raises(Exception, match="Unsupported color interpretation: invalid"):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation="1=invalid")
+
+    with pytest.raises(Exception, match="Invalid band number '0' in '0=Red'"):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation="0=Red")
+
+    with pytest.raises(Exception, match="Invalid band number '2' in '2=Red'"):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation="2=Red")
+
+    with pytest.raises(
+        Exception,
+        match="More color interpretation values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation=["Red", "Green"])
+
+
+def test_gdalalg_raster_edit_color_interpretation_multi_band():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+
+    gdal.alg.raster.edit(dataset=ds, color_interpretation="all=Green")
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_GreenBand
+
+    gdal.alg.raster.edit(dataset=ds, color_interpretation=["Red", "Green", "Blue"])
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_RedBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
+
+    gdal.alg.raster.edit(
+        dataset=ds, color_interpretation=["3=Red", "1=Green", "2=Blue"]
+    )
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_GreenBand
+    assert ds.GetRasterBand(2).GetColorInterpretation() == gdal.GCI_BlueBand
+    assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_RedBand
+
+    with pytest.raises(
+        Exception,
+        match="With several bands, specify as many color interpretation as bands, one or many values of the form <band_number>=<color> or a single value all=<color>",
+    ):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation="Red")
+
+    with pytest.raises(
+        Exception,
+        match="More color interpretation values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(
+            dataset=ds, color_interpretation=["Red", "Green", "Blue", "Alpha"]
+        )
+
+    with pytest.raises(
+        Exception,
+        match="Less color interpretation values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation=["Red", "Green"])
+
+    with pytest.raises(
+        Exception, match="Mix of different syntaxes to specify color interpretation"
+    ):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation=["Red", "all=Green"])
+
+    with pytest.raises(
+        Exception, match="Mix of different syntaxes to specify color interpretation"
+    ):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation=["2=Red", "Green"])
+
+    with pytest.raises(
+        Exception, match="Mix of different syntaxes to specify color interpretation"
+    ):
+        gdal.alg.raster.edit(dataset=ds, color_interpretation=["Red", "2=Green"])
+
+
+def test_gdalalg_raster_edit_color_interpretation_autocomplete():
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary not available")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster edit --color-interpretation last_word_is_complete=true"
+    ).split(" ")
+    assert "all=" in out
+    assert "Red" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster edit ../gcore/data/byte.tif --color-interpretation last_word_is_complete=true"
+    ).split(" ")
+    assert "all=" in out
+    assert "1=" in out
+    assert "Red" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal raster edit --color-interpretation all= last_word_is_complete=false"
+    ).split(" ")
+    assert "all=" not in out
+    assert "Red" in out
+
+
+def test_gdalalg_raster_edit_scale():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+
+    gdal.alg.raster.edit(dataset=ds, scale=2.5)
+    assert ds.GetRasterBand(1).GetScale() == 2.5
+    assert ds.GetRasterBand(2).GetScale() == 2.5
+    assert ds.GetRasterBand(3).GetScale() == 2.5
+
+    gdal.alg.raster.edit(dataset=ds, scale=[3.5, 2, 1.5])
+    assert ds.GetRasterBand(1).GetScale() == 3.5
+    assert ds.GetRasterBand(2).GetScale() == 2
+    assert ds.GetRasterBand(3).GetScale() == 1.5
+
+    gdal.alg.raster.edit(dataset=ds, scale="2=2.5")
+    assert ds.GetRasterBand(1).GetScale() == 3.5
+    assert ds.GetRasterBand(2).GetScale() == 2.5
+    assert ds.GetRasterBand(3).GetScale() == 1.5
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value 'foo' for 'scale'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale="foo")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value 'foo=1' for 'scale'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale="foo=1")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value '1=foo' for 'scale'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale="1=foo")
+
+    with pytest.raises(
+        Exception,
+        match="Less scale values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale=[1, 2])
+
+    with pytest.raises(
+        Exception,
+        match="More scale values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale=[1, 2, 3, 4])
+
+    with pytest.raises(
+        Exception,
+        match="Mix of different syntaxes to specify scale",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale=[1, "2=3"])
+
+    with pytest.raises(
+        Exception,
+        match="Invalid band number '0' in '0=3'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale=[1, "0=3"])
+
+    with pytest.raises(
+        Exception,
+        match="Invalid band number '4' in '4=3'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, scale=[1, "4=3"])
+
+
+def test_gdalalg_raster_edit_offset():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+
+    gdal.alg.raster.edit(dataset=ds, offset=2.5)
+    assert ds.GetRasterBand(1).GetOffset() == 2.5
+    assert ds.GetRasterBand(2).GetOffset() == 2.5
+    assert ds.GetRasterBand(3).GetOffset() == 2.5
+
+    gdal.alg.raster.edit(dataset=ds, offset=[3.5, 2, 1.5])
+    assert ds.GetRasterBand(1).GetOffset() == 3.5
+    assert ds.GetRasterBand(2).GetOffset() == 2
+    assert ds.GetRasterBand(3).GetOffset() == 1.5
+
+    gdal.alg.raster.edit(dataset=ds, offset="2=2.5")
+    assert ds.GetRasterBand(1).GetOffset() == 3.5
+    assert ds.GetRasterBand(2).GetOffset() == 2.5
+    assert ds.GetRasterBand(3).GetOffset() == 1.5
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value 'foo' for 'offset'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset="foo")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value 'foo=1' for 'offset'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset="foo=1")
+
+    with pytest.raises(
+        Exception,
+        match="Invalid value '1=foo' for 'offset'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset="1=foo")
+
+    with pytest.raises(
+        Exception,
+        match="Less offset values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset=[1, 2])
+
+    with pytest.raises(
+        Exception,
+        match="More offset values specified than bands in the dataset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset=[1, 2, 3, 4])
+
+    with pytest.raises(
+        Exception,
+        match="Mix of different syntaxes to specify offset",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset=[1, "2=3"])
+
+    with pytest.raises(
+        Exception,
+        match="Invalid band number '0' in '0=3'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset=[1, "0=3"])
+
+    with pytest.raises(
+        Exception,
+        match="Invalid band number '4' in '4=3'",
+    ):
+        gdal.alg.raster.edit(dataset=ds, offset=[1, "4=3"])
+
+
+def test_gdalalg_raster_edit_colormap(tmp_vsimem):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 3)
+
+    gdal.alg.raster.edit(dataset=ds, color_map="../gcore/data/empty1bit.tif")
+
+    assert ds.GetRasterBand(1).GetColorTable().GetCount() == 2
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_PaletteIndex
+
+    gdal.alg.raster.edit(dataset=ds, unset_color_table=True)
+
+    assert ds.GetRasterBand(1).GetColorTable() is None
+    assert ds.GetRasterBand(1).GetColorInterpretation() == gdal.GCI_Undefined
+
+    with gdal.VSIFile(tmp_vsimem / "ct.txt", "wb") as f:
+        f.write(b"1 2 3 4\n")
+
+    gdal.alg.raster.edit(dataset=ds, color_map=tmp_vsimem / "ct.txt")
+
+    assert ds.GetRasterBand(1).GetColorTable().GetCount() == 2
+    assert ds.GetRasterBand(1).GetColorTable().GetColorEntry(1) == (2, 3, 4, 255)
+
+    if gdal.GetDriverByName("netCDF"):
+        with pytest.raises(
+            Exception, match="../gdrivers/data/netcdf/complex.nc has no raster band"
+        ):
+            gdal.alg.raster.edit(
+                dataset=ds, color_map="../gdrivers/data/netcdf/complex.nc"
+            )
+
+    with pytest.raises(Exception, match="../gcore/data/byte.tif has no color table"):
+        gdal.alg.raster.edit(dataset=ds, color_map="../gcore/data/byte.tif")
+
+    with pytest.raises(
+        Exception, match="test_gdalalg_raster_edit.py has no color table"
+    ):
+        gdal.alg.raster.edit(dataset=ds, color_map="test_gdalalg_raster_edit.py")
+
+    with gdal.VSIFile(tmp_vsimem / "ct.txt", "wb") as f:
+        f.write(b"1.5 2 3 4\n")
+
+    with pytest.raises(
+        Exception,
+        match="Value 1.500000 of color map is not compatible of an integer index",
+    ):
+        gdal.alg.raster.edit(dataset=ds, color_map=tmp_vsimem / "ct.txt")
+
+    with pytest.raises(Exception, match="Band 1 is not valid"):
+        gdal.alg.raster.edit(
+            dataset=gdal.GetDriverByName("MEM").Create("", 1, 1, 0),
+            color_map="../gcore/data/empty1bit.tif",
+        )
+
+    with pytest.raises(Exception, match="Band 1 is not valid"):
+        gdal.alg.raster.edit(
+            dataset=gdal.GetDriverByName("MEM").Create("", 1, 1, 0),
+            unset_color_table=True,
+        )

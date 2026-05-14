@@ -34,7 +34,7 @@ def test_s111_basic():
     assert ds.RasterCount == 0
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.4, 0.0, 48.75, 0.0, -0.5))
     assert ds.GetMetadata_Dict() == {
         "VERTICAL_DATUM_NAME": "meanLowerLowWater",
@@ -103,7 +103,7 @@ def test_s111_north_up_no():
     assert ds.RasterCount == 2
     assert ds.RasterXSize == 3
     assert ds.RasterYSize == 2
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
     assert ds.GetGeoTransform() == pytest.approx((1.8, 0.4, 0.0, 47.75, 0.0, 0.5))
 
     band = ds.GetRasterBand(1)
@@ -147,7 +147,7 @@ def test_s111_multidim():
     ar = rg.OpenMDArrayFromFullname(
         "/SurfaceCurrent/SurfaceCurrent.01/Group_001/values"
     )
-    assert ar.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ar.GetSpatialRef().GetAuthorityCode() == "4326"
 
     assert ar.GetDimensions()[0].GetName() == "Y"
     y = ar.GetDimensions()[0].GetIndexingVariable()
@@ -703,7 +703,7 @@ def test_s111_write_basic(tmp_path):
         )
 
     with gdal.Open(f'S111:"{tmp_path}/111xxxxyyyy.h5":Group_001') as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32631"
         assert ds.GetGeoTransform() == pytest.approx(
             (500000, 1.1, 0, 4500000 + 1.2 * 3, 0, -1.2)
         )
@@ -817,7 +817,7 @@ def test_s111_write_with_uncertainty_bands(tmp_path):
         )
 
     with gdal.Open(f'S111:"{tmp_path}/111xxxxyyyy.h5":Group_001') as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32631"
         assert ds.GetGeoTransform() == pytest.approx(
             (500000, 1.1, 0, 4500000 + 1.2 * 3, 0, -1.2)
         )
@@ -1350,7 +1350,7 @@ def test_s111_write_multiple_timestamps(tmp_path):
         )
 
     with gdal.Open(f'S111:"{tmp_path}/111xxxxyyyy.h5":Group_001') as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32631"
         assert ds.GetGeoTransform() == pytest.approx(
             (500000, 1.1, 0, 4500000 + 1.2 * 3, 0, -1.2)
         )
@@ -1419,7 +1419,7 @@ def test_s111_write_multiple_timestamps(tmp_path):
         )
 
     with gdal.Open(f'S111:"{tmp_path}/111xxxxyyyybis.h5":Group_001') as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32631"
         assert ds.GetGeoTransform() == pytest.approx(
             (500000, 1.1, 0, 4500000 + 1.2 * 3, 0, -1.2)
         )
@@ -1520,7 +1520,7 @@ def test_s111_write_multiple_instances(tmp_path):
     with gdal.Open(
         f'S111:"{tmp_path}/111xxxxyyyy.h5":SurfaceCurrent.01:Group_001'
     ) as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32631"
         assert ds.GetGeoTransform() == pytest.approx(
             (500000, 1.1, 0, 4500000 + 1.2 * 3, 0, -1.2)
         )
@@ -1577,7 +1577,7 @@ def test_s111_write_multiple_instances(tmp_path):
     with gdal.Open(
         f'S111:"{tmp_path}/111xxxxyyyy.h5":SurfaceCurrent.02:Group_001'
     ) as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32631"
         assert ds.GetGeoTransform() == pytest.approx(
             (500000, 1.1, 0, 4500000 + 1.2 * 3, 0, -1.2)
         )
@@ -1648,7 +1648,7 @@ def test_s111_write_multiple_instances(tmp_path):
     with gdal.Open(
         f'S111:"{tmp_path}/111xxxxyyyybis.h5":SurfaceCurrent.01:Group_001'
     ) as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32631"
         assert ds.GetGeoTransform() == pytest.approx(
             (500000, 1.1, 0, 4500000 + 1.2 * 3, 0, -1.2)
         )
@@ -1679,7 +1679,7 @@ def test_s111_write_multiple_instances(tmp_path):
     with gdal.Open(
         f'S111:"{tmp_path}/111xxxxyyyybis.h5":SurfaceCurrent.02:Group_001'
     ) as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32631"
         assert ds.GetGeoTransform() == pytest.approx(
             (500000, 1.1, 0, 4500000 + 1.2 * 3, 0, -1.2)
         )

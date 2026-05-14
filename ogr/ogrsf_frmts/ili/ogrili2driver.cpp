@@ -52,7 +52,7 @@ static GDALDataset *OGRILI2DriverOpen(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           RegisterOGRILI2()                           */
+/*                          RegisterOGRILI2()                           */
 /************************************************************************/
 
 void RegisterOGRILI2()

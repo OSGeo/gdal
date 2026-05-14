@@ -250,7 +250,7 @@ CPLErr AAIGRasterBand::SetNoDataValue(double dfNoData)
 /************************************************************************/
 
 /************************************************************************/
-/*                            AAIGDataset()                            */
+/*                            AAIGDataset()                             */
 /************************************************************************/
 
 AAIGDataset::AAIGDataset()
@@ -262,7 +262,7 @@ AAIGDataset::AAIGDataset()
 }
 
 /************************************************************************/
-/*                           ~AAIGDataset()                            */
+/*                            ~AAIGDataset()                            */
 /************************************************************************/
 
 AAIGDataset::~AAIGDataset()
@@ -341,7 +341,7 @@ char **AAIGDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int AAIGDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -373,7 +373,7 @@ int AAIGDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int GRASSASCIIDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -399,7 +399,7 @@ int GRASSASCIIDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int ISGDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -458,7 +458,7 @@ GDALDataset *AAIGDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          ParseHeader()                               */
+/*                            ParseHeader()                             */
 /************************************************************************/
 
 bool AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
@@ -513,12 +513,12 @@ bool AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
         (j = aosTokens.FindString("yllcorner")) >= 0 && i + 1 < nTokens &&
         j + 1 < nTokens)
     {
-        m_gt[0] = CPLAtofM(aosTokens[i + 1]);
+        m_gt.xorig = CPLAtofM(aosTokens[i + 1]);
 
         // Small hack to compensate from insufficient precision in cellsize
         // parameter in datasets of
         // http://ccafs-climate.org/data/A2a_2020s/hccpr_hadcm3
-        if ((nRasterXSize % 360) == 0 && fabs(m_gt[0] - (-180.0)) < 1e-12 &&
+        if ((nRasterXSize % 360) == 0 && fabs(m_gt.xorig - (-180.0)) < 1e-12 &&
             dfCellDX == dfCellDY &&
             fabs(dfCellDX - (360.0 / nRasterXSize)) < 1e-9)
         {
@@ -526,11 +526,11 @@ bool AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
             dfCellDX = dfCellDY;
         }
 
-        m_gt[1] = dfCellDX;
-        m_gt[2] = 0.0;
-        m_gt[3] = CPLAtofM(aosTokens[j + 1]) + nRasterYSize * dfCellDY;
-        m_gt[4] = 0.0;
-        m_gt[5] = -dfCellDY;
+        m_gt.xscale = dfCellDX;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = CPLAtofM(aosTokens[j + 1]) + nRasterYSize * dfCellDY;
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -dfCellDY;
     }
     else if ((i = aosTokens.FindString("xllcenter")) >= 0 &&
              (j = aosTokens.FindString("yllcenter")) >= 0 && i + 1 < nTokens &&
@@ -538,22 +538,22 @@ bool AAIGDataset::ParseHeader(const char *pszHeader, const char *pszDataType)
     {
         SetMetadataItem(GDALMD_AREA_OR_POINT, GDALMD_AOP_POINT);
 
-        m_gt[0] = CPLAtofM(aosTokens[i + 1]) - 0.5 * dfCellDX;
-        m_gt[1] = dfCellDX;
-        m_gt[2] = 0.0;
-        m_gt[3] = CPLAtofM(aosTokens[j + 1]) - 0.5 * dfCellDY +
-                  nRasterYSize * dfCellDY;
-        m_gt[4] = 0.0;
-        m_gt[5] = -dfCellDY;
+        m_gt.xorig = CPLAtofM(aosTokens[i + 1]) - 0.5 * dfCellDX;
+        m_gt.xscale = dfCellDX;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = CPLAtofM(aosTokens[j + 1]) - 0.5 * dfCellDY +
+                     nRasterYSize * dfCellDY;
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -dfCellDY;
     }
     else
     {
-        m_gt[0] = 0.0;
-        m_gt[1] = dfCellDX;
-        m_gt[2] = 0.0;
-        m_gt[3] = 0.0;
-        m_gt[4] = 0.0;
-        m_gt[5] = -dfCellDY;
+        m_gt.xorig = 0.0;
+        m_gt.xscale = dfCellDX;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = 0.0;
+        m_gt.yrot = 0.0;
+        m_gt.yscale = -dfCellDY;
     }
 
     if ((i = aosTokens.FindString("NODATA_value")) >= 0 && i + 1 < nTokens)
@@ -620,7 +620,7 @@ GDALDataset *GRASSASCIIDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          ParseHeader()                               */
+/*                            ParseHeader()                             */
 /************************************************************************/
 
 bool GRASSASCIIDataset::ParseHeader(const char *pszHeader,
@@ -664,12 +664,12 @@ bool GRASSASCIIDataset::ParseHeader(const char *pszHeader,
     const double dfPixelXSize = (dfEast - dfWest) / nRasterXSize;
     const double dfPixelYSize = (dfNorth - dfSouth) / nRasterYSize;
 
-    m_gt[0] = dfWest;
-    m_gt[1] = dfPixelXSize;
-    m_gt[2] = 0.0;
-    m_gt[3] = dfNorth;
-    m_gt[4] = 0.0;
-    m_gt[5] = -dfPixelYSize;
+    m_gt.xorig = dfWest;
+    m_gt.xscale = dfPixelXSize;
+    m_gt.xrot = 0.0;
+    m_gt.yorig = dfNorth;
+    m_gt.yrot = 0.0;
+    m_gt.yscale = -dfPixelYSize;
 
     if ((i = aosTokens.FindString("null")) >= 0 && i + 1 < nTokens)
     {
@@ -726,7 +726,7 @@ GDALDataset *ISGDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          ParseHeader()                               */
+/*                            ParseHeader()                             */
 /************************************************************************/
 
 bool ISGDataset::ParseHeader(const char *pszHeader, const char *)
@@ -988,12 +988,12 @@ bool ISGDataset::ParseHeader(const char *pszHeader, const char *)
     }
     nRasterXSize = nCols;
     nRasterYSize = nRows;
-    m_gt[0] = dfLonMin;
-    m_gt[1] = dfDeltaLon;
-    m_gt[2] = 0.0;
-    m_gt[3] = dfLatMax;
-    m_gt[4] = 0.0;
-    m_gt[5] = -dfDeltaLat;
+    m_gt.xorig = dfLonMin;
+    m_gt.xscale = dfDeltaLon;
+    m_gt.xrot = 0.0;
+    m_gt.yorig = dfLatMax;
+    m_gt.yrot = 0.0;
+    m_gt.yscale = -dfDeltaLat;
     if (!osNodata.empty())
     {
         bNoDataSet = true;
@@ -1003,7 +1003,7 @@ bool ISGDataset::ParseHeader(const char *pszHeader, const char *)
 }
 
 /************************************************************************/
-/*                           CommonOpen()                               */
+/*                             CommonOpen()                             */
 /************************************************************************/
 
 GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
@@ -1249,12 +1249,12 @@ GDALDataset *AAIGDataset::CommonOpen(GDALOpenInfo *poOpenInfo,
             if (oSRS.IsGeographic() &&
                 EQUAL(OSR_GDS(poDS->papszPrj, "Units", ""), "DS"))
             {
-                poDS->m_gt[0] /= 3600.0;
-                poDS->m_gt[1] /= 3600.0;
-                poDS->m_gt[2] /= 3600.0;
-                poDS->m_gt[3] /= 3600.0;
-                poDS->m_gt[4] /= 3600.0;
-                poDS->m_gt[5] /= 3600.0;
+                poDS->m_gt.xorig /= 3600.0;
+                poDS->m_gt.xscale /= 3600.0;
+                poDS->m_gt.xrot /= 3600.0;
+                poDS->m_gt.yorig /= 3600.0;
+                poDS->m_gt.yrot /= 3600.0;
+                poDS->m_gt.yscale /= 3600.0;
             }
 
             poDS->m_oSRS = std::move(oSRS);
@@ -1284,7 +1284,7 @@ CPLErr AAIGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *AAIGDataset::GetSpatialRef() const
@@ -1293,12 +1293,12 @@ const OGRSpatialReference *AAIGDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                          CreateCopy()                                */
+/*                             CreateCopy()                             */
 /************************************************************************/
 
 GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /* bStrict */,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {
@@ -1336,9 +1336,10 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
 
     poSrcDS->GetGeoTransform(gt);
 
-    const double dfYLLCorner = gt[5] < 0 ? gt[3] + nYSize * gt[5] : gt[3];
-    if (std::abs(gt[1] + gt[5]) < 0.0000001 ||
-        std::abs(gt[1] - gt[5]) < 0.0000001 ||
+    const double dfYLLCorner =
+        gt.yscale < 0 ? gt.yorig + nYSize * gt.yscale : gt.yorig;
+    if (std::abs(gt.xscale + gt.yscale) < 0.0000001 ||
+        std::abs(gt.xscale - gt.yscale) < 0.0000001 ||
         (pszForceCellsize && CPLTestBool(pszForceCellsize)))
     {
         CPLsnprintf(szHeader, sizeof(szHeader),
@@ -1347,7 +1348,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                     "xllcorner    %.12f\n"
                     "yllcorner    %.12f\n"
                     "cellsize     %.12f\n",
-                    nXSize, nYSize, gt[0], dfYLLCorner, gt[1]);
+                    nXSize, nYSize, gt.xorig, dfYLLCorner, gt.xscale);
     }
     else
     {
@@ -1366,7 +1367,8 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                     "yllcorner    %.12f\n"
                     "dx           %.12f\n"
                     "dy           %.12f\n",
-                    nXSize, nYSize, gt[0], dfYLLCorner, gt[1], fabs(gt[5]));
+                    nXSize, nYSize, gt.xorig, dfYLLCorner, gt.xscale,
+                    fabs(gt.yscale));
     }
 
     // Builds the format string used for printing float values.
@@ -1450,7 +1452,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
     for (int iLine = 0; eErr == CE_None && iLine < nYSize; iLine++)
     {
         CPLString osBuf;
-        const int iSrcLine = gt[5] < 0 ? iLine : nYSize - 1 - iLine;
+        const int iSrcLine = gt.yscale < 0 ? iLine : nYSize - 1 - iLine;
         eErr = poBand->RasterIO(GF_Read, 0, iSrcLine, nXSize, 1,
                                 bReadAsInt ? static_cast<void *>(panScanline)
                                            : static_cast<void *>(padfScanline),
@@ -1683,7 +1685,7 @@ void GDALRegister_AAIGrid()
 }
 
 /************************************************************************/
-/*                   GDALRegister_GRASSASCIIGrid()                      */
+/*                    GDALRegister_GRASSASCIIGrid()                     */
 /************************************************************************/
 
 void GDALRegister_GRASSASCIIGrid()
@@ -1709,7 +1711,7 @@ void GDALRegister_GRASSASCIIGrid()
 }
 
 /************************************************************************/
-/*                       GDALRegister_ISG()                             */
+/*                          GDALRegister_ISG()                          */
 /************************************************************************/
 
 void GDALRegister_ISG()

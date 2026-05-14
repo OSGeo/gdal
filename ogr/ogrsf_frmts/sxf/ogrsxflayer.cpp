@@ -22,7 +22,7 @@
 #include "cpl_multiproc.h"
 
 /************************************************************************/
-/*                        OGRSXFLayer()                                 */
+/*                            OGRSXFLayer()                             */
 /************************************************************************/
 
 OGRSXFLayer::OGRSXFLayer(VSILFILE *fp, CPLMutex **hIOMutex, GByte nID,
@@ -69,7 +69,7 @@ OGRSXFLayer::OGRSXFLayer(VSILFILE *fp, CPLMutex **hIOMutex, GByte nID,
 }
 
 /************************************************************************/
-/*                         ~OGRSXFLayer()                               */
+/*                            ~OGRSXFLayer()                            */
 /************************************************************************/
 
 OGRSXFLayer::~OGRSXFLayer()
@@ -97,7 +97,7 @@ void OGRSXFLayer::AddClassifyCode(unsigned nClassCode, const char *szName)
 }
 
 /************************************************************************/
-/*                           AddRecord()                                */
+/*                             AddRecord()                              */
 /************************************************************************/
 
 bool OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode,
@@ -307,7 +307,7 @@ const OGRSpatialReference *OGRSXFLayer::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRSXFLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -415,7 +415,7 @@ int OGRSXFLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                                TranslateXYH()                        */
+/*                            TranslateXYH()                            */
 /************************************************************************/
 /****
  * TODO : Take into account information given in the passport
@@ -1302,7 +1302,7 @@ OGRFeature *OGRSXFLayer::TranslateLine(const SXFRecordDescription &certifInfo,
 }
 
 /************************************************************************/
-/*                       TranslateVetorAngle()                          */
+/*                        TranslateVetorAngle()                         */
 /************************************************************************/
 
 OGRFeature *

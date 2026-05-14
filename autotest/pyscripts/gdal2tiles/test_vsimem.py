@@ -30,7 +30,13 @@ def test_gdal2tiles_vsimem():
         pytest.skip("PNG driver is missing")
 
     gdal2tiles.main(
-        argv=["gdal2tiles", "-q", "../../gcore/data/byte.tif", "/vsimem/gdal2tiles"]
+        argv=[
+            "gdal2tiles",
+            "--legacy",
+            "-q",
+            "../../gcore/data/byte.tif",
+            "/vsimem/gdal2tiles",
+        ]
     )
 
     assert set(gdal.ReadDirRecursive("/vsimem/gdal2tiles")) == set(

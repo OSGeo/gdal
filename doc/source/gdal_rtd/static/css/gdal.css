@@ -347,3 +347,13 @@ div.horizontal-logos::after {
     background: white;
     color: #343131;
 }
+
+/* top-aligned table, used in geometry_validity_examples.rst */
+table.top-aligned-table td {
+    vertical-align: top !important;
+}
+
+table.top-aligned-table td p {
+    line-height: 140% !important;
+}
+

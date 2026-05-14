@@ -417,7 +417,7 @@ def test_rasterize_6():
         208,
     )
 
-    data_source = ogr.GetDriverByName("MEMORY").CreateDataSource("")
+    data_source = ogr.GetDriverByName("MEM").CreateDataSource("")
     layer = data_source.CreateLayer("", sr, geom_type=ogr.wkbPolygon)
     feature = ogr.Feature(layer.GetLayerDefn())
     feature.SetGeometryDirectly(ogr.CreateGeometryFromWkb(wkb))
@@ -538,7 +538,7 @@ def test_rasterize_merge_alg_add_multiple_segment_linestring():
     sr_wkt = 'LOCAL_CS["arbitrary"]'
     sr = osr.SpatialReference(sr_wkt)
 
-    data_source = ogr.GetDriverByName("MEMORY").CreateDataSource("")
+    data_source = ogr.GetDriverByName("MEM").CreateDataSource("")
     layer = data_source.CreateLayer("", sr, geom_type=ogr.wkbLineString)
     feature = ogr.Feature(layer.GetLayerDefn())
     # Diagonal segments
@@ -793,7 +793,7 @@ def test_rasterize_merge_alg_add_polygon(wkt):
     sr_wkt = 'LOCAL_CS["arbitrary"]'
     sr = osr.SpatialReference(sr_wkt)
 
-    data_source = ogr.GetDriverByName("MEMORY").CreateDataSource("")
+    data_source = ogr.GetDriverByName("MEM").CreateDataSource("")
     layer = data_source.CreateLayer("", sr, geom_type=ogr.wkbPolygon)
     feature = ogr.Feature(layer.GetLayerDefn())
     feature.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
@@ -945,9 +945,7 @@ def test_rasterize_bugfix_gh8437(wkt, options, nbands):
     expected_checksum = (
         519
         if wkt.startswith("LINESTRING")
-        else 1727
-        if "ALL_TOUCHED=YES" in options
-        else 1435
+        else 1727 if "ALL_TOUCHED=YES" in options else 1435
     )
     for i in range(nbands):
         _, maxval = target_ds.GetRasterBand(i + 1).ComputeRasterMinMax()
@@ -1066,3 +1064,46 @@ def test_rasterize_huge_geometry():
     )
 
     assert target_ds.GetRasterBand(1).Checksum() == 400
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "wkt,checksum",
+    (
+        ("CIRCULARSTRING (0 0, 10 10, 20 0)", 38),
+        (
+            "COMPOUNDCURVE (CIRCULARSTRING (10 0, 0 10, 10 20), (10 20, 20 10, 10 0))",
+            67,
+        ),
+        (
+            "CURVEPOLYGON (COMPOUNDCURVE (CIRCULARSTRING (10 0, 0 10, 10 20), (10 20, 20 10, 10 0)))",
+            291,
+        ),
+        (
+            "MULTICURVE (CIRCULARSTRING (0 0, 10 10, 20 0), CIRCULARSTRING (0 20, 10 10, 20 20))",
+            76,
+        ),
+        (
+            "MULTISURFACE (CURVEPOLYGON (CIRCULARSTRING (0 5, 10 10, 15 5, 10 0, 0 5)), ((15 15, 20 15, 20 20, 15 20, 15 15)))",
+            160,
+        ),
+    ),
+)
+def test_rasterize_curves(wkt, checksum):
+
+    target_ds = gdal.GetDriverByName("MEM").Create("", 20, 20)
+    target_ds.SetGeoTransform((0, 1, 0, 20, 0, -1))
+
+    vec_ds = gdaltest.wkt_ds(wkt)
+
+    gdal.RasterizeLayer(
+        target_ds,
+        [1],
+        vec_ds.GetLayer(0),
+        burn_values=[1],
+        options={"ALL_TOUCHED": True},
+    )
+
+    assert target_ds.GetRasterBand(1).Checksum() == checksum

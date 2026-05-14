@@ -1,0 +1,32 @@
+PDS_VERSION_ID            = PDS3
+OBJECT = COMPRESSED_FILE
+    FILE_NAME                  = "fake_hirise.jp2"
+    RECORD_TYPE                = UNDEFINED
+    ENCODING_TYPE              = "JP2"
+    ENCODING_TYPE_VERSION_NAME = "ISO/IEC15444-1:2004"
+    INTERCHANGE_FORMAT         = BINARY
+    /* The name of the original source file. */
+    UNCOMPRESSED_FILE_NAME     = "fake_hirise.IMG"
+    /* The amount of original image data. */
+    REQUIRED_STORAGE_BYTES     = 1 <BYTES>
+    ^DESCRIPTION               = "JP2INFO.TXT"
+END_OBJECT = COMPRESSED_FILE
+/* The source image data definition. */
+OBJECT = UNCOMPRESSED_FILE
+    FILE_NAME    = "fake_hirise.IMG"
+    RECORD_TYPE  = FIXED_LENGTH
+    RECORD_BYTES = 512 <BYTES>
+    FILE_RECORDS = 1
+    ^IMAGE       = "fake_hirise.IMG"
+    OBJECT = IMAGE
+        LINES                      = 1
+        LINE_SAMPLES               = 1
+        BANDS                      = 1
+        SAMPLE_BITS                = 8
+        SCALING_FACTOR             = 1.5
+        OFFSET                     = 0.5
+        BAND_STORAGE_TYPE          = BAND_SEQUENTIAL
+        CORE_NULL                  = 0
+    END_OBJECT = IMAGE
+END_OBJECT = UNCOMPRESSED_FILE
+END

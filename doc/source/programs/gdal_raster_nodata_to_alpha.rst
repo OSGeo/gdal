@@ -56,6 +56,11 @@ Standard Options
 
     .. include:: gdal_options/ot.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

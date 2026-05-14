@@ -10,14 +10,18 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#include "cpl_enumerate.h"
 #include "cpl_float.h"
 #include "cpl_vsi_virtual.h"
+#include "cpl_worker_thread_pool.h"
 #include "gdal_thread_pool.h"
 #include "zarr.h"
 #include "zarr_v3_codec.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cassert>
+#include <cinttypes>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
@@ -25,37 +29,36 @@
 #include <set>
 
 /************************************************************************/
-/*                       ZarrV3Array::ZarrV3Array()                     */
+/*                      ZarrV3Array::ZarrV3Array()                      */
 /************************************************************************/
 
 ZarrV3Array::ZarrV3Array(
     const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-    const std::string &osParentName, const std::string &osName,
+    const std::shared_ptr<ZarrGroupBase> &poParent, const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
     const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
     const std::vector<GUInt64> &anOuterBlockSize,
     const std::vector<GUInt64> &anInnerBlockSize)
-    : GDALAbstractMDArray(osParentName, osName),
-      ZarrArray(poSharedResource, osParentName, osName, aoDims, oType,
-                aoDtypeElts, anOuterBlockSize, anInnerBlockSize)
+    : GDALAbstractMDArray(poParent->GetFullName(), osName),
+      ZarrArray(poSharedResource, poParent, osName, aoDims, oType, aoDtypeElts,
+                anOuterBlockSize, anInnerBlockSize)
 {
 }
 
 /************************************************************************/
-/*                         ZarrV3Array::Create()                        */
+/*                        ZarrV3Array::Create()                         */
 /************************************************************************/
 
-std::shared_ptr<ZarrV3Array>
-ZarrV3Array::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-                    const std::string &osParentName, const std::string &osName,
-                    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
-                    const GDALExtendedDataType &oType,
-                    const std::vector<DtypeElt> &aoDtypeElts,
-                    const std::vector<GUInt64> &anOuterBlockSize,
-                    const std::vector<GUInt64> &anInnerBlockSize)
+std::shared_ptr<ZarrV3Array> ZarrV3Array::Create(
+    const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+    const std::shared_ptr<ZarrGroupBase> &poParent, const std::string &osName,
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+    const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
+    const std::vector<GUInt64> &anOuterBlockSize,
+    const std::vector<GUInt64> &anInnerBlockSize)
 {
     auto arr = std::shared_ptr<ZarrV3Array>(
-        new ZarrV3Array(poSharedResource, osParentName, osName, aoDims, oType,
+        new ZarrV3Array(poSharedResource, poParent, osName, aoDims, oType,
                         aoDtypeElts, anOuterBlockSize, anInnerBlockSize));
     if (arr->m_nTotalInnerChunkCount == 0)
         return nullptr;
@@ -65,7 +68,7 @@ ZarrV3Array::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
 }
 
 /************************************************************************/
-/*                             ~ZarrV3Array()                           */
+/*                            ~ZarrV3Array()                            */
 /************************************************************************/
 
 ZarrV3Array::~ZarrV3Array()
@@ -74,7 +77,7 @@ ZarrV3Array::~ZarrV3Array()
 }
 
 /************************************************************************/
-/*                                Flush()                               */
+/*                               Flush()                                */
 /************************************************************************/
 
 bool ZarrV3Array::Flush()
@@ -82,7 +85,14 @@ bool ZarrV3Array::Flush()
     if (!m_bValid)
         return true;
 
+    // Flush last dirty block (may add to shard write cache)
     bool ret = ZarrV3Array::FlushDirtyBlock();
+
+    // Encode and write all cached shards
+    if (!ZarrV3Array::FlushShardCache())
+        ret = false;
+
+    m_anCachedBlockIndices.clear();
 
     if (!m_aoDims.empty())
     {
@@ -124,7 +134,7 @@ bool ZarrV3Array::Flush()
 }
 
 /************************************************************************/
-/*                    ZarrV3Array::Serialize()                          */
+/*                       ZarrV3Array::Serialize()                       */
 /************************************************************************/
 
 bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
@@ -167,7 +177,13 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
         oConfiguration.Add("separator", m_osDimSeparator);
     }
 
-    if (m_pabyNoData == nullptr)
+    if (m_oType.GetClass() == GEDTC_STRING && m_pabyNoData != nullptr)
+    {
+        char *pStr = nullptr;
+        memcpy(&pStr, m_pabyNoData, sizeof(pStr));
+        oRoot.Add("fill_value", pStr ? pStr : "");
+    }
+    else if (m_pabyNoData == nullptr)
     {
         if (m_oType.GetNumericDataType() == GDT_Float16 ||
             m_oType.GetNumericDataType() == GDT_Float32 ||
@@ -251,14 +267,14 @@ bool ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
 }
 
 /************************************************************************/
-/*                  ZarrV3Array::NeedDecodedBuffer()                    */
+/*                   ZarrV3Array::NeedDecodedBuffer()                   */
 /************************************************************************/
 
 bool ZarrV3Array::NeedDecodedBuffer() const
 {
     for (const auto &elt : m_aoDtypeElts)
     {
-        if (elt.needByteSwapping || elt.gdalTypeIsApproxOfNative)
+        if (elt.needByteSwapping)
         {
             return true;
         }
@@ -267,7 +283,7 @@ bool ZarrV3Array::NeedDecodedBuffer() const
 }
 
 /************************************************************************/
-/*               ZarrV3Array::AllocateWorkingBuffers()                  */
+/*                ZarrV3Array::AllocateWorkingBuffers()                 */
 /************************************************************************/
 
 bool ZarrV3Array::AllocateWorkingBuffers() const
@@ -364,7 +380,7 @@ bool ZarrV3Array::AllocateWorkingBuffers(
 }
 
 /************************************************************************/
-/*                      ZarrV3Array::LoadBlockData()                     */
+/*                     ZarrV3Array::LoadBlockData()                     */
 /************************************************************************/
 
 bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices,
@@ -413,8 +429,13 @@ bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
 
     // For network file systems, get the streaming version of the filename,
     // as we don't need arbitrary seeking in the file
-    osFilename = VSIFileManager::GetHandler(osFilename.c_str())
-                     ->GetStreamingFilename(osFilename);
+    // ... unless we do partial decoding, in which case range requests within
+    // a shard are much more efficient
+    if (!(poCodecs && poCodecs->SupportsPartialDecoding()))
+    {
+        osFilename = VSIFileManager::GetHandler(osFilename.c_str())
+                         ->GetStreamingFilename(osFilename);
+    }
 
     // First if we have a tile presence cache, check tile presence from it
     bool bEarlyRet;
@@ -584,12 +605,245 @@ bool ZarrV3Array::LoadBlockData(const uint64_t *blockIndices, bool bUseMutex,
 }
 
 /************************************************************************/
+/*                         ZarrV3Array::IRead()                         */
+/************************************************************************/
+
+bool ZarrV3Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
+                        const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+                        const GDALExtendedDataType &bufferDataType,
+                        void *pDstBuffer) const
+{
+    // For sharded arrays, pre-populate the block cache via ReadMultiRange()
+    // so that the base-class block-by-block loop hits memory, not HTTP.
+    if (m_poCodecs && m_poCodecs->SupportsPartialDecoding())
+    {
+        PreloadShardedBlocks(arrayStartIdx, count);
+    }
+    return ZarrArray::IRead(arrayStartIdx, count, arrayStep, bufferStride,
+                            bufferDataType, pDstBuffer);
+}
+
+/************************************************************************/
+/*                 ZarrV3Array::PreloadShardedBlocks()                  */
+/************************************************************************/
+
+void ZarrV3Array::PreloadShardedBlocks(const GUInt64 *arrayStartIdx,
+                                       const size_t *count) const
+{
+    const size_t nDims = m_aoDims.size();
+    if (nDims == 0)
+        return;
+
+    // Calculate needed block index range
+    std::vector<uint64_t> anBlockMin(nDims), anBlockMax(nDims);
+    size_t nTotalBlocks = 1;
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        anBlockMin[i] = arrayStartIdx[i] / m_anInnerBlockSize[i];
+        anBlockMax[i] =
+            (arrayStartIdx[i] + count[i] - 1) / m_anInnerBlockSize[i];
+        nTotalBlocks *= static_cast<size_t>(anBlockMax[i] - anBlockMin[i] + 1);
+    }
+
+    if (nTotalBlocks <= 1)
+        return;  // single block — no batching benefit
+
+    CPLDebugOnly("ZARR", "PreloadShardedBlocks: %" PRIu64 " blocks to batch",
+                 static_cast<uint64_t>(nTotalBlocks));
+
+    // Enumerate all needed blocks, grouped by shard filename
+    struct BlockInfo
+    {
+        std::vector<uint64_t> anBlockIndices{};
+        std::vector<size_t> anStartIdx{};
+        std::vector<size_t> anCount{};
+    };
+
+    std::map<std::string, std::vector<BlockInfo>> oShardToBlocks;
+
+    // Iterate over all needed block indices
+    std::vector<uint64_t> anCur(nDims);
+    size_t dimIdx = 0;
+lbl_next:
+    if (dimIdx == nDims)
+    {
+        // Skip blocks already in cache
+        const std::vector<uint64_t> cacheKey(anCur.begin(), anCur.end());
+        if (m_oChunkCache.find(cacheKey) == m_oChunkCache.end())
+        {
+            // Compute shard filename and inner chunk start/count
+            std::vector<uint64_t> outerIdx(nDims);
+            BlockInfo info;
+            info.anBlockIndices = anCur;
+            info.anStartIdx.resize(nDims);
+            info.anCount.resize(nDims);
+            for (size_t i = 0; i < nDims; ++i)
+            {
+                outerIdx[i] =
+                    anCur[i] * m_anInnerBlockSize[i] / m_anOuterBlockSize[i];
+                info.anStartIdx[i] = static_cast<size_t>(
+                    (anCur[i] * m_anInnerBlockSize[i]) % m_anOuterBlockSize[i]);
+                info.anCount[i] = static_cast<size_t>(m_anInnerBlockSize[i]);
+            }
+
+            std::string osFilename = BuildChunkFilename(outerIdx.data());
+            oShardToBlocks[osFilename].push_back(std::move(info));
+        }
+    }
+    else
+    {
+        anCur[dimIdx] = anBlockMin[dimIdx];
+        while (true)
+        {
+            dimIdx++;
+            goto lbl_next;
+        lbl_return:
+            dimIdx--;
+            if (anCur[dimIdx] == anBlockMax[dimIdx])
+                break;
+            ++anCur[dimIdx];
+        }
+    }
+    if (dimIdx > 0)
+        goto lbl_return;
+
+    // Collect shards that qualify for batching (>1 block)
+    struct ShardWork
+    {
+        const std::string *posFilename;
+        std::vector<BlockInfo> *paBlocks;
+    };
+
+    std::vector<ShardWork> aShardWork;
+    for (auto &[osFilename, aBlocks] : oShardToBlocks)
+    {
+        if (aBlocks.size() > 1)
+            aShardWork.push_back({&osFilename, &aBlocks});
+    }
+
+    if (aShardWork.empty())
+        return;
+
+    const char *const apszOpenOptions[] = {"IGNORE_FILENAME_RESTRICTIONS=YES",
+                                           nullptr};
+    const bool bNeedDecode = NeedDecodedBuffer();
+
+    // Process one shard: open file, batch-decode, type-convert, cache.
+    // poCodecs: per-thread clone (parallel) or m_poCodecs (sequential).
+    // oMutex: guards cache writes (uncontended in sequential path).
+    const auto ProcessOneShard =
+        [this, &apszOpenOptions, bNeedDecode](const ShardWork &work,
+                                              ZarrV3CodecSequence *poCodecs,
+                                              std::mutex &oMutex)
+    {
+        VSIVirtualHandleUniquePtr fp(
+            VSIFOpenEx2L(work.posFilename->c_str(), "rb", 0, apszOpenOptions));
+        if (!fp)
+            return;
+
+        const auto &aBlocks = *work.paBlocks;
+        std::vector<std::pair<std::vector<size_t>, std::vector<size_t>>>
+            anRequests;
+        anRequests.reserve(aBlocks.size());
+        for (const auto &info : aBlocks)
+            anRequests.push_back({info.anStartIdx, info.anCount});
+
+        std::vector<ZarrByteVectorQuickResize> aResults;
+        if (!poCodecs->BatchDecodePartial(fp.get(), work.posFilename->c_str(),
+                                          anRequests, aResults))
+            return;
+
+        // Type-convert outside mutex (CPU-bound, thread-local data)
+        std::vector<ZarrByteVectorQuickResize> aDecoded;
+        if (bNeedDecode)
+        {
+            const size_t nSourceSize = m_aoDtypeElts.back().nativeOffset +
+                                       m_aoDtypeElts.back().nativeSize;
+            const auto nGDALDTSize = m_oType.GetSize();
+            aDecoded.resize(aBlocks.size());
+            for (size_t i = 0; i < aBlocks.size(); ++i)
+            {
+                if (aResults[i].empty())
+                    continue;
+                const size_t nValues = aResults[i].size() / nSourceSize;
+                aDecoded[i].resize(nValues * nGDALDTSize);
+                const GByte *pSrc = aResults[i].data();
+                GByte *pDst = aDecoded[i].data();
+                for (size_t v = 0; v < nValues;
+                     v++, pSrc += nSourceSize, pDst += nGDALDTSize)
+                {
+                    DecodeSourceElt(m_aoDtypeElts, pSrc, pDst);
+                }
+            }
+        }
+
+        // Store in cache under mutex
+        std::lock_guard<std::mutex> oLock(oMutex);
+        for (size_t i = 0; i < aBlocks.size(); ++i)
+        {
+            CachedBlock cachedBlock;
+            if (!aResults[i].empty())
+            {
+                if (bNeedDecode)
+                    std::swap(cachedBlock.abyDecoded, aDecoded[i]);
+                else
+                    std::swap(cachedBlock.abyDecoded, aResults[i]);
+            }
+            m_oChunkCache[aBlocks[i].anBlockIndices] = std::move(cachedBlock);
+        }
+    };
+
+    const int nMaxThreads = GDALGetNumThreads();
+
+    const int nShards = static_cast<int>(aShardWork.size());
+    std::mutex oMutex;
+
+    // Sequential: single thread, single shard, or no thread pool
+    CPLWorkerThreadPool *wtp = (nMaxThreads > 1 && nShards > 1)
+                                   ? GDALGetGlobalThreadPool(nMaxThreads)
+                                   : nullptr;
+    if (!wtp)
+    {
+        for (const auto &work : aShardWork)
+            ProcessOneShard(work, m_poCodecs.get(), oMutex);
+        return;
+    }
+
+    CPLDebugOnly("ZARR",
+                 "PreloadShardedBlocks: parallel across %d shards (%d threads)",
+                 nShards, std::min(nMaxThreads, nShards));
+
+    // Clone codecs upfront on main thread (Clone is not thread-safe)
+    std::vector<std::unique_ptr<ZarrV3CodecSequence>> apoCodecs(nShards);
+    for (int i = 0; i < nShards; ++i)
+        apoCodecs[i] = m_poCodecs->Clone();
+
+    auto poQueue = wtp->CreateJobQueue();
+    for (int i = 0; i < nShards; ++i)
+    {
+        poQueue->SubmitJob([&work = aShardWork[i], pCodecs = apoCodecs[i].get(),
+                            &oMutex, &ProcessOneShard]()
+                           { ProcessOneShard(work, pCodecs, oMutex); });
+    }
+    poQueue->WaitCompletion();
+}
+
+/************************************************************************/
 /*                      ZarrV3Array::IAdviseRead()                      */
 /************************************************************************/
 
 bool ZarrV3Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                               CSLConstList papszOptions) const
 {
+    // For sharded arrays, batch all needed inner chunks via
+    // PreloadShardedBlocks (BatchDecodePartial + ReadMultiRange) instead
+    // of the per-block LoadBlockData path below.
+    if (m_poCodecs && m_poCodecs->SupportsPartialDecoding())
+    {
+        PreloadShardedBlocks(arrayStartIdx, count);
+        return true;
+    }
+
     std::vector<uint64_t> anIndicesCur;
     int nThreadsMax = 0;
     std::vector<uint64_t> anReqBlocksIndices;
@@ -754,6 +1008,13 @@ bool ZarrV3Array::FlushDirtyBlock() const
         return true;
     m_bDirtyBlock = false;
 
+    // Sharded arrays need special handling: the block cache operates at
+    // inner chunk granularity but we must write complete shards.
+    if (m_poCodecs && m_poCodecs->SupportsPartialDecoding())
+    {
+        return FlushDirtyBlockSharded();
+    }
+
     std::string osFilename = BuildChunkFilename(m_anCachedBlockIndices.data());
 
     const size_t nSourceSize =
@@ -842,7 +1103,573 @@ bool ZarrV3Array::FlushDirtyBlock() const
 }
 
 /************************************************************************/
-/*                         ZarrV3Array::IWrite()                        */
+/*                ZarrV3Array::FlushDirtyBlockSharded()                 */
+/************************************************************************/
+
+// Accumulates dirty inner chunks into a per-shard write cache.
+// Actual encoding and writing happens in FlushShardCache().
+// This avoids the O(N) decode-encode cost of re-encoding the full shard
+// for every inner chunk write (N = inner chunks per shard).
+// Single-writer only: concurrent writes to the same shard are not supported.
+
+bool ZarrV3Array::FlushDirtyBlockSharded() const
+{
+    const size_t nDims = GetDimensionCount();
+    const size_t nSourceSize =
+        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
+
+    // 1. Convert dirty inner block from GDAL format to native format
+    if (!m_abyDecodedBlockData.empty())
+    {
+        const size_t nDTSize = m_oType.GetSize();
+        const size_t nValues = m_abyDecodedBlockData.size() / nDTSize;
+        GByte *pDst = &m_abyRawBlockData[0];
+        const GByte *pSrc = m_abyDecodedBlockData.data();
+        for (size_t i = 0; i < nValues;
+             i++, pDst += nSourceSize, pSrc += nDTSize)
+        {
+            EncodeElt(m_aoDtypeElts, pSrc, pDst);
+        }
+    }
+
+    // 2. Compute shard indices and inner block position within shard
+    std::vector<uint64_t> anShardIndices(nDims);
+    std::vector<size_t> anPosInShard(nDims);
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        anShardIndices[i] = m_anCachedBlockIndices[i] * m_anInnerBlockSize[i] /
+                            m_anOuterBlockSize[i];
+        anPosInShard[i] = static_cast<size_t>(m_anCachedBlockIndices[i] %
+                                              m_anCountInnerBlockInOuter[i]);
+    }
+
+    std::string osFilename = BuildChunkFilename(anShardIndices.data());
+
+    // 3. Get or create shard cache entry
+    size_t nShardElements = 1;
+    for (size_t i = 0; i < nDims; ++i)
+        nShardElements *= static_cast<size_t>(m_anOuterBlockSize[i]);
+
+    size_t nTotalInnerChunks = 1;
+    for (size_t i = 0; i < nDims; ++i)
+        nTotalInnerChunks *= static_cast<size_t>(m_anCountInnerBlockInOuter[i]);
+
+    auto oIt = m_oShardWriteCache.find(osFilename);
+    if (oIt == m_oShardWriteCache.end())
+    {
+        ShardWriteEntry entry;
+        try
+        {
+            entry.abyShardBuffer.resize(nShardElements * nSourceSize);
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate memory for shard buffer");
+            return false;
+        }
+        try
+        {
+            entry.abDirtyInnerChunks.resize(nTotalInnerChunks, false);
+        }
+        catch (const std::exception &)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "Cannot allocate memory for dirty chunk tracking");
+            return false;
+        }
+
+        // Read existing shard or fill with nodata
+        VSIStatBufL sStat;
+        if (VSIStatL(osFilename.c_str(), &sStat) == 0)
+        {
+            VSILFILE *fpRead = VSIFOpenL(osFilename.c_str(), "rb");
+            if (fpRead == nullptr)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot open shard file %s for reading",
+                         osFilename.c_str());
+                return false;
+            }
+
+            ZarrByteVectorQuickResize abyFileData;
+            try
+            {
+                abyFileData.resize(static_cast<size_t>(sStat.st_size));
+            }
+            catch (const std::exception &)
+            {
+                CPLError(
+                    CE_Failure, CPLE_OutOfMemory,
+                    "Cannot allocate " CPL_FRMT_GUIB " bytes for shard file %s",
+                    static_cast<GUIntBig>(sStat.st_size), osFilename.c_str());
+                VSIFCloseL(fpRead);
+                return false;
+            }
+            if (VSIFReadL(abyFileData.data(), 1, abyFileData.size(), fpRead) !=
+                abyFileData.size())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot read shard file %s", osFilename.c_str());
+                VSIFCloseL(fpRead);
+                return false;
+            }
+            VSIFCloseL(fpRead);
+
+            entry.abyShardBuffer = std::move(abyFileData);
+            if (!m_poCodecs->Decode(entry.abyShardBuffer))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot decode existing shard %s", osFilename.c_str());
+                return false;
+            }
+
+            if (entry.abyShardBuffer.size() != nShardElements * nSourceSize)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Decoded shard %s has unexpected size",
+                         osFilename.c_str());
+                return false;
+            }
+        }
+        else
+        {
+            if (m_pabyNoData == nullptr ||
+                (m_oType.GetClass() == GEDTC_NUMERIC &&
+                 GetNoDataValueAsDouble() == 0.0))
+            {
+                memset(entry.abyShardBuffer.data(), 0,
+                       entry.abyShardBuffer.size());
+            }
+            else
+            {
+                for (size_t i = 0; i < nShardElements; ++i)
+                {
+                    memcpy(entry.abyShardBuffer.data() + i * nSourceSize,
+                           m_pabyNoData, nSourceSize);
+                }
+            }
+        }
+
+        oIt = m_oShardWriteCache.emplace(osFilename, std::move(entry)).first;
+    }
+
+    // cppcheck-suppress derefInvalidIteratorRedundantCheck
+    auto &entry = oIt->second;
+
+    // 4. Compute inner chunk linear index and mark dirty
+    size_t nInnerChunkIdx = 0;
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        nInnerChunkIdx = nInnerChunkIdx * static_cast<size_t>(
+                                              m_anCountInnerBlockInOuter[i]) +
+                         anPosInShard[i];
+    }
+    entry.abDirtyInnerChunks[nInnerChunkIdx] = true;
+    const bool bAllDirty =
+        std::all_of(entry.abDirtyInnerChunks.begin(),
+                    entry.abDirtyInnerChunks.end(), [](bool b) { return b; });
+
+    // 5. Copy dirty inner block into shard buffer at correct position.
+    // Same strided N-D copy pattern as CopySubArrayIntoLargerOne() in
+    // zarr_v3_codec_sharding.cpp (operates on GUInt64 block sizes here).
+    {
+        std::vector<size_t> anShardStride(nDims);
+        size_t nStride = nSourceSize;
+        for (size_t iDim = nDims; iDim > 0;)
+        {
+            --iDim;
+            anShardStride[iDim] = nStride;
+            nStride *= static_cast<size_t>(m_anOuterBlockSize[iDim]);
+        }
+
+        GByte *pShardDst = entry.abyShardBuffer.data();
+        for (size_t iDim = 0; iDim < nDims; ++iDim)
+        {
+            pShardDst += anPosInShard[iDim] *
+                         static_cast<size_t>(m_anInnerBlockSize[iDim]) *
+                         anShardStride[iDim];
+        }
+
+        const GByte *pInnerSrc = m_abyRawBlockData.data();
+        const size_t nLastDimBytes =
+            static_cast<size_t>(m_anInnerBlockSize.back()) * nSourceSize;
+
+        if (nDims == 1)
+        {
+            memcpy(pShardDst, pInnerSrc, nLastDimBytes);
+        }
+        else
+        {
+            std::vector<GByte *> dstPtrStack(nDims + 1);
+            std::vector<size_t> count(nDims + 1);
+            dstPtrStack[0] = pShardDst;
+            size_t dimIdx = 0;
+        lbl_next_depth:
+            if (dimIdx + 1 == nDims)
+            {
+                memcpy(dstPtrStack[dimIdx], pInnerSrc, nLastDimBytes);
+                pInnerSrc += nLastDimBytes;
+            }
+            else
+            {
+                count[dimIdx] = static_cast<size_t>(m_anInnerBlockSize[dimIdx]);
+                while (true)
+                {
+                    dimIdx++;
+                    dstPtrStack[dimIdx] = dstPtrStack[dimIdx - 1];
+                    goto lbl_next_depth;
+                lbl_return_to_caller:
+                    dimIdx--;
+                    if (--count[dimIdx] == 0)
+                        break;
+                    dstPtrStack[dimIdx] += anShardStride[dimIdx];
+                }
+            }
+            if (dimIdx > 0)
+                goto lbl_return_to_caller;
+        }
+    }
+
+    // 6. Flush shard immediately if all inner chunks have been written,
+    // to bound memory usage during sequential writes.
+    if (bAllDirty)
+    {
+        const bool bOK = FlushSingleShard(osFilename, entry);
+        m_oShardWriteCache.erase(osFilename);
+        return bOK;
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                   ZarrV3Array::FlushSingleShard()                    */
+/************************************************************************/
+
+bool ZarrV3Array::FlushSingleShard(const std::string &osFilename,
+                                   ShardWriteEntry &entry) const
+{
+    // Encode mutates abyShardBuffer in-place. On failure the buffer
+    // is left in an undefined state, but the shard is not written.
+    if (!m_poCodecs->Encode(entry.abyShardBuffer))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot encode shard for %s",
+                 osFilename.c_str());
+        return false;
+    }
+
+    // All-nodata shard: skip writing (or delete stale file from prior write)
+    if (entry.abyShardBuffer.empty())
+    {
+        VSIStatBufL sStat;
+        if (VSIStatL(osFilename.c_str(), &sStat) == 0)
+            VSIUnlink(osFilename.c_str());
+        return true;
+    }
+
+    // Create directory if needed
+    if (m_osDimSeparator == "/")
+    {
+        std::string osDir = CPLGetDirnameSafe(osFilename.c_str());
+        VSIStatBufL sStatDir;
+        if (VSIStatL(osDir.c_str(), &sStatDir) != 0)
+        {
+            if (VSIMkdirRecursive(osDir.c_str(), 0755) != 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot create directory %s", osDir.c_str());
+                return false;
+            }
+        }
+    }
+
+    VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wb");
+    if (fp == nullptr)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot create shard file %s",
+                 osFilename.c_str());
+        return false;
+    }
+
+    const size_t nEncodedSize = entry.abyShardBuffer.size();
+    bool bRet = true;
+    if (VSIFWriteL(entry.abyShardBuffer.data(), 1, nEncodedSize, fp) !=
+        nEncodedSize)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Could not write shard file %s correctly", osFilename.c_str());
+        bRet = false;
+    }
+    VSIFCloseL(fp);
+    if (bRet)
+        ZarrEraseShardIndexFromCache(osFilename);
+    return bRet;
+}
+
+/************************************************************************/
+/*                    ZarrV3Array::FlushShardCache()                    */
+/************************************************************************/
+
+// Encodes and writes all cached shards. Called from Flush().
+// Each shard is encoded exactly once regardless of how many inner chunks
+// were written.
+
+bool ZarrV3Array::FlushShardCache() const
+{
+    if (m_oShardWriteCache.empty())
+        return true;
+
+    bool bRet = true;
+    for (auto &[osFilename, entry] : m_oShardWriteCache)
+    {
+        if (!FlushSingleShard(osFilename, entry))
+            bRet = false;
+    }
+
+    m_oShardWriteCache.clear();
+    return bRet;
+}
+
+/************************************************************************/
+/*                          ExtractSubArray()                           */
+/************************************************************************/
+
+static void ExtractSubArray(const GByte *const pabySrc,
+                            const std::vector<size_t> &anSrcStart,
+                            const std::vector<GPtrDiff_t> &anSrcStrideElts,
+                            const std::vector<size_t> &anCount,
+                            GByte *const pabyDst,
+                            const std::vector<GPtrDiff_t> &anDstStrideElts,
+                            const size_t nDTSize)
+{
+    const auto nDims = anSrcStart.size();
+    CPLAssert(nDims > 0);
+    CPLAssert(nDims == anSrcStrideElts.size());
+    CPLAssert(nDims == anCount.size());
+    CPLAssert(nDims == anDstStrideElts.size());
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
+    std::vector<const GByte *> srcPtrStack(nDims);
+    std::vector<GByte *> dstPtrStack(nDims);
+    std::vector<GPtrDiff_t> anSrcStrideBytes(nDims);
+    std::vector<GPtrDiff_t> anDstStrideBytes(nDims);
+    std::vector<size_t> count(nDims);
+
+    srcPtrStack[0] = pabySrc;
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        anSrcStrideBytes[i] = anSrcStrideElts[i] * nDTSize;
+        anDstStrideBytes[i] = anDstStrideElts[i] * nDTSize;
+        srcPtrStack[0] += anSrcStart[i] * anSrcStrideBytes[i];
+    }
+    dstPtrStack[0] = pabyDst;
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
+    const size_t nLastDimSize = anCount.back() * nDTSize;
+    size_t dimIdx = 0;
+lbl_next_depth:
+    if (dimIdx + 1 == nDims)
+    {
+        memcpy(dstPtrStack[dimIdx], srcPtrStack[dimIdx], nLastDimSize);
+    }
+    else
+    {
+        count[dimIdx] = anCount[dimIdx];
+        while (true)
+        {
+            dimIdx++;
+            srcPtrStack[dimIdx] = srcPtrStack[dimIdx - 1];
+            dstPtrStack[dimIdx] = dstPtrStack[dimIdx - 1];
+            goto lbl_next_depth;
+        lbl_return_to_caller:
+            dimIdx--;
+            if (--count[dimIdx] == 0)
+                break;
+            srcPtrStack[dimIdx] += anSrcStrideBytes[dimIdx];
+            dstPtrStack[dimIdx] += anDstStrideBytes[dimIdx];
+        }
+    }
+    if (dimIdx > 0)
+        goto lbl_return_to_caller;
+}
+
+/************************************************************************/
+/*                 ZarrV3Array::WriteChunksThreadSafe()                 */
+/************************************************************************/
+
+bool ZarrV3Array::WriteChunksThreadSafe(
+    const GUInt64 *arrayStartIdx, const size_t *count,
+    [[maybe_unused]] const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    [[maybe_unused]] const GDALExtendedDataType &bufferDataType,
+    const void *pSrcBuffer, const int iThread, const int nThreads,
+    std::string &osErrorMsg) const
+{
+    CPLAssert(m_oType == bufferDataType);
+
+    const auto nDims = GetDimensionCount();
+    std::vector<size_t> anChunkCount(nDims);
+    std::vector<size_t> anChunkCoord(nDims);
+    size_t nChunks = 1;
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        CPLAssert(count[i] == 1 || arrayStep[i] == 1);
+        anChunkCount[i] = static_cast<size_t>(cpl::div_round_up(
+            static_cast<uint64_t>(count[i]), m_anOuterBlockSize[i]));
+        nChunks *= anChunkCount[i];
+    }
+
+    const size_t iFirstChunk = static_cast<size_t>(
+        (static_cast<uint64_t>(iThread) * nChunks) / nThreads);
+    const size_t iLastChunkExcluded = static_cast<size_t>(
+        (static_cast<uint64_t>(iThread + 1) * nChunks) / nThreads);
+
+    std::vector<size_t> anSrcStart(nDims);
+    const std::vector<GPtrDiff_t> anSrcStrideElts(bufferStride,
+                                                  bufferStride + nDims);
+    std::vector<GPtrDiff_t> anDstStrideElts(nDims);
+
+    size_t nDstStride = 1;
+    for (size_t i = nDims, iChunkCur = iFirstChunk; i > 0;)
+    {
+        --i;
+        anChunkCoord[i] = iChunkCur % anChunkCount[i];
+        iChunkCur /= anChunkCount[i];
+
+        anDstStrideElts[i] = nDstStride;
+        nDstStride *= static_cast<size_t>(m_anOuterBlockSize[i]);
+    }
+
+    const auto StoreError = [this, &osErrorMsg](const std::string &s)
+    {
+        std::lock_guard oLock(m_oMutex);
+        if (!osErrorMsg.empty())
+            osErrorMsg += '\n';
+        osErrorMsg = s;
+        return false;
+    };
+
+    const size_t nDTSize = m_oType.GetSize();
+    const size_t nDstSize =
+        static_cast<size_t>(MultiplyElements(m_anOuterBlockSize)) * nDTSize;
+    ZarrByteVectorQuickResize abyDst;
+    try
+    {
+        abyDst.resize(nDstSize);
+    }
+    catch (const std::exception &)
+    {
+        return StoreError("Out of memory allocating temporary buffer");
+    }
+
+    std::unique_ptr<ZarrV3CodecSequence> poCodecs;
+    if (m_poCodecs)
+    {
+        // Codec cloning is not thread safe
+        std::lock_guard oLock(m_oMutex);
+        poCodecs = m_poCodecs->Clone();
+    }
+
+    std::vector<uint64_t> anChunkIndex(nDims);
+    std::vector<size_t> anCount(nDims);
+    for (size_t iChunk = iFirstChunk; iChunk < iLastChunkExcluded; ++iChunk)
+    {
+        if (iChunk > iFirstChunk)
+        {
+            size_t iDimToIncrement = nDims - 1;
+            while (++anChunkCoord[iDimToIncrement] ==
+                   anChunkCount[iDimToIncrement])
+            {
+                anChunkCoord[iDimToIncrement] = 0;
+                CPLAssert(iDimToIncrement >= 1);
+                --iDimToIncrement;
+            }
+        }
+
+        bool bPartialChunk = false;
+        for (size_t i = 0; i < nDims; ++i)
+        {
+            anChunkIndex[i] =
+                anChunkCoord[i] + arrayStartIdx[i] / m_anOuterBlockSize[i];
+            anSrcStart[i] =
+                anChunkCoord[i] * static_cast<size_t>(m_anOuterBlockSize[i]);
+            anCount[i] = static_cast<size_t>(std::min(
+                m_aoDims[i]->GetSize() - arrayStartIdx[i] - anSrcStart[i],
+                m_anOuterBlockSize[i]));
+            bPartialChunk = bPartialChunk || anCount[i] < m_anOuterBlockSize[i];
+        }
+
+        // Resize to target size, as a previous iteration may have shorten it
+        // during compression.
+        abyDst.resize(nDstSize);
+        if (bPartialChunk)
+            memset(abyDst.data(), 0, nDstSize);
+
+        ExtractSubArray(static_cast<const GByte *>(pSrcBuffer), anSrcStart,
+                        anSrcStrideElts, anCount, abyDst.data(),
+                        anDstStrideElts, nDTSize);
+
+        const std::string osFilename = BuildChunkFilename(anChunkIndex.data());
+        if (IsEmptyBlock(abyDst))
+        {
+            VSIStatBufL sStat;
+            if (VSIStatL(osFilename.c_str(), &sStat) == 0)
+            {
+                CPLDebugOnly(ZARR_DEBUG_KEY,
+                             "Deleting chunk %s that has now empty content",
+                             osFilename.c_str());
+                if (VSIUnlink(osFilename.c_str()) != 0)
+                {
+                    return StoreError("Chunk " + osFilename +
+                                      " deletion failed");
+                }
+            }
+            continue;
+        }
+
+        if (poCodecs)
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            if (!poCodecs->Encode(abyDst))
+            {
+                return StoreError(CPLGetLastErrorMsg());
+            }
+        }
+
+        if (m_osDimSeparator == "/")
+        {
+            const std::string osDir = CPLGetDirnameSafe(osFilename.c_str());
+            VSIStatBufL sStat;
+            if (VSIStatL(osDir.c_str(), &sStat) != 0 &&
+                VSIMkdirRecursive(osDir.c_str(), 0755) != 0)
+            {
+                return StoreError("Cannot create directory " + osDir);
+            }
+        }
+
+        auto fp = VSIFilesystemHandler::OpenStatic(osFilename.c_str(), "wb");
+        if (fp == nullptr)
+        {
+            return StoreError("Cannot create file " + osFilename);
+        }
+
+        if (fp->Write(abyDst.data(), abyDst.size()) != abyDst.size() ||
+            fp->Close() != 0)
+        {
+            return StoreError("Write error while writing " + osFilename);
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                        ZarrV3Array::IWrite()                         */
 /************************************************************************/
 
 bool ZarrV3Array::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -851,18 +1678,89 @@ bool ZarrV3Array::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                          const GDALExtendedDataType &bufferDataType,
                          const void *pSrcBuffer)
 {
-    if (m_poCodecs && m_poCodecs->SupportsPartialDecoding())
+
+    // Multithreading writing if window is aligned on chunk boundaries.
+    if (m_oType == bufferDataType && m_oType.GetClass() == GEDTC_NUMERIC)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Writing to sharded dataset is not supported");
-        return false;
+        const auto nDims = GetDimensionCount();
+        bool bCanUseMultiThreading = true;
+        size_t nChunks = 1;
+        for (size_t i = 0; i < nDims; ++i)
+        {
+            if ((arrayStartIdx[i] % m_anOuterBlockSize[i]) != 0 ||
+                (count[i] != 1 && arrayStep[i] != 1) ||
+                !((count[i] % m_anOuterBlockSize[i]) == 0 ||
+                  arrayStartIdx[i] + count[i] == m_aoDims[i]->GetSize()))
+            {
+                bCanUseMultiThreading = false;
+                break;
+            }
+            nChunks *= static_cast<size_t>(cpl::div_round_up(
+                static_cast<uint64_t>(count[i]), m_anOuterBlockSize[i]));
+        }
+        if (bCanUseMultiThreading && nChunks >= 2)
+        {
+            const int nMaxThreads = static_cast<int>(
+                std::min<size_t>(nChunks, GDAL_DEFAULT_MAX_THREAD_COUNT));
+            const int nThreads =
+                GDALGetNumThreads(nMaxThreads, /* bDefaultAllCPUs=*/false);
+            CPLWorkerThreadPool *wtp =
+                nThreads >= 2 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
+
+            if (wtp)
+            {
+                m_oChunkCache.clear();
+
+                if (!FlushDirtyBlock())
+                    return false;
+
+                CPLDebug("Zarr", "Using %d threads for writing", nThreads);
+                auto poJobQueue = wtp->CreateJobQueue();
+                std::atomic<bool> bSuccess = true;
+                std::string osErrorMsg;
+                for (int iThread = 0; iThread < nThreads; ++iThread)
+                {
+                    auto job = [this, iThread, nThreads, arrayStartIdx, count,
+                                arrayStep, bufferStride, pSrcBuffer,
+                                &bufferDataType, &bSuccess, &osErrorMsg]()
+                    {
+                        if (bSuccess &&
+                            !WriteChunksThreadSafe(
+                                arrayStartIdx, count, arrayStep, bufferStride,
+                                bufferDataType, pSrcBuffer, iThread, nThreads,
+                                osErrorMsg))
+                        {
+                            bSuccess = false;
+                        }
+                    };
+                    if (!poJobQueue->SubmitJob(job))
+                    {
+                        CPLError(
+                            CE_Failure, CPLE_AppDefined,
+                            "ZarrV3Array::IWrite(): job submission failed");
+                        return false;
+                    }
+                }
+
+                poJobQueue->WaitCompletion();
+
+                if (!bSuccess)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "ZarrV3Array::IWrite(): %s", osErrorMsg.c_str());
+                }
+
+                return bSuccess;
+            }
+        }
     }
+
     return ZarrArray::IWrite(arrayStartIdx, count, arrayStep, bufferStride,
                              bufferDataType, pSrcBuffer);
 }
 
 /************************************************************************/
-/*                          BuildChunkFilename()                        */
+/*                         BuildChunkFilename()                         */
 /************************************************************************/
 
 std::string ZarrV3Array::BuildChunkFilename(const uint64_t *blockIndices) const
@@ -901,7 +1799,7 @@ std::string ZarrV3Array::GetDataDirectory() const
 }
 
 /************************************************************************/
-/*                       GetChunkIndicesFromFilename()                  */
+/*                    GetChunkIndicesFromFilename()                     */
 /************************************************************************/
 
 CPLStringList
@@ -927,7 +1825,7 @@ ZarrV3Array::GetChunkIndicesFromFilename(const char *pszFilename) const
 }
 
 /************************************************************************/
-/*                           ParseDtypeV3()                             */
+/*                            ParseDtypeV3()                            */
 /************************************************************************/
 
 static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
@@ -1011,6 +1909,24 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
                 elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
                 eDT = GDT_CFloat64;
             }
+            else if (str == "string")
+            {
+                // Variable-length UTF-8 strings (zarr-extensions).
+                // nativeSize determines the fixed slot size used by the
+                // vlen-utf8 codec; strings exceeding (nativeSize-1) are
+                // truncated.  Increase via ZARR_VLEN_STRING_MAX_LENGTH.
+                const int nMaxLen =
+                    std::max(2, atoi(CPLGetConfigOption(
+                                    "ZARR_VLEN_STRING_MAX_LENGTH", "256")));
+                elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
+                elt.nativeSize = static_cast<size_t>(nMaxLen);
+                elt.gdalType = GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nMaxLen));
+                elt.gdalSize = elt.gdalType.GetSize();
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nMaxLen));
+            }
             else
                 break;
 
@@ -1018,14 +1934,57 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
             elt.gdalSize = elt.gdalType.GetSize();
             if (!elt.gdalTypeIsApproxOfNative)
                 elt.nativeSize = elt.gdalSize;
-
             if (elt.nativeSize > 1)
             {
                 elt.needByteSwapping = (CPL_IS_LSB == 0);
             }
-
             elts.emplace_back(elt);
             return GDALExtendedDataType::Create(eDT);
+        }
+        else if (obj.GetType() == CPLJSONObject::Type::Object)
+        {
+            const auto osName = obj["name"].ToString();
+            const auto oConfig = obj["configuration"];
+            DtypeElt elt;
+
+            if (osName == "null_terminated_bytes" && oConfig.IsValid())
+            {
+                const int nBytes = oConfig["length_bytes"].ToInteger();
+                if (nBytes <= 0 || nBytes > 10 * 1024 * 1024)
+                    break;
+                elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
+                elt.nativeSize = static_cast<size_t>(nBytes);
+                elt.gdalType = GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nBytes));
+                elt.gdalSize = elt.gdalType.GetSize();
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::CreateString(
+                    static_cast<size_t>(nBytes));
+            }
+            else if (osName == "fixed_length_utf32" && oConfig.IsValid())
+            {
+                const int nBytes = oConfig["length_bytes"].ToInteger();
+                if (nBytes <= 0 || nBytes % 4 != 0 || nBytes > 10 * 1024 * 1024)
+                    break;
+                elt.nativeType = DtypeElt::NativeType::STRING_UNICODE;
+                elt.nativeSize = static_cast<size_t>(nBytes);
+                // Endianness handled by the bytes codec in v3
+                elt.gdalType = GDALExtendedDataType::CreateString();
+                elt.gdalSize = elt.gdalType.GetSize();
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::CreateString();
+            }
+            else if (osName == "numpy.datetime64" ||
+                     osName == "numpy.timedelta64")
+            {
+                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
+                elt.gdalType = GDALExtendedDataType::Create(GDT_Int64);
+                elt.gdalSize = elt.gdalType.GetSize();
+                elt.nativeSize = elt.gdalSize;
+                elt.needByteSwapping = (CPL_IS_LSB == 0);
+                elts.emplace_back(elt);
+                return GDALExtendedDataType::Create(GDT_Int64);
+            }
         }
     } while (false);
     CPLError(CE_Failure, CPLE_AppDefined,
@@ -1035,7 +1994,7 @@ static GDALExtendedDataType ParseDtypeV3(const CPLJSONObject &obj,
 }
 
 /************************************************************************/
-/*                    ParseNoDataStringAsDouble()                       */
+/*                     ParseNoDataStringAsDouble()                      */
 /************************************************************************/
 
 static double ParseNoDataStringAsDouble(const std::string &osVal, bool &bOK)
@@ -1061,7 +2020,7 @@ static double ParseNoDataStringAsDouble(const std::string &osVal, bool &bOK)
 }
 
 /************************************************************************/
-/*                     ParseNoDataComponent()                           */
+/*                        ParseNoDataComponent()                        */
 /************************************************************************/
 
 template <typename T, typename Tint>
@@ -1104,7 +2063,7 @@ static T ParseNoDataComponent(const CPLJSONObject &oObj, bool &bOK)
 }
 
 /************************************************************************/
-/*                     ZarrV3Group::LoadArray()                         */
+/*                       ZarrV3Group::LoadArray()                       */
 /************************************************************************/
 
 std::shared_ptr<ZarrArray>
@@ -1385,6 +2344,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         CPLError(CE_Failure, CPLE_NotSupported, "data_type missing");
         return nullptr;
     }
+    const auto oOrigDtype = oDtype;
     if (oDtype["fallback"].IsValid())
         oDtype = oDtype["fallback"];
     std::vector<DtypeElt> aoDtypeElts;
@@ -1398,6 +2358,26 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         return nullptr;
 
     std::vector<GByte> abyNoData;
+
+    struct NoDataFreer
+    {
+        std::vector<GByte> &m_abyNodata;
+        const GDALExtendedDataType &m_oType;
+
+        NoDataFreer(std::vector<GByte> &abyNoDataIn,
+                    const GDALExtendedDataType &oTypeIn)
+            : m_abyNodata(abyNoDataIn), m_oType(oTypeIn)
+        {
+        }
+
+        ~NoDataFreer()
+        {
+            if (!m_abyNodata.empty())
+                m_oType.FreeDynamicMemory(&m_abyNodata[0]);
+        }
+    };
+
+    NoDataFreer noDataFreer(abyNoData, oType);
 
     auto oFillValue = oRoot["fill_value"];
     auto eFillValueType = oFillValue.GetType();
@@ -1419,7 +2399,14 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     else if (eFillValueType == CPLJSONObject::Type::String)
     {
         const auto osFillValue = oFillValue.ToString();
-        if (STARTS_WITH(osFillValue.c_str(), "0x"))
+        if (oType.GetClass() == GEDTC_STRING)
+        {
+            abyNoData.resize(oType.GetSize());
+            char *pDstStr = CPLStrdup(osFillValue.c_str());
+            char **pDstPtr = reinterpret_cast<char **>(&abyNoData[0]);
+            memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
+        }
+        else if (STARTS_WITH(osFillValue.c_str(), "0x"))
         {
             if (osFillValue.size() > 2 + 2 * oType.GetSize())
             {
@@ -1477,36 +2464,51 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         }
         else
         {
-            bool bOK = true;
-            double dfNoDataValue = ParseNoDataStringAsDouble(osFillValue, bOK);
-            if (!bOK)
+            // Handle "NaT" fill_value for numpy.datetime64/timedelta64
+            // NaT is equivalent to INT64_MIN per the zarr extension spec
+            if (osFillValue == "NaT" && oType.GetNumericDataType() == GDT_Int64)
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
-                return nullptr;
-            }
-            else if (oType.GetNumericDataType() == GDT_Float16)
-            {
-                const GFloat16 hfNoDataValue =
-                    static_cast<GFloat16>(dfNoDataValue);
-                abyNoData.resize(sizeof(hfNoDataValue));
-                memcpy(&abyNoData[0], &hfNoDataValue, sizeof(hfNoDataValue));
-            }
-            else if (oType.GetNumericDataType() == GDT_Float32)
-            {
-                const float fNoDataValue = static_cast<float>(dfNoDataValue);
-                abyNoData.resize(sizeof(fNoDataValue));
-                memcpy(&abyNoData[0], &fNoDataValue, sizeof(fNoDataValue));
-            }
-            else if (oType.GetNumericDataType() == GDT_Float64)
-            {
-                abyNoData.resize(sizeof(dfNoDataValue));
-                memcpy(&abyNoData[0], &dfNoDataValue, sizeof(dfNoDataValue));
+                const int64_t nNaT = std::numeric_limits<int64_t>::min();
+                abyNoData.resize(oType.GetSize());
+                memcpy(&abyNoData[0], &nNaT, sizeof(nNaT));
             }
             else
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid fill_value for this data type");
-                return nullptr;
+                bool bOK = true;
+                double dfNoDataValue =
+                    ParseNoDataStringAsDouble(osFillValue, bOK);
+                if (!bOK)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
+                    return nullptr;
+                }
+                else if (oType.GetNumericDataType() == GDT_Float16)
+                {
+                    const GFloat16 hfNoDataValue =
+                        static_cast<GFloat16>(dfNoDataValue);
+                    abyNoData.resize(sizeof(hfNoDataValue));
+                    memcpy(&abyNoData[0], &hfNoDataValue,
+                           sizeof(hfNoDataValue));
+                }
+                else if (oType.GetNumericDataType() == GDT_Float32)
+                {
+                    const float fNoDataValue =
+                        static_cast<float>(dfNoDataValue);
+                    abyNoData.resize(sizeof(fNoDataValue));
+                    memcpy(&abyNoData[0], &fNoDataValue, sizeof(fNoDataValue));
+                }
+                else if (oType.GetNumericDataType() == GDT_Float64)
+                {
+                    abyNoData.resize(sizeof(dfNoDataValue));
+                    memcpy(&abyNoData[0], &dfNoDataValue,
+                           sizeof(dfNoDataValue));
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid fill_value for this data type");
+                    return nullptr;
+                }
             }
         }
     }
@@ -1613,8 +2615,8 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         }
     }
 
-    auto poArray = ZarrV3Array::Create(m_poSharedResource, GetFullName(),
-                                       osArrayName, aoDims, oType, aoDtypeElts,
+    auto poArray = ZarrV3Array::Create(m_poSharedResource, Self(), osArrayName,
+                                       aoDims, oType, aoDtypeElts,
                                        anOuterBlockSize, anInnerBlockSize);
     if (!poArray)
         return nullptr;
@@ -1626,9 +2628,33 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     {
         poArray->RegisterNoDataValue(abyNoData.data());
     }
-    poArray->ParseSpecialAttributes(m_pSelf.lock(), oAttributes);
-    poArray->SetAttributes(oAttributes);
+    poArray->SetAttributes(Self(), oAttributes);
     poArray->SetDtype(oDtype);
+    // Expose extension data type configuration as structural info
+    if (oOrigDtype.GetType() == CPLJSONObject::Type::Object)
+    {
+        const auto osName = oOrigDtype.GetString("name");
+        if (!osName.empty())
+        {
+            poArray->SetStructuralInfo("data_type.name", osName.c_str());
+        }
+        const auto oConfig = oOrigDtype["configuration"];
+        if (oConfig.IsValid() &&
+            oConfig.GetType() == CPLJSONObject::Type::Object)
+        {
+            const auto osUnit = oConfig.GetString("unit");
+            if (!osUnit.empty())
+            {
+                poArray->SetStructuralInfo("data_type.unit", osUnit.c_str());
+            }
+            const auto nScaleFactor = oConfig.GetInteger("scale_factor", -1);
+            if (nScaleFactor > 0)
+            {
+                poArray->SetStructuralInfo("data_type.scale_factor",
+                                           CPLSPrintf("%d", nScaleFactor));
+            }
+        }
+    }
     if (oCodecs.Size() > 0 &&
         oCodecs[oCodecs.Size() - 1].GetString("name") != "bytes")
     {
@@ -1659,7 +2685,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
 }
 
 /************************************************************************/
-/*                   ZarrV3Array::GetRawBlockInfoInfo()                 */
+/*                  ZarrV3Array::GetRawBlockInfoInfo()                  */
 /************************************************************************/
 
 CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
@@ -1735,7 +2761,7 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
 }
 
 /************************************************************************/
-/*                        ZarrV3Array::SetupCodecs()                    */
+/*                      ZarrV3Array::SetupCodecs()                      */
 /************************************************************************/
 
 /* static */ std::unique_ptr<ZarrV3CodecSequence> ZarrV3Array::SetupCodecs(
@@ -1759,6 +2785,27 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
                  "Zarr driver issue: gdalTypeIsApproxOfNative is not taken "
                  "into account by codecs. Nodata will be assumed to be zero by "
                  "sharding codec");
+    }
+    else if (!abyNoData.empty() &&
+             (zarrDataType.nativeType == DtypeElt::NativeType::STRING_ASCII ||
+              zarrDataType.nativeType == DtypeElt::NativeType::STRING_UNICODE))
+    {
+        // Convert from GDAL representation (char* pointer) to native
+        // format (fixed-size null-padded buffer) for FillWithNoData()
+        char *pStr = nullptr;
+        memcpy(&pStr, abyNoData.data(), sizeof(pStr));
+        oInputArrayMetadata.abyNoData.resize(zarrDataType.nativeSize, 0);
+        if (pStr &&
+            zarrDataType.nativeType == DtypeElt::NativeType::STRING_ASCII)
+        {
+            const size_t nCopy =
+                std::min(strlen(pStr), zarrDataType.nativeSize > 0
+                                           ? zarrDataType.nativeSize - 1
+                                           : static_cast<size_t>(0));
+            memcpy(oInputArrayMetadata.abyNoData.data(), pStr, nCopy);
+        }
+        // STRING_UNICODE non-empty fill would need UTF-8 to UCS4
+        // conversion; zero-fill is correct for the common "" case
     }
     else
     {
@@ -1789,7 +2836,7 @@ CPLStringList ZarrV3Array::GetRawBlockInfoInfo() const
 }
 
 /************************************************************************/
-/*                        ZarrV3Array::SetCodecs()                      */
+/*                       ZarrV3Array::SetCodecs()                       */
 /************************************************************************/
 
 void ZarrV3Array::SetCodecs(const CPLJSONArray &oJSONCodecs,
@@ -1797,4 +2844,962 @@ void ZarrV3Array::SetCodecs(const CPLJSONArray &oJSONCodecs,
 {
     m_oJSONCodecs = oJSONCodecs;
     m_poCodecs = std::move(poCodecs);
+}
+
+/************************************************************************/
+/*                     ZarrV3Array::LoadOverviews()                     */
+/************************************************************************/
+
+void ZarrV3Array::LoadOverviews() const
+{
+    if (m_bOverviewsLoaded)
+        return;
+    m_bOverviewsLoaded = true;
+
+    // Cf https://github.com/zarr-conventions/multiscales
+    // and https://github.com/zarr-conventions/spatial
+
+    const auto poRG = GetRootGroup();
+    if (!poRG)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "LoadOverviews(): cannot access root group");
+        return;
+    }
+
+    auto poGroup = GetParentGroup();
+    if (!poGroup)
+    {
+        CPLDebugOnly(ZARR_DEBUG_KEY,
+                     "LoadOverviews(): cannot access parent group");
+        return;
+    }
+
+    // Look for "zarr_conventions" and "multiscales" attributes in our
+    // immediate parent, or in our grandparent if not found.
+    auto poAttrZarrConventions = poGroup->GetAttribute("zarr_conventions");
+    auto poAttrMultiscales = poGroup->GetAttribute("multiscales");
+    if (!poAttrZarrConventions || !poAttrMultiscales)
+    {
+        poGroup = poGroup->GetParentGroup();
+        if (poGroup)
+        {
+            poAttrZarrConventions = poGroup->GetAttribute("zarr_conventions");
+            poAttrMultiscales = poGroup->GetAttribute("multiscales");
+        }
+        if (!poAttrZarrConventions || !poAttrMultiscales)
+        {
+            return;
+        }
+    }
+
+    const char *pszZarrConventions = poAttrZarrConventions->ReadAsString();
+    const char *pszMultiscales = poAttrMultiscales->ReadAsString();
+    if (!pszZarrConventions || !pszMultiscales)
+        return;
+
+    CPLJSONDocument oDoc;
+    if (!oDoc.LoadMemory(pszZarrConventions))
+        return;
+    const auto oZarrConventions = oDoc.GetRoot();
+
+    if (!oDoc.LoadMemory(pszMultiscales))
+        return;
+    const auto oMultiscales = oDoc.GetRoot();
+
+    if (!oZarrConventions.IsValid() ||
+        oZarrConventions.GetType() != CPLJSONObject::Type::Array ||
+        !oMultiscales.IsValid() ||
+        oMultiscales.GetType() != CPLJSONObject::Type::Object)
+    {
+        return;
+    }
+
+    const auto oZarrConventionsArray = oZarrConventions.ToArray();
+    const auto hasMultiscalesUUIDLambda = [](const CPLJSONObject &obj)
+    { return obj.GetString("uuid") == ZARR_MULTISCALES_UUID; };
+    const bool bFoundMultiScalesUUID =
+        std::find_if(oZarrConventionsArray.begin(), oZarrConventionsArray.end(),
+                     hasMultiscalesUUIDLambda) != oZarrConventionsArray.end();
+    if (!bFoundMultiScalesUUID)
+        return;
+
+    const auto hasSpatialUUIDLambda = [](const CPLJSONObject &obj)
+    {
+        constexpr const char *SPATIAL_UUID =
+            "689b58e2-cf7b-45e0-9fff-9cfc0883d6b4";
+        return obj.GetString("uuid") == SPATIAL_UUID;
+    };
+    const bool bFoundSpatialUUID =
+        std::find_if(oZarrConventionsArray.begin(), oZarrConventionsArray.end(),
+                     hasSpatialUUIDLambda) != oZarrConventionsArray.end();
+
+    const auto oLayout = oMultiscales["layout"];
+    if (!oLayout.IsValid() && oLayout.GetType() != CPLJSONObject::Type::Array)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "layout not found in multiscales");
+        return;
+    }
+
+    // is pixel-is-area ?
+    auto poSpatialRegistration = poGroup->GetAttribute("spatial:registration");
+    const char *pszSpatialRegistration =
+        poSpatialRegistration ? poSpatialRegistration->ReadAsString() : nullptr;
+    const bool bHasExplicitPixelSpatialRegistration =
+        bFoundSpatialUUID && pszSpatialRegistration &&
+        strcmp(pszSpatialRegistration, "pixel") == 0;
+
+    std::vector<std::string> aosSpatialDimensions;
+    std::set<std::string> oSetSpatialDimensionNames;
+    auto poSpatialDimensions = poGroup->GetAttribute("spatial:dimensions");
+    if (bFoundSpatialUUID && poSpatialDimensions)
+    {
+        aosSpatialDimensions = poSpatialDimensions->ReadAsStringArray();
+        for (const auto &osDimName : aosSpatialDimensions)
+        {
+            oSetSpatialDimensionNames.insert(osDimName);
+        }
+    }
+
+    // Multiscales convention: asset/derived_from paths are relative to
+    // the group holding the convention metadata, not the store root.
+    const std::string osGroupPrefix = poGroup->GetFullName().back() == '/'
+                                          ? poGroup->GetFullName()
+                                          : poGroup->GetFullName() + '/';
+    const auto resolveAssetPath =
+        [&osGroupPrefix](const std::string &osRelative) -> std::string
+    { return osGroupPrefix + osRelative; };
+
+    // Check whether this multiscales describes our array's pyramid.
+    // The first layout entry is the base (full-resolution) level; its
+    // "asset" field identifies the target array.  If it refers to a
+    // different array, the entire layout is irrelevant to us.
+    {
+        const auto oFirstItem = oLayout.ToArray()[0];
+        const std::string osBaseAsset = oFirstItem.GetString("asset");
+        if (!osBaseAsset.empty())
+        {
+            std::shared_ptr<GDALGroup> poBaseGroup;
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                poBaseGroup =
+                    poRG->OpenGroupFromFullname(resolveAssetPath(osBaseAsset));
+            }
+            if (poBaseGroup)
+            {
+                // Group-based layout (e.g. OME-Zarr "0", "1", ...):
+                // skip if the base group has no array with our name.
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                if (!poBaseGroup->OpenMDArray(GetName()))
+                    return;
+            }
+            else
+            {
+                // Extract array name from path (e.g. "level0/ar" -> "ar").
+                const auto nSlash = osBaseAsset.rfind('/');
+                const std::string osArrayName =
+                    nSlash != std::string::npos ? osBaseAsset.substr(nSlash + 1)
+                                                : osBaseAsset;
+                if (osArrayName != GetName())
+                    return;
+            }
+        }
+    }
+
+    for (const auto &oLayoutItem : oLayout.ToArray())
+    {
+        const std::string osAsset = oLayoutItem.GetString("asset");
+        if (osAsset.empty())
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "multiscales.layout[].asset not found");
+            continue;
+        }
+
+        // Resolve "asset" to a MDArray
+        std::shared_ptr<GDALGroup> poAssetGroup;
+        {
+            CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+            poAssetGroup =
+                poRG->OpenGroupFromFullname(resolveAssetPath(osAsset));
+        }
+        std::shared_ptr<GDALMDArray> poAssetArray;
+        if (poAssetGroup)
+        {
+            poAssetArray = poAssetGroup->OpenMDArray(GetName());
+        }
+        else if (osAsset.find('/') == std::string::npos)
+        {
+            poAssetArray = poGroup->OpenMDArray(osAsset);
+            if (!poAssetArray)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "multiscales.layout[].asset=%s ignored, because it is "
+                         "not a valid group or array name",
+                         osAsset.c_str());
+                continue;
+            }
+        }
+        else
+        {
+            poAssetArray =
+                poRG->OpenMDArrayFromFullname(resolveAssetPath(osAsset));
+            if (poAssetArray && poAssetArray->GetName() != GetName())
+            {
+                continue;
+            }
+        }
+        if (!poAssetArray)
+        {
+            continue;
+        }
+        if (poAssetArray->GetDimensionCount() != GetDimensionCount())
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "multiscales.layout[].asset=%s (%s) ignored, because it  has "
+                "not the same dimension count as %s (%s)",
+                osAsset.c_str(), poAssetArray->GetFullName().c_str(),
+                GetName().c_str(), GetFullName().c_str());
+            continue;
+        }
+        if (poAssetArray->GetDataType() != GetDataType())
+        {
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "multiscales.layout[].asset=%s (%s) ignored, because it has "
+                "not the same data type as %s (%s)",
+                osAsset.c_str(), poAssetArray->GetFullName().c_str(),
+                GetName().c_str(), GetFullName().c_str());
+            continue;
+        }
+
+        bool bAssetIsDownsampledOfThis = false;
+        for (size_t iDim = 0; iDim < GetDimensionCount(); ++iDim)
+        {
+            if (poAssetArray->GetDimensions()[iDim]->GetSize() <
+                GetDimensions()[iDim]->GetSize())
+            {
+                bAssetIsDownsampledOfThis = true;
+                break;
+            }
+        }
+        if (!bAssetIsDownsampledOfThis)
+        {
+            // not an error
+            continue;
+        }
+
+        // Inspect dimensions of the asset
+        std::map<std::string, size_t> oMapAssetDimNameToIdx;
+        const auto &apoAssetDims = poAssetArray->GetDimensions();
+        size_t nCountSpatialDimsFoundInAsset = 0;
+        for (const auto &[idx, poDim] : cpl::enumerate(apoAssetDims))
+        {
+            oMapAssetDimNameToIdx[poDim->GetName()] = idx;
+            if (cpl::contains(oSetSpatialDimensionNames, poDim->GetName()))
+                ++nCountSpatialDimsFoundInAsset;
+        }
+        const bool bAssetHasAllSpatialDims =
+            (nCountSpatialDimsFoundInAsset == aosSpatialDimensions.size());
+
+        // Consistency checks on "derived_from" and "transform"
+        const auto oDerivedFrom = oLayoutItem["derived_from"];
+        const auto oTransform = oLayoutItem["transform"];
+        if (oDerivedFrom.IsValid() && oTransform.IsValid() &&
+            oDerivedFrom.GetType() == CPLJSONObject::Type::String &&
+            oTransform.GetType() == CPLJSONObject::Type::Object)
+        {
+            const std::string osDerivedFrom = oDerivedFrom.ToString();
+            // Resolve "derived_from" to a MDArray
+            std::shared_ptr<GDALGroup> poDerivedFromGroup;
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                poDerivedFromGroup = poRG->OpenGroupFromFullname(
+                    resolveAssetPath(osDerivedFrom));
+            }
+            std::shared_ptr<GDALMDArray> poDerivedFromArray;
+            if (poDerivedFromGroup)
+            {
+                poDerivedFromArray = poDerivedFromGroup->OpenMDArray(GetName());
+            }
+            else if (osDerivedFrom.find('/') == std::string::npos)
+            {
+                poDerivedFromArray = poGroup->OpenMDArray(osDerivedFrom);
+                if (!poDerivedFromArray)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "multiscales.layout[].asset=%s refers to "
+                             "derived_from=%s which does not exist",
+                             osAsset.c_str(), osDerivedFrom.c_str());
+                    poDerivedFromArray.reset();
+                }
+            }
+            else
+            {
+                poDerivedFromArray = poRG->OpenMDArrayFromFullname(
+                    resolveAssetPath(osDerivedFrom));
+            }
+            if (poDerivedFromArray && bAssetHasAllSpatialDims)
+            {
+                if (poDerivedFromArray->GetDimensionCount() !=
+                    GetDimensionCount())
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "multiscales.layout[].asset=%s refers to "
+                             "derived_from=%s that does not have the expected "
+                             "number of dimensions. Ignoring that asset",
+                             osAsset.c_str(), osDerivedFrom.c_str());
+                    continue;
+                }
+
+                const auto oScale = oTransform["scale"];
+                if (oScale.GetType() == CPLJSONObject::Type::Array &&
+                    bHasExplicitPixelSpatialRegistration)
+                {
+                    const auto oScaleArray = oScale.ToArray();
+                    if (oScaleArray.size() != GetDimensionCount())
+                    {
+
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "multiscales.layout[].asset=%s has a "
+                                 "transform.scale array with an unexpected "
+                                 "number of values. Ignoring the asset",
+                                 osAsset.c_str());
+                        continue;
+                    }
+
+                    for (size_t iDim = 0; iDim < GetDimensionCount(); ++iDim)
+                    {
+                        const double dfScale = oScaleArray[iDim].ToDouble();
+                        const double dfExpectedScale =
+                            static_cast<double>(
+                                poDerivedFromArray->GetDimensions()[iDim]
+                                    ->GetSize()) /
+                            static_cast<double>(
+                                poAssetArray->GetDimensions()[iDim]->GetSize());
+                        constexpr double EPSILON = 1e-3;
+                        if (std::fabs(dfScale - dfExpectedScale) >
+                            EPSILON * dfExpectedScale)
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "multiscales.layout[].asset=%s has a "
+                                     "transform.scale[%d]=%f value whereas %f "
+                                     "was expected. "
+                                     "Assuming that later value as the scale.",
+                                     osAsset.c_str(), static_cast<int>(iDim),
+                                     dfScale, dfExpectedScale);
+                        }
+                    }
+                }
+
+                const auto oTranslation = oTransform["translation"];
+                if (oTranslation.GetType() == CPLJSONObject::Type::Array &&
+                    bHasExplicitPixelSpatialRegistration)
+                {
+                    const auto oTranslationArray = oTranslation.ToArray();
+                    if (oTranslationArray.size() != GetDimensionCount())
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "multiscales.layout[].asset=%s has a "
+                                 "transform.translation array with an "
+                                 "unexpected number of values. "
+                                 "Ignoring the asset",
+                                 osAsset.c_str());
+                        continue;
+                    }
+
+                    for (size_t iDim = 0; iDim < GetDimensionCount(); ++iDim)
+                    {
+                        const double dfOffset =
+                            oTranslationArray[iDim].ToDouble();
+                        if (dfOffset != 0)
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "multiscales.layout[].asset=%s has a "
+                                     "transform.translation[%d]=%f value. "
+                                     "Ignoring that offset.",
+                                     osAsset.c_str(), static_cast<int>(iDim),
+                                     dfOffset);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bFoundSpatialUUID && bAssetHasAllSpatialDims)
+        {
+            const auto oSpatialShape = oLayoutItem["spatial:shape"];
+            if (oSpatialShape.IsValid())
+            {
+                if (oSpatialShape.GetType() != CPLJSONObject::Type::Array)
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "multiscales.layout[].asset=%s ignored, because its "
+                        "spatial:shape property is not an array",
+                        osAsset.c_str());
+                    continue;
+                }
+                const auto oSpatialShapeArray = oSpatialShape.ToArray();
+                if (oSpatialShapeArray.size() != aosSpatialDimensions.size())
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "multiscales.layout[].asset=%s ignored, because its "
+                        "spatial:shape property has not the expected number "
+                        "of values",
+                        osAsset.c_str());
+                    continue;
+                }
+
+                bool bSkip = false;
+                for (const auto &[idx, oShapeVal] :
+                     cpl::enumerate(oSpatialShapeArray))
+                {
+                    const auto oIter =
+                        oMapAssetDimNameToIdx.find(aosSpatialDimensions[idx]);
+                    if (oIter != oMapAssetDimNameToIdx.end())
+                    {
+                        const auto poDim = apoAssetDims[oIter->second];
+                        if (poDim->GetSize() !=
+                            static_cast<uint64_t>(oShapeVal.ToLong()))
+                        {
+                            bSkip = true;
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "multiscales.layout[].asset=%s ignored, "
+                                     "because its "
+                                     "spatial:shape[%d] value is %" PRIu64
+                                     " whereas %" PRIu64 " was expected.",
+                                     osAsset.c_str(), static_cast<int>(idx),
+                                     static_cast<uint64_t>(oShapeVal.ToLong()),
+                                     static_cast<uint64_t>(poDim->GetSize()));
+                        }
+                    }
+                }
+                if (bSkip)
+                    continue;
+            }
+        }
+
+        m_apoOverviews.push_back(std::move(poAssetArray));
+    }
+}
+
+/************************************************************************/
+/*                   ZarrV3Array::GetOverviewCount()                    */
+/************************************************************************/
+
+int ZarrV3Array::GetOverviewCount() const
+{
+    LoadOverviews();
+    return static_cast<int>(m_apoOverviews.size());
+}
+
+/************************************************************************/
+/*                      ZarrV3Array::GetOverview()                      */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> ZarrV3Array::GetOverview(int idx) const
+{
+    if (idx < 0 || idx >= GetOverviewCount())
+        return nullptr;
+    return m_apoOverviews[idx];
+}
+
+/************************************************************************/
+/*         ZarrV3Array::ReconstructCreationOptionsFromCodecs()          */
+/************************************************************************/
+
+// When an array is opened from disk (LoadArray), m_aosCreationOptions is
+// empty because SetCreationOptions() is only called during CreateMDArray().
+// BuildOverviews() needs the creation options so that overview arrays
+// inherit the same codec (compression, sharding).  This method reverse-maps
+// the stored codec JSON back to creation option key/value pairs.
+
+void ZarrV3Array::ReconstructCreationOptionsFromCodecs()
+{
+    if (!m_poCodecs || m_aosCreationOptions.FetchNameValue("COMPRESS"))
+        return;
+
+    CPLJSONArray oCodecArray = m_poCodecs->GetJSon().ToArray();
+
+    // Detect sharding: if the sole top-level codec is sharding_indexed,
+    // extract SHARD_CHUNK_SHAPE and use the inner codecs for compression.
+    for (int i = 0; i < oCodecArray.Size(); ++i)
+    {
+        const auto oCodec = oCodecArray[i];
+        if (oCodec.GetString("name") == "sharding_indexed")
+        {
+            const auto oConfig = oCodec["configuration"];
+
+            // Inner chunk shape
+            const auto oChunkShape = oConfig.GetArray("chunk_shape");
+            if (oChunkShape.IsValid() && oChunkShape.Size() > 0)
+            {
+                std::string osShape;
+                for (int j = 0; j < oChunkShape.Size(); ++j)
+                {
+                    if (!osShape.empty())
+                        osShape += ',';
+                    osShape += CPLSPrintf(
+                        CPL_FRMT_GUIB,
+                        static_cast<GUIntBig>(oChunkShape[j].ToLong()));
+                }
+                m_aosCreationOptions.SetNameValue("SHARD_CHUNK_SHAPE",
+                                                  osShape.c_str());
+            }
+
+            // Use inner codecs for compression detection
+            oCodecArray = oConfig.GetArray("codecs");
+            break;
+        }
+    }
+
+    // Scan codecs for compression algorithm
+    for (int i = 0; i < oCodecArray.Size(); ++i)
+    {
+        const auto oCodec = oCodecArray[i];
+        const auto osName = oCodec.GetString("name");
+        const auto oConfig = oCodec["configuration"];
+
+        if (osName == "gzip")
+        {
+            m_aosCreationOptions.SetNameValue("COMPRESS", "GZIP");
+            if (oConfig.IsValid())
+            {
+                m_aosCreationOptions.SetNameValue(
+                    "GZIP_LEVEL",
+                    CPLSPrintf("%d", oConfig.GetInteger("level")));
+            }
+        }
+        else if (osName == "zstd")
+        {
+            m_aosCreationOptions.SetNameValue("COMPRESS", "ZSTD");
+            if (oConfig.IsValid())
+            {
+                m_aosCreationOptions.SetNameValue(
+                    "ZSTD_LEVEL",
+                    CPLSPrintf("%d", oConfig.GetInteger("level")));
+                if (oConfig.GetBool("checksum"))
+                    m_aosCreationOptions.SetNameValue("ZSTD_CHECKSUM", "YES");
+            }
+        }
+        else if (osName == "blosc")
+        {
+            m_aosCreationOptions.SetNameValue("COMPRESS", "BLOSC");
+            if (oConfig.IsValid())
+            {
+                const auto osCName = oConfig.GetString("cname");
+                if (!osCName.empty())
+                    m_aosCreationOptions.SetNameValue("BLOSC_CNAME",
+                                                      osCName.c_str());
+                m_aosCreationOptions.SetNameValue(
+                    "BLOSC_CLEVEL",
+                    CPLSPrintf("%d", oConfig.GetInteger("clevel")));
+                const auto osShuffle = oConfig.GetString("shuffle");
+                if (osShuffle == "noshuffle")
+                    m_aosCreationOptions.SetNameValue("BLOSC_SHUFFLE", "NONE");
+                else if (osShuffle == "bitshuffle")
+                    m_aosCreationOptions.SetNameValue("BLOSC_SHUFFLE", "BIT");
+                else
+                    m_aosCreationOptions.SetNameValue("BLOSC_SHUFFLE", "BYTE");
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                    ZarrV3Array::BuildOverviews()                     */
+/************************************************************************/
+
+CPLErr ZarrV3Array::BuildOverviews(const char *pszResampling, int nOverviews,
+                                   const int *panOverviewList,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData,
+                                   CSLConstList /* papszOptions */)
+{
+    const size_t nDimCount = GetDimensionCount();
+    if (nDimCount < 2)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "BuildOverviews() requires at least 2 dimensions");
+        return CE_Failure;
+    }
+
+    if (!m_bUpdatable)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Dataset not open in update mode");
+        return CE_Failure;
+    }
+
+    auto poParentGroup =
+        std::static_pointer_cast<ZarrV3Group>(GetParentGroup());
+    if (!poParentGroup)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot access parent group");
+        return CE_Failure;
+    }
+
+    if (!pfnProgress)
+        pfnProgress = GDALDummyProgress;
+
+    // Identify spatial dimensions via GDALDimension::GetType().
+    // Fall back to last two dimensions (Y, X) if types are not set.
+    const auto &apoSrcDims = GetDimensions();
+    size_t iYDim = nDimCount - 2;
+    size_t iXDim = nDimCount - 1;
+
+    for (size_t i = 0; i < nDimCount; ++i)
+    {
+        if (apoSrcDims[i]->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X)
+            iXDim = i;
+        else if (apoSrcDims[i]->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y)
+            iYDim = i;
+    }
+
+    if (iXDim == iYDim)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot identify two distinct spatial dimensions. "
+                 "Set dimension types (HORIZONTAL_X / HORIZONTAL_Y) "
+                 "or ensure the array has at least 2 dimensions.");
+        return CE_Failure;
+    }
+
+    // Delete existing overview groups (ovr_*) for idempotent rebuild.
+    // Also handles nOverviews==0 ("clear overviews").
+    for (const auto &osName : poParentGroup->GetGroupNames())
+    {
+        if (STARTS_WITH(osName.c_str(), "ovr_") &&
+            !poParentGroup->DeleteGroup(osName))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot delete existing overview group '%s'",
+                     osName.c_str());
+            return CE_Failure;
+        }
+    }
+
+    if (nOverviews == 0)
+    {
+        poParentGroup->GenerateMultiscalesMetadata(nullptr);
+        m_bOverviewsLoaded = false;
+        m_apoOverviews.clear();
+        return CE_None;
+    }
+
+    if (nOverviews < 0 || !panOverviewList)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg, "Invalid overview list");
+        return CE_Failure;
+    }
+
+    if (!pszResampling || pszResampling[0] == '\0')
+        pszResampling = "NEAREST";
+
+    // Sort and deduplicate factors for sequential resampling chain.
+    std::vector<int> anFactors(panOverviewList, panOverviewList + nOverviews);
+    std::sort(anFactors.begin(), anFactors.end());
+    anFactors.erase(std::unique(anFactors.begin(), anFactors.end()),
+                    anFactors.end());
+    for (const int nFactor : anFactors)
+    {
+        if (nFactor < 2)
+        {
+            CPLError(CE_Failure, CPLE_IllegalArg,
+                     "Overview factor %d is invalid (must be >= 2)", nFactor);
+            return CE_Failure;
+        }
+    }
+
+    // Ensure creation options are populated (they are empty when the array
+    // was opened from disk rather than freshly created).
+    ReconstructCreationOptionsFromCodecs();
+
+    // Inherit creation options from source array (codec settings, etc.).
+    // Only override BLOCKSIZE and SHARD_CHUNK_SHAPE per level.
+    CPLStringList aosCreateOptions(m_aosCreationOptions);
+
+    const std::string &osArrayName = GetName();
+    const void *pRawNoData = GetRawNoDataValue();
+
+    // Build each level sequentially: 2x from base, 4x from 2x, etc.
+    // poChainSource starts as the base array and advances to each
+    // newly created overview so each level resamples from the previous.
+    std::shared_ptr<GDALMDArray> poChainSource =
+        std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
+    if (!poChainSource)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot obtain shared_ptr to self");
+        return CE_Failure;
+    }
+
+    // Pre-compute total output pixels for pixel-weighted progress.
+    double dfTotalPixels = 0.0;
+    for (const int nF : anFactors)
+    {
+        dfTotalPixels += static_cast<double>(
+                             DIV_ROUND_UP(apoSrcDims[iYDim]->GetSize(), nF)) *
+                         DIV_ROUND_UP(apoSrcDims[iXDim]->GetSize(), nF);
+    }
+    double dfPixelsProcessed = 0.0;
+
+    const int nFactorCount = static_cast<int>(anFactors.size());
+    for (int iOvr = 0; iOvr < nFactorCount; ++iOvr)
+    {
+        const int nFactor = anFactors[iOvr];
+
+        // Create sibling group for this overview level.
+        const std::string osGroupName = CPLSPrintf("ovr_%dx", nFactor);
+        auto poOvrGroup = poParentGroup->CreateGroup(osGroupName);
+        if (!poOvrGroup)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot create group '%s'",
+                     osGroupName.c_str());
+            return CE_Failure;
+        }
+
+        // Create dimensions: downsample spatial, preserve non-spatial.
+        std::vector<std::shared_ptr<GDALDimension>> aoOvrDims;
+        std::string osBlockSize;
+        for (size_t i = 0; i < nDimCount; ++i)
+        {
+            const bool bSpatial = (i == iYDim || i == iXDim);
+            const GUInt64 nSrcSize = apoSrcDims[i]->GetSize();
+            const GUInt64 nOvrSize =
+                bSpatial ? DIV_ROUND_UP(nSrcSize, nFactor) : nSrcSize;
+
+            auto poDim = poOvrGroup->CreateDimension(
+                apoSrcDims[i]->GetName(), apoSrcDims[i]->GetType(),
+                apoSrcDims[i]->GetDirection(), nOvrSize);
+            if (!poDim)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot create dimension '%s' in group '%s'",
+                         apoSrcDims[i]->GetName().c_str(), osGroupName.c_str());
+                return CE_Failure;
+            }
+            aoOvrDims.push_back(std::move(poDim));
+
+            // Block size: inherit from source, cap to overview dim size.
+            const GUInt64 nBlock = std::min(m_anOuterBlockSize[i], nOvrSize);
+            if (!osBlockSize.empty())
+                osBlockSize += ',';
+            osBlockSize +=
+                CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nBlock));
+
+            // Build 1D coordinate array for spatial dimensions.
+            if (bSpatial)
+            {
+                auto poSrcVar = apoSrcDims[i]->GetIndexingVariable();
+                if (poSrcVar && poSrcVar->GetDimensionCount() == 1)
+                {
+                    if (nOvrSize > 100 * 1000 * 1000)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Overview dimension too large for "
+                                 "coordinate array");
+                        return CE_Failure;
+                    }
+                    const size_t nOvrCount = static_cast<size_t>(nOvrSize);
+                    auto poCoordArray = poOvrGroup->CreateMDArray(
+                        poSrcVar->GetName(), {aoOvrDims.back()},
+                        poSrcVar->GetDataType());
+                    if (poCoordArray)
+                    {
+                        std::vector<double> adfValues;
+                        try
+                        {
+                            adfValues.resize(nOvrCount);
+                        }
+                        catch (const std::exception &)
+                        {
+                            CPLError(CE_Failure, CPLE_OutOfMemory,
+                                     "Cannot allocate coordinate array");
+                            return CE_Failure;
+                        }
+                        double dfStart = 0;
+                        double dfIncrement = 0;
+                        if (poSrcVar->IsRegularlySpaced(dfStart, dfIncrement))
+                        {
+                            // Recalculate from spacing: overview pixels are
+                            // centered at (j * factor + (factor-1)/2.0) in
+                            // source pixel space.
+                            for (size_t j = 0; j < nOvrCount; ++j)
+                            {
+                                adfValues[j] =
+                                    dfStart +
+                                    (static_cast<double>(j) * nFactor +
+                                     (nFactor - 1) / 2.0) *
+                                        dfIncrement;
+                            }
+                        }
+                        else
+                        {
+                            // Irregular spacing: subsample by stride.
+                            if (nSrcSize > 100 * 1000 * 1000)
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "Source dimension too large "
+                                         "for coordinate array");
+                                return CE_Failure;
+                            }
+                            const size_t nSrcCount =
+                                static_cast<size_t>(nSrcSize);
+                            std::vector<double> adfSrc;
+                            try
+                            {
+                                adfSrc.resize(nSrcCount);
+                            }
+                            catch (const std::exception &)
+                            {
+                                CPLError(CE_Failure, CPLE_OutOfMemory,
+                                         "Cannot allocate source "
+                                         "coordinate array");
+                                return CE_Failure;
+                            }
+                            const GUInt64 anSrcStart[1] = {0};
+                            const size_t anSrcCount[1] = {nSrcCount};
+                            if (!poSrcVar->Read(
+                                    anSrcStart, anSrcCount, nullptr, nullptr,
+                                    GDALExtendedDataType::Create(GDT_Float64),
+                                    adfSrc.data()))
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "Failed to read coordinate "
+                                         "variable '%s'",
+                                         poSrcVar->GetName().c_str());
+                                return CE_Failure;
+                            }
+                            for (size_t j = 0; j < nOvrCount; ++j)
+                            {
+                                // Pick the source index closest to the
+                                // overview pixel center.
+                                const size_t nSrcIdx = std::min(
+                                    static_cast<size_t>(static_cast<double>(j) *
+                                                            nFactor +
+                                                        nFactor / 2),
+                                    nSrcCount - 1);
+                                adfValues[j] = adfSrc[nSrcIdx];
+                            }
+                        }
+                        const GUInt64 anStart[1] = {0};
+                        const size_t anCount[1] = {nOvrCount};
+                        if (!poCoordArray->Write(
+                                anStart, anCount, nullptr, nullptr,
+                                GDALExtendedDataType::Create(GDT_Float64),
+                                adfValues.data()))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Failed to write coordinate "
+                                     "variable for overview");
+                            return CE_Failure;
+                        }
+                        aoOvrDims.back()->SetIndexingVariable(
+                            std::move(poCoordArray));
+                    }
+                }
+            }
+        }
+        aosCreateOptions.SetNameValue("BLOCKSIZE", osBlockSize.c_str());
+
+        // Validate SHARD_CHUNK_SHAPE: inner chunks must divide
+        // the (capped) block size evenly. Drop sharding if not.
+        const char *pszShardShape =
+            aosCreateOptions.FetchNameValue("SHARD_CHUNK_SHAPE");
+        if (pszShardShape)
+        {
+            const CPLStringList aosShard(
+                CSLTokenizeString2(pszShardShape, ",", 0));
+            const CPLStringList aosBlock(
+                CSLTokenizeString2(osBlockSize.c_str(), ",", 0));
+            bool bShardValid = (aosShard.size() == aosBlock.size());
+            for (int iDim = 0; bShardValid && iDim < aosShard.size(); ++iDim)
+            {
+                const auto nInner = static_cast<GUInt64>(atoll(aosShard[iDim]));
+                const auto nOuter = static_cast<GUInt64>(atoll(aosBlock[iDim]));
+                if (nInner == 0 || nOuter < nInner || nOuter % nInner != 0)
+                    bShardValid = false;
+            }
+            if (!bShardValid)
+                aosCreateOptions.SetNameValue("SHARD_CHUNK_SHAPE", nullptr);
+        }
+
+        auto poOvrArray = poOvrGroup->CreateMDArray(
+            osArrayName, aoOvrDims, GetDataType(), aosCreateOptions.List());
+        if (!poOvrArray)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create overview array for factor %d", nFactor);
+            return CE_Failure;
+        }
+
+        if (pRawNoData)
+            poOvrArray->SetRawNoDataValue(pRawNoData);
+
+        // Wrap as classic datasets for GDALRegenerateOverviews.
+        // Non-spatial dims become bands automatically.
+        std::unique_ptr<GDALDataset> poPrevDS(
+            poChainSource->AsClassicDataset(iXDim, iYDim));
+        std::unique_ptr<GDALDataset> poOvrDS(
+            poOvrArray->AsClassicDataset(iXDim, iYDim));
+        if (!poPrevDS || !poOvrDS)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot create classic dataset wrapper for resampling");
+            return CE_Failure;
+        }
+
+        // Resample all bands from previous level into this overview.
+        const int nBands = poPrevDS->GetRasterCount();
+        const double dfLevelPixels =
+            static_cast<double>(poOvrDS->GetRasterXSize()) *
+            poOvrDS->GetRasterYSize();
+        void *pLevelData = GDALCreateScaledProgress(
+            dfPixelsProcessed / dfTotalPixels,
+            (dfPixelsProcessed + dfLevelPixels) / dfTotalPixels, pfnProgress,
+            pProgressData);
+
+        CPLErr eErr = CE_None;
+        for (int iBand = 1; iBand <= nBands && eErr == CE_None; ++iBand)
+        {
+            const double dfBandBase = static_cast<double>(iBand - 1) / nBands;
+            const double dfBandEnd = static_cast<double>(iBand) / nBands;
+            void *pBandData = GDALCreateScaledProgress(
+                dfBandBase, dfBandEnd, GDALScaledProgress, pLevelData);
+
+            GDALRasterBandH hOvrBand =
+                GDALRasterBand::ToHandle(poOvrDS->GetRasterBand(iBand));
+            eErr = GDALRegenerateOverviews(
+                GDALRasterBand::ToHandle(poPrevDS->GetRasterBand(iBand)), 1,
+                &hOvrBand, pszResampling, GDALScaledProgress, pBandData);
+
+            GDALDestroyScaledProgress(pBandData);
+        }
+
+        GDALDestroyScaledProgress(pLevelData);
+        dfPixelsProcessed += dfLevelPixels;
+
+        if (eErr != CE_None)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "GDALRegenerateOverviews failed for factor %d", nFactor);
+            return CE_Failure;
+        }
+
+        poChainSource = std::move(poOvrArray);
+    }
+
+    // Write multiscales metadata on parent group.
+    poParentGroup->GenerateMultiscalesMetadata(pszResampling);
+
+    // Reset overview cache so GetOverviewCount() rediscovers.
+    m_bOverviewsLoaded = false;
+    m_apoOverviews.clear();
+
+    return CE_None;
 }

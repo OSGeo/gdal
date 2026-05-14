@@ -227,7 +227,7 @@ ECWRasterBand::ECWRasterBand(ECWDataset *poDSIn, int nBandIn, int iOverviewIn,
 }
 
 /************************************************************************/
-/*                          ~ECWRasterBand()                           */
+/*                           ~ECWRasterBand()                           */
 /************************************************************************/
 
 ECWRasterBand::~ECWRasterBand()
@@ -287,7 +287,7 @@ CPLErr ECWRasterBand::SetColorInterpretation(GDALColorInterp eNewInterp)
 
 CPLErr ECWRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                                  int nBufXSize, int nBufYSize, GDALDataType eDT,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 {
     const int nResFactor = 1 << (iOverview + 1);
 
@@ -301,7 +301,7 @@ CPLErr ECWRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 #if ECWSDK_VERSION >= 50
 
 /************************************************************************/
-/*                       GetDefaultHistogram()                          */
+/*                        GetDefaultHistogram()                         */
 /************************************************************************/
 
 CPLErr ECWRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
@@ -404,7 +404,7 @@ CPLErr ECWRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
 }
 
 /************************************************************************/
-/*                       SetDefaultHistogram()                          */
+/*                        SetDefaultHistogram()                         */
 /************************************************************************/
 
 CPLErr ECWRasterBand::SetDefaultHistogram(double dfMin, double dfMax,
@@ -544,7 +544,7 @@ CPLErr ECWRasterBand::SetDefaultHistogram(double dfMin, double dfMax,
 }
 
 /************************************************************************/
-/*                   GetBandIndexAndCountForStatistics()                */
+/*                 GetBandIndexAndCountForStatistics()                  */
 /************************************************************************/
 
 void ECWRasterBand::GetBandIndexAndCountForStatistics(int &bandIndex,
@@ -567,7 +567,7 @@ void ECWRasterBand::GetBandIndexAndCountForStatistics(int &bandIndex,
 }
 
 /************************************************************************/
-/*                           GetMinimum()                               */
+/*                             GetMinimum()                             */
 /************************************************************************/
 
 double ECWRasterBand::GetMinimum(int *pbSuccess)
@@ -595,7 +595,7 @@ double ECWRasterBand::GetMinimum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                           GetMaximum()                               */
+/*                             GetMaximum()                             */
 /************************************************************************/
 
 double ECWRasterBand::GetMaximum(int *pbSuccess)
@@ -635,7 +635,7 @@ CPLErr ECWRasterBand::SetMetadataItem(const char *pszName, const char *pszValue,
 }
 
 /************************************************************************/
-/*                          GetStatistics()                             */
+/*                           GetStatistics()                            */
 /************************************************************************/
 
 CPLErr ECWRasterBand::GetStatistics(int bApproxOK, int bForce, double *pdfMin,
@@ -753,7 +753,7 @@ CPLErr ECWRasterBand::GetStatistics(int bApproxOK, int bForce, double *pdfMin,
 }
 
 /************************************************************************/
-/*                          SetStatistics()                             */
+/*                           SetStatistics()                            */
 /************************************************************************/
 
 CPLErr ECWRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean,
@@ -818,7 +818,7 @@ CPLErr ECWRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean,
 
 // #if !defined(SDK_CAN_DO_SUPERSAMPLING)
 /************************************************************************/
-/*                          OldIRasterIO()                              */
+/*                            OldIRasterIO()                            */
 /************************************************************************/
 
 /* This implementation of IRasterIO(), derived from the one of GDAL 1.9 */
@@ -1057,13 +1057,10 @@ CPLErr ECWRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr ECWRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
-    int nXOff = nBlockXOff * nBlockXSize, nYOff = nBlockYOff * nBlockYSize,
-        nXSize = nBlockXSize, nYSize = nBlockYSize;
-
-    if (nXOff + nXSize > nRasterXSize)
-        nXSize = nRasterXSize - nXOff;
-    if (nYOff + nYSize > nRasterYSize)
-        nYSize = nRasterYSize - nYOff;
+    const int nXOff = nBlockXOff * nBlockXSize;
+    const int nXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
+    const int nYOff = nBlockYOff * nBlockYSize;
+    const int nYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
 
     const GSpacing nPixelSpace = GDALGetDataTypeSizeBytes(eDataType);
     const GSpacing nLineSpace = nPixelSpace * nBlockXSize;
@@ -1082,7 +1079,7 @@ CPLErr ECWRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 /************************************************************************/
 
 /************************************************************************/
-/*                            ECWDataset()                              */
+/*                             ECWDataset()                             */
 /************************************************************************/
 
 ECWDataset::ECWDataset(int bIsJPEG2000In)
@@ -1154,7 +1151,7 @@ ECWDataset::ECWDataset(int bIsJPEG2000In)
 }
 
 /************************************************************************/
-/*                           ~ECWDataset()                              */
+/*                            ~ECWDataset()                             */
 /************************************************************************/
 
 ECWDataset::~ECWDataset()
@@ -1279,7 +1276,7 @@ NCS::CError ECWDataset::StatisticsWrite()
 }
 
 /************************************************************************/
-/*                          CleanupStatistics()                         */
+/*                         CleanupStatistics()                          */
 /************************************************************************/
 
 void ECWDataset::CleanupStatistics()
@@ -1313,7 +1310,7 @@ CPLErr ECWDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                            SetSpatialRef()                           */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 CPLErr ECWDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -1336,7 +1333,7 @@ CPLErr ECWDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                            SetMetadataItem()                         */
+/*                          SetMetadataItem()                           */
 /************************************************************************/
 
 CPLErr ECWDataset::SetMetadataItem(const char *pszName, const char *pszValue,
@@ -1465,7 +1462,7 @@ CPLErr ECWDataset::SetMetadataItem(const char *pszName, const char *pszValue,
 }
 
 /************************************************************************/
-/*                              SetMetadata()                           */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
 CPLErr ECWDataset::SetMetadata(CSLConstList papszMetadata,
@@ -1572,7 +1569,7 @@ CPLErr ECWDataset::SetMetadata(CSLConstList papszMetadata,
 }
 
 /************************************************************************/
-/*                             WriteHeader()                            */
+/*                            WriteHeader()                             */
 /************************************************************************/
 
 void ECWDataset::WriteHeader()
@@ -1645,10 +1642,10 @@ void ECWDataset::WriteHeader()
 
     if (bGeoTransformChanged)
     {
-        psEditInfo->fOriginX = m_gt[0];
-        psEditInfo->fCellIncrementX = m_gt[1];
-        psEditInfo->fOriginY = m_gt[3];
-        psEditInfo->fCellIncrementY = m_gt[5];
+        psEditInfo->fOriginX = m_gt.xorig;
+        psEditInfo->fCellIncrementX = m_gt.xscale;
+        psEditInfo->fOriginY = m_gt.yorig;
+        psEditInfo->fCellIncrementY = m_gt.yscale;
         CPLDebug("ECW", "Rewrite Geotransform");
     }
 
@@ -1680,7 +1677,8 @@ void ECWDataset::WriteHeader()
 CPLErr ECWDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                               int nBufXSize, int nBufYSize,
                               CPL_UNUSED GDALDataType eDT, int nBandCount,
-                              int *panBandList, CPL_UNUSED char **papszOptions)
+                              int *panBandList,
+                              CPL_UNUSED CSLConstList papszOptions)
 {
     CPLDebug("ECW", "ECWDataset::AdviseRead(%d,%d,%d,%d->%d,%d)", nXOff, nYOff,
              nXSize, nYSize, nBufXSize, nBufYSize);
@@ -1752,7 +1750,7 @@ CPLErr ECWDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 }
 
 /************************************************************************/
-/*                        RunDeferredAdviseRead()                        */
+/*                       RunDeferredAdviseRead()                        */
 /************************************************************************/
 
 CPLErr ECWDataset::RunDeferredAdviseRead()
@@ -2401,7 +2399,7 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                        ReadBandsDirectly()                           */
+/*                         ReadBandsDirectly()                          */
 /************************************************************************/
 
 CPLErr ECWDataset::ReadBandsDirectly(void *pData, int nBufXSize, int nBufYSize,
@@ -2458,7 +2456,7 @@ CPLErr ECWDataset::ReadBandsDirectly(void *pData, int nBufXSize, int nBufYSize,
 }
 
 /************************************************************************/
-/*                            ReadBands()                               */
+/*                             ReadBands()                              */
 /************************************************************************/
 
 CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
@@ -3236,7 +3234,7 @@ GDALDataset *ECWDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJPEG2000)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **ECWDataset::GetMetadataDomainList()
@@ -3247,7 +3245,7 @@ char **ECWDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                           GetMetadataItem()                          */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *ECWDataset::GetMetadataItem(const char *pszName,
@@ -3346,7 +3344,7 @@ void ECWDataset::ReadFileMetaDataFromFile()
 }
 
 /************************************************************************/
-/*                       WriteFileMetaData()                            */
+/*                         WriteFileMetaData()                          */
 /************************************************************************/
 
 void ECWDataset::WriteFileMetaData(NCSFileMetaData *pFileMetaDataCopy)
@@ -3416,12 +3414,12 @@ void ECWDataset::ECW2WKTProjection()
     {
         bGeoTransformValid = TRUE;
 
-        m_gt[0] = psFileInfo->fOriginX;
-        m_gt[1] = psFileInfo->fCellIncrementX;
-        m_gt[2] = 0.0;
+        m_gt.xorig = psFileInfo->fOriginX;
+        m_gt.xscale = psFileInfo->fCellIncrementX;
+        m_gt.xrot = 0.0;
 
-        m_gt[3] = psFileInfo->fOriginY;
-        m_gt[4] = 0.0;
+        m_gt.yorig = psFileInfo->fOriginY;
+        m_gt.yrot = 0.0;
 
         /* By default, set Y-resolution negative assuming images always */
         /* have "Upward" orientation (Y coordinates increase "Upward"). */
@@ -3431,9 +3429,9 @@ void ECWDataset::ECW2WKTProjection()
         /* rare images with "Downward" orientation, where Y coordinates */
         /* increase "Downward" and Y-resolution is positive.            */
         if (CPLTestBool(CPLGetConfigOption("ECW_ALWAYS_UPWARD", "TRUE")))
-            m_gt[5] = -fabs(psFileInfo->fCellIncrementY);
+            m_gt.yscale = -fabs(psFileInfo->fCellIncrementY);
         else
-            m_gt[5] = psFileInfo->fCellIncrementY;
+            m_gt.yscale = psFileInfo->fCellIncrementY;
     }
 
     /* -------------------------------------------------------------------- */
@@ -3576,7 +3574,7 @@ CellSizeUnits ECWTranslateToCellSizeUnits(const char *pszUnits)
 }
 
 /************************************************************************/
-/*                   ECWGetColorInterpretationByName()                  */
+/*                  ECWGetColorInterpretationByName()                   */
 /************************************************************************/
 
 GDALColorInterp ECWGetColorInterpretationByName(const char *pszName)
@@ -3597,7 +3595,7 @@ GDALColorInterp ECWGetColorInterpretationByName(const char *pszName)
 }
 
 /************************************************************************/
-/*                    ECWGetColorInterpretationName()                   */
+/*                   ECWGetColorInterpretationName()                    */
 /************************************************************************/
 
 const char *ECWGetColorInterpretationName(GDALColorInterp eColorInterpretation,
@@ -3643,7 +3641,7 @@ const char *ECWGetColorInterpretationName(GDALColorInterp eColorInterpretation,
 }
 
 /************************************************************************/
-/*                         ECWGetColorSpaceName()                       */
+/*                        ECWGetColorSpaceName()                        */
 /************************************************************************/
 
 const char *ECWGetColorSpaceName(NCSFileColorSpace colorSpace)
@@ -3674,7 +3672,7 @@ const char *ECWGetColorSpaceName(NCSFileColorSpace colorSpace)
 }
 
 /************************************************************************/
-/*                     ECWTranslateFromCellSizeUnits()                  */
+/*                   ECWTranslateFromCellSizeUnits()                    */
 /************************************************************************/
 
 const char *ECWTranslateFromCellSizeUnits(CellSizeUnits eUnits)
@@ -3963,7 +3961,7 @@ void GDALRegister_ECW_JP2ECW()
 }
 
 /************************************************************************/
-/*                     ECWDatasetOpenJPEG2000()                         */
+/*                       ECWDatasetOpenJPEG2000()                       */
 /************************************************************************/
 GDALDataset *ECWDatasetOpenJPEG2000(GDALOpenInfo *poOpenInfo)
 {

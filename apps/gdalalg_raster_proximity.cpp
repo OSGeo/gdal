@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*      GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()    */
+/*     GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm()     */
 /************************************************************************/
 
 GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm(bool standaloneStep)
@@ -46,7 +46,7 @@ GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm(bool standaloneStep)
            &m_maxDistance)
         .SetDefault(m_maxDistance);
     AddArg("fixed-value", 0,
-           _("Fixed value for the pixels that are beyond the "
+           _("Fixed value for the pixels that are within the "
              "maximum distance (instead of the actual distance)"),
            &m_fixedBufferValue)
         .SetMinValueIncluded(0)
@@ -58,7 +58,7 @@ GDALRasterProximityAlgorithm::GDALRasterProximityAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                 GDALRasterProximityAlgorithm::RunStep()              */
+/*               GDALRasterProximityAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterProximityAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

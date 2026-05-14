@@ -13,6 +13,8 @@
 
 #include "oci_wrapper.h"
 
+#include <algorithm>
+
 static const OW_CellDepth ahOW_CellDepth[] = {{"8BIT_U", GDT_UInt8},
                                               {"16BIT_U", GDT_UInt16},
                                               {"16BIT_S", GDT_Int16},
@@ -26,9 +28,9 @@ static const OW_CellDepth ahOW_CellDepth[] = {{"8BIT_U", GDT_UInt8},
                                               {"2BIT", GDT_UInt8},
                                               {"4BIT", GDT_UInt8}};
 
-/*****************************************************************************/
-/*                            OWSessionPool                                  */
-/*****************************************************************************/
+/************************************************************************/
+/*                            OWSessionPool                             */
+/************************************************************************/
 
 /*************************************************
  *  Create Connection from the Extproc Context
@@ -196,9 +198,9 @@ OWConnection *OWSessionPool::GetConnection(const char *pszUserIn,
     return new OWConnection(this, pszUserIn, pszPasswordIn, pszServerIn);
 }
 
-/*****************************************************************************/
-/*                            OWConnection                                   */
-/*****************************************************************************/
+/************************************************************************/
+/*                             OWConnection                             */
+/************************************************************************/
 
 OWConnection::OWConnection(OCIExtProcContext *poWithContext)
 {
@@ -831,7 +833,7 @@ bool OWConnection::GetNextField(OCIParam *phTable, int nIndex, char *pszName,
         }
     }
 
-    nNameLength = MIN(nNameLength, OWNAME);
+    nNameLength = std::min<ub4>(nNameLength, OWNAME);
 
     strncpy(pszName, pszFieldName, nNameLength);
     pszName[nNameLength] = '\0';
@@ -859,9 +861,9 @@ bool OWConnection::Commit()
     return true;
 }
 
-/*****************************************************************************/
-/*                           OWStatement                                     */
-/*****************************************************************************/
+/************************************************************************/
+/*                             OWStatement                              */
+/************************************************************************/
 
 OWStatement::OWStatement(OWConnection *pConnect, const char *pszStatement)
     : poConnection(pConnect), hError(poConnection->hError)
@@ -1661,9 +1663,9 @@ void OWStatement::BindArray(void *pData, long nSize)
                hError);
 }
 
-/*****************************************************************************/
-/*               Check for valid integer number in a string                  */
-/*****************************************************************************/
+/************************************************************************/
+/*              Check for valid integer number in a string              */
+/************************************************************************/
 
 bool OWIsNumeric(const char *pszText)
 {
@@ -1684,9 +1686,9 @@ bool OWIsNumeric(const char *pszText)
     return true;
 }
 
-/*****************************************************************************/
-/*                     Remove quotes                                         */
-/*****************************************************************************/
+/************************************************************************/
+/*                            Remove quotes                             */
+/************************************************************************/
 
 char *OWRemoveQuotes(const char *pszText)
 {
@@ -1704,9 +1706,9 @@ char *OWRemoveQuotes(const char *pszText)
     return pszResult;
 }
 
-/*****************************************************************************/
-/*                     To upper if there is no quotes                        */
-/*****************************************************************************/
+/************************************************************************/
+/*                    To upper if there is no quotes                    */
+/************************************************************************/
 
 void OWUpperIfNoQuotes(char *pszText)
 {
@@ -1724,9 +1726,9 @@ void OWUpperIfNoQuotes(char *pszText)
     }
 }
 
-/*****************************************************************************/
-/*                     Parse Value after a Hint on a string                  */
-/*****************************************************************************/
+/************************************************************************/
+/*                 Parse Value after a Hint on a string                 */
+/************************************************************************/
 static CPLString OWParseValue(const char *pszText, const char *pszSeparators,
                               const char *pszHint, int nOffset)
 {
@@ -1756,9 +1758,9 @@ static CPLString OWParseValue(const char *pszText, const char *pszSeparators,
     return osResult;
 }
 
-/*****************************************************************************/
-/*                            Parse SDO_GEOR.INIT entries                    */
-/*****************************************************************************/
+/************************************************************************/
+/*                     Parse SDO_GEOR.INIT entries                      */
+/************************************************************************/
 
 /* Input Examples:
  *
@@ -1808,9 +1810,9 @@ CPLString OWParseSDO_GEOR_INIT(const char *pszInsert, int nField)
     return EQUAL(osValue, "") ? "NULL" : osValue;
 }
 
-/*****************************************************************************/
-/*                            Parse Release Version                          */
-/*****************************************************************************/
+/************************************************************************/
+/*                        Parse Release Version                         */
+/************************************************************************/
 
 /* Input Examples:
  *
@@ -1825,9 +1827,9 @@ int OWParseServerVersion(const char *pszText)
     return atoi(OWParseValue(pszText, " .", "Release", 1));
 }
 
-/*****************************************************************************/
-/*                            Parse EPSG Codes                               */
-/*****************************************************************************/
+/************************************************************************/
+/*                           Parse EPSG Codes                           */
+/************************************************************************/
 
 /* Input Examples:
  *
@@ -1841,9 +1843,9 @@ int OWParseEPSG(const char *pszText)
     return atoi(OWParseValue(pszText, " ()", "EPSG", 2));
 }
 
-/*****************************************************************************/
-/*                            Convert Data type description                  */
-/*****************************************************************************/
+/************************************************************************/
+/*                    Convert Data type description                     */
+/************************************************************************/
 
 GDALDataType OWGetDataType(const char *pszCellDepth)
 {
@@ -1860,9 +1862,9 @@ GDALDataType OWGetDataType(const char *pszCellDepth)
     return GDT_Unknown;
 }
 
-/*****************************************************************************/
-/*                            Convert Data type description                  */
-/*****************************************************************************/
+/************************************************************************/
+/*                    Convert Data type description                     */
+/************************************************************************/
 
 const char *OWSetDataType(const GDALDataType eType)
 
@@ -1880,9 +1882,9 @@ const char *OWSetDataType(const GDALDataType eType)
     return "Unknown";
 }
 
-/*****************************************************************************/
-/*                            Check for Failure                              */
-/*****************************************************************************/
+/************************************************************************/
+/*                          Check for Failure                           */
+/************************************************************************/
 bool CheckError(sword nStatus, OCIError *hError)
 {
     text szMsg[OWTEXT];
@@ -1894,19 +1896,19 @@ bool CheckError(sword nStatus, OCIError *hError)
             return false;
             break;
         case OCI_NEED_DATA:
-            CPLError(CE_Failure, CPLE_AppDefined, "OCI_NEED_DATA\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "OCI_NEED_DATA");
             break;
         case OCI_NO_DATA:
-            CPLError(CE_Failure, CPLE_AppDefined, "OCI_NODATA\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "OCI_NODATA");
             break;
         case OCI_INVALID_HANDLE:
             CPLError(CE_Failure, CPLE_AppDefined, "OCI_INVALID_HANDLE");
             break;
         case OCI_STILL_EXECUTING:
-            CPLError(CE_Failure, CPLE_AppDefined, "OCI_STILL_EXECUTE\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "OCI_STILL_EXECUTE");
             break;
         case OCI_CONTINUE:
-            CPLError(CE_Failure, CPLE_AppDefined, "OCI_CONTINUE\n");
+            CPLError(CE_Failure, CPLE_AppDefined, "OCI_CONTINUE");
             break;
         case OCI_ERROR:
 

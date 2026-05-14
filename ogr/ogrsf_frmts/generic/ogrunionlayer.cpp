@@ -19,7 +19,7 @@
 #include <limits>
 
 /************************************************************************/
-/*                      OGRUnionLayerGeomFieldDefn()                    */
+/*                     OGRUnionLayerGeomFieldDefn()                     */
 /************************************************************************/
 
 OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(const char *pszNameIn,
@@ -29,7 +29,7 @@ OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(const char *pszNameIn,
 }
 
 /************************************************************************/
-/*                      OGRUnionLayerGeomFieldDefn()                    */
+/*                     OGRUnionLayerGeomFieldDefn()                     */
 /************************************************************************/
 
 OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
@@ -40,7 +40,7 @@ OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
 }
 
 /************************************************************************/
-/*                      OGRUnionLayerGeomFieldDefn()                    */
+/*                     OGRUnionLayerGeomFieldDefn()                     */
 /************************************************************************/
 
 // cppcheck-suppress missingMemberCopy
@@ -53,13 +53,13 @@ OGRUnionLayerGeomFieldDefn::OGRUnionLayerGeomFieldDefn(
 }
 
 /************************************************************************/
-/*                     ~OGRUnionLayerGeomFieldDefn()                    */
+/*                    ~OGRUnionLayerGeomFieldDefn()                     */
 /************************************************************************/
 
 OGRUnionLayerGeomFieldDefn::~OGRUnionLayerGeomFieldDefn() = default;
 
 /************************************************************************/
-/*                          OGRUnionLayer()                             */
+/*                           OGRUnionLayer()                            */
 /************************************************************************/
 
 // cppcheck-suppress uninitMemberVar
@@ -81,7 +81,7 @@ OGRUnionLayer::OGRUnionLayer(const char *pszName, int nSrcLayersIn,
 }
 
 /************************************************************************/
-/*                         ~OGRUnionLayer()                             */
+/*                           ~OGRUnionLayer()                           */
 /************************************************************************/
 
 OGRUnionLayer::~OGRUnionLayer()
@@ -98,7 +98,7 @@ OGRUnionLayer::~OGRUnionLayer()
 }
 
 /************************************************************************/
-/*                              SetFields()                             */
+/*                             SetFields()                              */
 /************************************************************************/
 
 void OGRUnionLayer::SetFields(FieldUnionStrategy eFieldStrategyIn,
@@ -123,7 +123,7 @@ void OGRUnionLayer::SetFields(FieldUnionStrategy eFieldStrategyIn,
 }
 
 /************************************************************************/
-/*                              SetFields()                             */
+/*                             SetFields()                              */
 /************************************************************************/
 
 void OGRUnionLayer::SetFields(FieldUnionStrategy eFieldStrategyIn,
@@ -145,7 +145,7 @@ void OGRUnionLayer::SetFields(FieldUnionStrategy eFieldStrategyIn,
 }
 
 /************************************************************************/
-/*                        SetSourceLayerFieldName()                     */
+/*                      SetSourceLayerFieldName()                       */
 /************************************************************************/
 
 void OGRUnionLayer::SetSourceLayerFieldName(const char *pszSourceLayerFieldName)
@@ -158,7 +158,7 @@ void OGRUnionLayer::SetSourceLayerFieldName(const char *pszSourceLayerFieldName)
 }
 
 /************************************************************************/
-/*                           SetPreserveSrcFID()                        */
+/*                         SetPreserveSrcFID()                          */
 /************************************************************************/
 
 void OGRUnionLayer::SetPreserveSrcFID(int bPreserveSrcFIDIn)
@@ -180,7 +180,7 @@ void OGRUnionLayer::SetFeatureCount(int nFeatureCountIn)
 }
 
 /************************************************************************/
-/*                         MergeFieldDefn()                             */
+/*                           MergeFieldDefn()                           */
 /************************************************************************/
 
 static void MergeFieldDefn(OGRFieldDefn *poFieldDefn,
@@ -215,7 +215,7 @@ static void MergeFieldDefn(OGRFieldDefn *poFieldDefn,
 }
 
 /************************************************************************/
-/*                             GetLayerDefn()                           */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
@@ -460,7 +460,7 @@ const OGRFeatureDefn *OGRUnionLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                             GetGeomType()                            */
+/*                            GetGeomType()                             */
 /************************************************************************/
 
 OGRwkbGeometryType OGRUnionLayer::GetGeomType() const
@@ -476,7 +476,7 @@ OGRwkbGeometryType OGRUnionLayer::GetGeomType() const
 }
 
 /************************************************************************/
-/*                    SetSpatialFilterToSourceLayer()                   */
+/*                   SetSpatialFilterToSourceLayer()                    */
 /************************************************************************/
 
 void OGRUnionLayer::SetSpatialFilterToSourceLayer(OGRLayer *poSrcLayer)
@@ -618,7 +618,7 @@ void OGRUnionLayer::ConfigureActiveLayer()
 }
 
 /************************************************************************/
-/*                             ResetReading()                           */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRUnionLayer::ResetReading()
@@ -627,7 +627,7 @@ void OGRUnionLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                         AutoWarpLayerIfNecessary()                   */
+/*                      AutoWarpLayerIfNecessary()                      */
 /************************************************************************/
 
 void OGRUnionLayer::AutoWarpLayerIfNecessary(int iLayer)
@@ -886,7 +886,7 @@ OGRFeature *OGRUnionLayer::GetFeature(GIntBig nFeatureId)
 }
 
 /************************************************************************/
-/*                          ICreateFeature()                             */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRUnionLayer::ICreateFeature(OGRFeature *poFeature)
@@ -941,7 +941,7 @@ OGRErr OGRUnionLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                             ISetFeature()                             */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRUnionLayer::ISetFeature(OGRFeature *poFeature)
@@ -999,7 +999,7 @@ OGRErr OGRUnionLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          IUpsertFeature()                            */
+/*                           IUpsertFeature()                           */
 /************************************************************************/
 
 OGRErr OGRUnionLayer::IUpsertFeature(OGRFeature *poFeature)
@@ -1137,7 +1137,7 @@ const OGRSpatialReference *OGRUnionLayer::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                      GetAttrFilterPassThroughValue()                 */
+/*                   GetAttrFilterPassThroughValue()                    */
 /************************************************************************/
 
 int OGRUnionLayer::GetAttrFilterPassThroughValue() const
@@ -1183,7 +1183,7 @@ int OGRUnionLayer::GetAttrFilterPassThroughValue() const
 }
 
 /************************************************************************/
-/*                  ApplyAttributeFilterToSrcLayer()                    */
+/*                   ApplyAttributeFilterToSrcLayer()                   */
 /************************************************************************/
 
 void OGRUnionLayer::ApplyAttributeFilterToSrcLayer(int iSubLayer)
@@ -1437,7 +1437,7 @@ OGRErr OGRUnionLayer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                        ISetSpatialFilter()                           */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRUnionLayer::ISetSpatialFilter(int iGeomField,
@@ -1469,7 +1469,7 @@ OGRErr OGRUnionLayer::ISetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                        TranslateFromSrcLayer()                       */
+/*                       TranslateFromSrcLayer()                        */
 /************************************************************************/
 
 std::unique_ptr<OGRFeature>

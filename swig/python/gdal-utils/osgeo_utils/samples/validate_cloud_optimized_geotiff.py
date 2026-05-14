@@ -488,8 +488,25 @@ def validate(ds, check_tiled=True, full_check=False):
     return warnings, errors, details
 
 
-def main(argv=sys.argv):
+_acc_print = ""
+
+
+def get_output_string():
+    return _acc_print
+
+
+def main(argv=sys.argv, output_in_string=False):
     """Return 0 in case of success, 1 for failure."""
+
+    global _acc_print
+    _acc_print = ""
+
+    def acc_print(msg):
+        global _acc_print
+        _acc_print += msg
+        _acc_print += "\n"
+
+    myprint = acc_print if output_in_string else print
 
     i = 1
     filename = None
@@ -526,21 +543,21 @@ def main(argv=sys.argv):
         warnings, errors, details = validate(filename, full_check=full_check)
         if warnings:
             if not quiet:
-                print("The following warnings were found:")
+                myprint("The following warnings were found:")
                 for warning in warnings:
-                    print(" - " + warning)
-                print("")
+                    myprint(" - " + warning)
+                myprint("")
         if errors:
             if not quiet:
-                print("%s is NOT a valid cloud optimized GeoTIFF." % filename)
-                print("The following errors were found:")
+                myprint("%s is NOT a valid cloud optimized GeoTIFF." % filename)
+                myprint("The following errors were found:")
                 for error in errors:
-                    print(" - " + error)
-                print("")
+                    myprint(" - " + error)
+                myprint("")
             ret = 1
         else:
             if not quiet:
-                print("%s is a valid cloud optimized GeoTIFF" % filename)
+                myprint("%s is a valid cloud optimized GeoTIFF" % filename)
 
         if not quiet and not warnings and not errors:
             headers_size = min(
@@ -548,10 +565,12 @@ def main(argv=sys.argv):
             )
             if headers_size == 0:
                 headers_size = gdal.VSIStatL(filename).size
-            print("\nThe size of all IFD headers is %d bytes" % headers_size)
+            myprint("\nThe size of all IFD headers is %d bytes" % headers_size)
     except ValidateCloudOptimizedGeoTIFFException as e:
         if not quiet:
-            print("%s is NOT a valid cloud optimized GeoTIFF : %s" % (filename, str(e)))
+            myprint(
+                "%s is NOT a valid cloud optimized GeoTIFF : %s" % (filename, str(e))
+            )
         ret = 1
 
     return ret

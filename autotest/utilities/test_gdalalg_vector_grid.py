@@ -504,7 +504,7 @@ def test_gdalalg_vector_grid_crs():
     alg["crs"] = "EPSG:4326"
     assert alg.Run()
     ds = alg["output"].GetDataset()
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
 
 def test_gdalalg_vector_grid_overwrite(tmp_vsimem):

@@ -480,7 +480,7 @@ class CPL_DLL GDALRasterAttributeTable
 };
 
 /************************************************************************/
-/*                    GDALDefaultRasterAttributeTable                   */
+/*                   GDALDefaultRasterAttributeTable                    */
 /************************************************************************/
 
 //! Raster Attribute Table container.

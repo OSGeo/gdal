@@ -468,11 +468,11 @@ public:
     return (const char*)name;
   }
 
-  const char *GetAuthorityCode( const char *target_key ) {
+  const char *GetAuthorityCode( const char *target_key = NULL ) {
     return OSRGetAuthorityCode( self, target_key );
   }
 
-  const char *GetAuthorityName( const char *target_key ) {
+  const char *GetAuthorityName( const char *target_key = NULL ) {
     return OSRGetAuthorityName( self, target_key );
   }
 
@@ -550,7 +550,7 @@ public:
     int bNorth = FALSE;
     int nZone = OSRGetUTMZone( self, &bNorth );
     if( !bNorth )
-        nZone = -1 * ABS(nZone);
+        nZone = -nZone;
     return nZone;
   }
 
@@ -1597,9 +1597,9 @@ void GetCRSInfoListFromDatabase( const char *authName,
 #endif // SWIGPYTHON
 
 %inline %{
-void SetPROJSearchPath( const char *utf8_path )
+void SetPROJSearchPath( const char *utf8_string )
 {
-    const char* const apszPaths[2] = { utf8_path, NULL };
+    const char* const apszPaths[2] = { utf8_string, NULL };
     OSRSetPROJSearchPaths(apszPaths);
 }
 %}
@@ -1656,9 +1656,9 @@ void SetPROJEnableNetwork(bool enabled)
 %}
 
 %inline %{
-void SetPROJAuxDbPath( const char *utf8_path )
+void SetPROJAuxDbPath( const char *utf8_string )
 {
-    const char* const apszPaths[2] = { utf8_path, NULL };
+    const char* const apszPaths[2] = { utf8_string, NULL };
     OSRSetPROJAuxDbPaths(apszPaths);
 }
 %}

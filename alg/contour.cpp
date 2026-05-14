@@ -23,6 +23,7 @@
 #include "gdal.h"
 #include "gdal_alg.h"
 #include "cpl_conv.h"
+#include "cpl_error_internal.h"
 #include "cpl_string.h"
 #include "ogr_api.h"
 #include "ogr_srs_api.h"
@@ -680,6 +681,56 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
 
     bool polygonize = CPLFetchBool(options, "POLYGONIZE", false);
 
+    int bSuccessMin = FALSE;
+    double dfMinimum = GDALGetRasterMinimum(hBand, &bSuccessMin);
+    int bSuccessMax = FALSE;
+    double dfMaximum = GDALGetRasterMaximum(hBand, &bSuccessMax);
+    if ((!bSuccessMin || !bSuccessMax))
+    {
+        double adfMinMax[2];
+        CPLErrorAccumulator oAccumulator;
+        bool bGotMinMax;
+        {
+            CPLErrorStateBackuper oBackuper;
+            auto oAccumulatorContext = oAccumulator.InstallForCurrentScope();
+            CPL_IGNORE_RET_VAL(oAccumulatorContext);
+            bGotMinMax =
+                (GDALComputeRasterMinMax(hBand, false, adfMinMax) == CE_None);
+        }
+        if (bGotMinMax)
+        {
+            dfMinimum = adfMinMax[0];
+            dfMaximum = adfMinMax[1];
+        }
+        else
+        {
+            bool bNoValidPixels = false;
+            for (const auto &sError : oAccumulator.GetErrors())
+            {
+                if (sError.msg.find("no valid pixels found in sampling") !=
+                    std::string::npos)
+                {
+                    bNoValidPixels = true;
+                }
+                else if (sError.type == CE_Debug)
+                {
+                    CPLDebug("GDAL", "%s", sError.msg.c_str());
+                }
+                else
+                {
+                    CPLError(sError.type, sError.no, "%s", sError.msg.c_str());
+                }
+            }
+            if (bNoValidPixels && oAccumulator.GetErrors().size() == 1)
+            {
+                CPLDebug("GDAL",
+                         "contour: no valid pixels found in input band");
+                return CE_None;
+            }
+            return CE_Failure;
+        }
+    }
+
     using namespace marching_squares;
 
     OGRContourWriterInfo oCWI;
@@ -710,20 +761,6 @@ CPLErr GDALContourGenerateEx(GDALRasterBandH hBand, void *hLayer,
             OGRERR_NONE)
         {
             oCWI.nTransactionCommitInterval = 0;
-        }
-    }
-
-    int bSuccessMin = FALSE;
-    double dfMinimum = GDALGetRasterMinimum(hBand, &bSuccessMin);
-    int bSuccessMax = FALSE;
-    double dfMaximum = GDALGetRasterMaximum(hBand, &bSuccessMax);
-    if ((!bSuccessMin || !bSuccessMax))
-    {
-        double adfMinMax[2];
-        if (GDALComputeRasterMinMax(hBand, false, adfMinMax) == CE_None)
-        {
-            dfMinimum = adfMinMax[0];
-            dfMaximum = adfMinMax[1];
         }
     }
 

@@ -73,11 +73,10 @@ OGRWktReadPointsM(const char *pszInput, OGRRawPoint **ppaoPoints,
 void CPL_DLL OGRMakeWktCoordinate(char *, double, double, double, int);
 std::string CPL_DLL OGRMakeWktCoordinate(double, double, double, int,
                                          const OGRWktOptions &opts);
-void CPL_DLL OGRMakeWktCoordinateM(char *, double, double, double, double,
-                                   OGRBoolean, OGRBoolean);
-std::string CPL_DLL OGRMakeWktCoordinateM(double, double, double, double,
-                                          OGRBoolean, OGRBoolean,
-                                          const OGRWktOptions &opts);
+void CPL_DLL OGRMakeWktCoordinateM(char *, double, double, double, double, bool,
+                                   bool);
+std::string CPL_DLL OGRMakeWktCoordinateM(double, double, double, double, bool,
+                                          bool, const OGRWktOptions &opts);
 
 #endif
 
@@ -174,7 +173,7 @@ int CPL_DLL OGRGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
 extern const char *const SpecialFieldNames[SPECIAL_FIELD_COUNT];
 
 /************************************************************************/
-/*     Some SRS related stuff, search in SRS data files.                */
+/*          Some SRS related stuff, search in SRS data files.           */
 /************************************************************************/
 
 OGRErr CPL_DLL OSRGetEllipsoidInfo(int, char **, double *, double *);
@@ -192,11 +191,11 @@ OGRGeometry CPL_DLL *OGRGeometryFromEWKB(GByte *pabyWKB, int nLength,
                                          int *pnSRID, int bIsPostGIS1_EWKB);
 OGRGeometry CPL_DLL *OGRGeometryFromHexEWKB(const char *pszBytea, int *pnSRID,
                                             int bIsPostGIS1_EWKB);
-char CPL_DLL *OGRGeometryToHexEWKB(OGRGeometry *poGeometry, int nSRSId,
+char CPL_DLL *OGRGeometryToHexEWKB(const OGRGeometry *poGeometry, int nSRSId,
                                    int nPostGISMajor, int nPostGISMinor);
 
 /************************************************************************/
-/*                        WKB Type Handling encoding                    */
+/*                      WKB Type Handling encoding                      */
 /************************************************************************/
 
 OGRErr CPL_DLL OGRReadWKBGeometryType(const unsigned char *pabyData,
@@ -204,21 +203,21 @@ OGRErr CPL_DLL OGRReadWKBGeometryType(const unsigned char *pabyData,
                                       OGRwkbGeometryType *eGeometryType);
 
 /************************************************************************/
-/*                        WKT Type Handling encoding                    */
+/*                      WKT Type Handling encoding                      */
 /************************************************************************/
 
 OGRErr CPL_DLL OGRReadWKTGeometryType(const char *pszWKT,
                                       OGRwkbGeometryType *peGeometryType);
 
 /************************************************************************/
-/*                            Other                                     */
+/*                                Other                                 */
 /************************************************************************/
 
 void CPL_DLL OGRUpdateFieldType(OGRFieldDefn *poFDefn, OGRFieldType eNewType,
                                 OGRFieldSubType eNewSubType);
 
 /************************************************************************/
-/*                         OGRRoundValueIEEE754()                       */
+/*                        OGRRoundValueIEEE754()                        */
 /************************************************************************/
 
 /** Set to zero least significants bits of a double precision floating-point
@@ -259,7 +258,7 @@ inline uint64_t OGRRoundValueIEEE754(uint64_t nVal, int nBitsPrecision)
 }
 
 /************************************************************************/
-/*                   OGRRoundCoordinatesIEEE754XYValues()               */
+/*                 OGRRoundCoordinatesIEEE754XYValues()                 */
 /************************************************************************/
 
 /** Quantize XY values.

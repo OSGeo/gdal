@@ -41,10 +41,12 @@ static GDALDataset *OGROCIDriverOpen(GDALOpenInfo *poOpenInfo)
 /*                         OGROCIDriverCreate()                         */
 /************************************************************************/
 
-static GDALDataset *
-OGROCIDriverCreate(const char *pszName, CPL_UNUSED int nBands,
-                   CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                   CPL_UNUSED GDALDataType eDT, CPL_UNUSED char **papszOptions)
+static GDALDataset *OGROCIDriverCreate(const char *pszName,
+                                       CPL_UNUSED int nBands,
+                                       CPL_UNUSED int nXSize,
+                                       CPL_UNUSED int nYSize,
+                                       CPL_UNUSED GDALDataType eDT,
+                                       CPL_UNUSED CSLConstList papszOptions)
 
 {
     OGROCIDataSource *poDS;
@@ -65,7 +67,7 @@ OGROCIDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 }
 
 /************************************************************************/
-/*                           RegisterOGROCI()                            */
+/*                           RegisterOGROCI()                           */
 /************************************************************************/
 
 void RegisterOGROCI()

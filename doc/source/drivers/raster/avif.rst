@@ -109,9 +109,9 @@ The following creation options are supported:
       Whether to write XMP metadata present in source file.
 
 -  .. co:: NBITS
-      :choices: 8, 10, 12
+      :choices: 8, 10, 12, 16
 
-      Bit depth.
+      Bit depth. 16 only supported with libavif >= 1.4 and GDAL >= 3.13
 
 -  .. co:: YUV_SUBSAMPLING
       :choices: 444, 422, 420

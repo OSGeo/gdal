@@ -390,7 +390,7 @@ int OGROCISession::Failed(sword nStatus, const char *pszFunction)
 }
 
 /************************************************************************/
-/*                            GetParamInfo()                             */
+/*                            GetParamInfo()                            */
 /************************************************************************/
 
 CPLErr OGROCISession::GetParamInfo(OCIParam *hParamDesc,

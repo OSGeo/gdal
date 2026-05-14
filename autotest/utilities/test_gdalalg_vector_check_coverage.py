@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
+
 import pytest
 
 from osgeo import gdal, ogr
@@ -162,22 +164,31 @@ def test_gdalalg_vector_check_coverage_multiple_geometry_fields(alg):
     assert alg.Finalize()
 
 
-def test_gdalalg_vector_check_coverage_multiple_layers(alg):
+@pytest.mark.parametrize("create_empty_layers", (True, False))
+def test_gdalalg_vector_check_coverage_multiple_layers(
+    alg, three_rectangles, create_empty_layers
+):
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
-
-    ds.CreateLayer("source1")
-    ds.CreateLayer("source2")
+    with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+        ds.CopyLayer(poly_ds.GetLayer(0), "source1")
+    ds.CopyLayer(three_rectangles.GetLayer(0), "source2")
 
     alg["input"] = ds
+    alg["no-create-empty-layers"] = not create_empty_layers
     alg["output"] = ""
     alg["output-format"] = "stream"
 
     assert alg.Run()
 
     dst_ds = alg["output"].GetDataset()
-    assert dst_ds.GetLayer(0).GetName() == "invalid_edge_source1"
-    assert dst_ds.GetLayer(1).GetName() == "invalid_edge_source2"
+    if create_empty_layers:
+        assert dst_ds.GetLayerCount() == 2
+        assert dst_ds.GetLayer(0).GetName() == "invalid_edge_source1"
+        assert dst_ds.GetLayer(1).GetName() == "invalid_edge_source2"
+    else:
+        assert dst_ds.GetLayerCount() == 1
+        assert dst_ds.GetLayer(0).GetName() == "invalid_edge_source2"
 
 
 def test_gdalalg_vector_check_coverage_no_geometry_field(alg):
@@ -194,6 +205,7 @@ def test_gdalalg_vector_check_coverage_no_geometry_field(alg):
     dst_ds = alg["output"].GetDataset()
     assert dst_ds.GetLayerCount() == 0
 
+    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["check-coverage"]
     alg["input"] = ds
     alg["output"] = ""
     alg["output-format"] = "stream"
@@ -203,3 +215,36 @@ def test_gdalalg_vector_check_coverage_no_geometry_field(alg):
         Exception, match="Specified layer 'source' has no geometry field"
     ):
         alg.Run()
+
+
+@pytest.mark.require_driver("GDALG")
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_check_coverage_test_ogrsf(tmp_path, three_rectangles):
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    with gdal.GetDriverByName("GPKG").CreateVector(tmp_path / "src.gpkg") as ds:
+        with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+            ds.CopyLayer(poly_ds.GetLayer(0), "poly1")
+        ds.CopyLayer(three_rectangles.GetLayer(0), "poly2")
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+
+    gdalg_contents = {
+        "type": "gdal_streamed_alg",
+        "command_line": f"gdal vector check-coverage {tmp_path}/src.gpkg --no-create-empty-layers --output-format=stream dummy_dataset_name",
+        "relative_paths_relative_to_this_file": False,
+    }
+
+    with open(gdalg_filename, "w") as gdalg_file:
+        json.dump(gdalg_contents, gdalg_file)
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret

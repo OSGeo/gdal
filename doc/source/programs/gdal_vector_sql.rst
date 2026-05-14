@@ -90,6 +90,12 @@ Standard Options
 
     .. include:: gdal_options/upsert.rst
 
+    .. include:: gdal_options/quiet.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -114,6 +120,14 @@ Examples
    .. code-block:: bash
 
         $ gdal vector sql --update my.gpkg --sql "DELETE FROM countries WHERE pop > 1e6"
+
+.. example::
+   :title: Add a new field to an existing layer of a GeoPackage
+   :id: gdal-vector-sql-addfield
+
+   .. code-block:: bash
+
+       $ gdal vector sql --update my.gpkg --sql "ALTER TABLE countries ADD COLUMN abbrev STRING(10)"
 
 .. example::
    :title: Append to an existing layer of a GeoPackage file

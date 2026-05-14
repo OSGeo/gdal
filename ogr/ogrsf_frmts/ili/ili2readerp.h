@@ -37,7 +37,7 @@ std::string trim(const std::string &tmpstr);
 class ILI2Reader;
 
 /************************************************************************/
-/*                            ILI2Handler                                */
+/*                             ILI2Handler                              */
 /************************************************************************/
 class ILI2Handler final : public DefaultHandler
 {
@@ -71,7 +71,7 @@ class ILI2Handler final : public DefaultHandler
 };
 
 /************************************************************************/
-/*                              ILI2Reader                               */
+/*                              ILI2Reader                              */
 /************************************************************************/
 
 class ILI2Reader final : public IILI2Reader

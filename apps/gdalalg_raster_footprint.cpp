@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*      GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()    */
+/*     GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm()     */
 /************************************************************************/
 
 GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm(bool standaloneStep)
@@ -38,23 +38,34 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm(bool standaloneStep)
 
     if (standaloneStep)
     {
-        AddOpenOptionsArg(&m_openOptions);
+        AddOpenOptionsArg(&m_openOptions).SetAvailableInPipelineStep(false);
         AddInputFormatsArg(&m_inputFormats)
-            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-        AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
+            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER})
+            .SetAvailableInPipelineStep(false);
+        AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER)
+            .SetAvailableInPipelineStep(false);
 
         AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
-            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
+            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT)
+            .SetAvailableInPipelineStep(false);
         AddOutputFormatArg(&m_format, /* bStreamAllowed = */ false,
                            /* bGDALGAllowed = */ false)
             .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                             {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE});
-        AddCreationOptionsArg(&m_creationOptions);
-        AddLayerCreationOptionsArg(&m_layerCreationOptions);
+                             {GDAL_DCAP_VECTOR, GDAL_DCAP_CREATE})
+            .SetAvailableInPipelineStep(false);
+        AddCreationOptionsArg(&m_creationOptions)
+            .SetAvailableInPipelineStep(false);
+        AddLayerCreationOptionsArg(&m_layerCreationOptions)
+            .SetAvailableInPipelineStep(false);
         AddUpdateArg(&m_update)
+            .SetAvailableInPipelineStep(false)
             .SetHidden();  // needed for correct append execution
-        AddAppendLayerArg(&m_appendLayer);
-        AddOverwriteArg(&m_overwrite);
+        AddAppendLayerArg(&m_appendLayer).SetAvailableInPipelineStep(false);
+        AddOverwriteArg(&m_overwrite).SetAvailableInPipelineStep(false);
+    }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
     }
 
     m_outputLayerName = "footprint";
@@ -73,16 +84,18 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm(bool standaloneStep)
            &m_overview)
         .SetMutualExclusionGroup("overview-srcnodata")
         .SetMinValueIncluded(0);
-    AddArg("src-nodata", 0, _("Set nodata values for input bands."),
+    AddArg("input-nodata", 0, _("Set nodata values for input bands."),
            &m_srcNoData)
         .SetMinCount(1)
         .SetRepeatedArgAllowed(false)
+        .AddHiddenAlias("src-nodata")
         .SetMutualExclusionGroup("overview-srcnodata");
     AddArg("coordinate-system", 0, _("Target coordinate system"),
            &m_coordinateSystem)
         .SetChoices("georeferenced", "pixel");
-    AddArg("dst-crs", 0, _("Destination CRS"), &m_dstCrs)
+    AddArg(GDAL_ARG_NAME_OUTPUT_CRS, 0, _("Output CRS"), &m_dstCrs)
         .SetIsCRSArg()
+        .AddHiddenAlias("dst-crs")
         .AddHiddenAlias("t_srs");
     AddArg("split-multipolygons", 0,
            _("Whether to split multipolygons as several features each with one "
@@ -177,7 +190,7 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                 GDALRasterFootprintAlgorithm::RunImpl()              */
+/*               GDALRasterFootprintAlgorithm::RunImpl()                */
 /************************************************************************/
 
 bool GDALRasterFootprintAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
@@ -190,7 +203,7 @@ bool GDALRasterFootprintAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 }
 
 /************************************************************************/
-/*                 GDALRasterFootprintAlgorithm::RunStep()              */
+/*               GDALRasterFootprintAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterFootprintAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -347,7 +360,11 @@ bool GDALRasterFootprintAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             if (poRetDS && !m_standaloneStep && !outputFilename.empty())
             {
                 bOK = poRetDS->FlushCache() == CE_None;
+#if !defined(__APPLE__)
+                // For some unknown reason, unlinking the file on MacOSX
+                // leads to later "disk I/O error". See https://github.com/OSGeo/gdal/issues/13794
                 VSIUnlink(outputFilename.c_str());
+#endif
                 poRetDS->MarkSuppressOnClose();
             }
             m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));

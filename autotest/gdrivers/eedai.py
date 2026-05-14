@@ -343,7 +343,7 @@ def test_eedai_gce_credentials():
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
+    gdaltest.webserver_process, gdaltest.webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if gdaltest.webserver_port == 0:

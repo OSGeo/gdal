@@ -706,7 +706,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
                     }
                     nNumPoints = atoi(pszLine);
                 }
-                if (nNumPoints < 2)
+                if (nNumPoints < 0)
                 {
                     CPLError(CE_Failure, CPLE_FileIO,
                              "Invalid number of vertices (%d) in PLINE "
@@ -771,7 +771,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         }
         else
         {
-            if (nNumPoints < 2)
+            if (nNumPoints < 0)
             {
                 CPLError(CE_Failure, CPLE_FileIO,
                          "Invalid number of vertices (%d) in PLINE "
@@ -1055,7 +1055,7 @@ int TABRegion::ReadGeometryFromMIFFile(MIDDATAFile *fp)
             CPLError(
                 CE_Warning, CPLE_AppDefined,
                 "Geometry of polygon cannot be translated to Simple Geometry. "
-                "All polygons will be contained in a multipolygon.\n");
+                "All polygons will be contained in a multipolygon.");
         }
     }
 

@@ -52,7 +52,7 @@ class GDALVectorExplodeCollectionsAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*             GDALVectorExplodeCollectionsAlgorithmStandalone          */
+/*           GDALVectorExplodeCollectionsAlgorithmStandalone            */
 /************************************************************************/
 
 class GDALVectorExplodeCollectionsAlgorithmStandalone final

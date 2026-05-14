@@ -45,7 +45,7 @@ be set.
 
 In a GTI context, the extent of all tiles referenced in the tile index must
 be expressed in a single CRS. Consequently, if input tiles may have different
-CRS, :option:`--dst-crs` must be specified.
+CRS, :option:`--output-crs` must be specified.
 
 
 The following options are available:
@@ -98,14 +98,14 @@ Standard options
     Minimum pixel size in term of geospatial extent per pixel (resolution) that
     a raster should have to be selected. The pixel size
     is evaluated after reprojection of its extent to the target CRS defined
-    by :option:`--dst-crs`.
+    by :option:`--output-crs`.
 
 .. option:: --max-pixel-size <val>
 
     Maximum pixel size in term of geospatial extent per pixel (resolution) that
     a raster should have to be selected. The pixel size
     is evaluated after reprojection of its extent to the target CRS defined
-    by :option:`--dst-crs`.
+    by :option:`--output-crs`.
 
 .. option:: -location-name <LOCATION-NAME>
 
@@ -118,7 +118,7 @@ Standard options
     By default the raster filenames will be put in the file exactly as they
     are specified on the command line.
 
-.. option:: --dst-crs <DST-CRS>
+.. option:: --output-crs <OUTPUT-CRS>
 
     Geometries of input files will be transformed to the desired target
     coordinate reference system.
@@ -224,6 +224,11 @@ Standard options
     This option may be repeated.
 
     For example: ``--fetched-metadata TIFFTAG_DATETIME,creation_date,DateTime``
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

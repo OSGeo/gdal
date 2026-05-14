@@ -88,7 +88,7 @@ class FITSDataset final : public GDALPamDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
     static CPLErr Delete(const char *pszFilename);
 
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -227,7 +227,7 @@ class FITSLayer final : public OGRLayer,
 };
 
 /************************************************************************/
-/*                            FITSLayer()                               */
+/*                             FITSLayer()                              */
 /************************************************************************/
 
 FITSLayer::FITSLayer(FITSDataset *poDS, int hduNum, const char *pszExtName)
@@ -552,7 +552,7 @@ FITSLayer::FITSLayer(FITSDataset *poDS, int hduNum, const char *pszExtName)
 }
 
 /************************************************************************/
-/*                           ~FITSLayer()                               */
+/*                             ~FITSLayer()                             */
 /************************************************************************/
 
 FITSLayer::~FITSLayer()
@@ -596,7 +596,7 @@ void FITSLayer::SetActiveHDU()
 }
 
 /************************************************************************/
-/*                        GetFeatureCount()                             */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig FITSLayer::GetFeatureCount(int bForce)
@@ -607,7 +607,7 @@ GIntBig FITSLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                          ResetReading()                              */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void FITSLayer::ResetReading()
@@ -616,7 +616,7 @@ void FITSLayer::ResetReading()
 }
 
 /************************************************************************/
-/*                              ReadCol                                 */
+/*                               ReadCol                                */
 /************************************************************************/
 
 template <typename T_FITS, typename T_GDAL, int TYPECODE> struct ReadCol
@@ -660,7 +660,7 @@ template <typename T_FITS, typename T_GDAL, int TYPECODE> struct ReadCol
 };
 
 /************************************************************************/
-/*                        GetNextRawFeature()                           */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *FITSLayer::GetNextRawFeature()
@@ -672,7 +672,7 @@ OGRFeature *FITSLayer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                           GetFeature()                               */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
@@ -874,7 +874,7 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                         TestCapability()                             */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int FITSLayer::TestCapability(const char *pszCap) const
@@ -895,7 +895,7 @@ int FITSLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                        RunDeferredFieldCreation()                    */
+/*                      RunDeferredFieldCreation()                      */
 /************************************************************************/
 
 void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
@@ -1254,7 +1254,7 @@ void FITSLayer::RunDeferredFieldCreation(const OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           CreateField()                              */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr FITSLayer::CreateField(const OGRFieldDefn *poField, int /* bApproxOK */)
@@ -1279,7 +1279,7 @@ OGRErr FITSLayer::CreateField(const OGRFieldDefn *poField, int /* bApproxOK */)
 }
 
 /************************************************************************/
-/*                              WriteCol                                */
+/*                               WriteCol                               */
 /************************************************************************/
 
 template <class T> static T Round(double dfValue)
@@ -1391,7 +1391,7 @@ struct WriteCol
 };
 
 /************************************************************************/
-/*                            WriteComplex                              */
+/*                             WriteComplex                             */
 /************************************************************************/
 
 template <typename T, int TYPECODE> struct WriteComplex
@@ -1444,7 +1444,7 @@ template <typename T, int TYPECODE> struct WriteComplex
 };
 
 /************************************************************************/
-/*                        SetOrCreateFeature()                          */
+/*                         SetOrCreateFeature()                         */
 /************************************************************************/
 
 bool FITSLayer::SetOrCreateFeature(const OGRFeature *poFeature, LONGLONG nRow)
@@ -1660,7 +1660,7 @@ OGRErr FITSLayer::ICreateFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                           ISetFeature()                              */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr FITSLayer::ISetFeature(OGRFeature *poFeature)
@@ -1680,7 +1680,7 @@ OGRErr FITSLayer::ISetFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                          DeleteFeature()                             */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 OGRErr FITSLayer::DeleteFeature(GIntBig nFID)
@@ -1700,7 +1700,7 @@ OGRErr FITSLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                          FITSRasterBand()                           */
+/*                           FITSRasterBand()                           */
 /************************************************************************/
 
 FITSRasterBand::FITSRasterBand(FITSDataset *poDSIn, int nBandIn)
@@ -1854,7 +1854,7 @@ static bool isIgnorableFITSHeader(const char *name)
 }
 
 /************************************************************************/
-/*                            FITSDataset()                            */
+/*                            FITSDataset()                             */
 /************************************************************************/
 
 FITSDataset::FITSDataset()
@@ -1863,7 +1863,7 @@ FITSDataset::FITSDataset()
 }
 
 /************************************************************************/
-/*                           ~FITSDataset()                            */
+/*                            ~FITSDataset()                            */
 /************************************************************************/
 
 FITSDataset::~FITSDataset()
@@ -2015,7 +2015,7 @@ FITSDataset::~FITSDataset()
 }
 
 /************************************************************************/
-/*                        GetRawBinaryLayout()                          */
+/*                         GetRawBinaryLayout()                         */
 /************************************************************************/
 
 bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
@@ -2047,7 +2047,7 @@ bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 }
 
 /************************************************************************/
-/*                           Init()                                     */
+/*                                Init()                                */
 /************************************************************************/
 
 CPLErr FITSDataset::Init(fitsfile *hFITS, bool isExistingFile, int hduNum)
@@ -2184,7 +2184,7 @@ CPLErr FITSDataset::Init(fitsfile *hFITS, bool isExistingFile, int hduNum)
 }
 
 /************************************************************************/
-/*                         LoadMetadata()                               */
+/*                            LoadMetadata()                            */
 /************************************************************************/
 
 void FITSDataset::LoadMetadata(GDALMajorObject *poTarget)
@@ -2673,7 +2673,7 @@ GDALDataset *FITSDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *FITSDataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 CPL_UNUSED char **papszParamList)
+                                 CPL_UNUSED CSLConstList papszParamList)
 {
     int status = 0;
 
@@ -2797,7 +2797,7 @@ GDALDataset *FITSDataset::Create(const char *pszFilename, int nXSize,
 }
 
 /************************************************************************/
-/*                              Delete()                                */
+/*                               Delete()                               */
 /************************************************************************/
 
 CPLErr FITSDataset::Delete(const char *pszFilename)
@@ -2806,7 +2806,7 @@ CPLErr FITSDataset::Delete(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                          WriteFITSInfo()                          */
+/*                           WriteFITSInfo()                            */
 /************************************************************************/
 
 void FITSDataset::WriteFITSInfo()
@@ -3029,8 +3029,8 @@ void FITSDataset::WriteFITSInfo()
             }
         }
 
-        UpperLeftCornerX = m_gt[0] - falseEast;
-        UpperLeftCornerY = m_gt[3] - falseNorth;
+        UpperLeftCornerX = m_gt.xorig - falseEast;
+        UpperLeftCornerY = m_gt.yorig - falseNorth;
 
         if (centlon > 180.)
         {
@@ -3039,8 +3039,8 @@ void FITSDataset::WriteFITSInfo()
         if (strstr(unit, "metre"))
         {
             // convert degrees/pixel to m/pixel
-            mapres = 1. / m_gt[1];     // mapres is pixel/meters
-            mres = m_gt[1] / cfactor;  // mres is deg/pixel
+            mapres = 1. / m_gt.xscale;     // mapres is pixel/meters
+            mres = m_gt.xscale / cfactor;  // mres is deg/pixel
             crpix1 = -(UpperLeftCornerX * mapres) + centlon / mres + 0.5;
             // assuming that center latitude is also the origin of the
             // coordinate system: this is not always true. More generic
@@ -3050,8 +3050,8 @@ void FITSDataset::WriteFITSInfo()
         else if (strstr(unit, "degree"))
         {
             // convert m/pixel to pixel/degree
-            mapres = 1. / m_gt[1] / cfactor;  // mapres is pixel/deg
-            mres = m_gt[1];                   // mres is meters/pixel
+            mapres = 1. / m_gt.xscale / cfactor;  // mapres is pixel/deg
+            mres = m_gt.xscale;                   // mres is meters/pixel
             crpix1 = -(UpperLeftCornerX * mres) + centlon / mapres + 0.5;
             // assuming that center latitude is also the origin of the
             // coordinate system: this is not always true. More generic
@@ -3119,10 +3119,10 @@ void FITSDataset::WriteFITSInfo()
             /// Write WCS CDELTia and PCi_ja here
 
             double cd[4];
-            cd[0] = m_gt[1] / cfactor;
-            cd[1] = m_gt[2] / cfactor;
-            cd[2] = m_gt[4] / cfactor;
-            cd[3] = m_gt[5] / cfactor;
+            cd[0] = m_gt.xscale / cfactor;
+            cd[1] = m_gt.xrot / cfactor;
+            cd[2] = m_gt.yrot / cfactor;
+            cd[3] = m_gt.yscale / cfactor;
 
             double pc[4];
             pc[0] = 1.;
@@ -3206,7 +3206,7 @@ void FITSDataset::WriteFITSInfo()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *FITSDataset::GetSpatialRef() const
@@ -3370,7 +3370,7 @@ CPLErr FITSRasterBand::SetNoDataValue(double dfNoData)
 }
 
 /************************************************************************/
-/*                        DeleteNoDataValue()                           */
+/*                         DeleteNoDataValue()                          */
 /************************************************************************/
 
 CPLErr FITSRasterBand::DeleteNoDataValue()
@@ -3508,10 +3508,10 @@ void FITSDataset::LoadGeoreferencing()
 
                 double radfac = DEG2RAD * aRadius;
 
-                m_gt[1] = cd[0] * radfac;
-                m_gt[2] = cd[1] * radfac;
-                m_gt[4] = cd[2] * radfac;
-                m_gt[5] = -cd[3] * radfac;
+                m_gt.xscale = cd[0] * radfac;
+                m_gt.xrot = cd[1] * radfac;
+                m_gt.yrot = cd[2] * radfac;
+                m_gt.yscale = -cd[3] * radfac;
                 if (crval1 > 180.)
                 {
                     crval1 = crval1 - 180.;
@@ -3520,11 +3520,11 @@ void FITSDataset::LoadGeoreferencing()
                 /* NOTA BENE: FITS standard define pixel integers at the center
                    of the pixel, 0.5 must be subtract to have UpperLeft corner
                  */
-                m_gt[0] = crval1 * radfac - m_gt[1] * (crpix1 - 0.5);
+                m_gt.xorig = crval1 * radfac - m_gt.xscale * (crpix1 - 0.5);
                 // assuming that center latitude is also the origin of the
                 // coordinate system: this is not always true. More generic
                 // implementation coming soon
-                m_gt[3] = -m_gt[5] * (crpix2 - 0.5);
+                m_gt.yorig = -m_gt.yscale * (crpix2 - 0.5);
                 //+ crval2 * radfac;
                 m_bGeoTransformValid = true;
             }
@@ -3640,7 +3640,7 @@ void FITSDataset::LoadGeoreferencing()
 }
 
 /************************************************************************/
-/*                     LoadFITSInfo()                                   */
+/*                            LoadFITSInfo()                            */
 /************************************************************************/
 
 void FITSDataset::LoadFITSInfo()
@@ -3689,7 +3689,7 @@ void FITSDataset::LoadFITSInfo()
 }
 
 /************************************************************************/
-/*                          GDALRegister_FITS()                         */
+/*                         GDALRegister_FITS()                          */
 /************************************************************************/
 
 void GDALRegister_FITS()

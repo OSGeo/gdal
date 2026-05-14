@@ -651,7 +651,7 @@ This driver supports the following creation options:
 -  .. co:: INTERLEAVE
       :choices: BAND, PIXEL
 
-      Set the interleaving to use
+      Set the interleaving to use. See :ref:`raster_data_model_interleave_mode` for more details.
 
       * ``PIXEL``: for each spatial block, one TIFF tile/strip gathering values for
         all bands is used . This matches the ``contiguous`` planar configuration in

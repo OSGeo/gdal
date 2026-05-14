@@ -94,7 +94,7 @@ int DGNResizeElement(DGNHandle hDGN, DGNElemCore *psElement, int nNewSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed seek or read when trying to mark existing\n"
-                     "element as deleted in DGNResizeElement()\n");
+                     "element as deleted in DGNResizeElement()");
             return FALSE;
         }
 
@@ -107,7 +107,7 @@ int DGNResizeElement(DGNHandle hDGN, DGNElemCore *psElement, int nNewSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Failed seek or write when trying to mark existing\n"
-                     "element as deleted in DGNResizeElement()\n");
+                     "element as deleted in DGNResizeElement()");
             return FALSE;
         }
 
@@ -765,7 +765,7 @@ int DGNUpdateElemCoreExtended(CPL_UNUSED DGNHandle hDGN, DGNElemCore *psElement)
 }
 
 /************************************************************************/
-/*                         DGNInitializeElemCore()                      */
+/*                       DGNInitializeElemCore()                        */
 /************************************************************************/
 
 static void DGNInitializeElemCore(CPL_UNUSED DGNHandle hDGN,
@@ -1164,7 +1164,7 @@ DGNElemCore *DGNCreateArcElem(DGNHandle hDGN, int nType, double dfOriginX,
 }
 
 /************************************************************************/
-/*                          DGNCreateConeElem()                         */
+/*                         DGNCreateConeElem()                          */
 /************************************************************************/
 
 /**
@@ -1721,7 +1721,7 @@ DGNElemCore *DGNCreateComplexHeaderFromGroup(DGNHandle hDGN, int nType,
 }
 
 /************************************************************************/
-/*                     DGNCreateSolidHeaderElem()                       */
+/*                      DGNCreateSolidHeaderElem()                      */
 /************************************************************************/
 
 /**
@@ -1803,7 +1803,7 @@ DGNElemCore *DGNCreateSolidHeaderElem(DGNHandle hDGN, int nType, int nSurfType,
 }
 
 /************************************************************************/
-/*                  DGNCreateSolidHeaderFromGroup()                     */
+/*                   DGNCreateSolidHeaderFromGroup()                    */
 /************************************************************************/
 
 /**

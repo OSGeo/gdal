@@ -294,10 +294,10 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
      return ret;
    }
 
- public static void FileFromMemBuffer(string utf8_path, byte[] bytes) {
+ public static void FileFromMemBuffer(string utf8_string, byte[] bytes) {
      GCHandle handle = GCHandle.Alloc(bytes, GCHandleType.Pinned);
      try {
-          FileFromMemBuffer(utf8_path, bytes.Length, handle.AddrOfPinnedObject());
+          FileFromMemBuffer(utf8_string, bytes.Length, handle.AddrOfPinnedObject());
      } finally {
         handle.Free();
      }
@@ -340,7 +340,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
    }
 
    public static Dataset BuildVRT(string dest, string[] poObjects, GDALBuildVRTOptions buildVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      return wrapper_GDALBuildVRT_names(dest, poObjects, buildVrtAppOptions, callback, callback_data); 
+      return wrapper_GDALBuildVRT_names(dest, poObjects, buildVrtAppOptions, callback, callback_data);
    }
 
    public static Dataset BuildVRT(string dest, Dataset[] poObjects, GDALBuildVRTOptions buildVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
@@ -390,9 +390,9 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
 %typemap(csin) (int bUnlinkAndSeize) "$csinput ? 1 : 0";
 
 %inline {
-GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_path, vsi_l_offset *pnDataLength, int bUnlinkAndSeize)
+GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnDataLength, int bUnlinkAndSeize)
 {
-    return VSIGetMemFileBuffer(utf8_path, pnDataLength, bUnlinkAndSeize);
+    return VSIGetMemFileBuffer(utf8_string, pnDataLength, bUnlinkAndSeize);
 }
 }
 

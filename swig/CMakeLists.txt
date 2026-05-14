@@ -59,7 +59,7 @@ endif()
 
 # CSharp bindings
 
-if (SWIG_EXECUTABLE AND CSHARP_FOUND)
+if (SWIG_EXECUTABLE AND CSHARP_FOUND AND DOTNET_FOUND)
     option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" ON)
 else()
     option(BUILD_CSHARP_BINDINGS "Build CSharp bindings" OFF)

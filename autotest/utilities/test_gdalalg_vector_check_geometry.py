@@ -11,6 +11,8 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import json
+
 import gdaltest
 import ogrtest
 import pytest
@@ -64,18 +66,25 @@ def test_gdalalg_vector_check_geometry(alg, polys):
 
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
+    dst_defn = dst_lyr.GetLayerDefn()
+
     assert dst_lyr.GetName() == "error_location"
-    assert dst_lyr.GetLayerDefn().GetGeomType() == ogr.wkbPoint
+    assert dst_defn.GetGeomType() == ogr.wkbMultiPoint
+
+    field_names = [
+        dst_defn.GetFieldDefn(i).GetName() for i in range(dst_defn.GetFieldCount())
+    ]
+    assert field_names == ["error"]
 
     errors = [f for f in dst_lyr]
 
     assert len(errors) == 2
     assert errors[0]["error"] == "Self-intersection"
-    assert errors[0].GetGeometryRef().ExportToWkt() == "POINT (5 5)"
+    assert errors[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (5 5)"
     assert errors[0].GetFID() == 2
 
     assert errors[1]["error"] == "Hole lies outside shell"
-    assert errors[1].GetGeometryRef().ExportToWkt() == "POINT (15 15)"
+    assert errors[1].GetGeometryRef().ExportToWkt() == "MULTIPOINT (15 15)"
     assert errors[1].GetFID() == 3
 
     assert dst_lyr.GetFeatureCount() == 2
@@ -129,7 +138,7 @@ def test_gdalalg_vector_check_geometry_linestring(alg, lines):
         ogr.GetGEOSVersionMajor(),
         ogr.GetGEOSVersionMinor(),
     ) >= (3, 14):
-        assert out[0].GetGeometryRef().ExportToWkt() == "POINT (5 5)"
+        assert out[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (5 5)"
     assert out[0].GetFID() == 2
 
     assert alg.Finalize()
@@ -211,7 +220,7 @@ def test_gdalalg_vector_check_geometry_compoundcurve(alg):
         ogr.GetGEOSVersionMajor(),
         ogr.GetGEOSVersionMinor(),
     ) >= (3, 14):
-        expected = ogr.CreateGeometryFromWkt("POINT (1 1)")
+        expected = ogr.CreateGeometryFromWkt("MULTIPOINT (1 1)")
         assert out[0].GetGeometryRef().Distance(expected) < 1e-3
 
 
@@ -273,7 +282,7 @@ def test_gdalalg_vector_check_geometry_geometry_collection(alg):
         ogr.GetGEOSVersionMajor(),
         ogr.GetGEOSVersionMinor(),
     ) >= (3, 14):
-        assert out[0].GetGeometryRef().ExportToWkt() == "POINT (5 5)"
+        assert out[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (5 5)"
 
 
 def test_gdalalg_vector_check_geometry_non_closed_polygon_ring(alg):
@@ -294,7 +303,7 @@ def test_gdalalg_vector_check_geometry_non_closed_polygon_ring(alg):
         errors[0]["error"].lower()
         == "points of linearring do not form a closed linestring"
     )
-    assert errors[0].GetGeometryRef().ExportToWkt() == "POINT (7 3)"
+    assert errors[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (7 3)"
 
     assert alg.Finalize()
 
@@ -314,7 +323,7 @@ def test_gdalalg_vector_check_geometry_single_point_polygon(alg):
     errors = [f for f in dst_lyr]
 
     assert errors[0]["error"].lower() == "point array must contain 0 or >1 elements"
-    assert errors[0].GetGeometryRef().ExportToWkt() == "POINT (7 3)"
+    assert errors[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (7 3)"
 
     assert alg.Finalize()
 
@@ -334,7 +343,7 @@ def test_gdalalg_vector_check_geometry_two_point_polygon(alg):
     errors = [f for f in dst_lyr]
 
     assert "invalid number of points in linearring" in errors[0]["error"].lower()
-    assert errors[0].GetGeometryRef().ExportToWkt() == "POINT (7 3)"
+    assert errors[0].GetGeometryRef().ExportToWkt() == "MULTIPOINT (7 3)"
 
     assert alg.Finalize()
 
@@ -455,22 +464,30 @@ def test_gdalalg_vector_check_geometry_multiple_geometry_fields(alg):
     assert alg.Finalize()
 
 
-def test_gdalalg_vector_check_geometry_multiple_layers(alg):
+@pytest.mark.parametrize("create_empty_layers", (True, False))
+def test_gdalalg_vector_check_geometry_multiple_layers(alg, polys, create_empty_layers):
 
     ds = gdal.GetDriverByName("MEM").CreateVector("")
-
-    ds.CreateLayer("source1")
-    ds.CreateLayer("source2")
+    with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+        ds.CopyLayer(poly_ds.GetLayer(0), "poly1")
+    ds.CopyLayer(polys.GetLayer(0), "poly2")
 
     alg["input"] = ds
+    alg["no-create-empty-layers"] = not create_empty_layers
     alg["output"] = ""
     alg["output-format"] = "stream"
 
     assert alg.Run()
 
     dst_ds = alg["output"].GetDataset()
-    assert dst_ds.GetLayer(0).GetName() == "error_location_source1"
-    assert dst_ds.GetLayer(1).GetName() == "error_location_source2"
+
+    if create_empty_layers:
+        assert dst_ds.GetLayerCount() == 2
+        assert dst_ds.GetLayer(0).GetName() == "error_location_poly1"
+        assert dst_ds.GetLayer(1).GetName() == "error_location_poly2"
+    else:
+        assert dst_ds.GetLayerCount() == 1
+        assert dst_ds.GetLayer(0).GetName() == "error_location_poly2"
 
 
 def test_gdalalg_vector_check_geometry_no_geometry_field(alg):
@@ -487,6 +504,7 @@ def test_gdalalg_vector_check_geometry_no_geometry_field(alg):
     dst_ds = alg["output"].GetDataset()
     assert dst_ds.GetLayerCount() == 0
 
+    alg = gdal.GetGlobalAlgorithmRegistry()["vector"]["check-geometry"]
     alg["input"] = ds
     alg["output"] = ""
     alg["output-format"] = "stream"
@@ -498,10 +516,22 @@ def test_gdalalg_vector_check_geometry_no_geometry_field(alg):
         alg.Run()
 
 
-def test_gdalalg_vector_check_geometry_include_field(alg):
+@pytest.mark.parametrize(
+    "include_field",
+    (
+        ["EAS_ID", "AREA"],
+        ["AREA", "EAS_ID"],
+        ["AREA", "AREA", "EAS_ID"],
+        "ALL",
+        None,
+        "NONE",
+    ),
+)
+def test_gdalalg_vector_check_geometry_include_field(alg, include_field):
 
     alg["input"] = "../ogr/data/poly.shp"
-    alg["include-field"] = ["EAS_ID", "AREA"]
+    if include_field is not None:
+        alg["include-field"] = include_field
     alg["output-format"] = "stream"
     alg["include-valid"] = True
 
@@ -509,12 +539,23 @@ def test_gdalalg_vector_check_geometry_include_field(alg):
     dst_ds = alg["output"].GetDataset()
     dst_lyr = dst_ds.GetLayer(0)
     dst_defn = dst_lyr.GetLayerDefn()
-    assert dst_defn.GetFieldDefn(0).GetName() == "EAS_ID"
-    assert dst_defn.GetFieldDefn(1).GetName() == "AREA"
+    dst_fields = [
+        dst_defn.GetFieldDefn(i).GetName() for i in range(dst_defn.GetFieldCount())
+    ]
 
-    f = dst_lyr.GetNextFeature()
-    assert f["EAS_ID"] == 168
-    assert f["AREA"] == 215229.266
+    if include_field in (None, "NONE"):
+        assert dst_fields == ["error"]
+    else:
+        unique_include_fields = list({f: True for f in include_field}.keys())
+
+        if include_field == "ALL":
+            assert dst_fields == ["AREA", "EAS_ID", "PRFEDEA", "error"]
+        else:
+            assert dst_fields == unique_include_fields + ["error"]
+
+        f = dst_lyr.GetNextFeature()
+        assert f["EAS_ID"] == 168
+        assert f["AREA"] == 215229.266
 
 
 def test_gdalalg_vector_check_geometry_include_field_error(alg):
@@ -523,5 +564,39 @@ def test_gdalalg_vector_check_geometry_include_field_error(alg):
     alg["include-field"] = "does_not_exist"
     alg["output-format"] = "stream"
 
-    with pytest.raises(Exception, match="Specified field .* does not exist"):
+    with pytest.raises(Exception, match="Field .* does not exist"):
         alg.Run()
+
+
+@pytest.mark.require_driver("GDALG")
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_vector_check_geometry_test_ogrsf(tmp_path, polys):
+
+    import test_cli_utilities
+
+    if test_cli_utilities.get_test_ogrsf_path() is None:
+        pytest.skip()
+
+    with gdal.GetDriverByName("GPKG").CreateVector(tmp_path / "src.gpkg") as ds:
+        with gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR) as poly_ds:
+            ds.CopyLayer(poly_ds.GetLayer(0), "poly1")
+        ds.CopyLayer(polys.GetLayer(0), "poly2")
+
+    gdalg_filename = tmp_path / "tmp.gdalg.json"
+
+    gdalg_contents = {
+        "type": "gdal_streamed_alg",
+        "command_line": f"gdal vector check-geometry {tmp_path}/src.gpkg --no-create-empty-layers --output-format=stream dummy_dataset_name",
+        "relative_paths_relative_to_this_file": False,
+    }
+
+    with open(gdalg_filename, "w") as gdalg_file:
+        json.dump(gdalg_contents, gdalg_file)
+
+    ret = gdaltest.runexternal(
+        test_cli_utilities.get_test_ogrsf_path() + f" -ro {gdalg_filename}"
+    )
+
+    assert "INFO" in ret
+    assert "ERROR" not in ret
+    assert "FAILURE" not in ret

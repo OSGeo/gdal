@@ -41,11 +41,62 @@ Program-Specific Options
     Persistent Auxiliary Metadata (PAM) mechanism, changes will be
     saved in an auxiliary side car file of extension ``.aux.xml``.
 
+.. option:: -b, --band <BAND>
+
+    .. versionadded:: 3.13
+
+    Index (starting at 1) of the band to which the following options apply:
+    :option:`--color-map`, :option:`--unset-color-table`. Defaults to one if
+    not specified.
+
 .. option:: --bbox <xmin>,<ymin>,<xmax>,ymax>
 
     Override the spatial bounding box, in CRS units, without reprojecting or subsetting.
     'x' is longitude values for geographic CRS and easting for projected CRS.
     'y' is latitude values for geographic CRS and northing for projected CRS.
+
+.. option:: --color-map <COLOR-MAP>
+
+    .. versionadded:: 3.13
+
+    Color map filename containing the association between various raster
+    values and the corresponding wished color to set on the first band, or the
+    one specified by :option:`--band`. This can be either a GDAL dataset
+    with a color table attached to its first band or a text-based color configuration
+
+    The text-based color configuration file generally contains 4 columns
+    per line: the raster value and the corresponding Red, Green, Blue
+    component (between 0 and 255). The raster value mus be an integer value
+    between 0 and 65535.
+    The raster value can also be expressed as a percentage: 0% being the minimum
+    value found in the raster, 100% the maximum value.
+
+    An extra column can be optionally added for the alpha component.
+    If it is not specified, full opacity (255) is assumed.
+
+    Various field separators are accepted: comma, tabulation, spaces, ':'.
+
+    Common colors used by GRASS can also be specified by using their name,
+    instead of the RGB triplet. The supported list is: white, black, red,
+    green, blue, yellow, magenta, cyan, aqua, grey/gray, orange, brown,
+    purple/violet and indigo.
+
+        GMT :file:`.cpt` palette files are also supported (COLOR_MODEL = RGB only).
+
+    Note: the syntax of the color configuration file is derived from the one
+    supported by GRASS r.colors utility. ESRI HDR color table files (.clr)
+    also match that syntax. The alpha component and the support of tab and
+    comma as separators are GDAL specific extensions.
+
+    For example:
+
+    ::
+
+        3500   white
+        2500   235:220:175
+        50%   190 185 135
+        700    240 250 150
+        0      50  180  50
 
 .. option:: --crs <CRS>
 
@@ -83,6 +134,54 @@ Program-Specific Options
 
     .. note:: This option is not available when the command is part of a pipeline.
 
+.. option:: --color-interpretation [all|<BAND>=]<COLOR-INTERPRETATION>
+
+    .. versionadded:: 3.13
+
+    Set band color interpretation. May be repeated.
+
+    ``<COLOR-INTERPRETATION>`` is one of ``red``, ``green``, ``blue``, ``alpha``,
+    ``gray``, ``undefined``, ``pan``, ``coastal``, ``rededge``, ``nir``, ``swir``, ``mwir`` or ``lwir``.
+
+    Several syntaxes are supported:
+
+    - specifying ``all=<COLOR-INTERPRETATION>``: set the color interpretation on all bands.
+
+    - specifying as many ``<COLOR-INTERPRETATION>`` as there are bands, starting from band 1 to the last band.
+
+    - specifying the color interpretation on a subset of bands with ``<BAND>=<COLOR-INTERPRETATION>``
+      where band is the band number starting at 1.
+
+.. option:: --scale [<BAND>=]<SCALE>
+
+    .. versionadded:: 3.13
+
+    Set band scale factor. May be repeated.
+
+    Several syntaxes are supported:
+
+    - specifying one single ``<SCALE>``: set the scale on all bands.
+
+    - specifying as many ``<SCALE>`` as there are bands, starting from band 1 to the last band.
+
+    - specifying the scale on a subset of bands with ``<BAND>=<SCALE>``
+      where band is the band number starting at 1.
+
+.. option:: --offset [<BAND>=]<OFFSET>
+
+    .. versionadded:: 3.13
+
+    Set band offset constant. May be repeated.
+
+    Several syntaxes are supported:
+
+    - specifying one single ``<OFFSET>``: set the offset on all bands.
+
+    - specifying as many ``<OFFSET>`` as there are bands, starting from band 1 to the last band.
+
+    - specifying the offset on a subset of bands with ``<BAND>=<OFFSET>``
+      where band is the band number starting at 1.
+
 .. option:: --metadata <KEY>=<VALUE>
 
     Add/update metadata item, at the dataset level. May be repeated.
@@ -97,6 +196,12 @@ Program-Specific Options
 
     Compute raster band statistics for all bands.
 
+.. option:: --unset-color-table
+
+    .. versionadded:: 3.13
+
+    Remove the color table associated to the first band, or the one specified
+    by :option:`--band`.
 
 .. option:: --unset-metadata <KEY>
 
@@ -108,6 +213,17 @@ Program-Specific Options
 
     Remove metadata domain, at the dataset level. May be repeated.
 
+Standard Options
+----------------
+
+.. collapse:: Details
+
+    .. include:: gdal_options/oo.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -153,3 +269,10 @@ Examples
    .. code-block:: bash
 
         $ gdal raster edit --gcp @gcps.csv my.tif
+
+.. example::
+   :title: Set red, green, blue, NIR color interpretation to a 4-band dataset
+
+   .. code-block:: bash
+
+        $ gdal raster edit --color-interpretation red,green,blue,nir 4band.tif

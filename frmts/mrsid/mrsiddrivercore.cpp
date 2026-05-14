@@ -69,7 +69,7 @@ int MrSIDJP2Identify(GDALOpenInfo *poOpenInfo)
 #endif
 
 /************************************************************************/
-/*                     MrSIDDriverSetCommonMetadata()                   */
+/*                    MrSIDDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void MrSIDDriverSetCommonMetadata(GDALDriver *poDriver)

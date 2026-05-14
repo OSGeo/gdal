@@ -135,12 +135,12 @@ SIGDEMDataset::SIGDEMDataset(const SIGDEMHeader &sHeaderIn)
     this->nRasterXSize = sHeader.nCols;
     this->nRasterYSize = sHeader.nRows;
 
-    m_gt[0] = sHeader.dfMinX;
-    m_gt[1] = sHeader.dfXDim;
-    m_gt[2] = 0.0;
-    m_gt[3] = sHeader.dfMaxY;
-    m_gt[4] = 0.0;
-    m_gt[5] = -sHeader.dfYDim;
+    m_gt.xorig = sHeader.dfMinX;
+    m_gt.xscale = sHeader.dfXDim;
+    m_gt.xrot = 0.0;
+    m_gt.yorig = sHeader.dfMaxY;
+    m_gt.yrot = 0.0;
+    m_gt.yscale = -sHeader.dfYDim;
 }
 
 SIGDEMDataset::~SIGDEMDataset()
@@ -158,7 +158,7 @@ SIGDEMDataset::~SIGDEMDataset()
 
 GDALDataset *SIGDEMDataset::CreateCopy(const char *pszFilename,
                                        GDALDataset *poSrcDS, int /*bStrict*/,
-                                       char ** /*papszOptions*/,
+                                       CSLConstList /*papszOptions*/,
                                        GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {
@@ -196,7 +196,7 @@ GDALDataset *SIGDEMDataset::CreateCopy(const char *pszFilename,
 
     SIGDEMHeader sHeader;
     sHeader.nCoordinateSystemId = nCoordinateSystemId;
-    sHeader.dfMinX = gt[0];
+    sHeader.dfMinX = gt.xorig;
     const char *pszMin = band->GetMetadataItem("STATISTICS_MINIMUM");
     if (pszMin == nullptr)
     {
@@ -206,7 +206,7 @@ GDALDataset *SIGDEMDataset::CreateCopy(const char *pszFilename,
     {
         sHeader.dfMinZ = CPLAtof(pszMin);
     }
-    sHeader.dfMaxY = gt[3];
+    sHeader.dfMaxY = gt.yorig;
     const char *pszMax = band->GetMetadataItem("STATISTICS_MAXIMUM");
     if (pszMax == nullptr)
     {
@@ -218,8 +218,8 @@ GDALDataset *SIGDEMDataset::CreateCopy(const char *pszFilename,
     }
     sHeader.nCols = poSrcDS->GetRasterXSize();
     sHeader.nRows = poSrcDS->GetRasterYSize();
-    sHeader.dfXDim = gt[1];
-    sHeader.dfYDim = -gt[5];
+    sHeader.dfXDim = gt.xscale;
+    sHeader.dfYDim = -gt.yscale;
     sHeader.dfMaxX = sHeader.dfMinX + sHeader.nCols * sHeader.dfXDim;
     sHeader.dfMinY = sHeader.dfMaxY - sHeader.nRows * sHeader.dfYDim;
     sHeader.dfOffsetX = sHeader.dfMinX;

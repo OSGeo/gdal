@@ -158,7 +158,7 @@ static GDALDataset *OGRShapeDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
                                          int /* nXSize */, int /* nYSize */,
                                          GDALDataType /* eDT */,
-                                         char ** /* papszOptions */)
+                                         CSLConstList /* papszOptions */)
 {
     bool bSingleNewFile = false;
     const CPLString osExt(CPLGetExtensionSafe(pszName));
@@ -232,7 +232,7 @@ static GDALDataset *OGRShapeDriverCreate(const char *pszName, int /* nBands */,
 }
 
 /************************************************************************/
-/*                           Delete()                                   */
+/*                               Delete()                               */
 /************************************************************************/
 
 static CPLErr OGRShapeDriverDelete(const char *pszDataSource)
@@ -318,6 +318,8 @@ void RegisterOGRShape()
     poDriver->SetMetadataItem(GDAL_DMD_GEOMETRY_FLAGS,
                               "EquatesMultiAndSingleLineStringDuringWrite "
                               "EquatesMultiAndSinglePolygonDuringWrite");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY,
+                              "YES");
 
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "ESRI Shapefile");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "shp");

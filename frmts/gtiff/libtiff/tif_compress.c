@@ -139,12 +139,55 @@ static int _TIFFtrue(TIFF *tif)
 }
 static void _TIFFvoid(TIFF *tif) { (void)tif; }
 
+void _TIFFSetDefaultPostDecode(TIFF *tif)
+{
+    tif->tif_postdecode = _TIFFNoPostDecode;
+    /*
+     * If the data require post-decoding processing to byte-swap
+     * samples, set it up here.  Note that since tags are required
+     * to be ordered, compression code can override this behavior
+     * in the setup method if it wants to roll the post decoding
+     * work in with its normal work.
+     */
+    if (tif->tif_flags & TIFF_SWAB)
+    {
+        TIFFDirectory *td = &tif->tif_dir;
+        if (td->td_bitspersample == 16)
+            tif->tif_postdecode = _TIFFSwab16BitData;
+        else if (td->td_bitspersample == 24)
+            tif->tif_postdecode = _TIFFSwab24BitData;
+        else if (td->td_bitspersample == 32)
+            tif->tif_postdecode = _TIFFSwab32BitData;
+        else if (td->td_bitspersample == 64)
+            tif->tif_postdecode = _TIFFSwab64BitData;
+        else if (td->td_bitspersample == 128)
+        {
+            // Used for Complex 64-bit floating point.
+            // The real and imaginary parts are byte-swapped separately.
+            tif->tif_postdecode = _TIFFSwab64BitData;
+        }
+    }
+}
+
+static uint64_t _TIFFDefaultGetMaxCompressionRatio(TIFF *tif)
+{
+    (void)tif;
+    return 0; /* unknown */
+}
+
+static uint64_t _TIFFGetMaxCompressionRatioOne(TIFF *tif)
+{
+    (void)tif;
+    return 1; /* no compression */
+}
+
 void _TIFFSetDefaultCompressionState(TIFF *tif)
 {
     tif->tif_fixuptags = _TIFFNoFixupTags;
     tif->tif_decodestatus = TRUE;
     tif->tif_setupdecode = _TIFFtrue;
     tif->tif_predecode = _TIFFNoPreCode;
+    _TIFFSetDefaultPostDecode(tif);
     tif->tif_decoderow = _TIFFNoRowDecode;
     tif->tif_decodestrip = _TIFFNoStripDecode;
     tif->tif_decodetile = _TIFFNoTileDecode;
@@ -160,6 +203,7 @@ void _TIFFSetDefaultCompressionState(TIFF *tif)
     tif->tif_cleanup = _TIFFvoid;
     tif->tif_defstripsize = _TIFFDefaultStripSize;
     tif->tif_deftilesize = _TIFFDefaultTileSize;
+    tif->tif_getmaxcompressionratio = _TIFFDefaultGetMaxCompressionRatio;
     tif->tif_flags &= ~(TIFF_NOBITREV | TIFF_NOREADRAW);
 }
 
@@ -168,6 +212,8 @@ int TIFFSetCompressionScheme(TIFF *tif, int scheme)
     const TIFFCodec *c = TIFFFindCODEC((uint16_t)scheme);
 
     _TIFFSetDefaultCompressionState(tif);
+    if (scheme == COMPRESSION_NONE)
+        tif->tif_getmaxcompressionratio = _TIFFGetMaxCompressionRatioOne;
     /*
      * Don't treat an unknown compression scheme as an error.
      * This permits applications to open files with data that
@@ -175,6 +221,13 @@ int TIFFSetCompressionScheme(TIFF *tif, int scheme)
      * may still be meaningful.
      */
     return (c ? (*c->init)(tif, scheme) : 1);
+}
+
+uint64_t TIFFGetMaxCompressionRatio(TIFF *tif)
+{
+    if (tif->tif_getmaxcompressionratio)
+        return tif->tif_getmaxcompressionratio(tif);
+    return 0;
 }
 
 /*
@@ -200,7 +253,7 @@ const TIFFCodec *TIFFFindCODEC(uint16_t scheme)
     for (c = _TIFFBuiltinCODECS; c->name; c++)
         if (c->scheme == scheme)
             return (c);
-    return ((const TIFFCodec *)0);
+    return NULL;
 }
 
 TIFFCodec *TIFFRegisterCODEC(uint16_t scheme, const char *name,
@@ -249,7 +302,7 @@ void TIFFUnRegisterCODEC(TIFFCodec *c)
 }
 
 /************************************************************************/
-/*                       TIFFGetConfiguredCODECs()                      */
+/*                      TIFFGetConfiguredCODECs()                       */
 /************************************************************************/
 
 /**
@@ -270,8 +323,8 @@ TIFFCodec *TIFFGetConfiguredCODECs(void)
 
     for (cd = registeredCODECS; cd; cd = cd->next)
     {
-        new_codecs =
-            (TIFFCodec *)_TIFFreallocExt(NULL, codecs, i * sizeof(TIFFCodec));
+        new_codecs = (TIFFCodec *)_TIFFreallocExt(
+            NULL, codecs, (tmsize_t)((size_t)i * sizeof(TIFFCodec)));
         if (!new_codecs)
         {
             _TIFFfreeExt(NULL, codecs);
@@ -285,21 +338,21 @@ TIFFCodec *TIFFGetConfiguredCODECs(void)
     {
         if (TIFFIsCODECConfigured(c->scheme))
         {
-            new_codecs = (TIFFCodec *)_TIFFreallocExt(NULL, codecs,
-                                                      i * sizeof(TIFFCodec));
+            new_codecs = (TIFFCodec *)_TIFFreallocExt(
+                NULL, codecs, (tmsize_t)((size_t)i * sizeof(TIFFCodec)));
             if (!new_codecs)
             {
                 _TIFFfreeExt(NULL, codecs);
                 return NULL;
             }
             codecs = new_codecs;
-            _TIFFmemcpy(codecs + i - 1, (const void *)c, sizeof(TIFFCodec));
+            _TIFFmemcpy(codecs + i - 1, c, sizeof(TIFFCodec));
             i++;
         }
     }
 
-    new_codecs =
-        (TIFFCodec *)_TIFFreallocExt(NULL, codecs, i * sizeof(TIFFCodec));
+    new_codecs = (TIFFCodec *)_TIFFreallocExt(
+        NULL, codecs, (tmsize_t)((size_t)i * sizeof(TIFFCodec)));
     if (!new_codecs)
     {
         _TIFFfreeExt(NULL, codecs);

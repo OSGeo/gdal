@@ -456,7 +456,7 @@ int OGRPCIDSKLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                         GetFeatureCount()                          */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRPCIDSKLayer::GetFeatureCount(int bForce)
@@ -476,7 +476,7 @@ GIntBig OGRPCIDSKLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                            IGetExtent()                              */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRPCIDSKLayer::IGetExtent(int /*iGeomField*/, OGREnvelope *psExtent,
@@ -579,7 +579,7 @@ OGRErr OGRPCIDSKLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                          ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 OGRErr OGRPCIDSKLayer::ICreateFeature(OGRFeature *poFeature)

@@ -165,7 +165,7 @@ GMLReader::~GMLReader()
 }
 
 /************************************************************************/
-/*                          SetSourceFile()                             */
+/*                           SetSourceFile()                            */
 /************************************************************************/
 
 void GMLReader::SetSourceFile(const char *pszFilename)
@@ -176,7 +176,7 @@ void GMLReader::SetSourceFile(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                       GetSourceFileName()                           */
+/*                         GetSourceFileName()                          */
 /************************************************************************/
 
 const char *GMLReader::GetSourceFileName()
@@ -236,7 +236,7 @@ bool GMLReader::SetupParser()
 
 #ifdef HAVE_XERCES
 /************************************************************************/
-/*                        SetupParserXerces()                           */
+/*                         SetupParserXerces()                          */
 /************************************************************************/
 
 bool GMLReader::SetupParserXerces()
@@ -300,7 +300,7 @@ bool GMLReader::SetupParserXerces()
         XMLString::release(&xmlUriNS);
 
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Exception initializing Xerces based GML reader.\n");
+                 "Exception initializing Xerces based GML reader.");
         return false;
     }
 
@@ -312,7 +312,7 @@ bool GMLReader::SetupParserXerces()
 #endif
 
 /************************************************************************/
-/*                        SetupParserExpat()                            */
+/*                          SetupParserExpat()                          */
 /************************************************************************/
 
 #ifdef HAVE_EXPAT
@@ -392,7 +392,7 @@ void GMLReader::CleanupParser()
 }
 
 /************************************************************************/
-/*                        NextFeatureXerces()                           */
+/*                         NextFeatureXerces()                          */
 /************************************************************************/
 
 #ifdef HAVE_XERCES
@@ -479,7 +479,7 @@ GMLFeature *GMLReader::NextFeatureExpat()
         VSIFErrorL(fpGML))
         return nullptr;
 
-    nFeatureTabLength = 0;
+    this->nFeatureTabLength = 0;
     nFeatureTabIndex = 0;
 
     int nDone = 0;
@@ -515,9 +515,9 @@ GMLFeature *GMLReader::NextFeatureExpat()
         if (!m_bStopParsing)
             m_bStopParsing = static_cast<GMLExpatHandler *>(m_poGMLHandler)
                                  ->HasStoppedParsing();
-    } while (!nDone && !m_bStopParsing && nFeatureTabLength == 0);
+    } while (!nDone && !m_bStopParsing && this->nFeatureTabLength == 0);
 
-    if (nFeatureTabLength)
+    if (this->nFeatureTabLength)
         return ppoFeatureTab[nFeatureTabIndex++];
 
     if (!m_osErrorMessage.empty())
@@ -756,7 +756,7 @@ int GMLReader::GetFeatureElementIndex(const char *pszElement,
 }
 
 /************************************************************************/
-/*                IsCityGMLGenericAttributeElement()                    */
+/*                  IsCityGMLGenericAttributeElement()                  */
 /************************************************************************/
 
 bool GMLReader::IsCityGMLGenericAttributeElement(const char *pszElement,
@@ -796,7 +796,7 @@ bool GMLReader::IsCityGMLGenericAttributeElement(const char *pszElement,
 }
 
 /************************************************************************/
-/*                       GetAttributeElementIndex()                     */
+/*                      GetAttributeElementIndex()                      */
 /************************************************************************/
 
 int GMLReader::GetAttributeElementIndex(const char *pszElement, int nLen,
@@ -1528,7 +1528,7 @@ void GMLReader::SetGlobalSRSName(const char *pszGlobalSRSName)
 }
 
 /************************************************************************/
-/*                       SetFilteredClassName()                         */
+/*                        SetFilteredClassName()                        */
 /************************************************************************/
 
 bool GMLReader::SetFilteredClassName(const char *pszClassName)

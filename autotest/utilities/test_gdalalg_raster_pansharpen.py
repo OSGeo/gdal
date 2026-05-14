@@ -210,3 +210,53 @@ def test_gdalalg_raster_pansharpen_errors():
             output="",
             format="VRT",
         )
+
+
+###############################################################################
+
+
+def test_gdalalg_raster_pansharpen_not_intersecting(tmp_vsimem):
+
+    gdal.alg.raster.create(
+        output=tmp_vsimem / "pan.tif", size=[1, 1], bbox=[-11, -101, -10, -100]
+    )
+    gdal.alg.raster.create(
+        output=tmp_vsimem / "ms.tif", size=[1, 1], bbox=[10, 20, 11, 21]
+    )
+
+    gdal.alg.raster.pansharpen(
+        input=tmp_vsimem / "pan.tif",
+        spectral=tmp_vsimem / "ms.tif",
+        output=tmp_vsimem / "out.vrt",
+    )
+
+    ds = gdal.Open(tmp_vsimem / "out.vrt")
+    assert ds.RasterXSize == 22
+    assert ds.RasterYSize == 122
+    assert ds.GetFileList() == [
+        str(tmp_vsimem / "out.vrt"),
+        str(tmp_vsimem / "pan.tif"),
+        str(tmp_vsimem / "ms.tif"),
+    ]
+
+
+###############################################################################
+
+
+def test_gdalalg_raster_pansharpen_not_intersecting_int_overflow(tmp_vsimem):
+
+    billion = 1e9
+    gdal.alg.raster.create(
+        output=tmp_vsimem / "pan.tif",
+        size=[1, 1],
+        bbox=[-10 * billion - 1, -10 * billion - 1, -10 * billion, -10 * billion],
+    )
+    gdal.alg.raster.create(output=tmp_vsimem / "ms.tif", size=[1, 1], bbox=[0, 0, 1, 1])
+
+    with pytest.raises(Exception, match="Datasets are too disjoint"):
+        gdal.alg.raster.pansharpen(
+            input=tmp_vsimem / "pan.tif",
+            spectral=tmp_vsimem / "ms.tif",
+            output="",
+            output_format="VRT",
+        )

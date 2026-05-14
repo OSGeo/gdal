@@ -18,7 +18,7 @@
 #include "ogrmongodbv3drivercore.h"
 
 /************************************************************************/
-/*                   OGRMongoDBv3DriverIdentify()                       */
+/*                     OGRMongoDBv3DriverIdentify()                     */
 /************************************************************************/
 
 int OGRMongoDBv3DriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -30,7 +30,7 @@ int OGRMongoDBv3DriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                 OGRMongoDBv3DriverSetCommonMetadata()                */
+/*                OGRMongoDBv3DriverSetCommonMetadata()                 */
 /************************************************************************/
 
 void OGRMongoDBv3DriverSetCommonMetadata(GDALDriver *poDriver)

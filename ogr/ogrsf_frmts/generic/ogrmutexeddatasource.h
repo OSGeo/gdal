@@ -67,7 +67,7 @@ class CPL_DLL OGRMutexedDataSource final : public GDALDataset
                                    const OGRGeomFieldDefn *poGeomFieldDefn,
                                    CSLConstList papszOptions) override;
     virtual OGRLayer *CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
-                                char **papszOptions = nullptr) override;
+                                CSLConstList papszOptions = nullptr) override;
 
     OGRStyleTable *GetStyleTable() override;
     void SetStyleTableDirectly(OGRStyleTable *poStyleTable) override;

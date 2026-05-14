@@ -24,7 +24,7 @@
 #endif
 
 /************************************************************************/
-/*          GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()        */
+/*         GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()         */
 /************************************************************************/
 
 GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()
@@ -51,7 +51,7 @@ GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()
 }
 
 /************************************************************************/
-/*          GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()        */
+/*         GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm()         */
 /************************************************************************/
 
 GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm(
@@ -62,7 +62,7 @@ GDALRasterIndexAlgorithm::GDALRasterIndexAlgorithm(
 }
 
 /************************************************************************/
-/*              GDALRasterIndexAlgorithm::AddCommonOptions()            */
+/*             GDALRasterIndexAlgorithm::AddCommonOptions()             */
 /************************************************************************/
 
 void GDALRasterIndexAlgorithm::AddCommonOptions()
@@ -92,8 +92,9 @@ void GDALRasterIndexAlgorithm::AddCommonOptions()
         &m_writeAbsolutePaths,
         _("Whether the path to the input datasets should be stored as an "
           "absolute path"));
-    AddArg("dst-crs", 0, _("Destination CRS"), &m_crs)
+    AddArg(GDAL_ARG_NAME_OUTPUT_CRS, 0, _("Output CRS"), &m_crs)
         .SetIsCRSArg()
+        .AddHiddenAlias("dst-crs")
         .AddHiddenAlias("t_srs");
 
     {
@@ -167,7 +168,7 @@ void GDALRasterIndexAlgorithm::AddCommonOptions()
                         ReportError(
                             CE_Failure, CPLE_NotSupported,
                             "STAC-GeoParquet profile is only compatible "
-                            "with --dst-crs=EPSG:4326");
+                            "with --output-crs=EPSG:4326");
                         return false;
                     }
                 }
@@ -179,7 +180,7 @@ void GDALRasterIndexAlgorithm::AddCommonOptions()
 }
 
 /************************************************************************/
-/*                   GDALRasterIndexAlgorithm::RunImpl()                */
+/*                 GDALRasterIndexAlgorithm::RunImpl()                  */
 /************************************************************************/
 
 bool GDALRasterIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
@@ -188,13 +189,7 @@ bool GDALRasterIndexAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     CPLStringList aosSources;
     for (auto &srcDS : m_inputDatasets)
     {
-        if (srcDS.GetDatasetRef())
-        {
-            ReportError(
-                CE_Failure, CPLE_IllegalArg,
-                "Input datasets must be provided by name, not as object");
-            return false;
-        }
+        CPLAssert(!srcDS.GetDatasetRef());
         aosSources.push_back(srcDS.GetName());
     }
 

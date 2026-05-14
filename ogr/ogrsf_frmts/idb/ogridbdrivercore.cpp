@@ -19,7 +19,7 @@
 #include "ogridbdrivercore.h"
 
 /************************************************************************/
-/*                     OGRIDBDriverIdentify()                           */
+/*                        OGRIDBDriverIdentify()                        */
 /************************************************************************/
 
 int OGRIDBDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -29,7 +29,7 @@ int OGRIDBDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                  OGRIDBDriverSetCommonMetadata()                     */
+/*                   OGRIDBDriverSetCommonMetadata()                    */
 /************************************************************************/
 
 void OGRIDBDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -46,7 +46,7 @@ void OGRIDBDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredOGRIDBPlugin()                      */
+/*                    DeclareDeferredOGRIDBPlugin()                     */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

@@ -67,6 +67,7 @@ def test_gdalalg_mdim_info():
                             "standard_name": "projection_x_coordinate",
                             "long_name": "x coordinate of projection",
                         },
+                        "full_name": "/x",
                         "unit": "m",
                     }
                 },
@@ -85,6 +86,7 @@ def test_gdalalg_mdim_info():
                             "standard_name": "projection_y_coordinate",
                             "long_name": "y coordinate of projection",
                         },
+                        "full_name": "/y",
                         "unit": "m",
                     }
                 },
@@ -99,6 +101,7 @@ def test_gdalalg_mdim_info():
                     "standard_name": "projection_x_coordinate",
                     "long_name": "x coordinate of projection",
                 },
+                "full_name": "/x",
                 "unit": "m",
             },
             "y": {
@@ -109,6 +112,7 @@ def test_gdalalg_mdim_info():
                     "standard_name": "projection_y_coordinate",
                     "long_name": "y coordinate of projection",
                 },
+                "full_name": "/y",
                 "unit": "m",
             },
             "Band1": {
@@ -119,6 +123,7 @@ def test_gdalalg_mdim_info():
                     "long_name": "GDAL Band Number 1",
                     "valid_range": [0, 255],
                 },
+                "full_name": "/Band1",
                 "srs": {
                     "data_axis_to_srs_axis_mapping": [2, 1],
                 },
@@ -194,6 +199,7 @@ def test_gdalalg_mdim_info_binary(gdal_path):
                     "/y",
                     "/x",
                 ],
+                "full_name": "/Band1",
                 "srs": {
                     "data_axis_to_srs_axis_mapping": [
                         2,
@@ -226,6 +232,7 @@ def test_gdalalg_mdim_info_binary(gdal_path):
                 "dimensions": [
                     "/x",
                 ],
+                "full_name": "/x",
                 "unit": "m",
             },
             "y": {
@@ -240,6 +247,7 @@ def test_gdalalg_mdim_info_binary(gdal_path):
                 "dimensions": [
                     "/y",
                 ],
+                "full_name": "/y",
                 "unit": "m",
             },
         },
@@ -265,6 +273,7 @@ def test_gdalalg_mdim_info_binary(gdal_path):
                         "dimensions": [
                             "/x",
                         ],
+                        "full_name": "/x",
                         "unit": "m",
                     },
                 },
@@ -287,6 +296,7 @@ def test_gdalalg_mdim_info_binary(gdal_path):
                         "dimensions": [
                             "/y",
                         ],
+                        "full_name": "/y",
                         "unit": "m",
                     },
                 },
@@ -334,3 +344,19 @@ def test_gdalalg_mdim_info_completion_array_option(gdal_path):
         f"{gdal_path} completion gdal mdim info ../gdrivers/data/netcdf/byte.nc --array-option"
     ).split(" ")
     assert "USE_DEFAULT_FILL_AS_NODATA=" in out
+
+
+def test_gdalalg_mdim_info_summary():
+    info = gdal.alg.mdim.info(input="../gdrivers/data/netcdf/byte.nc", summary=True)
+    output_string = info["output-string"]
+    j = json.loads(output_string)
+    assert j == {
+        "arrays": {
+            "Band1": {"full_name": "/Band1"},
+            "x": {"full_name": "/x"},
+            "y": {"full_name": "/y"},
+        },
+        "driver": "netCDF",
+        "name": "/",
+        "type": "group",
+    }

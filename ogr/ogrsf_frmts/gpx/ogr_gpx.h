@@ -212,7 +212,7 @@ class OGRGPXDataSource final : public GDALDataset
 
     int Open(GDALOpenInfo *poOpenInfo);
 
-    int Create(const char *pszFilename, char **papszOptions);
+    int Create(const char *pszFilename, CSLConstList papszOptions);
 
     int GetLayerCount() const override
     {

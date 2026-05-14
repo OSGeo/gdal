@@ -17,7 +17,7 @@
 // Implements https://zarr-specs.readthedocs.io/en/latest/v3/codecs/gzip/index.html
 
 /************************************************************************/
-/*                        ZarrV3CodecGZip()                             */
+/*                          ZarrV3CodecGZip()                           */
 /************************************************************************/
 
 ZarrV3CodecGZip::ZarrV3CodecGZip() : ZarrV3CodecAbstractCompressor(NAME)
@@ -25,7 +25,7 @@ ZarrV3CodecGZip::ZarrV3CodecGZip() : ZarrV3CodecAbstractCompressor(NAME)
 }
 
 /************************************************************************/
-/*                           GetConfiguration()                         */
+/*                          GetConfiguration()                          */
 /************************************************************************/
 
 /* static */ CPLJSONObject ZarrV3CodecGZip::GetConfiguration(int nLevel)
@@ -36,7 +36,7 @@ ZarrV3CodecGZip::ZarrV3CodecGZip() : ZarrV3CodecAbstractCompressor(NAME)
 }
 
 /************************************************************************/
-/*                   ZarrV3CodecGZip::InitFromConfiguration()           */
+/*               ZarrV3CodecGZip::InitFromConfiguration()               */
 /************************************************************************/
 
 bool ZarrV3CodecGZip::InitFromConfiguration(
@@ -105,7 +105,7 @@ bool ZarrV3CodecGZip::InitFromConfiguration(
 }
 
 /************************************************************************/
-/*                      ZarrV3CodecGZip::Clone()                        */
+/*                       ZarrV3CodecGZip::Clone()                       */
 /************************************************************************/
 
 std::unique_ptr<ZarrV3Codec> ZarrV3CodecGZip::Clone() const

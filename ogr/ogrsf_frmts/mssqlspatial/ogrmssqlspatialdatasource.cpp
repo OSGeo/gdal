@@ -14,7 +14,7 @@
 #include "ogr_mssqlspatial.h"
 
 /************************************************************************/
-/*                          OGRMSSQLSpatialDataSource()                 */
+/*                     OGRMSSQLSpatialDataSource()                      */
 /************************************************************************/
 
 OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() : bDSUpdate(false)
@@ -55,7 +55,7 @@ OGRMSSQLSpatialDataSource::OGRMSSQLSpatialDataSource() : bDSUpdate(false)
 }
 
 /************************************************************************/
-/*                         ~OGRMSSQLSpatialDataSource()                 */
+/*                     ~OGRMSSQLSpatialDataSource()                     */
 /************************************************************************/
 
 OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
@@ -72,7 +72,7 @@ OGRMSSQLSpatialDataSource::~OGRMSSQLSpatialDataSource()
 }
 
 /************************************************************************/
-/*                      OGRMSSQLDecodeVersionString()                   */
+/*                    OGRMSSQLDecodeVersionString()                     */
 /************************************************************************/
 
 void OGRMSSQLSpatialDataSource::OGRMSSQLDecodeVersionString(MSSQLVer *psVersion,
@@ -645,7 +645,7 @@ int OGRMSSQLSpatialDataSource::OpenTable(const char *pszSchemaName,
 }
 
 /************************************************************************/
-/*                       GetLayerCount()                                */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int OGRMSSQLSpatialDataSource::GetLayerCount() const
@@ -654,7 +654,7 @@ int OGRMSSQLSpatialDataSource::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                       ParseValue()                                   */
+/*                             ParseValue()                             */
 /************************************************************************/
 
 int OGRMSSQLSpatialDataSource::ParseValue(char **pszValue, char *pszSource,
@@ -1437,17 +1437,13 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS(int nId)
         {
             if (oStmt.GetColData(0))
             {
-                auto poSRS = std::unique_ptr<OGRSpatialReference,
-                                             OGRSpatialReferenceReleaser>(
-                    new OGRSpatialReference());
+                auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
                 poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
                 const char *pszWKT = oStmt.GetColData(0);
                 if (poSRS->importFromWkt(pszWKT) == OGRERR_NONE)
                 {
-                    const char *pszAuthorityName =
-                        poSRS->GetAuthorityName(nullptr);
-                    const char *pszAuthorityCode =
-                        poSRS->GetAuthorityCode(nullptr);
+                    const char *pszAuthorityName = poSRS->GetAuthorityName();
+                    const char *pszAuthorityCode = poSRS->GetAuthorityCode();
                     if (pszAuthorityName && pszAuthorityCode &&
                         EQUAL(pszAuthorityName, "EPSG"))
                     {
@@ -1465,9 +1461,7 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS(int nId)
     /* -------------------------------------------------------------------- */
     /*      Try looking up the EPSG list                                    */
     /* -------------------------------------------------------------------- */
-    auto poSRS =
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>(
-            new OGRSpatialReference());
+    auto poSRS = OGRSpatialReferenceRefCountedPtr::makeInstance();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     if (poSRS->importFromEPSG(nId) == OGRERR_NONE)
     {
@@ -1485,8 +1479,7 @@ OGRSpatialReference *OGRMSSQLSpatialDataSource::FetchSRS(int nId)
 /************************************************************************/
 
 OGRSpatialReference *OGRMSSQLSpatialDataSource::AddSRIDToCache(
-    int nId,
-    std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser> &&poSRS)
+    int nId, OGRSpatialReferenceRefCountedPtr poSRS)
 {
     /* -------------------------------------------------------------------- */
     /*      Add to the cache.                                               */
@@ -1529,7 +1522,7 @@ int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
     // cppcheck-suppress uselessAssignmentPtrArg
     poSRS = nullptr;
 
-    pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+    pszAuthorityName = oSRS.GetAuthorityName();
 
     if (pszAuthorityName == nullptr || strlen(pszAuthorityName) == 0)
     {
@@ -1540,16 +1533,16 @@ int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
          */
         oSRS.AutoIdentifyEPSG();
 
-        pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+        pszAuthorityName = oSRS.GetAuthorityName();
         if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
         {
-            const char *pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
+            const char *pszAuthorityCode = oSRS.GetAuthorityCode();
             if (pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0)
             {
                 /* Import 'clean' SRS */
                 oSRS.importFromEPSG(atoi(pszAuthorityCode));
 
-                pszAuthorityName = oSRS.GetAuthorityName(nullptr);
+                pszAuthorityName = oSRS.GetAuthorityName();
             }
         }
     }
@@ -1563,7 +1556,7 @@ int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
         /* For the root authority name 'EPSG', the authority code
          * should always be integral
          */
-        nAuthorityCode = atoi(oSRS.GetAuthorityCode(nullptr));
+        nAuthorityCode = atoi(oSRS.GetAuthorityCode());
 
         CPLODBCStatement oStmt(&oSession);
         oStmt.Appendf("SELECT srid FROM spatial_ref_sys WHERE "
@@ -1575,10 +1568,8 @@ int OGRMSSQLSpatialDataSource::FetchSRSId(const OGRSpatialReference *poSRS)
             nSRSId = atoi(oStmt.GetColData(0));
             if (nSRSId != 0)
             {
-                std::unique_ptr<OGRSpatialReference,
-                                OGRSpatialReferenceReleaser>
-                    poCachedSRS;
-                poCachedSRS.reset(oSRS.Clone());
+                auto poCachedSRS =
+                    OGRSpatialReferenceRefCountedPtr::makeClone(oSRS);
                 if (poCachedSRS)
                     poCachedSRS->SetAxisMappingStrategy(
                         OAMS_TRADITIONAL_GIS_ORDER);

@@ -190,7 +190,7 @@ CPLErr GenBinBitRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                            GenBinDataset()                             */
+/*                           GenBinDataset()                            */
 /************************************************************************/
 
 GenBinDataset::GenBinDataset()
@@ -200,7 +200,7 @@ GenBinDataset::GenBinDataset()
 }
 
 /************************************************************************/
-/*                            ~GenBinDataset()                          */
+/*                           ~GenBinDataset()                           */
 /************************************************************************/
 
 GenBinDataset::~GenBinDataset()
@@ -210,7 +210,7 @@ GenBinDataset::~GenBinDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GenBinDataset::Close(GDALProgressFunc, void *)
@@ -700,13 +700,13 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
         const double dfLRY =
             CPLAtofM(CSLFetchNameValue(papszHdr, "LR_Y_COORDINATE"));
 
-        poDS->m_gt[1] = (dfLRX - dfULX) / (poDS->nRasterXSize - 1);
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = (dfLRY - dfULY) / (poDS->nRasterYSize - 1);
+        poDS->m_gt.xscale = (dfLRX - dfULX) / (poDS->nRasterXSize - 1);
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = (dfLRY - dfULY) / (poDS->nRasterYSize - 1);
 
-        poDS->m_gt[0] = dfULX - poDS->m_gt[1] * 0.5;
-        poDS->m_gt[3] = dfULY - poDS->m_gt[5] * 0.5;
+        poDS->m_gt.xorig = dfULX - poDS->m_gt.xscale * 0.5;
+        poDS->m_gt.yorig = dfULY - poDS->m_gt.yscale * 0.5;
 
         poDS->bGotTransform = true;
     }
@@ -730,7 +730,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         GDALRegister_GenBin()                        */
+/*                        GDALRegister_GenBin()                         */
 /************************************************************************/
 
 void GDALRegister_GenBin()

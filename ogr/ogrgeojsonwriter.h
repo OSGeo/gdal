@@ -26,7 +26,7 @@ class OGRGeometry;
 class OGRPolygon;
 
 /************************************************************************/
-/*                 GeoJSON Geometry Translators                         */
+/*                     GeoJSON Geometry Translators                     */
 /************************************************************************/
 
 class CPL_DLL OGRGeoJSONWriteOptions

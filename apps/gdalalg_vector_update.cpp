@@ -37,6 +37,11 @@ GDALVectorUpdateAlgorithm::GDALVectorUpdateAlgorithm(bool standaloneStep)
     {
         AddVectorInputArgs(false);
     }
+    else
+    {
+        AddVectorHiddenInputDatasetArg();
+    }
+
     {
         auto &layerArg = AddArg(GDAL_ARG_NAME_INPUT_LAYER, 0,
                                 _("Input layer name"), &m_inputLayerNames)
@@ -65,7 +70,7 @@ GDALVectorUpdateAlgorithm::GDALVectorUpdateAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                  GDALVectorUpdateAlgorithm::RunStep()                */
+/*                 GDALVectorUpdateAlgorithm::RunStep()                 */
 /************************************************************************/
 
 bool GDALVectorUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -333,14 +338,14 @@ bool GDALVectorUpdateAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*                  ~GDALVectorUpdateAlgorithmStandalone()              */
+/*                ~GDALVectorUpdateAlgorithmStandalone()                */
 /************************************************************************/
 
 GDALVectorUpdateAlgorithmStandalone::~GDALVectorUpdateAlgorithmStandalone() =
     default;
 
 /************************************************************************/
-/*              GDALVectorUpdateAlgorithmStandalone::RunImpl()          */
+/*            GDALVectorUpdateAlgorithmStandalone::RunImpl()            */
 /************************************************************************/
 
 bool GDALVectorUpdateAlgorithmStandalone::RunImpl(GDALProgressFunc pfnProgress,

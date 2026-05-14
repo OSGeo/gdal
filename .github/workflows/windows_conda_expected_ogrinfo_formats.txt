@@ -8,15 +8,17 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   JP2OpenJPEG -raster,vector- (rwv): JPEG-2000 driver based on JP2OpenJPEG library (*.jp2, *.j2k)
   PDF -raster,vector- (rw+uvs): Geospatial PDF (*.pdf)
   MBTiles -raster,vector- (rw+v): MBTiles (*.mbtiles)
-  TileDB -raster,multidimensional raster,vector- (rw+uvs): TileDB
   BAG -raster,multidimensional raster,vector- (rw+v): Bathymetry Attributed Grid (*.bag)
   EEDA -vector- (ro): Earth Engine Data API
   OGCAPI -raster,vector- (rov): OGCAPI
   GDALG -raster,vector- (rov): GDAL Streamed Algorithm driver (*.gdalg.json)
+  TileDB -raster,multidimensional raster,vector- (rw+uvs): TileDB
   ESRI Shapefile -vector- (rw+uv): ESRI Shapefile (*.shp, *.dbf, *.shz, *.shp.zip)
   MapInfo File -vector- (rw+uv): MapInfo File (*.tab, *.mif, *.mid)
+  UK .NTF -vector- (rov): UK .NTF
   LVBAG -vector- (rov): Kadaster LV BAG Extract 2.0 (*.xml)
   S57 -vector- (rw+v): IHO S-57 (ENC) (*.000)
+  S101 -vector- (rov): IHO S-101 (ENC) (*.000)
   DGN -vector- (rw+v): Microstation DGN (*.dgn)
   OGR_VRT -vector- (rov): VRT - Virtual Datasource (*.vrt)
   CSV -vector- (rw+uv): Comma Separated Value (.csv) (*.csv, *.tsv, *.psv)
@@ -71,10 +73,11 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   Parquet -vector- (rw+uv): (Geo)Parquet (*.parquet)
   Arrow -vector- (rw+v): (Geo)Arrow IPC File Format / Stream (*.arrow, *.feather, *.arrows, *.ipc)
   GTFS -vector- (rov): General Transit Feed Specification (*.zip)
-  PMTiles -vector- (rw+v): ProtoMap Tiles (*.pmtiles)
+  PMTiles -raster,vector- (rw+v): ProtoMap Tiles (*.pmtiles)
   JSONFG -vector- (rw+v): OGC Features and Geometries JSON (*.json)
   MiraMonVector -vector- (rw+v): MiraMon Vectors (.pol, .arc, .pnt) (*.pol, *.arc, *.pnt)
   ADBC -vector- (ro): Arrow Database Connectivity
+  TIGER -vector- (rov): U.S. Census TIGER/Line
   AVCBin -vector- (rov): Arc/Info Binary Coverage
   AVCE00 -vector- (rov): Arc/Info E00 (ASCII) Coverage (*.e00)
   AIVector -vector- (ro): Artificial Intelligence powered vector driver

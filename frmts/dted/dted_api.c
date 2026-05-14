@@ -330,7 +330,7 @@ DTEDInfo *DTEDOpenEx(VSILFILE *fp, const char *pszFilename,
 }
 
 /************************************************************************/
-/*               DTEDDetectVariantWithMissingColumns()                  */
+/*                DTEDDetectVariantWithMissingColumns()                 */
 /************************************************************************/
 
 static void DTEDDetectVariantWithMissingColumns(DTEDInfo *psDInfo)
@@ -767,7 +767,7 @@ int DTEDWriteProfile(DTEDInfo *psDInfo, int nColumnOffset, GInt16 *panData)
 
     for (i = 0; i < psDInfo->nYSize; i++)
     {
-        int nABSVal = ABS(panData[psDInfo->nYSize - i - 1]);
+        int nABSVal = CPL_ABS(panData[psDInfo->nYSize - i - 1]);
         pabyRecord[8 + i * 2] = (GByte)((nABSVal >> 8) & 0x7f);
         pabyRecord[8 + i * 2 + 1] = (GByte)(nABSVal & 0xff);
 
@@ -1063,7 +1063,7 @@ int DTEDSetMetadata(DTEDInfo *psDInfo, DTEDMetaDataCode eCode,
     /* -------------------------------------------------------------------- */
     /*      Update it, padding with spaces.                                 */
     /* -------------------------------------------------------------------- */
-    nLenToCopy = MIN((size_t)nFieldLen, strlen(pszNewValue));
+    nLenToCopy = CPL_MIN((size_t)nFieldLen, strlen(pszNewValue));
     memcpy(pszFieldSrc, pszNewValue, nLenToCopy);
     if (nLenToCopy < (size_t)nFieldLen)
         memset(pszFieldSrc + nLenToCopy, ' ', nFieldLen - nLenToCopy);

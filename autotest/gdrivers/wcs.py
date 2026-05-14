@@ -450,7 +450,7 @@ def setupFct():
 
 @pytest.fixture(scope="module")
 def wcs_server():
-    (process, port) = webserver.launch(handler=WCSHTTPHandler)
+    process, port = webserver.launch(handler=WCSHTTPHandler)
 
     url = "http://127.0.0.1:" + str(port)
 
@@ -496,7 +496,7 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
 
     # 1. Open without requesting a specific coverage
     query = "server=" + server + "&version=" + version
-    ds = gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query, open_options=options)
+    ds = gdal.OpenEx("WCS:" + url + "/?" + query, open_options=options)
     assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
 
     # 2. Open and request a specific coverage
@@ -515,7 +515,7 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
         if o != "-oo":
             options.append(o)
     options.append("GetCoverageExtra=test=none")
-    gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query, open_options=options)
+    gdal.OpenEx("WCS:" + url + "/?" + query, open_options=options)
     assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
     ds = None
 
@@ -523,7 +523,7 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
     options = [cache]
     options.append("GetCoverageExtra=test=scaled")
     options.append("INTERLEAVE=PIXEL")
-    ds = gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query, open_options=options)
+    ds = gdal.OpenEx("WCS:" + url + "/?" + query, open_options=options)
 
     assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
 
@@ -546,7 +546,7 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
         options = [cache]
         options.append("GetCoverageExtra=test=non_scaled")
         options.append("INTERLEAVE=PIXEL")
-        ds = gdal.OpenEx(utf8_path="WCS:" + url + "/?" + query, open_options=options)
+        ds = gdal.OpenEx("WCS:" + url + "/?" + query, open_options=options)
 
         assert ds is not None, f"OpenEx failed: WCS:{url}/?{query}"
 

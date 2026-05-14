@@ -115,7 +115,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -212,7 +212,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -311,7 +311,7 @@ Connection: Keep-Alive
             "description" : "Resource has expired",
             "headers" : {
               "Cache-Control" : {
-                "description" : "410 is cachable by default, but deferred execution may come back online.",
+                "description" : "410 is cacheable by default, but deferred execution may come back online.",
                 "schema" : {
                   "type" : "string",
                   "enum" : [ "no-cache" ]
@@ -327,7 +327,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -398,7 +398,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -643,7 +643,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -712,7 +712,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -1279,7 +1279,7 @@ Connection: Keep-Alive
             "description" : "Resource has expired",
             "headers" : {
               "Cache-Control" : {
-                "description" : "410 is cachable by default, but deferred execution may come back online.",
+                "description" : "410 is cacheable by default, but deferred execution may come back online.",
                 "schema" : {
                   "type" : "string",
                   "enum" : [ "no-cache" ]
@@ -1295,7 +1295,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -1310,7 +1310,7 @@ Connection: Keep-Alive
     "/processes/{processId}/tiles/{tileMatrixSetId}" : {
       "post" : {
         "summary" : "Submit a workflow for execution and retrieve the tileset metadata of the results for the specified tiling scheme (tile matrix set)",
-        "description" : "Post a workflow to set up deferred execution of it for the specified supported TileMatrixSet, obtaining the tileset description resource with templated links to retrieve individual tiles via GET method, as well as information such as the tile limits for each tile matrix  (equivalent to the capability available thorugh the modular synchronous Tiles API execution)",
+        "description" : "Post a workflow to set up deferred execution of it for the specified supported TileMatrixSet, obtaining the tileset description resource with templated links to retrieve individual tiles via GET method, as well as information such as the tile limits for each tile matrix  (equivalent to the capability available through the modular synchronous Tiles API execution)",
         "operationId" : "execDeferredDescribeVectorTileset",
         "tags" : [ "Vector Tiles" ],
         "parameters" : [ {
@@ -1394,7 +1394,7 @@ Connection: Keep-Alive
             "description" : "Resource has expired",
             "headers" : {
               "Cache-Control" : {
-                "description" : "410 is cachable by default, but deferred execution may come back online.",
+                "description" : "410 is cacheable by default, but deferred execution may come back online.",
                 "schema" : {
                   "type" : "string",
                   "enum" : [ "no-cache" ]
@@ -1410,7 +1410,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -1497,7 +1497,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -1663,7 +1663,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -1870,7 +1870,7 @@ Connection: Keep-Alive
             "description" : "Resource has expired",
             "headers" : {
               "Cache-Control" : {
-                "description" : "410 is cachable by default, but deferred execution may come back online.",
+                "description" : "410 is cacheable by default, but deferred execution may come back online.",
                 "schema" : {
                   "type" : "string",
                   "enum" : [ "no-cache" ]
@@ -1886,7 +1886,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -1901,7 +1901,7 @@ Connection: Keep-Alive
     "/processes/{processId}/coverage/tiles/{tileMatrixSetId}" : {
       "post" : {
         "summary" : "Submit a workflow for deferred execution and retrieve the coverage tileset metadata for the results and the specified tiling scheme (tile matrix set)",
-        "description" : "Post a workflow to set up deferred execution of it for the specified supported TileMatrixSet, obtaining the tileset description resource with templated links to retrieve individual tiles via GET method, as well as information such as the tile limits for each tile matrix  (equivalent to the capability available thorugh the modular synchronous Tiles API execution)",
+        "description" : "Post a workflow to set up deferred execution of it for the specified supported TileMatrixSet, obtaining the tileset description resource with templated links to retrieve individual tiles via GET method, as well as information such as the tile limits for each tile matrix  (equivalent to the capability available through the modular synchronous Tiles API execution)",
         "tags" : [ "Coverage Tiles" ],
         "operationId" : "execDeferredDescribeCoverageTileSet",
         "parameters" : [ {
@@ -1979,7 +1979,7 @@ Connection: Keep-Alive
             "description" : "Resource has expired",
             "headers" : {
               "Cache-Control" : {
-                "description" : "410 is cachable by default, but deferred execution may come back online.",
+                "description" : "410 is cacheable by default, but deferred execution may come back online.",
                 "schema" : {
                   "type" : "string",
                   "enum" : [ "no-cache" ]
@@ -1995,7 +1995,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -2076,7 +2076,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -2328,7 +2328,7 @@ Connection: Keep-Alive
             "description" : "Resource has expired",
             "headers" : {
               "Cache-Control" : {
-                "description" : "410 is cachable by default, but deferred execution may come back online.",
+                "description" : "410 is cacheable by default, but deferred execution may come back online.",
                 "schema" : {
                   "type" : "string",
                   "enum" : [ "no-cache" ]
@@ -2344,7 +2344,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -2918,7 +2918,7 @@ Connection: Keep-Alive
             "description" : "Resource has expired",
             "headers" : {
               "Cache-Control" : {
-                "description" : "410 is cachable by default, but deferred execution may come back online.",
+                "description" : "410 is cacheable by default, but deferred execution may come back online.",
                 "schema" : {
                   "type" : "string",
                   "enum" : [ "no-cache" ]
@@ -2934,7 +2934,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -3033,7 +3033,7 @@ Connection: Keep-Alive
             "description" : "Resource has expired",
             "headers" : {
               "Cache-Control" : {
-                "description" : "410 is cachable by default, but deferred execution may come back online.",
+                "description" : "410 is cacheable by default, but deferred execution may come back online.",
                 "schema" : {
                   "type" : "string",
                   "enum" : [ "no-cache" ]
@@ -3049,7 +3049,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -3142,7 +3142,7 @@ Connection: Keep-Alive
             }
           },
           "default" : {
-            "description" : "An error occured.",
+            "description" : "An error occurred.",
             "content" : {
               "application/json" : {
                 "schema" : {

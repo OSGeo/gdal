@@ -1551,3 +1551,61 @@ def test_ogr_miramon_check_layer_name_with_accents(tmp_vsimem):
 
     ds = None
     lyr = None
+
+
+###############################################################################
+
+
+def test_ogr_miramon_write_launder_layer_name(tmp_path):
+
+    ds = ogr.GetDriverByName("MiramonVector").CreateVector(tmp_path)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32631)
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        match="Layer name 'not/allowed' laundered as 'not_allowed' for filename compatibility",
+    ):
+        ds.CreateLayer("not/allowed", srs=srs, geom_type=ogr.wkbUnknown)
+
+
+###############################################################################
+
+
+def test_ogr_miramon_vector_sql_select_preserve_reserved_fields():
+
+    src_filename = "data/miramon/Polygons/SimplePolygons/SimplePolFile.pol"
+
+    import os
+    import tempfile
+
+    tmp_dir = tempfile.mkdtemp()
+    out_filename = os.path.join(tmp_dir, "selected.pol")
+
+    ds = ogr.Open(src_filename)
+    assert ds is not None
+
+    out_ds = gdal.VectorTranslate(
+        out_filename,
+        ds,
+        format="MiraMonVector",
+        SQLStatement="SELECT * FROM SimplePolFile WHERE ATT1 = 'C'",
+    )
+
+    assert out_ds is not None
+
+    out_ds = None
+    ds = None
+
+    rel_filename = out_filename[:-4] + "P.rel"
+
+    with open(rel_filename, "rt", encoding="latin1") as f:
+        rel_content = f.read()
+
+    assert rel_content.count("[TAULA_PRINCIPAL:ID_GRAFIC]") == 1
+    assert rel_content.count("[TAULA_PRINCIPAL:ID_GRAFIC2]") == 1
+
+    assert rel_content.count("[TAULA_PRINCIPAL:N_VERTEXS]") == 1
+    assert rel_content.count("[TAULA_PRINCIPAL:PERIMETRE]") == 1
+    assert rel_content.count("[TAULA_PRINCIPAL:AREA]") == 1
+    assert rel_content.count("[TAULA_PRINCIPAL:N_ARCS]") == 1
+    assert rel_content.count("[TAULA_PRINCIPAL:N_POLIG]") == 1

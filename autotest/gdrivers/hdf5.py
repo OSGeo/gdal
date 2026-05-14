@@ -19,7 +19,7 @@ import gdaltest
 import pytest
 from uffd import uffd_compare
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 ###############################################################################
 # Test if HDF5 driver is present
@@ -1746,7 +1746,6 @@ def test_hdf5_eos_grid_VIIRS_Grid_IMG_2D_issue_12941():
     assert ds
     assert ds.RasterXSize == 4
     assert ds.RasterYSize == 5
-    print(ds.GetGeoTransform())
     assert ds.GetGeoTransform() == pytest.approx(
         (
             -1111950.519667,
@@ -1757,3 +1756,83 @@ def test_hdf5_eos_grid_VIIRS_Grid_IMG_2D_issue_12941():
             -222390.10393320007,
         )
     )
+
+
+###############################################################################
+# Test opening a fake NISAR Level 2 dataset where SRS is encoded in epsg_code
+# attribute
+
+
+def test_hdf5_NISAR_level_2_epsg_code():
+
+    if False:
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/fake_NISAR_L2_epsg_code.h5", "w")
+        f.attrs["mission_name"] = "NISAR"
+
+        some_group = f.create_group("some_group")
+
+        ds = some_group.create_dataset("test", (5, 4), dtype="B")
+        ds[...] = np.array([i for i in range(5 * 4)]).reshape(ds.shape)
+        ds.attrs["grid_mapping"] = "projection"
+
+        ds = some_group.create_dataset("projection", (), dtype="B")
+        ds.attrs["epsg_code"] = "32611"
+
+        ds = some_group.create_dataset("xCoordinates", (4), dtype="d")
+        ds[...] = np.array([10, 20, 30, 40]).reshape(ds.shape)
+
+        ds = some_group.create_dataset("yCoordinates", (5), dtype="d")
+        ds[...] = np.array([500, 400, 300, 200, 100]).reshape(ds.shape)
+
+        f.close()
+
+    ds = gdal.Open("data/hdf5/fake_NISAR_L2_epsg_code.h5")
+    assert ds
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 5
+    assert ds.GetGeoTransform() == pytest.approx((5.0, 10.0, 0.0, 550.0, 0.0, -100.0))
+    assert ds.GetSpatialRef().GetAuthorityCode() == "32611"
+
+
+###############################################################################
+# Test opening a fake NISAR Level 2 dataset where SRS is encoded in spatial_ref
+# attribute
+
+
+def test_hdf5_NISAR_level_2_spatial_ref():
+
+    if False:
+
+        import h5py
+        import numpy as np
+
+        f = h5py.File("data/hdf5/fake_NISAR_L2_spatial_ref.h5", "w")
+        f.attrs["mission_name"] = "NISAR"
+
+        some_group = f.create_group("some_group")
+
+        ds = some_group.create_dataset("test", (5, 4), dtype="B")
+        ds[...] = np.array([i for i in range(5 * 4)]).reshape(ds.shape)
+        ds.attrs["grid_mapping"] = "projection"
+
+        ds = some_group.create_dataset("projection", (), dtype="B")
+        ds.attrs["spatial_ref"] = osr.SpatialReference(epsg=32611).ExportToWkt()
+
+        ds = some_group.create_dataset("xCoordinates", (4), dtype="d")
+        ds[...] = np.array([10, 20, 30, 40]).reshape(ds.shape)
+
+        ds = some_group.create_dataset("yCoordinates", (5), dtype="d")
+        ds[...] = np.array([500, 400, 300, 200, 100]).reshape(ds.shape)
+
+        f.close()
+
+    ds = gdal.Open("data/hdf5/fake_NISAR_L2_spatial_ref.h5")
+    assert ds
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 5
+    assert ds.GetGeoTransform() == pytest.approx((5.0, 10.0, 0.0, 550.0, 0.0, -100.0))
+    assert ds.GetSpatialRef().GetAuthorityCode() == "32611"

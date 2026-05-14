@@ -304,16 +304,14 @@ def test_ogrinfo_lib_json_relationships():
 @pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_OFSTJSON():
 
-    ds = gdal.OpenEx(
-        """{"type":"FeatureCollection","features":[
+    ds = gdal.OpenEx("""{"type":"FeatureCollection","features":[
             { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": true }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": null }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": "astring" }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": { "nested": 75 } }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } },
             { "type": "Feature", "properties": { "prop0": { "a": "b" } }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
-        ]}"""
-    )
+        ]}""")
 
     ret = gdal.VectorInfo(ds, format="json", dumpFeatures=True)
     assert ret["layers"][0]["features"] == [
@@ -363,11 +361,9 @@ def test_ogrinfo_lib_json_OFSTJSON():
 @pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_fields_NO():
 
-    ds = gdal.OpenEx(
-        """{"type":"FeatureCollection","features":[
+    ds = gdal.OpenEx("""{"type":"FeatureCollection","features":[
             { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
-        ]}"""
-    )
+        ]}""")
 
     ret = gdal.VectorInfo(ds, options="-json -features -fields=NO")
     assert ret["layers"][0]["features"] == [
@@ -387,11 +383,9 @@ def test_ogrinfo_lib_json_fields_NO():
 @pytest.mark.require_driver("GeoJSON")
 def test_ogrinfo_lib_json_geom_NO():
 
-    ds = gdal.OpenEx(
-        """{"type":"FeatureCollection","features":[
+    ds = gdal.OpenEx("""{"type":"FeatureCollection","features":[
             { "type": "Feature", "properties": { "prop0": 42 }, "geometry": { "type": "Point", "coordinates": [ 102.0, 0.5 ] } }
-        ]}"""
-    )
+        ]}""")
 
     ret = gdal.VectorInfo(ds, options="-json -features -geom=NO")
     assert ret["layers"][0]["features"] == [
@@ -645,3 +639,71 @@ def test_ogrinfo_lib_coordinate_epoch(epoch):
     crs = j["layers"][0]["geometryFields"][0]["coordinateSystem"]
     assert "coordinateEpoch" in crs
     assert crs["coordinateEpoch"] == float(epoch)
+
+
+#############################################################################
+# Test -schema to export OGR_SCHEMA
+
+
+def test_ogrinfo_lib_schema():
+    ds = gdal.GetDriverByName("MEM").Create("dummy", 0, 0, 0, gdal.GDT_Unknown)
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("field1", ogr.OFTString))
+    floatf = ogr.FieldDefn("field2", ogr.OFTReal)
+    floatf.SetPrecision(2)
+    floatf.SetWidth(5)
+    floatf.SetDefault("3.14")
+    lyr.CreateField(floatf)
+    datef = ogr.FieldDefn("field3", ogr.OFTDate)
+    datef.SetTZFlag(ogr.TZFLAG_UTC)
+    lyr.CreateField(datef)
+
+    lyr2 = ds.CreateLayer("test2")
+    lyr2.CreateField(ogr.FieldDefn("field11", ogr.OFTString))
+    lyr2.CreateField(ogr.FieldDefn("field21", ogr.OFTInteger))
+
+    ret = gdal.VectorInfo(ds, options="-schema")
+    jret = json.loads(ret)
+    layer1 = jret["layers"][0]
+    assert layer1["name"] == "test"
+    assert layer1["fields"] == [
+        {
+            "name": "field1",
+            "type": "String",
+            "nullable": True,
+            "uniqueConstraint": False,
+        },
+        {
+            "name": "field2",
+            "type": "Real",
+            "width": 5,
+            "precision": 2,
+            "nullable": True,
+            "uniqueConstraint": False,
+            "defaultValue": "3.14",
+        },
+        {
+            "name": "field3",
+            "type": "Date",
+            "nullable": True,
+            "uniqueConstraint": False,
+            "timezone": "UTC",
+        },
+    ]
+
+    layer2 = jret["layers"][1]
+    assert layer2["name"] == "test2"
+    assert layer2["fields"] == [
+        {
+            "name": "field11",
+            "type": "String",
+            "nullable": True,
+            "uniqueConstraint": False,
+        },
+        {
+            "name": "field21",
+            "type": "Integer",
+            "nullable": True,
+            "uniqueConstraint": False,
+        },
+    ]

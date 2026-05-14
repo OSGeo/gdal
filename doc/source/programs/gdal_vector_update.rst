@@ -78,6 +78,11 @@ Standard Options
 
     .. include:: gdal_options/output_oo.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

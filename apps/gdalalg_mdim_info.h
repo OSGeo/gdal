@@ -39,6 +39,7 @@ class GDALMdimInfoAlgorithm final : public GDALAlgorithm
     std::vector<std::string> m_openOptions{};
     std::vector<std::string> m_inputFormats{};
     std::string m_output{};
+    bool m_summary = false;
     bool m_detailed = false;
     std::string m_array{};
     int m_limit = 0;

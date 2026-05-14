@@ -159,7 +159,7 @@ int SQLGetInteger(sqlite3 *poDb, const char *pszSQL, OGRErr *err)
 }
 
 /************************************************************************/
-/*                             SQLUnescape()                            */
+/*                            SQLUnescape()                             */
 /************************************************************************/
 
 CPLString SQLUnescape(const char *pszVal)
@@ -220,7 +220,7 @@ CPLString SQLEscapeName(const char *pszName)
 }
 
 /************************************************************************/
-/*                             SQLTokenize()                            */
+/*                            SQLTokenize()                             */
 /************************************************************************/
 
 char **SQLTokenize(const char *pszStr)
@@ -301,7 +301,7 @@ char **SQLTokenize(const char *pszStr)
 }
 
 /************************************************************************/
-/*                    SQLGetUniqueFieldUCConstraints()                  */
+/*                   SQLGetUniqueFieldUCConstraints()                   */
 /************************************************************************/
 
 /* Return set of field names (in upper case) that have a UNIQUE constraint,
@@ -684,7 +684,7 @@ bool OGRSQLiteRTreeRequiresTrustedSchemaOn()
 }
 
 /************************************************************************/
-/*               OGRSQLiteIsSpatialFunctionReturningGeometry()          */
+/*            OGRSQLiteIsSpatialFunctionReturningGeometry()             */
 /************************************************************************/
 
 bool OGRSQLiteIsSpatialFunctionReturningGeometry(const char *pszName)
@@ -835,7 +835,7 @@ double SQLResult::GetValueAsDouble(int iColNum, int iRowNum) const
 }
 
 /************************************************************************/
-/*                  OGRSQLite_gdal_get_pixel_value_common()             */
+/*               OGRSQLite_gdal_get_pixel_value_common()                */
 /************************************************************************/
 
 void OGRSQLite_gdal_get_pixel_value_common(const char *pszFunctionName,
@@ -962,7 +962,7 @@ void OGRSQLite_gdal_get_pixel_value_common(const char *pszFunctionName,
     defined(ALLOW_FORMAT_DUMPS)
 
 /************************************************************************/
-/*                          SQLCheckLineIsSafe()                        */
+/*                         SQLCheckLineIsSafe()                         */
 /************************************************************************/
 
 bool SQLCheckLineIsSafe(const char *pszLine)
@@ -1060,4 +1060,91 @@ int SQLPrepareWithError(sqlite3 *db, const char *sql, int nByte,
                  sql, sqlite3_errmsg(db));
     }
     return ret;
+}
+
+/** Returns true if pszTail (has set by sqlite3_prepare_v2) has still
+ * remaining non-blank / non-comment content.
+ */
+bool SQLHasRemainingContent(const char *pszTail)
+{
+    bool bInCComment = false;
+    bool bInSingleLineComment = false;
+    for (; *pszTail; ++pszTail)
+    {
+        const char c = *pszTail;
+        const char cNext = pszTail[1];
+        if (c == ' ' || c == '\t')
+        {
+            continue;
+        }
+        else if (c == '\n' || c == '\r')
+        {
+            bInSingleLineComment = false;
+        }
+        else if (c == '-' && cNext == '-')
+        {
+            bInSingleLineComment = true;
+        }
+        else if (c == '/' && cNext == '*')
+        {
+            bInCComment = true;
+        }
+        else if (bInCComment && c == '*' && cNext == '/')
+        {
+            bInCComment = false;
+        }
+        else if (!bInCComment && !bInSingleLineComment)
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Multiple statements are not supported");
+            return true;
+        }
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                   SQLFormatErrorMsgFailedPrepare()                   */
+/************************************************************************/
+
+std::string SQLFormatErrorMsgFailedPrepare(sqlite3 *hDB,
+                                           const char *pszErrMsgIntro,
+                                           const char *pszSQL)
+{
+    std::string osErrorMsg(pszErrMsgIntro);
+    osErrorMsg += sqlite3_errmsg(hDB);
+    osErrorMsg += "\n  ";
+    osErrorMsg += pszSQL;
+#if SQLITE_VERSION_NUMBER >= 3038000L
+    const int nOffset = sqlite3_error_offset(hDB);
+    if (nOffset >= 0 && static_cast<size_t>(nOffset) <= strlen(pszSQL))
+    {
+        osErrorMsg += "\n  ";
+        osErrorMsg.append(nOffset, ' ');
+        osErrorMsg += "^--- error here";
+    }
+#endif
+    return osErrorMsg;
+}
+
+/************************************************************************/
+/*                       SQLGetSQLite3DataType()                        */
+/************************************************************************/
+
+const char *SQLGetSQLite3DataType(int nSQLite3DataType)
+{
+    switch (nSQLite3DataType)
+    {
+        case SQLITE_NULL:
+            return "NULL";
+        case SQLITE_TEXT:
+            return "TEXT";
+        case SQLITE_INTEGER:
+            return "INTEGER";
+        case SQLITE_FLOAT:
+            return "FLOAT";
+        case SQLITE_BLOB:
+            return "BLOB";
+    }
+    return "(unknown)";
 }

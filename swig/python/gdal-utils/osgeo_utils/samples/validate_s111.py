@@ -1214,6 +1214,31 @@ class S111Checker:
                 SurfaceCurrent, "dataCodingFormat", expected_values
             )
 
+        if "interpolationType" in SurfaceCurrent.attrs:
+            expected_values = {
+                1: "nearestneighbor",
+                5: "bilinear",
+                6: "biquadratic",
+                7: "bicubic",
+                9: "barycentric",
+                10: "discrete",
+            }
+            self._validate_enumeration(
+                SurfaceCurrent, "interpolationType", expected_values
+            )
+
+        if "dataOffsetCode" in SurfaceCurrent.attrs:
+            expected_values = {
+                1: 'XMin, YMin ("Lower left") corner ("Cell origin")',
+                2: 'XMax, YMax ("Upper right") corner',
+                3: 'XMax, YMin ("Lower right") corner',
+                4: 'XMin, YMax ("Upper left") corner',
+                5: "Barycenter (centroid) of cell",
+            }
+            self._validate_enumeration(
+                SurfaceCurrent, "dataOffsetCode", expected_values
+            )
+
         self._log_check("111_Dev2005")
         horizontalPositionUncertainty = _get_float_attr_or_none(
             SurfaceCurrent, "horizontalPositionUncertainty"

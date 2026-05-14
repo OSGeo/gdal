@@ -11,6 +11,7 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -176,11 +177,10 @@ def test_gdalalg_raster_as_features_geom_type_invalid(alg):
         alg["geometry-type"] = "LineString"
 
 
-@pytest.mark.require_driver("GPKG")
 def test_gdalalg_raster_as_features_layer_name(alg, tmp_vsimem):
 
     alg["input"] = "../gcore/data/byte.tif"
-    alg["output"] = tmp_vsimem / "out.gpkg"
+    alg["output-format"] = "stream"
     alg["output-layer"] = "layer123"
 
     assert alg.Run()
@@ -188,8 +188,19 @@ def test_gdalalg_raster_as_features_layer_name(alg, tmp_vsimem):
     assert alg["output"]
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer("layer123")
-
     assert lyr is not None
+    assert lyr.GetLayerDefn().GetName() == "layer123"
+
+
+def test_gdalalg_raster_as_features_layer_name_pipeline(alg, tmp_vsimem):
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! as-features --output-layer layer123"
+    ) as alg:
+        ds = alg["output"].GetDataset()
+        lyr = ds.GetLayer("layer123")
+        assert lyr is not None
+        assert lyr.GetLayerDefn().GetName() == "layer123"
 
 
 def test_gdalalg_raster_as_features_zero_bands(alg, tmp_vsimem):
@@ -248,3 +259,35 @@ def test_gdalalg_raster_as_features_zero_width(alg, tmp_vsimem):
     lyr = ds.GetLayer(0)
 
     assert lyr.GetFeatureCount() == 0
+
+
+def test_gdalalg_as_features_empty_row_at_end_of_block(alg, tmp_vsimem):
+    # See https://github.com/OSGeo/gdal/issues/14348
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    src_fname = tmp_vsimem / "src.tif"
+
+    with gdal.GetDriverByName("GTiff").Create(
+        src_fname,
+        64,
+        64,
+        1,
+        options={"TILED": True, "BLOCKXSIZE": 32, "BLOCKYSIZE": 32},
+    ) as ds:
+        ds.GetRasterBand(1).SetNoDataValue(0)
+        data = np.zeros((64, 64))
+        data[63, 63] = 1
+        ds.WriteArray(data)
+
+    alg["input"] = src_fname
+    alg["output-format"] = "MEM"
+    alg["skip-nodata"] = True
+
+    assert alg.Run()
+
+    ds = alg.Output()
+    lyr = ds.GetLayer(0)
+
+    assert lyr.GetFeatureCount() == 1

@@ -4,7 +4,7 @@ filename,sha256sum
 "swig/java/test_data/poly.shx",ac735bd4487f979081d723ec6611861dc90aab3560d170963ac3c5a886594ea2
 "swig/java/test_data/poly.dbf",19a2f2d8ff31e21df0cb5eb7afb0512760f1a01070f67b0f78dfc748ab264dfb
 "swig/csharp/gdal.snk",93bc052177485a64850ebe7d126ba741a8b5d0b57e6c6ea08f8ae86d4827e5a7
-"ogr/ogrsf_frmts/miramon/data/MM_m_idofic.csv",69c57dbb95e172744e3c236bbe732e97105a029678e7011df67ce31a85b29604
+"ogr/ogrsf_frmts/miramon/data/MM_m_idofic.csv",7adfc54a3428b6c9bed35048aa48ecab29ff59aa6378429a37c3c4f69faa8e59
 "ogr/ogrsf_frmts/sxf/data/default.rsc",9e1c9d7081d52775e750d4155d49255252b04ca81fef27cb2997675d3cd9626b
 "ogr/ogrsf_frmts/dgn/data/seed_3d.dgn",97c2f00ee6ea96873b7d16e5e898b4850e3d35448299d7d9d37e7d1792b56896
 "ogr/ogrsf_frmts/dgn/data/seed_2d.dgn",dd8465f18569d9289809e9e0962115d365d0a56de021393952a5e7a0a20b527c

@@ -16,7 +16,7 @@
 #include "ogr_arrow.h"
 
 /************************************************************************/
-/*                         OGRArrowDataset()                            */
+/*                          OGRArrowDataset()                           */
 /************************************************************************/
 
 inline OGRArrowDataset::OGRArrowDataset(
@@ -26,7 +26,7 @@ inline OGRArrowDataset::OGRArrowDataset(
 }
 
 /************************************************************************/
-/*                            SetLayer()                                */
+/*                              SetLayer()                              */
 /************************************************************************/
 
 inline void OGRArrowDataset::SetLayer(std::unique_ptr<IOGRArrowLayer> &&poLayer)
@@ -35,7 +35,7 @@ inline void OGRArrowDataset::SetLayer(std::unique_ptr<IOGRArrowLayer> &&poLayer)
 }
 
 /************************************************************************/
-/*                          RegisterDomainName()                        */
+/*                         RegisterDomainName()                         */
 /************************************************************************/
 
 inline void OGRArrowDataset::RegisterDomainName(const std::string &osDomainName,
@@ -46,7 +46,7 @@ inline void OGRArrowDataset::RegisterDomainName(const std::string &osDomainName,
 }
 
 /************************************************************************/
-/*                          GetFieldDomainNames()                       */
+/*                        GetFieldDomainNames()                         */
 /************************************************************************/
 
 inline std::vector<std::string>
@@ -56,7 +56,7 @@ OGRArrowDataset::GetFieldDomainNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                          GetFieldDomain()                            */
+/*                           GetFieldDomain()                           */
 /************************************************************************/
 
 inline const OGRFieldDomain *
@@ -87,7 +87,7 @@ inline int OGRArrowDataset::GetLayerCount() const
 }
 
 /************************************************************************/
-/*                             GetLayer()                               */
+/*                              GetLayer()                              */
 /************************************************************************/
 
 inline const OGRLayer *OGRArrowDataset::GetLayer(int idx) const

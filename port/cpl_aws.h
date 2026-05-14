@@ -252,6 +252,26 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
         return m_osRegion;
     }
 
+    const std::string &GetAccessKeyId() const
+    {
+        return m_osAccessKeyId;
+    }
+
+    const std::string &GetSecretAccessKey() const
+    {
+        return m_osSecretAccessKey;
+    }
+
+    const std::string &GetSessionToken() const
+    {
+        return m_osSessionToken;
+    }
+
+    AWSCredentialsSource GetCredentialsSource() const
+    {
+        return m_eCredentialsSource;
+    }
+
     const std::string &GetRequestPayer() const
     {
         return m_osRequestPayer;
@@ -260,6 +280,11 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
     bool GetVirtualHosting() const
     {
         return m_bUseVirtualHosting;
+    }
+
+    bool GetUseHTTPS() const
+    {
+        return m_bUseHTTPS;
     }
 
     void SetEndpoint(const std::string &osStr);

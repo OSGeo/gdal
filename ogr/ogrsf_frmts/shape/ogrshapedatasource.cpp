@@ -42,7 +42,7 @@
 constexpr int knREFRESH_LOCK_FILE_DELAY_SEC = 10;
 
 /************************************************************************/
-/*                          DS_SHPOpen()                                */
+/*                             DS_SHPOpen()                             */
 /************************************************************************/
 
 SHPHandle OGRShapeDataSource::DS_SHPOpen(const char *pszShapeFile,
@@ -64,7 +64,7 @@ SHPHandle OGRShapeDataSource::DS_SHPOpen(const char *pszShapeFile,
 }
 
 /************************************************************************/
-/*                           DS_DBFOpen()                               */
+/*                             DS_DBFOpen()                             */
 /************************************************************************/
 
 DBFHandle OGRShapeDataSource::DS_DBFOpen(const char *pszDBFFile,
@@ -87,7 +87,7 @@ OGRShapeDataSource::OGRShapeDataSource()
 }
 
 /************************************************************************/
-/*                             GetLayerNames()                          */
+/*                           GetLayerNames()                            */
 /************************************************************************/
 
 std::vector<CPLString> OGRShapeDataSource::GetLayerNames() const
@@ -112,7 +112,7 @@ OGRShapeDataSource::~OGRShapeDataSource()
 }
 
 /************************************************************************/
-/*                       OGRShapeDataSource::Close()                   */
+/*                     OGRShapeDataSource::Close()                      */
 /************************************************************************/
 
 CPLErr OGRShapeDataSource::Close(GDALProgressFunc, void *)
@@ -192,7 +192,7 @@ bool OGRShapeDataSource::OpenZip(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                            CreateZip()                               */
+/*                             CreateZip()                              */
 /************************************************************************/
 
 bool OGRShapeDataSource::CreateZip(const char *pszOriFilename)
@@ -228,7 +228,7 @@ bool OGRShapeDataSource::Open(GDALOpenInfo *poOpenInfo, bool bTestOpen,
 
     eAccess = poOpenInfo->eAccess;
 
-    m_bSingleFileDataSource = CPL_TO_BOOL(bForceSingleFileDataSource);
+    m_bSingleFileDataSource = bForceSingleFileDataSource;
 
     /* -------------------------------------------------------------------- */
     /*      If m_bSingleFileDataSource is TRUE we don't try to do anything  */
@@ -521,7 +521,7 @@ bool OGRShapeDataSource::OpenFile(const char *pszNewName, bool bUpdate)
 }
 
 /************************************************************************/
-/*                             AddLayer()                               */
+/*                              AddLayer()                              */
 /************************************************************************/
 
 void OGRShapeDataSource::AddLayer(std::unique_ptr<OGRShapeLayer> poLayer)
@@ -543,7 +543,7 @@ void OGRShapeDataSource::AddLayer(std::unique_ptr<OGRShapeLayer> poLayer)
 }
 
 /************************************************************************/
-/*                        LaunderLayerName()                            */
+/*                          LaunderLayerName()                          */
 /************************************************************************/
 
 static CPLString LaunderLayerName(const char *pszLayerName)
@@ -559,7 +559,7 @@ static CPLString LaunderLayerName(const char *pszLayerName)
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -874,12 +874,11 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     /*      Create the .prj file, if required.                              */
     /* -------------------------------------------------------------------- */
     std::string osPrjFilename;
-    OGRSpatialReference *poSRSClone = nullptr;
-    if (poSRS != nullptr)
+    auto poSRSClone = OGRSpatialReferenceRefCountedPtr::makeClone(poSRS);
+    if (poSRSClone)
     {
         osPrjFilename =
             CPLFormFilenameSafe(nullptr, osFilenameWithoutExt.c_str(), "prj");
-        poSRSClone = poSRS->Clone();
 
         char *pszWKT = nullptr;
         VSILFILE *fp = nullptr;
@@ -904,13 +903,9 @@ OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
         CPLFormFilenameSafe(nullptr, osFilenameWithoutExt.c_str(), "shp");
 
     auto poLayer = std::make_unique<OGRShapeLayer>(
-        this, osSHPFilename.c_str(), hSHP, hDBF, poSRSClone,
+        this, osSHPFilename.c_str(), hSHP, hDBF, poSRSClone.get(),
         /* bSRSSet = */ true, osPrjFilename,
         /* bUpdate = */ true, eType);
-    if (poSRSClone != nullptr)
-    {
-        poSRSClone->Release();
-    }
 
     poLayer->SetResizeAtClose(CPLFetchBool(papszOptions, "RESIZE", false));
     poLayer->CreateSpatialIndexAtClose(
@@ -952,7 +947,7 @@ int OGRShapeDataSource::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                            GetLayerCount()                           */
+/*                           GetLayerCount()                            */
 /************************************************************************/
 
 int OGRShapeDataSource::GetLayerCount() const
@@ -1249,7 +1244,7 @@ OGRLayer *OGRShapeDataSource::ExecuteSQL(const char *pszStatement,
 }
 
 /************************************************************************/
-/*                     GetExtensionsForDeletion()                       */
+/*                      GetExtensionsForDeletion()                      */
 /************************************************************************/
 
 const char *const *OGRShapeDataSource::GetExtensionsForDeletion()

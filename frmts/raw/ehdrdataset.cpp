@@ -353,7 +353,7 @@ EHdrDataset::~EHdrDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr EHdrDataset::Close(GDALProgressFunc, void *)
@@ -463,7 +463,7 @@ void EHdrDataset::ResetKeyValue(const char *pszKey, const char *pszValue)
 }
 
 /************************************************************************/
-/*                           RewriteCLR()                               */
+/*                             RewriteCLR()                             */
 /************************************************************************/
 
 void EHdrDataset::RewriteCLR(GDALRasterBand *poBand) const
@@ -605,7 +605,7 @@ CPLErr EHdrDataset::SetGeoTransform(const GDALGeoTransform &gt)
 
 {
     // We only support non-rotated images with info in the .HDR file.
-    if (gt[2] != 0.0 || gt[4] != 0.0)
+    if (gt.xrot != 0.0 || gt.yrot != 0.0)
     {
         return GDALPamDataset::SetGeoTransform(gt);
     }
@@ -629,16 +629,16 @@ CPLErr EHdrDataset::SetGeoTransform(const GDALGeoTransform &gt)
     // Set the transformation information.
     CPLString oValue;
 
-    oValue.Printf("%.15g", m_gt[0] + m_gt[1] * 0.5);
+    oValue.Printf("%.15g", m_gt.xorig + m_gt.xscale * 0.5);
     ResetKeyValue("ULXMAP", oValue);
 
-    oValue.Printf("%.15g", m_gt[3] + m_gt[5] * 0.5);
+    oValue.Printf("%.15g", m_gt.yorig + m_gt.yscale * 0.5);
     ResetKeyValue("ULYMAP", oValue);
 
-    oValue.Printf("%.15g", m_gt[1]);
+    oValue.Printf("%.15g", m_gt.xscale);
     ResetKeyValue("XDIM", oValue);
 
-    oValue.Printf("%.15g", fabs(m_gt[5]));
+    oValue.Printf("%.15g", fabs(m_gt.yscale));
     ResetKeyValue("YDIM", oValue);
 
     return CE_None;
@@ -807,7 +807,7 @@ CPLErr EHdrDataset::ReadSTX() const
 }
 
 /************************************************************************/
-/*                      GetImageRepFilename()                           */
+/*                        GetImageRepFilename()                         */
 /************************************************************************/
 
 // Check for IMAGE.REP (Spatiocarte Defense 1.0) or name_of_image.rep
@@ -1332,21 +1332,21 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
         if (bCenter)
         {
-            poDS->m_gt[0] = dfULXMap - dfXDim * 0.5;
-            poDS->m_gt[1] = dfXDim;
-            poDS->m_gt[2] = 0.0;
-            poDS->m_gt[3] = dfULYMap + dfYDim * 0.5;
-            poDS->m_gt[4] = 0.0;
-            poDS->m_gt[5] = -dfYDim;
+            poDS->m_gt.xorig = dfULXMap - dfXDim * 0.5;
+            poDS->m_gt.xscale = dfXDim;
+            poDS->m_gt.xrot = 0.0;
+            poDS->m_gt.yorig = dfULYMap + dfYDim * 0.5;
+            poDS->m_gt.yrot = 0.0;
+            poDS->m_gt.yscale = -dfYDim;
         }
         else
         {
-            poDS->m_gt[0] = dfULXMap;
-            poDS->m_gt[1] = dfXDim;
-            poDS->m_gt[2] = 0.0;
-            poDS->m_gt[3] = dfULYMap;
-            poDS->m_gt[4] = 0.0;
-            poDS->m_gt[5] = -dfYDim;
+            poDS->m_gt.xorig = dfULXMap;
+            poDS->m_gt.xscale = dfXDim;
+            poDS->m_gt.xrot = 0.0;
+            poDS->m_gt.yorig = dfULYMap;
+            poDS->m_gt.yrot = 0.0;
+            poDS->m_gt.yscale = -dfYDim;
         }
     }
 
@@ -1388,12 +1388,12 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
                               ""),
                       "DS"))
             {
-                poDS->m_gt[0] /= 3600.0;
-                poDS->m_gt[1] /= 3600.0;
-                poDS->m_gt[2] /= 3600.0;
-                poDS->m_gt[3] /= 3600.0;
-                poDS->m_gt[4] /= 3600.0;
-                poDS->m_gt[5] /= 3600.0;
+                poDS->m_gt.xorig /= 3600.0;
+                poDS->m_gt.xscale /= 3600.0;
+                poDS->m_gt.xrot /= 3600.0;
+                poDS->m_gt.yorig /= 3600.0;
+                poDS->m_gt.yrot /= 3600.0;
+                poDS->m_gt.yscale /= 3600.0;
             }
         }
         else
@@ -1637,7 +1637,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
 GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszParamList)
+                                 CSLConstList papszParamList)
 
 {
     // Verify input options.
@@ -1754,7 +1754,7 @@ GDALDataset *EHdrDataset::Create(const char *pszFilename, int nXSize,
 
 GDALDataset *EHdrDataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 
@@ -1810,7 +1810,7 @@ GDALDataset *EHdrDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                        GetNoDataValue()                              */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double EHdrRasterBand::GetNoDataValue(int *pbSuccess)
@@ -1825,7 +1825,7 @@ double EHdrRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                           GetMinimum()                               */
+/*                             GetMinimum()                             */
 /************************************************************************/
 
 double EHdrRasterBand::GetMinimum(int *pbSuccess)
@@ -1840,7 +1840,7 @@ double EHdrRasterBand::GetMinimum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                           GetMaximum()                               */
+/*                             GetMaximum()                             */
 /************************************************************************/
 
 double EHdrRasterBand::GetMaximum(int *pbSuccess)
@@ -1974,7 +1974,7 @@ GDALRasterAttributeTable *EHdrRasterBand::GetDefaultRAT()
 }
 
 /************************************************************************/
-/*                            SetDefaultRAT()                           */
+/*                           SetDefaultRAT()                            */
 /************************************************************************/
 
 CPLErr EHdrRasterBand::SetDefaultRAT(const GDALRasterAttributeTable *poRAT)

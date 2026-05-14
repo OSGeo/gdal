@@ -78,7 +78,8 @@ bool Cumulative::run(const std::string &srcFilename,
     CPLWorkerThreadPool executorPool(numThreads);
     for (int i = 0; i < numThreads; ++i)
         executorPool.SubmitJob(
-            [this, &srcFilename, &progress, &err, &running, &hasFoundNoData] {
+            [this, &srcFilename, &progress, &err, &running, &hasFoundNoData]
+            {
                 runExecutor(srcFilename, progress, err, running,
                             hasFoundNoData);
             });

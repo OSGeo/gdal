@@ -12,7 +12,6 @@
 ###############################################################################
 
 import math
-import sys
 
 import gdaltest
 import ogrtest
@@ -423,9 +422,9 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_all_stats(zonal, strategy, sta
     zonal["output-format"] = "MEM"
     zonal["pixels"] = "fractional"
     zonal["strategy"] = strategy
-    zonal[
-        "stat"
-    ] = stat  # process stats individually to ensure RasterStatsOptions set correctly
+    zonal["stat"] = (
+        stat  # process stats individually to ensure RasterStatsOptions set correctly
+    )
 
     assert zonal.Run()
 
@@ -611,8 +610,9 @@ def test_gdalalg_raster_zonal_stats_output_format_detection(
     assert out_ds.GetDriver().GetName() == "CSV"
 
 
+@pytest.mark.parametrize("include_field", [None, "ALL", "NONE", ["PRFEDEA", "EAS_ID"]])
 def test_gdalalg_raster_zonal_stats_polygon_zones_include_fields(
-    zonal, strategy, polyrast
+    zonal, strategy, polyrast, include_field
 ):
 
     zonal["input"] = polyrast
@@ -623,22 +623,64 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_include_fields(
     zonal["include-field"] = "does_not_exist"
     zonal["zones"] = "../ogr/data/poly.shp"
 
-    with pytest.raises(Exception, match="Field .* not found"):
-        zonal.Run()
+    if include_field is None:
+        with pytest.raises(Exception, match="Field .* not found"):
+            zonal.Run()
+    else:
+        zonal["include-field"] = include_field
 
-    zonal["include-field"] = ["PRFEDEA", "EAS_ID"]
+        if include_field == "ALL":
+            expected_fields = ["AREA", "EAS_ID", "PRFEDEA", "sum"]
+        elif include_field == "NONE":
+            expected_fields = ["sum"]
+        else:
+            expected_fields = ["PRFEDEA", "EAS_ID", "sum"]
+
+        assert zonal.Run()
+
+        out_ds = zonal.Output()
+
+        f = out_ds.GetLayer(0).GetNextFeature()
+
+        assert field_names(f) == expected_fields
+
+        if "PRFEDEA" in expected_fields:
+            assert f["PRFEDEA"] == "35043411"
+        if "EAS_ID" in expected_fields:
+            assert f["EAS_ID"] == 168
+        if "AREA" in expected_fields:
+            assert f["AREA"] == 215229.266
+        assert f["sum"] == 369.0
+
+
+def test_gdalalg_raster_zonal_stats_polygon_zones_include_geom(
+    zonal, strategy, polyrast
+):
+
+    zonal["input"] = polyrast
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+    zonal["strategy"] = strategy
+    zonal["stat"] = "sum"
+    zonal["include-geom"] = True
+    zonal["zones"] = "../ogr/data/poly.shp"
 
     assert zonal.Run()
 
     out_ds = zonal.Output()
+    out_lyr = out_ds.GetLayer(0)
 
-    f = out_ds.GetLayer(0).GetNextFeature()
+    src_ds = gdal.OpenEx("../ogr/data/poly.shp")
+    src_lyr = src_ds.GetLayer(0)
 
-    assert field_names(f) == ["PRFEDEA", "EAS_ID", "sum"]
+    assert out_lyr.GetSpatialRef().IsSame(src_lyr.GetSpatialRef())
 
-    assert f["PRFEDEA"] == "35043411"
-    assert f["EAS_ID"] == 168
-    assert f["sum"] == 369.0
+    for src_feat, dst_feat in zip(src_lyr, out_lyr):
+        src_geom = src_feat.GetGeometryRef()
+        dst_geom = dst_feat.GetGeometryRef()
+
+        assert src_geom.GetSpatialReference().IsSame(dst_geom.GetSpatialReference())
+        ogrtest.check_feature_geometry(dst_feat, src_geom)
 
 
 def test_gdalalg_raster_zonal_stats_raster_zones_include_fields(zonal):
@@ -651,6 +693,19 @@ def test_gdalalg_raster_zonal_stats_raster_zones_include_fields(zonal):
     zonal["include-field"] = "id"
 
     with pytest.raises(Exception, match="Cannot include fields"):
+        zonal.Run()
+
+
+def test_gdalalg_raster_zonal_stats_raster_zones_include_geom(zonal):
+
+    zonal["input"] = "../gcore/data/byte.tif"
+    zonal["zones"] = "../gcore/data/byte.tif"
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+    zonal["stat"] = "sum"
+    zonal["include-geom"] = True
+
+    with pytest.raises(Exception, match="Cannot include geometry"):
         zonal.Run()
 
 
@@ -705,7 +760,7 @@ def test_gdalalg_raster_zonal_stats_polygon_zones_invalid_chunk_size(zonal):
         zonal["chunk-size"] = "512"
 
 
-@pytest.mark.skipif(sys.maxsize <= 1 << 32, reason="only works on 64 bit")
+@pytest.mark.require_64bit()
 def test_gdalalg_raster_zonal_stats_polygon_zones_large_chunk_size(zonal):
 
     zonal["input"] = "../gcore/data/byte.tif"
@@ -1082,7 +1137,7 @@ def test_gdalalg_raster_zonal_stats_pipeline_usage(zonal, tmp_vsimem, polyrast):
 
     pipeline = gdal.Algorithm("pipeline")
 
-    src_fname = tmp_vsimem / "polyrast.shp"
+    src_fname = tmp_vsimem / "polyrast.tif"
     out_fname = tmp_vsimem / "out.csv"
 
     gdal.GetDriverByName("GTiff").CreateCopy(src_fname, polyrast)
@@ -1095,6 +1150,39 @@ def test_gdalalg_raster_zonal_stats_pipeline_usage(zonal, tmp_vsimem, polyrast):
             "zonal-stats",
             "--zones",
             "../ogr/data/poly.shp",
+            "--stat",
+            "sum",
+            "!",
+            "write",
+            out_fname,
+        ]
+    )
+
+    with gdal.OpenEx(out_fname) as dst:
+        assert dst.GetLayer(0).GetFeatureCount() == 10
+
+
+def test_gdalalg_raster_zonal_stats_pipeline_piped_is_zones(
+    zonal, tmp_vsimem, polyrast
+):
+
+    pipeline = gdal.Algorithm("pipeline")
+
+    src_fname = tmp_vsimem / "polyrast.tif"
+    out_fname = tmp_vsimem / "out.csv"
+
+    gdal.GetDriverByName("GTiff").CreateCopy(src_fname, polyrast)
+
+    assert pipeline.ParseRunAndFinalize(
+        [
+            "read",
+            "../ogr/data/poly.shp",
+            "!",
+            "zonal-stats",
+            "--input",
+            src_fname,
+            "--zones",
+            "_PIPE_",
             "--stat",
             "sum",
             "!",
@@ -1164,8 +1252,7 @@ def test_gdalalg_raster_zonal_stats_polygon_huge_extent(zonal, strategy):
 @pytest.mark.slow()
 def test_gdalalg_raster_zonal_stats_polygon_huge_extent_huge_raster(zonal):
 
-    huge_raster = gdal.Open(
-        """<VRTDataset rasterXSize="2147483647" rasterYSize="1">
+    huge_raster = gdal.Open("""<VRTDataset rasterXSize="2147483647" rasterYSize="1">
   <GeoTransform>0,1,0,0,0,1</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
@@ -1176,8 +1263,7 @@ def test_gdalalg_raster_zonal_stats_polygon_huge_extent_huge_raster(zonal):
       <DstRect xOff="0" yOff="0" xSize="20" ySize="1" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     zonal["input"] = huge_raster
     v = 1e11
@@ -1198,3 +1284,49 @@ def test_gdalalg_raster_zonal_stats_polygon_huge_extent_huge_raster(zonal):
     assert len(results) == 1
 
     assert results[0]["count"] == 2147483647.0
+
+
+def test_gdalalg_raster_zonal_stats_raster_zones_output_layer(zonal):
+
+    src_fname = "../gcore/data/byte.tif"
+    zones_ds = gdaltest.wkt_ds(["POLYGON EMPTY"])
+
+    zonal["input"] = src_fname
+    zonal["zones"] = zones_ds
+    zonal["stat"] = "count"
+    zonal["output-format"] = "MEM"
+    zonal["output-layer"] = "myresult"
+
+    assert zonal.Run()
+
+    out_ds = zonal.Output()
+
+    assert out_ds.GetLayer(0).GetName() == "myresult"
+
+
+@pytest.mark.parametrize("pixels", ["default", "all-touched"], indirect=True)
+def test_gdalalg_raster_zonal_stats_center_xy_alloc(zonal, strategy, pixels):
+
+    # See https://github.com/OSGeo/gdal/issues/14371#issuecomment-4256674808
+
+    nx, ny = 10, 10
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", nx, ny, 1)
+    src_ds.SetGeoTransform((0, 1, 0, ny, 0, -1))
+
+    zones_ds = gdaltest.wkt_ds(
+        [
+            "POLYGON ((0 0, 1 0, 1 10, 0 10, 0 1))",
+            "POLYGON ((0 0, 10 0, 10 1, 0 1, 0 0))",
+        ]
+    )
+
+    zonal["input"] = src_ds
+    zonal["zones"] = zones_ds
+    zonal["output"] = ""
+    zonal["output-format"] = "MEM"
+    zonal["strategy"] = strategy
+    zonal["pixels"] = pixels
+    zonal["stat"] = ["count", "center_x", "center_y"]
+
+    assert zonal.Run()  # no crash

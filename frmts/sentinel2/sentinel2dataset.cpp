@@ -138,7 +138,7 @@ static bool SENTINEL2GetTileInfo(const char *pszFilename, int *pnWidth,
                                  int *pnHeight, int *pnBits);
 
 /************************************************************************/
-/*                          IsS2Prefixed()                              */
+/*                            IsS2Prefixed()                            */
 /************************************************************************/
 
 // IsS2Prefixed(pszStr, "foo") checks that pszStr starts with
@@ -152,7 +152,7 @@ static bool IsS2Prefixed(const char *pszStr, const char *pszPrefixAfterS2X)
 }
 
 /************************************************************************/
-/*                           SENTINEL2GranuleInfo                       */
+/*                         SENTINEL2GranuleInfo                         */
 /************************************************************************/
 
 class SENTINEL2GranuleInfo
@@ -363,7 +363,7 @@ char **SENTINEL2Dataset::GetFileList()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int SENTINEL2Dataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -431,7 +431,7 @@ int SENTINEL2Dataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         SENTINEL2_CPLXMLNodeHolder                   */
+/*                      SENTINEL2_CPLXMLNodeHolder                      */
 /************************************************************************/
 
 class SENTINEL2_CPLXMLNodeHolder
@@ -639,7 +639,7 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        SENTINEL2isZipped()                           */
+/*                         SENTINEL2isZipped()                          */
 /************************************************************************/
 
 static bool SENTINEL2isZipped(const char *pszHeader, int nHeaderBytes)
@@ -684,7 +684,7 @@ SENTINEL2GetBandDesc(const char *pszBandName)
 }
 
 /************************************************************************/
-/*                       SENTINEL2GetL2ABandDesc()                      */
+/*                      SENTINEL2GetL2ABandDesc()                       */
 /************************************************************************/
 
 static const SENTINEL2_L2A_BandDescription *
@@ -699,7 +699,7 @@ SENTINEL2GetL2ABandDesc(const char *pszBandName)
 }
 
 /************************************************************************/
-/*                        SENTINEL2GetGranuleInfo()                     */
+/*                      SENTINEL2GetGranuleInfo()                       */
 /************************************************************************/
 
 static bool SENTINEL2GetGranuleInfo(
@@ -871,7 +871,7 @@ static bool SENTINEL2GetGranuleInfo(
 }
 
 /************************************************************************/
-/*                      SENTINEL2GetPathSeparator()                     */
+/*                     SENTINEL2GetPathSeparator()                      */
 /************************************************************************/
 
 // For the sake of simplifying our unit tests, we limit the use of \\ to when
@@ -1097,7 +1097,7 @@ static bool SENTINEL2GetGranuleList(
 }
 
 /************************************************************************/
-/*                     SENTINEL2GetUserProductMetadata()                */
+/*                  SENTINEL2GetUserProductMetadata()                   */
 /************************************************************************/
 
 static char **SENTINEL2GetUserProductMetadata(CPLXMLNode *psMainMTD,
@@ -1309,7 +1309,7 @@ static char **SENTINEL2GetUserProductMetadata(CPLXMLNode *psMainMTD,
 }
 
 /************************************************************************/
-/*                        SENTINEL2GetResolutionSet()                   */
+/*                     SENTINEL2GetResolutionSet()                      */
 /************************************************************************/
 
 static bool SENTINEL2GetResolutionSet(
@@ -1358,7 +1358,7 @@ static bool SENTINEL2GetResolutionSet(
 }
 
 /************************************************************************/
-/*                  SENTINEL2GetPolygonWKTFromPosList()                 */
+/*                 SENTINEL2GetPolygonWKTFromPosList()                  */
 /************************************************************************/
 
 static CPLString SENTINEL2GetPolygonWKTFromPosList(const char *pszPosList)
@@ -1397,7 +1397,7 @@ static CPLString SENTINEL2GetPolygonWKTFromPosList(const char *pszPosList)
 }
 
 /************************************************************************/
-/*                    SENTINEL2GetBandListForResolution()               */
+/*                 SENTINEL2GetBandListForResolution()                  */
 /************************************************************************/
 
 static CPLString
@@ -1586,7 +1586,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BUserProduct(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                    SENTINEL2GetL1BGranuleMetadata()                  */
+/*                   SENTINEL2GetL1BGranuleMetadata()                   */
 /************************************************************************/
 
 static char **SENTINEL2GetL1BGranuleMetadata(CPLXMLNode *psMainMTD)
@@ -1783,7 +1783,7 @@ SENTINEL2GetTilename(const std::string &osGranulePath,
 }
 
 /************************************************************************/
-/*                 SENTINEL2GetMainMTDFilenameFromGranuleMTD()          */
+/*             SENTINEL2GetMainMTDFilenameFromGranuleMTD()              */
 /************************************************************************/
 
 static CPLString
@@ -1827,7 +1827,7 @@ SENTINEL2GetMainMTDFilenameFromGranuleMTD(const char *pszFilename)
 }
 
 /************************************************************************/
-/*            SENTINEL2GetResolutionSetAndMainMDFromGranule()           */
+/*           SENTINEL2GetResolutionSetAndMainMDFromGranule()            */
 /************************************************************************/
 
 static void SENTINEL2GetResolutionSetAndMainMDFromGranule(
@@ -2002,7 +2002,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BGranule(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                     SENTINEL2SetBandMetadata()                       */
+/*                      SENTINEL2SetBandMetadata()                      */
 /************************************************************************/
 
 static void SENTINEL2SetBandMetadata(GDALRasterBand *poBand,
@@ -2369,7 +2369,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1BSubdataset(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                   OpenL1BSubdatasetWithGeoloc()                      */
+/*                    OpenL1BSubdatasetWithGeoloc()                     */
 /************************************************************************/
 
 GDALDataset *
@@ -2735,7 +2735,7 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                 SENTINEL2GetGranuleList_L1CSafeCompact()             */
+/*               SENTINEL2GetGranuleList_L1CSafeCompact()               */
 /************************************************************************/
 
 static bool SENTINEL2GetGranuleList_L1CSafeCompact(
@@ -2824,7 +2824,7 @@ static bool SENTINEL2GetGranuleList_L1CSafeCompact(
 }
 
 /************************************************************************/
-/*                 SENTINEL2GetGranuleList_L2ASafeCompact()             */
+/*               SENTINEL2GetGranuleList_L2ASafeCompact()               */
 /************************************************************************/
 
 static bool SENTINEL2GetGranuleList_L2ASafeCompact(
@@ -2938,7 +2938,7 @@ static bool SENTINEL2GetGranuleList_L2ASafeCompact(
 }
 
 /************************************************************************/
-/*                           OpenL1C_L2A()                              */
+/*                            OpenL1C_L2A()                             */
 /************************************************************************/
 
 GDALDataset *SENTINEL2Dataset::OpenL1C_L2A(const char *pszFilename,
@@ -3240,7 +3240,7 @@ static char **SENTINEL2GetL1BCTileMetadata(CPLXMLNode *psMainMTD)
 }
 
 /************************************************************************/
-/*                              OpenL1CTile()                           */
+/*                            OpenL1CTile()                             */
 /************************************************************************/
 
 GDALDataset *SENTINEL2Dataset::OpenL1CTile(const char *pszFilename,
@@ -3393,7 +3393,7 @@ static CPLString LaunderUnit(const char *pszUnit)
 }
 
 /************************************************************************/
-/*                       SENTINEL2GetTileInfo()                         */
+/*                        SENTINEL2GetTileInfo()                        */
 /************************************************************************/
 
 static bool SENTINEL2GetTileInfo(const char *pszFilename, int *pnWidth,
@@ -3508,7 +3508,7 @@ static bool SENTINEL2GetTileInfo(const char *pszFilename, int *pnWidth,
 }
 
 /************************************************************************/
-/*                         OpenL1C_L2ASubdataset()                      */
+/*                       OpenL1C_L2ASubdataset()                        */
 /************************************************************************/
 
 GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset(GDALOpenInfo *poOpenInfo,
@@ -3799,7 +3799,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1C_L2ASubdataset(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                         AddL1CL2ABandMetadata()                      */
+/*                       AddL1CL2ABandMetadata()                        */
 /************************************************************************/
 
 void SENTINEL2Dataset::AddL1CL2ABandMetadata(
@@ -3982,7 +3982,7 @@ void SENTINEL2Dataset::AddL1CL2ABandMetadata(
 }
 
 /************************************************************************/
-/*                         CreateL1CL2ADataset()                        */
+/*                        CreateL1CL2ADataset()                         */
 /************************************************************************/
 
 SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
@@ -4240,7 +4240,7 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
 }
 
 /************************************************************************/
-/*                      OpenL1CTileSubdataset()                         */
+/*                       OpenL1CTileSubdataset()                        */
 /************************************************************************/
 
 GDALDataset *SENTINEL2Dataset::OpenL1CTileSubdataset(GDALOpenInfo *poOpenInfo)
@@ -4358,7 +4358,7 @@ GDALDataset *SENTINEL2Dataset::OpenL1CTileSubdataset(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      GDALRegister_SENTINEL2()                        */
+/*                       GDALRegister_SENTINEL2()                       */
 /************************************************************************/
 
 void GDALRegister_SENTINEL2()

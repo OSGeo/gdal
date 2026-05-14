@@ -16,6 +16,8 @@
 #include "gdal_utils.h"
 #include "ogrsf_frmts.h"
 
+#include <optional>
+
 //! @cond Doxygen_Suppress
 
 #ifndef _
@@ -23,7 +25,7 @@
 #endif
 
 /************************************************************************/
-/*                          GetGCPFilename()                            */
+/*                           GetGCPFilename()                           */
 /************************************************************************/
 
 static std::string GetGCPFilename(const std::vector<std::string> &gcps)
@@ -52,13 +54,22 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
                _("Dataset (to be updated in-place, unless --auxiliary)"),
                &m_dataset, GDAL_OF_RASTER | GDAL_OF_UPDATE)
             .SetPositional()
-            .SetRequired();
+            .SetRequired()
+            .SetAvailableInPipelineStep(false);
+        AddOpenOptionsArg(&m_openOptions).SetAvailableInPipelineStep(false);
         AddArg("auxiliary", 0,
                _("Ask for an auxiliary .aux.xml file to be edited"),
                &m_readOnly)
             .AddHiddenAlias("ro")
-            .AddHiddenAlias(GDAL_ARG_NAME_READ_ONLY);
+            .AddHiddenAlias(GDAL_ARG_NAME_READ_ONLY)
+            .SetAvailableInPipelineStep(false);
     }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
+
+    AddBandArg(&m_band, _("Active band (1-based index)"));
 
     AddArg("crs", 0, _("Override CRS (without reprojection)"), &m_overrideCrs)
         .AddHiddenAlias("a_srs")
@@ -69,6 +80,83 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
 
     AddNodataArg(&m_nodata, /* noneAllowed = */ true);
 
+    AddArg("color-interpretation", 0, _("Set band color interpretation"),
+           &m_colorInterpretation)
+        .SetMetaVar("[all|<BAND>=]<COLOR-INTEPRETATION>")
+        .SetAutoCompleteFunction(
+            [this](const std::string &s)
+            {
+                std::vector<std::string> ret;
+                int nValues = 0;
+                const auto paeVals = GDALGetColorInterpretationList(&nValues);
+                if (s.find('=') == std::string::npos)
+                {
+                    ret.push_back("all=");
+                    if (auto poDS = m_dataset.GetDatasetRef())
+                    {
+                        for (int i = 0; i < poDS->GetRasterCount(); ++i)
+                            ret.push_back(std::to_string(i + 1).append("="));
+                    }
+                    for (int i = 0; i < nValues; ++i)
+                        ret.push_back(
+                            GDALGetColorInterpretationName(paeVals[i]));
+                }
+                else
+                {
+                    for (int i = 0; i < nValues; ++i)
+                        ret.push_back(
+                            GDALGetColorInterpretationName(paeVals[i]));
+                }
+                return ret;
+            });
+
+    AddArg("color-map", 0, _("Color map filename"), &m_colorMap)
+        .SetMutualExclusionGroup("color-table")
+        .AddHiddenAlias("color-table");
+
+    const auto ValidationActionScaleOffset =
+        [this](const char *argName, const std::vector<std::string> &values)
+    {
+        for (const std::string &s : values)
+        {
+            bool valid = true;
+            const auto nPos = s.find('=');
+            if (nPos != std::string::npos)
+            {
+                if (CPLGetValueType(s.substr(0, nPos).c_str()) !=
+                        CPL_VALUE_INTEGER ||
+                    CPLGetValueType(s.substr(nPos + 1).c_str()) ==
+                        CPL_VALUE_STRING)
+                {
+                    valid = false;
+                }
+            }
+            else if (CPLGetValueType(s.c_str()) == CPL_VALUE_STRING)
+            {
+                valid = false;
+            }
+            if (!valid)
+            {
+                ReportError(CE_Failure, CPLE_IllegalArg,
+                            "Invalid value '%s' for '%s'", s.c_str(), argName);
+                return false;
+            }
+        }
+        return true;
+    };
+
+    AddArg("scale", 0, _("Override band scale factor"), &m_scale)
+        .SetMetaVar("[<BAND>=]<SCALE>")
+        .AddValidationAction(
+            [this, ValidationActionScaleOffset]()
+            { return ValidationActionScaleOffset("scale", m_scale); });
+
+    AddArg("offset", 0, _("Override band offset constant"), &m_offset)
+        .SetMetaVar("[<BAND>=]<OFFSET>")
+        .AddValidationAction(
+            [this, ValidationActionScaleOffset]()
+            { return ValidationActionScaleOffset("offset", m_offset); });
+
     {
         auto &arg = AddArg("metadata", 0, _("Add/update dataset metadata item"),
                            &m_metadata)
@@ -78,6 +166,11 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
                                 { return ParseAndValidateKeyValue(arg); });
         arg.AddHiddenAlias("mo");
     }
+
+    AddArg("unset-color-table", 0,
+           _("Unset color table on 1st band or the one specified with --band"),
+           &m_unsetColorTable)
+        .SetMutualExclusionGroup("color-table");
 
     AddArg("unset-metadata", 0, _("Remove dataset metadata item(s)"),
            &m_unsetMetadata)
@@ -135,13 +228,13 @@ GDALRasterEditAlgorithm::GDALRasterEditAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*           GDALRasterEditAlgorithm::~GDALRasterEditAlgorithm()        */
+/*         GDALRasterEditAlgorithm::~GDALRasterEditAlgorithm()          */
 /************************************************************************/
 
 GDALRasterEditAlgorithm::~GDALRasterEditAlgorithm() = default;
 
 /************************************************************************/
-/*                              ParseGCPs()                             */
+/*                             ParseGCPs()                              */
 /************************************************************************/
 
 std::vector<gdal::GCP> GDALRasterEditAlgorithm::ParseGCPs() const
@@ -226,7 +319,7 @@ std::vector<gdal::GCP> GDALRasterEditAlgorithm::ParseGCPs() const
 }
 
 /************************************************************************/
-/*                GDALRasterEditAlgorithm::RunStep()                    */
+/*                  GDALRasterEditAlgorithm::RunStep()                  */
 /************************************************************************/
 
 bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -234,6 +327,7 @@ bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     GDALDataset *poDS = m_dataset.GetDatasetRef();
     if (poDS)
     {
+        // Standalone mode
         if (poDS->GetAccess() != GA_Update && !m_readOnly)
         {
             ReportError(CE_Failure, CPLE_AppDefined,
@@ -244,21 +338,35 @@ bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
     else
     {
+        // Pipeline mode
         const auto poSrcDS = m_inputDataset[0].GetDatasetRef();
         CPLAssert(poSrcDS);
         CPLAssert(m_outputDataset.GetName().empty());
         CPLAssert(!m_outputDataset.GetDatasetRef());
-
-        CPLStringList aosOptions;
-        aosOptions.push_back("-of");
-        aosOptions.push_back("VRT");
-        GDALTranslateOptions *psOptions =
-            GDALTranslateOptionsNew(aosOptions.List(), nullptr);
-        GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
-        auto poRetDS = GDALDataset::FromHandle(
-            GDALTranslate("", hSrcDS, psOptions, nullptr));
-        GDALTranslateOptionsFree(psOptions);
-        m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
+        auto poDriver = poSrcDS->GetDriver();
+        if (poDriver && EQUAL(poDriver->GetDescription(), "VRT") &&
+            poSrcDS->GetDescription()[0] == '\0')
+        {
+            // We can directly edit an anonymous input VRT file
+            // and we actually need to do that since the generic code path
+            // in the other branch will try to serialize and deserialize a XML
+            // file pointing to an anonymous source.
+            m_outputDataset.Set(poSrcDS);
+        }
+        else
+        {
+            // Create a in-memory VRT to avoid modifying the source dataset.
+            CPLStringList aosOptions;
+            aosOptions.push_back("-of");
+            aosOptions.push_back("VRT");
+            GDALTranslateOptions *psOptions =
+                GDALTranslateOptionsNew(aosOptions.List(), nullptr);
+            GDALDatasetH hSrcDS = GDALDataset::ToHandle(poSrcDS);
+            auto poRetDS = GDALDataset::FromHandle(
+                GDALTranslate("", hSrcDS, psOptions, nullptr));
+            GDALTranslateOptionsFree(psOptions);
+            m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
+        }
         poDS = m_outputDataset.GetDatasetRef();
     }
 
@@ -298,12 +406,12 @@ bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 return false;
             }
             GDALGeoTransform gt;
-            gt[0] = m_bbox[0];
-            gt[1] = (m_bbox[2] - m_bbox[0]) / poDS->GetRasterXSize();
-            gt[2] = 0;
-            gt[3] = m_bbox[3];
-            gt[4] = 0;
-            gt[5] = -(m_bbox[3] - m_bbox[1]) / poDS->GetRasterYSize();
+            gt.xorig = m_bbox[0];
+            gt.xscale = (m_bbox[2] - m_bbox[0]) / poDS->GetRasterXSize();
+            gt.xrot = 0;
+            gt.yorig = m_bbox[3];
+            gt.yrot = 0;
+            gt.yscale = -(m_bbox[3] - m_bbox[1]) / poDS->GetRasterYSize();
             if (poDS->SetGeoTransform(gt) != CE_None)
             {
                 ReportError(CE_Failure, CPLE_AppDefined,
@@ -322,6 +430,330 @@ bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     poDS->GetRasterBand(i + 1)->SetNoDataValue(
                         CPLAtof(m_nodata.c_str()));
             }
+        }
+
+        if (!m_colorMap.empty())
+        {
+            std::unique_ptr<GDALDataset> poAuxDS;
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                poAuxDS = std::unique_ptr<GDALDataset>(
+                    GDALDataset::Open(m_colorMap.c_str(), GDAL_OF_RASTER));
+            }
+            if (m_band == 0)
+                m_band = 1;
+            if (poDS->GetRasterCount() < m_band)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Band %d is not valid for %s", m_band,
+                            poDS->GetDescription());
+                return false;
+            }
+            if (poAuxDS)
+            {
+                if (poAuxDS->GetRasterCount() == 0)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "%s has no raster band", m_colorMap.c_str());
+                    return false;
+                }
+                const auto poCT = poAuxDS->GetRasterBand(1)->GetColorTable();
+                if (!poCT)
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "%s has no color table", m_colorMap.c_str());
+                    return false;
+                }
+                if (poDS->GetRasterBand(m_band)->SetColorTable(poCT) != CE_None)
+                {
+                    return false;
+                }
+                if (m_colorInterpretation.empty())
+                {
+                    poDS->GetRasterBand(m_band)->SetColorInterpretation(
+                        GCI_PaletteIndex);
+                }
+            }
+            else
+            {
+                std::vector<GDALColorAssociation> asColors =
+                    GDALLoadTextColorMap(m_colorMap.c_str(),
+                                         poDS->GetRasterBand(m_band));
+                if (asColors.empty())
+                {
+                    ReportError(CE_Failure, CPLE_AppDefined,
+                                "%s has no color table", m_colorMap.c_str());
+                    return false;
+                }
+                GDALColorTable oCT;
+                for (const auto &sColor : asColors)
+                {
+                    if (!(sColor.dfVal >= 0 && sColor.dfVal < 65536 &&
+                          static_cast<int>(sColor.dfVal) == sColor.dfVal))
+                    {
+                        ReportError(CE_Failure, CPLE_AppDefined,
+                                    "Value %f of color map is not compatible "
+                                    "of an integer index",
+                                    sColor.dfVal);
+                        return false;
+                    }
+                    GDALColorEntry entry;
+                    entry.c1 = static_cast<short>(sColor.nR);
+                    entry.c2 = static_cast<short>(sColor.nG);
+                    entry.c3 = static_cast<short>(sColor.nB);
+                    entry.c4 = static_cast<short>(sColor.nA);
+                    oCT.SetColorEntry(static_cast<int>(sColor.dfVal), &entry);
+                }
+                if (poDS->GetRasterBand(m_band)->SetColorTable(&oCT) != CE_None)
+                {
+                    return false;
+                }
+                if (m_colorInterpretation.empty())
+                {
+                    poDS->GetRasterBand(m_band)->SetColorInterpretation(
+                        GCI_PaletteIndex);
+                }
+            }
+        }
+        else if (m_unsetColorTable)
+        {
+            if (m_band == 0)
+                m_band = 1;
+            if (poDS->GetRasterCount() < m_band)
+            {
+                ReportError(CE_Failure, CPLE_AppDefined,
+                            "Band %d is not valid for %s", m_band,
+                            poDS->GetDescription());
+                return false;
+            }
+            if (poDS->GetRasterBand(m_band)->SetColorTable(nullptr) != CE_None)
+            {
+                return false;
+            }
+            if (m_colorInterpretation.empty())
+            {
+                poDS->GetRasterBand(m_band)->SetColorInterpretation(
+                    GCI_Undefined);
+            }
+        }
+
+        if (!m_colorInterpretation.empty())
+        {
+            const auto GetColorInterp =
+                [this](const char *pszStr) -> std::optional<GDALColorInterp>
+            {
+                if (EQUAL(pszStr, "undefined"))
+                    return GCI_Undefined;
+                const GDALColorInterp eInterp =
+                    GDALGetColorInterpretationByName(pszStr);
+                if (eInterp != GCI_Undefined)
+                    return eInterp;
+                ReportError(CE_Failure, CPLE_NotSupported,
+                            "Unsupported color interpretation: %s", pszStr);
+                return {};
+            };
+
+            if (m_colorInterpretation.size() == 1 &&
+                poDS->GetRasterCount() > 1 &&
+                !cpl::starts_with(m_colorInterpretation[0], "all="))
+            {
+                ReportError(
+                    CE_Failure, CPLE_NotSupported,
+                    "With several bands, specify as many color interpretation "
+                    "as bands, one or many values of the form "
+                    "<band_number>=<color> or a single value all=<color>");
+                return false;
+            }
+            else
+            {
+                int nBandIter = 0;
+                bool bSyntaxAll = false;
+                bool bSyntaxExplicitBand = false;
+                bool bSyntaxImplicitBand = false;
+                for (const std::string &token : m_colorInterpretation)
+                {
+                    const CPLStringList aosTokens(
+                        CSLTokenizeString2(token.c_str(), "=", 0));
+                    if (aosTokens.size() == 2 && EQUAL(aosTokens[0], "all"))
+                    {
+                        bSyntaxAll = true;
+                        const auto eColorInterp = GetColorInterp(aosTokens[1]);
+                        if (!eColorInterp)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            for (int i = 0; i < poDS->GetRasterCount(); ++i)
+                            {
+                                if (poDS->GetRasterBand(i + 1)
+                                        ->SetColorInterpretation(
+                                            *eColorInterp) != CE_None)
+                                    return false;
+                            }
+                        }
+                    }
+                    else if (aosTokens.size() == 2)
+                    {
+                        bSyntaxExplicitBand = true;
+                        const int nBand = atoi(aosTokens[0]);
+                        if (nBand <= 0 || nBand > poDS->GetRasterCount())
+                        {
+                            ReportError(CE_Failure, CPLE_NotSupported,
+                                        "Invalid band number '%s' in '%s'",
+                                        aosTokens[0], token.c_str());
+                            return false;
+                        }
+                        const auto eColorInterp = GetColorInterp(aosTokens[1]);
+                        if (!eColorInterp)
+                        {
+                            return false;
+                        }
+                        else if (poDS->GetRasterBand(nBand)
+                                     ->SetColorInterpretation(*eColorInterp) !=
+                                 CE_None)
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        bSyntaxImplicitBand = true;
+                        ++nBandIter;
+                        if (nBandIter > poDS->GetRasterCount())
+                        {
+                            ReportError(CE_Failure, CPLE_IllegalArg,
+                                        "More color interpretation values "
+                                        "specified than bands in the dataset");
+                            return false;
+                        }
+                        const auto eColorInterp = GetColorInterp(token.c_str());
+                        if (!eColorInterp)
+                        {
+                            return false;
+                        }
+                        else if (poDS->GetRasterBand(nBandIter)
+                                     ->SetColorInterpretation(*eColorInterp) !=
+                                 CE_None)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                if ((bSyntaxAll ? 1 : 0) + (bSyntaxExplicitBand ? 1 : 0) +
+                        (bSyntaxImplicitBand ? 1 : 0) !=
+                    1)
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Mix of different syntaxes to specify color "
+                                "interpretation");
+                    return false;
+                }
+                if (bSyntaxImplicitBand && nBandIter != poDS->GetRasterCount())
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Less color interpretation values specified "
+                                "than bands in the dataset");
+                    return false;
+                }
+            }
+        }
+
+        const auto ScaleOffsetSetterLambda =
+            [this, poDS](const char *argName,
+                         const std::vector<std::string> &values,
+                         CPLErr (GDALRasterBand::*Setter)(double))
+        {
+            if (values.size() == 1 && values[0].find('=') == std::string::npos)
+            {
+                const double dfScale = CPLAtof(values[0].c_str());
+                for (int i = 0; i < poDS->GetRasterCount(); ++i)
+                {
+                    if ((poDS->GetRasterBand(i + 1)->*Setter)(dfScale) !=
+                        CE_None)
+                        return false;
+                }
+            }
+            else
+            {
+                int nBandIter = 0;
+                bool bSyntaxExplicitBand = false;
+                bool bSyntaxImplicitBand = false;
+                for (const std::string &token : values)
+                {
+                    const CPLStringList aosTokens(
+                        CSLTokenizeString2(token.c_str(), "=", 0));
+                    if (aosTokens.size() == 2)
+                    {
+                        bSyntaxExplicitBand = true;
+                        const int nBand = atoi(aosTokens[0]);
+                        if (nBand <= 0 || nBand > poDS->GetRasterCount())
+                        {
+                            ReportError(CE_Failure, CPLE_NotSupported,
+                                        "Invalid band number '%s' in '%s'",
+                                        aosTokens[0], token.c_str());
+                            return false;
+                        }
+                        const double dfScale = CPLAtof(aosTokens[1]);
+                        if ((poDS->GetRasterBand(nBand)->*Setter)(dfScale) !=
+                            CE_None)
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        bSyntaxImplicitBand = true;
+                        ++nBandIter;
+                        if (nBandIter > poDS->GetRasterCount())
+                        {
+                            ReportError(CE_Failure, CPLE_IllegalArg,
+                                        "More %s values "
+                                        "specified than bands in the dataset",
+                                        argName);
+                            return false;
+                        }
+                        const double dfScale = CPLAtof(token.c_str());
+                        if ((poDS->GetRasterBand(nBandIter)->*Setter)(
+                                dfScale) != CE_None)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                if (((bSyntaxExplicitBand ? 1 : 0) +
+                     (bSyntaxImplicitBand ? 1 : 0)) != 1)
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Mix of different syntaxes to specify %s",
+                                argName);
+                    return false;
+                }
+                if (bSyntaxImplicitBand && nBandIter != poDS->GetRasterCount())
+                {
+                    ReportError(CE_Failure, CPLE_IllegalArg,
+                                "Less %s values specified "
+                                "than bands in the dataset",
+                                argName);
+                    return false;
+                }
+            }
+
+            return true;
+        };
+
+        if (!m_scale.empty())
+        {
+            if (!ScaleOffsetSetterLambda("scale", m_scale,
+                                         &GDALRasterBand::SetScale))
+                return false;
+        }
+
+        if (!m_offset.empty())
+        {
+            if (!ScaleOffsetSetterLambda("offset", m_offset,
+                                         &GDALRasterBand::SetOffset))
+                return false;
         }
 
         const CPLStringList aosMD(m_metadata);

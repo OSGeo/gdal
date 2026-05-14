@@ -127,7 +127,7 @@ NASHandler::~NASHandler()
 }
 
 /************************************************************************/
-/*                        GetAttributes()                               */
+/*                           GetAttributes()                            */
 /************************************************************************/
 
 CPLString NASHandler::GetAttributes(const Attributes *attrs)
@@ -146,7 +146,7 @@ CPLString NASHandler::GetAttributes(const Attributes *attrs)
 }
 
 /************************************************************************/
-/*                   setDocumentLocator()                               */
+/*                         setDocumentLocator()                         */
 /************************************************************************/
 
 void NASHandler::setDocumentLocator(const Locator *locator)
@@ -449,11 +449,11 @@ void NASHandler::endElement(const XMLCh *const /* uri */,
     {
         if (m_osElementName == "Name" || m_osElementName == "ValueReference")
         {
-            const char *pszName;
-            pszName = strrchr(m_pszCurField, '/');
-            pszName = pszName ? pszName + 1 : m_pszCurField;
-            pszName = strrchr(pszName, ':');
-            pszName = pszName ? pszName + 1 : m_pszCurField;
+            const char *pszName = m_pszCurField;
+            if (const char *p = strrchr(pszName, '/'))
+                pszName = p + 1;
+            if (const char *p = strrchr(pszName, ':'))
+                pszName = p + 1;
 
             CPLAssert(m_osUpdatePropertyName == "");
             m_osUpdatePropertyName = pszName;
@@ -651,7 +651,7 @@ void NASHandler::endElement(const XMLCh *const /* uri */,
 }
 
 /************************************************************************/
-/*                             startEntity()                            */
+/*                            startEntity()                             */
 /************************************************************************/
 
 void NASHandler::startEntity(const XMLCh *const /* name */)

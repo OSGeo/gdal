@@ -106,7 +106,7 @@ def test_gdalbuildvrt_1(gdalbuildvrt_path, tmp_path, sample_tifs):
 
     mosaic_vrt = str(tmp_path / "mosaic.vrt")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdalbuildvrt_path + f" {mosaic_vrt} {' '.join(sample_tifs)}"
     )
     assert err is None or err == "", "got error/warning"
@@ -474,7 +474,7 @@ def test_gdalbuildvrt_12(gdalbuildvrt_path, tmp_path):
 
     output_vrt = str(tmp_path / "gdalbuildvrt12.vrt")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         gdalbuildvrt_path + f" -tap {output_vrt} ../gcore/data/byte.tif",
         check_memleak=False,
     )
@@ -569,7 +569,7 @@ def test_gdalbuildvrt_15(gdalbuildvrt_path, tmp_path):
 
 def test_gdalbuildvrt_16(gdalbuildvrt_path):
 
-    (out, err) = gdaltest.runexternal_out_and_err(
+    out, err = gdaltest.runexternal_out_and_err(
         gdalbuildvrt_path
         + " /non_existing_dir/non_existing_subdir/out.vrt ../gcore/data/byte.tif"
     )

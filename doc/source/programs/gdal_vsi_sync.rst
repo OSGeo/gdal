@@ -79,6 +79,11 @@ Options
 
    Number of jobs to run at once
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

@@ -58,7 +58,7 @@ class CEOSRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           CEOSRasterBand()                            */
+/*                           CEOSRasterBand()                           */
 /************************************************************************/
 
 CEOSRasterBand::CEOSRasterBand(CEOSDataset *poDSIn, int nBandIn)
@@ -200,7 +200,7 @@ GDALDataset *CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GDALRegister_GTiff()                        */
+/*                         GDALRegister_GTiff()                         */
 /************************************************************************/
 
 void GDALRegister_CEOS()

@@ -102,7 +102,7 @@ def test_gdalalg_raster_pipeline_input_through_api_run_twice(tmp_vsimem):
     pipeline["pipeline"] = f"read ! write {out_filename}"
     assert pipeline.Run()
     with pytest.raises(
-        Exception, match=r"pipeline: Step nr 0 \(read\) has already an output dataset"
+        Exception, match="can be called only once per algorithm instance"
     ):
         pipeline.Run()
 
@@ -430,7 +430,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_src_crs(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="reproject: Invalid value for 'src-crs' argument",
+        match="reproject: Invalid value for 'input-crs' argument",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -438,8 +438,8 @@ def test_gdalalg_raster_pipeline_reproject_invalid_src_crs(tmp_vsimem):
                 "../gcore/data/byte.tif",
                 "!",
                 "reproject",
-                "--src-crs=invalid",
-                "--dst-crs=EPSG:4326",
+                "--input-crs=invalid",
+                "--output-crs=EPSG:4326",
                 "!",
                 "write",
                 out_filename,
@@ -454,7 +454,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_dst_crs(tmp_vsimem):
     pipeline = get_pipeline_alg()
     with pytest.raises(
         Exception,
-        match="reproject: Invalid value for 'dst-crs' argument",
+        match="reproject: Invalid value for 'output-crs' argument",
     ):
         pipeline.ParseRunAndFinalize(
             [
@@ -462,7 +462,7 @@ def test_gdalalg_raster_pipeline_reproject_invalid_dst_crs(tmp_vsimem):
                 "../gcore/data/byte.tif",
                 "!",
                 "reproject",
-                "--dst-crs=invalid",
+                "--output-crs=invalid",
                 "!",
                 "write",
                 out_filename,
@@ -512,7 +512,7 @@ def test_gdalalg_raster_pipeline_reproject_no_args(tmp_vsimem):
     )
 
     with gdal.OpenEx(out_filename) as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "26711"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "26711"
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
@@ -561,7 +561,7 @@ def test_gdalalg_raster_pipeline_reproject_bbox_arg(tmp_vsimem):
     )
 
     with gdal.OpenEx(out_filename) as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
         assert ds.GetGeoTransform() == pytest.approx(
             (-117.641, 0.0005909090909093286, 0.0, 33.9005, 0.0, -0.0005833333333333554)
         )
@@ -592,7 +592,7 @@ def test_gdalalg_raster_pipeline_reproject_almost_all_args(tmp_vsimem):
     )
 
     with gdal.OpenEx(out_filename) as ds:
-        assert ds.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
         assert ds.GetGeoTransform() == pytest.approx(
             (-117.641, 0.0005, 0.0, 33.9008, 0.0, -0.0004), rel=1e-8
         )
@@ -664,7 +664,7 @@ def test_gdalalg_raster_pipeline_to_gdalg_step_non_natively_streamable(
         gdal.Run(
             "raster",
             "pipeline",
-            pipeline=f"read {src_filename} ! fill-nodata ! write {tmp_vsimem}/out.gdalg.json",
+            pipeline=f'read "{src_filename}" ! fill-nodata ! write {tmp_vsimem}/out.gdalg.json',
         )
 
     if gdal.GetDriverByName("GDALG"):
@@ -745,3 +745,9 @@ def test_gdalalg_raster_pipeline_info_executable():
         f"{gdal_path} raster pipeline read ../gcore/data/byte.tif ! info"
     )
     assert out.startswith("Driver: GTiff/GeoTIFF")
+
+
+def test_gdalalg_raster_pipeline_ignores_wkt_input(tmp_vsimem):
+
+    with pytest.raises(Exception, match="No such file"):
+        gdal.alg.raster.pipeline('read "POINT (2 2)" ! write {tmp_vsimem}/out.tif')

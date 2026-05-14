@@ -25,7 +25,7 @@
 #include "ograpispy.h"
 
 /************************************************************************/
-/*                         OGRGeomFieldDefn()                           */
+/*                          OGRGeomFieldDefn()                          */
 /************************************************************************/
 
 /**
@@ -63,7 +63,7 @@ OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn *poPrototype)
 }
 
 /************************************************************************/
-/*                           OGR_GFld_Create()                          */
+/*                          OGR_GFld_Create()                           */
 /************************************************************************/
 /**
  * \brief Create a new field geometry definition.
@@ -106,13 +106,10 @@ OGRGeomFieldDefn::~OGRGeomFieldDefn()
 
 {
     CPLFree(pszName);
-
-    if (nullptr != poSRS)
-        const_cast<OGRSpatialReference *>(poSRS)->Release();
 }
 
 /************************************************************************/
-/*                   OGRGeomFieldDefn::OGRGeomFieldDefn()               */
+/*                 OGRGeomFieldDefn::OGRGeomFieldDefn()                 */
 /************************************************************************/
 
 /**
@@ -122,17 +119,14 @@ OGRGeomFieldDefn::~OGRGeomFieldDefn()
  */
 OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn &oOther)
     : pszName(CPLStrdup(oOther.pszName)), eGeomType(oOther.eGeomType),
-      poSRS(nullptr), bIgnore(oOther.bIgnore), bNullable(oOther.bNullable),
-      m_bSealed(false), m_oCoordPrecision(oOther.m_oCoordPrecision)
+      poSRS(oOther.GetRefCountedSRS()), bIgnore(oOther.bIgnore),
+      bNullable(oOther.bNullable), m_bSealed(false),
+      m_oCoordPrecision(oOther.m_oCoordPrecision)
 {
-    if (auto poSrcSRS = oOther.GetSpatialRef())
-    {
-        poSRS = poSrcSRS->Clone();
-    }
 }
 
 /************************************************************************/
-/*                   OGRGeomFieldDefn::OGRGeomFieldDefn()               */
+/*                 OGRGeomFieldDefn::OGRGeomFieldDefn()                 */
 /************************************************************************/
 
 /**
@@ -141,16 +135,16 @@ OGRGeomFieldDefn::OGRGeomFieldDefn(const OGRGeomFieldDefn &oOther)
  * @since GDAL 3.13
  */
 OGRGeomFieldDefn::OGRGeomFieldDefn(OGRGeomFieldDefn &&oOther)
-    : pszName(oOther.pszName), eGeomType(oOther.eGeomType), poSRS(oOther.poSRS),
-      bIgnore(oOther.bIgnore), bNullable(oOther.bNullable),
-      m_bSealed(oOther.m_bSealed), m_oCoordPrecision(oOther.m_oCoordPrecision)
+    : pszName(oOther.pszName), eGeomType(oOther.eGeomType),
+      poSRS(std::move(oOther.GetRefCountedSRS())), bIgnore(oOther.bIgnore),
+      bNullable(oOther.bNullable), m_bSealed(oOther.m_bSealed),
+      m_oCoordPrecision(oOther.m_oCoordPrecision)
 {
     oOther.pszName = nullptr;
-    oOther.poSRS = nullptr;
 }
 
 /************************************************************************/
-/*                          OGRGeomFieldDefn::operator=()               */
+/*                    OGRGeomFieldDefn::operator=()                     */
 /************************************************************************/
 
 /**
@@ -166,11 +160,7 @@ OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(const OGRGeomFieldDefn &oOther)
         CPLFree(pszName);
         pszName = CPLStrdup(oOther.pszName);
         eGeomType = oOther.eGeomType;
-        if (oOther.poSRS)
-            const_cast<OGRSpatialReference *>(oOther.poSRS)->Reference();
-        if (poSRS)
-            const_cast<OGRSpatialReference *>(poSRS)->Dereference();
-        poSRS = oOther.poSRS;
+        poSRS = oOther.GetRefCountedSRS();
         bNullable = oOther.bNullable;
         m_oCoordPrecision = oOther.m_oCoordPrecision;
         m_bSealed = oOther.m_bSealed;
@@ -180,7 +170,7 @@ OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(const OGRGeomFieldDefn &oOther)
 }
 
 /************************************************************************/
-/*                          OGRGeomFieldDefn::operator=()               */
+/*                    OGRGeomFieldDefn::operator=()                     */
 /************************************************************************/
 
 /**
@@ -195,7 +185,7 @@ OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(OGRGeomFieldDefn &&oOther)
     {
         std::swap(pszName, oOther.pszName);
         eGeomType = oOther.eGeomType;
-        std::swap(poSRS, oOther.poSRS);
+        std::swap(poSRS, oOther.GetRefCountedSRS());
         bNullable = oOther.bNullable;
         m_oCoordPrecision = oOther.m_oCoordPrecision;
         m_bSealed = oOther.m_bSealed;
@@ -205,7 +195,7 @@ OGRGeomFieldDefn &OGRGeomFieldDefn::operator=(OGRGeomFieldDefn &&oOther)
 }
 
 /************************************************************************/
-/*                         OGR_GFld_Destroy()                           */
+/*                          OGR_GFld_Destroy()                          */
 /************************************************************************/
 /**
  * \brief Destroy a geometry field definition.
@@ -258,7 +248,7 @@ void OGRGeomFieldDefn::SetName(const char *pszNameIn)
 }
 
 /************************************************************************/
-/*                         OGR_GFld_SetName()                           */
+/*                          OGR_GFld_SetName()                          */
 /************************************************************************/
 /**
  * \brief Reset the name of this field.
@@ -472,7 +462,7 @@ int OGR_GFld_IsIgnored(OGRGeomFieldDefnH hDefn)
 }
 
 /************************************************************************/
-/*                            SetIgnored()                              */
+/*                             SetIgnored()                             */
 /************************************************************************/
 
 /**
@@ -529,7 +519,7 @@ void OGR_GFld_SetIgnored(OGRGeomFieldDefnH hDefn, int ignore)
 
 const OGRSpatialReference *OGRGeomFieldDefn::GetSpatialRef() const
 {
-    return poSRS;
+    return poSRS.get();
 }
 
 /************************************************************************/
@@ -594,18 +584,40 @@ void OGRGeomFieldDefn::SetSpatialRef(const OGRSpatialReference *poSRSIn)
         return;
     }
 
-    if (poSRS == poSRSIn)
+    poSRS.reset(const_cast<OGRSpatialReference *>(poSRSIn), /*add_ref=*/true);
+}
+
+/************************************************************************/
+/*                           SetSpatialRef()                            */
+/************************************************************************/
+
+/**
+ * \brief Set the spatial reference of this field.
+ *
+ * This method drops the reference of the previously set SRS object and
+ * acquires a new reference on the passed object (if non-NULL).
+ *
+ * Note that once a OGRGeomFieldDefn has been added to a layer definition with
+ * OGRLayer::AddGeomFieldDefn(), its setter methods should not be called on the
+ * object returned with OGRLayer::GetLayerDefn() const->GetGeomFieldDefn(). Instead,
+ * OGRLayer::AlterGeomFieldDefn() should be called on a new instance of
+ * OGRFieldDefn, for drivers that support AlterFieldDefn().
+ *
+ * @param poSRSIn the new SRS to apply.
+ *
+ * @since 3.13
+ */
+void OGRGeomFieldDefn::SetSpatialRef(OGRSpatialReferenceRefCountedPtr poSRSIn)
+{
+    if (m_bSealed)
     {
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "OGRGeomFieldDefn::SetSpatialRef() not allowed on a sealed object");
         return;
     }
 
-    if (poSRS != nullptr)
-        const_cast<OGRSpatialReference *>(poSRS)->Release();
-
-    poSRS = poSRSIn;
-
-    if (poSRS != nullptr)
-        const_cast<OGRSpatialReference *>(poSRS)->Reference();
+    poSRS = std::move(poSRSIn);
 }
 
 /************************************************************************/
@@ -641,7 +653,7 @@ void OGR_GFld_SetSpatialRef(OGRGeomFieldDefnH hDefn, OGRSpatialReferenceH hSRS)
 }
 
 /************************************************************************/
-/*                             IsSame()                                 */
+/*                               IsSame()                               */
 /************************************************************************/
 
 /**
@@ -695,7 +707,7 @@ int OGRGeomFieldDefn::IsSame(const OGRGeomFieldDefn *poOtherFieldDefn) const
  */
 
 /************************************************************************/
-/*                         OGR_GFld_IsNullable()                        */
+/*                        OGR_GFld_IsNullable()                         */
 /************************************************************************/
 
 /**
@@ -789,7 +801,7 @@ void OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int bNullableIn)
 }
 
 /************************************************************************/
-/*                        GetCoordinatePrecision()                      */
+/*                       GetCoordinatePrecision()                       */
 /************************************************************************/
 
 /**
@@ -804,7 +816,7 @@ void OGR_GFld_SetNullable(OGRGeomFieldDefnH hDefn, int bNullableIn)
  */
 
 /************************************************************************/
-/*                     OGR_GFld_GetCoordinatePrecision()                */
+/*                  OGR_GFld_GetCoordinatePrecision()                   */
 /************************************************************************/
 
 /**
@@ -825,7 +837,7 @@ OGR_GFld_GetCoordinatePrecision(OGRGeomFieldDefnH hDefn)
 }
 
 /************************************************************************/
-/*                        SetCoordinatePrecision()                      */
+/*                       SetCoordinatePrecision()                       */
 /************************************************************************/
 
 /**
@@ -854,7 +866,7 @@ void OGRGeomFieldDefn::SetCoordinatePrecision(
 }
 
 /************************************************************************/
-/*                     OGR_GFld_SetCoordinatePrecision()                */
+/*                  OGR_GFld_SetCoordinatePrecision()                   */
 /************************************************************************/
 
 /**
@@ -896,7 +908,7 @@ void OGRGeomFieldDefn::Seal()
 }
 
 /************************************************************************/
-/*                       OGRGeomFieldDefn::Unseal()                     */
+/*                      OGRGeomFieldDefn::Unseal()                      */
 /************************************************************************/
 
 /** Unseal a OGRGeomFieldDefn.
@@ -915,7 +927,7 @@ void OGRGeomFieldDefn::Unseal()
 }
 
 /************************************************************************/
-/*                  OGRGeomFieldDefn::GetTemporaryUnsealer()            */
+/*               OGRGeomFieldDefn::GetTemporaryUnsealer()               */
 /************************************************************************/
 
 /** Return an object that temporary unseals the OGRGeomFieldDefn

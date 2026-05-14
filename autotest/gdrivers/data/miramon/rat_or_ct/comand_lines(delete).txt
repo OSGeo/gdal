@@ -1,0 +1,4 @@
+d:\github-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\rat_or_ct\uinteger_imageI.rel" "D:\tmp\CT_AND_RAT.vrt" -oo RAT_OR_CT=ALL
+d:\github-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\rat_or_ct\uinteger_imageI.rel" "D:\tmp\CT.vrt" -oo RAT_OR_CT=CT
+d:\github-repository\gdal\build\apps\Debug\gdal_translate.exe "D:\GitHub-repository\gdal\autotest\gdrivers\data\miramon\rat_or_ct\uinteger_imageI.rel" "D:\tmp\RAT.vrt" -oo RAT_OR_CT=RAT
+

@@ -21,7 +21,7 @@
 #include "ogr_gmlas_consts.h"
 
 /************************************************************************/
-/*                    OGRGMLASDriverIdentify()                          */
+/*                       OGRGMLASDriverIdentify()                       */
 /************************************************************************/
 
 int OGRGMLASDriverIdentify(GDALOpenInfo *poOpenInfo)

@@ -223,7 +223,7 @@ static herr_t HDF5_vsil_truncate(H5FD_t *_file, hid_t /* dxpl_id*/,
 }
 
 /************************************************************************/
-/*                       HDF5VFLGetFileDriver()                         */
+/*                        HDF5VFLGetFileDriver()                        */
 /************************************************************************/
 
 static hid_t HDF5VFLGetFileDriver()
@@ -245,7 +245,7 @@ static hid_t HDF5VFLGetFileDriver()
 }
 
 /************************************************************************/
-/*                     HDF5VFLUnloadFileDriver()                        */
+/*                      HDF5VFLUnloadFileDriver()                       */
 /************************************************************************/
 
 static void HDF5VFLUnloadFileDriver()

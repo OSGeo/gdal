@@ -35,6 +35,7 @@ constexpr double PDS_NULL3 = -3.4028226550889044521e+38;
 #include "pdsdrivercore.h"
 
 #include <array>
+#include <optional>
 
 enum PDSLayout
 {
@@ -114,11 +115,11 @@ class PDSDataset final : public RawDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBands, GDALDataType eType,
-                               char **papszParamList);
+                               CSLConstList papszParamList);
 };
 
 /************************************************************************/
-/*                            PDSDataset()                            */
+/*                             PDSDataset()                             */
 /************************************************************************/
 
 PDSDataset::PDSDataset()
@@ -127,7 +128,7 @@ PDSDataset::PDSDataset()
 }
 
 /************************************************************************/
-/*                            ~PDSDataset()                            */
+/*                            ~PDSDataset()                             */
 /************************************************************************/
 
 PDSDataset::~PDSDataset()
@@ -137,7 +138,7 @@ PDSDataset::~PDSDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr PDSDataset::Close(GDALProgressFunc, void *)
@@ -161,7 +162,7 @@ CPLErr PDSDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int PDSDataset::CloseDependentDatasets()
@@ -256,7 +257,7 @@ CPLErr PDSDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *PDSDataset::GetSpatialRef() const
@@ -594,7 +595,7 @@ void PDSDataset::ParseSRS()
         // body name 'GCS' = Geographic/Geocentric Coordinate System
         const CPLString geog_name = "GCS_" + target_name;
 
-        // The datum and sphere names will be the same basic name aas the planet
+        // The datum and sphere names will be the same basic name as the planet
         const CPLString datum_name = "D_" + target_name;
 
         CPLString sphere_name = std::move(target_name);
@@ -695,12 +696,12 @@ void PDSDataset::ParseSRS()
     if (dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0)
     {
         bGotTransform = TRUE;
-        m_gt[0] = dfULXMap;
-        m_gt[1] = dfXDim;
-        m_gt[2] = 0.0;
-        m_gt[3] = dfULYMap;
-        m_gt[4] = 0.0;
-        m_gt[5] = dfYDim;
+        m_gt.xorig = dfULXMap;
+        m_gt.xscale = dfXDim;
+        m_gt.xrot = 0.0;
+        m_gt.yorig = dfULYMap;
+        m_gt.yrot = 0.0;
+        m_gt.yscale = dfYDim;
 
         const double rotation = CPLAtof(GetKeyword(
             osPrefix + "IMAGE_MAP_PROJECTION.MAP_PROJECTION_ROTATION"));
@@ -710,30 +711,32 @@ void PDSDataset::ParseSRS()
                 rotation == 90 ? 1.0 : sin(rotation / 180 * M_PI);
             const double cos_rot =
                 rotation == 90 ? 0.0 : cos(rotation / 180 * M_PI);
-            const double gt_1 = cos_rot * m_gt[1] - sin_rot * m_gt[4];
-            const double gt_2 = cos_rot * m_gt[2] - sin_rot * m_gt[5];
-            const double gt_0 = cos_rot * m_gt[0] - sin_rot * m_gt[3];
-            const double gt_4 = sin_rot * m_gt[1] + cos_rot * m_gt[4];
-            const double gt_5 = sin_rot * m_gt[2] + cos_rot * m_gt[5];
-            const double gt_3 = sin_rot * m_gt[0] + cos_rot * m_gt[3];
-            m_gt[1] = gt_1;
-            m_gt[2] = gt_2;
-            m_gt[0] = gt_0;
-            m_gt[4] = gt_4;
-            m_gt[5] = gt_5;
-            m_gt[3] = gt_3;
+            const double gt_1 = cos_rot * m_gt.xscale - sin_rot * m_gt.yrot;
+            const double gt_2 = cos_rot * m_gt.xrot - sin_rot * m_gt.yscale;
+            const double gt_0 = cos_rot * m_gt.xorig - sin_rot * m_gt.yorig;
+            const double gt_4 = sin_rot * m_gt.xscale + cos_rot * m_gt.yrot;
+            const double gt_5 = sin_rot * m_gt.xrot + cos_rot * m_gt.yscale;
+            const double gt_3 = sin_rot * m_gt.xorig + cos_rot * m_gt.yorig;
+            m_gt.xscale = gt_1;
+            m_gt.xrot = gt_2;
+            m_gt.xorig = gt_0;
+            m_gt.yrot = gt_4;
+            m_gt.yscale = gt_5;
+            m_gt.yorig = gt_3;
         }
     }
 
     if (!bGotTransform)
-        bGotTransform = GDALReadWorldFile(pszFilename, "psw", m_gt.data());
+        bGotTransform =
+            CPL_TO_BOOL(GDALReadWorldFile(pszFilename, "psw", m_gt.data()));
 
     if (!bGotTransform)
-        bGotTransform = GDALReadWorldFile(pszFilename, "wld", m_gt.data());
+        bGotTransform =
+            CPL_TO_BOOL(GDALReadWorldFile(pszFilename, "wld", m_gt.data()));
 }
 
 /************************************************************************/
-/*                        GetRawBinaryLayout()                          */
+/*                         GetRawBinaryLayout()                         */
 /************************************************************************/
 
 bool PDSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
@@ -745,7 +748,7 @@ bool PDSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 }
 
 /************************************************************************/
-/*                        PDSConvertFromHex()                           */
+/*                         PDSConvertFromHex()                          */
 /************************************************************************/
 
 static GUInt32 PDSConvertFromHex(const char *pszVal)
@@ -1297,6 +1300,9 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
 class PDSWrapperRasterBand final : public GDALProxyRasterBand
 {
     GDALRasterBand *poBaseBand{};
+    double m_dfOffset = 0.0;
+    double m_dfScale = 1.0;
+    std::optional<double> m_dfNoData{};
 
     CPL_DISALLOW_COPY_ASSIGN(PDSWrapperRasterBand)
 
@@ -1305,11 +1311,34 @@ class PDSWrapperRasterBand final : public GDALProxyRasterBand
     RefUnderlyingRasterBand(bool /*bForceOpen*/) const override;
 
   public:
-    explicit PDSWrapperRasterBand(GDALRasterBand *poBaseBandIn)
+    PDSWrapperRasterBand(GDALRasterBand *poBaseBandIn, double dfOffset,
+                         double dfScale, std::optional<double> dfNoData)
+        : m_dfOffset(dfOffset), m_dfScale(dfScale), m_dfNoData(dfNoData)
     {
         this->poBaseBand = poBaseBandIn;
         eDataType = poBaseBand->GetRasterDataType();
         poBaseBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    }
+
+    double GetScale(int *pbHasVal) override
+    {
+        if (pbHasVal)
+            *pbHasVal = m_dfScale != 1.0;
+        return m_dfScale;
+    }
+
+    double GetOffset(int *pbHasVal) override
+    {
+        if (pbHasVal)
+            *pbHasVal = m_dfOffset != 1.0;
+        return m_dfOffset;
+    }
+
+    double GetNoDataValue(int *pbHasVal) override
+    {
+        if (pbHasVal)
+            *pbHasVal = m_dfNoData.has_value();
+        return m_dfNoData.has_value() ? m_dfNoData.value() : 0.0;
     }
 };
 
@@ -1320,7 +1349,7 @@ PDSWrapperRasterBand::RefUnderlyingRasterBand(bool /*bForceOpen*/) const
 }
 
 /************************************************************************/
-/*                       ParseCompressedImage()                         */
+/*                        ParseCompressedImage()                        */
 /************************************************************************/
 
 int PDSDataset::ParseCompressedImage()
@@ -1333,6 +1362,24 @@ int PDSDataset::ParseCompressedImage()
         CPLError(CE_Failure, CPLE_NotSupported, "Path traversal detected in %s",
                  osFileName.c_str());
         return false;
+    }
+
+    double dfOffset = 0;
+    double dfScale = 1;
+    std::optional<double> dfNoData;
+    const std::string osUncompressedFilename =
+        GetKeyword("COMPRESSED_FILE.UNCOMPRESSED_FILE_NAME", "");
+    if (!osUncompressedFilename.empty() &&
+        GetKeyword("UNCOMPRESSED_FILE.FILE_NAME", "") == osUncompressedFilename)
+
+    {
+        dfOffset = CPLAtof(GetKeyword("UNCOMPRESSED_FILE.IMAGE.OFFSET", "0.0"));
+        dfScale = CPLAtof(
+            GetKeyword("UNCOMPRESSED_FILE.IMAGE.SCALING_FACTOR", "1.0"));
+        const char *pszNull =
+            GetKeyword("UNCOMPRESSED_FILE.IMAGE.CORE_NULL", nullptr);
+        if (pszNull)
+            dfNoData = CPLAtof(pszNull);
     }
 
     const CPLString osPath = CPLGetPathSafe(GetDescription());
@@ -1351,7 +1398,8 @@ int PDSDataset::ParseCompressedImage()
     for (int iBand = 0; iBand < poCompressedDS->GetRasterCount(); iBand++)
     {
         SetBand(iBand + 1, new PDSWrapperRasterBand(
-                               poCompressedDS->GetRasterBand(iBand + 1)));
+                               poCompressedDS->GetRasterBand(iBand + 1),
+                               dfOffset, dfScale, dfNoData));
     }
 
     return TRUE;
@@ -1533,7 +1581,7 @@ const char *PDSDataset::GetKeyword(const std::string &osPath,
 }
 
 /************************************************************************/
-/*                            GetKeywordSub()                           */
+/*                           GetKeywordSub()                            */
 /************************************************************************/
 
 const char *PDSDataset::GetKeywordSub(const std::string &osPath, int iSubscript,
@@ -1563,7 +1611,7 @@ const char *PDSDataset::GetKeywordSub(const std::string &osPath, int iSubscript,
 }
 
 /************************************************************************/
-/*                            GetKeywordUnit()                          */
+/*                           GetKeywordUnit()                           */
 /************************************************************************/
 
 const char *PDSDataset::GetKeywordUnit(const char *pszPath, int iSubscript,
@@ -1613,13 +1661,13 @@ CPLString PDSDataset::CleanString(const CPLString &osInput)
             pszWrk[i] = '_';
     }
 
-    CPLString osOutput = pszWrk;
+    CPLString osOutput(pszWrk);
     CPLFree(pszWrk);
     return osOutput;
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **PDSDataset::GetMetadataDomainList()
@@ -1628,7 +1676,7 @@ char **PDSDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                             GetMetadata()                            */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList PDSDataset::GetMetadata(const char *pszDomain)
@@ -1641,7 +1689,7 @@ CSLConstList PDSDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                         GDALRegister_PDS()                           */
+/*                          GDALRegister_PDS()                          */
 /************************************************************************/
 
 void GDALRegister_PDS()

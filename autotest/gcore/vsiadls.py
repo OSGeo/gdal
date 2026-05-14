@@ -21,6 +21,7 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_curl()
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -57,7 +58,7 @@ def startup_and_cleanup():
     gdaltest.webserver_process = None
     gdaltest.webserver_port = 0
 
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
+    gdaltest.webserver_process, gdaltest.webserver_port = webserver.launch(
         handler=webserver.DispatcherHttpHandler
     )
     if gdaltest.webserver_port == 0:

@@ -35,7 +35,7 @@ def gdalsrsinfo_path():
 
 def test_gdalsrsinfo_1(gdalsrsinfo_path):
 
-    (ret, err) = gdaltest.runexternal_out_and_err(
+    ret, err = gdaltest.runexternal_out_and_err(
         gdalsrsinfo_path + " ../gcore/data/byte.tif",
         encoding="utf-8",
     )
@@ -267,7 +267,7 @@ def test_gdalsrsinfo_16(gdalsrsinfo_path):
     cmd = gdalsrsinfo_path + " GTIFF_RAW:../gcore/data/byte.tif"
 
     try:
-        (_, err) = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
+        _, err = gdaltest.runexternal_out_and_err(cmd, encoding="UTF-8")
     except Exception:
         pytest.fail("gdalsrsinfo execution failed")
 

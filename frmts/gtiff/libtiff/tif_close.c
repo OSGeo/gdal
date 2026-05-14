@@ -121,7 +121,7 @@ void TIFFCleanup(TIFF *tif)
 }
 
 /************************************************************************/
-/*                    _TIFFCleanupIFDOffsetAndNumberMaps()              */
+/*                 _TIFFCleanupIFDOffsetAndNumberMaps()                 */
 /************************************************************************/
 
 void _TIFFCleanupIFDOffsetAndNumberMaps(TIFF *tif)
@@ -139,7 +139,7 @@ void _TIFFCleanupIFDOffsetAndNumberMaps(TIFF *tif)
 }
 
 /************************************************************************/
-/*                            TIFFClose()                               */
+/*                             TIFFClose()                              */
 /************************************************************************/
 
 /**

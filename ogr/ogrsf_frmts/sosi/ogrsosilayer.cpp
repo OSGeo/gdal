@@ -18,7 +18,7 @@
 #include <string.h>
 
 /************************************************************************/
-/*                           OGRSOSILayer()                             */
+/*                            OGRSOSILayer()                            */
 /************************************************************************/
 
 OGRSOSILayer::OGRSOSILayer(OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn,
@@ -47,7 +47,7 @@ OGRSOSILayer::~OGRSOSILayer()
 }
 
 /************************************************************************/
-/*                           GetLayerDefn()                             */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 const OGRFeatureDefn *OGRSOSILayer::GetLayerDefn() const
 {
@@ -56,7 +56,7 @@ const OGRFeatureDefn *OGRSOSILayer::GetLayerDefn() const
 
 #ifdef WRITE_SUPPORT
 /************************************************************************/
-/*                           CreateField()                              */
+/*                            CreateField()                             */
 /************************************************************************/
 OGRErr OGRSOSILayer::CreateField(OGRFieldDefn *poField,
                                  CPL_UNUSED int bApproxOK)
@@ -66,7 +66,7 @@ OGRErr OGRSOSILayer::CreateField(OGRFieldDefn *poField,
 }
 
 /************************************************************************/
-/*                           ICreateFeature()                            */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 OGRErr OGRSOSILayer::ICreateFeature(OGRFeature *poFeature)
 {
@@ -559,7 +559,7 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                           ResetReading()                             */
+/*                            ResetReading()                            */
 /************************************************************************/
 void OGRSOSILayer::ResetReading()
 {
@@ -571,7 +571,7 @@ void OGRSOSILayer::ResetReading()
 }
 
 /************************************************************************/
-/*                              TestCapability()                        */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRSOSILayer::TestCapability(const char *pszCap) const

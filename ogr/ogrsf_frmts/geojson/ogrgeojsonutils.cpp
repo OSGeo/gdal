@@ -30,7 +30,7 @@ constexpr const char szESRIJSonFeaturesAttributes[] =
     "\"features\":[{\"attributes\":{";
 
 /************************************************************************/
-/*                           SkipUTF8BOM()                              */
+/*                            SkipUTF8BOM()                             */
 /************************************************************************/
 
 static void SkipUTF8BOM(const char *&pszText)
@@ -42,7 +42,7 @@ static void SkipUTF8BOM(const char *&pszText)
 }
 
 /************************************************************************/
-/*                           IsJSONObject()                             */
+/*                            IsJSONObject()                            */
 /************************************************************************/
 
 static bool IsJSONObject(const char *pszText)
@@ -75,7 +75,7 @@ static bool IsJSONObject(const char *pszText)
 }
 
 /************************************************************************/
-/*                           GetTopLevelType()                          */
+/*                          GetTopLevelType()                           */
 /************************************************************************/
 
 static std::string GetTopLevelType(const char *pszText)
@@ -190,7 +190,7 @@ static CPLString GetCompactJSon(const char *pszText, size_t nMaxSize)
 }
 
 /************************************************************************/
-/*                          IsGeoJSONLikeObject()                       */
+/*                        IsGeoJSONLikeObject()                         */
 /************************************************************************/
 
 static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
@@ -301,7 +301,7 @@ static bool IsGeoJSONLikeObject(const char *pszText, GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                       ESRIJSONIsObject()                             */
+/*                          ESRIJSONIsObject()                          */
 /************************************************************************/
 
 bool ESRIJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
@@ -344,7 +344,7 @@ bool ESRIJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       TopoJSONIsObject()                             */
+/*                          TopoJSONIsObject()                          */
 /************************************************************************/
 
 bool TopoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
@@ -362,7 +362,7 @@ bool TopoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      IsLikelyNewlineSequenceGeoJSON()                */
+/*                   IsLikelyNewlineSequenceGeoJSON()                   */
 /************************************************************************/
 
 static GDALIdentifyEnum
@@ -461,7 +461,7 @@ IsLikelyNewlineSequenceGeoJSON(VSILFILE *fpL, const GByte *pabyHeader,
 }
 
 /************************************************************************/
-/*                           GeoJSONFileIsObject()                      */
+/*                        GeoJSONFileIsObject()                         */
 /************************************************************************/
 
 static bool GeoJSONFileIsObject(GDALOpenInfo *poOpenInfo)
@@ -497,7 +497,7 @@ static bool GeoJSONFileIsObject(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           GeoJSONIsObject()                          */
+/*                          GeoJSONIsObject()                           */
 /************************************************************************/
 
 bool GeoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
@@ -516,7 +516,7 @@ bool GeoJSONIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GeoJSONSeqFileIsObject()                      */
+/*                       GeoJSONSeqFileIsObject()                       */
 /************************************************************************/
 
 static bool GeoJSONSeqFileIsObject(GDALOpenInfo *poOpenInfo)
@@ -590,7 +590,7 @@ bool GeoJSONSeqIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        JSONFGFileIsObject()                          */
+/*                         JSONFGFileIsObject()                         */
 /************************************************************************/
 
 static bool JSONFGFileIsObject(GDALOpenInfo *poOpenInfo)
@@ -717,7 +717,7 @@ bool JSONFGIsObject(const char *pszText, GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                           IsLikelyESRIJSONURL()                      */
+/*                        IsLikelyESRIJSONURL()                         */
 /************************************************************************/
 
 static bool IsLikelyESRIJSONURL(const char *pszURL)
@@ -731,7 +731,7 @@ static bool IsLikelyESRIJSONURL(const char *pszURL)
 }
 
 /************************************************************************/
-/*                           GeoJSONGetSourceType()                     */
+/*                        GeoJSONGetSourceType()                        */
 /************************************************************************/
 
 GeoJSONSourceType GeoJSONGetSourceType(GDALOpenInfo *poOpenInfo)
@@ -793,7 +793,7 @@ GeoJSONSourceType GeoJSONGetSourceType(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     ESRIJSONDriverGetSourceType()                    */
+/*                    ESRIJSONDriverGetSourceType()                     */
 /************************************************************************/
 
 GeoJSONSourceType ESRIJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
@@ -859,7 +859,7 @@ GeoJSONSourceType ESRIJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                     TopoJSONDriverGetSourceType()                    */
+/*                    TopoJSONDriverGetSourceType()                     */
 /************************************************************************/
 
 GeoJSONSourceType TopoJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
@@ -925,7 +925,7 @@ GeoJSONSourceType TopoJSONDriverGetSourceType(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          GeoJSONSeqGetSourceType()                   */
+/*                      GeoJSONSeqGetSourceType()                       */
 /************************************************************************/
 
 GeoJSONSourceType GeoJSONSeqGetSourceType(GDALOpenInfo *poOpenInfo)
@@ -978,7 +978,7 @@ GeoJSONSourceType GeoJSONSeqGetSourceType(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      JSONFGDriverGetSourceType()                     */
+/*                     JSONFGDriverGetSourceType()                      */
 /************************************************************************/
 
 GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo)
@@ -1031,7 +1031,7 @@ GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GeoJSONStringPropertyToFieldType()            */
+/*                  GeoJSONStringPropertyToFieldType()                  */
 /************************************************************************/
 
 OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
@@ -1067,10 +1067,12 @@ OGRFieldType GeoJSONStringPropertyToFieldType(json_object *poObject,
 }
 
 /************************************************************************/
-/*                   GeoJSONHTTPFetchWithContentTypeHeader()            */
+/*               GeoJSONHTTPFetchWithContentTypeHeader()                */
 /************************************************************************/
 
-CPLHTTPResult *GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL)
+CPLHTTPResult *
+GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL, bool bCanUsePOST,
+                                      const GDALOpenInfo *poOpenInfo)
 {
     std::string osHeaders;
     const char *pszGDAL_HTTP_HEADERS =
@@ -1120,7 +1122,29 @@ CPLHTTPResult *GeoJSONHTTPFetchWithContentTypeHeader(const char *pszURL)
 
     CPLStringList aosOptions;
     aosOptions.SetNameValue("HEADERS", osHeaders.c_str());
-    CPLHTTPResult *pResult = CPLHTTPFetch(pszURL, aosOptions.List());
+
+    std::string osURL(pszURL);
+    if (bCanUsePOST && poOpenInfo)
+    {
+        const char *pszHTTPMethod = CSLFetchNameValueDef(
+            poOpenInfo->papszOpenOptions, "HTTP_METHOD", "AUTO");
+        constexpr size_t MAX_URL_LEN_FOR_GET = 256;  // arbitrary
+        if (EQUAL(pszHTTPMethod, "AUTO"))
+            pszHTTPMethod =
+                (strlen(pszURL) < MAX_URL_LEN_FOR_GET) ? "GET" : "POST";
+        if (EQUAL(pszHTTPMethod, "POST"))
+        {
+            const auto nQuestionMarkPos = osURL.find('?');
+            if (nQuestionMarkPos != std::string::npos)
+            {
+                aosOptions.SetNameValue(
+                    "POSTFIELDS", osURL.substr(nQuestionMarkPos + 1).c_str());
+                osURL.resize(nQuestionMarkPos);
+            }
+        }
+    }
+
+    CPLHTTPResult *pResult = CPLHTTPFetch(osURL.c_str(), aosOptions.List());
 
     if (nullptr == pResult || 0 == pResult->nDataLen ||
         0 != CPLGetLastErrorNo())

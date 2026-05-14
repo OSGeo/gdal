@@ -66,6 +66,11 @@ Options
     Use a hierarchical presentation for JSON output, instead of a flat list.
     Only valid when :option:`--output-format` is set to ``json`` (or let at its default value).
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

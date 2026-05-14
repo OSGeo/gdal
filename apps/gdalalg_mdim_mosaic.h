@@ -59,6 +59,8 @@ class GDALMdimMosaicAlgorithm final : public GDALAlgorithm
         uint64_t nBlockSize = 0;
         std::vector<std::shared_ptr<GDALAttribute>> attributes{};
 
+        bool bHasIndexingVar = false;
+
         // Used for dimensions with irregular spaced labels
         int nProgressionSign =
             0;  // 1=increasing, -1=decreasing, 0=single value

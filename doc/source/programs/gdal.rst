@@ -1,7 +1,7 @@
 .. _gdal_program:
 
 ================================================================================
-gdal
+Main ``gdal`` entry point
 ================================================================================
 
 .. versionadded:: 3.11
@@ -17,8 +17,19 @@ Synopsis
 
 .. program-output:: gdal --help-doc
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
+
+.. example::
+   :title: Display the GDAL version
+   :id: gdal-version
+
+   .. command-output:: gdal --version
 
 .. example::
    :title: Getting information on the file :file:`utm.tif` (with JSON output)
@@ -49,8 +60,16 @@ Examples
        $ gdal --formats
 
 .. example::
-   :title: Getting list of all formats supported by the current GDAL build, as JSON.
+   :id: gdal-driver-search
+   :title: Search for Parquet in the list of all formats using ``jq``
 
-   .. code-block:: console
+   .. tabs::
 
-       $ gdal --formats --json
+      .. code-tab:: bash
+
+        $ gdal --drivers | jq '.[] | select(.short_name == "Parquet")'
+
+      .. code-tab:: ps1
+
+        gdal --drivers | jq '.[] | select(.short_name == \"Parquet\")'
+

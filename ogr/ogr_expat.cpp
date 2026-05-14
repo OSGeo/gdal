@@ -50,7 +50,7 @@ static bool CanAlloc(size_t size)
 }
 
 /************************************************************************/
-/*                          OGRExpatMalloc()                            */
+/*                           OGRExpatMalloc()                           */
 /************************************************************************/
 
 static void *OGRExpatMalloc(size_t size)
@@ -62,7 +62,7 @@ static void *OGRExpatMalloc(size_t size)
 }
 
 /************************************************************************/
-/*                         OGRExpatRealloc()                            */
+/*                          OGRExpatRealloc()                           */
 /************************************************************************/
 
 // Caller must replace the pointer with the returned pointer.
@@ -75,7 +75,7 @@ static void *OGRExpatRealloc(void *ptr, size_t size)
 }
 
 /************************************************************************/
-/*                            FillWINDOWS1252()                         */
+/*                          FillWINDOWS1252()                           */
 /************************************************************************/
 
 static void FillWINDOWS1252(XML_Encoding *info)
@@ -122,7 +122,7 @@ static void FillWINDOWS1252(XML_Encoding *info)
 }
 
 /************************************************************************/
-/*                             FillISO885915()                          */
+/*                           FillISO885915()                            */
 /************************************************************************/
 
 static void FillISO885915(XML_Encoding *info)
@@ -152,7 +152,7 @@ static void FillISO885915(XML_Encoding *info)
 }
 
 /************************************************************************/
-/*                  OGRExpatUnknownEncodingHandler()                    */
+/*                   OGRExpatUnknownEncodingHandler()                   */
 /************************************************************************/
 
 static int
@@ -177,7 +177,7 @@ OGRExpatUnknownEncodingHandler(void * /* unused_encodingHandlerData */,
 }
 
 /************************************************************************/
-/*                       OGRCreateExpatXMLParser()                      */
+/*                      OGRCreateExpatXMLParser()                       */
 /************************************************************************/
 
 XML_Parser OGRCreateExpatXMLParser()

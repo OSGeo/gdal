@@ -13,6 +13,7 @@
 
 #include "gdal_priv.h"
 
+#include <algorithm>
 #include <string.h>
 
 #include "georaster_priv.h"
@@ -830,7 +831,7 @@ GDALRasterAttributeTable *GeoRasterRasterBand::GetDefaultRAT()
                 continue;
         }
         osColumnList +=
-            CPLSPrintf("substr(%s,1,%d),", szField, MIN(nSize, OWNAME));
+            CPLSPrintf("substr(%s,1,%d),", szField, std::min(nSize, OWNAME));
 
         iCol++;
     }

@@ -380,6 +380,7 @@ WARN_LOGFILE           =
 
 INPUT                  = port \
                          gcore \
+                         gcore/multidim \
                          frmts/gdalallregister.cpp \
                          alg \
                          alg/viewshed \

@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALVectorSegmentizeAlgorithm                      */
+/*                    GDALVectorSegmentizeAlgorithm                     */
 /************************************************************************/
 
 class GDALVectorSegmentizeAlgorithm /* non final */
@@ -46,7 +46,7 @@ class GDALVectorSegmentizeAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                GDALVectorSegmentizeAlgorithmStandalone               */
+/*               GDALVectorSegmentizeAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALVectorSegmentizeAlgorithmStandalone final

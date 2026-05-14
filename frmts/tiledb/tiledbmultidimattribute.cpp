@@ -14,7 +14,7 @@
 #include "memmultidim.h"
 
 /************************************************************************/
-/*                TileDBAttribute::TileDBAttribute()                    */
+/*                  TileDBAttribute::TileDBAttribute()                  */
 /************************************************************************/
 
 TileDBAttribute::TileDBAttribute(const std::string &osParentName,
@@ -25,7 +25,7 @@ TileDBAttribute::TileDBAttribute(const std::string &osParentName,
 }
 
 /************************************************************************/
-/*                TileDBAttribute::Create()                             */
+/*                      TileDBAttribute::Create()                       */
 /************************************************************************/
 
 /*static*/ std::shared_ptr<GDALAttribute>
@@ -67,7 +67,7 @@ TileDBAttribute::Create(const std::shared_ptr<TileDBAttributeHolder> &poParent,
 }
 
 /************************************************************************/
-/*                     TileDBAttribute::IRead()                         */
+/*                       TileDBAttribute::IRead()                       */
 /************************************************************************/
 
 bool TileDBAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -122,7 +122,7 @@ bool TileDBAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                     TileDBAttribute::IWrite()                        */
+/*                      TileDBAttribute::IWrite()                       */
 /************************************************************************/
 
 bool TileDBAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,

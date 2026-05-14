@@ -21,7 +21,7 @@
 #endif
 
 /************************************************************************/
-/*                        GDALDatasetDeleteAlgorithm()                  */
+/*                     GDALDatasetDeleteAlgorithm()                     */
 /************************************************************************/
 
 GDALDatasetDeleteAlgorithm::GDALDatasetDeleteAlgorithm()
@@ -43,7 +43,8 @@ GDALDatasetDeleteAlgorithm::GDALDatasetDeleteAlgorithm()
         arg.AddValidationAction([this, &arg]()
                                 { return ValidateFormat(arg, false, false); });
         arg.SetAutoCompleteFunction(
-            [&arg](const std::string &) {
+            [&arg](const std::string &)
+            {
                 return GDALAlgorithm::FormatAutoCompleteFunction(arg, false,
                                                                  false);
             });
@@ -51,7 +52,7 @@ GDALDatasetDeleteAlgorithm::GDALDatasetDeleteAlgorithm()
 }
 
 /************************************************************************/
-/*                  GDALDatasetDeleteAlgorithm::RunImpl()               */
+/*                GDALDatasetDeleteAlgorithm::RunImpl()                 */
 /************************************************************************/
 
 bool GDALDatasetDeleteAlgorithm::RunImpl(GDALProgressFunc, void *)

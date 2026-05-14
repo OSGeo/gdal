@@ -13,7 +13,7 @@ fi
 set -eu
 
 mkdir proj
-curl -Lo - -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
+curl --retry 3 --retry-all-errors --retry-delay 3 -Lo - -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
     | tar xz -C proj --strip-components=1
 
 (
@@ -33,11 +33,14 @@ curl -Lo - -fsS "https://github.com/OSGeo/PROJ/archive/${PROJ_VERSION}.tar.gz" \
         ccache -M 100M
     fi
 
-    export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g"
-    export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g"
+    # -fzero-init-padding-bits=unions: restore GCC < 15 behavior with respect
+    # to union initialization.
+    export CFLAGS="-DPROJ_RENAME_SYMBOLS -O2 -g -fzero-init-padding-bits=unions"
+    export CXXFLAGS="-DPROJ_RENAME_SYMBOLS -DPROJ_INTERNAL_CPP_NAMESPACE -O2 -g -fzero-init-padding-bits=unions"
 
     cmake . \
         -G Ninja \
+        -DPROJ_OUTPUT_NAME=internalproj \
         -DBUILD_SHARED_LIBS=ON \
         -DCMAKE_INSTALL_PREFIX=${PROJ_INSTALL_PREFIX} \
         -DBUILD_TESTING=OFF \
@@ -64,16 +67,8 @@ if test "${DESTDIR}" = "/build_tmp_proj"; then
     exit 0
 fi
 
-PROJ_SO=$(readlink -f "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so" | awk 'BEGIN {FS="libproj.so."} {print $2}')
-PROJ_SO_FIRST=$(echo "$PROJ_SO" | awk 'BEGIN {FS="."} {print $1}')
+PROJ_SO=$(readlink -f "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so" | awk 'BEGIN {FS="libinternalproj.so."} {print $2}')
 PROJ_SO_DEST="${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO}"
-
-mv "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO}" "${PROJ_SO_DEST}"
-
-ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO_FIRST}"
-ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so"
-
-rm "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib"/libproj.*
 
 if [ "${WITH_DEBUG_SYMBOLS}" = "yes" ]; then
     # separate debug symbols
@@ -99,8 +94,3 @@ else
         ${GCC_ARCH}-linux-gnu-strip -s "$P" 2>/dev/null || /bin/true;
     done;
 fi
-
-patchelf --set-soname libinternalproj.so.${PROJ_SO_FIRST} ${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so.${PROJ_SO}
-for i in "${DESTDIR}${PROJ_INSTALL_PREFIX}/bin"/*; do
-  patchelf --replace-needed libproj.so.${PROJ_SO_FIRST} libinternalproj.so.${PROJ_SO_FIRST} $i;
-done

@@ -77,7 +77,7 @@ class NGSGEOIDRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                        NGSGEOIDRasterBand()                          */
+/*                         NGSGEOIDRasterBand()                         */
 /************************************************************************/
 
 NGSGEOIDRasterBand::NGSGEOIDRasterBand(NGSGEOIDDataset *poDSIn)
@@ -141,7 +141,7 @@ NGSGEOIDDataset::NGSGEOIDDataset() : fp(nullptr), bIsLittleEndian(TRUE)
 }
 
 /************************************************************************/
-/*                           ~NGSGEOIDDataset()                         */
+/*                          ~NGSGEOIDDataset()                          */
 /************************************************************************/
 
 NGSGEOIDDataset::~NGSGEOIDDataset()
@@ -153,7 +153,7 @@ NGSGEOIDDataset::~NGSGEOIDDataset()
 }
 
 /************************************************************************/
-/*                            GetHeaderInfo()                           */
+/*                           GetHeaderInfo()                            */
 /************************************************************************/
 
 int NGSGEOIDDataset::GetHeaderInfo(const GByte *pBuffer, GDALGeoTransform &gt,
@@ -269,12 +269,12 @@ int NGSGEOIDDataset::GetHeaderInfo(const GByte *pBuffer, GDALGeoTransform &gt,
           dfWLON >= -180.0 && dfWLON + nNLON * dfDLON <= 360.0))
         return FALSE;
 
-    gt[0] = dfWLON - dfDLON / 2;
-    gt[1] = dfDLON;
-    gt[2] = 0.0;
-    gt[3] = dfSLAT + nNLAT * dfDLAT - dfDLAT / 2;
-    gt[4] = 0.0;
-    gt[5] = -dfDLAT;
+    gt.xorig = dfWLON - dfDLON / 2;
+    gt.xscale = dfDLON;
+    gt.xrot = 0.0;
+    gt.yorig = dfSLAT + nNLAT * dfDLAT - dfDLAT / 2;
+    gt.yrot = 0.0;
+    gt.yscale = -dfDLAT;
 
     *pnRows = nNLAT;
     *pnCols = nNLON;
@@ -283,7 +283,7 @@ int NGSGEOIDDataset::GetHeaderInfo(const GByte *pBuffer, GDALGeoTransform &gt,
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int NGSGEOIDDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -362,7 +362,7 @@ CPLErr NGSGEOIDDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *NGSGEOIDDataset::GetSpatialRef() const

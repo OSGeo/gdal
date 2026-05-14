@@ -973,7 +973,7 @@ def test_ogr_arrow_convert_from_geoarrow_wkb_with_extension_loaded(tmp_path):
     if ogr2ogr_path is None:
         pytest.skip("ogr2ogr unavailable")
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         ogr2ogr_path
         + f" {tmp_path}/out.feather data/arrow/from_paleolimbot_geoarrow/geometrycollection-default.feather -lco GEOMETRY_ENCODING=WKB -a_srs EPSG:4326 --config OGR_ARROW_REGISTER_GEOARROW_WKB_EXTENSION=YES"
     )

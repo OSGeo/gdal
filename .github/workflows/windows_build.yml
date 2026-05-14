@@ -35,7 +35,7 @@ jobs:
             PROJ_BRANCH: "9.3"
             LIBZSTD_URL: "https://github.com/facebook/zstd/releases/download/v1.4.5/zstd-v1.4.5-win32.zip"
             LIBDEFLATE_URL: "https://github.com/ebiggers/libdeflate/releases/download/v1.6/libdeflate-1.6-windows-i686-bin.zip"
-            SWIG_URL: "https://freefr.dl.sourceforge.net/project/swig/swigwin/swigwin-4.1.1/swigwin-4.1.1.zip"
+            SWIG_URL: "https://raw.githubusercontent.com/rouault/downloads/refs/heads/main/swigwin-4.4.1.zip"
 
     env:
         VS_VERSION: ${{ matrix.VS_VERSION }}
@@ -59,7 +59,9 @@ jobs:
           git config --global core.autocrlf false
 
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set environment
         shell: pwsh
@@ -83,7 +85,7 @@ jobs:
             echo "CMAKE_ARCHITECTURE=$env:CMAKE_ARCHITECTURE" >> $env:GITHUB_ENV
 
       - name: Set compiler environment
-        shell: cmd
+        shell: cmd   # zizmor: ignore[misfeature]
         run: |
             if "%VS_VER%" == "2022" CALL "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\Tools\VsDevCmd.bat" -arch=%ARCHITECTURE%
             echo PATH=%PATH%>> %GITHUB_ENV%
@@ -133,7 +135,7 @@ jobs:
             if(-Not (Test-Path -Path $env:SDK_ZIP )) { Invoke-WebRequest "$env:SDK_URL" -OutFile "$env:SDK_ZIP" }
             $env:LIBZSTD_ZIP="libzstd.zip"
             if(-Not (Test-Path -Path $env:LIBZSTD_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBZSTD_URL" -OutFile "$env:LIBZSTD_ZIP" }
-            $env:SWIG_ZIP="swigwin-4.1.1.zip"
+            $env:SWIG_ZIP="swigwin-4.4.1.zip"
             if(-Not (Test-Path -Path $env:SWIG_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:SWIG_URL" -OutFile "$env:SWIG_ZIP" }
             # $env:LIBDEFLATE_ZIP="libdeflate.zip"
             # if(-Not (Test-Path -Path $env:LIBDEFLATE_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBDEFLATE_URL" -OutFile "$env:LIBDEFLATE_ZIP" }
@@ -167,7 +169,7 @@ jobs:
             mkdir build
             cd build
             $env:SDK_BIN="$env:SDK_PREFIX\bin"
-            $env:PATH="$env:SDK_BIN;$env:SDK\swigwin-4.1.1;$env:PATH"
+            $env:PATH="$env:SDK_BIN;$env:SDK\swigwin-4.4.1;$env:PATH"
             $env:GDAL_INSTALL_DIR="$env:GITHUB_WORKSPACE"+"\install-gdal"
             $env:CMAKE_INSTALL_PREFIX="-DCMAKE_INSTALL_PREFIX=" + $env:GDAL_INSTALL_DIR
             $env:PROJ_ROOT="-DPROJ_ROOT=" + $env:PROJ_INSTALL_DIR

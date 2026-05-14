@@ -35,7 +35,7 @@ namespace
 {
 
 /************************************************************************/
-/*                      GDALVectorSwapXYAlgorithmLayer                  */
+/*                    GDALVectorSwapXYAlgorithmLayer                    */
 /************************************************************************/
 
 class GDALVectorSwapXYAlgorithmLayer final

@@ -24,7 +24,7 @@ from osgeo import gdal
 
 def test_rfc30_1():
 
-    filename = "xx\u4E2D\u6587.\u4E2D\u6587"
+    filename = "xx\u4e2d\u6587.\u4e2d\u6587"
     filename_escaped = urllib.parse.quote(filename)
 
     gdaltest.download_or_skip(
@@ -52,7 +52,7 @@ def test_rfc30_1():
 
 def test_rfc30_2():
 
-    filename = "tmp/yy\u4E2D\u6587.\u4E2D\u6587"
+    filename = "tmp/yy\u4e2d\u6587.\u4e2d\u6587"
     fd = gdal.VSIFOpenL(filename, "w")
     assert fd is not None, "failed to create utf-8 named file."
 
@@ -61,7 +61,7 @@ def test_rfc30_2():
 
     # rename
 
-    new_filename = "tmp/yy\u4E2D\u6587.\u4E2D\u6587"
+    new_filename = "tmp/yy\u4e2d\u6587.\u4e2d\u6587"
     filename_for_rename = filename
 
     assert gdal.Rename(filename_for_rename, new_filename) == 0, "utf-8 rename failed."

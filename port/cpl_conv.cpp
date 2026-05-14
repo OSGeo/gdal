@@ -138,6 +138,14 @@ typedef struct
 
 static volatile CPLSharedFileInfoExtra *pasSharedFileListExtra = nullptr;
 
+static const char *
+CPLGetThreadLocalConfigOption(const char *pszKey, const char *pszDefault,
+                              bool bSubstituteNullValueMarkerWithNull);
+
+static const char *
+CPLGetGlobalConfigOption(const char *pszKey, const char *pszDefault,
+                         bool bSubstituteNullValueMarkerWithNull);
+
 /************************************************************************/
 /*                             CPLCalloc()                              */
 /************************************************************************/
@@ -850,7 +858,7 @@ const char *CPLReadLine3L(VSILFILE *fp, int nMaxCars, int *pnBufLength,
 }
 
 /************************************************************************/
-/*                            CPLScanString()                           */
+/*                           CPLScanString()                            */
 /************************************************************************/
 
 /**
@@ -916,7 +924,7 @@ char *CPLScanString(const char *pszString, int nMaxLength, int bTrimSpaces,
 }
 
 /************************************************************************/
-/*                             CPLScanLong()                            */
+/*                            CPLScanLong()                             */
 /************************************************************************/
 
 /**
@@ -1155,7 +1163,7 @@ void *CPLScanPointer(const char *pszString, int nMaxLength)
 }
 
 /************************************************************************/
-/*                             CPLScanDouble()                          */
+/*                           CPLScanDouble()                            */
 /************************************************************************/
 
 /**
@@ -1209,7 +1217,7 @@ double CPLScanDouble(const char *pszString, int nMaxLength)
 }
 
 /************************************************************************/
-/*                      CPLPrintString()                                */
+/*                           CPLPrintString()                           */
 /************************************************************************/
 
 /**
@@ -1296,7 +1304,7 @@ int CPLPrintStringFill(char *pszDest, const char *pszSrc, int nMaxLen)
 }
 
 /************************************************************************/
-/*                          CPLPrintInt32()                             */
+/*                           CPLPrintInt32()                            */
 /************************************************************************/
 
 /**
@@ -1425,7 +1433,7 @@ int CPLPrintPointer(char *pszBuffer, void *pValue, int nMaxLen)
 }
 
 /************************************************************************/
-/*                          CPLPrintDouble()                            */
+/*                           CPLPrintDouble()                           */
 /************************************************************************/
 
 /**
@@ -1606,7 +1614,7 @@ static std::set<CPLString> *paoGetKeys = nullptr;
 static std::set<CPLString> *paoSetKeys = nullptr;
 
 /************************************************************************/
-/*                      CPLShowAccessedOptions()                        */
+/*                       CPLShowAccessedOptions()                       */
 /************************************************************************/
 
 static void CPLShowAccessedOptions()
@@ -1698,17 +1706,21 @@ const char *CPL_STDCALL CPLGetConfigOption(const char *pszKey,
                                            const char *pszDefault)
 
 {
-    const char *pszResult = CPLGetThreadLocalConfigOption(pszKey, nullptr);
+    const char *pszResult = CPLGetThreadLocalConfigOption(
+        pszKey, nullptr, /* bSubstituteNullValueMarkerWithNull = */ false);
 
     if (pszResult == nullptr)
     {
-        pszResult = CPLGetGlobalConfigOption(pszKey, nullptr);
+        pszResult = CPLGetGlobalConfigOption(
+            pszKey, nullptr, /* bSubstituteNullValueMarkerWithNull = */ false);
     }
 
     if (gbIgnoreEnvVariables)
     {
         const char *pszEnvVar = getenv(pszKey);
-        if (pszEnvVar != nullptr)
+        // Skipping for CPL_DEBUG to avoid infinite recursion since CPLvDebug()
+        // calls CPLGetConfigOption()...
+        if (pszEnvVar != nullptr && !EQUAL(pszKey, "CPL_DEBUG"))
         {
             CPLDebug("CPL",
                      "Ignoring environment variable %s=%s because of "
@@ -1721,14 +1733,14 @@ const char *CPL_STDCALL CPLGetConfigOption(const char *pszKey,
         pszResult = getenv(pszKey);
     }
 
-    if (pszResult == nullptr)
+    if (pszResult == nullptr || strcmp(pszResult, CPL_NULL_VALUE) == 0)
         return pszDefault;
 
     return pszResult;
 }
 
 /************************************************************************/
-/*                         CPLGetConfigOptions()                        */
+/*                        CPLGetConfigOptions()                         */
 /************************************************************************/
 
 /**
@@ -1748,7 +1760,7 @@ char **CPLGetConfigOptions(void)
 }
 
 /************************************************************************/
-/*                         CPLSetConfigOptions()                        */
+/*                        CPLSetConfigOptions()                         */
 /************************************************************************/
 
 /**
@@ -1784,6 +1796,13 @@ const char *CPL_STDCALL CPLGetThreadLocalConfigOption(const char *pszKey,
                                                       const char *pszDefault)
 
 {
+    return CPLGetThreadLocalConfigOption(pszKey, pszDefault, true);
+}
+
+static const char *
+CPLGetThreadLocalConfigOption(const char *pszKey, const char *pszDefault,
+                              bool bSubstituteNullValueMarkerWithNull)
+{
 #ifdef DEBUG_CONFIG_OPTIONS
     CPLAccessConfigOption(pszKey, TRUE);
 #endif
@@ -1796,14 +1815,15 @@ const char *CPL_STDCALL CPLGetThreadLocalConfigOption(const char *pszKey,
     if (papszTLConfigOptions != nullptr)
         pszResult = CSLFetchNameValue(papszTLConfigOptions, pszKey);
 
-    if (pszResult == nullptr)
+    if (pszResult == nullptr || (bSubstituteNullValueMarkerWithNull &&
+                                 strcmp(pszResult, CPL_NULL_VALUE) == 0))
         return pszDefault;
 
     return pszResult;
 }
 
 /************************************************************************/
-/*                   CPLGetGlobalConfigOption()                         */
+/*                      CPLGetGlobalConfigOption()                      */
 /************************************************************************/
 
 /** Same as CPLGetConfigOption() but excludes environment variables and
@@ -1814,6 +1834,15 @@ const char *CPL_STDCALL CPLGetThreadLocalConfigOption(const char *pszKey,
 const char *CPL_STDCALL CPLGetGlobalConfigOption(const char *pszKey,
                                                  const char *pszDefault)
 {
+    return CPLGetGlobalConfigOption(
+        pszKey, pszDefault, /* bSubstituteNullValueMarkerWithNull = */ true);
+}
+
+static const char *
+CPLGetGlobalConfigOption(const char *pszKey, const char *pszDefault,
+                         bool bSubstituteNullValueMarkerWithNull)
+{
+
 #ifdef DEBUG_CONFIG_OPTIONS
     CPLAccessConfigOption(pszKey, TRUE);
 #endif
@@ -1823,14 +1852,15 @@ const char *CPL_STDCALL CPLGetGlobalConfigOption(const char *pszKey,
     const char *pszResult =
         CSLFetchNameValue(const_cast<char **>(g_papszConfigOptions), pszKey);
 
-    if (pszResult == nullptr)
+    if (pszResult == nullptr || (bSubstituteNullValueMarkerWithNull &&
+                                 strcmp(pszResult, CPL_NULL_VALUE) == 0))
         return pszDefault;
 
     return pszResult;
 }
 
 /************************************************************************/
-/*                    CPLSubscribeToSetConfigOption()                   */
+/*                   CPLSubscribeToSetConfigOption()                    */
 /************************************************************************/
 
 /**
@@ -1891,7 +1921,7 @@ void CPLUnsubscribeToSetConfigOption(int nId)
 }
 
 /************************************************************************/
-/*                  NotifyOtherComponentsConfigOptionChanged()          */
+/*              NotifyOtherComponentsConfigOptionChanged()              */
 /************************************************************************/
 
 static void NotifyOtherComponentsConfigOptionChanged(const char *pszKey,
@@ -1920,7 +1950,7 @@ static void NotifyOtherComponentsConfigOptionChanged(const char *pszKey,
 }
 
 /************************************************************************/
-/*                       CPLIsDebugEnabled()                            */
+/*                         CPLIsDebugEnabled()                          */
 /************************************************************************/
 
 static int gnDebug = -1;
@@ -1954,7 +1984,7 @@ bool CPLIsDebugEnabled()
 }
 
 /************************************************************************/
-/*                       CPLDeclareKnownConfigOption()                  */
+/*                    CPLDeclareKnownConfigOption()                     */
 /************************************************************************/
 
 static std::mutex goMutexDeclaredKnownConfigOptions;
@@ -1977,7 +2007,7 @@ void CPLDeclareKnownConfigOption(const char *pszKey,
 }
 
 /************************************************************************/
-/*                       CPLGetKnownConfigOptions()                     */
+/*                      CPLGetKnownConfigOptions()                      */
 /************************************************************************/
 
 /** Return the list of known configuration options.
@@ -1997,7 +2027,7 @@ char **CPLGetKnownConfigOptions()
 }
 
 /************************************************************************/
-/*           CPLSetConfigOptionDetectUnknownConfigOption()              */
+/*            CPLSetConfigOptionDetectUnknownConfigOption()             */
 /************************************************************************/
 
 static void CPLSetConfigOptionDetectUnknownConfigOption(const char *pszKey,
@@ -2060,14 +2090,22 @@ static void CPLSetConfigOptionDetectUnknownConfigOption(const char *pszKey,
  * value (note: passing NULL will not unset an existing environment variable;
  * it will just unset a value previously set by CPLSetConfigOption()).
  *
+ * Note that setting the GDAL_CACHEMAX configuration option after at least one
+ * raster has been read will be without effect. Use GDALSetCacheMax64()
+ * instead.
+ *
  * Starting with GDAL 3.11, if CPL_DEBUG is enabled prior to this call, and
  * CPLSetConfigOption() is called with a key that is neither a known
  * configuration option of GDAL itself, or one that has been declared with
  * CPLDeclareKnownConfigOption(), a warning will be emitted.
  *
- * @param pszKey the key of the option
- * @param pszValue the value of the option, or NULL to clear a setting.
+ * Starting with GDAL 3.13, the CPL_NULL_VALUE macro can be used as the value
+ * to indicate that callers of CPLGetConfigOption() should see the default value,
+ * instead of the value of the corresponding environment variable.
  *
+ * @param pszKey the key of the option
+ * @param pszValue the value of the option, NULL to clear a setting, or
+ *                 macro CPL_NULL_VALUE.
  * @see https://gdal.org/user/configoptions.html
  */
 void CPL_STDCALL CPLSetConfigOption(const char *pszKey, const char *pszValue)
@@ -2092,7 +2130,7 @@ void CPL_STDCALL CPLSetConfigOption(const char *pszKey, const char *pszValue)
 }
 
 /************************************************************************/
-/*                   CPLSetThreadLocalTLSFreeFunc()                     */
+/*                    CPLSetThreadLocalTLSFreeFunc()                    */
 /************************************************************************/
 
 /* non-stdcall wrapper function for CSLDestroy() (#5590) */
@@ -2122,8 +2160,17 @@ static void CPLSetThreadLocalTLSFreeFunc(void *pData)
  * it will just unset a value previously set by
  * CPLSetThreadLocalConfigOption()).
  *
+ * Note that setting the GDAL_CACHEMAX configuration option after at least one
+ * raster has been read will be without effect. Use GDALSetCacheMax64()
+ * instead.
+ *
+ * Starting with GDAL 3.13, the CPL_NULL_VALUE macro can be used as the value
+ * to indicate that callers of CPLGetConfigOption() should see the default value,
+ * instead of the value of the corresponding environment variable.
+ *
  * @param pszKey the key of the option
- * @param pszValue the value of the option, or NULL to clear a setting.
+ * @param pszValue the value of the option, NULL to clear a setting, or
+ *                 macro CPL_NULL_VALUE.
  */
 
 void CPL_STDCALL CPLSetThreadLocalConfigOption(const char *pszKey,
@@ -2456,7 +2503,7 @@ void CPLLoadConfigOptionsFromFile(const char *pszFilename, int bOverrideEnvVars)
 }
 
 /************************************************************************/
-/*                CPLLoadConfigOptionsFromPredefinedFiles()             */
+/*              CPLLoadConfigOptionsFromPredefinedFiles()               */
 /************************************************************************/
 
 /** Load configuration from a set of predefined files.
@@ -3039,7 +3086,7 @@ void CPLCloseShared(FILE *fp)
 }
 
 /************************************************************************/
-/*                   CPLCleanupSharedFileMutex()                        */
+/*                     CPLCleanupSharedFileMutex()                      */
 /************************************************************************/
 
 void CPLCleanupSharedFileMutex()
@@ -3300,7 +3347,13 @@ int CPLMoveFile(const char *pszNewPath, const char *pszOldPath)
     const int nRet = CPLCopyFile(pszNewPath, pszOldPath);
 
     if (nRet == 0)
-        VSIUnlink(pszOldPath);
+    {
+        if (VSIUnlink(pszOldPath) != 0)
+        {
+            CPLError(CE_Warning, CPLE_AppDefined, "Cannot delete '%s'",
+                     pszOldPath);
+        }
+    }
     return nRet;
 }
 
@@ -3362,7 +3415,7 @@ CPLLocaleC::~CPLLocaleC()
 }
 
 /************************************************************************/
-/*                        CPLThreadLocaleCPrivate                       */
+/*                       CPLThreadLocaleCPrivate                        */
 /************************************************************************/
 
 #ifdef HAVE_USELOCALE
@@ -3459,7 +3512,7 @@ CPLThreadLocaleCPrivate::~CPLThreadLocaleCPrivate()
 #endif
 
 /************************************************************************/
-/*                        CPLThreadLocaleC()                            */
+/*                          CPLThreadLocaleC()                          */
 /************************************************************************/
 
 CPLThreadLocaleC::CPLThreadLocaleC() : m_private(new CPLThreadLocaleCPrivate)
@@ -3467,7 +3520,7 @@ CPLThreadLocaleC::CPLThreadLocaleC() : m_private(new CPLThreadLocaleCPrivate)
 }
 
 /************************************************************************/
-/*                       ~CPLThreadLocaleC()                            */
+/*                         ~CPLThreadLocaleC()                          */
 /************************************************************************/
 
 CPLThreadLocaleC::~CPLThreadLocaleC()
@@ -3479,7 +3532,7 @@ CPLThreadLocaleC::~CPLThreadLocaleC()
 //! @endcond
 
 /************************************************************************/
-/*                          CPLsetlocale()                              */
+/*                            CPLsetlocale()                            */
 /************************************************************************/
 
 /**
@@ -3509,7 +3562,7 @@ char *CPLsetlocale(int category, const char *locale)
 }
 
 /************************************************************************/
-/*                       CPLCleanupSetlocaleMutex()                     */
+/*                      CPLCleanupSetlocaleMutex()                      */
 /************************************************************************/
 
 void CPLCleanupSetlocaleMutex(void)
@@ -3649,7 +3702,7 @@ void *CPLZLibInflate(const void *, size_t, void *, size_t, size_t *pnOutBytes)
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                         CPLConfigOptionSetter()                      */
+/*                       CPLConfigOptionSetter()                        */
 /************************************************************************/
 
 CPLConfigOptionSetter::CPLConfigOptionSetter(const char *pszKey,
@@ -3666,12 +3719,13 @@ CPLConfigOptionSetter::CPLConfigOptionSetter(const char *pszKey,
         m_bRestoreOldValue = true;
         if (pszOldValue)
             m_pszOldValue = CPLStrdup(pszOldValue);
-        CPLSetThreadLocalConfigOption(pszKey, pszValue);
+        CPLSetThreadLocalConfigOption(pszKey,
+                                      pszValue ? pszValue : CPL_NULL_VALUE);
     }
 }
 
 /************************************************************************/
-/*                        ~CPLConfigOptionSetter()                      */
+/*                       ~CPLConfigOptionSetter()                       */
 /************************************************************************/
 
 CPLConfigOptionSetter::~CPLConfigOptionSetter()
@@ -3701,14 +3755,14 @@ CPLConfigOptionSetter::~CPLConfigOptionSetter()
 bool CPLIsInteractive(FILE *f)
 {
 #ifndef _WIN32
-    return isatty(static_cast<int>(fileno(f)));
+    return CPL_TO_BOOL(isatty(static_cast<int>(fileno(f))));
 #else
-    return _isatty(_fileno(f));
+    return CPL_TO_BOOL(_isatty(_fileno(f)));
 #endif
 }
 
 /************************************************************************/
-/*                          CPLLockFileStruct                          */
+/*                          CPLLockFileStruct                           */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -3722,7 +3776,7 @@ struct CPLLockFileStruct
 //! @endcond
 
 /************************************************************************/
-/*                          CPLLockFileEx()                             */
+/*                           CPLLockFileEx()                            */
 /************************************************************************/
 
 /** Create and acquire a lock file.
@@ -3877,7 +3931,7 @@ CPLLockFileStatus CPLLockFileEx(const char *pszLockFileName,
 }
 
 /************************************************************************/
-/*                         CPLUnlockFileEx()                            */
+/*                          CPLUnlockFileEx()                           */
 /************************************************************************/
 
 /** Release and delete a lock file.
@@ -3903,7 +3957,7 @@ void CPLUnlockFileEx(CPLLockFileHandle hLockFileHandle)
 }
 
 /************************************************************************/
-/*                       CPLFormatReadableFileSize()                    */
+/*                     CPLFormatReadableFileSize()                      */
 /************************************************************************/
 
 template <class T>

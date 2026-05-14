@@ -135,22 +135,12 @@ extern "C++"
 /*      modified for new platforms.                                     */
 /* ==================================================================== */
 
-/* -------------------------------------------------------------------- */
-/*      Which versions of C++ are available.                            */
-/* -------------------------------------------------------------------- */
-
 /* MSVC fails to define a decent value of __cplusplus. Try to target VS2015*/
 /* as a minimum */
 
 #if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
 #if !(__cplusplus >= 201103L || (defined(_MSC_VER) && _MSC_VER >= 1900))
 #error Must have C++11 or newer.
-#endif
-#if __cplusplus >= 201402L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201402L)
-#define HAVE_CXX14 1
-#endif
-#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
-#define HAVE_CXX17 1
 #endif
 #endif /* __cplusplus */
 
@@ -357,23 +347,24 @@ typedef uintptr_t GUIntptr_t;
 #endif
 /*! @endcond*/
 
-#ifndef MAX
 /** Macro to compute the minimum of 2 values */
-#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define CPL_MIN(a, b) (((a) < (b)) ? (a) : (b))
 /** Macro to compute the maximum of 2 values */
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
-#endif
+#define CPL_MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-#ifndef ABS
 /** Macro to compute the absolute value */
-#define ABS(x) (((x) < 0) ? (-1 * (x)) : (x))
-#endif
+#define CPL_ABS(x) (((x) < 0) ? (-1 * (x)) : (x))
 
+/*! @cond Doxygen_Suppress */
+
+#if defined(GDAL_COMPILATION)
 #ifndef M_PI
-/** PI definition */
 #define M_PI 3.14159265358979323846
 /* 3.1415926535897932384626433832795 */
 #endif
+
+#endif
+/*! @endcond*/
 
 /* -------------------------------------------------------------------- */
 /*      Macro to test equality of two floating point values.            */
@@ -618,9 +609,9 @@ static inline char *CPL_afl_friendly_strstr(const char *haystack,
 #endif
 
 #if defined(CPL_LSB)
-#define CPL_IS_LSB 1
+#define CPL_IS_LSB (1 == 1)
 #else
-#define CPL_IS_LSB 0
+#define CPL_IS_LSB (0 == 1)
 #endif
 /*! @endcond */
 
@@ -804,12 +795,216 @@ extern "C++"
  */
 #define CPL_LSBUINT16PTR(x) CPL_STATIC_CAST(GUInt16, CPL_LSBINT16PTR(x))
 
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+extern "C++"
+{
+#include <cstdint>
+
+    /** Return a signed Int32 from the 4 bytes ordered in LSB order at address x */
+    template <class T> inline int32_t CPL_LSBSINT32PTR(const T *x)
+    {
+        static_assert(sizeof(T) == 1 || sizeof(T) == sizeof(int32_t),
+                      "sizeof(T) == 1 || sizeof(T) == sizeof(int32_t)");
+#if CPL_IS_LSB
+        {
+            int32_t signed_val;
+            memcpy(&signed_val, x, sizeof(int32_t));
+            return signed_val;
+        }
+#else
+        {
+            uint32_t unsigned_val;
+            memcpy(&unsigned_val, x, sizeof(int32_t));
+            unsigned_val = CPL_SWAP32(unsigned_val);
+            int32_t signed_val;
+            memcpy(&signed_val, &unsigned_val, sizeof(int32_t));
+            return signed_val;
+        }
+#endif
+    }
+}
+#else
 /** Return a signed Int32 from the 4 bytes ordered in LSB order at address x */
 #define CPL_LSBSINT32PTR(x) CPL_STATIC_CAST(GInt32, CPL_LSBINT32PTR(x))
+#endif
 
 /** Return a unsigned Int32 from the 4 bytes ordered in LSB order at address x
  */
 #define CPL_LSBUINT32PTR(x) CPL_STATIC_CAST(GUInt32, CPL_LSBINT32PTR(x))
+
+#if defined(__cplusplus) && !defined(CPL_SUPRESS_CPLUSPLUS)
+
+extern "C++"
+{
+#include <cstddef>
+#include <cstdint>
+
+    /*! @cond Doxygen_Suppress */
+    // workaround before CWG2518/P2593R1
+    template <class T> struct CPL_T_IsAlwaysFalse
+    {
+        static const bool value = false;
+    };
+
+    /*! @endcond */
+
+    /** Return the provided value as a LSB ordered one.
+     *
+     * Only available for primitive types: [u]int[8|16|32|64], float and double.
+     */
+    template <class T> T CPL_AS_LSB(T)
+    {
+        // See https://youtu.be/b6j6SZiXmoo?t=1659 for rationale for CPL_T_IsAlwaysFalse
+        static_assert(CPL_T_IsAlwaysFalse<T>::value, "Unsupported value for T");
+    }
+
+    /*! @cond Doxygen_Suppress */
+    template <> inline int8_t CPL_AS_LSB<int8_t>(int8_t x)
+    {
+        return x;
+    }
+
+    template <> inline uint8_t CPL_AS_LSB<uint8_t>(uint8_t x)
+    {
+        return x;
+    }
+
+    template <> inline int16_t CPL_AS_LSB<int16_t>(int16_t x)
+    {
+        CPL_LSBPTR16(&x);
+        return x;
+    }
+
+    template <> inline uint16_t CPL_AS_LSB<uint16_t>(uint16_t x)
+    {
+        CPL_LSBPTR16(&x);
+        return x;
+    }
+
+    template <> inline int32_t CPL_AS_LSB<int32_t>(int32_t x)
+    {
+        CPL_LSBPTR32(&x);
+        return x;
+    }
+
+    template <> inline uint32_t CPL_AS_LSB<uint32_t>(uint32_t x)
+    {
+        CPL_LSBPTR32(&x);
+        return x;
+    }
+
+    template <> inline int64_t CPL_AS_LSB<int64_t>(int64_t x)
+    {
+        CPL_LSBPTR64(&x);
+        return x;
+    }
+
+    template <> inline uint64_t CPL_AS_LSB<uint64_t>(uint64_t x)
+    {
+        CPL_LSBPTR64(&x);
+        return x;
+    }
+
+    template <> inline float CPL_AS_LSB<float>(float x)
+    {
+        CPL_LSBPTR32(&x);
+        return x;
+    }
+
+    template <> inline double CPL_AS_LSB<double>(double x)
+    {
+        CPL_LSBPTR64(&x);
+        return x;
+    }
+
+    /*! @endcond */
+
+    /** Return a primitive type from a memory buffer containing its LSB
+     * ordered byte sequence
+     *
+     * Only available for primitive types: [u]int[8|16|32|64], float and double.
+     */
+    template <class T> inline T CPL_FROM_LSB(const void *ptr)
+    {
+        T x;
+        memcpy(&x, ptr, sizeof(x));
+        return CPL_AS_LSB(x);
+    }
+
+    /** Return the byte swapped version of the provided value.
+     *
+     * Only available for primitive types: [u]int[8|16|32|64], float and double.
+     */
+    template <class T> T CPL_SWAP(T)
+    {
+        // See https://youtu.be/b6j6SZiXmoo?t=1659 for rationale for CPL_T_IsAlwaysFalse
+        static_assert(CPL_T_IsAlwaysFalse<T>::value, "Unsupported value for T");
+    }
+
+    /*! @cond Doxygen_Suppress */
+    template <> inline int8_t CPL_SWAP<int8_t>(int8_t x)
+    {
+        return x;
+    }
+
+    template <> inline uint8_t CPL_SWAP<uint8_t>(uint8_t x)
+    {
+        return x;
+    }
+
+    template <> inline uint16_t CPL_SWAP<uint16_t>(uint16_t x)
+    {
+        return CPL_SWAP16(x);
+    }
+
+    template <> inline int16_t CPL_SWAP<int16_t>(int16_t x)
+    {
+        uint16_t ux = CPL_SWAP16(x);
+        memcpy(&x, &ux, sizeof(x));
+        return x;
+    }
+
+    template <> inline uint32_t CPL_SWAP<uint32_t>(uint32_t x)
+    {
+        return CPL_SWAP32(x);
+    }
+
+    template <> inline int32_t CPL_SWAP<int32_t>(int32_t x)
+    {
+        uint32_t ux = CPL_SWAP32(x);
+        memcpy(&x, &ux, sizeof(x));
+        return x;
+    }
+
+    template <> inline uint64_t CPL_SWAP<uint64_t>(uint64_t x)
+    {
+        return CPL_SWAP64(x);
+    }
+
+    template <> inline int64_t CPL_SWAP<int64_t>(int64_t x)
+    {
+        uint64_t ux = CPL_SWAP64(x);
+        memcpy(&x, &ux, sizeof(x));
+        return x;
+    }
+
+    template <> inline float CPL_SWAP<float>(float x)
+    {
+        float ret = x;
+        CPL_SWAP32PTR(&ret);
+        return ret;
+    }
+
+    template <> inline double CPL_SWAP<double>(double x)
+    {
+        double ret = x;
+        CPL_SWAP64PTR(&ret);
+        return ret;
+    }
+
+    /*! @endcond */
+}
+#endif  // defined(__cplusplus) && defined(GDAL_COMPILATION)
 
 /*! @cond Doxygen_Suppress */
 /* Utility macro to explicitly mark intentionally unreferenced parameters. */
@@ -989,6 +1184,8 @@ extern "C++"
     template <class T> static void CPL_IGNORE_RET_VAL(const T &)
     {
     }
+
+    inline static bool CPL_TO_BOOL(bool x) = delete;
 
     inline static bool CPL_TO_BOOL(int x)
     {

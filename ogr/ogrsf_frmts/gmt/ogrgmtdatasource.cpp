@@ -40,10 +40,10 @@ OGRGmtDataSource::~OGRGmtDataSource()
 /************************************************************************/
 
 int OGRGmtDataSource::Open(const char *pszFilename, VSILFILE *fp,
-                           const OGRSpatialReference *poSRS, int bUpdateIn)
+                           const OGRSpatialReference *poSRS, bool bUpdateIn)
 
 {
-    bUpdate = CPL_TO_BOOL(bUpdateIn);
+    bUpdate = bUpdateIn;
 
     OGRGmtLayer *poLayer =
         new OGRGmtLayer(this, pszFilename, fp, poSRS, bUpdate);
@@ -62,7 +62,7 @@ int OGRGmtDataSource::Open(const char *pszFilename, VSILFILE *fp,
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *
@@ -151,10 +151,10 @@ OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     if (poSRS != nullptr)
     {
-        if (poSRS->GetAuthorityName(nullptr) &&
-            EQUAL(poSRS->GetAuthorityName(nullptr), "EPSG"))
+        if (poSRS->GetAuthorityName() &&
+            EQUAL(poSRS->GetAuthorityName(), "EPSG"))
         {
-            VSIFPrintfL(fp, "# @Je%s\n", poSRS->GetAuthorityCode(nullptr));
+            VSIFPrintfL(fp, "# @Je%s\n", poSRS->GetAuthorityCode());
         }
 
         char *pszValue = nullptr;
@@ -179,7 +179,7 @@ OGRGmtDataSource::ICreateLayer(const char *pszLayerName,
     /* -------------------------------------------------------------------- */
     /*      Return open layer handle.                                       */
     /* -------------------------------------------------------------------- */
-    if (Open(osFilename, fp, poSRS, TRUE))
+    if (Open(osFilename, fp, poSRS, true))
     {
         OGRLayer *poLayer = papoLayers[nLayers - 1];
         if (strcmp(pszGeom, "") != 0)

@@ -987,7 +987,7 @@ void ParseStyles(DocumentPtr poKmlDocument, OGRStyleTable **poStyleTable)
 ******************************************************************************/
 
 void styletable2kml(OGRStyleTable *poOgrStyleTable, KmlFactory *poKmlFactory,
-                    ContainerPtr poKmlContainer, char **papszOptions)
+                    ContainerPtr poKmlContainer, CSLConstList papszOptions)
 {
     /***** just return if the styletable is null *****/
     if (!poOgrStyleTable)

@@ -45,7 +45,7 @@ class GNMFileNetwork : public GNMGenericNetwork
     int CloseDependentDatasets() override;
     OGRErr DeleteLayer(int) override;
     virtual CPLErr Create(const char *pszFilename,
-                          char **papszOptions) override;
+                          CSLConstList papszOptions) override;
 
   protected:
     OGRLayer *ICreateLayer(const char *pszName,
@@ -53,27 +53,27 @@ class GNMFileNetwork : public GNMGenericNetwork
                            CSLConstList papszOptions) override;
 
     virtual int CheckNetworkExist(const char *pszFilename,
-                                  char **papszOptions) override;
+                                  CSLConstList papszOptions) override;
 
   protected:
     virtual CPLErr CreateMetadataLayerFromFile(const char *pszFilename,
                                                int nVersion,
-                                               char **papszOptions);
+                                               CSLConstList papszOptions);
     CPLErr StoreNetworkSrs() override;
     CPLErr LoadNetworkSrs() override;
     CPLErr DeleteMetadataLayer() override;
     virtual CPLErr CreateGraphLayerFromFile(const char *pszFilename,
-                                            char **papszOptions);
+                                            CSLConstList papszOptions);
     CPLErr DeleteGraphLayer() override;
     virtual CPLErr CreateFeaturesLayerFromFile(const char *pszFilename,
-                                               char **papszOptions);
+                                               CSLConstList papszOptions);
     CPLErr DeleteFeaturesLayer() override;
     CPLErr DeleteNetworkLayers() override;
     CPLErr LoadNetworkLayer(const char *pszLayername) override;
     bool CheckStorageDriverSupport(const char *pszDriverName) override;
 
   protected:
-    CPLErr FormPath(const char *pszFilename, char **papszOptions);
+    CPLErr FormPath(const char *pszFilename, CSLConstList papszOptions);
 
   protected:
     CPLString m_soNetworkFullName;

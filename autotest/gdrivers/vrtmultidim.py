@@ -25,6 +25,7 @@ pytestmark = pytest.mark.skipif(
     reason="VRT driver open missing",
 )
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -1154,9 +1155,7 @@ def test_vrtmultidim_serialize():
     gdal.VSIFCloseL(f)
     # print(got_data)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="X" size="3" />
     <Dimension name="Y" size="4" indexingVariable="Y" />
@@ -1220,7 +1219,6 @@ def test_vrtmultidim_serialize():
   </Group>
 </VRTDataset>
 """
-    )
 
     _validate(got_data)
 
@@ -1261,9 +1259,7 @@ def test_vrtmultidim_createcopy():
     gdal.VSIFCloseL(f)
     # print(got_data)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="dim" size="3" />
     <Array name="array">
@@ -1283,7 +1279,6 @@ def test_vrtmultidim_createcopy():
   </Group>
 </VRTDataset>
 """
-    )
 
     _validate(got_data)
 
@@ -1349,9 +1344,7 @@ def test_vrtmultidim_createmultidimensional():
     gdal.VSIFCloseL(f)
     # print(got_data)
 
-    assert (
-        got_data
-        == """<VRTDataset>
+    assert got_data == """<VRTDataset>
   <Group name="/">
     <Dimension name="dim" size="3" />
     <Attribute name="attr">
@@ -1369,7 +1362,6 @@ def test_vrtmultidim_createmultidimensional():
   </Group>
 </VRTDataset>
 """
-    )
     _validate(got_data)
 
     with gdal.OpenEx(tmpfile, gdal.OF_MULTIDIM_RASTER) as ds:
@@ -1499,15 +1491,13 @@ def test_vrtmultidim_arraysource_error_no_array_in_array_source():
         Exception,
         match="Cannot find a <SimpleSourceArray>, <Array> or <DerivedArray> in <ArraySource>",
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1517,8 +1507,7 @@ def test_vrtmultidim_arraysource_error_no_SourceFilename():
     with pytest.raises(
         Exception, match="Cannot find <SourceFilename> in <SingleSourceArray>"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1528,8 +1517,7 @@ def test_vrtmultidim_arraysource_error_no_SourceFilename():
           </SingleSourceArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1539,8 +1527,7 @@ def test_vrtmultidim_arraysource_error_no_SourceArray():
     with pytest.raises(
         Exception, match="Cannot find <SourceArray> in <SingleSourceArray>"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1550,8 +1537,7 @@ def test_vrtmultidim_arraysource_error_no_SourceArray():
           </SingleSourceArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1559,8 +1545,7 @@ def test_vrtmultidim_arraysource_error_no_SourceArray():
 def test_vrtmultidim_arraysource_error_wrong_SourceFilename():
 
     with pytest.raises(Exception, match="i/do/not/exist.nc"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1570,8 +1555,7 @@ def test_vrtmultidim_arraysource_error_wrong_SourceFilename():
           </SingleSourceArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1579,8 +1563,7 @@ def test_vrtmultidim_arraysource_error_wrong_SourceFilename():
 def test_vrtmultidim_arraysource_error_wrong_SourceArray():
 
     with pytest.raises(Exception, match="Cannot find array"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1590,8 +1573,7 @@ def test_vrtmultidim_arraysource_error_wrong_SourceArray():
           </SingleSourceArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1602,8 +1584,7 @@ def test_vrtmultidim_arraysource_error_not_a_2D_array():
         Exception,
         match="Array referenced in <ArraySource> should be a two-dimensional array",
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1613,8 +1594,7 @@ def test_vrtmultidim_arraysource_error_not_a_2D_array():
           </SingleSourceArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1625,16 +1605,14 @@ def test_vrtmultidim_arraysource_error_no_source_array_in_DerivedArray():
         Exception,
         match="Cannot find a <SimpleSourceArray>, <Array> or <DerivedArray> in <DerivedArray>",
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
             <DerivedArray/>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1642,8 +1620,7 @@ def test_vrtmultidim_arraysource_error_no_source_array_in_DerivedArray():
 def test_vrtmultidim_arraysource_error_unknown_step():
 
     with pytest.raises(Exception, match="Unknown <Step>.<wrong> element"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1656,8 +1633,7 @@ def test_vrtmultidim_arraysource_error_unknown_step():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1667,8 +1643,7 @@ def test_vrtmultidim_arraysource_error_view_missing_expr():
     with pytest.raises(
         Exception, match="Cannot find 'expr' attribute in <View> element"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1681,8 +1656,7 @@ def test_vrtmultidim_arraysource_error_view_missing_expr():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1692,8 +1666,7 @@ def test_vrtmultidim_arraysource_error_transpose_missing_order():
     with pytest.raises(
         Exception, match="Cannot find 'newOrder' attribute in <Transpose> element"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1706,8 +1679,7 @@ def test_vrtmultidim_arraysource_error_transpose_missing_order():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1715,8 +1687,7 @@ def test_vrtmultidim_arraysource_error_transpose_missing_order():
 def test_vrtmultidim_arraysource_error_resample_wrong_dimension():
 
     with pytest.raises(Exception, match="Missing name attribute on Dimension"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1733,8 +1704,7 @@ def test_vrtmultidim_arraysource_error_resample_wrong_dimension():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1742,8 +1712,7 @@ def test_vrtmultidim_arraysource_error_resample_wrong_dimension():
 def test_vrtmultidim_arraysource_error_resample_wrong_srs():
 
     with pytest.raises(Exception, match="Invalid value for <SRS>"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1760,8 +1729,7 @@ def test_vrtmultidim_arraysource_error_resample_wrong_srs():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1771,8 +1739,7 @@ def test_vrtmultidim_arraysource_error_resample_wrong_option():
     with pytest.raises(
         Exception, match="Cannot find 'name' attribute in <Option> element"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1789,8 +1756,7 @@ def test_vrtmultidim_arraysource_error_resample_wrong_option():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1798,8 +1764,7 @@ def test_vrtmultidim_arraysource_error_resample_wrong_option():
 def test_vrtmultidim_arraysource_grid_missing_gridoptions():
 
     with pytest.raises(Exception, match="Cannot find <GridOptions> in <Grid> element"):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1815,8 +1780,7 @@ def test_vrtmultidim_arraysource_grid_missing_gridoptions():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1827,8 +1791,7 @@ def test_vrtmultidim_arraysource_grid_invalid_XArray():
         Exception,
         match="Cannot find a <SimpleSourceArray>, <Array> or <DerivedArray> in <XArray>",
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1846,8 +1809,7 @@ def test_vrtmultidim_arraysource_grid_invalid_XArray():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1858,8 +1820,7 @@ def test_vrtmultidim_arraysource_grid_invalid_YArray():
         Exception,
         match="Cannot find a <SimpleSourceArray>, <Array> or <DerivedArray> in <YArray>",
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1877,8 +1838,7 @@ def test_vrtmultidim_arraysource_grid_invalid_YArray():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1888,8 +1848,7 @@ def test_vrtmultidim_arraysource_grid_error_wrong_option():
     with pytest.raises(
         Exception, match="Cannot find 'name' attribute in <Option> element"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1907,8 +1866,7 @@ def test_vrtmultidim_arraysource_grid_error_wrong_option():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @pytest.mark.require_driver("netCDF")
@@ -1918,8 +1876,7 @@ def test_vrtmultidim_arraysource_getmask_error_wrong_option():
     with pytest.raises(
         Exception, match="Cannot find 'name' attribute in <Option> element"
     ):
-        gdal.Open(
-            """<VRTDataset rasterXSize="20" rasterYSize="20">
+        gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
       <VRTRasterBand dataType="Byte" band="1">
         <ColorInterp>Gray</ColorInterp>
         <ArraySource>
@@ -1936,8 +1893,7 @@ def test_vrtmultidim_arraysource_getmask_error_wrong_option():
             </DerivedArray>
         </ArraySource>
       </VRTRasterBand>
-    </VRTDataset>"""
-        )
+    </VRTDataset>""")
 
 
 @gdaltest.enable_exceptions()
@@ -1973,8 +1929,7 @@ def test_vrtmultidim_arraysource_view(
             0, 0, 2, 3, array.array("B", [0, 1, 2, 3, 4, 5])
         )
 
-    ds = gdal.Open(
-        f"""<VRTDataset rasterXSize="2" rasterYSize="3">
+    ds = gdal.Open(f"""<VRTDataset rasterXSize="2" rasterYSize="3">
   <VRTRasterBand dataType="Byte" band="1">
     <ArraySource>
       <DerivedArray>
@@ -1995,8 +1950,7 @@ def test_vrtmultidim_arraysource_view(
       </DerivedArray>
     </ArraySource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     assert array.array("B", ds.GetRasterBand(1).ReadRaster()) == array.array(
         "B", expected
@@ -2084,3 +2038,129 @@ def test_vrtmultidim_GetRawBlockInfo_two_sources(tmp_path):
         for y in range(10, 20):
             info = array.GetRawBlockInfo([y, 0])
             assert "out_top.nc" in info.GetFilename()
+
+
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_overview_by_ref():
+
+    ds = gdal.OpenEx(
+        """<VRTDataset>
+    <Group name="/">
+        <Array name="ar">
+            <DataType>Float32</DataType>
+            <Overviews>
+                <ArrayFullName>/ar2</ArrayFullName>
+            </Overviews>
+        </Array>
+        <Array name="ar2">
+            <DataType>Float32</DataType>
+        </Array>
+    </Group>
+</VRTDataset>""",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    assert ds
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("ar")
+    assert ar.GetOverviewCount() == 1
+    assert ar.GetOverview(-1) is None
+    assert ar.GetOverview(1) is None
+    assert ar.GetOverview(0).GetFullName() == "/ar2"
+
+
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_overview_by_ref_wrong():
+
+    ds = gdal.OpenEx(
+        """<VRTDataset>
+    <Group name="/">
+        <Array name="ar">
+            <DataType>Float32</DataType>
+            <Overviews>
+                <ArrayFullName>/wrong</ArrayFullName>
+            </Overviews>
+        </Array>
+    </Group>
+</VRTDataset>""",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    assert ds
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("ar")
+    with pytest.raises(
+        Exception, match="Cannot resolve overview full name '/wrong' to an actual array"
+    ):
+        ar.GetOverview(0)
+
+
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_overview_inline():
+
+    ds = gdal.OpenEx(
+        """<VRTDataset>
+    <Group name="/">
+        <Array name="ar">
+            <Dimension name="Y" size="40"/>
+            <Dimension name="X" size="20"/>
+            <DataType>Float32</DataType>
+            <Overviews>
+                <Array name="ar2">
+                    <Dimension name="Y_reduced" size="20"/>
+                    <Dimension name="X_reduced" size="10"/>
+                    <DataType>Float32</DataType>
+                </Array>
+            </Overviews>
+        </Array>
+    </Group>
+</VRTDataset>""",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    assert ds
+    rg = ds.GetRootGroup()
+    ar = rg.OpenMDArray("ar")
+    assert ar.GetOverviewCount() == 1
+    assert ar.GetOverview(0).GetName() == "ar2"
+
+    classic_ds = ar.AsClassicDataset(1, 0)
+    assert classic_ds.RasterYSize == 40
+    assert classic_ds.RasterXSize == 20
+    band = classic_ds.GetRasterBand(1)
+    assert band.GetOverviewCount() == 1
+    assert band.GetOverview(-1) is None
+    assert band.GetOverview(1) is None
+    assert band.GetOverview(0).YSize == 20
+    assert band.GetOverview(0).XSize == 10
+
+    ar_from_classic_ds = classic_ds.AsMDArray()
+    assert ar_from_classic_ds.GetOverviewCount() == 1
+    assert ar_from_classic_ds.GetOverview(-1) is None
+    assert ar_from_classic_ds.GetOverview(1) is None
+    assert ar_from_classic_ds.GetOverview(0).GetDimensions()[0].GetSize() == 1
+    assert ar_from_classic_ds.GetOverview(0).GetDimensions()[1].GetSize() == 20
+    assert ar_from_classic_ds.GetOverview(0).GetDimensions()[2].GetSize() == 10
+
+    ar_from_band = band.AsMDArray()
+    assert ar_from_band.GetOverviewCount() == 1
+    assert ar_from_band.GetOverview(-1) is None
+    assert ar_from_band.GetOverview(1) is None
+    assert ar_from_band.GetOverview(0).GetDimensions()[0].GetSize() == 20
+    assert ar_from_band.GetOverview(0).GetDimensions()[1].GetSize() == 10
+
+
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_overview_inline_wrong():
+
+    with pytest.raises(Exception, match="Missing name attribute on Array"):
+        gdal.OpenEx(
+            """<VRTDataset>
+        <Group name="/">
+            <Array name="ar">
+                <DataType>Float32</DataType>
+                <Overviews>
+                    <Array/>
+                </Overviews>
+            </Array>
+        </Group>
+    </VRTDataset>""",
+            gdal.OF_MULTIDIM_RASTER,
+        )

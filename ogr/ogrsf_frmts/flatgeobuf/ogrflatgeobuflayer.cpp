@@ -399,23 +399,22 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount,
     if (m_poSRS)
     {
         int nAuthorityCode = 0;
-        const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+        const char *pszAuthorityName = m_poSRS->GetAuthorityName();
         if (pszAuthorityName == nullptr || strlen(pszAuthorityName) == 0)
         {
             // Try to force identify an EPSG code.
             m_poSRS->AutoIdentifyEPSG();
 
-            pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+            pszAuthorityName = m_poSRS->GetAuthorityName();
             if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG"))
             {
-                const char *pszAuthorityCode =
-                    m_poSRS->GetAuthorityCode(nullptr);
+                const char *pszAuthorityCode = m_poSRS->GetAuthorityCode();
                 if (pszAuthorityCode != nullptr && strlen(pszAuthorityCode) > 0)
                 {
                     /* Import 'clean' SRS */
                     m_poSRS->importFromEPSG(atoi(pszAuthorityCode));
 
-                    pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+                    pszAuthorityName = m_poSRS->GetAuthorityName();
                 }
             }
         }
@@ -423,7 +422,7 @@ void OGRFlatGeobufLayer::writeHeader(VSILFILE *poFp, uint64_t featuresCount,
         {
             // For the root authority name 'EPSG', the authority code
             // should always be integral
-            nAuthorityCode = atoi(m_poSRS->GetAuthorityCode(nullptr));
+            nAuthorityCode = atoi(m_poSRS->GetAuthorityCode());
         }
 
         // Translate SRS to WKT.
@@ -975,7 +974,7 @@ GIntBig OGRFlatGeobufLayer::GetFeatureCount(int bForce)
 }
 
 /************************************************************************/
-/*                     ParseDateTime()                                  */
+/*                           ParseDateTime()                            */
 /************************************************************************/
 
 static inline bool ParseDateTime(std::string_view sInput, OGRField *psField)
@@ -1442,7 +1441,7 @@ OGRErr OGRFlatGeobufLayer::parseFeature(OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                      GetNextArrowArray()                             */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 int OGRFlatGeobufLayer::GetNextArrowArray(struct ArrowArrayStream *stream,

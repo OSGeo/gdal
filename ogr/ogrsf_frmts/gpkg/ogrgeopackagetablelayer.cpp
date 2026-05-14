@@ -821,7 +821,7 @@ const OGRFeatureDefn *OGRGeoPackageTableLayer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                      GetFIDColumn()                                  */
+/*                            GetFIDColumn()                            */
 /************************************************************************/
 
 const char *OGRGeoPackageTableLayer::GetFIDColumn() const
@@ -1544,7 +1544,7 @@ OGRGeoPackageTableLayer::~OGRGeoPackageTableLayer()
 }
 
 /************************************************************************/
-/*                 CancelAsyncNextArrowArray()                          */
+/*                     CancelAsyncNextArrowArray()                      */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::CancelAsyncNextArrowArray()
@@ -1585,7 +1585,7 @@ void OGRGeoPackageTableLayer::CancelAsyncNextArrowArray()
 }
 
 /************************************************************************/
-/*                        InitView()                                    */
+/*                              InitView()                              */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::InitView()
@@ -1694,7 +1694,7 @@ void OGRGeoPackageTableLayer::InitView()
 }
 
 /************************************************************************/
-/*                      CheckUpdatableTable()                           */
+/*                        CheckUpdatableTable()                         */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::CheckUpdatableTable(const char *pszOperation)
@@ -1718,7 +1718,7 @@ bool OGRGeoPackageTableLayer::CheckUpdatableTable(const char *pszOperation)
 }
 
 /************************************************************************/
-/*                      CreateField()                                   */
+/*                            CreateField()                             */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::CreateField(const OGRFieldDefn *poField,
@@ -1970,7 +1970,7 @@ bool OGRGeoPackageTableLayer::DoSpecialProcessingForColumnCreation(
 }
 
 /************************************************************************/
-/*                           CreateGeomField()                          */
+/*                          CreateGeomField()                           */
 /************************************************************************/
 
 OGRErr
@@ -1998,13 +1998,12 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
     }
 
     OGRGeomFieldDefn oGeomField(poGeomFieldIn);
-    auto poSRSOri = poGeomFieldIn->GetSpatialRef();
+    const auto poSRSOri = poGeomFieldIn->GetSpatialRef();
     if (poSRSOri)
     {
-        auto poSRS = poSRSOri->Clone();
+        auto poSRS = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSOri);
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-        oGeomField.SetSpatialRef(poSRS);
-        poSRS->Release();
+        oGeomField.SetSpatialRef(poSRS.get());
     }
     if (EQUAL(oGeomField.GetNameRef(), ""))
     {
@@ -2060,7 +2059,7 @@ OGRGeoPackageTableLayer::CreateGeomField(const OGRGeomFieldDefn *poGeomFieldIn,
 #ifdef ENABLE_GPKG_OGR_CONTENTS
 
 /************************************************************************/
-/*                      DisableFeatureCount()                           */
+/*                        DisableFeatureCount()                         */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::DisableFeatureCount()
@@ -2106,7 +2105,7 @@ void OGRGeoPackageTableLayer::CreateFeatureCountTriggers(
 }
 
 /************************************************************************/
-/*                   DisableFeatureCountTriggers()                      */
+/*                    DisableFeatureCountTriggers()                     */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::DisableFeatureCountTriggers(
@@ -2145,7 +2144,7 @@ void OGRGeoPackageTableLayer::DisableFeatureCountTriggers(
 #endif  // #ifdef ENABLE_GPKG_OGR_CONTENTS
 
 /************************************************************************/
-/*                      CheckGeometryType()                             */
+/*                         CheckGeometryType()                          */
 /************************************************************************/
 
 /** Check that the feature geometry type is consistent with the layer geometry
@@ -2201,7 +2200,9 @@ void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
                         CE_Warning, CPLE_AppDefined,
                         "Layer '%s' has been declared with non-Z geometry type "
                         "%s, but it does contain geometries with Z. Setting "
-                        "the Z=2 hint into gpkg_geometry_columns",
+                        "the Z=2 hint into gpkg_geometry_columns. "
+                        "If using ogr2ogr, specify the -nlt option to avoid "
+                        "ambiguity.",
                         GetName(),
                         OGRToOGCGeomType(eLayerGeomType, true, true, true));
                 }
@@ -2216,7 +2217,9 @@ void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
                         CE_Warning, CPLE_AppDefined,
                         "Layer '%s' has been declared with non-M geometry type "
                         "%s, but it does contain geometries with M. Setting "
-                        "the M=2 hint into gpkg_geometry_columns",
+                        "the M=2 hint into gpkg_geometry_columns. "
+                        "If using ogr2ogr, specify the -nlt option to avoid "
+                        "ambiguity.",
                         GetName(),
                         OGRToOGCGeomType(eLayerGeomType, true, true, true));
                 }
@@ -2238,7 +2241,7 @@ void OGRGeoPackageTableLayer::CheckGeometryType(const OGRFeature *poFeature)
 }
 
 /************************************************************************/
-/*                   CheckFIDAndFIDColumnConsistency()                  */
+/*                  CheckFIDAndFIDColumnConsistency()                   */
 /************************************************************************/
 
 static bool CheckFIDAndFIDColumnConsistency(const OGRFeature *poFeature,
@@ -2283,7 +2286,7 @@ static bool CheckFIDAndFIDColumnConsistency(const OGRFeature *poFeature,
 }
 
 /************************************************************************/
-/*                      ICreateFeature()                                 */
+/*                           ICreateFeature()                           */
 /************************************************************************/
 
 // rtreeValueDown() / rtreeValueUp() come from SQLite3 source code
@@ -2837,7 +2840,7 @@ void OGRGeoPackageTableLayer::StartAsyncRTree()
 }
 
 /************************************************************************/
-/*                        RemoveAsyncRTreeTempDB()                      */
+/*                       RemoveAsyncRTreeTempDB()                       */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::RemoveAsyncRTreeTempDB()
@@ -2876,7 +2879,7 @@ void OGRGeoPackageTableLayer::CancelAsyncRTree()
 }
 
 /************************************************************************/
-/*                     FinishOrDisableThreadedRTree()                   */
+/*                    FinishOrDisableThreadedRTree()                    */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::FinishOrDisableThreadedRTree()
@@ -2889,7 +2892,7 @@ void OGRGeoPackageTableLayer::FinishOrDisableThreadedRTree()
 }
 
 /************************************************************************/
-/*                       FlushInMemoryRTree()                           */
+/*                         FlushInMemoryRTree()                         */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::FlushInMemoryRTree(sqlite3 *hRTreeDB,
@@ -2935,7 +2938,7 @@ bool OGRGeoPackageTableLayer::FlushInMemoryRTree(sqlite3 *hRTreeDB,
 }
 
 /************************************************************************/
-/*                     GetMaxRAMUsageAllowedForRTree()                  */
+/*                   GetMaxRAMUsageAllowedForRTree()                    */
 /************************************************************************/
 
 static size_t GetMaxRAMUsageAllowedForRTree()
@@ -3100,7 +3103,7 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
 }
 
 /************************************************************************/
-/*                          ISetFeature()                                */
+/*                            ISetFeature()                             */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::ISetFeature(OGRFeature *poFeature)
@@ -3480,7 +3483,7 @@ OGRErr OGRGeoPackageTableLayer::SetAttributeFilter(const char *pszQuery)
 }
 
 /************************************************************************/
-/*                      ResetReading()                                  */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::ResetReading()
@@ -3654,7 +3657,7 @@ OGRFeature *OGRGeoPackageTableLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                        GetFeature()                                  */
+/*                             GetFeature()                             */
 /************************************************************************/
 
 OGRFeature *OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
@@ -3713,7 +3716,7 @@ OGRFeature *OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                        DeleteFeature()                               */
+/*                           DeleteFeature()                            */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
@@ -3793,7 +3796,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 }
 
 /************************************************************************/
-/*                     DoJobAtTransactionCommit()                       */
+/*                      DoJobAtTransactionCommit()                      */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::DoJobAtTransactionCommit()
@@ -3810,7 +3813,7 @@ bool OGRGeoPackageTableLayer::DoJobAtTransactionCommit()
 }
 
 /************************************************************************/
-/*                    DoJobAtTransactionRollback()                      */
+/*                     DoJobAtTransactionRollback()                     */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::DoJobAtTransactionRollback()
@@ -3901,7 +3904,7 @@ bool OGRGeoPackageTableLayer::StartDeferredSpatialIndexUpdate()
 }
 
 /************************************************************************/
-/*                  FlushPendingSpatialIndexUpdate()                    */
+/*                   FlushPendingSpatialIndexUpdate()                   */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::FlushPendingSpatialIndexUpdate()
@@ -3978,7 +3981,7 @@ bool OGRGeoPackageTableLayer::RunDeferredSpatialIndexUpdate()
 }
 
 /************************************************************************/
-/*                        SyncToDisk()                                  */
+/*                             SyncToDisk()                             */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::SyncToDisk()
@@ -4007,7 +4010,7 @@ OGRErr OGRGeoPackageTableLayer::SyncToDisk()
 }
 
 /************************************************************************/
-/*                        StartTransaction()                            */
+/*                          StartTransaction()                          */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::StartTransaction()
@@ -4017,7 +4020,7 @@ OGRErr OGRGeoPackageTableLayer::StartTransaction()
 }
 
 /************************************************************************/
-/*                        CommitTransaction()                           */
+/*                         CommitTransaction()                          */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::CommitTransaction()
@@ -4035,7 +4038,7 @@ OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 }
 
 /************************************************************************/
-/*                      GetTotalFeatureCount()                          */
+/*                        GetTotalFeatureCount()                        */
 /************************************************************************/
 
 GIntBig OGRGeoPackageTableLayer::GetTotalFeatureCount()
@@ -4076,7 +4079,7 @@ GIntBig OGRGeoPackageTableLayer::GetTotalFeatureCount()
 }
 
 /************************************************************************/
-/*                        GetFeatureCount()                             */
+/*                          GetFeatureCount()                           */
 /************************************************************************/
 
 GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
@@ -4096,6 +4099,14 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
         return 0;
 
     CancelAsyncNextArrowArray();
+
+    if (m_poFilterGeom != nullptr)
+    {
+        // Both are exclusive
+        CreateSpatialIndexIfNecessary();
+        if (!RunDeferredSpatialIndexUpdate())
+            return -1;
+    }
 
     /* Ignore bForce, because we always do a full count on the database */
     OGRErr err;
@@ -4199,7 +4210,7 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
 }
 
 /************************************************************************/
-/*                      GetExtentFromRTree()                            */
+/*                         GetExtentFromRTree()                         */
 /************************************************************************/
 
 static bool GetExtentFromRTree(sqlite3 *hDB, const std::string &osRTreeName,
@@ -4277,7 +4288,7 @@ static bool GetExtentFromRTree(sqlite3 *hDB, const std::string &osRTreeName,
 }
 
 /************************************************************************/
-/*                              IGetExtent()                            */
+/*                             IGetExtent()                             */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::IGetExtent(int /* iGeomField  */,
@@ -4377,7 +4388,7 @@ void OGRGeoPackageTableLayer::UpdateContentsToNullExtent()
 }
 
 /************************************************************************/
-/*                      RecomputeExtent()                               */
+/*                          RecomputeExtent()                           */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::RecomputeExtent()
@@ -4389,7 +4400,7 @@ void OGRGeoPackageTableLayer::RecomputeExtent()
 }
 
 /************************************************************************/
-/*                      TestCapability()                                */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRGeoPackageTableLayer::TestCapability(const char *pszCap) const
@@ -4457,7 +4468,7 @@ int OGRGeoPackageTableLayer::TestCapability(const char *pszCap) const
 }
 
 /************************************************************************/
-/*                     CreateSpatialIndexIfNecessary()                  */
+/*                   CreateSpatialIndexIfNecessary()                    */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::CreateSpatialIndexIfNecessary()
@@ -4469,7 +4480,7 @@ void OGRGeoPackageTableLayer::CreateSpatialIndexIfNecessary()
 }
 
 /************************************************************************/
-/*                       CreateSpatialIndex()                           */
+/*                         CreateSpatialIndex()                         */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
@@ -4988,7 +4999,7 @@ CPLString OGRGeoPackageTableLayer::ReturnSQLCreateSpatialIndexTriggers(
 }
 
 /************************************************************************/
-/*                    CheckUnknownExtensions()                          */
+/*                       CheckUnknownExtensions()                       */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::CheckUnknownExtensions()
@@ -5044,7 +5055,7 @@ void OGRGeoPackageTableLayer::CheckUnknownExtensions()
 }
 
 /************************************************************************/
-/*                     CreateGeometryExtensionIfNecessary()             */
+/*                 CreateGeometryExtensionIfNecessary()                 */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(
@@ -5075,7 +5086,7 @@ bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(
 }
 
 /************************************************************************/
-/*                     CreateGeometryExtensionIfNecessary()             */
+/*                 CreateGeometryExtensionIfNecessary()                 */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(
@@ -5131,7 +5142,7 @@ bool OGRGeoPackageTableLayer::CreateGeometryExtensionIfNecessary(
 }
 
 /************************************************************************/
-/*                        HasSpatialIndex()                             */
+/*                          HasSpatialIndex()                           */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::HasSpatialIndex() const
@@ -5205,7 +5216,7 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex() const
 }
 
 /************************************************************************/
-/*                        DropSpatialIndex()                            */
+/*                          DropSpatialIndex()                          */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
@@ -5264,7 +5275,7 @@ bool OGRGeoPackageTableLayer::DropSpatialIndex(bool bCalledFromSQLFunction)
 }
 
 /************************************************************************/
-/*               RunDeferredDropRTreeTableIfNecessary()                 */
+/*                RunDeferredDropRTreeTableIfNecessary()                */
 /************************************************************************/
 
 bool OGRGeoPackageTableLayer::RunDeferredDropRTreeTableIfNecessary()
@@ -5284,7 +5295,7 @@ bool OGRGeoPackageTableLayer::RunDeferredDropRTreeTableIfNecessary()
 }
 
 /************************************************************************/
-/*                   ReturnSQLDropSpatialIndexTriggers()                */
+/*                 ReturnSQLDropSpatialIndexTriggers()                  */
 /************************************************************************/
 
 CPLString OGRGeoPackageTableLayer::ReturnSQLDropSpatialIndexTriggers()
@@ -5309,7 +5320,7 @@ CPLString OGRGeoPackageTableLayer::ReturnSQLDropSpatialIndexTriggers()
 }
 
 /************************************************************************/
-/*                           Rename()                                   */
+/*                               Rename()                               */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::Rename(const char *pszDstTableName)
@@ -5551,7 +5562,7 @@ bool OGRGeoPackageTableLayer::HasFastSpatialFilter(int m_iGeomColIn)
 }
 
 /************************************************************************/
-/*                           GetSpatialWhere()                          */
+/*                          GetSpatialWhere()                           */
 /************************************************************************/
 
 CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int m_iGeomColIn,
@@ -5702,7 +5713,7 @@ void OGRGeoPackageTableLayer::SetOpeningParameters(
 }
 
 /************************************************************************/
-/*                        SetCreationParameters()                       */
+/*                       SetCreationParameters()                        */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::SetCreationParameters(
@@ -5728,8 +5739,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
         m_nZFlag = wkbHasZ(eGType) ? 1 : 0;
         m_nMFlag = wkbHasM(eGType) ? 1 : 0;
 
-        std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>
-            poGotSRS;
+        OGRSpatialReferenceRefCountedPtr poGotSRS;
         OGRGeomFieldDefn oGeomFieldDefn(pszGeomColumnName, eGType);
 
         oGeomFieldDefn.SetSpatialRef(poSRS);
@@ -5753,7 +5763,8 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
                 else
                 {
                     bool bOK = false;
-                    OGRSpatialReference *poSRSTmp = new OGRSpatialReference();
+                    auto poSRSTmp =
+                        OGRSpatialReferenceRefCountedPtr::makeInstance();
                     if (m_iSrs < 32767)
                     {
                         CPLErrorHandlerPusher oErrorHandler(
@@ -5764,8 +5775,8 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
                             bOK = true;
                             poSRSTmp->SetAxisMappingStrategy(
                                 OAMS_TRADITIONAL_GIS_ORDER);
-                            m_iSrs = m_poDS->GetSrsId(poSRSTmp);
-                            oGeomFieldDefn.SetSpatialRef(poSRSTmp);
+                            m_iSrs = m_poDS->GetSrsId(poSRSTmp.get());
+                            oGeomFieldDefn.SetSpatialRef(poSRSTmp.get());
                         }
                     }
                     if (!bOK)
@@ -5775,7 +5786,6 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
                             "No entry in gpkg_spatial_ref_sys matching SRID=%s",
                             pszSRID);
                     }
-                    poSRSTmp->Release();
                 }
             }
         }
@@ -5851,7 +5861,7 @@ void OGRGeoPackageTableLayer::SetCreationParameters(
 }
 
 /************************************************************************/
-/*                      RegisterGeometryColumn()                        */
+/*                       RegisterGeometryColumn()                       */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
@@ -5884,7 +5894,7 @@ OGRErr OGRGeoPackageTableLayer::RegisterGeometryColumn()
 }
 
 /************************************************************************/
-/*                        GetColumnsOfCreateTable()                     */
+/*                      GetColumnsOfCreateTable()                       */
 /************************************************************************/
 
 CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(
@@ -5996,7 +6006,7 @@ CPLString OGRGeoPackageTableLayer::GetColumnsOfCreateTable(
 }
 
 /************************************************************************/
-/*                      RunDeferredCreationIfNecessary()                */
+/*                   RunDeferredCreationIfNecessary()                   */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::RunDeferredCreationIfNecessary()
@@ -6275,7 +6285,7 @@ const char *OGRGeoPackageTableLayer::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **OGRGeoPackageTableLayer::GetMetadataDomainList()
@@ -6324,7 +6334,7 @@ CPLErr OGRGeoPackageTableLayer::SetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                          RecreateTable()                             */
+/*                           RecreateTable()                            */
 /************************************************************************/
 
 OGRErr
@@ -6406,7 +6416,7 @@ OGRGeoPackageTableLayer::RecreateTable(const CPLString &osColumnsForCreate,
 }
 
 /************************************************************************/
-/*                          BuildSelectFieldList()                      */
+/*                        BuildSelectFieldList()                        */
 /************************************************************************/
 
 CPLString OGRGeoPackageTableLayer::BuildSelectFieldList(
@@ -6456,7 +6466,7 @@ CPLString OGRGeoPackageTableLayer::BuildSelectFieldList(
 }
 
 /************************************************************************/
-/*                             DeleteField()                            */
+/*                            DeleteField()                             */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::DeleteField(int iFieldToDelete)
@@ -7406,12 +7416,13 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
         const auto poOldSRS = poGeomFieldDefn->GetSpatialRef();
         const auto poNewSRSRef = poNewGeomFieldDefn->GetSpatialRef();
 
-        std::unique_ptr<OGRSpatialReference> poNewSRS;
+        OGRSpatialReferenceRefCountedPtr poNewSRS;
         if ((nFlagsIn & ALTER_GEOM_FIELD_DEFN_SRS_FLAG) != 0)
         {
             if (poNewSRSRef != nullptr)
             {
-                poNewSRS.reset(poNewSRSRef->Clone());
+                poNewSRS =
+                    OGRSpatialReferenceRefCountedPtr::makeClone(poNewSRSRef);
                 if ((nFlagsIn & ALTER_GEOM_FIELD_DEFN_SRS_COORD_EPOCH_FLAG) ==
                     0)
                 {
@@ -7425,7 +7436,8 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
         {
             if (poOldSRS != nullptr)
             {
-                poNewSRS.reset(poOldSRS->Clone());
+                poNewSRS =
+                    OGRSpatialReferenceRefCountedPtr::makeClone(poOldSRS);
                 if (poNewSRSRef)
                     poNewSRS->SetCoordinateEpoch(
                         poNewSRSRef->GetCoordinateEpoch());
@@ -7518,10 +7530,7 @@ OGRErr OGRGeoPackageTableLayer::AlterGeomFieldDefn(
             }
 
             m_iSrs = nNewSRID;
-            OGRSpatialReference *poSRS = poNewSRS.release();
-            poGeomFieldDefn->SetSpatialRef(poSRS);
-            if (poSRS)
-                poSRS->Release();
+            poGeomFieldDefn->SetSpatialRef(poNewSRS.get());
         }
     }
 
@@ -7703,7 +7712,7 @@ static void OGR_GPKG_GeometryTypeAggregate_Finalize(sqlite3_context *)
 }
 
 /************************************************************************/
-/*                         GetGeometryTypes()                           */
+/*                          GetGeometryTypes()                          */
 /************************************************************************/
 
 OGRGeometryTypeCounter *OGRGeoPackageTableLayer::GetGeometryTypes(
@@ -8325,7 +8334,7 @@ error:
 }
 
 /************************************************************************/
-/*                   OGR_GPKG_FillArrowArray_Finalize()                 */
+/*                  OGR_GPKG_FillArrowArray_Finalize()                  */
 /************************************************************************/
 
 static void OGR_GPKG_FillArrowArray_Finalize(sqlite3_context * /*pContext*/)
@@ -8333,7 +8342,7 @@ static void OGR_GPKG_FillArrowArray_Finalize(sqlite3_context * /*pContext*/)
 }
 
 /************************************************************************/
-/*                    GetNextArrowArrayAsynchronous()                   */
+/*                   GetNextArrowArrayAsynchronous()                    */
 /************************************************************************/
 
 int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
@@ -8477,7 +8486,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
 }
 
 /************************************************************************/
-/*                  GetNextArrowArrayAsynchronousWorker()               */
+/*                GetNextArrowArrayAsynchronousWorker()                 */
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
@@ -8621,7 +8630,7 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
 }
 
 /************************************************************************/
-/*                      GetNextArrowArray()                             */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
@@ -8931,7 +8940,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 }
 
 /************************************************************************/
-/*                      GetNextArrowArrayInternal()                     */
+/*                     GetNextArrowArrayInternal()                      */
 /************************************************************************/
 
 int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
@@ -9060,7 +9069,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
 }
 
 /************************************************************************/
-/*               OGR_GPKG_GeometryExtent3DAggregate()                   */
+/*                 OGR_GPKG_GeometryExtent3DAggregate()                 */
 /************************************************************************/
 
 namespace
@@ -9130,7 +9139,7 @@ static void OGR_GPKG_GeometryExtent3DAggregate_Finalize(sqlite3_context *)
 }
 
 /************************************************************************/
-/*                            IGetExtent3D                              */
+/*                             IGetExtent3D                             */
 /************************************************************************/
 OGRErr OGRGeoPackageTableLayer::IGetExtent3D(int iGeomField,
                                              OGREnvelope3D *psExtent3D,
@@ -9207,7 +9216,7 @@ OGRErr OGRGeoPackageTableLayer::IGetExtent3D(int iGeomField,
 }
 
 /************************************************************************/
-/*                           Truncate()                                 */
+/*                              Truncate()                              */
 /************************************************************************/
 
 /** Implements "DELETE FROM {table_name}" in an optimized way.

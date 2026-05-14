@@ -104,7 +104,7 @@ class GDALVirtualMem
 };
 
 /************************************************************************/
-/*                             GDALVirtualMem()                         */
+/*                           GDALVirtualMem()                           */
 /************************************************************************/
 
 GDALVirtualMem::GDALVirtualMem(
@@ -157,7 +157,7 @@ GDALVirtualMem::GDALVirtualMem(
 }
 
 /************************************************************************/
-/*                            ~GDALVirtualMem()                         */
+/*                          ~GDALVirtualMem()                           */
 /************************************************************************/
 
 GDALVirtualMem::~GDALVirtualMem()
@@ -166,7 +166,7 @@ GDALVirtualMem::~GDALVirtualMem()
 }
 
 /************************************************************************/
-/*                              GetXYBand()                             */
+/*                             GetXYBand()                              */
 /************************************************************************/
 
 void GDALVirtualMem::GetXYBand(size_t nOffset, coord_type &x, coord_type &y,
@@ -196,7 +196,7 @@ void GDALVirtualMem::GetXYBand(size_t nOffset, coord_type &x, coord_type &y,
 }
 
 /************************************************************************/
-/*                            GotoNextPixel()                           */
+/*                           GotoNextPixel()                            */
 /************************************************************************/
 
 bool GDALVirtualMem::GotoNextPixel(coord_type &x, coord_type &y,
@@ -238,7 +238,7 @@ bool GDALVirtualMem::GotoNextPixel(coord_type &x, coord_type &y,
 }
 
 /************************************************************************/
-/*                              GetOffset()                             */
+/*                             GetOffset()                              */
 /************************************************************************/
 
 size_t GDALVirtualMem::GetOffset(const coord_type &x, const coord_type &y,
@@ -249,7 +249,7 @@ size_t GDALVirtualMem::GetOffset(const coord_type &x, const coord_type &y,
 }
 
 /************************************************************************/
-/*                          DoIOPixelInterleaved()                      */
+/*                        DoIOPixelInterleaved()                        */
 /************************************************************************/
 
 void GDALVirtualMem::DoIOPixelInterleaved(GDALRWFlag eRWFlag,
@@ -420,7 +420,7 @@ void GDALVirtualMem::DoIOPixelInterleaved(GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                          DoIOPixelInterleaved()                      */
+/*                        DoIOPixelInterleaved()                        */
 /************************************************************************/
 
 void GDALVirtualMem::DoIOBandSequential(GDALRWFlag eRWFlag,
@@ -532,7 +532,7 @@ void GDALVirtualMem::DoIOBandSequential(GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                    FillCacheBandSequential()                        */
+/*                      FillCacheBandSequential()                       */
 /************************************************************************/
 
 void GDALVirtualMem::FillCacheBandSequential(CPLVirtualMem *, size_t nOffset,
@@ -544,7 +544,7 @@ void GDALVirtualMem::FillCacheBandSequential(CPLVirtualMem *, size_t nOffset,
 }
 
 /************************************************************************/
-/*                    SaveFromCacheBandSequential()                    */
+/*                    SaveFromCacheBandSequential()                     */
 /************************************************************************/
 
 void GDALVirtualMem::SaveFromCacheBandSequential(CPLVirtualMem *,
@@ -571,7 +571,7 @@ void GDALVirtualMem::FillCachePixelInterleaved(CPLVirtualMem *, size_t nOffset,
 }
 
 /************************************************************************/
-/*                     SaveFromCachePixelInterleaved()                  */
+/*                   SaveFromCachePixelInterleaved()                    */
 /************************************************************************/
 
 void GDALVirtualMem::SaveFromCachePixelInterleaved(CPLVirtualMem *,
@@ -586,7 +586,7 @@ void GDALVirtualMem::SaveFromCachePixelInterleaved(CPLVirtualMem *,
 }
 
 /************************************************************************/
-/*                                Destroy()                             */
+/*                              Destroy()                               */
 /************************************************************************/
 
 void GDALVirtualMem::Destroy(void *pUserData)
@@ -630,7 +630,7 @@ static bool GDALCheckBandParameters(GDALDatasetH hDS, int nBandCount,
 }
 
 /************************************************************************/
-/*                          GDALGetVirtualMem()                         */
+/*                         GDALGetVirtualMem()                          */
 /************************************************************************/
 
 static CPLVirtualMem *
@@ -659,8 +659,8 @@ GDALGetVirtualMem(GDALDatasetH hDS, GDALRasterBandH hBand, GDALRWFlag eRWFlag,
         hDS ? GDALGetRasterYSize(hDS) : GDALGetRasterBandYSize(hBand);
 
     if (nXOff < 0 || nYOff < 0 || nXSize == 0 || nYSize == 0 || nBufXSize < 0 ||
-        nBufYSize < 0 || nXOff + nXSize > nRasterXSize ||
-        nYOff + nYSize > nRasterYSize)
+        nBufYSize < 0 || nXSize > nRasterXSize - nXOff ||
+        nYSize > nRasterYSize - nYOff)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid window request");
         return nullptr;
@@ -761,7 +761,7 @@ GDALGetVirtualMem(GDALDatasetH hDS, GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 }
 
 /************************************************************************/
-/*                       GDALDatasetGetVirtualMem()                     */
+/*                      GDALDatasetGetVirtualMem()                      */
 /************************************************************************/
 
 /** Create a CPLVirtualMem object from a GDAL dataset object.
@@ -893,7 +893,7 @@ CPLVirtualMem *GDALDatasetGetVirtualMem(
 }
 
 /************************************************************************/
-/*                     GDALRasterBandGetVirtualMem()                    */
+/*                    GDALRasterBandGetVirtualMem()                     */
 /************************************************************************/
 
 /** Create a CPLVirtualMem object from a GDAL raster band object.
@@ -1008,7 +1008,7 @@ CPLVirtualMem *GDALRasterBandGetVirtualMem(
 }
 
 /************************************************************************/
-/*                        GDALTiledVirtualMem                           */
+/*                         GDALTiledVirtualMem                          */
 /************************************************************************/
 
 class GDALTiledVirtualMem
@@ -1083,7 +1083,7 @@ GDALTiledVirtualMem::GDALTiledVirtualMem(
 }
 
 /************************************************************************/
-/*                       ~GDALTiledVirtualMem()                         */
+/*                        ~GDALTiledVirtualMem()                        */
 /************************************************************************/
 
 GDALTiledVirtualMem::~GDALTiledVirtualMem()
@@ -1170,7 +1170,7 @@ void GDALTiledVirtualMem::DoIO(GDALRWFlag eRWFlag, size_t nOffset, void *pPage,
 }
 
 /************************************************************************/
-/*                           FillCache()                                */
+/*                             FillCache()                              */
 /************************************************************************/
 
 void GDALTiledVirtualMem::FillCache(CPLVirtualMem *, size_t nOffset,
@@ -1183,7 +1183,7 @@ void GDALTiledVirtualMem::FillCache(CPLVirtualMem *, size_t nOffset,
 }
 
 /************************************************************************/
-/*                          SaveFromCache()                             */
+/*                           SaveFromCache()                            */
 /************************************************************************/
 
 void GDALTiledVirtualMem::SaveFromCache(CPLVirtualMem *, size_t nOffset,
@@ -1197,7 +1197,7 @@ void GDALTiledVirtualMem::SaveFromCache(CPLVirtualMem *, size_t nOffset,
 }
 
 /************************************************************************/
-/*                                Destroy()                             */
+/*                              Destroy()                               */
 /************************************************************************/
 
 void GDALTiledVirtualMem::Destroy(void *pUserData)
@@ -1208,7 +1208,7 @@ void GDALTiledVirtualMem::Destroy(void *pUserData)
 }
 
 /************************************************************************/
-/*                      GDALGetTiledVirtualMem()                        */
+/*                       GDALGetTiledVirtualMem()                       */
 /************************************************************************/
 
 static CPLVirtualMem *GDALGetTiledVirtualMem(
@@ -1424,7 +1424,7 @@ CPLVirtualMem *GDALDatasetGetTiledVirtualMem(
 }
 
 /************************************************************************/
-/*                   GDALRasterBandGetTiledVirtualMem()                 */
+/*                  GDALRasterBandGetTiledVirtualMem()                  */
 /************************************************************************/
 
 /** Create a CPLVirtualMem object from a GDAL rasterband object, with tiling

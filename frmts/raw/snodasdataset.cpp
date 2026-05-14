@@ -83,7 +83,7 @@ class SNODASRasterBand final : public RawRasterBand
 };
 
 /************************************************************************/
-/*                         SNODASRasterBand()                           */
+/*                          SNODASRasterBand()                          */
 /************************************************************************/
 
 SNODASRasterBand::SNODASRasterBand(VSILFILE *fpRawIn, int nXSize, int nYSize)
@@ -93,7 +93,7 @@ SNODASRasterBand::SNODASRasterBand(VSILFILE *fpRawIn, int nXSize, int nYSize)
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                            */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double SNODASRasterBand::GetNoDataValue(int *pbSuccess)
@@ -109,7 +109,7 @@ double SNODASRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                            GetMinimum()                              */
+/*                             GetMinimum()                             */
 /************************************************************************/
 
 double SNODASRasterBand::GetMinimum(int *pbSuccess)
@@ -125,7 +125,7 @@ double SNODASRasterBand::GetMinimum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                            GetMaximum()                             */
+/*                             GetMaximum()                             */
 /************************************************************************/
 
 double SNODASRasterBand::GetMaximum(int *pbSuccess)
@@ -169,7 +169,7 @@ SNODASDataset::~SNODASDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr SNODASDataset::Close(GDALProgressFunc, void *)
@@ -217,7 +217,7 @@ char **SNODASDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                            Identify()                                */
+/*                              Identify()                              */
 /************************************************************************/
 
 int SNODASDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -454,12 +454,12 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
     if (bHasMinX && bHasMinY && bHasMaxX && bHasMaxY)
     {
         poDS->bGotTransform = true;
-        poDS->m_gt[0] = dfMinX;
-        poDS->m_gt[1] = (dfMaxX - dfMinX) / nCols;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = dfMaxY;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = -(dfMaxY - dfMinY) / nRows;
+        poDS->m_gt.xorig = dfMinX;
+        poDS->m_gt.xscale = (dfMaxX - dfMinX) / nCols;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = dfMaxY;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = -(dfMaxY - dfMinY) / nRows;
     }
 
     if (!osDescription.empty())
@@ -502,7 +502,7 @@ GDALDataset *SNODASDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                       GDALRegister_SNODAS()                          */
+/*                        GDALRegister_SNODAS()                         */
 /************************************************************************/
 
 void GDALRegister_SNODAS()

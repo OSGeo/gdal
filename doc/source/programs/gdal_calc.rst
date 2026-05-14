@@ -167,6 +167,11 @@ but no projection checking is performed (unless the :option:`--projectionCheck` 
 
     Suppress progress messages.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 
 Python options
 --------------

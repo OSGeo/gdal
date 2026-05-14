@@ -21,8 +21,8 @@ Description
 -----------
 
 :program:`gdal raster scale` can be used to rescale the input pixels values
-from the range :option:`--src-min` to :option:`--src-max` to the range
-:option:`--dst-min` to :option:`--dst-max`.
+from the range :option:`--input-min` to :option:`--input-max` to the range
+:option:`--output-min` to :option:`--output-max`.
 It is also often necessary to reset the output datatype with the :option:`--ot` switch.
 If omitted the output range is from the minimum value to the maximum value allowed
 for integer data types (for example from 0 to 255 for Byte output) or from 0 to 1
@@ -54,19 +54,11 @@ Program-Specific Options
 
     Index (starting at 1) of the band to which the scaling must be only applied.
 
-.. option:: --dst-max <DSTMAX>
-
-    Maximum value of the output range. This option must be used together with :option:`--dst-min`.
-
-.. option:: --dst-min <DSTMIN>
-
-    Minimum value of the output range. This option must be used together with :option:`--dst-max`.
-
 .. option:: --exponent <EXPONENT>
 
     Apply non-linear scaling with a power function. ``exp_val`` is the exponent
     of the power function (must be positive). This option must be used with the
-    :option:`--src-min` / :option:`--src-max` / :option:`--dst-min` / :option:`--dst-max` options.
+    :option:`--input-min` / :option:`--input-max` / :option:`--output-min` / :option:`--output-max` options.
 
     The scaled value ``Dst`` is calculated from the source value ``Src`` with the following
     formula:
@@ -79,21 +71,29 @@ Program-Specific Options
         :ref:`gdal_raster_unscale` assumes linear scaling, and
         this cannot unscale values back to the original ones.
 
+.. option:: --input-max <MAX>
+
+    Maximum value of the source range. If not specified, it will be calculated from the source dataset.
+    This option must be used together with :option:`--input-min`.
+
+.. option:: --input-min <MIN>
+
+    Minimum value of the source range. If not specified, it will be calculated from the input dataset.
+    This option must be used together with :option:`--input-max`.
+
+.. option:: --output-max <MAX>
+
+    Maximum value of the output range. This option must be used together with :option:`--output-min`.
+
+.. option:: --output-min <MIN>
+
+    Minimum value of the output range. This option must be used together with :option:`--output-max`.
+
 .. option:: --no-clip
 
     Disable clipping input values to the source range. Note that using this option
     with non-linear scaling with a non-integer exponent will cause input values lower
     than the minimum value of the source range to be mapped to not-a-number.
-
-.. option:: --src-max <SRCMAX>
-
-    Maximum value of the source range. If not specified, it will be calculated from the source dataset.
-    This option must be used together with :option:`--src-min`.
-
-.. option:: --src-min <SRCMIN>
-
-    Minimum value of the source range. If not specified, it will be calculated from the input dataset.
-    This option must be used together with :option:`--src-max`.
 
 Standard Options
 ----------------
@@ -114,6 +114,10 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------
@@ -123,4 +127,4 @@ Examples
 
    .. code-block:: bash
 
-        $ gdal raster scale --datatype Byte --src-min 0 --src-max 4095 uint16.tif byte.tif --overwrite
+        $ gdal raster scale --datatype Byte --input-min 0 --input-max 4095 uint16.tif byte.tif --overwrite

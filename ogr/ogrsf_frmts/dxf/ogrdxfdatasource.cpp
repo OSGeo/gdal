@@ -595,7 +595,7 @@ std::vector<double> OGRDXFDataSource::LookupLineType(const char *pszName)
 }
 
 /************************************************************************/
-/*                       ReadTextStyleDefinition()                      */
+/*                      ReadTextStyleDefinition()                       */
 /************************************************************************/
 
 bool OGRDXFDataSource::ReadTextStyleDefinition()
@@ -677,7 +677,7 @@ bool OGRDXFDataSource::ReadTextStyleDefinition()
 }
 
 /************************************************************************/
-/*                           TextStyleExists()                          */
+/*                          TextStyleExists()                           */
 /************************************************************************/
 
 bool OGRDXFDataSource::TextStyleExists(const char *pszTextStyle)
@@ -693,7 +693,7 @@ bool OGRDXFDataSource::TextStyleExists(const char *pszTextStyle)
 }
 
 /************************************************************************/
-/*                       LookupTextStyleProperty()                      */
+/*                      LookupTextStyleProperty()                       */
 /************************************************************************/
 
 const char *OGRDXFDataSource::LookupTextStyleProperty(const char *pszTextStyle,
@@ -728,7 +728,7 @@ const char *OGRDXFDataSource::LookupTextStyleProperty(const char *pszTextStyle,
 CPLString OGRDXFDataSource::GetTextStyleNameByHandle(const char *pszID)
 
 {
-    CPLString l_osID = pszID;
+    const CPLString l_osID(pszID);
 
     if (oTextStyleHandles.count(l_osID) == 0)
         return "";
@@ -737,7 +737,7 @@ CPLString OGRDXFDataSource::GetTextStyleNameByHandle(const char *pszID)
 }
 
 /************************************************************************/
-/*                  PopulateDefaultDimStyleProperties()                 */
+/*                 PopulateDefaultDimStyleProperties()                  */
 /************************************************************************/
 
 void OGRDXFDataSource::PopulateDefaultDimStyleProperties(

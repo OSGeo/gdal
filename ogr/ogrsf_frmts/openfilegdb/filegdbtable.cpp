@@ -61,6 +61,11 @@ constexpr GUInt32 EXT_SHAPE_SEGMENT_ELLIPSE = 5;
 namespace OpenFileGDB
 {
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4800) /* implicit conversion from "type" to bool */
+#endif
+
 FileGDBGeomField::~FileGDBGeomField() = default;
 
 FileGDBRasterField::~FileGDBRasterField() = default;
@@ -77,7 +82,7 @@ static double SanitizeScale(double dfVal)
 }
 
 /************************************************************************/
-/*                      FileGDBTablePrintError()                        */
+/*                       FileGDBTablePrintError()                       */
 /************************************************************************/
 
 void FileGDBTablePrintError(const char *pszFile, int nLineNumber)
@@ -105,7 +110,7 @@ FileGDBTable::~FileGDBTable()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 void FileGDBTable::Close()
@@ -122,7 +127,7 @@ void FileGDBTable::Close()
 }
 
 /************************************************************************/
-/*                              GetFieldIdx()                           */
+/*                            GetFieldIdx()                             */
 /************************************************************************/
 
 int FileGDBTable::GetFieldIdx(const std::string &osName) const
@@ -136,7 +141,7 @@ int FileGDBTable::GetFieldIdx(const std::string &osName) const
 }
 
 /************************************************************************/
-/*                          ReadVarUInt()                               */
+/*                            ReadVarUInt()                             */
 /************************************************************************/
 
 template <class OutType, class ControlType>
@@ -521,7 +526,7 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset, GUInt32 *pnSize,
 }
 
 /************************************************************************/
-/*                      GuessFeatureLocations()                         */
+/*                       GuessFeatureLocations()                        */
 /************************************************************************/
 
 #define MARK_DELETED(x) ((x) | (static_cast<GUIntBig>(1) << 63))
@@ -620,7 +625,7 @@ bool FileGDBTable::GuessFeatureLocations()
 }
 
 /************************************************************************/
-/*                           ReadTableXHeaderV3()                       */
+/*                         ReadTableXHeaderV3()                         */
 /************************************************************************/
 
 bool FileGDBTable::ReadTableXHeaderV3()
@@ -712,7 +717,7 @@ bool FileGDBTable::ReadTableXHeaderV3()
 }
 
 /************************************************************************/
-/*                           ReadTableXHeaderV4()                       */
+/*                         ReadTableXHeaderV4()                         */
 /************************************************************************/
 
 bool FileGDBTable::ReadTableXHeaderV4()
@@ -809,7 +814,7 @@ bool FileGDBTable::ReadTableXHeaderV4()
 }
 
 /************************************************************************/
-/*                                 Open()                               */
+/*                                Open()                                */
 /************************************************************************/
 
 bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
@@ -1439,7 +1444,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 }
 
 /************************************************************************/
-/*                          SkipVarUInt()                               */
+/*                            SkipVarUInt()                             */
 /************************************************************************/
 
 /* Bound check only valid if nIter <= 4 */
@@ -1595,7 +1600,7 @@ FileGDBTable::GetOffsetInTableForRow(int64_t iRow,
 }
 
 /************************************************************************/
-/*                        ReadFeatureOffset()                           */
+/*                         ReadFeatureOffset()                          */
 /************************************************************************/
 
 uint64_t FileGDBTable::ReadFeatureOffset(const GByte *pabyBuffer)
@@ -1607,7 +1612,7 @@ uint64_t FileGDBTable::ReadFeatureOffset(const GByte *pabyBuffer)
 }
 
 /************************************************************************/
-/*                      GetAndSelectNextNonEmptyRow()                   */
+/*                    GetAndSelectNextNonEmptyRow()                     */
 /************************************************************************/
 
 int64_t FileGDBTable::GetAndSelectNextNonEmptyRow(int64_t iRow)
@@ -1648,10 +1653,10 @@ int64_t FileGDBTable::GetAndSelectNextNonEmptyRow(int64_t iRow)
 }
 
 /************************************************************************/
-/*                            SelectRow()                               */
+/*                             SelectRow()                              */
 /************************************************************************/
 
-bool FileGDBTable::SelectRow(int64_t iRow)
+bool FileGDBTable::SelectRow(int64_t iRow, bool bWarnOnlyOnDeletedRows)
 {
     const int errorRetValue = FALSE;
     returnErrorAndCleanupIf(iRow < 0 || iRow >= m_nTotalRecordCount,
@@ -1680,8 +1685,22 @@ bool FileGDBTable::SelectRow(int64_t iRow)
 
         if (m_nRowBlobLength > 0)
         {
-            /* CPLDebug("OpenFileGDB", "nRowBlobLength = %u", nRowBlobLength);
-             */
+#ifdef DEBUG_VERBOSE
+            CPLDebug("OpenFileGDB",
+                     "%s: iRow = %" PRId64 ", m_nRowBlobLength = %u",
+                     m_osFilename.c_str(), iRow, m_nRowBlobLength);
+#endif
+            if ((m_nRowBlobLength >> 31) != 0)
+            {
+                CPLError(
+                    bWarnOnlyOnDeletedRows ? CE_Warning : CE_Failure,
+                    CPLE_AppDefined,
+                    "Feature %" PRId64
+                    " of %s appears to be deleted, but index is out of sync",
+                    iRow + 1, m_osFilename.c_str());
+                m_nCurRow = -1;
+                return false;
+            }
             returnErrorAndCleanupIf(
                 m_nRowBlobLength <
                         static_cast<GUInt32>(m_nNullableFieldsSizeInBytes) ||
@@ -1830,7 +1849,7 @@ bool FileGDBTable::SelectRow(int64_t iRow)
 }
 
 /************************************************************************/
-/*                      FileGDBDoubleDateToOGRDate()                    */
+/*                     FileGDBDoubleDateToOGRDate()                     */
 /************************************************************************/
 
 int FileGDBDoubleDateToOGRDate(double dfVal, bool bHighPrecision,
@@ -1874,7 +1893,7 @@ int FileGDBDoubleDateToOGRDate(double dfVal, bool bHighPrecision,
 }
 
 /************************************************************************/
-/*                      FileGDBDoubleTimeToOGRTime()                    */
+/*                     FileGDBDoubleTimeToOGRTime()                     */
 /************************************************************************/
 
 int FileGDBDoubleTimeToOGRTime(double dfVal, OGRField *psField)
@@ -1901,7 +1920,7 @@ int FileGDBDoubleTimeToOGRTime(double dfVal, OGRField *psField)
 }
 
 /************************************************************************/
-/*                  FileGDBDateTimeWithOffsetToOGRDate()                */
+/*                 FileGDBDateTimeWithOffsetToOGRDate()                 */
 /************************************************************************/
 
 int FileGDBDateTimeWithOffsetToOGRDate(double dfVal, int16_t nUTCOffset,
@@ -1957,7 +1976,7 @@ std::vector<OGRField> FileGDBTable::GetAllFieldValues()
 }
 
 /************************************************************************/
-/*                        FreeAllFieldValues()                          */
+/*                         FreeAllFieldValues()                         */
 /************************************************************************/
 
 void FileGDBTable::FreeAllFieldValues(std::vector<OGRField> &asFields)
@@ -1986,7 +2005,7 @@ void FileGDBTable::FreeAllFieldValues(std::vector<OGRField> &asFields)
 }
 
 /************************************************************************/
-/*                          GetFieldValue()                             */
+/*                           GetFieldValue()                            */
 /************************************************************************/
 
 const OGRField *FileGDBTable::GetFieldValue(int iCol)
@@ -2667,7 +2686,7 @@ int FileGDBTable::GetIndexCount()
 }
 
 /************************************************************************/
-/*                           HasSpatialIndex()                          */
+/*                          HasSpatialIndex()                           */
 /************************************************************************/
 
 bool FileGDBTable::HasSpatialIndex()
@@ -2737,7 +2756,7 @@ void FileGDBTable::InstallFilterEnvelope(const OGREnvelope *psFilterEnvelope)
 }
 
 /************************************************************************/
-/*                  GetMinMaxProjYForSpatialIndex()                     */
+/*                   GetMinMaxProjYForSpatialIndex()                    */
 /************************************************************************/
 
 // ESRI software seems to have an extremely weird behavior regarding spatial
@@ -2807,7 +2826,7 @@ void FileGDBTable::GetMinMaxProjYForSpatialIndex(double &dfYMin,
 }
 
 /************************************************************************/
-/*                         GetFeatureExtent()                           */
+/*                          GetFeatureExtent()                          */
 /************************************************************************/
 
 int FileGDBTable::GetFeatureExtent(const OGRField *psField,
@@ -2918,7 +2937,7 @@ int FileGDBTable::GetFeatureExtent(const OGRField *psField,
 }
 
 /************************************************************************/
-/*                 DoesGeometryIntersectsFilterEnvelope()               */
+/*                DoesGeometryIntersectsFilterEnvelope()                */
 /************************************************************************/
 
 int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField *psField)
@@ -3030,7 +3049,7 @@ static OGRField GetUnsetField()
 const OGRField FileGDBField::UNSET_FIELD = GetUnsetField();
 
 /************************************************************************/
-/*                           FileGDBField()                             */
+/*                            FileGDBField()                            */
 /************************************************************************/
 
 FileGDBField::FileGDBField(FileGDBTable *poParentIn) : m_poParent(poParentIn)
@@ -3039,7 +3058,7 @@ FileGDBField::FileGDBField(FileGDBTable *poParentIn) : m_poParent(poParentIn)
 }
 
 /************************************************************************/
-/*                           FileGDBField()                             */
+/*                            FileGDBField()                            */
 /************************************************************************/
 
 FileGDBField::FileGDBField(const std::string &osName,
@@ -3069,7 +3088,7 @@ FileGDBField::FileGDBField(const std::string &osName,
 }
 
 /************************************************************************/
-/*                          ~FileGDBField()                             */
+/*                           ~FileGDBField()                            */
 /************************************************************************/
 
 FileGDBField::~FileGDBField()
@@ -3080,7 +3099,7 @@ FileGDBField::~FileGDBField()
 }
 
 /************************************************************************/
-/*                            HasIndex()                                */
+/*                              HasIndex()                              */
 /************************************************************************/
 
 int FileGDBField::HasIndex()
@@ -3090,7 +3109,7 @@ int FileGDBField::HasIndex()
 }
 
 /************************************************************************/
-/*                            GetIndex()                                */
+/*                              GetIndex()                              */
 /************************************************************************/
 
 FileGDBIndex *FileGDBField::GetIndex()
@@ -3100,7 +3119,7 @@ FileGDBIndex *FileGDBField::GetIndex()
 }
 
 /************************************************************************/
-/*                              getESRI_NAN()                           */
+/*                            getESRI_NAN()                             */
 /************************************************************************/
 
 static double getESRI_NAN()
@@ -3119,7 +3138,7 @@ static double getESRI_NAN()
 const double FileGDBGeomField::ESRI_NAN = getESRI_NAN();
 
 /************************************************************************/
-/*                           FileGDBGeomField()                         */
+/*                          FileGDBGeomField()                          */
 /************************************************************************/
 
 FileGDBGeomField::FileGDBGeomField(FileGDBTable *poParentIn)
@@ -3128,7 +3147,7 @@ FileGDBGeomField::FileGDBGeomField(FileGDBTable *poParentIn)
 }
 
 /************************************************************************/
-/*                           FileGDBGeomField()                         */
+/*                          FileGDBGeomField()                          */
 /************************************************************************/
 
 FileGDBGeomField::FileGDBGeomField(
@@ -3146,7 +3165,7 @@ FileGDBGeomField::FileGDBGeomField(
 }
 
 /************************************************************************/
-/*                                SetXYMinMax()                         */
+/*                            SetXYMinMax()                             */
 /************************************************************************/
 
 void FileGDBGeomField::SetXYMinMax(double dfXMin, double dfYMin, double dfXMax,
@@ -3159,7 +3178,7 @@ void FileGDBGeomField::SetXYMinMax(double dfXMin, double dfYMin, double dfXMax,
 }
 
 /************************************************************************/
-/*                                SetZMinMax()                          */
+/*                             SetZMinMax()                             */
 /************************************************************************/
 
 void FileGDBGeomField::SetZMinMax(double dfZMin, double dfZMax)
@@ -3169,7 +3188,7 @@ void FileGDBGeomField::SetZMinMax(double dfZMin, double dfZMax)
 }
 
 /************************************************************************/
-/*                                SetMMinMax()                          */
+/*                             SetMMinMax()                             */
 /************************************************************************/
 
 void FileGDBGeomField::SetMMinMax(double dfMMin, double dfMMax)
@@ -3209,7 +3228,7 @@ void FileGDBGeomField::SetMOriginScaleTolerance(double dfMOrigin,
 FileGDBOGRGeometryConverter::~FileGDBOGRGeometryConverter() = default;
 
 /************************************************************************/
-/*                      FileGDBOGRGeometryConverterImpl                 */
+/*                   FileGDBOGRGeometryConverterImpl                    */
 /************************************************************************/
 
 class FileGDBOGRGeometryConverterImpl final : public FileGDBOGRGeometryConverter
@@ -3267,7 +3286,7 @@ FileGDBOGRGeometryConverterImpl::FileGDBOGRGeometryConverterImpl(
 }
 
 /************************************************************************/
-/*                 ~FileGDBOGRGeometryConverter()                       */
+/*                    ~FileGDBOGRGeometryConverter()                    */
 /************************************************************************/
 
 FileGDBOGRGeometryConverterImpl::~FileGDBOGRGeometryConverterImpl()
@@ -3276,7 +3295,7 @@ FileGDBOGRGeometryConverterImpl::~FileGDBOGRGeometryConverterImpl()
 }
 
 /************************************************************************/
-/*                          ReadPartDefs()                              */
+/*                            ReadPartDefs()                            */
 /************************************************************************/
 
 bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
@@ -3332,7 +3351,7 @@ bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
 }
 
 /************************************************************************/
-/*                         XYLineStringSetter                           */
+/*                          XYLineStringSetter                          */
 /************************************************************************/
 
 class FileGDBOGRLineString final : public OGRLineString
@@ -3383,7 +3402,7 @@ class XYLineStringSetter
 };
 
 /************************************************************************/
-/*                         XYMultiPointSetter                           */
+/*                          XYMultiPointSetter                          */
 /************************************************************************/
 
 class XYMultiPointSetter
@@ -3404,7 +3423,7 @@ class XYMultiPointSetter
 };
 
 /************************************************************************/
-/*                             XYArraySetter                            */
+/*                            XYArraySetter                             */
 /************************************************************************/
 
 class XYArraySetter
@@ -3426,7 +3445,7 @@ class XYArraySetter
 };
 
 /************************************************************************/
-/*                          ReadXYArray()                               */
+/*                            ReadXYArray()                             */
 /************************************************************************/
 
 template <class XYSetter>
@@ -3479,7 +3498,7 @@ class ZLineStringSetter
 };
 
 /************************************************************************/
-/*                         ZMultiPointSetter                           */
+/*                          ZMultiPointSetter                           */
 /************************************************************************/
 
 class ZMultiPointSetter
@@ -3498,7 +3517,7 @@ class ZMultiPointSetter
 };
 
 /************************************************************************/
-/*                             FileGDBArraySetter                            */
+/*                          FileGDBArraySetter                          */
 /************************************************************************/
 
 class FileGDBArraySetter
@@ -3517,7 +3536,7 @@ class FileGDBArraySetter
 };
 
 /************************************************************************/
-/*                          ReadZArray()                                */
+/*                             ReadZArray()                             */
 /************************************************************************/
 
 template <class ZSetter>
@@ -3558,7 +3577,7 @@ class MLineStringSetter
 };
 
 /************************************************************************/
-/*                         MMultiPointSetter                           */
+/*                          MMultiPointSetter                           */
 /************************************************************************/
 
 class MMultiPointSetter
@@ -3577,7 +3596,7 @@ class MMultiPointSetter
 };
 
 /************************************************************************/
-/*                          ReadMArray()                                */
+/*                             ReadMArray()                             */
 /************************************************************************/
 
 template <class MSetter>
@@ -3599,7 +3618,7 @@ int FileGDBOGRGeometryConverterImpl::ReadMArray(MSetter &setter,
 }
 
 /************************************************************************/
-/*                          CreateCurveGeometry()                       */
+/*                        CreateCurveGeometry()                         */
 /************************************************************************/
 
 class XYBufferSetter
@@ -3796,13 +3815,14 @@ OGRGeometry *FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
     CPLAssert(nOffset <= nMaxSize);
 
     OGRGeometry *poRet = nullptr;
-    OGRCreateFromShapeBin(pabyExtShapeBuffer, &poRet, nOffset);
+    OGRCreateFromShapeBin(pabyExtShapeBuffer, &poRet, nOffset,
+                          /* pszOrganizePolygonsMethod = */ "DEFAULT");
     VSIFree(pabyExtShapeBuffer);
     return poRet;
 }
 
 /************************************************************************/
-/*                          GetAsGeometry()                             */
+/*                           GetAsGeometry()                            */
 /************************************************************************/
 
 OGRGeometry *
@@ -4421,5 +4441,9 @@ FileGDBOGRGeometryConverter::GetGeometryTypeFromESRI(const char *pszESRIType)
     CPLDebug("OpenFileGDB", "Unhandled geometry type : %s", pszESRIType);
     return wkbUnknown;
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 } /* namespace OpenFileGDB */

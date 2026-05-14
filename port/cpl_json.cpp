@@ -632,6 +632,33 @@ void CPLJSONObject::Add(const std::string &osName, const std::string &osValue)
     }
 }
 
+/** Add new key - value pair to json object.
+ *
+ * @param osName Key name.
+ * @param svValue String value.
+ * @since 3.13
+ */
+void CPLJSONObject::Add(const std::string &osName, std::string_view svValue)
+{
+    std::string objectName;
+    if (m_osKey == INVALID_OBJ_KEY)
+        m_osKey.clear();
+    CPLJSONObject object = GetObjectByPath(osName, objectName);
+    if (object.IsValid() && json_object_get_type(TO_JSONOBJ(
+                                object.m_poJsonObject)) == json_type_object)
+    {
+        if (svValue.size() > static_cast<size_t>(INT_MAX - 1))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too long string view");
+            return;
+        }
+        json_object *poVal = json_object_new_string_len(
+            svValue.data(), static_cast<int>(svValue.size()));
+        json_object_object_add(TO_JSONOBJ(object.GetInternalHandle()),
+                               objectName.c_str(), poVal);
+    }
+}
+
 /**
  * Add new key - value pair to json object.
  * @param osName Key name.
@@ -916,6 +943,26 @@ CPLJSONObject CPLJSONObject::GetObj(const std::string &osName) const
         {
             return CPLJSONObject(objectName, poVal);
         }
+    }
+    return CPLJSONObject(INVALID_OBJ_KEY, nullptr);
+}
+
+/**
+ * Get value by key (without splitting on /).
+ * @param  osName Key name.
+ * @return         Json object.
+ * @since 3.13
+ *
+ */
+CPLJSONObject CPLJSONObject::GetObjNoSplitName(const std::string &osName) const
+{
+    json_object *poVal = nullptr;
+
+    // Typically for keys that contain / character
+    if (json_object_object_get_ex(TO_JSONOBJ(GetInternalHandle()),
+                                  osName.c_str(), &poVal))
+    {
+        return CPLJSONObject(osName, poVal);
     }
     return CPLJSONObject(INVALID_OBJ_KEY, nullptr);
 }
@@ -1428,6 +1475,28 @@ void CPLJSONArray::Add(const std::string &osValue)
 
 /**
  * Add value to array
+ * @param svValue Value to add.
+ * @since 3.13
+ *
+ */
+void CPLJSONArray::Add(std::string_view svValue)
+{
+    if (svValue.size() > static_cast<size_t>(INT_MAX - 1))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Too long string view");
+        return;
+    }
+    if (m_poJsonObject)
+    {
+        json_object_array_add(
+            TO_JSONOBJ(m_poJsonObject),
+            json_object_new_string_len(svValue.data(),
+                                       static_cast<int>(svValue.size())));
+    }
+}
+
+/**
+ * Add value to array
  * @param pszValue Value to add.
  *
  */
@@ -1529,8 +1598,34 @@ const CPLJSONObject CPLJSONArray::operator[](int nIndex) const
         json_object_array_get_idx(TO_JSONOBJ(m_poJsonObject), nIndex));
 }
 
+/**
+ * Get array item by index.
+ * @param  nIndex Item index.
+ * @return        Json object.
+ *
+ */
+CPLJSONObject CPLJSONArray::operator[](size_t nIndex)
+{
+    return CPLJSONObject(CPLSPrintf("id:%d", static_cast<int>(nIndex)),
+                         json_object_array_get_idx(TO_JSONOBJ(m_poJsonObject),
+                                                   static_cast<int>(nIndex)));
+}
+
+/**
+ * Get array const item by index.
+ * @param  nIndex Item index.
+ * @return        Json object.
+ *
+ */
+const CPLJSONObject CPLJSONArray::operator[](size_t nIndex) const
+{
+    return CPLJSONObject(CPLSPrintf("id:%d", static_cast<int>(nIndex)),
+                         json_object_array_get_idx(TO_JSONOBJ(m_poJsonObject),
+                                                   static_cast<int>(nIndex)));
+}
+
 /************************************************************************/
-/*                      CPLParseKeyValueJson()                          */
+/*                        CPLParseKeyValueJson()                        */
 /************************************************************************/
 
 /** Return a string list of key/value pairs extracted from a JSON doc.

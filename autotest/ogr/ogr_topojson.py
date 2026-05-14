@@ -186,7 +186,7 @@ def test_ogr_topojson_crs():
 
     ds = ogr.Open("data/topojson/topojson_with_crs.topojson")
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
 
     lyr = ds.GetLayer(1)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"

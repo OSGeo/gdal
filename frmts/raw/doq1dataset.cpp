@@ -149,7 +149,7 @@ DOQ1Dataset::~DOQ1Dataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr DOQ1Dataset::Close(GDALProgressFunc, void *)
@@ -182,12 +182,12 @@ CPLErr DOQ1Dataset::Close(GDALProgressFunc, void *)
 CPLErr DOQ1Dataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    gt[0] = dfULX;
-    gt[1] = dfXPixelSize;
-    gt[2] = 0.0;
-    gt[3] = dfULY;
-    gt[4] = 0.0;
-    gt[5] = -1 * dfYPixelSize;
+    gt.xorig = dfULX;
+    gt.xscale = dfXPixelSize;
+    gt.xrot = 0.0;
+    gt.yorig = dfULY;
+    gt.yrot = 0.0;
+    gt.yscale = -1 * dfYPixelSize;
 
     return CE_None;
 }

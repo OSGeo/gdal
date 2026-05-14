@@ -17,7 +17,7 @@
 #include "webpdrivercore.h"
 
 /************************************************************************/
-/*                     WEBPDriverIdentify()                             */
+/*                         WEBPDriverIdentify()                         */
 /************************************************************************/
 
 int WEBPDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -37,7 +37,7 @@ int WEBPDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      WEBPDriverSetCommonMetadata()                   */
+/*                    WEBPDriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void WEBPDriverSetCommonMetadata(GDALDriver *poDriver)

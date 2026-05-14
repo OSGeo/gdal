@@ -99,7 +99,7 @@ ENVIDataset::~ENVIDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr ENVIDataset::Close(GDALProgressFunc, void *)
@@ -569,19 +569,24 @@ void ENVIDataset::WriteProjectionInfo()
     CPLString osLocation;
     CPLString osRotation;
 
-    const double dfPixelXSize = sqrt(m_gt[1] * m_gt[1] + m_gt[2] * m_gt[2]);
-    const double dfPixelYSize = sqrt(m_gt[4] * m_gt[4] + m_gt[5] * m_gt[5]);
-    const bool bHasNonDefaultGT = m_gt[0] != 0.0 || m_gt[1] != 1.0 ||
-                                  m_gt[2] != 0.0 || m_gt[3] != 0.0 ||
-                                  m_gt[4] != 0.0 || m_gt[5] != 1.0;
-    if (m_gt[1] > 0.0 && m_gt[2] == 0.0 && m_gt[4] == 0.0 && m_gt[5] > 0.0)
+    const double dfPixelXSize =
+        sqrt(m_gt.xscale * m_gt.xscale + m_gt.xrot * m_gt.xrot);
+    const double dfPixelYSize =
+        sqrt(m_gt.yrot * m_gt.yrot + m_gt.yscale * m_gt.yscale);
+    const bool bHasNonDefaultGT = m_gt.xorig != 0.0 || m_gt.xscale != 1.0 ||
+                                  m_gt.xrot != 0.0 || m_gt.yorig != 0.0 ||
+                                  m_gt.yrot != 0.0 || m_gt.yscale != 1.0;
+    if (m_gt.xscale > 0.0 && m_gt.xrot == 0.0 && m_gt.yrot == 0.0 &&
+        m_gt.yscale > 0.0)
     {
         osRotation = ", rotation=180";
     }
     else if (bHasNonDefaultGT)
     {
-        const double dfRotation1 = -atan2(-m_gt[2], m_gt[1]) * kdfRadToDeg;
-        const double dfRotation2 = -atan2(-m_gt[4], -m_gt[5]) * kdfRadToDeg;
+        const double dfRotation1 =
+            -atan2(-m_gt.xrot, m_gt.xscale) * kdfRadToDeg;
+        const double dfRotation2 =
+            -atan2(-m_gt.yrot, -m_gt.yscale) * kdfRadToDeg;
         const double dfRotation = (dfRotation1 + dfRotation2) / 2.0;
 
         if (fabs(dfRotation1 - dfRotation2) > 1e-5)
@@ -597,8 +602,8 @@ void ENVIDataset::WriteProjectionInfo()
         }
     }
 
-    osLocation.Printf("1, 1, %.15g, %.15g, %.15g, %.15g", m_gt[0], m_gt[3],
-                      dfPixelXSize, dfPixelYSize);
+    osLocation.Printf("1, 1, %.15g, %.15g, %.15g, %.15g", m_gt.xorig,
+                      m_gt.yorig, dfPixelXSize, dfPixelYSize);
 
     // Minimal case - write out simple geotransform if we have a
     // non-default geotransform.
@@ -907,7 +912,7 @@ void ENVIDataset::WriteProjectionInfo()
 }
 
 /************************************************************************/
-/*                ParseRpcCoeffsMetaDataString()                        */
+/*                    ParseRpcCoeffsMetaDataString()                    */
 /************************************************************************/
 
 bool ENVIDataset::ParseRpcCoeffsMetaDataString(const char *psName,
@@ -930,7 +935,7 @@ bool ENVIDataset::ParseRpcCoeffsMetaDataString(const char *psName,
 }
 
 /************************************************************************/
-/*                          WriteRpcInfo()                              */
+/*                            WriteRpcInfo()                            */
 /************************************************************************/
 
 bool ENVIDataset::WriteRpcInfo()
@@ -998,7 +1003,7 @@ bool ENVIDataset::WriteRpcInfo()
 }
 
 /************************************************************************/
-/*                        WritePseudoGcpInfo()                          */
+/*                         WritePseudoGcpInfo()                         */
 /************************************************************************/
 
 bool ENVIDataset::WritePseudoGcpInfo()
@@ -1036,7 +1041,7 @@ bool ENVIDataset::WritePseudoGcpInfo()
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *ENVIDataset::GetSpatialRef() const
@@ -1045,7 +1050,7 @@ const OGRSpatialReference *ENVIDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                          SetSpatialRef()                             */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 CPLErr ENVIDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -1100,7 +1105,7 @@ void ENVIDataset::SetDescription(const char *pszDescription)
 }
 
 /************************************************************************/
-/*                             SetMetadata()                            */
+/*                            SetMetadata()                             */
 /************************************************************************/
 
 CPLErr ENVIDataset::SetMetadata(CSLConstList papszMetadata,
@@ -1114,7 +1119,7 @@ CPLErr ENVIDataset::SetMetadata(CSLConstList papszMetadata,
 }
 
 /************************************************************************/
-/*                             SetMetadataItem()                        */
+/*                          SetMetadataItem()                           */
 /************************************************************************/
 
 CPLErr ENVIDataset::SetMetadataItem(const char *pszName, const char *pszValue,
@@ -1128,7 +1133,7 @@ CPLErr ENVIDataset::SetMetadataItem(const char *pszName, const char *pszValue,
 }
 
 /************************************************************************/
-/*                               SetGCPs()                              */
+/*                              SetGCPs()                               */
 /************************************************************************/
 
 CPLErr ENVIDataset::SetGCPs(int nGCPCount, const GDAL_GCP *pasGCPList,
@@ -1284,18 +1289,18 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
     const double xPixelSize = CPLAtof(aosFields[5]);
     const double yPixelSize = CPLAtof(aosFields[6]);
 
-    m_gt[0] = pixelEasting - (xReference - 1) * xPixelSize;
-    m_gt[1] = cos(dfRotation) * xPixelSize;
-    m_gt[2] = -sin(dfRotation) * xPixelSize;
-    m_gt[3] = pixelNorthing + (yReference - 1) * yPixelSize;
-    m_gt[4] = -sin(dfRotation) * yPixelSize;
-    m_gt[5] = -cos(dfRotation) * yPixelSize;
+    m_gt.xorig = pixelEasting - (xReference - 1) * xPixelSize;
+    m_gt.xscale = cos(dfRotation) * xPixelSize;
+    m_gt.xrot = -sin(dfRotation) * xPixelSize;
+    m_gt.yorig = pixelNorthing + (yReference - 1) * yPixelSize;
+    m_gt.yrot = -sin(dfRotation) * yPixelSize;
+    m_gt.yscale = -cos(dfRotation) * yPixelSize;
     if (bUpsideDown)  // to avoid numeric approximations
     {
-        m_gt[1] = xPixelSize;
-        m_gt[2] = 0;
-        m_gt[4] = 0;
-        m_gt[5] = yPixelSize;
+        m_gt.xscale = xPixelSize;
+        m_gt.xrot = 0;
+        m_gt.yrot = 0;
+        m_gt.yscale = yPixelSize;
     }
 
     // TODO(schwehr): Symbolic constants for the fields.
@@ -1471,12 +1476,12 @@ bool ENVIDataset::ProcessMapinfo(const char *pszMapinfo)
                     conversionFactor = 60.0;
                 else if (EQUAL(pszUnits, "Seconds"))
                     conversionFactor = 3600.0;
-                m_gt[0] /= conversionFactor;
-                m_gt[1] /= conversionFactor;
-                m_gt[2] /= conversionFactor;
-                m_gt[3] /= conversionFactor;
-                m_gt[4] /= conversionFactor;
-                m_gt[5] /= conversionFactor;
+                m_gt.xorig /= conversionFactor;
+                m_gt.xscale /= conversionFactor;
+                m_gt.xrot /= conversionFactor;
+                m_gt.yorig /= conversionFactor;
+                m_gt.yrot /= conversionFactor;
+                m_gt.yscale /= conversionFactor;
             }
         }
     }
@@ -1620,7 +1625,7 @@ void ENVIDataset::ProcessRPCinfo(const char *pszRPCinfo, int numCols,
 }
 
 /************************************************************************/
-/*                             GetGCPCount()                            */
+/*                            GetGCPCount()                             */
 /************************************************************************/
 
 int ENVIDataset::GetGCPCount()
@@ -1783,7 +1788,7 @@ double ENVIDataset::byteSwapDouble(double swapMe)
 }
 
 /************************************************************************/
-/*                        GetRawBinaryLayout()                          */
+/*                         GetRawBinaryLayout()                         */
 /************************************************************************/
 
 bool ENVIDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
@@ -2265,7 +2270,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     const char *pszMapInfo = poDS->m_aosHeader["map_info"];
     if (pszMapInfo != nullptr)
     {
-        poDS->bFoundMapinfo = CPL_TO_BOOL(poDS->ProcessMapinfo(pszMapInfo));
+        poDS->bFoundMapinfo = poDS->ProcessMapinfo(pszMapInfo);
     }
 
     // Look for RPC.
@@ -2351,7 +2356,7 @@ int ENVIDataset::GetEnviType(GDALDataType eType)
 
 GDALDataset *ENVIDataset::Create(const char *pszFilename, int nXSize,
                                  int nYSize, int nBandsIn, GDALDataType eType,
-                                 char **papszOptions)
+                                 CSLConstList papszOptions)
 
 {
     // Verify input options.
@@ -2473,7 +2478,7 @@ void ENVIRasterBand::SetDescription(const char *pszDescription)
 }
 
 /************************************************************************/
-/*                           SetCategoryNames()                         */
+/*                          SetCategoryNames()                          */
 /************************************************************************/
 
 CPLErr ENVIRasterBand::SetCategoryNames(char **papszCategoryNamesIn)
@@ -2483,7 +2488,7 @@ CPLErr ENVIRasterBand::SetCategoryNames(char **papszCategoryNamesIn)
 }
 
 /************************************************************************/
-/*                            SetNoDataValue()                          */
+/*                           SetNoDataValue()                           */
 /************************************************************************/
 
 CPLErr ENVIRasterBand::SetNoDataValue(double dfNoDataValue)
@@ -2512,7 +2517,7 @@ CPLErr ENVIRasterBand::SetNoDataValue(double dfNoDataValue)
 }
 
 /************************************************************************/
-/*                         SetColorInterpretation()                     */
+/*                       SetColorInterpretation()                       */
 /************************************************************************/
 
 CPLErr ENVIRasterBand::SetColorInterpretation(GDALColorInterp eColorInterp)
@@ -2532,7 +2537,7 @@ CPLErr ENVIRasterBand::SetOffset(double dfValue)
 }
 
 /************************************************************************/
-/*                             SetScale()                               */
+/*                              SetScale()                              */
 /************************************************************************/
 
 CPLErr ENVIRasterBand::SetScale(double dfValue)

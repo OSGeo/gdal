@@ -321,10 +321,10 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo, bool ignoreOversizedLods)
         // resolution is the smallest figure
         res = resolutions[0];
         m_gt = GDALGeoTransform();
-        m_gt[0] = minx;
-        m_gt[3] = maxy;
-        m_gt[1] = res;
-        m_gt[5] = -res;
+        m_gt.xorig = minx;
+        m_gt.yorig = maxy;
+        m_gt.xscale = res;
+        m_gt.yscale = -res;
 
         double dxsz = (maxx - minx) / res;
         double dysz = (maxy - miny) / res;
@@ -490,10 +490,10 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot,
         // resolution is the smallest figure
         res = resolutions[0];
         m_gt = GDALGeoTransform();
-        m_gt[0] = minx;
-        m_gt[3] = maxy;
-        m_gt[1] = res;
-        m_gt[5] = -res;
+        m_gt.xorig = minx;
+        m_gt.yorig = maxy;
+        m_gt.xscale = res;
+        m_gt.yscale = -res;
 
         double dxsz = (maxx - minx) / res;
         double dysz = (maxy - miny) / res;
@@ -628,7 +628,7 @@ class ESRICProxyDataset final : public GDALProxyDataset
         m_aosFileList.AddString(pszDescription);
     }
 
-    GDALDriver *GetDriver() override
+    GDALDriver *GetDriver() const override
     {
         return GDALDriver::FromHandle(GDALGetDriverByName("ESRIC"));
     }
@@ -652,8 +652,8 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
 GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo,
                              const char *pszDescription)
 {
-    bool ignoreOversizedLods = CSLFetchBoolean(poOpenInfo->papszOpenOptions,
-                                               "IGNORE_OVERSIZED_LODS", FALSE);
+    bool ignoreOversizedLods = CPL_TO_BOOL(CSLFetchBoolean(
+        poOpenInfo->papszOpenOptions, "IGNORE_OVERSIZED_LODS", FALSE));
     if (IdentifyXML(poOpenInfo))
     {
         CPLXMLNode *config = CPLParseXMLFile(poOpenInfo->pszFilename);

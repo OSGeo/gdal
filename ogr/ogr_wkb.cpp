@@ -30,16 +30,19 @@
 #endif
 
 /************************************************************************/
-/*                          OGRWKBNeedSwap()                            */
+/*                           OGRWKBNeedSwap()                           */
 /************************************************************************/
 
 static inline bool OGRWKBNeedSwap(GByte b)
 {
-    return b != CPL_IS_LSB;
+    if constexpr (CPL_IS_LSB)
+        return b != 1;
+    else
+        return b != 0;
 }
 
 /************************************************************************/
-/*                        OGRWKBReadUInt32()                            */
+/*                          OGRWKBReadUInt32()                          */
 /************************************************************************/
 
 static inline uint32_t OGRWKBReadUInt32(const GByte *pabyWkb, bool bNeedSwap)
@@ -52,7 +55,7 @@ static inline uint32_t OGRWKBReadUInt32(const GByte *pabyWkb, bool bNeedSwap)
 }
 
 /************************************************************************/
-/*                        OGRWKBReadFloat64()                           */
+/*                         OGRWKBReadFloat64()                          */
 /************************************************************************/
 
 static inline double OGRWKBReadFloat64(const GByte *pabyWkb, bool bNeedSwap)
@@ -65,7 +68,7 @@ static inline double OGRWKBReadFloat64(const GByte *pabyWkb, bool bNeedSwap)
 }
 
 /************************************************************************/
-/*                        OGRWKBRingGetArea()                           */
+/*                         OGRWKBRingGetArea()                          */
 /************************************************************************/
 
 static bool OGRWKBRingGetArea(const GByte *&pabyWkb, size_t &nWKBSize, int nDim,
@@ -174,7 +177,7 @@ bool OGRWKBPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
 }
 
 /************************************************************************/
-/*                    OGRWKBMultiPolygonGetArea()                       */
+/*                     OGRWKBMultiPolygonGetArea()                      */
 /************************************************************************/
 
 bool OGRWKBMultiPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
@@ -262,7 +265,7 @@ const GByte *WKBFromEWKB(GByte *pabyEWKB, size_t nEWKBSize, size_t &nWKBSizeOut,
 }
 
 /************************************************************************/
-/*                     OGRWKBReadUInt32AtOffset()                       */
+/*                      OGRWKBReadUInt32AtOffset()                      */
 /************************************************************************/
 
 static uint32_t OGRWKBReadUInt32AtOffset(const uint8_t *data,
@@ -280,7 +283,7 @@ static uint32_t OGRWKBReadUInt32AtOffset(const uint8_t *data,
 }
 
 /************************************************************************/
-/*                         ReadWKBPointSequence()                       */
+/*                        ReadWKBPointSequence()                        */
 /************************************************************************/
 
 template <bool INCLUDE_Z, typename EnvelopeType>
@@ -333,7 +336,7 @@ static bool ReadWKBPointSequence(const uint8_t *data, size_t size,
 }
 
 /************************************************************************/
-/*                         ReadWKBRingSequence()                        */
+/*                        ReadWKBRingSequence()                         */
 /************************************************************************/
 
 template <bool INCLUDE_Z, typename EnvelopeType>
@@ -625,7 +628,7 @@ static bool OGRWKBIntersectsPointSequencePessimistic(
 }
 
 /************************************************************************/
-/*               OGRWKBIntersectsRingSequencePessimistic()              */
+/*              OGRWKBIntersectsRingSequencePessimistic()               */
 /************************************************************************/
 
 static bool OGRWKBIntersectsRingSequencePessimistic(
@@ -676,7 +679,7 @@ static bool OGRWKBIntersectsRingSequencePessimistic(
 }
 
 /************************************************************************/
-/*                  OGRWKBIntersectsPessimistic()                         */
+/*                    OGRWKBIntersectsPessimistic()                     */
 /************************************************************************/
 
 static bool OGRWKBIntersectsPessimistic(const GByte *data, const size_t size,
@@ -779,7 +782,7 @@ static bool OGRWKBIntersectsPessimistic(const GByte *data, const size_t size,
 }
 
 /************************************************************************/
-/*                  OGRWKBIntersectsPessimistic()                       */
+/*                    OGRWKBIntersectsPessimistic()                     */
 /************************************************************************/
 
 /* Returns whether the geometry (pabyWkb, nWKBSize) intersects, for sure,
@@ -813,7 +816,7 @@ static inline bool epsilonEqual(double a, double b, double eps)
 }
 
 /************************************************************************/
-/*                     OGRWKBIsClockwiseRing()                          */
+/*                       OGRWKBIsClockwiseRing()                        */
 /************************************************************************/
 
 static inline double GetX(const GByte *data, uint32_t i, int nDim,
@@ -947,7 +950,7 @@ static bool OGRWKBIsClockwiseRing(const GByte *data, const uint32_t nPoints,
 }
 
 /************************************************************************/
-/*                OGRWKBFixupCounterClockWiseExternalRing()             */
+/*              OGRWKBFixupCounterClockWiseExternalRing()               */
 /************************************************************************/
 
 static bool OGRWKBFixupCounterClockWiseExternalRingInternal(
@@ -1052,7 +1055,7 @@ void OGRWKBFixupCounterClockWiseExternalRing(GByte *pabyWkb, size_t nWKBSize)
 }
 
 /************************************************************************/
-/*                        OGRWKBPointUpdater()                          */
+/*                         OGRWKBPointUpdater()                         */
 /************************************************************************/
 
 OGRWKBPointUpdater::OGRWKBPointUpdater() = default;
@@ -1094,7 +1097,7 @@ static bool OGRWKBUpdatePointsSequence(uint8_t *data, const size_t size,
 }
 
 /************************************************************************/
-/*                        OGRWKBVisitRingSequence()                     */
+/*                      OGRWKBVisitRingSequence()                       */
 /************************************************************************/
 
 static bool OGRWKBVisitRingSequence(uint8_t *data, const size_t size,
@@ -1126,7 +1129,7 @@ static bool OGRWKBVisitRingSequence(uint8_t *data, const size_t size,
 }
 
 /************************************************************************/
-/*                      OGRWKBUpdatePoints()                             */
+/*                         OGRWKBUpdatePoints()                         */
 /************************************************************************/
 
 static bool OGRWKBUpdatePoints(uint8_t *data, const size_t size,
@@ -1173,8 +1176,8 @@ static bool OGRWKBUpdatePoints(uint8_t *data, const size_t size,
         return true;
     }
 
-    const bool bHasZ = OGR_GT_HasZ(eGeometryType);
-    const bool bHasM = OGR_GT_HasM(eGeometryType);
+    const bool bHasZ = CPL_TO_BOOL(OGR_GT_HasZ(eGeometryType));
+    const bool bHasM = CPL_TO_BOOL(OGR_GT_HasM(eGeometryType));
     const int nDim = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
 
     if (eFlatType == wkbPoint)
@@ -1242,7 +1245,7 @@ void OGRWKBTransformCache::clear()
 #endif
 
 /************************************************************************/
-/*                         OGRWKBTransform()                            */
+/*                          OGRWKBTransform()                           */
 /************************************************************************/
 
 /** Visit all points of a WKB geometry to transform them.
@@ -1405,13 +1408,13 @@ bool OGRWKBTransform(GByte *pabyWkb, size_t nWKBSize,
 }
 
 /************************************************************************/
-/*                         OGRAppendBuffer()                            */
+/*                          OGRAppendBuffer()                           */
 /************************************************************************/
 
 OGRAppendBuffer::OGRAppendBuffer() = default;
 
 /************************************************************************/
-/*                        ~OGRAppendBuffer()                            */
+/*                          ~OGRAppendBuffer()                          */
 /************************************************************************/
 
 OGRAppendBuffer::~OGRAppendBuffer() = default;
@@ -1433,7 +1436,7 @@ OGRWKTToWKBTranslator::OGRWKTToWKBTranslator(OGRAppendBuffer &oAppendBuffer)
 }
 
 /************************************************************************/
-/*                          TranslateWKT()                              */
+/*                            TranslateWKT()                            */
 /************************************************************************/
 
 size_t OGRWKTToWKBTranslator::TranslateWKT(void *pabyWKTStart, size_t nLength,

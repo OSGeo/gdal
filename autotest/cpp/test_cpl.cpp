@@ -22,6 +22,7 @@
 #include "cpl_compressor.h"
 #include "cpl_enumerate.h"
 #include "cpl_error.h"
+#include "cpl_error_internal.h"
 #include "cpl_float.h"
 #include "cpl_hash_set.h"
 #include "cpl_levenshtein.h"
@@ -44,6 +45,7 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_threadsafe_queue.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <cmath>
 #include <limits>
@@ -595,8 +597,8 @@ TEST_F(test_cpl, CPLRecode)
             break;
         }
 
-        size_t nLength =
-            MIN(strlen(pszDecodedString), sizeof(oReferenceString.szEncoding));
+        size_t nLength = std::min(strlen(pszDecodedString),
+                                  sizeof(oReferenceString.szEncoding));
         bool bOK =
             (memcmp(pszDecodedString, oReferenceString.szString, nLength) == 0);
         // FIXME Some tests fail on Mac. Not sure why, but do not error out just
@@ -650,6 +652,10 @@ TEST_F(test_cpl, CPLStringList_Base)
     ASSERT_TRUE(oCSL[-1] == nullptr);
     ASSERT_EQ(oCSL.FindString("abc"), 1);
 
+    oCSL.RemoveStrings(0, 1);
+    ASSERT_EQ(oCSL.Count(), 1);
+    ASSERT_EQ(oCSL.FindString("abc"), 0);
+
     CSLDestroy(oCSL.StealList());
     ASSERT_EQ(oCSL.Count(), 0);
     ASSERT_TRUE(oCSL.List() == nullptr);
@@ -670,6 +676,38 @@ TEST_F(test_cpl, CPLStringList_Base)
     ASSERT_EQ(oCopy.Count(), 3);
     ASSERT_EQ(oCSL.Count(), 2);
     ASSERT_TRUE(EQUAL(oCopy[2], "xyz"));
+}
+
+TEST_F(test_cpl, CPLStringList_SetString)
+{
+    CPLStringList oCSL;
+
+    oCSL.AddString("abc");
+    oCSL.AddString("def");
+    oCSL.AddString("ghi");
+
+    oCSL.Sort();
+
+    CPLStringList oCSL2(oCSL.List(), false);
+    oCSL2.Sort();
+
+    oCSL2.SetString(0, "bcd");
+    ASSERT_TRUE(EQUAL(oCSL[0], "abc"));
+    ASSERT_TRUE(EQUAL(oCSL2[0], "bcd"));
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    oCSL2.SetString(1, std::string("efg"));
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    oCSL2.SetString(2, "hij");
+    ASSERT_TRUE(oCSL2.IsSorted());
+
+    for (int i = 0; i < oCSL.size(); i++)
+    {
+        CPLStringList oCopy(oCSL);
+        oCopy.SetString(0, "xyz");
+        ASSERT_FALSE(oCopy.IsSorted());
+    }
 }
 
 TEST_F(test_cpl, CPLStringList_NameValue)
@@ -1120,11 +1158,30 @@ TEST_F(test_cpl, CPLGetDirname)
         "2Fgdal%2Fmaster%2Fautotest%2Fogr%2Fdata");
 }
 
-TEST_F(test_cpl, VSIGetDiskFreeSpace)
+TEST_F(test_cpl, CPLLexicallyNormalize)
 {
-    ASSERT_TRUE(VSIGetDiskFreeSpace("/vsimem/") > 0);
-    ASSERT_TRUE(VSIGetDiskFreeSpace(".") == -1 ||
-                VSIGetDiskFreeSpace(".") >= 0);
+    EXPECT_STREQ(CPLLexicallyNormalize("", '/').c_str(), "");
+    EXPECT_STREQ(CPLLexicallyNormalize("x", '/').c_str(), "x");
+    EXPECT_STREQ(CPLLexicallyNormalize("xy", '/').c_str(), "xy");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/", '/').c_str(), "x/");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/.", '/').c_str(), "x/");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/./", '/').c_str(), "x/");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/y", '/').c_str(), "x/y");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/yz", '/').c_str(), "x/yz");
+    EXPECT_STREQ(CPLLexicallyNormalize("xy/z", '/').c_str(), "xy/z");
+    EXPECT_STREQ(CPLLexicallyNormalize("x//y", '/').c_str(), "x/y");
+    EXPECT_STREQ(CPLLexicallyNormalize("/", '/').c_str(), "/");
+    EXPECT_STREQ(CPLLexicallyNormalize("/x", '/').c_str(), "/x");
+    EXPECT_STREQ(CPLLexicallyNormalize("../x", '/').c_str(), "../x");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/../y", '/').c_str(), "y");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/..", '/').c_str(), "");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/../", '/').c_str(), "");
+    EXPECT_STREQ(CPLLexicallyNormalize("xy/../z", '/').c_str(), "z");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/../yz", '/').c_str(), "yz");
+    EXPECT_STREQ(CPLLexicallyNormalize("x/../../yz", '/').c_str(), "../yz");
+    EXPECT_STREQ(CPLLexicallyNormalize("a/x/y/../../t", '/').c_str(), "a/t");
+    EXPECT_STREQ(CPLLexicallyNormalize("a\\x\\y\\..\\..\\t", '/', '\\').c_str(),
+                 "a\\t");
 }
 
 TEST_F(test_cpl, CPLsscanf)
@@ -1197,6 +1254,7 @@ TEST_F(test_cpl, CPLSetErrorHandler)
     ASSERT_EQ(gbGotError, false);
     gbGotError = false;
     CPLSetErrorHandler(oldHandler);
+    CPLSetCurrentErrorHandlerCatchDebug(true);
 
     CPLPushErrorHandler(myErrorHandler);
     CPLSetCurrentErrorHandlerCatchDebug(FALSE);
@@ -1218,8 +1276,47 @@ TEST_F(test_cpl, CPLSetErrorHandler)
     CPLSetErrorHandler(oldHandler);
 }
 
+TEST_F(test_cpl, global_error_handler_and_CPLSetCurrentErrorHandlerCatchDebug)
+{
+    static bool gbGotDebugMessage = false;
+    static bool gbGotExpectedUserData = false;
+
+    struct MyStruct
+    {
+        static void CPL_STDCALL myErrorHandler(CPLErr eErr, CPLErrorNum,
+                                               const char *msg)
+        {
+            if (CPLGetErrorHandlerUserData() == &gbGotExpectedUserData)
+            {
+                gbGotExpectedUserData = true;
+            }
+            if (eErr == CE_Debug && strcmp(msg, "TEST: my debug message") == 0)
+            {
+                gbGotDebugMessage = true;
+            }
+        }
+    };
+
+    CPLErrorHandler oldHandler =
+        CPLSetErrorHandlerEx(MyStruct::myErrorHandler, &gbGotExpectedUserData);
+
+    CPLErrorAccumulator oAccumulator;
+    {
+        auto scopedAccumulator = oAccumulator.InstallForCurrentScope();
+        CPL_IGNORE_RET_VAL(scopedAccumulator);
+
+        CPLConfigOptionSetter oSetter("CPL_DEBUG", "ON", false);
+        CPLDebug("TEST", "my debug message");
+    }
+
+    EXPECT_TRUE(gbGotExpectedUserData);
+    EXPECT_TRUE(gbGotDebugMessage);
+
+    CPLSetErrorHandler(oldHandler);
+}
+
 /************************************************************************/
-/*                         CPLString::replaceAll()                      */
+/*                       CPLString::replaceAll()                        */
 /************************************************************************/
 
 TEST_F(test_cpl, CPLString_replaceAll)
@@ -1255,7 +1352,7 @@ TEST_F(test_cpl, CPLString_replaceAll)
 }
 
 /************************************************************************/
-/*                        VSIMallocAligned()                            */
+/*                          VSIMallocAligned()                          */
 /************************************************************************/
 TEST_F(test_cpl, VSIMallocAligned)
 {
@@ -1303,7 +1400,7 @@ TEST_F(test_cpl, VSIMallocAligned)
 }
 
 /************************************************************************/
-/*             CPLGetConfigOptions() / CPLSetConfigOptions()            */
+/*            CPLGetConfigOptions() / CPLSetConfigOptions()             */
 /************************************************************************/
 TEST_F(test_cpl, CPLGetConfigOptions)
 {
@@ -1318,7 +1415,7 @@ TEST_F(test_cpl, CPLGetConfigOptions)
 }
 
 /************************************************************************/
-/*  CPLGetThreadLocalConfigOptions() / CPLSetThreadLocalConfigOptions() */
+/* CPLGetThreadLocalConfigOptions() / CPLSetThreadLocalConfigOptions()  */
 /************************************************************************/
 TEST_F(test_cpl, CPLGetThreadLocalConfigOptions)
 {
@@ -4331,21 +4428,39 @@ TEST_F(test_cpl, test_config_overrides_environment)
     char szEnvVar[] = "TEST_CONFIG_OVERRIDES_ENVIRONMENT=123";
     putenv(szEnvVar);
 
-    ASSERT_STREQ(
-        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
-        "123");
+    constexpr const char *key = "TEST_CONFIG_OVERRIDES_ENVIRONMENT";
 
-    CPLSetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", "456");
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
 
-    ASSERT_STREQ(
-        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
-        "456");
+    CPLSetConfigOption(key, "456");
 
-    CPLSetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr);
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "456");
 
-    ASSERT_STREQ(
-        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
-        "123");
+    CPLSetConfigOption(key, nullptr);
+
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
+
+    CPLSetConfigOption(key, CPL_NULL_VALUE);
+
+    ASSERT_EQ(CPLGetConfigOption(key, nullptr), nullptr);
+
+    CPLSetConfigOption(key, nullptr);
+
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
+
+    {
+        CPLConfigOptionSetter oSetter(key, nullptr, false);
+
+        ASSERT_EQ(CPLGetConfigOption(key, nullptr), nullptr);
+    }
+
+    ASSERT_STREQ(CPLGetConfigOption(key, nullptr), "123");
+
+    CPLSetThreadLocalConfigOption(key, CPL_NULL_VALUE);
+
+    ASSERT_EQ(CPLGetConfigOption(key, nullptr), nullptr);
+
+    ASSERT_EQ(CPLGetThreadLocalConfigOption(key, nullptr), nullptr);
 }
 
 // Test CPLWorkerThreadPool recursion
@@ -5690,6 +5805,136 @@ TEST_F(test_cpl, cpl_enumerate)
         EXPECT_EQ(tab[1], 2);
         EXPECT_EQ(tab[2], 3);
     }
+}
+
+TEST_F(test_cpl, CPL_SWAP)
+{
+    {
+        uint8_t x = 1;
+        EXPECT_EQ(CPL_SWAP(x), x);
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+    }
+    {
+        int8_t x = 1;
+        EXPECT_EQ(CPL_SWAP(x), x);
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+    }
+    {
+        uint16_t x = 0x0123;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        int16_t x = 0x0123;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        uint32_t x = 0x01234567;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        int32_t x = 0x01234567;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        uint64_t x = (static_cast<uint64_t>(0x01234567) << 32) | 0x89ABCDEF;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        int64_t x = (static_cast<int64_t>(0x01234567) << 32) | 0x89ABCDEF;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        float x = 1.5;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+    {
+        double x = 1.5;
+        auto y = CPL_SWAP(x);
+        EXPECT_NE(y, x);
+        EXPECT_EQ(CPL_SWAP(y), x);
+#if CPL_IS_LSB
+        EXPECT_EQ(CPL_AS_LSB(x), x);
+#else
+        EXPECT_EQ(CPL_AS_LSB(x), CPL_SWAP(x));
+#endif
+    }
+}
+
+TEST_F(test_cpl, CPLLaunderForFilenameSafe)
+{
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("").c_str(), "");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a").c_str(), "a");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a<b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a>b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a:b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a\"b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a/b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a\\b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a|b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a?b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a*b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a^b").c_str(), "a_b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe(".").c_str(), "._");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("..").c_str(), ".._");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a.b").c_str(), "a.b");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe(" a ").c_str(), " a _");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe(".a.").c_str(), ".a._");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe(" a ", ';').c_str(), " a ;");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("CON").c_str(), "CON_");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a<b c", ';', " ").c_str(), "a;b;c");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("a<b c", '\0', " ").c_str(), "abc");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("CON", '\0', nullptr).c_str(),
+                 "CON_");
+    EXPECT_STREQ(CPLLaunderForFilenameSafe("CON", ';').c_str(), "CON;");
 }
 
 }  // namespace

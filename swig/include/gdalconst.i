@@ -17,6 +17,7 @@
 
 #if defined(SWIGCSHARP)
 %module GdalConst
+%include csharp_strings.i
 #else
 %module gdalconst
 #endif
@@ -259,6 +260,7 @@
 %constant char *DCAP_FEATURE_STYLES_WRITE  = GDAL_DCAP_FEATURE_STYLES_WRITE;
 %constant char *DCAP_COORDINATE_EPOCH    = GDAL_DCAP_COORDINATE_EPOCH;
 %constant char *DCAP_MULTIPLE_VECTOR_LAYERS    = GDAL_DCAP_MULTIPLE_VECTOR_LAYERS;
+%constant char *DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY    = GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY;
 %constant char *DCAP_FIELD_DOMAINS    = GDAL_DCAP_FIELD_DOMAINS;
 %constant char *DCAP_RELATIONSHIPS    = GDAL_DCAP_RELATIONSHIPS;
 %constant char *GDAL_DCAP_CREATE_RELATIONSHIP    = GDAL_DCAP_CREATE_RELATIONSHIP;
@@ -289,6 +291,12 @@
 // so to make things consistent we currently add variants both with and
 // without the prefix.
 // TODO GDAL 4.0: clean this up!
+
+#if defined(SWIGCSHARP)
+%csconst(1);
+#elif defined(SWIGJAVA)
+%javaconst(0);
+#endif
 
 #define DMD_LONGNAME "DMD_LONGNAME"
 #define GDAL_DMD_LONGNAME "DMD_LONGNAME"
@@ -414,6 +422,8 @@
 #define GDAL_DCAP_COORDINATE_EPOCH "DCAP_COORDINATE_EPOCH"
 #define DCAP_MULTIPLE_VECTOR_LAYERS "DCAP_MULTIPLE_VECTOR_LAYERS"
 #define GDAL_DCAP_MULTIPLE_VECTOR_LAYERS "DCAP_MULTIPLE_VECTOR_LAYERS"
+#define DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY "DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY"
+#define GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY "DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY"
 #define DCAP_FIELD_DOMAINS    "DCAP_FIELD_DOMAINS"
 #define GDAL_DCAP_FIELD_DOMAINS    "DCAP_FIELD_DOMAINS"
 #define DCAP_RELATIONSHIPS    "DCAP_RELATIONSHIPS"
@@ -451,6 +461,12 @@
 #define GDsCUpdateRelationship "UpdateRelationship"
 #define GDsCFastGetExtent "FastGetExtent"
 #define GDsCFastGetExtentWGS84LongLat "FastGetExtentWGS84LongLat"
+
+#if defined(SWIGCSHARP)
+%csconst(0);
+#elif defined(SWIGJAVA)
+%javaconst(0);
+#endif
 
 #endif
 

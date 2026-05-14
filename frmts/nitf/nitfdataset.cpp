@@ -20,11 +20,11 @@
 
 #include "gdal_mdreader.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -48,23 +48,34 @@
 #include "embedded_resources.h"
 #endif
 
-static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
-                                 GUIntBig nImageOffset, GIntBig nPixelCount,
-                                 const char *pszIC, vsi_l_offset nICOffset,
+#include "offsetpatcher.h"
+#include "rpfframewriter.h"
+
+static bool NITFPatchImageLength(const char *pszFilename, VSILFILE *fp,
+                                 int nIMIndex, GUIntBig nImageOffset,
+                                 GIntBig nPixelCount, const char *pszIC,
+                                 vsi_l_offset nICOffset,
                                  CSLConstList papszCreationOptions);
-static bool NITFWriteExtraSegments(const char *pszFilename,
-                                   CSLConstList papszCgmMD,
-                                   CSLConstList papszTextMD,
-                                   CSLConstList papszOptions);
+static bool
+NITFWriteExtraSegments(const char *pszFilename, VSILFILE *fpIn,
+                       CSLConstList papszCgmMD, CSLConstList papszTextMD,
+                       GDALOffsetPatcher::OffsetPatcher *offsetPatcher,
+                       const CPLStringList &aosOptions, int nReciprocalScale);
 
 #ifdef JPEG_SUPPORTED
-static bool NITFWriteJPEGImage(GDALDataset *, VSILFILE *, vsi_l_offset, char **,
-                               GDALProgressFunc pfnProgress,
+static bool NITFWriteJPEGImage(GDALDataset *, VSILFILE *, vsi_l_offset,
+                               CSLConstList, GDALProgressFunc pfnProgress,
                                void *pProgressData);
 #endif
 
 static void SetBandMetadata(NITFImage *psImage, GDALRasterBand *poBand,
                             int nBand, bool bReportISUBCAT);
+
+static bool NITFWriteCGMSegments(const char *pszFilename, VSILFILE *&fpVSIL,
+                                 CSLConstList papszList);
+static bool NITFWriteTextSegments(const char *pszFilename, VSILFILE *&fpVSIL,
+                                  CSLConstList papszList);
+static bool UpdateFileLength(VSILFILE *fp);
 
 /************************************************************************/
 /* ==================================================================== */
@@ -105,7 +116,7 @@ NITFDataset::~NITFDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr NITFDataset::Close(GDALProgressFunc, void *)
@@ -169,9 +180,9 @@ CPLErr NITFDataset::Close(int &bHasDroppedRef)
                 static_cast<GIntBig>(nRasterXSize) * nRasterYSize * nBands;
 
             eErr = GDAL::Combine(
-                eErr, NITFPatchImageLength(GetDescription(), m_nIMIndex,
-                                           m_nImageOffset, nPixelCount, "C8",
-                                           m_nICOffset, nullptr));
+                eErr, NITFPatchImageLength(
+                          GetDescription(), nullptr, m_nIMIndex, m_nImageOffset,
+                          nPixelCount, "C8", m_nICOffset, nullptr));
         }
 
         bJP2Writing = FALSE;
@@ -193,10 +204,10 @@ CPLErr NITFDataset::Close(int &bHasDroppedRef)
         /* -------------------------------------------------------------------- */
         if (m_nIMIndex + 1 == m_nImageCount)
         {
-            eErr = GDAL::Combine(eErr, NITFWriteExtraSegments(
-                                           GetDescription(), papszCgmMDToWrite,
-                                           papszTextMDToWrite,
-                                           aosCreationOptions.List()));
+            eErr = GDAL::Combine(
+                eErr, NITFWriteExtraSegments(
+                          GetDescription(), nullptr, papszCgmMDToWrite,
+                          papszTextMDToWrite, nullptr, aosCreationOptions, 0));
         }
 
         CSLDestroy(papszTextMDToWrite);
@@ -224,7 +235,7 @@ CPLErr NITFDataset::Close(int &bHasDroppedRef)
 }
 
 /************************************************************************/
-/*                        CloseDependentDatasets()                      */
+/*                       CloseDependentDatasets()                       */
 /************************************************************************/
 
 int NITFDataset::CloseDependentDatasets()
@@ -1082,31 +1093,6 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         (pszITITLE[strlen(pszITITLE) - 1] == '9' ||
          pszITITLE[strlen(pszITITLE) - 1] == 'J'))
     {
-        /* To get a perfect rectangle in Azimuthal Equidistant projection, we
-         * must use */
-        /* the sphere and not WGS84 ellipsoid. That's a bit strange... */
-        const char *pszNorthPolarProjection =
-            "PROJCS[\"ARC_System_Zone_09\",GEOGCS[\"GCS_Sphere\","
-            "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
-            "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
-            "PROJECTION[\"Azimuthal_Equidistant\"],"
-            "PARAMETER[\"latitude_of_center\",90],"
-            "PARAMETER[\"longitude_of_center\",0],"
-            "PARAMETER[\"false_easting\",0],"
-            "PARAMETER[\"false_northing\",0],"
-            "UNIT[\"metre\",1]]";
-
-        const char *pszSouthPolarProjection =
-            "PROJCS[\"ARC_System_Zone_18\",GEOGCS[\"GCS_Sphere\","
-            "DATUM[\"D_Sphere\",SPHEROID[\"Sphere\",6378137.0,0.0]],"
-            "PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433]],"
-            "PROJECTION[\"Azimuthal_Equidistant\"],"
-            "PARAMETER[\"latitude_of_center\",-90],"
-            "PARAMETER[\"longitude_of_center\",0],"
-            "PARAMETER[\"false_easting\",0],"
-            "PARAMETER[\"false_northing\",0],"
-            "UNIT[\"metre\",1]]";
-
         OGRSpatialReference oSRS_AEQD, oSRS_WGS84;
 
         const char *pszPolarProjection = (psImage->dfULY > 0)
@@ -1151,13 +1137,13 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
                     poDS->m_oSRS = std::move(oSRS_AEQD);
 
                     poDS->bGotGeoTransform = TRUE;
-                    poDS->m_gt[0] = dfULX_AEQD;
-                    poDS->m_gt[1] =
+                    poDS->m_gt.xorig = dfULX_AEQD;
+                    poDS->m_gt.xscale =
                         (dfURX_AEQD - dfULX_AEQD) / poDS->nRasterXSize;
-                    poDS->m_gt[2] = 0;
-                    poDS->m_gt[3] = dfULY_AEQD;
-                    poDS->m_gt[4] = 0;
-                    poDS->m_gt[5] =
+                    poDS->m_gt.xrot = 0;
+                    poDS->m_gt.yorig = dfULY_AEQD;
+                    poDS->m_gt.yrot = 0;
+                    poDS->m_gt.yscale =
                         (dfLLY_AEQD - dfULY_AEQD) / poDS->nRasterYSize;
                 }
             }
@@ -1838,7 +1824,7 @@ NITFDataset *NITFDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
 }
 
 /************************************************************************/
-/*                             Validate()                               */
+/*                              Validate()                              */
 /************************************************************************/
 
 bool NITFDataset::Validate()
@@ -2203,12 +2189,14 @@ void NITFDataset::CheckGeoSDEInfo()
                  pszMAPLOB + 0);
     }
 
-    m_gt[0] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 13, 15));
-    m_gt[1] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 3, 5)) * dfMeterPerUnit;
-    m_gt[2] = 0.0;
-    m_gt[3] = CPLAtof(NITFGetField(szParam, pszMAPLOB, 28, 15));
-    m_gt[4] = 0.0;
-    m_gt[5] = -CPLAtof(NITFGetField(szParam, pszMAPLOB, 8, 5)) * dfMeterPerUnit;
+    m_gt.xorig = CPLAtof(NITFGetField(szParam, pszMAPLOB, 13, 15));
+    m_gt.xscale =
+        CPLAtof(NITFGetField(szParam, pszMAPLOB, 3, 5)) * dfMeterPerUnit;
+    m_gt.xrot = 0.0;
+    m_gt.yorig = CPLAtof(NITFGetField(szParam, pszMAPLOB, 28, 15));
+    m_gt.yrot = 0.0;
+    m_gt.yscale =
+        -CPLAtof(NITFGetField(szParam, pszMAPLOB, 8, 5)) * dfMeterPerUnit;
 
     m_oSRS = std::move(oSRS);
 
@@ -2222,7 +2210,7 @@ void NITFDataset::CheckGeoSDEInfo()
 CPLErr NITFDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                                int nBufXSize, int nBufYSize, GDALDataType eDT,
                                int nBandCount, int *panBandList,
-                               char **papszOptions)
+                               CSLConstList papszOptions)
 
 {
     //go through GDALDataset::AdviseRead for the complex SAR
@@ -2296,16 +2284,16 @@ CPLErr NITFDataset::SetGeoTransform(const GDALGeoTransform &gt)
     bGotGeoTransform = TRUE;
     m_gt = gt;
 
-    double dfIGEOLOULX = m_gt[0] + 0.5 * m_gt[1] + 0.5 * m_gt[2];
-    double dfIGEOLOULY = m_gt[3] + 0.5 * m_gt[4] + 0.5 * m_gt[5];
-    double dfIGEOLOURX = dfIGEOLOULX + m_gt[1] * (nRasterXSize - 1);
-    double dfIGEOLOURY = dfIGEOLOULY + m_gt[4] * (nRasterXSize - 1);
-    double dfIGEOLOLRX = dfIGEOLOULX + m_gt[1] * (nRasterXSize - 1) +
-                         m_gt[2] * (nRasterYSize - 1);
-    double dfIGEOLOLRY = dfIGEOLOULY + m_gt[4] * (nRasterXSize - 1) +
-                         m_gt[5] * (nRasterYSize - 1);
-    double dfIGEOLOLLX = dfIGEOLOULX + m_gt[2] * (nRasterYSize - 1);
-    double dfIGEOLOLLY = dfIGEOLOULY + m_gt[5] * (nRasterYSize - 1);
+    double dfIGEOLOULX = m_gt.xorig + 0.5 * m_gt.xscale + 0.5 * m_gt.xrot;
+    double dfIGEOLOULY = m_gt.yorig + 0.5 * m_gt.yrot + 0.5 * m_gt.yscale;
+    double dfIGEOLOURX = dfIGEOLOULX + m_gt.xscale * (nRasterXSize - 1);
+    double dfIGEOLOURY = dfIGEOLOULY + m_gt.yrot * (nRasterXSize - 1);
+    double dfIGEOLOLRX = dfIGEOLOULX + m_gt.xscale * (nRasterXSize - 1) +
+                         m_gt.xrot * (nRasterYSize - 1);
+    double dfIGEOLOLRY = dfIGEOLOULY + m_gt.yrot * (nRasterXSize - 1) +
+                         m_gt.yscale * (nRasterYSize - 1);
+    double dfIGEOLOLLX = dfIGEOLOULX + m_gt.xrot * (nRasterYSize - 1);
+    double dfIGEOLOLLY = dfIGEOLOULY + m_gt.yscale * (nRasterYSize - 1);
 
     if (psImage != nullptr &&
         NITFWriteIGEOLO(psImage, psImage->chICORDS, psImage->nZone, dfIGEOLOULX,
@@ -2317,7 +2305,7 @@ CPLErr NITFDataset::SetGeoTransform(const GDALGeoTransform &gt)
 }
 
 /************************************************************************/
-/*                               SetGCPs()                              */
+/*                              SetGCPs()                               */
 /************************************************************************/
 
 CPLErr NITFDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
@@ -2406,7 +2394,7 @@ CPLErr NITFDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *NITFDataset::GetSpatialRef() const
@@ -2419,7 +2407,7 @@ const OGRSpatialReference *NITFDataset::GetSpatialRef() const
 }
 
 /************************************************************************/
-/*                            SetSpatialRef()                           */
+/*                           SetSpatialRef()                            */
 /************************************************************************/
 
 CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
@@ -2435,7 +2423,7 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     if (poSRS->IsSameGeogCS(&oSRS_WGS84) == FALSE)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "NITF only supports WGS84 geographic and UTM projections.\n");
+                 "NITF only supports WGS84 geographic and UTM projections.");
         return CE_Failure;
     }
 
@@ -2445,7 +2433,7 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "NITF file should have been created with creation option "
-                     "'ICORDS=G' (or 'ICORDS=D').\n");
+                     "'ICORDS=G' (or 'ICORDS=D').");
             return CE_Failure;
         }
     }
@@ -2455,14 +2443,14 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "NITF file should have been created with creation option "
-                     "'ICORDS=N'.\n");
+                     "'ICORDS=N'.");
             return CE_Failure;
         }
         else if (!bNorth && psImage->chICORDS != 'S')
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "NITF file should have been created with creation option "
-                     "'ICORDS=S'.\n");
+                     "'ICORDS=S'.");
             return CE_Failure;
         }
 
@@ -2471,7 +2459,7 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     else
     {
         CPLError(CE_Failure, CPLE_NotSupported,
-                 "NITF only supports WGS84 geographic and UTM projections.\n");
+                 "NITF only supports WGS84 geographic and UTM projections.");
         return CE_Failure;
     }
 
@@ -2485,7 +2473,7 @@ CPLErr NITFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 
 #ifdef ESRI_BUILD
 /************************************************************************/
-/*                       InitializeNITFDESMetadata()                    */
+/*                     InitializeNITFDESMetadata()                      */
 /************************************************************************/
 
 void NITFDataset::InitializeNITFDESMetadata()
@@ -2560,7 +2548,7 @@ void NITFDataset::InitializeNITFDESMetadata()
 }
 
 /************************************************************************/
-/*                       InitializeNITFTREs()                           */
+/*                         InitializeNITFTREs()                         */
 /************************************************************************/
 
 void NITFDataset::InitializeNITFTREs()
@@ -2681,7 +2669,7 @@ void NITFDataset::InitializeNITFTREs()
 #endif
 
 /************************************************************************/
-/*                       InitializeNITFDESs()                           */
+/*                         InitializeNITFDESs()                         */
 /************************************************************************/
 
 bool NITFDataset::InitializeNITFDESs(bool bValidate)
@@ -2728,7 +2716,7 @@ bool NITFDataset::InitializeNITFDESs(bool bValidate)
 }
 
 /************************************************************************/
-/*                       InitializeNITFMetadata()                        */
+/*                       InitializeNITFMetadata()                       */
 /************************************************************************/
 
 void NITFDataset::InitializeNITFMetadata()
@@ -3054,6 +3042,7 @@ bool NITFDataset::InitializeTREMetadata(bool bValidate)
 
     bool bGotError = false;
     CPLXMLNode *psTresNode = CPLCreateXMLNode(nullptr, CXT_Element, "tres");
+    bool bFoundRPFIMG = false;
 
     /* -------------------------------------------------------------------- */
     /*      Loop over TRE sources (file and image).                         */
@@ -3120,6 +3109,9 @@ bool NITFDataset::InitializeTREMetadata(bool bValidate)
             while (strlen(szTag) > 0 && szTag[strlen(szTag) - 1] == ' ')
                 szTag[strlen(szTag) - 1] = '\0';
 
+            if (strcmp(szTag, "RPFIMG") == 0)
+                bFoundRPFIMG = true;
+
             CPLXMLNode *psTreNode =
                 NITFCreateXMLTre(psFile, szTag, pszTREData + 11, nThisTRESize,
                                  bValidate, &bGotError);
@@ -3180,46 +3172,57 @@ bool NITFDataset::InitializeTREMetadata(bool bValidate)
         while (NITFDESGetTRE(psDES, nOffset, szTREName, &pabyTREData,
                              &nThisTRESize))
         {
-            char *pszEscapedData = CPLEscapeString(pabyTREData, nThisTRESize,
-                                                   CPLES_BackslashQuotable);
-            if (pszEscapedData == nullptr)
+            if (nThisTRESize == 0)
             {
-                NITFDESFreeTREData(pabyTREData);
-                bGotError = true;
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Invalid size=0 for TRE %s", szTREName);
                 break;
             }
 
-            // trim white off tag.
-            while (strlen(szTREName) > 0 &&
-                   szTREName[strlen(szTREName) - 1] == ' ')
-                szTREName[strlen(szTREName) - 1] = '\0';
-
-            CPLXMLNode *psTreNode =
-                NITFCreateXMLTre(psFile, szTREName, pabyTREData, nThisTRESize,
-                                 bValidate, &bGotError);
-            if (psTreNode)
+            if (!(bFoundRPFIMG && strcmp(szTREName, "RPFDES") == 0))
             {
-                const char *pszDESID =
-                    CSLFetchNameValue(psDES->papszMetadata, "DESID");
-                CPLCreateXMLNode(
-                    CPLCreateXMLNode(psTreNode, CXT_Attribute, "location"),
-                    CXT_Text,
-                    pszDESID ? CPLSPrintf("des %s", pszDESID) : "des");
-                CPLAddXMLChild(psTresNode, psTreNode);
-            }
+                char *pszEscapedData = CPLEscapeString(
+                    pabyTREData, nThisTRESize, CPLES_BackslashQuotable);
+                if (pszEscapedData == nullptr)
+                {
+                    NITFDESFreeTREData(pabyTREData);
+                    bGotError = true;
+                    break;
+                }
 
-            char szUniqueTag[32];
-            strcpy(szUniqueTag, szTREName);
-            int nCountUnique = 2;
-            while (oSpecialMD.GetMetadataItem(szUniqueTag, "TRE") != nullptr)
-            {
-                snprintf(szUniqueTag, sizeof(szUniqueTag), "%s_%d", szTREName,
-                         nCountUnique);
-                nCountUnique++;
-            }
-            oSpecialMD.SetMetadataItem(szUniqueTag, pszEscapedData, "TRE");
+                // trim white off tag.
+                while (strlen(szTREName) > 0 &&
+                       szTREName[strlen(szTREName) - 1] == ' ')
+                    szTREName[strlen(szTREName) - 1] = '\0';
 
-            CPLFree(pszEscapedData);
+                CPLXMLNode *psTreNode =
+                    NITFCreateXMLTre(psFile, szTREName, pabyTREData,
+                                     nThisTRESize, bValidate, &bGotError);
+                if (psTreNode)
+                {
+                    const char *pszDESID =
+                        CSLFetchNameValue(psDES->papszMetadata, "DESID");
+                    CPLCreateXMLNode(
+                        CPLCreateXMLNode(psTreNode, CXT_Attribute, "location"),
+                        CXT_Text,
+                        pszDESID ? CPLSPrintf("des %s", pszDESID) : "des");
+                    CPLAddXMLChild(psTresNode, psTreNode);
+                }
+
+                char szUniqueTag[32];
+                strcpy(szUniqueTag, szTREName);
+                int nCountUnique = 2;
+                while (oSpecialMD.GetMetadataItem(szUniqueTag, "TRE") !=
+                       nullptr)
+                {
+                    snprintf(szUniqueTag, sizeof(szUniqueTag), "%s_%d",
+                             szTREName, nCountUnique);
+                    nCountUnique++;
+                }
+                oSpecialMD.SetMetadataItem(szUniqueTag, pszEscapedData, "TRE");
+
+                CPLFree(pszEscapedData);
+            }
 
             nOffset += 11 + nThisTRESize;
 
@@ -3242,7 +3245,7 @@ bool NITFDataset::InitializeTREMetadata(bool bValidate)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **NITFDataset::GetMetadataDomainList()
@@ -3255,7 +3258,7 @@ char **NITFDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                      InitializeImageStructureMetadata()              */
+/*                  InitializeImageStructureMetadata()                  */
 /************************************************************************/
 
 void NITFDataset::InitializeImageStructureMetadata()
@@ -3470,7 +3473,7 @@ int NITFDataset::GetGCPCount()
 }
 
 /************************************************************************/
-/*                      GetGCPSpatialRef()                              */
+/*                          GetGCPSpatialRef()                          */
 /************************************************************************/
 
 const OGRSpatialReference *NITFDataset::GetGCPSpatialRef() const
@@ -4126,24 +4129,25 @@ static const char *GDALToNITFDataType(GDALDataType eType)
 /*      NITF creation options.                                          */
 /************************************************************************/
 
-static char **NITFJP2ECWOptions(char **papszOptions)
+static CPLStringList NITFJP2ECWOptions(const CPLStringList &aosOptionsIn)
 
 {
-    char **papszJP2Options = CSLAddString(nullptr, "PROFILE=NPJE");
-    papszJP2Options = CSLAddString(papszJP2Options, "CODESTREAM_ONLY=TRUE");
+    CPLStringList aoJP2ECWOptions;
+    aoJP2ECWOptions.AddString("PROFILE=NPJE");
+    aoJP2ECWOptions.AddString("CODESTREAM_ONLY=TRUE");
 
-    for (int i = 0; papszOptions != nullptr && papszOptions[i] != nullptr; i++)
+    for (int i = 0; i < aosOptionsIn.size(); ++i)
     {
-        if (STARTS_WITH_CI(papszOptions[i], "PROFILE="))
+        if (STARTS_WITH_CI(aosOptionsIn[i], "PROFILE="))
         {
-            CPLFree(papszJP2Options[0]);
-            papszJP2Options[0] = CPLStrdup(papszOptions[i]);
+            aoJP2ECWOptions.SetNameValue("PROFILE",
+                                         aosOptionsIn[i] + strlen("PROFILE="));
         }
-        else if (STARTS_WITH_CI(papszOptions[i], "TARGET="))
-            papszJP2Options = CSLAddString(papszJP2Options, papszOptions[i]);
+        else if (STARTS_WITH_CI(aosOptionsIn[i], "TARGET="))
+            aoJP2ECWOptions.AddString(aosOptionsIn[i]);
     }
 
-    return papszJP2Options;
+    return aoJP2ECWOptions;
 }
 
 /************************************************************************/
@@ -4153,27 +4157,28 @@ static char **NITFJP2ECWOptions(char **papszOptions)
 /*      NITF creation options.                                          */
 /************************************************************************/
 
-static char **NITFJP2KAKOptions(char **papszOptions, int nABPP)
+static CPLStringList NITFJP2KAKOptions(const CPLStringList &aosOptionsIn,
+                                       int nABPP)
 
 {
-    char **papszJP2Options = CSLAddString(nullptr, "CODEC=J2K");
+    CPLStringList aoJP2KAKOptions;
+    aoJP2KAKOptions.AddString("CODEC=J2K");
 
-    for (int i = 0; papszOptions != nullptr && papszOptions[i] != nullptr; i++)
+    for (int i = 0; i < aosOptionsIn.size(); ++i)
     {
-        if (STARTS_WITH_CI(papszOptions[i], "QUALITY=") ||
-            STARTS_WITH_CI(papszOptions[i], "BLOCKXSIZE=") ||
-            STARTS_WITH_CI(papszOptions[i], "BLOCKYSIZE=") ||
-            STARTS_WITH_CI(papszOptions[i], "LAYERS=") ||
-            STARTS_WITH_CI(papszOptions[i], "ROI="))
+        if (STARTS_WITH_CI(aosOptionsIn[i], "QUALITY=") ||
+            STARTS_WITH_CI(aosOptionsIn[i], "BLOCKXSIZE=") ||
+            STARTS_WITH_CI(aosOptionsIn[i], "BLOCKYSIZE=") ||
+            STARTS_WITH_CI(aosOptionsIn[i], "LAYERS=") ||
+            STARTS_WITH_CI(aosOptionsIn[i], "ROI="))
         {
-            papszJP2Options = CSLAddString(papszJP2Options, papszOptions[i]);
+            aoJP2KAKOptions.AddString(aosOptionsIn[i]);
         }
     }
 
-    papszJP2Options =
-        CSLSetNameValue(papszJP2Options, "NBITS", CPLSPrintf("%d", nABPP));
+    aoJP2KAKOptions.SetNameValue("NBITS", CPLSPrintf("%d", nABPP));
 
-    return papszJP2Options;
+    return aoJP2KAKOptions;
 }
 
 /************************************************************************/
@@ -4183,13 +4188,15 @@ static char **NITFJP2KAKOptions(char **papszOptions, int nABPP)
 /*      NITF creation options.                                          */
 /************************************************************************/
 
-static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
-                                     CSLConstList papszOptions, int nABPP)
+static CPLStringList NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
+                                            const CPLStringList &aosOptionsIn,
+                                            int nABPP)
 
 {
-    char **papszJP2Options = CSLAddString(nullptr, "CODEC=J2K");
+    CPLStringList aoJP2OJPOptions;
+    aoJP2OJPOptions.AddString("CODEC=J2K");
 
-    const char *pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
+    const char *pszQuality = aosOptionsIn.FetchNameValue("QUALITY");
     double dfQuality = 0;
     if (pszQuality)
     {
@@ -4198,29 +4205,27 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
             dfQuality = std::max(dfQuality, CPLAtof(pszVal));
     }
 
-    double dfTarget =
-        CPLAtof(CSLFetchNameValueDef(papszOptions, "TARGET", "0"));
+    double dfTarget = CPLAtof(aosOptionsIn.FetchNameValueDef("TARGET", "0"));
 
     if (dfTarget > 0 && dfTarget < 100)
         dfQuality = 100. - dfTarget;
 
-    for (int i = 0; papszOptions != nullptr && papszOptions[i] != nullptr; i++)
+    for (int i = 0; i < aosOptionsIn.size(); ++i)
     {
-        if (STARTS_WITH_CI(papszOptions[i], "BLOCKXSIZE=") ||
-            STARTS_WITH_CI(papszOptions[i], "BLOCKYSIZE="))
+        if (STARTS_WITH_CI(aosOptionsIn[i], "BLOCKXSIZE=") ||
+            STARTS_WITH_CI(aosOptionsIn[i], "BLOCKYSIZE="))
         {
-            papszJP2Options = CSLAddString(papszJP2Options, papszOptions[i]);
+            aoJP2OJPOptions.AddString(aosOptionsIn[i]);
         }
     }
 
     // Set it now before the NPJE profiles have a chance to override it
     if (pszQuality)
     {
-        papszJP2Options =
-            CSLSetNameValue(papszJP2Options, "QUALITY", pszQuality);
+        aoJP2OJPOptions.SetNameValue("QUALITY", pszQuality);
     }
 
-    const char *pszProfile = CSLFetchNameValueDef(papszOptions, "PROFILE", "");
+    const char *pszProfile = aosOptionsIn.FetchNameValueDef("PROFILE", "");
     if (STARTS_WITH_CI(pszProfile, "NPJE"))
     {
         // Follow STDI-0006 NCDRD "2.3 Data Compression - JPEG 2000" and
@@ -4236,11 +4241,10 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
                      pszProfile);
         }
 
-        papszJP2Options =
-            CSLAddString(papszJP2Options, "@BLOCKSIZE_STRICT=YES");
+        aoJP2OJPOptions.AddString("@BLOCKSIZE_STRICT=YES");
 
         // Empty PRECINCTS option to ask for no custom precincts
-        papszJP2Options = CSLAddString(papszJP2Options, "PRECINCTS=");
+        aoJP2OJPOptions.AddString("PRECINCTS=");
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
@@ -4259,7 +4263,7 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
             adfBPP.push_back(8.0);
 
             // Lossless 5x3 wavelet
-            papszJP2Options = CSLAddString(papszJP2Options, "REVERSIBLE=YES");
+            aoJP2OJPOptions.AddString("REVERSIBLE=YES");
         }
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
@@ -4280,20 +4284,19 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
             }
             osQuality += CPLSPrintf("%f", dfLayerQuality);
         }
-        papszJP2Options =
-            CSLSetNameValue(papszJP2Options, "QUALITY", osQuality.c_str());
+        aoJP2OJPOptions.SetNameValue("QUALITY", osQuality.c_str());
 
-        papszJP2Options = CSLAddString(papszJP2Options, "PROGRESSION=LRCP");
+        aoJP2OJPOptions.AddString("PROGRESSION=LRCP");
 
         // Disable MCT
-        papszJP2Options = CSLAddString(papszJP2Options, "YCC=NO");
+        aoJP2OJPOptions.AddString("YCC=NO");
 
         // TLM option added in OpenJPEG 2.5
         if (strstr(poJ2KDriver->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST),
                    "TLM") != nullptr)
         {
-            papszJP2Options = CSLAddString(papszJP2Options, "PLT=YES");
-            papszJP2Options = CSLAddString(papszJP2Options, "TLM=YES");
+            aoJP2OJPOptions.AddString("PLT=YES");
+            aoJP2OJPOptions.AddString("TLM=YES");
         }
         else
         {
@@ -4302,55 +4305,52 @@ static char **NITFJP2OPENJPEGOptions(GDALDriver *poJ2KDriver,
                      "Use OpenJPEG 2.5 or later");
         }
 
-        papszJP2Options = CSLAddString(papszJP2Options, "RESOLUTIONS=6");
+        aoJP2OJPOptions.AddString("RESOLUTIONS=6");
     }
     else if (EQUAL(pszProfile, "PROFILE_1"))
     {
-        papszJP2Options = CSLAddString(papszJP2Options, "PROFILE=PROFILE_1");
+        aoJP2OJPOptions.AddString("PROFILE=PROFILE_1");
     }
     else if (EQUAL(pszProfile, "PROFILE_2"))
     {
-        papszJP2Options = CSLAddString(papszJP2Options, "PROFILE=UNRESTRICTED");
+        aoJP2OJPOptions.AddString("PROFILE=UNRESTRICTED");
     }
 
-    papszJP2Options =
-        CSLSetNameValue(papszJP2Options, "NBITS", CPLSPrintf("%d", nABPP));
+    aoJP2OJPOptions.SetNameValue("NBITS", CPLSPrintf("%d", nABPP));
 
-    return papszJP2Options;
+    return aoJP2OJPOptions;
 }
 
 /************************************************************************/
-/*              NITFExtractTEXTAndCGMCreationOption()                   */
+/*                NITFExtractTEXTAndCGMCreationOption()                 */
 /************************************************************************/
 
-static char **NITFExtractTEXTAndCGMCreationOption(GDALDataset *poSrcDS,
-                                                  char **papszOptions,
-                                                  char ***ppapszTextMD,
-                                                  char ***ppapszCgmMD)
+static CPLStringList NITFExtractTEXTAndCGMCreationOption(
+    GDALDataset *poSrcDS, CSLConstList papszOptions, CPLStringList &aosTextMD,
+    CPLStringList &aosCgmMD)
 {
-    char **papszFullOptions = CSLDuplicate(papszOptions);
+    CPLStringList aosOptions(CSLDuplicate(papszOptions));
 
     /* -------------------------------------------------------------------- */
     /*      Prepare for text segments.                                      */
     /* -------------------------------------------------------------------- */
-    char **papszTextMD = CSLFetchNameValueMultiple(papszOptions, "TEXT");
+    aosTextMD = CSLFetchNameValueMultiple(papszOptions, "TEXT");
     // Notice: CSLFetchNameValueMultiple remove the leading "TEXT=" when
     // returning the list, which is what we want.
 
     // Use TEXT information from original image if no creation option is passed
     // in.
-    if (poSrcDS != nullptr && papszTextMD == nullptr)
+    if (poSrcDS != nullptr && aosTextMD.empty())
     {
         // Read CGM adata from original image, duplicate the list because
         // we frees papszCgmMD at end of the function.
-        papszTextMD = CSLDuplicate(poSrcDS->GetMetadata("TEXT"));
+        aosTextMD = CSLDuplicate(poSrcDS->GetMetadata("TEXT"));
     }
 
     int nNUMT = 0;
-    for (int iOpt = 0; papszTextMD != nullptr && papszTextMD[iOpt] != nullptr;
-         iOpt++)
+    for (int iOpt = 0; iOpt < aosTextMD.size(); iOpt++)
     {
-        if (!STARTS_WITH_CI(papszTextMD[iOpt], "DATA_"))
+        if (!STARTS_WITH_CI(aosTextMD[iOpt], "DATA_"))
             continue;
 
         nNUMT++;
@@ -4358,45 +4358,40 @@ static char **NITFExtractTEXTAndCGMCreationOption(GDALDataset *poSrcDS,
 
     if (nNUMT > 0)
     {
-        papszFullOptions = CSLAddString(papszFullOptions,
-                                        CPLString().Printf("NUMT=%d", nNUMT));
+        aosOptions.SetNameValue("NUMT", std::to_string(nNUMT).c_str());
     }
 
     /* -------------------------------------------------------------------- */
     /*      Prepare for CGM segments.                                       */
     /* -------------------------------------------------------------------- */
-    char **papszCgmMD = CSLFetchNameValueMultiple(papszOptions, "CGM");
+    aosCgmMD = CSLFetchNameValueMultiple(papszOptions, "CGM");
     // Notice: CSLFetchNameValueMultiple remove the leading "CGM=" when
     // returning the list, which is what we want.
 
     // Use CGM information from original image if no creation option is passed
     // in.
-    if (poSrcDS != nullptr && papszCgmMD == nullptr)
+    if (poSrcDS != nullptr && aosCgmMD.empty())
     {
         // Read CGM adata from original image, duplicate the list because
         // we frees papszCgmMD at end of the function.
-        papszCgmMD = CSLDuplicate(poSrcDS->GetMetadata("CGM"));
+        aosCgmMD = CSLDuplicate(poSrcDS->GetMetadata("CGM"));
     }
 
     // Set NUMS based on the number of segments
     const char *pszNUMS;  // graphic segment option string
     int nNUMS = 0;
-    if (papszCgmMD != nullptr)
+    if (!aosCgmMD.empty())
     {
-        pszNUMS = CSLFetchNameValue(papszCgmMD, "SEGMENT_COUNT");
+        pszNUMS = aosCgmMD.FetchNameValue("SEGMENT_COUNT");
 
         if (pszNUMS != nullptr)
         {
             nNUMS = atoi(pszNUMS);
         }
-        papszFullOptions = CSLAddString(papszFullOptions,
-                                        CPLString().Printf("NUMS=%d", nNUMS));
+        aosOptions.SetNameValue("NUMS", std::to_string(nNUMS).c_str());
     }
 
-    *ppapszTextMD = papszTextMD;
-    *ppapszCgmMD = papszCgmMD;
-
-    return papszFullOptions;
+    return aosOptions;
 }
 
 /************************************************************************/
@@ -4406,12 +4401,20 @@ static char **NITFExtractTEXTAndCGMCreationOption(GDALDataset *poSrcDS,
 GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
                                             int nYSize, int nBandsIn,
                                             GDALDataType eType,
-                                            char **papszOptions)
+                                            CSLConstList papszOptions)
 
 {
     const char *pszPVType = GDALToNITFDataType(eType);
     if (pszPVType == nullptr)
         return nullptr;
+
+    const char *pszProduct = CSLFetchNameValue(papszOptions, "PRODUCT_TYPE");
+    if (pszProduct && EQUAL(pszProduct, "CADRG"))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "CADRG creation only supported in CreateCopy()");
+        return nullptr;
+    }
 
     const char *pszIC = CSLFetchNameValue(papszOptions, "IC");
 
@@ -4470,28 +4473,25 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     /*      Prepare for text and CGM segments.                              */
     /* -------------------------------------------------------------------- */
-    char **papszTextMD = nullptr;
-    char **papszCgmMD = nullptr;
-    char **papszFullOptions = NITFExtractTEXTAndCGMCreationOption(
-        nullptr, papszOptions, &papszTextMD, &papszCgmMD);
+    CPLStringList aosTextMD, aosCgmMD;
+    CPLStringList aosOptions(NITFExtractTEXTAndCGMCreationOption(
+        nullptr, papszOptions, aosTextMD, aosCgmMD));
 
-    const char *pszBlockSize = CSLFetchNameValue(papszFullOptions, "BLOCKSIZE");
+    const char *pszBlockSize = aosOptions.FetchNameValue("BLOCKSIZE");
     if (pszBlockSize != nullptr &&
-        CSLFetchNameValue(papszFullOptions, "BLOCKXSIZE") == nullptr)
+        aosOptions.FetchNameValue("BLOCKXSIZE") == nullptr)
     {
-        papszFullOptions =
-            CSLSetNameValue(papszFullOptions, "BLOCKXSIZE", pszBlockSize);
+        aosOptions.SetNameValue("BLOCKXSIZE", pszBlockSize);
     }
     if (pszBlockSize != nullptr &&
-        CSLFetchNameValue(papszFullOptions, "BLOCKYSIZE") == nullptr)
+        aosOptions.FetchNameValue("BLOCKYSIZE") == nullptr)
     {
-        papszFullOptions =
-            CSLSetNameValue(papszFullOptions, "BLOCKYSIZE", pszBlockSize);
+        aosOptions.SetNameValue("BLOCKYSIZE", pszBlockSize);
     }
 
-    if (const char *pszNBITS = CSLFetchNameValue(papszFullOptions, "NBITS"))
+    if (const char *pszNBITS = aosOptions.FetchNameValue("NBITS"))
     {
-        papszFullOptions = CSLSetNameValue(papszFullOptions, "ABPP", pszNBITS);
+        aosOptions.SetNameValue("ABPP", pszNBITS);
     }
 
     /* -------------------------------------------------------------------- */
@@ -4504,12 +4504,9 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
     vsi_l_offset nICOffset = 0;
     if (!NITFCreateEx(pszFilename, nXSize, nYSize, nBandsIn,
                       GDALGetDataTypeSizeBits(eType), pszPVType,
-                      papszFullOptions, &nIMIndex, &nImageCount, &nImageOffset,
-                      &nICOffset))
+                      aosOptions.List(), &nIMIndex, &nImageCount, &nImageOffset,
+                      &nICOffset, nullptr))
     {
-        CSLDestroy(papszTextMD);
-        CSLDestroy(papszCgmMD);
-        CSLDestroy(papszFullOptions);
         return nullptr;
     }
 
@@ -4524,19 +4521,15 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
         osDSName.Printf("/vsisubfile/" CPL_FRMT_GUIB "_%d,%s",
                         static_cast<GUIntBig>(nImageOffset), -1, pszFilename);
 
-        char **papszJP2Options = NITFJP2ECWOptions(papszFullOptions);
-        poWritableJ2KDataset = poJ2KDriver->Create(
-            osDSName, nXSize, nYSize, nBandsIn, eType, papszJP2Options);
-        CSLDestroy(papszJP2Options);
+        poWritableJ2KDataset =
+            poJ2KDriver->Create(osDSName, nXSize, nYSize, nBandsIn, eType,
+                                NITFJP2ECWOptions(aosOptions).List());
 
         if (poWritableJ2KDataset == nullptr)
         {
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszCgmMD);
             return nullptr;
         }
     }
-    CSLDestroy(papszFullOptions);
 
     /* -------------------------------------------------------------------- */
     /*      Open the dataset in update mode.                                */
@@ -4550,14 +4543,9 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
         poDS->m_nIMIndex = nIMIndex;
         poDS->m_nImageCount = nImageCount;
         poDS->m_nICOffset = nICOffset;
-        poDS->papszTextMDToWrite = papszTextMD;
-        poDS->papszCgmMDToWrite = papszCgmMD;
+        poDS->papszTextMDToWrite = aosTextMD.StealList();
+        poDS->papszCgmMDToWrite = aosCgmMD.StealList();
         poDS->aosCreationOptions.Assign(CSLDuplicate(papszOptions), true);
-    }
-    else
-    {
-        CSLDestroy(papszTextMD);
-        CSLDestroy(papszCgmMD);
     }
     return poDS;
 }
@@ -4568,11 +4556,34 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
 
 GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                                          GDALDataset *poSrcDS, int bStrict,
-                                         char **papszOptions,
+                                         CSLConstList papszOptions,
                                          GDALProgressFunc pfnProgress,
                                          void *pProgressData)
+{
+    CADRGCreateCopyContext copyContext;
+    return CreateCopy(pszFilename, poSrcDS, bStrict, papszOptions, pfnProgress,
+                      pProgressData, /* nRecLevel = */ 0, &copyContext)
+        .release();
+}
+
+/************************************************************************/
+/*                      NITFDataset::CreateCopy()                       */
+/************************************************************************/
+
+std::unique_ptr<GDALDataset>
+NITFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
+                        int bStrict, CSLConstList papszOptions,
+                        GDALProgressFunc pfnProgress, void *pProgressData,
+                        int nRecLevel, CADRGCreateCopyContext *copyContext)
 
 {
+    if (nRecLevel == 3)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "NITFDataset::CreateCopy(): programming error: too deep "
+                 "recursion");
+        return nullptr;
+    }
 
     int nBands = poSrcDS->GetRasterCount();
     if (nBands == 0)
@@ -4587,6 +4598,10 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     {
         return nullptr;
     }
+
+    const char *pszProductType =
+        CSLFetchNameValue(papszOptions, "PRODUCT_TYPE");
+    const bool bIsCADRG = (pszProductType && EQUAL(pszProductType, "CADRG"));
 
     /* -------------------------------------------------------------------- */
     /*      Only allow supported compression values.                        */
@@ -4603,6 +4618,22 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     const char *pszIC = CSLFetchNameValue(papszOptions, "IC");
     if (pszIC != nullptr)
     {
+        if (bIsCADRG)
+        {
+            if (!EQUAL(pszIC, "C4"))
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "CADRG only supports IC=C4");
+                return nullptr;
+            }
+        }
+        else if (EQUAL(pszIC, "C4"))
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "IC=C4 only supported for PRODUCT_TYPE=CADRG");
+            return nullptr;
+        }
+
         if (EQUAL(pszIC, "NC"))
             /* ok */;
         else if (EQUAL(pszIC, "C8"))
@@ -4683,25 +4714,55 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         eType = GDT_CFloat32;
 
     /* -------------------------------------------------------------------- */
+    /*      CADRG related checks and pre-processing                         */
+    /* -------------------------------------------------------------------- */
+    if (bIsCADRG)
+    {
+        auto ret =
+            CADRGCreateCopy(pszFilename, poSrcDS, bStrict, papszOptions,
+                            pfnProgress, pProgressData, nRecLevel, copyContext);
+        if (std::holds_alternative<std::unique_ptr<GDALDataset>>(ret))
+        {
+            return std::move(std::get<std::unique_ptr<GDALDataset>>(ret));
+        }
+        CPLAssert(std::holds_alternative<bool>(ret));
+        const bool bGoOn = std::get<bool>(ret);
+        if (!bGoOn)
+        {
+            return nullptr;
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
     /*      Prepare for text and CGM segments.                              */
     /* -------------------------------------------------------------------- */
-    char **papszTextMD = nullptr;
-    char **papszCgmMD = nullptr;
-    char **papszFullOptions = NITFExtractTEXTAndCGMCreationOption(
-        poSrcDS, papszOptions, &papszTextMD, &papszCgmMD);
+    CPLStringList aosTextMD, aosCgmMD;
+    CPLStringList aosOptions(NITFExtractTEXTAndCGMCreationOption(
+        poSrcDS, papszOptions, aosTextMD, aosCgmMD));
 
-    const char *pszBlockSize = CSLFetchNameValue(papszFullOptions, "BLOCKSIZE");
-    if (pszBlockSize != nullptr &&
-        CSLFetchNameValue(papszFullOptions, "BLOCKXSIZE") == nullptr)
+    const char *pszBlockSize = aosOptions.FetchNameValue("BLOCKSIZE");
+    if (bIsCADRG)
     {
-        papszFullOptions =
-            CSLSetNameValue(papszFullOptions, "BLOCKXSIZE", pszBlockSize);
+        if (pszBlockSize && atoi(pszBlockSize) != 256)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CADRG only supports BLOCKSIZE=256");
+            return nullptr;
+        }
+        else
+        {
+            pszBlockSize = "256";
+        }
     }
     if (pszBlockSize != nullptr &&
-        CSLFetchNameValue(papszFullOptions, "BLOCKYSIZE") == nullptr)
+        aosOptions.FetchNameValue("BLOCKXSIZE") == nullptr)
     {
-        papszFullOptions =
-            CSLSetNameValue(papszFullOptions, "BLOCKYSIZE", pszBlockSize);
+        aosOptions.SetNameValue("BLOCKXSIZE", pszBlockSize);
+    }
+    if (pszBlockSize != nullptr &&
+        aosOptions.FetchNameValue("BLOCKYSIZE") == nullptr)
+    {
+        aosOptions.SetNameValue("BLOCKYSIZE", pszBlockSize);
     }
 
     /* -------------------------------------------------------------------- */
@@ -4732,10 +4793,10 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         {
             char *pszName = nullptr;
             const char *pszValue = CPLParseNameValue(papszSrcMD[iMD], &pszName);
-            if (pszName != nullptr &&
-                CSLFetchNameValue(papszFullOptions, pszName + 5) == nullptr)
-                papszFullOptions =
-                    CSLSetNameValue(papszFullOptions, pszName + 5, pszValue);
+            if (pszName && aosOptions.FetchNameValue(pszName + 5) == nullptr)
+            {
+                aosOptions.SetNameValue(pszName + 5, pszValue);
+            }
             CPLFree(pszName);
         }
     }
@@ -4775,7 +4836,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             CSLPartialFindString(papszOptions, CPLSPrintf("TRE=%s", pszName)) <
                 0)
         {
-            papszFullOptions = CSLAddString(papszFullOptions, osTRE);
+            aosOptions.AddString(osTRE);
         }
         CPLFree(pszName);
     }
@@ -4783,7 +4844,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Set if we can set IREP.                                         */
     /* -------------------------------------------------------------------- */
-    if (CSLFetchNameValue(papszFullOptions, "IREP") == nullptr)
+    if (aosOptions.FetchNameValue("IREP") == nullptr)
     {
         if (((poSrcDS->GetRasterCount() == 3 && bJPEG) ||
              (poSrcDS->GetRasterCount() >= 3 && !bJPEG)) &&
@@ -4794,11 +4855,9 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             poSrcDS->GetRasterBand(3)->GetColorInterpretation() == GCI_BlueBand)
         {
             if (bJPEG)
-                papszFullOptions =
-                    CSLSetNameValue(papszFullOptions, "IREP", "YCbCr601");
+                aosOptions.SetNameValue("IREP", "YCbCr601");
             else
-                papszFullOptions =
-                    CSLSetNameValue(papszFullOptions, "IREP", "RGB");
+                aosOptions.SetNameValue("IREP", "RGB");
         }
         else if (poSrcDS->GetRasterCount() >= 3 && !bJPEG &&
                  poSrcDS->GetRasterBand(1)->GetColorInterpretation() ==
@@ -4807,48 +4866,38 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                      GCI_GreenBand &&
                  poSrcDS->GetRasterBand(3)->GetColorInterpretation() ==
                      GCI_RedBand &&
-                 CSLFetchNameValue(papszFullOptions, "IREPBAND") == nullptr)
+                 aosOptions.FetchNameValue("IREPBAND") == nullptr)
         {
-            papszFullOptions =
-                CSLSetNameValue(papszFullOptions, "IREP", "MULTI");
+            aosOptions.SetNameValue("IREP", "MULTI");
             std::string osIREPBAND = "B,G,R";
             for (int i = 4; i <= poSrcDS->GetRasterCount(); ++i)
                 osIREPBAND += ",M";
-            papszFullOptions = CSLSetNameValue(papszFullOptions, "IREPBAND",
-                                               osIREPBAND.c_str());
+            aosOptions.SetNameValue("IREPBAND", osIREPBAND.c_str());
         }
         else if (poSrcDS->GetRasterCount() == 1 && eType == GDT_UInt8 &&
                  poBand1->GetColorTable() != nullptr)
         {
-            papszFullOptions =
-                CSLSetNameValue(papszFullOptions, "IREP", "RGB/LUT");
-            papszFullOptions = CSLSetNameValue(
-                papszFullOptions, "LUT_SIZE",
+            aosOptions.SetNameValue("IREP", "RGB/LUT");
+            aosOptions.SetNameValue(
+                "LUT_SIZE",
                 CPLString().Printf(
                     "%d", poBand1->GetColorTable()->GetColorEntryCount()));
         }
         else if (GDALDataTypeIsComplex(eType))
-            papszFullOptions =
-                CSLSetNameValue(papszFullOptions, "IREP", "NODISPLY");
+            aosOptions.SetNameValue("IREP", "NODISPLY");
 
         else
-            papszFullOptions =
-                CSLSetNameValue(papszFullOptions, "IREP", "MONO");
+            aosOptions.SetNameValue("IREP", "MONO");
     }
 
     /* -------------------------------------------------------------------- */
     /*      Do we have lat/long georeferencing information?                 */
     /* -------------------------------------------------------------------- */
-    const char *pszWKT = poSrcDS->GetProjectionRef();
-    if (pszWKT == nullptr || pszWKT[0] == '\0')
-        pszWKT = poSrcDS->GetGCPProjection();
-
     GDALGeoTransform gt;
     bool bWriteGeoTransform = false;
     bool bWriteGCPs = false;
     int nZone = 0;
-    OGRSpatialReference oSRS;
-    OGRSpatialReference oSRS_WGS84;
+
     int nGCIFFlags = GCIF_PAM_DEFAULT;
     double dfIGEOLOULX = 0;
     double dfIGEOLOULY = 0;
@@ -4860,46 +4909,68 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     double dfIGEOLOLLY = 0;
     bool bManualWriteOfIGEOLO = false;
 
-    if (pszWKT != nullptr && pszWKT[0] != '\0')
+    const OGRSpatialReference *poSrcSRS = poSrcDS->GetSpatialRef();
+    if (!poSrcSRS)
+        poSrcSRS = poSrcDS->GetGCPSpatialRef();
+    if (poSrcSRS)
     {
-        oSRS.importFromWkt(pszWKT);
-
-        /* NITF is only WGS84 */
+        OGRSpatialReference oSRS_WGS84;
         oSRS_WGS84.SetWellKnownGeogCS("WGS84");
-        if (oSRS.IsSameGeogCS(&oSRS_WGS84) == FALSE)
+        oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+        const bool bIsCADRGPolarAzimuthalEquidistant =
+            bIsCADRG && poSrcSRS->IsProjected() &&
+            EQUAL(poSrcSRS->GetAttrValue("PROJECTION"),
+                  SRS_PT_AZIMUTHAL_EQUIDISTANT) &&
+            poSrcSRS->GetSemiMajor() == SRS_WGS84_SEMIMAJOR &&
+            poSrcSRS->GetInvFlattening() == 0.0 &&
+            poSrcSRS->GetPrimeMeridian() == 0.0 &&
+            poSrcSRS->GetProjParm(SRS_PP_LONGITUDE_OF_CENTER) == 0.0 &&
+            std::fabs(poSrcSRS->GetProjParm(SRS_PP_LATITUDE_OF_CENTER)) == 90.0;
+        if (bIsCADRG && !poSrcSRS->IsGeographic() &&
+            !bIsCADRGPolarAzimuthalEquidistant)
         {
-            CPLError(
-                (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                "NITF only supports WGS84 geographic and UTM projections.\n");
-            if (bStrict)
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "CADRG only support geographic CRS or polar azimuthal "
+                     "equidistant");
+            return nullptr;
+        }
+
+        if (!bIsCADRGPolarAzimuthalEquidistant)
+        {
+            /* NITF is only WGS84 */
+            if (!poSrcSRS->IsSameGeogCS(&oSRS_WGS84))
             {
-                CSLDestroy(papszFullOptions);
-                CSLDestroy(papszCgmMD);
-                CSLDestroy(papszTextMD);
-                return nullptr;
+                CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
+                         "NITF only supports WGS84 geographic and UTM "
+                         "projections.");
+                if (bStrict)
+                {
+                    return nullptr;
+                }
             }
         }
 
-        const char *pszICORDS = CSLFetchNameValue(papszFullOptions, "ICORDS");
+        const char *pszICORDS = aosOptions.FetchNameValue("ICORDS");
 
         /* --------------------------------------------------------------------
          */
         /*      Should we write DIGEST Spatial Data Extension TRE ? */
         /* --------------------------------------------------------------------
          */
-        const char *pszSDE_TRE = CSLFetchNameValue(papszFullOptions, "SDE_TRE");
+        const char *pszSDE_TRE = aosOptions.FetchNameValue("SDE_TRE");
         const bool bSDE_TRE = pszSDE_TRE && CPLTestBool(pszSDE_TRE);
         if (bSDE_TRE)
         {
-            if (oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0 &&
-                poSrcDS->GetGeoTransform(gt) == CE_None && gt[2] == 0.0 &&
-                gt[4] == 0.0 && gt[5] < 0.0)
+            if (poSrcSRS->IsGeographic() &&
+                poSrcSRS->GetPrimeMeridian() == 0.0 &&
+                poSrcDS->GetGeoTransform(gt) == CE_None && gt.xrot == 0.0 &&
+                gt.yrot == 0.0 && gt.yscale < 0.0)
             {
                 /* Override ICORDS to G if necessary */
                 if (pszICORDS != nullptr && EQUAL(pszICORDS, "D"))
                 {
-                    papszFullOptions =
-                        CSLSetNameValue(papszFullOptions, "ICORDS", "G");
+                    aosOptions.SetNameValue("ICORDS", "G");
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Forcing ICORDS=G when writing GEOLOB");
                 }
@@ -4908,7 +4979,8 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                     /* Code a bit below will complain with other ICORDS value */
                 }
 
-                if (CSLPartialFindString(papszFullOptions, "TRE=GEOLOB=") != -1)
+                if (CSLPartialFindString(aosOptions.List(), "TRE=GEOLOB=") !=
+                    -1)
                 {
                     CPLDebug("NITF", "GEOLOB TRE was explicitly defined "
                                      "before.  Overriding it with current "
@@ -4926,10 +4998,10 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                 // Extra (useless) bytes to avoid CLang 18 erroneous -Wformat-truncation
                 constexpr int MARGIN_FOR_CLANG_18 = 2;
                 char szGEOLOB[48 + 1 + MARGIN_FOR_CLANG_18];
-                const double dfARV = 360.0 / gt[1];
-                const double dfBRV = 360.0 / -gt[5];
-                const double dfLSO = gt[0];
-                const double dfPSO = gt[3];
+                const double dfARV = 360.0 / gt.xscale;
+                const double dfBRV = 360.0 / -gt.yscale;
+                const double dfLSO = gt.xorig;
+                const double dfPSO = gt.yorig;
                 CPLsnprintf(szGEOLOB, sizeof(szGEOLOB),
                             "%09d%09d%#+015.10f%#+015.10f",
                             static_cast<int>(dfARV + 0.5),
@@ -4937,16 +5009,17 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
 
                 CPLString osGEOLOB("TRE=GEOLOB=");
                 osGEOLOB += szGEOLOB;
-                papszFullOptions = CSLAddString(papszFullOptions, osGEOLOB);
+                aosOptions.AddString(osGEOLOB);
 
                 /* --------------------------------------------------------------------
                  */
                 /*      Write GEOPSB TRE if not already explicitly provided */
                 /* --------------------------------------------------------------------
                  */
-                if (CSLPartialFindString(papszFullOptions,
+                if (CSLPartialFindString(aosOptions.List(),
                                          "FILE_TRE=GEOPSB=") == -1 &&
-                    CSLPartialFindString(papszFullOptions, "TRE=GEOPSB=") == -1)
+                    CSLPartialFindString(aosOptions.List(), "TRE=GEOPSB=") ==
+                        -1)
                 {
                     char szGEOPSB[443 + 1];
                     memset(szGEOPSB, ' ', 443);
@@ -4984,7 +5057,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
 
                     CPLString osGEOPSB("FILE_TRE=GEOPSB=");
                     osGEOPSB += szGEOPSB;
-                    papszFullOptions = CSLAddString(papszFullOptions, osGEOPSB);
+                    aosOptions.AddString(osGEOPSB);
                 }
                 else
                 {
@@ -4999,9 +5072,6 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                          "GEOLOB TRE (only geographic SRS handled for now)");
                 if (bStrict)
                 {
-                    CSLDestroy(papszFullOptions);
-                    CSLDestroy(papszCgmMD);
-                    CSLDestroy(papszTextMD);
                     return nullptr;
                 }
             }
@@ -5011,8 +5081,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         bWriteGCPs = (!bWriteGeoTransform && poSrcDS->GetGCPCount() == 4);
 
         int bNorth;
-        const bool bHasIGEOLO =
-            CSLFetchNameValue(papszFullOptions, "IGEOLO") != nullptr;
+        const bool bHasIGEOLO = aosOptions.FetchNameValue("IGEOLO") != nullptr;
         if (bHasIGEOLO && pszICORDS == nullptr)
         {
             CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_AppDefined,
@@ -5020,14 +5089,11 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                      bStrict ? "" : " Ignoring IGEOLO");
             if (bStrict)
             {
-                CSLDestroy(papszFullOptions);
-                CSLDestroy(papszCgmMD);
-                CSLDestroy(papszTextMD);
                 return nullptr;
             }
         }
 
-        if (CSLFetchNameValue(papszFullOptions, "IGEOLO") != nullptr &&
+        if (aosOptions.FetchNameValue("IGEOLO") != nullptr &&
             pszICORDS != nullptr)
         {
             // if both IGEOLO and ICORDS are specified, do not try to write
@@ -5038,12 +5104,12 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             nGCIFFlags &= ~GCIF_PROJECTION;
             nGCIFFlags &= ~GCIF_GEOTRANSFORM;
         }
-        else if (oSRS.IsGeographic() && oSRS.GetPrimeMeridian() == 0.0)
+        else if (poSrcSRS->IsGeographic() &&
+                 poSrcSRS->GetPrimeMeridian() == 0.0)
         {
             if (pszICORDS == nullptr)
             {
-                papszFullOptions =
-                    CSLSetNameValue(papszFullOptions, "ICORDS", "G");
+                aosOptions.SetNameValue("ICORDS", "G");
             }
             else if (EQUAL(pszICORDS, "G") || EQUAL(pszICORDS, "D"))
             {
@@ -5057,24 +5123,19 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                          (!bStrict) ? ". Setting it to G instead" : "");
                 if (bStrict)
                 {
-                    CSLDestroy(papszFullOptions);
-                    CSLDestroy(papszCgmMD);
-                    CSLDestroy(papszTextMD);
                     return nullptr;
                 }
-                papszFullOptions =
-                    CSLSetNameValue(papszFullOptions, "ICORDS", "G");
+                aosOptions.SetNameValue("ICORDS", "G");
             }
         }
 
-        else if (oSRS.GetUTMZone(&bNorth) > 0)
+        else if (poSrcSRS->GetUTMZone(&bNorth) > 0)
         {
             const char *pszComputedICORDS = bNorth ? "N" : "S";
-            nZone = oSRS.GetUTMZone(nullptr);
+            nZone = poSrcSRS->GetUTMZone(nullptr);
             if (pszICORDS == nullptr)
             {
-                papszFullOptions = CSLSetNameValue(papszFullOptions, "ICORDS",
-                                                   pszComputedICORDS);
+                aosOptions.SetNameValue("ICORDS", pszComputedICORDS);
             }
             else if (EQUAL(pszICORDS, pszComputedICORDS))
             {
@@ -5091,22 +5152,19 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                 const int nXSize = poSrcDS->GetRasterXSize();
                 const int nYSize = poSrcDS->GetRasterYSize();
 
-                dfIGEOLOULX = gt[0] + 0.5 * gt[1] + 0.5 * gt[2];
-                dfIGEOLOULY = gt[3] + 0.5 * gt[4] + 0.5 * gt[5];
-                dfIGEOLOURX = dfIGEOLOULX + gt[1] * (nXSize - 1);
-                dfIGEOLOURY = dfIGEOLOULY + gt[4] * (nXSize - 1);
-                dfIGEOLOLRX =
-                    dfIGEOLOULX + gt[1] * (nXSize - 1) + gt[2] * (nYSize - 1);
-                dfIGEOLOLRY =
-                    dfIGEOLOULY + gt[4] * (nXSize - 1) + gt[5] * (nYSize - 1);
-                dfIGEOLOLLX = dfIGEOLOULX + gt[2] * (nYSize - 1);
-                dfIGEOLOLLY = dfIGEOLOULY + gt[5] * (nYSize - 1);
-
-                oSRS_WGS84.SetWellKnownGeogCS("WGS84");
-                oSRS_WGS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                dfIGEOLOULX = gt.xorig + 0.5 * gt.xscale + 0.5 * gt.xrot;
+                dfIGEOLOULY = gt.yorig + 0.5 * gt.yrot + 0.5 * gt.yscale;
+                dfIGEOLOURX = dfIGEOLOULX + gt.xscale * (nXSize - 1);
+                dfIGEOLOURY = dfIGEOLOULY + gt.yrot * (nXSize - 1);
+                dfIGEOLOLRX = dfIGEOLOULX + gt.xscale * (nXSize - 1) +
+                              gt.xrot * (nYSize - 1);
+                dfIGEOLOLRY = dfIGEOLOULY + gt.yrot * (nXSize - 1) +
+                              gt.yscale * (nYSize - 1);
+                dfIGEOLOLLX = dfIGEOLOULX + gt.xrot * (nYSize - 1);
+                dfIGEOLOLLY = dfIGEOLOULY + gt.yscale * (nYSize - 1);
 
                 auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
-                    OGRCreateCoordinateTransformation(&oSRS, &oSRS_WGS84));
+                    OGRCreateCoordinateTransformation(poSrcSRS, &oSRS_WGS84));
                 if (poCT && poCT->Transform(1, &dfIGEOLOULX, &dfIGEOLOULY) &&
                     poCT->Transform(1, &dfIGEOLOURX, &dfIGEOLOURY) &&
                     poCT->Transform(1, &dfIGEOLOLRX, &dfIGEOLOLRY) &&
@@ -5123,9 +5181,6 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                     CPLError(
                         CE_Failure, CPLE_AppDefined,
                         "Cannot reproject UTM coordinates to geographic ones");
-                    CSLDestroy(papszFullOptions);
-                    CSLDestroy(papszCgmMD);
-                    CSLDestroy(papszTextMD);
                     return nullptr;
                 }
             }
@@ -5135,23 +5190,52 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                          "Inconsistent ICORDS value with SRS : %s.", pszICORDS);
                 if (bStrict)
                 {
-                    CSLDestroy(papszFullOptions);
-                    CSLDestroy(papszCgmMD);
-                    CSLDestroy(papszTextMD);
                     return nullptr;
                 }
+            }
+        }
+        else if (bIsCADRGPolarAzimuthalEquidistant)
+        {
+            OGREnvelope sExtent;
+            poSrcDS->GetExtent(&sExtent);
+
+            aosOptions.SetNameValue("ICORDS", "G");
+            dfIGEOLOULX = sExtent.MinX;
+            dfIGEOLOULY = sExtent.MaxY;
+            dfIGEOLOURX = sExtent.MaxX;
+            dfIGEOLOURY = sExtent.MaxY;
+            dfIGEOLOLLX = sExtent.MinX;
+            dfIGEOLOLLY = sExtent.MinY;
+            dfIGEOLOLRX = sExtent.MaxX;
+            dfIGEOLOLRY = sExtent.MinY;
+            auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                OGRCreateCoordinateTransformation(poSrcSRS, &oSRS_WGS84));
+            if (poCT && poCT->Transform(1, &dfIGEOLOULX, &dfIGEOLOULY) &&
+                poCT->Transform(1, &dfIGEOLOURX, &dfIGEOLOURY) &&
+                poCT->Transform(1, &dfIGEOLOLRX, &dfIGEOLOLRY) &&
+                poCT->Transform(1, &dfIGEOLOLLX, &dfIGEOLOLLY))
+            {
+                nZone = 0;
+                bWriteGeoTransform = false;
+                bManualWriteOfIGEOLO = true;
+                nGCIFFlags &= ~GCIF_PROJECTION;
+                nGCIFFlags &= ~GCIF_GEOTRANSFORM;
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Cannot reproject azimuthal equidistant coordinates "
+                         "to geographic ones");
+                return nullptr;
             }
         }
         else
         {
             CPLError(
                 (bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                "NITF only supports WGS84 geographic and UTM projections.\n");
+                "NITF only supports WGS84 geographic and UTM projections.");
             if (bStrict)
             {
-                CSLDestroy(papszFullOptions);
-                CSLDestroy(papszCgmMD);
-                CSLDestroy(papszTextMD);
                 return nullptr;
             }
         }
@@ -5165,9 +5249,9 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
 
     CSLConstList papszRPC = poSrcDS->GetMetadata("RPC");
     if (papszRPC != nullptr && bUseSrcNITFMetadata &&
-        CPLFetchBool(papszFullOptions, "RPC00B", true))
+        CPLFetchBool(aosOptions.List(), "RPC00B", true))
     {
-        if (CSLPartialFindString(papszFullOptions, "TRE=RPC00B=") >= 0)
+        if (CSLPartialFindString(aosOptions.List(), "TRE=RPC00B=") >= 0)
         {
             CPLDebug("NITF",
                      "Both TRE=RPC00B and RPC metadata are available. "
@@ -5185,9 +5269,6 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                     "Cannot format a valid RPC00B TRE from the RPC metadata");
                 if (bStrict)
                 {
-                    CSLDestroy(papszFullOptions);
-                    CSLDestroy(papszCgmMD);
-                    CSLDestroy(papszTextMD);
                     return nullptr;
                 }
             }
@@ -5195,7 +5276,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             {
                 CPLString osRPC00B("TRE=RPC00B=");
                 osRPC00B += pszRPC;
-                papszFullOptions = CSLAddString(papszFullOptions, osRPC00B);
+                aosOptions.AddString(osRPC00B);
 
                 // If no precision loss occurred during RPC conversion, then
                 // we can suppress it from PAM
@@ -5205,17 +5286,17 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             CPLFree(pszRPC);
         }
     }
-    else if (!CPLFetchBool(papszFullOptions, "RPC00B", true))
+    else if (!CPLFetchBool(aosOptions.List(), "RPC00B", true))
     {
-        int nIdx = CSLPartialFindString(papszFullOptions, "TRE=RPC00B=");
+        int nIdx = CSLPartialFindString(aosOptions.List(), "TRE=RPC00B=");
         if (nIdx >= 0)
         {
-            papszFullOptions =
-                CSLRemoveStrings(papszFullOptions, nIdx, 1, nullptr);
+            aosOptions =
+                CSLRemoveStrings(aosOptions.StealList(), nIdx, 1, nullptr);
         }
     }
 
-    if (papszRPC != nullptr && CPLFetchBool(papszFullOptions, "RPCTXT", false))
+    if (papszRPC != nullptr && CPLFetchBool(aosOptions.List(), "RPCTXT", false))
     {
         GDALWriteRPCTXTFile(pszFilename, papszRPC);
     }
@@ -5229,37 +5310,32 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
 
     if (pszPVType == nullptr)
     {
-        CSLDestroy(papszFullOptions);
-        CSLDestroy(papszCgmMD);
-        CSLDestroy(papszTextMD);
         return nullptr;
     }
 
     int nABPP = GDALGetDataTypeSizeBits(eType);
-    if (const char *pszABPP = CSLFetchNameValue(papszFullOptions, "ABPP"))
+    if (const char *pszABPP = aosOptions.FetchNameValue("ABPP"))
     {
         nABPP = atoi(pszABPP);
     }
-    else if (const char *pszNBITS = CSLFetchNameValueDef(
-                 papszFullOptions, "NBITS",
-                 poBand1->GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))
+    else if (const char *pszNBITS = aosOptions.FetchNameValueDef(
+                 "NBITS", poBand1->GetMetadataItem("NBITS", "IMAGE_STRUCTURE")))
     {
-        papszFullOptions = CSLSetNameValue(papszFullOptions, "ABPP", pszNBITS);
+        aosOptions.SetNameValue("ABPP", pszNBITS);
         nABPP = atoi(pszNBITS);
     }
 
     if (poJ2KDriver != nullptr &&
         EQUAL(poJ2KDriver->GetDescription(), "JP2ECW"))
     {
-        if (STARTS_WITH_CI(
-                CSLFetchNameValueDef(papszFullOptions, "PROFILE", "NPJE"),
-                "NPJE") &&
+        if (STARTS_WITH_CI(aosOptions.FetchNameValueDef("PROFILE", "NPJE"),
+                           "NPJE") &&
             (nXSize >= 1024 || nYSize >= 1024))
         {
             int nBlockXSize =
-                atoi(CSLFetchNameValueDef(papszFullOptions, "BLOCKXSIZE", "0"));
+                atoi(aosOptions.FetchNameValueDef("BLOCKXSIZE", "0"));
             int nBlockYSize =
-                atoi(CSLFetchNameValueDef(papszFullOptions, "BLOCKYSIZE", "0"));
+                atoi(aosOptions.FetchNameValueDef("BLOCKYSIZE", "0"));
             if (nBlockXSize > 0 && nBlockXSize != 1024)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
@@ -5272,30 +5348,26 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             }
             if (nBlockXSize == 0)
             {
-                papszFullOptions =
-                    CSLSetNameValue(papszFullOptions, "BLOCKXSIZE", "1024");
+                aosOptions.SetNameValue("BLOCKXSIZE", "1024");
             }
             if (nBlockYSize == 0)
             {
-                papszFullOptions =
-                    CSLSetNameValue(papszFullOptions, "BLOCKYSIZE", "1024");
+                aosOptions.SetNameValue("BLOCKYSIZE", "1024");
             }
         }
     }
     else if (poJ2KDriver != nullptr &&
              EQUAL(poJ2KDriver->GetDescription(), "JP2OPENJPEG"))
     {
-        const char *pszProfile = CSLFetchNameValue(papszFullOptions, "PROFILE");
+        const char *pszProfile = aosOptions.FetchNameValue("PROFILE");
         if (pszProfile && EQUAL(pszProfile, "EPJE"))
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "PROFILE=EPJE not handled by JP2OPENJPEG driver");
         }
 
-        int nBlockXSize =
-            atoi(CSLFetchNameValueDef(papszFullOptions, "BLOCKXSIZE", "0"));
-        int nBlockYSize =
-            atoi(CSLFetchNameValueDef(papszFullOptions, "BLOCKYSIZE", "0"));
+        int nBlockXSize = atoi(aosOptions.FetchNameValueDef("BLOCKXSIZE", "0"));
+        int nBlockYSize = atoi(aosOptions.FetchNameValueDef("BLOCKYSIZE", "0"));
         if (pszProfile && STARTS_WITH_CI(pszProfile, "NPJE") &&
             ((nBlockXSize != 0 && nBlockXSize != 1024) ||
              (nBlockYSize != 0 && nBlockYSize != 1024)))
@@ -5311,20 +5383,17 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             // explicitly for NITFCreate() purposes.
             if (nBlockXSize == 0)
             {
-                papszFullOptions =
-                    CSLSetNameValue(papszFullOptions, "BLOCKXSIZE", "1024");
+                aosOptions.SetNameValue("BLOCKXSIZE", "1024");
             }
             if (nBlockYSize == 0)
             {
-                papszFullOptions =
-                    CSLSetNameValue(papszFullOptions, "BLOCKYSIZE", "1024");
+                aosOptions.SetNameValue("BLOCKYSIZE", "1024");
             }
         }
 
         // Compose J2KLRA TRE for NPJE profiles
         if (pszProfile && STARTS_WITH_CI(pszProfile, "NPJE") &&
-            CPLTestBool(
-                CSLFetchNameValueDef(papszFullOptions, "J2KLRA", "YES")))
+            CPLTestBool(aosOptions.FetchNameValueDef("J2KLRA", "YES")))
         {
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
@@ -5346,9 +5415,9 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
 #endif
 
             double dfQuality =
-                CPLAtof(CSLFetchNameValueDef(papszFullOptions, "QUALITY", "0"));
+                CPLAtof(aosOptions.FetchNameValueDef("QUALITY", "0"));
             double dfTarget =
-                CPLAtof(CSLFetchNameValueDef(papszFullOptions, "TARGET", "0"));
+                CPLAtof(aosOptions.FetchNameValueDef("TARGET", "0"));
             if (dfTarget > 0 && dfTarget < 100)
                 dfQuality = 100. - dfTarget;
 
@@ -5380,8 +5449,81 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                 osJ2KLRA += CPLSPrintf("%03d", static_cast<int>(i));
                 osJ2KLRA += CPLSPrintf("%09.6f", adfBPP[i]);
             }
-            papszFullOptions = CSLAddString(papszFullOptions, osJ2KLRA);
+            aosOptions.AddString(osJ2KLRA);
         }
+    }
+
+    GDALOffsetPatcher::OffsetPatcher offsetPatcher;
+    std::unique_ptr<CADRGInformation> CADRGInfo;
+
+    if (bIsCADRG)
+    {
+        aosOptions.SetNameValue("FHDR", "NITF02.00");
+        pszIC = "C4";
+        aosOptions.SetNameValue("IC", pszIC);
+        if (aosOptions.FetchNameValue("IID1") == nullptr)
+        {
+            aosOptions.SetNameValue("IID1", "CADRG");
+        }
+        if (aosOptions.FetchNameValue("FTITLE") == nullptr)
+        {
+            aosOptions.SetNameValue("FTITLE", CPLGetFilename(pszFilename));
+        }
+        if (aosOptions.FetchNameValue("ITITLE") == nullptr)
+        {
+            aosOptions.SetNameValue("ITITLE", CPLGetFilename(pszFilename));
+        }
+        if (aosOptions.FetchNameValue("ICAT") == nullptr)
+        {
+            aosOptions.SetNameValue("ICAT", "MAP");
+        }
+        if (aosOptions.FetchNameValue("IMAG") == nullptr)
+        {
+            // 0.67 = 100 (microns ADRG) / 150 (microns CADRG)
+            aosOptions.SetNameValue("IMAG", "0.67");
+        }
+
+        const int nRPFDESIdx = aosOptions.PartialFindString("DES=RPFDES=");
+        if (nRPFDESIdx >= 0)
+            aosOptions.RemoveStrings(nRPFDESIdx);
+        // +1 for the created RPFDES
+        const int nDES =
+            1 +
+            CPLStringList(CSLFetchNameValueMultiple(aosOptions.List(), "DES"))
+                .size();
+        aosOptions.SetNameValue("NUMDES", CPLSPrintf("%d", nDES));
+
+        if (copyContext->nReciprocalScale == 0)
+        {
+            bool bGotDPI = false;
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                copyContext->nReciprocalScale =
+                    RPFGetCADRGClosestReciprocalScale(poSrcDS, 0, bGotDPI);
+            }
+            if (!bGotDPI)
+            {
+                // the one from ADRG typically
+                constexpr double DEFAULT_DPI = 254;
+                copyContext->nReciprocalScale =
+                    RPFGetCADRGClosestReciprocalScale(poSrcDS, DEFAULT_DPI,
+                                                      bGotDPI);
+                if (!copyContext->nReciprocalScale)
+                    return nullptr;
+            }
+        }
+
+        CADRGInfo = RPFFrameCreateCADRG_TREs(&offsetPatcher, pszFilename,
+                                             poSrcDS, aosOptions, *copyContext);
+        if (!CADRGInfo)
+        {
+            return nullptr;
+        }
+
+        aosOptions.SetNameValue(
+            "LUT_SIZE",
+            CPLSPrintf("%d", CADRG_MAX_COLOR_ENTRY_COUNT +
+                                 (CADRGInfo->HasTransparentPixels() ? 1 : 0)));
     }
 
     int nIMIndex = 0;
@@ -5390,12 +5532,9 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     vsi_l_offset nICOffset = 0;
     if (!NITFCreateEx(pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
                       GDALGetDataTypeSizeBits(eType), pszPVType,
-                      papszFullOptions, &nIMIndex, &nImageCount, &nImageOffset,
-                      &nICOffset))
+                      aosOptions.List(), &nIMIndex, &nImageCount, &nImageOffset,
+                      &nICOffset, &offsetPatcher))
     {
-        CSLDestroy(papszFullOptions);
-        CSLDestroy(papszCgmMD);
-        CSLDestroy(papszTextMD);
         return nullptr;
     }
 
@@ -5403,7 +5542,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     /*      JPEG2000 case.  We need to write the data through a J2K         */
     /*      driver in pixel interleaved form.                               */
     /* ==================================================================== */
-    NITFDataset *poDstDS = nullptr;
+    std::unique_ptr<NITFDataset> poDstDS;
 
     if (bJPEG2000)
     {
@@ -5411,80 +5550,59 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         osDSName.Printf("/vsisubfile/" CPL_FRMT_GUIB "_%d,%s",
                         static_cast<GUIntBig>(nImageOffset), -1, pszFilename);
 
-        GDALDataset *poJ2KDataset = nullptr;
+        std::unique_ptr<GDALDataset> poJ2KDataset;
         if (EQUAL(poJ2KDriver->GetDescription(), "JP2ECW"))
         {
-            char **papszJP2Options = NITFJP2ECWOptions(papszFullOptions);
-            poJ2KDataset = poJ2KDriver->CreateCopy(osDSName, poSrcDS, FALSE,
-                                                   papszJP2Options, pfnProgress,
-                                                   pProgressData);
-            CSLDestroy(papszJP2Options);
+            poJ2KDataset.reset(poJ2KDriver->CreateCopy(
+                osDSName, poSrcDS, FALSE, NITFJP2ECWOptions(aosOptions).List(),
+                pfnProgress, pProgressData));
         }
         else if (EQUAL(poJ2KDriver->GetDescription(), "JP2KAK"))
         {
-            char **papszJP2Options = NITFJP2KAKOptions(papszFullOptions, nABPP);
-            poJ2KDataset = poJ2KDriver->CreateCopy(osDSName, poSrcDS, FALSE,
-                                                   papszJP2Options, pfnProgress,
-                                                   pProgressData);
-            CSLDestroy(papszJP2Options);
+            poJ2KDataset.reset(poJ2KDriver->CreateCopy(
+                osDSName, poSrcDS, FALSE,
+                NITFJP2KAKOptions(aosOptions, nABPP).List(), pfnProgress,
+                pProgressData));
         }
         else if (EQUAL(poJ2KDriver->GetDescription(), "JP2OPENJPEG"))
         {
-            char **papszJP2Options =
-                NITFJP2OPENJPEGOptions(poJ2KDriver, papszFullOptions, nABPP);
-            poJ2KDataset = poJ2KDriver->CreateCopy(osDSName, poSrcDS, FALSE,
-                                                   papszJP2Options, pfnProgress,
-                                                   pProgressData);
-            CSLDestroy(papszJP2Options);
-        }
-        else
-        {
-            /* Jasper case */
-            const char *apszOptions[] = {"FORMAT=JPC", nullptr};
-            poJ2KDataset = poJ2KDriver->CreateCopy(
-                osDSName, poSrcDS, FALSE, const_cast<char **>(apszOptions),
-                pfnProgress, pProgressData);
+            poJ2KDataset.reset(poJ2KDriver->CreateCopy(
+                osDSName, poSrcDS, FALSE,
+                NITFJP2OPENJPEGOptions(poJ2KDriver, aosOptions, nABPP).List(),
+                pfnProgress, pProgressData));
         }
         if (poJ2KDataset == nullptr)
         {
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
 
-        delete poJ2KDataset;
+        poJ2KDataset.reset();
 
         // Now we need to figure out the actual length of the file
         // and correct the image segment size information.
         const GIntBig nPixelCount =
             static_cast<GIntBig>(nXSize) * nYSize * poSrcDS->GetRasterCount();
 
-        bool bOK = NITFPatchImageLength(pszFilename, nIMIndex, nImageOffset,
-                                        nPixelCount, "C8", nICOffset,
-                                        papszFullOptions);
+        bool bOK = NITFPatchImageLength(pszFilename, nullptr, nIMIndex,
+                                        nImageOffset, nPixelCount, "C8",
+                                        nICOffset, aosOptions.List());
         if (nIMIndex + 1 == nImageCount)
         {
-            bOK &= NITFWriteExtraSegments(pszFilename, papszCgmMD, papszTextMD,
-                                          papszFullOptions);
+            bOK &= NITFWriteExtraSegments(pszFilename, nullptr, aosCgmMD.List(),
+                                          aosTextMD.List(), nullptr, aosOptions,
+                                          0);
         }
         if (!bOK)
         {
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
 
         GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
-        poDstDS = OpenInternal(&oOpenInfo, nullptr, true,
-                               nImageCount == 1 ? -1 : nIMIndex);
+        poDstDS.reset(OpenInternal(&oOpenInfo, nullptr, true,
+                                   nImageCount == 1 ? -1 : nIMIndex));
 
         if (poDstDS == nullptr)
         {
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
     }
@@ -5495,25 +5613,19 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     else if (bJPEG)
     {
 #ifdef JPEG_SUPPORTED
-        NITFFile *psFile = NITFOpen(pszFilename, TRUE);
+        std::unique_ptr<NITFFile, decltype(&NITFClose)> psFile(
+            NITFOpen(pszFilename, TRUE), NITFClose);
         if (psFile == nullptr)
         {
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
 
         const bool bSuccess =
             NITFWriteJPEGImage(poSrcDS, psFile->fp, nImageOffset,
-                               papszFullOptions, pfnProgress, pProgressData);
+                               aosOptions.List(), pfnProgress, pProgressData);
 
         if (!bSuccess)
         {
-            NITFClose(psFile);
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
 
@@ -5522,36 +5634,92 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         const GIntBig nPixelCount =
             static_cast<GIntBig>(nXSize) * nYSize * poSrcDS->GetRasterCount();
 
-        NITFClose(psFile);
+        psFile.reset();
 
-        bool bOK = NITFPatchImageLength(pszFilename, nIMIndex, nImageOffset,
-                                        nPixelCount, pszIC, nICOffset,
-                                        papszFullOptions);
+        bool bOK = NITFPatchImageLength(pszFilename, nullptr, nIMIndex,
+                                        nImageOffset, nPixelCount, pszIC,
+                                        nICOffset, aosOptions.List());
         if (nIMIndex + 1 == nImageCount)
         {
-            bOK &= NITFWriteExtraSegments(pszFilename, papszCgmMD, papszTextMD,
-                                          papszFullOptions);
+            bOK &= NITFWriteExtraSegments(pszFilename, nullptr, aosCgmMD.List(),
+                                          aosTextMD.List(), nullptr, aosOptions,
+                                          0);
         }
         if (!bOK)
         {
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
 
         GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
-        poDstDS = OpenInternal(&oOpenInfo, nullptr, true,
-                               nImageCount == 1 ? -1 : nIMIndex);
+        poDstDS.reset(OpenInternal(&oOpenInfo, nullptr, true,
+                                   nImageCount == 1 ? -1 : nIMIndex));
 
         if (poDstDS == nullptr)
         {
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
 #endif /* def JPEG_SUPPORTED */
+    }
+
+    else if (bIsCADRG)
+    {
+        auto fp = VSIFilesystemHandler::OpenStatic(pszFilename, "rb+");
+        if (!fp)
+        {
+            CPLError(CE_Failure, CPLE_FileIO,
+                     "Cannot re-open %s in read/write mode", pszFilename);
+            return nullptr;
+        }
+
+        if (!RPFFrameWriteCADRG_ImageContent(&offsetPatcher, fp.get(), poSrcDS,
+                                             CADRGInfo.get()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "RPFFrameWriteCADRG_ImageContent() failed");
+            return nullptr;
+        }
+
+        // Now we need to figure out the actual length of the file
+        // and correct the image segment size information.
+        const GIntBig nPixelCount =
+            static_cast<GIntBig>(nXSize) * nYSize * poSrcDS->GetRasterCount();
+
+        bool bOK = NITFPatchImageLength(pszFilename, fp.get(), nIMIndex,
+                                        nImageOffset, nPixelCount, pszIC,
+                                        nICOffset, aosOptions.List());
+
+        // This will call RPFFrameWriteCADRG_RPFDES()
+        bOK &= NITFWriteExtraSegments(
+            pszFilename, fp.get(), aosCgmMD.List(), aosTextMD.List(),
+            &offsetPatcher, aosOptions, copyContext->nReciprocalScale);
+
+        if (!bOK || !offsetPatcher.Finalize(fp.get()))
+            return nullptr;
+
+        fp.reset();
+
+        GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
+        poDstDS.reset(OpenInternal(&oOpenInfo, nullptr, true, -1));
+        if (poDstDS == nullptr)
+        {
+            return nullptr;
+        }
+
+        const GDALColorTable *poCT = poSrcDS->GetRasterBand(1)->GetColorTable();
+        GDALColorTable oDstCT;
+        const int nMaxCTEntries = CADRG_MAX_COLOR_ENTRY_COUNT +
+                                  (CADRGInfo->HasTransparentPixels() ? 1 : 0);
+        for (int i = 0; i < nMaxCTEntries; ++i)
+        {
+            if (i < poCT->GetColorEntryCount())
+                oDstCT.SetColorEntry(i, poCT->GetColorEntry(i));
+            else
+            {
+                GDALColorEntry entry = {0, 0, 0, 0};
+                oDstCT.SetColorEntry(i, &entry);
+            }
+        }
+        poDstDS->GetRasterBand(1)->SetColorTable(&oDstCT);
     }
 
     /* ==================================================================== */
@@ -5561,13 +5729,11 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
     {
         if (nIMIndex + 1 == nImageCount)
         {
-            bool bOK = NITFWriteExtraSegments(pszFilename, papszCgmMD,
-                                              papszTextMD, papszFullOptions);
+            bool bOK = NITFWriteExtraSegments(pszFilename, nullptr,
+                                              aosCgmMD.List(), aosTextMD.List(),
+                                              nullptr, aosOptions, 0);
             if (!bOK)
             {
-                CSLDestroy(papszCgmMD);
-                CSLDestroy(papszTextMD);
-                CSLDestroy(papszFullOptions);
                 return nullptr;
             }
         }
@@ -5579,27 +5745,21 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         CPLString osLastErrorMsg = CPLGetLastErrorMsg();
 
         GDALOpenInfo oOpenInfo(pszFilename, GA_Update);
-        poDstDS = OpenInternal(&oOpenInfo, nullptr, true,
-                               nImageCount == 1 ? -1 : nIMIndex);
+        poDstDS.reset(OpenInternal(&oOpenInfo, nullptr, true,
+                                   nImageCount == 1 ? -1 : nIMIndex));
 
         if (CPLGetLastErrorType() == CE_None && eLastErr != CE_None)
             CPLErrorSetState(eLastErr, nLastErrNo, osLastErrorMsg.c_str());
 
         if (poDstDS == nullptr)
         {
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
 
-        void *pData = VSIMalloc2(nXSize, GDALGetDataTypeSizeBytes(eType));
+        std::unique_ptr<void, VSIFreeReleaser> pData(
+            VSIMalloc2(nXSize, GDALGetDataTypeSizeBytes(eType)));
         if (pData == nullptr)
         {
-            delete poDstDS;
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
 
@@ -5628,13 +5788,15 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
              */
             for (int iLine = 0; iLine < nYSize; iLine++)
             {
-                eErr = poSrcBand->RasterIO(GF_Read, 0, iLine, nXSize, 1, pData,
-                                           nXSize, 1, eType, 0, 0, nullptr);
+                eErr = poSrcBand->RasterIO(GF_Read, 0, iLine, nXSize, 1,
+                                           pData.get(), nXSize, 1, eType, 0, 0,
+                                           nullptr);
                 if (eErr != CE_None)
                     break;
 
-                eErr = poDstBand->RasterIO(GF_Write, 0, iLine, nXSize, 1, pData,
-                                           nXSize, 1, eType, 0, 0, nullptr);
+                eErr = poDstBand->RasterIO(GF_Write, 0, iLine, nXSize, 1,
+                                           pData.get(), nXSize, 1, eType, 0, 0,
+                                           nullptr);
 
                 if (eErr != CE_None)
                     break;
@@ -5651,14 +5813,8 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
             }
         }
 
-        CPLFree(pData);
-
         if (eErr != CE_None)
         {
-            delete poDstDS;
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
     }
@@ -5677,10 +5833,6 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
                              dfIGEOLOURX, dfIGEOLOURY, dfIGEOLOLRX, dfIGEOLOLRY,
                              dfIGEOLOLLX, dfIGEOLOLLY))
         {
-            delete poDstDS;
-            CSLDestroy(papszCgmMD);
-            CSLDestroy(papszTextMD);
-            CSLDestroy(papszFullOptions);
             return nullptr;
         }
     }
@@ -5706,21 +5858,20 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         {
             if (!bUseSrcNITFMetadata)
             {
-                char **papszNewMD = CSLDuplicate(poDstDS->GetMetadata());
+                CPLStringList aosNewMD(CSLDuplicate(poDstDS->GetMetadata()));
                 bool bAdded = false;
                 for (const char *pszKeyValue : cpl::Iterate(papszSrcMD))
                 {
                     if (!STARTS_WITH(pszKeyValue, "NITF_"))
                     {
                         bAdded = true;
-                        papszNewMD = CSLAddString(papszNewMD, pszKeyValue);
+                        aosNewMD.AddString(pszKeyValue);
                     }
                 }
                 if (bAdded)
                 {
-                    poDstDS->SetMetadata(papszNewMD);
+                    poDstDS->SetMetadata(aosNewMD.List());
                 }
-                CSLDestroy(papszNewMD);
             }
             else if (CSLCount(poDstDS->GetMetadata()) != CSLCount(papszSrcMD))
             {
@@ -5730,11 +5881,43 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
         poDstDS->SetMOFlags(nSavedMOFlags);
     }
 
-    CSLDestroy(papszCgmMD);
-    CSLDestroy(papszTextMD);
-    CSLDestroy(papszFullOptions);
+    if (bIsCADRG)
+    {
+        GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly);
+        poDstDS.reset();
+        poDstDS.reset(OpenInternal(&oOpenInfo, nullptr, true, -1));
+    }
+
+    if (poDstDS && pfnProgress && !pfnProgress(1.0, "", pProgressData))
+    {
+        CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+        poDstDS.reset();
+    }
 
     return poDstDS;
+}
+
+/************************************************************************/
+/*                         NITFHasFSDWNGField()                         */
+/************************************************************************/
+
+static bool NITFHasFSDWNGField(VSILFILE *fpVSIL)
+{
+    char szFHDR[9 + 1] = {0};
+    bool bOK = VSIFSeekL(fpVSIL, 0, SEEK_SET) == 0;
+    bOK &= VSIFReadL(szFHDR, 9, 1, fpVSIL) == 1;
+    if (EQUAL(szFHDR, "NITF02.00"))
+    {
+        // Read FSDWNG field
+        char szFSDWNG[6 + 1] = {0};
+        bOK &= VSIFSeekL(fpVSIL, 280, SEEK_SET) == 0;
+        bOK &= VSIFReadL(szFSDWNG, 1, 6, fpVSIL) == 6;
+        if (bOK && EQUAL(szFSDWNG, "999998"))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 /************************************************************************/
@@ -5745,13 +5928,14 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
 /*      and the compression ratio achieved.                             */
 /************************************************************************/
 
-static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
-                                 GUIntBig nImageOffset, GIntBig nPixelCount,
-                                 const char *pszIC, vsi_l_offset nICOffset,
+static bool NITFPatchImageLength(const char *pszFilename, VSILFILE *fp,
+                                 int nIMIndex, GUIntBig nImageOffset,
+                                 GIntBig nPixelCount, const char *pszIC,
+                                 vsi_l_offset nICOffset,
                                  CSLConstList papszCreationOptions)
 
 {
-    VSILFILE *fpVSIL = VSIFOpenL(pszFilename, "r+b");
+    VSILFILE *fpVSIL = fp ? fp : VSIFOpenL(pszFilename, "r+b");
     if (fpVSIL == nullptr)
         return false;
 
@@ -5771,12 +5955,14 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
     }
     CPLString osLen =
         CPLString().Printf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "u", nFileLen);
-    if (VSIFSeekL(fpVSIL, 342, SEEK_SET) != 0 ||
+    const int nExtraOffset = NITFHasFSDWNGField(fpVSIL) ? 40 : 0;
+    if (VSIFSeekL(fpVSIL, 342 + nExtraOffset, SEEK_SET) != 0 ||
         VSIFWriteL(reinterpret_cast<const void *>(osLen.c_str()), 12, 1,
                    fpVSIL) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Write error");
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpVSIL));
+        if (!fp)
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpVSIL));
         return false;
     }
 
@@ -5794,12 +5980,13 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
     }
     osLen =
         CPLString().Printf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "u", nImageSize);
-    if (VSIFSeekL(fpVSIL, 369 + 16 * nIMIndex, SEEK_SET) != 0 ||
+    if (VSIFSeekL(fpVSIL, 369 + nExtraOffset + 16 * nIMIndex, SEEK_SET) != 0 ||
         VSIFWriteL(reinterpret_cast<const void *>(osLen.c_str()), 10, 1,
                    fpVSIL) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Write error");
-        CPL_IGNORE_RET_VAL(VSIFCloseL(fpVSIL));
+        if (!fp)
+            CPL_IGNORE_RET_VAL(VSIFCloseL(fpVSIL));
         return false;
     }
 
@@ -5829,7 +6016,7 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
     }
     else
     {
-        char szCOMRAT[5];
+        char szCOMRAT[5] = "00.0";
 
         if (EQUAL(pszIC, "C8")) /* jpeg2000 */
         {
@@ -5863,9 +6050,9 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
                          static_cast<unsigned>(dfRate * 100) % 10000);
             }
         }
-        else if (EQUAL(pszIC, "C3") || EQUAL(pszIC, "M3")) /* jpeg */
+        else if (EQUAL(pszIC, "C4") || EQUAL(pszIC, "M4"))  // VQ
         {
-            strcpy(szCOMRAT, "00.0");
+            snprintf(szCOMRAT, sizeof(szCOMRAT), "0.75");
         }
 
         bOK &= VSIFWriteL(szCOMRAT, 4, 1, fpVSIL) == 1;
@@ -5885,15 +6072,15 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
             const unsigned int nCLevelOri = nCLevel;
             if (nFileLen > 2147483647)
             {
-                nCLevel = MAX(nCLevel, 7U);
+                nCLevel = std::max(nCLevel, 7U);
             }
             else if (nFileLen > 1073741833)
             {
-                nCLevel = MAX(nCLevel, 6U);
+                nCLevel = std::max(nCLevel, 6U);
             }
             else if (nFileLen > 52428799)
             {
-                nCLevel = MAX(nCLevel, 5U);
+                nCLevel = std::max(nCLevel, 5U);
             }
             if (nCLevel != nCLevelOri)
             {
@@ -5913,7 +6100,7 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
         }
     }
 
-    if (VSIFCloseL(fpVSIL) != 0)
+    if (!fp && VSIFCloseL(fpVSIL) != 0)
         bOK = false;
 
     if (!bOK)
@@ -5925,7 +6112,7 @@ static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
 }
 
 /************************************************************************/
-/*                       NITFWriteCGMSegments()                        */
+/*                        NITFWriteCGMSegments()                        */
 /************************************************************************/
 static bool NITFWriteCGMSegments(const char *pszFilename, VSILFILE *&fpVSIL,
                                  CSLConstList papszList)
@@ -5957,8 +6144,9 @@ static bool NITFWriteCGMSegments(const char *pszFilename, VSILFILE *&fpVSIL,
     char achNUMI[4];  // 3 digits plus null character
     achNUMI[3] = '\0';
 
-    // NUMI offset is at a fixed offset 363
-    const vsi_l_offset nNumIOffset = 360;
+    // NUMI offset is at a fixed offset 360
+    const vsi_l_offset nNumIOffset =
+        360 + (NITFHasFSDWNGField(fpVSIL) ? 40 : 0);
     bool bOK = VSIFSeekL(fpVSIL, nNumIOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMI, 3, 1, fpVSIL) == 1;
     const int nIM = atoi(achNUMI);
@@ -6182,8 +6370,9 @@ static bool NITFWriteTextSegments(const char *pszFilename, VSILFILE *&fpVSIL,
 
     char achNUMI[4];  // 3 digits plus null character
     achNUMI[3] = '\0';
-    // NUMI offset is at a fixed offset 363
-    vsi_l_offset nNumIOffset = 360;
+    // NUMI offset is at a fixed offset 360
+    const vsi_l_offset nNumIOffset =
+        360 + (NITFHasFSDWNGField(fpVSIL) ? 40 : 0);
     bool bOK = VSIFSeekL(fpVSIL, nNumIOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMI, 3, 1, fpVSIL) == 1;
     int nIM = atoi(achNUMI);
@@ -6614,21 +6803,18 @@ static bool NITFWriteDES(VSILFILE *&fp, const char *pszFilename,
 }
 
 /************************************************************************/
-/*                          NITFWriteDESs()                             */
+/*                            NITFWriteDES()                            */
 /************************************************************************/
 
 static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
-                         CSLConstList papszOptions)
+                         GDALOffsetPatcher::OffsetPatcher *offsetPatcher,
+                         const CPLStringList &aosOptions, int nReciprocalScale)
 {
-    if (papszOptions == nullptr)
+    int nDESFound = offsetPatcher ? 1 : 0;
+    for (const char *pszOpt : aosOptions)
     {
-        return true;
-    }
-
-    int nDESFound = 0;
-    for (int iOption = 0; papszOptions[iOption] != nullptr; iOption++)
-    {
-        if (EQUALN(papszOptions[iOption], "DES=", 4))
+        if (cpl::starts_with(std::string_view(pszOpt),
+                             std::string_view("DES=")))
         {
             nDESFound++;
         }
@@ -6646,10 +6832,12 @@ static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
     if (fpVSIL == nullptr)
         return false;
 
+    // NUMI offset is at a fixed offset 360, unless there is a FSDWNG field
+    const vsi_l_offset nNumIOffset =
+        360 + (NITFHasFSDWNGField(fpVSIL) ? 40 : 0);
+
     char achNUMI[4];  // 3 digits plus null character
     achNUMI[3] = '\0';
-    // NUMI offset is at a fixed offset 363
-    vsi_l_offset nNumIOffset = 360;
     bool bOK = VSIFSeekL(fpVSIL, nNumIOffset, SEEK_SET) == 0;
     bOK &= VSIFReadL(achNUMI, 3, 1, fpVSIL) == 1;
     int nIM = atoi(achNUMI);
@@ -6690,37 +6878,45 @@ static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
         return false;
     }
 
+    const auto nOffsetLDSH = nNumDESOffset + 3;
+
     int iDES = 0;
-    for (int iOption = 0; papszOptions[iOption] != nullptr; iOption++)
+    if (offsetPatcher)
     {
-        if (!EQUALN(papszOptions[iOption], "DES=", 4))
+        bOK = RPFFrameWriteCADRG_RPFDES(offsetPatcher, fpVSIL, nOffsetLDSH,
+                                        aosOptions, nReciprocalScale);
+        iDES = 1;
+    }
+
+    for (int iOption = 0; bOK && iOption < aosOptions.size(); iOption++)
+    {
+        if (!cpl::starts_with(std::string_view(aosOptions[iOption]),
+                              std::string_view("DES=")))
         {
             continue;
         }
 
         /* We don't use CPLParseNameValue() as it removes leading spaces */
         /* from the value (see #3088) */
-        const char *pszDelim = strchr(papszOptions[iOption] + 4, '=');
+        const char *pszDESOpt = aosOptions[iOption] + 4;
+        const char *pszDelim = strchr(pszDESOpt, '=');
         if (pszDelim == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Could not parse creation options %s",
-                     papszOptions[iOption] + 4);
+                     "Could not parse creation options %s", pszDESOpt);
             return false;
         }
 
-        const size_t nNameLength =
-            strlen(papszOptions[iOption] + 4) - strlen(pszDelim);
+        const size_t nNameLength = strlen(pszDESOpt) - strlen(pszDelim);
         if (nNameLength > 25)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Specified DESID is too long %s",
-                     papszOptions[iOption] + 4);
+                     "Specified DESID is too long %s", pszDESOpt);
             return false;
         }
 
         char *pszDESName = static_cast<char *>(CPLMalloc(nNameLength + 1));
-        memcpy(pszDESName, papszOptions[iOption] + 4, nNameLength);
+        memcpy(pszDESName, pszDESOpt, nNameLength);
         pszDESName[nNameLength] = '\0';
 
         const char *pszEscapedContents = pszDelim + 1;
@@ -6730,8 +6926,8 @@ static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
             reinterpret_cast<GByte *>(CPLUnescapeString(
                 pszEscapedContents, &nContentLength, CPLES_BackslashQuotable));
 
-        if (!NITFWriteDES(fpVSIL, pszFilename, nNumDESOffset + 3, iDES,
-                          pszDESName, pabyUnescapedContents, nContentLength))
+        if (!NITFWriteDES(fpVSIL, pszFilename, nOffsetLDSH, iDES, pszDESName,
+                          pabyUnescapedContents, nContentLength))
         {
             CPLFree(pszDESName);
             CPLFree(pabyUnescapedContents);
@@ -6750,7 +6946,7 @@ static bool NITFWriteDES(const char *pszFilename, VSILFILE *&fpVSIL,
 }
 
 /************************************************************************/
-/*                         UpdateFileLength()                           */
+/*                          UpdateFileLength()                          */
 /************************************************************************/
 
 static bool UpdateFileLength(VSILFILE *fp)
@@ -6761,8 +6957,10 @@ static bool UpdateFileLength(VSILFILE *fp)
     /* -------------------------------------------------------------------- */
     bool bOK = VSIFSeekL(fp, 0, SEEK_END) == 0;
     GUIntBig nFileLen = VSIFTellL(fp);
+
     // Offset to file length entry
-    bOK &= VSIFSeekL(fp, 342, SEEK_SET) == 0;
+    const vsi_l_offset nFLOffset = 342 + (NITFHasFSDWNGField(fp) ? 40 : 0);
+    bOK &= VSIFSeekL(fp, nFLOffset, SEEK_SET) == 0;
     if (nFileLen >= NITF_MAX_FILE_SIZE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -6782,20 +6980,22 @@ static bool UpdateFileLength(VSILFILE *fp)
 /*                       NITFWriteExtraSegments()                       */
 /************************************************************************/
 
-static bool NITFWriteExtraSegments(const char *pszFilename,
-                                   CSLConstList papszCgmMD,
-                                   CSLConstList papszTextMD,
-                                   CSLConstList papszOptions)
+static bool
+NITFWriteExtraSegments(const char *pszFilename, VSILFILE *fpIn,
+                       CSLConstList papszCgmMD, CSLConstList papszTextMD,
+                       GDALOffsetPatcher::OffsetPatcher *offsetPatcher,
+                       const CPLStringList &aosOptions, int nReciprocalScale)
 {
-    VSILFILE *fp = nullptr;
+    VSILFILE *fp = fpIn;
     bool bOK = NITFWriteCGMSegments(pszFilename, fp, papszCgmMD);
     bOK &= NITFWriteTextSegments(pszFilename, fp, papszTextMD);
-    bOK &= NITFWriteDES(pszFilename, fp, papszOptions);
+    bOK &= NITFWriteDES(pszFilename, fp, offsetPatcher, aosOptions,
+                        nReciprocalScale);
     if (fp)
     {
         bOK &= UpdateFileLength(fp);
 
-        if (VSIFCloseL(fp) != 0)
+        if (fp != fpIn && VSIFCloseL(fp) != 0)
             bOK = false;
 
         if (!bOK)
@@ -6819,7 +7019,8 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
                        void *pProgressData);
 
 static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
-                               vsi_l_offset nStartOffset, char **papszOptions,
+                               vsi_l_offset nStartOffset,
+                               CSLConstList papszOptions,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData)
 {
@@ -7111,7 +7312,7 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
 #endif /* def JPEG_SUPPORTED */
 
 /************************************************************************/
-/*                          GDALRegister_NITF()                         */
+/*                         GDALRegister_NITF()                          */
 /************************************************************************/
 
 typedef struct
@@ -7128,20 +7329,22 @@ static const NITFFieldDescription asFieldDescription[] = {
     {14, "FDT", "File Date and Time"},
     {80, "FTITLE", "File Title"},
     {1, "FSCLAS", "File Security Classification"},
-    {2, "FSCLSY", "File Classification Security System"},
+    {2, "FSCLSY", "File Classification Security System (NITF02.10/NSIF only)"},
     {11, "FSCODE", "File Codewords"},
     {2, "FSCTLH", "File Control and Handling"},
     {20, "FSREL", "File Releasing Instructions"},
-    {2, "FSDCTP", "File Declassification Type"},
-    {8, "FSDCDT", "File Declassification Date"},
-    {4, "FSDCXM", "File Declassification Exemption"},
-    {1, "FSDG", "File Downgrade"},
-    {8, "FSDGDT", "File Downgrade Date"},
-    {43, "FSCLTX", "File Classification Text"},
-    {1, "FSCATP", "File Classification Authority Type"},
+    {2, "FSDCTP", "File Declassification Type (NITF02.10/NSIF only)"},
+    {8, "FSDCDT", "File Declassification Date (NITF02.10/NSIF only)"},
+    {4, "FSDCXM", "File Declassification Exemption (NITF02.10/NSIF only)"},
+    {1, "FSDG", "File Downgrade (NITF02.10/NSIF only)"},
+    {8, "FSDGDT", "File Downgrade Date (NITF02.10/NSIF only)"},
+    {6, "FSDWNG", "File Security Downgrade (NITF02.00 only)"},
+    {40, "FSDEVT", "File Downgrading event (NITF02.00 only)"},
+    {43, "FSCLTX", "File Classification Text (NITF02.10/NSIF only)"},
+    {1, "FSCATP", "File Classification Authority Type (NITF02.10/NSIF only)"},
     {40, "FSCAUT", "File Classification Authority"},
-    {1, "FSCRSN", "File Classification Reason"},
-    {8, "FSSRDT", "File Security Source Date"},
+    {1, "FSCRSN", "File Classification Reason (NITF02.10/NSIF only)"},
+    {8, "FSSRDT", "File Security Source Date (NITF02.10/NSIF only)"},
     {15, "FSCTLN", "File Security Control Number"},
     {5, "FSCOP", "File Copy Number"},
     {5, "FSCPYS", "File Number of Copies"},
@@ -7150,23 +7353,26 @@ static const NITFFieldDescription asFieldDescription[] = {
     {10, "IID1", "Image Identifier 1"},
     {14, "IDATIM", "Image Date and Time"},
     {17, "TGTID", "Target Identifier"},
-    {80, "IID2", "Image Identifier 2"},
+    {80, "IID2", "Image Identifier 2 (NITF02.10/NSIF only)"},
+    {80, "ITITLE", "Image Title (NITF02.00 only)"},
     {1, "ISCLAS", "Image Security Classification"},
-    {2, "ISCLSY", "Image Classification Security System"},
+    {2, "ISCLSY", "Image Classification Security System (NITF02.10/NSIF only)"},
     {11, "ISCODE", "Image Codewords"},
     {2, "ISCTLH", "Image Control and Handling"},
-    {20, "ISREL", "Image Releasing Instructions"},
-    {2, "ISDCTP", "Image Declassification Type"},
-    {8, "ISDCDT", "Image Declassification Date"},
-    {4, "ISDCXM", "Image Declassification Exemption"},
-    {1, "ISDG", "Image Downgrade"},
-    {8, "ISDGDT", "Image Downgrade Date"},
-    {43, "ISCLTX", "Image Classification Text"},
-    {1, "ISCATP", "Image Classification Authority Type"},
+    {20, "ISREL", "Image Releasing Instructions (NITF02.10/NSIF only)"},
+    {2, "ISDCTP", "Image Declassification Type (NITF02.10/NSIF only)"},
+    {8, "ISDCDT", "Image Declassification Date (NITF02.10/NSIF only)"},
+    {4, "ISDCXM", "Image Declassification Exemption (NITF02.10/NSIF only)"},
+    {1, "ISDG", "Image Downgrade (NITF02.10/NSIF only)"},
+    {8, "ISDGDT", "Image Downgrade Date (NITF02.10/NSIF only)"},
+    {6, "ISDWNG", "Image Security Downgrade (NITF02.00 only)"},
+    {40, "ISDEVT", "Image Downgrading event (NITF02.00 only)"},
+    {43, "ISCLTX", "Image Classification Text (NITF02.10/NSIF only)"},
+    {1, "ISCATP", "Image Classification Authority Type (NITF02.10/NSIF only)"},
     {40, "ISCAUT", "Image Classification Authority"},
-    {1, "ISCRSN", "Image Classification Reason"},
-    {8, "ISSRDT", "Image Security Source Date"},
-    {15, "ISCTLN", "Image Security Control Number"},
+    {1, "ISCRSN", "Image Classification Reason (NITF02.10/NSIF only)"},
+    {8, "ISSRDT", "Image Security Source Date (NITF02.10/NSIF only)"},
+    {15, "ISCTLN", "Image Security Control Number (NITF02.10/NSIF only)"},
     {42, "ISORCE", "Image Source"},
     {8, "ICAT", "Image Category"},
     {2, "ABPP", "Actual Bits-Per-Pixel Per Band"},
@@ -7210,7 +7416,7 @@ class NITFDriver final : public GDALDriver
 };
 
 /************************************************************************/
-/*                     NITFDriver::GetMetadataItem()                    */
+/*                    NITFDriver::GetMetadataItem()                     */
 /************************************************************************/
 
 const char *NITFDriver::GetMetadataItem(const char *pszName,
@@ -7225,7 +7431,7 @@ const char *NITFDriver::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                         InitCreationOptionList()                     */
+/*                       InitCreationOptionList()                       */
 /************************************************************************/
 
 void NITFDriver::InitCreationOptionList()
@@ -7247,7 +7453,7 @@ void NITFDriver::InitCreationOptionList()
 #ifdef JPEG_SUPPORTED
         "C3/M3=JPEG compression. "
 #endif
-        ;
+        "C4=VQ compression (only for PRODUCT_TYPE=CADRG). ";
 
     if (bHasJPEG2000Drivers)
         osCreationOptions +=
@@ -7259,7 +7465,7 @@ void NITFDriver::InitCreationOptionList()
                          "       <Value>C3</Value>"
                          "       <Value>M3</Value>"
 #endif
-        ;
+                         "       <Value>C4</Value>";
 
     if (bHasJPEG2000Drivers)
         osCreationOptions += "       <Value>C8</Value>";
@@ -7283,8 +7489,9 @@ void NITFDriver::InitCreationOptionList()
         "progressive mode'/>"
         "   <Option name='RESTART_INTERVAL' type='int' description='Restart "
         "interval (in MCUs). -1 for auto, 0 for none, > 0 for user specified' "
-        "default='-1'/>"
+        "default='-1'/>";
 #endif
+    osCreationOptions +=
         "   <Option name='NUMI' type='int' default='1' description='Number of "
         "images to create (1-999). Only works with IC=NC if "
         "WRITE_ONLY_FIRST_IMAGE=NO'/>"
@@ -7349,6 +7556,7 @@ void NITFDriver::InitCreationOptionList()
         "version' default='NITF02.10'>"
         "       <Value>NITF02.10</Value>"
         "       <Value>NSIF01.00</Value>"
+        "       <Value>NITF02.00</Value>"
         "   </Option>"
         "   <Option name='IREP' type='string' description='Set to RGB/LUT to "
         "reserve space for a color table for each output band. (Only needed "
@@ -7424,8 +7632,93 @@ void NITFDriver::InitCreationOptionList()
         "_RPC.TXT file' default='NO'/>"
         "   <Option name='USE_SRC_NITF_METADATA' type='boolean' "
         "description='Whether to use NITF source metadata in NITF-to-NITF "
-        "conversions' default='YES'/>";
-    osCreationOptions += "</CreationOptionList>";
+        "conversions' default='YES'/>"
+        "   <Option name='PRODUCT_TYPE' type='string-select' description='"
+        "Sub-specification the output dataset should respect' "
+        "default='REGULAR'>"
+        "       <Value>REGULAR</Value>"
+        "       <Value>CADRG</Value>"
+        "   </Option>"
+        "   <Option name='SCALE' type='string' min='1000' max='20000000' "
+        "description='Reciprocal scale to use when generating output frames. "
+        "Special value GUESS can be used. Only used when PRODUCT_TYPE=CADRG'/>"
+        "   <Option name='COLOR_QUANTIZATION_BITS' type='int' min='5' max='8' "
+        "default='5' description='"
+        "Number of bits per R,G,B color component used during color palette "
+        "computation. The higher the better quality and slower computation "
+        "time. Only used when PRODUCT_TYPE=CADRG'/>"
+        "   <Option name='COLOR_TABLE_PER_FRAME' type='boolean' default='NO' "
+        "description='Whether the color table should be optimized on the whole "
+        "input dataset, or per output frame. "
+        "Only used when PRODUCT_TYPE=CADRG'/>"
+        "   <Option name='DPI' type='float' description='"
+        "Dot-Per-Inch value that may need to be specified together with SCALE. "
+        "Only used when PRODUCT_TYPE=CADRG' min='1' max='7200'/>"
+        "   <Option name='ZONE' type='string' description='"
+        "ARC Zone to which restrict generation of CADRG frames (1 to 9, A to "
+        "H, J)."
+        "Only used when PRODUCT_TYPE=CADRG'/>"
+        "   <Option name='SERIES_CODE' type='string-select' description='"
+        "Two-letter code specifying the map/chart type. Only used when "
+        "PRODUCT_TYPE=CADRG' default='MM'>"
+        "       <Value>GN</Value>"
+        "       <Value>JN</Value>"
+        "       <Value>ON</Value>"
+        "       <Value>TP</Value>"
+        "       <Value>LF</Value>"
+        "       <Value>JG</Value>"
+        "       <Value>JA</Value>"
+        "       <Value>JR</Value>"
+        "       <Value>TF</Value>"
+        "       <Value>AT</Value>"
+        "       <Value>TC</Value>"
+        "       <Value>TL</Value>"
+        "       <Value>HA</Value>"
+        "       <Value>CO</Value>"
+        "       <Value>OA</Value>"
+        "       <Value>CG</Value>"
+        "       <Value>CM</Value>"
+        "       <Value>MM</Value>"
+        "       <OtherValues/>"
+        "   </Option>"
+        "   <Option name='RESAMPLING' type='string-select' description='"
+        "Resampling method used during CADRG frame creation' "
+        "default='CUBIC'>"
+        "       <Value>CUBIC</Value>"
+        "       <Value>BILINEAR</Value>"
+        "       <Value>LANCZOS</Value>"
+        "       <Value>NEAREST</Value>"
+        "   </Option>"
+        "   <Option name='VERSION_NUMBER' type='string' description='"
+        "Two letter version number (using letters among 0-9, A-H and J). "
+        "Only used when PRODUCT_TYPE=CADRG' default='01'/>"
+        "   <Option name='PRODUCER_CODE_ID' type='string' description='"
+        "One letter code indicating the data producer. Only used when "
+        "PRODUCT_TYPE=CADRG' default='0'/>"
+        "   <Option name='SECURITY_COUNTRY_CODE' type='string' description='"
+        "Two letter country ISO code of the security classification'/>"
+        "   <Option name='CURRENCY_DATE' type='string' description='"
+        "Date of the most recent revision to the RPF product, as YYYYMMDD. "
+        "Can also be set to empty string or special value NOW. "
+        "Only used when PRODUCT_TYPE=CADRG'/>"
+        "   <Option name='PRODUCTION_DATE' type='string' description='"
+        "Date that the source data was transferred to RPF format, as YYYYMMDD. "
+        "Can also be set to empty string or special value NOW. "
+        "Only used when PRODUCT_TYPE=CADRG'/>"
+        "   <Option name='SIGNIFICANT_DATE' type='string' description='"
+        "Date describing the basic date of the source produc, as YYYYMMDD. "
+        "Can also be set to empty string or special value NOW. "
+        "Only used when PRODUCT_TYPE=CADRG'/>"
+        "   <Option name='DATA_SERIES_DESIGNATION' type='string' "
+        "description='Short title for the identification of a group of products"
+        " usually having the same scale and/or cartographic specification "
+        "(e.g. JOG 1501A). Up to 10 characters. Only used when "
+        "PRODUCT_TYPE=CADRG'/>"
+        "   <Option name='MAP_DESIGNATION' type='string' "
+        "description='Designation, within the data series, of the hardcopy "
+        "source (e.g. G18 if the hardcopy source is ONC G18). Up to 8 "
+        "characters. Only used when PRODUCT_TYPE=CADRG'/>"
+        "</CreationOptionList>";
 
     SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, osCreationOptions);
 }

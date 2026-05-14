@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALVectorMakeValidAlgorithm                       */
+/*                     GDALVectorMakeValidAlgorithm                     */
 /************************************************************************/
 
 class GDALVectorMakeValidAlgorithm /* non final */

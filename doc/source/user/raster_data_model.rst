@@ -147,14 +147,92 @@ Metadata in the default domain is intended to be related to the image, and not p
 
 Currently the following items are defined by :ref:`rfc-14` as having specific semantics in the IMAGE_STRUCTURE domain.
 
-- COMPRESSION: The compression type used for this dataset or band. There is no fixed catalog of compression type names, but where a given format includes a COMPRESSION creation option, the same list of values should be used here as there.
-- NBITS: The actual number of bits used for this band, or the bands of this dataset. Normally only present when the number of bits is non-standard for the datatype, such as when a 1 bit TIFF is represented through GDAL as GDT_UInt8.
-- INTERLEAVE: This only applies on datasets, and the value should be one of PIXEL, LINE or BAND. It can be used as a data access hint.
+- COMPRESSION: The compression type used for this dataset or band. There is no
+  fixed catalog of compression type names, but where a given format includes
+  a COMPRESSION creation option, the same list of values should be used here as there.
+
+- NBITS: The actual number of bits used for this band, or the bands of this dataset.
+  Normally only present when the number of bits is non-standard for the datatype,
+  such as when a 1 bit TIFF is represented through GDAL as GDT_UInt8.
+
+- INTERLEAVE: This only applies on datasets, and the value should be one of
+  PIXEL, LINE or BAND. It can be used as a data access hint.
+  See :ref:`raster_data_model_interleave_mode` for more details.
+
 - PIXELTYPE: This may appear on a GDT_UInt8 band (or the corresponding dataset)
   and have the value SIGNEDBYTE to indicate the unsigned byte values between
   128 and 255 should be interpreted as being values between -128 and -1 for
   applications that recognise the SIGNEDBYTE type.
   Starting with GDAL 3.7, this metadata item is no longer used, as the Int8 data type is used for signed bytes.
+
+.. _raster_data_model_interleave_mode:
+
+Multiband pixel organization (INTERLEAVE metadata item)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For a dataset with several channel, there are 3 typical ways of how to organize
+image data within the raster file.
+
+- In Band Interleaved by Pixel (BIP) mode, reported as INTERLEAVE=PIXEL, the
+  samples of all bands for a given pixel are stored contiguously. Said otherwise,
+  for a given (row, column) location in the raster, the pixel value of the first
+  band is first written, followed by the value of the second band, until the
+  value of the last band.
+
+  For example, for a 3-band image the values are stored as ``R1 G1 B1 R2 G2 B2 R3 G3 B3``,
+  where ``R1 G1 B1`` are the band values of the first pixel, ``R2 G2 B2`` those
+  of the second pixel, and so on.
+
+  .. figure:: ../../images/interleave_bip.svg
+
+     Band Interleaved by Pixel (BIP) mode
+
+  That mode is efficient to fetch at once the values of all bands for a given
+  location, and is conversely less efficient to extract only a subset of bands
+  when the number of bands increases.
+
+  In GeoTIFF format, this organization corresponds to the PlanarConfiguration=Contiguous,
+  and there is only one single tile or strip (depending on whether the dataset
+  is tiled or not) for each spatial region. That mode can be required for some
+  compression methods, or be preferred for higher compression, such as using YCbCr
+  photometric mode for JPEG compression.
+
+- In Band SeQuential (BSQ) mode, reported as INTERLEAVE=BAND, all samples of one
+  band are stored together before the next band.
+
+  For example, for a 3-band image the values are stored as ``R1 R2 R3 ... G1 G2 G3 ... B1 B2 B3 ...``,
+  where all pixels of the first band are stored first, followed by all pixels of
+  the second band, and then the third band.
+
+  .. figure:: ../../images/interleave_bsq.svg
+
+     Band SeQuential (BSQ) mode
+
+  In GeoTIFF format, this organization corresponds to the PlanarConfiguration=Separate,
+  and there is one tile or strip (depending on whether the dataset
+  is tiled or not) per band for each spatial region.
+
+- In Band Interleaved by Line (BIL) mode, reported as INTERLEAVE=LINE, the samples
+  are stored band by band for each image line.
+
+  For a 3-band image, the layout for each line is:
+
+  ::
+
+      R11 R21 R31 ... G11 G21 G31 ... B11 B21 B31 ...  (line 1)
+      R21 R22 R32 ... G21 G22 G23 ... B21 B22 B32 ...  (line 2)
+
+  That is, all pixels of band 1 for the first line are stored first, followed by
+  all pixels of band 2 for that line, then band 3, before moving to the next line.
+
+  .. figure:: ../../images/interleave_bil.svg
+
+     Band Interleaved by Line (BIL) mode
+
+  There is no GeoTIFF pixel organization corresponding to that mode, but it can be found
+  in some raw image formats such as :ref:`ESRI .hdr labeling <raster.ehdr>` or
+  :ref:`ENVI .hdr Labelled Raster <raster.envi>`
+
 
 RPC Domain
 ++++++++++

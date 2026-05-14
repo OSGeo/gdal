@@ -23,7 +23,7 @@
 class OGRLayer;
 
 /************************************************************************/
-/*                   GDALDatasetIdentifyAlgorithm                       */
+/*                     GDALDatasetIdentifyAlgorithm                     */
 /************************************************************************/
 
 class GDALDatasetIdentifyAlgorithm final : public GDALAlgorithm

@@ -83,14 +83,22 @@ jobs:
             test_script: test.sh
             os: ubuntu-22.04
 
-          - name: Ubuntu 24.04, gcc
-            id: ubuntu_24.04
-            travis_branch: ubuntu_2404
-            container: ubuntu_24.04
+          - name: Ubuntu 26.04, gcc
+            id: ubuntu_26.04
+            travis_branch: ubuntu_2604
+            container: ubuntu_26.04
             before_test_script: services.sh
             build_script: build.sh
             test_script: test.sh
-            os: ubuntu-22.04
+            os: ubuntu-24.04
+
+          - name: Ubuntu 26.04, clang ASAN
+            id: asan
+            travis_branch: sanitize
+            container: ubuntu_26.04
+            build_script: build.sh
+            test_script: test.sh
+            os: ubuntu-24.04
 
           - name: Ubuntu 22.04, gcc
             id: ubuntu_22.04
@@ -100,14 +108,6 @@ jobs:
             build_script: build.sh
             test_script: test.sh
             os: ubuntu-22.04
-
-          - name: Ubuntu 24.04, clang ASAN
-            id: asan
-            travis_branch: sanitize
-            container: ubuntu_24.04
-            build_script: build.sh
-            test_script: test.sh
-            os: ubuntu-24.04
 
           - name: Ubuntu 20.04, gcc
             id: ubuntu_20.04
@@ -138,6 +138,7 @@ jobs:
           - name: Ubuntu 22.04, Intel compiler
             id: icc
             container: icc
+            travis_branch: ubuntu_2204
             build_script: build.sh
             os: ubuntu-22.04
 
@@ -186,14 +187,16 @@ jobs:
           sudo sysctl vm.mmap_rnd_bits=28
 
       - name: Checkout
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Login to Docker Hub
         if: env.CONTAINER_REGISTRY == 'docker.io'
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}   # zizmor: ignore[secrets-outside-env]
+          password: ${{ secrets.DOCKERHUB_TOKEN }}   # zizmor: ignore[secrets-outside-env]
 
       - name: Login to GHCR
         if: env.CONTAINER_REGISTRY == 'ghcr.io'
@@ -258,13 +261,13 @@ jobs:
       # different architecture.
       - name: Restore build cache
         id: restore-cache
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.run_id }}
+          key: ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}
-            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}
+            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}-
+            ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-
 
       - name: Prepare ccache
         run: |
@@ -319,7 +322,12 @@ jobs:
             ccache -s
 
       - name: Save build cache
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        # Do not write to cache on pull_request events to prevent cache poisoning.
+        # Fork PRs can otherwise overwrite shared cache keys used by main branch runs
+        # and as we have "packages: write" that could potentially lead to compromising
+        # our gdal-deps Docker images.
+        if: github.event_name != 'pull_request'
         with:
           path: ${{ github.workspace }}/.ccache
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
@@ -377,6 +385,7 @@ jobs:
         with:
           format: lcov
           file: build-coverage/gdal_filtered.info
+          fail-on-error: false
 
       - name: Push build environment
         if: github.event_name == 'push'
@@ -387,14 +396,14 @@ jobs:
           docker push ${CONTAINER_NAME_FULL}
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ matrix.id == 'coverage' }}
         with:
           name: coverage_index.html
           path: build-${{ matrix.id }}/coverage_html/index.html
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: ${{ matrix.id == 'coverage' }}
         with:
           name: HTML
@@ -403,8 +412,10 @@ jobs:
       - name: Deploy ssh key (for coverage)
         if: ${{ matrix.id == 'coverage' && github.event_name == 'push' && github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
         shell: bash -l {0}
+        env:
+          GDAL_TEST_COVERAGE_RESULTS_SSH_KEY: ${{ secrets.GDAL_TEST_COVERAGE_RESULTS_SSH_KEY }}   # zizmor: ignore[secrets-outside-env]
         run: |
-          mkdir $HOME/.ssh && echo "${{ secrets.GDAL_TEST_COVERAGE_RESULTS_SSH_KEY }}" > $HOME/.ssh/id_rsa
+          mkdir $HOME/.ssh && echo "${GDAL_TEST_COVERAGE_RESULTS_SSH_KEY}" > $HOME/.ssh/id_rsa
           chmod 700 $HOME/.ssh && chmod 600 $HOME/.ssh/id_rsa
           ssh-keyscan -t rsa github.com >> $HOME/.ssh/known_hosts
           eval `ssh-agent -s`

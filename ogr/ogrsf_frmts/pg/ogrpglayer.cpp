@@ -46,6 +46,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <algorithm>
 #include <limits>
 
 #define PQexec this_is_an_error
@@ -58,7 +59,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #endif
 
 /************************************************************************/
-/*                           OGRPGLayer()                               */
+/*                             OGRPGLayer()                             */
 /************************************************************************/
 
 OGRPGLayer::OGRPGLayer()
@@ -123,7 +124,7 @@ void OGRPGLayer::CloseCursor()
 }
 
 /************************************************************************/
-/*                       InvalidateCursor()                             */
+/*                          InvalidateCursor()                          */
 /************************************************************************/
 
 void OGRPGLayer::InvalidateCursor()
@@ -280,7 +281,7 @@ static char *OGRPGGetStrFromBinaryNumeric(NumericVar *var)
 }
 
 /************************************************************************/
-/*                         OGRPGj2date()                            */
+/*                            OGRPGj2date()                             */
 /************************************************************************/
 
 /* Coming from j2date() in pgsql/src/backend/utils/adt/datetime.c */
@@ -307,7 +308,7 @@ static void OGRPGj2date(int jd, int *year, int *month, int *day)
 } /* j2date() */
 
 /************************************************************************/
-/*                              OGRPGdt2time()                          */
+/*                            OGRPGdt2time()                            */
 /************************************************************************/
 
 #define USECS_PER_SEC 1000000
@@ -344,7 +345,7 @@ static void OGRPGdt2timeFloat8(double jd, int *hour, int *min, int *sec,
 }
 
 /************************************************************************/
-/*                        OGRPGTimeStamp2DMYHMS()                       */
+/*                       OGRPGTimeStamp2DMYHMS()                        */
 /************************************************************************/
 
 #define TMODULO(t, q, u)                                                       \
@@ -1388,7 +1389,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
 }
 
 /************************************************************************/
-/*                    OGRPGIsKnownGeomFuncPrefix()                      */
+/*                     OGRPGIsKnownGeomFuncPrefix()                     */
 /************************************************************************/
 
 static const char *const apszKnownGeomFuncPrefixes[] = {
@@ -1408,7 +1409,7 @@ static int OGRPGIsKnownGeomFuncPrefix(const char *pszFieldName)
 }
 
 /************************************************************************/
-/*                CreateMapFromFieldNameToIndex()                       */
+/*                   CreateMapFromFieldNameToIndex()                    */
 /************************************************************************/
 
 /* Evaluating GetFieldIndex() on each field of each feature can be very */
@@ -1462,7 +1463,7 @@ void OGRPGLayer::CreateMapFromFieldNameToIndex(PGresult *hResult,
 }
 
 /************************************************************************/
-/*                     SetInitialQueryCursor()                          */
+/*                       SetInitialQueryCursor()                        */
 /************************************************************************/
 
 void OGRPGLayer::SetInitialQueryCursor()
@@ -1540,7 +1541,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 
         OGRPGClearResult(hCursorResult);
 
-        iNextShapeId = MAX(1, iNextShapeId);
+        iNextShapeId = std::max<GIntBig>(1, iNextShapeId);
         return nullptr;
     }
 
@@ -1570,7 +1571,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
     {
         CloseCursor();
 
-        iNextShapeId = MAX(1, iNextShapeId);
+        iNextShapeId = std::max<GIntBig>(1, iNextShapeId);
 
         return nullptr;
     }
@@ -1653,7 +1654,7 @@ OGRErr OGRPGLayer::SetNextByIndex(GIntBig nIndex)
 }
 
 /************************************************************************/
-/*                        BYTEAToGByteArray()                           */
+/*                         BYTEAToGByteArray()                          */
 /************************************************************************/
 
 GByte *OGRPGLayer::BYTEAToGByteArray(const char *pszBytea, int *pnLength)
@@ -1771,7 +1772,7 @@ char *OGRPGLayer::GeometryToBYTEA(const OGRGeometry *poGeometry,
 }
 
 /************************************************************************/
-/*                          OIDToGeometry()                             */
+/*                           OIDToGeometry()                            */
 /************************************************************************/
 
 OGRGeometry *OGRPGLayer::OIDToGeometry(Oid oid)
@@ -2345,7 +2346,7 @@ int OGRPGLayer::ReadResultDefinition(PGresult *hInitialResultIn)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *OGRPGGeomFieldDefn::GetSpatialRef() const
@@ -2358,10 +2359,8 @@ const OGRSpatialReference *OGRPGGeomFieldDefn::GetSpatialRef() const
     if (poSRS == nullptr && nSRSId > 0)
     {
         poSRS = poLayer->GetDS()->FetchSRS(nSRSId);
-        if (poSRS != nullptr)
-            const_cast<OGRSpatialReference *>(poSRS)->Reference();
     }
-    return poSRS;
+    return poSRS.get();
 }
 
 /************************************************************************/

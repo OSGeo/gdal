@@ -24,6 +24,8 @@ Commonly used utilities include:
 -  gdal_calc
 -  ogrmerge
 
+The sub-package ``samples`` contains the :ref:`python_samples`.
+
 Developers
 ----------
 

@@ -11,11 +11,13 @@ VRT -- GDAL Virtual Format
 Introduction
 ------------
 
-The VRT driver is a format driver for GDAL that allows a virtual GDAL dataset
+GDAL Virtual Format is a raster driver that allows a virtual GDAL dataset
 to be composed from other GDAL datasets with repositioning, and algorithms
 potentially applied as well as various kinds of metadata altered or added.
 VRT descriptions of datasets can be saved in an XML format normally given the
-extension .vrt.
+extension .vrt.  The :ref:`gdal_raster_mosaic` or :ref:`gdal_raster_stack` programs can build a VRT from a list of datasets.
+
+
 
 Note .vrt files starting with
 
@@ -606,7 +608,7 @@ ArraySource
 .. versionadded:: 3.8
 
 The ArraySource_ indicates that raster data should be read from a 2D array using
-the multidimensional API. If the original array is not a 3D array, a DerivedArray
+the multidimensional API. If the original array is not a 2D array, a DerivedArray
 with a View step must be typically used to create a 2D slice.
 
 ArraySource can have the following child elements:
@@ -1213,6 +1215,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - Number of input sources
      - PixelFunctionArguments
      - Description
+   * - **area**
+     - 0
+     -
+     - (GDAL >= 3.13) Returns the area of each pixel in square meters.
    * - **argmax**
      - >= 1
      - ``propagateNoData`` (optional, default=false)
@@ -1539,6 +1545,14 @@ GDAL provides a set of default pixel functions that can be used without writing 
        Starting with GDAL 3.12, if the input is equal to the derived band's NoData value
 
        (set with ``<NoDataValue>``), the result will be the NoData value.
+   * - **quantile**
+     - 1
+     - ``q``
+     - Calculate the specified quantile (``q``) of the input raster bands.
+
+       If the input is equal to the derived band's NoData value
+
+       (set with ``<NoDataValue>``), the result will be the NoData value.
    * - **real**
      - 1
      - -
@@ -1572,6 +1586,10 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - = 1
      - ``to`` (optional)
      - Convert incoming ``NoData`` values to a new value, IEEE 754 `nan` by default
+   * - **round**
+     - = 1
+     - - ``digits`` (optional)
+     - (GDAL >= 3.13) Round the input to the specified number of digits to the right of the decimal point.
    * - **scale**
      - = 1
      - -
@@ -2432,7 +2450,7 @@ For example:
 
 The supported options currently are ``bands``, ``a_nodata``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, ``eco``, ``sd_name``, and ``sd``.
+``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, ``nogcp``, ``epo``, ``eco``, ``sd_name``, ``sd``, and ``block``.
 
 Other options may be added in the future.
 
@@ -2542,6 +2560,21 @@ The usage syntax is ``vrt://somefile.extension?transpose=varname:iXDim,iYDim`` w
 ``vrt://somefile.extension?transpose=varname:0,1`` and ``vrt://somefile.extension?transpose=varname:1,0`` would be a
 transpose on the first two axes. There must be two unique axis indexes with values between 0 and the maximum available.
 This option is mutually exclusive with ``sd_name`` and ``sd``.
+
+The effect of the ``block`` option (added in GDAL 3.13) is to access a natural block
+from the raster as a subwindow defined by the internal block indexing as per
+:cpp:func:`GDALRasterBand::ReadBlock`. The value consists of two integers separated by commas,
+in the order 'nXBlockOff,nYBlockOff', the horizontal and vertical block offset, with 0 indicating
+the left-most or top-most block, 1 the next block, and so forth. Marginal blocks are extracted with
+reduced size if implied by imperfect divisor matching of block size versus raster size. It is an error
+to provide fewer or more than two values to the ``block`` option, and an error for values that are
+less than zero, or greater than the maximum block index. This option is mutually exclusive with
+``srcwin``, ``projwin``, ``outsize``, ``tr``, ``r``, and ``ovr``.
+
+.. spelling:word-list::
+    nXBlockOff
+    nYBlockOff
+
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).

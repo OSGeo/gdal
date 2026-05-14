@@ -69,7 +69,7 @@ static GDALDataset *OGRIDBDriverCreate(const char *pszName, int /* nBands */,
 }
 
 /************************************************************************/
-/*                           RegisterOGRIDB()                            */
+/*                           RegisterOGRIDB()                           */
 /************************************************************************/
 
 void RegisterOGRIDB()

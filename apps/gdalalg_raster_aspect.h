@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                       GDALRasterAspectAlgorithm                      */
+/*                      GDALRasterAspectAlgorithm                       */
 /************************************************************************/
 
 class GDALRasterAspectAlgorithm /* non final */

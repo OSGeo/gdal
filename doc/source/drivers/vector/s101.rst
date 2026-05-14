@@ -1,0 +1,295 @@
+.. _vector.s101:
+
+IHO S-101 (ENC)
+===============
+
+.. versionadded:: 3.14
+
+.. shortname:: S101
+
+.. built_in_by_default::
+
+International Hydrographic Organization (IHO) S-101 Electronic Navigation
+Charts (ENC) datasets are supported for read access.
+
+S-101 (ENC) files normally start with "101" and have the extension ".000".
+
+The S-101 driver produces OGR features for all S-101 information (in a broad sense,
+this includes geometry primitives, Information Type, and Feature Type records) in the
+S-101 file.
+
+Georeferenced features are referenced to WGS 84 (EPSG:4326). Point and multipoint
+geometries may be referenced to a vertical datum (depth, in meters).
+
+S-101 update files contain information on how to update a distributed
+S-101 base data file. The base files normally have the extension .000
+while the update files have extensions like .001, .002 and so on. The
+S-101 reader will normally read and apply all update files to the in
+memory version of the base file on the fly. The feature data provided to
+the application therefore includes all the updates.
+
+Driver capabilities
+-------------------
+
+.. supports_georeferencing::
+
+.. supports_virtualio::
+
+Open Options
+------------
+
+|about-open-options|
+The following open options are supported:
+
+- .. oo:: STRICT
+      :choices: YES, NO
+      :default: YES
+
+      Whether strict parsing mode should be enabled. Strict mode validates
+      the product against the specification and errors out as soon as an error is
+      encountered. When setting this option to NO, warnings will be emitted
+      instead and the parsing of the product will continue as much as possible.
+
+-  .. oo:: UPDATES
+      :choices: APPLY, IGNORE
+      :default: APPLY
+
+      Should update files be incorporated into the base data on the fly.
+
+Layers
+------
+
+The following layers are exposed (when there are corresponding records in the
+dataset):
+
+``informationType`` layer
++++++++++++++++++++++++++
+
+No geometry field.
+
+One OGR feature per Information Type record.
+
+The following OGR fields are available:
+
+* ``recordId``, Integer: content of the ``RCID`` subfield of the ``IRID`` field.
+* ``recordVersion``, Integer: content of the ``RVER`` subfield of the ``IRID`` field.
+* ``informationType``, String: type of the record (e.g., ``ContactDetails``, ``SpatialQuality``, etc.).
+* Attributes of the ``ATTR`` field, exposed in a flattened way (e.g., ``spatialAccuracy.horizontalPositionUncertainty.uncertaintyFixed``).
+
+When one information association is present, the following optional
+fields are also available:
+
+* ``infoAssociationRecordId``, Integer: foreign key to the ``recordId`` value of another informationType feature.
+* ``infoAssociationCode``, String: type of information association (e.g., ``AdditionalInformation``).
+* ``infoAssociationRoleCode``, String: role of the association (e.g., ``providesInformation``, ``supports``, etc.).
+* Attributes of the association, exposed in a flattened way and prefixed with ``association_``.
+
+When several information associations are present, the following optional
+fields are also available:
+
+* ``infoAssociationRecordId[{idx}]``, Integer: foreign key to the ``recordId`` value of another informationType feature.
+* ``infoAssociationCode[{idx}]``, String: type of information association (e.g., ``AdditionalInformation``).
+* ``infoAssociationRoleCode[{idx}]``, String: role of the association (e.g., ``providesInformation``, ``supports``, etc.).
+* Attributes of the association, exposed in a flattened way and prefixed with ``association[{idx}]_``.
+
+``Point2D`` layer
++++++++++++++++++
+
+Geometry field: 2D point in WGS 84.
+
+The following OGR fields are available:
+
+* ``recordId``, Integer: content of the ``RCID`` subfield of the ``PRID`` field.
+* ``recordVersion``, Integer: content of the ``RVER`` subfield of the ``PRID`` field.
+
+Optional information association(s) are exposed in the same way as for the
+``informationType`` layer.
+
+``Point3D_{vertical_crs_name}`` layers
++++++++++++++++++++++++++++++++++++++++
+
+Geometry field: 3D point in a compound CRS, whose horizontal part is WGS 84
+and vertical part is a depth.
+
+Same fields as the ``Point2D`` layer.
+
+``MultiPoint2D`` layer
+++++++++++++++++++++++
+
+Geometry field: 2D multipoint in WGS 84.
+
+The following OGR fields are available:
+
+* ``recordId``, Integer: content of the ``RCID`` subfield of the ``MRID`` field.
+* ``recordVersion``, Integer: content of the ``RVER`` subfield of the ``MRID`` field.
+
+Optional information association(s) are exposed in the same way as for the
+``informationType`` layer.
+
+``MultiPoint3D_{vertical_crs_name}`` layers
++++++++++++++++++++++++++++++++++++++++++++++
+
+Geometry field: 3D point in a compound CRS, whose horizontal part is WGS 84
+and vertical part is a depth.
+
+Same fields as the ``MultiPoint2D`` layer.
+
+``Curve`` layer
++++++++++++++++
+
+Geometry field: 2D linestring in WGS 84.
+
+The following OGR fields are available:
+
+* ``recordId``, Integer: content of the ``RCID`` subfield of the ``CRID`` field.
+* ``recordVersion``, Integer: content of the ``RVER`` subfield of the ``CRID`` field.
+
+Optional information association(s) are exposed in the same way as for the
+``informationType`` layer.
+
+``CompositeCurve`` layer
+++++++++++++++++++++++++
+
+Geometry field: 2D linestring in WGS 84.
+
+The following OGR fields are available:
+
+* ``recordId``, Integer: content of the ``RCID`` subfield of the ``CCID`` field.
+* ``recordVersion``, Integer: content of the ``RVER`` subfield of the ``CCID`` field.
+
+Optional information association(s) are exposed in the same way as for the
+``informationType`` layer.
+
+``Surface`` layer
+++++++++++++++++++
+
+Geometry field: 2D polygon in WGS 84.
+
+The following OGR fields are available:
+
+* ``recordId``, Integer: content of the ``RCID`` subfield of the ``SRID`` field.
+* ``recordVersion``, Integer: content of the ``RVER`` subfield of the ``SRID`` field.
+
+Optional information association(s) are exposed in the same way as for the
+``informationType`` layer.
+
+Feature type layers
++++++++++++++++++++
+
+One layer per feature type (as determined by the ``NTFC`` subfield of the
+``FRID`` field) and per geometry type.
+
+The layer name is ``{featureTypeShortName}_{geometryType}``, e.g.,
+``AnchorageArea_Point2D`` and ``AnchorageArea_Polygon``, ``RangeSystem_NoGeom``.
+
+If several geometries of the same nature are associated with at least one feature,
+multi-geometry types are used (MultiPoint, MultiLineString, MultiPolygon, or
+GeometryCollection when the individual geometry is a MultiPoint).
+
+The following OGR fields are available:
+
+* ``recordId``, Integer: content of the ``RCID`` subfield of the ``FRID`` field.
+* ``recordVersion``, Integer: content of the ``RVER`` subfield of the ``FRID`` field.
+* ``featureIdentificationNumber``, Integer: content of the ``FIDN`` subfield of
+  the ``FOID`` field.
+* ``featureIdentificationSubdivision``, Integer: content of the ``FIDS`` subfield
+  of the ``FOID`` field.
+* ``producingAgency``, Integer: content of the ``AGEN`` subfield of the ``FOID``
+  field. The corresponding text name is in the IHO S-62
+  `Producer Code Register <https://registry.iho.int/producercode/list2.do>`__.
+
+For spatial layers, the following additional fields are available:
+
+* ``geometryLayerName``, String (or StringList for multi-geometries):
+  name of the layer of the associated geometry.
+* ``geometryRecordId``, Integer (or IntegerList for multi-geometries):
+  foreign key to the ``recordId`` value of the associated geometry in layer ``geometryLayerName``.
+* ``geometryOrientation``, String (or StringList for multi-geometries):
+  ``forward`` if the associated curve must be followed in its nominal orientation,
+  or ``reverse`` if it must be followed in the reverse direction of its definition.
+  Only present when the geometry is a ``Curve`` or ``CompositeCurve``.
+* ``scaleMinimum``, Integer (or IntegerList for multi-geometries):
+  the smallest (reciprocal) scale at which a feature is intended to be displayed.
+* ``scaleMaximum``, Integer (or IntegerList for multi-geometries):
+  the largest (reciprocal) scale at which a feature is intended to be displayed.
+
+Optional information association(s) are exposed in the same way as for the
+``informationType`` layer.
+
+Optional feature association(s) are exposed in a similar way as information
+association(s), but using a ``featureAssociation`` field name prefix instead of
+``informationType``.
+
+In certain circumstances, the symbolization of a curve may need to be
+suppressed in surface features. When masking is defined, the following
+additional fields are available:
+
+* ``maskLayerName``, String (or StringList for multi-mask geometries):
+  name of the layer of the associated geometry (``Curve`` or ``CompositeCurve``).
+* ``maskRecordId``, Integer (or IntegerList for multi-mask geometries):
+  foreign key to the ``recordId`` value of the associated geometry in layer ``maskLayerName``.
+* ``maskIndicator``, String (or StringList for multi-mask geometries):
+  how the mask must be applied. The two potential values are
+  ``truncatedByDataCoverageLimit`` or ``suppressPortrayal``.
+
+The mask geometry is also attached as an OGR geometry in an additional
+``maskGeometry`` OGR geometry field.
+Note that upon file format conversion, this additional geometry field may be
+lost due to file format limitations. The ``maskLayerName`` and ``maskRecordId``
+attributes may then be used to recover the mask geometry.
+
+Dataset metadata
+----------------
+
+The following metadata items are reported at the dataset level:
+
+* ``APPLICATION_PROFILE``. 1 if only initial file .000 processed, 2 otherwise.
+* ``DATASET_EDITION``. Dataset version number. Set to 0 if dataset is cancelled
+* ``DATASET_IDENTIFIER``. The filename, including extension but excluding any path information.
+* ``DATASET_LANGUAGE``. Primary language used in the dataset. Must be ``EN`` (English).
+* ``DATASET_REFERENCE_DATE``. Reference date of the dataset. Format: YYYYMMDD according to ISO 8601.
+* ``DATASET_TITLE``. Title of the dataset.
+* ``ENCODING_SPECIFICATION``. Must be ``S-100 Part 10a``.
+* ``ENCODING_SPECIFICATION_EDITION``. Must be ``5.2``.
+* ``PRODUCT_EDITION``. Must be ``2.0``.
+* ``PRODUCT_IDENTIFIER``. Must be ``INT.IHO.S-101.2.0``.
+* ``STATUS``. ``VALID`` or ``CANCELLED``.
+
+Feature Catalog
+---------------
+
+The driver can operate without the XML Feature Catalog file being present on the
+system, but access to that file provides:
+
+* better typing of attributes, in particular boolean fields.
+* extra consistency checks on the validity of attributes and feature types.
+* exposing enumerated attributes as OGR field domains.
+
+The feature catalog is looked for in the following locations, by decreasing priority:
+
+* Value defined by the ``GDAL_S101_FEATURE_CATALOG`` configuration option.
+* In :file:`$INSTALL_PREFIX/share/gdal/101_Feature_Catalogue_2.0.0.xml`.
+* In :file:`$HOME/.gdal/101_Feature_Catalogue_2.0.0.xml`.
+
+If not found, an attempt is made to download it from the `IHO OHI GitHub repository <https://raw.githubusercontent.com/iho-ohi/S-101-Documentation-and-FC/fbcf8aaa72331a33668aa554e702e2a28f27cbc0/S-101FC/FeatureCatalogue.xml>`__
+and cache it in :file:`$HOME/.gdal/101_Feature_Catalogue_2.0.0.xml`.
+
+See Also
+--------
+
+- `IHO S-101 Electronic Navigational Chart (ENC) Product Specification - Edition 2.0.0`_
+- :ref:`vector.s57`
+
+.. _`IHO S-101 Electronic Navigational Chart (ENC) Product Specification - Edition 2.0.0`: https://registry.iho.int/productspec/view.do?idx=214&product_ID=S-101&statusS=5&domainS=ALL&category=product_ID&searchValue=
+
+Credits
+-------
+
+Initial development of this driver was funded by `Rijkswaterstaat <https://www.rijkswaterstaat.nl/en>`__.
+Support for reading update files was funded by `Zydromarine <https://zydromarine.com>`__.
+
+.. below is an allow-list for spelling checker.
+
+.. spelling:word-list::
+    informationType
+    cancelled

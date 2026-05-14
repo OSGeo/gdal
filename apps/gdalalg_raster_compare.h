@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                     GDALRasterCompareAlgorithm                       */
+/*                      GDALRasterCompareAlgorithm                      */
 /************************************************************************/
 
 class GDALRasterCompareAlgorithm /* non final */
@@ -40,6 +40,11 @@ class GDALRasterCompareAlgorithm /* non final */
     bool CanBeLastStep() const override
     {
         return true;
+    }
+
+    int GetOutputType() const override
+    {
+        return 0;
     }
 
   private:

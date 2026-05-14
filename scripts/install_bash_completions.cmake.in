@@ -2,27 +2,39 @@
 set(PROGRAMS
     gdal
     gdal2tiles.py
+    gdal2tiles
     gdal2xyz.py
+    gdal2xyz
     gdaladdo
     gdalbuildvrt
     gdal_calc.py
+    gdal_calc
     gdalcompare.py
+    gdalcompare
     gdal-config
     gdal_contour
     gdaldem
     gdal_edit.py
+    gdal_edit
     gdalenhance
     gdal_fillnodata.py
+    gdal_fillnodata
     gdal_grid
     gdallocationinfo
     gdalmanage
     gdal_merge.py
+    gdal_merge
     gdalmove.py
+    gdalmove
     gdal_polygonize.py
+    gdal_polygonize
     gdal_proximity.py
+    gdal_proximity
     gdal_rasterize
     gdal_retile.py
+    gdal_retile
     gdal_sieve.py
+    gdal_sieve
     gdalsrsinfo
     gdaltindex
     gdaltransform
@@ -33,8 +45,10 @@ set(PROGRAMS
     ogrinfo
     ogrlineref
     ogrmerge.py
+    ogrmerge
     ogrtindex
     ogr_layer_algebra.py
+    ogr_layer_algebra
     gdal_viewshed
     gdal_create
     sozip)

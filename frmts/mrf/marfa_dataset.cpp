@@ -728,12 +728,12 @@ CPLErr MRFDataset::SetVersion(int version)
     for (int bcount = 1; bcount <= nBands; bcount++)
     {
         MRFRasterBand *srcband =
-            reinterpret_cast<MRFRasterBand *>(GetRasterBand(bcount));
+            cpl::down_cast<MRFRasterBand *>(GetRasterBand(bcount));
         srcband->img.idxoffset += idxSize * verCount;
         for (int l = 0; l < srcband->GetOverviewCount(); l++)
         {
             MRFRasterBand *band =
-                reinterpret_cast<MRFRasterBand *>(srcband->GetOverview(l));
+                cpl::down_cast<MRFRasterBand *>(srcband->GetOverview(l));
             if (band != nullptr)
                 band->img.idxoffset += idxSize * verCount;
         }
@@ -752,8 +752,10 @@ CPLErr MRFDataset::LevelInit(const int l)
         return CE_Failure;
     }
 
-    MRFRasterBand *srcband = reinterpret_cast<MRFRasterBand *>(
-        cds->GetRasterBand(1)->GetOverview(l));
+    MRFRasterBand *srcband =
+        cpl::down_cast<MRFRasterBand *>(cds->GetRasterBand(1)->GetOverview(l));
+    if (!srcband)
+        return CE_Failure;
 
     // Copy the sizes from this level
     full = srcband->img;
@@ -770,8 +772,8 @@ CPLErr MRFDataset::LevelInit(const int l)
     bGeoTransformValid = (CE_None == cds->GetGeoTransform(m_gt));
     for (int i = 0; i < l + 1; i++)
     {
-        m_gt[1] *= scale;
-        m_gt[5] *= scale;
+        m_gt.xscale *= scale;
+        m_gt.yscale *= scale;
     }
 
     nRasterXSize = current.size.x;
@@ -1366,13 +1368,13 @@ CPLXMLNode *MRFDataset::BuildConfig()
     // Do we have an affine transform different from identity?
     GDALGeoTransform gt;
     if ((MRFDataset::GetGeoTransform(gt) == CE_None) &&
-        (gt[0] != 0 || gt[1] != 1 || gt[2] != 0 || gt[3] != 0 || gt[4] != 0 ||
-         gt[5] != 1))
+        (gt.xorig != 0 || gt.xscale != 1 || gt.xrot != 0 || gt.yorig != 0 ||
+         gt.yrot != 0 || gt.yscale != 1))
     {
-        double minx = gt[0];
-        double maxx = gt[1] * full.size.x + minx;
-        double maxy = gt[3];
-        double miny = gt[5] * full.size.y + maxy;
+        double minx = gt.xorig;
+        double maxx = gt.xscale * full.size.x + minx;
+        double maxy = gt.yorig;
+        double miny = gt.yscale * full.size.y + maxy;
         CPLXMLNode *bbox = CPLCreateXMLNode(gtags, CXT_Element, "BoundingBox");
         XMLSetAttributeVal(bbox, "minx", minx);
         XMLSetAttributeVal(bbox, "miny", miny);
@@ -1438,12 +1440,12 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
         y1 = atof(CPLGetXMLValue(bbox, "maxy", "1"));
         y0 = atof(CPLGetXMLValue(bbox, "miny", "0"));
 
-        m_gt[0] = x0;
-        m_gt[1] = (x1 - x0) / full.size.x;
-        m_gt[2] = 0;
-        m_gt[3] = y1;
-        m_gt[4] = 0;
-        m_gt[5] = (y0 - y1) / full.size.y;
+        m_gt.xorig = x0;
+        m_gt.xscale = (x1 - x0) / full.size.x;
+        m_gt.xrot = 0;
+        m_gt.yorig = y1;
+        m_gt.yrot = 0;
+        m_gt.yscale = (y0 - y1) / full.size.y;
         bGeoTransformValid = TRUE;
     }
 
@@ -1731,7 +1733,7 @@ static char **CSLAddIfMissing(char **papszList, const char *pszName,
 // CreateCopy implemented based on Create
 GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int /*bStrict*/,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 {
@@ -2103,20 +2105,19 @@ CPLErr MRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
 
 // Apply open options to the current dataset
 // Called before the configuration is read
-void MRFDataset::ProcessOpenOptions(char **papszOptions)
+void MRFDataset::ProcessOpenOptions(CSLConstList papszOptions)
 {
-    CPLStringList opt(papszOptions, FALSE);
-    no_errors = opt.FetchBoolean("NOERRORS", FALSE);
-    const char *val = opt.FetchNameValue("ZSLICE");
+    no_errors = CSLFetchBoolean(papszOptions, "NOERRORS", FALSE);
+    const char *val = CSLFetchNameValue(papszOptions, "ZSLICE");
     if (val)
         zslice = atoi(val);
 }
 
 // Apply create options to the current dataset, only valid during creation
-void MRFDataset::ProcessCreateOptions(char **papszOptions)
+void MRFDataset::ProcessCreateOptions(CSLConstList papszOptions)
 {
     assert(!bCrystalized);
-    CPLStringList opt(papszOptions, FALSE);
+    const CPLStringList opt(papszOptions);
     ILImage &img(full);
 
     const char *val = opt.FetchNameValue("COMPRESS");
@@ -2196,7 +2197,7 @@ void MRFDataset::ProcessCreateOptions(char **papszOptions)
 
 GDALDataset *MRFDataset::Create(const char *pszName, int nXSize, int nYSize,
                                 int nBandsIn, GDALDataType eType,
-                                char **papszOptions)
+                                CSLConstList papszOptions)
 {
     if (nBandsIn == 0)
     {

@@ -48,7 +48,7 @@ class MSGRasterBand final : public GDALRasterBand
 };
 
 /************************************************************************/
-/*                      MSGDataset                                       */
+/*                              MSGDataset                              */
 /************************************************************************/
 class MSGDataset final : public GDALDataset
 {

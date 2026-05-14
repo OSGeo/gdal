@@ -470,7 +470,7 @@ def test_geoloc_GEOLOC_ARRAY_transformer_option():
     warped_ds = gdal.Warp(
         "", ds, format="MEM", transformerOptions=["GEOLOC_ARRAY=/vsimem/lonlat.tif"]
     )
-    assert warped_ds.GetSpatialRef().GetAuthorityCode(None) == "32631"
+    assert warped_ds.GetSpatialRef().GetAuthorityCode() == "32631"
 
     ds = None
 

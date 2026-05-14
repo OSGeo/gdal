@@ -80,7 +80,7 @@ static bool bHaveWarned5 = false;
 static bool bHaveWarned6 = false;
 
 /************************************************************************/
-/*                 CPLClearRecodeStubWarningFlags()                     */
+/*                   CPLClearRecodeStubWarningFlags()                   */
 /************************************************************************/
 
 void CPLClearRecodeStubWarningFlags()
@@ -485,7 +485,7 @@ wchar_t *CPLRecodeToWCharStub(const char *pszSource, const char *pszSrcEncoding,
 }
 
 /************************************************************************/
-/*                                 CPLIsUTF8()                          */
+/*                             CPLIsUTF8()                              */
 /************************************************************************/
 
 /**
@@ -958,7 +958,7 @@ static unsigned int utf8fromwc(char *dst, unsigned dstlen, const wchar_t *src,
                 // Surrogate pair.
                 unsigned int ucs2 = src[i++];
                 ucs = 0x10000U + ((ucs & 0x3ff) << 10) + (ucs2 & 0x3ff);
-                // All surrogate pairs turn into 4-byte utf8.
+            // All surrogate pairs turn into 4-byte utf8.
 #else
             }
             else if (ucs >= 0x10000)
@@ -1116,7 +1116,7 @@ static unsigned utf8froma(char *dst, unsigned dstlen, const char *src,
 #ifdef _WIN32
 
 /************************************************************************/
-/*                            CPLWin32Recode()                          */
+/*                           CPLWin32Recode()                           */
 /************************************************************************/
 
 /* Convert an CODEPAGE (i.e. normal c-string) byte stream
@@ -1351,7 +1351,7 @@ unsigned utf8tomb(const char *src, unsigned srclen, char *dst, unsigned dstlen)
             free((void *)buf);
         if (ret >= 0)
             return (unsigned)ret;
-            // On any errors we return the UTF-8 as raw text...
+        // On any errors we return the UTF-8 as raw text...
 #endif
     }
     // Identity transform:

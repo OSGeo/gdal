@@ -27,7 +27,7 @@
 #endif
 
 /************************************************************************/
-/*                    GDALRasterRGBToPaletteAlgorithm()                 */
+/*                  GDALRasterRGBToPaletteAlgorithm()                   */
 /************************************************************************/
 
 GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm(
@@ -42,7 +42,8 @@ GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm(
         .SetMinValueIncluded(2)
         .SetMaxValueIncluded(256);
     AddArg("color-map", 0, _("Color map filename"), &m_colorMap);
-    AddArg("dst-nodata", 0, _("Destination nodata value"), &m_dstNoData)
+    AddArg("output-nodata", 0, _("Output nodata value"), &m_dstNoData)
+        .AddHiddenAlias("dst-nodata")
         .SetMinValueIncluded(0)
         .SetMaxValueIncluded(255);
     AddArg("no-dither", 0, _("Disable Floyd-Steinberg dithering"), &m_noDither);
@@ -55,7 +56,7 @@ GDALRasterRGBToPaletteAlgorithm::GDALRasterRGBToPaletteAlgorithm(
 }
 
 /************************************************************************/
-/*                GDALRasterRGBToPaletteAlgorithm::RunStep()            */
+/*              GDALRasterRGBToPaletteAlgorithm::RunStep()              */
 /************************************************************************/
 
 bool GDALRasterRGBToPaletteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

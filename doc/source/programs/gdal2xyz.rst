@@ -115,6 +115,10 @@ Examples
    The remaining columns represent the first and second bands.
    We also replace the dataset nodata values with zeros.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Caveats
 -------

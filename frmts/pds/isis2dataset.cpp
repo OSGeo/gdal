@@ -84,7 +84,7 @@ ISIS2Dataset::ISIS2Dataset()
 }
 
 /************************************************************************/
-/*                            ~ISIS2Dataset()                            */
+/*                           ~ISIS2Dataset()                            */
 /************************************************************************/
 
 ISIS2Dataset::~ISIS2Dataset()
@@ -94,7 +94,7 @@ ISIS2Dataset::~ISIS2Dataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr ISIS2Dataset::Close(GDALProgressFunc, void *)
@@ -131,7 +131,7 @@ char **ISIS2Dataset::GetFileList()
 }
 
 /************************************************************************/
-/*                         GetSpatialRef()                              */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *ISIS2Dataset::GetSpatialRef() const
@@ -494,7 +494,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         // body name 'GCS' = Geographic/Geocentric Coordinate System
         const CPLString geog_name = "GCS_" + target_name;
 
-        // The datum and sphere names will be the same basic name aas the planet
+        // The datum and sphere names will be the same basic name as the planet
         const CPLString datum_name = "D_" + target_name;
 
         CPLString sphere_name = std::move(target_name);
@@ -710,21 +710,21 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (dfULXMap != 0.5 || dfULYMap != 0.5 || dfXDim != 1.0 || dfYDim != 1.0)
     {
         poDS->bGotTransform = TRUE;
-        poDS->m_gt[0] = dfULXMap;
-        poDS->m_gt[1] = dfXDim;
-        poDS->m_gt[2] = 0.0;
-        poDS->m_gt[3] = dfULYMap;
-        poDS->m_gt[4] = 0.0;
-        poDS->m_gt[5] = dfYDim;
+        poDS->m_gt.xorig = dfULXMap;
+        poDS->m_gt.xscale = dfXDim;
+        poDS->m_gt.xrot = 0.0;
+        poDS->m_gt.yorig = dfULYMap;
+        poDS->m_gt.yrot = 0.0;
+        poDS->m_gt.yscale = dfYDim;
     }
 
     if (!poDS->bGotTransform)
-        poDS->bGotTransform = GDALReadWorldFile(poOpenInfo->pszFilename, "cbw",
-                                                poDS->m_gt.data());
+        poDS->bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
+            poOpenInfo->pszFilename, "cbw", poDS->m_gt.data()));
 
     if (!poDS->bGotTransform)
-        poDS->bGotTransform = GDALReadWorldFile(poOpenInfo->pszFilename, "wld",
-                                                poDS->m_gt.data());
+        poDS->bGotTransform = CPL_TO_BOOL(GDALReadWorldFile(
+            poOpenInfo->pszFilename, "wld", poDS->m_gt.data()));
 
     /* -------------------------------------------------------------------- */
     /*      Initialize any PAM information.                                 */
@@ -752,7 +752,7 @@ const char *ISIS2Dataset::GetKeyword(const char *pszPath,
 }
 
 /************************************************************************/
-/*                            GetKeywordSub()                           */
+/*                           GetKeywordSub()                            */
 /************************************************************************/
 
 const char *ISIS2Dataset::GetKeywordSub(const char *pszPath, int iSubscript,

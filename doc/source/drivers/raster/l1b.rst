@@ -133,7 +133,7 @@ See Also
    Guide'' (TIROS-N -- NOAA-14 satellites) and in the \``NOAA KLM User's
    Guide'' (NOAA-15 -- NOAA-16 satellites). You can find this manuals at
    `NOAA Technical Documentation Introduction
-   Page <http://www2.ncdc.noaa.gov/docs/intro.htm>`__
+   Page <https://web.archive.org/web/20130110183419/http://www2.ncdc.noaa.gov/docs/intro.htm>`__
 -  There are a great variety of L1B datasets, sometimes with variations
    in header locations that are not documented in the official NOAA
    documentation. In case a dataset is not recognized by the GDAL L1B
@@ -143,8 +143,8 @@ See Also
    Advanced Very High Resolution Radiometer (AVHRR)'' by Arthur P.
    Cracknell, Taylor and Francis Ltd., 1997, ISBN 0-7484-0209-8.
 -  NOAA data can be downloaded from the `Comprehensive Large Array-data
-   Stewardship System (CLASS) <http://www.class.noaa.gov/>`__ (former
+   Stewardship System (CLASS) <https://www.aev.class.noaa.gov/>`__ (former
    SAA). Actually it is only source of Level 1b datasets for me, so my
    implementation tested with that files only.
 -  `NOAA spacecrafts status
-   page <http://www.oso.noaa.gov/poesstatus/>`__
+   page <https://web.archive.org/web/20140821145613/http://www.oso.noaa.gov/poesstatus/>`__

@@ -41,7 +41,7 @@ namespace
 {
 
 /************************************************************************/
-/*                   GDALVectorSegmentizeAlgorithmLayer                 */
+/*                  GDALVectorSegmentizeAlgorithmLayer                  */
 /************************************************************************/
 
 class GDALVectorSegmentizeAlgorithmLayer final
@@ -88,7 +88,7 @@ GDALVectorSegmentizeAlgorithmLayer::TranslateFeature(
 }  // namespace
 
 /************************************************************************/
-/*             GDALVectorSegmentizeAlgorithm::CreateAlgLayer()          */
+/*           GDALVectorSegmentizeAlgorithm::CreateAlgLayer()            */
 /************************************************************************/
 
 std::unique_ptr<OGRLayerWithTranslateFeature>

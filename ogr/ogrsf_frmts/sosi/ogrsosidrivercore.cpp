@@ -19,7 +19,7 @@
 #include "ogrsosidrivercore.h"
 
 /************************************************************************/
-/*                      OGRSOSIDriverIdentify()                         */
+/*                       OGRSOSIDriverIdentify()                        */
 /************************************************************************/
 
 int OGRSOSIDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -34,7 +34,7 @@ int OGRSOSIDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                  OGRSOSIDriverSetCommonMetadata()                    */
+/*                   OGRSOSIDriverSetCommonMetadata()                   */
 /************************************************************************/
 
 void OGRSOSIDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -61,7 +61,7 @@ void OGRSOSIDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                   DeclareDeferredOGRSOSIPlugin()                     */
+/*                    DeclareDeferredOGRSOSIPlugin()                    */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

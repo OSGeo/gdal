@@ -25,7 +25,7 @@
 #include "ogr_p.h"
 
 /************************************************************************/
-/*                  OGRLinearRing( const OGRLinearRing& )               */
+/*                OGRLinearRing( const OGRLinearRing& )                 */
 /************************************************************************/
 
 /**
@@ -65,7 +65,7 @@ OGRLinearRing::OGRLinearRing(const OGRLinearRing *poSrcRing)
 }
 
 /************************************************************************/
-/*                    operator=( const OGRLinearRing& )                 */
+/*                  operator=( const OGRLinearRing& )                   */
 /************************************************************************/
 
 /**
@@ -406,7 +406,7 @@ OGRLinearRing *OGRLinearRing::clone() const
 }
 
 /************************************************************************/
-/*                             reverseWindingOrder()                    */
+/*                        reverseWindingOrder()                         */
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
@@ -440,7 +440,7 @@ void OGRLinearRing::closeRings()
 }
 
 /************************************************************************/
-/*                              isPointInRing()                         */
+/*                           isPointInRing()                            */
 /************************************************************************/
 
 /** Returns whether the point is inside the ring.
@@ -449,8 +449,8 @@ void OGRLinearRing::closeRings()
  *                      ring envelope must be checked first.
  * @return TRUE or FALSE.
  */
-OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint *poPoint,
-                                        int bTestEnvelope) const
+bool OGRLinearRing::isPointInRing(const OGRPoint *poPoint,
+                                  int bTestEnvelope) const
 {
     if (nullptr == poPoint)
     {
@@ -517,7 +517,7 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint *poPoint,
 
     // If iNumCrossings number is even, given point is outside the ring,
     // when the crossings number is odd, the point is inside the ring.
-    return iNumCrossings % 2;  // OGRBoolean
+    return (iNumCrossings % 2) != 0;
 }
 
 /************************************************************************/
@@ -530,8 +530,8 @@ OGRBoolean OGRLinearRing::isPointInRing(const OGRPoint *poPoint,
  *                      ring envelope must be checked first.
  * @return TRUE or FALSE.
  */
-OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint *poPoint,
-                                                int bTestEnvelope) const
+bool OGRLinearRing::isPointOnRingBoundary(const OGRPoint *poPoint,
+                                          int bTestEnvelope) const
 {
     if (nullptr == poPoint)
     {
@@ -612,7 +612,7 @@ OGRBoolean OGRLinearRing::isPointOnRingBoundary(const OGRPoint *poPoint,
 OGRErr OGRLinearRing::transform(OGRCoordinateTransformation *poCT)
 
 {
-    const bool bIsClosed = getNumPoints() > 2 && CPL_TO_BOOL(get_IsClosed());
+    const bool bIsClosed = getNumPoints() > 2 && get_IsClosed();
     OGRErr eErr = OGRLineString::transform(poCT);
     if (bIsClosed && eErr == OGRERR_NONE && !get_IsClosed())
     {
@@ -652,7 +652,7 @@ OGRLineString *OGRLinearRing::CastToLineString(OGRLinearRing *poLR)
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                     GetCasterToLineString()                          */
+/*                       GetCasterToLineString()                        */
 /************************************************************************/
 
 OGRLineString *OGRLinearRing::CasterToLineString(OGRCurve *poCurve)
@@ -666,7 +666,7 @@ OGRCurveCasterToLineString OGRLinearRing::GetCasterToLineString() const
 }
 
 /************************************************************************/
-/*                        GetCasterToLinearRing()                       */
+/*                       GetCasterToLinearRing()                        */
 /************************************************************************/
 
 static OGRLinearRing *CasterToLinearRing(OGRCurve *poCurve)

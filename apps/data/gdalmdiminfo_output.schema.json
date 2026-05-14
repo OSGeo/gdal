@@ -20,6 +20,9 @@
         "name": {
           "type": "string"
         },
+        "full_name": {
+          "type": "string"
+        },
         "type": {
           "type": "string",
           "enum": [
@@ -67,6 +70,9 @@
         },
         "structural_info": {
           "$ref": "#/definitions/structural_info"
+        },
+        "overviews": {
+          "$ref": "#/definitions/overviews"
         }
       },
       "additionalProperties": false
@@ -237,7 +243,17 @@
           "type": "string"
         },
         "indexing_variable": {
-          "type": "string"
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/definitions/array"
+              }
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -265,6 +281,9 @@
           "type": "string"
         },
         "name": {
+          "type": "string"
+        },
+        "full_name": {
           "type": "string"
         },
         "type": {
@@ -314,6 +333,20 @@
           }
         }
       ]
+    },
+
+    "overviews": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/definitions/array"
+          }
+        ]
+      }
     },
 
     "srs": {

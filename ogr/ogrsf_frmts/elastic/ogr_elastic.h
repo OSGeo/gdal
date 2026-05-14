@@ -48,7 +48,7 @@ class OGRESSortDesc
 };
 
 /************************************************************************/
-/*                          OGRElasticLayer                             */
+/*                           OGRElasticLayer                            */
 /************************************************************************/
 
 class OGRElasticLayer final : public OGRLayer
@@ -351,7 +351,7 @@ class OGRElasticDataSource final : public GDALDataset
 
     bool Open(GDALOpenInfo *poOpenInfo);
 
-    int Create(const char *pszFilename, char **papszOptions);
+    int Create(const char *pszFilename, CSLConstList papszOptions);
 
     CPLHTTPResult *HTTPFetch(const char *pszURL, CSLConstList papszOptions);
 

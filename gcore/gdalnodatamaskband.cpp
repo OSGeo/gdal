@@ -29,7 +29,7 @@
 
 //! @cond Doxygen_Suppress
 /************************************************************************/
-/*                        GDALNoDataMaskBand()                          */
+/*                         GDALNoDataMaskBand()                         */
 /************************************************************************/
 
 GDALNoDataMaskBand::GDALNoDataMaskBand(GDALRasterBand *poParentIn)
@@ -54,7 +54,7 @@ GDALNoDataMaskBand::GDALNoDataMaskBand(GDALRasterBand *poParentIn)
 }
 
 /************************************************************************/
-/*                        GDALNoDataMaskBand()                          */
+/*                         GDALNoDataMaskBand()                         */
 /************************************************************************/
 
 GDALNoDataMaskBand::GDALNoDataMaskBand(GDALRasterBand *poParentIn,
@@ -80,7 +80,7 @@ GDALNoDataMaskBand::GDALNoDataMaskBand(GDALRasterBand *poParentIn,
 }
 
 /************************************************************************/
-/*                       ~GDALNoDataMaskBand()                          */
+/*                        ~GDALNoDataMaskBand()                         */
 /************************************************************************/
 
 GDALNoDataMaskBand::~GDALNoDataMaskBand() = default;
@@ -255,8 +255,7 @@ CPLErr GDALNoDataMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("tree-vectorize")))
 #endif
-static void
-SetZeroOr255(GByte *pabyDestAndSrc, size_t nBufSize, GByte byNoData)
+static void SetZeroOr255(GByte *pabyDestAndSrc, size_t nBufSize, GByte byNoData)
 {
     for (size_t i = 0; i < nBufSize; ++i)
     {
@@ -268,8 +267,8 @@ template <class T>
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("tree-vectorize")))
 #endif
-static void
-SetZeroOr255(GByte *pabyDest, const T *panSrc, size_t nBufSize, T nNoData)
+static void SetZeroOr255(GByte *pabyDest, const T *panSrc, size_t nBufSize,
+                         T nNoData)
 {
     for (size_t i = 0; i < nBufSize; ++i)
     {
@@ -580,7 +579,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                   EmitErrorMessageIfWriteNotSupported()              */
+/*                EmitErrorMessageIfWriteNotSupported()                 */
 /************************************************************************/
 
 bool GDALNoDataMaskBand::EmitErrorMessageIfWriteNotSupported(

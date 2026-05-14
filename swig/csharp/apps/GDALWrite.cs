@@ -7,11 +7,13 @@
  *
  ******************************************************************************
  * Copyright (c) 2007, Tamas Szekeres
+ * Copyright (c) 2026, Paul Harwood
  *
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
 using System;
+using System.Globalization;
 
 using OSGeo.GDAL;
 
@@ -29,14 +31,15 @@ using OSGeo.GDAL;
 /// A C# based sample to write a GDAL raster.
 /// </summary>
 
-class GDALWrite {
+class GDALWrite
+{
 
-	public static void usage()
+    public static void usage()
 
-	{
-		Console.WriteLine("usage: gdalwrite {dataset name} {width} {height}");
-		System.Environment.Exit(-1);
-	}
+    {
+        Console.WriteLine("usage: gdalwrite {dataset name} {width} {height}");
+        System.Environment.Exit(-1);
+    }
 
     public static void Main(string[] args)
     {
@@ -53,40 +56,42 @@ class GDALWrite {
         h = 100;
 
         if (args.Length > 1)
-            w = int.Parse(args[1]);
+            w = int.Parse(args[1], CultureInfo.InvariantCulture);
 
         if (args.Length > 2)
-            h = int.Parse(args[2]);
+            h = int.Parse(args[2], CultureInfo.InvariantCulture);
 
         bXSize = w;
         bYSize = 1;
 
-        //try
+        /* -------------------------------------------------------------------- */
+        /*      Register driver(s).                                             */
+        /* -------------------------------------------------------------------- */
+        Gdal.AllRegister();
+
+        /* -------------------------------------------------------------------- */
+        /*      Get driver                                                      */
+        /* -------------------------------------------------------------------- */
+        Driver drv = Gdal.GetDriverByName("GTiff");
+
+        if (drv == null)
         {
-            /* -------------------------------------------------------------------- */
-            /*      Register driver(s).                                             */
-            /* -------------------------------------------------------------------- */
-            Gdal.AllRegister();
+            Console.WriteLine("Can't get driver.");
+            System.Environment.Exit(-1);
+        }
 
-            /* -------------------------------------------------------------------- */
-            /*      Get driver                                                      */
-            /* -------------------------------------------------------------------- */
-            Driver drv = Gdal.GetDriverByName("GTiff");
+        Console.WriteLine("Using driver " + drv.LongName);
 
-            if (drv == null)
-            {
-                Console.WriteLine("Can't get driver.");
-                System.Environment.Exit(-1);
-            }
+        /* -------------------------------------------------------------------- */
+        /*      Open dataset.                                                   */
+        /* -------------------------------------------------------------------- */
+        string[] options = new string[] {
+                "BLOCKXSIZE=" + bXSize,
+                "BLOCKYSIZE=" + bYSize
+            };
 
-            Console.WriteLine("Using driver " + drv.LongName);
-
-            /* -------------------------------------------------------------------- */
-            /*      Open dataset.                                                   */
-            /* -------------------------------------------------------------------- */
-            string[] options = new string [] {"BLOCKXSIZE=" + bXSize, "BLOCKYSIZE=" + bYSize};
-            Dataset ds = drv.Create(args[0], w, h, 1, DataType.GDT_Byte, options);
-
+        using (Dataset ds = drv.Create(args[0], w, h, 1, DataType.GDT_Byte, options))
+        {
             if (ds == null)
             {
                 Console.WriteLine("Can't open " + args[0]);
@@ -104,27 +109,23 @@ class GDALWrite {
             };
             ds.SetGCPs(GCPs, "");
 
-            Band band = ds.GetRasterBand(1);
-
-            byte [] buffer = new byte [w * h];
-
-            for (int i = 0; i < w; i++)
+            using (Band band = ds.GetRasterBand(1))
             {
-                for (int j = 0; j < h; j++)
+                byte[] buffer = new byte[w * h];
+
+                for (int i = 0; i < w; i++)
                 {
-                    buffer[i * w + j] = (byte)(i * 256 / w);
+                    for (int j = 0; j < h; j++)
+                    {
+                        buffer[i * w + j] = (byte)(i * 256 / w);
+                    }
                 }
+
+                band.WriteRaster(0, 0, w, h, buffer, w, h, 0, 0);
+
+                band.FlushCache();
             }
-
-            band.WriteRaster(0, 0, w, h, buffer, w, h, 0, 0);
-
-            band.FlushCache();
             ds.FlushCache();
-
         }
-        /*catch (Exception e)
-        {
-            Console.WriteLine("Application error: " + e.Message);
-        }*/
     }
 }

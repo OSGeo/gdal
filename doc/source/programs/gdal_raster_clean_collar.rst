@@ -99,6 +99,10 @@ Standard Options
         Note that updating an existing dataset may lead to file size increase if
         the dataset is compressed, and/or quality loss if lossy compression is used.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

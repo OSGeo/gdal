@@ -47,6 +47,8 @@ class MMRRasterBand final : public GDALPamRasterBand
     GDALColorTable *GetColorTable() override;
     double GetMinimum(int *pbSuccess = nullptr) override;
     double GetMaximum(int *pbSuccess = nullptr) override;
+    const char *GetUnitType() override;
+    CPLErr SetUnitType(const char *pszNewValue) override;
     double GetNoDataValue(int *pbSuccess = nullptr) override;
     GDALRasterAttributeTable *GetDefaultRAT() override;
 
@@ -104,8 +106,8 @@ class MMRRasterBand final : public GDALPamRasterBand
     CPLErr FromPaletteToAttributeTableDirectAssig();
     CPLErr FromPaletteToAttributeTableLinear();
     void ConvertColorsFromPaletteToColorTable();
-    CPLErr GetRATName(CPLString aosToken, CPLString &osRELName,
-                      CPLString &osDBFName, CPLString &osAssociateREL);
+    CPLErr GetRATName(CPLString &osRELName, CPLString &osDBFName,
+                      CPLString &osAssociateREL);
     CPLErr UpdateAttributeColorsFromPalette();
     CPLErr CreateRATFromDBF(const CPLString &osRELName,
                             const CPLString &osDBFName,
@@ -120,9 +122,14 @@ class MMRRasterBand final : public GDALPamRasterBand
     bool m_bIsValid =
         false;  // Determines if the created object is valid or not.
 
+    RAT_OR_CT nRatOrCT = RAT_OR_CT::ALL;
+
     std::array<std::vector<double>, 4> m_aadfPCT{};
 
-    CPLString m_osBandSection = "";  // Name of the band
+    // Name of the band
+    CPLString m_osBandSection = "";
+
+    CPLString m_osUnitType = "";
 
     MMDataType m_eMMRDataTypeMiraMon = MMDataType::DATATYPE_AND_COMPR_UNDEFINED;
     MMBytesPerPixel m_eMMBytesPerPixel =

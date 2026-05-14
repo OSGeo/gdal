@@ -100,8 +100,7 @@ def test_vsistdin_4():
         pytest.skip()
 
     f = open("tmp/vsistdin_4_src.vrt", "wt")
-    f.write(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    f.write("""<VRTDataset rasterXSize="20" rasterYSize="20">
   %s
   <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982138982,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Easting",EAST],AXIS["Northing",NORTH],AUTHORITY["EPSG","26711"]]</SRS>
   <GeoTransform>  4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
@@ -112,9 +111,7 @@ def test_vsistdin_4():
       <SourceBand>1</SourceBand>
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-        % (" " * (2 * 1024 * 1024))
-    )
+</VRTDataset>""" % (" " * (2 * 1024 * 1024)))
     f.close()
 
     # Should work on both Unix and Windows

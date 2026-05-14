@@ -32,7 +32,7 @@
 extern "C" int CPL_DLL GDALIsInGlobalDestructor();
 
 /************************************************************************/
-/*                         VSIZarrArrayInfo                             */
+/*                           VSIZarrArrayInfo                           */
 /************************************************************************/
 
 struct VSIZarrArrayInfo
@@ -41,7 +41,7 @@ struct VSIZarrArrayInfo
 };
 
 /************************************************************************/
-/*                    VSIKerchunkParquetRefFile                         */
+/*                      VSIKerchunkParquetRefFile                       */
 /************************************************************************/
 
 struct VSIKerchunkParquetRefFile
@@ -52,7 +52,7 @@ struct VSIKerchunkParquetRefFile
 };
 
 /************************************************************************/
-/*                    VSIKerchunkParquetRefFileSystem                   */
+/*                   VSIKerchunkParquetRefFileSystem                    */
 /************************************************************************/
 
 class VSIKerchunkParquetRefFileSystem final : public VSIFilesystemHandler
@@ -60,7 +60,8 @@ class VSIKerchunkParquetRefFileSystem final : public VSIFilesystemHandler
   public:
     VSIKerchunkParquetRefFileSystem()
     {
-        IsFileSystemInstantiated() = true;
+        bool *pbInstantiated = &IsFileSystemInstantiated();
+        *pbInstantiated = true;
     }
 
     ~VSIKerchunkParquetRefFileSystem() override;
@@ -118,13 +119,14 @@ class VSIKerchunkParquetRefFileSystem final : public VSIFilesystemHandler
 };
 
 /************************************************************************/
-/*               ~VSIKerchunkParquetRefFileSystem()                     */
+/*                  ~VSIKerchunkParquetRefFileSystem()                  */
 /************************************************************************/
 
 VSIKerchunkParquetRefFileSystem::~VSIKerchunkParquetRefFileSystem()
 {
     CleanCache();
-    IsFileSystemInstantiated() = false;
+    bool *pbInstantiated = &IsFileSystemInstantiated();
+    *pbInstantiated = false;
 }
 
 /************************************************************************/
@@ -148,7 +150,7 @@ void VSIKerchunkParquetRefFileSystem::CleanCache()
 }
 
 /************************************************************************/
-/*            VSIKerchunkParquetRefFileSystem::SplitFilename()          */
+/*           VSIKerchunkParquetRefFileSystem::SplitFilename()           */
 /************************************************************************/
 
 /*static*/
@@ -207,7 +209,7 @@ VSIKerchunkParquetRefFileSystem::SplitFilename(const char *pszFilename)
 }
 
 /************************************************************************/
-/*              VSIKerchunkParquetRefFileSystem::Load()                 */
+/*               VSIKerchunkParquetRefFileSystem::Load()                */
 /************************************************************************/
 
 std::shared_ptr<VSIKerchunkParquetRefFile>
@@ -847,7 +849,7 @@ void VSIInstallKerchunkParquetRefFileSystem()
 }
 
 /************************************************************************/
-/*                VSIKerchunkParquetRefFileSystemCleanCache()           */
+/*             VSIKerchunkParquetRefFileSystemCleanCache()              */
 /************************************************************************/
 
 void VSIKerchunkParquetRefFileSystemCleanCache()

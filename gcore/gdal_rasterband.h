@@ -24,6 +24,9 @@
 #include <complex>
 #include <iterator>
 #include <memory>
+#if __cplusplus >= 201703L
+#include <optional>
+#endif
 #if __cplusplus >= 202002L
 #include <span>
 #endif
@@ -475,6 +478,40 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual double GetNoDataValue(int *pbSuccess = nullptr);
     virtual int64_t GetNoDataValueAsInt64(int *pbSuccess = nullptr);
     virtual uint64_t GetNoDataValueAsUInt64(int *pbSuccess = nullptr);
+
+#if __cplusplus >= 201703L
+    template <class T> inline std::optional<T> GetNoDataValue() const
+    {
+        int bSuccess = false;
+        if constexpr (std::is_same_v<T, int64_t>)
+        {
+            const int64_t v =
+                const_cast<GDALRasterBand *>(this)->GetNoDataValueAsInt64(
+                    &bSuccess);
+            if (!bSuccess)
+                return {};
+            return v;
+        }
+        else if constexpr (std::is_same_v<T, uint64_t>)
+        {
+            const uint64_t v =
+                const_cast<GDALRasterBand *>(this)->GetNoDataValueAsUInt64(
+                    &bSuccess);
+            if (!bSuccess)
+                return {};
+            return v;
+        }
+        else
+        {
+            const double v =
+                const_cast<GDALRasterBand *>(this)->GetNoDataValue(&bSuccess);
+            if (!bSuccess)
+                return {};
+            return v;
+        }
+    }
+#endif
+
     virtual double GetMinimum(int *pbSuccess = nullptr);
     virtual double GetMaximum(int *pbSuccess = nullptr);
     virtual double GetOffset(int *pbSuccess = nullptr);
@@ -532,7 +569,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     virtual CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                               int nBufXSize, int nBufYSize,
-                              GDALDataType eBufType, char **papszOptions);
+                              GDALDataType eBufType, CSLConstList papszOptions);
 
     virtual CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
                                 GUIntBig *panHistogram, int bIncludeOutOfRange,
@@ -560,7 +597,7 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     virtual CPLVirtualMem *
     GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
                       GIntBig *pnLineSpace,
-                      char **papszOptions) CPL_WARN_UNUSED_RESULT;
+                      CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
     int GetDataCoverageStatus(int nXOff, int nYOff, int nXSize, int nYSize,
                               int nMaskFlagStop = 0,

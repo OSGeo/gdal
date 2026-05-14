@@ -35,7 +35,7 @@ constexpr int GCP_Y = 4;
 constexpr int GCP_Z = 5;
 
 /************************************************************************/
-/*                            SNAPTIFFDataset                           */
+/*                           SNAPTIFFDataset                            */
 /************************************************************************/
 
 class SNAPTIFFDataset final : public GDALPamDataset
@@ -164,7 +164,7 @@ int SNAPTIFFDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                               Open()                                 */
+/*                                Open()                                */
 /************************************************************************/
 
 GDALDataset *SNAPTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
@@ -389,7 +389,7 @@ GDALDataset *SNAPTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **SNAPTIFFDataset::GetMetadataDomainList()
@@ -400,7 +400,7 @@ char **SNAPTIFFDataset::GetMetadataDomainList()
 }
 
 /************************************************************************/
-/*                      GetGeolocationMetadata()                        */
+/*                       GetGeolocationMetadata()                       */
 /************************************************************************/
 
 // (Partially) read the content of the GeoTIFFTiePoints tag to check if the
@@ -565,7 +565,7 @@ bool SNAPTIFFDataset::GetGeolocationMetadata()
 }
 
 /************************************************************************/
-/*                             ReadSRS()                                */
+/*                              ReadSRS()                               */
 /************************************************************************/
 
 // Simplified GeoTIFF SRS reader, assuming the SRS is encoded as a EPSG code
@@ -695,7 +695,7 @@ CSLConstList SNAPTIFFDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                         GetMetadataItem()                            */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *SNAPTIFFDataset::GetMetadataItem(const char *pszName,
@@ -710,7 +710,7 @@ const char *SNAPTIFFDataset::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                     GDALRegister_SNAP_TIFF()                         */
+/*                       GDALRegister_SNAP_TIFF()                       */
 /************************************************************************/
 
 void GDALRegister_SNAP_TIFF()

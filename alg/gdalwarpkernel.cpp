@@ -186,6 +186,7 @@ static CPLErr GWKBilinearNoMasksOrDstDensityOnlyDouble(GDALWarpKernel *poWK);
 #endif
 static CPLErr GWKCubicNoMasksOrDstDensityOnlyShort(GDALWarpKernel *poWK);
 static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyShort(GDALWarpKernel *poWK);
+static CPLErr GWKNearestInt8(GDALWarpKernel *poWK);
 static CPLErr GWKNearestShort(GDALWarpKernel *poWK);
 static CPLErr GWKNearestUnsignedShort(GDALWarpKernel *poWK);
 static CPLErr GWKNearestNoMasksOrDstDensityOnlyFloat(GDALWarpKernel *poWK);
@@ -197,7 +198,7 @@ static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyUShort(GDALWarpKernel *);
 static CPLErr GWKBilinearNoMasksOrDstDensityOnlyUShort(GDALWarpKernel *);
 
 /************************************************************************/
-/*                           GWKJobStruct                               */
+/*                             GWKJobStruct                             */
 /************************************************************************/
 
 struct GWKJobStruct
@@ -240,7 +241,7 @@ struct GWKThreadData
 };
 
 /************************************************************************/
-/*                        GWKProgressThread()                           */
+/*                         GWKProgressThread()                          */
 /************************************************************************/
 
 // Return TRUE if the computation must be interrupted.
@@ -258,7 +259,7 @@ static int GWKProgressThread(GWKJobStruct *psJob)
 }
 
 /************************************************************************/
-/*                      GWKProgressMonoThread()                         */
+/*                       GWKProgressMonoThread()                        */
 /************************************************************************/
 
 // Return TRUE if the computation must be interrupted.
@@ -279,7 +280,7 @@ static int GWKProgressMonoThread(GWKJobStruct *psJob)
 }
 
 /************************************************************************/
-/*                       GWKGenericMonoThread()                         */
+/*                        GWKGenericMonoThread()                        */
 /************************************************************************/
 
 static CPLErr GWKGenericMonoThread(GDALWarpKernel *poWK,
@@ -309,25 +310,13 @@ void *GWKThreadsCreate(char **papszWarpOptions,
                        GDALTransformerFunc /* pfnTransformer */,
                        void *pTransformerArg)
 {
-    const char *pszWarpThreads =
-        CSLFetchNameValue(papszWarpOptions, "NUM_THREADS");
-    if (pszWarpThreads == nullptr)
-        pszWarpThreads = CPLGetConfigOption("GDAL_NUM_THREADS", "1");
-
-    int nThreads = 0;
-    if (EQUAL(pszWarpThreads, "ALL_CPUS"))
-        nThreads = CPLGetNumCPUs();
-    else
-        nThreads = atoi(pszWarpThreads);
-    if (nThreads <= 1)
-        nThreads = 0;
-    if (nThreads > 128)
-        nThreads = 128;
-
+    const int nThreads = GDALGetNumThreads(papszWarpOptions, "NUM_THREADS",
+                                           GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                           /* bDefaultAllCPUs = */ false);
     GWKThreadData *psThreadData = new GWKThreadData();
     auto poThreadPool =
-        nThreads > 0 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
-    if (nThreads && poThreadPool)
+        nThreads > 1 ? GDALGetGlobalThreadPool(nThreads) : nullptr;
+    if (poThreadPool)
     {
         psThreadData->nMaxThreads = nThreads;
         psThreadData->threadJobs.reset(new std::vector<GWKJobStruct>(
@@ -343,7 +332,7 @@ void *GWKThreadsCreate(char **papszWarpOptions,
 }
 
 /************************************************************************/
-/*                             GWKThreadsEnd()                          */
+/*                           GWKThreadsEnd()                            */
 /************************************************************************/
 
 void GWKThreadsEnd(void *psThreadDataIn)
@@ -442,7 +431,7 @@ static void ThreadFuncAdapter(void *pData)
 }
 
 /************************************************************************/
-/*                                GWKRun()                              */
+/*                               GWKRun()                               */
 /************************************************************************/
 
 static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
@@ -506,11 +495,17 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
 
     bool bStopFlag;
     {
-        std::unique_lock<std::mutex> lock(psThreadData->mutex);
+        {
+            // Important: do not run the SubmitJob() loop under the mutex
+            // because in some cases (typically if the current thread has been
+            // created by the GDAL global thread pool), the task will actually
+            // be run synchronously by SubmitJob(), and as it tries to acquire
+            // the mutex, that would result in a dead-lock
+            std::unique_lock<std::mutex> lock(psThreadData->mutex);
 
-        psThreadData->nTotalThreadCountForThisRun = nThreads;
-        // coverity[missing_lock]
-        psThreadData->nCurThreadCountForThisRun = 0;
+            psThreadData->nTotalThreadCountForThisRun = nThreads;
+            psThreadData->nCurThreadCountForThisRun = 0;
+        }
 
         // Start jobs.
         for (int i = 0; i < nThreads; ++i)
@@ -525,6 +520,7 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
         /*      Report progress. */
         /* --------------------------------------------------------------------
          */
+        std::unique_lock<std::mutex> lock(psThreadData->mutex);
         if (poWK->pfnProgress != GDALDummyProgress)
         {
             while (psThreadData->counter < nDstYSize)
@@ -539,6 +535,17 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
                     CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
                     psThreadData->stopFlag = true;
                     break;
+                }
+            }
+
+            if (!psThreadData->stopFlag)
+            {
+                if (!poWK->pfnProgress(poWK->dfProgressBase +
+                                           poWK->dfProgressScale,
+                                       "", poWK->pProgress))
+                {
+                    CPLError(CE_Failure, CPLE_UserInterrupt, "User terminated");
+                    psThreadData->stopFlag = true;
                 }
             }
         }
@@ -1001,6 +1008,53 @@ GDALWarpKernel::~GDALWarpKernel()
 }
 
 /************************************************************************/
+/*                              getArea()                               */
+/************************************************************************/
+
+typedef std::pair<double, double> XYPair;
+
+typedef std::vector<XYPair> XYPoly;
+
+// poly may or may not be closed.
+static double getArea(const XYPoly &poly)
+{
+    // CPLAssert(poly.size() >= 2);
+    const size_t nPointCount = poly.size();
+    double dfAreaSum =
+        poly[0].first * (poly[1].second - poly[nPointCount - 1].second);
+
+    for (size_t i = 1; i < nPointCount - 1; i++)
+    {
+        dfAreaSum += poly[i].first * (poly[i + 1].second - poly[i - 1].second);
+    }
+
+    dfAreaSum += poly[nPointCount - 1].first *
+                 (poly[0].second - poly[nPointCount - 2].second);
+
+    return 0.5 * std::fabs(dfAreaSum);
+}
+
+/************************************************************************/
+/*                       CanUse4SamplesFormula()                        */
+/************************************************************************/
+
+static bool CanUse4SamplesFormula(const GDALWarpKernel *poWK)
+{
+    if (poWK->eResample == GRA_Bilinear || poWK->eResample == GRA_Cubic)
+    {
+        // Use 4-sample formula if we are not downsampling by more than a
+        // factor of 1:2
+        if (poWK->dfXScale > 0.5 && poWK->dfYScale > 0.5)
+            return true;
+        CPLDebugOnce("WARP",
+                     "Not using 4-sample bilinear/bicubic formula because "
+                     "XSCALE(=%f) and/or YSCALE(=%f) <= 0.5",
+                     poWK->dfXScale, poWK->dfYScale);
+    }
+    return false;
+}
+
+/************************************************************************/
 /*                            PerformWarp()                             */
 /************************************************************************/
 
@@ -1035,132 +1089,212 @@ CPLErr GDALWarpKernel::PerformWarp()
     /*      Pre-calculate resampling scales and window sizes for filtering. */
     /* -------------------------------------------------------------------- */
 
-    dfXScale = static_cast<double>(nDstXSize) / (nSrcXSize - dfSrcXExtraSize);
-    dfYScale = static_cast<double>(nDstYSize) / (nSrcYSize - dfSrcYExtraSize);
-    if (nSrcXSize >= nDstXSize && nSrcXSize <= nDstXSize + dfSrcXExtraSize)
-        dfXScale = 1.0;
-    if (nSrcYSize >= nDstYSize && nSrcYSize <= nDstYSize + dfSrcYExtraSize)
-        dfYScale = 1.0;
-    if (dfXScale < 1.0)
-    {
-        double dfXReciprocalScale = 1.0 / dfXScale;
-        const int nXReciprocalScale =
-            static_cast<int>(dfXReciprocalScale + 0.5);
-        if (fabs(dfXReciprocalScale - nXReciprocalScale) < 0.05)
-            dfXScale = 1.0 / nXReciprocalScale;
-    }
-    if (dfYScale < 1.0)
-    {
-        double dfYReciprocalScale = 1.0 / dfYScale;
-        const int nYReciprocalScale =
-            static_cast<int>(dfYReciprocalScale + 0.5);
-        if (fabs(dfYReciprocalScale - nYReciprocalScale) < 0.05)
-            dfYScale = 1.0 / nYReciprocalScale;
-    }
+    dfXScale = 0.0;
+    dfYScale = 0.0;
 
-    // XSCALE and YSCALE undocumented for now. Can help in some cases.
+    // XSCALE and YSCALE per warping chunk is not necessarily ideal, in case of
+    // heterogeneous change in shapes.
     // Best would probably be a per-pixel scale computation.
     const char *pszXScale = CSLFetchNameValue(papszWarpOptions, "XSCALE");
-    if (pszXScale != nullptr && !EQUAL(pszXScale, "FROM_GRID_SAMPLING"))
-        dfXScale = CPLAtof(pszXScale);
     const char *pszYScale = CSLFetchNameValue(papszWarpOptions, "YSCALE");
+    if (!pszXScale || !pszYScale)
+    {
+        // Sample points along a grid in the destination space
+        constexpr int MAX_POINTS_PER_DIM = 10;
+        const int nPointsX = std::min(MAX_POINTS_PER_DIM, nDstXSize);
+        const int nPointsY = std::min(MAX_POINTS_PER_DIM, nDstYSize);
+        constexpr int CORNER_COUNT_PER_SQUARE = 4;
+        const int nPoints = CORNER_COUNT_PER_SQUARE * nPointsX * nPointsY;
+        std::vector<double> adfX;
+        std::vector<double> adfY;
+        adfX.reserve(CORNER_COUNT_PER_SQUARE * nPoints);
+        adfY.reserve(CORNER_COUNT_PER_SQUARE * nPoints);
+        std::vector<double> adfZ(CORNER_COUNT_PER_SQUARE * nPoints);
+        std::vector<int> abSuccess(CORNER_COUNT_PER_SQUARE * nPoints);
+        for (int iY = 0; iY < nPointsY; iY++)
+        {
+            const double dfYShift = (iY > 0 && iY == nPointsY - 1) ? -1.0 : 0.0;
+            const double dfY =
+                dfYShift + (nPointsY == 1 ? 0.0
+                                          : static_cast<double>(iY) *
+                                                nDstYSize / (nPointsY - 1));
+
+            for (int iX = 0; iX < nPointsX; iX++)
+            {
+                const double dfXShift =
+                    (iX > 0 && iX == nPointsX - 1) ? -1.0 : 0.0;
+
+                const double dfX =
+                    dfXShift + (nPointsX == 1 ? 0.0
+                                              : static_cast<double>(iX) *
+                                                    nDstXSize / (nPointsX - 1));
+
+                // Reproject a unit square at each sample point
+                adfX.push_back(dfX);
+                adfY.push_back(dfY);
+
+                adfX.push_back(dfX + 1);
+                adfY.push_back(dfY);
+
+                adfX.push_back(dfX);
+                adfY.push_back(dfY + 1);
+
+                adfX.push_back(dfX + 1);
+                adfY.push_back(dfY + 1);
+            }
+        }
+        pfnTransformer(pTransformerArg, TRUE, static_cast<int>(adfX.size()),
+                       adfX.data(), adfY.data(), adfZ.data(), abSuccess.data());
+
+        std::vector<XYPair> adfXYScales;
+        adfXYScales.reserve(nPoints);
+        for (int i = 0; i < nPoints; i += CORNER_COUNT_PER_SQUARE)
+        {
+            if (abSuccess[i + 0] && abSuccess[i + 1] && abSuccess[i + 2] &&
+                abSuccess[i + 3])
+            {
+                const auto square = [](double x) { return x * x; };
+
+                const double vx01 = adfX[i + 1] - adfX[i + 0];
+                const double vy01 = adfY[i + 1] - adfY[i + 0];
+                const double len01_sq = square(vx01) + square(vy01);
+
+                const double vx23 = adfX[i + 3] - adfX[i + 2];
+                const double vy23 = adfY[i + 3] - adfY[i + 2];
+                const double len23_sq = square(vx23) + square(vy23);
+
+                const double vx02 = adfX[i + 2] - adfX[i + 0];
+                const double vy02 = adfY[i + 2] - adfY[i + 0];
+                const double len02_sq = square(vx02) + square(vy02);
+
+                const double vx13 = adfX[i + 3] - adfX[i + 1];
+                const double vy13 = adfY[i + 3] - adfY[i + 1];
+                const double len13_sq = square(vx13) + square(vy13);
+
+                // ~ 20 degree, heuristic
+                constexpr double TAN_MODEST_ANGLE = 0.35;
+
+                // 10%, heuristic
+                constexpr double LENGTH_RELATIVE_TOLERANCE = 0.1;
+
+                // Security margin to avoid division by zero (would only
+                // happen in case of degenerated coordinate transformation,
+                // or insane upsampling)
+                constexpr double EPSILON = 1e-10;
+
+                // Does the transformed square looks like an almost non-rotated
+                // quasi-rectangle ?
+                if (std::fabs(vy01) < TAN_MODEST_ANGLE * vx01 &&
+                    std::fabs(vy23) < TAN_MODEST_ANGLE * vx23 &&
+                    std::fabs(len01_sq - len23_sq) <
+                        LENGTH_RELATIVE_TOLERANCE * std::fabs(len01_sq) &&
+                    std::fabs(len02_sq - len13_sq) <
+                        LENGTH_RELATIVE_TOLERANCE * std::fabs(len02_sq))
+                {
+                    // Using a geometric average here of lenAB_sq and lenCD_sq,
+                    // hence a sqrt(), and as this is still a squared value,
+                    // we need another sqrt() to get a distance.
+                    const double dfXLength =
+                        std::sqrt(std::sqrt(len01_sq * len23_sq));
+                    const double dfYLength =
+                        std::sqrt(std::sqrt(len02_sq * len13_sq));
+                    if (dfXLength > EPSILON && dfYLength > EPSILON)
+                    {
+                        const double dfThisXScale = 1.0 / dfXLength;
+                        const double dfThisYScale = 1.0 / dfYLength;
+                        adfXYScales.push_back({dfThisXScale, dfThisYScale});
+                    }
+                }
+                else
+                {
+                    // If not, then consider the area of the transformed unit
+                    // square to determine the X/Y scales.
+                    const XYPoly poly{{adfX[i + 0], adfY[i + 0]},
+                                      {adfX[i + 1], adfY[i + 1]},
+                                      {adfX[i + 3], adfY[i + 3]},
+                                      {adfX[i + 2], adfY[i + 2]}};
+                    const double dfSrcArea = getArea(poly);
+                    const double dfFactor = std::sqrt(dfSrcArea);
+                    if (dfFactor > EPSILON)
+                    {
+                        const double dfThisXScale = 1.0 / dfFactor;
+                        const double dfThisYScale = dfThisXScale;
+                        adfXYScales.push_back({dfThisXScale, dfThisYScale});
+                    }
+                }
+            }
+        }
+
+        if (!adfXYScales.empty())
+        {
+            // Sort by increasing xscale * yscale
+            std::sort(adfXYScales.begin(), adfXYScales.end(),
+                      [](const XYPair &a, const XYPair &b)
+                      { return a.first * a.second < b.first * b.second; });
+
+            // Compute the per-axis maximum of scale
+            double dfXMax = 0;
+            double dfYMax = 0;
+            for (const auto &[dfX, dfY] : adfXYScales)
+            {
+                dfXMax = std::max(dfXMax, dfX);
+                dfYMax = std::max(dfYMax, dfY);
+            }
+
+            // Now eliminate outliers, defined as ones whose value is < 10% of
+            // the maximum value, typically found at a polar discontinuity, and
+            // compute the average of non-outlier values.
+            dfXScale = 0;
+            dfYScale = 0;
+            int i = 0;
+            constexpr double THRESHOLD = 0.1;  // 10%, rather arbitrary
+            for (const auto &[dfX, dfY] : adfXYScales)
+            {
+                if (dfX > THRESHOLD * dfXMax && dfY > THRESHOLD * dfYMax)
+                {
+                    ++i;
+                    const double dfXDelta = dfX - dfXScale;
+                    const double dfYDelta = dfY - dfYScale;
+                    const double dfInvI = 1.0 / i;
+                    dfXScale += dfXDelta * dfInvI;
+                    dfYScale += dfYDelta * dfInvI;
+                }
+            }
+        }
+    }
+
+    // Round to closest integer reciprocal scale if we are very close to it
+    const auto RoundToClosestIntegerReciprocalScaleIfCloseEnough =
+        [](double dfScale)
+    {
+        if (dfScale < 1.0)
+        {
+            double dfReciprocalScale = 1.0 / dfScale;
+            const int nReciprocalScale =
+                static_cast<int>(dfReciprocalScale + 0.5);
+            if (fabs(dfReciprocalScale - nReciprocalScale) < 0.05)
+                dfScale = 1.0 / nReciprocalScale;
+        }
+        return dfScale;
+    };
+
+    if (dfXScale <= 0)
+        dfXScale = 1.0;
+    if (dfYScale <= 0)
+        dfYScale = 1.0;
+
+    dfXScale = RoundToClosestIntegerReciprocalScaleIfCloseEnough(dfXScale);
+    dfYScale = RoundToClosestIntegerReciprocalScaleIfCloseEnough(dfYScale);
+
+    if (pszXScale != nullptr)
+        dfXScale = CPLAtof(pszXScale);
     if (pszYScale != nullptr)
         dfYScale = CPLAtof(pszYScale);
 
-    // If the xscale is significantly lower than the yscale, this is highly
-    // suspicious of a situation of wrapping a very large virtual file in
-    // geographic coordinates with left and right parts being close to the
-    // antimeridian. In that situation, the xscale computed by the above method
-    // is completely wrong. Prefer doing an average of a few sample points
-    // instead
-    if ((dfYScale / dfXScale > 100 ||
-         (pszXScale != nullptr && EQUAL(pszXScale, "FROM_GRID_SAMPLING"))))
-    {
-        // Sample points along a grid
-        const int nPointsX = std::min(10, nDstXSize);
-        const int nPointsY = std::min(10, nDstYSize);
-        const int nPoints = 3 * nPointsX * nPointsY;
-        std::vector<double> padfX;
-        std::vector<double> padfY;
-        std::vector<double> padfZ(nPoints);
-        std::vector<int> pabSuccess(nPoints);
-        for (int iY = 0; iY < nPointsY; iY++)
-        {
-            for (int iX = 0; iX < nPointsX; iX++)
-            {
-                const double dfX =
-                    nPointsX == 1
-                        ? 0.0
-                        : static_cast<double>(iX) * nDstXSize / (nPointsX - 1);
-                const double dfY =
-                    nPointsY == 1
-                        ? 0.0
-                        : static_cast<double>(iY) * nDstYSize / (nPointsY - 1);
+    if (!pszXScale || !pszYScale)
+        CPLDebug("WARP", "dfXScale = %f, dfYScale = %f", dfXScale, dfYScale);
 
-                // Reproject each destination sample point and its neighbours
-                // at (x+1,y) and (x,y+1), so as to get the local scale.
-                padfX.push_back(dfX);
-                padfY.push_back(dfY);
-
-                padfX.push_back((iX == nPointsX - 1) ? dfX - 1 : dfX + 1);
-                padfY.push_back(dfY);
-
-                padfX.push_back(dfX);
-                padfY.push_back((iY == nPointsY - 1) ? dfY - 1 : dfY + 1);
-            }
-        }
-        pfnTransformer(pTransformerArg, TRUE, nPoints, &padfX[0], &padfY[0],
-                       &padfZ[0], &pabSuccess[0]);
-
-        // Compute the xscale at each sampling point
-        std::vector<double> adfXScales;
-        for (int i = 0; i < nPoints; i += 3)
-        {
-            if (pabSuccess[i] && pabSuccess[i + 1] && pabSuccess[i + 2])
-            {
-                const double dfPointXScale =
-                    1.0 / std::max(std::abs(padfX[i + 1] - padfX[i]),
-                                   std::abs(padfX[i + 2] - padfX[i]));
-                adfXScales.push_back(dfPointXScale);
-            }
-        }
-
-        // Sort by increasing xcale
-        std::sort(adfXScales.begin(), adfXScales.end());
-
-        if (!adfXScales.empty())
-        {
-            // Compute the average of scales, but eliminate outliers small
-            // scales, if some samples are just along the discontinuity.
-            const double dfMaxPointXScale = adfXScales.back();
-            double dfSumPointXScale = 0;
-            int nCountPointScale = 0;
-            for (double dfPointXScale : adfXScales)
-            {
-                if (dfPointXScale > dfMaxPointXScale / 10)
-                {
-                    dfSumPointXScale += dfPointXScale;
-                    nCountPointScale++;
-                }
-            }
-            if (nCountPointScale > 0)  // should always be true
-            {
-                const double dfXScaleFromSampling =
-                    dfSumPointXScale / nCountPointScale;
-#if DEBUG_VERBOSE
-                CPLDebug("WARP", "Correcting dfXScale from %f to %f", dfXScale,
-                         dfXScaleFromSampling);
-#endif
-                dfXScale = dfXScaleFromSampling;
-            }
-        }
-    }
-
-#if DEBUG_VERBOSE
-    CPLDebug("WARP", "dfXScale = %f, dfYScale = %f", dfXScale, dfYScale);
-#endif
-
-    const int bUse4SamplesFormula = dfXScale >= 0.95 && dfYScale >= 0.95;
+    const int bUse4SamplesFormula = CanUse4SamplesFormula(this);
 
     // Safety check for callers that would use GDALWarpKernel without using
     // GDALWarpOperation.
@@ -1252,6 +1386,9 @@ CPLErr GDALWarpKernel::PerformWarp()
     if ((eWorkingDataType == GDT_UInt16) && eResample == GRA_Bilinear &&
         bNoMasksOrDstDensityOnly)
         return GWKBilinearNoMasksOrDstDensityOnlyUShort(this);
+
+    if (eWorkingDataType == GDT_Int8 && eResample == GRA_NearestNeighbour)
+        return GWKNearestInt8(this);
 
     if (eWorkingDataType == GDT_Int16 && eResample == GRA_NearestNeighbour)
         return GWKNearestShort(this);
@@ -1402,7 +1539,7 @@ static void GWKOverlayDensity(const GDALWarpKernel *poWK, GPtrDiff_t iDstOffset,
 }
 
 /************************************************************************/
-/*                          GWKRoundValueT()                            */
+/*                           GWKRoundValueT()                           */
 /************************************************************************/
 
 template <class T, class U, bool is_signed> struct sGWKRoundValueT
@@ -1444,7 +1581,7 @@ template <> double GWKRoundValueT<double, double>(double value)
 #endif
 
 /************************************************************************/
-/*                            GWKClampValueT()                          */
+/*                           GWKClampValueT()                           */
 /************************************************************************/
 
 template <class T, class U> static CPL_INLINE T GWKClampValueT(U value)
@@ -1470,7 +1607,7 @@ template <> double GWKClampValueT<double, double>(double dfValue)
 #endif
 
 /************************************************************************/
-/*                             AvoidNoData()                            */
+/*                            AvoidNoData()                             */
 /************************************************************************/
 
 template <class T> inline void AvoidNoData(T *pDst, GPtrDiff_t iDstOffset)
@@ -1502,7 +1639,7 @@ template <class T> inline void AvoidNoData(T *pDst, GPtrDiff_t iDstOffset)
 }
 
 /************************************************************************/
-/*                             AvoidNoData()                            */
+/*                            AvoidNoData()                             */
 /************************************************************************/
 
 template <class T>
@@ -1533,7 +1670,7 @@ inline void AvoidNoData(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                       GWKAvoidNoDataMultiBand()                      */
+/*                      GWKAvoidNoDataMultiBand()                       */
 /************************************************************************/
 
 template <class T>
@@ -1581,7 +1718,7 @@ static void GWKAvoidNoDataMultiBand(const GDALWarpKernel *poWK,
 }
 
 /************************************************************************/
-/*                       GWKAvoidNoDataMultiBand()                      */
+/*                      GWKAvoidNoDataMultiBand()                       */
 /************************************************************************/
 
 static void GWKAvoidNoDataMultiBand(const GDALWarpKernel *poWK,
@@ -1645,7 +1782,7 @@ static void GWKAvoidNoDataMultiBand(const GDALWarpKernel *poWK,
 }
 
 /************************************************************************/
-/*                         GWKSetPixelValueRealT()                      */
+/*                       GWKSetPixelValueRealT()                        */
 /************************************************************************/
 
 template <class T>
@@ -1712,7 +1849,7 @@ static bool GWKSetPixelValueRealT(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                       ClampRoundAndAvoidNoData()                     */
+/*                      ClampRoundAndAvoidNoData()                      */
 /************************************************************************/
 
 template <class T>
@@ -2031,7 +2168,7 @@ static bool GWKSetPixelValue(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                       GWKSetPixelValueReal()                         */
+/*                        GWKSetPixelValueReal()                        */
 /************************************************************************/
 
 static bool GWKSetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
@@ -2342,7 +2479,7 @@ static bool GWKGetPixelValue(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                       GWKGetPixelValueReal()                         */
+/*                        GWKGetPixelValueReal()                        */
 /************************************************************************/
 
 static bool GWKGetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
@@ -2428,7 +2565,7 @@ static bool GWKGetPixelValueReal(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                          GWKGetPixelRow()                            */
+/*                           GWKGetPixelRow()                           */
 /************************************************************************/
 
 /* It is assumed that adfImag[] is set to 0 by caller code for non-complex */
@@ -2777,7 +2914,7 @@ static bool GWKGetPixelRow(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                          GWKGetPixelT()                              */
+/*                            GWKGetPixelT()                            */
 /************************************************************************/
 
 template <class T>
@@ -3523,7 +3660,7 @@ static bool GWKCubicResampleNoMasks4SampleT(const GDALWarpKernel *poWK,
 }
 
 /************************************************************************/
-/*                          GWKLanczosSinc()                            */
+/*                           GWKLanczosSinc()                           */
 /************************************************************************/
 
 /*
@@ -3580,7 +3717,7 @@ static double GWKLanczosSinc4Values(double *padfValues)
 }
 
 /************************************************************************/
-/*                           GWKBilinear()                              */
+/*                            GWKBilinear()                             */
 /************************************************************************/
 
 static double GWKBilinear(double dfX)
@@ -3618,7 +3755,7 @@ static double GWKBilinear4Values(double *padfValues)
 }
 
 /************************************************************************/
-/*                            GWKCubic()                                */
+/*                              GWKCubic()                              */
 /************************************************************************/
 
 static double GWKCubic(double dfX)
@@ -3669,7 +3806,7 @@ static double GWKCubic4Values(double *padfValues)
 }
 
 /************************************************************************/
-/*                           GWKBSpline()                               */
+/*                             GWKBSpline()                             */
 /************************************************************************/
 
 // https://www.cs.utexas.edu/~fussell/courses/cs384g-fall2013/lectures/mitchell/Mitchell.pdf
@@ -3731,7 +3868,7 @@ static double GWKBSpline4Values(double *padfValues)
     return padfValues[0] + padfValues[1] + padfValues[2] + padfValues[3];
 }
 /************************************************************************/
-/*                       GWKResampleWrkStruct                           */
+/*                         GWKResampleWrkStruct                         */
 /************************************************************************/
 
 typedef struct _GWKResampleWrkStruct GWKResampleWrkStruct;
@@ -3771,7 +3908,7 @@ struct _GWKResampleWrkStruct
 };
 
 /************************************************************************/
-/*                    GWKResampleCreateWrkStruct()                      */
+/*                     GWKResampleCreateWrkStruct()                     */
 /************************************************************************/
 
 static bool GWKResample(const GDALWarpKernel *poWK, int iBand, double dfSrcX,
@@ -3869,7 +4006,7 @@ static GWKResampleWrkStruct *GWKResampleCreateWrkStruct(GDALWarpKernel *poWK)
 }
 
 /************************************************************************/
-/*                    GWKResampleDeleteWrkStruct()                      */
+/*                     GWKResampleDeleteWrkStruct()                     */
 /************************************************************************/
 
 static void GWKResampleDeleteWrkStruct(GWKResampleWrkStruct *psWrkStruct)
@@ -3884,7 +4021,7 @@ static void GWKResampleDeleteWrkStruct(GWKResampleWrkStruct *psWrkStruct)
 }
 
 /************************************************************************/
-/*                           GWKResample()                              */
+/*                            GWKResample()                             */
 /************************************************************************/
 
 static bool GWKResample(const GDALWarpKernel *poWK, int iBand, double dfSrcX,
@@ -4045,7 +4182,7 @@ static bool GWKResample(const GDALWarpKernel *poWK, int iBand, double dfSrcX,
 }
 
 /************************************************************************/
-/*                      GWKResampleOptimizedLanczos()                   */
+/*                    GWKResampleOptimizedLanczos()                     */
 /************************************************************************/
 
 static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
@@ -4239,9 +4376,9 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                 else
                     padfWeightsXShifted[i] = padfCst[(i + 3) % 3] / (dfX * dfX);
 #if DEBUG_VERBOSE
-                    // TODO(schwehr): AlmostEqual.
-                    // CPLAssert(fabs(padfWeightsX[i-poWK->nFiltInitX] -
-                    //               GWKLanczosSinc(dfX, 3.0)) < 1e-10);
+                // TODO(schwehr): AlmostEqual.
+                // CPLAssert(fabs(padfWeightsX[i-poWK->nFiltInitX] -
+                //               GWKLanczosSinc(dfX, 3.0)) < 1e-10);
 #endif
             }
 
@@ -4356,9 +4493,9 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
                 else
                     padfWeightsYShifted[j] = padfCst[(j + 3) % 3] / (dfY * dfY);
 #if DEBUG_VERBOSE
-                    // TODO(schwehr): AlmostEqual.
-                    // CPLAssert(fabs(padfWeightsYShifted[j] -
-                    //               GWKLanczosSinc(dfY, 3.0)) < 1e-10);
+                // TODO(schwehr): AlmostEqual.
+                // CPLAssert(fabs(padfWeightsYShifted[j] -
+                //               GWKLanczosSinc(dfY, 3.0)) < 1e-10);
 #endif
             }
 
@@ -4597,7 +4734,7 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                        GWKComputeWeights()                           */
+/*                         GWKComputeWeights()                          */
 /************************************************************************/
 
 static void GWKComputeWeights(GDALResampleAlg eResample, int iMin, int iMax,
@@ -4772,7 +4909,7 @@ GWKResampleNoMasksT(const GDALWarpKernel *poWK, int iBand, double dfSrcX,
 #if defined(USE_SSE2)
 
 /************************************************************************/
-/*                    GWKResampleNoMasks_SSE2_T()                       */
+/*                     GWKResampleNoMasks_SSE2_T()                      */
 /************************************************************************/
 
 template <class T>
@@ -4972,7 +5109,7 @@ bool GWKResampleNoMasksT<GByte>(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                     GWKResampleNoMasksT<GInt16>()                    */
+/*                    GWKResampleNoMasksT<GInt16>()                     */
 /************************************************************************/
 
 template <>
@@ -4988,7 +5125,7 @@ bool GWKResampleNoMasksT<GInt16>(const GDALWarpKernel *poWK, int iBand,
 }
 
 /************************************************************************/
-/*                     GWKResampleNoMasksT<GUInt16>()                   */
+/*                    GWKResampleNoMasksT<GUInt16>()                    */
 /************************************************************************/
 
 template <>
@@ -5022,7 +5159,7 @@ bool GWKResampleNoMasksT<float>(const GDALWarpKernel *poWK, int iBand,
 #ifdef INSTANTIATE_FLOAT64_SSE2_IMPL
 
 /************************************************************************/
-/*                     GWKResampleNoMasksT<double>()                    */
+/*                    GWKResampleNoMasksT<double>()                     */
 /************************************************************************/
 
 template <>
@@ -5088,7 +5225,7 @@ static void GWKRoundSourceCoordinates(
 }
 
 /************************************************************************/
-/*                     GWKCheckAndComputeSrcOffsets()                   */
+/*                    GWKCheckAndComputeSrcOffsets()                    */
 /************************************************************************/
 static CPL_INLINE bool
 GWKCheckAndComputeSrcOffsets(GWKJobStruct *psJob, int *_pabSuccess, int _iDstX,
@@ -5205,7 +5342,7 @@ GWKCheckAndComputeSrcOffsets(GWKJobStruct *psJob, int *_pabSuccess, int _iDstX,
 }
 
 /************************************************************************/
-/*                   GWKOneSourceCornerFailsToReproject()               */
+/*                 GWKOneSourceCornerFailsToReproject()                 */
 /************************************************************************/
 
 static bool GWKOneSourceCornerFailsToReproject(GWKJobStruct *psJob)
@@ -5229,7 +5366,7 @@ static bool GWKOneSourceCornerFailsToReproject(GWKJobStruct *psJob)
 }
 
 /************************************************************************/
-/*                       GWKAdjustSrcOffsetOnEdge()                     */
+/*                      GWKAdjustSrcOffsetOnEdge()                      */
 /************************************************************************/
 
 static bool GWKAdjustSrcOffsetOnEdge(GWKJobStruct *psJob,
@@ -5305,7 +5442,7 @@ static bool GWKAdjustSrcOffsetOnEdge(GWKJobStruct *psJob,
 }
 
 /************************************************************************/
-/*                 GWKAdjustSrcOffsetOnEdgeUnifiedSrcDensity()          */
+/*             GWKAdjustSrcOffsetOnEdgeUnifiedSrcDensity()              */
 /************************************************************************/
 
 static bool GWKAdjustSrcOffsetOnEdgeUnifiedSrcDensity(GWKJobStruct *psJob,
@@ -5426,8 +5563,7 @@ static void GWKGeneralCaseThread(void *pData)
         static_cast<double *>(CPLMalloc(sizeof(double) * nDstXSize));
     int *pabSuccess = static_cast<int *>(CPLMalloc(sizeof(int) * nDstXSize));
 
-    const bool bUse4SamplesFormula =
-        poWK->dfXScale >= 0.95 && poWK->dfYScale >= 0.95;
+    const bool bUse4SamplesFormula = CanUse4SamplesFormula(poWK);
 
     GWKResampleWrkStruct *psWrkStruct = nullptr;
     if (poWK->eResample != GRA_NearestNeighbour)
@@ -5709,8 +5845,7 @@ static void GWKRealCaseThread(void *pData)
         static_cast<double *>(CPLMalloc(sizeof(double) * nDstXSize));
     int *pabSuccess = static_cast<int *>(CPLMalloc(sizeof(int) * nDstXSize));
 
-    const bool bUse4SamplesFormula =
-        poWK->dfXScale >= 0.95 && poWK->dfYScale >= 0.95;
+    const bool bUse4SamplesFormula = CanUse4SamplesFormula(poWK);
 
     GWKResampleWrkStruct *psWrkStruct = nullptr;
     if (poWK->eResample != GRA_NearestNeighbour)
@@ -6118,7 +6253,7 @@ static void GWKCubicResampleNoMasks4MultiBandT(const GDALWarpKernel *poWK,
 #endif  // defined(USE_SSE2)
 
 /************************************************************************/
-/*                GWKResampleNoMasksOrDstDensityOnlyThreadInternal()    */
+/*          GWKResampleNoMasksOrDstDensityOnlyThreadInternal()          */
 /************************************************************************/
 
 template <class T, GDALResampleAlg eResample, int bUse4SamplesFormula>
@@ -6318,8 +6453,7 @@ static void GWKResampleNoMasksOrDstDensityOnlyHas4SampleThread(void *pData)
     GWKJobStruct *psJob = static_cast<GWKJobStruct *>(pData);
     GDALWarpKernel *poWK = psJob->poWK;
     static_assert(eResample == GRA_Bilinear || eResample == GRA_Cubic);
-    const bool bUse4SamplesFormula =
-        poWK->dfXScale >= 0.95 && poWK->dfYScale >= 0.95;
+    const bool bUse4SamplesFormula = CanUse4SamplesFormula(poWK);
     if (bUse4SamplesFormula)
         GWKResampleNoMasksOrDstDensityOnlyThreadInternal<T, eResample, TRUE>(
             pData);
@@ -6660,6 +6794,11 @@ static CPLErr GWKCubicSplineNoMasksOrDstDensityOnlyUShort(GDALWarpKernel *poWK)
         GWKResampleNoMasksOrDstDensityOnlyThread<GUInt16, GRA_CubicSpline>);
 }
 
+static CPLErr GWKNearestInt8(GDALWarpKernel *poWK)
+{
+    return GWKRun(poWK, "GWKNearestInt8", GWKNearestThread<int8_t>);
+}
+
 static CPLErr GWKNearestShort(GDALWarpKernel *poWK)
 {
     return GWKRun(poWK, "GWKNearestShort", GWKNearestThread<GInt16>);
@@ -6708,7 +6847,7 @@ static CPLErr GWKAverageOrMode(GDALWarpKernel *poWK)
 }
 
 /************************************************************************/
-/*                   GWKAverageOrModeComputeLineCoords()                */
+/*                 GWKAverageOrModeComputeLineCoords()                  */
 /************************************************************************/
 
 static void GWKAverageOrModeComputeLineCoords(
@@ -6754,7 +6893,7 @@ static void GWKAverageOrModeComputeLineCoords(
 }
 
 /************************************************************************/
-/*              GWKAverageOrModeComputeSourceCoords()                   */
+/*                GWKAverageOrModeComputeSourceCoords()                 */
 /************************************************************************/
 
 static bool GWKAverageOrModeComputeSourceCoords(
@@ -6804,9 +6943,9 @@ static bool GWKAverageOrModeComputeSourceCoords(
     // Addresses https://github.com/OSGeo/gdal/issues/6478
     bWrapOverX = false;
     const int nThresholdWrapOverX = std::min(2, nSrcXSize / 10);
-    if (poWK->nSrcXOff == 0 &&
-        padfX[iDstX] * poWK->dfXScale < nThresholdWrapOverX &&
-        (nSrcXSize - padfX2[iDstX]) * poWK->dfXScale < nThresholdWrapOverX)
+    if (poWK->nSrcXOff == 0 && iDstX + 1 < poWK->nDstXSize &&
+        2 * padfX[iDstX] - padfX[iDstX + 1] < nThresholdWrapOverX &&
+        nSrcXSize - padfX2[iDstX] < nThresholdWrapOverX)
     {
         // Check there is a discontinuity by checking at mid-pixel.
         // NOTE: all this remains fragile. To confidently
@@ -6860,7 +6999,7 @@ static bool GWKAverageOrModeComputeSourceCoords(
 }
 
 /************************************************************************/
-/*                         GWKModeRealType()                            */
+/*                          GWKModeRealType()                           */
 /************************************************************************/
 
 template <class T> static inline bool IsSame(T a, T b)
@@ -7130,7 +7269,7 @@ template <class T> static void GWKModeRealType(GWKJobStruct *psJob)
 }
 
 /************************************************************************/
-/*                        GWKModeComplexType()                          */
+/*                         GWKModeComplexType()                         */
 /************************************************************************/
 
 static void GWKModeComplexType(GWKJobStruct *psJob)
@@ -8265,10 +8404,8 @@ static void GWKAverageOrModeThread(void *pData)
 }
 
 /************************************************************************/
-/*                         getOrientation()                             */
+/*                           getOrientation()                           */
 /************************************************************************/
-
-typedef std::pair<double, double> XYPair;
 
 // Returns 1 whether (p1,p2,p3) is clockwise oriented,
 // -1 if it is counter-clockwise oriented,
@@ -8291,10 +8428,8 @@ static int getOrientation(const XYPair &p1, const XYPair &p2, const XYPair &p3)
 }
 
 /************************************************************************/
-/*                          isConvex()                                  */
+/*                              isConvex()                              */
 /************************************************************************/
-
-typedef std::vector<XYPair> XYPoly;
 
 // poly must be closed
 static bool isConvex(const XYPoly &poly)
@@ -8352,7 +8487,7 @@ static bool pointIntersectsConvexPoly(const XYPair &xy, const XYPoly &poly)
 }
 
 /************************************************************************/
-/*                     getIntersection()                                */
+/*                          getIntersection()                           */
 /************************************************************************/
 
 /* Returns intersection of [p1,p2] with [p3,p4], if
@@ -8517,30 +8652,7 @@ static void getConvexPolyIntersection(const XYPoly &poly1, const XYPoly &poly2,
 }
 
 /************************************************************************/
-/*                            getArea()                                 */
-/************************************************************************/
-
-// poly may or may not be closed.
-static double getArea(const XYPoly &poly)
-{
-    // CPLAssert(poly.size() >= 2);
-    const size_t nPointCount = poly.size();
-    double dfAreaSum =
-        poly[0].first * (poly[1].second - poly[nPointCount - 1].second);
-
-    for (size_t i = 1; i < nPointCount - 1; i++)
-    {
-        dfAreaSum += poly[i].first * (poly[i + 1].second - poly[i - 1].second);
-    }
-
-    dfAreaSum += poly[nPointCount - 1].first *
-                 (poly[0].second - poly[nPointCount - 2].second);
-
-    return 0.5 * std::fabs(dfAreaSum);
-}
-
-/************************************************************************/
-/*                           GWKSumPreserving()                         */
+/*                          GWKSumPreserving()                          */
 /************************************************************************/
 
 static void GWKSumPreservingThread(void *pData);

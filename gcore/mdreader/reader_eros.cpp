@@ -36,6 +36,11 @@ GDALMDReaderEROS::GDALMDReaderEROS(const char *pszPath,
     size_t i;
     if (osBaseName.size() > 511)
         return;
+
+    // To shutdown HTTP 403 errors when trying to open .pass side-car file on
+    // gdalinfo /vsicurl/https://s3.opengeohub.org/global/dtm/v1.2/gedtm_rf_m_30m_s_20060101_20151231_go_epsg.4326.3855_v1.2.tif --debug on
+    CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+
     for (i = 0; i < osBaseName.size(); i++)
     {
         if (STARTS_WITH_CI(osBaseName + i, "."))

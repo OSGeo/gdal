@@ -39,7 +39,7 @@ constexpr const char *E57_PREFIX = "E57:";
 constexpr int E57_EOP_SIZE = 4;
 
 /************************************************************************/
-/*                             E57ImageDesc()                           */
+/*                            E57ImageDesc()                            */
 /************************************************************************/
 
 struct E57ImageDesc
@@ -55,7 +55,7 @@ struct E57ImageDesc
 };
 
 /************************************************************************/
-/*           IsValidPhysicalOffsetForBeginningOfSection()               */
+/*             IsValidPhysicalOffsetForBeginningOfSection()             */
 /************************************************************************/
 
 static bool IsValidPhysicalOffsetForBeginningOfSection(uint64_t nOffset,
@@ -98,7 +98,7 @@ class GDAL_E57Dataset final : public GDALProxyDataset
                     std::unique_ptr<GDALDataset> poMaskDS,
                     const E57ImageDesc &sE57ImageDesc, std::string osXML);
 
-    GDALDriver *GetDriver() override;
+    GDALDriver *GetDriver() const override;
 
     char **GetMetadataDomainList() override
     {
@@ -157,7 +157,7 @@ class GDAL_E57Dataset final : public GDALProxyDataset
     bool m_bMDSet = false;
 };
 
-GDALDriver *GDAL_E57Dataset::GetDriver()
+GDALDriver *GDAL_E57Dataset::GetDriver() const
 {
     // Short-circuit proxying, so as not to get the PNG/JPEG driver
     return GDALDataset::GetDriver();
@@ -318,7 +318,7 @@ vsi_l_offset GDAL_E57FileHandle::Tell()
 }
 
 /************************************************************************/
-/*                           GDAL_E57RasterBand                         */
+/*                          GDAL_E57RasterBand                          */
 /************************************************************************/
 
 class GDAL_E57RasterBand final : public GDALProxyRasterBand
@@ -381,7 +381,7 @@ GDAL_E57Dataset::GDAL_E57Dataset(
 }
 
 /************************************************************************/
-/*                               Identify()                             */
+/*                              Identify()                              */
 /************************************************************************/
 
 /* static */
@@ -394,7 +394,7 @@ int GDAL_E57Dataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         asMDDescriptors                              */
+/*                           asMDDescriptors                            */
 /************************************************************************/
 
 static const struct
@@ -425,7 +425,7 @@ static const struct
 };
 
 /************************************************************************/
-/*                                 Open()                               */
+/*                                Open()                                */
 /************************************************************************/
 
 /* static */
@@ -842,7 +842,7 @@ GDALDataset *GDAL_E57Dataset::Open(GDALOpenInfo *poOpenInfo)
 }  // namespace
 
 /************************************************************************/
-/*                         GDALRegister_E57()                           */
+/*                          GDALRegister_E57()                          */
 /************************************************************************/
 
 void GDALRegister_E57()

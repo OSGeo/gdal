@@ -47,7 +47,7 @@ OGRS57Driver::~OGRS57Driver()
 }
 
 /************************************************************************/
-/*                          OGRS57DriverIdentify()                      */
+/*                        OGRS57DriverIdentify()                        */
 /************************************************************************/
 
 static int OGRS57DriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -100,12 +100,13 @@ GDALDataset *OGRS57Driver::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 GDALDataset *OGRS57Driver::Create(const char *pszName, int /* nBands */,
                                   int /* nXSize */, int /* nYSize */,
-                                  GDALDataType /* eDT */, char **papszOptions)
+                                  GDALDataType /* eDT */,
+                                  CSLConstList papszOptions)
 {
     OGRS57DataSource *poDS = new OGRS57DataSource();
 

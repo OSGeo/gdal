@@ -230,8 +230,7 @@ def test_kmlsuperoverlay_5():
 
     from xml.etree import ElementTree
 
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="512" rasterYSize="512">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="512" rasterYSize="512">
   <SRS>PROJCS["WGS 84 / Mercator 41",
     GEOGCS["WGS 84",
         DATUM["WGS_1984",
@@ -259,8 +258,7 @@ def test_kmlsuperoverlay_5():
       <DstRect xOff="0" yOff="0" xSize="512" ySize="512" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ds = gdal.GetDriverByName("KMLSUPEROVERLAY").CreateCopy(
         "tmp/tmp.kml", src_ds, options=["FIX_ANTIMERIDIAN=YES"]
     )
@@ -400,8 +398,7 @@ def test_kmlsuperoverlay_gx_latlonquad():
 def test_kmlsuperoverlay_8():
 
     # a large raster with actual data on each end and blank space in between
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="2048" rasterYSize="512">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="2048" rasterYSize="512">
   <SRS>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]</SRS>
   <GeoTransform>  0,  0.01,  0,  0,  0, 0.01</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
@@ -476,8 +473,7 @@ def test_kmlsuperoverlay_8():
       <ScaleRatio>0</ScaleRatio>
     </ComplexSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ds = gdal.GetDriverByName("KMLSUPEROVERLAY").CreateCopy(
         "tmp/tmp.kml", src_ds, options=["FORMAT=AUTO"]
     )

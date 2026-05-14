@@ -130,7 +130,7 @@ static const char *const CRS_error_message[] = {
     "Failed to compute GCP transform: Internal error"};
 
 /************************************************************************/
-/*                   GDALCreateSimilarGCPTransformer()                  */
+/*                  GDALCreateSimilarGCPTransformer()                   */
 /************************************************************************/
 
 static void *GDALCreateSimilarGCPTransformer(void *hTransformArg,
@@ -585,13 +585,11 @@ struct MATRIX
 
 /* CALCULATE OFFSET INTO ARRAY BASED ON R/C */
 
-#define M(row, col) m->v[(((row)-1) * (m->n)) + (col)-1]
+#define M(row, col) m->v[(((row) - 1) * (m->n)) + (col) - 1]
 
-/***************************************************************************/
-/*
-    FUNCTION PROTOTYPES FOR STATIC (INTERNAL) FUNCTIONS
-*/
-/***************************************************************************/
+/************************************************************************/
+/*         FUNCTION PROTOTYPES FOR STATIC (INTERNAL) FUNCTIONS          */
+/************************************************************************/
 
 static int calccoef(struct Control_Points *, double, double, double *, double *,
                     int);
@@ -602,11 +600,9 @@ static int exactdet(struct Control_Points *, struct MATRIX *, double, double,
 static int solvemat(struct MATRIX *, double *, double *, double *, double *);
 static double term(int, double, double);
 
-/***************************************************************************/
-/*
-    TRANSFORM A SINGLE COORDINATE PAIR.
-*/
-/***************************************************************************/
+/************************************************************************/
+/*                 TRANSFORM A SINGLE COORDINATE PAIR.                  */
+/************************************************************************/
 
 static int
 CRS_georef(double e1,  /* EASTINGS TO BE TRANSFORMED */
@@ -671,11 +667,9 @@ CRS_georef(double e1,  /* EASTINGS TO BE TRANSFORMED */
     return (MSUCCESS);
 }
 
-/***************************************************************************/
-/*
-    COMPUTE THE GEOREFFERENCING COEFFICIENTS BASED ON A SET OF CONTROL POINTS
-*/
-/***************************************************************************/
+/************************************************************************/
+/*COMPUTE THE GEOREFFERENCING COEFFICIENTS BASED ON A SET OF CONTROL POINTS*/
+/************************************************************************/
 
 static int CRS_compute_georef_equations(GCPTransformInfo *psInfo,
                                         struct Control_Points *cp, double E12[],
@@ -719,11 +713,9 @@ static int CRS_compute_georef_equations(GCPTransformInfo *psInfo,
     return (status);
 }
 
-/***************************************************************************/
-/*
-    COMPUTE THE GEOREFFERENCING COEFFICIENTS BASED ON A SET OF CONTROL POINTS
-*/
-/***************************************************************************/
+/************************************************************************/
+/*COMPUTE THE GEOREFFERENCING COEFFICIENTS BASED ON A SET OF CONTROL POINTS*/
+/************************************************************************/
 
 static int calccoef(struct Control_Points *cp, double x_mean, double y_mean,
                     double E[], double N[], int order)

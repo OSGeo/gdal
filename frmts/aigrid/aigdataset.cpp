@@ -293,7 +293,7 @@ GDALColorTable *AIGRasterBand::GetColorTable()
 /************************************************************************/
 
 /************************************************************************/
-/*                            AIGDataset()                            */
+/*                             AIGDataset()                             */
 /************************************************************************/
 
 AIGDataset::AIGDataset()
@@ -304,7 +304,7 @@ AIGDataset::AIGDataset()
 }
 
 /************************************************************************/
-/*                           ~AIGDataset()                            */
+/*                            ~AIGDataset()                             */
 /************************************************************************/
 
 AIGDataset::~AIGDataset()
@@ -351,7 +351,7 @@ char **AIGDataset::GetFileList()
 }
 
 /************************************************************************/
-/*                          AIGErrorHandlerVATOpen()                    */
+/*                       AIGErrorHandlerVATOpen()                       */
 /************************************************************************/
 
 class AIGErrorDescription
@@ -759,19 +759,19 @@ GDALDataset *AIGDataset::Open(GDALOpenInfo *poOpenInfo)
 CPLErr AIGDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    gt[0] = psInfo->dfLLX;
-    gt[1] = psInfo->dfCellSizeX;
-    gt[2] = 0;
+    gt.xorig = psInfo->dfLLX;
+    gt.xscale = psInfo->dfCellSizeX;
+    gt.xrot = 0;
 
-    gt[3] = psInfo->dfURY;
-    gt[4] = 0;
-    gt[5] = -psInfo->dfCellSizeY;
+    gt.yorig = psInfo->dfURY;
+    gt.yrot = 0;
+    gt.yscale = -psInfo->dfCellSizeY;
 
     return CE_None;
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *AIGDataset::GetSpatialRef() const

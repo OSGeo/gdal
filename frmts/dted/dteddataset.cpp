@@ -86,7 +86,7 @@ class DTEDRasterBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                           DTEDRasterBand()                            */
+/*                           DTEDRasterBand()                           */
 /************************************************************************/
 
 DTEDRasterBand::DTEDRasterBand(DTEDDataset *poDSIn, int nBandIn)
@@ -519,30 +519,30 @@ CPLErr DTEDDataset::GetGeoTransform(GDALGeoTransform &gt) const
         CPLTestBool(CPLGetConfigOption("DTED_APPLY_PIXEL_IS_POINT", "FALSE"));
     if (!bApplyPixelIsPoint)
     {
-        gt[0] = psDTED->dfULCornerX;
-        gt[1] = psDTED->dfPixelSizeX;
-        gt[2] = 0.0;
-        gt[3] = psDTED->dfULCornerY;
-        gt[4] = 0.0;
-        gt[5] = psDTED->dfPixelSizeY * -1;
+        gt.xorig = psDTED->dfULCornerX;
+        gt.xscale = psDTED->dfPixelSizeX;
+        gt.xrot = 0.0;
+        gt.yorig = psDTED->dfULCornerY;
+        gt.yrot = 0.0;
+        gt.yscale = psDTED->dfPixelSizeY * -1;
 
         return CE_None;
     }
     else
     {
-        gt[0] = psDTED->dfULCornerX + (0.5 * psDTED->dfPixelSizeX);
-        gt[1] = psDTED->dfPixelSizeX;
-        gt[2] = 0.0;
-        gt[3] = psDTED->dfULCornerY - (0.5 * psDTED->dfPixelSizeY);
-        gt[4] = 0.0;
-        gt[5] = psDTED->dfPixelSizeY * -1;
+        gt.xorig = psDTED->dfULCornerX + (0.5 * psDTED->dfPixelSizeX);
+        gt.xscale = psDTED->dfPixelSizeX;
+        gt.xrot = 0.0;
+        gt.yorig = psDTED->dfULCornerY - (0.5 * psDTED->dfPixelSizeY);
+        gt.yrot = 0.0;
+        gt.yscale = psDTED->dfPixelSizeY * -1;
 
         return CE_None;
     }
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *DTEDDataset::GetSpatialRef() const
@@ -659,7 +659,7 @@ const OGRSpatialReference *DTEDDataset::GetSpatialRef() const
 
 static GDALDataset *DTEDCreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char ** /* papszOptions */,
+                                   CSLConstList /* papszOptions */,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData)
 
@@ -672,14 +672,14 @@ static GDALDataset *DTEDCreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "DTED driver does not support source dataset with zero band.\n");
+            "DTED driver does not support source datasets with zero bands.");
         return nullptr;
     }
 
     if (nBands != 1)
     {
         CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                 "DTED driver only uses the first band of the dataset.\n");
+                 "DTED driver only uses the first band of the dataset.");
         if (bStrict)
             return nullptr;
     }
@@ -729,13 +729,13 @@ static GDALDataset *DTEDCreateCopy(const char *pszFilename,
     poSrcDS->GetGeoTransform(gt);
 
     int nLLOriginLat =
-        (int)floor(gt[3] + poSrcDS->GetRasterYSize() * gt[5] + 0.5);
+        (int)floor(gt.yorig + poSrcDS->GetRasterYSize() * gt.yscale + 0.5);
 
-    int nLLOriginLong = (int)floor(gt[0] + 0.5);
+    int nLLOriginLong = (int)floor(gt.xorig + 0.5);
 
-    if (fabs(nLLOriginLat -
-             (gt[3] + (poSrcDS->GetRasterYSize() - 0.5) * gt[5])) > 1e-10 ||
-        fabs(nLLOriginLong - (gt[0] + 0.5 * gt[1])) > 1e-10)
+    if (fabs(nLLOriginLat - (gt.yorig + (poSrcDS->GetRasterYSize() - 0.5) *
+                                            gt.yscale)) > 1e-10 ||
+        fabs(nLLOriginLong - (gt.xorig + 0.5 * gt.xscale)) > 1e-10)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "The corner coordinates of the source are not properly "

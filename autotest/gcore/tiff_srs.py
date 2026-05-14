@@ -58,8 +58,7 @@ def test_srs_write_compd_cs():
 
     sr = osr.SpatialReference()
     # EPSG:7400 without the Authority
-    sr.SetFromUserInput(
-        """COMPD_CS["unknown",
+    sr.SetFromUserInput("""COMPD_CS["unknown",
     GEOGCS["NTF (Paris)",
         DATUM["Nouvelle_Triangulation_Francaise_Paris",
             SPHEROID["Clarke 1880 (IGN)",6378249.2,293.4660212936265,
@@ -73,8 +72,7 @@ def test_srs_write_compd_cs():
             AUTHORITY["EPSG","5119"]],
         UNIT["metre",1,
             AUTHORITY["EPSG","9001"]],
-        AXIS["Up",UP]]]"""
-    )
+        AXIS["Up",UP]]]""")
 
     ds = gdal.GetDriverByName("GTiff").Create("/vsimem/tiff_srs_compd_cs.tif", 1, 1)
     ds.SetProjection(sr.ExportToWkt())
@@ -127,8 +125,7 @@ def test_tiff_srs_weird_mercator_2sp():
 
     sr = osr.SpatialReference()
     # EPSG:7400 without the Authority
-    sr.SetFromUserInput(
-        """PROJCS["Global Mercator",
+    sr.SetFromUserInput("""PROJCS["Global Mercator",
     GEOGCS["NAD83",
         DATUM["North_American_Datum_1983",
             SPHEROID["GRS 1980",6378137,298.2572221010002,
@@ -144,8 +141,7 @@ def test_tiff_srs_weird_mercator_2sp():
     PARAMETER["false_easting",0],
     PARAMETER["false_northing",0],
     UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]]]"""
-    )
+        AUTHORITY["EPSG","9001"]]]""")
 
     assert sr.IsSame(sr2) == 1, "did not get expected SRS"
 
@@ -199,8 +195,8 @@ def test_tiff_srs_WGS_1984_Web_Mercator():
     sr = ds.GetSpatialRef()
     ds = None
 
-    assert sr.GetAuthorityName(None) == "ESRI"
-    assert sr.GetAuthorityCode(None) == "102113"
+    assert sr.GetAuthorityName() == "ESRI"
+    assert sr.GetAuthorityCode() == "102113"
 
 
 ###############################################################################
@@ -212,13 +208,11 @@ def test_tiff_srs_angular_units():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/tiff_srs_angular_units.tif", 1, 1
     )
-    ds.SetProjection(
-        """GEOGCS["WGS 84 (arc-second)",
+    ds.SetProjection("""GEOGCS["WGS 84 (arc-second)",
     DATUM["WGS_1984 (arc-second)",
         SPHEROID["WGS 84",6378137,298.257223563]],
     PRIMEM["Greenwich",0],
-    UNIT["arc-second",4.848136811095361e-06]]"""
-    )
+    UNIT["arc-second",4.848136811095361e-06]]""")
     ds = None
     ds = gdal.Open("/vsimem/tiff_srs_angular_units.tif")
     wkt = ds.GetProjectionRef()
@@ -228,13 +222,11 @@ def test_tiff_srs_angular_units():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/tiff_srs_angular_units.tif", 1, 1
     )
-    ds.SetProjection(
-        """GEOGCS["WGS 84 (arc-minute)",
+    ds.SetProjection("""GEOGCS["WGS 84 (arc-minute)",
     DATUM["WGS_1984 (arc-minute)",
         SPHEROID["WGS 84",6378137,298.257223563]],
     PRIMEM["Greenwich",0],
-    UNIT["arc-minute",0.0002908882086657216]]"""
-    )
+    UNIT["arc-minute",0.0002908882086657216]]""")
     ds = None
     ds = gdal.Open("/vsimem/tiff_srs_angular_units.tif")
     wkt = ds.GetProjectionRef()
@@ -244,13 +236,11 @@ def test_tiff_srs_angular_units():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/tiff_srs_angular_units.tif", 1, 1
     )
-    ds.SetProjection(
-        """GEOGCS["WGS 84 (grad)",
+    ds.SetProjection("""GEOGCS["WGS 84 (grad)",
     DATUM["WGS_1984 (grad)",
         SPHEROID["WGS 84",6378137,298.257223563]],
     PRIMEM["Greenwich",0],
-    UNIT["grad",0.01570796326794897]]"""
-    )
+    UNIT["grad",0.01570796326794897]]""")
     ds = None
     ds = gdal.Open("/vsimem/tiff_srs_angular_units.tif")
     wkt = ds.GetProjectionRef()
@@ -260,13 +250,11 @@ def test_tiff_srs_angular_units():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/tiff_srs_angular_units.tif", 1, 1
     )
-    ds.SetProjection(
-        """GEOGCS["WGS 84 (gon)",
+    ds.SetProjection("""GEOGCS["WGS 84 (gon)",
     DATUM["WGS_1984 (gon)",
         SPHEROID["WGS 84",6378137,298.257223563]],
     PRIMEM["Greenwich",0],
-    UNIT["gon",0.01570796326794897]]"""
-    )
+    UNIT["gon",0.01570796326794897]]""")
     ds = None
     ds = gdal.Open("/vsimem/tiff_srs_angular_units.tif")
     wkt = ds.GetProjectionRef()
@@ -276,13 +264,11 @@ def test_tiff_srs_angular_units():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/tiff_srs_angular_units.tif", 1, 1
     )
-    ds.SetProjection(
-        """GEOGCS["WGS 84 (radian)",
+    ds.SetProjection("""GEOGCS["WGS 84 (radian)",
     DATUM["WGS_1984 (radian)",
         SPHEROID["WGS 84",6378137,298.257223563]],
     PRIMEM["Greenwich",0],
-    UNIT["radian",1]]"""
-    )
+    UNIT["radian",1]]""")
     ds = None
     ds = gdal.Open("/vsimem/tiff_srs_angular_units.tif")
     wkt = ds.GetProjectionRef()
@@ -292,13 +278,11 @@ def test_tiff_srs_angular_units():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/tiff_srs_angular_units.tif", 1, 1
     )
-    ds.SetProjection(
-        """GEOGCS["WGS 84 (custom)",
+    ds.SetProjection("""GEOGCS["WGS 84 (custom)",
     DATUM["WGS_1984 (custom)",
         SPHEROID["WGS 84",6378137,298.257223563]],
     PRIMEM["Greenwich",0],
-    UNIT["custom",1.23]]"""
-    )
+    UNIT["custom",1.23]]""")
     ds = None
     ds = gdal.Open("/vsimem/tiff_srs_angular_units.tif")
     wkt = ds.GetProjectionRef()
@@ -317,13 +301,11 @@ def test_tiff_custom_datum_known_ellipsoid():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/tiff_custom_datum_known_ellipsoid.tif", 1, 1
     )
-    ds.SetProjection(
-        """GEOGCS["WGS 84 based",
+    ds.SetProjection("""GEOGCS["WGS 84 based",
     DATUM["WGS_1984_based",
         SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]]],
     PRIMEM["Greenwich",0],
-    UNIT["degree",1]]"""
-    )
+    UNIT["degree",1]]""")
     ds = None
     ds = gdal.Open("/vsimem/tiff_custom_datum_known_ellipsoid.tif")
     wkt = ds.GetProjectionRef()
@@ -363,8 +345,7 @@ def test_tiff_srs_PCSCitationGeoKey_LUnits():
     ds = gdal.GetDriverByName("GTiff").Create(
         "/vsimem/tiff_srs_PCSCitationGeoKey_LUnits.tif", 1, 1
     )
-    ds.SetProjection(
-        """PROJCS["UTM Zone 32, Northern Hemisphere",
+    ds.SetProjection("""PROJCS["UTM Zone 32, Northern Hemisphere",
     GEOGCS["GRS 1980(IUGG, 1980)",
         DATUM["unknown",
             SPHEROID["GRS80",6378137,298.257222101],
@@ -377,8 +358,7 @@ def test_tiff_srs_PCSCitationGeoKey_LUnits():
     PARAMETER["scale_factor",0.9996],
     PARAMETER["false_easting",50000000],
     PARAMETER["false_northing",0],
-    UNIT["Centimeter",0.01]]"""
-    )
+    UNIT["Centimeter",0.01]]""")
     ds = None
     ds = gdal.Open("/vsimem/tiff_srs_PCSCitationGeoKey_LUnits.tif")
     wkt = ds.GetProjectionRef()
@@ -467,7 +447,7 @@ def test_tiff_srs_ProjectedCSTypeGeoKey_GeographicTypeGeoKey():
 
     ds = gdal.Open("data/utmsmall.tif")
     sr = ds.GetSpatialRef()
-    assert sr.GetAuthorityCode(None) == "26711"
+    assert sr.GetAuthorityCode() == "26711"
 
 
 def _test_tiff_srs(sr, expect_fail):
@@ -481,7 +461,7 @@ def _test_tiff_srs(sr, expect_fail):
     # The GeoTIFF driver is smart enough to figure out that a CRS with
     # '+proj=longlat +datum=WGS84' is EPSG:4326
     if (
-        sr.GetAuthorityCode(None) is None
+        sr.GetAuthorityCode() is None
         and "+proj=longlat +datum=WGS84" in sr.ExportToProj4()
     ):
         sr.ImportFromEPSG(4326)
@@ -621,7 +601,7 @@ def _create_geotiff1_1_from_copy_and_compare(srcfilename, options=[]):
 def test_tiff_srs_read_epsg4326_geotiff1_1():
     ds = gdal.Open("data/epsg4326_geotiff1_1.tif")
     sr = ds.GetSpatialRef()
-    assert sr.GetAuthorityCode(None) == "4326"
+    assert sr.GetAuthorityCode() == "4326"
 
 
 def test_tiff_srs_write_epsg4326_geotiff1_1():
@@ -633,7 +613,7 @@ def test_tiff_srs_write_epsg4326_geotiff1_1():
 def test_tiff_srs_read_epsg26711_geotiff1_1():
     ds = gdal.Open("data/epsg26711_geotiff1_1.tif")
     sr = ds.GetSpatialRef()
-    assert sr.GetAuthorityCode(None) == "26711"
+    assert sr.GetAuthorityCode() == "26711"
 
 
 def test_tiff_srs_write_epsg26711_geotiff1_1():
@@ -657,7 +637,7 @@ def test_tiff_srs_write_epsg4326_3855_geotiff1_1():
 def test_tiff_srs_read_epsg4979_geotiff1_1():
     ds = gdal.Open("data/epsg4979_geotiff1_1.tif")
     sr = ds.GetSpatialRef()
-    assert sr.GetAuthorityCode(None) == "4979"
+    assert sr.GetAuthorityCode() == "4979"
 
 
 def test_tiff_srs_write_epsg4979_geotiff1_1():
@@ -675,7 +655,7 @@ def test_tiff_srs_write_epsg4937_etrs89_3D_geotiff1_1():
     ds = None
     ds = gdal.Open(tmpfile)
     assert sr.GetName() == "ETRS89"
-    assert sr.GetAuthorityCode(None) == "4937"
+    assert sr.GetAuthorityCode() == "4937"
     ds = None
     gdal.Unlink(tmpfile)
 
@@ -684,7 +664,7 @@ def test_tiff_srs_write_epsg4937_etrs89_3D_geotiff1_1():
 def test_tiff_srs_read_epsg4326_5030_geotiff1_1():
     ds = gdal.Open("data/epsg4326_5030_geotiff1_1.tif")
     sr = ds.GetSpatialRef()
-    assert sr.GetAuthorityCode(None) == "4979"
+    assert sr.GetAuthorityCode() == "4979"
 
 
 def test_tiff_srs_read_epsg26711_3855_geotiff1_1():
@@ -709,7 +689,7 @@ def test_tiff_srs_read_epsg32631_4979_geotiff1_1():
     assert sr.GetName() == "WGS 84 / UTM zone 31N"
     sr_geog = osr.SpatialReference()
     sr_geog.CopyGeogCSFrom(sr)
-    assert sr_geog.GetAuthorityCode(None) == "4979"
+    assert sr_geog.GetAuthorityCode() == "4979"
 
 
 def test_tiff_srs_write_vertical_perspective():
@@ -809,8 +789,7 @@ def test_tiff_srs_towgs84_with_epsg_code_but_non_default_TOWGS84():
     filename = "/vsimem/test.tif"
     ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
     srs_in = osr.SpatialReference()
-    srs_in.SetFromUserInput(
-        """PROJCS["DHDN / 3-degree Gauss-Kruger zone 4",
+    srs_in.SetFromUserInput("""PROJCS["DHDN / 3-degree Gauss-Kruger zone 4",
     GEOGCS["DHDN",
         DATUM["Deutsches_Hauptdreiecksnetz",
             SPHEROID["Bessel 1841",6377397.155,299.1528128,
@@ -832,8 +811,7 @@ def test_tiff_srs_towgs84_with_epsg_code_but_non_default_TOWGS84():
         AUTHORITY["EPSG","9001"]],
     AXIS["Northing",NORTH],
     AXIS["Easting",EAST],
-    AUTHORITY["EPSG","31468"]]"""
-    )
+    AUTHORITY["EPSG","31468"]]""")
     ds.SetSpatialRef(srs_in)
     ds = None
 
@@ -852,7 +830,7 @@ def test_tiff_srs_write_epsg3857():
     ds = None
     ds = gdal.Open(tmpfile)
     assert sr.GetName() == "WGS 84 / Pseudo-Mercator"
-    assert sr.GetAuthorityCode(None) == "3857"
+    assert sr.GetAuthorityCode() == "3857"
     f = gdal.VSIFOpenL(tmpfile, "rb")
     data = gdal.VSIFReadL(1, 100000, f)
     gdal.VSIFCloseL(f)
@@ -863,7 +841,7 @@ def test_tiff_srs_write_epsg3857():
 def test_tiff_srs_read_epsg26730_with_linear_units_set():
     ds = gdal.Open("data/epsg26730_with_linear_units_set.tif")
     sr = ds.GetSpatialRef()
-    assert sr.GetAuthorityCode(None) == "26730"
+    assert sr.GetAuthorityCode() == "26730"
 
 
 def test_tiff_srs_read_user_defined_geokeys():
@@ -993,7 +971,7 @@ def test_tiff_srs_read_inconsistent_invflattening():
     with gdal.quiet_errors():
         srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() != ""
-    assert srs.GetAuthorityCode(None) == "28992"
+    assert srs.GetAuthorityCode() == "28992"
     assert srs.GetAuthorityCode("GEOGCS") == "4289"
     assert srs.GetInvFlattening() == pytest.approx(
         299.1528131, abs=1e-7
@@ -1004,7 +982,7 @@ def test_tiff_srs_read_inconsistent_invflattening():
     with gdaltest.config_option("GTIFF_SRS_SOURCE", "GEOKEYS"):
         srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == ""
-    assert srs.GetAuthorityCode(None) is None
+    assert srs.GetAuthorityCode() is None
     assert srs.GetAuthorityCode("GEOGCS") is None
     assert srs.GetInvFlattening() == pytest.approx(
         299.1528131, abs=1e-7
@@ -1015,7 +993,7 @@ def test_tiff_srs_read_inconsistent_invflattening():
     with gdaltest.config_option("GTIFF_SRS_SOURCE", "EPSG"):
         srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == ""
-    assert srs.GetAuthorityCode(None) == "28992"
+    assert srs.GetAuthorityCode() == "28992"
     assert srs.GetAuthorityCode("GEOGCS") == "4289"
     assert srs.GetInvFlattening() == pytest.approx(
         299.1528128, abs=1e-7
@@ -1038,7 +1016,7 @@ def test_tiff_srs_dynamic_geodetic_crs():
     gdal.ErrorReset()
     srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
-    assert srs.GetAuthorityCode(None) == "8999"
+    assert srs.GetAuthorityCode() == "8999"
     assert srs.IsDynamic()
     ds = None
     gdal.Unlink("/vsimem/test_tiff_srs_dynamic_geodetic_crs.tif")
@@ -1062,7 +1040,7 @@ def test_tiff_srs_geographic_crs_3D(geotiff_version):
     srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
     if geotiff_version == "1.1":
-        assert srs.GetAuthorityCode(None) == "4959"
+        assert srs.GetAuthorityCode() == "4959"
     ds = None
     gdal.Unlink("/vsimem/test_tiff_srs_geographic_crs_3D.tif")
 
@@ -1080,7 +1058,7 @@ def test_tiff_srs_datum_name_with_space():
     gdal.ErrorReset()
     srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
-    assert srs.GetAuthorityCode(None) == "4312"
+    assert srs.GetAuthorityCode() == "4312"
     ds = None
     gdal.Unlink("/vsimem/test_tiff_srs_datum_name_with_space.tif")
 
@@ -1214,11 +1192,10 @@ def test_tiff_srs_epsg_2193_override():
     gdal.ErrorReset()
     srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
-    assert srs.GetAuthorityCode(None) == "2193"
+    assert srs.GetAuthorityCode() == "2193"
 
 
 def test_tiff_srs_projected_GTCitationGeoKey_with_underscore_and_GeogTOWGS84GeoKey():
-
     """Test bugfix for https://lists.osgeo.org/pipermail/gdal-dev/2023-March/057011.html"""
 
     ds = gdal.Open(
@@ -1226,7 +1203,7 @@ def test_tiff_srs_projected_GTCitationGeoKey_with_underscore_and_GeogTOWGS84GeoK
     )
     gdal.ErrorReset()
     srs = ds.GetSpatialRef()
-    assert srs.GetAuthorityCode(None) == "2039"
+    assert srs.GetAuthorityCode() == "2039"
     assert "+proj=tmerc" in srs.ExportToProj4()
     if osr.GetPROJVersionMajor() >= 9:  # not necessarily the minimum version
         assert srs.GetName() == "Israel 1993 / Israeli TM Grid"
@@ -1240,8 +1217,7 @@ def test_tiff_srs_write_compound_with_non_epsg_vert_crs():
 
     filename = "/vsimem/test_tiff_srs_write_compound_with_non_epsg_vert_crs.tif"
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """COMPD_CS["TestMS",
+    srs.SetFromUserInput("""COMPD_CS["TestMS",
     GEOGCS["NAD83(2011)",
         DATUM["NAD83_National_Spatial_Reference_System_2011",
             SPHEROID["GRS 1980",6378137,298.257222101,
@@ -1261,8 +1237,7 @@ def test_tiff_srs_write_compound_with_non_epsg_vert_crs():
             AUTHORITY["EPSG","9001"]],
         AXIS["Gravity-related height",UP],
         AUTHORITY["NOAA","800"]],
-    AUTHORITY["NOAA","2000"]]"""
-    )
+    AUTHORITY["NOAA","2000"]]""")
 
     ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
     ds.SetSpatialRef(srs)
@@ -1284,7 +1259,6 @@ def test_tiff_srs_write_compound_with_non_epsg_vert_crs():
 
 
 def test_tiff_srs_read_compound_with_VerticalCitationGeoKey_only():
-
     """Test bugfix for https://github.com/OSGeo/gdal/issues/7833"""
 
     ds = gdal.Open("data/gtiff/compound_with_VerticalCitationGeoKey_only.tif")
@@ -1309,7 +1283,6 @@ def test_tiff_srs_read_compound_with_VerticalCitationGeoKey_only():
     7, 2
 )  # not necessarily the minimum version, but 9707 doesn't exist in PROJ 6.x
 def test_tiff_srs_read_compound_with_EPSG_code(code):
-
     """Test bugfix for https://github.com/OSGeo/gdal/issues/7982"""
 
     filename = "/vsimem/test_tiff_srs_read_compound_with_EPSG_code.tif"
@@ -1323,14 +1296,13 @@ def test_tiff_srs_read_compound_with_EPSG_code(code):
     gdal.ErrorReset()
     got_srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
-    assert got_srs.GetAuthorityCode(None) == str(code)
+    assert got_srs.GetAuthorityCode() == str(code)
     assert got_srs.IsSame(srs)
     ds = None
     gdal.Unlink(filename)
 
 
 def test_tiff_srs_read_compound_without_EPSG_code():
-
     """Test case where identification of code for CompoundCRS (added for
     bugfix of https://github.com/OSGeo/gdal/issues/7982) doesn't trigger"""
 
@@ -1349,7 +1321,7 @@ def test_tiff_srs_read_compound_without_EPSG_code():
     gdal.ErrorReset()
     got_srs = ds.GetSpatialRef()
     assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
-    assert got_srs.GetAuthorityCode(None) is None
+    assert got_srs.GetAuthorityCode() is None
     assert got_srs.GetAuthorityCode("GEOGCS") == "4326"
     assert got_srs.GetAuthorityCode("VERT_CS") == "5709"
     assert got_srs.IsSame(srs)
@@ -1371,7 +1343,7 @@ def test_tiff_srs_projection_method_unknown_of_geotiff_with_crs_code():
     ds = gdal.Open(filename)
     gdal.ErrorReset()
     srs = ds.GetSpatialRef()
-    assert srs.GetAuthorityCode(None) == "8857"
+    assert srs.GetAuthorityCode() == "8857"
     ds = None
     gdal.Unlink(filename)
 
@@ -1380,8 +1352,7 @@ def test_tiff_srs_projection_method_unknown_of_geotiff_with_crs_code():
 def test_tiff_srs_projection_method_unknown_of_geotiff_without_crs_code():
 
     srs = osr.SpatialReference()
-    srs.SetFromUserInput(
-        """PROJCS["WGS_1984_Equal_Earth_Greenwich",
+    srs.SetFromUserInput("""PROJCS["WGS_1984_Equal_Earth_Greenwich",
     GEOGCS["GCS_WGS_1984",
         DATUM["D_WGS_1984",
             SPHEROID["WGS_1984",6378137.0,298.257223563]],
@@ -1391,8 +1362,7 @@ def test_tiff_srs_projection_method_unknown_of_geotiff_without_crs_code():
     PARAMETER["False_Easting",0.0],
     PARAMETER["False_Northing",0.0],
     PARAMETER["Central_Meridian",0.0],
-    UNIT["Meter",1.0]]"""
-    )
+    UNIT["Meter",1.0]]""")
     filename = "/vsimem/test_tiff_srs_projection_method_unknown_of_geotiff_without_crs_code.tif"
     ds = gdal.GetDriverByName("GTiff").Create(
         filename, 1, 1, options=["GEOTIFF_KEYS_FLAVOR=ESRI_PE"]
@@ -1465,8 +1435,7 @@ def test_tiff_srs_write_read_epsg_27563_full_def(tmp_vsimem, config_options):
     with gdal.config_options(config_options):
         filename = str(tmp_vsimem / "test.tif")
         srs = osr.SpatialReference()
-        srs.SetFromUserInput(
-            """PROJCRS["NTF (Paris) / Lambert Sud France",
+        srs.SetFromUserInput("""PROJCRS["NTF (Paris) / Lambert Sud France",
         BASEGEOGCRS["NTF (Paris)",
             DATUM["Nouvelle Triangulation Francaise (Paris)",
                 ELLIPSOID["Clarke 1880 (IGN)",6378249.2,293.466021293627,
@@ -1498,8 +1467,7 @@ def test_tiff_srs_write_read_epsg_27563_full_def(tmp_vsimem, config_options):
                 LENGTHUNIT["metre",1]],
             AXIS["northing (Y)",north,
                 ORDER[2],
-                LENGTHUNIT["metre",1]]]"""
-        )
+                LENGTHUNIT["metre",1]]]""")
         ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
         ds.SetSpatialRef(srs)
         ds = None
@@ -1522,5 +1490,5 @@ def test_tiff_srs_infer_iau_code_from_srs_name():
 
     ds = gdal.Open("data/gtiff/tiff_srs_iau_2015_30110.tif")
     srs = ds.GetSpatialRef()
-    assert srs.GetAuthorityName(None) == "IAU_2015"
-    assert srs.GetAuthorityCode(None) == "30110"
+    assert srs.GetAuthorityName() == "IAU_2015"
+    assert srs.GetAuthorityCode() == "30110"

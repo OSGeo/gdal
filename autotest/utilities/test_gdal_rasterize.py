@@ -98,7 +98,7 @@ def test_gdal_rasterize_1(gdal_rasterize_path, tmp_path):
     rast_ogr_ds.Close()
 
     # Run the algorithm.
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_rasterize_path} -b 3 -b 2 -b 1 -burn 200 -burn 220 -burn 240 -l rast1 {input_tab} {output_tif}"
     )
     assert err is None or err == "", "got error/warning"
@@ -253,16 +253,12 @@ def test_gdal_rasterize_5(gdal_rasterize_path, tmp_path):
     output_tif = str(tmp_path / "test_gdal_rasterize_5.tif")
 
     f = open(input_csv, "wb")
-    f.write(
-        """x,y,Value
+    f.write("""x,y,Value
 0.5,0.5,1
 0.5,2.5,2
 2.5,2.5,3
 2.5,0.5,4
-1.5,1.5,5""".encode(
-            "ascii"
-        )
-    )
+1.5,1.5,5""".encode("ascii"))
     f.close()
 
     gdaltest.runexternal(
@@ -304,13 +300,9 @@ def test_gdal_rasterize_6(gdal_rasterize_path, tmp_path):
     output_tif = str(tmp_path / "test_gdal_rasterize_6.tif")
 
     f = open(input_csv, "wb")
-    f.write(
-        """WKT,Value
+    f.write("""WKT,Value
 "POLYGON((2 49,2 50,3 50,3 49,2 49))",255
-""".encode(
-            "ascii"
-        )
-    )
+""".encode("ascii"))
     f.close()
 
     f = open(input_prj, "wb")
@@ -438,12 +430,12 @@ def test_gdal_rasterize_ts_1(tmp_path, gdal_rasterize_path):
     target_ds = None
 
     # Run the algorithm.
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_rasterize_path} -at -burn 200 -ts 100.0 200.0 ../alg/data/cutline.csv {output_tif}"
     )
     assert err is None or err == "", f"got error/warning {err}"
 
-    (_, err) = gdaltest.runexternal_out_and_err(
+    _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_rasterize_path} -at -burn 200 -ts 100.4 200.6 ../alg/data/cutline.csv {output_tif}"
     )
     assert "-ts values parsed as 100 200" in err

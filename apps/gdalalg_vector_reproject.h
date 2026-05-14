@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                    GDALVectorReprojectAlgorithm                      */
+/*                     GDALVectorReprojectAlgorithm                     */
 /************************************************************************/
 
 class GDALVectorReprojectAlgorithm /* non final */
@@ -36,12 +36,12 @@ class GDALVectorReprojectAlgorithm /* non final */
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string m_activeLayer{};
-    std::string m_srsCrs{};
+    std::string m_srcCrs{};
     std::string m_dstCrs{};
 };
 
 /************************************************************************/
-/*                 GDALVectorReprojectAlgorithmStandalone               */
+/*                GDALVectorReprojectAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALVectorReprojectAlgorithmStandalone final

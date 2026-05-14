@@ -277,7 +277,7 @@ def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
     assert "gdal_version" in j
     del j["gdal_version"]
     assert j == {
-        "command_line": "gdal raster pipeline read --input data/byte.tif ! reproject --dst-crs EPSG:4326",
+        "command_line": "gdal raster pipeline read --input data/byte.tif ! reproject --output-crs EPSG:4326",
         "type": "gdal_streamed_alg",
     }
 
@@ -319,7 +319,7 @@ def test_gdalg_generate_from_raster_pipeline(tmp_vsimem):
     assert "gdal_version" in j
     del j["gdal_version"]
     assert j == {
-        "command_line": "gdal raster pipeline read --input data/byte.tif ! reproject --dst-crs EPSG:4326",
+        "command_line": "gdal raster pipeline read --input data/byte.tif ! reproject --output-crs EPSG:4326",
         "type": "gdal_streamed_alg",
     }
 
@@ -357,7 +357,7 @@ def test_gdalg_generate_from_raster_reproject(tmp_vsimem):
     assert "gdal_version" in j
     del j["gdal_version"]
     assert j == {
-        "command_line": "gdal raster reproject --input data/byte.tif --dst-crs EPSG:4326 --output-format stream --output streamed_dataset",
+        "command_line": "gdal raster reproject --input data/byte.tif --output-crs EPSG:4326 --output-format stream --output streamed_dataset",
         "type": "gdal_streamed_alg",
     }
 
@@ -382,7 +382,7 @@ def test_gdalg_generate_from_vector_pipeline(tmp_vsimem):
     assert "gdal_version" in j
     del j["gdal_version"]
     assert j == {
-        "command_line": "gdal vector pipeline read --input ../ogr/data/poly.shp ! reproject --dst-crs EPSG:4326",
+        "command_line": "gdal vector pipeline read --input ../ogr/data/poly.shp ! reproject --output-crs EPSG:4326",
         "type": "gdal_streamed_alg",
     }
 

@@ -495,7 +495,7 @@ const int *ACGetKnownDimStyleCodes()
 }
 
 /************************************************************************/
-/*                      ACGetDimStylePropertyName()                     */
+/*                     ACGetDimStylePropertyName()                      */
 /************************************************************************/
 
 const char *ACGetDimStylePropertyName(const int iDimStyleCode)

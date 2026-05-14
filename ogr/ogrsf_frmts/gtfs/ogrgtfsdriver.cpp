@@ -14,15 +14,16 @@
 #include "gdal_priv.h"
 #include "ogrsf_frmts.h"
 
+#include <cassert>
 #include <map>
 #include <new>
 #include <utility>
 
 constexpr const char *const apszCSVDriver[] = {"CSV", nullptr};
 
-/***********************************************************************/
-/*                         OGRGTFSDataset                              */
-/***********************************************************************/
+/************************************************************************/
+/*                            OGRGTFSDataset                            */
+/************************************************************************/
 
 class OGRGTFSDataset final : public GDALDataset
 {
@@ -42,9 +43,9 @@ class OGRGTFSDataset final : public GDALDataset
     static GDALDataset *Open(GDALOpenInfo *poOpenInfo);
 };
 
-/***********************************************************************/
-/*                              GetLayer()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                              GetLayer()                              */
+/************************************************************************/
 
 const OGRLayer *OGRGTFSDataset::GetLayer(int nIdx) const
 {
@@ -53,9 +54,9 @@ const OGRLayer *OGRGTFSDataset::GetLayer(int nIdx) const
                : nullptr;
 }
 
-/***********************************************************************/
-/*                           OGRGTFSLayer                              */
-/***********************************************************************/
+/************************************************************************/
+/*                             OGRGTFSLayer                             */
+/************************************************************************/
 
 class OGRGTFSLayer final : public OGRLayer
 {
@@ -89,9 +90,9 @@ class OGRGTFSLayer final : public OGRLayer
     }
 };
 
-/***********************************************************************/
-/*                           OGRGTFSLayer()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                            OGRGTFSLayer()                            */
+/************************************************************************/
 
 OGRGTFSLayer::OGRGTFSLayer(const std::string &osDirname, const char *pszName,
                            std::unique_ptr<GDALDataset> &&poUnderlyingDS)
@@ -103,8 +104,15 @@ OGRGTFSLayer::OGRGTFSLayer(const std::string &osDirname, const char *pszName,
     m_poFeatureDefn->Reference();
 
     m_poUnderlyingLayer = m_poUnderlyingDS->GetLayer(0);
-
+    assert(m_poUnderlyingLayer);
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
     auto poSrcLayerDefn = m_poUnderlyingLayer->GetLayerDefn();
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
     const int nFieldCount = poSrcLayerDefn->GetFieldCount();
     m_nTripIdIdx = poSrcLayerDefn->GetFieldIndex("trip_id");
     if (EQUAL(pszName, "stops"))
@@ -168,27 +176,27 @@ OGRGTFSLayer::OGRGTFSLayer(const std::string &osDirname, const char *pszName,
     }
 }
 
-/***********************************************************************/
-/*                          ~OGRGTFSLayer()                            */
-/***********************************************************************/
+/************************************************************************/
+/*                           ~OGRGTFSLayer()                            */
+/************************************************************************/
 
 OGRGTFSLayer::~OGRGTFSLayer()
 {
     m_poFeatureDefn->Release();
 }
 
-/***********************************************************************/
-/*                          ResetReading()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
 
 void OGRGTFSLayer::ResetReading()
 {
     m_poUnderlyingLayer->ResetReading();
 }
 
-/***********************************************************************/
-/*                        PrepareTripsData()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                          PrepareTripsData()                          */
+/************************************************************************/
 
 void OGRGTFSLayer::PrepareTripsData()
 {
@@ -255,9 +263,9 @@ void OGRGTFSLayer::PrepareTripsData()
     }
 }
 
-/***********************************************************************/
-/*                          GetNextFeature()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
 
 OGRFeature *OGRGTFSLayer::GetNextFeature()
 {
@@ -344,9 +352,9 @@ OGRFeature *OGRGTFSLayer::GetNextFeature()
     }
 }
 
-/***********************************************************************/
-/*                          GetFeatureCount()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
 
 GIntBig OGRGTFSLayer::GetFeatureCount(int bForce)
 {
@@ -355,18 +363,18 @@ GIntBig OGRGTFSLayer::GetFeatureCount(int bForce)
     return m_poUnderlyingLayer->GetFeatureCount(bForce);
 }
 
-/***********************************************************************/
-/*                          TestCapability()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
 
 int OGRGTFSLayer::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, OLCStringsAsUTF8);
 }
 
-/***********************************************************************/
-/*                         OGRGTFSShapesGeomLayer                      */
-/***********************************************************************/
+/************************************************************************/
+/*                        OGRGTFSShapesGeomLayer                        */
+/************************************************************************/
 
 class OGRGTFSShapesGeomLayer final : public OGRLayer
 {
@@ -396,9 +404,9 @@ class OGRGTFSShapesGeomLayer final : public OGRLayer
     GIntBig GetFeatureCount(int bForce) override;
 };
 
-/***********************************************************************/
-/*                       OGRGTFSShapesGeomLayer()                      */
-/***********************************************************************/
+/************************************************************************/
+/*                       OGRGTFSShapesGeomLayer()                       */
+/************************************************************************/
 
 OGRGTFSShapesGeomLayer::OGRGTFSShapesGeomLayer(
     std::unique_ptr<GDALDataset> &&poUnderlyingDS)
@@ -414,27 +422,27 @@ OGRGTFSShapesGeomLayer::OGRGTFSShapesGeomLayer(
     m_poUnderlyingLayer = m_poUnderlyingDS->GetLayer(0);
 }
 
-/***********************************************************************/
-/*                      ~OGRGTFSShapesGeomLayer()                      */
-/***********************************************************************/
+/************************************************************************/
+/*                      ~OGRGTFSShapesGeomLayer()                       */
+/************************************************************************/
 
 OGRGTFSShapesGeomLayer::~OGRGTFSShapesGeomLayer()
 {
     m_poFeatureDefn->Release();
 }
 
-/***********************************************************************/
-/*                          ResetReading()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                            ResetReading()                            */
+/************************************************************************/
 
 void OGRGTFSShapesGeomLayer::ResetReading()
 {
     m_nIdx = 0;
 }
 
-/***********************************************************************/
-/*                            Prepare()                                */
-/***********************************************************************/
+/************************************************************************/
+/*                              Prepare()                               */
+/************************************************************************/
 
 void OGRGTFSShapesGeomLayer::Prepare()
 {
@@ -482,9 +490,9 @@ void OGRGTFSShapesGeomLayer::Prepare()
     }
 }
 
-/***********************************************************************/
-/*                          GetNextFeature()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                           GetNextFeature()                           */
+/************************************************************************/
 
 OGRFeature *OGRGTFSShapesGeomLayer::GetNextFeature()
 {
@@ -507,18 +515,18 @@ OGRFeature *OGRGTFSShapesGeomLayer::GetNextFeature()
     }
 }
 
-/***********************************************************************/
-/*                          TestCapability()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                           TestCapability()                           */
+/************************************************************************/
 
 int OGRGTFSShapesGeomLayer::TestCapability(const char *pszCap) const
 {
     return EQUAL(pszCap, OLCStringsAsUTF8);
 }
 
-/***********************************************************************/
-/*                          GetFeatureCount()                          */
-/***********************************************************************/
+/************************************************************************/
+/*                          GetFeatureCount()                           */
+/************************************************************************/
 
 GIntBig OGRGTFSShapesGeomLayer::GetFeatureCount(int bForce)
 {
@@ -529,9 +537,9 @@ GIntBig OGRGTFSShapesGeomLayer::GetFeatureCount(int bForce)
     return static_cast<GIntBig>(m_apoFeatures.size());
 }
 
-/***********************************************************************/
-/*                              Identify()                             */
-/***********************************************************************/
+/************************************************************************/
+/*                              Identify()                              */
+/************************************************************************/
 
 static const char *const apszRequiredFiles[] = {"agency.txt", "routes.txt",
                                                 "trips.txt",  "stop_times.txt",
@@ -592,9 +600,9 @@ int OGRGTFSDataset::Identify(GDALOpenInfo *poOpenInfo)
     return FALSE;
 }
 
-/***********************************************************************/
-/*                              Open()                                 */
-/***********************************************************************/
+/************************************************************************/
+/*                                Open()                                */
+/************************************************************************/
 
 GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
 {
@@ -679,9 +687,9 @@ GDALDataset *OGRGTFSDataset::Open(GDALOpenInfo *poOpenInfo)
     return poDS.release();
 }
 
-/***********************************************************************/
-/*                         RegisterOGRGTFS()                           */
-/***********************************************************************/
+/************************************************************************/
+/*                          RegisterOGRGTFS()                           */
+/************************************************************************/
 
 void RegisterOGRGTFS()
 

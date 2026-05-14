@@ -74,7 +74,7 @@ OGRDWGLayer::OGRDWGLayer(OGRDWGDataSource *poDSIn)
 }
 
 /************************************************************************/
-/*                           ~OGRDWGLayer()                           */
+/*                            ~OGRDWGLayer()                            */
 /************************************************************************/
 
 OGRDWGLayer::~OGRDWGLayer()
@@ -1122,7 +1122,7 @@ class GeometryInsertTransformer : public OGRCoordinateTransformation
 };
 
 /************************************************************************/
-/*                        Translate3DFACE()                             */
+/*                          Translate3DFACE()                           */
 /************************************************************************/
 
 OGRFeature *OGRDWGLayer::Translate3DFACE(OdDbEntityPtr poEntity)

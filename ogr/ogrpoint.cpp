@@ -27,7 +27,7 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                         GetEmptyNonEmptyFlag()                       */
+/*                        GetEmptyNonEmptyFlag()                        */
 /************************************************************************/
 
 static int GetEmptyNonEmptyFlag(double x, double y)
@@ -121,7 +121,7 @@ OGRPoint *OGRPoint::createXYM(double x, double y, double m)
 }
 
 /************************************************************************/
-/*                       OGRPoint( const OGRPoint& )                    */
+/*                     OGRPoint( const OGRPoint& )                      */
 /************************************************************************/
 
 /**
@@ -131,7 +131,7 @@ OGRPoint *OGRPoint::createXYM(double x, double y, double m)
 OGRPoint::OGRPoint(const OGRPoint &) = default;
 
 /************************************************************************/
-/*                       operator=( const OGRPoint& )                   */
+/*                     operator=( const OGRPoint& )                     */
 /************************************************************************/
 
 /**
@@ -668,7 +668,7 @@ void OGRPoint::getEnvelope(OGREnvelope3D *psEnvelope) const
 /*                               Equal()                                */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Equals(const OGRGeometry *poOther) const
+bool OGRPoint::Equals(const OGRGeometry *poOther) const
 
 {
     if (poOther == this)
@@ -721,7 +721,7 @@ void OGRPoint::swapXY()
 /*                               Within()                               */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Within(const OGRGeometry *poOtherGeom) const
+bool OGRPoint::Within(const OGRGeometry *poOtherGeom) const
 
 {
     if (!IsEmpty() && poOtherGeom != nullptr &&
@@ -735,10 +735,10 @@ OGRBoolean OGRPoint::Within(const OGRGeometry *poOtherGeom) const
 }
 
 /************************************************************************/
-/*                              Intersects()                            */
+/*                             Intersects()                             */
 /************************************************************************/
 
-OGRBoolean OGRPoint::Intersects(const OGRGeometry *poOtherGeom) const
+bool OGRPoint::Intersects(const OGRGeometry *poOtherGeom) const
 
 {
     if (!IsEmpty() && poOtherGeom != nullptr &&

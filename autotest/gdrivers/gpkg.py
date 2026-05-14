@@ -1912,14 +1912,12 @@ def test_gpkg_21():
             or feat.GetField("md_scope") != "dataset"
             or feat.GetField("md_standard_uri") != "http://gdal.org"
             or feat.GetField("mime_type") != "text/xml"
-            or feat.GetField("metadata")
-            != """<GDALMultiDomainMetadata>
+            or feat.GetField("metadata") != """<GDALMultiDomainMetadata>
   <Metadata>
     <MDI key="foo">%s</MDI>
   </Metadata>
 </GDALMultiDomainMetadata>
-"""
-            % foo_value
+""" % foo_value
         ):
             feat.DumpReadable()
             pytest.fail(i)
@@ -2009,8 +2007,7 @@ def test_gpkg_21():
         or feat.GetField("md_scope") != "dataset"
         or feat.GetField("md_standard_uri") != "http://gdal.org"
         or feat.GetField("mime_type") != "text/xml"
-        or feat.GetField("metadata")
-        != """<GDALMultiDomainMetadata>
+        or feat.GetField("metadata") != """<GDALMultiDomainMetadata>
   <Metadata>
     <MDI key="bar">foo</MDI>
   </Metadata>
@@ -2270,16 +2267,14 @@ def test_gpkg_22(tile_drv_name):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gpkg_26():
-
-    gdal.Unlink("/vsimem/tmp.gpkg")
-
-    tests = [
+@pytest.mark.parametrize(
+    "scheme,expected_cs,other_options",
+    [
         ("CUSTOM", [4672, 4672, 4672, 4873], None),
-        ("GoogleCRS84Quad", [3562, 3562, 3562, 3691], None),
-        ("GoogleCRS84Quad", [3562, 3562, 3562, 3691], ["RESAMPLING=BILINEAR"]),
-        ("GoogleCRS84Quad", [3417, 3417, 3417, 3691], ["RESAMPLING=CUBIC"]),
-        ("GoogleCRS84Quad", [3562, 3562, 3562, 3691], ["ZOOM_LEVEL_STRATEGY=AUTO"]),
+        ("GoogleCRS84Quad", [3439, 3439, 3439, 3691], None),
+        ("GoogleCRS84Quad", [3439, 3439, 3439, 3691], ["RESAMPLING=BILINEAR"]),
+        ("GoogleCRS84Quad", [3549, 3549, 3549, 3691], ["RESAMPLING=CUBIC"]),
+        ("GoogleCRS84Quad", [3439, 3439, 3439, 3691], ["ZOOM_LEVEL_STRATEGY=AUTO"]),
         (
             "GoogleCRS84Quad",
             [14445, 14445, 14445, 14448],
@@ -2295,77 +2290,65 @@ def test_gpkg_26():
             None,
             ["ZOOM_LEVEL=31"],
         ),
-        ("GoogleCRS84Quad", [3562, 3562, 3562, 3691], ["ZOOM_LEVEL_STRATEGY=LOWER"]),
+        ("GoogleCRS84Quad", [3439, 3439, 3439, 3691], ["ZOOM_LEVEL_STRATEGY=LOWER"]),
         ("GoogleMapsCompatible", [4118, 4118, 4118, 4406], None),
-        ("PseudoTMS_GlobalGeodetic", [3562, 3562, 3562, 3691], None),
+        ("PseudoTMS_GlobalGeodetic", [3439, 3439, 3439, 3691], None),
         ("PseudoTMS_GlobalMercator", [4118, 4118, 4118, 4406], None),
-    ]
+    ],
+)
+def test_gpkg_26(tmp_vsimem, scheme, expected_cs, other_options):
 
-    for (scheme, expected_cs, other_options) in tests:
-
-        src_ds = gdal.Open("data/byte.tif")
-        options = ["TILE_FORMAT=PNG", "TILING_SCHEME=" + scheme]
-        if other_options:
-            options = options + other_options
-        if expected_cs is None:
-            with gdal.quiet_errors():
-                ds = gdaltest.gpkg_dr.CreateCopy(
-                    "/vsimem/tmp.gpkg", src_ds, options=options
-                )
-                assert ds is None
-                continue
-
-        ds = gdaltest.gpkg_dr.CreateCopy("/vsimem/tmp.gpkg", src_ds, options=options)
-        ds = None
-
-        ds = gdal.OpenEx("/vsimem/tmp.gpkg", open_options=["BAND_COUNT=4"])
-        assert ds.GetMetadataItem("AREA_OR_POINT") == "Area"
-        got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
-        # VC12 returns [3561, 3561, 3561, 3691] for GoogleCRS84Quad
-        # and For GoogleCRS84Quad RESAMPLING=CUBIC, got [3415, 3415, 3415, 3691]
-        if max([abs(got_cs[i] - expected_cs[i]) for i in range(4)]) > 2:
-            print(
-                "For %s, got %s, expected %s" % (scheme, str(got_cs), str(expected_cs))
+    src_ds = gdal.Open("data/byte.tif")
+    options = ["TILE_FORMAT=PNG", "TILING_SCHEME=" + scheme]
+    if other_options:
+        options = options + other_options
+    if expected_cs is None:
+        with gdal.quiet_errors():
+            ds = gdaltest.gpkg_dr.CreateCopy(
+                tmp_vsimem / "tmp.gpkg", src_ds, options=options
             )
-            assert gdal.GetConfigOption("APPVEYOR") is not None
-        ds = None
+            assert ds is None
+            return
 
-        gdal.Unlink("/vsimem/tmp.gpkg")
+    ds = gdaltest.gpkg_dr.CreateCopy(tmp_vsimem / "tmp.gpkg", src_ds, options=options)
+    ds = None
 
-    tests = [
+    ds = gdal.OpenEx(tmp_vsimem / "tmp.gpkg", open_options=["BAND_COUNT=4"])
+    assert ds.GetMetadataItem("AREA_OR_POINT") == "Area"
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == pytest.approx(
+        expected_cs, abs=10
+    )
+    ds = None
+
+
+@pytest.mark.require_driver("PNG")
+@pytest.mark.parametrize(
+    "scheme,expected_cs,other_options",
+    [
         (
             "GoogleCRS84Quad",
-            [
-                [42255, 47336, 24963, 35707],
-                [42255, 47336, 24965, 35707],
-                [42253, 47333, 24961, 35707],
-                [42253, 47334, 24963, 35707],  # s390x
-            ],
+            [42255, 47336, 24963, 35707],
             None,
         ),
-        ("GoogleMapsCompatible", [[35429, 36787, 20035, 17849]], None),
-    ]
+        ("GoogleMapsCompatible", [31249, 35596, 19001, 17849], None),
+    ],
+)
+def test_gpkg_26_bis(tmp_vsimem, scheme, expected_cs, other_options):
 
-    for (scheme, expected_cs, other_options) in tests:
+    src_ds = gdal.Open("data/small_world.tif")
+    options = ["TILE_FORMAT=PNG", "TILING_SCHEME=" + scheme]
+    if other_options:
+        options = options + other_options
+    ds = gdaltest.gpkg_dr.CreateCopy(tmp_vsimem / "tmp.gpkg", src_ds, options=options)
+    ds = None
 
-        src_ds = gdal.Open("data/small_world.tif")
-        options = ["TILE_FORMAT=PNG", "TILING_SCHEME=" + scheme]
-        if other_options:
-            options = options + other_options
-        ds = gdaltest.gpkg_dr.CreateCopy("/vsimem/tmp.gpkg", src_ds, options=options)
-        ds = None
+    ds = gdal.Open(tmp_vsimem / "tmp.gpkg")
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == pytest.approx(
+        expected_cs, abs=10
+    )
 
-        ds = gdal.Open("/vsimem/tmp.gpkg")
-        got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
-        if got_cs not in expected_cs:
-            print(
-                "For %s, got %s, expected %s" % (scheme, str(got_cs), str(expected_cs))
-            )
-            assert gdal.GetConfigOption("APPVEYOR") is not None
-        ds = None
 
-        gdal.Unlink("/vsimem/tmp.gpkg")
-
+def test_gpkg_26_errors():
     # Test a few error cases
     with gdal.quiet_errors():
         ds = gdaltest.gpkg_dr.Create(
@@ -2402,7 +2385,7 @@ def test_gpkg_26():
         "../gdrivers/data/small_world.tif",
         options="-of GPKG -co TILING_SCHEME=LINZAntarticaMapTileGrid -projwin -180 -50 180 -90",
     )
-    assert ds.GetSpatialRef().GetAuthorityCode(None) == "5482"
+    assert ds.GetSpatialRef().GetAuthorityCode() == "5482"
     assert ds.GetGeoTransform() == pytest.approx(
         ((314023.27126670163, 28672, 0.0, 5685976.728733298, 0.0, -28672)), abs=1e-8
     )
@@ -3883,10 +3866,8 @@ def test_gpkg_wkt2(version):
 
 
 @pytest.mark.slow()
+@pytest.mark.require_64bit()
 def test_gpkg_50000_25000_uint16():
-
-    if sys.maxsize < 2**32:
-        pytest.skip("Test not available on 32 bit")
 
     ds = gdal.Open(
         "/vsizip/data/gpkg/50000_25000_uint16.gpkg.zip/50000_25000_uint16.gpkg"
@@ -3913,10 +3894,8 @@ def test_gpkg_50000_25000_uint16():
 
 
 @pytest.mark.slow()
+@pytest.mark.require_64bit()
 def test_gpkg_50000_50000_uint16():
-
-    if sys.maxsize < 2**32:
-        pytest.skip("Test not available on 32 bit")
 
     ds = gdal.Open(
         "/vsizip/data/gpkg/50000_50000_uint16.gpkg.zip/50000_50000_uint16.gpkg"
@@ -4383,32 +4362,32 @@ def test_gpkg_copy_using_get_data_coverage_status(tmp_vsimem):
     with ds.ExecuteSQL("SELECT COUNT(*) FROM tmp") as sql_lyr:
         assert sql_lyr.GetFeatureCount() == 1
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 1024, 768)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 1024, 768)
     assert (
         flags
         == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)
         and pct == 100.0 / 12
     )
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 1024, 256)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 1024, 256)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 512, 1024, 256)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(0, 512, 1024, 256)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 512, 768)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(0, 0, 512, 768)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(768, 0, 256, 768)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(768, 0, 256, 768)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY and pct == 0.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(512, 256, 256, 256)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(512, 256, 256, 256)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(512 + 1, 256 + 2, 3, 4)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(512 + 1, 256 + 2, 3, 4)
     assert flags == gdal.GDAL_DATA_COVERAGE_STATUS_DATA and pct == 100.0
 
-    (flags, pct) = ds.GetRasterBand(1).GetDataCoverageStatus(512 - 1, 256 - 1, 2, 2)
+    flags, pct = ds.GetRasterBand(1).GetDataCoverageStatus(512 - 1, 256 - 1, 2, 2)
     assert (
         flags
         == (gdal.GDAL_DATA_COVERAGE_STATUS_DATA | gdal.GDAL_DATA_COVERAGE_STATUS_EMPTY)

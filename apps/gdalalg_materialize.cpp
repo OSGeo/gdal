@@ -22,13 +22,15 @@
 #endif
 
 /************************************************************************/
-/*                     GDALMaterializeRasterAlgorithm()                 */
+/*                   GDALMaterializeRasterAlgorithm()                   */
 /************************************************************************/
 
 GDALMaterializeRasterAlgorithm::GDALMaterializeRasterAlgorithm()
     : GDALMaterializeStepAlgorithm<GDALRasterPipelineStepAlgorithm,
                                    GDAL_OF_RASTER>(HELP_URL)
 {
+    AddRasterHiddenInputDatasetArg();
+
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER,
                         /* positionalAndRequired = */ false,
                         _("Materialized dataset name"))
@@ -46,7 +48,7 @@ GDALMaterializeRasterAlgorithm::GDALMaterializeRasterAlgorithm()
 }
 
 /************************************************************************/
-/*               GDALMaterializeRasterAlgorithm::RunStep()              */
+/*              GDALMaterializeRasterAlgorithm::RunStep()               */
 /************************************************************************/
 
 bool GDALMaterializeRasterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -152,13 +154,15 @@ bool GDALMaterializeRasterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 }
 
 /************************************************************************/
-/*                     GDALMaterializeVectorAlgorithm()                 */
+/*                   GDALMaterializeVectorAlgorithm()                   */
 /************************************************************************/
 
 GDALMaterializeVectorAlgorithm::GDALMaterializeVectorAlgorithm()
     : GDALMaterializeStepAlgorithm<GDALVectorPipelineStepAlgorithm,
                                    GDAL_OF_VECTOR>(HELP_URL)
 {
+    AddVectorHiddenInputDatasetArg();
+
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR,
                         /* positionalAndRequired = */ false,
                         _("Materialized dataset name"))
@@ -178,7 +182,7 @@ GDALMaterializeVectorAlgorithm::GDALMaterializeVectorAlgorithm()
 }
 
 /************************************************************************/
-/*               GDALMaterializeVectorAlgorithm::RunStep()              */
+/*              GDALMaterializeVectorAlgorithm::RunStep()               */
 /************************************************************************/
 
 bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
@@ -240,7 +244,7 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     CPLStringList aosOptions;
-    aosOptions.AddString("--invoked-from-gdal-vector-convert");
+    aosOptions.AddString("--invoked-from-gdal-algorithm");
     if (!m_overwrite)
     {
         aosOptions.AddString("--no-overwrite");
@@ -253,6 +257,7 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         aosOptions.AddString("-dsco");
         aosOptions.AddString(co.c_str());
     }
+    CPLStringList aosReopenOpenOptions;
     if (EQUAL(m_format.c_str(), "SQLite"))
     {
         const char *pszCOList =
@@ -264,6 +269,7 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             aosOptions.AddString("-dsco");
             aosOptions.AddString("SPATIALITE=YES");
         }
+        aosReopenOpenOptions.AddString("LIST_ALL_TABLES=YES");
     }
     for (const auto &co : m_layerCreationOptions)
     {
@@ -305,7 +311,7 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                                                           nullptr};
                 poOutDS.reset(GDALDataset::Open(
                     filename.c_str(), GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
-                    apszAllowedDrivers));
+                    apszAllowedDrivers, aosReopenOpenOptions.List()));
                 ok = poOutDS != nullptr;
             }
         }

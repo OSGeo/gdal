@@ -25,7 +25,7 @@
 #include "ogr_spatialref.h"
 
 /************************************************************************/
-/*                         OSRImportFromERM()                           */
+/*                          OSRImportFromERM()                          */
 /************************************************************************/
 
 /**
@@ -135,7 +135,7 @@ OGRErr OGRSpatialReference::importFromERM(const char *pszProj,
 }
 
 /************************************************************************/
-/*                          OSRExportToERM()                            */
+/*                           OSRExportToERM()                           */
 /************************************************************************/
 /**
  * \brief Convert coordinate system to ERMapper format.

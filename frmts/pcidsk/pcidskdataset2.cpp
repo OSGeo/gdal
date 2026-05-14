@@ -548,7 +548,7 @@ CPLErr PCIDSK2Band::IReadBlock(int iBlockX, int iBlockY, void *pData)
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr PCIDSK2Band::IWriteBlock(int iBlockX, int iBlockY, void *pData)
@@ -688,13 +688,50 @@ CPLErr PCIDSK2Band::SetMetadataItem(const char *pszName, const char *pszValue,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **PCIDSK2Band::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamRasterBand::GetMetadataDomainList(),
                                    TRUE, "", nullptr);
+}
+
+/************************************************************************/
+/*                           GetNoDataValue()                           */
+/************************************************************************/
+
+double PCIDSK2Band::GetNoDataValue(int *pbSuccess)
+{
+    const char *pszNoData = GetMetadataItem("NO_DATA_VALUE", "");
+    if (pszNoData != nullptr)
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return CPLAtof(pszNoData);
+    }
+
+    PCIDSK2Dataset *poGDS = cpl::down_cast<PCIDSK2Dataset *>(poDS);
+    pszNoData = poGDS->GetMetadataItem("NO_DATA_VALUE", "");
+    if (pszNoData != nullptr)
+    {
+        if (pbSuccess)
+            *pbSuccess = TRUE;
+        return CPLAtof(pszNoData);
+    }
+
+    if (pbSuccess)
+        *pbSuccess = FALSE;
+    return 0.0;
+}
+
+/************************************************************************/
+/*                           SetNoDataValue()                           */
+/************************************************************************/
+
+CPLErr PCIDSK2Band::SetNoDataValue(double dfNoData)
+{
+    return SetMetadataItem("NO_DATA_VALUE", CPLSPrintf("%.17g", dfNoData), "");
 }
 
 /************************************************************************/
@@ -789,7 +826,7 @@ CSLConstList PCIDSK2Band::GetMetadata(const char *pszDomain)
 /************************************************************************/
 
 /************************************************************************/
-/*                           PCIDSK2Dataset()                            */
+/*                           PCIDSK2Dataset()                           */
 /************************************************************************/
 
 PCIDSK2Dataset::PCIDSK2Dataset()
@@ -798,7 +835,7 @@ PCIDSK2Dataset::PCIDSK2Dataset()
 }
 
 /************************************************************************/
-/*                            ~PCIDSK2Dataset()                          */
+/*                          ~PCIDSK2Dataset()                           */
 /************************************************************************/
 
 // FIXME? is an exception can really be thrown in the destructor, then it is
@@ -1124,7 +1161,7 @@ CPLErr PCIDSK2Dataset::SetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **PCIDSK2Dataset::GetMetadataDomainList()
@@ -1247,8 +1284,8 @@ CPLErr PCIDSK2Dataset::SetGeoTransform(const GDALGeoTransform &gt)
 
     try
     {
-        poGeoref->WriteSimple(poGeoref->GetGeosys(), gt[0], gt[1], gt[2], gt[3],
-                              gt[4], gt[5]);
+        poGeoref->WriteSimple(poGeoref->GetGeosys(), gt.xorig, gt.xscale,
+                              gt.xrot, gt.yorig, gt.yrot, gt.yscale);
     }
     catch (const PCIDSKException &ex)
     {
@@ -1280,7 +1317,8 @@ CPLErr PCIDSK2Dataset::GetGeoTransform(GDALGeoTransform &gt) const
     {
         try
         {
-            poGeoref->GetTransform(gt[0], gt[1], gt[2], gt[3], gt[4], gt[5]);
+            poGeoref->GetTransform(gt.xorig, gt.xscale, gt.xrot, gt.yorig,
+                                   gt.yrot, gt.yscale);
         }
         catch (const PCIDSKException &ex)
         {
@@ -1348,12 +1386,12 @@ CPLErr PCIDSK2Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 
     try
     {
-        double adfGT[6];
-        poGeoref->GetTransform(adfGT[0], adfGT[1], adfGT[2], adfGT[3], adfGT[4],
-                               adfGT[5]);
+        GDALGeoTransform gt;
+        poGeoref->GetTransform(gt.xorig, gt.xscale, gt.xrot, gt.yorig, gt.yrot,
+                               gt.yscale);
 
-        poGeoref->WriteSimple(pszGeosys, adfGT[0], adfGT[1], adfGT[2], adfGT[3],
-                              adfGT[4], adfGT[5]);
+        poGeoref->WriteSimple(pszGeosys, gt.xorig, gt.xscale, gt.xrot, gt.yorig,
+                              gt.yrot, gt.yscale);
 
         std::vector<double> adfPCIParameters;
         for (unsigned int i = 0; i < 17; i++)
@@ -1388,7 +1426,7 @@ CPLErr PCIDSK2Dataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *PCIDSK2Dataset::GetSpatialRef() const
@@ -1660,7 +1698,7 @@ CPLErr PCIDSK2Dataset::IBuildOverviews(
 }
 
 /************************************************************************/
-/*                         PCIDSKTypeToGDAL()                           */
+/*                          PCIDSKTypeToGDAL()                          */
 /************************************************************************/
 
 GDALDataType PCIDSK2Dataset::PCIDSKTypeToGDAL(eChanType eType)
@@ -1957,7 +1995,8 @@ GDALDataset *PCIDSK2Dataset::LLOpen(const char *pszFilename,
 
 GDALDataset *PCIDSK2Dataset::Create(const char *pszFilename, int nXSize,
                                     int nYSize, int nBandsIn,
-                                    GDALDataType eType, char **papszParamList)
+                                    GDALDataType eType,
+                                    CSLConstList papszParamList)
 
 {
     /* -------------------------------------------------------------------- */
@@ -2094,7 +2133,7 @@ const OGRLayer *PCIDSK2Dataset::GetLayer(int iLayer) const
 }
 
 /************************************************************************/
-/*                           ICreateLayer()                             */
+/*                            ICreateLayer()                            */
 /************************************************************************/
 
 OGRLayer *PCIDSK2Dataset::ICreateLayer(const char *pszLayerName,

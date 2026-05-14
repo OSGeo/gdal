@@ -19,6 +19,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <inttypes.h>
+
 #ifndef CPL_IGNORE_RET_VAL_INT_defined
 #define CPL_IGNORE_RET_VAL_INT_defined
 
@@ -35,7 +37,8 @@ static void NITFSwapWords(NITFImage *psImage, void *pData, int nWordCount);
 
 static void NITFLoadLocationTable(NITFImage *psImage);
 static void NITFLoadColormapSubSection(NITFImage *psImage);
-static void NITFLoadSubframeMaskTable(NITFImage *psImage);
+static void NITFLoadSubframeMaskTable(NITFImage *psImage,
+                                      bool *pbBlockStartRead);
 static int NITFLoadVQTables(NITFImage *psImage, int bTryGuessingOffset);
 static int NITFReadGEOLOB(NITFImage *psImage);
 static void NITFLoadAttributeSection(NITFImage *psImage);
@@ -68,7 +71,6 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
     int nNICOM;
     const char *pszIID1;
     int nFaultyLine = -1;
-    int bGotWrongOffset = FALSE;
 
     /* -------------------------------------------------------------------- */
     /*      Verify segment, and return existing image accessor if there     */
@@ -197,7 +199,7 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Does this header have the FSDEVT field?                         */
+    /*      Does this header have the ISDEVT field?                         */
     /* -------------------------------------------------------------------- */
     nOffset = 333;
 
@@ -822,6 +824,13 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
     }
 
     /* -------------------------------------------------------------------- */
+    /*  Load subframe mask table if present (typically, for CADRG/CIB       */
+    /*  images with IC=C4/M4)                                               */
+    /* -------------------------------------------------------------------- */
+    bool bBlockStartRead = false;
+    NITFLoadSubframeMaskTable(psImage, &bBlockStartRead);
+
+    /* -------------------------------------------------------------------- */
     /*      Offsets to VQ compressed tiles are based on a fixed block       */
     /*      size, and are offset from the spatial data location kept in     */
     /*      the location table ... which is generally not the beginning     */
@@ -829,20 +838,25 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
     /* -------------------------------------------------------------------- */
     if (EQUAL(psImage->szIC, "C4"))
     {
-        GUIntBig nLocBase = psSegInfo->nSegmentStart;
-
-        for (i = 0; i < psImage->nLocCount; i++)
+        if (!bBlockStartRead)
         {
-            if (psImage->pasLocations[i].nLocId == LID_SpatialDataSubsection)
-                nLocBase = psImage->pasLocations[i].nLocOffset;
+            GUIntBig nLocBase = psSegInfo->nSegmentStart;
+
+            for (i = 0; i < psImage->nLocCount; i++)
+            {
+                if (psImage->pasLocations[i].nLocId ==
+                    LID_SpatialDataSubsection)
+                    nLocBase = psImage->pasLocations[i].nLocOffset;
+            }
+
+            if (nLocBase == psSegInfo->nSegmentStart)
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Failed to find spatial data location, guessing.");
+
+            for (i = 0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn;
+                 i++)
+                psImage->panBlockStart[i] = nLocBase + (GUIntBig)(6144) * i;
         }
-
-        if (nLocBase == psSegInfo->nSegmentStart)
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Failed to find spatial data location, guessing.");
-
-        for (i = 0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++)
-            psImage->panBlockStart[i] = nLocBase + (GUIntBig)(6144) * i;
     }
 
     /* -------------------------------------------------------------------- */
@@ -947,51 +961,8 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
         }
         else if (nBMRLNTH == 4)
         {
-            int isM4 = EQUAL(psImage->szIC, "M4");
-            for (i = 0; bOK && i < nBlockCount; i++)
+            if (!bBlockStartRead)
             {
-                GUInt32 l_nOffset;
-                bOK &= VSIFReadL(&l_nOffset, 4, 1, psFile->fp) == 1;
-                CPL_MSBPTR32(&l_nOffset);
-                psImage->panBlockStart[i] = l_nOffset;
-                if (psImage->panBlockStart[i] != UINT_MAX)
-                {
-                    if (isM4 && (psImage->panBlockStart[i] % 6144) != 0)
-                    {
-                        break;
-                    }
-                    psImage->panBlockStart[i] +=
-                        psSegInfo->nSegmentStart + nIMDATOFF;
-                }
-            }
-            /* This is a fix for a problem with rpf/cjga/cjgaz01/0105f033.ja1
-             * and */
-            /* rpf/cjga/cjgaz03/0034t0b3.ja3 CADRG products (bug 1754). */
-            /* These products have the strange particularity that their block
-             * start table begins */
-            /* one byte after its theoretical beginning, for an unknown reason
-             */
-            /* We detect this situation when the block start offset is not a
-             * multiple of 6144 */
-            /* Hopefully there's something in the NITF/CADRG standard that can
-             * account for it,  */
-            /* but I've not found it */
-            if (isM4 && i != nBlockCount)
-            {
-                bGotWrongOffset = TRUE;
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Block start for block %d is wrong. Retrying with one "
-                         "extra byte shift...",
-                         i);
-                bOK &= VSIFSeekL(psFile->fp,
-                                 psSegInfo->nSegmentStart + 4 + /* nIMDATOFF */
-                                     2 +                        /* nBMRLNTH */
-                                     2 +                        /* nTMRLNTH */
-                                     2 +                        /* nTPXCDLNTH */
-                                     (nTPXCDLNTH + 7) / 8 +
-                                     1, /* MAGIC here ! One byte shift... */
-                                 SEEK_SET) == 0;
-
                 for (i = 0; bOK && i < nBlockCount; i++)
                 {
                     GUInt32 l_nOffset;
@@ -1000,14 +971,6 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
                     psImage->panBlockStart[i] = l_nOffset;
                     if (psImage->panBlockStart[i] != UINT_MAX)
                     {
-                        if ((psImage->panBlockStart[i] % 6144) != 0)
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "Block start for block %d is still wrong. "
-                                     "Display will be wrong.",
-                                     i);
-                            break;
-                        }
                         psImage->panBlockStart[i] +=
                             psSegInfo->nSegmentStart + nIMDATOFF;
                     }
@@ -1018,10 +981,13 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
         {
             if (EQUAL(psImage->szIC, "M4"))
             {
-                for (i = 0; i < nBlockCount; i++)
-                    psImage->panBlockStart[i] = (GUIntBig)6144 * i +
-                                                psSegInfo->nSegmentStart +
-                                                nIMDATOFF;
+                if (!bBlockStartRead)
+                {
+                    for (i = 0; i < nBlockCount; i++)
+                        psImage->panBlockStart[i] = (GUIntBig)6144 * i +
+                                                    psSegInfo->nSegmentStart +
+                                                    nIMDATOFF;
+                }
             }
             else if (EQUAL(psImage->szIC, "NM"))
             {
@@ -1068,13 +1034,6 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
     }
 
     /* -------------------------------------------------------------------- */
-    /*  Load subframe mask table if present (typically, for CADRG/CIB       */
-    /*  images with IC=C4/M4)                                               */
-    /* -------------------------------------------------------------------- */
-    if (!bGotWrongOffset)
-        NITFLoadSubframeMaskTable(psImage);
-
-    /* -------------------------------------------------------------------- */
     /*      Bug #1751: Add a transparent color if there are none. Absent    */
     /*      subblocks will be then transparent.                             */
     /* -------------------------------------------------------------------- */
@@ -1095,13 +1054,26 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
             }
             else
             {
-                psBandInfo->pabyLUT[0 + psBandInfo->nSignificantLUTEntries] = 0;
-                psBandInfo->pabyLUT[256 + psBandInfo->nSignificantLUTEntries] =
-                    0;
-                psBandInfo->pabyLUT[512 + psBandInfo->nSignificantLUTEntries] =
-                    0;
-                psImage->bNoDataSet = TRUE;
-                psImage->nNoDataValue = psBandInfo->nSignificantLUTEntries;
+                bool bHasMissingBlock = false;
+                for (int iBlock = 0; !bHasMissingBlock &&
+                                     iBlock < psImage->nBlocksPerRow *
+                                                  psImage->nBlocksPerColumn;
+                     ++iBlock)
+                {
+                    bHasMissingBlock =
+                        (psImage->panBlockStart[iBlock] == UINT_MAX);
+                }
+                if (bHasMissingBlock)
+                {
+                    psBandInfo
+                        ->pabyLUT[0 + psBandInfo->nSignificantLUTEntries] = 0;
+                    psBandInfo
+                        ->pabyLUT[256 + psBandInfo->nSignificantLUTEntries] = 0;
+                    psBandInfo
+                        ->pabyLUT[512 + psBandInfo->nSignificantLUTEntries] = 0;
+                    psImage->bNoDataSet = TRUE;
+                    psImage->nNoDataValue = psBandInfo->nSignificantLUTEntries;
+                }
             }
         }
     }
@@ -1241,8 +1213,8 @@ void NITFImageDeaccess(NITFImage *psImage)
 /*      from OpenMap ... open source means sharing!                     */
 /************************************************************************/
 
-static void NITFUncompressVQTile(NITFImage *psImage, GByte *pabyVQBuf,
-                                 GByte *pabyResult)
+static void NITFUncompressVQTile(const NITFImage *psImage,
+                                 const GByte *pabyVQBuf, GByte *pabyResult)
 
 {
     int i, j, t, iSrcByte = 0;
@@ -1278,7 +1250,7 @@ static void NITFUncompressVQTile(NITFImage *psImage, GByte *pabyVQBuf,
                 memcpy(pabyTarget + 4, psImage->apanVQLUT[t] + val2, 4);
             }
         } /* for j */
-    }     /* for i */
+    } /* for i */
 }
 
 /************************************************************************/
@@ -2101,19 +2073,51 @@ int NITFWriteIGEOLO(NITFImage *psImage, char chICORDS, int nZone, double dfULX,
         return FALSE;
     }
 
-    if (chICORDS != 'G' && chICORDS != 'N' && chICORDS != 'S' &&
-        chICORDS != 'D')
+    if (EQUAL(psImage->psFile->szVersion, "NITF02.00"))
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Invalid ICOORDS value (%c) for NITFWriteIGEOLO().", chICORDS);
-        return FALSE;
+        if (chICORDS == 'U')
+        {
+            // Could be done, but we don't need UTM for CADRG support
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Writing UTM MGRS coordinates for NITF02.00 is not "
+                     "supported in this implementation.");
+            return FALSE;
+        }
+        else if (chICORDS != 'G' && chICORDS != 'D')
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid ICOORDS value (%c) for NITFWriteIGEOLO().",
+                     chICORDS);
+            return FALSE;
+        }
+    }
+    else
+    {
+        if (chICORDS != 'G' && chICORDS != 'N' && chICORDS != 'S' &&
+            chICORDS != 'D')
+        {
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid ICOORDS value (%c) for NITFWriteIGEOLO().",
+                     chICORDS);
+            return FALSE;
+        }
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Format geographic coordinates in DMS                            */
-    /* -------------------------------------------------------------------- */
-    if (chICORDS == 'G')
+    if (chICORDS == 'G' || chICORDS == 'D')
     {
+        if (fabs(dfULX) <= 180 && fabs(dfLLX) <= 180 && dfURX > 180 &&
+            dfLRX > 180)
+        {
+            dfURX -= 360;
+            dfLRX -= 360;
+        }
+        else if (dfULX < -180 && dfLLX < -180 && fabs(dfURX) <= 180 &&
+                 fabs(dfLRX) <= 180)
+        {
+            dfULX += 360;
+            dfLLX += 360;
+        }
+
         if (fabs(dfULX) > 180 || fabs(dfURX) > 180 || fabs(dfLRX) > 180 ||
             fabs(dfLLX) > 180 || fabs(dfULY) > 90 || fabs(dfURY) > 90 ||
             fabs(dfLRY) > 90 || fabs(dfLLY) > 90)
@@ -2123,7 +2127,13 @@ int NITFWriteIGEOLO(NITFImage *psImage, char chICORDS, int nZone, double dfULX,
                 "Attempt to write geographic bound outside of legal range.");
             return FALSE;
         }
+    }
 
+    /* -------------------------------------------------------------------- */
+    /*      Format geographic coordinates in DMS                            */
+    /* -------------------------------------------------------------------- */
+    if (chICORDS == 'G')
+    {
         NITFEncodeDMSLoc(szIGEOLO + 0, sizeof(szIGEOLO) - 0, dfULY, "Lat");
         NITFEncodeDMSLoc(szIGEOLO + 7, sizeof(szIGEOLO) - 7, dfULX, "Long");
         NITFEncodeDMSLoc(szIGEOLO + 15, sizeof(szIGEOLO) - 15, dfURY, "Lat");
@@ -2138,16 +2148,6 @@ int NITFWriteIGEOLO(NITFImage *psImage, char chICORDS, int nZone, double dfULX,
     /* -------------------------------------------------------------------- */
     else if (chICORDS == 'D')
     {
-        if (fabs(dfULX) > 180 || fabs(dfURX) > 180 || fabs(dfLRX) > 180 ||
-            fabs(dfLLX) > 180 || fabs(dfULY) > 90 || fabs(dfURY) > 90 ||
-            fabs(dfLRY) > 90 || fabs(dfLLY) > 90)
-        {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Attempt to write geographic bound outside of legal range.");
-            return FALSE;
-        }
-
         CPLsnprintf(szIGEOLO + 0, sizeof(szIGEOLO), "%+#07.3f%+#08.3f", dfULY,
                     dfULX);
         CPLsnprintf(szIGEOLO + 15, sizeof(szIGEOLO) - 15, "%+#07.3f%+#08.3f",
@@ -2184,10 +2184,30 @@ int NITFWriteIGEOLO(NITFImage *psImage, char chICORDS, int nZone, double dfULX,
     /* -------------------------------------------------------------------- */
     /*      Write IGEOLO data to disk.                                      */
     /* -------------------------------------------------------------------- */
+    int nOffset = 372;
+    if (EQUAL(psImage->psFile->szVersion, "NITF02.00"))
+    {
+        // Read ISDWNG field;
+        char szISDWNG[6 + 1] = {0};
+        if (VSIFSeekL(psImage->psFile->fp,
+                      psImage->psFile->pasSegmentInfo[psImage->iSegment]
+                              .nSegmentHeaderStart +
+                          284,
+                      SEEK_SET) != 0 ||
+            VSIFReadL(szISDWNG, 1, 6, psImage->psFile->fp) != 6)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "I/O Error writing IGEOLO segment.\n%s",
+                     VSIStrerror(errno));
+            return FALSE;
+        }
+        if (EQUAL(szISDWNG, "999998"))
+            nOffset += 40;
+    }
     if (VSIFSeekL(psImage->psFile->fp,
                   psImage->psFile->pasSegmentInfo[psImage->iSegment]
                           .nSegmentHeaderStart +
-                      372,
+                      nOffset,
                   SEEK_SET) == 0 &&
         VSIFWriteL(szIGEOLO, 1, 60, psImage->psFile->fp) == 60)
     {
@@ -2822,7 +2842,7 @@ int NITFReadRPC00B(NITFImage *psImage, NITFRPC00BInfo *psRPC)
 }
 
 /************************************************************************/
-/*                          NITFDeserializeRPC00B()                     */
+/*                       NITFDeserializeRPC00B()                        */
 /************************************************************************/
 
 int NITFDeserializeRPC00B(const GByte *pabyTRE, NITFRPC00BInfo *psRPC,
@@ -3499,7 +3519,8 @@ static void NITFLoadAttributeSection(NITFImage *psImage)
 
                 const char *pszName = psAttr->pszGDALMetadataItem;
                 const int nLength = psAttr->nLength;
-                if (nLength != 0 && nAttrOffset + nLength <= nASSSize)
+                if (nLength != 0 && (GUInt32)nLength <= nASSSize &&
+                    nAttrOffset <= nASSSize - nLength)
                 {
                     memcpy(abyBuffer, pabyAttributeSubsection + nAttrOffset,
                            nLength);
@@ -3567,7 +3588,7 @@ static void NITFLoadAttributeSection(NITFImage *psImage)
 }
 
 /************************************************************************/
-/*                       NITFLoadColormapSubSection()                   */
+/*                     NITFLoadColormapSubSection()                     */
 /************************************************************************/
 
 /* This function is directly inspired by function parse_clut coming from
@@ -3729,20 +3750,22 @@ static void NITFLoadColormapSubSection(NITFImage *psImage)
 }
 
 /************************************************************************/
-/*                       NITFLoadSubframeMaskTable()                        */
+/*                     NITFLoadSubframeMaskTable()                      */
 /************************************************************************/
 
 /* Fixes bug #913 */
-static void NITFLoadSubframeMaskTable(NITFImage *psImage)
+static void NITFLoadSubframeMaskTable(NITFImage *psImage,
+                                      bool *pbBlockStartRead)
 {
     int i;
     NITFFile *psFile = psImage->psFile;
     NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + psImage->iSegment;
-    GUIntBig nLocBaseSpatialDataSubsection = psSegInfo->nSegmentStart;
+    vsi_l_offset nLocBaseSpatialDataSubsection = psSegInfo->nSegmentStart;
     GUInt32 nLocBaseMaskSubsection = 0;
+    vsi_l_offset nLocImageDescriptionSubheader = 0;
     GUInt16 subframeSequenceRecordLength, transparencySequenceRecordLength,
         transparencyOutputPixelCodeLength;
-    int bOK = TRUE;
+    bool bOK = true;
 
     for (i = 0; i < psImage->nLocCount; i++)
     {
@@ -3754,6 +3777,11 @@ static void NITFLoadSubframeMaskTable(NITFImage *psImage)
         {
             nLocBaseMaskSubsection = psImage->pasLocations[i].nLocOffset;
         }
+        else if (psImage->pasLocations[i].nLocId ==
+                 LID_ImageDescriptionSubheader)
+        {
+            nLocImageDescriptionSubheader = psImage->pasLocations[i].nLocOffset;
+        }
     }
     if (nLocBaseMaskSubsection == 0)
     {
@@ -3761,10 +3789,31 @@ static void NITFLoadSubframeMaskTable(NITFImage *psImage)
         return;
     }
 
+    // Reasonable default if ImageDescriptionSubheader is missing assuming
+    // the offset follow immediately the header of MaskSubsection which they
+    // generally do except for product cjga/cjgaz01/0105f033.ja1, which has
+    // however an explicit correct value for SUBFRAME_MASK_TABLE_OFFSET
+    GUInt32 nSUBFRAME_MASK_TABLE_OFFSET = 6;
+    if (nLocImageDescriptionSubheader > 0)
+    {
+        if (VSIFSeekL(psFile->fp, nLocImageDescriptionSubheader + 20,
+                      SEEK_SET) != 0)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %" PRIu64,
+                     ((uint64_t)nLocImageDescriptionSubheader) + 20);
+            return;
+        }
+
+        bOK &=
+            VSIFReadL(&nSUBFRAME_MASK_TABLE_OFFSET,
+                      sizeof(nSUBFRAME_MASK_TABLE_OFFSET), 1, psFile->fp) == 1;
+        CPL_MSBPTR32(&nSUBFRAME_MASK_TABLE_OFFSET);
+    }
+
     // fprintf(stderr, "nLocBaseMaskSubsection = %d\n", nLocBaseMaskSubsection);
     if (VSIFSeekL(psFile->fp, nLocBaseMaskSubsection, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %d.",
+        CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %u",
                  nLocBaseMaskSubsection);
         return;
     }
@@ -3805,24 +3854,40 @@ static void NITFLoadSubframeMaskTable(NITFImage *psImage)
     }
 
     /* Fix for rpf/cjnc/cjncz01/0001f023.jn1 */
-    if (!bOK || subframeSequenceRecordLength != 4)
+    if (!bOK || subframeSequenceRecordLength != 4 ||
+        nSUBFRAME_MASK_TABLE_OFFSET == UINT_MAX)
     {
         // fprintf(stderr, "subframeSequenceRecordLength=%d\n",
         // subframeSequenceRecordLength);
         return;
     }
+    if (nSUBFRAME_MASK_TABLE_OFFSET < 6)
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "Invalid value for SUBFRAME_MASK_TABLE_OFFSET: %u. Ignoring "
+                 "block start table",
+                 nSUBFRAME_MASK_TABLE_OFFSET);
+        return;
+    }
 
-    for (i = 0; i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn; i++)
+    bOK &= (VSIFSeekL(psFile->fp,
+                      nLocBaseMaskSubsection + nSUBFRAME_MASK_TABLE_OFFSET,
+                      SEEK_SET) == 0);
+
+    for (i = 0; bOK && i < psImage->nBlocksPerRow * psImage->nBlocksPerColumn;
+         i++)
     {
         unsigned int offset;
-        bOK &= VSIFReadL(&offset, sizeof(offset), 1, psFile->fp) == 1;
+        bOK = VSIFReadL(&offset, sizeof(offset), 1, psFile->fp) == 1;
         CPL_MSBPTR32(&offset);
-        // fprintf(stderr, "%d : %d\n", i, offset);
+        // fprintf(stderr, "%u : %d\n", i, offset);
         if (!bOK || offset == UINT_MAX)
             psImage->panBlockStart[i] = UINT_MAX;
         else
             psImage->panBlockStart[i] = nLocBaseSpatialDataSubsection + offset;
     }
+
+    *pbBlockStartRead = bOK;
 }
 
 static GUInt16 NITFReadMSBGUInt16(VSILFILE *fp, int *pbSuccess)
@@ -3850,7 +3915,7 @@ static GUInt32 NITFReadMSBGUInt32(VSILFILE *fp, int *pbSuccess)
 }
 
 /************************************************************************/
-/*                     NITFReadRPFLocationTable()                       */
+/*                      NITFReadRPFLocationTable()                      */
 /************************************************************************/
 
 NITFLocation *NITFReadRPFLocationTable(VSILFILE *fp, int *pnLocCount)
@@ -3915,6 +3980,9 @@ NITFLocation *NITFReadRPFLocationTable(VSILFILE *fp, int *pnLocCount)
         pasLocations[iLoc].nLocId = NITFReadMSBGUInt16(fp, &bSuccess);
         pasLocations[iLoc].nLocSize = NITFReadMSBGUInt32(fp, &bSuccess);
         pasLocations[iLoc].nLocOffset = NITFReadMSBGUInt32(fp, &bSuccess);
+        CPLDebugOnly("NITF", "Location[%d]: id=%d, size=%u, offset=%u", iLoc,
+                     pasLocations[iLoc].nLocId, pasLocations[iLoc].nLocSize,
+                     pasLocations[iLoc].nLocOffset);
     }
 
     if (!bSuccess)
@@ -4478,14 +4546,14 @@ static void NITFPossibleIGEOLOReorientation(NITFImage *psImage)
     /* -------------------------------------------------------------------- */
     {
 
-        double dfXMax = MAX(MAX(psImage->dfULX, psImage->dfURX),
-                            MAX(psImage->dfLRX, psImage->dfLLX));
-        double dfXMin = MIN(MIN(psImage->dfULX, psImage->dfURX),
-                            MIN(psImage->dfLRX, psImage->dfLLX));
-        double dfYMax = MAX(MAX(psImage->dfULY, psImage->dfURY),
-                            MAX(psImage->dfLRY, psImage->dfLLY));
-        double dfYMin = MIN(MIN(psImage->dfULY, psImage->dfURY),
-                            MIN(psImage->dfLRY, psImage->dfLLY));
+        double dfXMax = CPL_MAX(CPL_MAX(psImage->dfULX, psImage->dfURX),
+                                CPL_MAX(psImage->dfLRX, psImage->dfLLX));
+        double dfXMin = CPL_MIN(CPL_MIN(psImage->dfULX, psImage->dfURX),
+                                CPL_MIN(psImage->dfLRX, psImage->dfLLX));
+        double dfYMax = CPL_MAX(CPL_MAX(psImage->dfULY, psImage->dfURY),
+                                CPL_MAX(psImage->dfLRY, psImage->dfLLY));
+        double dfYMin = CPL_MIN(CPL_MIN(psImage->dfULY, psImage->dfURY),
+                                CPL_MIN(psImage->dfLRY, psImage->dfLLY));
         double dfXPivot = (dfXMax + dfXMin) * 0.5;
         double dfYPivot = (dfYMax + dfYMin) * 0.5;
 

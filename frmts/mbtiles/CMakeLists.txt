@@ -20,7 +20,7 @@ if (GDAL_USE_GEOS)
 endif ()
 
 target_compile_definitions(gdal_MBTiles PRIVATE -DHAVE_SQLITE)
-gdal_target_link_libraries(gdal_MBTiles PRIVATE SQLite::SQLite3)
+gdal_target_link_libraries(gdal_MBTiles PRIVATE SQLite3::SQLite3)
 
 if (NOT GDAL_USE_ZLIB_INTERNAL)
   gdal_target_link_libraries(gdal_MBTiles PRIVATE ZLIB::ZLIB)

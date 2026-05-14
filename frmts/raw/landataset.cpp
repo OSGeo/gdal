@@ -311,7 +311,7 @@ LANDataset::~LANDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr LANDataset::Close(GDALProgressFunc, void *)
@@ -509,24 +509,24 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
     float fTmp = 0.0;
 
     memcpy(&fTmp, poDS->pachHeader + 112, 4);
-    poDS->m_gt[0] = fTmp;
+    poDS->m_gt.xorig = fTmp;
     memcpy(&fTmp, poDS->pachHeader + 120, 4);
-    poDS->m_gt[1] = fTmp;
-    poDS->m_gt[2] = 0.0;
+    poDS->m_gt.xscale = fTmp;
+    poDS->m_gt.xrot = 0.0;
     memcpy(&fTmp, poDS->pachHeader + 116, 4);
-    poDS->m_gt[3] = fTmp;
-    poDS->m_gt[4] = 0.0;
+    poDS->m_gt.yorig = fTmp;
+    poDS->m_gt.yrot = 0.0;
     memcpy(&fTmp, poDS->pachHeader + 124, 4);
-    poDS->m_gt[5] = -fTmp;
+    poDS->m_gt.yscale = -fTmp;
 
     // adjust for center of pixel vs. top left corner of pixel.
-    poDS->m_gt[0] -= poDS->m_gt[1] * 0.5;
-    poDS->m_gt[3] -= poDS->m_gt[5] * 0.5;
+    poDS->m_gt.xorig -= poDS->m_gt.xscale * 0.5;
+    poDS->m_gt.yorig -= poDS->m_gt.yscale * 0.5;
 
     /* -------------------------------------------------------------------- */
     /*      If we didn't get any georeferencing, try for a worldfile.       */
     /* -------------------------------------------------------------------- */
-    if (poDS->m_gt[1] == 0.0 || poDS->m_gt[5] == 0.0)
+    if (poDS->m_gt.xscale == 0.0 || poDS->m_gt.yscale == 0.0)
     {
         if (!GDALReadWorldFile(poOpenInfo->pszFilename, nullptr,
                                poDS->m_gt.data()))
@@ -614,7 +614,7 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
 CPLErr LANDataset::GetGeoTransform(GDALGeoTransform &gt) const
 
 {
-    if (m_gt[1] != 0.0 && m_gt[5] != 0.0)
+    if (m_gt.xscale != 0.0 && m_gt.yscale != 0.0)
     {
         gt = m_gt;
         return CE_None;

@@ -15,7 +15,7 @@
 #include "../arrow_common/ograrrowwriterlayer.hpp"
 
 /************************************************************************/
-/*                      OGRFeatherWriterLayer()                         */
+/*                       OGRFeatherWriterLayer()                        */
 /************************************************************************/
 
 OGRFeatherWriterLayer::OGRFeatherWriterLayer(
@@ -29,7 +29,7 @@ OGRFeatherWriterLayer::OGRFeatherWriterLayer(
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 bool OGRFeatherWriterLayer::Close()
@@ -44,7 +44,7 @@ bool OGRFeatherWriterLayer::Close()
 }
 
 /************************************************************************/
-/*                       IsSupportedGeometryType()                      */
+/*                      IsSupportedGeometryType()                       */
 /************************************************************************/
 
 bool OGRFeatherWriterLayer::IsSupportedGeometryType(
@@ -67,7 +67,7 @@ bool OGRFeatherWriterLayer::IsSupportedGeometryType(
 }
 
 /************************************************************************/
-/*                           SetOptions()                               */
+/*                             SetOptions()                             */
 /************************************************************************/
 
 bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
@@ -195,7 +195,7 @@ bool OGRFeatherWriterLayer::SetOptions(const std::string &osFilename,
 }
 
 /************************************************************************/
-/*                         CloseFileWriter()                            */
+/*                          CloseFileWriter()                           */
 /************************************************************************/
 
 bool OGRFeatherWriterLayer::CloseFileWriter()
@@ -211,7 +211,7 @@ bool OGRFeatherWriterLayer::CloseFileWriter()
 }
 
 /************************************************************************/
-/*                          CreateSchema()                              */
+/*                            CreateSchema()                            */
 /************************************************************************/
 
 void OGRFeatherWriterLayer::CreateSchema()
@@ -302,7 +302,7 @@ void OGRFeatherWriterLayer::CreateSchema()
 }
 
 /************************************************************************/
-/*                          CreateWriter()                              */
+/*                            CreateWriter()                            */
 /************************************************************************/
 
 void OGRFeatherWriterLayer::CreateWriter()
@@ -370,7 +370,7 @@ void OGRFeatherWriterLayer::CreateWriter()
 }
 
 /************************************************************************/
-/*               PerformStepsBeforeFinalFlushGroup()                    */
+/*                 PerformStepsBeforeFinalFlushGroup()                  */
 /************************************************************************/
 
 // Add a gdal:geo extension metadata for now, which embeds a bbox
@@ -427,7 +427,7 @@ void OGRFeatherWriterLayer::PerformStepsBeforeFinalFlushGroup()
 }
 
 /************************************************************************/
-/*                            FlushGroup()                              */
+/*                             FlushGroup()                             */
 /************************************************************************/
 
 bool OGRFeatherWriterLayer::FlushGroup()

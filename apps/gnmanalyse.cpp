@@ -88,7 +88,7 @@ static void Usage(bool bIsError, const char *pszAdditionalMsg = nullptr,
 }
 
 /************************************************************************/
-/*                   GetLayerAndOverwriteIfNecessary()                  */
+/*                  GetLayerAndOverwriteIfNecessary()                   */
 /************************************************************************/
 
 static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
@@ -144,7 +144,7 @@ static OGRLayer *GetLayerAndOverwriteIfNecessary(GDALDataset *poDstDS,
 }
 
 /************************************************************************/
-/*                     CreateAndFillOutputDataset                       */
+/*                      CreateAndFillOutputDataset                      */
 /************************************************************************/
 static OGRErr CreateAndFillOutputDataset(OGRLayer *poSrcLayer,
                                          const char *pszDestDataSource,

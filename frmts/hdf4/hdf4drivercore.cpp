@@ -127,7 +127,7 @@ static GDALSubdatasetInfo *HDF4DriverGetSubdatasetInfo(const char *pszFileName)
 }
 
 /************************************************************************/
-/*                   HDF4DriverSetCommonMetadata()                      */
+/*                    HDF4DriverSetCommonMetadata()                     */
 /************************************************************************/
 
 void HDF4DriverSetCommonMetadata(GDALDriver *poDriver)
@@ -159,7 +159,7 @@ void HDF4DriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                     HDF4ImageDatasetIdentify()                       */
+/*                      HDF4ImageDatasetIdentify()                      */
 /************************************************************************/
 
 int HDF4ImageDatasetIdentify(GDALOpenInfo *poOpenInfo)
@@ -173,7 +173,7 @@ int HDF4ImageDatasetIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                 HDF4ImageDriverSetCommonMetadata()                   */
+/*                  HDF4ImageDriverSetCommonMetadata()                  */
 /************************************************************************/
 
 void HDF4ImageDriverSetCommonMetadata(GDALDriver *poDriver)
@@ -198,7 +198,7 @@ void HDF4ImageDriverSetCommonMetadata(GDALDriver *poDriver)
 }
 
 /************************************************************************/
-/*                    DeclareDeferredHDF4Plugin()                       */
+/*                     DeclareDeferredHDF4Plugin()                      */
 /************************************************************************/
 
 #ifdef PLUGIN_FILENAME

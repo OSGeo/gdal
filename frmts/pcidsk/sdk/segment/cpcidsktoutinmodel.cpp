@@ -141,7 +141,7 @@ void CPCIDSKToutinModelSegment::Synchronize()
 }
 
 /************************************************************************/
-/*                           BinaryToSRITInfo()                         */
+/*                          BinaryToSRITInfo()                          */
 /************************************************************************/
 /**
   * Translate a block of binary data into a SRIT segment. the caller is
@@ -341,7 +341,7 @@ CPCIDSKToutinModelSegment::BinaryToSRITInfo()
 }
 
 /************************************************************************/
-/*                           SRITInfoToBinary()                         */
+/*                          SRITInfoToBinary()                          */
 /************************************************************************/
 /**
   * Translate a SRITInfo_t into binary data.

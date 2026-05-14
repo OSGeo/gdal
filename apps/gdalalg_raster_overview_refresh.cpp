@@ -35,11 +35,10 @@ GDALRasterOverviewAlgorithmRefresh::GDALRasterOverviewAlgorithmRefresh()
 {
     AddProgressArg();
     AddOpenOptionsArg(&m_openOptions);
-    AddArg("dataset", 0,
-           _("Dataset (to be updated in-place, unless --external)"), &m_dataset,
-           GDAL_OF_RASTER | GDAL_OF_UPDATE)
-        .SetPositional()
-        .SetRequired();
+    AddInputDatasetArg(&m_dataset, GDAL_OF_RASTER | GDAL_OF_UPDATE,
+                       /* positionalAndRequired = */ true,
+                       _("Dataset (to be updated in-place, unless --external)"))
+        .AddAlias("dataset");
     AddArg("external", 0, _("Refresh external overviews"), &m_readOnly)
         .AddHiddenAlias("ro")
         .AddHiddenAlias(GDAL_ARG_NAME_READ_ONLY);
@@ -63,7 +62,7 @@ GDALRasterOverviewAlgorithmRefresh::GDALRasterOverviewAlgorithmRefresh()
 }
 
 /************************************************************************/
-/*                              PartialRefresh()                        */
+/*                           PartialRefresh()                           */
 /************************************************************************/
 
 static bool PartialRefresh(GDALDataset *poDS,
@@ -112,7 +111,7 @@ static bool PartialRefresh(GDALDataset *poDS,
 }
 
 /************************************************************************/
-/*                   PartialRefreshFromSourceTimestamp()                */
+/*                 PartialRefreshFromSourceTimestamp()                  */
 /************************************************************************/
 
 static bool
@@ -390,7 +389,7 @@ static bool PartialRefreshFromSourceExtent(
 }
 
 /************************************************************************/
-/*                     PartialRefreshFromBBOX()                         */
+/*                       PartialRefreshFromBBOX()                       */
 /************************************************************************/
 
 static bool PartialRefreshFromBBOX(GDALDataset *poDS,
@@ -441,7 +440,7 @@ static bool PartialRefreshFromBBOX(GDALDataset *poDS,
 }
 
 /************************************************************************/
-/*              GDALRasterOverviewAlgorithmRefresh::RunImpl()           */
+/*            GDALRasterOverviewAlgorithmRefresh::RunImpl()             */
 /************************************************************************/
 
 bool GDALRasterOverviewAlgorithmRefresh::RunImpl(GDALProgressFunc pfnProgress,

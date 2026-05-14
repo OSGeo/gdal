@@ -198,7 +198,7 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
 
     CPLVirtualMem *GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
                                      GIntBig *pnLineSpace,
-                                     char **papszOptions) override;
+                                     CSLConstList papszOptions) override;
 
     CPLErr AccessLine(int iLine);
 

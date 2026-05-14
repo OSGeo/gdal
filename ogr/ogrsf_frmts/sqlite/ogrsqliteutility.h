@@ -58,6 +58,8 @@ GIntBig SQLGetInteger64(sqlite3 *poDb, const char *pszSQL, OGRErr *err);
 
 std::unique_ptr<SQLResult> SQLQuery(sqlite3 *poDb, const char *pszSQL);
 
+const char *SQLGetSQLite3DataType(int nSQLite3DataType);
+
 /* To escape literals. The returned string doesn't contain the surrounding
  * single quotes */
 CPLString SQLEscapeLiteral(const char *pszLiteral);
@@ -103,5 +105,11 @@ void OGRSQLite_gdal_get_pixel_value_common(const char *pszFunctionName,
     defined(ALLOW_FORMAT_DUMPS)
 bool SQLCheckLineIsSafe(const char *pszLine);
 #endif
+
+bool SQLHasRemainingContent(const char *pszTail);
+
+std::string SQLFormatErrorMsgFailedPrepare(sqlite3 *hDB,
+                                           const char *pszErrMsgIntro,
+                                           const char *pszSQL);
 
 #endif  // OGR_SQLITEUTILITY_H_INCLUDED

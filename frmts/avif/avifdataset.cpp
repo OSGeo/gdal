@@ -18,6 +18,7 @@
 #include "avifdrivercore.h"
 #include "gdalexif.h"
 #include "memdataset.h"
+#include "gdal_thread_pool.h"
 
 #include <avif/avif.h>
 
@@ -33,7 +34,7 @@ constexpr const char *DEFAULT_QUALITY_ALPHA_STR = "100";
 constexpr const char *DEFAULT_SPEED_STR = "6";
 
 /************************************************************************/
-/*                         GDALAVIFDataset                              */
+/*                           GDALAVIFDataset                            */
 /************************************************************************/
 
 class GDALAVIFDataset final : public GDALPamDataset
@@ -80,7 +81,7 @@ class GDALAVIFDataset final : public GDALPamDataset
     }
 
     static GDALDataset *CreateCopy(const char *, GDALDataset *, int,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 
@@ -94,7 +95,7 @@ class GDALAVIFDataset final : public GDALPamDataset
 };
 
 /************************************************************************/
-/*                       GDALAVIFRasterBand                             */
+/*                          GDALAVIFRasterBand                          */
 /************************************************************************/
 
 class GDALAVIFRasterBand final : public MEMRasterBand
@@ -127,7 +128,7 @@ class GDALAVIFRasterBand final : public MEMRasterBand
 };
 
 /************************************************************************/
-/*                           GDALAVIFIO                                 */
+/*                              GDALAVIFIO                              */
 /************************************************************************/
 
 class GDALAVIFIO
@@ -150,7 +151,7 @@ class GDALAVIFIO
 };
 
 /************************************************************************/
-/*                         ~GDALAVIFDataset()                           */
+/*                          ~GDALAVIFDataset()                          */
 /************************************************************************/
 
 GDALAVIFDataset::~GDALAVIFDataset()
@@ -159,7 +160,7 @@ GDALAVIFDataset::~GDALAVIFDataset()
 }
 
 /************************************************************************/
-/*                                Close()                               */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr GDALAVIFDataset::Close(GDALProgressFunc, void *)
@@ -181,7 +182,7 @@ CPLErr GDALAVIFDataset::Close(GDALProgressFunc, void *)
 }
 
 /************************************************************************/
-/*                        GDALAVIFDataset::Decode()                     */
+/*                      GDALAVIFDataset::Decode()                       */
 /************************************************************************/
 
 bool GDALAVIFDataset::Decode()
@@ -264,7 +265,7 @@ GDALAVIFRasterBand::GDALAVIFRasterBand(GDALAVIFDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                               SetData()                              */
+/*                              SetData()                               */
 /************************************************************************/
 
 void GDALAVIFRasterBand::SetData(GByte *pabyDataIn, int nPixelOffsetIn,
@@ -276,7 +277,7 @@ void GDALAVIFRasterBand::SetData(GByte *pabyDataIn, int nPixelOffsetIn,
 }
 
 /************************************************************************/
-/*                            IReadBlock()                              */
+/*                             IReadBlock()                             */
 /************************************************************************/
 
 CPLErr GDALAVIFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
@@ -326,7 +327,7 @@ GDALAVIFIO::GDALAVIFIO(VSIVirtualHandleUniquePtr fpIn) : fp(std::move(fpIn))
 }
 
 /************************************************************************/
-/*                       GDALAVIFIO::Destroy()                          */
+/*                        GDALAVIFIO::Destroy()                         */
 /************************************************************************/
 
 /* static */ void GDALAVIFIO::Destroy(struct avifIO *io)
@@ -336,7 +337,7 @@ GDALAVIFIO::GDALAVIFIO(VSIVirtualHandleUniquePtr fpIn) : fp(std::move(fpIn))
 }
 
 /************************************************************************/
-/*                       GDALAVIFIO::Read()                             */
+/*                          GDALAVIFIO::Read()                          */
 /************************************************************************/
 
 /* static */ avifResult GDALAVIFIO::Read(struct avifIO *io, uint32_t readFlags,
@@ -387,7 +388,7 @@ GDALAVIFIO::GDALAVIFIO(VSIVirtualHandleUniquePtr fpIn) : fp(std::move(fpIn))
 
 #ifdef AVIF_HAS_OPAQUE_PROPERTIES
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 const OGRSpatialReference *GDALAVIFDataset::GetSpatialRef() const
 {
@@ -480,7 +481,7 @@ const OGRSpatialReference *GDALAVIFDataset::GetGCPSpatialRef() const
 #endif
 
 /************************************************************************/
-/*                              Init()                                  */
+/*                                Init()                                */
 /************************************************************************/
 
 bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
@@ -508,6 +509,11 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
             return false;
     }
 
+#if AVIF_VERSION >= 1040000
+    m_decoder->imageContentToDecode = AVIF_IMAGE_CONTENT_COLOR_AND_ALPHA |
+                                      AVIF_IMAGE_CONTENT_SAMPLE_TRANSFORMS;
+#endif
+
     auto gdalIO = std::make_unique<GDALAVIFIO>(std::move(fp));
     avifDecoderSetIO(m_decoder, reinterpret_cast<avifIO *>(gdalIO.release()));
 
@@ -524,7 +530,12 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
     nRasterXSize = static_cast<int>(m_decoder->image->width);
     nRasterYSize = static_cast<int>(m_decoder->image->height);
 
-    if (m_decoder->image->depth > 12)
+#if AVIF_VERSION < 1040000
+    constexpr int MAX_SUPPORTED_DEPTH = 12;
+#else
+    constexpr int MAX_SUPPORTED_DEPTH = 16;
+#endif
+    if (m_decoder->image->depth > MAX_SUPPORTED_DEPTH)
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Unsupported AVIF depth: %u",
                  m_decoder->image->depth);
@@ -671,7 +682,7 @@ bool GDALAVIFDataset::Init(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                          OpenStaticPAM()                             */
+/*                           OpenStaticPAM()                            */
 /************************************************************************/
 
 /* static */
@@ -699,11 +710,10 @@ GDALPamDataset *GDALAVIFDataset::OpenStaticPAM(GDALOpenInfo *poOpenInfo)
 /************************************************************************/
 
 /* static */
-GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
-                                         GDALDataset *poSrcDS,
-                                         int /* bStrict */, char **papszOptions,
-                                         GDALProgressFunc pfnProgress,
-                                         void *pProgressData)
+GDALDataset *
+GDALAVIFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
+                            int /* bStrict */, CSLConstList papszOptions,
+                            GDALProgressFunc pfnProgress, void *pProgressData)
 {
     auto poDrv = GetGDALDriverManager()->GetDriverByName(DRIVER_NAME);
     if (poDrv && poDrv->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST) == nullptr)
@@ -751,7 +761,13 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    int nBits = eDT == GDT_UInt8 ? 8 : 12;
+    int nBits = eDT == GDT_UInt8 ? 8 :
+#if AVIF_VERSION < 1040000
+                                 12
+#else
+                                 16
+#endif
+        ;
     const char *pszNBITS = CSLFetchNameValue(papszOptions, "NBITS");
     if (pszNBITS)
     {
@@ -765,8 +781,13 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
             nBits = atoi(pszNBITS);
         }
     }
-    if ((eDT == GDT_UInt8 && nBits != 8) ||
-        (eDT == GDT_UInt16 && nBits != 10 && nBits != 12))
+    if ((eDT == GDT_UInt8 && nBits != 8)
+#if AVIF_VERSION < 1040000
+        || (eDT == GDT_UInt16 && nBits != 10 && nBits != 12)
+#else
+        || (eDT == GDT_UInt16 && nBits != 10 && nBits != 12 && nBits != 16)
+#endif
+    )
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Invalid/inconsistent bit depth w.r.t data type");
@@ -783,8 +804,9 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
                    0, 100);
 
     // Create AVIF image.
-    avifPixelFormat ePixelFormat =
-        nBands <= 2 ? AVIF_PIXEL_FORMAT_YUV400 : AVIF_PIXEL_FORMAT_YUV444;
+    avifPixelFormat ePixelFormat = nBands <= 2 && nQuality != 100
+                                       ? AVIF_PIXEL_FORMAT_YUV400
+                                       : AVIF_PIXEL_FORMAT_YUV444;
     if (nBands >= 3)
     {
         const char *pszYUV_SUBSAMPLING =
@@ -930,13 +952,9 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
             avifCodecChoiceFromName(CPLString(pszCodec).tolower().c_str());
     }
 
-    const char *pszThreads = CSLFetchNameValueDef(
-        papszOptions, "NUM_THREADS",
-        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
-    if (pszThreads && !EQUAL(pszThreads, "ALL_CPUS"))
-        encoder->maxThreads = atoi(pszThreads);
-    else
-        encoder->maxThreads = CPLGetNumCPUs();
+    encoder->maxThreads = GDALGetNumThreads(papszOptions, "NUM_THREADS",
+                                            GDAL_DEFAULT_MAX_THREAD_COUNT,
+                                            /* bDefaultToAllCPUs = */ true);
 
 #if AVIF_VERSION_MAJOR >= 1
     encoder->quality = nQuality;
@@ -954,6 +972,15 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
     encoder->speed = std::clamp(
         atoi(CSLFetchNameValueDef(papszOptions, "SPEED", DEFAULT_SPEED_STR)), 0,
         10);
+
+#if AVIF_VERSION >= 1040000
+    if (eDT == GDT_UInt16 && nBits != 10 && nBits != 12)
+    {
+        encoder->sampleTransformRecipe =
+            nBits > 12 ? AVIF_SAMPLE_TRANSFORM_BIT_DEPTH_EXTENSION_12B_4B
+                       : AVIF_SAMPLE_TRANSFORM_BIT_DEPTH_EXTENSION_8B_8B;
+    }
+#endif
 
     if (CPLTestBool(
             CSLFetchNameValueDef(papszOptions, "WRITE_EXIF_METADATA", "YES")))
@@ -1082,7 +1109,7 @@ GDALDataset *GDALAVIFDataset::CreateCopy(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                         GDALAVIFDriver                               */
+/*                            GDALAVIFDriver                            */
 /************************************************************************/
 
 class GDALAVIFDriver final : public GDALDriver
@@ -1232,8 +1259,14 @@ void GDALAVIFDriver::InitMetadata()
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
         CPLAddXMLAttributeAndValue(psOption, "name", "NBITS");
         CPLAddXMLAttributeAndValue(psOption, "type", "int");
+#if AVIF_VERSION >= 1040000
+        CPLAddXMLAttributeAndValue(
+            psOption, "description",
+            "Bit depth. Valid values are 8, 10, 12 and 16.");
+#else
         CPLAddXMLAttributeAndValue(psOption, "description",
                                    "Bit depth. Valid values are 8, 10, 12.");
+#endif
     }
 
     {
@@ -1258,7 +1291,7 @@ void GDALAVIFDriver::InitMetadata()
 }
 
 /************************************************************************/
-/*                       GDALRegister_AVIF()                            */
+/*                         GDALRegister_AVIF()                          */
 /************************************************************************/
 
 void GDALRegister_AVIF()

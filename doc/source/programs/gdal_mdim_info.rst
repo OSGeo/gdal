@@ -21,7 +21,8 @@ Description
 -----------
 
 :program:`gdal mdim info` lists various information about a GDAL supported
-multidimensional dataset.
+multidimensional dataset, and returns them on the standard output stream when used from the
+command line, or in the ``output`` parameter when used from the API.
 
 The following items will be reported (when known) as JSON:
 
@@ -43,9 +44,17 @@ The following options are available:
 Standard options
 ++++++++++++++++
 
+.. option:: --summary
+
+    .. versionadded:: 3.13
+
+    Report only group and array hierarchy, without detailed information on attributes or dimensions.
+    Mutually exclusive with :option:`--detailed`.
+
 .. option:: --detailed
 
     Most verbose output. Report attribute data types and array values.
+    Mutually exclusive with :option:`--summary`.
 
 .. option:: --array <array_name>
 
@@ -84,6 +93,11 @@ Advanced options
 .. include:: gdal_options/oo.rst
 
 .. include:: gdal_options/if.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

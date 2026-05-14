@@ -184,12 +184,23 @@ def test_gdalalg_vector_clip_bbox_srs():
 
     out_ds = clip["output"].GetDataset()
     out_lyr = out_ds.GetLayer(0)
-    assert out_lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert out_lyr.GetSpatialRef().GetAuthorityCode() == "4326"
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
-    ogrtest.check_feature_geometry(
-        out_f, "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))"
+
+    out_g = out_f.GetGeometryRef()
+    ok = False
+    expected_wkt = (
+        "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))",
+        "POLYGON ((0.2 0.3,0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3))",  # GEOS 3.15
     )
+    for wkt in expected_wkt:
+        try:
+            ogrtest.check_feature_geometry(out_g, wkt)
+            ok = True
+        except Exception:
+            pass
+    assert ok, f"Got {out_g.ExportToIsoWkt()}, expected {expected_wkt}"
 
     assert out_lyr.GetNextFeature() is None
 
@@ -423,6 +434,53 @@ def test_gdalalg_vector_clip_geom_not_rectangle():
     )
 
     assert out_lyr.GetNextFeature() is None
+
+
+def test_gdalalg_vector_clip_geom_invalid():
+
+    clip = get_clip_alg()
+    clip["input"] = "../ogr/data/poly.shp"
+    clip["geometry"] = (
+        "POLYGON ((478919 4763746, 480410 4763753, 478974 4764785, 479934 4764846, 478919 4763746))"
+    )
+    clip["output-format"] = "MEM"
+
+    with pytest.raises(Exception, match="geometry is invalid"):
+        clip.Run()
+
+
+def test_gdalalg_vector_clip_geom_invalid_after_transform():
+
+    srs = osr.SpatialReference("+proj=gnom +lat_0=90 +lon_0=-50 +R=6.4e6")
+
+    ds = gdal.GetDriverByName("MEM").CreateVector("")
+    ds.CreateLayer("features", srs=srs)
+
+    clip = get_clip_alg()
+    clip["input"] = ds
+    clip["geometry"] = "POLYGON ((-20 1, 0 1, 0 2, -10 1.0000001, -20 2, -20 1))"
+    clip["geometry-crs"] = "EPSG:4326"
+    clip["output-format"] = "MEM"
+
+    with pytest.raises(Exception, match="geometry became invalid"):
+        clip.Run()
+
+
+def test_gdalalg_vector_clip_geom_fails_to_transform():
+
+    srs = osr.SpatialReference("+proj=gnom +lat_0=90 +lon_0=-50 +R=6.4e6")
+
+    ds = gdal.GetDriverByName("MEM").CreateVector("")
+    ds.CreateLayer("features", srs=srs)
+
+    clip = get_clip_alg()
+    clip["input"] = ds
+    clip["geometry"] = "POLYGON ((-20 -20, 0 -20, 0 0, -20 0, -20 -20))"
+    clip["geometry-crs"] = "EPSG:4326"
+    clip["output-format"] = "MEM"
+
+    with pytest.raises(Exception, match="Could not transform clipping geometry"):
+        clip.Run()
 
 
 def test_gdalalg_vector_clip_intersection_incompatible_geometry_type():
@@ -838,9 +896,19 @@ def test_gdalalg_vector_clip_like_raster():
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
-    ogrtest.check_feature_geometry(
-        out_f, "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))"
+    out_g = out_f.GetGeometryRef()
+    ok = False
+    expected_wkt = (
+        "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))",
+        "POLYGON ((0.2 0.3,0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3))",  # GEOS 3.15
     )
+    for wkt in expected_wkt:
+        try:
+            ogrtest.check_feature_geometry(out_g, wkt)
+            ok = True
+        except Exception:
+            pass
+    assert ok, f"Got {out_g.ExportToIsoWkt()}, expected {expected_wkt}"
 
     assert out_lyr.GetNextFeature() is None
 
@@ -879,9 +947,19 @@ def test_gdalalg_vector_clip_like_raster_srs():
     out_lyr = out_ds.GetLayer(0)
     out_f = out_lyr.GetNextFeature()
     assert out_f["foo"] == "bar"
-    ogrtest.check_feature_geometry(
-        out_f, "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))"
+    out_g = out_f.GetGeometryRef()
+    ok = False
+    expected_wkt = (
+        "POLYGON ((0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3,0.2 0.8))",
+        "POLYGON ((0.2 0.3,0.2 0.8,0.7 0.8,0.7 0.3,0.2 0.3))",  # GEOS 3.15
     )
+    for wkt in expected_wkt:
+        try:
+            ogrtest.check_feature_geometry(out_g, wkt)
+            ok = True
+        except Exception:
+            pass
+    assert ok, f"Got {out_g.ExportToIsoWkt()}, expected {expected_wkt}"
 
     assert out_lyr.GetNextFeature() is None
 
@@ -1074,3 +1152,17 @@ def test_gdalalg_vector_clip_test_ogrsf(tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+def test_gdalalg_vector_clip_on_aspatial_layer():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("the_layer", geom_type=ogr.wkbNone)
+    src_lyr.CreateFeature(ogr.Feature(src_lyr.GetLayerDefn()))
+
+    with gdal.alg.vector.clip(
+        input=src_ds, output="", output_format="MEM", bbox=[0, 0, 1, 1]
+    ) as alg:
+        ds = alg.Output()
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 1

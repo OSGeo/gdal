@@ -40,12 +40,12 @@ typedef enum
 
 GDALDataset *OGRGMLASDriverCreateCopy(const char *pszFilename,
                                       GDALDataset *poSrcDS, int /*bStrict*/,
-                                      char **papszOptions,
+                                      CSLConstList papszOptions,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData);
 
 /************************************************************************/
-/*                          IGMLASInputSourceClosing                    */
+/*                       IGMLASInputSourceClosing                       */
 /************************************************************************/
 
 class IGMLASInputSourceClosing /* non final */
@@ -57,7 +57,7 @@ class IGMLASInputSourceClosing /* non final */
 };
 
 /************************************************************************/
-/*                         GMLASResourceCache                           */
+/*                          GMLASResourceCache                          */
 /************************************************************************/
 
 class GMLASResourceCache /* non final */
@@ -90,7 +90,7 @@ class GMLASResourceCache /* non final */
 };
 
 /************************************************************************/
-/*                          GMLASXSDCache                               */
+/*                            GMLASXSDCache                             */
 /************************************************************************/
 
 class GMLASXSDCache final : public GMLASResourceCache
@@ -104,7 +104,7 @@ class GMLASXSDCache final : public GMLASResourceCache
 };
 
 /************************************************************************/
-/*                     GMLASBaseEntityResolver                          */
+/*                       GMLASBaseEntityResolver                        */
 /************************************************************************/
 
 class GMLASBaseEntityResolver /* non final*/ : public EntityResolver,
@@ -154,7 +154,7 @@ class GMLASBaseEntityResolver /* non final*/ : public EntityResolver,
 };
 
 /************************************************************************/
-/*                          GMLASInputSource                            */
+/*                           GMLASInputSource                           */
 /************************************************************************/
 
 class GMLASInputSource final : public InputSource
@@ -179,7 +179,7 @@ class GMLASInputSource final : public InputSource
 };
 
 /************************************************************************/
-/*                            GMLASErrorHandler                         */
+/*                          GMLASErrorHandler                           */
 /************************************************************************/
 
 class GMLASErrorHandler final : public ErrorHandler
@@ -232,7 +232,7 @@ class GMLASErrorHandler final : public ErrorHandler
 };
 
 /************************************************************************/
-/*                        GMLASXLinkResolutionConf                      */
+/*                       GMLASXLinkResolutionConf                       */
 /************************************************************************/
 
 class GMLASXLinkResolutionConf final
@@ -489,7 +489,7 @@ class GMLASXLinkResolver final : public GMLASResourceCache
 };
 
 /************************************************************************/
-/*                           GMLASXPathMatcher                          */
+/*                          GMLASXPathMatcher                           */
 /************************************************************************/
 
 /** Object to compares a user provided XPath against a set of test XPaths */
@@ -909,7 +909,7 @@ class GMLASField final
 };
 
 /************************************************************************/
-/*                            GMLASFeatureClass                         */
+/*                          GMLASFeatureClass                           */
 /************************************************************************/
 
 class GMLASFeatureClass final
@@ -1167,8 +1167,8 @@ class GMLASSchemaAnalyzer final
         GMLASFeatureClass &oClass, int nRecursionCounter,
         std::set<XSModelGroup *> &oSetVisitedModelGroups, XSModel *poModel,
         const std::map<CPLString, int> &oMapCountOccurrencesOfSameName);
-    void SetFieldTypeAndWidthFromDefinition(XSSimpleTypeDefinition *poST,
-                                            GMLASField &oField);
+    static void SetFieldTypeAndWidthFromDefinition(XSSimpleTypeDefinition *poST,
+                                                   GMLASField &oField);
     CPLString GetPrefix(const CPLString &osNamespaceURI);
     CPLString MakeXPath(const CPLString &osNamespace, const CPLString &osName);
     bool LaunderFieldNames(GMLASFeatureClass &oClass);
@@ -1284,7 +1284,7 @@ class GMLASSchemaAnalyzer final
 };
 
 /************************************************************************/
-/*                           OGRGMLASDataSource                         */
+/*                          OGRGMLASDataSource                          */
 /************************************************************************/
 
 class OGRGMLASLayer;
@@ -1495,7 +1495,7 @@ class OGRGMLASDataSource final : public GDALDataset
 };
 
 /************************************************************************/
-/*                             OGRGMLASLayer                            */
+/*                            OGRGMLASLayer                             */
 /************************************************************************/
 
 class OGRGMLASLayer final : public OGRLayer
@@ -1644,7 +1644,7 @@ class OGRGMLASLayer final : public OGRLayer
 };
 
 /************************************************************************/
-/*                              GMLASReader                             */
+/*                             GMLASReader                              */
 /************************************************************************/
 
 class GMLASReader final : public DefaultHandler

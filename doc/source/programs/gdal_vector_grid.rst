@@ -37,7 +37,7 @@ Options common to all algorithms
 Standard options
 ++++++++++++++++
 
-.. include:: gdal_options/of_vector.rst
+.. include:: gdal_options/of_raster_create.rst
 
 .. include:: gdal_options/co_vector.rst
 
@@ -529,6 +529,10 @@ The :ref:`vector.csv` description page contains details on CSV format supported 
 
 .. include:: gdal_cli_include/gdalg_raster_compatible_non_natively_streamable.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

@@ -21,7 +21,7 @@
 #include <unordered_set>
 
 /************************************************************************/
-/*                            OGRODBCLayer                              */
+/*                             OGRODBCLayer                             */
 /************************************************************************/
 
 class OGRODBCDataSource;
@@ -78,7 +78,7 @@ class OGRODBCLayer CPL_NON_FINAL : public OGRLayer
 };
 
 /************************************************************************/
-/*                           OGRODBCTableLayer                          */
+/*                          OGRODBCTableLayer                           */
 /************************************************************************/
 
 class OGRODBCTableLayer final : public OGRODBCLayer
@@ -160,7 +160,7 @@ class OGRODBCSelectLayer final : public OGRODBCLayer
 };
 
 /************************************************************************/
-/*                           OGRODBCDataSource                          */
+/*                          OGRODBCDataSource                           */
 /************************************************************************/
 
 class OGRODBCDataSource final : public GDALDataset
@@ -175,9 +175,7 @@ class OGRODBCDataSource final : public GDALDataset
 
     // We maintain a list of known SRID to reduce the number of trips to
     // the database to get SRSes.
-    std::map<int,
-             std::unique_ptr<OGRSpatialReference, OGRSpatialReferenceReleaser>>
-        m_oSRSCache{};
+    std::map<int, OGRSpatialReferenceRefCountedPtr> m_oSRSCache{};
 #endif
 
     // set of all lowercase table names. Note that this is only used when

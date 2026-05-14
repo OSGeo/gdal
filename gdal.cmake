@@ -6,8 +6,8 @@
 # a new member or virtual function in a public C++ class, etc.
 # This will typically happen for each GDAL feature release (change of X or Y in
 # a X.Y.Z numbering scheme), but should not happen for a bugfix release (change of Z)
-# Previous value: 38 for GDAL 3.12
-set(GDAL_SOVERSION 38)
+# Previous value: 39 for GDAL 3.13
+set(GDAL_SOVERSION 39)
 
 # Switches to control build targets(cached)
 option(ENABLE_GNM "Build GNM (Geography Network Model) component" ON)
@@ -280,11 +280,11 @@ if (GDAL_ENABLE_MACOSX_FRAMEWORK)
     ${GDAL_LIB_TARGET_NAME}
     PROPERTIES FRAMEWORK TRUE
                FRAMEWORK_VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}
-               MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}
-               MACOSX_FRAMEWORK_BUNDLE_VERSION "GDAL ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}"
+               MACOSX_FRAMEWORK_SHORT_VERSION_STRING ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}.${GDAL_VERSION_REV}
+               MACOSX_FRAMEWORK_BUNDLE_VERSION ${GDAL_VERSION_MAJOR}.${GDAL_VERSION_MINOR}
                MACOSX_FRAMEWORK_IDENTIFIER org.osgeo.libgdal
                XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
-               INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${FRAMEWORK_DESTINATION}"
+               INSTALL_NAME_DIR "@rpath"
                BUILD_WITH_INSTALL_RPATH TRUE
                # MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/info.plist.in"
     )
@@ -307,12 +307,14 @@ else ()
         ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}
         ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}
       )
-      if( NOT "${CMAKE_INSTALL_RPATH}" STREQUAL "" )
-          message(WARNING "CMAKE_INSTALL_RPATH=${CMAKE_INSTALL_RPATH} will be ignored and replaced with ${base};${base}/${relDir} due to GDAL_SET_INSTALL_RELATIVE_RPATH being set")
-      endif()
-      set(CMAKE_INSTALL_RPATH ${base} ${base}/${relDir})
+      set(GDAL_INSTALL_RPATH "${base}")
+      set(GDAL_INSTALL_RPATH_FOR_BINARY "${base}/${relDir}")
   endif()
 endif ()
+
+if(GDAL_INSTALL_RPATH)
+  set_target_properties(${GDAL_LIB_TARGET_NAME} PROPERTIES INSTALL_RPATH ${GDAL_INSTALL_RPATH})
+endif()
 
 set(INSTALL_PLUGIN_FULL_DIR "${CMAKE_INSTALL_PREFIX}/${INSTALL_PLUGIN_DIR}")
 
@@ -492,13 +494,16 @@ cmake_dependent_option(OGR_ENABLE_DRIVER_GPKG "Set ON to build OGR GPKG driver" 
 cmake_dependent_option(OGR_ENABLE_DRIVER_MVT "Set ON to build OGR MVT driver" ${OGR_BUILD_OPTIONAL_DRIVERS}
                        "GDAL_USE_SQLITE3" OFF)
 
-# Build frmts/iso8211 conditionally to drivers requiring it
-if ((GDAL_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED GDAL_ENABLE_DRIVER_ADRG AND NOT DEFINED GDAL_ENABLE_DRIVER_SDTS) OR
-    GDAL_ENABLE_DRIVER_ADRG OR
-    GDAL_ENABLE_DRIVER_SDTS OR
-    (OGR_BUILD_OPTIONAL_DRIVERS AND NOT DEFINED OGR_ENABLE_DRIVER_S57 AND NOT DEFINED OGR_ENABLE_DRIVER_SDTS) OR
-    OGR_ENABLE_DRIVER_S57 OR
-    OGR_ENABLE_DRIVER_SDTS)
+if (GDAL_BUILD_OPTIONAL_DRIVERS OR OGR_BUILD_OPTIONAL_DRIVERS OR
+    GDAL_ENABLE_DRIVER_ADRG OR GDAL_ENABLE_DRIVER_SDTS OR
+    OGR_ENABLE_DRIVER_S57 OR OGR_ENABLE_DRIVER_S101)
+    set(GDAL_ENABLE_ISO8211_DEFAULT ON)
+else()
+    set(GDAL_ENABLE_ISO8211_DEFAULT OFF)
+endif()
+option(GDAL_ENABLE_ISO8211 "Set ON to build ISO8211 library needed for SRP, ADRG, S57 and S101 drivers" ${GDAL_ENABLE_ISO8211_DEFAULT})
+mark_as_advanced(GDAL_ENABLE_ISO8211)
+if (GDAL_ENABLE_ISO8211)
   add_subdirectory(frmts/iso8211)
 endif()
 
@@ -766,7 +771,7 @@ set(GDAL_USE_EXTERNAL_LIBS_OLD_CACHED
     CACHE INTERNAL "Previous value of GDAL_USE_EXTERNAL_LIBS")
 
 # Emit a warning if users do not define the build type for non-multi config and that we can't find -O in CMAKE_CXX_FLAGS
-# This is not super idiomatic to warn this way, but this will help users transitionning from autoconf where the default
+# This is not super idiomatic to warn this way, but this will help users transitioning from autoconf where the default
 # settings result in a -O2 build.
 get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if (NOT GDAL_CMAKE_QUIET

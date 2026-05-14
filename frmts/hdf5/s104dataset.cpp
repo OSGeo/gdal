@@ -10,6 +10,10 @@
  * SPDX-License-Identifier: MIT
  ****************************************************************************/
 
+#ifdef _POSIX_C_SOURCE
+#undef _POSIX_C_SOURCE
+#endif
+
 #include "cpl_port.h"
 #include "hdf5dataset.h"
 #include "hdf5drivercore.h"
@@ -48,7 +52,7 @@ class S104Dataset final : public S100BaseDataset
     static GDALDataset *Open(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -631,7 +635,7 @@ GDALDataset *S104Dataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                              S104Creator                             */
+/*                             S104Creator                              */
 /************************************************************************/
 
 class S104Creator final : public S100BaseWriter
@@ -668,7 +672,7 @@ class S104Creator final : public S100BaseWriter
 };
 
 /************************************************************************/
-/*                      S104Creator::~S104Creator()                     */
+/*                     S104Creator::~S104Creator()                      */
 /************************************************************************/
 
 S104Creator::~S104Creator()
@@ -677,7 +681,7 @@ S104Creator::~S104Creator()
 }
 
 /************************************************************************/
-/*                         S104Creator::Create()                        */
+/*                        S104Creator::Create()                         */
 /************************************************************************/
 
 bool S104Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
@@ -1125,7 +1129,7 @@ bool S104Creator::Create(GDALProgressFunc pfnProgress, void *pProgressData)
 }
 
 /************************************************************************/
-/*            S104Creator::WriteFeatureGroupAttributes()                */
+/*              S104Creator::WriteFeatureGroupAttributes()              */
 /************************************************************************/
 
 bool S104Creator::WriteFeatureGroupAttributes()
@@ -1244,7 +1248,7 @@ bool S104Creator::WriteUncertaintyDataset()
 }
 
 /************************************************************************/
-/*              S104Creator::FillFeatureInstanceGroup()                 */
+/*               S104Creator::FillFeatureInstanceGroup()                */
 /************************************************************************/
 
 bool S104Creator::FillFeatureInstanceGroup(
@@ -1422,7 +1426,7 @@ bool S104Creator::FillFeatureInstanceGroup(
 }
 
 /************************************************************************/
-/*                      S104Creator::CreateGroupF()                     */
+/*                     S104Creator::CreateGroupF()                      */
 /************************************************************************/
 
 // Per S-104 v2.0 spec
@@ -1458,7 +1462,7 @@ bool S104Creator::CreateGroupF()
 }
 
 /************************************************************************/
-/*                       S104Creator::CopyValues()                      */
+/*                      S104Creator::CopyValues()                       */
 /************************************************************************/
 
 bool S104Creator::CopyValues(GDALDataset *poSrcDS, GDALProgressFunc pfnProgress,
@@ -1556,7 +1560,7 @@ bool S104Creator::CopyValues(GDALDataset *poSrcDS, GDALProgressFunc pfnProgress,
     std::vector<GByte> abyValues(
         static_cast<size_t>(nBlockYSize) * nBlockXSize *
         (sizeof(float) + sizeof(GByte) + sizeof(float)));
-    const bool bReverseY = m_gt[5] < 0;
+    const bool bReverseY = m_gt.yscale < 0;
 
     float fMinHeight = std::numeric_limits<float>::infinity();
     float fMaxHeight = -std::numeric_limits<float>::infinity();
@@ -1604,7 +1608,8 @@ bool S104Creator::CopyValues(GDALDataset *poSrcDS, GDALProgressFunc pfnProgress,
             if (bRet)
             {
                 size_t nOffset = 0;
-                for (int i = 0; i < nReqCountY * nReqCountX; i++)
+                for (size_t i = 0;
+                     i < static_cast<size_t>(nReqCountY) * nReqCountX; i++)
                 {
                     {
                         float fVal = afValues[i * nComponents];
@@ -1756,7 +1761,7 @@ static void S104DatasetDriverUnload(GDALDriver *)
 /* static */
 GDALDataset *S104Dataset::CreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int /* bStrict*/,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 {

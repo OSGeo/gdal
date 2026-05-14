@@ -27,7 +27,7 @@ OGRPDFLayer::OGRPDFLayer(PDFDataset *poDSIn, const char *pszName,
 }
 
 /************************************************************************/
-/*                              Fill()                                  */
+/*                                Fill()                                */
 /************************************************************************/
 
 void OGRPDFLayer::Fill(GDALPDFArray *poArray)

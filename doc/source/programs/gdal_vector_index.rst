@@ -39,7 +39,7 @@ Program-Specific Options
 .. option:: --accept-different-crs
 
     Whether layers with different CRS are accepted.
-    By default, unless :option:`--dst-crs` is specified, layers that do not have
+    By default, unless :option:`--output-crs` is specified, layers that do not have
     the same CRS as the first index layer will be skipped. Setting :option:`--accept-different-crs`
     may be useful to avoid the CRS consistency check.
 
@@ -54,13 +54,6 @@ Program-Specific Options
     Whether to write the dataset name only, instead of suffixed with the layer index.
 
     .. warning:: Setting this option will generate a location not compatible of MapServer.
-
-.. option:: --dst-crs <DST-CRS>
-
-    Envelopes of the input files will be transformed to the desired target
-    coordinate reference system.
-    Default creates simple rectangular polygons in the same coordinate reference
-    system as the input vectors.
 
 .. option:: --filename-filter <FILENAME-FILTER>
 
@@ -82,6 +75,13 @@ Program-Specific Options
     Write an arbitrary layer metadata item, for formats that support layer
     metadata.
     This option may be repeated.
+
+.. option:: --output-crs <OUTPUT-CRS>
+
+    Envelopes of the input files will be transformed to the desired target
+    coordinate reference system.
+    Default creates simple rectangular polygons in the same coordinate reference
+    system as the input vectors.
 
 .. option:: --recursive
 
@@ -129,6 +129,11 @@ Standard Options
 
 .. include:: gdal_options/update.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 
@@ -145,9 +150,9 @@ Examples
 
 .. example::
 
-   The :option:`--dst-crs` option can also be used to transform all input vector
+   The :option:`--output-crs` option can also be used to transform all input vector
    envelopes into the same output projection:
 
    .. code-block:: bash
 
-       gdal vector index --dst-crs EPSG:4326 --source-crs-field-name=src_srs countries/*.shp index.gpkg
+       gdal vector index --output-crs EPSG:4326 --source-crs-field-name=src_srs countries/*.shp index.gpkg

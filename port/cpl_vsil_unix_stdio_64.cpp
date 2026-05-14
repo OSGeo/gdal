@@ -292,14 +292,14 @@ class VSIUnixStdioHandle final : public VSIVirtualHandle
 };
 
 /************************************************************************/
-/*                       VSIUnixStdioHandle()                           */
+/*                         VSIUnixStdioHandle()                         */
 /************************************************************************/
 
 VSIUnixStdioHandle::VSIUnixStdioHandle(
 #ifndef VSI_COUNT_BYTES_READ
     CPL_UNUSED
 #endif
-        VSIUnixStdioFilesystemHandler *poFSIn,
+    VSIUnixStdioFilesystemHandler *poFSIn,
     int fdIn, AccessMode eAccessModeIn)
     : fd(fdIn), eAccessMode(eAccessModeIn)
 #ifdef VSI_COUNT_BYTES_READ
@@ -310,7 +310,7 @@ VSIUnixStdioHandle::VSIUnixStdioHandle(
 }
 
 /************************************************************************/
-/*                         ~VSIUnixStdioHandle()                        */
+/*                        ~VSIUnixStdioHandle()                         */
 /************************************************************************/
 
 VSIUnixStdioHandle::~VSIUnixStdioHandle()
@@ -372,7 +372,7 @@ int VSIUnixStdioHandle::Close()
 }
 
 /************************************************************************/
-/*                          CancelCreation()                            */
+/*                           CancelCreation()                           */
 /************************************************************************/
 
 void VSIUnixStdioHandle::CancelCreation()
@@ -759,7 +759,7 @@ size_t VSIUnixStdioHandle::Write(const void *pBuffer, size_t nBytes)
 }
 
 /************************************************************************/
-/*                             ClearErr()                               */
+/*                              ClearErr()                              */
 /************************************************************************/
 
 void VSIUnixStdioHandle::ClearErr()
@@ -770,7 +770,7 @@ void VSIUnixStdioHandle::ClearErr()
 }
 
 /************************************************************************/
-/*                              Error()                                 */
+/*                               Error()                                */
 /************************************************************************/
 
 int VSIUnixStdioHandle::Error()
@@ -790,7 +790,7 @@ int VSIUnixStdioHandle::Eof()
 }
 
 /************************************************************************/
-/*                             Truncate()                               */
+/*                              Truncate()                              */
 /************************************************************************/
 
 int VSIUnixStdioHandle::Truncate(vsi_l_offset nNewSize)
@@ -801,7 +801,7 @@ int VSIUnixStdioHandle::Truncate(vsi_l_offset nNewSize)
 }
 
 /************************************************************************/
-/*                          GetRangeStatus()                            */
+/*                           GetRangeStatus()                           */
 /************************************************************************/
 
 #ifdef __linux
@@ -876,7 +876,7 @@ VSIRangeStatus VSIUnixStdioHandle::GetRangeStatus(vsi_l_offset
 }
 
 /************************************************************************/
-/*                             HasPRead()                               */
+/*                              HasPRead()                              */
 /************************************************************************/
 
 #if defined(HAVE_PREAD64) || (defined(HAVE_PREAD_BSD) && SIZEOF_OFF_T == 8)
@@ -886,7 +886,7 @@ bool VSIUnixStdioHandle::HasPRead() const
 }
 
 /************************************************************************/
-/*                              PRead()                                 */
+/*                               PRead()                                */
 /************************************************************************/
 
 size_t VSIUnixStdioHandle::PRead(void *pBuffer, size_t nSize,
@@ -908,7 +908,7 @@ size_t VSIUnixStdioHandle::PRead(void *pBuffer, size_t nSize,
 
 #ifdef VSI_COUNT_BYTES_READ
 /************************************************************************/
-/*                     ~VSIUnixStdioFilesystemHandler()                 */
+/*                   ~VSIUnixStdioFilesystemHandler()                   */
 /************************************************************************/
 
 VSIUnixStdioFilesystemHandler::~VSIUnixStdioFilesystemHandler()
@@ -1006,7 +1006,7 @@ VSIUnixStdioFilesystemHandler::Open(const char *pszFilename,
 }
 
 /************************************************************************/
-/*                      CreateOnlyVisibleAtCloseTime()                  */
+/*                    CreateOnlyVisibleAtCloseTime()                    */
 /************************************************************************/
 
 VSIVirtualHandleUniquePtr
@@ -1115,7 +1115,7 @@ int VSIUnixStdioFilesystemHandler::Rmdir(const char *pszPathname)
 }
 
 /************************************************************************/
-/*                              ReadDirEx()                             */
+/*                             ReadDirEx()                              */
 /************************************************************************/
 
 char **VSIUnixStdioFilesystemHandler::ReadDirEx(const char *pszPath,
@@ -1152,7 +1152,7 @@ char **VSIUnixStdioFilesystemHandler::ReadDirEx(const char *pszPath,
 }
 
 /************************************************************************/
-/*                        GetDiskFreeSpace()                            */
+/*                          GetDiskFreeSpace()                          */
 /************************************************************************/
 
 GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace(const char *
@@ -1185,7 +1185,7 @@ GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace(const char *
 }
 
 /************************************************************************/
-/*                      SupportsSparseFiles()                           */
+/*                        SupportsSparseFiles()                         */
 /************************************************************************/
 
 #ifdef __linux
@@ -1265,7 +1265,7 @@ int VSIUnixStdioFilesystemHandler::SupportsSparseFiles(const char *
 }
 
 /************************************************************************/
-/*                          IsLocal()                                   */
+/*                              IsLocal()                               */
 /************************************************************************/
 
 bool VSIUnixStdioFilesystemHandler::IsLocal(const char *
@@ -1303,7 +1303,7 @@ bool VSIUnixStdioFilesystemHandler::IsLocal(const char *
 }
 
 /************************************************************************/
-/*                    SupportsSequentialWrite()                         */
+/*                      SupportsSequentialWrite()                       */
 /************************************************************************/
 
 bool VSIUnixStdioFilesystemHandler::SupportsSequentialWrite(
@@ -1316,7 +1316,7 @@ bool VSIUnixStdioFilesystemHandler::SupportsSequentialWrite(
 }
 
 /************************************************************************/
-/*                     SupportsRandomWrite()                            */
+/*                        SupportsRandomWrite()                         */
 /************************************************************************/
 
 bool VSIUnixStdioFilesystemHandler::SupportsRandomWrite(
@@ -1326,7 +1326,7 @@ bool VSIUnixStdioFilesystemHandler::SupportsRandomWrite(
 }
 
 /************************************************************************/
-/*                            VSIDIRUnixStdio                           */
+/*                           VSIDIRUnixStdio                            */
 /************************************************************************/
 
 struct VSIDIRUnixStdio final : public VSIDIR
@@ -1353,7 +1353,7 @@ struct VSIDIRUnixStdio final : public VSIDIR
 };
 
 /************************************************************************/
-/*                        OpenDirInternal()                             */
+/*                          OpenDirInternal()                           */
 /************************************************************************/
 
 /* static */
@@ -1376,7 +1376,7 @@ std::unique_ptr<VSIDIRUnixStdio> VSIUnixStdioFilesystemHandler::OpenDirInternal(
 }
 
 /************************************************************************/
-/*                            OpenDir()                                 */
+/*                              OpenDir()                               */
 /************************************************************************/
 
 VSIDIR *VSIUnixStdioFilesystemHandler::OpenDir(const char *pszPath,
@@ -1387,7 +1387,7 @@ VSIDIR *VSIUnixStdioFilesystemHandler::OpenDir(const char *pszPath,
 }
 
 /************************************************************************/
-/*                           NextDirEntry()                             */
+/*                            NextDirEntry()                            */
 /************************************************************************/
 
 const VSIDIREntry *VSIDIRUnixStdio::NextDirEntry()
@@ -1518,7 +1518,7 @@ begin:
 
 #ifdef VSI_COUNT_BYTES_READ
 /************************************************************************/
-/*                            AddToTotal()                              */
+/*                             AddToTotal()                             */
 /************************************************************************/
 
 void VSIUnixStdioFilesystemHandler::AddToTotal(vsi_l_offset nBytes)
@@ -1530,7 +1530,7 @@ void VSIUnixStdioFilesystemHandler::AddToTotal(vsi_l_offset nBytes)
 #endif
 
 /************************************************************************/
-/*                      GetCanonicalFilename()                          */
+/*                        GetCanonicalFilename()                        */
 /************************************************************************/
 
 #ifdef HAS_CASE_INSENSITIVE_FILE_SYSTEM

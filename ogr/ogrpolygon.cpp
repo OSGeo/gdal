@@ -49,7 +49,7 @@ OGRPolygon::OGRPolygon(double x1, double y1, double x2, double y2)
 }
 
 /************************************************************************/
-/*                OGRPolygon(const OGREnvelope &envelope)               */
+/*               OGRPolygon(const OGREnvelope &envelope)                */
 /************************************************************************/
 
 /**
@@ -65,7 +65,7 @@ OGRPolygon::OGRPolygon(const OGREnvelope &envelope)
 }
 
 /************************************************************************/
-/*                     OGRPolygon( const OGRPolygon& )                  */
+/*                   OGRPolygon( const OGRPolygon& )                    */
 /************************************************************************/
 
 /**
@@ -75,7 +75,7 @@ OGRPolygon::OGRPolygon(const OGREnvelope &envelope)
 OGRPolygon::OGRPolygon(const OGRPolygon &) = default;
 
 /************************************************************************/
-/*                     operator=( const OGRPolygon&)                    */
+/*                    operator=( const OGRPolygon&)                     */
 /************************************************************************/
 
 /**
@@ -188,7 +188,7 @@ const OGRLinearRing *OGRPolygon::getExteriorRing() const
 }
 
 /************************************************************************/
-/*                          stealExteriorRing()                         */
+/*                         stealExteriorRing()                          */
 /************************************************************************/
 
 /**
@@ -260,7 +260,7 @@ const OGRLinearRing *OGRPolygon::getInteriorRing(int iRing) const
 }
 
 /************************************************************************/
-/*                          stealInteriorRing()                         */
+/*                         stealInteriorRing()                          */
 /************************************************************************/
 
 /**
@@ -285,7 +285,7 @@ OGRLinearRing *OGRPolygon::stealInteriorRing(int iRing)
 /*! @cond Doxygen_Suppress */
 
 /************************************************************************/
-/*                            isRingCorrectType()                               */
+/*                         isRingCorrectType()                          */
 /************************************************************************/
 bool OGRPolygon::isRingCorrectType(const OGRCurve *poRing) const
 {
@@ -293,7 +293,7 @@ bool OGRPolygon::isRingCorrectType(const OGRCurve *poRing) const
 }
 
 /************************************************************************/
-/*                            checkRing()                               */
+/*                             checkRing()                              */
 /************************************************************************/
 
 bool OGRPolygon::checkRing(const OGRCurve *poNewRing) const
@@ -761,13 +761,13 @@ std::string OGRPolygon::exportToWkt(const OGRWktOptions &opts,
 }
 
 /************************************************************************/
-/*                           IsPointOnSurface()                           */
+/*                          IsPointOnSurface()                          */
 /************************************************************************/
 
 /** Return whether the point is on the surface.
  * @return TRUE or FALSE
  */
-OGRBoolean OGRPolygon::IsPointOnSurface(const OGRPoint *pt) const
+bool OGRPolygon::IsPointOnSurface(const OGRPoint *pt) const
 {
     if (nullptr == pt)
         return FALSE;
@@ -813,7 +813,7 @@ void OGRPolygon::closeRings()
 }
 
 /************************************************************************/
-/*                           CurvePolyToPoly()                          */
+/*                          CurvePolyToPoly()                           */
 /************************************************************************/
 
 OGRPolygon *
@@ -824,16 +824,16 @@ OGRPolygon::CurvePolyToPoly(CPL_UNUSED double dfMaxAngleStepSizeDegrees,
 }
 
 /************************************************************************/
-/*                         hasCurveGeometry()                           */
+/*                          hasCurveGeometry()                          */
 /************************************************************************/
 
-OGRBoolean OGRPolygon::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
+bool OGRPolygon::hasCurveGeometry(CPL_UNUSED int bLookForNonLinear) const
 {
     return FALSE;
 }
 
 /************************************************************************/
-/*                         getLinearGeometry()                        */
+/*                         getLinearGeometry()                          */
 /************************************************************************/
 
 OGRGeometry *
@@ -845,7 +845,7 @@ OGRPolygon::getLinearGeometry(double dfMaxAngleStepSizeDegrees,
 }
 
 /************************************************************************/
-/*                             getCurveGeometry()                       */
+/*                          getCurveGeometry()                          */
 /************************************************************************/
 
 OGRGeometry *OGRPolygon::getCurveGeometry(const char *const *papszOptions) const
@@ -870,7 +870,7 @@ OGRGeometry *OGRPolygon::getCurveGeometry(const char *const *papszOptions) const
 
 /*! @cond Doxygen_Suppress */
 /************************************************************************/
-/*                        CastToCurvePolygon()                          */
+/*                         CastToCurvePolygon()                         */
 /************************************************************************/
 
 /**
@@ -903,7 +903,7 @@ OGRCurvePolygon *OGRPolygon::CastToCurvePolygon(OGRPolygon *poPoly)
 }
 
 /************************************************************************/
-/*                      GetCasterToPolygon()                            */
+/*                         GetCasterToPolygon()                         */
 /************************************************************************/
 
 static OGRPolygon *CasterToPolygon(OGRSurface *poSurface)
@@ -917,7 +917,7 @@ OGRSurfaceCasterToPolygon OGRPolygon::GetCasterToPolygon() const
 }
 
 /************************************************************************/
-/*                      OGRSurfaceCasterToCurvePolygon()                */
+/*                   OGRSurfaceCasterToCurvePolygon()                   */
 /************************************************************************/
 
 OGRCurvePolygon *OGRPolygon::CasterToCurvePolygon(OGRSurface *poSurface)

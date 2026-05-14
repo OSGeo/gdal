@@ -79,7 +79,7 @@ class XYZDataset final : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -259,12 +259,12 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 poGDS->nDataLineNum++;
 
                 const int nX = static_cast<int>(
-                    (dfX - 0.5 * poGDS->m_gt[1] - poGDS->m_gt[0]) /
-                        poGDS->m_gt[1] +
+                    (dfX - 0.5 * poGDS->m_gt.xscale - poGDS->m_gt.xorig) /
+                        poGDS->m_gt.xscale +
                     0.5);
                 const int nY = static_cast<int>(
-                    (dfY - 0.5 * poGDS->m_gt[5] - poGDS->m_gt[3]) /
-                        poGDS->m_gt[5] +
+                    (dfY - 0.5 * poGDS->m_gt.yscale - poGDS->m_gt.yorig) /
+                        poGDS->m_gt.yscale +
                     0.5);
                 if (nX < 0 || nX >= nRasterXSize)
                 {
@@ -417,7 +417,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     }
 
     const double dfExpectedY =
-        poGDS->m_gt[3] + (0.5 + nBlockYOff) * poGDS->m_gt[5];
+        poGDS->m_gt.yorig + (0.5 + nBlockYOff) * poGDS->m_gt.yscale;
 
     int idx = -1;
     while (true)
@@ -504,17 +504,19 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 }
                 else
                 {
-                    if (fabs((dfY - dfExpectedY) / poGDS->m_gt[5]) >
+                    if (fabs((dfY - dfExpectedY) / poGDS->m_gt.yscale) >
                         RELATIVE_ERROR)
                     {
                         if (idx < 0)
                         {
                             const double dfYDeltaOrigin =
-                                dfY + 0.5 * poGDS->m_gt[5] - poGDS->m_gt[3];
-                            if (!(fabs(dfYDeltaOrigin) > fabs(poGDS->m_gt[5]) &&
+                                dfY + 0.5 * poGDS->m_gt.yscale -
+                                poGDS->m_gt.yorig;
+                            if (!(fabs(dfYDeltaOrigin) >
+                                      fabs(poGDS->m_gt.yscale) &&
                                   fabs(std::round(dfYDeltaOrigin /
-                                                  poGDS->m_gt[5]) -
-                                       (dfYDeltaOrigin / poGDS->m_gt[5])) <=
+                                                  poGDS->m_gt.yscale) -
+                                       (dfYDeltaOrigin / poGDS->m_gt.yscale)) <=
                                       RELATIVE_ERROR))
                             {
                                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -533,8 +535,8 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                     }
 
                     idx = static_cast<int>(
-                        (dfX - 0.5 * poGDS->m_gt[1] - poGDS->m_gt[0]) /
-                            poGDS->m_gt[1] +
+                        (dfX - 0.5 * poGDS->m_gt.xscale - poGDS->m_gt.xorig) /
+                            poGDS->m_gt.xscale +
                         0.5);
                 }
                 CPLAssert(idx >= 0 && idx < nRasterXSize);
@@ -592,7 +594,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 }
 
 /************************************************************************/
-/*                            GetMinimum()                              */
+/*                             GetMinimum()                             */
 /************************************************************************/
 
 double XYZRasterBand::GetMinimum(int *pbSuccess)
@@ -604,7 +606,7 @@ double XYZRasterBand::GetMinimum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                            GetMaximum()                              */
+/*                             GetMaximum()                             */
 /************************************************************************/
 
 double XYZRasterBand::GetMaximum(int *pbSuccess)
@@ -616,7 +618,7 @@ double XYZRasterBand::GetMaximum(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                          GetNoDataValue()                            */
+/*                           GetNoDataValue()                           */
 /************************************************************************/
 
 double XYZRasterBand::GetNoDataValue(int *pbSuccess)
@@ -641,7 +643,7 @@ double XYZRasterBand::GetNoDataValue(int *pbSuccess)
 }
 
 /************************************************************************/
-/*                            ~XYZDataset()                            */
+/*                            ~XYZDataset()                             */
 /************************************************************************/
 
 XYZDataset::XYZDataset()
@@ -653,7 +655,7 @@ XYZDataset::XYZDataset()
 }
 
 /************************************************************************/
-/*                            ~XYZDataset()                            */
+/*                            ~XYZDataset()                             */
 /************************************************************************/
 
 XYZDataset::~XYZDataset()
@@ -675,7 +677,7 @@ XYZDataset::~XYZDataset()
 }
 
 /************************************************************************/
-/*                             Identify()                               */
+/*                              Identify()                              */
 /************************************************************************/
 
 int XYZDataset::Identify(GDALOpenInfo *poOpenInfo)
@@ -689,7 +691,7 @@ int XYZDataset::Identify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                            IdentifyEx()                              */
+/*                             IdentifyEx()                             */
 /************************************************************************/
 
 int XYZDataset::IdentifyEx(GDALOpenInfo *poOpenInfo, int &bHasHeaderLine,
@@ -1073,11 +1075,29 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                     {
                         nUsefulColsFound++;
                         dfX = CPLAtofDelim(pszPtr, chLocalDecimalSep);
+                        if (std::isnan(dfX))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "At line " CPL_FRMT_GIB
+                                     ", NaN value found",
+                                     nLineNum);
+                            VSIFCloseL(fp);
+                            return nullptr;
+                        }
                     }
                     else if (nCol == nYIndex)
                     {
                         nUsefulColsFound++;
                         dfY = CPLAtofDelim(pszPtr, chLocalDecimalSep);
+                        if (std::isnan(dfY))
+                        {
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "At line " CPL_FRMT_GIB
+                                     ", NaN value found",
+                                     nLineNum);
+                            VSIFCloseL(fp);
+                            return nullptr;
+                        }
                     }
                     else if (nCol == nZIndex)
                     {
@@ -1097,7 +1117,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                             dfMaxZ = dfZ;
                         }
 
-                        if (dfZ < INT_MIN || dfZ > INT_MAX)
+                        if (!(dfZ >= INT_MIN && dfZ <= INT_MAX))
                         {
                             eDT = GDT_Float32;
                         }
@@ -1519,10 +1539,11 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nMinTokens = nMinTokens;
     poDS->nRasterXSize = nXSize;
     poDS->nRasterYSize = nYSize;
-    poDS->m_gt[0] = dfMinX - dfStepX / 2;
-    poDS->m_gt[1] = dfStepX;
-    poDS->m_gt[3] = (dfStepY < 0) ? dfMaxY - dfStepY / 2 : dfMinY - dfStepY / 2;
-    poDS->m_gt[5] = dfStepY;
+    poDS->m_gt.xorig = dfMinX - dfStepX / 2;
+    poDS->m_gt.xscale = dfStepX;
+    poDS->m_gt.yorig =
+        (dfStepY < 0) ? dfMaxY - dfStepY / 2 : dfMinY - dfStepY / 2;
+    poDS->m_gt.yscale = dfStepY;
     poDS->bSameNumberOfValuesPerLine = bSameNumberOfValuesPerLine;
     poDS->dfMinZ = dfMinZ;
     poDS->dfMaxZ = dfMaxZ;
@@ -1564,7 +1585,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
 
 GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 {
@@ -1576,14 +1597,14 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
     {
         CPLError(
             CE_Failure, CPLE_NotSupported,
-            "XYZ driver does not support source dataset with zero band.\n");
+            "XYZ driver does not support source datasets with zero bands.");
         return nullptr;
     }
 
     if (nBands != 1)
     {
         CPLError((bStrict) ? CE_Failure : CE_Warning, CPLE_NotSupported,
-                 "XYZ driver only uses the first band of the dataset.\n");
+                 "XYZ driver only uses the first band of the dataset.");
         if (bStrict)
             return nullptr;
     }
@@ -1599,11 +1620,11 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
     int nYSize = poSrcDS->GetRasterYSize();
     GDALGeoTransform gt;
     poSrcDS->GetGeoTransform(gt);
-    if (gt[2] != 0 || gt[4] != 0)
+    if (gt.xrot != 0 || gt.yrot != 0)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "XYZ driver does not support CreateCopy() from skewed or "
-                 "rotated dataset.\n");
+                 "rotated dataset.");
         return nullptr;
     }
 
@@ -1711,11 +1732,11 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
                                                    eReqDT, 0, 0, nullptr);
         if (eErr != CE_None)
             break;
-        const double dfY = gt[3] + (j + 0.5) * gt[5];
+        const double dfY = gt.yorig + (j + 0.5) * gt.yscale;
         CPLString osBuf;
         for (int i = 0; i < nXSize; i++)
         {
-            const double dfX = gt[0] + (i + 0.5) * gt[1];
+            const double dfX = gt.xorig + (i + 0.5) * gt.xscale;
             char szBuf[256];
             if (eReqDT == GDT_Int32)
                 CPLsnprintf(szBuf, sizeof(szBuf), szFormat, dfX, pszColSep[0],
@@ -1732,7 +1753,7 @@ GDALDataset *XYZDataset::CreateCopy(const char *pszFilename,
                 {
                     eErr = CE_Failure;
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Write failed, disk full?\n");
+                             "Write failed, disk full?");
                     break;
                 }
                 osBuf = "";
@@ -1790,7 +1811,7 @@ CPLErr XYZDataset::GetGeoTransform(GDALGeoTransform &gt) const
 }
 
 /************************************************************************/
-/*                         GDALRegister_XYZ()                           */
+/*                          GDALRegister_XYZ()                          */
 /************************************************************************/
 
 void GDALRegister_XYZ()

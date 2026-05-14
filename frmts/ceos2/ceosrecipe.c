@@ -46,30 +46,14 @@ static const CeosStringType_t CeosInterleaveType[] = {{"BSQ", CEOS_IL_BAND},
                                                       {" BIL", CEOS_IL_LINE},
                                                       {NULL, 0}};
 
-#define IMAGE_OPT                                                              \
-    {                                                                          \
-        63, 192, 18, 18                                                        \
-    }
+#define IMAGE_OPT {63, 192, 18, 18}
 #define IMAGE_JERS_OPT                                                         \
-    {                                                                          \
-        50, 192, 18, 18                                                        \
-    } /* Some JERS data uses this instead of IMAGE_OPT */
-#define PROC_DATA_REC                                                          \
-    {                                                                          \
-        50, 11, 18, 20                                                         \
-    }
-#define PROC_DATA_REC_ALT                                                      \
-    {                                                                          \
-        50, 11, 31, 20                                                         \
-    }
-#define PROC_DATA_REC_ALT2                                                     \
-    {                                                                          \
-        50, 11, 31, 50                                                         \
-    } /* Some cases of ERS 1, 2 */
-#define DATA_SET_SUMMARY                                                       \
-    {                                                                          \
-        18, 10, 18, 20                                                         \
-    }
+    {50, 192, 18, 18} /* Some JERS data uses this instead of IMAGE_OPT */
+#define PROC_DATA_REC {50, 11, 18, 20}
+#define PROC_DATA_REC_ALT {50, 11, 31, 20}
+#define PROC_DATA_REC_ALT2 {50, 11, 31, 50}       /* Some cases of ERS 1, 2 */
+#define PROC_DATA_REC_ALOS2_L1_1 {50, 10, 18, 20} /* ALOS2 L1.1 */
+#define DATA_SET_SUMMARY {18, 10, 18, 20}
 
 /* NOTE: This seems to be the generic recipe used for most things */
 static const CeosRecipeType_t RadarSatRecipe[] = {
@@ -169,6 +153,10 @@ static const CeosRecipeType_t JersRecipe[] = {
 
     {CEOS_REC_RECORDSIZE, 1, CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC, 9, 4,
      CEOS_REC_TYP_B}, /* The processed image record size */
+
+    /* Alternate data record subtype2. */
+    {CEOS_REC_RECORDSIZE, 1, CEOS_IMAGRY_OPT_FILE, PROC_DATA_REC_ALOS2_L1_1, 9,
+     4, CEOS_REC_TYP_B}, /* The processed image record size */
 
     {CEOS_REC_SUFFIX_SIZE, 1, CEOS_IMAGRY_OPT_FILE, IMAGE_JERS_OPT, 289, 4,
      CEOS_REC_TYP_I},                /* Suffix data per record */
@@ -370,15 +358,29 @@ int CeosDefaultRecipe(CeosSARVolume_t *volume, const void *token)
                         ** per data record.  We want the offset from the very
                         ** beginning of the record to the data, so we add
                         *another
-                        ** 12 to that.  I think some products incorrectly
+                        ** CEOS_HEADER_LENGTH to that.  I think some products incorrectly
                         *indicate
-                        ** 192 (prefix+12) instead of 180 so if we see 192
+                        ** 192 (prefix+CEOS_HEADER_LENGTH) instead of 180 so if we see 192
                         *assume
-                        ** the 12 bytes of record start data has already been
+                        ** the CEOS_HEADER_LENGTH bytes of record start data has already been
                         ** added.  Frank Warmerdam.
                         */
-                        if (ImageDesc->ImageDataStart != 192)
-                            ImageDesc->ImageDataStart += 12;
+                        // PALSAR-2 ALOS2 Level 1.1 products have ImageDataStart=544
+                        // cf https://www.eorc.jaxa.jp/ALOS/en/alos-2/pdf/product_format_description/PALSAR-2_xx_Format_CEOS_E_g.pdf, page 87
+                        // PALSAR-3 ALOS4 Level 1.0/1.1/1.2  products have ImageDataStart=800
+                        // cf  https://www.eorc.jaxa.jp/ALOS/en/alos-4/pdf/FTR-240031A_ALOS-4_PALSAR-3_StandardProduct_Format_CEOS_En.pdf, page "4.6-47"
+                        // and this does not need the +CEOS_HEADER_LENGTH
+                        if (ImageDesc->ImageDataStart != 192 &&
+                            ImageDesc->ImageDataStart != 544 &&
+                            ImageDesc->ImageDataStart != 800)
+                        {
+                            CPLDebug("SAR_CEOS",
+                                     "Patching ImageDataStart from %d to %d",
+                                     ImageDesc->ImageDataStart,
+                                     ImageDesc->ImageDataStart +
+                                         CEOS_HEADER_LENGTH);
+                            ImageDesc->ImageDataStart += CEOS_HEADER_LENGTH;
+                        }
                         break;
                     case CEOS_REC_SUFFIX_SIZE:
                         DoExtractInt(ImageDesc->ImageSuffixData);
@@ -669,7 +671,7 @@ void GetCeosSARImageDesc(CeosSARVolume_t *volume)
 {
     Link_t *l_link;
     RecipeFunctionData_t *rec_data;
-    int (*function)(CeosSARVolume_t * volume, const void *token);
+    int (*function)(CeosSARVolume_t *volume, const void *token);
 
     if (RecipeFunctions == NULL)
     {

@@ -6,7 +6,7 @@ gdalbuildvrt
 
 .. only:: html
 
-    Builds a VRT from a list of datasets.
+    Builds a VRT from a list of raster datasets.
 
 .. Index:: gdalbuildvrt
 
@@ -20,7 +20,7 @@ Synopsis
                  [[-strict]|[-non_strict]]
                  [-tile_index <field_name>]
                  [-resolution user|average|common|highest|lowest|same]
-                 [-tr <xres> <yes>] [-input_file_list <filename>]
+                 [-tr <xres> <yres>] [-input_file_list <filename>]
                  [[-separate]|[-pixel-function <function>]]
                  [-pixel-function-arg <NAME>=<VALUE>]...
                  [-allow_projection_difference] [-sd <n>] [-tap]
@@ -38,7 +38,7 @@ Synopsis
 Description
 -----------
 
-This program builds a :ref:`VRT (Virtual Dataset) <raster.vrt>` that is a mosaic of a list of
+This program builds a raster :ref:`VRT (Virtual Dataset) <raster.vrt>` that is a mosaic of a list of
 input GDAL datasets. The list of input GDAL datasets can be specified at the end
 of the command line, put in a text file (one filename per line) for very long lists,
 or it can be a MapServer tileindex (see the :ref:`gdaltindex` utility). If using a tile index, all
@@ -82,6 +82,8 @@ appearing on top of another source will override its content). This might be
 changed in later versions.
 
 .. include:: options/help_and_help_general.rst
+
+.. include:: options/quiet.rst
 
 .. option:: -tileindex <field_name>
 
@@ -190,14 +192,14 @@ changed in later versions.
 
     Set nodata values at the VRT band level (different values can be supplied for each band).  If more
     than one value is supplied, all values should be quoted to keep them together
-    as a single operating system argument (:example:`vrtnodata`). If the option is not specified,
+    as a single operating system argument (:example:`gdalbuildvrt-vrtnodata`). If the option is not specified,
     intrinsic nodata settings on the first dataset will be used (if they exist). The value set by this option
     is written in the ``NoDataValue`` element of each ``VRTRasterBand element``. Use a value of
     `None` to ignore intrinsic nodata settings on the source datasets.
 
 .. option:: -separate
 
-    Place each input file into a separate band. See :example:`separate`.
+    Place each input file into a separate band. See :example:`gdalbuildvrt-separate`.
     Contrary to the default mode, it is not
     required that all bands have the same datatype.
     This option is mutually exclusive with :option:`-pixel-function`.
@@ -251,7 +253,7 @@ changed in later versions.
 
 .. option:: -input_file_list <filename>
 
-    Specify a text file with an input filename on each line. See :example:`filelist`.
+    Specify a text file with an input filename on each line. See :example:`gdalbuildvrt-filelist`.
 
 .. option:: -q
 
@@ -292,7 +294,7 @@ Examples
 
 .. example::
    :title: Make a virtual mosaic from files whose name is specified in a text file
-   :id: filelist
+   :id: gdalbuildvrt-filelist
 
    .. code-block:: bash
 
@@ -300,7 +302,7 @@ Examples
 
 .. example::
    :title: Make a RGB virtual mosaic from 3 single-band input files
-   :id: separate
+   :id: gdalbuildvrt-separate
 
    .. code-block:: bash
 
@@ -308,11 +310,16 @@ Examples
 
 .. example::
    :title: Make a virtual mosaic with blue background colour (RGB: 0 0 255)
-   :id: vrtnodata
+   :id: gdalbuildvrt-vrtnodata
 
    .. code-block:: bash
 
        gdalbuildvrt -hidenodata -vrtnodata "0 0 255" doq_index.vrt doq/*.tif
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 C API
 -----

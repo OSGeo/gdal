@@ -110,17 +110,19 @@ option may be used:
 Examples
 ~~~~~~~~
 
-Reading the waypoints from a Garmin USB receiver :
+.. example::
+   :title: Reading the waypoints from a Garmin USB receiver
 
-::
+   .. code-block:: bash
 
-   ogrinfo -ro -al GPSBabel:garmin:usb:
+      ogrinfo -ro -al GPSBabel:garmin:usb:
 
-Converting a shapefile to Magellan Mapsend format :
+.. example::
+   :title: Converting a shapefile to Magellan Mapsend format
 
-::
+   .. code-block:: bash
 
-   ogr2ogr -f GPSBabel GPSBabel:mapsend:out.mapsend in.shp
+      ogr2ogr -f GPSBabel GPSBabel:mapsend:out.mapsend in.shp
 
 See Also
 ~~~~~~~~

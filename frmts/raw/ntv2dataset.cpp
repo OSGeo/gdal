@@ -121,7 +121,7 @@ class NTv2Dataset final : public RawDataset
 /************************************************************************/
 
 /************************************************************************/
-/*                             NTv2Dataset()                          */
+/*                            NTv2Dataset()                             */
 /************************************************************************/
 
 NTv2Dataset::NTv2Dataset()
@@ -141,7 +141,7 @@ NTv2Dataset::~NTv2Dataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr NTv2Dataset::Close(GDALProgressFunc, void *)
@@ -508,12 +508,12 @@ bool NTv2Dataset::OpenGrid(const char *pachHeader, vsi_l_offset nGridOffsetIn)
     /* -------------------------------------------------------------------- */
     /*      Setup georeferencing.                                           */
     /* -------------------------------------------------------------------- */
-    m_gt[0] = (w_long - long_inc * 0.5) / 3600.0;
-    m_gt[1] = long_inc / 3600.0;
-    m_gt[2] = 0.0;
-    m_gt[3] = (n_lat + lat_inc * 0.5) / 3600.0;
-    m_gt[4] = 0.0;
-    m_gt[5] = (-1 * lat_inc) / 3600.0;
+    m_gt.xorig = (w_long - long_inc * 0.5) / 3600.0;
+    m_gt.xscale = long_inc / 3600.0;
+    m_gt.xrot = 0.0;
+    m_gt.yorig = (n_lat + lat_inc * 0.5) / 3600.0;
+    m_gt.yrot = 0.0;
+    m_gt.yscale = (-1 * lat_inc) / 3600.0;
 
     return true;
 }

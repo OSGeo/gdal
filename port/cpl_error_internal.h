@@ -14,7 +14,7 @@
 #ifndef CPL_ERROR_INTERNAL_H_INCLUDED
 #define CPL_ERROR_INTERNAL_H_INCLUDED
 
-#ifdef GDAL_COMPILATION
+#if defined(GDAL_COMPILATION) || defined(DOXYGEN_SKIP)
 // internal only
 
 #include "cpl_error.h"
@@ -24,20 +24,33 @@
 #include <vector>
 
 /************************************************************************/
-/*                CPLErrorHandlerAccumulatorStruct                      */
+/*                   CPLErrorHandlerAccumulatorStruct                   */
 /************************************************************************/
 
+/** Class that stores details about an emitted error.
+ *
+ * Returned by CPLErrorAccumulator::GetErrors()
+ *
+ * @since 3.11
+ */
 class CPL_DLL CPLErrorHandlerAccumulatorStruct
 {
   public:
+    /** Error level */
     CPLErr type;
+
+    /** Error number */
     CPLErrorNum no;
+
+    /** Error message */
     CPLString msg{};
 
+    /** Default constructor */
     CPLErrorHandlerAccumulatorStruct() : type(CE_None), no(CPLE_None)
     {
     }
 
+    /** Constructor */
     CPLErrorHandlerAccumulatorStruct(CPLErr eErrIn, CPLErrorNum noIn,
                                      const char *msgIn)
         : type(eErrIn), no(noIn), msg(msgIn)
@@ -46,7 +59,7 @@ class CPL_DLL CPLErrorHandlerAccumulatorStruct
 };
 
 /************************************************************************/
-/*                       CPLErrorAccumulator                            */
+/*                         CPLErrorAccumulator                          */
 /************************************************************************/
 
 /** Class typically used by a worker thread to store errors emitted by their
@@ -65,9 +78,23 @@ class CPL_DLL CPLErrorAccumulator
     /** Constructor */
     CPLErrorAccumulator() = default;
 
+    /** Object returned by InstallForCurrentScope() during life-time of which,
+     * errors are redirected to the CPLErrorAccumulator instance.
+     */
     struct CPL_DLL Context
     {
+        /*! @cond Doxygen_Suppress */
         ~Context();
+
+        Context(const Context &) = delete;
+        Context &operator=(const Context &) = delete;
+        Context(Context &&) = delete;
+        Context &operator=(Context &&) = delete;
+
+      private:
+        friend class CPLErrorAccumulator;
+        explicit Context(CPLErrorAccumulator &sAccumulator);
+        /*! @endcond Doxygen_Suppress */
     };
 
     /** Install a temporary error handler that will store errors and warnings.
@@ -78,6 +105,14 @@ class CPL_DLL CPLErrorAccumulator
     const std::vector<CPLErrorHandlerAccumulatorStruct> &GetErrors() const
     {
         return errors;
+    }
+
+    /** Clear any accumulated errors.
+     */
+    void ClearErrors()
+    {
+        std::lock_guard oLock(mutex);
+        errors.clear();
     }
 
     /** Replay stored errors. */

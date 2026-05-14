@@ -66,6 +66,11 @@ types and deleting, renaming or copying the files.
     *target* filename, just like copy and move commands in an operating
     system.
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

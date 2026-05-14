@@ -85,7 +85,7 @@ class GIFDataset final : public GIFAbstractDataset
 
     static GDALDataset *CreateCopy(const char *pszFilename,
                                    GDALDataset *poSrcDS, int bStrict,
-                                   char **papszOptions,
+                                   CSLConstList papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
 };
@@ -145,7 +145,7 @@ CPLErr GIFRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 /************************************************************************/
-/*                            GIFDataset()                            */
+/*                             GIFDataset()                             */
 /************************************************************************/
 
 GIFDataset::GIFDataset()
@@ -326,7 +326,7 @@ GDALDataset *GIFDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GDALPrintGifError()                           */
+/*                         GDALPrintGifError()                          */
 /************************************************************************/
 
 static void GDALPrintGifError(CPL_UNUSED GifFileType *hGifFile,
@@ -360,7 +360,7 @@ static void GDALPrintGifError(CPL_UNUSED GifFileType *hGifFile,
 
 GDALDataset *GIFDataset::CreateCopy(const char *pszFilename,
                                     GDALDataset *poSrcDS, int bStrict,
-                                    char **papszOptions,
+                                    CSLConstList papszOptions,
                                     GDALProgressFunc pfnProgress,
                                     void *pProgressData)
 

@@ -71,7 +71,7 @@ class VSIBufferedReaderHandle final : public VSIVirtualHandle
 //! @endcond
 
 /************************************************************************/
-/*                    VSICreateBufferedReaderHandle()                   */
+/*                   VSICreateBufferedReaderHandle()                    */
 /************************************************************************/
 
 VSIVirtualHandle *VSICreateBufferedReaderHandle(VSIVirtualHandle *poBaseHandle)
@@ -91,7 +91,7 @@ VSICreateBufferedReaderHandle(VSIVirtualHandle *poBaseHandle,
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                        VSIBufferedReaderHandle()                     */
+/*                      VSIBufferedReaderHandle()                       */
 /************************************************************************/
 
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(VSIVirtualHandle *poBaseHandle)
@@ -114,7 +114,7 @@ VSIBufferedReaderHandle::VSIBufferedReaderHandle(
 }
 
 /************************************************************************/
-/*                        ~VSIBufferedReaderHandle()                    */
+/*                      ~VSIBufferedReaderHandle()                      */
 /************************************************************************/
 
 VSIBufferedReaderHandle::~VSIBufferedReaderHandle()
@@ -124,7 +124,7 @@ VSIBufferedReaderHandle::~VSIBufferedReaderHandle()
 }
 
 /************************************************************************/
-/*                               Seek()                                 */
+/*                                Seek()                                */
 /************************************************************************/
 
 int VSIBufferedReaderHandle::Seek(vsi_l_offset nOffset, int nWhence)
@@ -161,7 +161,7 @@ int VSIBufferedReaderHandle::Seek(vsi_l_offset nOffset, int nWhence)
 }
 
 /************************************************************************/
-/*                               Tell()                                 */
+/*                                Tell()                                */
 /************************************************************************/
 
 vsi_l_offset VSIBufferedReaderHandle::Tell()
@@ -173,7 +173,7 @@ vsi_l_offset VSIBufferedReaderHandle::Tell()
 }
 
 /************************************************************************/
-/*                           SeekBaseTo()                               */
+/*                             SeekBaseTo()                             */
 /************************************************************************/
 
 int VSIBufferedReaderHandle::SeekBaseTo(vsi_l_offset nTargetOffset)
@@ -211,7 +211,7 @@ int VSIBufferedReaderHandle::SeekBaseTo(vsi_l_offset nTargetOffset)
 }
 
 /************************************************************************/
-/*                               Read()                                 */
+/*                                Read()                                */
 /************************************************************************/
 
 size_t VSIBufferedReaderHandle::Read(void *pBuffer, size_t nTotalToRead)
@@ -321,7 +321,7 @@ size_t VSIBufferedReaderHandle::Read(void *pBuffer, size_t nTotalToRead)
 }
 
 /************************************************************************/
-/*                              Write()                                 */
+/*                               Write()                                */
 /************************************************************************/
 
 size_t VSIBufferedReaderHandle::Write(const void * /* pBuffer */,
@@ -333,7 +333,7 @@ size_t VSIBufferedReaderHandle::Write(const void * /* pBuffer */,
 }
 
 /************************************************************************/
-/*                             ClearErr()                               */
+/*                              ClearErr()                              */
 /************************************************************************/
 
 void VSIBufferedReaderHandle::ClearErr()
@@ -345,7 +345,7 @@ void VSIBufferedReaderHandle::ClearErr()
 }
 
 /************************************************************************/
-/*                               Eof()                                  */
+/*                                Eof()                                 */
 /************************************************************************/
 
 int VSIBufferedReaderHandle::Eof()
@@ -354,7 +354,7 @@ int VSIBufferedReaderHandle::Eof()
 }
 
 /************************************************************************/
-/*                              Error()                                 */
+/*                               Error()                                */
 /************************************************************************/
 
 int VSIBufferedReaderHandle::Error()
@@ -363,7 +363,7 @@ int VSIBufferedReaderHandle::Error()
 }
 
 /************************************************************************/
-/*                              Flush()                                 */
+/*                               Flush()                                */
 /************************************************************************/
 
 int VSIBufferedReaderHandle::Flush()
@@ -372,7 +372,7 @@ int VSIBufferedReaderHandle::Flush()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 int VSIBufferedReaderHandle::Close()

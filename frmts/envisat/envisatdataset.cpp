@@ -52,7 +52,7 @@ class MerisL2FlagBand final : public GDALPamRasterBand
 };
 
 /************************************************************************/
-/*                        MerisL2FlagBand()                       */
+/*                          MerisL2FlagBand()                           */
 /************************************************************************/
 MerisL2FlagBand::MerisL2FlagBand(GDALDataset *poDSIn, int nBandIn,
                                  VSILFILE *fpImageIn, vsi_l_offset nImgOffsetIn,
@@ -75,7 +75,7 @@ MerisL2FlagBand::MerisL2FlagBand(GDALDataset *poDSIn, int nBandIn,
 }
 
 /************************************************************************/
-/*                        ~MerisL2FlagBand()                       */
+/*                          ~MerisL2FlagBand()                          */
 /************************************************************************/
 MerisL2FlagBand::~MerisL2FlagBand()
 {
@@ -179,7 +179,7 @@ class EnvisatDataset final : public RawDataset
 /************************************************************************/
 
 /************************************************************************/
-/*                            EnvisatDataset()                          */
+/*                           EnvisatDataset()                           */
 /************************************************************************/
 
 EnvisatDataset::EnvisatDataset()
@@ -191,7 +191,7 @@ EnvisatDataset::EnvisatDataset()
 }
 
 /************************************************************************/
-/*                            ~EnvisatDataset()                         */
+/*                          ~EnvisatDataset()                           */
 /************************************************************************/
 
 EnvisatDataset::~EnvisatDataset()
@@ -201,7 +201,7 @@ EnvisatDataset::~EnvisatDataset()
 }
 
 /************************************************************************/
-/*                              Close()                                 */
+/*                               Close()                                */
 /************************************************************************/
 
 CPLErr EnvisatDataset::Close(GDALProgressFunc, void *)
@@ -266,7 +266,7 @@ const GDAL_GCP *EnvisatDataset::GetGCPs()
 }
 
 /************************************************************************/
-/*                         UnwrapGCPs()                                 */
+/*                             UnwrapGCPs()                             */
 /************************************************************************/
 
 /* external C++ implementation of the in-place unwrapper */
@@ -584,7 +584,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
 }
 
 /************************************************************************/
-/*                      GetMetadataDomainList()                         */
+/*                       GetMetadataDomainList()                        */
 /************************************************************************/
 
 char **EnvisatDataset::GetMetadataDomainList()
@@ -1157,7 +1157,7 @@ GDALDataset *EnvisatDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                         GDALRegister_Envisat()                       */
+/*                        GDALRegister_Envisat()                        */
 /************************************************************************/
 
 void GDALRegister_Envisat()

@@ -109,6 +109,11 @@ Standard Options
 
     .. include:: gdal_options/overwrite.rst
 
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
+
 Examples
 --------
 

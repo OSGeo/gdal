@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='504.00pt' height='360.00pt' viewBox='0 0 504.00 360.00'>
+<g class='svglite'>
+<defs>
+  <style type='text/css'><![CDATA[
+    .svglite line, .svglite polyline, .svglite polygon, .svglite path, .svglite rect, .svglite circle {
+      fill: none;
+      stroke: #000000;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-miterlimit: 10.00;
+    }
+    .svglite text {
+      white-space: pre;
+    }
+    .svglite g.glyphgroup path {
+      fill: inherit;
+      stroke: none;
+    }
+  ]]></style>
+</defs>
+<rect width='100%' height='100%' style='stroke: none; fill: none;'/>
+<defs>
+  <clipPath id='cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA='>
+    <rect x='0.00' y='0.00' width='504.00' height='360.00' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+</g>
+<defs>
+  <clipPath id='cpMTMyLjAwfDQ5OC41MnwyMi43OHwzMjkuMTA='>
+    <rect x='132.00' y='22.78' width='366.52' height='306.32' />
+  </clipPath>
+</defs>
+<g clip-path='url(#cpMTMyLjAwfDQ5OC41MnwyMi43OHwzMjkuMTA=)'>
+<polyline points='184.67,329.10 184.67,22.78 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='256.69,329.10 256.69,22.78 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='328.71,329.10 328.71,22.78 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='400.72,329.10 400.72,22.78 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='472.74,329.10 472.74,22.78 ' style='stroke-width: 0.53; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='132.00,293.76 498.52,293.76 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='132.00,234.85 498.52,234.85 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='132.00,175.94 498.52,175.94 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='132.00,117.03 498.52,117.03 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='132.00,58.13 498.52,58.13 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='148.66,329.10 148.66,22.78 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='220.68,329.10 220.68,22.78 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='292.70,329.10 292.70,22.78 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='364.72,329.10 364.72,22.78 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<polyline points='436.73,329.10 436.73,22.78 ' style='stroke-width: 1.07; stroke: #FFFFFF; stroke-linecap: butt;' />
+<rect x='148.66' y='267.25' width='333.20' height='53.02' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='148.66' y='31.62' width='3.94' height='53.02' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='148.66' y='149.43' width='162.67' height='53.02' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='148.66' y='90.53' width='5.25' height='53.02' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+<rect x='148.66' y='208.34' width='215.14' height='53.02' style='stroke-width: 1.07; stroke: none; stroke-linecap: butt; stroke-linejoin: miter; fill: #71C9F1;' />
+</g>
+<g clip-path='url(#cpMC4wMHw1MDQuMDB8MC4wMHwzNjAuMDA=)'>
+<text x='127.07' y='296.78' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Agree</text>
+<text x='127.07' y='237.88' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Unsure / Not able to answer</text>
+<text x='127.07' y='178.97' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Strongly agree</text>
+<text x='127.07' y='120.06' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Strongly disagree</text>
+<text x='127.07' y='61.15' text-anchor='end' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>Disagree</text>
+<polyline points='129.26,293.76 132.00,293.76 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='129.26,234.85 132.00,234.85 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='129.26,175.94 132.00,175.94 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='129.26,117.03 132.00,117.03 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='129.26,58.13 132.00,58.13 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='148.66,331.84 148.66,329.10 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='220.68,331.84 220.68,329.10 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='292.70,331.84 292.70,329.10 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='364.72,331.84 364.72,329.10 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<polyline points='436.73,331.84 436.73,329.10 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
+<text x='148.66' y='340.09' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>0%</text>
+<text x='220.68' y='340.09' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>10%</text>
+<text x='292.70' y='340.09' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>20%</text>
+<text x='364.72' y='340.09' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>30%</text>
+<text x='436.73' y='340.09' text-anchor='middle' style='font-size: 8.80px;fill: #4D4D4D; font-family: "Arimo";'>40%</text>
+<text x='315.26' y='352.23' text-anchor='middle' style='font-size: 11.00px; font-family: "Arimo";'>Percent of Respondents</text>
+<text transform='translate(13.05,175.94) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: "Arimo";'>Response</text>
+<text x='132.00' y='14.56' style='font-size: 13.20px; font-family: "Arimo";'>Is GDAL is secure software?</text>
+</g>
+</g>
+</svg>

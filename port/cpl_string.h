@@ -309,6 +309,9 @@ extern "C++"
 #ifndef DOXYGEN_SKIP
 #include <string>
 #include <vector>
+#if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#include <string_view>
+#endif
 #endif
 
 // VC++ implicitly applies __declspec(dllexport) to template base classes
@@ -531,6 +534,11 @@ extern "C++"
             AddString(osStr.c_str());
         }
 
+#if defined(DOXYGEN_SKIP) || __cplusplus >= 201703L ||                         \
+    (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+        void push_back(std::string_view svStr);
+#endif
+
         CPLStringList &InsertString(int nInsertAtLineNo, const char *pszNewLine)
         {
             return InsertStringDirectly(nInsertAtLineNo, CPLStrdup(pszNewLine));
@@ -540,8 +548,10 @@ extern "C++"
                                             char *pszNewLine);
 
         // CPLStringList &InsertStrings( int nInsertAtLineNo, char
-        // **papszNewLines ); CPLStringList &RemoveStrings( int
-        // nFirstLineToDelete, int nNumToRemove=1 );
+        // **papszNewLines );
+
+        CPLStringList &RemoveStrings(int nFirstLineToDelete,
+                                     int nNumToRemove = 1);
 
         /** Return index of pszTarget in the list, or -1 */
         int FindString(const char *pszTarget) const
@@ -565,6 +575,10 @@ extern "C++"
                                       const char *pszDefault) const;
         CPLStringList &AddNameValue(const char *pszKey, const char *pszValue);
         CPLStringList &SetNameValue(const char *pszKey, const char *pszValue);
+
+        CPLStringList &SetString(int pos, const char *pszString);
+        CPLStringList &SetString(int pos, const std::string &osString);
+        CPLStringList &SetStringDirectly(int pos, char *pszString);
 
         CPLStringList &Assign(char **papszListIn, int bTakeOwnership = TRUE);
 

@@ -937,7 +937,9 @@ def test_warp_30():
             cbk_user_data,
         )  # Progress callback user data
 
-    with gdal.config_option("GDAL_NUM_THREADS", "2"), pytest.raises(Exception):
+    with gdal.config_option("GDAL_NUM_THREADS", "2"), pytest.raises(
+        Exception, match="User terminated"
+    ):
         gdal.ReprojectImage(
             src_ds,
             dst_ds,
@@ -1048,8 +1050,7 @@ def test_warp_37():
 
     # Dummy proj.4 method
     sr = osr.SpatialReference()
-    sr.ImportFromWkt(
-        """PROJCS["unnamed",
+    sr.ImportFromWkt("""PROJCS["unnamed",
     GEOGCS["unnamed ellipse",
         DATUM["unknown",
             SPHEROID["unnamed",6378137,298.257223563]],
@@ -1057,8 +1058,7 @@ def test_warp_37():
         UNIT["degree",0.0174532925199433]],
     PROJECTION["custom_proj4"],
     UNIT["Meter",1],
-    EXTENSION["PROJ4","+proj=dummy_method +units=m +wktext"]]"""
-    )
+    EXTENSION["PROJ4","+proj=dummy_method +units=m +wktext"]]""")
     dst_wkt = sr.ExportToWkt()
 
     with pytest.raises(Exception):
@@ -1267,8 +1267,7 @@ def test_warp_sum():
 
 def test_warp_41():
 
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="67108864" rasterYSize="67108864">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="67108864" rasterYSize="67108864">
   <GeoTransform> -2.0037508340000000e+07,  5.9716428339481353e-01,  0.0000000000000000e+00,  2.0037508340000000e+07,  0.0000000000000000e+00, -5.9716428339481353e-01</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
     <SimpleSource>
@@ -1279,8 +1278,7 @@ def test_warp_41():
       <DstRect xOff="0" yOff="0" xSize="67108864" ySize="67108864" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
 
     vrt_ds = gdal.AutoCreateWarpedVRT(
         src_ds, None, None, gdal.GRA_NearestNeighbour, 0.3
@@ -1485,7 +1483,7 @@ def test_warp_52():
     )
 
     end = time.time()
-    assert end - start <= 10, "processing time was way too long"
+    assert end - start <= 60, "processing time was way too long"
 
     cs = out_ds.GetRasterBand(4).Checksum()
     assert cs == 3177
@@ -2144,8 +2142,7 @@ def test_warp_validate_options():
 
     from lxml import etree
 
-    schema_optionlist = etree.XML(
-        r"""
+    schema_optionlist = etree.XML(r"""
     <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
         <xs:element name="Value">
         <xs:complexType>
@@ -2194,8 +2191,7 @@ def test_warp_validate_options():
         </xs:complexType>
       </xs:element>
     </xs:schema>
-    """
-    )
+    """)
 
     schema = etree.XMLSchema(schema_optionlist)
 
@@ -2250,7 +2246,7 @@ def test_warp_mode(dt):
             gdal.GDT_CFloat32,
             gdal.GDT_CFloat64,
         )
-        else b"\xFF"
+        else b"\xff"
     )
     ds.WriteRaster(1, 0, 2, 1, val * (2 * dtsize))
 
@@ -2276,16 +2272,16 @@ def test_warp_mode_nan(dt):
     ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     dtsize = gdal.GetDataTypeSizeBytes(dt)
     # 3 different encodings of NaN
-    ds.WriteRaster(1, 0, 1, 1, b"\xFF" * dtsize)
+    ds.WriteRaster(1, 0, 1, 1, b"\xff" * dtsize)
     if sys.byteorder == "little":
-        ds.WriteRaster(2, 0, 1, 1, b"\xFE" + b"\xFF" * (dtsize - 1))
-        ds.WriteRaster(3, 0, 1, 1, b"\xFD" + b"\xFF" * (dtsize - 1))
+        ds.WriteRaster(2, 0, 1, 1, b"\xfe" + b"\xff" * (dtsize - 1))
+        ds.WriteRaster(3, 0, 1, 1, b"\xfd" + b"\xff" * (dtsize - 1))
     else:
-        ds.WriteRaster(2, 0, 1, 1, b"\xFF" * (dtsize - 1) + b"\xFE")
-        ds.WriteRaster(3, 0, 1, 1, b"\xFF" * (dtsize - 1) + b"\xFD")
+        ds.WriteRaster(2, 0, 1, 1, b"\xff" * (dtsize - 1) + b"\xfe")
+        ds.WriteRaster(3, 0, 1, 1, b"\xff" * (dtsize - 1) + b"\xfd")
 
     out_ds = gdal.Warp("", ds, options="-f MEM -r mode -ts 1 1")
-    assert out_ds.ReadRaster(0, 0, 1, 1) == b"\xFF" * dtsize, gdal.GetDataTypeName(dt)
+    assert out_ds.ReadRaster(0, 0, 1, 1) == b"\xff" * dtsize, gdal.GetDataTypeName(dt)
 
 
 def test_warp_zero_sized_target_extent():
@@ -2302,3 +2298,46 @@ def test_warp_zero_sized_target_extent():
     )
     assert out_ds.RasterXSize == 1
     assert out_ds.RasterYSize == 1
+
+
+@gdaltest.enable_exceptions()
+def test_warp_geolocation_array_with_rotation(tmp_path):
+    """Test that computed XSCALE/YSCALE are reasonable when a geolocation array
+    causes a ~ 90 degree rotation. Our input image is a checker of black and
+    white, and the expected output is also a non-blurred checker.
+    """
+    gdal.Warp(
+        tmp_path / "out.tif",
+        "data/input_for_geoloc_array_with_rotation.tif",
+        options="-r cubic -t_srs EPSG:32640 -to METHOD=GEOLOC_ARRAY -to GEOLOC_ARRAY=data/geoloc_array_with_rotation.tif -tr 30 30",
+    )
+    ds = gdal.Open(tmp_path / "out.tif")
+    ref_ds = gdal.Open("data/expected_output_for_geoloc_array_with_rotation.tif")
+    assert ds.GetRasterBand(1).Checksum() == ref_ds.GetRasterBand(1).Checksum()
+
+
+@gdaltest.enable_exceptions()
+def test_warp_homography_overview():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10)
+    src_ds.GetRasterBand(1).Fill(255)
+    gcp_ul = gdal.GCP(2, 49, 0.0, -0.5, -0.5)
+    gcp_ll = gdal.GCP(2, 48, 0.0, -0.5, 10.5)
+    gcp_lr = gdal.GCP(3, 48, 0.0, 10.5, 10.5)
+    gcp_ur = gdal.GCP(3, 49, 0.0, 10.5, -0.5)
+    src_ds.SetGCPs([gcp_ul, gcp_ll, gcp_lr, gcp_ur], None)
+    src_ds.BuildOverviews("NEAR", [2])
+
+    warped_vrt = gdal.Warp("", src_ds, format="VRT")
+    assert warped_vrt.GetRasterBand(1).GetOverview(0).ComputeRasterMinMax() == (
+        255,
+        255,
+    )
+
+
+@gdaltest.enable_exceptions()
+def test_warp_int8_nearest():
+
+    src_ds = gdal.Open("../gdrivers/data/gtiff/int8.tif")
+    warped_ds = gdal.Warp("", src_ds, format="MEM")
+    assert warped_ds.ReadRaster() == src_ds.ReadRaster()

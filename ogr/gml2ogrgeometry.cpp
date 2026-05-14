@@ -153,7 +153,7 @@ static const char *GetElementText(const CPLXMLNode *psElement)
 }
 
 /************************************************************************/
-/*                           GetChildElement()                          */
+/*                          GetChildElement()                           */
 /************************************************************************/
 
 static const CPLXMLNode *GetChildElement(const CPLXMLNode *psElement)
@@ -716,7 +716,7 @@ static std::unique_ptr<OGRPolygon> GML2FaceExtRing(const OGRGeometry *poGeom)
 #endif
 
 /************************************************************************/
-/*                   GML2OGRGeometry_AddToCompositeCurve()              */
+/*                GML2OGRGeometry_AddToCompositeCurve()                 */
 /************************************************************************/
 
 static bool
@@ -764,7 +764,7 @@ GML2OGRGeometry_AddToCompositeCurve(OGRCompoundCurve *poCC,
 }
 
 /************************************************************************/
-/*                   GML2OGRGeometry_AddToMultiSurface()                */
+/*                 GML2OGRGeometry_AddToMultiSurface()                  */
 /************************************************************************/
 
 static bool GML2OGRGeometry_AddToMultiSurface(
@@ -813,7 +813,7 @@ static bool GML2OGRGeometry_AddToMultiSurface(
 }
 
 /************************************************************************/
-/*                        GetUOMInMetre()                               */
+/*                           GetUOMInMetre()                            */
 /************************************************************************/
 
 static double GetUOMInMetre(const char *pszUnits, const char *pszAttribute,

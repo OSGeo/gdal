@@ -90,6 +90,10 @@ def test_mem_md_subgroup():
     assert subsubg is not None
     assert subsubg.GetFullName() == "/subgroup/subsubgroup"
 
+    root_from_fullname = rg.OpenGroupFromFullname("/")
+    assert root_from_fullname is not None
+    assert root_from_fullname.GetFullName() == "/"
+
     subg.CreateMDArray("myarray", [], gdal.ExtendedDataType.Create(gdal.GDT_UInt8))
     array = rg.OpenMDArrayFromFullname("/subgroup/myarray")
     assert array is not None
@@ -967,7 +971,7 @@ def test_mem_md_array_slice():
     ar = rg.CreateMDArray(
         "array_1", [dim_1], gdal.ExtendedDataType.Create(gdal.GDT_UInt8)
     )
-    data = b"\xFE"
+    data = b"\xfe"
     assert ar.Write(data) == gdal.CE_None
     assert ar[:].Read() == data
     assert ar[0:1].Read() == data
@@ -1478,7 +1482,7 @@ def test_mem_md_array_transpose():
         assert not ar.Transpose([0, 1, -1])  # missing axis
         assert not ar.Transpose([0, 1, 1])  # repeated axis
 
-    # Idendity
+    # Identity
     transposed = ar.Transpose([0, 1, 2])
     assert transposed.GetDimensionCount() == 3
     dims = transposed.GetDimensions()
@@ -1511,7 +1515,7 @@ def test_mem_md_array_transpose():
     assert transposed.GetNoDataValueAsRaw() == ar.GetNoDataValueAsRaw()
     assert transposed.GetSpatialRef().IsSame(ar.GetSpatialRef())
 
-    # Idendity with one extra axis
+    # Identity with one extra axis
     transposed = ar.Transpose([0, 1, -1, 2])
     assert transposed.GetDimensionCount() == 4
     dims = transposed.GetDimensions()
@@ -2534,7 +2538,7 @@ def test_mem_md_resize_dim_wrong_too_big_allocation_before_malloc():
         assert v.Resize([1 << 63]) == gdal.CE_Failure
 
 
-@pytest.mark.skipif(sys.maxsize < 2**32, reason="only on 64bit")
+@pytest.mark.require_64bit()
 def test_mem_md_resize_dim_wrong_too_big_allocation_at_malloc():
 
     drv = gdal.GetDriverByName("MEM")

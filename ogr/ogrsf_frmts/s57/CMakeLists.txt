@@ -7,11 +7,11 @@ add_gdal_driver(
           ogrs57layer.cpp
           s57classregistrar.cpp
           s57reader.cpp
-          ddfrecordindex.cpp
           s57featuredefns.cpp
           s57filecollector.cpp
           s57writer.cpp
-  BUILTIN
+  PLUGIN_CAPABLE
+  NO_DEPS
   NO_CXX_WFLAGS_EFFCXX
   NO_WFLAG_OLD_STYLE_CAST
 )
@@ -38,7 +38,9 @@ if (USE_ONLY_EMBEDDED_RESOURCE_FILES)
     target_compile_definitions(ogr_S57 PRIVATE USE_ONLY_EMBEDDED_RESOURCE_FILES)
 endif()
 
-add_executable(s57dump EXCLUDE_FROM_ALL s57dump.cpp)
-gdal_standard_includes(s57dump)
-target_include_directories(s57dump PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
-target_link_libraries(s57dump PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ogr_S57 gdal_iso8211)
+if (NOT OGR_ENABLE_DRIVER_S57_PLUGIN)
+    add_executable(s57dump EXCLUDE_FROM_ALL s57dump.cpp)
+    gdal_standard_includes(s57dump)
+    target_include_directories(s57dump PRIVATE $<TARGET_PROPERTY:gdal_iso8211,SOURCE_DIR>)
+    target_link_libraries(s57dump PRIVATE $<TARGET_NAME:${GDAL_LIB_TARGET_NAME}> ogr_S57 gdal_iso8211)
+endif()

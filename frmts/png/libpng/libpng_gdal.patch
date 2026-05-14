@@ -1,22 +1,52 @@
---- pngrutil.c.old	2020-02-23 16:47:37.962028934 +0100
-+++ pngrutil.c	2020-02-23 16:51:33.653908065 +0100
-@@ -3115,7 +3115,8 @@
- 
+diff --git a/frmts/png/libpng/pngrutil.c b/frmts/png/libpng/pngrutil.c
+index 3a35fe9de2..ac8440a1e3 100644
+--- a/frmts/png/libpng/pngrutil.c
++++ b/frmts/png/libpng/pngrutil.c
+@@ -2954,7 +2954,10 @@ png_handle_unknown(png_structrp png_ptr, png_inforp info_ptr,
+
     /* Check for unhandled critical chunks */
-    if (handled == 0 && PNG_CHUNK_CRITICAL(png_ptr->chunk_name))
+    if (handled < handled_saved && PNG_CHUNK_CRITICAL(png_ptr->chunk_name))
 -      png_chunk_error(png_ptr, "unhandled critical chunk");
-+       /* GDAL change : png_chunk_error -> png_chunk_warning */
++   {
++      /* GDAL change : png_chunk_error -> png_chunk_warning */
 +      png_chunk_warning(png_ptr, "unhandled critical chunk");
++   }
+
+    return handled;
  }
- 
- /* This function is called to verify that a chunk name is valid.
-@@ -3143,7 +3144,8 @@
-       int c = cn & 0xff;
- 
-       if (c < 65 || c > 122 || (c > 90 && c < 97))
--         png_chunk_error(png_ptr, "invalid chunk type");
-+        /* GDAL change : png_chunk_error -> png_chunk_warning */
-+         png_chunk_warning(png_ptr, "invalid chunk type");
- 
-       cn >>= 8;
-    }
+diff --git a/frmts/png/libpng/png.c b/frmts/png/libpng/png.c
+index cebe7af1f8..7bcd19643a 100644
+--- a/frmts/png/libpng/png.c
++++ b/frmts/png/libpng/png.c
+@@ -1067,7 +1067,7 @@ png_zstream_error(png_structrp png_ptr, int ret)
+
+ #ifdef PNG_COLORSPACE_SUPPORTED
+ static png_int_32
+-png_fp_add(png_int_32 addend0, png_int_32 addend1, int *error)
++png_fp_add_func(png_int_32 addend0, png_int_32 addend1, int *error)
+ {
+    /* Safely add two fixed point values setting an error flag and returning 0.5
+     * on overflow.
+@@ -1121,8 +1121,8 @@ png_safe_add(png_int_32 *addend0_and_result, png_int_32 addend1,
+     * set the result on overflow.
+     */
+    int error = 0;
+-   int result = png_fp_add(*addend0_and_result,
+-                           png_fp_add(addend1, addend2, &error),
++   int result = png_fp_add_func(*addend0_and_result,
++                           png_fp_add_func(addend1, addend2, &error),
+                            &error);
+    if (!error) *addend0_and_result = result;
+    return error;
+diff --git a/frmts/png/libpng/pngrutil.c b/frmts/png/libpng/pngrutil.c
+index ac8440a1e3..28ca4f757d 100644
+--- a/frmts/png/libpng/pngrutil.c
++++ b/frmts/png/libpng/pngrutil.c
+@@ -149,6 +149,7 @@ png_read_sig(png_structrp png_ptr, png_inforp info_ptr)
+  *
+  * Copied from libpng 1.7.
+  */
++GDAL_LIBPNG_NOSANITIZE_UNSIGNED_INT_OVERFLOW
+ static int
+ check_chunk_name(png_uint_32 name)
+ {

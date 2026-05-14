@@ -16,7 +16,7 @@
 #include "ogrdwgdrivercore.h"
 
 /************************************************************************/
-/*                          OGRDWGDriverUnload()                        */
+/*                         OGRDWGDriverUnload()                         */
 /************************************************************************/
 
 static void OGRDWGDriverUnload(GDALDriver *)

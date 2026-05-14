@@ -93,20 +93,20 @@ extern "C++"
          * rectangle */
         void Merge(OGREnvelope const &sOther)
         {
-            MinX = MIN(MinX, sOther.MinX);
-            MaxX = MAX(MaxX, sOther.MaxX);
-            MinY = MIN(MinY, sOther.MinY);
-            MaxY = MAX(MaxY, sOther.MaxY);
+            MinX = CPL_MIN(MinX, sOther.MinX);
+            MaxX = CPL_MAX(MaxX, sOther.MaxX);
+            MinY = CPL_MIN(MinY, sOther.MinY);
+            MaxY = CPL_MAX(MaxY, sOther.MaxY);
         }
 
         /** Update the current object by computing its union with the provided
          * point */
         void Merge(double dfX, double dfY)
         {
-            MinX = MIN(MinX, dfX);
-            MaxX = MAX(MaxX, dfX);
-            MinY = MIN(MinY, dfY);
-            MaxY = MAX(MaxY, dfY);
+            MinX = CPL_MIN(MinX, dfX);
+            MaxX = CPL_MAX(MaxX, dfX);
+            MinY = CPL_MIN(MinY, dfY);
+            MaxY = CPL_MAX(MaxY, dfY);
         }
 
         /** Update the current object by computing its intersection with the
@@ -117,10 +117,10 @@ extern "C++"
             {
                 if (IsInit())
                 {
-                    MinX = MAX(MinX, sOther.MinX);
-                    MaxX = MIN(MaxX, sOther.MaxX);
-                    MinY = MAX(MinY, sOther.MinY);
-                    MaxY = MIN(MaxY, sOther.MaxY);
+                    MinX = CPL_MAX(MinX, sOther.MinX);
+                    MaxX = CPL_MIN(MaxX, sOther.MaxX);
+                    MinY = CPL_MAX(MinY, sOther.MinY);
+                    MaxY = CPL_MIN(MaxY, sOther.MaxY);
                 }
                 else
                 {
@@ -262,34 +262,34 @@ extern "C++"
          * rectangle */
         void Merge(OGREnvelope3D const &sOther)
         {
-            MinX = MIN(MinX, sOther.MinX);
-            MaxX = MAX(MaxX, sOther.MaxX);
-            MinY = MIN(MinY, sOther.MinY);
-            MaxY = MAX(MaxY, sOther.MaxY);
-            MinZ = MIN(MinZ, sOther.MinZ);
-            MaxZ = MAX(MaxZ, sOther.MaxZ);
+            MinX = CPL_MIN(MinX, sOther.MinX);
+            MaxX = CPL_MAX(MaxX, sOther.MaxX);
+            MinY = CPL_MIN(MinY, sOther.MinY);
+            MaxY = CPL_MAX(MaxY, sOther.MaxY);
+            MinZ = CPL_MIN(MinZ, sOther.MinZ);
+            MaxZ = CPL_MAX(MaxZ, sOther.MaxZ);
         }
 
         /** Update the current object by computing its union with the other
          * rectangle */
         void Merge(OGREnvelope const &sOther)
         {
-            MinX = MIN(MinX, sOther.MinX);
-            MaxX = MAX(MaxX, sOther.MaxX);
-            MinY = MIN(MinY, sOther.MinY);
-            MaxY = MAX(MaxY, sOther.MaxY);
+            MinX = CPL_MIN(MinX, sOther.MinX);
+            MaxX = CPL_MAX(MaxX, sOther.MaxX);
+            MinY = CPL_MIN(MinY, sOther.MinY);
+            MaxY = CPL_MAX(MaxY, sOther.MaxY);
         }
 
         /** Update the current object by computing its union with the provided
          * point */
         void Merge(double dfX, double dfY, double dfZ)
         {
-            MinX = MIN(MinX, dfX);
-            MaxX = MAX(MaxX, dfX);
-            MinY = MIN(MinY, dfY);
-            MaxY = MAX(MaxY, dfY);
-            MinZ = MIN(MinZ, dfZ);
-            MaxZ = MAX(MaxZ, dfZ);
+            MinX = CPL_MIN(MinX, dfX);
+            MaxX = CPL_MAX(MaxX, dfX);
+            MinY = CPL_MIN(MinY, dfY);
+            MaxY = CPL_MAX(MaxY, dfY);
+            MinZ = CPL_MIN(MinZ, dfZ);
+            MaxZ = CPL_MAX(MaxZ, dfZ);
         }
 
         /** Update the current object by computing its intersection with the
@@ -300,12 +300,12 @@ extern "C++"
             {
                 if (IsInit())
                 {
-                    MinX = MAX(MinX, sOther.MinX);
-                    MaxX = MIN(MaxX, sOther.MaxX);
-                    MinY = MAX(MinY, sOther.MinY);
-                    MaxY = MIN(MaxY, sOther.MaxY);
-                    MinZ = MAX(MinZ, sOther.MinZ);
-                    MaxZ = MIN(MaxZ, sOther.MaxZ);
+                    MinX = CPL_MAX(MinX, sOther.MinX);
+                    MaxX = CPL_MIN(MaxX, sOther.MaxX);
+                    MinY = CPL_MAX(MinY, sOther.MinY);
+                    MaxY = CPL_MIN(MaxY, sOther.MaxY);
+                    MinZ = CPL_MAX(MinZ, sOther.MinZ);
+                    MaxZ = CPL_MIN(MaxZ, sOther.MaxZ);
                 }
                 else
                 {
@@ -572,7 +572,7 @@ typedef enum
 /** Return the 2D geometry type corresponding to the specified geometry type */
 #define wkbFlatten(x) OGR_GT_Flatten((OGRwkbGeometryType)(x))
 #else
-                                          /** Return the 2D geometry type corresponding to the specified geometry type */
+/** Return the 2D geometry type corresponding to the specified geometry type */
 #define wkbFlatten(x) OGR_GT_Flatten(static_cast<OGRwkbGeometryType>(x))
 #endif
 
@@ -634,7 +634,7 @@ typedef enum
 #endif
 
 #ifdef HACK_FOR_IBM_DB2_V72
-#define DB2_V72_FIX_BYTE_ORDER(x) ((((x)&0x31) == (x)) ? ((x)&0x1) : (x))
+#define DB2_V72_FIX_BYTE_ORDER(x) ((((x) & 0x31) == (x)) ? ((x) & 0x1) : (x))
 #define DB2_V72_UNFIX_BYTE_ORDER(x)                                            \
     CPL_STATIC_CAST(unsigned char, OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER   \
                                        ? ((x) | 0x30)                          \
@@ -1089,7 +1089,7 @@ int CPL_DLL OGRParseDate(const char *pszInput, OGRField *psOutput,
 #define OLMD_FID64 "OLMD_FID64"
 
 /************************************************************************/
-/*                  ogr_featurestyle.h related definitions.             */
+/*               ogr_featurestyle.h related definitions.                */
 /************************************************************************/
 
 /**

@@ -230,7 +230,7 @@ void GMLFeature::SetGeometryDirectly(int nIdx, CPLXMLNode *psGeom)
 }
 
 /************************************************************************/
-/*                          GetGeometryRef()                            */
+/*                           GetGeometryRef()                           */
 /************************************************************************/
 
 const CPLXMLNode *GMLFeature::GetGeometryRef(int nIdx) const
@@ -241,7 +241,7 @@ const CPLXMLNode *GMLFeature::GetGeometryRef(int nIdx) const
 }
 
 /************************************************************************/
-/*                             AddGeometry()                            */
+/*                            AddGeometry()                             */
 /************************************************************************/
 
 void GMLFeature::AddGeometry(CPLXMLNode *psGeom)
@@ -271,7 +271,7 @@ void GMLFeature::AddGeometry(CPLXMLNode *psGeom)
 }
 
 /************************************************************************/
-/*                         SetBoundedByGeometry()                       */
+/*                        SetBoundedByGeometry()                        */
 /************************************************************************/
 
 void GMLFeature::SetBoundedByGeometry(CPLXMLNode *psGeom)

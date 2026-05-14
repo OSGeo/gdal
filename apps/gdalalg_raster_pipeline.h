@@ -19,7 +19,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                GDALRasterPipelineStepAlgorithm                       */
+/*                   GDALRasterPipelineStepAlgorithm                    */
 /************************************************************************/
 
 class GDALRasterAlgorithmStepRegistry;
@@ -83,7 +83,7 @@ class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
 };
 
 /************************************************************************/
-/*                      GDALRasterAlgorithmStepRegistry                 */
+/*                   GDALRasterAlgorithmStepRegistry                    */
 /************************************************************************/
 
 class GDALRasterAlgorithmStepRegistry : public virtual GDALAlgorithmRegistry

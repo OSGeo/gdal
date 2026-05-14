@@ -97,7 +97,7 @@ Program-Specific Options
     such as latitude-based corrections, solar angle approximations, or zonal masks.
 
     See :example:`raster-calc-center-y` for a usage example.
- 
+
     Note: To work with longitude/latitude values, the input dataset must be in a
     geographic coordinate reference system (for example, EPSG:4326).
 
@@ -171,6 +171,11 @@ Standard Options
     .. include:: gdal_options/ot.rst
 
     .. include:: gdal_options/overwrite.rst
+
+.. Return status code
+.. ------------------
+
+.. include:: return_code.rst
 
 Examples
 --------

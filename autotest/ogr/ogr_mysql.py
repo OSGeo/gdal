@@ -37,6 +37,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("MySQL")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -175,9 +176,10 @@ def tpoly(mysql_ds):
         mysql_lyr.GetFeatureCount() == shp_lyr.GetFeatureCount()
     ), "not matching feature count"
 
-    assert mysql_lyr.GetSpatialRef().GetAuthorityCode(
-        None
-    ) == shp_lyr.GetSpatialRef().GetAuthorityCode(None), "not matching spatial ref"
+    assert (
+        mysql_lyr.GetSpatialRef().GetAuthorityCode()
+        == shp_lyr.GetSpatialRef().GetAuthorityCode()
+    ), "not matching spatial ref"
 
 
 ###############################################################################

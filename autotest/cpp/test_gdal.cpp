@@ -17,6 +17,7 @@
 #include "gdal_utils.h"
 #include "gdal_priv_templates.hpp"
 #include "gdal.h"
+#include "gdal_mem.h"
 #include "tilematrixset.hpp"
 #include "gdalcachedpixelaccessor.h"
 #include "memdataset.h"
@@ -587,14 +588,14 @@ class DatasetWithErrorInFlushCache final : public GDALDataset
         return CE_None;
     }
 
-    static GDALDataset *CreateCopy(const char *, GDALDataset *, int, char **,
-                                   GDALProgressFunc, void *)
+    static GDALDataset *CreateCopy(const char *, GDALDataset *, int,
+                                   CSLConstList, GDALProgressFunc, void *)
     {
         return new DatasetWithErrorInFlushCache();
     }
 
     static GDALDataset *Create(const char *, int nXSize, int nYSize, int,
-                               GDALDataType, char **)
+                               GDALDataType, CSLConstList)
     {
         DatasetWithErrorInFlushCache *poDS = new DatasetWithErrorInFlushCache();
         poDS->eAccess = GA_Update;
@@ -1346,6 +1347,31 @@ TEST_F(test_gdal, GDALDataset_GetBands_const)
     EXPECT_EQ(poConstDS->GetBands()[0], poConstDS->GetRasterBand(1));
     EXPECT_EQ(poConstDS->GetBands()[static_cast<size_t>(0)],
               poConstDS->GetRasterBand(1));
+}
+
+TEST_F(test_gdal, MEMCreate)
+{
+    CPLStringList aosOptions;
+    aosOptions.AddNameValue("INTERLEAVE", "PIXEL");
+
+    GDALDatasetH hDS = MEMCreate(2, 3, 2, GDT_UInt16, aosOptions.List());
+    ASSERT_NE(hDS, nullptr);
+
+    EXPECT_EQ(GDALGetRasterXSize(hDS), 2);
+    EXPECT_EQ(GDALGetRasterYSize(hDS), 3);
+    EXPECT_EQ(GDALGetRasterCount(hDS), 2);
+    EXPECT_EQ(GDALGetAccess(hDS), GA_Update);
+
+    const char *pszInterleave =
+        GDALGetMetadataItem(hDS, "INTERLEAVE", "IMAGE_STRUCTURE");
+    ASSERT_NE(pszInterleave, nullptr);
+    EXPECT_STREQ(pszInterleave, "PIXEL");
+
+    GDALRasterBandH hBand = GDALGetRasterBand(hDS, 1);
+    ASSERT_NE(hBand, nullptr);
+    EXPECT_EQ(GDALGetRasterDataType(hBand), GDT_UInt16);
+
+    GDALClose(hDS);
 }
 
 TEST_F(test_gdal, GDALExtendedDataType)
@@ -5238,8 +5264,10 @@ TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
     GDALDatasetUniquePtr poDS(
         MEMDataset::Create("", 2, 2, 1, GDT_Byte, nullptr));
     std::array<uint8_t, 6> buffer = {
-        2, 10,  //////////////////////////////////////////////////////////
-        4, 20,  //////////////////////////////////////////////////////////
+        2,
+        10,  //////////////////////////////////////////////////////////
+        4,
+        20,  //////////////////////////////////////////////////////////
     };
     GDALRasterIOExtraArg sExtraArg;
     INIT_RASTERIO_EXTRA_ARG(sExtraArg);
@@ -5250,8 +5278,10 @@ TEST_F(test_gdal, GDALComputeRasterMinMaxLocation_with_mask)
 
     poDS->GetRasterBand(1)->CreateMaskBand(0);
     std::array<uint8_t, 6> buffer_mask = {
-        0, 255,  //////////////////////////////////////////////////////////
-        255, 0,  //////////////////////////////////////////////////////////
+        0,
+        255,  //////////////////////////////////////////////////////////
+        255,
+        0,  //////////////////////////////////////////////////////////
     };
     EXPECT_EQ(poDS->GetRasterBand(1)->GetMaskBand()->RasterIO(
                   GF_Write, 0, 0, 2, 2, buffer_mask.data(), 2, 2, GDT_Byte,

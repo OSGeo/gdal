@@ -20,7 +20,7 @@
 
 /************************************************************************/
 /************************************************************************/
-/*                      GDAL Algorithm C API                            */
+/*                         GDAL Algorithm C API                         */
 /************************************************************************/
 /************************************************************************/
 
@@ -68,7 +68,7 @@ typedef struct GDALAlgorithmHS *GDALAlgorithmH;
 typedef struct GDALAlgorithmRegistryHS *GDALAlgorithmRegistryH;
 
 /************************************************************************/
-/*                  GDALAlgorithmRegistryH API                          */
+/*                      GDALAlgorithmRegistryH API                      */
 /************************************************************************/
 
 GDALAlgorithmRegistryH CPL_DLL GDALGetGlobalAlgorithmRegistry(void);
@@ -84,7 +84,7 @@ GDALAlgorithmH CPL_DLL GDALAlgorithmRegistryInstantiateAlgFromPath(
     GDALAlgorithmRegistryH, const char *const *papszAlgPath);
 
 /************************************************************************/
-/*                        GDALAlgorithmH API                            */
+/*                          GDALAlgorithmH API                          */
 /************************************************************************/
 
 void CPL_DLL GDALAlgorithmRelease(GDALAlgorithmH);
@@ -107,6 +107,9 @@ GDALAlgorithmInstantiateSubAlgorithm(GDALAlgorithmH, const char *pszSubAlgName);
 bool CPL_DLL GDALAlgorithmParseCommandLineArguments(GDALAlgorithmH,
                                                     CSLConstList papszArgs);
 
+char CPL_DLL **GDALAlgorithmGetArgDependencies(GDALAlgorithmH,
+                                               const char *pszArgumentName);
+
 GDALAlgorithmH CPL_DLL GDALAlgorithmGetActualAlgorithm(GDALAlgorithmH);
 
 bool CPL_DLL GDALAlgorithmRun(GDALAlgorithmH, GDALProgressFunc pfnProgress,
@@ -125,7 +128,7 @@ GDALAlgorithmArgH CPL_DLL GDALAlgorithmGetArgNonConst(GDALAlgorithmH,
                                                       const char *pszArgName);
 
 /************************************************************************/
-/*                      GDALAlgorithmArgH API                           */
+/*                        GDALAlgorithmArgH API                         */
 /************************************************************************/
 
 void CPL_DLL GDALAlgorithmArgRelease(GDALAlgorithmArgH);
@@ -186,6 +189,8 @@ bool CPL_DLL GDALAlgorithmArgIsHiddenForCLI(GDALAlgorithmArgH);
 
 bool CPL_DLL GDALAlgorithmArgIsHiddenForAPI(GDALAlgorithmArgH);
 
+bool CPL_DLL GDALAlgorithmArgIsAvailableInPipelineStep(GDALAlgorithmArgH);
+
 #ifndef DOXYGEN_SKIP
 bool CPL_DLL GDALAlgorithmArgIsOnlyForCLI(GDALAlgorithmArgH)
     CPL_WARN_DEPRECATED("Use GDALAlgorithmArgIsHiddenForAPI() instead");
@@ -196,6 +201,8 @@ bool CPL_DLL GDALAlgorithmArgIsInput(GDALAlgorithmArgH);
 bool CPL_DLL GDALAlgorithmArgIsOutput(GDALAlgorithmArgH);
 
 const char CPL_DLL *GDALAlgorithmArgGetMutualExclusionGroup(GDALAlgorithmArgH);
+
+const char CPL_DLL *GDALAlgorithmArgGetMutualDependencyGroup(GDALAlgorithmArgH);
 
 bool CPL_DLL GDALAlgorithmArgGetAsBoolean(GDALAlgorithmArgH);
 
@@ -209,6 +216,8 @@ int CPL_DLL GDALAlgorithmArgGetAsInteger(GDALAlgorithmArgH);
 double CPL_DLL GDALAlgorithmArgGetAsDouble(GDALAlgorithmArgH);
 
 char CPL_DLL **GDALAlgorithmArgGetAsStringList(GDALAlgorithmArgH);
+
+char CPL_DLL **GDALAlgorithmArgGetDirectDependencies(GDALAlgorithmArgH);
 
 const int CPL_DLL *GDALAlgorithmArgGetAsIntegerList(GDALAlgorithmArgH,
                                                     size_t *pnCount);
@@ -260,7 +269,7 @@ int CPL_DLL GDALAlgorithmArgGetDatasetInputFlags(GDALAlgorithmArgH);
 int CPL_DLL GDALAlgorithmArgGetDatasetOutputFlags(GDALAlgorithmArgH);
 
 /************************************************************************/
-/*                    GDALArgDatasetValueH API                          */
+/*                       GDALArgDatasetValueH API                       */
 /************************************************************************/
 
 GDALArgDatasetValueH CPL_DLL GDALArgDatasetValueCreate(void);

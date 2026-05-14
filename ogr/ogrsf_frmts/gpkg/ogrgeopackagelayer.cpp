@@ -20,7 +20,7 @@
 #include "ogrlayerarrow.h"
 
 /************************************************************************/
-/*                      OGRGeoPackageLayer()                            */
+/*                         OGRGeoPackageLayer()                         */
 /************************************************************************/
 
 OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS)
@@ -29,7 +29,7 @@ OGRGeoPackageLayer::OGRGeoPackageLayer(GDALGeoPackageDataset *poDS)
 }
 
 /************************************************************************/
-/*                      ~OGRGeoPackageLayer()                           */
+/*                        ~OGRGeoPackageLayer()                         */
 /************************************************************************/
 
 OGRGeoPackageLayer::~OGRGeoPackageLayer()
@@ -131,7 +131,7 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                         ParseDateField()                             */
+/*                           ParseDateField()                           */
 /************************************************************************/
 
 bool OGRGeoPackageLayer::ParseDateField(sqlite3_stmt *hStmt, int iRawField,
@@ -242,7 +242,7 @@ bool OGRGeoPackageLayer::ParseDateField(const char *pszTxt, OGRField *psField,
 }
 
 /************************************************************************/
-/*                        ParseDateTimeField()                          */
+/*                         ParseDateTimeField()                         */
 /************************************************************************/
 
 bool OGRGeoPackageLayer::ParseDateTimeField(sqlite3_stmt *hStmt, int iRawField,
@@ -325,7 +325,7 @@ bool OGRGeoPackageLayer::ParseDateTimeField(const char *pszTxt,
 }
 
 /************************************************************************/
-/*                         TranslateFeature()                           */
+/*                          TranslateFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
@@ -497,7 +497,7 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
 }
 
 /************************************************************************/
-/*                          GetArrowStream()                            */
+/*                           GetArrowStream()                           */
 /************************************************************************/
 
 bool OGRGeoPackageLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
@@ -515,7 +515,7 @@ bool OGRGeoPackageLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
 }
 
 /************************************************************************/
-/*                      GetNextArrowArray()                             */
+/*                         GetNextArrowArray()                          */
 /************************************************************************/
 
 int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
@@ -930,7 +930,7 @@ error:
 }
 
 /************************************************************************/
-/*                      GetFIDColumn()                                  */
+/*                            GetFIDColumn()                            */
 /************************************************************************/
 
 const char *OGRGeoPackageLayer::GetFIDColumn() const
@@ -942,7 +942,7 @@ const char *OGRGeoPackageLayer::GetFIDColumn() const
 }
 
 /************************************************************************/
-/*                      TestCapability()                                */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRGeoPackageLayer::TestCapability(const char *pszCap) const

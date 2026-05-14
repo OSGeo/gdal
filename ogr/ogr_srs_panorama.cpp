@@ -41,7 +41,7 @@ static bool IsNone(long val)
 }
 
 /************************************************************************/
-/*  "Panorama" projection codes.                                        */
+/*                     "Panorama" projection codes.                     */
 /************************************************************************/
 
 constexpr long PAN_PROJ_TM = 1L;       // Gauss-Kruger (Transverse Mercator)
@@ -65,7 +65,7 @@ constexpr long PAN_PROJ_MILLER = 34L;  // Miller
 constexpr long PAN_PROJ_PSEUDO_MERCATOR =
     35L;  // Popular Visualisation Pseudo Mercator
 /************************************************************************/
-/*  "Panorama" datum codes.                                             */
+/*                       "Panorama" datum codes.                        */
 /************************************************************************/
 
 constexpr long PAN_DATUM_PULKOVO42 = 1L;    // Pulkovo 1942
@@ -76,7 +76,7 @@ constexpr long PAN_DATUM_PULKOVO95 = 9L;  // Pulokovo 1995
 constexpr long PAN_DATUM_GSK2011 = 10L;   // GSK 2011
 
 /************************************************************************/
-/*  "Panorama" ellipsoid codes.                                         */
+/*                     "Panorama" ellipsoid codes.                      */
 /************************************************************************/
 
 constexpr long PAN_ELLIPSOID_KRASSOVSKY = 1L;  // Krassovsky, 1940
@@ -93,7 +93,7 @@ constexpr long PAN_ELLIPSOID_GSK2011 = 46L;       // GSK 2011
 constexpr long PAN_ELLIPSOID_PZ90 = 47L;          // PZ-90
 
 /************************************************************************/
-/*  Correspondence between "Panorama" datum and EPSG GeogCS codes.             */
+/*    Correspondence between "Panorama" datum and EPSG GeogCS codes.    */
 /************************************************************************/
 
 constexpr int aoDatums[] = {
@@ -113,7 +113,7 @@ constexpr int aoDatums[] = {
 constexpr int NUMBER_OF_DATUMS = static_cast<int>(CPL_ARRAYSIZE(aoDatums));
 
 /************************************************************************/
-/*  Correspondence between "Panorama" and EPSG ellipsoid codes.         */
+/*     Correspondence between "Panorama" and EPSG ellipsoid codes.      */
 /************************************************************************/
 
 constexpr int aoPanoramaEllips[] = {
@@ -171,7 +171,7 @@ constexpr int NUMBER_OF_PANORAM_ELLIPSOIDS =
     static_cast<int>(CPL_ARRAYSIZE(aoPanoramaEllips));
 
 /************************************************************************/
-/*  Correspondence between "Panorama" and EPSG vertical CS.             */
+/*       Correspondence between "Panorama" and EPSG vertical CS.        */
 /************************************************************************/
 
 constexpr int aoVCS[] = {
@@ -208,7 +208,7 @@ constexpr int aoVCS[] = {
 constexpr int NUMBER_OF_VERTICALCS = static_cast<int>(CPL_ARRAYSIZE(aoVCS));
 
 /************************************************************************/
-/*                        OSRImportFromPanorama()                       */
+/*                       OSRImportFromPanorama()                        */
 /************************************************************************/
 
 /** Import coordinate system from "Panorama" GIS projection definition.
@@ -227,7 +227,7 @@ OGRErr OSRImportFromPanorama(OGRSpatialReferenceH hSRS, long iProjSys,
 }
 
 /************************************************************************/
-/*                          importFromPanorama()                        */
+/*                         importFromPanorama()                         */
 /************************************************************************/
 
 /**
@@ -786,7 +786,7 @@ OGRErr OGRSpatialReference::exportVertCSToPanorama(int *piVert) const
 }
 
 /************************************************************************/
-/*                      OSRExportToPanorama()                           */
+/*                        OSRExportToPanorama()                         */
 /************************************************************************/
 
 /** Export coordinate system in "Panorama" GIS projection definition.
@@ -810,7 +810,7 @@ OGRErr OSRExportToPanorama(OGRSpatialReferenceH hSRS, long *piProjSys,
 }
 
 /************************************************************************/
-/*                           exportToPanorama()                         */
+/*                          exportToPanorama()                          */
 /************************************************************************/
 
 /**

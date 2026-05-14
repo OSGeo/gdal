@@ -36,7 +36,7 @@ def test_gdalalg_raster_footprint():
     assert last_pct[0] == 1.0
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayerByName("footprint")
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "26711"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "26711"
     assert lyr.GetFeatureCount() == 1
     f = lyr.GetNextFeature()
     assert f["location"] == "../gcore/data/byte.tif"
@@ -240,7 +240,7 @@ def test_gdalalg_raster_footprint_srcnodata():
     alg["input"] = src_ds
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["src-nodata"] = 255
+    alg["input-nodata"] = 255
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
@@ -322,11 +322,11 @@ def test_gdalalg_raster_dst_crs():
     alg["input"] = "../gcore/data/byte.tif"
     alg["output"] = ""
     alg["output-format"] = "MEM"
-    alg["dst-crs"] = "EPSG:4267"
+    alg["output-crs"] = "EPSG:4267"
     assert alg.Run()
     ds = alg["output"].GetDataset()
     lyr = ds.GetLayer(0)
-    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4267"
+    assert lyr.GetSpatialRef().GetAuthorityCode() == "4267"
     f = lyr.GetNextFeature()
     assert f.GetGeometryRef().ExportToWkt().startswith("MULTIPOLYGON (((-117.6411")
 

@@ -20,7 +20,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                      GDALMaterializeStepAlgorithm                    */
+/*                     GDALMaterializeStepAlgorithm                     */
 /************************************************************************/
 
 template <class BaseStepAlgorithm, int nDatasetType>
@@ -58,7 +58,7 @@ class GDALMaterializeStepAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*       GDALMaterializeStepAlgorithm::GDALMaterializeStepAlgorithm()   */
+/*     GDALMaterializeStepAlgorithm::GDALMaterializeStepAlgorithm()     */
 /************************************************************************/
 
 template <class BaseStepAlgorithm, int nDatasetType>
@@ -71,7 +71,7 @@ GDALMaterializeStepAlgorithm<BaseStepAlgorithm, nDatasetType>::
 }
 
 /************************************************************************/
-/*                       GDALMaterializeRasterAlgorithm                 */
+/*                    GDALMaterializeRasterAlgorithm                    */
 /************************************************************************/
 
 class GDALMaterializeRasterAlgorithm final
@@ -89,7 +89,7 @@ class GDALMaterializeRasterAlgorithm final
 };
 
 /************************************************************************/
-/*                      GDALMaterializeVectorAlgorithm                  */
+/*                    GDALMaterializeVectorAlgorithm                    */
 /************************************************************************/
 
 class GDALMaterializeVectorAlgorithm final

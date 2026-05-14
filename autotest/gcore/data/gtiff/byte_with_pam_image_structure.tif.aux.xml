@@ -1,0 +1,5 @@
+<PAMDataset>
+    <Metadata domain="IMAGE_STRUCTURE">
+      <MDI key="foo">bar</MDI>
+    </Metadata>
+</PAMDataset>

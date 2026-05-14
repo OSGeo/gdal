@@ -55,7 +55,7 @@ constexpr int TILE_CHUNK_SIZE = 1024;
 /************************************************************************/
 
 /************************************************************************/
-/*                           JP2KAKRasterBand()                         */
+/*                          JP2KAKRasterBand()                          */
 /************************************************************************/
 
 JP2KAKRasterBand::JP2KAKRasterBand(int nBandIn, kdu_codestream oCodeStreamIn,
@@ -436,7 +436,7 @@ CPLErr JP2KAKRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 }
 
 /************************************************************************/
-/*                  MayMultiBlockReadingBeMultiThreaded()               */
+/*                MayMultiBlockReadingBeMultiThreaded()                 */
 /************************************************************************/
 
 bool JP2KAKRasterBand::MayMultiBlockReadingBeMultiThreaded() const
@@ -558,13 +558,13 @@ GDALColorTable *JP2KAKRasterBand::GetColorTable()
 /************************************************************************/
 
 /************************************************************************/
-/*                           JP2KAKDataset()                           */
+/*                           JP2KAKDataset()                            */
 /************************************************************************/
 
 JP2KAKDataset::JP2KAKDataset() = default;
 
 /************************************************************************/
-/*                           JP2KAKDataset()                           */
+/*                           JP2KAKDataset()                            */
 /************************************************************************/
 
 // Constructor for overview dataset
@@ -585,7 +585,7 @@ JP2KAKDataset::JP2KAKDataset(JP2KAKDataset *poMainDS, int nDiscardLevels,
 }
 
 /************************************************************************/
-/*                            ~JP2KAKDataset()                         */
+/*                           ~JP2KAKDataset()                           */
 /************************************************************************/
 
 JP2KAKDataset::~JP2KAKDataset()
@@ -2030,7 +2030,7 @@ static bool JP2KAKCreateCopy_WriteTile(
 
 static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
                                      GDALDataset *poSrcDS, int bStrict,
-                                     char **papszOptions,
+                                     CSLConstList papszOptions,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
 
@@ -2687,8 +2687,8 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     // cppcheck-suppress knownConditionTrueFalse
     if (bIsJP2 &&
         ((poSrcDS->GetGeoTransform(gt) == CE_None &&
-          (gt[0] != 0.0 || gt[1] != 1.0 || gt[2] != 0.0 || gt[3] != 0.0 ||
-           gt[4] != 0.0 || std::abs(gt[5]) != 1.0)) ||
+          (gt.xorig != 0.0 || gt.xscale != 1.0 || gt.xrot != 0.0 ||
+           gt.yorig != 0.0 || gt.yrot != 0.0 || std::abs(gt.yscale) != 1.0)) ||
          poSrcDS->GetGCPCount() > 0 || poSrcDS->GetMetadata("RPC") != nullptr))
     {
         GDALJP2Metadata oJP2MD;

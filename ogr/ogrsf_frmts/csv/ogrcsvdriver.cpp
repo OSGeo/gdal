@@ -32,7 +32,7 @@ static CPLMutex *hMutex = nullptr;
 static std::map<CPLString, GDALDataset *> *poMap = nullptr;
 
 /************************************************************************/
-/*                         OGRCSVDriverIdentify()                       */
+/*                        OGRCSVDriverIdentify()                        */
 /************************************************************************/
 
 static int OGRCSVDriverIdentify(GDALOpenInfo *poOpenInfo)
@@ -111,7 +111,7 @@ static int OGRCSVDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        OGRCSVDriverRemoveFromMap()                   */
+/*                     OGRCSVDriverRemoveFromMap()                      */
 /************************************************************************/
 
 void OGRCSVDriverRemoveFromMap(const char *pszName, GDALDataset *poDS)
@@ -183,7 +183,7 @@ static GDALDataset *OGRCSVDriverOpen(GDALOpenInfo *poOpenInfo)
 static GDALDataset *
 OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
                    CPL_UNUSED int nXSize, CPL_UNUSED int nYSize,
-                   CPL_UNUSED GDALDataType eDT, char **papszOptions)
+                   CPL_UNUSED GDALDataType eDT, CSLConstList papszOptions)
 {
     // First, ensure there isn't any such file yet.
     VSIStatBufL sStatBuf;
@@ -252,7 +252,7 @@ OGRCSVDriverCreate(const char *pszName, CPL_UNUSED int nBands,
 }
 
 /************************************************************************/
-/*                              Delete()                                */
+/*                               Delete()                               */
 /************************************************************************/
 
 static CPLErr OGRCSVDriverDelete(const char *pszFilename)
@@ -262,7 +262,7 @@ static CPLErr OGRCSVDriverDelete(const char *pszFilename)
 }
 
 /************************************************************************/
-/*                           OGRCSVDriverUnload()                       */
+/*                         OGRCSVDriverUnload()                         */
 /************************************************************************/
 
 static void OGRCSVDriverUnload(GDALDriver *)
@@ -300,6 +300,8 @@ void RegisterOGRCSV()
                               "WidthPrecision");
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
                               "Name Type WidthPrecision");
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIPLE_VECTOR_LAYERS_IN_DIRECTORY,
+                              "YES");
 
     poDriver->SetMetadataItem(GDAL_DCAP_CURVE_GEOMETRIES, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_MEASURED_GEOMETRIES, "YES");
@@ -349,6 +351,7 @@ void RegisterOGRCSV()
         "    <Value>AS_XYZ</Value>"
         "    <Value>AS_XY</Value>"
         "    <Value>AS_YX</Value>"
+        "    <Value>NONE</Value>"
         "  </Option>"
         "  <Option name='CREATE_CSVT' type='boolean' description='whether to "
         "create a .csvt file' default='NO'/>"

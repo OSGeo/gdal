@@ -32,7 +32,7 @@ int OGRPLScenesDataV1FeatureDefn::GetFieldCount() const
 }
 
 /************************************************************************/
-/*                        OGRPLScenesDataV1Layer()                      */
+/*                       OGRPLScenesDataV1Layer()                       */
 /************************************************************************/
 
 OGRPLScenesDataV1Layer::OGRPLScenesDataV1Layer(OGRPLScenesDataV1Dataset *poDS,
@@ -75,7 +75,7 @@ OGRPLScenesDataV1Layer::~OGRPLScenesDataV1Layer()
 }
 
 /************************************************************************/
-/*                             GetLayerDefn()                           */
+/*                            GetLayerDefn()                            */
 /************************************************************************/
 
 const OGRFeatureDefn *OGRPLScenesDataV1Layer::GetLayerDefn() const
@@ -84,7 +84,7 @@ const OGRFeatureDefn *OGRPLScenesDataV1Layer::GetLayerDefn() const
 }
 
 /************************************************************************/
-/*                          RegisterField()                             */
+/*                           RegisterField()                            */
 /************************************************************************/
 
 void OGRPLScenesDataV1Layer::RegisterField(OGRFieldDefn *poFieldDefn,
@@ -328,7 +328,7 @@ void OGRPLScenesDataV1Layer::EstablishLayerDefn()
 }
 
 /************************************************************************/
-/*                             GetMetadata()                            */
+/*                            GetMetadata()                             */
 /************************************************************************/
 
 CSLConstList OGRPLScenesDataV1Layer::GetMetadata(const char *pszDomain)
@@ -341,7 +341,7 @@ CSLConstList OGRPLScenesDataV1Layer::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
-/*                           GetMetadataItem()                          */
+/*                          GetMetadataItem()                           */
 /************************************************************************/
 
 const char *OGRPLScenesDataV1Layer::GetMetadataItem(const char *pszName,
@@ -355,7 +355,7 @@ const char *OGRPLScenesDataV1Layer::GetMetadataItem(const char *pszName,
 }
 
 /************************************************************************/
-/*                              GetNextPage()                           */
+/*                            GetNextPage()                             */
 /************************************************************************/
 
 bool OGRPLScenesDataV1Layer::GetNextPage()
@@ -470,7 +470,7 @@ bool OGRPLScenesDataV1Layer::GetNextPage()
 }
 
 /************************************************************************/
-/*                             ResetReading()                           */
+/*                            ResetReading()                            */
 /************************************************************************/
 
 void OGRPLScenesDataV1Layer::ResetReading()
@@ -488,7 +488,7 @@ void OGRPLScenesDataV1Layer::ResetReading()
 }
 
 /************************************************************************/
-/*                          ISetSpatialFilter()                         */
+/*                         ISetSpatialFilter()                          */
 /************************************************************************/
 
 OGRErr OGRPLScenesDataV1Layer::ISetSpatialFilter(int /*iGeomField*/,
@@ -518,7 +518,7 @@ OGRErr OGRPLScenesDataV1Layer::ISetSpatialFilter(int /*iGeomField*/,
 }
 
 /************************************************************************/
-/*                      OGRPLScenesDataV1ParseDateTime()                    */
+/*                   OGRPLScenesDataV1ParseDateTime()                   */
 /************************************************************************/
 
 static bool OGRPLScenesDataV1ParseDateTime(const char *pszValue, int &nYear,
@@ -532,7 +532,7 @@ static bool OGRPLScenesDataV1ParseDateTime(const char *pszValue, int &nYear,
 }
 
 /************************************************************************/
-/*                          IsSimpleComparison()                        */
+/*                         IsSimpleComparison()                         */
 /************************************************************************/
 
 bool OGRPLScenesDataV1Layer::IsSimpleComparison(const swq_expr_node *poNode)
@@ -550,7 +550,7 @@ bool OGRPLScenesDataV1Layer::IsSimpleComparison(const swq_expr_node *poNode)
 }
 
 /************************************************************************/
-/*                             GetOperatorText()                        */
+/*                          GetOperatorText()                           */
 /************************************************************************/
 
 static const char *GetOperatorText(swq_op nOp)
@@ -568,7 +568,7 @@ static const char *GetOperatorText(swq_op nOp)
 }
 
 /************************************************************************/
-/*                             BuildFilter()                            */
+/*                            BuildFilter()                             */
 /************************************************************************/
 
 json_object *OGRPLScenesDataV1Layer::BuildFilter(swq_expr_node *poNode)
@@ -968,7 +968,7 @@ OGRFeature *OGRPLScenesDataV1Layer::GetNextFeature()
 }
 
 /************************************************************************/
-/*                            GetNextRawFeature()                       */
+/*                         GetNextRawFeature()                          */
 /************************************************************************/
 
 OGRFeature *OGRPLScenesDataV1Layer::GetNextRawFeature()
@@ -1192,7 +1192,7 @@ OGRFeature *OGRPLScenesDataV1Layer::GetNextRawFeature()
 }
 
 /************************************************************************/
-/*                    SetFieldFromPrefixedJSonFieldName()               */
+/*                 SetFieldFromPrefixedJSonFieldName()                  */
 /************************************************************************/
 
 bool OGRPLScenesDataV1Layer::SetFieldFromPrefixedJSonFieldName(
@@ -1364,7 +1364,7 @@ OGRErr OGRPLScenesDataV1Layer::IGetExtent(int iGeomField, OGREnvelope *psExtent,
 }
 
 /************************************************************************/
-/*                              TestCapability()                        */
+/*                           TestCapability()                           */
 /************************************************************************/
 
 int OGRPLScenesDataV1Layer::TestCapability(const char *pszCap) const

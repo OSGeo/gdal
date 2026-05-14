@@ -75,7 +75,9 @@
 
 #include "avc.h"
 
+#include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <ctype.h> /* toupper() */
 
 /**********************************************************************
@@ -579,7 +581,7 @@ const char *AVCE00GenCnt(AVCE00GenInfo *psInfo, AVCCnt *psCnt, GBool bCont)
         int i, nFirstLabel, numLabels;
 
         nFirstLabel = psInfo->iCurItem * 8;
-        numLabels = MIN(8, (psCnt->numLabels - nFirstLabel));
+        numLabels = std::min(8, (psCnt->numLabels - nFirstLabel));
 
         psInfo->pszBuf[0] = '\0';
         for (i = 0; i < numLabels; i++)
@@ -857,7 +859,7 @@ const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
             dXY[i] = psTxt->pasVertices[i + 1].x;
             dXY[i + 4] = psTxt->pasVertices[i + 1].y;
         }
-        for (i = 0; i < 3 && i < ABS(psTxt->numVerticesArrow); i++)
+        for (i = 0; i < 3 && i < std::abs(psTxt->numVerticesArrow); i++)
         {
             dXY[i + 8] = psTxt->pasVertices[i + psTxt->numVerticesLine].x;
             dXY[i + 11] = psTxt->pasVertices[i + psTxt->numVerticesLine].y;
@@ -962,7 +964,7 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
          *------------------------------------------------------------*/
         psInfo->iCurItem = 0;
         psInfo->numItems = 8 + psTxt->numVerticesLine +
-                           ABS(psTxt->numVerticesArrow) +
+                           std::abs(psTxt->numVerticesArrow) +
                            ((psTxt->numChars - 1) / 80 + 1);
 
         /* And return the TX6 header line.

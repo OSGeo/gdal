@@ -101,7 +101,7 @@ VRTGroup::~VRTGroup()
 }
 
 /************************************************************************/
-/*                         SetIsRootGroup()                             */
+/*                           SetIsRootGroup()                           */
 /************************************************************************/
 
 void VRTGroup::SetIsRootGroup()
@@ -110,7 +110,7 @@ void VRTGroup::SetIsRootGroup()
 }
 
 /************************************************************************/
-/*                         SetRootGroupRef()                            */
+/*                          SetRootGroupRef()                           */
 /************************************************************************/
 
 void VRTGroup::SetRootGroupRef(const std::weak_ptr<Ref> &rgRef)
@@ -129,7 +129,7 @@ std::weak_ptr<VRTGroup::Ref> VRTGroup::GetRootGroupRef() const
 }
 
 /************************************************************************/
-/*                           GetRootGroup()                             */
+/*                            GetRootGroup()                            */
 /************************************************************************/
 
 VRTGroup *VRTGroup::GetRootGroup() const
@@ -153,7 +153,7 @@ std::shared_ptr<VRTGroup> VRTGroup::GetRootGroupSharedPtr() const
 }
 
 /************************************************************************/
-/*                               XMLInit()                              */
+/*                              XMLInit()                               */
 /************************************************************************/
 
 bool VRTGroup::XMLInit(const std::shared_ptr<VRTGroup> &poRoot,
@@ -317,7 +317,7 @@ void VRTGroup::Serialize(CPLXMLNode *psParent, const char *pszVRTPath) const
 }
 
 /************************************************************************/
-/*                            GetGroupNames()                           */
+/*                           GetGroupNames()                            */
 /************************************************************************/
 
 std::vector<std::string> VRTGroup::GetGroupNames(CSLConstList) const
@@ -339,7 +339,7 @@ VRTGroup::OpenGroupInternal(const std::string &osName) const
 }
 
 /************************************************************************/
-/*                            GetDimensions()                           */
+/*                           GetDimensions()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALDimension>>
@@ -354,7 +354,7 @@ VRTGroup::GetDimensions(CSLConstList) const
 }
 
 /************************************************************************/
-/*                    GetDimensionFromFullName()                   */
+/*                      GetDimensionFromFullName()                      */
 /************************************************************************/
 
 std::shared_ptr<VRTDimension>
@@ -410,7 +410,7 @@ VRTGroup::GetDimensionFromFullName(const std::string &name,
 }
 
 /************************************************************************/
-/*                            GetAttributes()                           */
+/*                           GetAttributes()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALAttribute>>
@@ -425,7 +425,7 @@ VRTGroup::GetAttributes(CSLConstList) const
 }
 
 /************************************************************************/
-/*                           GetMDArrayNames()                          */
+/*                          GetMDArrayNames()                           */
 /************************************************************************/
 
 std::vector<std::string> VRTGroup::GetMDArrayNames(CSLConstList) const
@@ -434,7 +434,7 @@ std::vector<std::string> VRTGroup::GetMDArrayNames(CSLConstList) const
 }
 
 /************************************************************************/
-/*                             OpenMDArray()                            */
+/*                            OpenMDArray()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray> VRTGroup::OpenMDArray(const std::string &osName,
@@ -447,7 +447,7 @@ std::shared_ptr<GDALMDArray> VRTGroup::OpenMDArray(const std::string &osName,
 }
 
 /************************************************************************/
-/*                             SetDirty()                               */
+/*                              SetDirty()                              */
 /************************************************************************/
 
 void VRTGroup::SetDirty()
@@ -458,7 +458,7 @@ void VRTGroup::SetDirty()
 }
 
 /************************************************************************/
-/*                            CreateVRTGroup()                          */
+/*                           CreateVRTGroup()                           */
 /************************************************************************/
 
 std::shared_ptr<VRTGroup>
@@ -486,7 +486,7 @@ VRTGroup::CreateVRTGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                             CreateGroup()                            */
+/*                            CreateGroup()                             */
 /************************************************************************/
 
 std::shared_ptr<GDALGroup> VRTGroup::CreateGroup(const std::string &osName,
@@ -496,7 +496,7 @@ std::shared_ptr<GDALGroup> VRTGroup::CreateGroup(const std::string &osName,
 }
 
 /************************************************************************/
-/*                             CreateDimension()                        */
+/*                          CreateDimension()                           */
 /************************************************************************/
 
 std::shared_ptr<GDALDimension>
@@ -526,7 +526,7 @@ VRTGroup::CreateDimension(const std::string &osName, const std::string &osType,
 }
 
 /************************************************************************/
-/*                           CreateAttribute()                          */
+/*                          CreateAttribute()                           */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute>
@@ -548,7 +548,7 @@ VRTGroup::CreateAttribute(const std::string &osName,
 }
 
 /************************************************************************/
-/*                           CreateVRTMDArray()                         */
+/*                          CreateVRTMDArray()                          */
 /************************************************************************/
 
 std::shared_ptr<VRTMDArray> VRTGroup::CreateVRTMDArray(
@@ -610,7 +610,7 @@ std::shared_ptr<VRTMDArray> VRTGroup::CreateVRTMDArray(
 }
 
 /************************************************************************/
-/*                            CreateMDArray()                           */
+/*                           CreateMDArray()                            */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray> VRTGroup::CreateMDArray(
@@ -622,7 +622,7 @@ std::shared_ptr<GDALMDArray> VRTGroup::CreateMDArray(
 }
 
 /************************************************************************/
-/*                          ParseDataType()                             */
+/*                           ParseDataType()                            */
 /************************************************************************/
 
 static GDALExtendedDataType ParseDataType(const CPLXMLNode *psNode)
@@ -649,7 +649,7 @@ static GDALExtendedDataType ParseDataType(const CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 std::shared_ptr<VRTDimension>
@@ -710,7 +710,7 @@ void VRTDimension::Serialize(CPLXMLNode *psParent) const
 }
 
 /************************************************************************/
-/*                                GetGroup()                            */
+/*                              GetGroup()                              */
 /************************************************************************/
 
 VRTGroup *VRTDimension::GetGroup() const
@@ -720,7 +720,7 @@ VRTGroup *VRTDimension::GetGroup() const
 }
 
 /************************************************************************/
-/*                         GetIndexingVariable()                        */
+/*                        GetIndexingVariable()                         */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray> VRTDimension::GetIndexingVariable() const
@@ -757,7 +757,7 @@ std::shared_ptr<GDALMDArray> VRTDimension::GetIndexingVariable() const
 }
 
 /************************************************************************/
-/*                         SetIndexingVariable()                        */
+/*                        SetIndexingVariable()                         */
 /************************************************************************/
 
 bool VRTDimension::SetIndexingVariable(
@@ -801,7 +801,7 @@ bool VRTDimension::SetIndexingVariable(
 }
 
 /************************************************************************/
-/*                       CreationCommonChecks()                         */
+/*                        CreationCommonChecks()                        */
 /************************************************************************/
 
 bool VRTAttribute::CreationCommonChecks(
@@ -837,7 +837,7 @@ bool VRTAttribute::CreationCommonChecks(
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 std::shared_ptr<VRTAttribute>
@@ -870,7 +870,7 @@ VRTAttribute::Create(const std::string &osParentName, const CPLXMLNode *psNode)
 }
 
 /************************************************************************/
-/*                                   IRead()                            */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool VRTAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -908,7 +908,7 @@ bool VRTAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                                  IWrite()                            */
+/*                               IWrite()                               */
 /************************************************************************/
 
 bool VRTAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -965,7 +965,7 @@ void VRTAttribute::Serialize(CPLXMLNode *psParent) const
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 std::shared_ptr<VRTMDArray>
@@ -1160,11 +1160,78 @@ VRTMDArray::Create(const std::shared_ptr<VRTGroup> &poThisGroup,
         }
     }
 
+    const CPLXMLNode *psOverviews = CPLGetXMLNode(psNode, "Overviews");
+    if (psOverviews)
+    {
+        for (const CPLXMLNode *psIter = psOverviews->psChild; psIter;
+             psIter = psIter->psNext)
+        {
+            if (psIter->eType == CXT_Element &&
+                strcmp(psIter->pszValue, "ArrayFullName") == 0 &&
+                psIter->psChild->pszValue)
+            {
+                array->m_aosOverviewFullname.push_back(
+                    psIter->psChild->pszValue);
+                array->m_apoOverviews.push_back(nullptr);
+            }
+            else
+            {
+                CPLXMLNode sNode;
+                sNode.eType = CXT_Element;
+                sNode.pszValue = const_cast<char *>("!temp!");
+                sNode.psNext = nullptr;
+                sNode.psChild = const_cast<CPLXMLNode *>(psIter);
+                auto poOvrArray = ParseArray(
+                    &sNode, poThisGroup->GetVRTPath().c_str(), "Overviews");
+                if (!poOvrArray)
+                    return nullptr;
+                array->m_aosOverviewFullname.push_back(std::string());
+                array->m_apoOverviews.push_back(std::move(poOvrArray));
+            }
+        }
+    }
+
     return array;
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                          GetOverviewCount()                          */
+/************************************************************************/
+
+int VRTMDArray::GetOverviewCount() const
+{
+    CPLAssert(m_apoOverviews.size() == m_aosOverviewFullname.size());
+    return static_cast<int>(m_apoOverviews.size());
+}
+
+/************************************************************************/
+/*                            GetOverview()                             */
+/************************************************************************/
+
+std::shared_ptr<GDALMDArray> VRTMDArray::GetOverview(int idx) const
+{
+    if (idx < 0 || idx >= GetOverviewCount())
+        return nullptr;
+    if (!m_apoOverviews[idx] && !m_aosOverviewFullname[idx].empty())
+    {
+        if (auto poRG = GetRootGroup())
+        {
+            m_apoOverviews[idx] =
+                poRG->OpenMDArrayFromFullname(m_aosOverviewFullname[idx]);
+            if (!m_apoOverviews[idx])
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Cannot resolve overview full name '%s' to an actual array",
+                    m_aosOverviewFullname[idx].c_str());
+            }
+        }
+    }
+    return m_apoOverviews[idx];
+}
+
+/************************************************************************/
+/*                               Create()                               */
 /************************************************************************/
 
 std::shared_ptr<VRTMDArray> VRTMDArray::Create(const char *pszVRTPath,
@@ -1179,7 +1246,7 @@ std::shared_ptr<VRTMDArray> VRTMDArray::Create(const char *pszVRTPath,
 }
 
 /************************************************************************/
-/*                            GetAttributes()                           */
+/*                           GetAttributes()                            */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALAttribute>>
@@ -1194,7 +1261,7 @@ VRTMDArray::GetAttributes(CSLConstList) const
 }
 
 /************************************************************************/
-/*                     VRTMDArray::GetRawBlockInfo()                    */
+/*                    VRTMDArray::GetRawBlockInfo()                     */
 /************************************************************************/
 
 bool VRTMDArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
@@ -1262,7 +1329,7 @@ bool VRTMDArray::GetRawBlockInfo(const uint64_t *panBlockCoordinates,
 }
 
 /************************************************************************/
-/*                                  Read()                              */
+/*                                Read()                                */
 /************************************************************************/
 
 bool VRTMDArraySourceRegularlySpaced::Read(
@@ -1299,7 +1366,7 @@ void VRTMDArraySourceRegularlySpaced::Serialize(CPLXMLNode *psParent,
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 std::unique_ptr<VRTMDArraySourceInlinedValues>
@@ -1478,7 +1545,7 @@ VRTMDArraySourceInlinedValues::Create(const VRTMDArray *array,
 }
 
 /************************************************************************/
-/*                  ~VRTMDArraySourceInlinedValues()                    */
+/*                   ~VRTMDArraySourceInlinedValues()                   */
 /************************************************************************/
 
 VRTMDArraySourceInlinedValues::~VRTMDArraySourceInlinedValues()
@@ -1497,7 +1564,7 @@ VRTMDArraySourceInlinedValues::~VRTMDArraySourceInlinedValues()
 }
 
 /************************************************************************/
-/*                                   Read()                             */
+/*                                Read()                                */
 /************************************************************************/
 static inline void IncrPointer(const GByte *&ptr, GInt64 nInc, size_t nIncSize)
 {
@@ -1707,7 +1774,7 @@ void VRTMDArraySourceInlinedValues::Serialize(CPLXMLNode *psParent,
 }
 
 /************************************************************************/
-/*                              Create()                                */
+/*                               Create()                               */
 /************************************************************************/
 
 std::unique_ptr<VRTMDArraySourceFromArray>
@@ -1986,7 +2053,7 @@ void VRTMDArraySourceFromArray::Serialize(CPLXMLNode *psParent,
 }
 
 /************************************************************************/
-/*                      ~VRTMDArraySourceFromArray()                    */
+/*                     ~VRTMDArraySourceFromArray()                     */
 /************************************************************************/
 
 VRTMDArraySourceFromArray::~VRTMDArraySourceFromArray()
@@ -2027,7 +2094,7 @@ VRTMDArraySourceFromArray::~VRTMDArraySourceFromArray()
 }
 
 /************************************************************************/
-/*              VRTMDArraySourceFromArray::GetSourceArray()             */
+/*             VRTMDArraySourceFromArray::GetSourceArray()              */
 /************************************************************************/
 
 static std::string CreateKey(const std::string &filename)
@@ -2154,7 +2221,7 @@ VRTMDArraySourceFromArray::GetSourceArray() const
 }
 
 /************************************************************************/
-/*                                   Read()                             */
+/*                                Read()                                */
 /************************************************************************/
 
 bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
@@ -2272,7 +2339,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
 }
 
 /************************************************************************/
-/*          VRTMDArraySourceFromArray::GetRelationship()                */
+/*             VRTMDArraySourceFromArray::GetRelationship()             */
 /************************************************************************/
 
 VRTMDArraySource::RelationShip
@@ -2327,7 +2394,7 @@ VRTMDArraySourceFromArray::GetRelationship(const uint64_t *arrayStartIdx,
 }
 
 /************************************************************************/
-/*          VRTMDArraySourceFromArray::GetRawBlockInfo()                */
+/*             VRTMDArraySourceFromArray::GetRawBlockInfo()             */
 /************************************************************************/
 
 bool VRTMDArraySourceFromArray::GetRawBlockInfo(
@@ -2357,7 +2424,7 @@ bool VRTMDArraySourceFromArray::GetRawBlockInfo(
 }
 
 /************************************************************************/
-/*                                   IRead()                            */
+/*                               IRead()                                */
 /************************************************************************/
 
 bool VRTMDArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
@@ -2521,7 +2588,7 @@ bool VRTMDArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 }
 
 /************************************************************************/
-/*                             SetDirty()                               */
+/*                              SetDirty()                              */
 /************************************************************************/
 
 void VRTMDArray::SetDirty()
@@ -2534,7 +2601,7 @@ void VRTMDArray::SetDirty()
 }
 
 /************************************************************************/
-/*                                GetGroup()                            */
+/*                              GetGroup()                              */
 /************************************************************************/
 
 VRTGroup *VRTMDArray::GetGroup() const
@@ -2544,7 +2611,7 @@ VRTGroup *VRTMDArray::GetGroup() const
 }
 
 /************************************************************************/
-/*                           CreateAttribute()                          */
+/*                          CreateAttribute()                           */
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute>
@@ -2566,7 +2633,7 @@ VRTMDArray::CreateAttribute(const std::string &osName,
 }
 
 /************************************************************************/
-/*                               CopyFrom()                             */
+/*                              CopyFrom()                              */
 /************************************************************************/
 
 bool VRTMDArray::CopyFrom(GDALDataset *poSrcDS, const GDALMDArray *poSrcArray,
@@ -2650,7 +2717,7 @@ bool VRTMDArray::CopyFrom(GDALDataset *poSrcDS, const GDALMDArray *poSrcArray,
 }
 
 /************************************************************************/
-/*                          GetRawNoDataValue()                         */
+/*                         GetRawNoDataValue()                          */
 /************************************************************************/
 
 const void *VRTMDArray::GetRawNoDataValue() const
@@ -2659,7 +2726,7 @@ const void *VRTMDArray::GetRawNoDataValue() const
 }
 
 /************************************************************************/
-/*                          SetRawNoDataValue()                         */
+/*                         SetRawNoDataValue()                          */
 /************************************************************************/
 
 bool VRTMDArray::SetRawNoDataValue(const void *pNoData)
@@ -2702,7 +2769,7 @@ bool VRTMDArray::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                            AddSource()                               */
+/*                             AddSource()                              */
 /************************************************************************/
 
 void VRTMDArray::AddSource(std::unique_ptr<VRTMDArraySource> &&poSource)
@@ -2898,7 +2965,7 @@ CPLErr VRTArraySource::RasterIO(GDALDataType eBandDataType, int nXOff,
 }
 
 /************************************************************************/
-/*                        ParseSingleSourceArray()                      */
+/*                       ParseSingleSourceArray()                       */
 /************************************************************************/
 
 static std::shared_ptr<GDALMDArray>
@@ -2991,7 +3058,7 @@ CPLErr VRTArraySource::XMLInit(const CPLXMLNode *psTree, const char *pszVRTPath,
 }
 
 /************************************************************************/
-/*                          SerializeToXML()                            */
+/*                           SerializeToXML()                           */
 /************************************************************************/
 
 CPLXMLNode *VRTArraySource::SerializeToXML(const char * /*pszVRTPath*/)
@@ -3009,7 +3076,7 @@ CPLXMLNode *VRTArraySource::SerializeToXML(const char * /*pszVRTPath*/)
 }
 
 /************************************************************************/
-/*                     VRTDerivedArrayCreate()                          */
+/*                       VRTDerivedArrayCreate()                        */
 /************************************************************************/
 
 std::shared_ptr<GDALMDArray> VRTDerivedArrayCreate(const char *pszVRTPath,
@@ -3190,7 +3257,7 @@ std::shared_ptr<GDALMDArray> VRTDerivedArrayCreate(const char *pszVRTPath,
 }
 
 /************************************************************************/
-/*                              ParseArray()                            */
+/*                             ParseArray()                             */
 /************************************************************************/
 
 static std::shared_ptr<GDALMDArray> ParseArray(const CPLXMLNode *psTree,
@@ -3220,7 +3287,7 @@ static std::shared_ptr<GDALMDArray> ParseArray(const CPLXMLNode *psTree,
 }
 
 /************************************************************************/
-/*                       VRTParseArraySource()                          */
+/*                        VRTParseArraySource()                         */
 /************************************************************************/
 
 VRTSource *VRTParseArraySource(const CPLXMLNode *psChild,

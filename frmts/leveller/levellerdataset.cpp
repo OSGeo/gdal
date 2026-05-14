@@ -286,7 +286,7 @@ class LevellerDataset final : public GDALPamDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *Create(const char *pszFilename, int nXSize, int nYSize,
                                int nBandsIn, GDALDataType eType,
-                               char **papszOptions);
+                               CSLConstList papszOptions);
 
     CPLErr GetGeoTransform(GDALGeoTransform &gt) const override;
 
@@ -419,7 +419,7 @@ LevellerRasterBand::LevellerRasterBand(LevellerDataset *poDSIn)
 }
 
 /************************************************************************/
-/*                           Init()                                     */
+/*                                Init()                                */
 /************************************************************************/
 
 bool LevellerRasterBand::Init()
@@ -435,7 +435,7 @@ LevellerRasterBand::~LevellerRasterBand()
 }
 
 /************************************************************************/
-/*                             IWriteBlock()                            */
+/*                            IWriteBlock()                             */
 /************************************************************************/
 
 CPLErr LevellerRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
@@ -644,8 +644,8 @@ static double average(double a, double b)
 void LevellerDataset::raw_to_proj(double x, double y, double &xp,
                                   double &yp) const
 {
-    xp = x * m_gt[1] + m_gt[0];
-    yp = y * m_gt[5] + m_gt[3];
+    xp = x * m_gt.xscale + m_gt.xorig;
+    yp = y * m_gt.yscale + m_gt.yorig;
 }
 
 bool LevellerDataset::compute_elev_scaling(const OGRSpatialReference &sr)
@@ -656,7 +656,7 @@ bool LevellerDataset::compute_elev_scaling(const OGRSpatialReference &sr)
     {
         // For projected or local CS, the elev scale is
         // the average ground scale.
-        m_dElevScale = average(m_gt[1], m_gt[5]);
+        m_dElevScale = average(m_gt.xscale, m_gt.yscale);
 
         const double dfLinear = sr.GetLinearUnits();
         const measurement_unit *pu = this->get_uom(dfLinear);
@@ -768,7 +768,7 @@ bool LevellerDataset::write_header()
             write_tag("csclass", LEV_COORDSYS_GEO);
         }
 
-        if (m_gt[2] != 0.0 || m_gt[4] != 0.0)
+        if (m_gt.xrot != 0.0 || m_gt.yrot != 0.0)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
                      "Cannot handle rotated geotransform");
@@ -782,14 +782,14 @@ bool LevellerDataset::write_header()
         // Write north-south digital axis.
         write_tag("coordsys_da0_style", LEV_DA_PIXEL_SIZED);
         write_tag("coordsys_da0_fixedend", 0);
-        write_tag("coordsys_da0_v0", m_gt[3]);
-        write_tag("coordsys_da0_v1", m_gt[5]);
+        write_tag("coordsys_da0_v0", m_gt.yorig);
+        write_tag("coordsys_da0_v1", m_gt.yscale);
 
         // Write east-west digital axis.
         write_tag("coordsys_da1_style", LEV_DA_PIXEL_SIZED);
         write_tag("coordsys_da1_fixedend", 0);
-        write_tag("coordsys_da1_v0", m_gt[0]);
-        write_tag("coordsys_da1_v1", m_gt[1]);
+        write_tag("coordsys_da1_v0", m_gt.xorig);
+        write_tag("coordsys_da1_v1", m_gt.xscale);
     }
 
     this->write_tag_start("hf_data",
@@ -823,11 +823,12 @@ CPLErr LevellerDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
-/*                           Create()                                   */
+/*                               Create()                               */
 /************************************************************************/
 GDALDataset *LevellerDataset::Create(const char *pszFilename, int nXSize,
                                      int nYSize, int nBandsIn,
-                                     GDALDataType eType, char **papszOptions)
+                                     GDALDataType eType,
+                                     CSLConstList papszOptions)
 {
     if (nBandsIn != 1)
     {
@@ -1200,7 +1201,7 @@ bool LevellerDataset::make_local_coordsys(const char *pszName, UNITLABEL code)
 }
 
 /************************************************************************/
-/*                            load_from_file()                            */
+/*                           load_from_file()                           */
 /************************************************************************/
 
 bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
@@ -1297,13 +1298,13 @@ bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
 
             if (axis_ns.get(*this, file, 0) && axis_ew.get(*this, file, 1))
             {
-                m_gt[0] = axis_ew.origin(nRasterXSize);
-                m_gt[1] = axis_ew.scaling(nRasterXSize);
-                m_gt[2] = 0.0;
+                m_gt.xorig = axis_ew.origin(nRasterXSize);
+                m_gt.xscale = axis_ew.scaling(nRasterXSize);
+                m_gt.xrot = 0.0;
 
-                m_gt[3] = axis_ns.origin(nRasterYSize);
-                m_gt[4] = 0.0;
-                m_gt[5] = axis_ns.scaling(nRasterYSize);
+                m_gt.yorig = axis_ns.origin(nRasterYSize);
+                m_gt.yrot = 0.0;
+                m_gt.yscale = axis_ns.scaling(nRasterYSize);
             }
         }
 
@@ -1370,10 +1371,10 @@ bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
 
             // Our extents are such that the origin is at the
             // center of the heightfield.
-            m_gt[0] = -0.5 * dWorldscale * (nRasterXSize - 1);
-            m_gt[3] = -0.5 * dWorldscale * (nRasterYSize - 1);
-            m_gt[1] = dWorldscale;
-            m_gt[5] = dWorldscale;
+            m_gt.xorig = -0.5 * dWorldscale * (nRasterXSize - 1);
+            m_gt.yorig = -0.5 * dWorldscale * (nRasterYSize - 1);
+            m_gt.xscale = dWorldscale;
+            m_gt.yscale = dWorldscale;
         }
         m_dElevScale = dWorldscale;  // this was 1.0 before because
         // we were converting to real elevs ourselves, but
@@ -1392,7 +1393,7 @@ bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
 }
 
 /************************************************************************/
-/*                          GetSpatialRef()                             */
+/*                           GetSpatialRef()                            */
 /************************************************************************/
 
 const OGRSpatialReference *LevellerDataset::GetSpatialRef() const
@@ -1494,7 +1495,7 @@ GDALDataset *LevellerDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
-/*                        GDALRegister_Leveller()                       */
+/*                       GDALRegister_Leveller()                        */
 /************************************************************************/
 
 void GDALRegister_Leveller()

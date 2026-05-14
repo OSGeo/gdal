@@ -27,7 +27,7 @@ using namespace PCIDSK;
 #define BINARY_TILEDIR_VERSION 1
 
 /************************************************************************/
-/*                         GetOptimizedBlockSize()                      */
+/*                       GetOptimizedBlockSize()                        */
 /************************************************************************/
 uint32 BinaryTileDir::GetOptimizedBlockSize(BlockFile * poFile)
 {
@@ -58,7 +58,7 @@ uint32 BinaryTileDir::GetOptimizedBlockSize(BlockFile * poFile)
 }
 
 /************************************************************************/
-/*                          GetOptimizedDirSize()                       */
+/*                        GetOptimizedDirSize()                         */
 /************************************************************************/
 size_t BinaryTileDir::GetOptimizedDirSize(BlockFile * poFile)
 {
@@ -105,7 +105,7 @@ size_t BinaryTileDir::GetOptimizedDirSize(BlockFile * poFile)
 }
 
 /************************************************************************/
-/*                             BinaryTileDir()                          */
+/*                           BinaryTileDir()                            */
 /************************************************************************/
 
 /**
@@ -252,7 +252,7 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment)
 }
 
 /************************************************************************/
-/*                             BinaryTileDir()                          */
+/*                           BinaryTileDir()                            */
 /************************************************************************/
 
 /**
@@ -281,7 +281,7 @@ BinaryTileDir::BinaryTileDir(BlockFile * poFile, uint16 nSegment,
 }
 
 /************************************************************************/
-/*                              GetTileLayer()                          */
+/*                            GetTileLayer()                            */
 /************************************************************************/
 
 /**
@@ -297,7 +297,7 @@ BinaryTileLayer * BinaryTileDir::GetTileLayer(uint32 iLayer)
 }
 
 /************************************************************************/
-/*                              GetBlockSize()                          */
+/*                            GetBlockSize()                            */
 /************************************************************************/
 
 /**
@@ -311,7 +311,7 @@ uint32 BinaryTileDir::GetBlockSize(void) const
 }
 
 /************************************************************************/
-/*                               GetDirSize()                           */
+/*                             GetDirSize()                             */
 /************************************************************************/
 
 /**
@@ -354,7 +354,7 @@ size_t BinaryTileDir::GetDirSize(void) const
 }
 
 /************************************************************************/
-/*                             InitBlockList()                          */
+/*                           InitBlockList()                            */
 /************************************************************************/
 void BinaryTileDir::InitBlockList(BinaryTileLayer * poLayer)
 {
@@ -416,7 +416,7 @@ void BinaryTileDir::InitBlockList(BinaryTileLayer * poLayer)
 }
 
 /************************************************************************/
-/*                            ReadLayerBlocks()                         */
+/*                          ReadLayerBlocks()                           */
 /************************************************************************/
 void BinaryTileDir::ReadLayerBlocks(uint32 iLayer)
 {
@@ -424,7 +424,7 @@ void BinaryTileDir::ReadLayerBlocks(uint32 iLayer)
 }
 
 /************************************************************************/
-/*                           ReadFreeBlockLayer()                       */
+/*                         ReadFreeBlockLayer()                         */
 /************************************************************************/
 void BinaryTileDir::ReadFreeBlockLayer(void)
 {
@@ -435,7 +435,7 @@ void BinaryTileDir::ReadFreeBlockLayer(void)
 }
 
 /************************************************************************/
-/*                                WriteDir()                            */
+/*                              WriteDir()                              */
 /************************************************************************/
 void BinaryTileDir::WriteDir(void)
 {
@@ -572,7 +572,7 @@ void BinaryTileDir::WriteDir(void)
 }
 
 /************************************************************************/
-/*                              _CreateLayer()                          */
+/*                            _CreateLayer()                            */
 /************************************************************************/
 
 /**
@@ -617,7 +617,7 @@ BlockLayer * BinaryTileDir::_CreateLayer(uint16 nLayerType, uint32 iLayer)
 }
 
 /************************************************************************/
-/*                              _DeleteLayer()                          */
+/*                            _DeleteLayer()                            */
 /************************************************************************/
 
 /**
@@ -641,7 +641,7 @@ void BinaryTileDir::_DeleteLayer(uint32 iLayer)
 }
 
 /************************************************************************/
-/*                           GetDataSegmentName()                       */
+/*                         GetDataSegmentName()                         */
 /************************************************************************/
 std::string BinaryTileDir::GetDataSegmentName(void) const
 {
@@ -649,7 +649,7 @@ std::string BinaryTileDir::GetDataSegmentName(void) const
 }
 
 /************************************************************************/
-/*                           GetDataSegmentDesc()                       */
+/*                         GetDataSegmentDesc()                         */
 /************************************************************************/
 std::string BinaryTileDir::GetDataSegmentDesc(void) const
 {
@@ -657,7 +657,7 @@ std::string BinaryTileDir::GetDataSegmentDesc(void) const
 }
 
 /************************************************************************/
-/*                              SwapBlockDir()                          */
+/*                            SwapBlockDir()                            */
 /************************************************************************/
 
 /**

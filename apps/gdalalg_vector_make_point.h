@@ -18,7 +18,7 @@
 //! @cond Doxygen_Suppress
 
 /************************************************************************/
-/*                   GDALVectorMakePointAlgorithm                       */
+/*                     GDALVectorMakePointAlgorithm                     */
 /************************************************************************/
 
 class GDALVectorMakePointAlgorithm /* non final */
@@ -44,7 +44,7 @@ class GDALVectorMakePointAlgorithm /* non final */
 };
 
 /************************************************************************/
-/*                   GDALVectorMakePointAlgorithmStandalone             */
+/*                GDALVectorMakePointAlgorithmStandalone                */
 /************************************************************************/
 
 class GDALVectorMakePointAlgorithmStandalone final

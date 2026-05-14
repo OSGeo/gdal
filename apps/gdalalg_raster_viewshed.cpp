@@ -30,7 +30,7 @@
 #endif
 
 /************************************************************************/
-/*       GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()     */
+/*      GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm()      */
 /************************************************************************/
 
 GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
@@ -132,13 +132,12 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
            _("Pixel value to set for the cells that fall outside of the range "
              "specified by the observer location and the maximum distance"),
            &m_opts.outOfRangeVal)
-        .SetDefault(m_opts.outOfRangeVal)
-        .SetMinValueIncluded(0)
-        .SetMaxValueIncluded(255);
-    AddArg("dst-nodata", 0,
+        .SetDefault(m_opts.outOfRangeVal);
+    AddArg("output-nodata", 0,
            _("The value to be set for the cells in the output raster that have "
              "no data."),
            &m_opts.nodataVal)
+        .AddHiddenAlias("dst-nodata")
         .SetMinValueIncluded(0)
         .SetMaxValueIncluded(255);
     AddArg("observer-spacing", 0, _("Cell Spacing between observers"),
@@ -151,7 +150,7 @@ GDALRasterViewshedAlgorithm::GDALRasterViewshedAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
-/*                 GDALRasterViewshedAlgorithm::RunStep()               */
+/*                GDALRasterViewshedAlgorithm::RunStep()                */
 /************************************************************************/
 
 bool GDALRasterViewshedAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)

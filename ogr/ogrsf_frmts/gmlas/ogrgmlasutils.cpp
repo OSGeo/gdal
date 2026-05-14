@@ -18,7 +18,7 @@
 #include <set>
 
 /************************************************************************/
-/*                  OGRGMLASTruncateIdentifier()                        */
+/*                     OGRGMLASTruncateIdentifier()                     */
 /************************************************************************/
 
 CPLString OGRGMLASTruncateIdentifier(const CPLString &osName,

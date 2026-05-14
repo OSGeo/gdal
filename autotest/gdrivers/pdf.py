@@ -25,6 +25,7 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("PDF")
 
+
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
 def module_disable_exceptions():
@@ -119,7 +120,7 @@ def pdf_checksum_available():
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
 
-    (_, err) = gdaltest.runexternal_out_and_err("pdftoppm -v")
+    _, err = gdaltest.runexternal_out_and_err("pdftoppm -v")
     if err.startswith("pdftoppm version"):
         gdaltest.pdf_is_checksum_available = True
         return gdaltest.pdf_is_checksum_available
@@ -1476,8 +1477,7 @@ def test_pdf_jpeg_direct_copy(poppler_or_pdfium):
 @pytest.mark.require_driver("JPEG")
 def test_pdf_jpeg_in_vrt_direct_copy(poppler_or_pdfium):
 
-    src_ds = gdal.Open(
-        """<VRTDataset rasterXSize="20" rasterYSize="20">
+    src_ds = gdal.Open("""<VRTDataset rasterXSize="20" rasterYSize="20">
   <SRS>PROJCS["NAD27 / UTM zone 11N",GEOGCS["NAD27",DATUM["North_American_Datum_1927",SPHEROID["Clarke 1866",6378206.4,294.9786982139006,AUTHORITY["EPSG","7008"]],AUTHORITY["EPSG","6267"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433],AUTHORITY["EPSG","4267"]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",-117],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AUTHORITY["EPSG","26711"]]</SRS>
   <GeoTransform>  4.4072000000000000e+05,  6.0000000000000000e+01,  0.0000000000000000e+00,  3.7513200000000000e+06,  0.0000000000000000e+00, -6.0000000000000000e+01</GeoTransform>
   <VRTRasterBand dataType="Byte" band="1">
@@ -1489,8 +1489,7 @@ def test_pdf_jpeg_in_vrt_direct_copy(poppler_or_pdfium):
       <DstRect xOff="0" yOff="0" xSize="20" ySize="20" />
     </SimpleSource>
   </VRTRasterBand>
-</VRTDataset>"""
-    )
+</VRTDataset>""")
     ds = gdaltest.pdf_drv.CreateCopy("tmp/pdf_jpeg_in_vrt_direct_copy.pdf", src_ds)
     ds = None
     src_ds = None
@@ -1562,7 +1561,7 @@ def test_pdf_write_huge(poppler_or_pdfium):
     else:
         tmp_filename = "tmp/pdf_write_huge.pdf"
 
-    for (xsize, ysize) in [(19200, 1), (1, 19200)]:
+    for xsize, ysize in [(19200, 1), (1, 19200)]:
         src_ds = gdal.GetDriverByName("MEM").Create("", xsize, ysize, 1)
         ds = gdaltest.pdf_drv.CreateCopy(tmp_filename, src_ds)
         ds = None
@@ -1642,7 +1641,7 @@ def test_pdf_overviews(poppler_or_pdfium):
 def test_pdf_password(poppler_or_pdfium_or_podofo):
 
     if gdaltest.is_travis_branch("alpine_32bit") or gdaltest.is_travis_branch(
-        "cmake-ubuntu-jammy"
+        "cmake-ubuntu-noble"
     ):
         pytest.skip()
 
@@ -3084,8 +3083,8 @@ def test_pdf_iso32000_esri_as_epsg():
     gdal.ErrorReset()
     ds = gdal.Open("data/pdf/esri_102422_as_epsg_code.pdf")
     sr = ds.GetSpatialRef()
-    assert sr.GetAuthorityName(None) == "ESRI"
-    assert sr.GetAuthorityCode(None) == "102422"
+    assert sr.GetAuthorityName() == "ESRI"
+    assert sr.GetAuthorityCode() == "102422"
     assert gdal.GetLastErrorMsg() == ""
 
 
