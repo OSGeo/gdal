@@ -3566,13 +3566,19 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     // Temporary array to store result of horizontal filter.
     double *const padfHorizontalFiltered = static_cast<double *>(
         VSI_MALLOC3_VERBOSE(nChunkYSize, nDstXSize, sizeof(double) * nBands));
-
+    const uint64_t nWeightCount = static_cast<uint64_t>(
+        2 + 2 * std::max(dfXScaledRadius, dfYScaledRadius) + 0.5);
+    if (nWeightCount > std::numeric_limits<uint32_t>::max() / sizeof(double))
+    {
+        VSIFree(pafWrkScanline);
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Too large downsampling factor");
+        return CE_Failure;
+    }
     // To store convolution coefficients.
     double *const padfWeights =
         static_cast<double *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
-            static_cast<int>(
-                2 + 2 * std::max(dfXScaledRadius, dfYScaledRadius) + 0.5) *
-            sizeof(double)));
+            static_cast<size_t>(nWeightCount) * sizeof(double)));
 
     GByte *pabyChunkNodataMaskHorizontalFiltered = nullptr;
     if (pabyChunkNodataMask)
