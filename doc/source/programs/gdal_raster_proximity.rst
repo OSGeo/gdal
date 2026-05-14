@@ -109,4 +109,7 @@ Examples
 
     .. code-block:: bash
 
-        $ gdal raster pipeline stack [ read foo.tif ! proximity -b 1  --target-values 1,2,3 ] [ read foo.tif ! proximity -b 2 --target-values 4,5,6 ] ! write out.tif
+        $ gdal raster pipeline stack \
+               [ read input.tif ! proximity -b 1 --target-values 1,2,3 ] \
+               [ read input.tif ! proximity -b 2 --target-values 4,5,6 ] ! \
+               write output.tif
