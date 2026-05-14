@@ -102,3 +102,14 @@ Examples
     .. code-block:: bash
 
         $ gdal raster proximity --max-distance 3  input.tif output.tif
+
+.. example::
+
+   :title: Proximity map of a two bands raster with different target values for each band using a pipeline stack
+
+    .. code-block:: bash
+
+        $ gdal raster pipeline stack \
+               [ read input.tif ! proximity -b 1 --target-values 1,2,3 ] \
+               [ read input.tif ! proximity -b 2 --target-values 4,5,6 ] ! \
+               write output.tif
