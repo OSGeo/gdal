@@ -1313,13 +1313,11 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
     {
         const double dfSrcXOff = dfSrcXDelta + iDstPixel * dfXRatioDstToSrc;
         // Apply some epsilon to avoid numerical precision issues
-        int nSrcXOff = static_cast<int>(dfSrcXOff + 1e-8);
+        const int nSrcXOff =
+            std::max(static_cast<int>(dfSrcXOff + 1e-8), nChunkXOff);
         const double dfSrcXOff2 =
             dfSrcXDelta + (iDstPixel + 1) * dfXRatioDstToSrc;
         int nSrcXOff2 = static_cast<int>(ceil(dfSrcXOff2 - 1e-8));
-
-        if (nSrcXOff < nChunkXOff)
-            nSrcXOff = nChunkXOff;
         if (nSrcXOff2 == nSrcXOff)
             nSrcXOff2++;
         if (nSrcXOff2 > nChunkRightXOff)
@@ -1356,9 +1354,7 @@ GDALResampleChunk_AverageOrRMS_T(const GDALOverviewResampleArgs &args,
     for (int iDstLine = nDstYOff; iDstLine < nDstYOff2; ++iDstLine)
     {
         const double dfSrcYOff = dfSrcYDelta + iDstLine * dfYRatioDstToSrc;
-        int nSrcYOff = static_cast<int>(dfSrcYOff + 1e-8);
-        if (nSrcYOff < nChunkYOff)
-            nSrcYOff = nChunkYOff;
+        int nSrcYOff = std::max(static_cast<int>(dfSrcYOff + 1e-8), nChunkYOff);
 
         const double dfSrcYOff2 =
             dfSrcYDelta + (iDstLine + 1) * dfYRatioDstToSrc;
@@ -3606,14 +3602,12 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     {
         const double dfSrcPixel =
             (iDstPixel + 0.5) * dfXRatioDstToSrc + dfSrcXDelta;
-        int nSrcPixelStart =
-            static_cast<int>(floor(dfSrcPixel - dfXScaledRadius + 0.5));
-        if (nSrcPixelStart < nChunkXOff)
-            nSrcPixelStart = nChunkXOff;
-        int nSrcPixelStop =
-            static_cast<int>(dfSrcPixel + dfXScaledRadius + 0.5);
-        if (nSrcPixelStop > nChunkRightXOff)
-            nSrcPixelStop = nChunkRightXOff;
+        const int nSrcPixelStart = std::max(
+            static_cast<int>(floor(dfSrcPixel - dfXScaledRadius + 0.5)),
+            nChunkXOff);
+        const int nSrcPixelStop =
+            std::min(static_cast<int>(dfSrcPixel + dfXScaledRadius + 0.5),
+                     nChunkRightXOff);
 #if 0
         if( nSrcPixelStart < nChunkXOff && nChunkXOff > 0 )
         {
@@ -3978,13 +3972,12 @@ static CPLErr GDALResampleChunk_ConvolutionT(
 
         const double dfSrcLine =
             (iDstLine + 0.5) * dfYRatioDstToSrc + dfSrcYDelta;
-        int nSrcLineStart =
-            static_cast<int>(floor(dfSrcLine - dfYScaledRadius + 0.5));
-        int nSrcLineStop = static_cast<int>(dfSrcLine + dfYScaledRadius + 0.5);
-        if (nSrcLineStart < nChunkYOff)
-            nSrcLineStart = nChunkYOff;
-        if (nSrcLineStop > nChunkBottomYOff)
-            nSrcLineStop = nChunkBottomYOff;
+        const int nSrcLineStart =
+            std::max(static_cast<int>(floor(dfSrcLine - dfYScaledRadius + 0.5)),
+                     nChunkYOff);
+        const int nSrcLineStop =
+            std::min(static_cast<int>(dfSrcLine + dfYScaledRadius + 0.5),
+                     nChunkBottomYOff);
 #if 0
         if( nSrcLineStart < nChunkYOff &&
             nChunkYOff > 0 )
