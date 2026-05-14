@@ -4385,32 +4385,27 @@ static GDALDatasetH GDALWarpCreateOutput(
                         double adf3Y[3] = {adfY[0], adfY[nValues / 2],
                                            adfY[nValues - 1]};
                         double adf3Z[3] = {0};
-                        if (GDALGenImgProjTransform(
-                                hUniqueTransformArg.get(), TRUE, 3, &adf3X[0],
-                                &adf3Y[0], &adf3Z[0], &abSuccess[0]))
+                        GDALGenImgProjTransform(hUniqueTransformArg.get(), TRUE,
+                                                3, &adf3X[0], &adf3Y[0],
+                                                &adf3Z[0], &abSuccess[0]);
+                        for (int i = 0; i < 3; ++i)
                         {
-                            for (int i = 0; i < 3; ++i)
+                            if (abSuccess[i] && funcIsOK(adf3X[i], adf3Y[i]))
                             {
-                                if (abSuccess[i] &&
-                                    funcIsOK(adf3X[i], adf3Y[i]))
-                                {
-                                    return false;
-                                }
+                                return false;
                             }
                         }
                     }
 
                     // Do on full border to confirm
-                    if (GDALGenImgProjTransform(hUniqueTransformArg.get(), TRUE,
-                                                nValues, &adfX[0], &adfY[0],
-                                                &adfZ[0], &abSuccess[0]))
+                    GDALGenImgProjTransform(hUniqueTransformArg.get(), TRUE,
+                                            nValues, &adfX[0], &adfY[0],
+                                            &adfZ[0], &abSuccess[0]);
+                    for (int i = 0; i < nValues; ++i)
                     {
-                        for (int i = 0; i < nValues; ++i)
+                        if (abSuccess[i] && funcIsOK(adfX[i], adfY[i]))
                         {
-                            if (abSuccess[i] && funcIsOK(adfX[i], adfY[i]))
-                            {
-                                return false;
-                            }
+                            return false;
                         }
                     }
 
