@@ -301,6 +301,26 @@ test_ogr_s101_read_compositecurve_altered_params = [
             "id": 1,
         },
     ),
+    (
+        "((//DDFField[@name='CUCO'])[4])//DDFSubfield[@name='RRID']",
+        4,
+        "Record ID=4 of CCID: circular dependency",
+        "feature_iteration",
+        True,
+        "CompositeCurve",
+        {
+            "type": "Feature",
+            "geometry": None,
+            "properties": {
+                "recordId": 4,
+                "recordVersion": 1,
+                "infoAssociationRecordId": None,
+                "infoAssociationCode": None,
+                "infoAssociationRoleCode": None,
+            },
+            "id": 4,
+        },
+    ),
 ]
 
 
@@ -344,6 +364,10 @@ def test_ogr_s101_read_compositecurve_altered(
                 exception_text = None
 
             if "Record index=3 of CCID" in exception_text:
+                lyr.GetNextFeature()
+                lyr.GetNextFeature()
+                lyr.GetNextFeature()
+            elif "Record ID=4 of CCID" in exception_text:
                 lyr.GetNextFeature()
                 lyr.GetNextFeature()
                 lyr.GetNextFeature()
