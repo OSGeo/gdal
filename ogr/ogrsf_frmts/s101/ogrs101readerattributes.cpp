@@ -424,6 +424,7 @@ bool OGRS101Reader::InferFeatureDefn(
         bool bIsMultiValued = false;
         bool bMultipleFields = false;
         std::string osLongerName{};
+        std::string osDefinition{};
         std::string osFieldDomainName{};
     };
 
@@ -636,7 +637,7 @@ bool OGRS101Reader::InferFeatureDefn(
             std::string typeFromCatalog;
             if (m_poFeatureCatalog)
             {
-                const auto oIterNATC =
+                auto oIterNATC =
                     m_attributeCodes.find(sAttrDef.oReversedPath.front().first);
                 if (oIterNATC != m_attributeCodes.end())
                 {
@@ -650,6 +651,7 @@ bool OGRS101Reader::InferFeatureDefn(
                         typeFromCatalog = attrDef.type;
 
                         sOGRAttrDef.osLongerName = attrDef.name;
+                        sOGRAttrDef.osDefinition = attrDef.definition;
 
                         if (typeFromCatalog ==
                             OGRS101FeatureCatalog::VALUE_TYPE_ENUMERATION)
@@ -696,6 +698,27 @@ bool OGRS101Reader::InferFeatureDefn(
                                 oMapFieldDomains[osAttrCode] =
                                     std::move(poFieldDomain);
                             }
+                        }
+                    }
+                }
+
+                for (size_t i = 1; i < sAttrDef.oReversedPath.size(); ++i)
+                {
+                    oIterNATC =
+                        m_attributeCodes.find(sAttrDef.oReversedPath[i].first);
+                    if (oIterNATC != m_attributeCodes.end())
+                    {
+                        const auto &oMap =
+                            m_poFeatureCatalog->GetComplexAttributes();
+                        const std::string &osAttrCode = oIterNATC->second;
+                        const auto oIterAttr = oMap.find(osAttrCode);
+                        if (oIterAttr != oMap.end())
+                        {
+                            const auto &attrDef = oIterAttr->second;
+                            sOGRAttrDef.osDefinition += ' ';
+                            sOGRAttrDef.osDefinition += oIterNATC->second;
+                            sOGRAttrDef.osDefinition += '=';
+                            sOGRAttrDef.osDefinition += attrDef.definition;
                         }
                     }
                 }
@@ -891,6 +914,8 @@ bool OGRS101Reader::InferFeatureDefn(
             oFieldDefn.SetSubType(sOGRAttrDef.eSubType);
             if (!sOGRAttrDef.osLongerName.empty() && oReversedPath.size() == 1)
                 oFieldDefn.SetAlternativeName(sOGRAttrDef.osLongerName.c_str());
+            if (!sOGRAttrDef.osDefinition.empty())
+                oFieldDefn.SetComment(sOGRAttrDef.osDefinition.c_str());
             if (!sOGRAttrDef.osFieldDomainName.empty())
                 oFieldDefn.SetDomainName(sOGRAttrDef.osFieldDomainName.c_str());
             oFeatureDefn.AddFieldDefn(&oFieldDefn);

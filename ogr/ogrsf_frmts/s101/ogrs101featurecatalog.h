@@ -26,6 +26,7 @@ struct SimpleAttribute
 {
     std::string code{};  // short string
     std::string name{};  // longer string
+    std::string definition{};
     std::string type{};
     std::map<int, std::string> enumeratedValues{};
 };
@@ -34,6 +35,7 @@ struct ComplexAttribute
 {
     std::string code{};  // short string
     std::string name{};  // longer string
+    std::string definition{};
     std::set<std::string> attributeBindings{};
 };
 

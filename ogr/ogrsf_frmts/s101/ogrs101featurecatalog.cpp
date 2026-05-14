@@ -299,6 +299,8 @@ bool OGRS101FeatureCatalog::LoadSimpleAttributes(const char *pszFC,
                 SimpleAttribute attr;
                 attr.code = pszCode;
                 attr.name = CPLGetXMLValue(psSimpleAttr, "name", "");
+                attr.definition =
+                    CPLGetXMLValue(psSimpleAttr, "definition", "");
                 attr.type = pszValueType;
 
                 constexpr const char *const apszValueTypes[] = {
@@ -428,6 +430,8 @@ bool OGRS101FeatureCatalog::LoadComplexAttributes(const char *pszFC,
                 ComplexAttribute attr;
                 attr.code = pszCode;
                 attr.name = CPLGetXMLValue(psComplexAttr, "name", "");
+                attr.definition =
+                    CPLGetXMLValue(psComplexAttr, "definition", "");
 
                 const CPLXMLNode *psSubAttributeBinding =
                     CPLGetXMLNode(psComplexAttr, "subAttributeBinding");
