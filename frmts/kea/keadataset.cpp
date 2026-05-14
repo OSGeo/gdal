@@ -14,6 +14,7 @@
 #include "keaband.h"
 #include "keacopy.h"
 #include "keadrivercore.h"
+#include <hdf5.h>
 #include "../frmts/hdf5/hdf5vfl.h"
 #include "cpl_vsi_virtual.h"
 
