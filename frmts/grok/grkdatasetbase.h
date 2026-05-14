@@ -1939,6 +1939,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
     bool initializedAsync = false;  ///< True after first grk_decompress() call
     PostPreload cachedPostPreload_{};    ///< Cached first-call tile grid info
     bool hasCachedPostPreload_ = false;  ///< True after first decompressAsynch
+    VSILFILE *m_ovFp = nullptr;  ///< Private file handle for overview codec
 
     /**
      * @brief Destroys the JP2GRKDatasetBase object
@@ -2320,7 +2321,8 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         // trigger post-processing (wait(nullptr) -> postMulti_).
         const int nTotalTiles = (postPreload.tile_x1 - postPreload.tile_x0) *
                                 (postPreload.tile_y1 - postPreload.tile_y0);
-        bool canUseFastPath = (nTotalTiles > 1 && m_codec && m_codec->psImage);
+        bool canUseFastPath =
+            (nTotalTiles > 1 && m_codec && m_codec->psImage && iLevel == 0);
         if (canUseFastPath)
         {
             for (int i = 0; i < nBandCount && canUseFastPath; ++i)
@@ -2549,14 +2551,9 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         // When reading a subset of bands, tile images must persist
         // across per-band reads.  Use CACHE_IMAGE so that tile row
         // release keeps the decoded pixels alive.
-        const int nTotalComps =
-            (m_codec && m_codec->psImage) ? m_codec->psImage->numcomps : 0;
-        const bool needPersistentTiles =
-            (!this->bSingleTiled && nBandCount < nTotalComps);
-
         auto postPreload =
             decompressAsynch(nullptr, nullptr, nXOff, nYOff, nXSize, nYSize,
-                             rowCopy, needPersistentTiles);
+                             rowCopy, nBandCount);
 
         try
         {
@@ -2638,7 +2635,7 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
                                  int swath_x0, int swath_y0, int swath_width,
                                  int swath_height,
                                  RowCopyFunc rowCopy = nullptr,
-                                 bool needPersistentTiles = false)
+                                 int nBandCount = 0)
     {
         PostPreload rc;
 
@@ -2646,10 +2643,24 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
         // Overview datasets are created without a codec during Open;
         // initialise one on first read so decompression at this
         // reduce level can proceed.
+        // Open a private file handle so the overview codec does not
+        // interfere with the main dataset's file position.
         if (!m_codec && iLevel > 0)
         {
+            if (m_ovFp)
+            {
+                VSIFCloseL(m_ovFp);
+                m_ovFp = nullptr;
+            }
+            m_ovFp = VSIFOpenL(m_osFilename.c_str(), "rb");
+            if (!m_ovFp)
+            {
+                CPLError(CE_Failure, CPLE_OpenFailed,
+                         "Failed to open file for overview level %d", iLevel);
+                return rc;
+            }
             m_codec = new GRKCodecWrapper();
-            m_codec->open(fp_, nCodeStreamStart);
+            m_codec->open(m_ovFp, nCodeStreamStart);
             uint32_t nTileW = 0, nTileH = 0;
             int numRes = 0;
             if (!m_codec->setUpDecompress(GetNumThreads(), m_osFilename.c_str(),
@@ -2658,6 +2669,8 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
             {
                 delete m_codec;
                 m_codec = nullptr;
+                VSIFCloseL(m_ovFp);
+                m_ovFp = nullptr;
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Failed to init overview codec for level %d", iLevel);
                 return rc;
@@ -2712,6 +2725,15 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
             return cached;
         }
 
+        // Compute needPersistentTiles after lazy codec init (m_codec is now
+        // guaranteed non-null).  When reading a subset of bands, tile images
+        // must persist across per-band reads so that subsequent band reads
+        // can extract their data from the cached tiles.
+        const int nTotalComps =
+            (m_codec && m_codec->psImage) ? m_codec->psImage->numcomps : 0;
+        const bool needPersistentTiles =
+            (!this->bSingleTiled && nBandCount > 0 && nBandCount < nTotalComps);
+
         if (!initializedAsync)
         {
             grk_decompress_parameters decompressParams = {};
@@ -2732,54 +2754,21 @@ struct JP2GRKDatasetBase : public JP2DatasetBase
 
             if (!this->fullDecompress_)
             {
+                decompressParams.dw_reduced = true;
                 if (area_x0_ == 0 && area_y0_ == 0 && area_x1_ == 0 &&
                     area_y1_ == 0)
                 {
-                    // No AdviseRead region: use swath coordinates.
-                    // The decode area must be expressed in full-resolution
-                    // canvas coordinates (grid reference).  For overview
-                    // datasets (iLevel > 0), swath coordinates are in the
-                    // reduced overview space and must be scaled up to
-                    // full resolution.
-                    if (iLevel > 0 && nParentXSize > 0 && nParentYSize > 0)
-                    {
-                        const int scale = 1 << iLevel;
-                        decompressParams.dw_x0 = swath_x0 * scale;
-                        decompressParams.dw_y0 = swath_y0 * scale;
-                        decompressParams.dw_x1 = std::min(
-                            (swath_x0 + swath_width) * scale, nParentXSize);
-                        decompressParams.dw_y1 = std::min(
-                            (swath_y0 + swath_height) * scale, nParentYSize);
-                    }
-                    else
-                    {
-                        decompressParams.dw_x0 = swath_x0;
-                        decompressParams.dw_y0 = swath_y0;
-                        decompressParams.dw_x1 = swath_x0 + swath_width;
-                        decompressParams.dw_y1 = swath_y0 + swath_height;
-                    }
+                    decompressParams.dw_x0 = swath_x0;
+                    decompressParams.dw_y0 = swath_y0;
+                    decompressParams.dw_x1 = swath_x0 + swath_width;
+                    decompressParams.dw_y1 = swath_y0 + swath_height;
                 }
                 else
                 {
-                    // AdviseRead region — also in dataset pixel space,
-                    // needs scaling for overview datasets.
-                    if (iLevel > 0 && nParentXSize > 0 && nParentYSize > 0)
-                    {
-                        const int scale = 1 << iLevel;
-                        decompressParams.dw_x0 = area_x0_ * scale;
-                        decompressParams.dw_y0 = area_y0_ * scale;
-                        decompressParams.dw_x1 = std::min(
-                            static_cast<int>(area_x1_) * scale, nParentXSize);
-                        decompressParams.dw_y1 = std::min(
-                            static_cast<int>(area_y1_) * scale, nParentYSize);
-                    }
-                    else
-                    {
-                        decompressParams.dw_x0 = area_x0_;
-                        decompressParams.dw_y0 = area_y0_;
-                        decompressParams.dw_x1 = area_x1_;
-                        decompressParams.dw_y1 = area_y1_;
-                    }
+                    decompressParams.dw_x0 = area_x0_;
+                    decompressParams.dw_y0 = area_y0_;
+                    decompressParams.dw_x1 = area_x1_;
+                    decompressParams.dw_y1 = area_y1_;
                 }
             }
 
