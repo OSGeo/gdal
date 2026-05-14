@@ -1316,6 +1316,21 @@ public:
 #endif
 %clear (double padfGeoTransform[6]);
 
+%apply (double *OUTPUT) {double *pdfStart, double *pdfIncrement};
+#ifdef SWIGJAVA
+bool IsRegularlySpaced(double *pdfStart, double *pdfIncrement) {
+    return GDALMDArrayIsRegularlySpaced(self, pdfStart, pdfIncrement);
+}
+#else
+%apply (IF_FALSE_RETURN_NONE) {(RETURN_NONE)};
+RETURN_NONE IsRegularlySpaced(double *pdfStart, double *pdfIncrement) {
+    return GDALMDArrayIsRegularlySpaced(self, pdfStart, pdfIncrement);
+}
+%clear (RETURN_NONE);
+#endif
+%clear (double *pdfStart);
+%clear (double *pdfIncrement);
+
 } /* extend */
 }; /* GDALMDArrayH */
 
