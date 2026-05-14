@@ -1196,8 +1196,8 @@ gpsbabel
 gpx
 gradians
 Grantor
-graylevel
 graticule
+graylevel
 grayscale
 Grayscale
 grc
@@ -2531,10 +2531,10 @@ positionName
 posix
 Posix
 posList
+poSR
 poSrcDS
 poSrcFDefn
 poSrcFeature
-poSR
 poSRS
 Postel
 postfix
@@ -2585,6 +2585,7 @@ precompiled
 precompute
 predefine
 predelete
+prefetch
 preinstalled
 preload
 premultiplication

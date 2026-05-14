@@ -696,6 +696,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "NITF_USEGEOLOB", // from nitfimage.c
    "OCI_DEFAULT_DIM", // from ogrociwritablelayer.cpp
    "OCI_FID", // from ogrocidatasource.cpp, ogrociloaderlayer.cpp, ogrociselectlayer.cpp, ogrocitablelayer.cpp
+   "OCI_PREFETCH_ROWS", // from ogrocistatement.cpp
    "ODBC_OGR_FID", // from ogrodbclayer.cpp
    "ODS_RESOLVE_FORMULAS", // from ogrodsdatasource.cpp
    "OGR2OGR_MIN_FEATURES_FOR_THREADED_REPROJ", // from ogr2ogr_lib.cpp
