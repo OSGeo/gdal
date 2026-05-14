@@ -1906,6 +1906,16 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
         poODS->m_nX0 = poDS->m_nX0;
         poODS->m_nY0 = poDS->m_nY0;
 
+        // For Grok's DirectRasterIO path, overview datasets need tile
+        // dimensions scaled to the reduced resolution level so that
+        // tile range and row-iteration computations work correctly.
+        if (BASE::canPerformDirectIO())
+        {
+            const int ovLevel = poODS->iLevel;
+            poODS->m_nTileWidth = (nTileW + (1 << ovLevel) - 1) >> ovLevel;
+            poODS->m_nTileHeight = (nTileH + (1 << ovLevel) - 1) >> ovLevel;
+        }
+
         for (iBand = 1; iBand <= poDS->nBands; iBand++)
         {
             const bool bPromoteTo8Bit =
