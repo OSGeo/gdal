@@ -47,7 +47,7 @@ subject to details mentioned below:
       should be fully understood by the author(s) submitting them to the
       project.
 
-    * Submission of vibe-coded contributions is *banned*.
+    * Submission of `vibe-coded <https://en.wikipedia.org/wiki/Vibe_coding>`__ contributions is *banned*.
 
     * LLMs may only be used as an improved auto-completion mechanism, or
       for repeated tasks (mechanical refactoring) that could potentially be
