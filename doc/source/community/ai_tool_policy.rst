@@ -49,7 +49,7 @@ subject to details mentioned below:
 
     * Submission of vibe-coded contributions is *banned*.
 
-    * LLM use may only be used as an improved auto-completion mechanism, or
+    * LLMs may only be used as an improved auto-completion mechanism, or
       for repeated tasks (mechanical refactoring) that could potentially be
       completed with a deterministic algorithm.
 
