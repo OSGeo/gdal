@@ -16,7 +16,7 @@ The following example enables debug output for :ref:`gdal_vector_info`.
 
     $ gdal vector info in.gpkg --debug ON
 
-When ``debug`` is enabled, GDAL writes additional messages to the command output.
+When ``debug`` is enabled, GDAL writes additional messages to the command error stream.
 These messages can help identify issues related to dataset access, driver loading,
 configuration options, and processing operations.
 
