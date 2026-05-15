@@ -189,7 +189,21 @@ int TIFFWriteScanline(TIFF *tif, void *buf, uint32_t row, uint16_t sample)
 /* time if the new compressed tile is bigger than the older one. (GDAL #4771) */
 static int _TIFFReserveLargeEnoughWriteBuffer(TIFF *tif, uint32_t strip_or_tile)
 {
+    static const char module[] = "_TIFFReserveLargeEnoughWriteBuffer";
     TIFFDirectory *td = &tif->tif_dir;
+
+    if (td->td_stripbytecount_p == NULL)
+    {
+        TIFFErrorExtR(tif, module, "Strip bytecount array pointer is NULL");
+        return 0;
+    }
+
+    if (strip_or_tile == NOSTRIP || strip_or_tile >= td->td_nstrips)
+    {
+        TIFFErrorExtR(tif, module, "Strip/tile number not valid");
+        return 0;
+    }
+
     if (td->td_stripbytecount_p[strip_or_tile] > 0)
     {
         /* The +1 is to ensure at least one extra bytes */
