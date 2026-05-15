@@ -2074,7 +2074,7 @@ def test_multidim_guessgeotransform_irregular_2d():
     assert gt is None
 
 
-def test_multidim_is_regularly_spaced():
+def test_multidim_get_regular_spacing():
     ## two indexing variables, Y is irregular
     drv = gdal.GetDriverByName("MEM")
     mem_ds = drv.CreateMultiDimensional("myds_irreg")
@@ -2095,6 +2095,6 @@ def test_multidim_is_regularly_spaced():
     ar = rg.CreateMDArray(
         "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
     )
-    assert ar.IsRegularlySpaced() is None
-    assert varX.IsRegularlySpaced() == pytest.approx((-179.1, 1.0))
-    assert varY.IsRegularlySpaced() is None
+    assert ar.GetRegularSpacing() is None
+    assert varX.GetRegularSpacing() == pytest.approx((-179.1, 1.0))
+    assert varY.GetRegularSpacing() is None

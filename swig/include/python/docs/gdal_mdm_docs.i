@@ -138,7 +138,7 @@ tuple
 
 See Also
 --------
-:py:meth:`IsRegularlySpaced`
+:py:meth:`GetRegularSpacing`
 
 Examples
 --------
@@ -162,16 +162,18 @@ Examples
 ";
 
 
-%feature("docstring") IsRegularlySpaced "
+%feature("docstring") GetRegularSpacing "
 
-Returns whether an array is a 1D regularly spaced array.
+Returns start and increment of the detected regular spacing of the values of a 1D array, increasing
+or decreasing. For arrays of >1D, with length == 1, or with non-regular values the return value is ``None``.
 
-See :cpp:func:`GDALMDArray::IsRegularlySpaced`.
+See :cpp:func:`GDALMDArray::IsRegularlySpaced`, this function matches that capability recast to get
+the parameters, and fails silently when the regular condition does not apply.
 
 Returns
 -------
 tuple or None
-    A tuple (start, increment) if regularly spaced, None otherwise
+    A tuple (start, increment) if regularly spaced, ``None`` otherwise
 
 See Also
 --------
@@ -191,11 +193,11 @@ Examples
 >>> _ = varX.Write(array.array('d', [-180 + 0.9 + i for i in range(dimX.GetSize())]))
 >>> _ = dimX.SetIndexingVariable(varX)
 >>> ar = rg.CreateMDArray('ar', [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
->>> ar.IsRegularlySpaced() is None
+>>> ar.GetRegularSpacing() is None
 True
->>> varX.IsRegularlySpaced()
+>>> varX.GetRegularSpacing()
 (-179.1, 1.0)
->>> varY.IsRegularlySpaced() is None
+>>> varY.GetRegularSpacing() is None
 True
 
 ";
