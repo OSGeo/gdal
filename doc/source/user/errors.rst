@@ -86,7 +86,7 @@ problems, corrupted storage, or interruptions during disk operations.
 
    Alternatively, using a smaller output format can reduce disk usage. For
    example, ``--output-format COG`` typically produces significantly smaller
-   files.
+   files (because it defaults to using LZW compression).
 
    Finally, as suggested in the error message, the :ref:`raster.gtiff`
    creation option ``CHECK_DISK_FREE_SPACE=FALSE`` can be used to disable
