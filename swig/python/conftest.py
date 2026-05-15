@@ -1,3 +1,4 @@
+import array
 import ast
 import doctest
 import functools
@@ -16,6 +17,7 @@ from osgeo import gdal, ogr, osr
 ###
 @pytest.fixture(scope="session", autouse=True)
 def global_setup(doctest_namespace):
+    doctest_namespace["array"] = array
     doctest_namespace["gdal"] = gdal
     doctest_namespace["ogr"] = ogr
     doctest_namespace["osr"] = osr
