@@ -8,6 +8,7 @@ User oriented documentation
    :maxdepth: 1
 
    cookbook
+   errors
    raster_data_model
    band_algebra
    multidim_raster_data_model
