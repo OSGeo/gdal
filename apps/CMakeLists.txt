@@ -43,6 +43,7 @@ target_sources(appslib PRIVATE
   gdalalg_mdim.cpp
   gdalalg_mdim_info.cpp
   gdalalg_mdim_convert.cpp
+  gdalalg_mdim_get_refs.cpp
   gdalalg_mdim_mosaic.cpp
   gdalalg_pipeline.cpp
   gdalalg_raster.cpp
