@@ -167,6 +167,8 @@ Example:
 Global configuration options
 ----------------------------
 
+.. _configoptions_logging:
+
 Logging
 ^^^^^^^
 

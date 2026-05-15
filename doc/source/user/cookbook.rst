@@ -21,6 +21,15 @@ General How do I...
 ... get the GDAL version?
    :example:`gdal-version`
 
+... view debug output?
+   :example:`debug-output`
+
+... write GDAL output and errors to a log file?
+   :example:`debug-log-file`
+
+... log :term:`curl` output for HTTP requests?
+   :example:`debug-log-curl`
+
 Raster How do I...
 ------------------
 
