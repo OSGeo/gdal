@@ -4627,6 +4627,65 @@ static bool GWKResampleOptimizedLanczos(const GDALWarpKernel *poWK, int iBand,
         return true;
     }
 
+    if (poWK->eWorkingDataType == GDT_UInt8 && !poWK->panUnifiedSrcValid &&
+        !poWK->papanBandSrcValid && poWK->pafUnifiedSrcDensity &&
+        padfRowDensity)
+    {
+        // Optimization for Byte data with a unified density mask, such as an
+        // alpha band, and no additional validity masks.
+        const GByte *pSrc =
+            reinterpret_cast<const GByte *>(poWK->papabySrcImage[iBand]);
+        pSrc += iSrcOffset + static_cast<GPtrDiff_t>(jMin) * nSrcXSize;
+
+        const float *pafDensity =
+            poWK->pafUnifiedSrcDensity + iSrcOffset +
+            static_cast<GPtrDiff_t>(jMin) * nSrcXSize;
+
+        for (int j = jMin; j <= jMax; ++j)
+        {
+            const double dfWeight1 = padfWeightsYShifted[j];
+            for (int i = iMin; i <= iMax; ++i)
+            {
+                const double dfDensity = double(pafDensity[i]);
+                if (dfDensity < SRC_DENSITY_THRESHOLD_DOUBLE)
+                    continue;
+
+                const double dfWeight2 = dfWeight1 * padfWeightsXShifted[i];
+                dfAccumulatorReal += pSrc[i] * dfWeight2;
+                dfAccumulatorDensity += dfDensity * dfWeight2;
+                dfAccumulatorWeight += dfWeight2;
+            }
+
+            pSrc += nSrcXSize;
+            pafDensity += nSrcXSize;
+        }
+
+        if (dfAccumulatorWeight < 0.000001)
+        {
+            *pdfDensity = 0.0;
+            return false;
+        }
+        if (dfAccumulatorDensity < 0.000001)
+        {
+            *pdfDensity = 0.0;
+            return false;
+        }
+
+        if (dfAccumulatorWeight < 0.99999 || dfAccumulatorWeight > 1.00001)
+        {
+            const double dfInvAcc = 1.0 / dfAccumulatorWeight;
+            *pdfReal = dfAccumulatorReal * dfInvAcc;
+            *pdfDensity = dfAccumulatorDensity * dfInvAcc;
+        }
+        else
+        {
+            *pdfReal = dfAccumulatorReal;
+            *pdfDensity = dfAccumulatorDensity;
+        }
+
+        return true;
+    }
+
     GPtrDiff_t iRowOffset =
         iSrcOffset + static_cast<GPtrDiff_t>(jMin - 1) * nSrcXSize + iMin;
 

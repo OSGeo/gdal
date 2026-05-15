@@ -217,6 +217,79 @@ def test_gdalwarp_8(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
     ds = None
 
 
+def test_gdalwarp_lanczos_src_alpha_byte(gdalwarp_path, tmp_path):
+
+    xsize = 17
+    ysize = 17
+    for i_band in range(4):
+        data = bytearray()
+        for y in range(ysize):
+            for x in range(xsize):
+                if i_band == 0:
+                    value = (x * 13 + y * 7) & 0xFF
+                elif i_band == 1:
+                    value = (x * 3 + y * 17 + 11) & 0xFF
+                elif i_band == 2:
+                    value = (x * 19 + y * 5 + 23) & 0xFF
+                else:
+                    value = 0 if x < 3 or y < 2 or (x + y) % 7 == 0 else 255
+                data.append(value)
+        (tmp_path / f"b{i_band + 1}.raw").write_bytes(data)
+
+    src_vrt = tmp_path / "src.vrt"
+    src_vrt.write_text(
+        f"""<VRTDataset rasterXSize="{xsize}" rasterYSize="{ysize}">
+  <SRS>EPSG:4326</SRS>
+  <GeoTransform> -1, 0.01, 0, 1, 0, -0.01 </GeoTransform>
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTRawRasterBand">
+    <ColorInterp>Red</ColorInterp>
+    <SourceFilename relativeToVRT="1">b1.raw</SourceFilename>
+    <ImageOffset>0</ImageOffset>
+    <PixelOffset>1</PixelOffset>
+    <LineOffset>{xsize}</LineOffset>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="2" subClass="VRTRawRasterBand">
+    <ColorInterp>Green</ColorInterp>
+    <SourceFilename relativeToVRT="1">b2.raw</SourceFilename>
+    <ImageOffset>0</ImageOffset>
+    <PixelOffset>1</PixelOffset>
+    <LineOffset>{xsize}</LineOffset>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="3" subClass="VRTRawRasterBand">
+    <ColorInterp>Blue</ColorInterp>
+    <SourceFilename relativeToVRT="1">b3.raw</SourceFilename>
+    <ImageOffset>0</ImageOffset>
+    <PixelOffset>1</PixelOffset>
+    <LineOffset>{xsize}</LineOffset>
+  </VRTRasterBand>
+  <VRTRasterBand dataType="Byte" band="4" subClass="VRTRawRasterBand">
+    <ColorInterp>Alpha</ColorInterp>
+    <SourceFilename relativeToVRT="1">b4.raw</SourceFilename>
+    <ImageOffset>0</ImageOffset>
+    <PixelOffset>1</PixelOffset>
+    <LineOffset>{xsize}</LineOffset>
+  </VRTRasterBand>
+</VRTDataset>
+"""
+    )
+
+    dst_tif = tmp_path / "out.tif"
+    gdaltest.runexternal(
+        f"{gdalwarp_path} -q -overwrite -r lanczos -ts 11 13 "
+        f"-srcalpha -dstalpha {src_vrt} {dst_tif}"
+    )
+
+    ds = gdal.Open(str(dst_tif))
+    assert ds is not None
+    assert ds.RasterCount == 4
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == [
+        1019,
+        1067,
+        1115,
+        1188,
+    ]
+
+
 ###############################################################################
 # Test -te
 
