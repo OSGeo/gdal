@@ -307,6 +307,7 @@ Cadcorp
 calc
 Calc
 calloc
+cancelled
 capi
 cardinality
 Cardinality
