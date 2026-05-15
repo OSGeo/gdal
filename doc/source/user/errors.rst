@@ -56,7 +56,7 @@ Additional details are typically provided in the accompanying error message.
 
    .. code-block:: console
 
-      $ gdal raster mosaic --output-format COG --creation-option BIGTIFF=YES *.tif out.tif
+      $ gdal raster mosaic --output-format COG *.tif out.tif
       ERROR 1: TIFFAppendToStrip: Maximum TIFF file size exceeded. Use BIGTIFF=YES creation option.
 
 ERROR 2 Out of Memory Error
