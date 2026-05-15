@@ -28,6 +28,8 @@ Include file
 GDAL error handling routines are available by including the public :file:`cpl_error.h`
 header file (:source_file:`port/cpl_error.h`).
 
+.. _error_handling_levels:
+
 Error levels
 ++++++++++++
 
