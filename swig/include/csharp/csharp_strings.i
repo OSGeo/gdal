@@ -34,30 +34,31 @@ typedef char * (SWIGSTDCALL* CSharpUtf8StringHelperCallback)(const char *);
 static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
 %}
 
-%pragma(csharp) modulecode=%{
+/*
+ * Define a dummy type so that we can extend it to add custom types
+ * inside the module namespace using the csimports typemap
+ */
+%{
+typedef struct {} CsharpDummyObject;
+%}
+%typemap(csclassmodifiers) CsharpDummyObject "internal class";
+%typemap(csimports) CsharpDummyObject %{
+  using System;
+  using System.Text;
+  using System.Runtime.InteropServices;
+
   /* Interface for encoding/decoding string to/from Gdal unmanaged strings. */
-  public interface IStringEncoder {
+  public interface I$moduleStringEncoder {
     /* Encode a string to a null-terminated array of bytes to be sent to Gdal unmanaged */
     byte[] ToNullTerminated(string str);
     /* Decode an unmanaged, null-terminated string from Gdal to a managed string */
     string FromNullTerminated(IntPtr pStr);
   }
-  internal static readonly IStringEncoder s_DefaultStringEncoder = new DefaultStringEncoder();
-  internal static IStringEncoder s_StringEncoder;
-  public static IStringEncoder StringEncoder {
-    get {
-      if (s_StringEncoder == null)
-        s_StringEncoder = s_DefaultStringEncoder;
-      return s_StringEncoder;
-    }
-    set {
-      s_StringEncoder = value;
-    }
-  }
-  internal class DefaultStringEncoder : IStringEncoder {
-    public string FromNullTerminated(IntPtr pStr) {
+  
+  public class Default$moduleStringEncoder : I$moduleStringEncoder {
+    public virtual string FromNullTerminated(IntPtr pStr) {
 #if NETCOREAPP1_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-      return System.Runtime.InteropServices.Marshal.PtrToStringUTF8(pStr);
+      return Marshal.PtrToStringUTF8(pStr);
 #else
       if (pStr == IntPtr.Zero) return null;
       unsafe {
@@ -66,16 +67,32 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
         checked {
           while (pBytes[len] != 0) len++;
         }
-        return System.Text.Encoding.UTF8.GetString(pBytes, len);
+        return Encoding.UTF8.GetString(pBytes, len);
       }
 #endif
     }
-    public byte[] ToNullTerminated(string str) {
+    public virtual byte[] ToNullTerminated(string str) {
       if (str == null) return null;
-      int byteCount = System.Text.Encoding.UTF8.GetByteCount(str);
+      int byteCount = Encoding.UTF8.GetByteCount(str);
       var bts = new byte[byteCount + 1];
-      System.Text.Encoding.UTF8.GetBytes(str, 0, str.Length, bts, 0);
+      Encoding.UTF8.GetBytes(str, 0, str.Length, bts, 0);
       return bts;
+    }
+  }
+%}
+struct CsharpDummyObject{};
+
+%pragma(csharp) modulecode=%{
+  internal static readonly I$moduleStringEncoder s_DefaultStringEncoder = new Default$moduleStringEncoder();
+  internal static I$moduleStringEncoder s_StringEncoder;
+  public static I$moduleStringEncoder StringEncoder {
+    get {
+      if (s_StringEncoder == null)
+        s_StringEncoder = s_DefaultStringEncoder;
+      return s_StringEncoder;
+    }
+    set {
+      s_StringEncoder = value;
     }
   }
 %}
