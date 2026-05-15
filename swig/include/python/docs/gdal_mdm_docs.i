@@ -177,7 +177,7 @@ tuple or None
 
 See Also
 --------
-:py:meth:GuessGeoTransform
+:py:meth:`GuessGeoTransform`
 
 Examples
 --------
