@@ -12676,3 +12676,23 @@ def test_tiff_no_get_sibling_files(tmp_vsimem):
             with gdal.Open(tmp_vsimem / "foo.tif") as ds:
                 ds.GetRasterBand(1).GetDefaultRAT()
     assert res[0]
+
+
+@pytest.mark.parametrize("width", [1, 2, 3, 4, 5, 7, 8, 100, 101, 103, 256])
+def test_tiff_write_10bit_roundtrip(tmp_vsimem, width):
+    """Verify optimized 10-bit packing produces correct output for various widths."""
+
+    gdaltest.importorskip_gdal_array()
+    np = pytest.importorskip("numpy")
+
+    fname = tmp_vsimem / f"test_10bit_{width}.tif"
+    ds = gdaltest.tiff_drv.Create(
+        fname, width, 1, 1, gdal.GDT_UInt16, options=["NBITS=10"]
+    )
+    data = np.arange(width, dtype=np.uint16) % 1024
+    ds.GetRasterBand(1).WriteArray(data.reshape(1, width))
+    ds = None  # flush to disk before re-opening
+
+    with gdal.Open(fname) as ds:
+        read = ds.GetRasterBand(1).ReadAsArray().flatten()
+    assert np.array_equal(data, read)

@@ -13,6 +13,7 @@
 
 #include "gtiffoddbitsband.h"
 
+#include <algorithm>
 #include "gdal_priv.h"
 #include "cpl_float.h"  // CPLFloatToHalf()
 #include "gtiffdataset.h"
@@ -214,6 +215,64 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                     }
 
                     iBitOffset += m_poGDS->m_nBitsPerSample;
+                }
+                continue;
+            }
+
+            if (m_poGDS->m_nBitsPerSample == 10 && eDataType == GDT_UInt16)
+            {
+                // Optimized 10-bit packing: 4 pixels -> 5 bytes.
+                // Avoids the generic per-bit loop which is ~10x slower.
+                const GUInt16 *pSrc =
+                    static_cast<const GUInt16 *>(pImage) + iPixel;
+                GByte *pDst = m_poGDS->m_pabyBlockBuf + (iBitOffset >> 3);
+                int iX = 0;
+                const int nFastLimit = nBlockXSize - 3;  // may be <= 0
+                for (; iX < nFastLimit; iX += 4)
+                {
+                    GUInt32 v0 = pSrc[0];
+                    GUInt32 v1 = pSrc[1];
+                    GUInt32 v2 = pSrc[2];
+                    GUInt32 v3 = pSrc[3];
+                    if ((v0 | v1 | v2 | v3) > nMaxVal)
+                    {
+                        v0 = std::min(v0, nMaxVal);
+                        v1 = std::min(v1, nMaxVal);
+                        v2 = std::min(v2, nMaxVal);
+                        v3 = std::min(v3, nMaxVal);
+                        if (!m_poGDS->m_bClipWarn)
+                        {
+                            m_poGDS->m_bClipWarn = true;
+                            ReportError(
+                                CE_Warning, CPLE_AppDefined,
+                                "One or more pixels clipped to fit %d bit "
+                                "domain.",
+                                m_poGDS->m_nBitsPerSample);
+                        }
+                    }
+                    pDst[0] = static_cast<GByte>(v0 >> 2);
+                    pDst[1] = static_cast<GByte>((v0 << 6) | (v1 >> 4));
+                    pDst[2] = static_cast<GByte>((v1 << 4) | (v2 >> 6));
+                    pDst[3] = static_cast<GByte>((v2 << 2) | (v3 >> 8));
+                    pDst[4] = static_cast<GByte>(v3);
+                    pSrc += 4;
+                    pDst += 5;
+                }
+                // Handle remaining 1-3 pixels with the generic per-bit path
+                iPixel += iX;
+                iBitOffset += static_cast<GInt64>(iX) * 10;
+                for (; iX < nBlockXSize; ++iX)
+                {
+                    GUInt32 nInWord = static_cast<GUInt16 *>(pImage)[iPixel++];
+                    if (nInWord > nMaxVal)
+                        nInWord = nMaxVal;
+                    for (int iBit = 0; iBit < 10; ++iBit)
+                    {
+                        if (nInWord & (1 << (9 - iBit)))
+                            m_poGDS->m_pabyBlockBuf[iBitOffset >> 3] |=
+                                (0x80 >> (iBitOffset & 7));
+                        ++iBitOffset;
+                    }
                 }
                 continue;
             }
