@@ -196,7 +196,7 @@ Examples
 >>> ar.GetRegularSpacing() is None
 True
 >>> varX.GetRegularSpacing()
-(-179.1, 1.0)
+[-179.1, 1.0]
 >>> varY.GetRegularSpacing() is None
 True
 
