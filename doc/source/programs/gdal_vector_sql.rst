@@ -137,3 +137,23 @@ Examples
        $ gdal vector pipeline read europe.gpkg ! \
                               sql --sql "SELECT * FROM country WHERE pop > 1e6" ! \
                               write --append --output-layer-name=world world.gpkg
+
+.. example::
+   :title: List unique values in a Shapefile field
+   :id: gdal-vector-sql-distinct
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal vector pipeline \
+            ! read in.shp \
+            ! sql --sql "SELECT DISTINCT CODE FROM in ORDER BY CODE" \
+            ! info --features
+
+      .. code-tab:: ps1
+
+        gdal vector pipeline `
+            ! read in.shp `
+            ! sql --sql "SELECT DISTINCT CODE FROM in ORDER BY CODE" `
+            ! info --features
