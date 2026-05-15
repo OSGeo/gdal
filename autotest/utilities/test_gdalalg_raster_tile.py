@@ -2281,3 +2281,22 @@ def test_gdalalg_raster_tile_pipeline_error(tmp_path):
                 input=src_ds,
                 pipeline=f"mosaic ! tile {out_dirname} --min-zoom=0 --max-zoom=3",
             )
+
+
+def test_gdalalg_raster_tile_overview_selection(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 512, 512, 1)
+    src_ds.GetRasterBand(1).Fill(255)
+    src_ds.BuildOverviews("NONE", [2])
+    src_ds.GetRasterBand(1).GetOverview(0).Fill(127)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(3857)
+    src_ds.SetSpatialRef(srs)
+    MAX_GM = 20037508.342789244
+    RES = 2 * MAX_GM / 512
+    src_ds.SetGeoTransform([-MAX_GM, RES, 0, MAX_GM, 0, -RES])
+
+    gdal.alg.raster.tile(input=src_ds, output=tmp_vsimem, max_zoom=0)
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (127, 127)

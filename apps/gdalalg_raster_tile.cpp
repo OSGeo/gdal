@@ -416,6 +416,18 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
 }
 
 /************************************************************************/
+/*                      ~GDALRasterTileAlgorithm()                      */
+/************************************************************************/
+
+GDALRasterTileAlgorithm::~GDALRasterTileAlgorithm()
+{
+    if (m_poSrcOvrDS)
+    {
+        m_poSrcOvrDS->ReleaseRef();
+    }
+}
+
+/************************************************************************/
 /*                           GetTileIndices()                           */
 /************************************************************************/
 
@@ -5070,11 +5082,44 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         return false;
     }
 
+    /* -------------------------------------------------------------------- */
+    /*      Select source overview                                          */
+    /* -------------------------------------------------------------------- */
+
+    const int nDstXSize = (nMaxTileX - nMinTileX + 1) * tileMatrix.mTileWidth;
+    const int nDstYSize = (nMaxTileY - nMinTileY + 1) * tileMatrix.mTileHeight;
+
+    const int nSrcOvrCount = m_poSrcDS->GetRasterBand(1)->GetOverviewCount();
+    if (nSrcOvrCount > 0 &&
+        m_poSrcDS->GetRasterXSize() > tileMatrix.mTileWidth &&
+        m_poSrcDS->GetRasterYSize() > tileMatrix.mTileHeight)
+    {
+        const double dfTargetRatioX =
+            static_cast<double>(m_poSrcDS->GetRasterXSize()) / nDstXSize;
+        const double dfTargetRatioY =
+            static_cast<double>(m_poSrcDS->GetRasterYSize()) / nDstYSize;
+        // take the minimum of these ratios #7019
+        const double dfTargetRatio = std::min(dfTargetRatioX, dfTargetRatioY);
+        if (dfTargetRatio > 1.0)
+        {
+            const int iBestOvr = GDALBandGetBestOverviewLevel(
+                m_poSrcDS->GetRasterBand(1), dfTargetRatio,
+                /* dfOversamplingThreshold = */ 1.0);
+            if (iBestOvr >= 0)
+            {
+                CPLDebug("WARP", "Selecting overview level %d", iBestOvr);
+                m_poSrcOvrDS =
+                    GDALCreateOverviewDataset(m_poSrcDS, iBestOvr,
+                                              /* bThisLevelOnly = */ false);
+                m_poSrcDS = m_poSrcOvrDS;
+            }
+        }
+    }
+
     FakeMaxZoomDataset oFakeMaxZoomDS(
-        (nMaxTileX - nMinTileX + 1) * tileMatrix.mTileWidth,
-        (nMaxTileY - nMinTileY + 1) * tileMatrix.mTileHeight, nDstBands,
-        tileMatrix.mTileWidth, tileMatrix.mTileHeight, psWO->eWorkingDataType,
-        dstGT, oSRS_TMS, dstBuffer);
+        nDstXSize, nDstYSize, nDstBands, tileMatrix.mTileWidth,
+        tileMatrix.mTileHeight, psWO->eWorkingDataType, dstGT, oSRS_TMS,
+        dstBuffer);
     CPL_IGNORE_RET_VAL(oFakeMaxZoomDS.GetSpatialRef());
 
     psWO->hSrcDS = GDALDataset::ToHandle(m_poSrcDS);
@@ -5652,6 +5697,11 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     for (int i = 1; i <= m_poSrcDS->GetRasterCount(); ++i)
         aeColorInterp.push_back(
             m_poSrcDS->GetRasterBand(i)->GetColorInterpretation());
+    if (m_poSrcOvrDS)
+    {
+        m_poSrcOvrDS->ReleaseRef();
+        m_poSrcOvrDS = nullptr;
+    }
     if (m_inputDataset[0].HasDatasetBeenOpenedByAlgorithm())
     {
         m_inputDataset[0].Close();
