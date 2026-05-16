@@ -149,11 +149,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 
 %typemap(cstype) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "string"
 %typemap(imtype, out="IntPtr") (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "byte[]"
-
-%typemap(in) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
-  $1 = ($1_ltype)$input;
-%}
-
+%typemap(in) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{ $1 = ($1_ltype)$input; %}
 %typemap(out) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
  /*
   * %typemap(out) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
@@ -162,32 +158,29 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
   $result = SWIG_csharp_string_callback((const char *)$1);
 %}
 
-%typemap(csin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
-  $module.StringEncoder?.ToNullTerminated($csinput)
-%}
-
-%typemap(csout, excode=SWIGEXCODE) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
-{
-  /* %typemap(csout) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) */
+%typemap(csin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
+  "$module.StringEncoder?.ToNullTerminated($csinput)"
+  
+%define CS_RETURN_UTF8_STRING
   IntPtr cPtr = $imcall;
   string ret = $modulePINVOKE.StringFromPinnedGCHandle(cPtr);
   $excode
   return ret;
+%enddef
+
+%typemap(csout, excode=SWIGEXCODE) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) {
+  CS_RETURN_UTF8_STRING
 }
 
 /*
  * Typemap for UTF-8 char* string properties.
  */
 
-%typemap(csvarout, excode=SWIGEXCODE2) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
+%typemap(csvarout, noblock=1, excode=SWIGEXCODE2) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) {
   get {
-    /* %typemap(csvarout) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) */
-    IntPtr cPtr = $imcall;
-    string ret = $modulePINVOKE.StringFromPinnedGCHandle(cPtr);
-    $excode
-    return ret;
+    CS_RETURN_UTF8_STRING
   }
-%}
+}
 
 /*
  * Typemaps for  (retStringAndCPLFree*)
@@ -198,13 +191,10 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
   * %typemap(out) (retStringAndCPLFree*)
   * GCHandle is released by %typemap(csout) (char *)
   */
-  if($1)
-  {
+  if($1) {
     $result = SWIG_csharp_string_callback((const char *)$1);
     CPLFree($1);
-  }
-  else
-  {
+  } else {
     $result = NULL;
   }
 %}
@@ -216,15 +206,13 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(imtype) (char** argout), (char **username), (char **usrname), (char **type) "ref IntPtr"
 %typemap(cstype) (char** argout), (char **username), (char **usrname), (char **type) "out string"
 %typemap(in) (char **argout), (char **username), (char **usrname), (char **type) %{ $1 = ($1_ltype)$input; %}
-%typemap(csin,
+%typemap(csin, cshin="out $csinput",
   pre="    IntPtr temp$csinput = IntPtr.Zero;",
-  post="    $csinput = $modulePINVOKE.StringFromPinnedGCHandle(temp$csinput);",
-  cshin="out $csinput"
-  ) (char** argout), (char **username), (char **usrname), (char **type)
+  post="    $csinput = $modulePINVOKE.StringFromPinnedGCHandle(temp$csinput);")
+  (char** argout), (char **username), (char **usrname), (char **type)
   "ref temp$csinput"
 
-%typemap(argout) (char **argout)
-{
+%typemap(argout) (char **argout) {
  /*
   * %typemap(argout) (char **argout)
   * GCHandle is released by %typemap(csin)
@@ -235,8 +223,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
     CPLFree(*$1);
   *$1 = temp_string;
 }
-%typemap(argout) (char **username), (char **usrname), (char **type)
-{
+%typemap(argout) (char **username), (char **usrname), (char **type) {
  /*
   * %typemap(argout) (char **username), (char **usrname), (char **type)
   * GCHandle is released by %typemap(csin)
@@ -249,27 +236,10 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
  * caller doesn't want to see changes.
  */
 
-%typemap(imtype) (char **ignorechange) "ref byte[]"
+%typemap(imtype) (char **ignorechange) "byte[]"
 %typemap(cstype) (char **ignorechange) "ref string"
-%typemap(csin,
-  pre="    byte[] bts$csinput = $module.StringEncoder?.ToNullTerminated($csinput);",
-  cshin="$csinput"
-  ) (char** ignorechange)
-  "ref bts$csinput"
-
-%typemap(in, noblock="1") (char **ignorechange)
-{
-  /* %typemap(in) (char **ignorechange) */
-  $*1_type savearg = *(($1_type)$input);
-  $1 = ($1_ltype)$input;
-}
-%typemap(argout, noblock="1") (char **ignorechange)
-{
-  /* %typemap(argout) (char **ignorechange) */
-  if ((*$1 - savearg) > 0)
-     memmove(savearg, *$1, strlen(*$1)+1);
-  *$1 = savearg;
-}
+%typemap(in)     (char **ignorechange) %{ $1 = ($1_ltype)&$input; %}
+%typemap(csin)   (char **ignorechange) "$module.StringEncoder?.ToNullTerminated($csinput)"
 
 /******************************************************************************
  * Marshaller for NULL terminated lists of NULL terminated UTF-8 strings.     *
@@ -326,11 +296,10 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(cstype) char **options, char **dict, char **dictAndCSLDestroy, char **CSL "string[]"
 %typemap(in) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{ $1 = ($1_ltype)$input; %}
 %typemap(out) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{ $result = $1; %}
-%typemap(csin,
+%typemap(csin, cshin="$csinput",
   pre="    using (var temp$csinput = new $modulePINVOKE.StringListMarshal($csinput)) { ",
-  terminator="    }",
-  cshin="$csinput"
-  ) char **options, char **dict, char **dictAndCSLDestroy, char **CSL
+  terminator="    }")
+  char **options, char **dict, char **dictAndCSLDestroy, char **CSL
   "temp$csinput._ar"
 
 /*
