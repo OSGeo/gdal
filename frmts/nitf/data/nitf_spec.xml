@@ -161,7 +161,7 @@
         <if cond="EXISTENCE_MASK:29">
             <field name="DATA_FLD_2" length="32" type="string"/>
         </if>
-        <if cond="EXISTENCE_MASK:24">
+        <if cond="EXISTENCE_MASK:24 OR EXISTENCE_MASK:23 OR EXISTENCE_MASK:22 OR EXISTENCE_MASK:21 OR EXISTENCE_MASK:20 OR EXISTENCE_MASK:19">
             <field name="WAVE_LENGTH_UNIT" length="1" type="string"/>
         </if>
         <loop counter="COUNT" name="BANDS" md_prefix="BAND_%05d_">

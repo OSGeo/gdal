@@ -4611,6 +4611,74 @@ def test_nitf_91(tmp_vsimem):
 
 
 ###############################################################################
+# Test parsing BANDSB TRE (STDI-0002 App X) with NOM_WAVE and two bands
+
+
+def test_nitf_92(tmp_vsimem):
+    tre_data = (
+        "TRE=HEX/BANDSB="
+        + hex_string("00002UNCALIBRATED            D")
+        + "3F800000"
+        + "00000000"
+        + hex_string(
+            "0001.00M0001.20M-------M-------M                                                "
+        )
+        + "10210000"  # Set bits 28, 21 and 16
+        + hex_string("U")  # WAVE_LENGTH_UNIT
+        + hex_string("FIRST BAND                                        ")
+        + hex_string("0.75321")  # NOM_WAVE
+        + hex_string("023.94")  # INT_TIME
+        + hex_string("SECOND BAND                                       ")
+        + hex_string("01.2502")  # NOM_WAVE
+        + hex_string("4023.9")  # INT_TIME
+    )
+
+    ds = gdal.GetDriverByName("NITF").Create(
+        tmp_vsimem / "nitf_92.ntf", 1, 1, options=[tre_data]
+    )
+    ds = None
+
+    ds = gdal.Open(tmp_vsimem / "nitf_92.ntf")
+    data = ds.GetMetadata("xml:TRE")[0]
+    ds = None
+
+    expected_data = """<tres>
+  <tre name="BANDSB" location="image">
+    <field name="COUNT" value="00002" />
+    <field name="RADIOMETRIC_QUANTITY" value="UNCALIBRATED" />
+    <field name="RADIOMETRIC_QUANTITY_UNIT" value="D" />
+    <field name="SCALE_FACTOR" value="1.000000" />
+    <field name="ADDITIVE_FACTOR" value="0.000000" />
+    <field name="ROW_GSD" value="0001.00" />
+    <field name="ROW_GSD_UNIT" value="M" />
+    <field name="COL_GSD" value="0001.20" />
+    <field name="COL_GSD_UNIT" value="M" />
+    <field name="SPT_RESP_ROW" value="-------" />
+    <field name="SPT_RESP_UNIT_ROW" value="M" />
+    <field name="SPT_RESP_COL" value="-------" />
+    <field name="SPT_RESP_UNIT_COL" value="M" />
+    <field name="DATA_FLD_1" value="" />
+    <field name="EXISTENCE_MASK" value="270598144" />
+    <field name="WAVE_LENGTH_UNIT" value="U" />
+    <repeated name="BANDS" number="2">
+      <group index="0">
+        <field name="BANDID" value="FIRST BAND" />
+        <field name="NOM_WAVE" value="0.75321" />
+        <field name="INT_TIME" value="023.94" />
+      </group>
+      <group index="1">
+        <field name="BANDID" value="SECOND BAND" />
+        <field name="NOM_WAVE" value="01.2502" />
+        <field name="INT_TIME" value="4023.9" />
+      </group>
+    </repeated>
+  </tre>
+</tres>
+"""
+    assert data == expected_data
+
+
+###############################################################################
 # Test parsing RSMAPB TRE (STDI-0002-1-v5.0 App U)
 
 
