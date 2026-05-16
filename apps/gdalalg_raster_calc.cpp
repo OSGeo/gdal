@@ -1163,19 +1163,23 @@ bool GDALRasterCalcAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         translateArgs.AddString(co.c_str());
     }
 
+    bool bOK = false;
     GDALTranslateOptions *translateOptions =
         GDALTranslateOptionsNew(translateArgs.List(), nullptr);
-    GDALTranslateOptionsSetProgress(translateOptions, ctxt.m_pfnProgress,
-                                    ctxt.m_pProgressData);
+    if (translateOptions)
+    {
+        GDALTranslateOptionsSetProgress(translateOptions, ctxt.m_pfnProgress,
+                                        ctxt.m_pProgressData);
 
-    auto poOutDS =
-        std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(GDALTranslate(
-            m_outputDataset.GetName().c_str(), GDALDataset::ToHandle(vrt.get()),
-            translateOptions, nullptr)));
-    GDALTranslateOptionsFree(translateOptions);
+        auto poOutDS =
+            std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(GDALTranslate(
+                m_outputDataset.GetName().c_str(),
+                GDALDataset::ToHandle(vrt.get()), translateOptions, nullptr)));
+        GDALTranslateOptionsFree(translateOptions);
 
-    const bool bOK = poOutDS != nullptr;
-    m_outputDataset.Set(std::move(poOutDS));
+        bOK = poOutDS != nullptr;
+        m_outputDataset.Set(std::move(poOutDS));
+    }
 
     return bOK;
 }
