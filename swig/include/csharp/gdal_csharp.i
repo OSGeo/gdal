@@ -316,36 +316,49 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     => IntPtr.Size == sizeof(long) ? new IntPtr(checked(ptr.ToInt64() + offset))
      : new IntPtr(checked(ptr.ToInt32() + (int)offset));
 
-  public sealed class OwnedMemoryFile : IDisposable {
+  public sealed class VsiMemoryFile : IDisposable {
     private readonly GCHandle m_dataHandle;
     private int m_disposed;
     public string Filename { get; }
+    public bool VsiOwned { get; }
     public bool IsDisposed => m_disposed != 0;
-    internal OwnedMemoryFile(string filename, GCHandle dataHandle) {
+    internal VsiMemoryFile(string filename, GCHandle dataHandle) {
       Filename = filename;
       m_dataHandle = dataHandle;
     }
+    internal VsiMemoryFile(string filename) {
+      Filename = filename;
+      VsiOwned = true;
+    }
     public void Dispose() {
       if (System.Threading.Interlocked.CompareExchange(ref m_disposed, 1, 0) == 0) {
-        m_dataHandle.Free();
+        if (!VsiOwned)
+          m_dataHandle.Free();
         Unlink(Filename);
       }
       GC.SuppressFinalize(this);
     }
-    ~OwnedMemoryFile() => Dispose();
+    ~VsiMemoryFile() => Dispose();
   }
 
-  public static OwnedMemoryFile FileFromMemBufferNoCopy(string utf8_string, byte[] buffer, long offset, long count) {
-    ValidateBufferArgs(buffer, offset, count);
-    GCHandle dataHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-    IntPtr ptr = AddOffset(dataHandle.AddrOfPinnedObject(), offset);
-    IntPtr fp = VSIFileFromMemBuffer(utf8_string, ptr, (ulong)buffer.LongLength, bTakeOwnership: 0);
-    if (fp == IntPtr.Zero) {
-      dataHandle.Free();
-      return null;
+  public static VsiMemoryFile FileFromMemBuffer(string utf8_string, byte[] buffer, long offset, long count, bool vsiTakeOwnership) {
+    if (vsiTakeOwnership) {
+      return FileFromMemBuffer(utf8_string, buffer, offset, count) ? new VsiMemoryFile(utf8_string) : null;
     } else {
-      VSIFCloseL(fp);
-      return new OwnedMemoryFile(utf8_string, dataHandle);
+      ValidateBufferArgs(buffer, offset, count);
+      GCHandle dataHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+      try {
+        IntPtr ptr = AddOffset(dataHandle.AddrOfPinnedObject(), offset);
+        IntPtr fp = VSIFileFromMemBuffer(utf8_string, ptr, (ulong)buffer.LongLength, bTakeOwnership: 0);
+        if (fp == IntPtr.Zero) {
+          return null;
+        }
+        VSIFCloseL(fp);
+        return new VsiMemoryFile(utf8_string, dataHandle);
+      } catch {
+        dataHandle.Free();
+        throw;
+      }
     }
   }
 
