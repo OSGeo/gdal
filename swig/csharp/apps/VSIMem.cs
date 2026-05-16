@@ -124,7 +124,7 @@ class VSIMem
         //Create an in-memory file from a managed buffer.
         //The managed buffer is used to read/write and is not copied to GDAL.
         //Must dispose of the file to unpin the managed buffer and unlink the filename.
-        using (var inMemFile = Gdal.FileFromMemBufferNoCopy(inMemFilename, imageCopy, 0, imageCopy.Length))
+        using (var inMemFile = Gdal.FileFromMemBuffer(inMemFilename, imageCopy, 0, imageCopy.Length, vsiTakeOwnership: false))
         {
             if (inMemFile == null)
             {
