@@ -5,7 +5,7 @@ Error Codes
 Overview
 --------
 
-This page describes the GDAL error codes that may be returned by GDAL command-line tools and the Python API.
+This page describes GDAL error codes that may appear in command-line error output or be reported by the Python API.
 Each GDAL error code is listed below with:
 
 * a brief description,
@@ -36,9 +36,8 @@ Additional details are typically provided in the accompanying error message.
    :title: Overwriting a GeoPackage that is in use by another application
 
    Although ``--overwrite`` is specified, the output file cannot be replaced
-   because it is currently open in another application (for example QGIS).
-
-   This driver-specific failure is reported as ``CPLE_AppDefined``.
+   because it is in use by another application (for example, when opened in
+   QGIS on Windows).
 
    .. code-block:: console
 
@@ -76,7 +75,8 @@ ERROR 3 File I/O Error
 
 An error indicating a failure while reading from or writing to a file or other
 data source. This may occur due to issues such as missing files, permission
-problems, corrupted storage, or interruptions during disk operations.
+problems, corrupted storage, interruptions during disk or network operations,
+or failures when accessing remote datasets (e.g., /vsicurl streams).
 
 .. example::
    :title: Not enough disk space
@@ -88,14 +88,17 @@ problems, corrupted storage, or interruptions during disk operations.
    example, ``--output-format COG`` typically produces significantly smaller
    files (because it defaults to using LZW compression).
 
-   Finally, as suggested in the error message, the :ref:`raster.gtiff`
-   creation option ``CHECK_DISK_FREE_SPACE=FALSE`` can be used to disable
-   this check if the available disk space is being reported incorrectly.
+    Finally, as suggested in the error message, the :ref:`raster.gtiff`
+    creation option ``CHECK_DISK_FREE_SPACE=FALSE`` can be used to disable
+    the free disk space check. This is typically only required when writing
+    compressed GeoTIFF files (for example with ``COMPRESS=DEFLATE``),
+    since GDAL cannot predict the final compressed file size exactly and instead
+    uses heuristics to estimate the required disk space.
 
    .. code-block:: console
 
       $ gdal raster calc -i "A=a.tif" -i "B=b.tif" --calc "A - 0.3*B" --nodata=-9999 -o c.tif
-      ERROR 3: dem_burned.tif: Free disk space available is 1.62 GB, whereas 46.57 GB are at least necessary.
+      ERROR 3: c.tif: Free disk space available is 1.62 GB, whereas 46.57 GB are at least necessary.
       You can disable this check by defining the CHECK_DISK_FREE_SPACE configuration option to FALSE.
 
 ERROR 4 Open Failed
