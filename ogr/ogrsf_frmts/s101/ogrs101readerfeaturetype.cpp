@@ -838,6 +838,9 @@ bool OGRS101Reader::FillFeatureTypeMask(const DDFRecord *poRecord, int iRecord,
     CPLStringList aosLayerNames;
     CPLStringList aosMaskIndicators;
 
+    if (oFeature.GetDefnRef()->GetGeomFieldCount() != 2)
+        return true;
+
     constexpr int MASK_GEOM_FIELD_IDX = 1;
 
     const auto apoMASKFields = poRecord->GetFields(MASK_FIELD);
