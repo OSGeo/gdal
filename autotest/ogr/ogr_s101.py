@@ -918,3 +918,9 @@ def test_ogr_s101_read_minimal_altered_record_content(
         exception_text,
         recoverable,
     )
+
+
+def test_ogr_s101_read_invalid_non_increasing_field_offset():
+
+    with pytest.raises(Exception, match="Field `CRSH' overlapping with previous one"):
+        ogr.Open("data/s101/invalid/non_increasing_field_offset.000")

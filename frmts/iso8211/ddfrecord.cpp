@@ -427,6 +427,8 @@ int DDFRecord::ReadHeader()
          */
         apoFields.resize(nFieldCount);
 
+        int nLastFieldPos = 0;
+        int nLastFieldLength = 0;
         for (i = 0; i < nFieldCount; i++)
         {
             char szTag[128];
@@ -475,6 +477,17 @@ int DDFRecord::ReadHeader()
                 return FALSE;
             }
 
+            // This check is not strictly needed for reading scenarios, but
+            // in update scenarios (such as S57/S101), it is essential to avoid
+            // issues when resizing fields.
+            if (nFieldPos < nLastFieldPos + nLastFieldLength)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field `%s' overlapping with previous one.", szTag);
+                nFieldOffset = -1;
+                return FALSE;
+            }
+
             /* --------------------------------------------------------------------
              */
             /*      Assign info the DDFField. */
@@ -485,6 +498,9 @@ int DDFRecord::ReadHeader()
                                      osData.c_str() + _fieldAreaStart +
                                          nFieldPos - nLeaderSize,
                                      nFieldLength, true);
+
+            nLastFieldPos = nFieldPos;
+            nLastFieldLength = nFieldLength;
         }
 
         return TRUE;
@@ -610,6 +626,8 @@ int DDFRecord::ReadHeader()
         /* ----------------------------------------------------------------- */
         apoFields.resize(nFieldCount);
 
+        int nLastFieldPos = 0;
+        int nLastFieldLength = 0;
         for (i = 0; i < nFieldCount; i++)
         {
             char szTag[128];
@@ -655,6 +673,17 @@ int DDFRecord::ReadHeader()
                 return FALSE;
             }
 
+            // This check is not strictly needed for reading scenarios, but
+            // in update scenarios (such as S57/S101), it is essential to avoid
+            // issues when resizing fields.
+            if (nFieldPos < nLastFieldPos + nLastFieldLength)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field `%s' overlapping with previous one.", szTag);
+                nFieldOffset = -1;
+                return FALSE;
+            }
+
             /* ------------------------------------------------------------- */
             /* Assign info the DDFField.                                     */
             /* ------------------------------------------------------------- */
@@ -664,6 +693,9 @@ int DDFRecord::ReadHeader()
                                      osData.c_str() + _fieldAreaStart +
                                          nFieldPos - nLeaderSize,
                                      nFieldLength, true);
+
+            nLastFieldPos = nFieldPos;
+            nLastFieldLength = nFieldLength;
         }
 
         return TRUE;
@@ -1257,18 +1289,20 @@ int DDFRecord::ResizeField(DDFField *poField, int nNewDataSize)
     /* -------------------------------------------------------------------- */
     /*      How much data needs to be shifted up or down after this field?  */
     /* -------------------------------------------------------------------- */
+    const int nOldDataSize = poField->GetDataSize();
     const int nBytesToMove =
         static_cast<int>(osData.size()) -
-        static_cast<int>(poField->GetData() + poField->GetDataSize() -
-                         osData.data());
+        static_cast<int>(poField->GetData() + nOldDataSize - osData.data());
 
     /* -------------------------------------------------------------------- */
     /*      Store field offsets                                             */
     /* -------------------------------------------------------------------- */
     std::vector<int> anOffsets;
     for (auto &poIterField : apoFields)
+    {
         anOffsets.push_back(
             static_cast<int>(poIterField->GetData() - osData.data()));
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Reallocate the data buffer accordingly.                         */
@@ -1278,12 +1312,43 @@ int DDFRecord::ResizeField(DDFField *poField, int nNewDataSize)
     if (nBytesToAdd > 0)
     {
         osData.resize(osData.size() + nBytesToAdd);
+
+        /* ---------------------------------------------------------------- */
+        /*      Update the target fields info.                              */
+        /* ---------------------------------------------------------------- */
+        poField->Initialize(poField->GetFieldDefn(),
+                            osData.c_str() + anOffsets[iTarget], nNewDataSize,
+                            false);
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Update fields to point into newly allocated buffer.             */
+    /*      Shift the data beyond this field up or down as needed.          */
     /* -------------------------------------------------------------------- */
-    for (size_t i = 0; i < apoFields.size(); ++i)
+    if (nBytesToMove > 0)
+        memmove(const_cast<char *>(poField->GetData()) + nNewDataSize,
+                poField->GetData() + nOldDataSize, nBytesToMove);
+
+    /* -------------------------------------------------------------------- */
+    /*      Shift all following fields down, and update their data          */
+    /*      locations.                                                      */
+    /* -------------------------------------------------------------------- */
+    if (nBytesToAdd < 0)
+    {
+        osData.resize(osData.size() - (-nBytesToAdd));
+
+        /* ---------------------------------------------------------------- */
+        /*      Update the target fields info.                              */
+        /* ---------------------------------------------------------------- */
+        poField->Initialize(poField->GetFieldDefn(),
+                            osData.c_str() + anOffsets[iTarget], nNewDataSize,
+                            false);
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Update fields up to the resized one to point into newly         */
+    /*      allocated buffer.                                               */
+    /* -------------------------------------------------------------------- */
+    for (int i = 0; i < iTarget; i++)
     {
         auto &poIterField = apoFields[i];
         poIterField->Initialize(poIterField->GetFieldDefn(),
@@ -1292,46 +1357,14 @@ int DDFRecord::ResizeField(DDFField *poField, int nNewDataSize)
     }
 
     /* -------------------------------------------------------------------- */
-    /*      Shift the data beyond this field up or down as needed.          */
-    /* -------------------------------------------------------------------- */
-    if (nBytesToMove > 0)
-        memmove(const_cast<char *>(poField->GetData()) +
-                    poField->GetDataSize() + nBytesToAdd,
-                poField->GetData() + poField->GetDataSize(), nBytesToMove);
-
-    /* -------------------------------------------------------------------- */
-    /*      Update the target fields info.                                  */
-    /* -------------------------------------------------------------------- */
-    poField->Initialize(poField->GetFieldDefn(), poField->GetData(),
-                        poField->GetDataSize() + nBytesToAdd, false);
-
-    /* -------------------------------------------------------------------- */
     /*      Shift all following fields down, and update their data          */
     /*      locations.                                                      */
     /* -------------------------------------------------------------------- */
-    if (nBytesToAdd < 0)
+    for (int i = iTarget + 1; i < GetFieldCount(); i++)
     {
-        for (int i = iTarget + 1; i < GetFieldCount(); i++)
-        {
-            const char *pszOldDataLocation = apoFields[i]->GetData();
-
-            apoFields[i]->Initialize(apoFields[i]->GetFieldDefn(),
-                                     pszOldDataLocation + nBytesToAdd,
-                                     apoFields[i]->GetDataSize(), false);
-        }
-
-        osData.resize(osData.size() - (-nBytesToAdd));
-    }
-    else
-    {
-        for (int i = GetFieldCount() - 1; i > iTarget; i--)
-        {
-            const char *pszOldDataLocation = apoFields[i]->GetData();
-
-            apoFields[i]->Initialize(apoFields[i]->GetFieldDefn(),
-                                     pszOldDataLocation + nBytesToAdd,
-                                     apoFields[i]->GetDataSize(), false);
-        }
+        apoFields[i]->Initialize(apoFields[i]->GetFieldDefn(),
+                                 osData.c_str() + anOffsets[i] + nBytesToAdd,
+                                 apoFields[i]->GetDataSize(), false);
     }
 
     return TRUE;
@@ -1516,7 +1549,8 @@ int DDFRecord::SetFieldRaw(DDFField *poField, int iIndexWithinField,
 /**
  * Set the raw contents of a field (all instances in case it is a repeated one)
  *
- * It must end with DDF_FIELD_TERMINATOR.
+ * A DDF_FIELD_TERMINATOR will be automatically added at the end of the raw data
+ * if not already present.
  *
  * @param poField the field to set data within.
  * @param pachRawData the raw data to replace this field with.
@@ -1529,15 +1563,20 @@ int DDFRecord::SetFieldRaw(DDFField *poField, const char *pachRawData,
                            int nRawDataSize)
 
 {
+    const bool bAddFieldTerminator =
+        (nRawDataSize == 0 ||
+         pachRawData[nRawDataSize - 1] != DDF_FIELD_TERMINATOR);
+
     /* -------------------------------------------------------------------- */
     /*      Resize the field to the desired new size.                       */
     /* -------------------------------------------------------------------- */
-    if (!ResizeField(poField, nRawDataSize))
+    if (!ResizeField(poField, nRawDataSize + (bAddFieldTerminator ? 1 : 0)))
         return FALSE;
 
-    CPLAssert(nRawDataSize > 0);
-    CPLAssert(pachRawData[nRawDataSize - 1] == DDF_FIELD_TERMINATOR);
     memcpy(const_cast<char *>(poField->GetData()), pachRawData, nRawDataSize);
+    if (bAddFieldTerminator)
+        const_cast<char *>(poField->GetData())[nRawDataSize] =
+            DDF_FIELD_TERMINATOR;
 
     for (auto &poIterField : apoFields)
         poIterField->InitializeParts();
