@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Project:  GDAL
- * Purpose:  "reproject" step of "vector pipeline"
+ * Purpose:  "gdal vector reproject"
  * Author:   Even Rouault <even dot rouault at spatialys.com>
  *
  ******************************************************************************
@@ -28,7 +28,7 @@ class GDALVectorReprojectAlgorithm /* non final */
     static constexpr const char *NAME = "reproject";
     static constexpr const char *DESCRIPTION = "Reproject a vector dataset.";
     static constexpr const char *HELP_URL =
-        "/programs/gdal_vector_pipeline.html";
+        "/programs/gdal_vector_reproject.html";
 
     explicit GDALVectorReprojectAlgorithm(bool standaloneStep = false);
 
