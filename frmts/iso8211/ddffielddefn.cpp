@@ -569,6 +569,16 @@ bool DDFFieldDefn::BuildSubfields()
                                 return false;
                             }
                             ++pszFormatCur;
+                            if (nGroupSubFieldCount < 0 ||
+                                nGroupSubFieldCount > INT_MAX / nRepeat)
+                            {
+                                CPLError(CE_Failure, CPLE_AppDefined,
+                                         "Tag %s: invalid "
+                                         "formatControls: %s",
+                                         osTag.c_str(),
+                                         _formatControls.c_str());
+                                return false;
+                            }
                             nSubFieldCounter += nGroupSubFieldCount * nRepeat;
                             if (*pszFormatCur == ')')
                                 break;
