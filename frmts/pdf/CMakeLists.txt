@@ -67,12 +67,18 @@ if (GDAL_USE_POPPLER)
   if ("${Poppler_VERSION_MINOR}" MATCHES "0?[0-9]+")
     string(REGEX REPLACE "0?([0-9]+)" "\\1" Poppler_VERSION_MINOR ${Poppler_VERSION_MINOR})
   endif ()
+  string(REGEX REPLACE "^[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" Poppler_VERSION_MICRO ${Poppler_VERSION_STRING})
+  # Strip leading zero
+  if ("${Poppler_VERSION_MICRO}" MATCHES "0?[0-9]+")
+    string(REGEX REPLACE "0?([0-9]+)" "\\1" Poppler_VERSION_MICRO ${Poppler_VERSION_MICRO})
+  endif ()
   if (Poppler_VERSION_STRING VERSION_GREATER_EQUAL "24.05")
     target_compile_features(gdal_PDF PRIVATE cxx_std_20)
   endif ()
   target_compile_definitions(gdal_PDF PRIVATE -DHAVE_POPPLER
                                               -DPOPPLER_MAJOR_VERSION=${Poppler_VERSION_MAJOR}
-                                              -DPOPPLER_MINOR_VERSION=${Poppler_VERSION_MINOR})
+                                              -DPOPPLER_MINOR_VERSION=${Poppler_VERSION_MINOR}
+                                              -DPOPPLER_MICRO_VERSION=${Poppler_VERSION_MICRO})
 endif ()
 if (GDAL_USE_PODOFO)
   if( "${PODOFO_VERSION_STRING}" VERSION_GREATER "0.10")
