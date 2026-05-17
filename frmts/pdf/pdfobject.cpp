@@ -1343,8 +1343,15 @@ std::map<CPLString, GDALPDFObject *> &GDALPDFDictionaryPoppler::GetValues()
     int nLength = m_poDict->getLength();
     for (i = 0; i < nLength; i++)
     {
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION > 5) ||              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION == 5 &&              \
+     POPPLER_MICRO_VERSION > 0)
+        Get(m_poDict->getKey(i).c_str());
+#else
         const char *pszKey = m_poDict->getKey(i);
         Get(pszKey);
+#endif
     }
     return m_map;
 }
