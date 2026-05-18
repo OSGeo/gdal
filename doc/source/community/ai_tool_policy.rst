@@ -1,131 +1,79 @@
 .. _ai_tool_policy:
 
 ================================================================================
-AI/LLM tool policy
+LLM tool policy
 ================================================================================
 
-Summary
--------
+Rationale
+--------------------------------------------------------------------------------
 
-GDAL's policy is that contributors can use whatever tools they would like to
-craft their contributions, but **there must be a human in the loop**.
-Contributors must read and review all AI (Artificial Intelligence) /
-Large Language Model (LLM)-generated code or text before they ask other project
-members to review it. The contributor is always the author and is fully
-accountable for their contributions.
+LLMs are changing software development in many ways. What was once scarce, the
+time and expertise to *write* software, is now plentiful. This scarcity was a
+choke point that limited consumption of related resources in open source
+projects. With that scarcity effectively gone in 2026, the dynamics and economics
+of a project like GDAL are being disrupted.
 
-Warning
--------
+A project like GDAL is not simply code. It is also design, review, coordinated
+refactoring, deprecation scheduling, coordinated communication, distribution,
+and historical outlook. The plentiful convenience of code writing LLMs do not
+effectively replace the human maintainers, architects, and documenters doing
+the jobs that provide much of the value GDAL users actually derive. If they
+did, LLM contributors would not need to bother to upstream activity to the
+project at all.
 
-It is not currently a settled question within the GDAL community whether code
-created by LLMs is acceptable in the GDAL codebase at all. This document only
-addresses the interaction aspects of LLM content, and should not be viewed as the
-project taking a position on whether or not LLM code contributions are acceptable.
+With the explosion of LLM usage in software development, the constrained
+resource is now "maintenance". It is the time to review your contribution, the
+time to make it concise, the time to refactor it in to a larger system, and the
+time to protect the larger software system from disruption, breakage, and
+performance degradation. Indiscriminate usage of LLMs in open source projects
+*consume* maintenance, and the GDAL LLM tool policy attempts to conserve that
+resource.
 
-Grumpy maintainer effect
-------------------------
-
-Our initial feedback from receiving AI tools based contributions is that they
-have the effect of making maintainers more grumpy than usual. As fixing human
-behavior to play nicely with AI will involve natural selection over many generations,
-be prepared for not getting a very warm welcome if you misuse those tools.
-You have been warned!
+Additionally, legal systems across the world (including US and EU) have not
+definitely determined whether LLM outputs are derived works of training data or
+if LLM-written code can even be copyrighted by a human. This is despite it
+being latently extracted and originated from open source software in the first
+place.
 
 Policy
-------
+--------------------------------------------------------------------------------
 
-GDAL's policy is that contributors can use whatever tools they would like to
-craft their contributions, but there must be a **human in the loop**.
-Contributors must read and review all AI (Artificial Intelligence) / Large Language Model (LLM)-generated code
-or text before they ask other project members to review it.
-The contributor is always the author and is fully accountable for their contributions.
-Contributors should be sufficiently confident that the contribution is high enough
-quality that asking for a review is a good use of scarce maintainer time, and they
-should be **able to answer questions about their work** during review.
+Contributors can make **limited use** of LLMs for contributions in GDAL,
+subject to details mentioned below:
 
-We expect that new contributors will be less confident in their contributions,
-and our guidance to them is to **start with small contributions** that they can
-fully understand to build confidence. We aspire to be a welcoming community
-that helps new contributors grow their expertise, but learning involves taking
-small steps, getting feedback, and iterating. Passing maintainer feedback to an
-LLM doesn't help anyone grow, and does not sustain our community.
+    * **Human contributors must be the primary author(s) of GDAL contributions**
 
-Contributors **must be transparent and label contributions that
-contain substantial amounts of tool-generated content**, and always mention it.
-The pull request and issue templates contain a checkbox for that purpose.
-Failure to do so, or lies when asked by a reviewer, will be considered as a violation.
-Our policy on labeling is intended to facilitate reviews, and not to track which parts of
-GDAL are generated. Contributors should note tool usage in their pull request
-description, commit message, or wherever authorship is normally indicated for
-the work. For instance, use a commit message trailer like Assisted-by: <name of
-code assistant>. This transparency helps the community develop best practices
-and understand the role of these new tools.
+    * All contributions including code, ticket comments, and commit messages
+      should be fully understood by the author(s) submitting them to the
+      project.
 
-This policy includes, but is not limited to, the following kinds of
-contributions:
+    * Submission of `vibe-coded <https://en.wikipedia.org/wiki/Vibe_coding>`__ contributions is *banned*.
 
-- Code, usually in the form of a pull request
-- RFCs or design proposals
-- Issue or security vulnerability reporting
-- Comments and feedback on pull requests
+    * LLMs may only be used as an improved auto-completion mechanism, or
+      for repeated tasks (mechanical refactoring) that could potentially be
+      completed with a deterministic algorithm.
 
-Details
--------
+    * Human-coordinated or uncoordinated (OpenClaw, etc) use of agents for
+      submission of contributions to the GDAL repository is *banned*.
 
-To ensure sufficient self review and understanding of the work, it is strongly
-recommended that contributors write PR descriptions themselves (if needed,
-using tools for translation or copy-editing), in particular to avoid over-verbose
-descriptions that LLMs are prone to generate. The description should explain
-the motivation, implementation approach, expected impact, and any open
-questions or uncertainties to the same extent as a contribution made without
-tool assistance.
+    * *Any* LLM usage must be indicated by ticket label, comment, or commit
+      message indication and account for what was written by whom/what.
 
-An important implication of this policy is that it bans agents that take action
-in our digital spaces without human approval, such as the GitHub `@claude`
-agent. Similarly, automated review tools that
-publish comments without human review are not allowed. However, an opt-in
-review tool that **keeps a human in the loop** is acceptable under this policy.
-As another example, using an LLM to generate documentation, which a contributor
-manually reviews for correctness and relevance, edits, and then posts as a PR,
-is an approved use of tools under this policy.
+    * The contributing human author is ultimately responsible for every line of
+      code, comment, or mailing list interaction they initiate, and all of it
+      is subject to the project's :ref:`code_of_conduct`.
 
-Extractive Contributions
-------------------------
-
-The reason for our "human-in-the-loop" contribution policy is that processing
-patches, PRs, RFCs, comments, issues, security alerts to GDAL is not free --
-it takes a lot of maintainer time and energy to review those contributions! Sending the
-unreviewed output of an LLM to open source project maintainers *extracts* work
-from them in the form of design and code review, so we call this kind of
-contribution an "extractive contribution".
-
-Our **golden rule** is that a contribution should be worth more to the project
-than the time it takes to review it. These ideas are captured by this quote
-from the book `Working in Public <https://press.stripe.com/working-in-public>`__ by Nadia Eghbal:
-
-    When attention is being appropriated, producers need to weigh the costs and
-    benefits of the transaction. To assess whether the appropriation of attention
-    is net-positive, it's useful to distinguish between *extractive* and
-    *non-extractive* contributions. Extractive contributions are those where the
-    marginal cost of reviewing and merging that contribution is greater than the
-    marginal benefit to the project's producers. In the case of a code
-    contribution, it might be a pull request that's too complex or unwieldy to
-    review, given the potential upside.
-
-    -- Nadia Eghbal
+    * The typical high verbosity of LLM code and text is actively discouraged.
+      More code is more code to maintain. High verbosity contribution (tickets,
+      code, messages, etc) will be seen as indication of LLM-generated content
+      when not labeled otherwise and may be ignored, closed, left unmerged, or
+      removed at maintainers' discretion.
 
 
-Prior to the advent of LLMs, open source project maintainers would often review
-any and all changes sent to the project simply because posting a change for
-review was a sign of interest from a potential long-term contributor. While new
-tools enable more development, it shifts effort from the implementor to the
-reviewer, and our policy exists to ensure that we value and do not squander
-maintainer time.
+Violations
+--------------------------------------------------------------------------------
 
-Handling Violations
--------------------
-
-If a maintainer judges that a contribution doesn't comply with this policy,
+If a maintainer judges that a contribution does not comply with this policy,
 they should paste the following response to request changes:
 
 .. code-block:: text
@@ -136,53 +84,25 @@ they should paste the following response to request changes:
     AI-generated contributions:
     https://gdal.org/community/ai_tool_policy.html
 
-The best ways to make a change less extractive and more valuable are to reduce
-its size or complexity or to increase its usefulness to the community. These
-factors are impossible to weigh objectively, and our project policy leaves this
-determination up to the maintainers of the project, i.e. those who are doing
-the work of sustaining the project.
-
-If/or when it becomes clear that a GitHub issue or PR is off-track and not
-moving in the right direction, maintainers should apply the `extractive` label
-to help other reviewers prioritize their review time.
-
-If a contributor fails to make their change meaningfully less extractive,
+If a contributor fails to rectify their contribution to comply with the policy,
 maintainers may lock the conversation and/or close the pull request/issue/RFC.
 In case of repeated violations of our policy, the GDAL project reserves itself
-the right to ban temporarily or definitely the infringing person/account.
+the right to temporarily or permanently ban the infringing person/account.
 
-Copyright
----------
+Mitigation
+--------------------------------------------------------------------------------
 
-Artificial intelligence systems raise many questions around copyright that have
-yet to be answered. Our policy on AI tools is similar to our copyright policy:
-Contributors are responsible for ensuring that they have the right to
-contribute code under the terms of our license, typically meaning that either
-they, their employer, or their collaborators hold the copyright. Using AI tools
-to regenerate copyrighted material does not remove the copyright, and
-contributors are responsible for ensuring that such material does not appear in
-their contributions. Contributions found to violate this policy will be removed
-just like any other offending contribution. If a reviewer has doubts about the
-legal aspects of a contribution, they may ask the contributor to provide more
-details on the origins of a particular piece of code.
-
-Credits for this document
--------------------------
-
-This document is a quasi direct adaptation from the
-`LLVM software "AI Tool Use Policy" <https://github.com/llvm/llvm-project/blob/main/llvm/docs/AIToolPolicy.md>`__,
-and due credits go to its original authors: Reid Kleckner, Hubert Tong and
-"maflcko"
+The GDAL :ref:`sponsorship_program` is one way your organization can help
+buffer the cost and disruption of LLMs in keystone projects such as GDAL. The
+constrained resource is maintenance, not adding more code/capability. The
+Sponsorship Program financially supports operation of GDAL as an ongoing open source
+software project, and without it, much of the activity GDAL users take for granted
+would simply not happen.
 
 .. below is an allow-list for spelling checker.
 
 .. spelling:word-list::
-    Reid
-    Kleckner
-    Hubert
-    Tong
-    maflcko
     LLM
-    unreviewed
-    Eghbal
-    implementor
+    documenters
+    unmerged
+    latently
