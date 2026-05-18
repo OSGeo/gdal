@@ -3987,50 +3987,38 @@ void netCDFDataset::SetProjectionFromVar(
             {
                 if (EQUAL(pszProjName, SRS_PT_GEOSTATIONARY_SATELLITE))
                 {
-                    double satelliteHeight =
+                    const double satelliteHeight =
                         oSRS.GetProjParm(SRS_PP_SATELLITE_HEIGHT, 1.0);
-                    size_t nAttlen = 0;
-                    char szUnits[NC_MAX_NAME + 1];
-                    szUnits[0] = '\0';
-                    nc_type nAttype = NC_NAT;
-                    nc_inq_att(nGroupId, nVarDimXID, "units", &nAttype,
-                               &nAttlen);
-                    if (nAttlen < sizeof(szUnits) &&
-                        nc_get_att_text(nGroupId, nVarDimXID, "units",
-                                        szUnits) == NC_NOERR)
+                    std::string osUnits;
+                    if (NCDFGetAttr(nGroupId, nVarDimXID, "units", osUnits) ==
+                        CE_None)
                     {
-                        szUnits[nAttlen] = '\0';
-                        if (EQUAL(szUnits, "microradian"))
+                        if (EQUAL(osUnits.c_str(), "microradian"))
                         {
                             xMinMax[0] =
                                 xMinMax[0] * satelliteHeight * 0.000001;
                             xMinMax[1] =
                                 xMinMax[1] * satelliteHeight * 0.000001;
                         }
-                        else if (EQUAL(szUnits, "rad") ||
-                                 EQUAL(szUnits, "radian"))
+                        else if (EQUAL(osUnits.c_str(), "rad") ||
+                                 EQUAL(osUnits.c_str(), "radian"))
                         {
                             xMinMax[0] = xMinMax[0] * satelliteHeight;
                             xMinMax[1] = xMinMax[1] * satelliteHeight;
                         }
                     }
-                    szUnits[0] = '\0';
-                    nc_inq_att(nGroupId, nVarDimYID, "units", &nAttype,
-                               &nAttlen);
-                    if (nAttlen < sizeof(szUnits) &&
-                        nc_get_att_text(nGroupId, nVarDimYID, "units",
-                                        szUnits) == NC_NOERR)
+                    if (NCDFGetAttr(nGroupId, nVarDimYID, "units", osUnits) ==
+                        CE_None)
                     {
-                        szUnits[nAttlen] = '\0';
-                        if (EQUAL(szUnits, "microradian"))
+                        if (EQUAL(osUnits.c_str(), "microradian"))
                         {
                             yMinMax[0] =
                                 yMinMax[0] * satelliteHeight * 0.000001;
                             yMinMax[1] =
                                 yMinMax[1] * satelliteHeight * 0.000001;
                         }
-                        else if (EQUAL(szUnits, "rad") ||
-                                 EQUAL(szUnits, "radian"))
+                        else if (EQUAL(osUnits.c_str(), "rad") ||
+                                 EQUAL(osUnits.c_str(), "radian"))
                         {
                             yMinMax[0] = yMinMax[0] * satelliteHeight;
                             yMinMax[1] = yMinMax[1] * satelliteHeight;
@@ -5193,8 +5181,7 @@ int NCDFWriteSRSVariable(int cdfid, const OGRSpatialReference *poSRS,
                     break;
                 }
                 std::string val;
-                val.resize(attlen);
-                nc_get_att_text(cdfid, NCDFVarID, szAttrName, &val[0]);
+                NCDFGetAttr(cdfid, NCDFVarID, szAttrName, val);
                 if (val != pszValue)
                 {
                     bSame = false;
@@ -6563,10 +6550,8 @@ CPLErr netCDFDataset::ReadAttributes(int cdfidIn, int var)
 /************************************************************************/
 void netCDFDataset::CreateSubDatasetList(int nGroupId)
 {
-    char szVarStdName[NC_MAX_NAME + 1];
+    std::string osVarStdName;
     int *ponDimIds = nullptr;
-    nc_type nAttype;
-    size_t nAttlen;
 
     netCDFDataset *poDS = this;
 
@@ -6647,17 +6632,10 @@ void netCDFDataset::CreateSubDatasetList(int nGroupId)
 
             nSubDatasets++;
 
-            nAttlen = 0;
-            nc_inq_att(nGroupId, nVar, CF_STD_NAME, &nAttype, &nAttlen);
-            if (nAttlen < sizeof(szVarStdName) &&
-                nc_get_att_text(nGroupId, nVar, CF_STD_NAME, szVarStdName) ==
-                    NC_NOERR)
+            if (NCDFGetAttr(nGroupId, nVar, CF_STD_NAME, osVarStdName) !=
+                CE_None)
             {
-                szVarStdName[nAttlen] = '\0';
-            }
-            else
-            {
-                snprintf(szVarStdName, sizeof(szVarStdName), "%s", pszName);
+                osVarStdName = pszName;
             }
 
             char szTemp[NC_MAX_NAME + 1];
@@ -6687,7 +6665,7 @@ void netCDFDataset::CreateSubDatasetList(int nGroupId)
             poDS->papszSubDatasets =
                 CSLSetNameValue(poDS->papszSubDatasets, szTemp,
                                 CPLSPrintf("[%s] %s (%s)", osDim.c_str(),
-                                           szVarStdName, pszType));
+                                           osVarStdName.c_str(), pszType));
         }
     }
 
@@ -8459,21 +8437,11 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    char szConventions[NC_MAX_NAME + 1];
-    szConventions[0] = '\0';
-    nc_type nAttype = NC_NAT;
-    size_t nAttlen = 0;
-    nc_inq_att(cdfid, NC_GLOBAL, "Conventions", &nAttype, &nAttlen);
-    if (nAttlen >= sizeof(szConventions) ||
-        nc_get_att_text(cdfid, NC_GLOBAL, "Conventions", szConventions) !=
-            NC_NOERR)
+    std::string osConventions;
+    if (NCDFGetAttr(cdfid, NC_GLOBAL, "Conventions", osConventions) != CE_None)
     {
         CPLDebug("GDAL_netCDF", "No UNIDATA NC_GLOBAL:Conventions attribute");
         // Note that 'Conventions' is always capital 'C' in CF spec.
-    }
-    else
-    {
-        szConventions[nAttlen] = '\0';
     }
 
     // Create band information objects.
@@ -8649,7 +8617,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     // attributes (not varnames) set GDAL_NETCDF_VERIFY_DIMS=STRICT
     const bool bCheckDims =
         CPLTestBool(CPLGetConfigOption("GDAL_NETCDF_VERIFY_DIMS", "YES")) &&
-        STARTS_WITH_CI(szConventions, "CF");
+        STARTS_WITH_CI(osConventions.c_str(), "CF");
 
     bool bYXBandOrder = false;
     if (nd == 3)
@@ -10841,6 +10809,35 @@ CPLErr NCDFGetAttr(int nCdfId, int nVarId, const char *pszAttrName,
     return NCDFGetAttr1(nCdfId, nVarId, pszAttrName, nullptr, pszValue);
 }
 
+CPLErr NCDFGetAttr(int nCdfId, int nVarId, const char *pszAttrName,
+                   std::string &osValue)
+{
+    nc_type nAttrType = NC_NAT;
+    size_t nAttrLen = 0;
+
+    int status = nc_inq_att(nCdfId, nVarId, pszAttrName, &nAttrType, &nAttrLen);
+    if (status != NC_NOERR)
+        return CE_Failure;
+
+    if (nAttrType != NC_CHAR)
+        return CE_Failure;
+
+    try
+    {
+        osValue.resize(nAttrLen, 0);
+    }
+    catch (const std::exception &)
+    {
+        return CE_Failure;
+    }
+
+    const auto nErr = nc_get_att_text(nCdfId, nVarId, pszAttrName,
+                                      osValue.data()) != NC_NOERR;
+    NCDF_ERR_RET(nErr);
+
+    return CE_None;
+}
+
 /* By default write NC_CHAR, but detect for int/float/double and */
 /* NC4 string arrays */
 static CPLErr NCDFPutAttr(int nCdfId, int nVarId, const char *pszAttrName,
@@ -12388,13 +12385,13 @@ CPLErr netCDFDataset::FilterVars(
                                &attlen) == NC_NOERR &&
                     atttype == NC_CHAR && attlen < NC_MAX_NAME)
                 {
-                    char szInstanceDimension[NC_MAX_NAME + 1];
-                    if (nc_get_att_text(nCdfId, v, "instance_dimension",
-                                        szInstanceDimension) == NC_NOERR)
+                    std::string osInstanceDimension;
+                    if (NCDFGetAttr(nCdfId, v, "instance_dimension",
+                                    osInstanceDimension) == CE_None)
                     {
-                        szInstanceDimension[attlen] = 0;
-                        int status = nc_inq_dimid(nCdfId, szInstanceDimension,
-                                                  &nProfileDimId);
+                        const int status =
+                            nc_inq_dimid(nCdfId, osInstanceDimension.c_str(),
+                                         &nProfileDimId);
                         if (status == NC_NOERR)
                             nParentIndexVarID = v;
                         else
@@ -12403,7 +12400,7 @@ CPLErr netCDFDataset::FilterVars(
                             CPLError(CE_Warning, CPLE_AppDefined,
                                      "Attribute instance_dimension='%s' refers "
                                      "to a non existing dimension",
-                                     szInstanceDimension);
+                                     osInstanceDimension.c_str());
                         else
                             NCDF_ERR(status);
                     }

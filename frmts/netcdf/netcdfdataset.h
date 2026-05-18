@@ -792,6 +792,8 @@ CPLErr NCDFGetAttr(int nCdfId, int nVarId, const char *pszAttrName,
                    double *pdfValue);
 CPLErr NCDFGetAttr(int nCdfId, int nVarId, const char *pszAttrName,
                    char **pszValue);
+CPLErr NCDFGetAttr(int nCdfId, int nVarId, const char *pszAttrName,
+                   std::string &osValue);
 bool NCDFIsUnlimitedDim(bool bIsNC4, int cdfid, int nDimId);
 bool NCDFIsUserDefinedType(int ncid, int type);
 
