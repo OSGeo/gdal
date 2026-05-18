@@ -32,7 +32,7 @@ or the core GDAL runtime (``GDAL``).
 
     .. code-block:: console
 
-       $ gdal vector convert in.gpkg out.geojson --overwrite --debug ON
+       $ gdal vector convert in.shp out.geojson --overwrite --debug ON
        GDAL: GDALOpen(in.shp, this=000001719D0A3D80) succeeds as ESRI Shapefile.
        GeoJSON: First pass: 100.00 %
        GDAL: GDALOpen(out.geojson, this=000001719D0AC240) succeeds as GeoJSON.
