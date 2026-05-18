@@ -495,7 +495,7 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
 %}
 
 %rename (MDArray) GDALMDArrayHS;
-
+%rename (GetRegularSpacing) GDALMDArrayIsRegularlySpaced;
 class GDALMDArrayHS {
 private:
   GDALMDArrayHS();
@@ -1315,6 +1315,18 @@ public:
   %clear (RETURN_NONE);
 #endif
 %clear (double padfGeoTransform[6]);
+
+#ifdef SWIGJAVA
+bool GetRegularSpacing(double argout[2]) {
+    return GDALMDArrayIsRegularlySpaced(self, &argout[0], &argout[1]);
+}
+#else
+%apply (IF_FALSE_RETURN_NONE) {(RETURN_NONE)};
+RETURN_NONE GetRegularSpacing(double argout[2]) {
+    return GDALMDArrayIsRegularlySpaced(self, &argout[0], &argout[1]);
+}
+%clear (RETURN_NONE);
+#endif
 
 } /* extend */
 }; /* GDALMDArrayH */

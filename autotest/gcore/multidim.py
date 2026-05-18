@@ -2072,3 +2072,29 @@ def test_multidim_guessgeotransform_irregular_2d():
     assert gt is None
     gt = ar.GuessGeoTransform(0, 1, False)
     assert gt is None
+
+
+def test_multidim_get_regular_spacing():
+    ## two indexing variables, Y is irregular
+    drv = gdal.GetDriverByName("MEM")
+    mem_ds = drv.CreateMultiDimensional("myds_irreg")
+    rg = mem_ds.GetRootGroup()
+    dimX = rg.CreateDimension("X", None, None, 3)
+    dimY = rg.CreateDimension("Y", None, None, 8)
+    varY = rg.CreateMDArray(
+        dimY.GetName(), [dimY], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    # Irregularly spaced values - spacing increases from 1.0 to 6.0
+    varY.Write(array.array("d", [90, 89, 87.5, 85.5, 82.5, 78.5, 73.5, 67.5]))
+    dimY.SetIndexingVariable(varY)
+    varX = rg.CreateMDArray(
+        dimX.GetName(), [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+    )
+    varX.Write(array.array("d", [-180 + 0.9 + i for i in range(dimX.GetSize())]))
+    dimX.SetIndexingVariable(varX)
+    ar = rg.CreateMDArray(
+        "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    assert ar.GetRegularSpacing() is None
+    assert varX.GetRegularSpacing() == pytest.approx((-179.1, 1.0))
+    assert varY.GetRegularSpacing() is None

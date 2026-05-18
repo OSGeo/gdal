@@ -1699,3 +1699,20 @@ bool GDALMDArrayGuessGeoTransform(GDALMDArrayH hArray, size_t nDimX,
     return hArray->m_poImpl->GuessGeoTransform(nDimX, nDimY, bPixelIsPoint,
                                                padfGeoTransform);
 }
+
+/************************************************************************/
+/*                    GDALMDArrayIsRegularlySpaced()                    */
+/************************************************************************/
+
+/** \brief Returns whether an array is a 1D regularly spaced array.
+ *
+ * This is the same as the C++ method GDALMDArray::IsRegularlySpaced().
+ *
+ * @since GDAL 3.14
+ */
+bool GDALMDArrayIsRegularlySpaced(GDALMDArrayH hArray, double *pdfStart,
+                                  double *pdfIncrement)
+{
+    VALIDATE_POINTER1(hArray, __func__, false);
+    return hArray->m_poImpl->IsRegularlySpaced(*pdfStart, *pdfIncrement);
+}
