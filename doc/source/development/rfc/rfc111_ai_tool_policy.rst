@@ -8,7 +8,8 @@ RFC 111: Add a AI/LLM tool policy
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2026-02-09
-Status:        Draft
+Revised:       2026-05-18
+Status:        Adopted
 ============== =============================================
 
 Summary
@@ -36,7 +37,7 @@ Similar moves in other projects
 Voting history
 --------------
 
-TBD
++1 from PSC members KurtS, NormanB, MikeS, JavierJS, DanB, HowardB, JukkaR, DanielM and EvenR.
 
 .. below is an allow-list for spelling checker.
 
