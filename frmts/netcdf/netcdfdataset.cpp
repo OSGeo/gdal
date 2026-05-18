@@ -107,7 +107,7 @@ static CPLErr NCDFOpenSubDataset(int nCdfId, const char *pszSubdatasetName,
 static CPLErr NCDFGetVisibleDims(int nGroupId, int *pnDims, int **ppanDimIds);
 static CPLErr NCDFGetSubGroups(int nGroupId, int *pnSubGroups,
                                int **ppanSubGroupIds);
-static CPLErr NCDFGetGroupFullName(int nGroupId, char **ppszFullName,
+static CPLErr NCDFGetGroupFullName(int nGroupId, std::string &osFullName,
                                    bool bNC3Compat = true);
 static CPLErr NCDFGetVarFullName(int nGroupId, int nVarId,
                                  std::string &osFullName,
@@ -3070,10 +3070,8 @@ double netCDFDataset::FetchCopyParam(const char *pszGridMappingValue,
                                      bool *pbFound) const
 
 {
-    char *pszTemp =
-        CPLStrdup(CPLSPrintf("%s#%s", pszGridMappingValue, pszParam));
-    const char *pszValue = aosMetadata.FetchNameValue(pszTemp);
-    CPLFree(pszTemp);
+    std::string osTemp = CPLOPrintf("%s#%s", pszGridMappingValue, pszParam);
+    const char *pszValue = aosMetadata.FetchNameValue(osTemp.c_str());
 
     if (pbFound)
     {
@@ -11955,36 +11953,35 @@ static CPLErr NCDFGetSubGroups(int nGroupId, int *pnSubGroups,
 // (e.g. /group1/group2/.../groupn).
 // bNC3Compat remove the leading slash for top-level variables for
 // backward compatibility (top-level variables are the ones in the root group).
-static CPLErr NCDFGetGroupFullName(int nGroupId, char **ppszFullName,
+static CPLErr NCDFGetGroupFullName(int nGroupId, std::string &osFullName,
                                    bool bNC3Compat)
 {
-    *ppszFullName = nullptr;
+    osFullName = "";
 
     size_t nFullNameLen;
     NCDF_ERR_RET(nc_inq_grpname_len(nGroupId, &nFullNameLen));
-    *ppszFullName =
-        static_cast<char *>(CPLMalloc((nFullNameLen + 1) * sizeof(char)));
-    int status = nc_inq_grpname_full(nGroupId, &nFullNameLen, *ppszFullName);
+    osFullName.resize(nFullNameLen);
+
+    const int status =
+        nc_inq_grpname_full(nGroupId, &nFullNameLen, osFullName.data());
     if (status != NC_NOERR)
     {
-        CPLFree(*ppszFullName);
-        *ppszFullName = nullptr;
+        osFullName = "";
         NCDF_ERR_RET(status);
     }
 
-    if (bNC3Compat && EQUAL(*ppszFullName, "/"))
-        (*ppszFullName)[0] = '\0';
+    if (bNC3Compat && osFullName == "/")
+        osFullName = "";
 
     return CE_None;
 }
 
 CPLString NCDFGetGroupFullName(int nGroupId)
 {
-    char *pszFullname = nullptr;
-    NCDFGetGroupFullName(nGroupId, &pszFullname, false);
-    CPLString osRet(pszFullname ? pszFullname : "");
-    CPLFree(pszFullname);
-    return osRet;
+    CPLString osFullName;
+    NCDFGetGroupFullName(nGroupId, osFullName, false);
+
+    return osFullName;
 }
 
 // Get the full name of a given NetCDF variable ID
@@ -11996,8 +11993,8 @@ static CPLErr NCDFGetVarFullName(int nGroupId, int nVarId,
                                  std::string &osFullName, bool bNC3Compat)
 {
     osFullName = "";
-    char *pszGroupFullName = nullptr;
-    ERR_RET(NCDFGetGroupFullName(nGroupId, &pszGroupFullName, bNC3Compat));
+    std::string osGroupFullName;
+    ERR_RET(NCDFGetGroupFullName(nGroupId, osGroupFullName, bNC3Compat));
     char szVarName[NC_MAX_NAME + 1];
     if (nVarId == NC_GLOBAL)
     {
@@ -12008,15 +12005,15 @@ static CPLErr NCDFGetVarFullName(int nGroupId, int nVarId,
         int status = nc_inq_varname(nGroupId, nVarId, szVarName);
         if (status != NC_NOERR)
         {
-            CPLFree(pszGroupFullName);
             NCDF_ERR_RET(status);
         }
     }
     const char *pszSep = "/";
-    if (EQUAL(pszGroupFullName, "/") || EQUAL(pszGroupFullName, ""))
+    if (osGroupFullName.empty() || osGroupFullName == "/")
         pszSep = "";
-    osFullName = CPLOPrintf("%s%s%s", pszGroupFullName, pszSep, szVarName);
-    CPLFree(pszGroupFullName);
+    osFullName =
+        CPLOPrintf("%s%s%s", osGroupFullName.c_str(), pszSep, szVarName);
+
     return CE_None;
 }
 
@@ -12116,14 +12113,13 @@ static CPLErr NCDFResolveElem(int nStartGroupId, const char *pszVar,
 
     if (bMandatory)
     {
-        char *pszStartGroupFullName = nullptr;
-        NCDFGetGroupFullName(nStartGroupId, &pszStartGroupFullName);
+        std::string osStartGroupFullName;
+        NCDFGetGroupFullName(nStartGroupId, osStartGroupFullName);
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Cannot resolve mandatory %s %s from group %s",
                  (pszVar ? pszVar : pszAtt),
                  (pszVar ? "variable" : "attribute"),
-                 (pszStartGroupFullName ? pszStartGroupFullName : ""));
-        CPLFree(pszStartGroupFullName);
+                 osStartGroupFullName.c_str());
     }
 
     *pnGroupId = -1;
@@ -12448,17 +12444,15 @@ CPLErr netCDFDataset::CreateGrpVectorLayers(
     const std::map<int, int> &oMapDimIdToCount, int nVarXId, int nVarYId,
     int nVarZId, int nProfileDimId, int nParentIndexVarID, bool bKeepRasters)
 {
-    char *pszGroupName = nullptr;
-    NCDFGetGroupFullName(nCdfId, &pszGroupName);
-    if (pszGroupName == nullptr || pszGroupName[0] == '\0')
+    std::string osGroupName;
+    NCDFGetGroupFullName(nCdfId, osGroupName);
+    if (osGroupName.empty())
     {
-        CPLFree(pszGroupName);
-        pszGroupName = CPLStrdup(CPLGetBasenameSafe(osFilename).c_str());
+        osGroupName = CPLGetBasenameSafe(osFilename);
     }
     OGRwkbGeometryType eGType = wkbUnknown;
-    CPLString osLayerName =
-        aosMetadata.FetchNameValueDef("NC_GLOBAL#ogr_layer_name", pszGroupName);
-    CPLFree(pszGroupName);
+    CPLString osLayerName = aosMetadata.FetchNameValueDef(
+        "NC_GLOBAL#ogr_layer_name", osGroupName.c_str());
     aosMetadata.SetNameValue("NC_GLOBAL#ogr_layer_name", nullptr);
 
     if (EQUAL(osFeatureType, "point") || EQUAL(osFeatureType, "profile"))
@@ -12582,7 +12576,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers(
     if (!this->bSGSupport)
         SetProjectionFromVar(nCdfId, nFirstVarId, true);
     const char *pszValue = FetchAttr(nCdfId, nFirstVarId, CF_GRD_MAPPING);
-    char *pszGridMapping = (pszValue ? CPLStrdup(pszValue) : nullptr);
+    std::string osGridMapping = pszValue ? pszValue : "";
     aosMetadata = aosMetadataBackup;
 
     OGRSpatialReference *poSRS = nullptr;
@@ -12615,10 +12609,9 @@ CPLErr netCDFDataset::CreateGrpVectorLayers(
     {
         poLayer->SetWKTGeometryField(osGeometryField);
     }
-    if (pszGridMapping != nullptr)
+    if (!osGridMapping.empty())
     {
-        poLayer->SetGridMapping(pszGridMapping);
-        CPLFree(pszGridMapping);
+        poLayer->SetGridMapping(osGridMapping.c_str());
     }
     poLayer->SetProfile(nProfileDimId, nParentIndexVarID);
 
