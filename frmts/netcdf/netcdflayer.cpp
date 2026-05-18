@@ -158,8 +158,8 @@ bool netCDFLayer::Create(CSLConstList papszOptions,
     m_nDefaultWidth = atoi(
         CSLFetchNameValueDef(papszOptions, "STRING_DEFAULT_WIDTH",
                              CPLSPrintf("%d", m_bAutoGrowStrings ? 10 : 80)));
-    m_bWriteGDALTags = CPL_TO_BOOL(
-        CSLFetchBoolean(m_poDS->papszCreationOptions, "WRITE_GDAL_TAGS", TRUE));
+    m_bWriteGDALTags =
+        m_poDS->aosCreationOptions.FetchBool("WRITE_GDAL_TAGS", true);
     m_bUseStringInNC4 =
         CPL_TO_BOOL(CSLFetchBoolean(papszOptions, "USE_STRING_IN_NC4", TRUE));
     m_bNCDumpCompat =
