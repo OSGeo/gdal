@@ -772,8 +772,13 @@ std::vector<GDALColorAssociation> GDALLoadTextColorMap(const char *pszFilename,
     const double dfNoDataValue =
         poBand ? poBand->GetNoDataValue(&bHasNoData) : 0.0;
 
-    bool bIsGMT_CPT = false;
+    // GMT .cpt format is described at
+    // https://docs.generic-mapping-tools.org/dev/reference/features.html#color-palette-tables
+    // We also support an alternate (older) format not using slash to separate R/G/B
+
+    bool bIsGMT_CPT = EQUAL(CPLGetExtensionSafe(pszFilename).c_str(), "gmt");
     GDALColorAssociation sColor;
+    std::string osLine;
     while (const char *pszLine =
                CPLReadLine2L(fpColorFile.get(), 10 * 1024, nullptr))
     {
@@ -794,11 +799,20 @@ std::vector<GDALColorAssociation> GDALLoadTextColorMap(const char *pszFilename,
             continue;
         }
 
+        osLine = pszLine;
+        if (bIsGMT_CPT)
+        {
+            // Strip off trailing label(s)
+            const auto nPos = osLine.find(';');
+            if (nPos != std::string::npos)
+                osLine.resize(nPos);
+        }
+
         const CPLStringList aosFields(
-            CSLTokenizeStringComplex(pszLine, " ,\t:", FALSE, FALSE));
+            CSLTokenizeStringComplex(pszLine, " ,\t:/", FALSE, FALSE));
         const int nTokens = aosFields.size();
 
-        if (bIsGMT_CPT && nTokens == 8)
+        if (bIsGMT_CPT && (nTokens == 8 || nTokens == 9))
         {
             sColor.dfVal = CPLAtof(aosFields[0]);
             sColor.nR = atoi(aosFields[1]);
