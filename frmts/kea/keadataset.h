@@ -16,19 +16,26 @@
 #include "gdal_priv.h"
 #include "cpl_multiproc.h"
 #include "libkea_headers.h"
+#include "libkea/kea-config.h"
 
 class LockedRefCount;
+
+#if LIBKEA_VERSION_MAJOR < 2
+typedef H5::H5File *HDF5Ptr;
+#else
+typedef HighFive::File *HDF5Ptr;
+#endif
 
 // class that implements a GDAL dataset
 class KEADataset final : public GDALDataset
 {
-    static H5::H5File *CreateLL(const char *pszFilename, int nXSize, int nYSize,
-                                int nBands, GDALDataType eType,
-                                CSLConstList papszParamList);
+    static HDF5Ptr CreateLL(const char *pszFilename, int nXSize, int nYSize,
+                            int nBands, GDALDataType eType,
+                            CSLConstList papszParamList);
 
   public:
     // constructor/destructor
-    KEADataset(H5::H5File *keaImgH5File, GDALAccess eAccess);
+    KEADataset(HDF5Ptr keaImgH5File, GDALAccess eAccess);
     ~KEADataset() override;
 
     // static methods that handle open and creation
