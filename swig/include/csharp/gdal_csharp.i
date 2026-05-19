@@ -465,7 +465,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     }
   }
 
-  public static int VSIFReadL(byte[] buffer, int offset, int count, IntPtr fp) {
+  public static int VSIFReadL(byte[] buffer, long offset, int count, IntPtr fp) {
     ValidateBufferArgs(buffer, offset, count);
     GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
     try {
@@ -476,7 +476,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     }
   }
 
-  public static int VSIFWriteL(byte[] buffer, int offset, int count, IntPtr fp) {
+  public static int VSIFWriteL(byte[] buffer, long offset, int count, IntPtr fp) {
     ValidateBufferArgs(buffer, offset, count);
     GCHandle handle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
     try {
