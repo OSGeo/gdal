@@ -175,9 +175,9 @@ function (gdal_csharp_wrap)
     # SWIG command
     COMMAND
       ${SWIG_EXECUTABLE} -namespace ${_CSHARP_NAMESPACE} -outdir ${_CSHARP_WORKING_DIRECTORY} -DSWIG2_CSHARP
-      -DSWIG_CSHARP_NO_STRING_HELPER -dllimport ${_CSHARP_WRAPPER} -Wall -I${PROJECT_SOURCE_DIR}/swig/include 
-      -I${PROJECT_SOURCE_DIR}/swig/include/csharp -I${PROJECT_SOURCE_DIR}/gdal -c++ -csharp -o ${_CSHARP_WRAPPER}.cpp
-      ${_CSHARP_SWIG_INTERFACE}      
+      -DSWIG_CSHARP_NO_STRING_HELPER -DSWIG_CSHARP_NO_STRING_WITH_LENGTH_HELPER -dllimport ${_CSHARP_WRAPPER}
+      -Wall -I${PROJECT_SOURCE_DIR}/swig/include -I${PROJECT_SOURCE_DIR}/swig/include/csharp
+      -I${PROJECT_SOURCE_DIR}/gdal -c++ -csharp -o ${_CSHARP_WRAPPER}.cpp ${_CSHARP_SWIG_INTERFACE}      
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     DEPENDS ${GDAL_SWIG_COMMON_INTERFACE_FILES} ${PROJECT_SOURCE_DIR}/swig/include/csharp/typemaps_csharp.i
             ${_CSHARP_SWIG_INTERFACE})

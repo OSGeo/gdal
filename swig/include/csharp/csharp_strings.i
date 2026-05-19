@@ -358,3 +358,108 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
     CSLDestroy((char**)string_list_ptr);
   }
 %}
+
+/******************************************************************************
+ * SWIG helper for C# exceptions with UTF-8 string parameters
+ *
+ * This helper class supercedes SWIG's built-in SWIGExceptionHelper.
+ * SWIGExceptionHelper is still present and registers its own callbacks. Then
+ * ExceptionHelperUtf8 registers its own callbacks, overwriting the callbacks
+ * previously registered by SWIGExceptionHelper. Do this instead of defining
+ * SWIG_CSHARP_NO_EXCEPTION_HELPER so that we can still make use of the C#
+ * exception infrastructure built into SWIG.
+ *****************************************************************************/
+
+%pragma(csharp) imclasscode=%{
+  public class ExceptionHelperUtf8 {
+    public delegate void ExceptionDelegateUtf8(IntPtr pMessage);
+    public delegate void ExceptionArgumentDelegateUtf8(IntPtr pMessage, IntPtr pParamName);
+	
+    [DllImport("$dllimport", EntryPoint = "SWIGRegisterExceptionCallbacks_$module")]
+    public static extern void RegisterExceptionCallbacksUtf8(
+        ExceptionDelegateUtf8 applicationDelegate,
+        ExceptionDelegateUtf8 arithmeticDelegate,
+        ExceptionDelegateUtf8 divideByZeroDelegate,
+        ExceptionDelegateUtf8 indexOutOfRangeDelegate,
+        ExceptionDelegateUtf8 invalidCastDelegate,
+        ExceptionDelegateUtf8 invalidOperationDelegate,
+        ExceptionDelegateUtf8 ioDelegate,
+        ExceptionDelegateUtf8 nullReferenceDelegate,
+        ExceptionDelegateUtf8 outOfMemoryDelegate,
+        ExceptionDelegateUtf8 overflowDelegate,
+        ExceptionDelegateUtf8 systemExceptionDelegate);
+
+    [DllImport("$dllimport", EntryPoint = "SWIGRegisterExceptionArgumentCallbacks_$module")]
+    public static extern void RegisterExceptionCallbacksArgumentUtf8(
+        ExceptionArgumentDelegateUtf8 argumentDelegate,
+        ExceptionArgumentDelegateUtf8 argumentNullDelegate,
+        ExceptionArgumentDelegateUtf8 argumentOutOfRangeDelegate);
+
+    static ExceptionHelperUtf8() {
+      RegisterExceptionCallbacksUtf8(
+        new ExceptionDelegateUtf8(SetPendingApplicationException),
+        new ExceptionDelegateUtf8(SetPendingArithmeticException),
+        new ExceptionDelegateUtf8(SetPendingDivideByZeroException),
+        new ExceptionDelegateUtf8(SetPendingIndexOutOfRangeException),
+        new ExceptionDelegateUtf8(SetPendingInvalidCastException),
+        new ExceptionDelegateUtf8(SetPendingInvalidOperationException),
+        new ExceptionDelegateUtf8(SetPendingIOException),
+        new ExceptionDelegateUtf8(SetPendingNullReferenceException),
+        new ExceptionDelegateUtf8(SetPendingOutOfMemoryException),
+        new ExceptionDelegateUtf8(SetPendingOverflowException),
+        new ExceptionDelegateUtf8(SetPendingSystemException));
+		
+      RegisterExceptionCallbacksArgumentUtf8(
+        new ExceptionArgumentDelegateUtf8(SetPendingArgumentException),
+        new ExceptionArgumentDelegateUtf8(SetPendingArgumentNullException),
+        new ExceptionArgumentDelegateUtf8(SetPendingArgumentOutOfRangeException));
+    }
+
+    static void SetPendingApplicationException(IntPtr pMessage)
+      => SWIGPendingException.Set(new ApplicationException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingArithmeticException(IntPtr pMessage)
+      => SWIGPendingException.Set(new ArithmeticException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingDivideByZeroException(IntPtr pMessage)
+      => SWIGPendingException.Set(new DivideByZeroException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingIndexOutOfRangeException(IntPtr pMessage)
+      => SWIGPendingException.Set(new IndexOutOfRangeException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingInvalidCastException(IntPtr pMessage)
+      => SWIGPendingException.Set(new InvalidCastException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingInvalidOperationException(IntPtr pMessage)
+      => SWIGPendingException.Set(new InvalidOperationException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingIOException(IntPtr pMessage)
+      => SWIGPendingException.Set(new System.IO.IOException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingNullReferenceException(IntPtr pMessage)
+      => SWIGPendingException.Set(new NullReferenceException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingOutOfMemoryException(IntPtr pMessage)
+      => SWIGPendingException.Set(new OutOfMemoryException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingOverflowException(IntPtr pMessage)
+      => SWIGPendingException.Set(new OverflowException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingSystemException(IntPtr pMessage)
+      => SWIGPendingException.Set(new SystemException(Utf8UnmanagedToString(pMessage), SWIGPendingException.Retrieve()));
+    static void SetPendingArgumentException(IntPtr pMessage, IntPtr pParamName)
+      => SWIGPendingException.Set(new ArgumentException(Utf8UnmanagedToString(pMessage), Utf8UnmanagedToString(pParamName), SWIGPendingException.Retrieve()));
+    static void SetPendingArgumentNullException(IntPtr pMessage, IntPtr pParamName) {
+      Exception e = SWIGPendingException.Retrieve();
+	  string message = e != null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
+      SWIGPendingException.Set(new ArgumentNullException(Utf8UnmanagedToString(pParamName), message));
+    }
+    static void SetPendingArgumentOutOfRangeException(IntPtr pMessage, IntPtr pParamName) {
+      Exception e = SWIGPendingException.Retrieve();
+	  string message = e != null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
+      SWIGPendingException.Set(new ArgumentOutOfRangeException(Utf8UnmanagedToString(pParamName), message));
+    }
+    unsafe static string Utf8UnmanagedToString(IntPtr pUtf8Bts) {
+      if (pUtf8Bts == IntPtr.Zero)
+        return null;
+
+      byte* pStringUtf8 = (byte*)pUtf8Bts;
+      int len = 0;
+      while (pStringUtf8[len] != 0) len = checked(len + 1);
+
+      return System.Text.Encoding.UTF8.GetString(pStringUtf8, len);
+    }
+  }
+  //Instantiate the helper class so that the static constructor executes
+  static readonly ExceptionHelperUtf8 exceptionHelperUtf8 = new ExceptionHelperUtf8();
+%}

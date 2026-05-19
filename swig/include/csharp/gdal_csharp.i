@@ -397,3 +397,15 @@ GByte* wrapper_VSIGetMemFileBuffer(const char *utf8_string, vsi_l_offset *pnData
 }
 
 %clear (vsi_l_offset *pnDataLength);
+
+/* expose exception message setters for testing */
+%csmethodmodifiers TestSwigSetException "private";
+%csmethodmodifiers TestSwigSetArgumentException "private";
+%inline %{
+  void TestSwigSetException(int code, const char *message) {
+    SWIG_CSharpSetPendingException(static_cast<SWIG_CSharpExceptionCodes>(code), message);
+  }
+  void TestSwigSetArgumentException(int code, const char *message, const char *param_name) {
+    SWIG_CSharpSetPendingExceptionArgument(static_cast<SWIG_CSharpExceptionArgumentCodes>(code), message, param_name);
+  }
+%}
