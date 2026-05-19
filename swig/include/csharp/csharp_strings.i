@@ -439,7 +439,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 	  string message = e != null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
       SWIGPendingException.Set(new ArgumentOutOfRangeException(Utf8UnmanagedToString(pParamName), message));
     }
-    unsafe static string Utf8UnmanagedToString(IntPtr pUtf8Bts)
+    static string Utf8UnmanagedToString(IntPtr pUtf8Bts)
 	  => $module.StringEncoder?.FromNullTerminated(pUtf8Bts);
   }
   //Instantiate the helper class so that the static constructor executes
