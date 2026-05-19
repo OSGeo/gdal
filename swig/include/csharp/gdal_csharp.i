@@ -332,9 +332,9 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
     }
     public void Dispose() {
       if (System.Threading.Interlocked.CompareExchange(ref m_disposed, 1, 0) == 0) {
+        Unlink(Filename);
         if (!VsiOwned)
           m_dataHandle.Free();
-        Unlink(Filename);
       }
       GC.SuppressFinalize(this);
     }
@@ -349,7 +349,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
       GCHandle dataHandle = GCHandle.Alloc(buffer, GCHandleType.Pinned);
       try {
         IntPtr ptr = AddOffset(dataHandle.AddrOfPinnedObject(), offset);
-        IntPtr fp = VSIFileFromMemBuffer(utf8_string, ptr, (ulong)buffer.LongLength, bTakeOwnership: 0);
+        IntPtr fp = VSIFileFromMemBuffer(utf8_string, ptr, (ulong)count, bTakeOwnership: 0);
         if (fp == IntPtr.Zero) {
           return null;
         }
