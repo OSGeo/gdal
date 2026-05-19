@@ -784,18 +784,31 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
             const int nbAttrs = H5Aget_num_attrs(hGroupID);
             hsize_t nbObjs = 0;  // Number of objects in a group.
             H5Gget_num_objs(hGroupID, &nbObjs);
+            // Arbitrary threshold bigger than any conceivable reasonable use,
+            // to prevent denial of service and integer overflow.
+            if (nbObjs > 10 * 1000 * 1000)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too many attributes in \"%s\" group.", pszObjName);
+                H5Gclose(hGroupID);
+                return -1;
+            }
             poHchild->nbAttrs = nbAttrs;
-            poHchild->nbObjs = static_cast<int>(nbObjs);
+            poHchild->nbObjs = nbObjs;
             poHchild->nRank = 0;
             poHchild->paDims = nullptr;
             poHchild->HDatatype = 0;
 
             if (nbObjs > 0)
             {
-                poHchild->poHchild = static_cast<HDF5GroupObjects *>(CPLCalloc(
-                    static_cast<int>(nbObjs), sizeof(HDF5GroupObjects)));
-                memset(poHchild->poHchild, 0,
-                       static_cast<size_t>(sizeof(HDF5GroupObjects) * nbObjs));
+                poHchild->poHchild =
+                    static_cast<HDF5GroupObjects *>(VSI_CALLOC_VERBOSE(
+                        static_cast<int>(nbObjs), sizeof(HDF5GroupObjects)));
+                if (!poHchild->poHchild)
+                {
+                    H5Gclose(hGroupID);
+                    return -1;
+                }
             }
             else
             {
