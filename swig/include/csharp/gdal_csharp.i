@@ -351,6 +351,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
         IntPtr ptr = AddOffset(dataHandle.AddrOfPinnedObject(), offset);
         IntPtr fp = VSIFileFromMemBuffer(utf8_string, ptr, (ulong)count, bTakeOwnership: 0);
         if (fp == IntPtr.Zero) {
+          dataHandle.Free();
           return null;
         }
         VSIFCloseL(fp);
