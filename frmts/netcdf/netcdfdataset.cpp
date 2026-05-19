@@ -4268,12 +4268,11 @@ void netCDFDataset::SetProjectionFromVar(
                     OGRSpatialReference::
                         SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE)
             {
-                char *pszWKTExport = nullptr;
                 CPLDebug("GDAL_netCDF", "Got SRS from %s", pszSRID);
-                oSRS.exportToWkt(&pszWKTExport);
-                if (returnProjStr != nullptr)
+                std::string osWKTExport = oSRS.exportToWkt();
+                if (!osWKTExport.empty())
                 {
-                    (*returnProjStr) = std::string(pszWKTExport);
+                    (*returnProjStr) = std::move(osWKTExport);
                 }
                 else
                 {
@@ -4281,7 +4280,6 @@ void netCDFDataset::SetProjectionFromVar(
                     m_bAddedProjectionVarsData = true;
                     SetSpatialRefNoUpdate(&oSRS);
                 }
-                CPLFree(pszWKTExport);
             }
         }
     }
@@ -4295,13 +4293,13 @@ void netCDFDataset::SetProjectionFromVar(
     {
         OGRSpatialReference oGeogCRS;
         oGeogCRS.CopyGeogCSFrom(&m_oSRS);
-        char *pszWKTTmp = nullptr;
         const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
-        if (oGeogCRS.exportToWkt(&pszWKTTmp, apszOptions) == OGRERR_NONE)
+
+        std::string osWKTTmp = oGeogCRS.exportToWkt(apszOptions);
+        if (!osWKTTmp.empty())
         {
-            osGeolocWKT = pszWKTTmp;
+            osGeolocWKT = std::move(osWKTTmp);
         }
-        CPLFree(pszWKTTmp);
     }
 
     // Process geolocation arrays from CF "coordinates" attribute.
@@ -4414,13 +4412,11 @@ void netCDFDataset::SetProjectionFromVar(
             {
 
                 poDS->bIsGeographic = true;
-                char *pszTempProjection = nullptr;
                 // seems odd to use 4326 so OGC:CRS84
                 oSRS.SetFromUserInput("OGC:CRS84");
-                oSRS.exportToWkt(&pszTempProjection);
                 if (returnProjStr != nullptr)
                 {
-                    (*returnProjStr) = std::string(pszTempProjection);
+                    *returnProjStr = oSRS.exportToWkt();
                 }
                 else
                 {
@@ -4428,7 +4424,6 @@ void netCDFDataset::SetProjectionFromVar(
                     m_bAddedProjectionVarsData = true;
                     SetSpatialRefNoUpdate(&oSRS);
                 }
-                CPLFree(pszTempProjection);
 
                 CPLDebug("netCDF",
                          "Assumed Longitude Latitude CRS 'OGC:CRS84' because "
@@ -5374,14 +5369,12 @@ CPLErr netCDFDataset::AddProjectionVars(bool bDefsOnly,
 
     if (bDefsOnly)
     {
-        char *pszProjection = nullptr;
-        m_oSRS.exportToWkt(&pszProjection);
+        const std::string osProjection = m_oSRS.exportToWkt();
         CPLDebug("GDAL_netCDF",
                  "SetProjection, WKT now = [%s]\nprojected: %d geographic: %d",
-                 pszProjection ? pszProjection : "(null)",
+                 osProjection.empty() ? "(null)" : osProjection.c_str(),
                  static_cast<int>(bIsProjected),
                  static_cast<int>(bIsGeographic));
-        CPLFree(pszProjection);
 
         if (!m_bHasGeoTransform)
             CPLDebug("GDAL_netCDF",
@@ -11880,25 +11873,21 @@ static CPLErr NCDFOpenSubDataset(int nCdfId, const char *pszSubdatasetName,
     *pnVarId = -1;
 
     // Open group.
-    char *pszGroupFullName =
-        CPLStrdup(CPLGetPathSafe(pszSubdatasetName).c_str());
+    std::string osGroupFullName = CPLGetPathSafe(pszSubdatasetName);
     // Add a leading slash if needed.
-    if (pszGroupFullName[0] != '/')
+    if (osGroupFullName.empty() || osGroupFullName[0] != '/')
     {
-        char *old = pszGroupFullName;
-        pszGroupFullName = CPLStrdup(CPLSPrintf("/%s", pszGroupFullName));
-        CPLFree(old);
+        osGroupFullName = "/" + osGroupFullName;
     }
     // Detect root group.
-    if (EQUAL(pszGroupFullName, "/"))
+    if (osGroupFullName == "/")
     {
         *pnGroupId = nCdfId;
-        CPLFree(pszGroupFullName);
     }
     else
     {
-        int status = nc_inq_grp_full_ncid(nCdfId, pszGroupFullName, pnGroupId);
-        CPLFree(pszGroupFullName);
+        int status =
+            nc_inq_grp_full_ncid(nCdfId, osGroupFullName.c_str(), pnGroupId);
         NCDF_ERR_RET(status);
     }
 
