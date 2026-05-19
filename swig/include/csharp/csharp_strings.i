@@ -83,17 +83,15 @@ typedef struct {} CsharpDummyObject;
 struct CsharpDummyObject{};
 
 %pragma(csharp) modulecode=%{
-  internal static readonly I$moduleStringEncoder s_DefaultStringEncoder = new Default$moduleStringEncoder();
-  internal static I$moduleStringEncoder s_StringEncoder;
-  public static I$moduleStringEncoder StringEncoder {
-    get {
-      if (s_StringEncoder == null)
-        s_StringEncoder = s_DefaultStringEncoder;
-      return s_StringEncoder;
-    }
-    set {
-      s_StringEncoder = value;
-    }
+  private static readonly I$moduleStringEncoder s_DefaultStringEncoder = new Default$moduleStringEncoder();
+  [System.ThreadStatic]
+  private static I$moduleStringEncoder s_ThreadStringEncoder;
+  public static I$moduleStringEncoder StringEncoder
+    => ThreadStringEncoder ?? GlobalStringEncoder ?? s_DefaultStringEncoder;
+  public static I$moduleStringEncoder GlobalStringEncoder { get; set; }
+  public static I$moduleStringEncoder ThreadStringEncoder {    
+    get => s_ThreadStringEncoder;
+    set => s_ThreadStringEncoder = value;
   }
 %}
 
@@ -162,6 +160,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
   "$module.StringEncoder?.ToNullTerminated($csinput)"
   
 %define CS_RETURN_UTF8_STRING
+
   IntPtr cPtr = $imcall;
   string ret = $modulePINVOKE.StringFromPinnedGCHandle(cPtr);
   $excode
