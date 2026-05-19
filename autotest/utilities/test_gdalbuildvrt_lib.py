@@ -259,17 +259,18 @@ def test_gdalbuildvrt_lib_separate_nodata(tmp_vsimem):
 ###############################################################################
 def test_gdalbuildvrt_lib_separate_nodata_2(tmp_vsimem):
 
-    src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000, 1, gdal.GDT_Int16)
     src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src1_ds.GetRasterBand(1).SetNoDataValue(1)
 
-    src2_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000, 1, gdal.GDT_Int16)
     src2_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src2_ds.GetRasterBand(1).SetNoDataValue(2)
 
-    gdal.BuildVRT(
-        tmp_vsimem / "out.vrt", [src1_ds, src2_ds], separate=True, srcNodata="-3 4"
-    )
+    with gdaltest.error_raised(gdal.CE_None):
+        gdal.BuildVRT(
+            tmp_vsimem / "out.vrt", [src1_ds, src2_ds], separate=True, srcNodata="-3 4"
+        )
 
     f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
@@ -284,21 +285,22 @@ def test_gdalbuildvrt_lib_separate_nodata_2(tmp_vsimem):
 ###############################################################################
 def test_gdalbuildvrt_lib_separate_nodata_3(tmp_vsimem):
 
-    src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
+    src1_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000, 1, gdal.GDT_Int16)
     src1_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src1_ds.GetRasterBand(1).SetNoDataValue(1)
 
-    src2_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000)
+    src2_ds = gdal.GetDriverByName("MEM").Create("", 1000, 1000, 1, gdal.GDT_Int16)
     src2_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
     src2_ds.GetRasterBand(1).SetNoDataValue(2)
 
-    gdal.BuildVRT(
-        tmp_vsimem / "out.vrt",
-        [src1_ds, src2_ds],
-        separate=True,
-        srcNodata="3 4",
-        VRTNodata="-5 6",
-    )
+    with gdaltest.error_raised(gdal.CE_None):
+        gdal.BuildVRT(
+            tmp_vsimem / "out.vrt",
+            [src1_ds, src2_ds],
+            separate=True,
+            srcNodata="3 4",
+            VRTNodata="-5 6",
+        )
 
     f = gdal.VSIFOpenL(tmp_vsimem / "out.vrt", "rb")
     data = gdal.VSIFReadL(1, 10000, f)
@@ -335,6 +337,24 @@ def test_gdalbuildvrt_lib_separate_nodata_4(tmp_vsimem):
 
     assert b"<NoDataValue>" not in data
     assert b"<NODATA>" not in data
+
+
+###############################################################################
+def test_gdalbuildvrt_lib_separate_nodata_incompatible_of_band_type(tmp_vsimem):
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 11)
+    src_ds.SetGeoTransform([2, 0.001, 0, 49, 0, -0.001])
+
+    with gdaltest.error_raised(
+        gdal.CE_Warning,
+        "Band data type of Byte cannot represent the specified NoData value of -1",
+    ):
+        gdal.BuildVRT(
+            tmp_vsimem / "out.vrt",
+            [src_ds],
+            separate=True,
+            srcNodata="-1",
+        )
 
 
 ###############################################################################
