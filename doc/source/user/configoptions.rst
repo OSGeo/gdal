@@ -343,7 +343,7 @@ Driver management
 ^^^^^^^^^^^^^^^^^
 
 -  .. config:: GDAL_SKIP
-      :choices: space-separated list
+      :choices: comma-separated list
 
       Used by :cpp:func:`GDALDriverManager::AutoSkipDrivers`
 
@@ -351,7 +351,7 @@ Driver management
       be useful when a driver tries to open a dataset that it should not
       recognize, or when several drivers are built-in that can open the same
       datasets (for example JP2MrSID, JP2ECW, JPEG2000 and JP2KAK for JPEG2000
-      datasets). The value of this option must be a space delimited list of the
+      datasets). The value of this option must be a comma delimited list of the
       short name of the GDAL drivers to unregister.
 
       This option must be set before calling :cpp:func:`GDALAllRegister`, or an
