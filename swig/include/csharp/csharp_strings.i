@@ -85,13 +85,13 @@ struct CsharpDummyObject{};
 %pragma(csharp) modulecode=%{
   private static readonly I$moduleStringEncoder s_DefaultStringEncoder = new Default$moduleStringEncoder();
   [System.ThreadStatic]
-  private static I$moduleStringEncoder s_ThreadStringEncoder;
+  private static I$moduleStringEncoder s_ThreadLocalStringEncoder;
   public static I$moduleStringEncoder StringEncoder
-    => ThreadStringEncoder ?? GlobalStringEncoder ?? s_DefaultStringEncoder;
+    => ThreadLocalStringEncoder ?? GlobalStringEncoder ?? s_DefaultStringEncoder;
   public static I$moduleStringEncoder GlobalStringEncoder { get; set; }
-  public static I$moduleStringEncoder ThreadStringEncoder {    
-    get => s_ThreadStringEncoder;
-    set => s_ThreadStringEncoder = value;
+  public static I$moduleStringEncoder ThreadLocalStringEncoder {    
+    get => s_ThreadLocalStringEncoder;
+    set => s_ThreadLocalStringEncoder = value;
   }
 %}
 
