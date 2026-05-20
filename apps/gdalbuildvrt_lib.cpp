@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -450,7 +451,7 @@ static CPLString GetProjectionName(const char *pszProjection)
 }
 
 /************************************************************************/
-/*                           AnalyseRaster()                            */
+/*                         checkNoDataValues()                          */
 /************************************************************************/
 
 static void checkNoDataValues(const std::vector<BandProperty> &asProperties)
@@ -467,6 +468,10 @@ static void checkNoDataValues(const std::vector<BandProperty> &asProperties)
         }
     }
 }
+
+/************************************************************************/
+/*                           AnalyseRaster()                            */
+/************************************************************************/
 
 std::string VRTBuilder::AnalyseRaster(GDALDatasetH hDS,
                                       DatasetProperty *psDatasetProperties)
@@ -1258,8 +1263,8 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
                                         ? panSelectedBandList[iBandToIter] - 1
                                         : iBandToIter;
             assert(nSrcBandIdx >= 0);
-            poVRTDS->AddBand(psDatasetProperties->aeBandType[nSrcBandIdx],
-                             nullptr);
+            const auto eBandType = psDatasetProperties->aeBandType[nSrcBandIdx];
+            poVRTDS->AddBand(eBandType, nullptr);
 
             VRTSourcedRasterBand *poVRTBand =
                 static_cast<VRTSourcedRasterBand *>(
@@ -1281,18 +1286,30 @@ void VRTBuilder::CreateVRTSeparate(VRTDataset *poVRTDS)
 
             if (bAllowVRTNoData)
             {
+                std::optional<double> noData;
                 if (nVRTNoDataCount > 0)
                 {
                     if (iBand - 1 < nVRTNoDataCount)
-                        poVRTBand->SetNoDataValue(padfVRTNoData[iBand - 1]);
+                        noData = padfVRTNoData[iBand - 1];
                     else
-                        poVRTBand->SetNoDataValue(
-                            padfVRTNoData[nVRTNoDataCount - 1]);
+                        noData = padfVRTNoData[nVRTNoDataCount - 1];
                 }
                 else if (psDatasetProperties->abHasNoData[nSrcBandIdx])
                 {
-                    poVRTBand->SetNoDataValue(
-                        psDatasetProperties->adfNoDataValues[nSrcBandIdx]);
+                    noData = psDatasetProperties->adfNoDataValues[nSrcBandIdx];
+                }
+                if (noData.has_value())
+                {
+                    if (GDALDataTypeIsInteger(eBandType) &&
+                        !GDALIsValueExactAs(*noData, eBandType))
+                    {
+                        CPLError(CE_Warning, CPLE_NotSupported,
+                                 "Band data type of %s cannot represent the "
+                                 "specified "
+                                 "NoData value of %g",
+                                 GDALGetDataTypeName(eBandType), *noData);
+                    }
+                    poVRTBand->SetNoDataValue(*noData);
                 }
             }
 
