@@ -12,18 +12,21 @@
  * SPDX-License-Identifier: MIT
  *****************************************************************************/
 
-/*******************************************************************************
- * Marshaler for NULL terminated UTF-8 encoded strings                         *
- * Creates a callback function which is used from the native runtime to create *
- * .NET strings. The managed Utf8StringHelper registers a callback function    *
- * with the native runtime which is used by the native runtime to create .NET  *
- * strings. When called by the native runtime, the .NET function allocates     *
- * unmanaged memory and decodes the UTF-8 string into a length-prefixed UTF-16 *
- * string into that buffer. A pointer to that buffer is returned. When the     *
- * callback returns to managed .NET, a managed string is created from the      *
- * unmanaged buffer using LengthPrefixedUtf16UnmanagedToString, which frees    *
- * the unmanaged memory that was allocated by the callback function.           *
- ******************************************************************************/
+/******************************************************************************
+ * Marshaller for NULL terminated UTF-8 encoded strings                       *
+ * The managed Utf8StringHelper registers a callback function with the native *
+ * runtime which is used by the native runtime to create .NET strings. When   *
+ * called by the native runtime, the .NET function decodes the unmanaged      *
+ * memory into a managed string and returns a new pinned GCHandle for that    *
+ * string. A pointer to that GCHandle is returned. When the callback returns  *
+ * to managed .NET, the managed string is retrieved from the GCHandle and the *
+ * GCHandle is freed by calling StringFromPinnedGCHandle.                     *
+ *                                                                            *
+ * IMPORTANT:                                                                 *
+ * Every call to SWIG_csharp_string_callback MUST be followed by exactly      *
+ * one call to StringFromPinnedGCHandle() on the returned pointer.            *
+ * Failure to do so will result in memory leaks or double frees.              *
+ *****************************************************************************/
 
 %insert(runtime) %{
 /* Callback for returning strings to C# without leaking memory */
@@ -31,18 +34,73 @@ typedef char * (SWIGSTDCALL* CSharpUtf8StringHelperCallback)(const char *);
 static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
 %}
 
+/*
+ * Define a dummy type so that we can extend it to add custom types
+ * inside the module namespace using the csimports typemap
+ */
+%{
+typedef struct {} CsharpDummyObject;
+%}
+%typemap(csclassmodifiers) CsharpDummyObject "internal class";
+%typemap(csimports) CsharpDummyObject %{
+  using System;
+  using System.Text;
+  using System.Runtime.InteropServices;
+
+  /* Interface for encoding/decoding string to/from Gdal unmanaged strings. */
+  public interface I$moduleStringEncoder {
+    /* Encode a string to a null-terminated array of bytes to be sent to Gdal unmanaged */
+    byte[] ToNullTerminated(string str);
+    /* Decode an unmanaged, null-terminated string from Gdal to a managed string */
+    string FromNullTerminated(IntPtr pStr);
+  }
+  
+  public class Default$moduleStringEncoder : I$moduleStringEncoder {
+    public virtual string FromNullTerminated(IntPtr pStr) {
+#if NETCOREAPP1_1_OR_GREATER || NETSTANDARD2_1_OR_GREATER
+      return Marshal.PtrToStringUTF8(pStr);
+#else
+      if (pStr == IntPtr.Zero) return null;
+      unsafe {
+        byte* pBytes = (byte*)pStr.ToPointer();
+        int len = 0;
+        checked {
+          while (pBytes[len] != 0) len++;
+        }
+        return Encoding.UTF8.GetString(pBytes, len);
+      }
+#endif
+    }
+    public virtual byte[] ToNullTerminated(string str) {
+      if (str == null) return null;
+      int byteCount = Encoding.UTF8.GetByteCount(str);
+      var bts = new byte[byteCount + 1];
+      Encoding.UTF8.GetBytes(str, 0, str.Length, bts, 0);
+      return bts;
+    }
+  }
+%}
+struct CsharpDummyObject{};
+
+%pragma(csharp) modulecode=%{
+  private static readonly I$moduleStringEncoder s_DefaultStringEncoder = new Default$moduleStringEncoder();
+  [System.ThreadStatic]
+  private static I$moduleStringEncoder s_ThreadLocalStringEncoder;
+  public static I$moduleStringEncoder StringEncoder
+    => ThreadLocalStringEncoder ?? GlobalStringEncoder ?? s_DefaultStringEncoder;
+  public static I$moduleStringEncoder GlobalStringEncoder { get; set; }
+  public static I$moduleStringEncoder ThreadLocalStringEncoder {    
+    get => s_ThreadLocalStringEncoder;
+    set => s_ThreadLocalStringEncoder = value;
+  }
+%}
+
 %pragma(csharp) imclasscode=%{
   public class Utf8StringHelper {
 
     public delegate System.IntPtr Utf8StringDelegate(System.IntPtr message);
 
-   /*
-    * IMPORTANT:
-    * Every call to SWIG_csharp_string_callback MUST be followed by exactly one call
-    * to LengthPrefixedUtf16UnmanagedToString on the returned pointer.
-    * Failure to do so will result in memory leaks or double frees.
-    */
-    static Utf8StringDelegate stringDelegate = new Utf8StringDelegate($modulePINVOKE.Utf8UnmanagedToLengthPrefixedUtf16Unmanaged);
+    static Utf8StringDelegate stringDelegate = new Utf8StringDelegate(DecodeStringToPinnedGCHandle);
 
     [global::System.Runtime.InteropServices.DllImport("$dllimport", EntryPoint="RegisterUtf8StringCallback_$module")]
     public static extern void RegisterUtf8StringCallback_$module(Utf8StringDelegate stringDelegate);
@@ -50,65 +108,27 @@ static CSharpUtf8StringHelperCallback SWIG_csharp_string_callback = NULL;
     static Utf8StringHelper() {
       RegisterUtf8StringCallback_$module(stringDelegate);
     }
+
+    public static IntPtr DecodeStringToPinnedGCHandle(IntPtr pUtf8Bts) {
+      string value = $module.StringEncoder?.FromNullTerminated(pUtf8Bts);
+      if (value == null)
+        return IntPtr.Zero;
+      var handle = System.Runtime.InteropServices.GCHandle.Alloc(value,
+                     System.Runtime.InteropServices.GCHandleType.Pinned);
+      return System.Runtime.InteropServices.GCHandle.ToIntPtr(handle);
+    }
   }
 
-  //Instantiate the helper class so that the static constructor executes
+  /* Instantiate the helper class so that the static constructor executes */
   public static readonly Utf8StringHelper utf8StringHelper = new Utf8StringHelper();
 
-  public unsafe static IntPtr Utf8UnmanagedToLengthPrefixedUtf16Unmanaged(IntPtr pUtf8Bts)
-  {
-    if (pUtf8Bts == IntPtr.Zero)
-      return IntPtr.Zero;
-
-    byte* pStringUtf8 = (byte*)pUtf8Bts;
-    int len = 0;
-    while (pStringUtf8[len] != 0) len = checked(len + 1);
-
-    var charCount = System.Text.Encoding.UTF8.GetCharCount(pStringUtf8, len);
-    int size = checked(sizeof(int) + charCount * sizeof(char));
-    var bstrDest = System.Runtime.InteropServices.Marshal.AllocHGlobal(size);
-    *(int*)bstrDest = charCount;
-
-    System.Text.Encoding.UTF8.GetChars(pStringUtf8, len, (char*)IntPtr.Add(bstrDest, sizeof(int)), charCount);
-    return bstrDest;
-  }
-
-  public unsafe static string LengthPrefixedUtf16UnmanagedToString(IntPtr pBstr)
-  {
-    if (pBstr == IntPtr.Zero)
+  internal static string StringFromPinnedGCHandle(IntPtr pinnedHandle){
+    if (pinnedHandle == IntPtr.Zero)
       return null;
-
-    try
-    {
-      int charCount = *(int*)pBstr;
-      if (charCount < 0)
-        return null;
-      int charStart = sizeof(int) / sizeof(char);
-      return new string((char*)pBstr, charStart, charCount);
-    }
-    finally
-    {
-      System.Runtime.InteropServices.Marshal.FreeHGlobal(pBstr);
-    }
-  }
-
-  public unsafe static IntPtr StringToUtf8Unmanaged(string str)
-  {
-    if (str == null)
-      return IntPtr.Zero;
-
-    int byteCount = System.Text.Encoding.UTF8.GetByteCount(str);
-    IntPtr unmanagedString = System.Runtime.InteropServices.Marshal.AllocHGlobal(byteCount + 1);
-
-    byte* ptr = (byte*)unmanagedString.ToPointer();
-    fixed (char *pStr = str)
-    {
-      System.Text.Encoding.UTF8.GetBytes(pStr, str.Length, ptr, byteCount);
-      // null-terminate
-      ptr[byteCount] = 0;
-    }
-
-    return unmanagedString;
+    var handle = System.Runtime.InteropServices.GCHandle.FromIntPtr(pinnedHandle);
+    string value = handle.Target as string;
+    handle.Free();
+    return value;
   }
 %}
 
@@ -121,77 +141,59 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 }
 %}
 
-/******************************************************************************
- * Apply typemaps for all SWIG string types and for const char *utf8_string   *
- ******************************************************************************/
+/*****************************************************************************
+ * Apply typemaps for all SWIG string types and for const char *utf8_string  *
+ ****************************************************************************/
 
 %typemap(cstype) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "string"
-%typemap(imtype) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "IntPtr"
-
-%typemap(in) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
-  $1 = ($1_ltype)$input;
-%}
-
+%typemap(imtype, out="IntPtr") (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) "byte[]"
+%typemap(in) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{ $1 = ($1_ltype)$input; %}
 %typemap(out) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
+ /*
+  * %typemap(out) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
+  * GCHandle is released by %typemap(csout) or %typemap(csvarout) of same
+  */
   $result = SWIG_csharp_string_callback((const char *)$1);
 %}
 
-%typemap(csin,
-  pre="    IntPtr temp$csinput = $modulePINVOKE.StringToUtf8Unmanaged($csinput);",
-  post="    System.Runtime.InteropServices.Marshal.FreeHGlobal(temp$csinput);",
-  cshin="$csinput"
-  ) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
-  "temp$csinput"
+%typemap(csin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
+  "$module.StringEncoder?.ToNullTerminated($csinput)"
+  
+%define CS_RETURN_UTF8_STRING
 
-%typemap(csout, excode=SWIGEXCODE) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string)
-{
-  /* %typemap(csout) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) */
   IntPtr cPtr = $imcall;
-  string ret = $modulePINVOKE.LengthPrefixedUtf16UnmanagedToString(cPtr);
+  string ret = $modulePINVOKE.StringFromPinnedGCHandle(cPtr);
   $excode
   return ret;
+%enddef
+
+%typemap(csout, excode=SWIGEXCODE) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) {
+  CS_RETURN_UTF8_STRING
 }
 
 /*
  * Typemap for UTF-8 char* string properties.
  */
 
-%typemap(csvarin, excode=SWIGEXCODE2) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
-  /* %typemap(csvarin) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) */
-  set {
-    IntPtr temp$csinput = $modulePINVOKE.StringToUtf8Unmanaged($csinput);
-    try {
-      $imcall;$excode
-    }
-    finally {
-      System.Runtime.InteropServices.Marshal.FreeHGlobal(temp$csinput);
-    }
-  }
-%}
-
-%typemap(csvarout, excode=SWIGEXCODE2) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) %{
+%typemap(csvarout, noblock=1, excode=SWIGEXCODE2) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) {
   get {
-    /* %typemap(csvarout) (char *), (char *&), (char[ANY]), (char[]), (const char *utf8_string) */
-    IntPtr cPtr = $imcall;
-    string ret = $modulePINVOKE.LengthPrefixedUtf16UnmanagedToString(cPtr);
-    $excode
-    return ret;
+    CS_RETURN_UTF8_STRING
   }
-%}
+}
 
 /*
  * Typemaps for  (retStringAndCPLFree*)
  */
 
 %typemap(out) (retStringAndCPLFree*) %{
-  /* %typemap(out) (retStringAndCPLFree*) */
-  if($1)
-  {
+ /*
+  * %typemap(out) (retStringAndCPLFree*)
+  * GCHandle is released by %typemap(csout) (char *)
+  */
+  if($1) {
     $result = SWIG_csharp_string_callback((const char *)$1);
     CPLFree($1);
-  }
-  else
-  {
+  } else {
     $result = NULL;
   }
 %}
@@ -203,25 +205,28 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(imtype) (char** argout), (char **username), (char **usrname), (char **type) "ref IntPtr"
 %typemap(cstype) (char** argout), (char **username), (char **usrname), (char **type) "out string"
 %typemap(in) (char **argout), (char **username), (char **usrname), (char **type) %{ $1 = ($1_ltype)$input; %}
-%typemap(csin,
+%typemap(csin, cshin="out $csinput",
   pre="    IntPtr temp$csinput = IntPtr.Zero;",
-  post="    $csinput = $modulePINVOKE.LengthPrefixedUtf16UnmanagedToString(temp$csinput);",
-  cshin="out $csinput"
-  ) (char** argout), (char **username), (char **usrname), (char **type)
+  post="    $csinput = $modulePINVOKE.StringFromPinnedGCHandle(temp$csinput);")
+  (char** argout), (char **username), (char **usrname), (char **type)
   "ref temp$csinput"
 
-%typemap(argout) (char **argout)
-{
-  /* %typemap(argout) (char **argout) */
+%typemap(argout) (char **argout) {
+ /*
+  * %typemap(argout) (char **argout)
+  * GCHandle is released by %typemap(csin)
+  */
   char* temp_string;
   temp_string = SWIG_csharp_string_callback(*$1);
   if (*$1)
     CPLFree(*$1);
   *$1 = temp_string;
 }
-%typemap(argout) (char **username), (char **usrname), (char **type)
-{
-  /* %typemap(argout) (char **username), (char **usrname), (char **type) */
+%typemap(argout) (char **username), (char **usrname), (char **type) {
+ /*
+  * %typemap(argout) (char **username), (char **usrname), (char **type)
+  * GCHandle is released by %typemap(csin)
+  */
   *$1 = SWIG_csharp_string_callback(*$1);
 }
 
@@ -230,54 +235,54 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
  * caller doesn't want to see changes.
  */
 
-%typemap(imtype) (char **ignorechange) "ref IntPtr"
+%typemap(imtype) (char **ignorechange) "byte[]"
 %typemap(cstype) (char **ignorechange) "ref string"
-%typemap(csin,
-  pre="    IntPtr temp$csinput = $modulePINVOKE.StringToUtf8Unmanaged($csinput);",
-  post="    System.Runtime.InteropServices.Marshal.FreeHGlobal(temp$csinput);",
-  cshin="ref $csinput"
-  ) (char** ignorechange)
-  "ref temp$csinput"
-
-%typemap(in, noblock="1") (char **ignorechange)
-{
-  /* %typemap(in) (char **ignorechange) */
-  $*1_type savearg = *(($1_type)$input);
-  $1 = ($1_ltype)$input;
-}
-%typemap(argout, noblock="1") (char **ignorechange)
-{
-  /* %typemap(argout) (char **ignorechange) */
-  if ((*$1 - savearg) > 0)
-     memmove(savearg, *$1, strlen(*$1)+1);
-  *$1 = savearg;
-}
+%typemap(in)     (char **ignorechange) %{ $1 = ($1_ltype)&$input; %}
+%typemap(csin)   (char **ignorechange) "$module.StringEncoder?.ToNullTerminated($csinput)"
 
 /******************************************************************************
- * Marshaler for NULL terminated lists of NULL terminated UTF-8 strings.     *
+ * Marshaller for NULL terminated lists of NULL terminated UTF-8 strings.     *
  *****************************************************************************/
 
 %pragma(csharp) imclasscode=%{
   public class StringListMarshal : IDisposable {
     public readonly IntPtr[] _ar;
+    private readonly System.Runtime.InteropServices.GCHandle[] _handles;
     private int _isDisposed;
     public StringListMarshal(string[] ar) {
       if (ar == null)
         return;
-      _ar = new IntPtr[ar.Length+1];
+      _handles = new System.Runtime.InteropServices.GCHandle[ar.Length];
+      _ar = new IntPtr[ar.Length + 1];
       for (int cx = 0; cx < ar.Length; cx++) {
-        _ar[cx] = $modulePINVOKE.StringToUtf8Unmanaged(ar[cx]);
+        byte[] bts = $module.StringEncoder?.ToNullTerminated(ar[cx]);
+        _handles[cx] = System.Runtime.InteropServices.GCHandle.Alloc(bts, System.Runtime.InteropServices.GCHandleType.Pinned);
+        _ar[cx] = _handles[cx].AddrOfPinnedObject();
       }
       _ar[ar.Length] = IntPtr.Zero;
     }
     ~StringListMarshal() => Dispose();
     public virtual void Dispose() {
-      if (System.Threading.Interlocked.CompareExchange(ref _isDisposed, 1, 0) == 0 && _ar != null) {
-        for (int cx = 0; cx < _ar.Length - 1; cx++) {
-            System.Runtime.InteropServices.Marshal.FreeHGlobal(_ar[cx]);
+      if (System.Threading.Interlocked.CompareExchange(ref _isDisposed, 1, 0) == 0 && _handles != null) {
+         for (int cx = 0; cx < _handles.Length; cx++) {
+           _handles[cx].Free();
+           _ar[cx] = IntPtr.Zero;
         }
       }
       GC.SuppressFinalize(this);
+    }
+    public static string[] DecodeStringArray(IntPtr pList) {
+      int count = 0;
+      if (pList != IntPtr.Zero) checked {
+        while (System.Runtime.InteropServices.Marshal.ReadIntPtr(pList, count * IntPtr.Size) != IntPtr.Zero)
+          count++;
+      }
+      string[] ret = new string[count];
+      for(int cx = 0; cx < count; cx++) {
+        IntPtr objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(pList, cx * IntPtr.Size);
+        ret[cx]= $module.StringEncoder?.FromNullTerminated(objPtr);
+      }
+      return ret;
     }
   }
 %}
@@ -290,33 +295,11 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(cstype) char **options, char **dict, char **dictAndCSLDestroy, char **CSL "string[]"
 %typemap(in) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{ $1 = ($1_ltype)$input; %}
 %typemap(out) char **options, char **dict, char **dictAndCSLDestroy, char **CSL %{ $result = $1; %}
-%typemap(csin,
+%typemap(csin, cshin="$csinput",
   pre="    using (var temp$csinput = new $modulePINVOKE.StringListMarshal($csinput)) { ",
-  terminator="    }",
-  cshin="$csinput"
-  ) char **options, char **dict, char **dictAndCSLDestroy, char **CSL
+  terminator="    }")
+  char **options, char **dict, char **dictAndCSLDestroy, char **CSL
   "temp$csinput._ar"
-
-/*
- * C# code to marshal NULL terminated lists of NULL terminated UTF-8 strings.
- */
-
-%define CS_MARSHAL_STRING_LIST()
-  IntPtr cPtr = $imcall;
-  IntPtr objPtr;
-  int count = 0;
-  if (cPtr != IntPtr.Zero) {
-    while (System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, count*IntPtr.Size) != IntPtr.Zero)
-      ++count;
-  }
-  string[] ret = new string[count];
-  if (count > 0) {
-    for(int cx = 0; cx < count; cx++) {
-      objPtr = System.Runtime.InteropServices.Marshal.ReadIntPtr(cPtr, cx * System.Runtime.InteropServices.Marshal.SizeOf(typeof(IntPtr)));
-      ret[cx]= (objPtr == IntPtr.Zero) ? null : $module.Utf8BytesToString(objPtr);
-    }
-  }
-%enddef
 
 /*
  * Marshal char**options, char **dict to string[] and don't free the unmanaged
@@ -326,7 +309,8 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 %typemap(csout, excode=SWIGEXCODE) char**options, char **dict
 {
   /* %typemap(csout) char**options, char **dict */
-  CS_MARSHAL_STRING_LIST()
+  IntPtr cPtr = $imcall;
+  string[] ret = $modulePINVOKE.StringListMarshal.DecodeStringArray(cPtr);
   $excode
   return ret;
 }
@@ -338,11 +322,16 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 
 %typemap(csout, excode=SWIGEXCODE) char** CSL, char **dictAndCSLDestroy {
   /* %typemap(csout) char** CSL, char **dictAndCSLDestroy */
-  CS_MARSHAL_STRING_LIST()
-  if (cPtr != IntPtr.Zero)
-    $modulePINVOKE.StringListDestroy(cPtr);
-  $excode
-  return ret;
+  IntPtr cPtr = $imcall;
+  try {
+    string[] ret = $modulePINVOKE.StringListMarshal.DecodeStringArray(cPtr);
+    $excode
+    return ret;
+  }
+  finally {
+    if (cPtr != IntPtr.Zero)
+      $modulePINVOKE.StringListDestroy(cPtr);
+  }
 }
 
 /*
@@ -449,16 +438,8 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 	  string message = e != null ? " Inner Exception: " + e.Message : Utf8UnmanagedToString(pMessage);
       SWIGPendingException.Set(new ArgumentOutOfRangeException(Utf8UnmanagedToString(pParamName), message));
     }
-    unsafe static string Utf8UnmanagedToString(IntPtr pUtf8Bts) {
-      if (pUtf8Bts == IntPtr.Zero)
-        return null;
-
-      byte* pStringUtf8 = (byte*)pUtf8Bts;
-      int len = 0;
-      while (pStringUtf8[len] != 0) len = checked(len + 1);
-
-      return System.Text.Encoding.UTF8.GetString(pStringUtf8, len);
-    }
+    static string Utf8UnmanagedToString(IntPtr pUtf8Bts)
+	  => $module.StringEncoder?.FromNullTerminated(pUtf8Bts);
   }
   //Instantiate the helper class so that the static constructor executes
   static readonly ExceptionHelperUtf8 exceptionHelperUtf8 = new ExceptionHelperUtf8();
