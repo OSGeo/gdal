@@ -202,6 +202,8 @@ GDAL is available as several subpackages:
 - ``libgdal-tiledb``: :ref:`raster.tiledb` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
 - ``libgdal-xls``: :ref:`vector.xls` driver as a plugin (depends on libgdal-core, available since GDAL 3.9.1)
 
+For background on the GDAL package split on conda-forge, see
+`Introducing Lightweight Versions of GDAL and PDAL <https://quansight.com/post/introducing-lightweight-versions-of-gdal-and-pdal/>`__.
 
 To install the ``gdal`` package (Python bindings and utilities), and ``libgdal-core``:
 
