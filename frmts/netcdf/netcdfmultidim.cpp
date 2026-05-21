@@ -5260,11 +5260,10 @@ netCDFDataset::CreateMultiDimensional(const char *pszFilename,
     poDS->osFilename = pszFilename;
 
     // process options.
-    poDS->papszCreationOptions = CSLDuplicate(papszOptions);
+    poDS->aosCreationOptions = CSLDuplicate(papszOptions);
     if (CSLFetchNameValue(papszOptions, "FORMAT") == nullptr)
     {
-        poDS->papszCreationOptions =
-            CSLSetNameValue(poDS->papszCreationOptions, "FORMAT", "NC4");
+        poDS->aosCreationOptions.SetNameValue("FORMAT", "NC4");
     }
     poDS->ProcessCreationOptions();
 

@@ -1603,10 +1603,12 @@ def test_netcdf_42(tmp_path):
 
 @pytest.mark.parametrize("write_bottomup", [True, False])
 @pytest.mark.parametrize("read_bottomup", [True, False])
-def test_netcdf_geolocation_array_no_srs(tmp_path, write_bottomup, read_bottomup):
+def test_netcdf_geolocation_array_no_srs(
+    tmp_path, tmp_vsimem, write_bottomup, read_bottomup
+):
 
     lon_ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif", 3, 2, 1
+        tmp_vsimem / "test_netcdf_geolocation_array_no_srs_lon.tif", 3, 2, 1
     )
     lon_ds.GetRasterBand(1).WriteRaster(
         0, 0, 3, 2, struct.pack("B" * 6, 10, 11, 12, 13, 14, 15)
@@ -1614,7 +1616,7 @@ def test_netcdf_geolocation_array_no_srs(tmp_path, write_bottomup, read_bottomup
     lon_ds = None
 
     lat_ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif", 3, 2, 1
+        tmp_vsimem / "test_netcdf_geolocation_array_no_srs_lat.tif", 3, 2, 1
     )
     lat_ds.GetRasterBand(1).WriteRaster(
         0, 0, 3, 2, struct.pack("B" * 6, 20, 21, 22, 23, 24, 25)
@@ -1630,9 +1632,9 @@ def test_netcdf_geolocation_array_no_srs(tmp_path, write_bottomup, read_bottomup
             "PIXEL_STEP=1",
             'SRS=GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AXIS["Lat",NORTH],AXIS["Long",EAST],AUTHORITY["EPSG","4326"]]',
             "X_BAND=1",
-            "X_DATASET=/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif",
+            f"X_DATASET={tmp_vsimem}/test_netcdf_geolocation_array_no_srs_lon.tif",
             "Y_BAND=1",
-            "Y_DATASET=/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif",
+            f"Y_DATASET={tmp_vsimem}/test_netcdf_geolocation_array_no_srs_lat.tif",
         ],
         "GEOLOCATION",
     )
@@ -1698,9 +1700,6 @@ def test_netcdf_geolocation_array_no_srs(tmp_path, write_bottomup, read_bottomup
             assert got_data == (20, 21, 22, 23, 24, 25)
         ds = None
 
-    gdal.Unlink("/vsimem/test_netcdf_geolocation_array_no_srs_lon.tif")
-    gdal.Unlink("/vsimem/test_netcdf_geolocation_array_no_srs_lat.tif")
-
 
 ###############################################################################
 # Test reading GEOLOCATION array from geotransform (non default)
@@ -1752,7 +1751,7 @@ def test_netcdf_44(tmp_path, f, md5):
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_45():
+def test_netcdf_45(tmp_vsimem):
 
     # Test that a vector cannot be opened in raster-only mode
     ds = gdal.OpenEx("data/netcdf/test_ogr_nc3.nc", gdal.OF_RASTER)
@@ -1770,7 +1769,7 @@ def test_netcdf_45():
 
     with gdal.quiet_errors():
         gdal.VectorTranslate(
-            "/vsimem/netcdf_45.csv",
+            tmp_vsimem / "netcdf_45.csv",
             ds,
             format="CSV",
             layerCreationOptions=[
@@ -1781,7 +1780,7 @@ def test_netcdf_45():
             ],
         )
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_45.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_45.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -1792,16 +1791,13 @@ def test_netcdf_45():
 """
     assert content == expected_content
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_45.csvt", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_45.csvt", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,Integer,Integer,Real,Real,String(1),String(3),String,Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer
 """
     assert content == expected_content
-    gdal.Unlink("/vsimem/netcdf_45.csv")
-    gdal.Unlink("/vsimem/netcdf_45.csvt")
-    gdal.Unlink("/vsimem/netcdf_45.prj")
 
 
 ###############################################################################
@@ -1825,7 +1821,7 @@ def test_netcdf_46():
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_47():
+def test_netcdf_47(tmp_vsimem):
 
     # Test that a vector cannot be opened in raster-only mode
     with gdal.quiet_errors():
@@ -1836,7 +1832,7 @@ def test_netcdf_47():
 
     with gdal.quiet_errors():
         gdal.VectorTranslate(
-            "/vsimem/netcdf_47.csv",
+            tmp_vsimem / "netcdf_47.csv",
             ds,
             format="CSV",
             layerCreationOptions=[
@@ -1847,7 +1843,7 @@ def test_netcdf_47():
             ],
         )
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_47.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_47.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -1858,16 +1854,13 @@ def test_netcdf_47():
 """
     assert content == expected_content
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_47.csvt", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_47.csvt", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
     expected_content = """WKT,Integer,Integer,Real,Real,String(3),String,Date,DateTime,DateTime,Integer64,Integer64,Integer(Boolean),Integer(Boolean),Real(Float32),Real(Float32),Integer(Int16),Integer(Int16),Real,Integer,Integer,Integer,Integer,Integer,Integer64,Integer64,Real,Real
 """
     assert content == expected_content
-    gdal.Unlink("/vsimem/netcdf_47.csv")
-    gdal.Unlink("/vsimem/netcdf_47.csvt")
-    gdal.Unlink("/vsimem/netcdf_47.prj")
 
 
 ###############################################################################
@@ -1889,12 +1882,12 @@ def test_netcdf_48():
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_49():
+def test_netcdf_49(tmp_vsimem):
 
     with gdal.quiet_errors():
         ds = gdal.OpenEx("data/netcdf/test_ogr_xyz_float.nc", gdal.OF_VECTOR)
         gdal.VectorTranslate(
-            "/vsimem/netcdf_49.csv",
+            tmp_vsimem / "netcdf_49.csv",
             ds,
             format="CSV",
             layerCreationOptions=[
@@ -1904,7 +1897,7 @@ def test_netcdf_49():
             ],
         )
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_49.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_49.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -1914,8 +1907,6 @@ def test_netcdf_49():
 ,
 """
     assert content == expected_content
-
-    gdal.Unlink("/vsimem/netcdf_49.csv")
 
 
 ###############################################################################
@@ -1979,10 +1970,10 @@ def test_netcdf_50(tmp_path):
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_51(tmp_path):
+def test_netcdf_51(tmp_path, tmp_vsimem):
 
     ds = gdal.OpenEx("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
-    ofile = str(tmp_path / "out.nc")
+    ofile = tmp_path / "out.nc"
     # Test autogrow of string fields
     gdal.VectorTranslate(
         ofile,
@@ -1995,7 +1986,7 @@ def test_netcdf_51(tmp_path):
     with gdal.quiet_errors():
         ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
         gdal.VectorTranslate(
-            "/vsimem/netcdf_51.csv",
+            tmp_vsimem / "netcdf_51.csv",
             ds,
             format="CSV",
             layerCreationOptions=[
@@ -2008,7 +1999,7 @@ def test_netcdf_51(tmp_path):
         )
         ds = None
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_51.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_51.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2019,7 +2010,7 @@ def test_netcdf_51(tmp_path):
 """
     assert content == expected_content
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_51.csvt", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_51.csvt", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2050,20 +2041,16 @@ def test_netcdf_51(tmp_path):
     if netcdf_cf.cfchecks_available():
         netcdf_cf.netcdf_cf_check_file(ofile, "auto")
 
-    gdal.Unlink("/vsimem/netcdf_51.csv")
-    gdal.Unlink("/vsimem/netcdf_51.csvt")
-    gdal.Unlink("/vsimem/netcdf_51.prj")
-
 
 ###############################################################################
 # Test creating a vector NetCDF 3 file with X,Y,Z fields with WRITE_GDAL_TAGS=NO
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_51_no_gdal_tags(tmp_path):
+def test_netcdf_51_no_gdal_tags(tmp_path, tmp_vsimem):
 
     ds = gdal.OpenEx("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
-    ofile = str(tmp_path / "out.nc")
+    ofile = tmp_path / "out.nc"
     gdal.VectorTranslate(
         ofile,
         ds,
@@ -2074,7 +2061,7 @@ def test_netcdf_51_no_gdal_tags(tmp_path):
     with gdal.quiet_errors():
         ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
         gdal.VectorTranslate(
-            "/vsimem/netcdf_51_no_gdal_tags.csv",
+            tmp_vsimem / "netcdf_51_no_gdal_tags.csv",
             ds,
             format="CSV",
             layerCreationOptions=[
@@ -2086,7 +2073,7 @@ def test_netcdf_51_no_gdal_tags(tmp_path):
         )
         ds = None
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_51_no_gdal_tags.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_51_no_gdal_tags.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2097,7 +2084,7 @@ def test_netcdf_51_no_gdal_tags(tmp_path):
 """
     assert content == expected_content
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_51_no_gdal_tags.csvt", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_51_no_gdal_tags.csvt", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2105,17 +2092,13 @@ def test_netcdf_51_no_gdal_tags(tmp_path):
 """
     assert content == expected_content
 
-    gdal.Unlink("/vsimem/netcdf_51_no_gdal_tags.csv")
-    gdal.Unlink("/vsimem/netcdf_51_no_gdal_tags.csvt")
-    gdal.Unlink("/vsimem/netcdf_51_no_gdal_tags.prj")
-
 
 ###############################################################################
 # Test creating a vector NetCDF 4 file with X,Y,Z fields
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_52(tmp_path):
+def test_netcdf_52(tmp_path, tmp_vsimem):
 
     if gdaltest.netcdf_drv_version == "4.7.0":
         pytest.skip(
@@ -2134,7 +2117,7 @@ def test_netcdf_52(tmp_path):
     with gdal.quiet_errors():
         ds = gdal.OpenEx(ofile, gdal.OF_VECTOR)
         gdal.VectorTranslate(
-            "/vsimem/netcdf_52.csv",
+            tmp_vsimem / "netcdf_52.csv",
             ds,
             format="CSV",
             layerCreationOptions=[
@@ -2146,7 +2129,7 @@ def test_netcdf_52(tmp_path):
         )
         ds = None
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_52.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_52.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2157,7 +2140,7 @@ def test_netcdf_52(tmp_path):
 """
     assert content == expected_content
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_52.csvt", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_52.csvt", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2187,10 +2170,6 @@ def test_netcdf_52(tmp_path):
     # import netcdf_cf
     # if netcdf_cf.cfchecks_available():
     #     netcdf_cf.netcdf_cf_check_file(ofile, "auto")
-
-    gdal.Unlink("/vsimem/netcdf_52.csv")
-    gdal.Unlink("/vsimem/netcdf_52.csvt")
-    gdal.Unlink("/vsimem/netcdf_52.prj")
 
 
 ###############################################################################
@@ -2507,7 +2486,7 @@ def test_netcdf_59():
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_60():
+def test_netcdf_60(tmp_vsimem):
 
     # Test that a vector cannot be opened in raster-only mode
     ds = gdal.OpenEx("data/netcdf/profile.nc", gdal.OF_RASTER)
@@ -2518,7 +2497,7 @@ def test_netcdf_60():
 
     with gdal.quiet_errors():
         gdal.VectorTranslate(
-            "/vsimem/netcdf_60.csv",
+            tmp_vsimem / "netcdf_60.csv",
             ds,
             format="CSV",
             layerCreationOptions=[
@@ -2528,7 +2507,7 @@ def test_netcdf_60():
             ],
         )
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_60.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_60.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2540,21 +2519,19 @@ def test_netcdf_60():
 """
     assert content == expected_content
 
-    gdal.Unlink("/vsimem/netcdf_60.csv")
-
 
 ###############################################################################
 # Test appending to a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_61(tmp_path):
+def test_netcdf_61(tmp_path, tmp_vsimem):
 
     ofile = str(tmp_path / "out.nc")
     shutil.copy("data/netcdf/profile.nc", ofile)
     ds = gdal.VectorTranslate(ofile, "data/netcdf/profile.nc", accessMode="append")
     gdal.VectorTranslate(
-        "/vsimem/netcdf_61.csv",
+        tmp_vsimem / "netcdf_61.csv",
         ds,
         format="CSV",
         layerCreationOptions=[
@@ -2564,7 +2541,7 @@ def test_netcdf_61(tmp_path):
         ],
     )
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_61.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_61.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2580,18 +2557,15 @@ def test_netcdf_61(tmp_path):
 """
     assert content == expected_content
 
-    gdal.Unlink("/vsimem/netcdf_61.csv")
-    gdal.Unlink("/vsimem/netcdf_61.nc")
-
 
 ###############################################################################
 # Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_62(tmp_path):
+def test_netcdf_62(tmp_path, tmp_vsimem):
 
-    ofile = str(tmp_path / "out.nc")
+    ofile = tmp_path / "out.nc"
 
     ds = gdal.VectorTranslate(
         ofile,
@@ -2605,7 +2579,7 @@ def test_netcdf_62(tmp_path):
         datasetCreationOptions=["GEOMETRY_ENCODING=WKT"],
     )
     gdal.VectorTranslate(
-        "/vsimem/netcdf_62.csv",
+        tmp_vsimem / "netcdf_62.csv",
         ds,
         format="CSV",
         layerCreationOptions=[
@@ -2615,7 +2589,7 @@ def test_netcdf_62(tmp_path):
         ],
     )
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_62.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_62.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2627,8 +2601,6 @@ def test_netcdf_62(tmp_path):
 "POINT Z (3 50 100)",2,4,Santa Fe,baz2
 """
     assert content == expected_content
-
-    gdal.Unlink("/vsimem/netcdf_62.csv")
 
     if gdaltest.netcdf_have_ncdump:
         hdr = netcdf_ncdump(ofile)
@@ -2654,9 +2626,9 @@ def test_netcdf_62(tmp_path):
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_63(tmp_path):
+def test_netcdf_63(tmp_path, tmp_vsimem):
 
-    ofile = str(tmp_path / "out.nc")
+    ofile = tmp_path / "out.nc"
 
     shutil.copy("data/netcdf/profile.nc", ofile)
     ds = gdal.VectorTranslate(
@@ -2671,7 +2643,7 @@ def test_netcdf_63(tmp_path):
         ],
     )
     gdal.VectorTranslate(
-        "/vsimem/netcdf_63.csv",
+        tmp_vsimem / "netcdf_63.csv",
         ds,
         format="CSV",
         layerCreationOptions=[
@@ -2681,7 +2653,7 @@ def test_netcdf_63(tmp_path):
         ],
     )
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_63.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_63.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2694,8 +2666,6 @@ def test_netcdf_63(tmp_path):
 """
     assert content == expected_content
 
-    gdal.Unlink("/vsimem/netcdf_63.csv")
-
     del ds
 
     if gdaltest.netcdf_have_ncdump:
@@ -2707,8 +2677,6 @@ def test_netcdf_63(tmp_path):
         assert ':featureType = "profile"' in hdr
         assert "char station(record" in hdr
 
-    gdal.Unlink("/vsimem/netcdf_63.nc")
-
 
 ###############################################################################
 # Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
@@ -2716,9 +2684,9 @@ def test_netcdf_63(tmp_path):
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_64(tmp_path):
+def test_netcdf_64(tmp_path, tmp_vsimem):
 
-    ofile = str(tmp_path / "out.nc")
+    ofile = tmp_path / "out.nc"
 
     gdal.VectorTranslate(
         ofile,
@@ -2734,7 +2702,7 @@ def test_netcdf_64(tmp_path):
         datasetCreationOptions=["GEOMETRY_ENCODING=WKT"],
     )
     gdal.VectorTranslate(
-        "/vsimem/netcdf_64.csv",
+        tmp_vsimem / "netcdf_64.csv",
         ofile,
         format="CSV",
         layerCreationOptions=[
@@ -2744,7 +2712,7 @@ def test_netcdf_64(tmp_path):
         ],
     )
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_64.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_64.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2756,9 +2724,6 @@ def test_netcdf_64(tmp_path):
 "POINT Z (3 50 100)",1,4,Santa Fe,baz2
 """
     assert content == expected_content
-
-    gdal.Unlink("/vsimem/netcdf_64.csv")
-    gdal.Unlink("/vsimem/netcdf_64.nc")
 
 
 ###############################################################################
@@ -2794,9 +2759,9 @@ def test_netcdf_65(tmp_path):
 
 
 @pytest.mark.require_driver("CSV")
-def test_netcdf_66(tmp_path):
+def test_netcdf_66(tmp_path, tmp_vsimem):
 
-    ofile = str(tmp_path / "out.nc")
+    ofile = tmp_path / "out.nc"
 
     # First trying with no so good configs
 
@@ -2892,7 +2857,7 @@ def test_netcdf_66(tmp_path):
         datasetCreationOptions=["CONFIG_FILE=" + myconfig, "GEOMETRY_ENCODING=WKT"],
     )
     gdal.VectorTranslate(
-        "/vsimem/netcdf_66.csv",
+        tmp_vsimem / "netcdf_66.csv",
         ofile,
         format="CSV",
         layerCreationOptions=[
@@ -2902,7 +2867,7 @@ def test_netcdf_66(tmp_path):
         ],
     )
 
-    fp = gdal.VSIFOpenL("/vsimem/netcdf_66.csv", "rb")
+    fp = gdal.VSIFOpenL(tmp_vsimem / "netcdf_66.csv", "rb")
     if fp is not None:
         content = gdal.VSIFReadL(1, 10000, fp).decode("ascii")
         gdal.VSIFCloseL(fp)
@@ -2914,8 +2879,6 @@ def test_netcdf_66(tmp_path):
 "POINT Z (3 50 100)",2,4,Santa Fe,baz2
 """
     assert content == expected_content
-
-    gdal.Unlink("/vsimem/netcdf_66.csv")
 
     if gdaltest.netcdf_have_ncdump:
         hdr = netcdf_ncdump(ofile)
@@ -5668,15 +5631,16 @@ def test_netcdf_hdf5_signature_not_at_beginning():
 # Test opening a /vsimem/ file
 
 
-def test_netcdf_open_vsimem():
+def test_netcdf_open_vsimem(tmp_vsimem):
 
     if gdal.GetDriverByName("netCDF").GetMetadataItem("NETCDF_HAS_NETCDF_MEM") is None:
         pytest.skip("NETCDF_HAS_NETCDF_MEM missing")
 
-    gdal.FileFromMemBuffer("/vsimem/test.nc", open("data/netcdf/trmm.nc", "rb").read())
-    ds = gdal.Open("/vsimem/test.nc")
+    gdal.FileFromMemBuffer(
+        tmp_vsimem / "test.nc", open("data/netcdf/trmm.nc", "rb").read()
+    )
+    ds = gdal.Open(tmp_vsimem / "test.nc")
     assert ds is not None
-    gdal.Unlink("/vsimem/test.nc")
     assert ds.GetRasterBand(1).Checksum() == 14
 
 

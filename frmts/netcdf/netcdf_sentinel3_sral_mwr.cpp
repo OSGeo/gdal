@@ -436,19 +436,19 @@ void netCDFDataset::ProcessSentinel3_SRAL_MWR()
 
     OGRSpatialReference *poSRS = nullptr;
     const char *pszSemiMajor =
-        CSLFetchNameValue(papszMetadata, "NC_GLOBAL#semi_major_ellipsoid_axis");
+        aosMetadata.FetchNameValue("NC_GLOBAL#semi_major_ellipsoid_axis");
     const char *pszFlattening =
-        CSLFetchNameValue(papszMetadata, "NC_GLOBAL#ellipsoid_flattening");
+        aosMetadata.FetchNameValue("NC_GLOBAL#ellipsoid_flattening");
     if (pszSemiMajor && EQUAL(pszSemiMajor, "6378137") && pszFlattening &&
         fabs(CPLAtof(pszFlattening) - 0.00335281066474748) < 1e-16)
     {
-        int iAttr =
-            CSLFindName(papszMetadata, "NC_GLOBAL#semi_major_ellipsoid_axis");
+        int iAttr = aosMetadata.FindName("NC_GLOBAL#semi_major_ellipsoid_axis");
         if (iAttr >= 0)
-            papszMetadata = CSLRemoveStrings(papszMetadata, iAttr, 1, nullptr);
-        iAttr = CSLFindName(papszMetadata, "NC_GLOBAL#ellipsoid_flattening");
+            aosMetadata.RemoveStrings(iAttr, 1);
+
+        iAttr = aosMetadata.FindName("NC_GLOBAL#ellipsoid_flattening");
         if (iAttr >= 0)
-            papszMetadata = CSLRemoveStrings(papszMetadata, iAttr, 1, nullptr);
+            aosMetadata.RemoveStrings(iAttr, 1);
         poSRS = new OGRSpatialReference();
         poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
         poSRS->importFromEPSG(4326);
