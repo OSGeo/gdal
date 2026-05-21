@@ -216,7 +216,7 @@ Examples
             --output-format CSV \
             --output /vsistdout/
 
-    or, using the zone vector dataset as the piped dataset using the ``_`` placeholder dataset name:
+    or, using the zone vector dataset as the piped dataset using the ``_PIPE_`` placeholder dataset name:
 
    .. code-block:: bash
 
@@ -224,7 +224,7 @@ Examples
           buffer 200 ! \
           zonal-stats \
             --input dem.tif
-            --zones _ \
+            --zones _PIPE_ \
             --stat mean ! \
           write \
             --output-format CSV \
