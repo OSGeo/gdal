@@ -595,3 +595,15 @@ def test_hdf4_gcp_nodata():
     ds = None
 
     assert gcp_count == 72, "did not get expected gcp count"
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14356
+
+
+def test_hdf4_gh_14356():
+
+    if gdaltest.hdf4_drv is None:
+        pytest.skip()
+
+    gdal.Open("data/hdf4/issue_14356.he4")
