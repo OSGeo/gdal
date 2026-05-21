@@ -30,7 +30,7 @@
 /*                             Initialize()                             */
 /************************************************************************/
 
-void DDFField::Initialize(const DDFFieldDefn *poDefnIn, const char *pachDataIn,
+bool DDFField::Initialize(const DDFFieldDefn *poDefnIn, const char *pachDataIn,
                           int nDataSizeIn, bool bInitializeParts)
 
 {
@@ -38,17 +38,14 @@ void DDFField::Initialize(const DDFFieldDefn *poDefnIn, const char *pachDataIn,
     nDataSize = nDataSizeIn;
     poDefn = poDefnIn;
 
-    if (bInitializeParts)
-    {
-        InitializeParts();
-    }
+    return bInitializeParts ? InitializeParts() : true;
 }
 
 /************************************************************************/
 /*                          InitializeParts()                           */
 /************************************************************************/
 
-void DDFField::InitializeParts()
+bool DDFField::InitializeParts()
 {
     const bool bCreateParts = apoFieldParts.empty();
     const size_t nDefnPartsCount = poDefn->GetParts().size();
@@ -58,6 +55,13 @@ void DDFField::InitializeParts()
     for (const auto &[iPart, poFieldDefnPart] :
          cpl::enumerate(poDefn->GetParts()))
     {
+        if (iOffset > nDataSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Not enough bytes for part %d of field %s",
+                     static_cast<int>(iPart), poDefn->GetName());
+            return false;
+        }
         const int iOffsetBefore = iOffset;
         if (nDataSize > 0)
         {
@@ -96,6 +100,8 @@ void DDFField::InitializeParts()
                                              iOffset - iOffsetBefore, false);
         }
     }
+
+    return true;
 }
 
 /************************************************************************/
