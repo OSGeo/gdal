@@ -120,17 +120,15 @@ When working with remote datasets, it is often useful to log :term:`curl` output
 
       .. code-tab:: bash
 
-        $ export CPL_CURL_VERBOSE=YES
         $ export CPL_TIMESTAMP=ON
-        $ gdal raster info /vsicurl/https://download.osgeo.org/geotiff/samples/spot/chicago/SP27GTIF.TIF --debug "CURL_INFO_TEXT"
+        $ gdal raster info /vsicurl/https://download.osgeo.org/geotiff/samples/spot/chicago/SP27GTIF.TIF --debug "CURL_INFO_TEXT" --config CPL_CURL_VERBOSE=ON
         [Fri May 15 11:57:24 2026].6370, 0.0000: CURL_INFO_TEXT: Could not find host download.osgeo.org in the .netrc file; using defaults
         [Fri May 15 11:57:24 2026].6640, 0.0270: CURL_INFO_TEXT: Host download.osgeo.org:443 was resolved.
 
       .. code-tab:: ps1
 
-        $env:CPL_CURL_VERBOSE="YES"
         $env:CPL_TIMESTAMP="ON"
-        gdal raster info /vsicurl/https://download.osgeo.org/geotiff/samples/spot/chicago/SP27GTIF.TIF --debug "CURL_INFO_TEXT"
+        gdal raster info /vsicurl/https://download.osgeo.org/geotiff/samples/spot/chicago/SP27GTIF.TIF --debug "CURL_INFO_TEXT" --config CPL_CURL_VERBOSE=ON
 
 :config:`CPL_LOG_ERRORS` enables logging of error messages through GDAL’s CPL logging system, rather than only reporting them to the terminal.
 When combined with :config:`CPL_LOG`, log output (including errors) can be written to a file.
