@@ -534,9 +534,9 @@ class CPL_DLL DDFField
     DDFField(DDFField &&) = default;
     DDFField &operator=(DDFField &&) = default;
 
-    void Initialize(const DDFFieldDefn *, const char *pszData, int nSize,
+    bool Initialize(const DDFFieldDefn *, const char *pszData, int nSize,
                     bool bInitializeParts);
-    void InitializeParts();
+    bool InitializeParts();
 
     void Dump(FILE *fp, int nNestingLevel = 0) const;
 

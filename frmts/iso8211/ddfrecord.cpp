@@ -494,10 +494,15 @@ int DDFRecord::ReadHeader()
             /* --------------------------------------------------------------------
              */
             apoFields[i] = std::make_unique<DDFField>();
-            apoFields[i]->Initialize(poFieldDefn,
-                                     osData.c_str() + _fieldAreaStart +
-                                         nFieldPos - nLeaderSize,
-                                     nFieldLength, true);
+            if (!apoFields[i]->Initialize(poFieldDefn,
+                                          osData.c_str() + _fieldAreaStart +
+                                              nFieldPos - nLeaderSize,
+                                          nFieldLength, true))
+            {
+                // Error message emitted by Initialize()
+                nFieldOffset = -1;
+                return FALSE;
+            }
 
             nLastFieldPos = nFieldPos;
             nLastFieldLength = nFieldLength;
@@ -689,10 +694,15 @@ int DDFRecord::ReadHeader()
             /* ------------------------------------------------------------- */
 
             apoFields[i] = std::make_unique<DDFField>();
-            apoFields[i]->Initialize(poFieldDefn,
-                                     osData.c_str() + _fieldAreaStart +
-                                         nFieldPos - nLeaderSize,
-                                     nFieldLength, true);
+            if (!apoFields[i]->Initialize(poFieldDefn,
+                                          osData.c_str() + _fieldAreaStart +
+                                              nFieldPos - nLeaderSize,
+                                          nFieldLength, true))
+            {
+                // Error message emitted by Initialize()
+                nFieldOffset = -1;
+                return FALSE;
+            }
 
             nLastFieldPos = nFieldPos;
             nLastFieldLength = nFieldLength;
