@@ -44,7 +44,7 @@ or the core GDAL runtime (``GDAL``).
        Shape: 19 features read on layer 'in'.
 
 Debug output can be filtered by passing a component prefix to the ``--debug`` option.
-For example, to display only messages from the ``Shape`` driver, use ``--debug Shape``.
+For example, to display only messages beginning with ``Shape:`, use ``--debug Shape``.
 Prefix matching is case-insensitive, but partial matches and wildcards are not supported.
 
 .. example::
@@ -101,7 +101,7 @@ The following are all broadly equivalent, although environment variables affect 
         $env:CPL_DEBUG="ON"
         gdal vector info in.gpkg
 
-When working with remote datasets, it is often useful to log :term:`curl` output for HTTP requests. This can be done by setting the ``CPL_CURL_VERBOSE`` configuration option to ``ON``.
+When working with remote datasets, it is often useful to log :term:`curl` output for HTTP requests. This can be done by setting the :config:`CPL_CURL_VERBOSE` configuration option to ``ON``.
 
 .. example::
    :title: Get raster information with HTTP request logging enabled
@@ -111,7 +111,7 @@ When working with remote datasets, it is often useful to log :term:`curl` output
 
       $ gdal raster info /vsicurl/https://download.osgeo.org/geotiff/samples/spot/chicago/SP27GTIF.TIF --config CPL_CURL_VERBOSE=ON
 
-``CPL_TIMESTAMP`` adds timestamps to each log and debug message emitted by GDAL, which can be useful for troubleshooting performance bottlenecks and benchmarking.
+:config:`CPL_TIMESTAMP` adds timestamps to each log and debug message emitted by GDAL, which can be useful for troubleshooting performance bottlenecks and benchmarking.
 
 .. example::
    :title: Get raster info with curl logging and timestamps
@@ -132,8 +132,8 @@ When working with remote datasets, it is often useful to log :term:`curl` output
         $env:CPL_TIMESTAMP="ON"
         gdal raster info /vsicurl/https://download.osgeo.org/geotiff/samples/spot/chicago/SP27GTIF.TIF --debug "CURL_INFO_TEXT"
 
-``CPL_LOG_ERRORS`` enables logging of error messages through GDAL’s CPL logging system, rather than only reporting them to the terminal.
-When combined with ``CPL_LOG``, log output (including errors) can be written to a file.
+:config:`CPL_LOG_ERRORS` enables logging of error messages through GDAL’s CPL logging system, rather than only reporting them to the terminal.
+When combined with :config:`CPL_LOG`, log output (including errors) can be written to a file.
 
 .. example::
    :title: Log debug output and errors to a file
