@@ -194,8 +194,8 @@ Execution of pipelines and argument substitutions can also be done in Python wit
 
     gdal.Run("pipeline", pipeline="raster_reproject.gdalg.json", output="out.tif", arguments={"edit[0].metadata": "before=modified"})
 
-Placeholder dataset name ``_``
-------------------------------
+Placeholder dataset name ``_PIPE_``
+-----------------------------------
 
 .. versionadded:: 3.13
 
@@ -205,7 +205,8 @@ dataset from the previous step. In some cases, it might be desirable to pipe
 the output dataset from the previous step into one of the other input dataset
 arguments instead.
 
-This can be achieved by using the placeholder dataset name ``_`` (underscore) as
+This can be achieved by using the placeholder dataset name ``_PIPE_`` (PIPE with
+leading and trailing underscore character) as
 the value for the alternate dataset argument, while explicitly specifying the
 input positional dataset argument.
 
@@ -217,7 +218,7 @@ input positional dataset argument.
       gdal pipeline read points.geojson ! buffer 200 ! \
           zonal-stats \
             --input dem.tif
-            --zones _ \
+            --zones _PIPE_ \
             --stat mean ! \
           write \
             --output-format CSV \
@@ -226,12 +227,6 @@ input positional dataset argument.
 
 It is also possible to achieve the same result by using a input nested pipeline
 as described below.
-
-.. warning::
-
-    Be careful to use the underscore character ``_``, and not the dash character ``-``.
-    The later tries to read the dataset from the standard input stream.
-
 
 .. _gdal_nested_pipeline:
 
