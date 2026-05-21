@@ -532,9 +532,11 @@ bool DDFFieldDefn::BuildSubfields()
                                 else if (*pszFormatCur >= '1' &&
                                          *pszFormatCur <= '9')
                                 {
-                                    nGroupSubFieldCount += static_cast<int>(
-                                        strtol(pszFormatCur, &pszNext, 10));
-                                    if (!(*pszNext))
+                                    const long nIncrement =
+                                        strtol(pszFormatCur, &pszNext, 10);
+                                    if (!(*pszNext) ||
+                                        nIncrement >
+                                            INT_MAX - nGroupSubFieldCount)
                                     {
                                         CPLError(CE_Failure, CPLE_AppDefined,
                                                  "Tag %s: invalid "
@@ -543,6 +545,8 @@ bool DDFFieldDefn::BuildSubfields()
                                                  _formatControls.c_str());
                                         return false;
                                     }
+                                    nGroupSubFieldCount +=
+                                        static_cast<int>(nIncrement);
                                     pszFormatCur = pszNext;
                                 }
                                 else if (*pszFormatCur == ',')
