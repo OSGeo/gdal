@@ -1069,9 +1069,23 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
           * and MAX (32 * local_ns[2],SECT2_FLOATSIZE)
           * for size of section 2 unpacked.
           */
+         if (local_ns[2] > INT_MAX / 32)
+         {
+             /* Very unlikely to happen given local_ns[2] is validated against
+                the message size */
+             preErrSprintf ("Too large local_ns[2]\n");
+             free (buff);
+             return -2;
+         }
          nidat = (32 * local_ns[2] < SECT2_INIT_SIZE) ? SECT2_INIT_SIZE :
                32 * local_ns[2];
          nrdat = nidat;
+         if( nidat > INT_MAX / (int)sizeof (sInt4))
+         {
+             preErrSprintf ("Too large local_ns[2]\n");
+             free (buff);
+             return -2;
+         }
       }
       if (nidat > IS->nidat) {
          IS->idat = (sInt4 *) realloc ((void *) IS->idat,
