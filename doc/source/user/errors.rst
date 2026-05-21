@@ -115,8 +115,7 @@ To check if a driver is installed, see :example:`gdal-vector-drivers`.
 .. example::
    :title: Opening a NetCDF file
 
-   GDAL supports :ref:`raster.netcdf`, but it requires the NetCDF driver plugin
-   to be available in the installation.
+   GDAL supports :ref:`raster.netcdf`, but some packaging systems require the netCDF driver to be installed separately.
 
    As indicated in the error message, this can be installed in a
    :ref:`conda`-based GDAL environment using ``conda install``.
