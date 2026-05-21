@@ -4564,10 +4564,19 @@ void BAGDataset::LoadMetadata()
     {
         H5Sget_simple_extent_dims(dataspace, dims, maxdims);
 
-        pszXMLMetadata =
-            static_cast<char *>(CPLCalloc(static_cast<int>(dims[0] + 1), 1));
+        if (dims[0] > 10 * 1024 * 1024)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Too large size for /BAG_root/metadata");
+        }
+        else
+        {
+            pszXMLMetadata = static_cast<char *>(
+                CPLCalloc(static_cast<int>(dims[0] + 1), 1));
 
-        H5Dread(hMDDS, native, H5S_ALL, dataspace, H5P_DEFAULT, pszXMLMetadata);
+            H5Dread(hMDDS, native, H5S_ALL, dataspace, H5P_DEFAULT,
+                    pszXMLMetadata);
+        }
     }
 
     H5Tclose(native);

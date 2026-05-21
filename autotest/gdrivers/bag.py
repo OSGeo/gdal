@@ -1204,3 +1204,10 @@ def test_bag_open_larger_than_INT_MAX_pixels():
 
     with pytest.raises(Exception, match="At least one dimension size exceeds INT_MAX"):
         gdal.Open("data/bag/larger_than_INT_MAX_pixels.bag")
+
+
+###############################################################################
+@gdaltest.enable_exceptions()
+def test_bag_open_too_large_metadata_dim():
+
+    gdal.Open("data/bag/too_large_metadata_dim.bag")
