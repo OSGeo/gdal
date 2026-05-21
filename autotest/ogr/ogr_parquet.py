@@ -5053,3 +5053,17 @@ def test_ogr_parquet_read_geoparquet_1_1_no_explicit_crs_but_geoarrow_wkb_declar
     )
     lyr = ds.GetLayer(0)
     assert lyr.GetSpatialRef().GetAuthorityCode() == "4326"
+
+
+###############################################################################
+# Test bugfix for https://github.com/OSGeo/gdal/issues/14610
+# Case where a column with a nested column "type" appears before a top-level
+# column "type"
+
+
+def test_ogr_parquet_read_gh_14610():
+
+    ds = ogr.Open("data/parquet/gh_14610.parquet")
+    lyr = ds.GetLayer(0)
+    lyr.SetIgnoredFields(["OGR_GEOMETRY"])
+    assert lyr.GetNextFeature()

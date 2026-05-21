@@ -1312,33 +1312,6 @@ void OGRParquetLayer::ProcessGeometryColumnCovering(
 }
 
 /************************************************************************/
-/*                              FindNode()                              */
-/************************************************************************/
-
-static const parquet::schema::Node *FindNode(const parquet::schema::Node *node,
-                                             const std::string &arrowFieldName)
-{
-    CPLAssert(node);
-    if (node->name() == arrowFieldName)
-    {
-        return node;
-    }
-    else if (node->is_group())
-    {
-        const auto groupNode =
-            cpl::down_cast<const parquet::schema::GroupNode *>(node);
-        for (int i = 0; i < groupNode->field_count(); ++i)
-        {
-            const auto found =
-                FindNode(groupNode->field(i).get(), arrowFieldName);
-            if (found)
-                return found;
-        }
-    }
-    return nullptr;
-}
-
-/************************************************************************/
 /*                         CollectLeaveNodes()                          */
 /************************************************************************/
 
@@ -1378,7 +1351,20 @@ std::vector<int> OGRParquetLayer::GetParquetColumnIndicesForArrowField(
 
     std::vector<int> anParquetCols;
     const auto *rootNode = schema->schema_root().get();
-    const auto *fieldNode = FindNode(rootNode, arrowFieldName);
+    const parquet::schema::Node *fieldNode = nullptr;
+    if (rootNode->is_group())
+    {
+        const auto groupNode =
+            cpl::down_cast<const parquet::schema::GroupNode *>(rootNode);
+        for (int i = 0; i < groupNode->field_count(); ++i)
+        {
+            if (groupNode->field(i).get()->name() == arrowFieldName)
+            {
+                fieldNode = groupNode->field(i).get();
+                break;
+            }
+        }
+    }
     if (!fieldNode)
     {
         CPLDebug("Parquet",

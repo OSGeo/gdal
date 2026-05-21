@@ -307,7 +307,7 @@ class OGRArrowLayer CPL_NON_FINAL
         ++m_nFeatureIdx;
     }
 
-    void SanityCheckOfSetBatch() const;
+    bool SanityCheckOfSetBatch() const;
 
     OGRLayer *GetLayer() override
     {
