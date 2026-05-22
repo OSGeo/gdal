@@ -57,9 +57,15 @@ class GDALRasterTileAlgorithm /* non final */
         return true;
     }
 
+    int GetOutputType() const override
+    {
+        return 0;
+    }
+
   private:
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterTileAlgorithm)
 
+    std::string m_outputDir{};
     std::vector<std::string> m_metadata{};
     bool m_copySrcMetadata = false;
     std::string m_tilingScheme{};
