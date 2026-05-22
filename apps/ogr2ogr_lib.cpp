@@ -2960,7 +2960,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
         CPL_TO_BOOL(poDS->TestCapability(ODsCRandomLayerRead));
     if (bRandomLayerReading && !poODS->TestCapability(ODsCRandomLayerWrite) &&
         psOptions->aosLayers.size() != 1 && psOptions->osSQLStatement.empty() &&
-        !psOptions->bQuiet)
+        poDS->GetLayerCount() > 1 && !psOptions->bQuiet)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Input datasource uses random layer reading, but "

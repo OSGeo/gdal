@@ -669,3 +669,20 @@ def test_gdalalg_vector_convert_multiple_geometry_fields(tmp_vsimem):
         dst_lyr = dst_ds.GetLayer(0)
 
         assert dst_lyr.GetLayerDefn().GetGeomFieldCount() == 2
+
+
+################################################################################
+
+
+@pytest.mark.require_driver("GeoJSON")
+@pytest.mark.require_driver("OSM")
+def test_pbf_to_geojson_warning(tmp_vsimem):
+    """Test for issue GH #14608: do not raise warning about random layer reading on single layers"""
+
+    with gdaltest.error_raised(gdal.CE_None):
+        gdal.alg.vector.convert(
+            input="../ogr/data/osm/test.pbf",
+            output=tmp_vsimem / "out.geojson",
+            output_format="GeoJSON",
+            input_layer="points",
+        )
