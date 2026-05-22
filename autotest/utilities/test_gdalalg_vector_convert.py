@@ -679,17 +679,10 @@ def test_gdalalg_vector_convert_multiple_geometry_fields(tmp_vsimem):
 def test_pbf_to_geojson_warning(tmp_vsimem):
     """Test for issue GH #14608: do not raise warning about random layer reading on single layers"""
 
-    msgs = []
-
-    def my_handler(typ, errno, msg):
-        msgs.append(msg)
-
-    with gdaltest.disable_exceptions(), gdaltest.error_handler(my_handler):
+    with gdaltest.error_raised(gdal.CE_None):
         gdal.alg.vector.convert(
             input="../ogr/data/osm/test.pbf",
             output=tmp_vsimem / "out.geojson",
             output_format="GeoJSON",
             input_layer="points",
         )
-
-    assert not msgs, "Unexpected warning: %s" % str(msgs)
