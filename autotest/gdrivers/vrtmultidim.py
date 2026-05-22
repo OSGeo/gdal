@@ -2164,3 +2164,15 @@ def test_vrtmultidim_overview_inline_wrong():
     </VRTDataset>""",
             gdal.OF_MULTIDIM_RASTER,
         )
+
+
+@pytest.mark.require_driver("netCDF")
+@gdaltest.enable_exceptions()
+def test_vrtmultidim_ref_vrtmultidim(tmp_vsimem):
+
+    # Check we don't dead lock on dataset closing
+    with gdal.OpenEx(
+        "data/vrt/multidim_ref_multidim_vrt.vrt", gdal.OF_MULTIDIM_RASTER
+    ) as ds:
+        array = ds.GetRootGroup().OpenMDArrayFromFullname("/Band1")
+        array.Read()
