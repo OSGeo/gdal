@@ -2235,10 +2235,11 @@ def test_gdalalg_raster_tile_pipeline(tmp_path):
             "GDAL_THRESHOLD_MIN_TILES_PER_JOB": "1",
         }
     ):
-        gdal.Run(
+        alg = gdal.Run(
             "raster pipeline",
             pipeline=f"mosaic ../gdrivers/data/small_world.tif ! tile {out_dirname} --min-zoom=0 --max-zoom=3",
         )
+        assert alg.Outputs() == {"output": None, "output-string": ""}
 
     assert len(gdal.ReadDirRecursive(out_dirname)) == 108
 
