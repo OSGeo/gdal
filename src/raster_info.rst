@@ -53,7 +53,7 @@ We see 3 main Sentinel 2 products, the JPEG-2000 files with the data, and a bunc
 Raster dataset with subdatasets
 -------------------------------
 
-Let's get information on one of the Sentinel 2 dataset
+Let's get information on one of the Sentinel 2 datasets
 
 ::
 

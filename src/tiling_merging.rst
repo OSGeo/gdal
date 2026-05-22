@@ -115,7 +115,7 @@ Modify above pipeline to materialize the scaled dataset as a COG before tiling.
 ==> :ref:`solution_materialize`.
 
 
-Vector partitionning
+Vector partitioning
 --------------------
 
 Using `gdal vector partition <https://gdal.org/en/stable/programs/gdal_vector_partition.html>`__
