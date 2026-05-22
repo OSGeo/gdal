@@ -1273,52 +1273,53 @@ def test_pdf_extra_rasters(poppler_or_pdfium):
 
 
 @pytest.mark.require_driver("CSV")
-def test_pdf_write_ogr(poppler_or_pdfium):
-    f = gdal.VSIFOpenL("tmp/test.csv", "wb")
-    data = """id,foo,WKT,style
-1,bar,"MULTIPOLYGON (((440720 3751320,440720 3750120,441020 3750120,441020 3751320,440720 3751320),(440800 3751200,440900 3751200,440900 3751000,440800 3751000,440800 3751200)),((441720 3751320,441720 3750120,441920 3750120,441920 3751320,441720 3751320)))",
-2,baz,"LINESTRING(440720 3751320,441920 3750120)","PEN(c:#FF0000,w:5pt,p:""2px 1pt"")"
-3,baz2,"POINT(441322.400 3750717.600)","PEN(c:#FF00FF,w:10px);BRUSH(fc:#FFFFFF);LABEL(c:#FF000080, f:""Arial, Helvetica"", a:45, s:12pt, t:""Hello World!"")"
-4,baz3,"POINT(0 0)",""
-"""
-    gdal.VSIFWriteL(data, 1, len(data), f)
-    gdal.VSIFCloseL(f)
+def test_pdf_write_ogr(tmp_path, poppler_or_pdfium):
+    csv_file = tmp_path / "test.csv"
+    with gdal.VSIFile(csv_file, "wb") as f:
+        data = b"""id,foo,WKT,style
+    1,bar,"MULTIPOLYGON (((440720 3751320,440720 3750120,441020 3750120,441020 3751320,440720 3751320),(440800 3751200,440900 3751200,440900 3751000,440800 3751000,440800 3751200)),((441720 3751320,441720 3750120,441920 3750120,441920 3751320,441720 3751320)))",
+    2,baz,"LINESTRING(440720 3751320,441920 3750120)","PEN(c:#FF0000,w:5pt,p:""2px 1pt"")"
+    3,baz2,"POINT(441322.400 3750717.600)","PEN(c:#FF00FF,w:10px);BRUSH(fc:#FFFFFF);LABEL(c:#FF000080, f:""Arial, Helvetica"", a:45, s:12pt, t:""Hello World!"")"
+    4,baz3,"POINT(0 0)",""
+    """
+        f.write(data)
 
-    f = gdal.VSIFOpenL("tmp/test.vrt", "wb")
-    data = """<OGRVRTDataSource>
-  <OGRVRTLayer name="test">
-    <SrcDataSource relativeToVRT="0" shared="1">tmp/test.csv</SrcDataSource>
-    <SrcLayer>test</SrcLayer>
-    <GeometryType>wkbUnknown</GeometryType>
-    <LayerSRS>EPSG:26711</LayerSRS>
-    <Field name="id" type="Integer" src="id"/>
-    <Field name="foo" type="String" src="foo"/>
-    <Field name="WKT" type="String" src="WKT"/>
-    <Style>style</Style>
-  </OGRVRTLayer>
-</OGRVRTDataSource>
-"""
-    gdal.VSIFWriteL(data, 1, len(data), f)
-    gdal.VSIFCloseL(f)
+    vrt_file = tmp_path / "test.vrt"
+    with gdal.VSIFile(vrt_file, "wb") as f:
+        data = f"""<OGRVRTDataSource>
+      <OGRVRTLayer name="test">
+        <SrcDataSource relativeToVRT="0" shared="1">{csv_file}</SrcDataSource>
+        <SrcLayer>test</SrcLayer>
+        <GeometryType>wkbUnknown</GeometryType>
+        <LayerSRS>EPSG:26711</LayerSRS>
+        <Field name="id" type="Integer" src="id"/>
+        <Field name="foo" type="String" src="foo"/>
+        <Field name="WKT" type="String" src="WKT"/>
+        <Style>style</Style>
+      </OGRVRTLayer>
+    </OGRVRTDataSource>
+    """
+        f.write(data.encode("utf-8"))
 
     options = [
-        "OGR_DATASOURCE=tmp/test.vrt",
+        f"OGR_DATASOURCE={vrt_file}",
         "OGR_DISPLAY_LAYER_NAMES=A_Layer",
         "OGR_DISPLAY_FIELD=foo",
     ]
 
     src_ds = gdal.Open("data/byte.tif")
-    ds = gdaltest.pdf_drv.CreateCopy("tmp/pdf_write_ogr.pdf", src_ds, options=options)
+    out_file = tmp_path / "pdf_write_ogr.pdf"
+    ds = gdaltest.pdf_drv.CreateCopy(out_file, src_ds, options=options)
     ds = None
     src_ds = None
 
     if pdf_is_poppler() or pdf_is_pdfium():
-        ds = gdal.Open("tmp/pdf_write_ogr.pdf")
+        ds = gdal.Open(out_file)
         cs_ref = ds.GetRasterBand(1).Checksum()
         layers = ds.GetMetadata_List("LAYERS")
         ds = None
 
-    ogr_ds = ogr.Open("tmp/pdf_write_ogr.pdf")
+    ogr_ds = ogr.Open(out_file)
     ogr_lyr = ogr_ds.GetLayer(0)
     feature_count = ogr_lyr.GetFeatureCount()
     ogr_ds = None
@@ -1337,9 +1338,7 @@ def test_pdf_write_ogr(poppler_or_pdfium):
         ]
         for opt in rendering_options:
             gdal.ErrorReset()
-            ds = gdal.OpenEx(
-                "tmp/pdf_write_ogr.pdf", open_options=["RENDERING_OPTIONS=%s" % opt]
-            )
+            ds = gdal.OpenEx(out_file, open_options=["RENDERING_OPTIONS=%s" % opt])
             cs = ds.GetRasterBand(1).Checksum()
             # When misconfigured Poppler with fonts, use this to avoid error
             if "TEXT" in opt and gdal.GetLastErrorMsg().find("font") >= 0:
@@ -1352,16 +1351,31 @@ def test_pdf_write_ogr(poppler_or_pdfium):
             # print('Checksum %s: %d' % (rendering_options[i], cs_tab[i]) )
             for j in range(i + 1, len(rendering_options)):
                 if cs_tab[i] == cs_tab[j] and cs_tab[i] >= 0 and cs_tab[j] >= 0:
-                    print("Checksum %s: %d" % (roi, cs_tab[i]))
-                    pytest.fail("Checksum %s: %d" % (rendering_options[j], cs_tab[j]))
+
+                    if gdaltest.is_travis_branch("macos_build_conda"):
+                        # Issue with poppler 26.05, fontconfig 2.18 on MacOSX
+                        pytest.skip(
+                            "Checksum %s=%d, %s=%d. See https://github.com/conda-forge/poppler-feedstock/issues/186"
+                            % (
+                                rendering_options[i],
+                                cs_tab[i],
+                                rendering_options[j],
+                                cs_tab[j],
+                            )
+                        )
+
+                    pytest.fail(
+                        "Checksum %s=%d, %s=%d"
+                        % (
+                            rendering_options[i],
+                            cs_tab[i],
+                            rendering_options[j],
+                            cs_tab[j],
+                        )
+                    )
 
         # And test that RASTER,VECTOR,TEXT is the default rendering
         assert abs(cs_tab[len(rendering_options) - 1]) == cs_ref
-
-    gdal.GetDriverByName("PDF").Delete("tmp/pdf_write_ogr.pdf")
-
-    gdal.Unlink("tmp/test.csv")
-    gdal.Unlink("tmp/test.vrt")
 
     if pdf_is_poppler() or pdf_is_pdfium():
         assert layers == [
