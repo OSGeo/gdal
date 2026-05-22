@@ -151,14 +151,15 @@ Examples
 --------
 
 .. example::
-   :title: Convert a shapefile mixing polygons and multipolygons to a GeoPackage with multipolygons.
+   :title: Convert a shapefile mixing polygons and multipolygons to a GeoPackage with multipolygons
+   :id: gdal-vector-set-geom-type-multi
 
    .. code-block:: bash
 
         $ gdal vector set-geom-type --geometry-type=MULTIPOLYGON in.shp out.gpkg --overwrite
 
 .. example::
-   :title: Convert a GeoPackage with curve geometries to a Shapefile (that does not support them).
+   :title: Convert a GeoPackage with curve geometries to a Shapefile (that does not support them)
 
    .. code-block:: bash
 

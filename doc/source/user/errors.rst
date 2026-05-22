@@ -58,6 +58,43 @@ Additional details are typically provided in the accompanying error message.
       $ gdal raster mosaic --output-format COG *.tif out.tif
       ERROR 1: TIFFAppendToStrip: Maximum TIFF file size exceeded. Use BIGTIFF=YES creation option.
 
+.. example::
+   :title: Converting a Shapefile with multipolygons to a GeoPackage
+
+   Shapefiles do not clearly distinguish between Polygon and MultiPolygon geometries.
+   For historical reasons, the driver always reports the layer geometry type as ``POLYGON``,
+   even when some or all features are ``MULTIPOLYGON`` geometries.
+
+   As a result, the conversion succeeds but emits a warning, and the resulting GeoPackage
+   is not fully compliant with the specification.
+
+   To create a compliant GeoPackage, explicitly set the output layer geometry type to
+   ``MULTIPOLYGON``. See :example:`gdal-vector-set-geom-type-multi`.
+
+   .. code-block:: console
+
+      $ gdal convert poly_multipoly.shp out.gpkg
+      Warning 1: A geometry of type MULTIPOLYGON is inserted into layer poly_multipoly of geometry type POLYGON,
+      which is not normally allowed by the GeoPackage specification, but the driver will however do it.
+      To create a conformant GeoPackage, if using ogr2ogr, the -nlt option can be used to override the layer geometry type.
+      This warning will no longer be emitted for this combination of layer and feature geometry type.
+
+.. example::
+   :title: Converting to a parquet file
+
+   GDAL supports :ref:`vector.parquet`, but in some installations the Parquet
+   driver is provided as a separate plugin.
+
+   In a :ref:`conda`-based GDAL environment, the missing plugin can be installed
+   with ``conda install``.
+
+   .. code-block:: console
+
+      $ gdal vector convert in.gpkg out.parquet
+      ERROR 1: No installed driver matching parquet extension, but Parquet driver is known.
+      However plugin ogr_Parquet.dll is not available in your installation.You may install it with
+      'conda install -c gdal-master libgdal-arrow-parquet'
+
 ERROR 2 Out of Memory Error
 +++++++++++++++++++++++++++
 
