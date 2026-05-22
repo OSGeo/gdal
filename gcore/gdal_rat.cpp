@@ -27,6 +27,7 @@
 #include "cpl_error.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"
+#include "cpl_vsi_virtual.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -3420,4 +3421,56 @@ void CPL_STDCALL GDALRATRemoveStatistics(GDALRasterAttributeTableH hRAT)
     VALIDATE_POINTER0(hRAT, "GDALRATRemoveStatistics");
 
     GDALRasterAttributeTable::FromHandle(hRAT)->RemoveStatistics();
+}
+
+/************************************************************************/
+/*                        GDALLoadEsriCLRAsRAT()                        */
+/************************************************************************/
+
+/**
+ * \brief Load a Esri .clr as a RAT.
+ *
+ * @param pszFilename .clr filename
+ *
+ * @return a new RAT, or nullptr in case of error.
+ *
+ * @since GDAL 3.14
+ */
+std::unique_ptr<GDALRasterAttributeTable>
+GDALLoadEsriCLRAsRAT(const char *pszFilename)
+{
+    auto fp = VSIFilesystemHandler::OpenStatic(pszFilename, "rb");
+    if (!fp)
+        return nullptr;
+
+    auto poRAT = std::make_unique<GDALDefaultRasterAttributeTable>();
+    poRAT->CreateColumn("Value", GFT_Integer, GFU_Generic);
+    poRAT->CreateColumn("Red", GFT_Integer, GFU_Red);
+    poRAT->CreateColumn("Green", GFT_Integer, GFU_Green);
+    poRAT->CreateColumn("Blue", GFT_Integer, GFU_Blue);
+
+    int nRatRow = 0;
+
+    constexpr int MAX_LINE_SIZE = 1000;  // Arbitary
+    while (const char *pszLine =
+               CPLReadLine2L(fp.get(), MAX_LINE_SIZE, nullptr))
+    {
+        if (*pszLine == '#' || *pszLine == '!')
+            continue;
+
+        const CPLStringList aosTokens(
+            CSLTokenizeString2(pszLine, "\t ", CSLT_HONOURSTRINGS));
+
+        if (aosTokens.size() >= 4)
+        {
+            const int nIndex = atoi(aosTokens[0]);
+            poRAT->SetValue(nRatRow, 0, nIndex);
+            poRAT->SetValue(nRatRow, 1, atoi(aosTokens[1]));
+            poRAT->SetValue(nRatRow, 2, atoi(aosTokens[2]));
+            poRAT->SetValue(nRatRow, 3, atoi(aosTokens[3]));
+            nRatRow++;
+        }
+    }
+
+    return poRAT;
 }
