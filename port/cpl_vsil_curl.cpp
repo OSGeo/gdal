@@ -1466,7 +1466,7 @@ retry:
             return aosHeaders;
         };
 
-        if (response_code < 400)
+        if (response_code < 300)
         {
             curl_off_t nSizeTmp = 0;
             const CURLcode code = curl_easy_getinfo(

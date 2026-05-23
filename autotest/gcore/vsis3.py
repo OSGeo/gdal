@@ -169,6 +169,7 @@ def test_vsis3_no_sign_request(aws_test_config_as_config_options_or_credentials)
 # Test Sync() and multithreaded download
 
 
+@gdaltest.enable_exceptions()
 @pytest.mark.network
 def test_vsis3_sync_multithreaded_download(
     tmp_vsimem,
