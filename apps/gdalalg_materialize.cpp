@@ -45,6 +45,11 @@ GDALMaterializeRasterAlgorithm::GDALMaterializeRasterAlgorithm()
 
     AddCreationOptionsArg(&m_creationOptions);
     AddOverwriteArg(&m_overwrite);
+
+    AddArg(ARG_NAME_REOPEN_AND_DO_NOT_EARLY_DELETE, 0,
+           _("Reopen after materialization and do not early deleted"),
+           &m_reopenAndDoNotEarlyDelete)
+        .SetHidden();
 }
 
 /************************************************************************/
@@ -72,9 +77,10 @@ bool GDALMaterializeRasterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     std::string filename = m_outputDataset.GetName();
-    const bool autoDeleteFile =
-        filename.empty() && !EQUAL(m_format.c_str(), "MEM");
-    if (autoDeleteFile)
+    const bool autoDeleteFile = !m_reopenAndDoNotEarlyDelete &&
+                                filename.empty() &&
+                                !EQUAL(m_format.c_str(), "MEM");
+    if (filename.empty() && !EQUAL(m_format.c_str(), "MEM"))
     {
         filename = CPLGenerateTempFilenameSafe(nullptr);
 
@@ -118,7 +124,8 @@ bool GDALMaterializeRasterAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     bool ok = poOutDS != nullptr && poOutDS->FlushCache() == CE_None;
     if (poOutDS)
     {
-        if (poDrv->GetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED))
+        if (m_reopenAndDoNotEarlyDelete ||
+            poDrv->GetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED))
         {
             ok = poOutDS->Close() == CE_None;
             poOutDS.reset();
@@ -229,9 +236,10 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     std::string filename = m_outputDataset.GetName();
-    const bool autoDeleteFile =
-        filename.empty() && !EQUAL(m_format.c_str(), "MEM");
-    if (autoDeleteFile)
+    const bool autoDeleteFile = !m_reopenAndDoNotEarlyDelete &&
+                                filename.empty() &&
+                                !EQUAL(m_format.c_str(), "MEM");
+    if (filename.empty() && !EQUAL(m_format.c_str(), "MEM"))
     {
         filename = CPLGenerateTempFilenameSafe(nullptr);
 
@@ -301,7 +309,8 @@ bool GDALMaterializeVectorAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     bool ok = poOutDS != nullptr && poOutDS->FlushCache() == CE_None;
     if (poOutDS)
     {
-        if (poDrv->GetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED))
+        if (m_reopenAndDoNotEarlyDelete ||
+            poDrv->GetMetadataItem(GDAL_DCAP_REOPEN_AFTER_WRITE_REQUIRED))
         {
             ok = poOutDS->Close() == CE_None;
             poOutDS.reset();
