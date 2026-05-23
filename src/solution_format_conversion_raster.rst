@@ -60,3 +60,8 @@ or
             --output-data-type uint8  \
             --creation-option COMPRESS=JPEG \
             --creation-option TILED=YES
+
+   .. note::
+
+       We have not yet marked the nodata value as being 0, so above statistics
+       are not fully correct. We'll do that later.
