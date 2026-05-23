@@ -311,6 +311,8 @@ bool GDALVSIListAlgorithm::RunImpl(GDALProgressFunc, void *)
         sEntry.bModeKnown = true;
         sEntry.nMode = sStat.st_mode;
         sEntry.nSize = sStat.st_size;
+        sEntry.nMTime = sStat.st_mtime;
+        sEntry.bMTimeKnown = true;
         PrintEntry(&sEntry);
     }
 
