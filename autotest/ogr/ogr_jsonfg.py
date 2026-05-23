@@ -1618,6 +1618,14 @@ def test_jsonfg_write_circular_string_longer_than_11_points(tmp_vsimem):
         f.SetGeometry(g)
         lyr.CreateFeature(f)
 
+    with gdal.VSIFile(out_filename, "rb") as f:
+        j = json.loads(f.read())
+        assert j["conformsTo"] == [
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/core",
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/types-schemas",
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/circular-arcs",
+        ]
+
     with ogr.Open(out_filename) as ds:
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
@@ -1647,6 +1655,11 @@ def test_jsonfg_write_read_measure_unit_description(tmp_vsimem, single_layer):
 
     with gdal.VSIFile(out_filename, "rb") as f:
         j = json.loads(f.read())
+        assert j["conformsTo"] == [
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/core",
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/types-schemas",
+            "http://www.opengis.net/spec/json-fg-1/1.0/conf/measures",
+        ]
         if single_layer == "YES":
             assert "measures" in j
             assert j["measures"] == {
