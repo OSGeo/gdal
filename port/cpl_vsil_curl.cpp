@@ -1273,8 +1273,14 @@ retry:
 
     oFileProp.eExists = EXIST_UNKNOWN;
 
-    long mtime = 0;
-    curl_easy_getinfo(hCurlHandle, CURLINFO_FILETIME, &mtime);
+    curl_off_t filetime = -1;
+    GIntBig mtime = 0;
+    if (curl_easy_getinfo(hCurlHandle, CURLINFO_FILETIME_T, &filetime) ==
+            CURLE_OK &&
+        filetime != -1)
+    {
+        mtime = static_cast<GIntBig>(filetime);
+    }
 
     if (osVerb == "GET")
         NetworkStatisticsLogger::LogGET(sWriteFuncData.nSize);
