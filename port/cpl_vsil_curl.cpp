@@ -1510,18 +1510,24 @@ retry:
                         goto retry;
                     }
 
-                    const CPLStringList aosHeaders(
-                        TokenizeHeaders(sWriteFuncHeaderData.pBuffer));
-                    if (strcmp(aosHeaders.FetchNameValueDef("transfer-encoding",
-                                                            ""),
-                               "chunked") == 0)
+                    if (poFS->GetFSPrefix() == "/vsicurl/" ||
+                        poFS->GetFSPrefix() == "/vsicurl?")
                     {
-                        CPLError(
-                            CE_Failure, CPLE_AppDefined,
-                            "Server does not seem to support range requests. "
-                            "Maybe retry with /vsicurl_streaming/ if the read "
-                            "access pattern is compatible of sequential "
-                            "reading, or download the file entirely");
+                        const CPLStringList aosHeaders(
+                            TokenizeHeaders(sWriteFuncHeaderData.pBuffer));
+                        if (strcmp(aosHeaders.FetchNameValueDef(
+                                       "transfer-encoding", ""),
+                                   "chunked") == 0)
+                        {
+                            CPLError(
+                                CE_Failure, CPLE_AppDefined,
+                                "Server does not seem to support range "
+                                "requests. "
+                                "Maybe retry with /vsicurl_streaming/ if the "
+                                "read "
+                                "access pattern is compatible of sequential "
+                                "reading, or download the file entirely");
+                        }
                     }
                 }
                 else
