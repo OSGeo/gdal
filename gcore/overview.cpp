@@ -352,21 +352,6 @@ inline GUInt16 ComputeIntegerRMS_4values<GUInt16, double>(double sumSquares)
 /*                    QuadraticMeanByteSSE2OrAVX2()                     */
 /************************************************************************/
 
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-#define sse2_packus_epi32 _mm_packus_epi32
-#else
-inline __m128i sse2_packus_epi32(__m128i a, __m128i b)
-{
-    const auto minus32768_32 = _mm_set1_epi32(-32768);
-    const auto minus32768_16 = _mm_set1_epi16(-32768);
-    a = _mm_add_epi32(a, minus32768_32);
-    b = _mm_add_epi32(b, minus32768_32);
-    a = _mm_packs_epi32(a, b);
-    a = _mm_sub_epi16(a, minus32768_16);
-    return a;
-}
-#endif
-
 #if defined(__SSSE3__) || defined(USE_NEON_OPTIMIZATIONS)
 #define sse2_hadd_epi16 _mm_hadd_epi16
 #else
@@ -439,7 +424,7 @@ inline __m256i FIXUP_LANES(__m256i x)
 #define sqrt_ps _mm_sqrt_ps
 #define cvttps_epi32 _mm_cvttps_epi32
 #define packs_epi32 _mm_packs_epi32
-#define packus_epi32 sse2_packus_epi32
+#define packus_epi32 GDAL_mm_packus_epi32
 #define srli_epi32 _mm_srli_epi32
 #define mullo_epi16 _mm_mullo_epi16
 #define srli_epi16 _mm_srli_epi16
@@ -858,7 +843,7 @@ QuadraticMeanUInt16SSE2(int nDstXWidth, int nChunkXSize,
         rms = _mm_sub_epi32(rms, mask);
 
         // Pack each 32 bit RMS value to 16 bits
-        rms = sse2_packus_epi32(rms, rms /* could be anything */);
+        rms = GDAL_mm_int32_to_uint16(rms);
 #endif
 
         _mm_storel_epi64(reinterpret_cast<__m128i *>(&pDstScanline[iDstPixel]),
@@ -937,7 +922,7 @@ AverageUInt16SSE2(int nDstXWidth, int nChunkXSize,
         }
 
         // Pack each 32 bit average value to 16 bits
-        auto average = sse2_packus_epi32(averageLow, averageHigh);
+        auto average = GDAL_mm_packus_epi32(averageLow, averageHigh);
         _mm_storeu_si128(reinterpret_cast<__m128i *>(&pDstScanline[iDstPixel]),
                          average);
         pSrcScanlineShifted += 2 * DEST_ELTS;
