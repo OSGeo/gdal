@@ -70,7 +70,7 @@ The GDAL glossary contains terms and acronyms found throughout the GDAL document
         as well as compatibility and standard conformance of compilers was a challenge,
         CPL proved necessary for smooth portability of GDAL/OGR.
 
-        CPL, or parts of it, is used by some projects external to GDAL (eg. MITAB, libgeotiff).
+        CPL, or parts of it, is used by some projects external to GDAL (e.g. MITAB, libgeotiff).
 
     Credentials
 
