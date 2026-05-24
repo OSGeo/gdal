@@ -698,7 +698,7 @@ TEST_F(TestCopyWords, GDT_Float32and64)
     /* GDT_Float32 and GDT_Float64 */
     for (int i = 0; i < 2; i++)
     {
-        GDALDataType intype = (i == 0) ? GDT_Float32 : GDT_Float64;
+        const GDALDataType intype = (i == 0) ? GDT_Float32 : GDT_Float64;
         for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
              outtype = (GDALDataType)(outtype + 1))
         {
@@ -731,6 +731,9 @@ TEST_F(TestCopyWords, GDT_Float32and64)
                     FROM_R_F(intype, -127.5, outtype,
                              -128); /* We could argue how to do this rounding */
                 }
+
+                FROM_R_F(intype, std::numeric_limits<float>::quiet_NaN(),
+                         outtype, 0);
             }
         }
         FROM_R(intype, -CST_3000000000, GDT_Byte, 0);
