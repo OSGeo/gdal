@@ -274,7 +274,6 @@ Examples
 
         $ gdal vector pipeline ! concat --single --output-crs=EPSG:32632 france.shp belgium.shp ! filter --where "pop > 1e6" ! write out.gpkg --overwrite
 
-
 .. example::
    :title: Filter and reproject a GeoPackage layer to a GeoJSON file
 
@@ -329,3 +328,42 @@ Examples
 .. only:: not html
 
    .. image:: ../../images/programs/gdal_pipeline_vector_example.svg
+
+.. example::
+   :title: Clip a vector layer using a nested pipeline as the clipping source
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+       gdal vector pipeline \
+        ! read natural_earth_vector.gpkg --layer "ne_10m_rivers_europe" \
+        ! reproject --output-crs="EPSG:3844" \
+        ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! reproject --output-crs="EPSG:3844" ] \
+        ! set-geom-type --geometry-type="MULTILINESTRING" \
+        ! write romania-rivers.gpkg --overwrite
+
+      .. code-tab:: ps1
+
+       gdal vector pipeline `
+        ! read natural_earth_vector.gpkg --layer "ne_10m_rivers_europe" `
+        ! reproject --output-crs="EPSG:3844" `
+        ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! reproject --output-crs="EPSG:3844" ] `
+        ! set-geom-type --geometry-type="MULTILINESTRING" `
+        ! write romania-rivers.gpkg --overwrite
+
+.. only:: html
+
+   .. image:: ../../images/programs/gdal_pipeline_vector_nested_example.svg
+      :width: 0
+      :height: 0
+
+   .. raw:: html
+
+      <object type="image/svg+xml"
+              data="../_images/gdal_pipeline_vector_nested_example.svg">
+      </object>
+
+.. only:: not html
+
+   .. image:: ../../images/programs/gdal_pipeline_vector_nested_example.svg
