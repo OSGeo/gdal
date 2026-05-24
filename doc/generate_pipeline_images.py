@@ -49,3 +49,16 @@ gdal vector pipeline
 """
     output_fn = f"{IMAGE_ROOT}/programs/gdal_pipeline_vector_example.svg"
     generate_diagram(pipeline, output_fn, docs_root="../programs", vertical=True)
+
+
+def test_gdal_vector_pipeline_nested():
+    pipeline = """
+gdal vector pipeline
+    ! read natural_earth_vector.gpkg --layer "ne_10m_rivers_europe"
+    ! reproject --output-crs="EPSG:3844"
+    ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! reproject --output-crs="EPSG:3844" ]
+    ! set-geom-type --geometry-type="MULTILINESTRING"
+    ! write romania-rivers.gpkg --overwrite
+"""
+    output_fn = f"{IMAGE_ROOT}/programs/gdal_pipeline_vector_nested_example.svg"
+    generate_diagram(pipeline, output_fn, docs_root="../programs", vertical=True)
