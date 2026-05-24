@@ -1230,21 +1230,22 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                       : 0);
              !forAutoComplete && i < steps.size(); ++i)
         {
-            if (!steps[i].alreadyChangedType && !steps[i].isSubAlgorithm &&
-                GetStepAlg(steps[i].alg->GetName()) == nullptr)
+            auto &step = steps[i];
+
+            if (!step.alreadyChangedType && !step.isSubAlgorithm &&
+                GetStepAlg(step.alg->GetName()) == nullptr)
             {
-                auto newAlg = GetStepAlg(steps[i].alg->GetName() +
+                auto newAlg = GetStepAlg(step.alg->GetName() +
                                          (nLastStepOutputType == GDAL_OF_RASTER
                                               ? RASTER_SUFFIX
                                               : VECTOR_SUFFIX));
                 CPLAssert(newAlg);
 
-                if (steps[i].alg->GetName() ==
-                    GDALTeeStepAlgorithmAbstract::NAME)
+                if (step.alg->GetName() == GDALTeeStepAlgorithmAbstract::NAME)
                 {
                     const auto poSrcTeeAlg =
                         dynamic_cast<const GDALTeeStepAlgorithmAbstract *>(
-                            steps[i].alg.get());
+                            step.alg.get());
                     auto poDstTeeAlg =
                         dynamic_cast<GDALTeeStepAlgorithmAbstract *>(
                             newAlg.get());
@@ -1253,7 +1254,9 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                     poDstTeeAlg->CopyFilenameBindingsFrom(poSrcTeeAlg);
                 }
 
-                steps[i].alg = std::move(newAlg);
+                newAlg->m_oMapDatasetNameToDataset =
+                    std::move(step.alg->m_oMapDatasetNameToDataset);
+                step.alg = std::move(newAlg);
 
                 if (i == steps.size() - 1 &&
                     m_eLastStepAsWrite != StepConstraint::CAN_NOT_BE)
@@ -1261,29 +1264,29 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                     SetWriteArgFromPipeline();
                 }
 
-                steps[i].alg->m_inputDatasetCanBeOmitted =
+                step.alg->m_inputDatasetCanBeOmitted =
                     i > 0 || !m_bExpectReadStep;
-                steps[i].alg->m_skipValidationInParseCommandLine = true;
-                if (!steps[i].alg->ParseCommandLineArguments(steps[i].args))
+                step.alg->m_skipValidationInParseCommandLine = true;
+                if (!step.alg->ParseCommandLineArguments(step.args))
                     return false;
-                steps[i].alg->SetCallPath({steps[i].alg->GetName()});
-                steps[i].alg->SetReferencePathForRelativePaths(
+                step.alg->SetCallPath({step.alg->GetName()});
+                step.alg->SetReferencePathForRelativePaths(
                     GetReferencePathForRelativePaths());
                 if (IsCalledFromCommandLine())
-                    steps[i].alg->SetCalledFromCommandLine();
-                steps[i].alreadyChangedType = true;
+                    step.alg->SetCalledFromCommandLine();
+                step.alreadyChangedType = true;
             }
 
             if (i > 0)
             {
                 bool emitError =
-                    (steps[i].alg->GetInputType() != 0 &&
-                     steps[i].alg->GetInputType() != nLastStepOutputType);
+                    (step.alg->GetInputType() != 0 &&
+                     step.alg->GetInputType() != nLastStepOutputType);
 
                 // Check if a dataset argument, which has as value the
                 // placeholder value, has the same dataset type as the output
                 // of the last step
-                for (const auto &arg : steps[i].alg->GetArgs())
+                for (const auto &arg : step.alg->GetArgs())
                 {
                     if (!arg->IsOutput() &&
                         (arg->GetType() == GAAT_DATASET ||
@@ -1323,26 +1326,25 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                 }
                 if (emitError)
                 {
-                    ReportError(CE_Failure, CPLE_AppDefined,
-                                "Step '%s' expects a %s input dataset, but "
-                                "previous step '%s' "
-                                "generates a %s output dataset",
-                                steps[i].alg->GetName().c_str(),
-                                steps[i].alg->GetInputType() == GDAL_OF_RASTER
-                                    ? "raster"
-                                : steps[i].alg->GetInputType() == GDAL_OF_VECTOR
-                                    ? "vector"
-                                    : "unknown",
-                                steps[i - 1].alg->GetName().c_str(),
-                                nLastStepOutputType == GDAL_OF_RASTER ? "raster"
-                                : nLastStepOutputType == GDAL_OF_VECTOR
-                                    ? "vector"
-                                    : "unknown");
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Step '%s' expects a %s input dataset, but "
+                        "previous step '%s' "
+                        "generates a %s output dataset",
+                        step.alg->GetName().c_str(),
+                        step.alg->GetInputType() == GDAL_OF_RASTER ? "raster"
+                        : step.alg->GetInputType() == GDAL_OF_VECTOR
+                            ? "vector"
+                            : "unknown",
+                        steps[i - 1].alg->GetName().c_str(),
+                        nLastStepOutputType == GDAL_OF_RASTER   ? "raster"
+                        : nLastStepOutputType == GDAL_OF_VECTOR ? "vector"
+                                                                : "unknown");
                     return false;
                 }
             }
 
-            nLastStepOutputType = steps[i].alg->GetOutputType();
+            nLastStepOutputType = step.alg->GetOutputType();
             if (!forAutoComplete && nLastStepOutputType == 0)
             {
                 // If this step has no precise output dataset (unique instance
