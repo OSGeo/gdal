@@ -1045,6 +1045,35 @@ inline void GDALCopy4Words(const float *pValueIn, GInt16 *const pValueOut)
     GDALCopyXMMToInt64(xmm_i, pValueOut);
 }
 
+inline __m128i GDAL_mm_int32_to_uint16(__m128i xmm_i)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    xmm_i = _mm_packus_epi32(xmm_i, xmm_i);  // Pack int32 to uint16
+#else
+    // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only
+    xmm_i = _mm_add_epi32(xmm_i, _mm_set1_epi32(-32768));
+    xmm_i = _mm_packs_epi32(xmm_i, xmm_i);  // Pack int32 to int16
+    // Translate back to uint16 range (actually -32768==32768 in int16)
+    xmm_i = _mm_add_epi16(xmm_i, _mm_set1_epi16(-32768));
+#endif
+    return xmm_i;
+}
+
+inline __m128i GDAL_mm_packus_epi32(__m128i xmm_lo, __m128i xmm_hi)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    auto xmm = _mm_packus_epi32(xmm_lo, xmm_hi);  // Pack int32 to uint16
+#else
+    // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only
+    xmm_lo = _mm_add_epi32(xmm_lo, _mm_set1_epi32(-32768));
+    xmm_hi = _mm_add_epi32(xmm_hi, _mm_set1_epi32(-32768));
+    auto xmm = _mm_packs_epi32(xmm_lo, xmm_hi);  // Pack int32 to int16
+    // Translate back to uint16 range (actually -32768==32768 in int16)
+    xmm = _mm_add_epi16(xmm, _mm_set1_epi16(-32768));
+#endif
+    return xmm;
+}
+
 template <>
 inline void GDALCopy4Words(const float *pValueIn, GUInt16 *const pValueOut)
 {
@@ -1063,15 +1092,7 @@ inline void GDALCopy4Words(const float *pValueIn, GUInt16 *const pValueOut)
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
 #endif
 
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-    xmm_i = _mm_packus_epi32(xmm_i, xmm_i);  // Pack int32 to uint16
-#else
-    // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only
-    xmm_i = _mm_add_epi32(xmm_i, _mm_set1_epi32(-32768));
-    xmm_i = _mm_packs_epi32(xmm_i, xmm_i);  // Pack int32 to int16
-    // Translate back to uint16 range (actually -32768==32768 in int16)
-    xmm_i = _mm_add_epi16(xmm_i, _mm_set1_epi16(-32768));
-#endif
+    xmm_i = GDAL_mm_int32_to_uint16(xmm_i);
     GDALCopyXMMToInt64(xmm_i, pValueOut);
 }
 
@@ -1188,16 +1209,7 @@ inline void GDALCopy8Words(const float *pValueIn, GFloat16 *const pValueOut)
     __m128i xmm_hi =
         GDALFourFloat32ToFloat16(_mm_castps_si128(_mm_loadu_ps(pValueIn + 4)));
 
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-    auto xmm = _mm_packus_epi32(xmm_lo, xmm_hi);  // Pack int32 to uint16
-#else
-    // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only
-    xmm_lo = _mm_add_epi32(xmm_lo, _mm_set1_epi32(-32768));
-    xmm_hi = _mm_add_epi32(xmm_hi, _mm_set1_epi32(-32768));
-    auto xmm = _mm_packs_epi32(xmm_lo, xmm_hi);  // Pack int32 to int16
-    // Translate back to uint16 range (actually -32768==32768 in int16)
-    xmm = _mm_add_epi16(xmm, _mm_set1_epi16(-32768));
-#endif
+    auto xmm = GDAL_mm_packus_epi32(xmm_lo, xmm_hi);  // Pack int32 to uint16
     _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut), xmm);
 }
 
@@ -1481,16 +1493,7 @@ inline void GDALCopy8Words(const float *pValueIn, GUInt16 *const pValueOut)
     __m128i xmm1_i = _mm_cvttps_epi32(xmm1);
 #endif
 
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-    xmm_i = _mm_packus_epi32(xmm_i, xmm1_i);  // Pack int32 to uint16
-#else
-    // Translate to int16 range because _mm_packus_epi32 is SSE4.1 only
-    xmm_i = _mm_add_epi32(xmm_i, _mm_set1_epi32(-32768));
-    xmm1_i = _mm_add_epi32(xmm1_i, _mm_set1_epi32(-32768));
-    xmm_i = _mm_packs_epi32(xmm_i, xmm1_i);  // Pack int32 to int16
-    // Translate back to uint16 range (actually -32768==32768 in int16)
-    xmm_i = _mm_add_epi16(xmm_i, _mm_set1_epi16(-32768));
-#endif
+    xmm_i = GDAL_mm_packus_epi32(xmm_i, xmm1_i);  // Pack int32 to uint16
     _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut), xmm_i);
 }
 #endif
