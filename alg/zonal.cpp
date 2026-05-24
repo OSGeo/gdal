@@ -24,6 +24,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstring>
 #include <limits>
 #include <variant>
@@ -1158,7 +1159,17 @@ class GDALZonalStatsImpl
                 poAlignedWeightsDS->GetRasterBand(m_options.weights_band);
         }
 
-        std::map<double, std::vector<gdal::RasterStats<double>>> stats;
+        struct CompareNaNAware
+        {
+            bool operator()(double lhs, double rhs) const
+            {
+                return (std::isnan(lhs) && !std::isnan(rhs)) || lhs < rhs;
+            }
+        };
+
+        std::map<double, std::vector<gdal::RasterStats<double>>,
+                 CompareNaNAware>
+            stats;
 
         auto pabyZonesBuf = CreateBuffer();
         size_t nBufSize = 0;
