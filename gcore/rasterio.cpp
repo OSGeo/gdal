@@ -3077,7 +3077,7 @@ CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
             return;
         }
 #endif
-#ifdef HAVE_SSE2
+
         // SSE2 path: 16 pixels per iteration
         decltype(nWordCount) n = 0;
         for (; n < nWordCount - 15; n += 16)
@@ -3098,14 +3098,8 @@ CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), bytes);
         }
         for (; n < nWordCount; n++)
-#else
-        for (decltype(nWordCount) n = 0; n < nWordCount; n++)
-#endif
         {
-            pDstData[n] = pSrcData[n] <= 0 ? 0
-                          : pSrcData[n] >= 255
-                              ? 255
-                              : static_cast<uint8_t>(pSrcData[n]);
+            pDstData[n] = static_cast<uint8_t>(std::clamp(pSrcData[n], 0, 255));
         }
     }
     else
@@ -3133,53 +3127,19 @@ CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
         }
 #endif
         decltype(nWordCount) n = 0;
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
-        // SSE4.1: _mm_packus_epi32 directly handles uint saturation
         for (; n < nWordCount - 7; n += 8)
         {
             __m128i v0 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n));
             __m128i v1 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n + 4));
-            __m128i packed = _mm_packus_epi32(v0, v1);
+            const auto packed = GDAL_mm_packus_epi32(v0, v1);
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), packed);
         }
-#else
-        // SSE2: clamp to [0, 65535], bias to signed range, pack, unbias
-        const __m128i xmm_65535 = _mm_set1_epi32(65535);
-        const __m128i xmm_bias32 = _mm_set1_epi32(32768);
-        const __m128i xmm_bias16 = _mm_set1_epi16(-32768);
-        for (; n < nWordCount - 7; n += 8)
-        {
-            __m128i v0 = _mm_loadu_si128(
-                reinterpret_cast<const __m128i *>(pSrcData + n));
-            __m128i v1 = _mm_loadu_si128(
-                reinterpret_cast<const __m128i *>(pSrcData + n + 4));
-            // max(v, 0)
-            v0 = _mm_andnot_si128(_mm_srai_epi32(v0, 31), v0);
-            v1 = _mm_andnot_si128(_mm_srai_epi32(v1, 31), v1);
-            // min(v, 65535)
-            __m128i gt0 = _mm_cmpgt_epi32(v0, xmm_65535);
-            __m128i gt1 = _mm_cmpgt_epi32(v1, xmm_65535);
-            v0 = _mm_or_si128(_mm_andnot_si128(gt0, v0),
-                              _mm_and_si128(gt0, xmm_65535));
-            v1 = _mm_or_si128(_mm_andnot_si128(gt1, v1),
-                              _mm_and_si128(gt1, xmm_65535));
-            // Shift [0, 65535] -> [-32768, 32767] for _mm_packs_epi32
-            v0 = _mm_sub_epi32(v0, xmm_bias32);
-            v1 = _mm_sub_epi32(v1, xmm_bias32);
-            __m128i packed = _mm_packs_epi32(v0, v1);
-            // Shift back: sub_epi16(x, -32768) == add 32768 (mod 2^16)
-            packed = _mm_sub_epi16(packed, xmm_bias16);
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), packed);
-        }
-#endif
         for (; n < nWordCount; n++)
         {
-            pDstData[n] = pSrcData[n] <= 0 ? 0
-                          : pSrcData[n] >= 65535
-                              ? 65535
-                              : static_cast<uint16_t>(pSrcData[n]);
+            pDstData[n] =
+                static_cast<uint16_t>(std::clamp(pSrcData[n], 0, 65535));
         }
     }
     else
