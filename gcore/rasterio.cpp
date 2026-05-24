@@ -2580,7 +2580,8 @@ CPL_NOINLINE void GDALCopyWordsT(const int8_t *const CPL_RESTRICT pSrcData,
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
     {
         decltype(nWordCount) n = 0;
-#if !(defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS))
+#if !(defined(__SSE4_1__) || defined(__AVX__) ||                               \
+      defined(USE_NEON_OPTIMIZATIONS))
         const __m128i xmm_INT8_to_UINT8 = _mm_set1_epi8(-128);
 #endif
         for (; n < nWordCount - 31; n += 32)
@@ -2589,7 +2590,7 @@ CPL_NOINLINE void GDALCopyWordsT(const int8_t *const CPL_RESTRICT pSrcData,
                 reinterpret_cast<const __m128i *>(pSrcData + n));
             __m128i xmm1 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n + 16));
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
             xmm0 = _mm_max_epi8(xmm0, _mm_setzero_si128());
             xmm1 = _mm_max_epi8(xmm1, _mm_setzero_si128());
 #else
@@ -2629,7 +2630,7 @@ CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
     {
         decltype(nWordCount) n = 0;
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
         const auto xmm_MAX_INT16 = _mm_set1_epi16(32767);
 #else
         // In SSE2, min_epu16 does not exist, so shift from
@@ -2643,7 +2644,7 @@ CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
                 reinterpret_cast<const __m128i *>(pSrcData + n));
             __m128i xmm1 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n + 8));
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
             xmm0 = _mm_min_epu16(xmm0, xmm_MAX_INT16);
             xmm1 = _mm_min_epu16(xmm1, xmm_MAX_INT16);
 #else
@@ -2682,7 +2683,7 @@ CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
         nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
     {
         decltype(nWordCount) n = 0;
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
         const __m128i xmm_MAX_INT16 = _mm_set1_epi16(32767);
 #else
         // In SSE2, min_epu16 does not exist, so shift from
@@ -2696,7 +2697,7 @@ CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
                 reinterpret_cast<const __m128i *>(pSrcData + n));
             __m128i xmm1 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n + 8));
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
             xmm0 = _mm_min_epu16(xmm0, xmm_MAX_INT16);
             xmm1 = _mm_min_epu16(xmm1, xmm_MAX_INT16);
 #else
@@ -2765,8 +2766,6 @@ CPL_NOINLINE void GDALCopyWordsT(const int16_t *const CPL_RESTRICT pSrcData,
     }
 }
 
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
-
 template <>
 CPL_NOINLINE void GDALCopyWordsT(const uint32_t *const CPL_RESTRICT pSrcData,
                                  int nSrcPixelStride,
@@ -2778,14 +2777,29 @@ CPL_NOINLINE void GDALCopyWordsT(const uint32_t *const CPL_RESTRICT pSrcData,
     {
         decltype(nWordCount) n = 0;
         const __m128i xmm_MAX_INT = _mm_set1_epi32(INT_MAX);
+        [[maybe_unused]] const __m128i bias = _mm_set1_epi32(INT_MIN);
+        [[maybe_unused]] const __m128i xmm_MAX_INT_biased =
+            _mm_xor_si128(xmm_MAX_INT, bias);
         for (; n < nWordCount - 7; n += 8)
         {
             __m128i xmm0 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n));
             __m128i xmm1 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n + 4));
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
             xmm0 = _mm_min_epu32(xmm0, xmm_MAX_INT);
             xmm1 = _mm_min_epu32(xmm1, xmm_MAX_INT);
+#else
+            const __m128i xmm0_biased = _mm_xor_si128(xmm0, bias);
+            const __m128i mask0 =
+                _mm_cmplt_epi32(xmm0_biased, xmm_MAX_INT_biased);
+            xmm0 = GDALIfThenElse(mask0, xmm0, xmm_MAX_INT);
+
+            const __m128i xmm1_biased = _mm_xor_si128(xmm1, bias);
+            const __m128i mask1 =
+                _mm_cmplt_epi32(xmm1_biased, xmm_MAX_INT_biased);
+            xmm1 = GDALIfThenElse(mask1, xmm1, xmm_MAX_INT);
+#endif
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm0);
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 4),
                              xmm1);
@@ -2823,8 +2837,15 @@ CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
                 reinterpret_cast<const __m128i *>(pSrcData + n));
             __m128i xmm1 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n + 4));
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
             xmm0 = _mm_max_epi32(xmm0, xmm_zero);
             xmm1 = _mm_max_epi32(xmm1, xmm_zero);
+#else
+            const __m128i mask0 = _mm_cmpgt_epi32(xmm0, xmm_zero);
+            const __m128i mask1 = _mm_cmpgt_epi32(xmm1, xmm_zero);
+            xmm0 = _mm_and_si128(xmm0, mask0);
+            xmm1 = _mm_and_si128(xmm1, mask1);
+#endif
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm0);
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 4),
                              xmm1);
@@ -2843,8 +2864,6 @@ CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
                               nDstPixelStride, nWordCount);
     }
 }
-
-#endif  // defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
 
 template <>
 CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
@@ -6097,7 +6116,7 @@ bool GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
                 pabyBuffer + 3 * sizeof(zero)));
             const auto v =
                 _mm_or_si128(_mm_or_si128(v0, v1), _mm_or_si128(v2, v3));
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
             if (!_mm_test_all_zeros(v, v))
 #else
             if (_mm_movemask_epi8(_mm_cmpeq_epi8(v, zero)) != 0xFFFF)
@@ -6176,7 +6195,7 @@ bool GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
             auto v = _mm_or_si128(_mm_or_si128(v0, v1), _mm_or_si128(v2, v3));
             // Clear the sign bit (makes -0.0 become +0.0)
             v = _mm_and_si128(v, signMask);
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
             if (!_mm_test_all_zeros(v, v))
 #else
             if (_mm_movemask_epi8(_mm_cmpeq_epi8(v, zero)) != 0xFFFF)
@@ -6224,7 +6243,7 @@ bool GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
             auto v = _mm_or_si128(_mm_or_si128(v0, v1), _mm_or_si128(v2, v3));
             // Clear the sign bit (makes -0.0 become +0.0)
             v = _mm_and_si128(v, signMask);
-#if defined(__SSE4_1__) || defined(USE_NEON_OPTIMIZATIONS)
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
             if (!_mm_test_all_zeros(v, v))
 #else
             if (_mm_movemask_epi8(_mm_cmpeq_epi8(v, zero)) != 0xFFFF)
