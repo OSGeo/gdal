@@ -939,6 +939,8 @@ inline void GDALCopy4Words(const float *pValueIn, GByte *const pValueOut)
 
     // The following clamping would be useless due to the final saturating
     // packing if we could guarantee the input range in [INT_MIN,INT_MAX]
+
+    // Clamp to [UINT8_MIN, UINT8_MAX]
     const __m128 p0d5 = _mm_set1_ps(0.5f);
     const __m128 xmm_max = _mm_set1_ps(255);
     xmm = _mm_add_ps(xmm, p0d5);
@@ -970,6 +972,10 @@ inline void GDALCopy4Words(const float *pValueIn, GInt8 *const pValueOut)
 {
     __m128 xmm = _mm_loadu_ps(pValueIn);
 
+    // Cast NaN to zero
+    xmm = _mm_andnot_ps(_mm_cmpunord_ps(xmm, xmm), xmm);
+
+    // Clamp to [INT8_MIN, INT8_MAX]
     const __m128 xmm_min = _mm_set1_ps(-128);
     const __m128 xmm_max = _mm_set1_ps(127);
     xmm = _mm_min_ps(_mm_max_ps(xmm, xmm_min), xmm_max);
@@ -997,6 +1003,10 @@ inline void GDALCopy4Words(const float *pValueIn, GInt16 *const pValueOut)
 {
     __m128 xmm = _mm_loadu_ps(pValueIn);
 
+    // Cast NaN to zero
+    xmm = _mm_andnot_ps(_mm_cmpunord_ps(xmm, xmm), xmm);
+
+    // Clamp to [INT16_MIN, INT16_MAX]
     const __m128 xmm_min = _mm_set1_ps(-32768);
     const __m128 xmm_max = _mm_set1_ps(32767);
     xmm = _mm_min_ps(_mm_max_ps(xmm, xmm_min), xmm_max);
@@ -1018,6 +1028,7 @@ inline void GDALCopy4Words(const float *pValueIn, GUInt16 *const pValueOut)
 {
     __m128 xmm = _mm_loadu_ps(pValueIn);
 
+    // Clamp to [UINT16_MIN, UINT16_MAX]
     const __m128 p0d5 = _mm_set1_ps(0.5f);
     const __m128 xmm_max = _mm_set1_ps(65535);
     xmm = _mm_add_ps(xmm, p0d5);
@@ -1052,7 +1063,9 @@ template <>
 inline void GDALCopy4Words(const float *pValueIn, GInt32 *const pValueOut)
 {
     __m128 xmm = _mm_loadu_ps(pValueIn);
-    const __m128 xmm_ori = xmm;
+
+    // Cast NaN to zero
+    xmm = _mm_andnot_ps(_mm_cmpunord_ps(xmm, xmm), xmm);
 
     const __m128 p0d5 = _mm_set1_ps(0.5f);
     const __m128 m0d5 = _mm_set1_ps(-0.5f);
@@ -1062,14 +1075,11 @@ inline void GDALCopy4Words(const float *pValueIn, GInt32 *const pValueOut)
 
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
 
-    const __m128 xmm_min = _mm_set1_ps(-2147483648.0f);
+    // Clamp to <= INT32_MAX
     const __m128 xmm_max = _mm_set1_ps(2147483648.0f);
-    const __m128i xmm_i_min = _mm_set1_epi32(INT_MIN);
     const __m128i xmm_i_max = _mm_set1_epi32(INT_MAX);
-    xmm_i = GDALIfThenElse(_mm_castps_si128(_mm_cmpge_ps(xmm_ori, xmm_max)),
+    xmm_i = GDALIfThenElse(_mm_castps_si128(_mm_cmpge_ps(xmm, xmm_max)),
                            xmm_i_max, xmm_i);
-    xmm_i = GDALIfThenElse(_mm_castps_si128(_mm_cmple_ps(xmm_ori, xmm_min)),
-                           xmm_i_min, xmm_i);
 
     _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut), xmm_i);
 }
