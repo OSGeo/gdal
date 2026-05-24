@@ -362,7 +362,7 @@ SWIGEXPORT void SWIGSTDCALL RegisterUtf8StringCallback_$module(CSharpUtf8StringH
 /******************************************************************************
  * SWIG helper for C# exceptions with UTF-8 string parameters
  *
- * This helper class supercedes SWIG's built-in SWIGExceptionHelper.
+ * This helper class supersedes SWIG's built-in SWIGExceptionHelper.
  * SWIGExceptionHelper is still present and registers its own callbacks. Then
  * ExceptionHelperUtf8 registers its own callbacks, overwriting the callbacks
  * previously registered by SWIGExceptionHelper. Do this instead of defining
