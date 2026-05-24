@@ -5152,12 +5152,13 @@ void GDALAlgorithm::SetAutoCompleteFunctionForLayerName(
 
 void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
     GDALInConstructionAlgorithmArg &fieldArg,
-    const GDALAlgorithmArg *layerNameArg,
-    std::vector<GDALArgDatasetValue> &datasetArg)
+    const GDALAlgorithmArg *layerNameArg, bool attributeFields,
+    bool geometryFields, std::vector<GDALArgDatasetValue> &datasetArg)
 {
 
     fieldArg.SetAutoCompleteFunction(
-        [&datasetArg, layerNameArg](const std::string &currentValue)
+        [&datasetArg, layerNameArg, attributeFields,
+         geometryFields](const std::string &currentValue)
         {
             std::set<std::string> ret;
             if (!datasetArg.empty())
@@ -5165,19 +5166,39 @@ void GDALAlgorithm::SetAutoCompleteFunctionForFieldName(
                 CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
 
                 const auto getLayerFields =
-                    [&ret, &currentValue](const OGRLayer *poLayer)
+                    [&ret, &currentValue, attributeFields,
+                     geometryFields](const OGRLayer *poLayer)
                 {
                     const auto poDefn = poLayer->GetLayerDefn();
-                    for (const auto poFieldDefn : poDefn->GetFields())
+                    if (attributeFields)
                     {
-                        const char *fieldName = poFieldDefn->GetNameRef();
-                        if (currentValue == fieldName)
+                        for (const auto poFieldDefn : poDefn->GetFields())
                         {
-                            ret.clear();
+                            const char *fieldName = poFieldDefn->GetNameRef();
+                            if (currentValue == fieldName)
+                            {
+                                ret.clear();
+                                ret.insert(fieldName);
+                                break;
+                            }
                             ret.insert(fieldName);
-                            break;
                         }
-                        ret.insert(fieldName);
+                    }
+                    if (geometryFields)
+                    {
+                        for (const auto poFieldDefn : poDefn->GetGeomFields())
+                        {
+                            const char *fieldName = poFieldDefn->GetNameRef();
+                            if (fieldName[0] == 0)
+                                fieldName = "OGR_GEOMETRY";
+                            if (currentValue == fieldName)
+                            {
+                                ret.clear();
+                                ret.insert(fieldName);
+                                break;
+                            }
+                            ret.insert(fieldName);
+                        }
                     }
                 };
 

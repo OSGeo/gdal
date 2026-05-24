@@ -38,7 +38,9 @@ GDALVectorCombineAlgorithm::GDALVectorCombineAlgorithm(bool standaloneStep)
                &m_groupBy)
             .SetDuplicateValuesAllowed(false);
     SetAutoCompleteFunctionForFieldName(
-        groupByArg, GetArg(GDAL_ARG_NAME_INPUT_LAYER), m_inputDataset);
+        groupByArg, GetArg(GDAL_ARG_NAME_INPUT_LAYER),
+        /* attributeFields = */ true,
+        /* geometryFields = */ false, m_inputDataset);
 
     AddArg("keep-nested", 0,
            _("Avoid combining the components of multipart geometries"),

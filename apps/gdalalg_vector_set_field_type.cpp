@@ -33,6 +33,8 @@ GDALVectorSetFieldTypeAlgorithm::GDALVectorSetFieldTypeAlgorithm(
                              .SetRequired()
                              .SetMutualExclusionGroup("name-or-type");
     SetAutoCompleteFunctionForFieldName(fieldNameArg, &layerArg,
+                                        /* attributeFields = */ true,
+                                        /* geometryFields = */ false,
                                         m_inputDataset);
     AddFieldTypeSubtypeArg(&m_srcFieldType, &m_srcFieldSubType,
                            &m_srcFieldTypeSubTypeStr, "input-field-type",

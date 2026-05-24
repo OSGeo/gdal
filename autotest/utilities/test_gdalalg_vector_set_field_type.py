@@ -281,6 +281,7 @@ def test_gdalalg_set_field_type_completion(tmp_path):
         f"{gdal_path} completion gdal vector set-field-type --input ../ogr/data/poly.shp --field-name"
     )
     assert "EAS_ID" in out
+    assert "OGR_GEOMETRY" not in out
 
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! set-field-type --field-name "
