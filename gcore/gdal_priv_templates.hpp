@@ -932,6 +932,15 @@ inline void GDALCopy8Words(const Tin *pValueIn, Tout *const pValueOut)
 #if defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2) ||               \
     defined(USE_NEON_OPTIMIZATIONS)
 
+#ifdef USE_NEON_OPTIMIZATIONS
+inline __m128i _mm_cvttps_epi32_neon_no_post_correction(__m128 a)
+{
+    float32x4_t f = vreinterpretq_f32_m128(a);
+    int32x4_t cvt = vcvtq_s32_f32(f);
+    return vreinterpretq_m128i_s32(cvt);
+}
+#endif
+
 template <>
 inline void GDALCopy4Words(const float *pValueIn, GByte *const pValueOut)
 {
@@ -943,10 +952,16 @@ inline void GDALCopy4Words(const float *pValueIn, GByte *const pValueOut)
     // Clamp to [UINT8_MIN, UINT8_MAX]
     const __m128 p0d5 = _mm_set1_ps(0.5f);
     const __m128 xmm_max = _mm_set1_ps(255);
+
     xmm = _mm_add_ps(xmm, p0d5);
     xmm = _mm_min_ps(_mm_max_ps(xmm, p0d5), xmm_max);
 
+#ifdef USE_NEON_OPTIMIZATIONS
+    // Optimization to avoid useless clamping
+    __m128i xmm_i = _mm_cvttps_epi32_neon_no_post_correction(xmm);
+#else
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
+#endif
 
 #if defined(__SSSE3__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_shuffle_epi8(
@@ -986,7 +1001,12 @@ inline void GDALCopy4Words(const float *pValueIn, GInt8 *const pValueOut)
     // f >= 0.5f ? f + 0.5f : f - 0.5f
     xmm = _mm_add_ps(xmm, GDALIfThenElse(mask, p0d5, m0d5));
 
+#ifdef USE_NEON_OPTIMIZATIONS
+    // Optimization to avoid useless clamping
+    __m128i xmm_i = _mm_cvttps_epi32_neon_no_post_correction(xmm);
+#else
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
+#endif
 
 #if defined(__SSSE3__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_shuffle_epi8(
@@ -1017,7 +1037,12 @@ inline void GDALCopy4Words(const float *pValueIn, GInt16 *const pValueOut)
     // f >= 0.5f ? f + 0.5f : f - 0.5f
     xmm = _mm_add_ps(xmm, GDALIfThenElse(mask, p0d5, m0d5));
 
+#ifdef USE_NEON_OPTIMIZATIONS
+    // Optimization to avoid useless clamping
+    __m128i xmm_i = _mm_cvttps_epi32_neon_no_post_correction(xmm);
+#else
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
+#endif
 
     xmm_i = _mm_packs_epi32(xmm_i, xmm_i);  // Pack int32 to int16
     GDALCopyXMMToInt64(xmm_i, pValueOut);
@@ -1034,7 +1059,12 @@ inline void GDALCopy4Words(const float *pValueIn, GUInt16 *const pValueOut)
     xmm = _mm_add_ps(xmm, p0d5);
     xmm = _mm_min_ps(_mm_max_ps(xmm, p0d5), xmm_max);
 
+#ifdef USE_NEON_OPTIMIZATIONS
+    // Optimization to avoid useless clamping
+    __m128i xmm_i = _mm_cvttps_epi32_neon_no_post_correction(xmm);
+#else
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
+#endif
 
 #if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_packus_epi32(xmm_i, xmm_i);  // Pack int32 to uint16
@@ -1064,8 +1094,10 @@ inline void GDALCopy4Words(const float *pValueIn, GInt32 *const pValueOut)
 {
     __m128 xmm = _mm_loadu_ps(pValueIn);
 
+#if !defined(USE_NEON_OPTIMIZATIONS)
     // Cast NaN to zero
     xmm = _mm_andnot_ps(_mm_cmpunord_ps(xmm, xmm), xmm);
+#endif
 
     const __m128 p0d5 = _mm_set1_ps(0.5f);
     const __m128 m0d5 = _mm_set1_ps(-0.5f);
@@ -1073,6 +1105,10 @@ inline void GDALCopy4Words(const float *pValueIn, GInt32 *const pValueOut)
     // f >= 0.5f ? f + 0.5f : f - 0.5f
     xmm = _mm_add_ps(xmm, GDALIfThenElse(mask, p0d5, m0d5));
 
+#ifdef USE_NEON_OPTIMIZATIONS
+    // Optimization to avoid useless clamping
+    __m128i xmm_i = _mm_cvttps_epi32_neon_no_post_correction(xmm);
+#else
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
 
     // Clamp to <= INT32_MAX
@@ -1080,6 +1116,7 @@ inline void GDALCopy4Words(const float *pValueIn, GInt32 *const pValueOut)
     const __m128i xmm_i_max = _mm_set1_epi32(INT_MAX);
     xmm_i = GDALIfThenElse(_mm_castps_si128(_mm_cmpge_ps(xmm, xmm_max)),
                            xmm_i_max, xmm_i);
+#endif
 
     _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut), xmm_i);
 }
@@ -1433,8 +1470,14 @@ inline void GDALCopy8Words(const float *pValueIn, GUInt16 *const pValueOut)
     xmm = _mm_min_ps(_mm_max_ps(xmm, p0d5), xmm_max);
     xmm1 = _mm_min_ps(_mm_max_ps(xmm1, p0d5), xmm_max);
 
+#ifdef USE_NEON_OPTIMIZATIONS
+    // Optimization to avoid useless clamping
+    __m128i xmm_i = _mm_cvttps_epi32_neon_no_post_correction(xmm);
+    __m128i xmm1_i = _mm_cvttps_epi32_neon_no_post_correction(xmm1);
+#else
     __m128i xmm_i = _mm_cvttps_epi32(xmm);
     __m128i xmm1_i = _mm_cvttps_epi32(xmm1);
+#endif
 
 #if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
     xmm_i = _mm_packus_epi32(xmm_i, xmm1_i);  // Pack int32 to uint16
