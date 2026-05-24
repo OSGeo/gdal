@@ -287,6 +287,16 @@ def test_gdalalg_set_field_type_completion(tmp_path):
     )
     assert "EAS_ID" in out
 
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! set-field-type --active-layer poly --field-name "
+    )
+    assert "EAS_ID" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! set-field-type --active-layer invalid --field-name "
+    )
+    assert "EAS_ID" not in out
+
     # No completion when there is a tee operator as this can be a slow operation
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal pipeline read ../ogr/data/poly.shp ! tee [ write /vsimem/out.gpkg ] ! set-field-type --field-name "
