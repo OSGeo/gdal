@@ -3222,6 +3222,52 @@ CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
     }
 }
 
+// ---- int32 -> int16 with clamping to [-32768, 32767] ----
+template <>
+CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
+                                 int nSrcPixelStride,
+                                 int16_t *const CPL_RESTRICT pDstData,
+                                 int nDstPixelStride, GPtrDiff_t nWordCount)
+{
+    if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
+        nDstPixelStride == static_cast<int>(sizeof(*pDstData)))
+    {
+        // SSE2 path: 16 pixels per iteration
+        decltype(nWordCount) n = 0;
+        for (; n < nWordCount - 15; n += 16)
+        {
+            __m128i v0 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n));
+            __m128i v1 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 4));
+            __m128i v2 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 8));
+            __m128i v3 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 12));
+            // Pack int32->int16 with signed saturation to [-32768,32767] range
+            __m128i packed_lo = _mm_packs_epi32(v0, v1);
+            __m128i packed_hi = _mm_packs_epi32(v2, v3);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n),
+                             packed_lo);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 8),
+                             packed_hi);
+        }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
+        for (; n < nWordCount; n++)
+        {
+            pDstData[n] =
+                static_cast<int16_t>(std::clamp(pSrcData[n], -32768, 32767));
+        }
+    }
+    else
+    {
+        GDALCopyWordsGenericT(pSrcData, nSrcPixelStride, pDstData,
+                              nDstPixelStride, nWordCount);
+    }
+}
+
 #endif  // HAVE_SSE2
 
 template <>
