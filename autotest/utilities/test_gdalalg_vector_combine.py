@@ -506,6 +506,7 @@ def test_gdalalg_vector_combine_completion(tmp_path):
         f"{gdal_path} completion gdal vector combine ../ogr/data/poly.shp --group-by"
     )
     assert "EAS_ID" in out
+    assert "OGR_GEOMETRY" not in out
 
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal vector combine ../ogr/data/poly.shp --layer poly --group-by"

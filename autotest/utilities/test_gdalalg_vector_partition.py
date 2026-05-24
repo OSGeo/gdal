@@ -1260,3 +1260,4 @@ def test_gdalalg_vector_partition_completion(tmp_path):
         f"{gdal_path} completion gdal vector partition ../ogr/data/poly.shp --field"
     )
     assert "EAS_ID" in out
+    assert "OGR_GEOMETRY" in out
