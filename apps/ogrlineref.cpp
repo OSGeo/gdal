@@ -23,6 +23,7 @@
 #include "ogrsf_frmts.h"
 #include "gdalargumentparser.h"
 
+#include <cmath>
 #include <limits>
 #include <map>
 #include <set>
@@ -312,7 +313,8 @@ static OGRErr CreateSubline(OGRLayer *const poPkLayer, double dfPosBeg,
     while ((pFeature = poPkLayer->GetNextFeature()) != nullptr)
     {
         double dfStart = pFeature->GetFieldAsDouble(FIELD_START);
-        moParts[dfStart] = pFeature;
+        if (!std::isnan(dfStart))
+            moParts[dfStart] = pFeature;
     }
 
     if (moParts.empty())
@@ -447,12 +449,11 @@ static OGRErr CreatePartsFromLineString(
     // Create sorted list of repers.
     std::map<double, OGRPoint *> moRepers;
     poPkLayer->ResetReading();
-    OGRFeature *pReperFeature = nullptr;
-    while ((pReperFeature = poPkLayer->GetNextFeature()) != nullptr)
+    for (auto &&pReperFeature : *poPkLayer)
     {
         const double dfReperPos = pReperFeature->GetFieldAsDouble(nMValField);
         OGRGeometry *pGeom = pReperFeature->GetGeometryRef();
-        if (nullptr != pGeom)
+        if (nullptr != pGeom && !std::isnan(dfReperPos))
         {
             OGRPoint *pPt = pGeom->clone()->toPoint();
             if (!bQuiet)
@@ -485,7 +486,6 @@ static OGRErr CreatePartsFromLineString(
                     delete pPt;
             }
         }
-        OGRFeature::DestroyFeature(pReperFeature);
     }
 
     if (moRepers.size() < 2)
