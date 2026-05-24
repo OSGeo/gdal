@@ -75,3 +75,61 @@ Examples
    .. code-block:: bash
 
        gdal vector export-schema poly.gpkg
+
+.. example::
+   :title: Save the OGR_SCHEMA to a file
+
+   When using Windows PowerShell 5.1, redirecting output with ``>`` or ``Out-File -Encoding utf8``
+   produces UTF-8 with a BOM (Byte Order Mark). When using the schema with :ref:`gdal_vector_create`
+   it may fail with ``ERROR 1: JSON parsing error: unexpected character (at offset 0)``.
+
+   In PowerShell 5.1, use ``-Encoding ascii`` for JSON output that contains no non-ASCII characters.
+
+   .. tabs::
+
+     .. code-tab:: bash
+
+         gdal vector export-schema natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" > countries.json
+
+     .. code-tab:: ps1
+
+        # PowerShell 5.1
+        gdal vector export-schema natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" | Out-File countries.json -Encoding ascii
+
+        # PowerShell 7+
+        gdal vector export-schema natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" | Out-File countries.json -Encoding utf8
+
+.. example::
+   :title: Validate an OGR_SCHEMA file using Python
+
+   Validate against the latest version of the schema definition at :source_file:`ogr/data/ogr_fields_override.schema.json`
+   using the Python package `check-jsonschema <https://pypi.org/project/check-jsonschema/>`__ available on PyPI.
+
+   .. code-block:: bash
+
+       $ pip install check-jsonschema
+       $ check-jsonschema --schemafile https://raw.githubusercontent.com/OSGeo/gdal/master/ogr/data/ogr_fields_override.schema.json countries.json --verbose
+
+.. example::
+   :title: Create an OGR_SCHEMA at the end of a pipeline
+
+   This example renames the field ``pop_est`` to ``estimated_population`` and changes its
+   type from ``Real`` to ``Integer``, before exporting the resulting OGR_SCHEMA.
+
+   .. tabs::
+
+     .. code-tab:: bash
+
+        gdal vector pipeline \
+            ! read natural_earth_vector.gpkg --layer ne_50m_admin_0_countries \
+            ! sql --sql "SELECT geom,name,abbrev,pop_est AS estimated_population FROM ne_50m_admin_0_countries" --output-layer "countries" \
+            ! set-field-type --field-name "estimated_population" --field-type Integer \
+            ! export-schema
+
+     .. code-tab:: ps1
+
+        gdal vector pipeline `
+            ! read natural_earth_vector.gpkg --layer ne_50m_admin_0_countries `
+            ! sql --sql "SELECT geom,name,abbrev,pop_est AS estimated_population FROM ne_50m_admin_0_countries" --output-layer "countries" `
+            ! set-field-type --field-name "estimated_population" --field-type Integer `
+            ! export-schema
