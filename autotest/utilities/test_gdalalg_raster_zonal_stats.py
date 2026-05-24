@@ -12,6 +12,7 @@
 ###############################################################################
 
 import math
+import struct
 
 import gdaltest
 import ogrtest
@@ -1330,3 +1331,36 @@ def test_gdalalg_raster_zonal_stats_center_xy_alloc(zonal, strategy, pixels):
     zonal["stat"] = ["count", "center_x", "center_y"]
 
     assert zonal.Run()  # no crash
+
+
+def test_gdalalg_raster_zonal_stats_zones_nodata(zonal):
+
+    src_ds = gdal.Open("../gcore/data/byte.tif")
+
+    zones_ds = gdal.GetDriverByName("MEM").Create(
+        "", src_ds.RasterXSize, src_ds.RasterYSize, 1, gdal.GDT_Float32
+    )
+    zones_ds.SetGeoTransform(src_ds.GetGeoTransform())
+    zones_ds.SetSpatialRef(src_ds.GetSpatialRef())
+    zones_ds.WriteRaster(0, 0, 1, 1, struct.pack("f", float("nan")))
+    zones_ds.WriteRaster(0, 1, 1, 1, struct.pack("f", float("nan")))
+
+    zonal["input"] = src_ds
+    zonal["zones"] = zones_ds
+    zonal["stat"] = "count"
+    zonal["output-format"] = "MEM"
+    zonal["output-layer"] = "myresult"
+
+    assert zonal.Run()
+
+    out_ds = zonal.Output()
+    lyr = out_ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 2
+
+    f = lyr.GetNextFeature()
+    assert math.isnan(f["value"])
+    assert f["count"] == 2
+
+    f = lyr.GetNextFeature()
+    assert f["value"] == 0
+    assert f["count"] == 398
