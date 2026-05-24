@@ -2769,7 +2769,7 @@ CPL_NOINLINE void GDALCopyWordsT(const uint32_t *const CPL_RESTRICT pSrcData,
     {
         decltype(nWordCount) n = 0;
         const __m128i xmm_MAX_INT = _mm_set1_epi32(INT_MAX);
-        for (; n < nWordCount - 8; n += 7)
+        for (; n < nWordCount - 7; n += 8)
         {
             __m128i xmm0 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n));
