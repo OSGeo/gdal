@@ -36,6 +36,10 @@
           "description": "The name of the layer. Can be '*' to apply to any layer.",
           "type": "string"
         },
+        "fidColumnName": {
+          "description": "The name of the FID column",
+          "type": "string"
+        },
         "schemaType": {
           "description": "The type of schema operation: patch or full",
           "$ref": "#/definitions/schemaType"
