@@ -3189,14 +3189,22 @@ CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
         }
 #endif
         decltype(nWordCount) n = 0;
-        for (; n < nWordCount - 7; n += 8)
+        for (; n < nWordCount - 15; n += 16)
         {
             __m128i v0 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n));
             __m128i v1 = _mm_loadu_si128(
                 reinterpret_cast<const __m128i *>(pSrcData + n + 4));
-            const auto packed = GDAL_mm_packus_epi32(v0, v1);
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), packed);
+            __m128i v2 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 8));
+            __m128i v3 = _mm_loadu_si128(
+                reinterpret_cast<const __m128i *>(pSrcData + n + 12));
+            const auto packed_lo = GDAL_mm_packus_epi32(v0, v1);
+            const auto packed_hi = GDAL_mm_packus_epi32(v2, v3);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n),
+                             packed_lo);
+            _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 8),
+                             packed_hi);
         }
 #if defined(__clang__)
 #pragma clang loop vectorize(disable)
