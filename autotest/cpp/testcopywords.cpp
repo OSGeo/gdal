@@ -734,6 +734,10 @@ TEST_F(TestCopyWords, GDT_Float32and64)
 
                 FROM_R_F(intype, std::numeric_limits<float>::quiet_NaN(),
                          outtype, 0);
+
+                constexpr double NEGATIVE_ZERO =
+                    -1.0f / std::numeric_limits<float>::infinity();
+                FROM_R_F(intype, NEGATIVE_ZERO, outtype, 0);
             }
         }
         FROM_R(intype, -CST_3000000000, GDT_Byte, 0);

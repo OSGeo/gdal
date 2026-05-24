@@ -973,13 +973,14 @@ inline void GDALCopy4Words(const float *pValueIn, GByte *const pValueOut)
     GDALCopyXMMToInt32(xmm_i, pValueOut);
 }
 
-static inline __m128 GDALIfThenElse(__m128 mask, __m128 thenVal, __m128 elseVal)
+static inline __m128 AddDotZeroBias(__m128 xmm)
 {
-#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
-    return _mm_blendv_ps(elseVal, thenVal, mask);
-#else
-    return _mm_or_ps(_mm_and_ps(mask, thenVal), _mm_andnot_ps(mask, elseVal));
-#endif
+    const __m128 zeroDotFive = _mm_set1_ps(0.5f);
+    const __m128 negativeZero = _mm_set1_ps(-0.0f);
+    // f >= 0 ? f + 0.5f : f - 0.5f
+    const __m128 bias = _mm_or_ps(zeroDotFive, _mm_and_ps(xmm, negativeZero));
+    xmm = _mm_add_ps(xmm, bias);
+    return xmm;
 }
 
 template <>
@@ -987,19 +988,17 @@ inline void GDALCopy4Words(const float *pValueIn, GInt8 *const pValueOut)
 {
     __m128 xmm = _mm_loadu_ps(pValueIn);
 
+#if !defined(USE_NEON_OPTIMIZATIONS)
     // Cast NaN to zero
     xmm = _mm_andnot_ps(_mm_cmpunord_ps(xmm, xmm), xmm);
+#endif
 
     // Clamp to [INT8_MIN, INT8_MAX]
     const __m128 xmm_min = _mm_set1_ps(-128);
     const __m128 xmm_max = _mm_set1_ps(127);
     xmm = _mm_min_ps(_mm_max_ps(xmm, xmm_min), xmm_max);
 
-    const __m128 p0d5 = _mm_set1_ps(0.5f);
-    const __m128 m0d5 = _mm_set1_ps(-0.5f);
-    const __m128 mask = _mm_cmpge_ps(xmm, p0d5);
-    // f >= 0.5f ? f + 0.5f : f - 0.5f
-    xmm = _mm_add_ps(xmm, GDALIfThenElse(mask, p0d5, m0d5));
+    xmm = AddDotZeroBias(xmm);
 
 #ifdef USE_NEON_OPTIMIZATIONS
     // Optimization to avoid useless clamping
@@ -1023,19 +1022,17 @@ inline void GDALCopy4Words(const float *pValueIn, GInt16 *const pValueOut)
 {
     __m128 xmm = _mm_loadu_ps(pValueIn);
 
+#if !defined(USE_NEON_OPTIMIZATIONS)
     // Cast NaN to zero
     xmm = _mm_andnot_ps(_mm_cmpunord_ps(xmm, xmm), xmm);
+#endif
 
     // Clamp to [INT16_MIN, INT16_MAX]
     const __m128 xmm_min = _mm_set1_ps(-32768);
     const __m128 xmm_max = _mm_set1_ps(32767);
     xmm = _mm_min_ps(_mm_max_ps(xmm, xmm_min), xmm_max);
 
-    const __m128 p0d5 = _mm_set1_ps(0.5f);
-    const __m128 m0d5 = _mm_set1_ps(-0.5f);
-    const __m128 mask = _mm_cmpge_ps(xmm, p0d5);
-    // f >= 0.5f ? f + 0.5f : f - 0.5f
-    xmm = _mm_add_ps(xmm, GDALIfThenElse(mask, p0d5, m0d5));
+    xmm = AddDotZeroBias(xmm);
 
 #ifdef USE_NEON_OPTIMIZATIONS
     // Optimization to avoid useless clamping
@@ -1099,11 +1096,7 @@ inline void GDALCopy4Words(const float *pValueIn, GInt32 *const pValueOut)
     xmm = _mm_andnot_ps(_mm_cmpunord_ps(xmm, xmm), xmm);
 #endif
 
-    const __m128 p0d5 = _mm_set1_ps(0.5f);
-    const __m128 m0d5 = _mm_set1_ps(-0.5f);
-    const __m128 mask = _mm_cmpge_ps(xmm, p0d5);
-    // f >= 0.5f ? f + 0.5f : f - 0.5f
-    xmm = _mm_add_ps(xmm, GDALIfThenElse(mask, p0d5, m0d5));
+    xmm = AddDotZeroBias(xmm);
 
 #ifdef USE_NEON_OPTIMIZATIONS
     // Optimization to avoid useless clamping
@@ -1119,6 +1112,15 @@ inline void GDALCopy4Words(const float *pValueIn, GInt32 *const pValueOut)
 #endif
 
     _mm_storeu_si128(reinterpret_cast<__m128i *>(pValueOut), xmm_i);
+}
+
+static inline __m128 GDALIfThenElse(__m128 mask, __m128 thenVal, __m128 elseVal)
+{
+#if defined(__SSE4_1__) || defined(__AVX__) || defined(USE_NEON_OPTIMIZATIONS)
+    return _mm_blendv_ps(elseVal, thenVal, mask);
+#else
+    return _mm_or_ps(_mm_and_ps(mask, thenVal), _mm_andnot_ps(mask, elseVal));
+#endif
 }
 
 // ARM64 has an efficient instruction for Float32 -> Float16
