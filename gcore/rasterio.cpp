@@ -2286,6 +2286,9 @@ void GDALCopyWordsByteTo16Bit(const GByte *const CPL_RESTRICT pSrcData,
             _mm_storeu_si128(
                 reinterpret_cast<__m128i *>(pabyDstDataPtr + n * 2 + 16), xmm1);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
             pDstData[n] = pSrcData[n];
@@ -2353,6 +2356,9 @@ void GDALCopyWordsByteTo32Bit(const GByte *const CPL_RESTRICT pSrcData,
             _mm_storeu_si128(
                 reinterpret_cast<__m128i *>(pabyDstDataPtr + n * 4 + 48), xmm3);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
             pDstData[n] = pSrcData[n];
@@ -2421,6 +2427,9 @@ CPL_NOINLINE void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
             _mm_storeu_ps(
                 reinterpret_cast<float *>(pabyDstDataPtr + n * 4 + 48), xmm3_f);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
             pDstData[n] = pSrcData[n];
@@ -2508,6 +2517,9 @@ CPL_NOINLINE void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
                 xmm3_high_d);
 #endif
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
             pDstData[n] = pSrcData[n];
@@ -2543,10 +2555,12 @@ CPL_NOINLINE void GDALCopyWordsT(const uint8_t *const CPL_RESTRICT pSrcData,
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 16),
                              xmm1);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
-            pDstData[n] =
-                pSrcData[n] >= 127 ? 127 : static_cast<int8_t>(pSrcData[n]);
+            pDstData[n] = static_cast<int8_t>(std::min<int>(pSrcData[n], 127));
         }
     }
     else
@@ -2590,10 +2604,12 @@ CPL_NOINLINE void GDALCopyWordsT(const int8_t *const CPL_RESTRICT pSrcData,
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 16),
                              xmm1);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
-            pDstData[n] =
-                pSrcData[n] < 0 ? 0 : static_cast<uint8_t>(pSrcData[n]);
+            pDstData[n] = static_cast<uint8_t>(std::max<int>(pSrcData[n], 0));
         }
     }
     else
@@ -2641,10 +2657,12 @@ CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
             xmm0 = _mm_packus_epi16(xmm0, xmm1);
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), xmm0);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
-            pDstData[n] =
-                pSrcData[n] >= 255 ? 255 : static_cast<uint8_t>(pSrcData[n]);
+            pDstData[n] = static_cast<uint8_t>(std::min<int>(pSrcData[n], 255));
         }
     }
     else
@@ -2693,11 +2711,13 @@ CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 8),
                              xmm1);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
-            pDstData[n] = pSrcData[n] >= 32767
-                              ? 32767
-                              : static_cast<int16_t>(pSrcData[n]);
+            pDstData[n] =
+                static_cast<int16_t>(std::min<int>(pSrcData[n], 32767));
         }
     }
     else
@@ -2730,10 +2750,12 @@ CPL_NOINLINE void GDALCopyWordsT(const int16_t *const CPL_RESTRICT pSrcData,
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 8),
                              xmm1);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
-            pDstData[n] =
-                pSrcData[n] < 0 ? 0 : static_cast<uint16_t>(pSrcData[n]);
+            pDstData[n] = static_cast<uint16_t>(std::max<int>(pSrcData[n], 0));
         }
     }
     else
@@ -2768,11 +2790,13 @@ CPL_NOINLINE void GDALCopyWordsT(const uint32_t *const CPL_RESTRICT pSrcData,
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 4),
                              xmm1);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
-            pDstData[n] = pSrcData[n] >= INT_MAX
-                              ? INT_MAX
-                              : static_cast<int32_t>(pSrcData[n]);
+            pDstData[n] =
+                static_cast<int32_t>(std::min<uint32_t>(pSrcData[n], INT_MAX));
         }
     }
     else
@@ -2805,10 +2829,12 @@ CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n + 4),
                              xmm1);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
-            pDstData[n] =
-                pSrcData[n] < 0 ? 0 : static_cast<uint32_t>(pSrcData[n]);
+            pDstData[n] = static_cast<uint32_t>(std::max(pSrcData[n], 0));
         }
     }
     else
@@ -2846,6 +2872,9 @@ CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
             _mm_storeu_ps(
                 reinterpret_cast<float *>(pabyDstDataPtr + n * 4 + 16), xmm1_f);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
             pDstData[n] = pSrcData[n];
@@ -2884,6 +2913,9 @@ CPL_NOINLINE void GDALCopyWordsT(const int16_t *const CPL_RESTRICT pSrcData,
             _mm_storeu_ps(
                 reinterpret_cast<float *>(pabyDstDataPtr + n * 4 + 16), xmm1_f);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
             pDstData[n] = pSrcData[n];
@@ -2935,6 +2967,9 @@ CPL_NOINLINE void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
                 reinterpret_cast<double *>(pabyDstDataPtr + n * 8 + 48),
                 xmm1_high_d);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
             pDstData[n] = pSrcData[n];
@@ -2986,6 +3021,9 @@ CPL_NOINLINE void GDALCopyWordsT(const int16_t *const CPL_RESTRICT pSrcData,
                 reinterpret_cast<double *>(pabyDstDataPtr + n * 8 + 48),
                 xmm1_high_d);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
             pDstData[n] = pSrcData[n];
@@ -3028,11 +3066,12 @@ static void GDALCopyWordsInt32ToUInt8_AVX2(const int32_t *CPL_RESTRICT pSrc,
         bytes = _mm256_permutevar8x32_epi32(bytes, permuteIdx);
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(pDst + n), bytes);
     }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
     for (; n < nWordCount; n++)
     {
-        pDst[n] = pSrc[n] <= 0     ? 0
-                  : pSrc[n] >= 255 ? 255
-                                   : static_cast<uint8_t>(pSrc[n]);
+        pDst[n] = static_cast<uint8_t>(std::clamp(pSrc[n], 0, 255));
     }
 }
 
@@ -3060,11 +3099,12 @@ static void GDALCopyWordsInt32ToUInt16_AVX2(const int32_t *CPL_RESTRICT pSrc,
         packed = _mm256_permutevar8x32_epi32(packed, permuteIdx);
         _mm256_storeu_si256(reinterpret_cast<__m256i *>(pDst + n), packed);
     }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
     for (; n < nWordCount; n++)
     {
-        pDst[n] = pSrc[n] <= 0       ? 0
-                  : pSrc[n] >= 65535 ? 65535
-                                     : static_cast<uint16_t>(pSrc[n]);
+        pDst[n] = static_cast<uint16_t>(std::clamp(pSrc[n], 0, 65535));
     }
 }
 #endif  // HAVE_AVX2_DISPATCH
@@ -3105,6 +3145,9 @@ CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
             __m128i bytes = _mm_packus_epi16(lo16, hi16);
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), bytes);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
             pDstData[n] = static_cast<uint8_t>(std::clamp(pSrcData[n], 0, 255));
@@ -3144,6 +3187,9 @@ CPL_NOINLINE void GDALCopyWordsT(const int32_t *const CPL_RESTRICT pSrcData,
             const auto packed = GDAL_mm_packus_epi32(v0, v1);
             _mm_storeu_si128(reinterpret_cast<__m128i *>(pDstData + n), packed);
         }
+#if defined(__clang__)
+#pragma clang loop vectorize(disable)
+#endif
         for (; n < nWordCount; n++)
         {
             pDstData[n] =
