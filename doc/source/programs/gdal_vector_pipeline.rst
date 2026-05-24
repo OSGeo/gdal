@@ -336,7 +336,7 @@ Examples
 
       .. code-tab:: bash
 
-       gdal vector pipeline `
+       gdal vector pipeline \
         ! read natural_earth_vector.gpkg --layer "ne_10m_rivers_europe" \
         ! reproject --output-crs="EPSG:3844" \
         ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! reproject --output-crs="EPSG:3844" ] \
