@@ -4108,7 +4108,6 @@ static GDALDatasetH GDALWarpCreateOutput(
                 OGRSpatialReference oSrcSRS;
                 OGRSpatialReference oDstSRS;
                 CPLErrorStateBackuper oErrorStateBackuper(CPLQuietErrorHandler);
-                // DemoteTo2D requires PROJ >= 6.3
                 if (oSrcSRS.SetFromUserInput(osThisSourceSRS.c_str()) ==
                         OGRERR_NONE &&
                     oDstSRS.SetFromUserInput(osThisTargetSRS.c_str()) ==
