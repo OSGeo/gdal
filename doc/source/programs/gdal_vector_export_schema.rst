@@ -51,6 +51,8 @@ Standard Options
 
     .. option:: -o, --output <OUTPUT>
 
+        .. versionadded:: 3.14
+        
         Filename to write the ``OGR_SCHEMA``. If not specified, the output will be written to the standard output stream.
 
     .. include:: gdal_options/oo.rst
