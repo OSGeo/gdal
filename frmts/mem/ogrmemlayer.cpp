@@ -55,7 +55,7 @@ OGRMemLayer::OGRMemLayer(const char *pszName,
                          OGRwkbGeometryType eReqType)
     : m_poFeatureDefn(OGRFeatureDefnRefCountedPtr::makeInstance(pszName))
 {
-    SetDescription(m_poFeatureDefn->GetName());
+    OGRMemLayer::SetDescription(m_poFeatureDefn->GetName());
     m_poFeatureDefn->SetGeomType(eReqType);
 
     if (eReqType != wkbNone && poSRSIn != nullptr)
@@ -72,7 +72,7 @@ OGRMemLayer::OGRMemLayer(const char *pszName,
 OGRMemLayer::OGRMemLayer(const OGRFeatureDefn &oFeatureDefn)
     : m_poFeatureDefn(oFeatureDefn.Clone())
 {
-    SetDescription(m_poFeatureDefn->GetName());
+    OGRMemLayer::SetDescription(m_poFeatureDefn->GetName());
 
     m_oMapFeaturesIter = m_oMapFeatures.begin();
     m_poFeatureDefn->Seal(/* bSealFields = */ true);

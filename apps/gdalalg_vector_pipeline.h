@@ -393,7 +393,8 @@ class GDALVectorPipelinePassthroughLayer /* non final */
     explicit GDALVectorPipelinePassthroughLayer(OGRLayer &oSrcLayer)
         : GDALVectorPipelineOutputLayer(oSrcLayer)
     {
-        SetDescription(oSrcLayer.GetDescription());
+        GDALVectorPipelinePassthroughLayer::SetDescription(
+            oSrcLayer.GetDescription());
     }
 
     const OGRFeatureDefn *GetLayerDefn() const override;
