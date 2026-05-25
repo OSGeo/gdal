@@ -387,7 +387,9 @@ bool GDALPipelineStepAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
         {
             auto outputArg = GetArg(GDAL_ARG_NAME_OUTPUT);
             const bool bOutputSpecified =
-                outputArg && outputArg->IsExplicitlySet();
+                outputArg && outputArg->IsExplicitlySet() &&
+                (outputArg->GetType() == GAAT_DATASET ||
+                 outputArg->GetType() == GAAT_DATASET_LIST);
 
             m_inputDataset.clear();
             m_inputDataset.resize(1);
