@@ -4830,7 +4830,7 @@ void GTiffDataset::PushMetadataToPam()
                     papszMD = CSLRemoveStrings(papszMD, i, 1, nullptr);
             }
 
-            if (nBand == 0)
+            if (!poBand)
                 GDALPamDataset::SetMetadata(papszMD, papszDomainList[iDomain]);
             else
                 poBand->GDALPamRasterBand::SetMetadata(

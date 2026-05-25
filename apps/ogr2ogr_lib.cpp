@@ -1335,12 +1335,16 @@ class CompositeCT final : public OGRCoordinateTransformation
 
     OGRCoordinateTransformation *GetInverse() const override
     {
-        if (!poCT1 && !poCT2)
-            return nullptr;
-        if (!poCT2)
-            return poCT1->GetInverse();
         if (!poCT1)
-            return poCT2->GetInverse();
+        {
+            if (poCT2)
+                return poCT2->GetInverse();
+            return nullptr;
+        }
+        else if (!poCT2)
+        {
+            return poCT1->GetInverse();
+        }
         auto poInvCT1 =
             std::unique_ptr<OGRCoordinateTransformation>(poCT1->GetInverse());
         auto poInvCT2 =
