@@ -39,6 +39,10 @@ class GDALVectorFilterAlgorithm /* non final */
   private:
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
+    std::vector<std::string>
+    CompleteWhere(const GDALAlgorithmArg &layerArg,
+                  const std::string &currentValue) const;
+
     std::string m_activeLayer{};
     std::vector<double> m_bbox{};
     std::string m_where{};

@@ -38,15 +38,21 @@ _gdal()
   if test "$HAS_GET_COMP_WORDS_BY_REF" = "yes"; then
     local cur prev
     _get_comp_words_by_ref cur prev
-    if test "$cur" = ""; then
-      extra="last_word_is_complete=true"
+    if [[ ${COMP_LINE} == *\"* ]]; then
+      choices=$(gdal completion "${COMP_WORDS[@]}")
     else
-      extra="prev=${prev} cur=${cur}"
+      if test "$cur" = ""; then
+        extra="last_word_is_complete=true"
+      else
+        extra="prev=${prev} cur=${cur}"
+      fi
+      choices=$(gdal completion ${COMP_LINE} ${extra})
     fi
-    choices=$(gdal completion ${COMP_LINE} ${extra})
   else
     choices=$(gdal completion ${COMP_LINE})
   fi
+
+  ori_cur="$cur"
 
   COMPREPLY=()
   if [ "$choices" != "" ]; then
@@ -63,6 +69,10 @@ _gdal()
           COMPREPLY+=("! $line")
       done
     else
+      if [[ $ori_cur == \"* ]]; then
+        # Strip leading double quote before doing choice matching
+        cur=${cur:1}
+      fi
       for line in "${CHOICES[@]}"; do
           [[ $line == ${cur}* ]] && COMPREPLY+=("$line")
       done
@@ -70,21 +80,29 @@ _gdal()
   fi
 
   if [ "$CURRENT_SHELL" = "bash" ]; then
-    for element in "${COMPREPLY[@]}"; do
-      if [[ $element == */ ]]; then
-        # Do not add a space if one of the suggestion ends with slash
-        compopt -o nospace
-        break
-      elif [[ $element == *= ]]; then
-        # Do not add a space if one of the suggestion ends with equal
-        compopt -o nospace
-        break
-      elif [[ $element == *: ]]; then
-        # Do not add a space if one of the suggestion ends with colon
-        compopt -o nospace
-        break
-      fi
-    done
+    if [[ $ori_cur == \"* ]]; then
+        compopt -o filenames -o nospace -o noquote
+        # re-add opening quote
+        for i in "${!COMPREPLY[@]}"; do
+            COMPREPLY[i]="\"${COMPREPLY[$i]}"
+        done
+    else
+      for element in "${COMPREPLY[@]}"; do
+        if [[ $element == */ ]]; then
+          # Do not add a space if one of the suggestion ends with slash
+          compopt -o nospace
+          break
+        elif [[ $element == *= ]]; then
+          # Do not add a space if one of the suggestion ends with equal
+          compopt -o nospace
+          break
+        elif [[ $element == *: ]]; then
+          # Do not add a space if one of the suggestion ends with colon
+          compopt -o nospace
+          break
+        fi
+      done
+    fi
   else
     # zsh
     for element in "${COMPREPLY[@]}"; do

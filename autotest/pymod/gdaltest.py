@@ -1953,6 +1953,8 @@ def runexternal(
         command = cmd
     else:
         command = shlex.split(cmd)
+        if cmd.endswith('STRIP-ME"'):
+            command[-1] = '"' + command[-1][0 : -len("STRIP-ME")]
     if strin is None:
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
     else:

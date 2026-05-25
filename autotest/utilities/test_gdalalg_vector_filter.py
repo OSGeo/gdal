@@ -11,8 +11,11 @@
 # SPDX-License-Identifier: MIT
 ###############################################################################
 
+import sys
+
 import gdaltest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal, ogr
 
@@ -184,8 +187,6 @@ def test_gdalalg_vector_filter_update_extent(tmp_vsimem):
 @pytest.mark.require_driver("GDALG")
 def test_gdalalg_vector_filter_test_ogrsf(tmp_path):
 
-    import test_cli_utilities
-
     if test_cli_utilities.get_test_ogrsf_path() is None:
         pytest.skip()
 
@@ -214,3 +215,210 @@ def test_gdalalg_vector_filter_test_ogrsf(tmp_path):
     assert "INFO" in ret
     assert "ERROR" not in ret
     assert "FAILURE" not in ret
+
+
+def _make_shlex_happy(cmd):
+    # We add STRIP-ME" at the end just to make shlex.split() happy
+    return cmd + 'STRIP-ME"'
+
+
+@pytest.mark.parametrize(
+    "suffix,expected_completions",
+    [
+        ("", ["AREA", "EAS_ID", "PRFEDEA"]),
+        ("AR", ["AREA", "EAS_ID", "PRFEDEA"]),
+        (
+            "PRFEDEA ",
+            [
+                "PRFEDEA =",
+                "PRFEDEA <>",
+                "PRFEDEA <",
+                "PRFEDEA <=",
+                "PRFEDEA >",
+                "PRFEDEA >=",
+                "PRFEDEA AND",
+                "PRFEDEA OR",
+                "PRFEDEA LIKE",
+                "PRFEDEA BETWEEN",
+            ],
+        ),
+        (
+            "PRFEDEA = ",
+            [
+                "PRFEDEA = '35043369'",
+                "PRFEDEA = '35043408'",
+                "PRFEDEA = '35043409'",
+                "PRFEDEA = '35043411'",
+                "PRFEDEA = '35043412'",
+                "PRFEDEA = '35043413'",
+                "PRFEDEA = '35043414'",
+                "PRFEDEA = '35043415'",
+                "PRFEDEA = '35043416'",
+                "PRFEDEA = '35043423'",
+            ],
+        ),
+        (
+            "PRFEDEA = '3",
+            [
+                "PRFEDEA = '35043369'",
+                "PRFEDEA = '35043408'",
+                "PRFEDEA = '35043409'",
+                "PRFEDEA = '35043411'",
+                "PRFEDEA = '35043412'",
+                "PRFEDEA = '35043413'",
+                "PRFEDEA = '35043414'",
+                "PRFEDEA = '35043415'",
+                "PRFEDEA = '35043416'",
+                "PRFEDEA = '35043423'",
+            ],
+        ),
+        (
+            "EAS_ID = ",
+            [
+                "EAS_ID = 168",
+                "EAS_ID = 179",
+                "EAS_ID = 171",
+                "EAS_ID = 173",
+                "EAS_ID = 172",
+                "EAS_ID = 169",
+                "EAS_ID = 166",
+                "EAS_ID = 158",
+                "EAS_ID = 165",
+                "EAS_ID = 170",
+            ],
+        ),
+        (
+            "PRFEDEA = 'foo' AND ",
+            [
+                "PRFEDEA = 'foo' AND AREA",
+                "PRFEDEA = 'foo' AND EAS_ID",
+                "PRFEDEA = 'foo' AND PRFEDEA",
+            ],
+        ),
+    ],
+)
+def test_gdalalg_vector_filter_where_completion(suffix, expected_completions):
+
+    if sys.platform == "win32":
+        pytest.skip("not compatible of win32")
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary not available")
+
+    out = gdaltest.run_and_parse_completion_output(
+        _make_shlex_happy(
+            f'{gdal_path} completion gdal vector filter ../ogr/data/poly.shp --where "{suffix}'
+        )
+    )
+    assert out == expected_completions
+
+
+@pytest.mark.require_driver("SQLITE")
+def test_gdalalg_vector_filter_where_completion_more_ten_features(tmp_path):
+
+    if sys.platform == "win32":
+        pytest.skip("not compatible of win32")
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary not available")
+
+    with gdal.GetDriverByName("ESRI Shapefile").CreateVector(tmp_path / "tmp.db") as ds:
+        lyr = ds.CreateLayer("tmp")
+        lyr.CreateField(ogr.FieldDefn("int", ogr.OFTInteger))
+        lyr.CreateField(ogr.FieldDefn("int2", ogr.OFTInteger))
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        lyr.CreateField(ogr.FieldDefn("str2", ogr.OFTString))
+        for i in range(100):
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f["int"] = 100 - i
+            f["str"] = (
+                "z"
+                if i < 40
+                else (
+                    "b"
+                    if i < 45
+                    else (
+                        "c"
+                        if i < 55
+                        else (
+                            "d"
+                            if i < 60
+                            else (
+                                "e"
+                                if i < 65
+                                else (
+                                    "f"
+                                    if i < 70
+                                    else (
+                                        "g"
+                                        if i < 75
+                                        else (
+                                            "h"
+                                            if i < 80
+                                            else (
+                                                "i"
+                                                if i < 85
+                                                else (
+                                                    "j"
+                                                    if i < 90
+                                                    else "k" if i < 95 else "l"
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+            lyr.CreateFeature(f)
+
+    out = gdaltest.run_and_parse_completion_output(
+        _make_shlex_happy(
+            f'{gdal_path} completion gdal vector filter {tmp_path}/tmp.db --where "str = '
+        )
+    )
+    assert out == [
+        "str = str2",
+        "str = 'z'",
+        "str = 'c'",
+        "str = 'b'",
+        "str = 'd'",
+        "str = 'e'",
+        "str = 'f'",
+        "str = 'g'",
+        "str = 'h'",
+        "str = 'i'",
+        "str = 'j'",
+        "str = '...other values...",
+    ]
+
+    out = gdaltest.run_and_parse_completion_output(
+        _make_shlex_happy(
+            f'{gdal_path} completion gdal vector filter {tmp_path}/tmp.db --active-layer tmp --where "int = '
+        )
+    )
+    assert out == [
+        "int = int2",
+        "int = 1",
+        "int = 2",
+        "int = 3",
+        "int = 4",
+        "int = 5",
+        "int = 96",
+        "int = 97",
+        "int = 98",
+        "int = 99",
+        "int = 100",
+        "int = ...other values...",
+    ]
+
+    out = gdaltest.run_and_parse_completion_output(
+        _make_shlex_happy(
+            f'{gdal_path} completion gdal vector filter {tmp_path}/tmp.db --active-layer invalid --where "int = '
+        )
+    )
+    assert out[0] == "**"
