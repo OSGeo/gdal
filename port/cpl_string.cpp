@@ -784,10 +784,12 @@ char **CSLTokenizeStringComplex(const char *pszString,
  * reported by isspace());
  * - CSLT_HONOURSTRINGS: double quotes can be used to hold values that should
  * not be broken into multiple tokens;
+ * - CSLT_HONOURSINGLEQUOTES: single quotes can be used to hold values that should
+ * not be broken into multiple tokens;
  * - CSLT_PRESERVEQUOTES: string quotes are carried into the tokens when this
  * is set, otherwise they are removed;
  * - CSLT_PRESERVEESCAPES: if set backslash escapes (for backslash itself,
- * and for literal double quotes) will be preserved in the tokens, otherwise
+ * and for literal single/double quotes) will be preserved in the tokens, otherwise
  * the backslashes will be removed in processing.
  *
  * \b Example:
@@ -822,6 +824,8 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
 
     CPLStringList oRetList;
     const bool bHonourStrings = (nCSLTFlags & CSLT_HONOURSTRINGS) != 0;
+    const bool bHonourStringsSingleQuotes =
+        (nCSLTFlags & CSLT_HONOURSINGLEQUOTES) != 0;
     const bool bAllowEmptyTokens = (nCSLTFlags & CSLT_ALLOWEMPTYTOKENS) != 0;
     const bool bStripLeadSpaces = (nCSLTFlags & CSLT_STRIPLEADSPACES) != 0;
     const bool bStripEndSpaces = (nCSLTFlags & CSLT_STRIPENDSPACES) != 0;
@@ -832,6 +836,7 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
     while (*pszString != '\0')
     {
         bool bInString = false;
+        bool bInStringSingleQuote = false;
         bool bStartString = true;
         size_t nTokenLen = 0;
 
@@ -858,7 +863,8 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
             }
 
             // End if this is a delimiter skip it and break.
-            if (!bInString && strchr(pszDelimiters, *pszString) != nullptr)
+            if (!bInString && !bInStringSingleQuote &&
+                strchr(pszDelimiters, *pszString) != nullptr)
             {
                 ++pszString;
                 break;
@@ -867,7 +873,7 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
             // If this is a quote, and we are honouring constant
             // strings, then process the constant strings, with out delim
             // but don't copy over the quotes.
-            if (bHonourStrings && *pszString == '"')
+            if (bHonourStrings && !bInStringSingleQuote && *pszString == '"')
             {
                 if (nCSLTFlags & CSLT_PRESERVEQUOTES)
                 {
@@ -876,6 +882,18 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
                 }
 
                 bInString = !bInString;
+                continue;
+            }
+            else if (bHonourStringsSingleQuotes && !bHonourStrings &&
+                     *pszString == '\'')
+            {
+                if (nCSLTFlags & CSLT_PRESERVEQUOTES)
+                {
+                    pszToken[nTokenLen] = *pszString;
+                    ++nTokenLen;
+                }
+
+                bInStringSingleQuote = !bInStringSingleQuote;
                 continue;
             }
 
@@ -897,10 +915,23 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
                     ++pszString;
                 }
             }
+            else if (bInStringSingleQuote && pszString[0] == '\\')
+            {
+                if (pszString[1] == '\'' || pszString[1] == '\\')
+                {
+                    if (nCSLTFlags & CSLT_PRESERVEESCAPES)
+                    {
+                        pszToken[nTokenLen] = *pszString;
+                        ++nTokenLen;
+                    }
+
+                    ++pszString;
+                }
+            }
 
             // Strip spaces at the token start if requested.
-            if (!bInString && bStripLeadSpaces && bStartString &&
-                isspace(static_cast<unsigned char>(*pszString)))
+            if (!bInString && !bInStringSingleQuote && bStripLeadSpaces &&
+                bStartString && isspace(static_cast<unsigned char>(*pszString)))
                 continue;
 
             bStartString = false;
@@ -910,7 +941,7 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
         }
 
         // Strip spaces at the token end if requested.
-        if (!bInString && bStripEndSpaces)
+        if (!bInString && !bInStringSingleQuote && bStripEndSpaces)
         {
             while (nTokenLen &&
                    isspace(static_cast<unsigned char>(pszToken[nTokenLen - 1])))
