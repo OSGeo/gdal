@@ -1334,15 +1334,47 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    if (eType != GDT_UInt8 && eType != GDT_Int8 && eType != GDT_Int16 &&
-        eType != GDT_UInt16 && eType != GDT_Int32 && eType != GDT_UInt32 &&
-        eType != GDT_Float32 && eType != GDT_Float64)
+    const char *pszCellType = "Unsigned8BitInteger";
+    switch (eType)
     {
-        CPLError(
-            CE_Failure, CPLE_AppDefined,
-            "The ERS driver does not supporting creating files of types %s.",
-            GDALGetDataTypeName(eType));
-        return nullptr;
+        case GDT_UInt8:
+            break;
+        case GDT_Int8:
+            pszCellType = "Signed8BitInteger";
+            break;
+        case GDT_Int16:
+            pszCellType = "Signed16BitInteger";
+            break;
+        case GDT_UInt16:
+            pszCellType = "Unsigned16BitInteger";
+            break;
+        case GDT_Int32:
+            pszCellType = "Signed32BitInteger";
+            break;
+        case GDT_UInt32:
+            pszCellType = "Unsigned32BitInteger";
+            break;
+        case GDT_Float32:
+            pszCellType = "IEEE4ByteReal";
+            break;
+        case GDT_Float64:
+            pszCellType = "IEEE8ByteReal";
+            break;
+        case GDT_UInt64:
+        case GDT_Int64:
+        case GDT_Float16:
+        case GDT_CInt16:
+        case GDT_CInt32:
+        case GDT_CFloat16:
+        case GDT_CFloat32:
+        case GDT_CFloat64:
+        case GDT_Unknown:
+        case GDT_TypeCount:
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "The ERS driver does not supporting creating files of "
+                     "types %s.",
+                     GDALGetDataTypeName(eType));
+            return nullptr;
     }
 
     /* -------------------------------------------------------------------- */
@@ -1360,33 +1392,6 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     {
         osBinFile = pszFilename;
         osErsFile = osBinFile + ".ers";
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Work out some values we will write.                             */
-    /* -------------------------------------------------------------------- */
-    const char *pszCellType = "Unsigned8BitInteger";
-    CPL_IGNORE_RET_VAL(pszCellType);  // Make CSA happy
-
-    if (eType == GDT_UInt8)
-        pszCellType = "Unsigned8BitInteger";
-    else if (eType == GDT_Int8)
-        pszCellType = "Signed8BitInteger";
-    else if (eType == GDT_Int16)
-        pszCellType = "Signed16BitInteger";
-    else if (eType == GDT_UInt16)
-        pszCellType = "Unsigned16BitInteger";
-    else if (eType == GDT_Int32)
-        pszCellType = "Signed32BitInteger";
-    else if (eType == GDT_UInt32)
-        pszCellType = "Unsigned32BitInteger";
-    else if (eType == GDT_Float32)
-        pszCellType = "IEEE4ByteReal";
-    else if (eType == GDT_Float64)
-        pszCellType = "IEEE8ByteReal";
-    else
-    {
-        CPLAssert(false);
     }
 
     /* -------------------------------------------------------------------- */

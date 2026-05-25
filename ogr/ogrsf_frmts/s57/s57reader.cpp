@@ -425,9 +425,6 @@ bool S57Reader::Ingest()
         if (poKeyFieldDefn == nullptr)
             continue;
         const char *pszName = poKeyFieldDefn->GetName();
-        if (pszName == nullptr)
-            continue;
-
         if (EQUAL(pszName, "VRID"))
         {
             int bSuccess = FALSE;
@@ -3204,7 +3201,7 @@ bool S57Reader::ApplyUpdates(DDFModule *poUpdateModule)
             const int nRCID = poRecord->GetIntSubfield(pszKey, 0, "RCID", 0);
             const int nRVER = poRecord->GetIntSubfield(pszKey, 0, "RVER", 0);
             const int nRUIN = poRecord->GetIntSubfield(pszKey, 0, "RUIN", 0);
-            DDFRecordIndex *poIndex = nullptr;
+            DDFRecordIndex *poIndex = &oFE_Index;
 
             if (EQUAL(poKeyField->GetFieldDefn()->GetName(), "VRID"))
             {
@@ -3231,59 +3228,52 @@ bool S57Reader::ApplyUpdates(DDFModule *poUpdateModule)
                         return false;
                 }
             }
-            else
+
+            if (nRUIN == 1) /* insert */
             {
-                poIndex = &oFE_Index;
+                auto poClone = poRecord->Clone();
+                if (!poClone->TransferTo(poModule.get()))
+                    return false;
+                poIndex->AddRecord(nRCID, std::move(poClone));
+            }
+            else if (nRUIN == 2) /* delete */
+            {
+                const DDFRecord *poTarget = poIndex->FindRecord(nRCID);
+                if (poTarget == nullptr)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Can't find RCNM=%d,RCID=%d for delete.\n", nRCNM,
+                             nRCID);
+                }
+                else if (poTarget->GetIntSubfield(pszKey, 0, "RVER", 0) !=
+                         nRVER - 1)
+                {
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Mismatched RVER value on RCNM=%d,RCID=%d.\n",
+                             nRCNM, nRCID);
+                }
+                else
+                {
+                    poIndex->RemoveRecord(nRCID);
+                }
             }
 
-            if (poIndex != nullptr)
+            else if (nRUIN == 3) /* modify in place */
             {
-                if (nRUIN == 1) /* insert */
+                DDFRecord *poTarget = poIndex->FindRecord(nRCID);
+                if (poTarget == nullptr)
                 {
-                    auto poClone = poRecord->Clone();
-                    if (!poClone->TransferTo(poModule.get()))
-                        return false;
-                    poIndex->AddRecord(nRCID, std::move(poClone));
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Can't find RCNM=%d,RCID=%d for update.\n", nRCNM,
+                             nRCID);
                 }
-                else if (nRUIN == 2) /* delete */
+                else
                 {
-                    const DDFRecord *poTarget = poIndex->FindRecord(nRCID);
-                    if (poTarget == nullptr)
+                    if (!ApplyRecordUpdate(poTarget, poRecord))
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Can't find RCNM=%d,RCID=%d for delete.\n",
+                                 "An update to RCNM=%d,RCID=%d failed.\n",
                                  nRCNM, nRCID);
-                    }
-                    else if (poTarget->GetIntSubfield(pszKey, 0, "RVER", 0) !=
-                             nRVER - 1)
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Mismatched RVER value on RCNM=%d,RCID=%d.\n",
-                                 nRCNM, nRCID);
-                    }
-                    else
-                    {
-                        poIndex->RemoveRecord(nRCID);
-                    }
-                }
-
-                else if (nRUIN == 3) /* modify in place */
-                {
-                    DDFRecord *poTarget = poIndex->FindRecord(nRCID);
-                    if (poTarget == nullptr)
-                    {
-                        CPLError(CE_Warning, CPLE_AppDefined,
-                                 "Can't find RCNM=%d,RCID=%d for update.\n",
-                                 nRCNM, nRCID);
-                    }
-                    else
-                    {
-                        if (!ApplyRecordUpdate(poTarget, poRecord))
-                        {
-                            CPLError(CE_Warning, CPLE_AppDefined,
-                                     "An update to RCNM=%d,RCID=%d failed.\n",
-                                     nRCNM, nRCID);
-                        }
                     }
                 }
             }

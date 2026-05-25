@@ -477,8 +477,7 @@ bool OGRDXFDataSource::ReadLayerDefinition()
     if (!oLayerProperties.empty())
         oLayerTable[osLayerName] = std::move(oLayerProperties);
 
-    if (nCode == 0)
-        UnreadValue();
+    UnreadValue();
     return true;
 }
 
@@ -576,8 +575,7 @@ bool OGRDXFDataSource::ReadLineTypeDefinition()
         oLineTypeTable[osLineTypeName] = std::move(oLineTypeDef);
     }
 
-    if (nCode == 0)
-        UnreadValue();
+    UnreadValue();
     return true;
 }
 
@@ -667,8 +665,7 @@ bool OGRDXFDataSource::ReadTextStyleDefinition()
         return false;
     }
 
-    if (nCode == 0)
-        UnreadValue();
+    UnreadValue();
 
     if (osStyleHandle != "")
         oTextStyleHandles[osStyleHandle] = std::move(osStyleName);
@@ -792,8 +789,7 @@ bool OGRDXFDataSource::ReadDimStyleDefinition()
     if (!oDimStyleProperties.empty())
         oDimStyleTable[osDimStyleName] = std::move(oDimStyleProperties);
 
-    if (nCode == 0)
-        UnreadValue();
+    UnreadValue();
     return true;
 }
 

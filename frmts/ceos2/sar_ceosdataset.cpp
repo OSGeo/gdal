@@ -2431,17 +2431,14 @@ static int ProcessData(VSILFILE *fp, int fileid, CeosSARVolume_t *sar,
 
         if (max_records > 0)
             max_records--;
-        if (max_bytes > 0)
+
+        if ((vsi_l_offset)record->Length <= max_bytes)
+            max_bytes -= record->Length;
+        else
         {
-            if ((vsi_l_offset)record->Length <= max_bytes)
-                max_bytes -= record->Length;
-            else
-            {
-                CPLDebug("SAR_CEOS",
-                         "Partial record found.  %d > " CPL_FRMT_GUIB,
-                         record->Length, max_bytes);
-                max_bytes = 0;
-            }
+            CPLDebug("SAR_CEOS", "Partial record found.  %d > " CPL_FRMT_GUIB,
+                     record->Length, max_bytes);
+            max_bytes = 0;
         }
     }
 

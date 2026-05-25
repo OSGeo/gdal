@@ -336,8 +336,7 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
         const char *pszSourceBand =
             CPLGetXMLValue(psPanchroBand, "SourceBand", "1");
         nPanBand = atoi(pszSourceBand);
-        if (poPanBand == nullptr)
-            poPanBand = poPanDataset->GetRasterBand(nPanBand);
+        poPanBand = poPanDataset->GetRasterBand(nPanBand);
         if (poPanBand == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "%s invalid band of %s",

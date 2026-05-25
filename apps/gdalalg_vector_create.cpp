@@ -433,10 +433,7 @@ bool GDALVectorCreateAlgorithm::CreateLayer(
     const std::vector<OGRFieldDefn> &fieldDefinitions,
     const std::vector<OGRGeomFieldDefn> &geometryFieldDefinitions) const
 {
-
-    auto poDstLayer = poDstDS->GetLayerByName(layerName.c_str());
-
-    if (poDstLayer)
+    if (auto poExistingDstLayer = poDstDS->GetLayerByName(layerName.c_str()))
     {
         if (GetOverwriteLayer())
         {
@@ -444,7 +441,7 @@ bool GDALVectorCreateAlgorithm::CreateLayer(
             const int nLayerCount = poDstDS->GetLayerCount();
             for (iLayer = 0; iLayer < nLayerCount; iLayer++)
             {
-                if (poDstDS->GetLayer(iLayer) == poDstLayer)
+                if (poDstDS->GetLayer(iLayer) == poExistingDstLayer)
                     break;
             }
 
@@ -457,7 +454,6 @@ bool GDALVectorCreateAlgorithm::CreateLayer(
                     return false;
                 }
             }
-            poDstLayer = nullptr;
         }
         else
         {
@@ -493,23 +489,18 @@ bool GDALVectorCreateAlgorithm::CreateLayer(
             std::make_unique<OGRGeomFieldDefn>(geometryFieldDefinitions[0]);
     }
 
-    if (!poDstLayer)
+    CPLStringList aosCreationOptions(GetLayerCreationOptions());
+    if (aosCreationOptions.FetchNameValue("FID") == nullptr &&
+        !fidColumnName.empty())
     {
-        CPLStringList aosCreationOptions(GetLayerCreationOptions());
-        if (aosCreationOptions.FetchNameValue("FID") == nullptr &&
-            !fidColumnName.empty())
+        auto poDstDriver = poDstDS->GetDriver();
+        if (poDstDriver && poDstDriver->HasLayerCreationOption("FID"))
         {
-            auto poDstDriver = poDstDS->GetDriver();
-            if (poDstDriver && poDstDriver->HasLayerCreationOption("FID"))
-            {
-                aosCreationOptions.SetNameValue("FID", fidColumnName.c_str());
-            }
+            aosCreationOptions.SetNameValue("FID", fidColumnName.c_str());
         }
-        poDstLayer =
-            poDstDS->CreateLayer(layerName.c_str(), poGeomFieldDefn.get(),
-                                 aosCreationOptions.List());
     }
-
+    auto poDstLayer = poDstDS->CreateLayer(
+        layerName.c_str(), poGeomFieldDefn.get(), aosCreationOptions.List());
     if (!poDstLayer)
     {
         ReportError(CE_Failure, CPLE_AppDefined, "Cannot create layer '%s'.",

@@ -2758,7 +2758,7 @@ CPLErr VRTNoDataFromMaskSource::RasterIO(
     {
         if (bByteOptim && nOutXOff == 0 && nOutYOff == 0 &&
             nOutXSize == nBufXSize && nOutYSize == nBufYSize &&
-            eSrcBandDT == eBufType && nPixelSpace == nSrcBandDTSize &&
+            nPixelSpace == nSrcBandDTSize &&
             nLineSpace == nPixelSpace * nBufXSize)
         {
             pabyWrkBuffer = static_cast<GByte *>(pData);

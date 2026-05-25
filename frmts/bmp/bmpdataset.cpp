@@ -1490,7 +1490,7 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
      */
     GUInt32 nScanSize =
         (GUInt32)poDS->sInfoHeader.iWidth * poDS->sInfoHeader.iBitCount + 31;
-    if (!poDS->sInfoHeader.iWidth || !poDS->sInfoHeader.iBitCount ||
+    if (!poDS->sInfoHeader.iWidth ||
         (nScanSize - 31) / poDS->sInfoHeader.iBitCount !=
             (GUInt32)poDS->sInfoHeader.iWidth)
     {
