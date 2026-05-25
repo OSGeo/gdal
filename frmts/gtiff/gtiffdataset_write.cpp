@@ -5486,10 +5486,8 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                 CSLFetchNameValue(papszParamList, "INTERLEAVE"))
         {
             if (EQUAL(pszValue, "PIXEL"))
-                nPlanar = PLANARCONFIG_CONTIG;
-            else if (EQUAL(pszValue, "BAND"))
             {
-                nPlanar = PLANARCONFIG_SEPARATE;
+                nPlanar = PLANARCONFIG_CONTIG;
             }
             else if (EQUAL(pszValue, "BAND"))
             {
