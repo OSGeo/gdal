@@ -12203,6 +12203,7 @@ CreateComputedBand(GDALComputedRasterBand::Operation op,
                    const GDALRasterBand &bandA, const GDALRasterBand &bandB)
 {
 #ifndef HAVE_MUPARSER
+    (void)op;
     (void)bandA;
     (void)bandB;
     return ThrowIfNotMuparser();
@@ -12217,6 +12218,7 @@ CreateComputedBand(GDALComputedRasterBand::Operation op,
                    const GDALRasterBand &band, double constant)
 {
 #ifndef HAVE_MUPARSER
+    (void)op;
     (void)band;
     (void)constant;
     return ThrowIfNotMuparser();
@@ -12230,6 +12232,7 @@ CreateComputedBand(GDALComputedRasterBand::Operation op, double constant,
                    const GDALRasterBand &band)
 {
 #ifndef HAVE_MUPARSER
+    (void)op;
     (void)constant;
     (void)band;
     return ThrowIfNotMuparser();
