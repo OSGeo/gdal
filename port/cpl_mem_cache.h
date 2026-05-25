@@ -299,6 +299,12 @@ class Cache final
         return maxSize_ + elasticity_;
     }
 
+    template <typename F> void cwalk(F &f)
+    {
+        Guard g(lock_);
+        std::for_each(keys_.begin(), keys_.end(), f);
+    }
+
     template <typename F> void cwalk(F &f) const
     {
         Guard g(lock_);
