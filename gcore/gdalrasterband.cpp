@@ -9983,7 +9983,8 @@ bool GDALRasterBand::HasConflictingMaskSources(
     const bool bHasBinaryMaskBand =
         ((const_cast<GDALRasterBand *>(this)->GetMaskFlags() &
           (GMF_ALL_VALID | GMF_NODATA | GMF_ALPHA)) == 0) &&
-        (!bHasExternalMask || poDS->oOvManager.GetMaskBand(nBand) != this);
+        (!bHasExternalMask ||
+         (poDS && poDS->oOvManager.GetMaskBand(nBand) != this));
     const bool bHasNoData = HasNoData();
     const bool bHasNODATA_VALUES =
         poDS && poDS->GetMetadataItem("NODATA_VALUES");
