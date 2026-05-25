@@ -574,7 +574,9 @@ bool DDFFieldDefn::BuildSubfields()
                             }
                             ++pszFormatCur;
                             if (nGroupSubFieldCount < 0 ||
-                                nGroupSubFieldCount > INT_MAX / nRepeat)
+                                nGroupSubFieldCount > INT_MAX / nRepeat ||
+                                nSubFieldCounter >
+                                    INT_MAX - nGroupSubFieldCount * nRepeat)
                             {
                                 CPLError(CE_Failure, CPLE_AppDefined,
                                          "Tag %s: invalid "
