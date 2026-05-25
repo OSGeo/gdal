@@ -67,6 +67,8 @@ class VRTOverviewInfo
         oOther.poBand = nullptr;
     }
 
+    VRTOverviewInfo &operator=(VRTOverviewInfo &&) = delete;
+
     ~VRTOverviewInfo()
     {
         CloseDataset();
