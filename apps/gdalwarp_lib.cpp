@@ -4883,8 +4883,9 @@ static GDALDatasetH GDALWarpCreateOutput(
 /*      Convert points from georef coordinates to pixel/line based      */
 /*      on a geotransform.                                              */
 /************************************************************************/
-
-class CutlineTransformer : public OGRCoordinateTransformation
+namespace
+{
+class CutlineTransformer final : public OGRCoordinateTransformation
 {
     CPL_DISALLOW_COPY_ASSIGN(CutlineTransformer)
 
@@ -4934,6 +4935,7 @@ CutlineTransformer::~CutlineTransformer()
 {
     GDALDestroyTransformer(hSrcImageTransformer);
 }
+}  // namespace
 
 static double GetMaximumSegmentLength(OGRGeometry *poGeom)
 {
