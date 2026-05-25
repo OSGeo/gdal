@@ -48,10 +48,11 @@ GDALVectorExportSchemaAlgorithm::GDALVectorExportSchemaAlgorithm(
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
     m_outputFileNameArg = &AddArg(
-        GDAL_ARG_NAME_OUTPUT, 0,
+        GDAL_ARG_NAME_OUTPUT, 'o',
         _("Output file name. If not specified, output is sent to stdout"),
         &m_outputFileName);
-    AddOverwriteArg(&m_overwrite);
+    AddOverwriteArg(&m_overwrite,
+                    _("Whether overwriting existing output file is allowed"));
 }
 
 /************************************************************************/
