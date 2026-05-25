@@ -432,6 +432,20 @@ TEST_F(TestCopyWords, GDT_Int32)
     FROM_R(GDT_Int32, 67000, GDT_CInt32, 67000);
     FROM_R(GDT_Int32, 67000, GDT_CFloat32, 67000);
     FROM_R(GDT_Int32, 67000, GDT_CFloat64, 67000);
+
+    FROM_R(GDT_Int32, INT_MIN, GDT_Int32, INT_MIN);
+    FROM_R(GDT_Int32, INT_MIN + 1, GDT_Int32, INT_MIN + 1);
+    FROM_R(GDT_Int32, -1, GDT_Int32, -1);
+    FROM_R(GDT_Int32, 1, GDT_Int32, 1);
+    FROM_R(GDT_Int32, INT_MAX - 1, GDT_Int32, INT_MAX - 1);
+    FROM_R(GDT_Int32, INT_MAX, GDT_Int32, INT_MAX);
+
+    FROM_R(GDT_Int32, INT_MIN, GDT_UInt32, 0);
+    FROM_R(GDT_Int32, INT_MIN + 1, GDT_UInt32, 0);
+    FROM_R(GDT_Int32, -1, GDT_UInt32, 0);
+    FROM_R(GDT_Int32, 1, GDT_UInt32, 1);
+    FROM_R(GDT_Int32, INT_MAX - 1, GDT_UInt32, INT_MAX - 1);
+    FROM_R(GDT_Int32, INT_MAX, GDT_UInt32, INT_MAX);
 }
 
 TEST_F(TestCopyWords, GDT_UInt32)
@@ -444,17 +458,21 @@ TEST_F(TestCopyWords, GDT_UInt32)
         FROM_R(GDT_UInt32, 127, outtype, 127);
     }
 
-    FROM_R(GDT_UInt32, 3000000000U, GDT_Byte, 255);         /* clamp */
-    FROM_R(GDT_UInt32, 3000000000U, GDT_Int16, 32767);      /* clamp */
-    FROM_R(GDT_UInt32, 3000000000U, GDT_UInt16, 65535);     /* clamp */
-    FROM_R(GDT_UInt32, 3000000000U, GDT_Int32, 2147483647); /* clamp */
+    FROM_R(GDT_UInt32, 3000000000U, GDT_Byte, 255);      /* clamp */
+    FROM_R(GDT_UInt32, 3000000000U, GDT_Int16, 32767);   /* clamp */
+    FROM_R(GDT_UInt32, 3000000000U, GDT_UInt16, 65535);  /* clamp */
+    FROM_R(GDT_UInt32, 3000000000U, GDT_Int32, INT_MAX); /* clamp */
+    FROM_R(GDT_UInt32, INT_MAX - 1, GDT_Int32, INT_MAX - 1);
+    FROM_R(GDT_UInt32, INT_MAX, GDT_Int32, INT_MAX);
+    FROM_R(GDT_UInt32, 1U << 31U, GDT_Int32, INT_MAX);  /* clamp */
+    FROM_R(GDT_UInt32, UINT32_MAX, GDT_Int32, INT_MAX); /* clamp */
     FROM_R(GDT_UInt32, 3000000000U, GDT_UInt32, 3000000000U);
     FROM_R(GDT_UInt32, 3000000000U, GDT_Int64, 3000000000U);
     FROM_R(GDT_UInt32, 3000000000U, GDT_UInt64, 3000000000U);
     FROM_R(GDT_UInt32, 3000000000U, GDT_Float32, 3000000000U);
     FROM_R(GDT_UInt32, 3000000000U, GDT_Float64, 3000000000U);
-    FROM_R(GDT_UInt32, 3000000000U, GDT_CInt16, 32767);      /* clamp */
-    FROM_R(GDT_UInt32, 3000000000U, GDT_CInt32, 2147483647); /* clamp */
+    FROM_R(GDT_UInt32, 3000000000U, GDT_CInt16, 32767);   /* clamp */
+    FROM_R(GDT_UInt32, 3000000000U, GDT_CInt32, INT_MAX); /* clamp */
     FROM_R(GDT_UInt32, 3000000000U, GDT_CFloat32, 3000000000U);
     FROM_R(GDT_UInt32, 3000000000U, GDT_CFloat64, 3000000000U);
 }
@@ -698,7 +716,7 @@ TEST_F(TestCopyWords, GDT_Float32and64)
     /* GDT_Float32 and GDT_Float64 */
     for (int i = 0; i < 2; i++)
     {
-        GDALDataType intype = (i == 0) ? GDT_Float32 : GDT_Float64;
+        const GDALDataType intype = (i == 0) ? GDT_Float32 : GDT_Float64;
         for (GDALDataType outtype = GDT_Byte; outtype < GDT_TypeCount;
              outtype = (GDALDataType)(outtype + 1))
         {
@@ -731,6 +749,13 @@ TEST_F(TestCopyWords, GDT_Float32and64)
                     FROM_R_F(intype, -127.5, outtype,
                              -128); /* We could argue how to do this rounding */
                 }
+
+                FROM_R_F(intype, std::numeric_limits<float>::quiet_NaN(),
+                         outtype, 0);
+
+                constexpr double NEGATIVE_ZERO =
+                    -1.0f / std::numeric_limits<float>::infinity();
+                FROM_R_F(intype, NEGATIVE_ZERO, outtype, 0);
             }
         }
         FROM_R(intype, -CST_3000000000, GDT_Byte, 0);
