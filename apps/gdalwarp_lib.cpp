@@ -4937,13 +4937,13 @@ CutlineTransformer::~CutlineTransformer()
 }
 }  // namespace
 
-static double GetMaximumSegmentLength(OGRGeometry *poGeom)
+static double GetMaximumSegmentLength(const OGRGeometry *poGeom)
 {
     switch (wkbFlatten(poGeom->getGeometryType()))
     {
         case wkbLineString:
         {
-            OGRLineString *poLS = static_cast<OGRLineString *>(poGeom);
+            const OGRLineString *poLS = poGeom->toLineString();
             double dfMaxSquaredLength = 0.0;
             for (int i = 0; i < poLS->getNumPoints() - 1; i++)
             {
@@ -4959,27 +4959,24 @@ static double GetMaximumSegmentLength(OGRGeometry *poGeom)
 
         case wkbPolygon:
         {
-            OGRPolygon *poPoly = static_cast<OGRPolygon *>(poGeom);
-            double dfMaxLength =
-                GetMaximumSegmentLength(poPoly->getExteriorRing());
-            for (int i = 0; i < poPoly->getNumInteriorRings(); i++)
+            const OGRPolygon *poPoly = poGeom->toPolygon();
+            double dfMaxLength = 0;
+            for (const auto *poRing : *poPoly)
             {
-                dfMaxLength = std::max(
-                    dfMaxLength,
-                    GetMaximumSegmentLength(poPoly->getInteriorRing(i)));
+                dfMaxLength =
+                    std::max(dfMaxLength, GetMaximumSegmentLength(poRing));
             }
             return dfMaxLength;
         }
 
         case wkbMultiPolygon:
         {
-            OGRMultiPolygon *poMP = static_cast<OGRMultiPolygon *>(poGeom);
+            const OGRMultiPolygon *poMP = poGeom->toMultiPolygon();
             double dfMaxLength = 0.0;
-            for (int i = 0; i < poMP->getNumGeometries(); i++)
+            for (const auto *poPoly : *poMP)
             {
                 dfMaxLength =
-                    std::max(dfMaxLength,
-                             GetMaximumSegmentLength(poMP->getGeometryRef(i)));
+                    std::max(dfMaxLength, GetMaximumSegmentLength(poPoly));
             }
             return dfMaxLength;
         }
