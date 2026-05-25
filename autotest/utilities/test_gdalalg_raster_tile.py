@@ -2301,3 +2301,37 @@ def test_gdalalg_raster_tile_overview_selection(tmp_vsimem):
 
     ds = gdal.Open(tmp_vsimem / "0/0/0.png")
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (127, 127)
+
+
+def test_gdalalg_raster_tile_pipeline_materialize_explicit_filename(tmp_vsimem):
+
+    gdal.alg.pipeline(
+        pipeline=f"read ../gdrivers/data/small_world.tif ! materialize --output {tmp_vsimem}/tmp.tif ! tile {tmp_vsimem}"
+    )
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (0, 255)
+
+    ds = gdal.Open(tmp_vsimem / "tmp.tif")
+    assert ds.RasterXSize == 400
+
+
+def test_gdalalg_raster_tile_pipeline_materialize_no_explicit_filename(tmp_vsimem):
+
+    gdal.alg.pipeline(
+        pipeline=f"read ../gdrivers/data/small_world.tif ! materialize ! tile {tmp_vsimem}"
+    )
+
+    ds = gdal.Open(tmp_vsimem / "0/0/0.png")
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (0, 255)
+
+
+def test_gdalalg_raster_tile_pipeline_materialize_not_second_to_lat(tmp_vsimem):
+
+    with pytest.raises(
+        Exception,
+        match="Cannot execute this pipeline in parallel mode due to the presence of a materialize step that has a 'output' argument and is not immediately before the last step",
+    ):
+        gdal.alg.pipeline(
+            pipeline=f"read ../gdrivers/data/small_world.tif ! materialize --output {tmp_vsimem}/tmp.tif ! edit ! tile {tmp_vsimem}"
+        )
