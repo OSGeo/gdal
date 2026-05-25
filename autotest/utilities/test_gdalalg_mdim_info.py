@@ -324,9 +324,9 @@ def test_gdalalg_mdim_info_completion_array_invalid_ds(gdal_path):
 
 def test_gdalalg_mdim_info_completion_array(gdal_path):
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal mdim info ../gdrivers/data/netcdf/byte.nc --array"
-    ).split(" ")
+    )
     assert out == ["/x", "/y", "/Band1"]
 
 
@@ -340,9 +340,9 @@ def test_gdalalg_mdim_info_completion_array_option_invalid_ds(gdal_path):
 
 def test_gdalalg_mdim_info_completion_array_option(gdal_path):
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal mdim info ../gdrivers/data/netcdf/byte.nc --array-option"
-    ).split(" ")
+    )
     assert "USE_DEFAULT_FILL_AS_NODATA=" in out
 
 

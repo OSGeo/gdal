@@ -281,8 +281,8 @@ def test_gdalalg_raster_reproject_complete_output_crs():
         f"{gdal_path} completion gdal raster reproject ../gcore/data/byte.tif --output-crs=EPSG:"
     )
 
-    assert "4326\\ --" in out
-    assert "2193\\ --" not in out  # NZGD2000
+    assert "4326 --" in out
+    assert "2193 --" not in out  # NZGD2000
 
 
 @pytest.mark.require_proj(8, 1)

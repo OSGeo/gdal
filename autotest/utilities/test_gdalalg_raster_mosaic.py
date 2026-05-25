@@ -511,28 +511,26 @@ def test_gdalalg_raster_mosaic_pixel_function_arg_complete():
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal raster mosaic --pixel-function-arg"
     )
-    assert (
-        "Specify argument(s) to pass to the pixel function".replace(" ", "\\ ") in out
-    )
+    assert "Specify argument(s) to pass to the pixel function" in out
 
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal raster mosaic --pixel-function=invalid --pixel-function-arg"
     )
-    assert "Invalid pixel function name".replace(" ", "\\ ") in out
+    assert "Invalid pixel function name" in out
 
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal raster mosaic --pixel-function=scale --pixel-function-arg"
     )
-    assert "No pixel function arguments for pixel function".replace(" ", "\\ ") in out
+    assert "No pixel function arguments for pixel function" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster mosaic --pixel-function=mean --pixel-function-arg"
     )
-    assert out == "propagateNoData="
+    assert out == ["propagateNoData="]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster mosaic --pixel-function=mean --pixel-function-arg propagateNoData="
-    ).split(" ")
+    )
     assert out == ["NO", "YES"]
 
     out = gdaltest.runexternal(

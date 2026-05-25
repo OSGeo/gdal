@@ -109,8 +109,8 @@ def test_gdalalg_vector_reproject_complete_dst_crs():
     out = gdaltest.runexternal(
         f"{gdal_path} completion gdal vector reproject ../ogr/data/poly.shp --dst-crs=EPSG:"
     )
-    assert "4326\\ --" in out
-    assert "2193\\ --" not in out  # NZGD2000
+    assert "4326 --" in out
+    assert "2193 --" not in out  # NZGD2000
 
 
 ###############################################################################

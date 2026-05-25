@@ -287,9 +287,9 @@ def test_gdalalg_vector_explode_collections_type_autocomplete():
     if gdal_path is None:
         pytest.skip("gdal binary not available")
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector explode-collections --geometry-type"
-    ).split(" ")
+    )
     assert out == [
         "GEOMETRY",
         "GEOMETRYZ",
@@ -329,9 +329,9 @@ def test_gdalalg_vector_explode_collections_type_autocomplete():
         "TINZM",
     ]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector explode-collections --geometry-type COMPOUNDCURVE"
-    ).split(" ")
+    )
     assert len(out) == 4
 
 

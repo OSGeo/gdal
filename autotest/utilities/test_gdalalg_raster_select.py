@@ -192,9 +192,9 @@ def test_gdalalg_raster_select_autocomplete():
     if gdal_path is None:
         pytest.skip("gdal binary not available")
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster select ../gcore/data/byte.tif --band last_word_is_complete=true"
-    ).split(" ")
+    )
     assert out == ["1", "mask", "gray"]
 
     out = gdaltest.runexternal(

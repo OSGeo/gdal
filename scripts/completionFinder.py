@@ -351,16 +351,29 @@ _gdal()
   else
     choices=$(gdal completion ${COMP_LINE})
   fi
-  if [ "$CURRENT_SHELL" = "bash" ]; then
-    if [[ "$cur" == "=" ]]; then
-      mapfile -t COMPREPLY < <(compgen -W "$choices" --)
-    elif [[ "$cur" == ":" ]]; then
-      mapfile -t COMPREPLY < <(compgen -W "$choices" --)
-    elif [[ "$cur" == "!" ]]; then
-      mapfile -t COMPREPLY < <(compgen -W "$choices" -P "! " --)
+
+  COMPREPLY=()
+  if [ "$choices" != "" ]; then
+    CHOICES=()
+    while IFS= read -r line; do
+      CHOICES+=("$line")
+    done <<< "$choices"
+    if [ "$cur" = "=" ]; then
+      COMPREPLY=("${CHOICES[@]}")
+    elif [ "$cur" = ":" ]; then
+      COMPREPLY=("${CHOICES[@]}")
+    elif [ "$cur" = "!" ]; then
+      for line in "${CHOICES[@]}"; do
+          COMPREPLY+=("! $line")
+      done
     else
-      mapfile -t COMPREPLY < <(compgen -W "$choices" -- "$cur")
+      for line in "${CHOICES[@]}"; do
+          [[ $line == ${cur}* ]] && COMPREPLY+=("$line")
+      done
     fi
+  fi
+
+  if [ "$CURRENT_SHELL" = "bash" ]; then
     for element in "${COMPREPLY[@]}"; do
       if [[ $element == */ ]]; then
         # Do not add a space if one of the suggestion ends with slash
@@ -378,15 +391,6 @@ _gdal()
     done
   else
     # zsh
-    if [ "$cur" = "=" ]; then
-      COMPREPLY=( "$(compgen -W "$choices" --)" )
-    elif [ "$cur" = ":" ]; then
-      COMPREPLY=( "$(compgen -W "$choices" --)" )
-    elif [ "$cur" = "!" ]; then
-      COMPREPLY=( "$(compgen -W "$choices" -P "! " --)" )
-    else
-      COMPREPLY=( "$(compgen -W "$choices" -- "$cur")" )
-    fi
     for element in "${COMPREPLY[@]}"; do
       if [[ $element == */ ]]; then
         # Do not add a space if one of the suggestion ends with slash

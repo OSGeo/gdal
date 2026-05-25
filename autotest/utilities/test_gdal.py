@@ -145,105 +145,111 @@ def test_gdal_suggestions(gdal_path):
 
 def test_gdal_completion(gdal_path):
 
-    out = gdaltest.runexternal(f"{gdal_path} completion gdal -").split(" ")
+    out = gdaltest.run_and_parse_completion_output(f"{gdal_path} completion gdal -")
     assert "--version" in out
 
-    out = gdaltest.runexternal(f"{gdal_path} completion gdal").split(" ")
+    out = gdaltest.run_and_parse_completion_output(f"{gdal_path} completion gdal")
     assert "convert" in out
     assert "info" in out
     assert "raster" in out
     assert "vector" in out
 
-    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster").split(" ")
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal raster"
+    )
     assert "convert" in out
     assert "edit" in out
     assert "info" in out
     assert "reproject" in out
     assert "pipeline" in out
 
-    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info -").split(" ")
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal raster info -"
+    )
     assert "-f" not in out
     assert "--of" not in out
     assert "--format" not in out
     assert "--output-format" in out
 
-    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info --").split(" ")
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal raster info --"
+    )
     assert "-f" not in out
     assert "--of" not in out
     assert "--format" not in out
     assert "--output-format" in out
 
-    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info --o").split(
-        " "
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal raster info --o"
     )
     assert "--of" in out
     assert "--output-format" in out
 
-    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info --form").split(
-        " "
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal raster info --form"
     )
     assert out == ["--format"]
 
-    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info --of").split(
-        " "
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal raster info --of"
     )
     assert "json" in out
     assert "text" in out
 
-    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info --of=").split(
-        " "
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal raster info --of="
     )
     assert "json" in out
     assert "text" in out
 
-    out = gdaltest.runexternal(f"{gdal_path} completion gdal raster info --of=t").split(
-        " "
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal raster info --of=t"
     )
     assert "json" in out
     assert "text" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --of"
-    ).split(" ")
+    )
     if gdal.GetDriverByName("GTiff"):
         assert "GTiff" in out
     if gdal.GetDriverByName("HFA"):
         assert "HFA" in out
 
     # Test that config options are taken into account
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --config GDAL_SKIP=GTiff --of"
-    ).split(" ")
+    )
     assert "GTiff" not in out
     if gdal.GetDriverByName("HFA"):
         assert "HFA" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --input"
-    ).split(" ")
+    )
     assert "data/" in out or "data\\" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --input data/"
-    ).split(" ")
+    )
     assert "data/whiteblackred.tif" in out or "data\\whiteblackred.tif" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert /vsizip/../gcore/data/byte.tif.zip/"
-    ).split(" ")
+    )
     assert out == ["/vsizip/../gcore/data/byte.tif.zip/byte.tif"]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster reproject --resolution"
     )
-    assert (
-        out
-        == "** \xc2\xa0description:\\ Target\\ resolution\\ (in\\ destination\\ CRS\\ units)"
-    )
+    assert out == [
+        "**",
+        "\xc2\xa0description: Target resolution (in destination CRS units)",
+    ]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --input /vsi"
-    ).split(" ")
+    )
     assert "/vsimem/" in out
 
     # Just run it. Result will depend on local configuration
@@ -252,168 +258,168 @@ def test_gdal_completion(gdal_path):
 
 def test_gdal_completion_co(gdal_path):
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert in.tif out.tif --co"
-    ).split(" ")
+    )
     assert "COMPRESS=" in out
     assert "RPCTXT=" in out
     assert "TILING_SCHEME=" not in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert in.tif out.tif --co="
-    ).split(" ")
+    )
     assert "COMPRESS=" in out
     assert "RPCTXT=" in out
     assert "TILING_SCHEME=" not in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert in.tif out.tif --co COMPRESS="
-    ).split(" ")
+    )
     assert "NONE" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert in.tif out.tif --co COMPRESS=NO"
-    ).split(" ")
+    )
     assert "NONE" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert in.tif out.tif --co=COMPRESS="
-    ).split(" ")
+    )
     assert "NONE" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert in.tif out.tif --co=COMPRESS=NO"
-    ).split(" ")
+    )
     assert "NONE" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert in.tif out.tif --co TILED="
-    ).split(" ")
+    )
     assert out == ["NO", "YES"]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert in.tif out.tif --co ZLEVEL="
-    ).split(" ")
+    )
     assert "1" in out
     assert "9" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --of CO in.tif out.tif prev=of cur=CO"
-    ).split(" ")
+    )
     assert "COG" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --of=CO in.tif out.tif prev== cur=CO"
-    ).split(" ")
+    )
     assert "COG" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --of COG --co="
-    ).split(" ")
+    )
     assert "COMPRESS=" in out
     assert "RPCTXT=" not in out
     assert "TILING_SCHEME=" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --of=COG --creation-option ZOOM_LEVEL="
     )
-    assert (
-        out
-        == "## type:\\ int,\\ description:\\ Target\\ zoom\\ level.\\ Only\\ used\\ for\\ TILING_SCHEME\\ !=\\ CUSTOM"
-    )
+    assert out == [
+        "##",
+        "type: int, description: Target zoom level. Only used for TILING_SCHEME != CUSTOM",
+    ]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --of COG --co BLOCKSIZE="
     )
-    assert out == "## validity\\ range:\\ >=\\ 128"
+    assert out == ["##", "validity range: >= 128"]
 
     if "JPEG_QUALITY" in gdal.GetDriverByName("GTiff").GetMetadataItem(
         "DMD_CREATIONOPTIONLIST"
     ):
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{gdal_path} completion gdal raster convert in.tif out.tif --co JPEG_QUALITY="
         )
-        assert out == "## validity\\ range:\\ [1,100]"
+        assert out == ["##", "validity range: [1,100]"]
 
     if gdal.GetDriverByName("GPKG"):
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{gdal_path} completion gdal raster convert --of GPKG --co="
-        ).split(" ")
+        )
         assert "APPEND_SUBDATASET=" in out
         assert "VERSION=" in out
 
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{gdal_path} completion gdal vector convert --of GPKG --co="
-        ).split(" ")
+        )
         assert "APPEND_SUBDATASET=" not in out
         assert "VERSION=" in out
 
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{gdal_path} completion gdal raster convert --of GPKG --co BLOCKSIZE="
         )
-        assert out == "## validity\\ range:\\ <=\\ 4096"
+        assert out == ["##", "validity range: <= 4096"]
 
 
 def test_gdal_completion_lco(gdal_path):
 
     if gdal.GetDriverByName("GPKG"):
 
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{gdal_path} completion gdal vector convert --of GPKG --lco"
-        ).split(" ")
+        )
         assert "FID=" in out
 
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{gdal_path} completion gdal vector convert in.shp out.gpkg --layer-creation-option="
-        ).split(" ")
+        )
         assert "FID=" in out
 
 
 def test_gdal_completion_oo(gdal_path):
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster info foo.tif --oo"
-    ).split(" ")
+    )
     assert "COLOR_TABLE_MULTIPLIER=" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster info --if GTiff --open-option"
-    ).split(" ")
+    )
     assert "COLOR_TABLE_MULTIPLIER=" in out
 
 
 def test_gdal_completion_dst_crs(gdal_path):
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster reproject --dst-crs"
-    ).split(" ")
+    )
     assert "EPSG:" in out
     assert "ESRI:" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster reproject --dst-crs EPSG:"
     )
-    assert "4326\\ --\\ WGS\\ 84" in out
+    assert "4326 -- WGS 84 (geographic 2D)" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster reproject --dst-crs=EPSG:"
     )
-    assert "4326\\ --\\ WGS\\ 84" in out
+    assert "4326 -- WGS 84 (geographic 2D)" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster reproject --dst-crs EPSG:43"
     )
-    assert "4326\\ --\\ WGS\\ 84" in out
+    assert "4326 -- WGS 84 (geographic 2D)" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster reproject --dst-crs=EPSG:43"
     )
-    assert "4326\\ --\\ WGS\\ 84" in out
+    assert "4326 -- WGS 84 (geographic 2D)" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster reproject --dst-crs EPSG:4326"
     )
-    assert out == "4326"
+    assert out == ["4326"]
 
 
 def test_gdal_completion_config(gdal_path):
@@ -436,14 +442,14 @@ def test_gdal_completion_config(gdal_path):
     assert "CPL_DEBUG=" in out
     assert err == ""
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --config FOO="
-    ).split(" ")
+    )
     assert out == [""]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster convert --config=FOO="
-    ).split(" ")
+    )
     assert out == [""]
 
 
@@ -456,7 +462,7 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
         pipeline_cmd += subcommand
     pipeline_cmd += " pipeline"
 
-    out = gdaltest.runexternal(f"{pipeline_cmd}").split(" ")
+    out = gdaltest.run_and_parse_completion_output(f"{pipeline_cmd}")
     if subcommand == "raster":
         assert "calc" in out
         assert "concat" not in out
@@ -466,13 +472,13 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
     assert "read" in out
     assert "write" not in out
 
-    out = gdaltest.runexternal(f"{pipeline_cmd} re").split(" ")
+    out = gdaltest.run_and_parse_completion_output(f"{pipeline_cmd} re")
     assert out == ["read"]
 
-    out = gdaltest.runexternal(f"{pipeline_cmd} read").split(" ")
+    out = gdaltest.run_and_parse_completion_output(f"{pipeline_cmd} read")
     assert out == [""]
 
-    out = gdaltest.runexternal(f"{pipeline_cmd} read -").split(" ")
+    out = gdaltest.run_and_parse_completion_output(f"{pipeline_cmd} read -")
     assert "--input" in out
     assert "--open-option" in out
     if subcommand == "raster":
@@ -480,34 +486,34 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
     else:
         assert "--input-layer" in out
 
-    out = gdaltest.runexternal(f"{pipeline_cmd} read !").split(" ")
+    out = gdaltest.run_and_parse_completion_output(f"{pipeline_cmd} read !")
     assert "reproject" in out
     assert "write" in out
     assert "read" not in out
 
-    out = gdaltest.runexternal(f"{pipeline_cmd} read ! re").split(" ")
+    out = gdaltest.run_and_parse_completion_output(f"{pipeline_cmd} read ! re")
     assert "reproject" in out
     assert "write" in out
     assert "read" not in out
 
-    out = gdaltest.runexternal(f"{pipeline_cmd} read foo ! write -").split(" ")
+    out = gdaltest.run_and_parse_completion_output(f"{pipeline_cmd} read foo ! write -")
     assert "--output" in out
     assert "--creation-option" in out
 
     if subcommand != "vector":
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{pipeline_cmd} read foo ! foo ! reproject -"
-        ).split(" ")
+        )
         assert "--resampling" in out
 
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{pipeline_cmd} read foo ! reproject --resampling"
-        ).split(" ")
+        )
         assert "nearest" in out
 
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{pipeline_cmd} read ../gcore/data/byte.tif !"
-        ).split(" ")
+        )
         assert "resize" in out
         assert "make-valid" not in out
         if subcommand is None:
@@ -515,29 +521,31 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
         else:
             assert "polygonize" not in out
 
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{pipeline_cmd} read ../gcore/data/byte.tif ! edit -"
-        ).split(" ")
+        )
         assert "--nodata" in out
         assert "--geometry-type" not in out
 
     if subcommand != "raster":
 
-        out = gdaltest.runexternal(f"{pipeline_cmd} read test_gdal.py -").split(" ")
+        out = gdaltest.run_and_parse_completion_output(
+            f"{pipeline_cmd} read test_gdal.py -"
+        )
         assert "--input-layer" in out
 
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{pipeline_cmd} read ../ogr/data/poly.shp ! reproject -"
-        ).split(" ")
+        )
         assert "--active-layer" in out
 
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{pipeline_cmd} read foo ! reproject --dst-crs"
-        ).split(" ")
+        )
         assert "EPSG:" in out
 
-        out = gdaltest.runexternal(f"{pipeline_cmd} read ../ogr/data/poly.shp !").split(
-            " "
+        out = gdaltest.run_and_parse_completion_output(
+            f"{pipeline_cmd} read ../ogr/data/poly.shp !"
         )
         assert "resize" not in out
         assert "make-valid" in out
@@ -546,41 +554,41 @@ def test_gdal_completion_pipeline(gdal_path, subcommand):
         else:
             assert "rasterize" not in out
 
-        out = gdaltest.runexternal(
+        out = gdaltest.run_and_parse_completion_output(
             f"{pipeline_cmd} read ../ogr/data/poly.shp ! edit -"
-        ).split(" ")
+        )
         assert "--nodata" not in out
         assert "--geometry-type" in out
 
 
 def test_gdal_completion_gdal_vector_info_layer(gdal_path):
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector info ../ogr/data/poly.shp --layer"
-    ).split(" ")
+    )
     assert out == ["poly"]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector info ../ogr/data/poly.shp --layer p"
-    ).split(" ")
+    )
     assert out == ["poly"]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector info ../ogr/data/poly.shp --layer poly"
-    ).split(" ")
+    )
     assert out == [""]
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector info ../ogr/data/poly.shp --layer poly XX"
-    ).split(" ")
+    )
     assert out == [""]
 
 
 def test_gdal_completion_gdal_vector_pipeline_read_layer(gdal_path):
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector pipeline read ../ogr/data/poly.shp --layer"
-    ).split(" ")
+    )
     assert out == ["poly"]
 
 

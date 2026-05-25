@@ -2219,3 +2219,16 @@ def wkt_ds(wkts, *, geom_type=None, epsg=None):
         lyr.CreateFeature(f)
 
     return ds
+
+
+###############################################################################
+# Run cmd_line, which must be 'gdal completion' + arguments, and return its
+# output parsed as a list
+
+
+def run_and_parse_completion_output(cmd_line):
+    res = runexternal(cmd_line)
+    sep = "\r\n" if "\r\n" in res else "\n"
+    if res and res.endswith(sep):
+        res = res[0 : -len(sep)]
+    return res.split(sep)
