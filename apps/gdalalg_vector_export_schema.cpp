@@ -47,10 +47,9 @@ GDALVectorExportSchemaAlgorithm::GDALVectorExportSchemaAlgorithm(
     SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
-    m_outputFileNameArg = &AddArg(
-        GDAL_ARG_NAME_OUTPUT, 'o',
-        _("Output file name. If not specified, output is sent to stdout"),
-        &m_outputFileName);
+    AddArg(GDAL_ARG_NAME_OUTPUT, 'o',
+           _("Output file name. If not specified, output is sent to stdout"),
+           &m_outputFileName);
     AddOverwriteArg(&m_overwrite,
                     _("Whether overwriting existing output file is allowed"));
 }
@@ -89,7 +88,8 @@ bool GDALVectorExportSchemaAlgorithm::RunStep(GDALPipelineStepRunContext &)
     if (!ret)
         return false;
 
-    if (m_outputFileNameArg && m_outputFileNameArg->IsExplicitlySet())
+    const auto outFileNameArg = GetArg(GDAL_ARG_NAME_OUTPUT);
+    if (outFileNameArg && outFileNameArg->IsExplicitlySet())
     {
         // Check if file exists
         VSIStatBufL sStat;
