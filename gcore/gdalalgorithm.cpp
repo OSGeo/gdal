@@ -521,7 +521,7 @@ bool GDALAlgorithmArg::SetFrom(const GDALArgDatasetValue &other)
                  GetName().c_str(), GDALAlgorithmArgTypeName(m_decl.GetType()));
         return false;
     }
-    if (!CheckCanSetDatasetObject(this))
+    if (other.GetDatasetRef() && !CheckCanSetDatasetObject(this))
         return false;
     m_explicitlySet = true;
     std::get<GDALArgDatasetValue *>(m_value)->SetFrom(other);
