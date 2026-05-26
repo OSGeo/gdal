@@ -35,7 +35,7 @@ struct VRTArrayDatasetWrapper
     VRTArrayDatasetWrapper(const VRTArrayDatasetWrapper &) = delete;
     VRTArrayDatasetWrapper &operator=(const VRTArrayDatasetWrapper &) = delete;
 
-    GDALDataset *m_poDS;
+    std::unique_ptr<GDALDataset> m_poDS{};
 
     explicit VRTArrayDatasetWrapper(GDALDataset *poDS) : m_poDS(poDS)
     {
@@ -44,13 +44,20 @@ struct VRTArrayDatasetWrapper
 
     ~VRTArrayDatasetWrapper()
     {
-        CPLDebug("VRT", "Close %s", m_poDS->GetDescription());
-        delete m_poDS;
+        if (m_poDS)
+        {
+            CPLDebug("VRT", "Close %s", m_poDS->GetDescription());
+        }
+    }
+
+    std::unique_ptr<GDALDataset> borrow()
+    {
+        return std::move(m_poDS);
     }
 
     GDALDataset *get() const
     {
-        return m_poDS;
+        return m_poDS.get();
     }
 };
 
@@ -2058,39 +2065,38 @@ void VRTMDArraySourceFromArray::Serialize(CPLXMLNode *psParent,
 
 VRTMDArraySourceFromArray::~VRTMDArraySourceFromArray()
 {
-    std::lock_guard<std::mutex> oGuard(g_cacheLock);
+    std::vector<std::unique_ptr<GDALDataset>> datasetsToFree;
+    {
+        std::lock_guard<std::mutex> oGuard(g_cacheLock);
 
-    // Remove from the cache datasets that are only used by this array
-    // or drop our reference to those datasets
-    std::unordered_set<std::string> oSetKeysToRemove;
-    std::unordered_set<std::string> oSetKeysToDropReference;
-    auto lambda = [&oSetKeysToRemove, &oSetKeysToDropReference,
-                   this](const decltype(g_cacheSources)::node_type &key_value)
-    {
-        auto &listOfArrays(key_value.value.second);
-        auto oIter = listOfArrays.find(this);
-        if (oIter != listOfArrays.end())
+        // Remove from the cache datasets that are only used by this array
+        // or drop our reference to those datasets
+        std::unordered_set<std::string> setKeysToRemove;
+        auto lambda = [&setKeysToRemove, &datasetsToFree,
+                       this](decltype(g_cacheSources)::node_type &key_value)
         {
-            if (listOfArrays.size() == 1)
-                oSetKeysToRemove.insert(key_value.key);
-            else
-                oSetKeysToDropReference.insert(key_value.key);
+            auto &listOfArrays(key_value.value.second);
+            auto oIter = listOfArrays.find(this);
+            if (oIter != listOfArrays.end())
+            {
+                if (listOfArrays.size() == 1)
+                {
+                    datasetsToFree.push_back(key_value.value.first->borrow());
+                    setKeysToRemove.insert(key_value.key);
+                }
+                else
+                    listOfArrays.erase(oIter);
+            }
+        };
+        g_cacheSources.cwalk(lambda);
+        for (const auto &key : setKeysToRemove)
+        {
+            CPLDebug("VRT", "Dropping %s", key.c_str());
+            g_cacheSources.remove(key);
         }
-    };
-    g_cacheSources.cwalk(lambda);
-    for (const auto &key : oSetKeysToRemove)
-    {
-        CPLDebug("VRT", "Dropping %s", key.c_str());
-        g_cacheSources.remove(key);
     }
-    for (const auto &key : oSetKeysToDropReference)
-    {
-        CPLDebug("VRT", "Dropping reference to %s", key.c_str());
-        CacheEntry oPair;
-        g_cacheSources.tryGet(key, oPair);
-        oPair.second.erase(this);
-        g_cacheSources.insert(key, oPair);
-    }
+    // outside of lock to avoid potential dead lock
+    datasetsToFree.clear();
 }
 
 /************************************************************************/
