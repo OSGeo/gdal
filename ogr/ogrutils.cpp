@@ -2365,3 +2365,17 @@ std::string OGRDuplicateCharacter(const std::string &osStr, char ch)
     char aszReplacement[] = {ch, ch, 0};
     return CPLString(osStr).replaceAll(ch, aszReplacement);
 }
+
+/************************************************************************/
+/*                       OGRIsGeoJSONMediaType()                        */
+/************************************************************************/
+
+/** Returns whether pszMediaType is "application/geo+json" or
+ * "application/vnd.geo+json"
+ */
+bool OGRIsGeoJSONMediaType(const char *pszMediaType)
+{
+    return EQUAL(pszMediaType, "application/geo+json") ||
+           // Below is deprecated
+           EQUAL(pszMediaType, "application/vnd.geo+json");
+}
