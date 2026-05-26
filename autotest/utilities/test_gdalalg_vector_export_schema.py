@@ -91,3 +91,33 @@ def test_export_field_with_alias_comment_domain_default(tmp_vsimem):
         j["layers"][0]["geometryFields"][0]["coordinateSystem"]["authid"]
         == "EPSG:32631"
     )
+
+
+def test_gdalalg_vector_export_schema_to_file(tmp_vsimem):
+    info = get_alg()
+    tmp_file = str(tmp_vsimem / "out_schema.json")
+    assert info.ParseRunAndFinalize(["data/path.shp", f"--output={tmp_file}"])
+    with gdaltest.vsi_open(tmp_file, "r") as f:
+        j = json.load(f)
+        gdaltest.validate_json(j, "ogr_fields_override.schema.json")
+
+    # Test without --overwrite and file already exists
+    info = get_alg()
+    with pytest.raises(RuntimeError, match="already exists"):
+        assert info.ParseRunAndFinalize(["data/path.shp", f"--output={tmp_file}"])
+
+    info = get_alg()
+    assert info.ParseRunAndFinalize(
+        ["data/path.shp", f"--output={tmp_file}", "--overwrite"]
+    )
+
+
+def test_gdalalg_vector_export_schema_to_file_pipeline(tmp_vsimem):
+    pipeline = gdal.Algorithm("pipeline")
+    tmp_file = str(tmp_vsimem / "out_schema_pipeline.json")
+    assert pipeline.ParseRunAndFinalize(
+        ["read", "data/path.shp", "!", "export-schema", f"--output={tmp_file}"]
+    )
+    with gdaltest.vsi_open(tmp_file, "r") as f:
+        j = json.load(f)
+        gdaltest.validate_json(j, "ogr_fields_override.schema.json")

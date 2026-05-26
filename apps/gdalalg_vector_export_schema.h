@@ -42,6 +42,7 @@ class GDALVectorExportSchemaAlgorithm /* non final */
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::vector<std::string> m_layerNames{};
+    std::string m_outputFileName{};
 };
 
 /************************************************************************/

@@ -47,6 +47,11 @@ GDALVectorExportSchemaAlgorithm::GDALVectorExportSchemaAlgorithm(
     SetAutoCompleteFunctionForLayerName(layerArg, datasetArg);
     AddOutputStringArg(&m_output);
     AddStdoutArg(&m_stdout);
+    AddArg(GDAL_ARG_NAME_OUTPUT, 'o',
+           _("Output file name. If not specified, output is sent to stdout"),
+           &m_outputFileName);
+    AddOverwriteArg(&m_overwrite,
+                    _("Whether overwriting existing output file is allowed"));
 }
 
 /************************************************************************/
@@ -83,7 +88,62 @@ bool GDALVectorExportSchemaAlgorithm::RunStep(GDALPipelineStepRunContext &)
     if (!ret)
         return false;
 
-    m_output = ret;
+    const auto outFileNameArg = GetArg(GDAL_ARG_NAME_OUTPUT);
+    if (outFileNameArg && outFileNameArg->IsExplicitlySet())
+    {
+        // Check if file exists
+        VSIStatBufL sStat;
+        if (VSIStatL(m_outputFileName.c_str(), &sStat) == 0)
+        {
+            const auto overwriteArg = GetArg(GDAL_ARG_NAME_OVERWRITE);
+            if (overwriteArg && overwriteArg->GetType() == GAAT_BOOLEAN)
+            {
+                if (!overwriteArg->GDALAlgorithmArg::Get<bool>())
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "File '%s' already exists. Specify the "
+                             "--overwrite option to overwrite it.",
+                             m_outputFileName.c_str());
+                    CPLFree(ret);
+                    return false;
+                }
+                else
+                {
+                    if (VSIUnlink(m_outputFileName.c_str()) != 0)
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Failed to delete existing file '%s'",
+                                 m_outputFileName.c_str());
+                        CPLFree(ret);
+                        return false;
+                    }
+                }
+            }
+        }
+
+        VSILFILE *fp = VSIFOpenL(m_outputFileName.c_str(), "wb");
+        if (!fp)
+        {
+            CPLError(CE_Failure, CPLE_FileIO, "Failed to open output file '%s'",
+                     m_outputFileName.c_str());
+            CPLFree(ret);
+            return false;
+        }
+        auto nBytesWritten = VSIFWriteL(ret, 1, strlen(ret), fp);
+        VSIFCloseL(fp);
+        if (nBytesWritten != strlen(ret))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Failed to write output file '%s'",
+                     m_outputFileName.c_str());
+            CPLFree(ret);
+            return false;
+        }
+    }
+    else
+    {
+        m_output = ret;
+    }
     CPLFree(ret);
 
     return true;
