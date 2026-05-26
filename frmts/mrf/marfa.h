@@ -594,11 +594,9 @@ class MRFDataset final : public GDALPamDataset
     // A small int actually due to GDAL limitations
     double scale;
 
-    // A place to keep an uncompressed block, to keep from allocating it all the
-    // time
-    void *pbuffer;
+    void *pbuffer;    // A place to keep an uncompressed block
     unsigned int pbsize;
-    ILSize tile;  // ID of tile present in buffer
+    ILSize tile;      // ID of tile present in buffer
     GUIntBig bdirty;  // used in pixel interleaved (up to 64 bands)
 
     // GeoTransform support
