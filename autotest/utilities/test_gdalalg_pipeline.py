@@ -1146,3 +1146,38 @@ def test_gdalalg_pipeline_help_after_rasterize(tmp_vsimem):
     )
 
     assert "Return information on a raster dataset" in out
+
+
+def test_gdalalg_pipeline_raster_input_clip_and_inner_pipeline_raster():
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! clip --like [ read ../gcore/data/byte.tif ]"
+    ) as alg:
+        assert alg.Output().GetRasterBand(1).Checksum() == 4672
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_raster_input_clip_and_inner_pipeline_vector():
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! clip --like [ read ../gcore/data/byte.tif ! polygonize ]"
+    ) as alg:
+        assert alg.Output().GetRasterBand(1).Checksum() == 4672
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_vector_input_clip_and_inner_pipeline_raster():
+
+    with gdal.alg.pipeline(
+        pipeline="read ../ogr/data/poly.shp ! clip --like [ read ../ogr/data/poly.shp ]"
+    ) as alg:
+        assert alg.Output().GetLayer(0).GetFeatureCount() == 10
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_vector_input_clip_and_inner_pipeline_vector():
+
+    with gdal.alg.pipeline(
+        pipeline="read ../ogr/data/poly.shp ! clip --like [ read ../ogr/data/poly.shp ! rasterize --size 10,10 --burn 255 ]"
+    ) as alg:
+        assert alg.Output().GetLayer(0).GetFeatureCount() == 10
