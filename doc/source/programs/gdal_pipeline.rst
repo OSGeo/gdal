@@ -34,7 +34,7 @@ Synopsis
 A pipeline chains several steps, separated with the ``!`` (exclamation mark) character.
 Including a ``!`` between ``gdal pipeline`` and the first step is optional.
 The first step must be ``read``, ``calc``, ``concat``, ``mosaic`` or ``stack``,
-and the last one ``info``, ``tile`` or ``write``.
+and the last one ``export-schema``, ``info``, ``tile`` or ``write``.
 Each step has its own positional or non-positional arguments.
 Apart from ``read``, ``calc``, ``concat``, ``mosaic``, ``stack``, ``info``, ``tile``, ``partition`` and ``write``,
 all other steps can potentially be used several times in a pipeline.
@@ -429,3 +429,46 @@ Examples
       Including the original geometry field will result in multiple geometry
       columns in the output. Instead, explicitly list the required attributes
       and return a single geometry column.
+
+.. example::
+   :title: Clip a raster dataset using a nested vector pipeline
+   :id: gdal-pipeline-mixed-nested
+
+   This pipeline uses a raster input dataset, and clips it using a vector geometry coming from a nested vector pipeline.
+   The resulting clipped raster is then resized and written to disk, and shown in the image below.
+
+   .. image:: ../../images/programs/romania.png
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal pipeline \
+            ! read "NE2_50M_SR_W.tif" \
+            ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ] \
+            ! resize --size=70%,70% -r average \
+            ! write romania.png --overwrite
+
+      .. code-tab:: ps1
+
+        gdal pipeline `
+            ! read "NE2_50M_SR_W.tif" `
+            ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ] `
+            ! resize --size=70%,70% -r average `
+            ! write romania.png --overwrite
+
+.. only:: html
+
+   .. image:: ../../images/programs/test_gdal_mixed_pipeline_nested.svg
+      :width: 0
+      :height: 0
+
+   .. raw:: html
+
+      <object type="image/svg+xml"
+              data="../_images/test_gdal_mixed_pipeline_nested.svg">
+      </object>
+
+.. only:: not html
+
+   .. image:: ../../images/programs/test_gdal_mixed_pipeline_nested.svg

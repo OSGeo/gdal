@@ -181,6 +181,35 @@ Examples
         $ gdal raster clip --window=1000,2000,500,600 in.tif out.tif --overwrite
 
 .. example::
+   :title: Clip a GeoTIFF file using vector features
+   :id: gdal-raster-clip-vector
+
+   .. code-block:: bash
+
+        $ gdal raster clip NE2_50M_SR_W.tif clipped.tif \
+             --like natural_earth_vector.gpkg \
+             --like-layer "ne_50m_admin_0_countries" \
+             --like-where "ADMIN='Romania'"
+
+.. example::
+   :title: Clip a GeoTIFF file using SQL
+   :id: gdal-raster-clip-sql
+
+   This example produces the same result as :example:`gdal-raster-clip-vector`,
+   but uses :option:`--like-sql` instead of :option:`--like-layer`
+   and :option:`--like-where`.
+
+   The geometry column name (``geom`` in this case) must be included
+   in the SQL query.
+
+   .. code-block:: bash
+
+        $ gdal raster clip NE2_50M_SR_W.tif clipped.tif \
+            --like natural_earth_vector.gpkg \
+            --like-sql "SELECT geom FROM ne_50m_admin_0_countries WHERE ADMIN = 'Romania'" \
+            --overwrite
+
+.. example::
    :title: Clip a GeoTIFF using a bounding box extending beyond the source extent, and write the result as a COG
 
    Use ``--allow-bbox-outside-source`` to suppress the error
