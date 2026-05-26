@@ -121,8 +121,9 @@ previous paragraph), which is equal to setting
 
 If the :oo:`NATIVE_DATA` open option is set to YES, the Feature JSON object
 will be stored as a serialized JSON object in the NativeData property of
-the OGRFeature object (and "application/vnd.geo+json" in the
-NativeMediaType property). On write, if the OGRFeature to be written has
+the OGRFeature object (and "application/geo+json" in the
+NativeMediaType property, or "application/vnd.geo+json" before GDAL 3.13.1).
+On write, if the OGRFeature to be written has
 its NativeMediaType property set to "application/geo+json"
 (or "application/vnd.geo+json" before GDAL 3.13.1) and its
 NativeData property set to a string that is a serialized JSON object,

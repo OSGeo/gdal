@@ -1396,7 +1396,7 @@ def test_ogr_geojson_45(tmp_vsimem, mediatype):
         native_data = lyr.GetMetadataItem("NATIVE_DATA", "NATIVE_DATA")
         assert native_data == '{ "foo": "bar", "bar": "baz" }'
         native_media_type = lyr.GetMetadataItem("NATIVE_MEDIA_TYPE", "NATIVE_DATA")
-        assert native_media_type == "application/vnd.geo+json"
+        assert native_media_type == "application/geo+json"
         f = lyr.GetNextFeature()
         native_data = f.GetNativeData()
         if i == 0:
@@ -1410,7 +1410,7 @@ def test_ogr_geojson_45(tmp_vsimem, mediatype):
             ]
         assert native_data in expected
         native_media_type = f.GetNativeMediaType()
-        assert native_media_type == "application/vnd.geo+json"
+        assert native_media_type == "application/geo+json"
         ds = None
         if i == 1:
             gdal.Unlink(tmp_vsimem / "ogr_geojson_45.json")
