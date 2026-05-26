@@ -5211,7 +5211,14 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef HAVE_POPPLER
     if (bUseLib.test(PDFLIB_POPPLER))
     {
+#if POPPLER_MAJOR_VERSION > 26 ||                                              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION > 5) ||              \
+    (POPPLER_MAJOR_VERSION == 26 && POPPLER_MINOR_VERSION == 5 &&              \
+     POPPLER_MICRO_VERSION > 0)
+        const auto *psMediaBox = &(poPagePoppler->getMediaBox());
+#else
         const auto *psMediaBox = poPagePoppler->getMediaBox();
+#endif
         dfX1 = psMediaBox->x1;
         dfY1 = psMediaBox->y1;
         dfX2 = psMediaBox->x2;
