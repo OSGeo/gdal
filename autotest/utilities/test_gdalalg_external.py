@@ -142,6 +142,167 @@ def test_gdalalg_external_input_output(tmp_vsimem):
         assert ds.GetSpatialRef().GetAuthorityCode() == "4326"
 
 
+def test_gdalalg_external_pipeline_raster_and_clip(tmp_vsimem, tmp_path):
+    gdal_path = test_cli_utilities.get_gdal_path()
+
+    gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
+    before = gdal.ReadDir(tmp_vsimem / "temp_files")
+    before_tmp_path = gdal.ReadDir(tmp_path)
+    with gdal.config_options(
+        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
+    ):
+        with gdal.alg.pipeline(
+            pipeline=f'read ../gcore/data/byte.tif ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! clip --like ../gcore/data/byte.tif ! write {tmp_vsimem}/out.tif'
+        ):
+            pass
+
+    assert gdal.ReadDir(tmp_vsimem / "temp_files") == before
+    assert gdal.ReadDir(tmp_path) == before_tmp_path
+
+    with gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+@pytest.mark.require_geos
+def test_gdalalg_external_pipeline_vector_and_clip_raster(tmp_vsimem, tmp_path):
+    gdal_path = test_cli_utilities.get_gdal_path()
+
+    poly_tif = tmp_vsimem / "poly.tif"
+    gdal.alg.vector.rasterize(
+        input="../ogr/data/poly.shp", output=poly_tif, size=[100, 100], burn=255
+    )
+
+    gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
+    before = gdal.ReadDir(tmp_vsimem / "temp_files")
+    before_tmp_path = gdal.ReadDir(tmp_path)
+    with gdal.config_options(
+        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
+    ):
+        with gdal.alg.pipeline(
+            pipeline=f'read ../ogr/data/poly.shp ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! clip --input {poly_tif} --like _PIPE_ ! write {tmp_vsimem}/out.tif'
+        ):
+            pass
+
+    assert gdal.ReadDir(tmp_vsimem / "temp_files") == before
+    assert gdal.ReadDir(tmp_path) == before_tmp_path
+
+    with gdal.Open(poly_tif) as src_ds, gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+
+@pytest.mark.require_geos
+def test_gdalalg_external_pipeline_vector_and_clip_raster_with_tee(
+    tmp_vsimem, tmp_path
+):
+    gdal_path = test_cli_utilities.get_gdal_path()
+
+    poly_tif = tmp_vsimem / "poly.tif"
+    gdal.alg.vector.rasterize(
+        input="../ogr/data/poly.shp", output=poly_tif, size=[100, 100], burn=255
+    )
+
+    gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
+    before = gdal.ReadDir(tmp_vsimem / "temp_files")
+    before_tmp_path = gdal.ReadDir(tmp_path)
+    with gdal.config_options(
+        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
+    ):
+        with gdal.alg.pipeline(
+            pipeline=f'read ../ogr/data/poly.shp ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! tee [ write {tmp_vsimem}/out.shp ] ! clip --input {poly_tif} --like _PIPE_ ! write {tmp_vsimem}/out.tif'
+        ):
+            pass
+
+    assert gdal.ReadDir(tmp_vsimem / "temp_files") == before
+    assert gdal.ReadDir(tmp_path) == before_tmp_path
+
+    with gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == 10
+
+    with gdal.Open(poly_tif) as src_ds, gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+
+@pytest.mark.require_geos
+def test_gdalalg_external_pipeline_vector_and_clip_raster_from_inner_pipeline(
+    tmp_vsimem, tmp_path
+):
+    gdal_path = test_cli_utilities.get_gdal_path()
+
+    poly_tif = tmp_vsimem / "poly.tif"
+    gdal.alg.vector.rasterize(
+        input="../ogr/data/poly.shp", output=poly_tif, size=[100, 100], burn=255
+    )
+
+    gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
+    before = gdal.ReadDir(tmp_vsimem / "temp_files")
+    before_tmp_path = gdal.ReadDir(tmp_path)
+    with gdal.config_options(
+        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
+    ):
+        with gdal.alg.pipeline(
+            pipeline=f'read ../ogr/data/poly.shp ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! clip --input [ read {poly_tif} ] --like _PIPE_ ! write {tmp_vsimem}/out.tif'
+        ):
+            pass
+
+    assert gdal.ReadDir(tmp_vsimem / "temp_files") == before
+    assert gdal.ReadDir(tmp_path) == before_tmp_path
+
+    with gdal.Open(poly_tif) as src_ds, gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+
+@pytest.mark.require_geos
+def test_gdalalg_external_pipeline_raster_and_clip_vector(tmp_vsimem, tmp_path):
+    gdal_path = test_cli_utilities.get_gdal_path()
+
+    byte_shp = tmp_vsimem / "byte.shp"
+    gdal.alg.raster.polygonize(input="../gcore/data/byte.tif", output=byte_shp)
+
+    gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
+    before = gdal.ReadDir(tmp_vsimem / "temp_files")
+    before_tmp_path = gdal.ReadDir(tmp_path)
+    with gdal.config_options(
+        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
+    ):
+        with gdal.alg.pipeline(
+            pipeline=f'read ../gcore/data/byte.tif ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! clip --input {byte_shp} --like _PIPE_ ! write {tmp_vsimem}/out.shp'
+        ):
+            pass
+
+    assert gdal.ReadDir(tmp_vsimem / "temp_files") == before
+    assert gdal.ReadDir(tmp_path) == before_tmp_path
+
+    with gdal.OpenEx(byte_shp) as src_ds, gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == src_ds.GetLayer(0).GetFeatureCount()
+
+
+@pytest.mark.require_geos
+def test_gdalalg_external_pipeline_raster_and_clip_vector_from_inner_pipeline(
+    tmp_vsimem, tmp_path
+):
+    gdal_path = test_cli_utilities.get_gdal_path()
+
+    byte_shp = tmp_vsimem / "byte.shp"
+    gdal.alg.raster.polygonize(input="../gcore/data/byte.tif", output=byte_shp)
+
+    gdal.Mkdir(tmp_vsimem / "temp_files", 0o755)
+    before = gdal.ReadDir(tmp_vsimem / "temp_files")
+    before_tmp_path = gdal.ReadDir(tmp_path)
+    with gdal.config_options(
+        {"GDAL_ENABLE_EXTERNAL": "YES", "CPL_TMPDIR": str(tmp_path)}
+    ):
+        with gdal.alg.pipeline(
+            pipeline=f'read ../gcore/data/byte.tif ! external "{gdal_path} convert <INPUT> <OUTPUT>" ! clip --input [ read {byte_shp} ] --like _PIPE_ ! write {tmp_vsimem}/out.shp'
+        ):
+            pass
+
+    assert gdal.ReadDir(tmp_vsimem / "temp_files") == before
+    assert gdal.ReadDir(tmp_path) == before_tmp_path
+
+    with gdal.OpenEx(byte_shp) as src_ds, gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == src_ds.GetLayer(0).GetFeatureCount()
+
+
 @pytest.mark.require_driver("GPKG")
 @pytest.mark.require_driver("HFA")
 def test_gdalalg_external_pipeline_with_user_specified_drivers(tmp_vsimem, tmp_path):

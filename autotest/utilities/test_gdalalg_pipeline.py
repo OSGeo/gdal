@@ -1181,3 +1181,67 @@ def test_gdalalg_pipeline_vector_input_clip_and_inner_pipeline_vector():
         pipeline="read ../ogr/data/poly.shp ! clip --like [ read ../ogr/data/poly.shp ! rasterize --size 10,10 --burn 255 ]"
     ) as alg:
         assert alg.Output().GetLayer(0).GetFeatureCount() == 10
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_vector_and_clip_raster(tmp_vsimem, tmp_path):
+
+    poly_tif = tmp_vsimem / "poly.tif"
+    gdal.alg.vector.rasterize(
+        input="../ogr/data/poly.shp", output=poly_tif, size=[100, 100], burn=255
+    )
+
+    assert gdal.alg.pipeline(
+        pipeline=f"read ../ogr/data/poly.shp ! clip --input {poly_tif} --like _PIPE_ ! write {tmp_vsimem}/out.tif"
+    )
+
+    with gdal.Open(poly_tif) as src_ds, gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_vector_and_clip_raster_from_inner_pipeline(
+    tmp_vsimem, tmp_path
+):
+
+    poly_tif = tmp_vsimem / "poly.tif"
+    gdal.alg.vector.rasterize(
+        input="../ogr/data/poly.shp", output=poly_tif, size=[100, 100], burn=255
+    )
+
+    assert gdal.alg.pipeline(
+        pipeline=f"read ../ogr/data/poly.shp ! clip --input [ read {poly_tif} ] --like _PIPE_ ! write {tmp_vsimem}/out.tif"
+    )
+
+    with gdal.Open(poly_tif) as src_ds, gdal.Open(tmp_vsimem / "out.tif") as ds:
+        assert ds.GetRasterBand(1).Checksum() == src_ds.GetRasterBand(1).Checksum()
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_raster_and_clip_vector(tmp_vsimem, tmp_path):
+
+    byte_shp = tmp_vsimem / "byte.shp"
+    gdal.alg.raster.polygonize(input="../gcore/data/byte.tif", output=byte_shp)
+
+    assert gdal.alg.pipeline(
+        pipeline=f"read ../gcore/data/byte.tif ! clip --input {byte_shp} --like _PIPE_ ! write {tmp_vsimem}/out.shp"
+    )
+
+    with gdal.OpenEx(byte_shp) as src_ds, gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == src_ds.GetLayer(0).GetFeatureCount()
+
+
+@pytest.mark.require_geos
+def test_gdalalg_pipeline_raster_and_clip_vector_from_inner_pipeline(
+    tmp_vsimem, tmp_path
+):
+
+    byte_shp = tmp_vsimem / "byte.shp"
+    gdal.alg.raster.polygonize(input="../gcore/data/byte.tif", output=byte_shp)
+
+    assert gdal.alg.pipeline(
+        pipeline=f"read ../gcore/data/byte.tif ! clip --input [ read {byte_shp} ] --like _PIPE_ ! write {tmp_vsimem}/out.shp"
+    )
+
+    with gdal.OpenEx(byte_shp) as src_ds, gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
+        assert ds.GetLayer(0).GetFeatureCount() == src_ds.GetLayer(0).GetFeatureCount()
