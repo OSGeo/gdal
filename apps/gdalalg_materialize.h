@@ -33,6 +33,9 @@ class GDALMaterializeStepAlgorithm /* non final */
         "Materialize a piped dataset on disk to increase the efficiency of the "
         "following steps.";
 
+    static constexpr const char *ARG_NAME_REOPEN_AND_DO_NOT_EARLY_DELETE =
+        "reopen-and-do-not-early-delete";
+
     bool IsNativelyStreamingCompatible() const override
     {
         return false;
@@ -55,6 +58,8 @@ class GDALMaterializeStepAlgorithm /* non final */
     {
         return nDatasetType;
     }
+
+    bool m_reopenAndDoNotEarlyDelete = false;
 };
 
 /************************************************************************/

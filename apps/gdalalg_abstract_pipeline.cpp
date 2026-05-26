@@ -15,6 +15,7 @@
 #include "cpl_json.h"
 
 #include "gdalalg_abstract_pipeline.h"
+#include "gdalalg_materialize.h"
 #include "gdalalg_raster_read.h"
 #include "gdalalg_raster_write.h"
 #include "gdalalg_vector_read.h"
@@ -1756,10 +1757,14 @@ GDALAbstractPipelineAlgorithm::GetAutoComplete(std::vector<std::string> &args,
 }
 
 /************************************************************************/
-/*            GDALAbstractPipelineAlgorithm::SaveGDALGFile()            */
+/*      GDALAbstractPipelineAlgorithm::SaveGDALGIntoFileOrString()      */
 /************************************************************************/
 
-bool GDALAbstractPipelineAlgorithm::SaveGDALGFile(
+/** Save the pipeline either into the file of name outFilename, if
+ * outFilename is not empty, or into the output string outString if
+ * outFilename is empty.
+ */
+bool GDALAbstractPipelineAlgorithm::SaveGDALGIntoFileOrString(
     const std::string &outFilename, std::string &outString) const
 {
     std::string osCommandLine;
@@ -1871,7 +1876,7 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             }
 
             std::string outStringUnused;
-            return SaveGDALGFile(filename, outStringUnused);
+            return SaveGDALGIntoFileOrString(filename, outStringUnused);
         }
 
         const auto outputFormatArg =
@@ -1953,51 +1958,106 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     // Because of multiprocessing in gdal raster tile, make sure that all
-    // steps before it are serialized in a .gdal.json file
+    // steps before it are either materialized or serialized in a .gdal.json file
     if (m_steps.size() >= 2 && m_steps.back()->SupportsInputMultiThreading() &&
         m_steps.back()
                 ->GetArg(GDAL_ARG_NAME_NUM_THREADS_INT_HIDDEN)
                 ->Get<int>() > 1 &&
         !(m_steps.size() == 2 && m_steps[0]->GetName() == "read"))
     {
-        bool ret = false;
-        auto poSrcDS = m_inputDataset.size() == 1
-                           ? m_inputDataset[0].GetDatasetRef()
-                           : nullptr;
-        if (poSrcDS)
+        if (m_steps[m_steps.size() - 2]->GetName() ==
+            GDALMaterializeRasterAlgorithm::NAME)
         {
-            auto poSrcDriver = poSrcDS->GetDriver();
-            if (!poSrcDriver || EQUAL(poSrcDriver->GetDescription(), "MEM"))
+            // If the step immediately before the last one is materialize,
+            // then make sure the file it generates can be re-opened
+            auto poArg = m_steps[m_steps.size() - 2]->GetArg(
+                GDALMaterializeRasterAlgorithm::
+                    ARG_NAME_REOPEN_AND_DO_NOT_EARLY_DELETE);
+            CPLAssert(poArg);
+            poArg->Set(true);
+        }
+        else
+        {
+            for (size_t i = m_steps.size() - 2; i > 0;)
+            {
+                --i;
+                if (m_steps[i]->GetName() ==
+                    GDALMaterializeRasterAlgorithm::NAME)
+                {
+                    auto poArg = m_steps[i]->GetArg(GDAL_ARG_NAME_OUTPUT);
+                    CPLAssert(poArg);
+                    if (poArg->IsExplicitlySet())
+                    {
+                        // We could potentially support that scenario but that
+                        // would require executing the pipeline up to that
+                        // step, and serializing the rest to GDALG
+                        ReportError(
+                            CE_Failure, CPLE_AppDefined,
+                            "Cannot execute this pipeline in parallel mode due "
+                            "to the presence of a materialize step that has a "
+                            "'output' argument and is not immediately before "
+                            "the last step. "
+                            "Move/create a materialize step immediately before "
+                            "the last step, or add '-j 1' to the last step "
+                            "'%s'",
+                            m_steps.back()->GetName().c_str());
+                        return false;
+                    }
+                }
+            }
+
+            bool ret = false;
+            auto poSrcDS = m_inputDataset.size() == 1
+                               ? m_inputDataset[0].GetDatasetRef()
+                               : nullptr;
+            if (poSrcDS)
+            {
+                auto poSrcDriver = poSrcDS->GetDriver();
+                if (!poSrcDriver || EQUAL(poSrcDriver->GetDescription(), "MEM"))
+                {
+                    ReportError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Cannot execute this pipeline in parallel mode due to "
+                        "input dataset of last step being a non-materialized "
+                        "dataset. "
+                        "Materialize it first, or add '-j 1' to the last step "
+                        "'%s'",
+                        m_steps.back()->GetName().c_str());
+                    return false;
+                }
+            }
+            std::string outString;
+            if (SaveGDALGIntoFileOrString(std::string(), outString))
+            {
+                const char *const apszAllowedDrivers[] = {"GDALG", nullptr};
+                auto poCurDS = GDALDataset::Open(
+                    outString.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
+                    apszAllowedDrivers);
+                if (poCurDS)
+                {
+                    auto &lastAlg = m_steps.back();
+                    lastAlg->m_inputDataset.clear();
+                    lastAlg->m_inputDataset.resize(1);
+                    lastAlg->m_inputDataset[0].Set(poCurDS);
+                    lastAlg->m_inputDataset[0].SetDatasetOpenedByAlgorithm();
+                    poCurDS->Release();
+                    ret = lastAlg->RunStep(ctxt);
+                    lastAlg->m_inputDataset[0].Close();
+                }
+            }
+            else
             {
                 ReportError(
                     CE_Failure, CPLE_AppDefined,
                     "Cannot execute this pipeline in parallel mode due to "
-                    "input dataset being a non-materialized dataset. "
-                    "Materialize it first, or add '-j 1' to the last step "
-                    "'tile'");
+                    "an unexpected error. "
+                    "Trying adding a materialize step before the last step "
+                    "'%s', or add '-j 1' to the last step.",
+                    m_steps.back()->GetName().c_str());
                 return false;
             }
+            return ret;
         }
-        std::string outString;
-        if (SaveGDALGFile(std::string(), outString))
-        {
-            const char *const apszAllowedDrivers[] = {"GDALG", nullptr};
-            auto poCurDS = GDALDataset::Open(
-                outString.c_str(), GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR,
-                apszAllowedDrivers);
-            if (poCurDS)
-            {
-                auto &tileAlg = m_steps.back();
-                tileAlg->m_inputDataset.clear();
-                tileAlg->m_inputDataset.resize(1);
-                tileAlg->m_inputDataset[0].Set(poCurDS);
-                tileAlg->m_inputDataset[0].SetDatasetOpenedByAlgorithm();
-                poCurDS->Release();
-                ret = tileAlg->RunStep(ctxt);
-                tileAlg->m_inputDataset[0].Close();
-            }
-        }
-        return ret;
     }
 
     int countPipelinesWithProgress = 0;

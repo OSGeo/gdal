@@ -505,8 +505,8 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
                         std::vector<std::string> &nestedPipelineArgs,
                         bool forAutoComplete);
 
-    bool SaveGDALGFile(const std::string &outFilename,
-                       std::string &outString) const;
+    bool SaveGDALGIntoFileOrString(const std::string &outFilename,
+                                   std::string &outString) const;
 
     virtual std::unique_ptr<GDALAbstractPipelineAlgorithm>
     CreateNestedPipeline() const = 0;
