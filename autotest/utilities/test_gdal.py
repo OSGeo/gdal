@@ -12,6 +12,9 @@
 ###############################################################################
 
 import json
+import os
+import subprocess
+import sys
 
 import gdaltest
 import pytest
@@ -753,3 +756,163 @@ def test_gdal_drivers():
         j = alg.Output()
         assert "GTiff" in [x["short_name"] for x in j]
         assert "ESRI Shapefile" in [x["short_name"] for x in j]
+
+
+@pytest.mark.parametrize(
+    "shell,input_args,last_arg_is_complete,expected_output",
+    [
+        (
+            "bash",
+            [],
+            True,
+            [
+                "convert",
+                "dataset",
+                "driver",
+                "info",
+                "mdim",
+                "pipeline",
+                "raster",
+                "vector",
+                "vsi",
+            ],
+        ),
+        (
+            "zsh",
+            [],
+            True,
+            [
+                "convert",
+                "dataset",
+                "driver",
+                "info",
+                "mdim",
+                "pipeline",
+                "raster",
+                "vector",
+                "vsi",
+            ],
+        ),
+        (
+            "bash",
+            ["raster", "convert", "--"],
+            False,
+            [
+                "--append",
+                "--creation-option",
+                "--input",
+                "--input-format",
+                "--open-option",
+                "--output",
+                "--output-format",
+                "--overwrite",
+                "--quiet",
+            ],
+        ),
+        (
+            "zsh",
+            ["raster", "convert", "--"],
+            False,
+            [
+                "--append",
+                "--creation-option",
+                "--input",
+                "--input-format",
+                "--open-option",
+                "--output",
+                "--output-format",
+                "--overwrite",
+                "--quiet",
+            ],
+        ),
+        (
+            "bash",
+            ["vector", "filter", "../ogr/data/poly.shp", "--where", '"'],
+            False,
+            ['"AREA', '"EAS_ID', '"PRFEDEA'],
+        ),
+        (
+            "zsh",
+            ["vector", "filter", "../ogr/data/poly.shp", "--where", '"'],
+            False,
+            ["AREA", "EAS_ID", "PRFEDEA"],
+        ),
+        ("bash", ["vector", "pipeline", "read", "!"], False, ["! info"]),
+        ("zsh", ["vector", "pipeline", "read", "!"], False, ["! info"]),
+        (
+            "bash",
+            ["raster", "convert", "--format=GTiff", "--creation-option"],
+            True,
+            ["COMPRESS="],
+        ),
+        (
+            "zsh",
+            ["raster", "convert", "--format=GTiff", "--creation-option"],
+            True,
+            ["COMPRESS="],
+        ),
+        ("bash", ["raster", "reproject", "--output-crs"], True, ["EPSG:"]),
+        ("zsh", ["raster", "reproject", "--output-crs"], True, ["EPSG:"]),
+    ],
+)
+def test_gdal_completion_shell(
+    shell, input_args, last_arg_is_complete, expected_output
+):
+    """Test running bash/zsh completion script"""
+
+    if sys.platform == "win32":
+        pytest.skip("not compatible of win32")
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary not available")
+
+    gdal_bash_completion = os.path.join(
+        os.getcwd(), "..", "..", "scripts", "gdal-bash-completion.sh"
+    )
+    if not os.path.exists(gdal_bash_completion):
+        pytest.skip(f"cannot find {gdal_bash_completion}")
+
+    bash_completion = "/usr/share/bash-completion/bash_completion"
+    if shell == "bash" and not os.path.exists(bash_completion):
+        pytest.skip(f"cannot find {bash_completion}")
+
+    input_args = [gdal_path] + input_args
+
+    command_line = " ".join(input_args)
+    command_line_escaped = command_line.replace("\\", "\\\\").replace('"', '\\"')
+    COMP_CWORD = len(input_args)
+    if not last_arg_is_complete:
+        COMP_CWORD -= 1
+    if shell == "zsh":
+        # /usr/share/zsh/functions/Completion/bashcompinit does that
+        # This set start array offset=0 and split variables on space
+        cmd = "emulate -L sh\n"
+    else:
+        cmd = f"source {bash_completion}\n"
+
+    cmd += f"""
+source {gdal_bash_completion}
+
+# Set env variables involved in completion
+COMP_LINE="{command_line_escaped}"
+COMP_POINT={len(command_line)}
+COMP_WORDS=({command_line_escaped})
+COMP_CWORD={COMP_CWORD}
+
+# Execute the completion function
+_gdal
+
+for line in "${{COMPREPLY[@]}}"; do
+  echo $line;
+done
+"""
+
+    try:
+        result = subprocess.run([shell, "-c", cmd], capture_output=True, text=True)
+
+        output = result.stdout.strip().split("\n")
+        for x in expected_output:
+            assert x in output
+    except FileNotFoundError:
+        pytest.skip(f"{shell} not available")
