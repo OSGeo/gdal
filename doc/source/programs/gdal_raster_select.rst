@@ -103,6 +103,7 @@ Examples
 
 .. example::
    :title: Convert a RGBA dataset to a YCbCR JPEG compressed GeoTIFF
+   :id: gdal-raster-select-rgba
 
    .. code-block:: bash
 

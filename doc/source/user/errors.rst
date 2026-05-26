@@ -211,6 +211,22 @@ ERROR 6 Not Supported
 
 The requested operation is not supported by the driver, dataset, or GDAL component.
 
+.. example::
+   :title: JPEG compression fails on a 4-band GeoTIFF
+
+   JPEG compression with ``PHOTOMETRIC=YCBCR`` is only supported for
+   3-band RGB datasets. To create a compatible dataset, select 3 bands from the source image
+   before conversion. See :example:`gdal-raster-select-rgba`.
+
+   See :ref:`raster.gtiff` for supported combinations of compression
+   methods and photometric interpretations.
+
+   .. code-block:: console
+
+        $ gdal raster convert --co COMPRESS=JPEG --co PHOTOMETRIC=YCBCR rgba.tif output.tif
+        ERROR 6: output.tif: PHOTOMETRIC=YCBCR not supported on a 4-band raster:
+        only compatible of a 3-band (RGB) raster
+
 ERROR 7 Assertion Failed
 ++++++++++++++++++++++++
 
