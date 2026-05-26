@@ -42,6 +42,7 @@
 #include "ogrgeojsonwriter.h"
 #include "ogrsf_frmts.h"
 #include "ogr_schema_override.h"
+#include "ogr_p.h"
 
 // #include "symbol_renames.h"
 
@@ -381,7 +382,7 @@ OGRGeoJSONDataSource::ICreateLayer(const char *pszNameIn,
     bool bWriteCRSIfWGS84 = true;
     bool bFoundNameInNativeData = false;
     if (pszNativeData && pszNativeMediaType &&
-        EQUAL(pszNativeMediaType, "application/vnd.geo+json"))
+        OGRIsGeoJSONMediaType(pszNativeMediaType))
     {
         json_object *poObj = nullptr;
         if (OGRJSonParse(pszNativeData, &poObj) &&

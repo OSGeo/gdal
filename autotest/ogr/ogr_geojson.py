@@ -1374,7 +1374,10 @@ def test_ogr_geojson_44():
 # Test native data support
 
 
-def test_ogr_geojson_45(tmp_vsimem):
+@pytest.mark.parametrize(
+    "mediatype", ["application/geo+json", "application/vnd.geo+json"]
+)
+def test_ogr_geojson_45(tmp_vsimem, mediatype):
 
     # Test read support
     content = """{"type": "FeatureCollection", "foo": "bar", "bar": "baz",
@@ -1435,7 +1438,7 @@ def test_ogr_geojson_45(tmp_vsimem):
         '{ "type": "ignored", "bbox": "ignored", "properties" : "ignored", "foo_feature": "bar_feature", "geometry": %s }'
         % json_geom
     )
-    f.SetNativeMediaType("application/vnd.geo+json")
+    f.SetNativeMediaType(mediatype)
     with gdal.quiet_errors():  # will warn about "coordinates": [0,1,2, 3]
         f.SetGeometry(ogr.CreateGeometryFromJson(json_geom))
     lyr.CreateFeature(f)

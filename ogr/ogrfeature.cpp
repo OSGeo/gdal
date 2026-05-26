@@ -7338,7 +7338,7 @@ const char *OGR_F_GetNativeData(OGRFeatureH hFeat)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON.
  *
  * This function is the same as the C function
  * OGR_F_GetNativeMediaType().
@@ -7357,7 +7357,7 @@ const char *OGR_F_GetNativeData(OGRFeatureH hFeat)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON.
  *
  * This function is the same as the C function
  * OGR_F_GetNativeMediaType().
@@ -7439,7 +7439,8 @@ void OGR_F_SetNativeData(OGRFeatureH hFeat, const char *pszNativeData)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON (or "application/vnd.geo+json"
+ * before GDAL 3.13.1)
  *
  * This function is the same as the C function
  * OGR_F_SetNativeMediaType().
@@ -7466,7 +7467,8 @@ void OGRFeature::SetNativeMediaType(const char *pszNativeMediaType)
  *
  * The native media type is the identifier for the format of the native data.
  * It follows the IANA RFC 2045 (see https://en.wikipedia.org/wiki/Media_type),
- * e.g. "application/vnd.geo+json" for JSon.
+ * e.g. "application/geo+json" for GeoJSON (or "application/vnd.geo+json"
+ * before GDAL 3.13.1)
  *
  * This function is the same as the C++ method
  * OGRFeature::SetNativeMediaType().
