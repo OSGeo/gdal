@@ -410,25 +410,23 @@ template <> struct sGDALCopyWord<double, float>
 {
     static inline void f(const double dfValueIn, float &fValueOut)
     {
-#if defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2)
-        // We could just write fValueOut = static_cast<float>(dfValueIn);
-        // but a sanitizer might complain with values above FLT_MAX
-        _mm_store_ss(&fValueOut,
-                     _mm_cvtsd_ss(_mm_undefined_ps(), _mm_load_sd(&dfValueIn)));
-#else
-        if (dfValueIn > static_cast<double>(std::numeric_limits<float>::max()))
+        if constexpr (!std::numeric_limits<double>::is_iec559)
         {
-            fValueOut = std::numeric_limits<float>::infinity();
-            return;
-        }
-        if (dfValueIn < static_cast<double>(-std::numeric_limits<float>::max()))
-        {
-            fValueOut = -std::numeric_limits<float>::infinity();
-            return;
+            if (dfValueIn >
+                static_cast<double>(std::numeric_limits<float>::max()))
+            {
+                fValueOut = std::numeric_limits<float>::infinity();
+                return;
+            }
+            if (dfValueIn <
+                static_cast<double>(-std::numeric_limits<float>::max()))
+            {
+                fValueOut = -std::numeric_limits<float>::infinity();
+                return;
+            }
         }
 
         fValueOut = static_cast<float>(dfValueIn);
-#endif
     }
 };
 
