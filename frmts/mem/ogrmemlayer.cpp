@@ -861,15 +861,12 @@ OGRErr OGRMemLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
         }
         else
         {
-            if (poFieldDefn->GetType() != OGRUnknownType)
+            if (poNewFieldDefn->GetType() != OFTString)
             {
-                if (poNewFieldDefn->GetType() != OFTString)
-                {
-                    CPLError(CE_Failure, CPLE_NotSupported,
-                             "Can only convert from OFTInteger to OFTReal, "
-                             "or from anything to OFTString");
-                    return OGRERR_FAILURE;
-                }
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Can only convert from OFTInteger to OFTReal, "
+                         "or from anything to OFTString");
+                return OGRERR_FAILURE;
             }
 
             // Update all the internal features.  Hopefully there aren't any

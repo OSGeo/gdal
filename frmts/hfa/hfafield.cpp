@@ -1451,8 +1451,7 @@ int HFAField::GetInstBytes(GByte *pabyData, int nDataSize,
     else
     {
         oVisitedFields.insert(this);
-        for (int i = 0; i < nCount && nInstBytes < nDataSize && nInstBytes >= 0;
-             i++)
+        for (int i = 0; i < nCount && nInstBytes < nDataSize; i++)
         {
             const int nThisBytes = poItemObjectType->GetInstBytes(
                 pabyData, nDataSize - nInstBytes, oVisitedFields);

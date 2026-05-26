@@ -980,49 +980,40 @@ GDALDataset *ECRGTOCDataset::Open(GDALOpenInfo *poOpenInfo)
         /* PRODUCT:DISK:SCALE:FILENAME (or PRODUCT:DISK:FILENAME historically)
          */
         /* with FILENAME potentially C:\BLA... */
-        char **papszTokens = CSLTokenizeString2(pszFilename, ":", 0);
-        int nTokens = CSLCount(papszTokens);
-        if (nTokens != 3 && nTokens != 4 && nTokens != 5)
+        const CPLStringList aosTokens(CSLTokenizeString2(pszFilename, ":", 0));
+        if (aosTokens.size() == 3)
+            osFilename = aosTokens[2];
+        else if (aosTokens.size() == 4)
         {
-            CSLDestroy(papszTokens);
-            return nullptr;
-        }
-
-        osProduct = papszTokens[0];
-        osDiscId = papszTokens[1];
-
-        if (nTokens == 3)
-            osFilename = papszTokens[2];
-        else if (nTokens == 4)
-        {
-            if (strlen(papszTokens[2]) == 1 &&
-                (papszTokens[3][0] == '\\' || papszTokens[3][0] == '/'))
+            if (strlen(aosTokens[2]) == 1 &&
+                (aosTokens[3][0] == '\\' || aosTokens[3][0] == '/'))
             {
-                osFilename = papszTokens[2];
+                osFilename = aosTokens[2];
                 osFilename += ":";
-                osFilename += papszTokens[3];
+                osFilename += aosTokens[3];
             }
             else
             {
-                osScale = papszTokens[2];
-                osFilename = papszTokens[3];
+                osScale = aosTokens[2];
+                osFilename = aosTokens[3];
             }
         }
-        else if (nTokens == 5 && strlen(papszTokens[3]) == 1 &&
-                 (papszTokens[4][0] == '\\' || papszTokens[4][0] == '/'))
+        else if (aosTokens.size() == 5 && strlen(aosTokens[3]) == 1 &&
+                 (aosTokens[4][0] == '\\' || aosTokens[4][0] == '/'))
         {
-            osScale = papszTokens[2];
-            osFilename = papszTokens[3];
+            osScale = aosTokens[2];
+            osFilename = aosTokens[3];
             osFilename += ":";
-            osFilename += papszTokens[4];
+            osFilename += aosTokens[4];
         }
         else
         {
-            CSLDestroy(papszTokens);
             return nullptr;
         }
 
-        CSLDestroy(papszTokens);
+        osProduct = aosTokens[0];
+        osDiscId = aosTokens[1];
+
         pszFilename = osFilename.c_str();
     }
 

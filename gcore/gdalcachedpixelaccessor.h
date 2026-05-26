@@ -236,13 +236,10 @@ bool GDALCachedPixelAccessor<Type, TILE_SIZE, CACHED_TILE_COUNT>::SetSlowPath(
         {
             cachedTile.m_data[nYInTile * TILE_SIZE + nXInTile] = val;
             cachedTile.m_bModified = true;
-            if (i > 0)
-            {
-                CachedTile tmp = std::move(m_aCachedTiles[i]);
-                for (int j = i; j >= 1; --j)
-                    m_aCachedTiles[j] = std::move(m_aCachedTiles[j - 1]);
-                m_aCachedTiles[0] = std::move(tmp);
-            }
+            CachedTile tmp = std::move(m_aCachedTiles[i]);
+            for (int j = i; j >= 1; --j)
+                m_aCachedTiles[j] = std::move(m_aCachedTiles[j - 1]);
+            m_aCachedTiles[0] = std::move(tmp);
             return true;
         }
     }

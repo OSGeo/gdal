@@ -585,8 +585,7 @@ static int SIRCRecipeFCN(CeosSARVolume_t *volume, const void *token)
     /* -------------------------------------------------------------------- */
     if (ImageDesc->PixelsPerLine == 0 || ImageDesc->Lines == 0 ||
         ImageDesc->RecordsPerLine == 0 || ImageDesc->ImageDataStart == 0 ||
-        ImageDesc->FileDescriptorLength == 0 || ImageDesc->DataType == 0 ||
-        ImageDesc->NumChannels == 0 || ImageDesc->BytesPerPixel == 0 ||
+        ImageDesc->FileDescriptorLength == 0 || ImageDesc->NumChannels == 0 ||
         ImageDesc->ChannelInterleaving == 0 || ImageDesc->BytesPerRecord == 0)
     {
         return 0;
@@ -654,8 +653,7 @@ static int PALSARRecipeFCN(CeosSARVolume_t *volume, const void *token)
     /* -------------------------------------------------------------------- */
     if (ImageDesc->PixelsPerLine == 0 || ImageDesc->Lines == 0 ||
         ImageDesc->RecordsPerLine == 0 || ImageDesc->ImageDataStart == 0 ||
-        ImageDesc->FileDescriptorLength == 0 || ImageDesc->DataType == 0 ||
-        ImageDesc->NumChannels == 0 || ImageDesc->BytesPerPixel == 0 ||
+        ImageDesc->FileDescriptorLength == 0 ||
         ImageDesc->ChannelInterleaving == 0 || ImageDesc->BytesPerRecord == 0)
     {
         return 0;

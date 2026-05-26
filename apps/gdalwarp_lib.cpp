@@ -3655,13 +3655,9 @@ static GDALDatasetH GDALWarpCreateOutput(
                 nDstBandCount = GDALGetRasterCount(hSrcDS);
                 for (int iBand = 0; iBand < nDstBandCount; iBand++)
                 {
-                    if (psOptions->anDstBands.empty())
-                    {
-                        GDALColorInterp eInterp =
-                            GDALGetRasterColorInterpretation(
-                                GDALGetRasterBand(hSrcDS, iBand + 1));
-                        apeColorInterpretations.push_back(eInterp);
-                    }
+                    GDALColorInterp eInterp = GDALGetRasterColorInterpretation(
+                        GDALGetRasterBand(hSrcDS, iBand + 1));
+                    apeColorInterpretations.push_back(eInterp);
                 }
 
                 // Do we want to generate an alpha band in the output file?
@@ -3803,7 +3799,7 @@ static GDALDatasetH GDALWarpCreateOutput(
                 const GDALReprojectionTransformInfo *psRTI =
                     static_cast<const GDALReprojectionTransformInfo *>(
                         psTransformInfo->pReprojectArg);
-                if (psRTI && psRTI->poReverseTransform)
+                if (psRTI->poReverseTransform)
                 {
 
                     // Compute new geotransform from transformed target extent

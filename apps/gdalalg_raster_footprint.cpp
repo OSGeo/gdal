@@ -354,10 +354,9 @@ bool GDALRasterFootprintAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             GDALDataset::ToHandle(m_outputDataset.GetDatasetRef());
         auto poRetDS = GDALDataset::FromHandle(GDALFootprint(
             outputFilename.c_str(), hDstDS, hSrcDS, psOptions.get(), nullptr));
-        bOK = poRetDS != nullptr;
-        if (bOK && !hDstDS)
+        if ((bOK = (poRetDS != nullptr)) && !hDstDS)
         {
-            if (poRetDS && !m_standaloneStep && !outputFilename.empty())
+            if (!m_standaloneStep && !outputFilename.empty())
             {
                 bOK = poRetDS->FlushCache() == CE_None;
 #if !defined(__APPLE__)

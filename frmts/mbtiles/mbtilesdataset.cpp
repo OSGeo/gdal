@@ -494,8 +494,6 @@ char *MBTilesDataset::FindKey(int iPixel, int iLine)
 
     char *pszKey = nullptr;
 
-    OGRLayerH hSQLLyr;
-    OGRFeatureH hFeat;
     json_object *poGrid = nullptr;
     int i;
 
@@ -506,11 +504,11 @@ char *MBTilesDataset::FindKey(int iPixel, int iLine)
                    "zoom_level = %d AND tile_column = %d AND tile_row = %d",
                    m_nZoomLevel, nTileColumn, nTileRow);
     CPLDebug("MBTILES", "%s", pszSQL);
-    hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
+    OGRLayerH hSQLLyr = GDALDatasetExecuteSQL(hDS, pszSQL, nullptr, nullptr);
     if (hSQLLyr == nullptr)
         return nullptr;
 
-    hFeat = OGR_L_GetNextFeature(hSQLLyr);
+    OGRFeatureH hFeat = OGR_L_GetNextFeature(hSQLLyr);
     if (hFeat == nullptr || !OGR_F_IsFieldSetAndNotNull(hFeat, 0))
     {
         OGR_F_Destroy(hFeat);
@@ -666,10 +664,8 @@ end:
     if (jsobj)
         json_object_put(jsobj);
     VSIFree(pabyUncompressed);
-    if (hFeat)
-        OGR_F_Destroy(hFeat);
-    if (hSQLLyr)
-        GDALDatasetReleaseResultSet(hDS, hSQLLyr);
+    OGR_F_Destroy(hFeat);
+    GDALDatasetReleaseResultSet(hDS, hSQLLyr);
 
     return pszKey;
 }

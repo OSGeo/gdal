@@ -434,7 +434,7 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo *psDInfo)
 
         for (i = 0; i < nPhysicalCols; i++)
         {
-            int nDataBlockCount, nLongitudeCount;
+            int nDataBlockCount;
 
             if (VSIFSeekL(psDInfo->fp, psDInfo->nDataOffset + i * nColByteSize,
                           SEEK_SET) < 0 ||
@@ -455,8 +455,9 @@ static void DTEDDetectVariantWithMissingColumns(DTEDInfo *psDInfo)
                          nDataBlockCount, i);
             }
 
-            nLongitudeCount = (pabyRecordHeader[4] << 8) | pabyRecordHeader[5];
-            if (nLongitudeCount < 0 || nLongitudeCount >= psDInfo->nXSize)
+            const int nLongitudeCount =
+                (pabyRecordHeader[4] << 8) | pabyRecordHeader[5];
+            if (nLongitudeCount >= psDInfo->nXSize)
             {
                 CPLDebug("DTED",
                          "Invalid longitude count (%d) at physical column %d",
