@@ -312,6 +312,7 @@ extern "C++"
 #include <string>
 #include <vector>
 #if __cplusplus >= 201703L || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#define HAVE_STRING_VIEW
 #include <string_view>
 #endif
 #endif
@@ -522,6 +523,9 @@ extern "C++"
 
         CPLStringList &AddString(const char *pszNewString);
         CPLStringList &AddString(const std::string &newString);
+#if defined(DOXYGEN_SKIP) || defined(HAVE_STRING_VIEW)
+        CPLStringList &AddString(std::string_view newString);
+#endif
         CPLStringList &AddStringDirectly(char *pszNewString);
 
         /** Add a string to the list */
@@ -536,8 +540,7 @@ extern "C++"
             AddString(osStr.c_str());
         }
 
-#if defined(DOXYGEN_SKIP) || __cplusplus >= 201703L ||                         \
-    (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#if defined(DOXYGEN_SKIP) || defined(HAVE_STRING_VIEW)
         void push_back(std::string_view svStr);
 #endif
 
@@ -719,58 +722,40 @@ extern "C++"
 
     /*! @cond Doxygen_Suppress */
 
-    /** Equivalent of C++20 std::string::starts_with(const char*) */
-    template <class StringType>
-    inline bool starts_with(const StringType &str, const char *prefix)
-    {
-        const size_t prefixLen = strlen(prefix);
-        return str.size() >= prefixLen &&
-               str.compare(0, prefixLen, prefix, prefixLen) == 0;
-    }
+#if defined(DOXYGEN_SKIP) || defined(HAVE_STRING_VIEW)
+    bool CPL_DLL starts_with(std::string_view str, std::string_view prefix);
+    bool CPL_DLL starts_with_ci(std::string_view str, std::string_view prefix);
 
-    /** Equivalent of C++20 std::string::starts_with(const std::string &) */
-    template <class StringType>
-    inline bool starts_with(const StringType &str, const std::string &prefix)
-    {
-        return str.size() >= prefix.size() &&
-               str.compare(0, prefix.size(), prefix) == 0;
-    }
+    bool CPL_DLL ends_with(std::string_view str, std::string_view suffix);
+    bool CPL_DLL ends_with_ci(std::string_view str, std::string_view suffix);
 
-    /** Equivalent of C++20 std::string::starts_with(std::string_view) */
-    template <class StringType>
-    inline bool starts_with(const StringType &str, std::string_view prefix)
-    {
-        return str.size() >= prefix.size() &&
-               str.compare(0, prefix.size(), prefix) == 0;
-    }
+    bool CPL_DLL equals(std::string_view str1, std::string_view str2);
+    bool CPL_DLL equals_ci(std::string_view str1, std::string_view str2);
 
-    /** Equivalent of C++20 std::string::ends_with(const char*) */
-    template <class StringType>
-    inline bool ends_with(const StringType &str, const char *suffix)
-    {
-        const size_t suffixLen = strlen(suffix);
-        return str.size() >= suffixLen &&
-               str.compare(str.size() - suffixLen, suffixLen, suffix,
-                           suffixLen) == 0;
-    }
+    std::string_view CPL_DLL trim(std::string_view str);
+    std::string_view CPL_DLL rtrim(std::string_view str);
+    std::string_view CPL_DLL ltrim(std::string_view str);
 
-    /** Equivalent of C++20 std::string::ends_with(const std::string &) */
-    template <class StringType>
-    inline bool ends_with(const StringType &str, const std::string &suffix)
-    {
-        return str.size() >= suffix.size() &&
-               str.compare(str.size() - suffix.size(), suffix.size(), suffix) ==
-                   0;
-    }
+    std::string_view CPL_DLL trim(const char *str);
+    std::string_view CPL_DLL rtrim(const char *str);
+    std::string_view CPL_DLL ltrim(const char *str);
 
-    /** Equivalent of C++20 std::string::ends_with(std::string_view) */
-    template <class StringType>
-    inline bool ends_with(const StringType &str, std::string_view suffix)
-    {
-        return str.size() >= suffix.size() &&
-               str.compare(str.size() - suffix.size(), suffix.size(), suffix) ==
-                   0;
-    }
+    std::string_view trim(std::string &&) = delete;
+    std::string_view rtrim(std::string &&) = delete;
+    std::string_view ltrim(std::string &&) = delete;
+
+    std::pair<std::string_view, std::string_view>
+        CPL_DLL parse_name_value(std::string_view svNameValue);
+
+    std::pair<std::string_view, std::string_view>
+        CPL_DLL parse_name_value(const char *svNameValue);
+
+    std::pair<std::string_view, std::string_view>
+    parse_name_value(std::string &&) = delete;
+
+    CPLStringList tokenize_string(std::string_view str,
+                                  std::string_view delimiters, int nCSLTFlags);
+#endif
 
     /** Iterator for a CSLConstList */
     struct CPL_DLL CSLIterator
@@ -981,6 +966,10 @@ extern "C++"
 #endif
 
 }  // extern "C++"
+
+#ifdef HAVE_STRING_VIEW
+#undef HAVE_STRING_VIEW
+#endif
 
 #endif /* def __cplusplus && !CPL_SUPRESS_CPLUSPLUS */
 
