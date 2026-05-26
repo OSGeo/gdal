@@ -1129,7 +1129,7 @@ def test_gdalalg_vector_pipeline_read_wkt(tmp_vsimem, srid):
     assert ds.GetLayerCount() == 1
 
     lyr = ds.GetLayer(0)
-    assert lyr.GetGeomType() == ogr.wkbLineString
+    assert lyr.GetGeomType() == ogr.wkbMultiLineString
     assert lyr.GetFeatureCount() == 1
 
     if srid:
@@ -1139,7 +1139,10 @@ def test_gdalalg_vector_pipeline_read_wkt(tmp_vsimem, srid):
     else:
         assert lyr.GetSpatialRef() is None
 
-    assert lyr.GetNextFeature().GetGeometryRef().ExportToWkt() == "LINESTRING (3 3,4 4)"
+    assert (
+        lyr.GetNextFeature().GetGeometryRef().ExportToWkt()
+        == "MULTILINESTRING ((3 3,4 4))"
+    )
 
 
 @pytest.mark.parametrize(

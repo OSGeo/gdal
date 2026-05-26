@@ -7,6 +7,16 @@ Migration guide
 From GDAL 3.13 to GDAL 3.14
 ---------------------------
 
+- Behavior changes:
+
+    * Shapefile driver: on reading, layers with LineString (resp. Polygon)
+      are automatically exposed as MultiLineString (resp. MultiPolygon) at
+      the layer geometry type and feature's geometry level. This is aimed at
+      avoiding later issues when converting to formats that do not accept mixing
+      single and multi-geometries.
+      GDAL < 3.14 behavior can be obtained by setting the PROMOTE_TO_MULTI open
+      option, or the :config:`SHAPE_PROMOTE_TO_MULTI` configuration option, to NO.
+
 - Changes impacting C++ users:
 
     * All methods accepting or returning ``OGRBoolean`` (aliased to ``int``)

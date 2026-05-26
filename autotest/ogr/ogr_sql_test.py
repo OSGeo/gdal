@@ -407,10 +407,10 @@ def test_ogr_sql_12():
 
 def test_ogr_sql_13(data_ds):
 
-    expect = ["POLYGON"] * 10
+    expect = ["MULTIPOLYGON"] * 10
 
     with data_ds.ExecuteSQL(
-        "select ogr_geometry from poly where ogr_geometry = 'POLYGON'"
+        "select ogr_geometry from poly where ogr_geometry = 'MULTIPOLYGON'"
     ) as sql_lyr:
 
         ogrtest.check_features_against_list(sql_lyr, "ogr_geometry", expect)

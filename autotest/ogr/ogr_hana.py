@@ -120,7 +120,7 @@ def test_ogr_hana_2():
     ds = open_datasource()
     layer = ds.GetLayerByName("TPOLY")
 
-    shp_ds = ogr.Open("data/poly.shp")
+    shp_ds = gdal.OpenEx("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_layer = shp_ds.GetLayer(0)
 
     assert (
@@ -1254,7 +1254,7 @@ def create_tpoly_table(ds, layer_name="TPOLY"):
     with gdal.quiet_errors():
         ds.ExecuteSQL("DELLAYER:%s" % layer_name)
 
-    shp_ds = ogr.Open("data/poly.shp")
+    shp_ds = gdal.OpenEx("data/poly.shp", open_options=["PROMOTE_TO_MULTI=NO"])
     shp_layer = shp_ds.GetLayer(0)
 
     ######################################################

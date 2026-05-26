@@ -156,11 +156,11 @@ cellsize     1
             for i, feat in enumerate(lyr):
                 geom = feat.GetGeometryRef()
                 if polygonize:
-                    assert geom.GetGeometryType() == ogr.wkbPolygon
+                    assert geom.GetGeometryType() == ogr.wkbMultiPolygon
                     assert feat.GetField("ELEV_MIN") == expected_elev_values[i][0]
                     assert feat.GetField("ELEV_MAX") == expected_elev_values[i][1]
                 else:
-                    assert geom.GetGeometryType() == ogr.wkbLineString
+                    assert geom.GetGeometryType() == ogr.wkbMultiLineString
                     assert feat.GetField("ELEV") == expected_elev_values[i]
             lyr = None
 

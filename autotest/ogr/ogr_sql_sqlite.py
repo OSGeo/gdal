@@ -495,7 +495,7 @@ def test_ogr_sql_sqlite_left_join():
         feat.DumpReadable()
         pytest.fail()
     geom = feat.GetGeometryRef()
-    p = geom.GetGeometryRef(0).GetPoint_2D(0)
+    p = geom.GetGeometryRef(0).GetGeometryRef(0).GetPoint_2D(0)
     if p != (480701.0625, 4764738.0):
         feat.DumpReadable()
         pytest.fail()

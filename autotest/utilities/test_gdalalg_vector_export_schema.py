@@ -49,7 +49,7 @@ def test_gdalalg_vector_info_features_json():
     geom_fields = j["layers"][0]["geometryFields"]
     assert len(geom_fields) == 1
     assert geom_fields[0]["name"] == ""
-    assert geom_fields[0]["type"] == "LineString"
+    assert geom_fields[0]["type"] == "MultiLineString"
     assert geom_fields[0]["nullable"] is True
     assert geom_fields[0]["coordinateSystem"]["authid"] == "EPSG:4326"
 

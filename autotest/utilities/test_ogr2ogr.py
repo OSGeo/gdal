@@ -250,7 +250,7 @@ def test_ogr2ogr_11(ogr2ogr_path, tmp_path):
     )
 
     ds = ogr.Open(output_shp)
-    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbPolygon25D
+    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbMultiPolygon25D
 
 
 ###############################################################################
@@ -266,7 +266,7 @@ def test_ogr2ogr_12(ogr2ogr_path, tmp_path):
     )
 
     ds = ogr.Open(output_shp)
-    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbPolygon25D
+    assert ds.GetLayer(0).GetLayerDefn().GetGeomType() == ogr.wkbMultiPolygon25D
 
 
 ###############################################################################
@@ -307,7 +307,9 @@ def test_ogr2ogr_14(ogr2ogr_path, tmp_path):
     ds = ogr.Open(output_shp)
     assert ds is not None and ds.GetLayer(0).GetFeatureCount() == 10
     feat = ds.GetLayer(0).GetNextFeature()
-    assert feat.GetGeometryRef().GetGeometryRef(0).GetPointCount() == 36
+    assert (
+        feat.GetGeometryRef().GetGeometryRef(0).GetGeometryRef(0).GetPointCount() == 36
+    )
 
 
 ###############################################################################
@@ -912,7 +914,7 @@ def test_ogr2ogr_33(ogr2ogr_path, tmp_path):
         ogr2ogr_path + f" -explodecollections {dst_shp} {src_csv} -select foo"
     )
 
-    ds = ogr.Open(dst_shp)
+    ds = gdal.OpenEx(dst_shp, open_options=["PROMOTE_TO_MULTI=NO"])
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 3, "-explodecollections failed"
 
@@ -1180,9 +1182,9 @@ def test_ogr2ogr_43(ogr2ogr_path, tmp_path, dim):
     ds = ogr.Open(output_shp)
     lyr = ds.GetLayerByIndex(0)
     if dim == 3:
-        assert lyr.GetGeomType() == ogr.wkbPolygon25D
+        assert lyr.GetGeomType() == ogr.wkbMultiPolygon25D
     elif dim == 2:
-        assert lyr.GetGeomType() == ogr.wkbPolygon
+        assert lyr.GetGeomType() == ogr.wkbMultiPolygon
 
 
 ###############################################################################

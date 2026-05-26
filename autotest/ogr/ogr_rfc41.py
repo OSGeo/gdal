@@ -751,11 +751,11 @@ def test_ogr_rfc41_7():
         or feat["p.eas_id"] != 168
         or feat.area_int != 215229
         or feat.area != pytest.approx(215229.266, abs=1e-5)
-        or feat.geom1.GetGeometryType() != ogr.wkbPolygon
+        or feat.geom1.GetGeometryType() != ogr.wkbMultiPolygon
         or feat.geom2 is not None
         or feat.geom3.GetGeometryType() != ogr.wkbPoint
-        or feat.geom4.GetGeometryType() != ogr.wkbPolygon
-        or feat["_ogr_geometry_"].GetGeometryType() != ogr.wkbPolygon
+        or feat.geom4.GetGeometryType() != ogr.wkbMultiPolygon
+        or feat["_ogr_geometry_"].GetGeometryType() != ogr.wkbMultiPolygon
     ):
         feat.DumpReadable()
         pytest.fail()

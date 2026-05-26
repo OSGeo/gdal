@@ -53,8 +53,7 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
                              DBFHandle hDBFIn,
                              const OGRSpatialReference *poSRSIn, bool bSRSSetIn,
                              const std::string &osPrjFilename, bool bUpdate,
-                             OGRwkbGeometryType eReqType,
-                             CSLConstList papszCreateOptions)
+                             OGRwkbGeometryType eReqType, bool bCreateLayer)
     : OGRAbstractProxiedLayer(poDSIn->GetPool()), m_poDS(poDSIn),
       m_osFullName(pszFullNameIn), m_hSHP(hSHPIn), m_hDBF(hDBFIn),
       m_bUpdateAccess(bUpdate), m_eRequestedGeomType(eReqType),
@@ -120,8 +119,6 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
 
     const char *pszShapeEncoding =
         CSLFetchNameValue(m_poDS->GetOpenOptions(), "ENCODING");
-    if (pszShapeEncoding == nullptr && m_osEncoding == "")
-        pszShapeEncoding = CSLFetchNameValue(papszCreateOptions, "ENCODING");
     if (pszShapeEncoding == nullptr)
         pszShapeEncoding = CPLGetConfigOption("SHAPE_ENCODING", nullptr);
     if (pszShapeEncoding != nullptr)
@@ -200,6 +197,20 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
         else
         {
             eType = m_eRequestedGeomType;
+        }
+
+        if (!bCreateLayer)
+        {
+            if (wkbFlatten(eType) == wkbLineString ||
+                wkbFlatten(eType) == wkbPolygon)
+            {
+                if (CPLTestBool(CSLFetchNameValueDef(
+                        m_poDS->GetOpenOptions(), "PROMOTE_TO_MULTI",
+                        CPLGetConfigOption("SHAPE_PROMOTE_TO_MULTI", "YES"))))
+                {
+                    eType = OGR_GT_GetCollection(eType);
+                }
+            }
         }
 
         auto poSRSClone = OGRSpatialReferenceRefCountedPtr::makeClone(poSRSIn);
@@ -1257,53 +1268,53 @@ OGRErr OGRShapeLayer::ICreateFeature(OGRFeature *poFeature)
             case wkbLineString:
             case wkbMultiLineString:
                 nShapeType = SHPT_ARC;
-                m_eRequestedGeomType = wkbLineString;
+                m_eRequestedGeomType = wkbMultiLineString;
                 break;
 
             case wkbLineString25D:
             case wkbMultiLineString25D:
                 nShapeType = SHPT_ARCZ;
-                m_eRequestedGeomType = wkbLineString25D;
+                m_eRequestedGeomType = wkbMultiLineString25D;
                 break;
 
             case wkbLineStringM:
             case wkbMultiLineStringM:
                 nShapeType = SHPT_ARCM;
-                m_eRequestedGeomType = wkbLineStringM;
+                m_eRequestedGeomType = wkbMultiLineStringM;
                 break;
 
             case wkbLineStringZM:
             case wkbMultiLineStringZM:
                 nShapeType = SHPT_ARCZ;
-                m_eRequestedGeomType = wkbLineStringZM;
+                m_eRequestedGeomType = wkbMultiLineStringZM;
                 break;
 
             case wkbPolygon:
             case wkbMultiPolygon:
             case wkbTriangle:
                 nShapeType = SHPT_POLYGON;
-                m_eRequestedGeomType = wkbPolygon;
+                m_eRequestedGeomType = wkbMultiPolygon;
                 break;
 
             case wkbPolygon25D:
             case wkbMultiPolygon25D:
             case wkbTriangleZ:
                 nShapeType = SHPT_POLYGONZ;
-                m_eRequestedGeomType = wkbPolygon25D;
+                m_eRequestedGeomType = wkbMultiPolygon25D;
                 break;
 
             case wkbPolygonM:
             case wkbMultiPolygonM:
             case wkbTriangleM:
                 nShapeType = SHPT_POLYGONM;
-                m_eRequestedGeomType = wkbPolygonM;
+                m_eRequestedGeomType = wkbMultiPolygonM;
                 break;
 
             case wkbPolygonZM:
             case wkbMultiPolygonZM:
             case wkbTriangleZM:
                 nShapeType = SHPT_POLYGONZ;
-                m_eRequestedGeomType = wkbPolygonZM;
+                m_eRequestedGeomType = wkbMultiPolygonZM;
                 break;
 
             default:
@@ -1480,7 +1491,7 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 
         if (psShape != nullptr && psShape->nSHPType != SHPT_NULL)
         {
-            OGRGeometry *poGeometry = nullptr;
+            std::unique_ptr<OGRGeometry> poGeometry;
             OGREnvelope sGeomEnv;
             // Test if we have a degenerated bounding box.
             if (psShape->nSHPType != SHPT_POINT &&
@@ -1495,8 +1506,9 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
 
                 if (psShape)
                 {
-                    poGeometry = SHPReadOGRObject(
-                        m_hSHP, iShape, psShape, m_bHasWarnedWrongWindingOrder);
+                    poGeometry = SHPReadOGRObject(m_hSHP, iShape, psShape,
+                                                  m_bHasWarnedWrongWindingOrder,
+                                                  GetGeomType());
                     if (poGeometry)
                         poGeometry->getEnvelope(&sGeomEnv);
                     psShape = nullptr;
@@ -1558,9 +1570,9 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                             psShape = SHPReadObject(m_hSHP, iShape);
                         if (psShape)
                         {
-                            poGeometry =
-                                SHPReadOGRObject(m_hSHP, iShape, psShape,
-                                                 m_bHasWarnedWrongWindingOrder);
+                            poGeometry = SHPReadOGRObject(
+                                m_hSHP, iShape, psShape,
+                                m_bHasWarnedWrongWindingOrder, GetGeomType());
                             psShape = nullptr;
                         }
                     }
@@ -1572,12 +1584,12 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                     {
                         if (OGRPreparedGeometryIntersects(
                                 m_pPreparedFilterGeom,
-                                OGRGeometry::ToHandle(poGeometry)))
+                                OGRGeometry::ToHandle(poGeometry.get())))
                         {
                             nFeatureCount++;
                         }
                     }
-                    else if (m_poFilterGeom->Intersects(poGeometry))
+                    else if (m_poFilterGeom->Intersects(poGeometry.get()))
                         nFeatureCount++;
                 }
                 else
@@ -1585,8 +1597,6 @@ int OGRShapeLayer::GetFeatureCountWithSpatialFilterOnly()
                     nFeatureCount++;
                 }
             }
-
-            delete poGeometry;
         }
         else
         {

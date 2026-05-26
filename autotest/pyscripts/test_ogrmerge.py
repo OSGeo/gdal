@@ -266,7 +266,7 @@ def test_ogrmerge_7a(script_path, tmp_path):
         f"-single -f VRT -o {out_vrt} "
         + test_py_scripts.get_data_path("ogr")
         + "poly.shp "
-        "-src_geom_type POLYGON",
+        "-src_geom_type MULTIPOLYGON",
     )
 
     ds = ogr.Open(out_vrt)
@@ -300,7 +300,7 @@ def test_ogrmerge_7c(script_path, tmp_path):
         script_path,
         "ogrmerge",
         f"-f VRT -o {out_vrt} " + test_py_scripts.get_data_path("ogr") + "poly.shp "
-        "-src_geom_type POLYGON",
+        "-src_geom_type MULTIPOLYGON",
     )
 
     ds = ogr.Open(out_vrt)

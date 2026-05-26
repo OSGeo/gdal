@@ -98,8 +98,10 @@ CreateLinearRing(SHPObject *psShape, int ring, bool bHasZ, bool bHasM)
 /*      representation.                                                 */
 /************************************************************************/
 
-OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
-                              bool &bHasWarnedWrongWindingOrder)
+std::unique_ptr<OGRGeometry> SHPReadOGRObject(SHPHandle hSHP, int iShape,
+                                              SHPObject *psShape,
+                                              bool &bHasWarnedWrongWindingOrder,
+                                              OGRwkbGeometryType eLayerGeomType)
 {
 #if DEBUG_VERBOSE
     CPLDebug("Shape", "SHPReadOGRObject( iShape=%d )", iShape);
@@ -113,32 +115,34 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
         return nullptr;
     }
 
-    OGRGeometry *poOGR = nullptr;
+    std::unique_ptr<OGRGeometry> poOGR;
 
     /* -------------------------------------------------------------------- */
     /*      Point.                                                          */
     /* -------------------------------------------------------------------- */
     if (psShape->nSHPType == SHPT_POINT)
     {
-        poOGR = new OGRPoint(psShape->padfX[0], psShape->padfY[0]);
+        poOGR =
+            std::make_unique<OGRPoint>(psShape->padfX[0], psShape->padfY[0]);
     }
     else if (psShape->nSHPType == SHPT_POINTZ)
     {
         if (psShape->bMeasureIsUsed)
         {
-            poOGR = new OGRPoint(psShape->padfX[0], psShape->padfY[0],
-                                 psShape->padfZ[0], psShape->padfM[0]);
+            poOGR = std::make_unique<OGRPoint>(
+                psShape->padfX[0], psShape->padfY[0], psShape->padfZ[0],
+                psShape->padfM[0]);
         }
         else
         {
-            poOGR = new OGRPoint(psShape->padfX[0], psShape->padfY[0],
-                                 psShape->padfZ[0]);
+            poOGR = std::make_unique<OGRPoint>(
+                psShape->padfX[0], psShape->padfY[0], psShape->padfZ[0]);
         }
     }
     else if (psShape->nSHPType == SHPT_POINTM)
     {
-        poOGR = new OGRPoint(psShape->padfX[0], psShape->padfY[0], 0.0,
-                             psShape->padfM[0]);
+        poOGR = std::make_unique<OGRPoint>(psShape->padfX[0], psShape->padfY[0],
+                                           0.0, psShape->padfM[0]);
         poOGR->set3D(FALSE);
     }
     /* -------------------------------------------------------------------- */
@@ -154,46 +158,45 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
         }
         else
         {
-            OGRMultiPoint *poOGRMPoint = new OGRMultiPoint();
+            auto poOGRMPoint = std::make_unique<OGRMultiPoint>();
 
             for (int i = 0; i < psShape->nVertices; i++)
             {
-                OGRPoint *poPoint = nullptr;
+                std::unique_ptr<OGRPoint> poPoint;
 
                 if (psShape->nSHPType == SHPT_MULTIPOINTZ)
                 {
                     if (psShape->padfM)
                     {
-                        poPoint =
-                            new OGRPoint(psShape->padfX[i], psShape->padfY[i],
-                                         psShape->padfZ[i], psShape->padfM[i]);
+                        poPoint = std::make_unique<OGRPoint>(
+                            psShape->padfX[i], psShape->padfY[i],
+                            psShape->padfZ[i], psShape->padfM[i]);
                     }
                     else
                     {
-                        poPoint =
-                            new OGRPoint(psShape->padfX[i], psShape->padfY[i],
-                                         psShape->padfZ[i]);
+                        poPoint = std::make_unique<OGRPoint>(psShape->padfX[i],
+                                                             psShape->padfY[i],
+                                                             psShape->padfZ[i]);
                     }
                 }
                 else if (psShape->nSHPType == SHPT_MULTIPOINTM &&
                          psShape->padfM)
                 {
-                    poPoint = new OGRPoint(psShape->padfX[i], psShape->padfY[i],
-                                           0.0, psShape->padfM[i]);
+                    poPoint = std::make_unique<OGRPoint>(psShape->padfX[i],
+                                                         psShape->padfY[i], 0.0,
+                                                         psShape->padfM[i]);
                     poPoint->set3D(FALSE);
                 }
                 else
                 {
-                    poPoint =
-                        new OGRPoint(psShape->padfX[i], psShape->padfY[i]);
+                    poPoint = std::make_unique<OGRPoint>(psShape->padfX[i],
+                                                         psShape->padfY[i]);
                 }
 
-                poOGRMPoint->addGeometry(poPoint);
-
-                delete poPoint;
+                poOGRMPoint->addGeometry(std::move(poPoint));
             }
 
-            poOGR = poOGRMPoint;
+            poOGR = std::move(poOGRMPoint);
         }
     }
 
@@ -205,14 +208,9 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
     else if (psShape->nSHPType == SHPT_ARC || psShape->nSHPType == SHPT_ARCM ||
              psShape->nSHPType == SHPT_ARCZ)
     {
-        if (psShape->nParts == 0)
+        if (psShape->nParts == 1)
         {
-            poOGR = nullptr;
-        }
-        else if (psShape->nParts == 1)
-        {
-            OGRLineString *poOGRLine = new OGRLineString();
-            poOGR = poOGRLine;
+            auto poOGRLine = std::make_unique<OGRLineString>();
 
             if (psShape->nSHPType == SHPT_ARCZ)
                 poOGRLine->setPoints(psShape->nVertices, psShape->padfX,
@@ -224,18 +222,28 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
             else
                 poOGRLine->setPoints(psShape->nVertices, psShape->padfX,
                                      psShape->padfY);
+
+            if (wkbFlatten(eLayerGeomType) == wkbMultiLineString)
+            {
+                auto poOGRMulti = std::make_unique<OGRMultiLineString>();
+                poOGRMulti->addGeometry(std::move(poOGRLine));
+                poOGR = std::move(poOGRMulti);
+            }
+            else
+            {
+                poOGR = std::move(poOGRLine);
+            }
         }
-        else
+        else if (psShape->nParts > 1)
         {
-            OGRMultiLineString *poOGRMulti = new OGRMultiLineString();
-            poOGR = poOGRMulti;
+            auto poOGRMulti = std::make_unique<OGRMultiLineString>();
 
             for (int iRing = 0; iRing < psShape->nParts; iRing++)
             {
                 int nRingPoints = 0;
                 int nRingStart = 0;
 
-                OGRLineString *poLine = new OGRLineString();
+                auto poLine = std::make_unique<OGRLineString>();
 
                 if (psShape->panPartStart == nullptr)
                 {
@@ -268,8 +276,10 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                     poLine->setPoints(nRingPoints, psShape->padfX + nRingStart,
                                       psShape->padfY + nRingStart);
 
-                poOGRMulti->addGeometryDirectly(poLine);
+                poOGRMulti->addGeometry(std::move(poLine));
             }
+
+            poOGR = std::move(poOGRMulti);
         }
     }
 
@@ -290,19 +300,24 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
                  psShape->nParts);
 #endif
 
-        if (psShape->nParts == 0)
-        {
-            poOGR = nullptr;
-        }
-        else if (psShape->nParts == 1)
+        if (psShape->nParts == 1)
         {
             // Surely outer ring.
-            OGRPolygon *poOGRPoly = new OGRPolygon();
-            poOGR = poOGRPoly;
-
+            auto poOGRPoly = std::make_unique<OGRPolygon>();
             poOGRPoly->addRing(CreateLinearRing(psShape, 0, bHasZ, bHasM));
+
+            if (wkbFlatten(eLayerGeomType) == wkbMultiPolygon)
+            {
+                auto poOGRMulti = std::make_unique<OGRMultiPolygon>();
+                poOGRMulti->addGeometry(std::move(poOGRPoly));
+                poOGR = std::move(poOGRMulti);
+            }
+            else
+            {
+                poOGR = std::move(poOGRPoly);
+            }
         }
-        else
+        else if (psShape->nParts >= 1)
         {
             std::vector<std::unique_ptr<OGRGeometry>> apoPolygons;
             apoPolygons.reserve(psShape->nParts);
@@ -426,8 +441,7 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
             const char *const apszOptions[] = {
                 bUseSlowMethod ? "METHOD=DEFAULT" : "METHOD=ONLY_CCW", nullptr};
             poOGR = OGRGeometryFactory::organizePolygons(
-                        apoPolygons, &isValidGeometry, apszOptions)
-                        .release();
+                apoPolygons, &isValidGeometry, apszOptions);
 
             if (!isValidGeometry)
             {
@@ -446,9 +460,10 @@ OGRGeometry *SHPReadOGRObject(SHPHandle hSHP, int iShape, SHPObject *psShape,
     /* -------------------------------------------------------------------- */
     else if (psShape->nSHPType == SHPT_MULTIPATCH)
     {
-        poOGR = OGRCreateFromMultiPatch(
+        poOGR = std::unique_ptr<OGRGeometry>(OGRCreateFromMultiPatch(
             psShape->nParts, psShape->panPartStart, psShape->panPartType,
-            psShape->nVertices, psShape->padfX, psShape->padfY, psShape->padfZ);
+            psShape->nVertices, psShape->padfX, psShape->padfY,
+            psShape->padfZ));
     }
 
     /* -------------------------------------------------------------------- */
@@ -1424,8 +1439,9 @@ OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
     {
         if (!poDefn->IsGeometryIgnored())
         {
-            OGRGeometry *poGeometry = SHPReadOGRObject(
-                hSHP, iShape, psShape, bHasWarnedWrongWindingOrder);
+            auto poGeometry = SHPReadOGRObject(hSHP, iShape, psShape,
+                                               bHasWarnedWrongWindingOrder,
+                                               poDefn->GetGeomType());
 
             // Two possibilities are expected here (both are tested by
             // GDAL Autotests):
@@ -1464,7 +1480,7 @@ OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                 }
             }
 
-            poFeature->SetGeometryDirectly(poGeometry);
+            poFeature->SetGeometry(std::move(poGeometry));
         }
         else if (psShape != nullptr)
         {

@@ -1015,6 +1015,7 @@ constexpr static const char* const apszKnownConfigOptions[] =
    "SENTINEL2_USE_MAIN_MTD", // from sentinel2dataset.cpp
    "SHAPE_2GB_LIMIT", // from ogrshapedatasource.cpp
    "SHAPE_ENCODING", // from ogrshapelayer.cpp
+   "SHAPE_PROMOTE_TO_MULTI", // from ogrshapelayer.cpp
    "SHAPE_RESTORE_SHX", // from ogrshapedatasource.cpp
    "SHAPE_REWIND_ON_WRITE", // from ogrshapelayer.cpp
    "SPARSE_OK_OVERVIEW", // from gt_overview.cpp
