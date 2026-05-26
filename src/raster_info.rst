@@ -25,7 +25,7 @@ in recursive mode in the current directory:
 
     $ gdal dataset identify -r .
 
-Output:
+**Output:**
 
 ::
 
@@ -59,11 +59,11 @@ Let's get information on one of the Sentinel 2 dataset
 
     $ gdal raster info S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml
 
-Output:
+**Output:**
 
 Driver short name and long name. It is generally a good idea to consult the
 driver documentation page to learn about the peculiarities of each format. Here
-`Sentinel-2 <https://gdal.org/en/stable/drivers/raster/sentinel2.html>`__.
+we are using `Sentinel-2 <https://gdal.org/en/stable/drivers/raster/sentinel2.html>`__.
 
 ::
 
@@ -160,6 +160,7 @@ So for example let's open the 10m resolution bands with:
 
     $ gdal raster info SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634
 
+**Output:**
 
 File(s) composing the dataset:
 
@@ -288,7 +289,7 @@ by adding dash dash and pressing the TAB key twice.
 
     $ gdal raster info SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 --<TAB><TAB>
 
-Output:
+**Output:**
 
 ::
 
@@ -301,11 +302,11 @@ For example statistics:
 
 ::
 
-    $ gdal raster info SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 --statistics
+    $ gdal raster info SENTINEL2_L2A:S2B_MSIL2A_20260423T094029_N0512_R036_T34TDR_20260423T115714.SAFE/MTD_MSIL2A.xml:10m:EPSG_32634 --stats
 
 Answer "y" and validate.
 
-Output
+**Output:**
 
 ::
 
@@ -340,9 +341,10 @@ Hidden feature: symbolic links and subdatasets
   But for Windows, you can almost have the same behavior by doing
 
   ::
+
       gdal raster convert <input> <shortcut.vrt>
 
-As those Sentinel 2 filenames are quite long, you can of course create symbolic
+As those Sentinel 2 filenames are quite long, you can of course create symbolic links
 to them with:
 
 ::
@@ -790,7 +792,7 @@ processing utility
 
     ``jq`` uses 0-based array indexing.
 
-Output:
+**Output:**
 
 ::
 
@@ -945,6 +947,11 @@ After a few seconds:
 
   {'band': 1, 'block': [128, 128], 'type': 'UInt16', 'colorInterpretation': 'Red', 'description': 'B4, central wavelength 665 nm', 'computedMin': 0.0, 'computedMax': 17143.0, 'overviews': [{'size': [5490, 5490]}, {'size': [2745, 2745]}, {'size': [1373, 1373]}], 'metadata': {'': {'BANDNAME': 'B4', 'BANDWIDTH': '30', 'BANDWIDTH_UNIT': 'nm', 'WAVELENGTH': '665', 'WAVELENGTH_UNIT': 'nm', 'SOLAR_IRRADIANCE': '1512.79', 'SOLAR_IRRADIANCE_UNIT': 'W/m2/um', 'BOA_ADD_OFFSET': '-1000'}, 'IMAGE_STRUCTURE': {'NBITS': '15'}, 'IMAGERY': {'CENTRAL_WAVELENGTH_UM': '0.665', 'FWHM_UM': '0.030'}}}
 
+To exit Python and return to the shell, type:
+
+::
+
+  exit()
 
 
 Getting pixel value

@@ -99,7 +99,7 @@ You are done for the installation and can skip everything else in this page!
 Conda installation
 ++++++++++++++++++
 
-If you already have a Conda installation, skip that paragraph.
+If you already have a Conda installation, skip this paragraph.
 
 Download the Miniforge3 installer:
 
@@ -288,7 +288,8 @@ Windows
 Conda installation
 ++++++++++++++++++
 
-If you already have a Conda installation, skip that paragraph.
+If you already have a Conda installation, skip this paragraph, although you can install a separate Miniforge3 instance for the purpose of this workshop,
+to avoid any interference with your existing Conda installation. It will also allow you to use the launcher script described in the next section without modification.
 
 Download the Miniforge3 installer at https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Windows-x86_64.exe
 
@@ -349,7 +350,7 @@ which will open a :file:`cmd` console with Conda executables available in the PA
     :alt: Miniforge3-enabled console
 
 Then we will create a Conda "environment" for the purpose of this workshop,
-and will call it "gdal", an install it into :file:`c:\\gdal\\condaenv\`\gdal`.
+and will call it "gdal", and install it into :file:`c:\\gdal\\condaenv\\gdal`.
 A Conda environment is a kind of workspace where you
 can install a set of packages that will not interfere with the ones of other
 environments. We use the "conda-forge" channel to get up-to-date official releases
@@ -475,7 +476,7 @@ Click on Next:
 .. image:: ../images/msys2_install_1.png
     :alt: Welcome page
 
-Specify :file:`c:\\gdal\\msys64`` as the installation folder and click on Next:
+Specify :file:`c:\\gdal\\msys64` as the installation folder and click on Next:
 
 .. image:: ../images/msys2_install_2.png
     :alt: Installation folder page
@@ -494,9 +495,15 @@ Click on Finish:
 Create a launcher script
 ++++++++++++++++++++++++
 
-Download the script at https://github.com/rouault/gdal_cli_workshop/blob/master/gdal.bat
+Download the script at https://raw.githubusercontent.com/rouault/gdal_cli_workshop/refs/heads/master/gdal.bat
 and save it as :file:`c:\\gdal\\gdal.bat`. This script will launch a Bash shell
-with all the necessary environment to run GDAL, include the command line completion.
+with all the necessary environment to run GDAL, including the command line completion.
+
+.. note::
+
+    The launcher script will only work if you have installed Miniforge3 and the Conda environment
+    in the default locations as described in the previous sections.
+    If you have installed them in different locations, you will need to edit the script to adjust the paths.
 
 Launch  :file:`c:\\gdal\\gdal.bat` from the Explorer or a shortcut you may have
 created.
@@ -528,6 +535,14 @@ For example, on Linux/MacOSX:
     $ cd $HOME/gdal_cli_workshop_data
     $ curl -O https://github.com/rouault/gdal_cli_workshop_data/archive/refs/heads/master.zip
     $ unzip master.zip
+
+On Windows, download and unzip the file. You will need to set the active directory to the unzipped folder to run the exercises.
+For example if you unzipped the file in :file:`C:\\gdal\\gdal_cli_workshop_data-master`, then in the command line started by the launcher script,
+set the active directory to that location with:
+
+::
+
+    (gdal) /c/gdal$ cd gdal_cli_workshop_data-master
 
 
 .. note::

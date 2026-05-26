@@ -164,7 +164,7 @@ Program syntax
 
           $ gdal raster convert --input=input.png --output=output.tif
 
-`
+
 * No more silent overwriting
 
   - ``--overwrite`` will be required and suggested if needed
@@ -177,9 +177,9 @@ Program syntax
 
       .. warning::
 
-          Overwrite destroys and recreate the whole dataset.
+          Overwrite destroys and recreates the whole dataset.
 
-          Some programs with vector output can offer a more scope ``--overwrite-layer``.
+          Some programs with vector output can offer a more limited scope using ``--overwrite-layer``.
 
   - ``--update`` or ``--append`` may also be available
 
