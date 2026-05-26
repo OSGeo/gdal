@@ -187,11 +187,9 @@ bool GDALVectorClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
     CPLAssert(m_outputDataset.GetName().empty());
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
-    const int nLayerCount = poSrcDS->GetLayerCount();
     bool bSrcLayerHasSRS = false;
-    for (int i = 0; i < nLayerCount; ++i)
+    for (const auto *poSrcLayer : poSrcDS->GetLayers())
     {
-        auto poSrcLayer = poSrcDS->GetLayer(i);
         if (poSrcLayer &&
             (m_activeLayer.empty() ||
              m_activeLayer == poSrcLayer->GetDescription()) &&
@@ -216,8 +214,10 @@ bool GDALVectorClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
         return false;
     }
 
+    const OGRSpatialReference *clipSRS = poClipGeom->getSpatialReference();
+
     auto poLikeDS = m_likeDataset.GetDatasetRef();
-    if (bSrcLayerHasSRS && !poClipGeom->getSpatialReference() && poLikeDS &&
+    if (bSrcLayerHasSRS && !clipSRS && poLikeDS &&
         poLikeDS->GetLayerCount() == 0)
     {
         ReportError(CE_Warning, CPLE_AppDefined,
@@ -228,9 +228,8 @@ bool GDALVectorClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
 
     auto outDS = std::make_unique<GDALVectorPipelineOutputDataset>(*poSrcDS);
 
-    for (int i = 0; i < nLayerCount; ++i)
+    for (auto *poSrcLayer : poSrcDS->GetLayers())
     {
-        const auto poSrcLayer = poSrcDS->GetLayer(i);
         if (poSrcLayer == nullptr)
         {
             return false;
@@ -239,16 +238,13 @@ bool GDALVectorClipAlgorithm::RunStep(GDALPipelineStepRunContext &)
         if ((m_activeLayer.empty() && poSrcLayer->GetGeomType() != wkbNone) ||
             m_activeLayer == poSrcLayer->GetDescription())
         {
-            const OGRSpatialReference *clipSRS =
-                poClipGeom->getSpatialReference();
             const OGRSpatialReference *layerSRS = poSrcLayer->GetSpatialRef();
 
             auto poClipGeomForLayer =
                 std::unique_ptr<OGRGeometry>(poClipGeom->clone());
             if (clipSRS && layerSRS && !clipSRS->IsSame(layerSRS))
             {
-                if (poClipGeomForLayer->transformTo(
-                        poSrcLayer->GetSpatialRef()) != OGRERR_NONE)
+                if (poClipGeomForLayer->transformTo(layerSRS) != OGRERR_NONE)
                 {
                     ReportError(CE_Failure, CPLE_AppDefined,
                                 "Could not transform clipping geometry to "
