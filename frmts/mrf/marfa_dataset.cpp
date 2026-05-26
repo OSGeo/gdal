@@ -991,6 +991,14 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
             ds->SetMaxValue(pszValue);
     }
 
+    // Check that pagesize.c is 64 or less so we can use bitmasks
+    if (image.pagesize.c > 64)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MRF: Max number of pixel interleaved bands is 64");
+        return CE_Failure;
+    }
+
     // Calculate the page size in bytes
     const int nDTSize = GDALGetDataTypeSizeBytes(image.dt);
     if (nDTSize <= 0 || image.pagesize.z <= 0 ||
@@ -1002,7 +1010,7 @@ static CPLErr Init_Raster(ILImage &image, MRFDataset *ds, CPLXMLNode *defimage)
                 image.pagesize.c >
             INT_MAX / nDTSize)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF page size too big");
+        CPLError(CE_Failure, CPLE_AppDefined, "MRF page size is too large");
         return CE_Failure;
     }
     image.pageSizeBytes = nDTSize * image.pagesize.x * image.pagesize.y *
