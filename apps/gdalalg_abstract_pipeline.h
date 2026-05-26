@@ -495,6 +495,12 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
     CheckFirstAndLastStep(const std::vector<GDALPipelineStepAlgorithm *> &steps,
                           bool forAutoComplete) const;
 
+    static int GetInputDatasetType(const GDALPipelineStepAlgorithm *alg);
+
+    bool CopyStepAlgorithmFromAnother(GDALPipelineStepAlgorithm *dst,
+                                      const GDALPipelineStepAlgorithm *src,
+                                      bool maybeWriteStep) const;
+
     bool ParseCommandLineArguments(const std::vector<std::string> &args,
                                    bool forAutoComplete);
 
