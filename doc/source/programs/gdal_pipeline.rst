@@ -239,6 +239,8 @@ Execution of pipelines and argument substitutions can also be done in Python wit
 
     gdal.Run("pipeline", pipeline="raster_reproject.gdalg.json", output="out.tif", arguments={"edit[0].metadata": "before=modified"})
 
+.. _gdal_pipeline_pipe:
+
 Placeholder dataset name ``_PIPE_``
 -----------------------------------
 
@@ -434,7 +436,7 @@ Examples
    :title: Clip a raster dataset using a nested vector pipeline
    :id: gdal-pipeline-mixed-nested
 
-   This pipeline uses a raster input dataset, and clips it using a vector geometry coming from a nested vector pipeline.
+   This pipeline uses a raster input dataset, and clips it using a buffered geometry coming from a nested vector pipeline.
    The resulting clipped raster is then resized and written to disk, and shown in the image below.
 
    .. image:: ../../images/programs/romania.png
@@ -445,7 +447,7 @@ Examples
 
         gdal pipeline \
             ! read "NE2_50M_SR_W.tif" \
-            ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ] \
+            ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! buffer --distance=1 ] \
             ! resize --size=70%,70% -r average \
             ! write romania.png --overwrite
 
@@ -453,7 +455,7 @@ Examples
 
         gdal pipeline `
             ! read "NE2_50M_SR_W.tif" `
-            ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ] `
+            ! clip --like [ read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" ! filter --where "ADMIN='Romania'" ! buffer --distance=1 ] `
             ! resize --size=70%,70% -r average `
             ! write romania.png --overwrite
 
@@ -472,3 +474,32 @@ Examples
 .. only:: not html
 
    .. image:: ../../images/programs/test_gdal_mixed_pipeline_nested.svg
+
+.. example::
+   :title: Clip a raster dataset with vector features using ``_PIPE_``
+   :id: gdal-pipeline-mixed-pipe
+
+   This pipeline produces the same result as :example:`gdal-pipeline-mixed-nested`,
+   but instead of using a nested pipeline for the clipping geometry,
+   it uses the special placeholder dataset name :ref:`__PIPE__ <gdal_pipeline_pipe>`
+   to pass the output of the buffering step to ``clip``.
+
+   .. tabs::
+
+      .. code-tab:: bash
+
+        gdal pipeline \
+          ! read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" \
+          ! filter --where "ADMIN='Romania'" \
+          ! buffer --distance=1 \
+          ! clip --input "NE2_50M_SR_W.tif" --like _PIPE_ \
+          ! write romania.png --overwrite
+
+      .. code-tab:: ps1
+
+        gdal pipeline `
+          ! read natural_earth_vector.gpkg --layer "ne_50m_admin_0_countries" `
+          ! filter --where "ADMIN='Romania'" `
+          ! buffer --distance=1 `
+          ! clip --input "NE2_50M_SR_W.tif" --like _PIPE_ `
+          ! write romania.png --overwrite

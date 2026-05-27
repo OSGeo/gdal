@@ -82,3 +82,4 @@ Raster and Vector How do I...
     - :example:`gdal-raster-clip-vector`
     - :example:`gdal-raster-clip-sql`
     - :example:`gdal-pipeline-mixed-nested`
+    - :example:`gdal-pipeline-mixed-pipe`
