@@ -20,14 +20,6 @@ import pytest
 
 from osgeo import gdal
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
-
 ###############################################################################
 # Verify the checksum and flags for "all valid" case.
 
@@ -469,10 +461,11 @@ def test_mask_14():
             ds = drv.CreateCopy("tmp/byte_with_mask.tif", src_ds)
     src_ds = None
 
-    # The only flag value supported for internal mask is GMF_PER_DATASET
-    with gdal.quiet_errors():
+    with pytest.raises(
+        Exception,
+        match="only flag value supported for internal mask is GMF_PER_DATASET",
+    ):
         ret = ds.CreateMaskBand(0)
-    assert ret != 0, "Error expected"
 
     ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     assert ret == 0, "Creation failed"
@@ -486,15 +479,11 @@ def test_mask_14():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     assert cs == 400, "Got wrong checksum for the mask (2)"
 
-    # This TIFF dataset has already an internal mask band
-    with gdal.quiet_errors():
+    with pytest.raises(Exception, match="already has an internal mask band"):
         ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    assert ret != 0, "Error expected"
 
-    # This TIFF dataset has already an internal mask band
-    with gdal.quiet_errors():
+    with pytest.raises(Exception, match="already has an internal mask band"):
         ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    assert ret != 0, "Error expected"
 
     ds = None
 
@@ -546,15 +535,11 @@ def test_mask_and_ovr(order, method):
     if order == 1:
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.BuildOverviews(method, overviewlist=[2, 4])
-        with gdal.quiet_errors():
-            assert (
-                ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
-                == gdal.CE_Failure
-            )
-            assert (
-                ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-                == gdal.CE_Failure
-            )
+        with pytest.raises(Exception, match="already has an internal mask band"):
+            ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
+        with pytest.raises(Exception, match="already has an internal mask band"):
+            ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
+            ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
     elif order == 2:
         ds.BuildOverviews(method, overviewlist=[2, 4])
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
@@ -874,8 +859,8 @@ def test_mask_25():
     ds.SetMetadataItem("INTERNAL_MASK_FLAGS_2", "0")
     ds = None
     ds = gdal.Open("/vsimem/mask_25.tif")
-    with gdal.quiet_errors():
-        assert ds.GetRasterBand(2).GetMaskFlags() == gdal.GMF_ALL_VALID
+    with pytest.raises(Exception, match="Illegal band"):
+        ds.GetRasterBand(2).GetMaskFlags()
     ds = None
     gdal.Unlink("/vsimem/mask_25.tif")
     gdal.Unlink("/vsimem/mask_25.tif.msk")
@@ -884,17 +869,12 @@ def test_mask_25():
     ds = gdal.GetDriverByName("GTiff").Create("/vsimem/mask_25.tif", 1, 1, 2)
     with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
         ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    with gdal.quiet_errors():
-        with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
+        with pytest.raises(Exception, match="msk file has a PER_DATASET mask"):
             assert ds.GetRasterBand(2).CreateMaskBand(0) != 0
     ds = None
     gdal.Unlink("/vsimem/mask_25.tif")
     gdal.Unlink("/vsimem/mask_25.tif.msk")
-
-    # CreateMaskBand not supported by this dataset
-    with gdal.quiet_errors():
-        ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-        ds.CreateMaskBand(0)
 
 
 ###############################################################################
@@ -963,6 +943,7 @@ def test_mask_27():
 @pytest.mark.parametrize(
     "GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND", [None, "YES", "ALWAYS"]
 )
+@gdaltest.disable_exceptions()
 def test_mask_setting_nodata(dt, GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND):
     def set_nodata_value(ds, val):
         if dt == gdal.GDT_UInt8:
