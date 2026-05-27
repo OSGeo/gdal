@@ -12,6 +12,7 @@
 
 #include "cpl_port.h"
 #include "cpl_conv.h"
+#include "cpl_enumerate.h"
 #include "cpl_error.h"
 #include "cpl_error_internal.h"
 #include "cpl_json.h"
@@ -2177,6 +2178,30 @@ bool GDALAlgorithm::ParseArgument(
 }
 
 /************************************************************************/
+/*                     FormatSuggestionsAsString()                      */
+/************************************************************************/
+
+static std::string
+FormatSuggestionsAsString(const std::vector<std::string> &suggestions,
+                          bool addDashDashPrefix)
+{
+    std::string ret;
+    for (auto [i, suggestion] : cpl::enumerate(suggestions))
+    {
+        if (i > 0)
+        {
+            ret += (i + 1 < suggestions.size()) ? ", " : " or ";
+        }
+        ret += '\'';
+        if (addDashDashPrefix)
+            ret += "--";
+        ret += suggestion;
+        ret += '\'';
+    }
+    return ret;
+}
+
+/************************************************************************/
 /*              GDALAlgorithm::ParseCommandLineArguments()              */
 /************************************************************************/
 
@@ -2279,13 +2304,16 @@ bool GDALAlgorithm::ParseCommandLineArguments(
             }
             if (iterArg == m_mapLongNameToArg.end())
             {
-                const std::string bestCandidate =
-                    GetSuggestionForArgumentName(nameWithoutDash);
-                if (!bestCandidate.empty())
+                const auto suggestions =
+                    GetSuggestionsForArgumentName(nameWithoutDash);
+                if (!suggestions.empty())
                 {
                     ReportError(CE_Failure, CPLE_IllegalArg,
-                                "Option '%s' is unknown. Do you mean '--%s'?",
-                                name.c_str(), bestCandidate.c_str());
+                                "Option '%s' is unknown. Do you mean %s?",
+                                name.c_str(),
+                                FormatSuggestionsAsString(
+                                    suggestions, /* addDashDashPrefix = */ true)
+                                    .c_str());
                 }
                 else
                 {
@@ -2322,15 +2350,18 @@ bool GDALAlgorithm::ParseCommandLineArguments(
                     }
                     else
                     {
-                        const std::string bestCandidate =
-                            GetSuggestionForArgumentName(nameWithoutDash);
-                        if (!bestCandidate.empty())
+                        const auto suggestions =
+                            GetSuggestionsForArgumentName(nameWithoutDash);
+                        if (!suggestions.empty())
                         {
                             ReportError(
                                 CE_Failure, CPLE_IllegalArg,
                                 "Short name option '%s' is unknown. Do you "
-                                "mean '--%s' (with leading double dash) ?",
-                                name.c_str(), bestCandidate.c_str());
+                                "mean %s (with leading double dash) ?",
+                                name.c_str(),
+                                FormatSuggestionsAsString(
+                                    suggestions, /* addDashDashPrefix = */ true)
+                                    .c_str());
                         }
                         else
                         {
@@ -3519,6 +3550,34 @@ GDALAlgorithm::GetSuggestionForArgumentName(const std::string &osName) const
 }
 
 /************************************************************************/
+/*            GDALAlgorithm::GetSuggestionsForArgumentName()            */
+/************************************************************************/
+
+std::vector<std::string>
+GDALAlgorithm::GetSuggestionsForArgumentName(const std::string &osName) const
+{
+    std::vector<std::string> ret;
+    std::string suggestion = GetSuggestionForArgumentName(osName);
+    if (!suggestion.empty())
+    {
+        ret.push_back(std::move(suggestion));
+    }
+    else if (osName.size() >= 3)
+    {
+        // e.g "crs" for reproject will match "input-crs" and "target-crs"
+        const std::string dashName = std::string("-").append(osName);
+        for (const auto &arg : m_args)
+        {
+            if (cpl::ends_with(arg->GetName(), dashName))
+            {
+                ret.push_back(arg->GetName());
+            }
+        }
+    }
+    return ret;
+}
+
+/************************************************************************/
 /*         GDALAlgorithm::IsKnownOutputRelatedBooleanArgName()          */
 /************************************************************************/
 
@@ -3602,12 +3661,15 @@ GDALAlgorithmArg *GDALAlgorithm::GetArg(const std::string &osName,
 
     if (suggestionAllowed)
     {
-        const std::string bestCandidate = GetSuggestionForArgumentName(osName);
-        if (!bestCandidate.empty())
+        const auto suggestions = GetSuggestionsForArgumentName(osName);
+        if (!suggestions.empty())
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Argument '%s' is unknown. Do you mean '%s'?",
-                     osName.c_str(), bestCandidate.c_str());
+                     "Argument '%s' is unknown. Do you mean %s?",
+                     osName.c_str(),
+                     FormatSuggestionsAsString(suggestions,
+                                               /* addDashDashPrefix = */ false)
+                         .c_str());
         }
     }
 
