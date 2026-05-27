@@ -1459,7 +1459,7 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
     // below this test This way works fine, but it does work extra for empty
     // pages
 
-    if (GIntBig(empties) == AllBandMask())
+    if (AllBandMask() == empties)
     {
         CPLFree(tbuffer);
         return poMRFDS->WriteTile(nullptr, infooffset, 0);
@@ -1467,8 +1467,8 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 
     if (poMRFDS->bdirty != AllBandMask())
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "MRF: IWrite, band dirty mask is " CPL_FRMT_GIB
-                 " instead of " CPL_FRMT_GIB,
+                 "MRF: IWrite, band dirty mask is " CPL_FRMT_GUIB
+                 " instead of " CPL_FRMT_GUIB,
                  poMRFDS->bdirty, AllBandMask());
 
     buf_mgr src;

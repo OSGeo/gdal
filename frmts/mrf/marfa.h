@@ -594,13 +594,10 @@ class MRFDataset final : public GDALPamDataset
     // A small int actually due to GDAL limitations
     double scale;
 
-    // A place to keep an uncompressed block, to keep from allocating it all the
-    // time
-    void *pbuffer;
+    void *pbuffer;  // A place to keep an uncompressed block
     unsigned int pbsize;
-    ILSize tile;  // ID of tile present in buffer
-    GIntBig
-        bdirty;  // Holds bits, to be used in pixel interleaved (up to 64 bands)
+    ILSize tile;      // ID of tile present in buffer
+    GUIntBig bdirty;  // used in pixel interleaved (up to 64 bands)
 
     // GeoTransform support
     GDALGeoTransform m_gt{};
@@ -763,19 +760,19 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     // Read the index record itself, can be overwritten
     //    virtual CPLErr ReadTileIdx(const ILSize &, ILIdx &, GIntBig bias = 0);
 
-    static GIntBig bandbit(int b)
+    static GUInt64 bandbit(int b)
     {
-        return ((GIntBig)1) << b;
+        return ((GUInt64)1) << b;
     }
 
-    GIntBig bandbit()
+    GUInt64 bandbit()
     {
         return bandbit(nBand - 1);
     }
 
-    GIntBig AllBandMask()
+    GUInt64 AllBandMask()
     {
-        return bandbit(poMRFDS->nBands) - 1;
+        return (~GUInt64(0)) >> (64 - poMRFDS->nBands);
     }
 
     // Overview Support
