@@ -286,7 +286,7 @@ std::string GDALRasterPipelineAlgorithm::GetUsageForCLI(
 
     ret += '\n';
     ret += "Example: 'gdal raster pipeline --progress ! read in.tif ! \\\n";
-    ret += "               reproject --dst-crs=EPSG:32632 ! ";
+    ret += "               reproject --output-crs=EPSG:32632 ! ";
     ret += "write out.tif --overwrite'\n";
     ret += '\n';
     ret += "Potential steps are:\n";

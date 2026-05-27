@@ -263,7 +263,7 @@ std::string GDALVectorPipelineAlgorithm::GetUsageForCLI(
 
     ret += '\n';
     ret += "Example: 'gdal vector pipeline --progress ! read in.gpkg ! \\\n";
-    ret += "               reproject --dst-crs=EPSG:32632 ! ";
+    ret += "               reproject --output-crs=EPSG:32632 ! ";
     ret += "write out.gpkg --overwrite'\n";
     ret += '\n';
     ret += "Potential steps are:\n";

@@ -174,15 +174,15 @@ MAIN_START(nArgc, papszArgv)
     if (!osOutputFormat.empty())
         alg["output-format"] = osOutputFormat;
     if (!aosLayerNames.empty())
-        alg["source-layer-name"] = aosLayerNames;
+        alg["input-layer-name"] = aosLayerNames;
     if (!anLayerNumbers.empty())
-        alg["source-layer-index"] = anLayerNumbers;
+        alg["input-layer-index"] = anLayerNumbers;
     if (!osSrcSRSName.empty())
-        alg["source-crs-field-name"] = osSrcSRSName;
+        alg["input-crs-field-name"] = osSrcSRSName;
     if (!osSrcSRSFormat.empty())
-        alg["source-crs-format"] = osSrcSRSFormat;
+        alg["input-crs-format"] = osSrcSRSFormat;
     if (!osTargetSRS.empty())
-        alg["dst-crs"] = osTargetSRS;
+        alg["output-crs"] = osTargetSRS;
     alg["accept-different-schemas"] = bAcceptDifferentSchemas;
     if (bSkipDifferentProjection)
         alg["skip-different-crs"] = bSkipDifferentProjection;

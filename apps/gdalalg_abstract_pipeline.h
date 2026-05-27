@@ -23,9 +23,9 @@
 #include <algorithm>
 
 // This is an easter egg to pay tribute to PROJ pipeline syntax
-// We accept "gdal vector +gdal=pipeline +step +gdal=read +input=in.tif +step +gdal=reproject +dst-crs=EPSG:32632 +step +gdal=write +output=out.tif +overwrite"
+// We accept "gdal vector +gdal=pipeline +step +gdal=read +input=in.tif +step +gdal=reproject +output-crs=EPSG:32632 +step +gdal=write +output=out.tif +overwrite"
 // as an alternative to (recommended):
-// "gdal vector pipeline ! read in.tif ! reproject--dst-crs=EPSG:32632 ! write out.tif --overwrite"
+// "gdal vector pipeline ! read in.tif ! reproject--output-crs=EPSG:32632 ! write out.tif --overwrite"
 #ifndef GDAL_PIPELINE_PROJ_NOSTALGIA
 #define GDAL_PIPELINE_PROJ_NOSTALGIA
 #endif

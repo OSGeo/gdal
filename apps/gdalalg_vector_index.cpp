@@ -133,7 +133,7 @@ GDALVectorIndexAlgorithm::GDALVectorIndexAlgorithm()
             {
                 ReportError(
                     CE_Warning, CPLE_AppDefined,
-                    "--skip-different-crs ignored when --dst-crs specified");
+                    "--skip-different-crs ignored when --output-crs specified");
             }
 
             return true;
