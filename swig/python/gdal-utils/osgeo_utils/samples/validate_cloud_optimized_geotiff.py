@@ -12,6 +12,7 @@
 # SPDX-License-Identifier: MIT
 # *****************************************************************************
 
+import os
 import os.path
 import struct
 import sys
@@ -185,7 +186,7 @@ def validate(ds, check_tiled=True, full_check=False):
     """
 
     unicode_type = type("".encode("utf-8").decode("utf-8"))
-    if isinstance(ds, (str, unicode_type)):
+    if isinstance(ds, (str, unicode_type, os.PathLike)):
         gdal.PushErrorHandler()
         ds = gdal.Open(ds)
         gdal.PopErrorHandler()
