@@ -43,7 +43,7 @@
 
 #define SFCGAL_MAKE_VERSION(major, minor, patch)                               \
     ((major) * 10000 + (minor) * 100 + (patch))
-#define SFCGAL_VERSION                                                         \
+#define SFCGAL_VERSION_NUM                                                     \
     SFCGAL_MAKE_VERSION(SFCGAL_VERSION_MAJOR, SFCGAL_VERSION_MINOR,            \
                         SFCGAL_VERSION_PATCH)
 
@@ -8575,7 +8575,7 @@ OGRGeometry::OGRexportToSFCGAL(UNUSED_IF_NO_SFCGAL const OGRGeometry *poGeom)
 #ifdef HAVE_SFCGAL
 
     sfcgal_init();
-#if SFCGAL_VERSION >= SFCGAL_MAKE_VERSION(1, 5, 2)
+#if SFCGAL_VERSION_NUM >= SFCGAL_MAKE_VERSION(1, 5, 2)
 
     const auto exportToSFCGALViaWKB =
         [](const OGRGeometry *geom) -> sfcgal_geometry_t *
@@ -8733,7 +8733,7 @@ OGRGeometry *OGRGeometry::SFCGALexportToOGR(
     sfcgal_init();
     char *pabySFCGAL = nullptr;
     size_t nLength = 0;
-#if SFCGAL_VERSION >= SFCGAL_MAKE_VERSION(1, 5, 2)
+#if SFCGAL_VERSION_NUM >= SFCGAL_MAKE_VERSION(1, 5, 2)
 
     sfcgal_geometry_as_wkb(geometry, &pabySFCGAL, &nLength);
 
