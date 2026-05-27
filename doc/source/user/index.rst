@@ -9,6 +9,7 @@ User oriented documentation
 
    cookbook
    debug
+   errors
    raster_data_model
    band_algebra
    multidim_raster_data_model
