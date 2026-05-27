@@ -506,7 +506,7 @@ The driver supports the following layer creation options:
       mapping type. If used, the "centroid" of the geometry is used.
       GEO_SHAPE uses the
       `geo_shape <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html>`__
-      mapping type, compatible of all geometry types. When using AUTO, for
+      mapping type, compatible with all geometry types. When using AUTO, for
       geometry fields of type Point, a geo_point is used. In other cases,
       geo_shape is used.
 

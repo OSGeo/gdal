@@ -1317,7 +1317,7 @@ def test_basic_config_option_GDAL_CACHEMAX():
 
     with pytest.raises(
         Exception,
-        match="Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible of the thread_local=True argument of gdal.config_option",
+        match="Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible with the thread_local=True argument of gdal.config_option",
     ):
         with gdal.config_option("GDAL_CACHEMAX", 1):
             pass
@@ -1329,7 +1329,7 @@ def test_basic_config_option_GDAL_CACHEMAX():
 
     with pytest.raises(
         Exception,
-        match="Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible of the thread_local=True argument of gdal.config_options",
+        match="Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible with the thread_local=True argument of gdal.config_options",
     ):
         with gdal.config_options({"GDAL_CACHEMAX": 1}):
             pass

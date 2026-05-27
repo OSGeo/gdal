@@ -417,7 +417,7 @@ static int LERCPreDecode(TIFF *tif, uint16_t s)
         return 0;
     }
 
-    /* If the configuration is compatible of a LERC mask, and that the */
+    /* If the configuration is compatible with a LERC mask, and that the */
     /* LERC info has dim == samplesperpixel - 1, then there is a LERC */
     /* mask. */
     if (td->td_planarconfig == PLANARCONFIG_CONTIG && td->td_extrasamples > 0 &&

@@ -102,9 +102,9 @@ netCDF variables.
 -  *ogr_field_precision*: OGR field precision. Only set if it is
    non-zero
 -  *standard_name*": (GDAL >= 3.7) OGR field alternative name, if it is
-   compatible of the convention for the value of standard_name.
+   compatible with the convention for the value of standard_name.
 -  *long_name*: (GDAL >= 3.7) OGR field comment, or if not set, OGR field
-   alternative name if it is not compatible of standard_name, or
+   alternative name if it is not compatible with standard_name, or
    "Field {ogr_field_name}" otherwise.
 
 They are written by default (unless the
@@ -279,7 +279,7 @@ The following dataset creation options are supported:
       :default: Nc
 
       netCDF format. NC is the classic netCDF
-      format (compatible of netCDF v3.X and 4.X libraries). NC2 is the
+      format (compatible with netCDF v3.X and 4.X libraries). NC2 is the
       extension of NC for files larger than 4 GB. NC4 is the netCDF v4
       format, using a HDF5 container, offering new capabilities (new types,
       concept of groups, etc...) only available in netCDF v4 library. NC4C

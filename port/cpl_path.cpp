@@ -1586,7 +1586,7 @@ const char *CPLGetHomeDir()
 /************************************************************************/
 
 /**
- * Launder a string to be compatible of a filename.
+ * Launder a string to be compatible with a filename.
  *
  * @param pszName The input string to launder.
  * @param pszOutputPath The directory where the file would be created.
@@ -1621,7 +1621,7 @@ std::string CPLLaunderForFilenameSafe(const char *pszName,
  *
  * @param osInput Input string.
  * @param chReplacementChar Character to substitute to characters that are not
- *                          compatible of a file name, or NUL character to
+ *                          compatible with a file name, or NUL character to
  *                          remove them.
  * @param pszExtraReservedCharacters String with extra reserved characters that
  *                                   are replaced by the replacement character,
@@ -1687,7 +1687,7 @@ std::string CPLLaunderForFilenameSafe(const std::string &osInput,
 /************************************************************************/
 
 /**
- * Launder a string to be compatible of a filename.
+ * Launder a string to be compatible with a filename.
  *
  * @param pszName The input string to launder.
  * @param pszOutputPath The directory where the file would be created.

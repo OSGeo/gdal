@@ -2654,7 +2654,7 @@ OGRErr netCDFLayer::CreateField(const OGRFieldDefn *poFieldDefn,
         fieldDesc.bIsDays = (eType == OFTDate);
         m_aoFieldDesc.push_back(fieldDesc);
 
-        // If we have an alternative name that is compatible of the
+        // If we have an alternative name that is compatible with the
         // standard_name attribute, then put it in it.
         // http://cfconventions.org/Data/cf-standard-names/docs/guidelines.html:
         // "Standard names consist of lower-letters, digits and underscores,

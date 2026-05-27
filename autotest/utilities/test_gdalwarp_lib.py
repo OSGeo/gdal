@@ -2943,7 +2943,7 @@ def test_gdalwarp_lib_to_cog_reprojection_options_te_and_conflicting_t_srs(tmp_v
 
 
 ###############################################################################
-# Test warping of multiple source, compatible of BuildVRT mosaicing, to COG
+# Test warping of multiple source, compatible with BuildVRT mosaicing, to COG
 
 
 def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog(tmp_vsimem):
@@ -2962,7 +2962,7 @@ def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog(tmp_vsimem):
 
 
 ###############################################################################
-# Test warping of multiple source, compatible of BuildVRT mosaicing, to COG,
+# Test warping of multiple sources, compatible with BuildVRT mosaicing, to COG,
 # with reprojection options
 
 
@@ -2993,7 +2993,7 @@ def test_gdalwarp_lib_multiple_source_compatible_buildvrt_to_cog_reprojection_op
 
 
 ###############################################################################
-# Test warping of multiple source, incompatible of BuildVRT mosaicing, to COG
+# Test warping of multiple sources, incompatible with BuildVRT mosaicing, to COG
 
 
 def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog(tmp_vsimem):
@@ -3017,7 +3017,7 @@ def test_gdalwarp_lib_multiple_source_incompatible_buildvrt_to_cog(tmp_vsimem):
 
 
 ###############################################################################
-# Test warping of multiple source, incompatible of BuildVRT mosaicing, to COG,
+# Test warping of multiple sources, incompatible with BuildVRT mosaicing, to COG,
 # with reprojection options
 
 

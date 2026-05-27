@@ -608,7 +608,7 @@ std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
                 CPLDebug(
                     "GDAL",
                     "Longitude and latitude coordinate variables found, "
-                    "but their characteristics are not compatible of using "
+                    "but their characteristics are not compatible with using "
                     "them as geolocation arrays");
             }
             if (useGeolocationArray)

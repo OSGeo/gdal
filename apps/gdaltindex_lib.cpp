@@ -2026,7 +2026,7 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
             CPLError(
                 CE_Failure, CPLE_AppDefined,
                 "%s is not using the same projection system "
-                "as other files in the tileindex. This is not compatible of "
+                "as other files in the tileindex. This is not compatible with "
                 "GTI use. Use -t_srs option to reproject tile extents "
                 "to a common SRS.",
                 osSrcFilename.c_str());

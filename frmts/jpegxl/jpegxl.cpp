@@ -2379,7 +2379,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     void *pJPEGContent = nullptr;
     size_t nJPEGContent = 0;
     char *pszDetailedFormat = nullptr;
-    // If the source dataset is a JPEG file or compatible of it, try to
+    // If the source dataset is a JPEG file or compatible with it, try to
     // losslessly add it
     if ((EQUAL(pszLossLessCopy, "AUTO") || CPLTestBool(pszLossLessCopy)) &&
         poSrcDS->ReadCompressedData(

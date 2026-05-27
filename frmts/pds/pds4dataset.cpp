@@ -4883,14 +4883,14 @@ std::unique_ptr<PDS4Dataset> PDS4Dataset::CreateInternal(
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
-                "CREATE_LABEL_ONLY is only compatible of CreateCopy() mode");
+                "CREATE_LABEL_ONLY is only compatible with CreateCopy() mode");
             return nullptr;
         }
         RawBinaryLayout sLayout;
         if (!poSrcDS->GetRawBinaryLayout(sLayout))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Source dataset is not compatible of a raw binary format");
+                     "Source dataset is not compatible with raw binary format");
             return nullptr;
         }
         if ((nBandsIn > 1 &&

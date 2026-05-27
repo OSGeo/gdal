@@ -871,7 +871,7 @@ def test_gdalalg_raster_edit_colormap(tmp_vsimem):
 
     with pytest.raises(
         Exception,
-        match="Value 1.500000 of color map is not compatible of an integer index",
+        match="Value 1.500000 of color map is not compatible with an integer index",
     ):
         gdal.alg.raster.edit(dataset=ds, color_map=tmp_vsimem / "ct.txt")
 

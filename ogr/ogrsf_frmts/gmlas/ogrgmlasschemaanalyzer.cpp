@@ -3064,7 +3064,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                             GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK)
                     {
                         /* We have a complex type, but no attributes, and */
-                        /* compatible of arrays, so move it to top level! */
+                        /* compatible with arrays, so move it to top level! */
                         oField.SetName(osPrefixedEltName);
                         oField.SetArray(true);
                         oField.SetMinOccurs(nMinOccurs);
@@ -3397,7 +3397,7 @@ bool GMLASSchemaAnalyzer::ExploreModelGroup(
                                 GMLASField::PATH_TO_CHILD_ELEMENT_WITH_LINK)
                         {
                             // In the case the sequence has a single element,
-                            // compatible of array type, and no attribute and
+                            // compatible with array type, and no attribute and
                             // no nested classes, then add an array attribute
                             // at the top-level
                             GMLASField oField(oNestedClass.GetFields()[0]);

@@ -1501,7 +1501,7 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
             {
                 CPLDebug("TILEDB",
                          "Dimension %s has indexing variable %s, "
-                         "but not compatible of a dimension label",
+                         "but not compatible with a dimension label",
                          poDim->GetName().c_str(),
                          poIndexingVar->GetName().c_str());
             }

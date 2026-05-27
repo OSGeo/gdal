@@ -5598,7 +5598,8 @@ class GDALGTICreateAlgorithm final : public GDALRasterIndexAlgorithm
   public:
     static constexpr const char *NAME = "create";
     static constexpr const char *DESCRIPTION =
-        "Create an index of raster datasets compatible of the GDAL Tile Index "
+        "Create an index of raster datasets compatible with the GDAL Tile "
+        "Index "
         "(GTI) driver.";
     static constexpr const char *HELP_URL =
         "/programs/gdal_driver_gti_create.html";

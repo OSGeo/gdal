@@ -1933,7 +1933,7 @@ class S104Checker:
                 else:
                     self._log_check("104_Dev3016")
                     if startSequence != ["0", "0"]:
-                        # other tests are probably not compatible of a non (0,0) startSequence
+                        # other tests are probably not compatible with a non (0,0) startSequence
                         self._warning(
                             f"WaterLevel feature instance group {instance.name}: Values in startSequence in instance group are incompatible with the scan direction in sequencingRule"
                         )

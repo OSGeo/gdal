@@ -1724,7 +1724,7 @@ CPLErr ECWDataset::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
     }
 
     // We don't setup the reading window right away, in case the actual read
-    // pattern wouldn't be compatible of it. Which might be the case for
+    // pattern wouldn't be compatible with it. Which might be the case for
     // example if AdviseRead() requests a full image, but we don't read by
     // chunks of the full width of one or several lines
     m_nAdviseReadXOff = nXOff;

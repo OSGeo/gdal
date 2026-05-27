@@ -2336,7 +2336,7 @@ def test_netcdf_ogr_field_alternative_name_comment(tmp_path):
 
     fld_defn = ogr.FieldDefn("fld2", ogr.OFTInteger)
     fld_defn.SetAlternativeName(
-        "not compatible of standard_name. will be put in long_name, and read back as comment"
+        "not compatible with standard_name. will be put in long_name, and read back as comment"
     )
     lyr.CreateField(fld_defn)
 
@@ -2359,7 +2359,7 @@ def test_netcdf_ogr_field_alternative_name_comment(tmp_path):
     assert lyr.GetLayerDefn().GetFieldDefn(1).GetAlternativeName() == ""
     assert (
         lyr.GetLayerDefn().GetFieldDefn(1).GetComment()
-        == "not compatible of standard_name. will be put in long_name, and read back as comment"
+        == "not compatible with standard_name. will be put in long_name, and read back as comment"
     )
 
     assert lyr.GetLayerDefn().GetFieldDefn(2).GetName() == "fld3"

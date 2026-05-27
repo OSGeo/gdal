@@ -2677,7 +2677,7 @@ bool GDALGeoPackageDataset::OpenRaster(
                 }
             }
 
-            // Check that the tile offset and scales are compatible of a
+            // Check that the tile offset and scales are compatible with a
             // final integer result.
             if (m_eDT != GDT_Float32)
             {
