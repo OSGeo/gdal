@@ -249,12 +249,17 @@ class GDALMDArrayResampled final : public GDALPamMDArray
   protected:
     GDALMDArrayResampled(
         const std::shared_ptr<GDALMDArray> &poParent,
+        const std::string &osParentPath, const std::string &osName,
         const std::vector<std::shared_ptr<GDALDimension>> &apoDims,
         const std::vector<GUInt64> &anBlockSize)
-        : GDALAbstractMDArray(std::string(),
-                              "Resampled view of " + poParent->GetFullName()),
+        : GDALAbstractMDArray(osParentPath, !osName.empty()
+                                                ? osName
+                                                : "Resampled view of " +
+                                                      poParent->GetFullName()),
           GDALPamMDArray(
-              std::string(), "Resampled view of " + poParent->GetFullName(),
+              osParentPath,
+              !osName.empty() ? osName
+                              : "Resampled view of " + poParent->GetFullName(),
               GDALPamMultiDim::GetPAM(poParent), poParent->GetContext()),
           m_poParent(std::move(poParent)), m_apoDims(apoDims),
           m_anBlockSize(anBlockSize), m_dt(m_poParent->GetDataType())
@@ -356,7 +361,7 @@ std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
     const std::shared_ptr<GDALMDArray> &poParent,
     const std::vector<std::shared_ptr<GDALDimension>> &apoNewDimsIn,
     GDALRIOResampleAlg resampleAlg, const OGRSpatialReference *poTargetSRS,
-    CSLConstList /* papszOptions */)
+    CSLConstList papszOptions)
 {
     const char *pszResampleAlg = "nearest";
     bool unsupported = false;
@@ -754,8 +759,11 @@ std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
 
     apoNewDims.emplace_back(poDimY);
     apoNewDims.emplace_back(poDimX);
-    auto newAr(std::shared_ptr<GDALMDArrayResampled>(
-        new GDALMDArrayResampled(poParent, apoNewDims, anBlockSize)));
+    const std::string osParentPath =
+        CSLFetchNameValueDef(papszOptions, "PARENT_PATH", "");
+    const std::string osName = CSLFetchNameValueDef(papszOptions, "NAME", "");
+    auto newAr(std::shared_ptr<GDALMDArrayResampled>(new GDALMDArrayResampled(
+        poParent, osParentPath, osName, apoNewDims, anBlockSize)));
     newAr->SetSelf(newAr);
     if (poTargetSRS)
     {

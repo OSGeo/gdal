@@ -27,21 +27,15 @@
 /************************************************************************/
 
 GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+    : GDALMdimPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
+                                    ConstructorOptions()
+                                        .SetStandaloneStep(true)
+                                        .SetInputDatasetMaxCount(1)
+                                        .SetAddDefaultArguments(false))
 {
+    AddMdimInputArgs(false, false, /* acceptRaster = */ true);
     AddProgressArg();
-    AddOutputFormatArg(&m_outputFormat)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_CREATE_MULTIDIMENSIONAL});
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER});
-    AddInputDatasetArg(&m_inputDataset,
-                       GDAL_OF_RASTER | GDAL_OF_MULTIDIM_RASTER);
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_MULTIDIM_RASTER);
-    AddCreationOptionsArg(&m_creationOptions);
-    AddOverwriteArg(&m_overwrite);
+    AddMdimOutputArgs(false);
 
     {
         auto &arg = AddArg("array", 0,
@@ -55,14 +49,18 @@ GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()
             [this](const std::string &)
             {
                 std::vector<std::string> ret;
-
-                if (auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-                        m_inputDataset.GetName().c_str(),
-                        GDAL_OF_MULTIDIM_RASTER, nullptr, nullptr, nullptr)))
+                if (m_inputDataset.size() == 1)
                 {
-                    if (auto poRG = poDS->GetRootGroup())
+                    if (auto poDS =
+                            std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                                m_inputDataset[0].GetName().c_str(),
+                                GDAL_OF_MULTIDIM_RASTER, nullptr, nullptr,
+                                nullptr)))
                     {
-                        ret = poRG->GetMDArrayFullNamesRecursive();
+                        if (auto poRG = poDS->GetRootGroup())
+                        {
+                            ret = poRG->GetMDArrayFullNamesRecursive();
+                        }
                     }
                 }
 
@@ -84,17 +82,22 @@ GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()
             [this](const std::string &currentValue)
             {
                 std::vector<std::string> ret;
-
-                if (auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
-                        m_inputDataset.GetName().c_str(),
-                        GDAL_OF_MULTIDIM_RASTER, nullptr, nullptr, nullptr)))
+                if (m_inputDataset.size() == 1)
                 {
-                    if (auto poDriver = poDS->GetDriver())
+                    if (auto poDS =
+                            std::unique_ptr<GDALDataset>(GDALDataset::Open(
+                                m_inputDataset[0].GetName().c_str(),
+                                GDAL_OF_MULTIDIM_RASTER, nullptr, nullptr,
+                                nullptr)))
                     {
-                        if (const char *pszXML = poDriver->GetMetadataItem(
-                                GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST))
+                        if (auto poDriver = poDS->GetDriver())
                         {
-                            AddOptionsSuggestions(pszXML, 0, currentValue, ret);
+                            if (const char *pszXML = poDriver->GetMetadataItem(
+                                    GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST))
+                            {
+                                AddOptionsSuggestions(pszXML, 0, currentValue,
+                                                      ret);
+                            }
                         }
                     }
                 }
@@ -129,14 +132,28 @@ GDALMdimConvertAlgorithm::GDALMdimConvertAlgorithm()
 bool GDALMdimConvertAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                        void *pProgressData)
 {
-    CPLAssert(m_inputDataset.GetDatasetRef());
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
+}
+
+/************************************************************************/
+/*                 GDALMdimConvertAlgorithm::RunStep()                  */
+/************************************************************************/
+
+bool GDALMdimConvertAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
+{
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
+    CPLAssert(poSrcDS);
+
     CPLAssert(!m_outputDataset.GetDatasetRef());
 
     CPLStringList aosOptions;
-    if (!m_outputFormat.empty())
+    if (!m_format.empty())
     {
         aosOptions.AddString("-of");
-        aosOptions.AddString(m_outputFormat.c_str());
+        aosOptions.AddString(m_format.c_str());
     }
     if (m_overwrite)
     {
@@ -192,10 +209,12 @@ bool GDALMdimConvertAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
 
     GDALMultiDimTranslateOptions *psOptions =
         GDALMultiDimTranslateOptionsNew(aosOptions.List(), nullptr);
+    auto pfnProgress = ctxt.m_pfnProgress;
+    auto pProgressData = ctxt.m_pProgressData;
     GDALMultiDimTranslateOptionsSetProgress(psOptions, pfnProgress,
                                             pProgressData);
 
-    auto hSrcDS = GDALDataset::ToHandle(m_inputDataset.GetDatasetRef());
+    auto hSrcDS = GDALDataset::ToHandle(poSrcDS);
     auto poOutDS = std::unique_ptr<GDALDataset>(GDALDataset::FromHandle(
         GDALMultiDimTranslate(m_outputDataset.GetName().c_str(), nullptr, 1,
                               &hSrcDS, psOptions, nullptr)));

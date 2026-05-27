@@ -313,6 +313,96 @@ void GDALPipelineStepAlgorithm::AddOutputLayerNameArg(
 }
 
 /************************************************************************/
+/*      GDALPipelineStepAlgorithm::AddMdimHiddenInputDatasetArg()       */
+/************************************************************************/
+
+void GDALPipelineStepAlgorithm::AddMdimHiddenInputDatasetArg()
+{
+    AddInputDatasetArg(&m_inputDataset, GDAL_OF_MULTIDIM_RASTER, false)
+        .SetMinCount(0)
+        .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
+        .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
+        .SetMetaVar(m_constructorOptions.inputDatasetMetaVar)
+        .SetHidden();
+}
+
+/************************************************************************/
+/*            GDALPipelineStepAlgorithm::AddMdimInputArgs()             */
+/************************************************************************/
+
+void GDALPipelineStepAlgorithm::AddMdimInputArgs(bool openForMixedMdimVector,
+                                                 bool hiddenForCLI,
+                                                 bool acceptRaster)
+{
+    AddInputFormatsArg(&m_inputFormats)
+        .AddMetadataItem(
+            GAAMDI_REQUIRED_CAPABILITIES,
+            openForMixedMdimVector
+                ? std::vector<
+                      std::string>{acceptRaster
+                                       ? GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER
+                                       : GDAL_DCAP_MULTIDIM_RASTER,
+                                   GDAL_DCAP_VECTOR}
+                : std::vector<
+                      std::string>{acceptRaster
+                                       ? GDAL_ALG_DCAP_RASTER_OR_MULTIDIM_RASTER
+                                       : GDAL_DCAP_MULTIDIM_RASTER})
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetAvailableInPipelineStep(false);
+    AddOpenOptionsArg(&m_openOptions)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetAvailableInPipelineStep(false);
+    auto &arg =
+        AddInputDatasetArg(&m_inputDataset,
+                           (acceptRaster ? GDAL_OF_RASTER : 0) |
+                               (openForMixedMdimVector
+                                    ? (GDAL_OF_MULTIDIM_RASTER | GDAL_OF_VECTOR)
+                                    : GDAL_OF_MULTIDIM_RASTER),
+                           false,
+                           m_constructorOptions.inputDatasetHelpMsg.c_str())
+            .SetDatasetInputFlags(m_constructorOptions.inputDatasetInputFlags)
+            .SetMinCount(m_constructorOptions.inputDatasetRequired ? 1 : 0)
+            .SetMaxCount(m_constructorOptions.inputDatasetMaxCount)
+            .SetAutoOpenDataset(m_constructorOptions.autoOpenInputDatasets)
+            .SetMetaVar(m_constructorOptions.inputDatasetMetaVar)
+            .SetHiddenForCLI(hiddenForCLI)
+            .SetAvailableInPipelineStep(false);
+    if (m_constructorOptions.inputDatasetPositional && !hiddenForCLI)
+        arg.SetPositional();
+    if (m_constructorOptions.inputDatasetRequired && !hiddenForCLI)
+        arg.SetRequired();
+    if (!m_constructorOptions.inputDatasetAlias.empty())
+        arg.AddAlias(m_constructorOptions.inputDatasetAlias);
+}
+
+/************************************************************************/
+/*            GDALPipelineStepAlgorithm::AddMdimOutputArgs()            */
+/************************************************************************/
+
+void GDALPipelineStepAlgorithm::AddMdimOutputArgs(bool hiddenForCLI)
+{
+    m_outputFormatArg =
+        &(AddOutputFormatArg(&m_format, /* bStreamAllowed = */ true,
+                             /* bGDALGAllowed = */ true)
+              .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
+                               {GDAL_DCAP_CREATE_MULTIDIMENSIONAL})
+              .SetHiddenForCLI(hiddenForCLI))
+             .SetAvailableInPipelineStep(false);
+    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_MULTIDIM_RASTER,
+                        /* positionalAndRequired = */ !hiddenForCLI,
+                        m_constructorOptions.outputDatasetHelpMsg.c_str())
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT)
+        .SetAvailableInPipelineStep(false);
+    AddCreationOptionsArg(&m_creationOptions)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetAvailableInPipelineStep(false);
+    AddOverwriteArg(&m_overwrite)
+        .SetHiddenForCLI(hiddenForCLI)
+        .SetAvailableInPipelineStep(false);
+}
+
+/************************************************************************/
 /*                 GDALPipelineStepAlgorithm::RunImpl()                 */
 /************************************************************************/
 

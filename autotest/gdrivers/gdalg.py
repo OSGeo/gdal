@@ -476,3 +476,18 @@ def test_gdalg_alg_does_not_support_streaming():
                 }
             )
         )
+
+
+@pytest.mark.require_driver("netCDF")
+def test_gdalg_mdim_pipeline_standard():
+    # No write step, which is the nominal way
+    ds = gdal.OpenEx(
+        json.dumps(
+            {
+                "type": "gdal_streamed_alg",
+                "command_line": "gdal mdim pipeline ! read data/netcdf/byte.nc",
+            }
+        ),
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    assert ds.GetRootGroup().OpenMDArray("Band1") is not None

@@ -17,6 +17,8 @@
 #include "gdalalg_mdim_info.h"
 #include "gdalalg_mdim_convert.h"
 #include "gdalalg_mdim_mosaic.h"
+#include "gdalalg_mdim_pipeline.h"
+#include "gdalalg_mdim_reproject.h"
 
 #include "gdal_priv.h"
 
@@ -37,9 +39,11 @@ GDALMdimAlgorithm::GDALMdimAlgorithm()
 
     AddOutputStringArg(&m_output);
 
-    RegisterSubAlgorithm<GDALMdimInfoAlgorithm>();
+    RegisterSubAlgorithm<GDALMdimInfoAlgorithmStandalone>();
     RegisterSubAlgorithm<GDALMdimConvertAlgorithm>();
     RegisterSubAlgorithm<GDALMdimMosaicAlgorithm>();
+    RegisterSubAlgorithm<GDALMdimPipelineAlgorithm>();
+    RegisterSubAlgorithm<GDALMdimReprojectAlgorithmStandalone>();
 }
 
 bool GDALMdimAlgorithm::RunImpl(GDALProgressFunc, void *)

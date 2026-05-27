@@ -41,6 +41,9 @@ The following items will be reported (when known) as JSON:
     * Units
     * Statistics (if requested)
 
+Starting with GDAL 3.14, :program:`gdal mdim info` can be used as the last
+step of a :ref:`gdal_mdim_pipeline`.
+
 The following options are available:
 
 Standard options

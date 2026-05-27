@@ -1955,6 +1955,14 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
 
     GDALDataset *poSrcDS = GDALDataset::FromHandle(pahSrcDS[0]);
 
+    if (EQUAL(osFormat.c_str(), "VRT") && pszDest[0] != 0 &&
+        strlen(poSrcDS->GetDescription()) == 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Dataset is not compatible of VRT output");
+        return nullptr;
+    }
+
     std::unique_ptr<GDALDataset> poTmpDS;
     GDALDataset *poTmpSrcDS = poSrcDS;
     if (psOptions &&

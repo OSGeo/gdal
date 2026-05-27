@@ -299,6 +299,10 @@ Multidimensional raster commands
    gdal_mdim_info
    gdal_mdim_convert
    gdal_mdim_mosaic
+   gdal_mdim_pipeline
+   gdal_mdim_read
+   gdal_mdim_reproject
+   gdal_mdim_write
 
 .. only:: html
 
@@ -306,6 +310,13 @@ Multidimensional raster commands
     - :ref:`gdal_mdim_info`: Get information on a multidimensional dataset
     - :ref:`gdal_mdim_convert`: Convert a multidimensional dataset
     - :ref:`gdal_mdim_mosaic`: Build a mosaic, either virtual (VRT) or materialized, from multidimensional datasets.
+    - :ref:`gdal_mdim_read`: Read a multidimensional dataset (pipeline only)
+    - :ref:`gdal_mdim_reproject`: Reproject a multidimensional dataset
+    - :ref:`gdal_mdim_write`: Write a multidimensional dataset (pipeline only)
+
+    Pipelines:
+
+    - :ref:`gdal_mdim_pipeline`: Process a multidimensional dataset applying several steps
 
 Dataset management commands
 +++++++++++++++++++++++++++
