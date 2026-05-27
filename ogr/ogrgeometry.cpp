@@ -6919,7 +6919,7 @@ OGRGeometryH OGR_G_SimplifyPreserveTopology(OGRGeometryH hThis,
  * Note that this is not the same as OGRGeometry::SetPrecision(). The later
  * will return valid geometries, whereas roundCoordinates() does not make
  * such guarantee and may return geometries with invalidities, if they are
- * not compatible of the specified precision. roundCoordinates() supports
+ * not compatible with the specified precision. roundCoordinates() supports
  * curve geometries, whereas SetPrecision() does not currently.
  *
  * One use case for roundCoordinates() is to undo the effect of

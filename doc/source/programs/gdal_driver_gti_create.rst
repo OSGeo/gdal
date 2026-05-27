@@ -8,7 +8,7 @@
 
 .. only:: html
 
-    Create an index of raster datasets compatible of the GDAL Tile Index (GTI) driver.
+    Create an index of raster datasets compatible with the GDAL Tile Index (GTI) driver.
 
 .. Index:: gdal driver gti create
 

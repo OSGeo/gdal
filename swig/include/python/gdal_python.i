@@ -6110,7 +6110,7 @@ def config_options(options, thread_local=True):
     set_config_option = SetThreadLocalConfigOption if thread_local else SetConfigOption
 
     if thread_local and "GDAL_CACHEMAX" in options:
-        raise ValueError("Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible of the thread_local=True argument of gdal.config_options()")
+        raise ValueError("Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible with the thread_local=True argument of gdal.config_options()")
 
     oldvals = {key: get_config_option(key) for key in options}
     old_gdal_cache_max = GetCacheMax() if "GDAL_CACHEMAX" in options else None
@@ -6160,7 +6160,7 @@ def config_option(key, value, thread_local=True):
     """
 
     if thread_local and key == "GDAL_CACHEMAX":
-        raise ValueError("Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible of the thread_local=True argument of gdal.config_option()")
+        raise ValueError("Setting GDAL_CACHEMAX has process-wide visibility, and is thus incompatible with the thread_local=True argument of gdal.config_option()")
 
     return config_options({key: value}, thread_local=thread_local)
 

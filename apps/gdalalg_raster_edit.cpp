@@ -493,7 +493,7 @@ bool GDALRasterEditAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                     {
                         ReportError(CE_Failure, CPLE_AppDefined,
                                     "Value %f of color map is not compatible "
-                                    "of an integer index",
+                                    "with an integer index",
                                     sColor.dfVal);
                         return false;
                     }

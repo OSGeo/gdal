@@ -1314,7 +1314,7 @@ bool GDALEEDAIDataset::Open(GDALOpenInfo *poOpenInfo)
                 oSetUserBandNames.end())
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Band %s is not compatible of other bands",
+                         "Band %s is not compatible with other bands",
                          aoBandDesc[i].osName.c_str());
             }
             aoMapBandNames[aoBandDesc[i].osName] = -1;

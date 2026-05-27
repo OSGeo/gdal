@@ -612,7 +612,7 @@ Vector related options
       By default, when a geometry coordinate precision is set on a geometry field
       definition and a driver honors the GDAL_DCAP_HONOR_GEOM_COORDINATE_PRECISION
       capability, geometries passed to :cpp:func:`OGRLayer::CreateFeature` and
-      :cpp:func:`OGRLayer::SetFeature` are assumed to be compatible of the
+      :cpp:func:`OGRLayer::SetFeature` are assumed to be compatible with the
       coordinate precision. That is they are assumed to be valid once their
       coordinates are rounded to it. If it might not be the case, set this
       configuration option to YES before calling CreateFeature() or SetFeature()

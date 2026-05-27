@@ -591,7 +591,7 @@ OGRSpatialReferenceRefCountedPtr OGRMySQLDataSource::FetchSRS(int nId)
     if (poSRS)
     {
         // The WKT found in MySQL 8 ST_SPATIAL_REFERENCE_SYSTEMS is not
-        // compatible of what GDAL understands.
+        // compatible with what GDAL understands.
         const char *pszAuthorityName = poSRS->GetAuthorityName();
         const char *pszAuthorityCode = poSRS->GetAuthorityCode();
         if (pszAuthorityName != nullptr && EQUAL(pszAuthorityName, "EPSG") &&

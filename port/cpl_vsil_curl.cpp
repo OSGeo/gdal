@@ -1531,7 +1531,7 @@ retry:
                                 "requests. "
                                 "Maybe retry with /vsicurl_streaming/ if the "
                                 "read "
-                                "access pattern is compatible of sequential "
+                                "access pattern is compatible with sequential "
                                 "reading, or download the file entirely");
                         }
                     }

@@ -422,7 +422,7 @@ The registration function will create an instance of a GDALDriver object when fi
 - pfnDelete: The function to call to delete a dataset of this format. (optional)
 - pfnUnloadDriver: A function called only when the driver is destroyed. Could be used to cleanup data at the driver level. Rarely used. (optional)
 
-For a driver that can be built as a plugin (that is to say a standalone shared object, loaded at runtime by GDAL), since GDAL 3.9 and :ref:`rfc-96`, there is a way to implement the driver in a way where the plugin will be loaded only when necessary, and not immediately at :cpp:func:`GDALAllRegister` time. Consult :ref:`rfc96_example_driver` for the changes needed to make the driver compatible of deferred plugin loading.
+For a driver that can be built as a plugin (that is to say a standalone shared object, loaded at runtime by GDAL), since GDAL 3.9 and :ref:`rfc-96`, there is a way to implement the driver in a way where the plugin will be loaded only when necessary, and not immediately at :cpp:func:`GDALAllRegister` time. Consult :ref:`rfc96_example_driver` for the changes needed to make the driver compatible with deferred plugin loading.
 
 Adding Driver to GDAL Tree
 --------------------------

@@ -2038,7 +2038,7 @@ class S111Checker:
                 else:
                     self._log_check("111_Dev3016")
                     if startSequence != ["0", "0"]:
-                        # other tests are probably not compatible of a non (0,0) startSequence
+                        # other tests are probably not compatible with a non (0,0) startSequence
                         self._warning(
                             f"SurfaceCurrent feature instance group {instance.name}: Values in startSequence in instance group are incompatible with the scan direction in sequencingRule"
                         )

@@ -138,11 +138,11 @@ The following open options are available :
 
       -  **AUTO**: for 1, 3 or 4-band images of type Byte, resolves to PNG.
          Otherwise to RAW
-      -  **RAW**: compatible of all images. Pixels are requested in a
+      -  **RAW**: compatible with all images. Pixels are requested in a
          uncompressed raw format.
-      -  **PNG**: compatible of 1, 3 or 4-band images of type Byte
-      -  **JPEG**: compatible of 1 or 3-band images of type Byte
-      -  **JPEG2000**: compatible of all images. Requires GDAL to be built
+      -  **PNG**: compatible with 1, 3 or 4-band images of type Byte
+      -  **JPEG**: compatible with 1 or 3-band images of type Byte
+      -  **JPEG2000**: compatible with all images. Requires GDAL to be built
          with one of its JPEG2000-capable drivers.
 
 -  .. oo:: MASKS

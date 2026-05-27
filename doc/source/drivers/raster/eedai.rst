@@ -162,7 +162,7 @@ Pixel encoding
 --------------
 
 By default (:oo:`PIXEL_ENCODING=AUTO`), the driver will request pixels in a
-format compatible of the number and data types of the bands. The PNG,
+format compatible with the number and data types of the bands. The PNG,
 JPEG and AUTO_JPEG_PNG can only be used with bands of type Byte.
 
 Examples

@@ -5585,7 +5585,7 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
                 poFieldDefn->GetType() == OFTDateTime)
             {
                 CPLDebug("ARROW",
-                         "DATETIME_AS_STRING=YES not compatible of fast "
+                         "DATETIME_AS_STRING=YES not compatible with fast "
                          "Arrow implementation");
                 return true;
             }
@@ -5603,7 +5603,7 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
                 m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB &&
                 m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKT)
             {
-                CPLDebug("ARROW", "Geometry encoding not compatible of fast "
+                CPLDebug("ARROW", "Geometry encoding not compatible with fast "
                                   "Arrow implementation");
                 return true;
             }

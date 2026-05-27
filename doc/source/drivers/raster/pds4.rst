@@ -14,7 +14,7 @@ PDS4 formatted imagery data.
 
 PDS4 files are compose of a .xml (label) file which references a raw
 imagery file. The driver also supports imagery stored in a separate
-uncompressed GeoTIFF file with a strip organization compatible of a raw
+uncompressed GeoTIFF file with a strip organization compatible with a raw
 imagery file.
 
 The driver also reads and write georeferencing and coordinate system
@@ -176,7 +176,7 @@ The following dataset creation options are available:
          If set to YES, and used
          in a gdal_translate / CreateCopy() context where the source dataset is
          a ENVI, GeoTIFF, ISIS3, VICAR, FITS or PDS3 dataset, whose layout is
-         compatible of a raw binary format, as supported by PDS4, then only the
+         compatible with a raw binary format, as supported by PDS4, then only the
          label XML file will be generated, and it will reference the raw binary
          file of the source dataset. The IMAGE_FILENAME, IMAGE_FORMAT and
          INTERLEAVE creation options are ignored in that situation.

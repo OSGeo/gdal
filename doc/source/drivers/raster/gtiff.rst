@@ -513,7 +513,7 @@ In the case where :co:`SPARSE_OK` is **not** defined
 value is not set, or set to 0, in Create() and CreateCopy() mode, the
 driver will delay the allocation of 0-blocks until file closing, so as
 to be able to write them at the very end of the file, and in a way
-compatible of the filesystem sparse file mechanisms (to be distinguished
+compatible with the filesystem sparse file mechanisms (to be distinguished
 from the TIFF sparse file extension discussed earlier). That is that all
 the empty blocks will be seen as properly allocated from the TIFF point
 of view (corresponding strips/tiles will have valid offsets and byte
@@ -1058,7 +1058,7 @@ This driver supports the following creation options:
       information. The STANDARD way (default choice) will use the general
       accepted formulations of GeoTIFF keys, including extensions of the
       values accepted for ProjectedCSTypeGeoKey to new EPSG codes. The
-      ESRI_PE flavor will write formulations that are (more) compatible of
+      ESRI_PE flavor will write formulations that are (more) compatible with
       ArcGIS. At the time of writing, the ESRI_PE choice has mostly an
       effect when writing the EPSG:3857 (Web Mercator) SRS. For other SRS,
       the standard way will be used, with the addition of a ESRI_PE WKT

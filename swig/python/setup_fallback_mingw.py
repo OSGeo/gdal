@@ -33,7 +33,7 @@ if "CXX" in os.environ and os.environ["CXX"].strip().find(" ") >= 0:
         os.environ["CXX"] = os.environ["CXX"].strip()[len("ccache ") :]
     else:
         print(
-            'WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of setuptools'
+            'WARNING: "CXX=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible with setuptools'
             % os.environ["CXX"]
         )
         del os.environ["CXX"]
@@ -45,7 +45,7 @@ if "CC" in os.environ and os.environ["CC"].strip().find(" ") >= 0:
         os.environ["CC"] = os.environ["CC"].strip()[len("ccache ") :]
     else:
         print(
-            'WARNING: "CC=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible of setuptools'
+            'WARNING: "CC=%s" was defined in the environment and contains more than one word. Unsetting it since that is incompatible with setuptools'
             % os.environ["CC"]
         )
         del os.environ["CC"]

@@ -1452,7 +1452,7 @@ class S102Checker:
                 else:
                     self._log_check("102_Dev3014")
                     if startSequence != ["0", "0"]:
-                        # other tests are probably not compatible of a non (0,0) startSequence
+                        # other tests are probably not compatible with a non (0,0) startSequence
                         self._warning(
                             f"BathymetryCoverage feature instance group {instance.name}: Values in startSequence in instance group are incompatible with the scan direction in sequencingRule"
                         )

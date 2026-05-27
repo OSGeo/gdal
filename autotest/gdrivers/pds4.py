@@ -1637,7 +1637,7 @@ def test_pds4_createlabelonly_gtiff():
 
 
 ###############################################################################
-# Test CREATE_LABEL_ONLY=YES with a tiled GTiff (incompatible of raw binary layout)
+# Test CREATE_LABEL_ONLY=YES with a tiled GTiff (incompatible with raw binary layout)
 
 
 def test_pds4_createlabelonly_gtiff_error():

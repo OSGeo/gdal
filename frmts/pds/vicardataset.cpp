@@ -2753,7 +2753,7 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
         if (!GDALDataTypeIsInteger(eDataType))
         {
             CPLError(CE_Failure, CPLE_NotSupported,
-                     "Data type incompatible of compression");
+                     "Data type incompatible with compression");
             return nullptr;
         }
         // To avoid potential issues in basic_decode()
