@@ -2365,9 +2365,13 @@ bool GDALAbstractPipelineAlgorithm::HasOutputString() const
 bool GDALAbstractPipelineAlgorithm::Finalize()
 {
     bool ret = GDALPipelineStepAlgorithm::Finalize();
-    for (auto &step : m_steps)
+    // Finalize steps in reverse order, typically to make sure later steps
+    // have dropped their reference on datasets passed by previous ones.
+    // This helps for example for the "external" step that needs to delete
+    // temporary files.
+    for (auto iter = m_steps.rbegin(); iter != m_steps.rend(); ++iter)
     {
-        ret = step->Finalize() && ret;
+        ret = (*iter)->Finalize() && ret;
     }
     return ret;
 }
