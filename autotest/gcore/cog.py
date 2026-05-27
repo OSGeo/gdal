@@ -23,14 +23,6 @@ from test_py_scripts import samples_path
 
 from osgeo import gdal, osr
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
-
 ###############################################################################
 
 
@@ -1363,22 +1355,18 @@ def test_cog_zoom_level():
     filename = "/vsimem/test_cog_zoom_level.tif"
     src_ds = gdal.Open("data/byte.tif")
 
-    with gdal.quiet_errors():
-        assert (
-            gdal.GetDriverByName("COG").CreateCopy(
-                filename,
-                src_ds,
-                options=["TILING_SCHEME=GoogleMapsCompatible", "ZOOM_LEVEL=-1"],
-            )
-            is None
+    with pytest.raises(Exception, match="Invalid zoom level"):
+        gdal.GetDriverByName("COG").CreateCopy(
+            filename,
+            src_ds,
+            options=["TILING_SCHEME=GoogleMapsCompatible", "ZOOM_LEVEL=-1"],
         )
-        assert (
-            gdal.GetDriverByName("COG").CreateCopy(
-                filename,
-                src_ds,
-                options=["TILING_SCHEME=GoogleMapsCompatible", "ZOOM_LEVEL=31"],
-            )
-            is None
+
+    with pytest.raises(Exception, match="Invalid zoom level"):
+        gdal.GetDriverByName("COG").CreateCopy(
+            filename,
+            src_ds,
+            options=["TILING_SCHEME=GoogleMapsCompatible", "ZOOM_LEVEL=31"],
         )
 
     ds = gdal.GetDriverByName("COG").CreateCopy(
@@ -1469,16 +1457,13 @@ def test_cog_invalid_warp_resampling():
     filename = "/vsimem/test_cog_invalid_warp_resampling.tif"
     src_ds = gdal.Open("data/byte.tif")
 
-    with gdal.quiet_errors():
-        assert (
-            gdal.GetDriverByName("COG").CreateCopy(
-                filename,
-                src_ds,
-                options=["TILING_SCHEME=GoogleMapsCompatible", "RESAMPLING=INVALID"],
-            )
-            is None
+    with pytest.raises(Exception, match="Unknown resampling"):
+        gdal.GetDriverByName("COG").CreateCopy(
+            filename,
+            src_ds,
+            options=["TILING_SCHEME=GoogleMapsCompatible", "RESAMPLING=INVALID"],
         )
-    gdal.Unlink(filename)
+        gdal.Unlink(filename)
 
 
 ###############################################################################
@@ -1517,6 +1502,7 @@ def test_cog_overview_size():
 # Test bugfix for https://github.com/OSGeo/gdal/issues/2946
 
 
+@gdaltest.disable_exceptions()
 def test_cog_float32_color_table():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1024, 1024, 1, gdal.GDT_Float32)
