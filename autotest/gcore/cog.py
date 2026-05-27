@@ -26,6 +26,13 @@ from osgeo import gdal, osr
 ###############################################################################
 
 
+@pytest.fixture(autouse=True)
+def fail_on_warnings():
+
+    with gdaltest.error_raised(gdal.CE_None):
+        yield
+
+
 def _check_cog(filename):
 
     path = samples_path
@@ -435,13 +442,16 @@ def test_cog_small_world_to_web_mercator(tmp_vsimem):
     gdal.Mkdir(directory, 0o755)
     filename = directory / "cog.tif"
     src_ds = gdal.Open("../gdrivers/data/small_world.tif")
-    ds = gdal.GetDriverByName("COG").CreateCopy(
-        filename,
-        src_ds,
-        options=["TILING_SCHEME=GoogleMapsCompatible", "COMPRESS=JPEG"],
-        callback=my_cbk,
-        callback_data=tab,
-    )
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "Raster extent partially outside of tile matrix"
+    ):
+        ds = gdal.GetDriverByName("COG").CreateCopy(
+            filename,
+            src_ds,
+            options=["TILING_SCHEME=GoogleMapsCompatible", "COMPRESS=JPEG"],
+            callback=my_cbk,
+            callback_data=tab,
+        )
     assert tab[0] == 1.0
     assert ds
     assert len(gdal.ReadDir(directory)) == 1  # check that the temp file has gone away
@@ -472,10 +482,6 @@ def test_cog_small_world_to_web_mercator(tmp_vsimem):
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     ds = None
     _check_cog(filename)
-
-    src_ds = None
-    gdal.GetDriverByName("GTiff").Delete(filename)
-    gdal.Unlink(directory)
 
 
 ###############################################################################
@@ -775,11 +781,11 @@ def test_cog_overviews_co(tmp_vsimem):
 # Test editing and invalidating a COG file
 
 
-@gdaltest.enable_exceptions()
 def test_cog_invalidation_by_data_change(tmp_vsimem):
 
     filename = tmp_vsimem / "cog.tif"
     src_ds = gdal.GetDriverByName("MEM").Create("", 100, 100)
+
     ds = gdal.GetDriverByName("COG").CreateCopy(
         filename, src_ds, options=["COMPRESS=DEFLATE"]
     )
@@ -798,11 +804,13 @@ def test_cog_invalidation_by_data_change(tmp_vsimem):
     src_ds = gdal.Open("data/byte.tif")
     data = src_ds.ReadRaster()
     ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, data)
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "strile cannot be rewritten in place"):
         assert ds.FlushCache() == gdal.CE_None
     ds = None
 
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "file used to have optimizations in its layout"
+    ):
         ds = gdal.Open(filename)
     assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") is None
     ds = None
@@ -811,9 +819,6 @@ def test_cog_invalidation_by_data_change(tmp_vsimem):
         AssertionError, match="KNOWN_INCOMPATIBLE_EDITION=YES is declared in the file"
     ):
         _check_cog(filename)
-
-    with gdal.quiet_errors():
-        gdal.GetDriverByName("GTiff").Delete(filename)
 
 
 ###############################################################################
@@ -829,19 +834,18 @@ def test_cog_invalidation_by_metadata_change(tmp_vsimem):
     )
     ds = None
 
-    ds = gdal.OpenEx(
-        filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
-    )
-    ds.GetRasterBand(1).ComputeStatistics(False)
-    ds = None
+    with gdaltest.error_raised(gdal.CE_Warning, "IFD has been rewritten"):
+        ds = gdal.OpenEx(
+            filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
+        )
+        ds.GetRasterBand(1).ComputeStatistics(False)
+        ds = None
 
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(
+        gdal.CE_Warning, "file used to have optimizations in its layout"
+    ):
         ds = gdal.Open(filename)
     assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") is None
-    ds = None
-
-    with gdal.quiet_errors():
-        gdal.GetDriverByName("GTiff").Delete(filename)
 
 
 ###############################################################################
@@ -1598,7 +1602,12 @@ def test_cog_overview_count(tmp_vsimem, options, expected_count):
 
     tmpfilename = tmp_vsimem / "test_cog_overview_count.tif"
 
-    with gdal.quiet_errors():
+    if "GoogleMaps" in options:
+        expected_errors = (gdal.CE_Warning, "extent partially outside")
+    else:
+        expected_errors = (gdal.CE_None,)
+
+    with gdaltest.error_raised(*expected_errors):
         gdal.Translate(
             tmpfilename,
             "../gdrivers/data/small_world.tif",
@@ -1878,9 +1887,10 @@ def test_cog_write_check_golden_file(tmp_path, src_filename, creation_options):
     out_filename = tmp_path / "test.tif"
     with gdal.config_option("GDAL_TIFF_ENDIANNESS", "LITTLE"):
         with gdal.Open(src_filename) as src_ds:
-            gdal.GetDriverByName("COG").CreateCopy(
-                out_filename, src_ds, options=creation_options
-            )
+            with gdal.quiet_warnings():
+                gdal.GetDriverByName("COG").CreateCopy(
+                    out_filename, src_ds, options=creation_options
+                )
     assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
     assert open(src_filename, "rb").read() == open(out_filename, "rb").read()
 
@@ -1918,12 +1928,11 @@ def test_cog_preserve_ALPHA_PREMULTIPLIED_on_copy(tmp_vsimem):
 #
 
 
-@gdaltest.enable_exceptions()
 @pytest.mark.parametrize("INTERLEAVE", ["TILE", "BAND"])
 def test_cog_write_interleave_tile_or_band(tmp_vsimem, INTERLEAVE):
     out_filename = tmp_vsimem / "out.tif"
 
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "unexpected value for BLOCKSIZE"):
         gdal.GetDriverByName("COG").CreateCopy(
             out_filename,
             gdal.Open("data/rgbsmall.tif"),
@@ -1947,12 +1956,11 @@ def test_cog_write_interleave_tile_or_band(tmp_vsimem, INTERLEAVE):
 #
 
 
-@gdaltest.enable_exceptions()
 @pytest.mark.parametrize("INTERLEAVE", ["TILE", "BAND"])
 def test_cog_write_interleave_with_mask(tmp_vsimem, INTERLEAVE):
     out_filename = tmp_vsimem / "out.tif"
 
-    with gdal.quiet_errors():
+    with gdaltest.error_raised(gdal.CE_Warning, "unexpected value for BLOCKSIZE"):
         gdal.GetDriverByName("COG").CreateCopy(
             out_filename,
             gdal.Translate(
@@ -2000,7 +2008,6 @@ def test_cog_write_interleave_with_mask(tmp_vsimem, INTERLEAVE):
 #
 
 
-@gdaltest.enable_exceptions()
 def test_cog_write_interleave_tile_with_mask_and_ovr(tmp_vsimem):
     out_filename = tmp_vsimem / "out.tif"
     out2_filename = tmp_vsimem / "out2.tif"
@@ -2145,7 +2152,6 @@ def test_cog_interleave_tile_or_band_vsicurl(tmp_vsimem, INTERLEAVE):
 
 
 @pytest.mark.require_creation_option("COG", "JPEG")
-@gdaltest.enable_exceptions()
 def test_cog_write_interleave_tile_jpeg(tmp_vsimem):
     out_filename = tmp_vsimem / "out.tif"
 
@@ -2172,7 +2178,6 @@ def test_cog_write_interleave_tile_jpeg(tmp_vsimem):
 
 
 @pytest.mark.require_creation_option("COG", "WEBP")
-@gdaltest.enable_exceptions()
 def test_cog_write_interleave_tile_webp_error(tmp_vsimem):
     out_filename = tmp_vsimem / "out.tif"
 
@@ -2189,7 +2194,6 @@ def test_cog_write_interleave_tile_webp_error(tmp_vsimem):
 ###############################################################################
 
 
-@gdaltest.enable_exceptions()
 def test_cog_write_complex(tmp_vsimem):
 
     gdal.Translate(
@@ -2204,7 +2208,6 @@ def test_cog_write_complex(tmp_vsimem):
 ###############################################################################
 
 
-@gdaltest.enable_exceptions()
 def test_cog_create(tmp_vsimem):
 
     ds = gdal.GetDriverByName("COG").Create(
@@ -2243,7 +2246,6 @@ def test_cog_create(tmp_vsimem):
 ###############################################################################
 
 
-@gdaltest.enable_exceptions()
 def test_cog_algorithm_driver_cog_validate():
 
     with gdal.alg.driver.cog.validate(
