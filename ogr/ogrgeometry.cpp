@@ -41,11 +41,15 @@
 #include "ogr_srs_api.h"
 #include "ogr_wkb.h"
 
+#ifndef SFCGAL_MAKE_VERSION
 #define SFCGAL_MAKE_VERSION(major, minor, patch)                               \
     ((major) * 10000 + (minor) * 100 + (patch))
+#endif
+#ifndef SFCGAL_VERSION_NUM
 #define SFCGAL_VERSION_NUM                                                     \
     SFCGAL_MAKE_VERSION(SFCGAL_VERSION_MAJOR, SFCGAL_VERSION_MINOR,            \
                         SFCGAL_VERSION_PATCH)
+#endif
 
 //! @cond Doxygen_Suppress
 int OGRGeometry::bGenerate_DB2_V72_BYTE_ORDER = FALSE;
