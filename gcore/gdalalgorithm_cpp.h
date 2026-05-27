@@ -3040,8 +3040,8 @@ class CPL_DLL GDALAlgorithmRegistry
     /** Register an auto complete function for a field name argument */
     static void SetAutoCompleteFunctionForFieldName(
         GDALInConstructionAlgorithmArg &fieldArg,
-        GDALInConstructionAlgorithmArg &layerNameArg,
-        std::vector<GDALArgDatasetValue> &datasetArg);
+        const GDALAlgorithmArg *layerNameArg, bool attributeFields,
+        bool geometryFields, std::vector<GDALArgDatasetValue> &datasetArg);
 
     /** Add a field name argument */
     GDALInConstructionAlgorithmArg &

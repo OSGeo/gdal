@@ -16,6 +16,7 @@ import string
 
 import gdaltest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
@@ -493,3 +494,26 @@ def test_gdalalg_vector_combine_extra_fields(add_extra_fields):
             assert lyr_defn.GetFieldDefn(1).GetName() == "country_fr"
             assert lyr_defn.GetFieldDefn(2).GetName() == "some_dt"
             assert lyr_defn.GetFieldDefn(2).GetType() == ogr.OFTDateTime
+
+
+def test_gdalalg_vector_combine_completion(tmp_path):
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector combine ../ogr/data/poly.shp --group-by"
+    )
+    assert "EAS_ID" in out
+    assert "OGR_GEOMETRY" not in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector combine ../ogr/data/poly.shp --layer poly --group-by"
+    )
+    assert "EAS_ID" in out
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector combine ../ogr/data/poly.shp --layer invalid --group-by"
+    )
+    assert "EAS_ID" not in out

@@ -32,9 +32,15 @@ GDALVectorCombineAlgorithm::GDALVectorCombineAlgorithm(bool standaloneStep)
     : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
                                       standaloneStep)
 {
-    AddArg("group-by", 0,
-           _("Names of field(s) by which inputs should be grouped"), &m_groupBy)
-        .SetDuplicateValuesAllowed(false);
+    auto &groupByArg =
+        AddArg("group-by", 0,
+               _("Names of field(s) by which inputs should be grouped"),
+               &m_groupBy)
+            .SetDuplicateValuesAllowed(false);
+    SetAutoCompleteFunctionForFieldName(
+        groupByArg, GetArg(GDAL_ARG_NAME_INPUT_LAYER),
+        /* attributeFields = */ true,
+        /* geometryFields = */ false, m_inputDataset);
 
     AddArg("keep-nested", 0,
            _("Avoid combining the components of multipart geometries"),

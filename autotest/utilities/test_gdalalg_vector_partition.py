@@ -13,6 +13,7 @@
 
 import gdaltest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal, ogr
 
@@ -1247,3 +1248,16 @@ def test_gdalalg_vector_partition_no_fields(tmp_vsimem):
         "test_0000000001.gpkg",
         "test_0000000002.gpkg",
     ]
+
+
+def test_gdalalg_vector_partition_completion(tmp_path):
+
+    gdal_path = test_cli_utilities.get_gdal_path()
+    if gdal_path is None:
+        pytest.skip("gdal binary missing")
+
+    out = gdaltest.runexternal(
+        f"{gdal_path} completion gdal vector partition ../ogr/data/poly.shp --field"
+    )
+    assert "EAS_ID" in out
+    assert "OGR_GEOMETRY" in out
