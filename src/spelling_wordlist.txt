@@ -41,7 +41,7 @@ Northings
 ogr
 optimized
 organization
-partitionning
+partitioning
 Podman
 Pre
 qgis
