@@ -68,6 +68,34 @@ def test_gdalalg_vector_materialize_temp_output_shapefile(tmp_path):
     assert _get_cleaned_list(gdal.ReadDir(tmp_path)) == []
 
 
+@pytest.mark.require_driver("ESRI Shapefile")
+def test_gdalalg_vector_materialize_named_output_shapefile(
+    tmp_vsimem,
+):
+
+    with gdal.Run(
+        "vector",
+        "pipeline",
+        pipeline=f"read ../ogr/data/poly.shp ! materialize --output {tmp_vsimem}/out.shp ! write --of stream streamed_dataset",
+    ) as alg:
+        with alg.Output() as ds:
+            assert ds.GetDriver().GetDescription() == "ESRI Shapefile"
+            assert ds.GetDescription() == str(tmp_vsimem / "out.shp")
+            assert ds.GetLayer(0).GetFeatureCount() == 10
+
+
+def test_gdalalg_vector_materialize_named_output_error(
+    tmp_vsimem,
+):
+
+    with pytest.raises(Exception, match="Cannot guess driver"):
+        gdal.Run(
+            "vector",
+            "pipeline",
+            pipeline=f"read ../ogr/data/poly.shp ! materialize --output {tmp_vsimem}/out.unknown ! write --of stream streamed_dataset",
+        )
+
+
 def test_gdalalg_vector_materialize_temp_output_mem(tmp_path):
 
     with gdal.config_option("CPL_TMPDIR", str(tmp_path)):

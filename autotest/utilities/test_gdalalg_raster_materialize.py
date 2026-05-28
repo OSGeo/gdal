@@ -103,6 +103,32 @@ def test_gdalalg_raster_materialize_temp_output_gpkg(tmp_path):
     assert _get_cleaned_list(gdal.ReadDir(tmp_path)) == []
 
 
+@pytest.mark.require_driver("GPKG")
+def test_gdalalg_raster_materialize_named_output_gpkg(tmp_vsimem):
+
+    with gdal.Run(
+        "raster",
+        "pipeline",
+        pipeline=f"read ../gcore/data/byte.tif ! materialize --output {tmp_vsimem}/out.gpkg ! write --of stream streamed_dataset",
+    ) as alg:
+        with alg.Output() as ds:
+            assert ds.GetDriver().GetDescription() == "GPKG"
+            assert ds.GetDescription() == str(tmp_vsimem / "out.gpkg")
+            assert ds.GetRasterBand(1).Checksum() == 4672
+
+
+def test_gdalalg_raster_materialize_named_output_error(
+    tmp_vsimem,
+):
+
+    with pytest.raises(Exception, match="Cannot guess driver"):
+        gdal.Run(
+            "raster",
+            "pipeline",
+            pipeline=f"read ../gcore/data/byte.tif ! materialize --output {tmp_vsimem}/out.unknown ! write --of stream streamed_dataset",
+        )
+
+
 def test_gdalalg_raster_materialize_manual_output(tmp_path):
 
     with gdal.Run(
