@@ -72,6 +72,10 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
     GDALVectorClipAlgorithmLayer(OGRLayer &oSrcLayer,
                                  std::unique_ptr<OGRGeometry> poClipGeom)
         : GDALVectorPipelineOutputLayer(oSrcLayer),
+          // Clone the SRS as the input geometry might use one that will be
+          // hard deleted.
+          m_poSRSClone(OGRSpatialReferenceRefCountedPtr::makeClone(
+              poClipGeom->getSpatialReference())),
           m_poClipGeom(std::move(poClipGeom)),
           m_eSrcLayerGeomType(oSrcLayer.GetGeomType()),
           m_eFlattenSrcLayerGeomType(wkbFlatten(m_eSrcLayerGeomType)),
@@ -79,6 +83,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
               m_eFlattenSrcLayerGeomType, wkbGeometryCollection))),
           m_poFeatureDefn(oSrcLayer.GetLayerDefn()->Clone())
     {
+        m_poClipGeom->assignSpatialReference(m_poSRSClone.get());
         SetDescription(oSrcLayer.GetDescription());
         SetMetadata(oSrcLayer.GetMetadata());
         oSrcLayer.SetSpatialFilter(m_poClipGeom.get());
@@ -164,6 +169,7 @@ class GDALVectorClipAlgorithmLayer final : public GDALVectorPipelineOutputLayer
     }
 
   private:
+    OGRSpatialReferenceRefCountedPtr const m_poSRSClone{};
     std::unique_ptr<OGRGeometry> const m_poClipGeom{};
     const OGRwkbGeometryType m_eSrcLayerGeomType;
     const OGRwkbGeometryType m_eFlattenSrcLayerGeomType;
