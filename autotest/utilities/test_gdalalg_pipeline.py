@@ -908,6 +908,19 @@ def test_gdalalg_pipeline_nested_double():
         assert ds.GetRasterBand(1).Checksum() == 4672
 
 
+def test_gdalalg_pipeline_nested_completion(gdal_path):
+
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal pipeline read ../gcore/data/byte.tif ! clip --like [ read --"
+    )
+    assert set(out) == {"--input", "--input-format", "--open-option", "--input-layer"}
+
+    out = gdaltest.run_and_parse_completion_output(
+        f"{gdal_path} completion gdal pipeline read ../gcore/data/byte.tif ! clip --like [ read ../gcore/data/byte.tif ] --"
+    )
+    assert "--like" in out
+
+
 def test_gdalalg_pipeline_tee_nominal_raster(tmp_vsimem):
 
     out_filename = tmp_vsimem / "out.tif"

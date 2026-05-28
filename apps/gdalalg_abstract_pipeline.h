@@ -501,15 +501,17 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
                                       const GDALPipelineStepAlgorithm *src,
                                       bool maybeWriteStep) const;
 
-    bool ParseCommandLineArguments(const std::vector<std::string> &args,
-                                   bool forAutoComplete);
+    bool ParseCommandLineArguments(
+        const std::vector<std::string> &args, bool forAutoComplete,
+        std::vector<std::string> *pCurArgsForAutocomplete);
 
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
 
     std::string
     BuildNestedPipeline(GDALPipelineStepAlgorithm *curAlg,
                         std::vector<std::string> &nestedPipelineArgs,
-                        bool forAutoComplete);
+                        bool forAutoComplete,
+                        std::vector<std::string> *pCurArgsForAutocomplete);
 
     bool SaveGDALGIntoFileOrString(const std::string &outFilename,
                                    std::string &outString) const;
