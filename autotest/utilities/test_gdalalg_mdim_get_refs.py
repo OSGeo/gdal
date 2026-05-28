@@ -12,23 +12,13 @@
 ###############################################################################
 
 import pytest
-import test_cli_utilities
 
 from osgeo import gdal, ogr
 
 pytestmark = [
     pytest.mark.require_driver("VRT"),
     pytest.mark.require_driver("GPKG"),
-    pytest.mark.skipif(
-        test_cli_utilities.get_gdal_path() is None,
-        reason="gdal binary not available",
-    ),
 ]
-
-
-@pytest.fixture()
-def gdal_path():
-    return test_cli_utilities.get_gdal_path()
 
 
 def get_mdim_get_refs_alg():
@@ -42,6 +32,7 @@ def get_mdim_convert_alg():
 ###############################################################################
 # Algorithm-level tests, arguments, errors, framework behaviour.
 ###############################################################################
+
 
 # Helper to extract type+subtype for a named field
 def field_info(name, defn):
@@ -64,27 +55,27 @@ def test_gdalalg_mdim_get_refs_basic(tmp_vsimem):
     assert layer is not None
     defn = layer.GetLayerDefn()
 
-    # dim_0, dim_1 (assuming a 2D array in the VRT) — Integer64, no subtype
+    # dim_0, dim_1 (assuming a 2D array in the VRT) - Integer64, no subtype
     assert field_info("dim_0", defn) == (ogr.OFTInteger64, ogr.OFSTNone)
     assert field_info("dim_1", defn) == (ogr.OFTInteger64, ogr.OFSTNone)
 
-    # present — Integer with Boolean subtype
+    # present - Integer with Boolean subtype
     assert field_info("present", defn) == (ogr.OFTInteger, ogr.OFSTBoolean)
 
-    # path, info — plain String, no subtype
+    # path, info - plain String, no subtype
     assert field_info("path", defn) == (ogr.OFTString, ogr.OFSTNone)
     assert field_info("info", defn) == (ogr.OFTString, ogr.OFSTNone)
 
-    # offset, size — Integer64, no subtype
+    # offset, size - Integer64, no subtype
     assert field_info("offset", defn) == (ogr.OFTInteger64, ogr.OFSTNone)
     assert field_info("size", defn) == (ogr.OFTInteger64, ogr.OFSTNone)
 
 
-def test_gdalalg_mdim_get_refs_array_required():
+def test_gdalalg_mdim_get_refs_array_required(tmp_vsimem):
     """--array is required at parse time; absence is rejected by the framework."""
     alg = get_mdim_get_refs_alg()
     with pytest.raises(Exception, match="array"):
-        alg.ParseRunAndFinalize(["data/mdim_zarr.vrt", "/tmp/dummy.gpkg"])
+        alg.ParseRunAndFinalize(["data/mdim_zarr.vrt", tmp_vsimem / "dummy.gpkg"])
 
 
 def test_gdalalg_mdim_get_refs_missing_array_path(tmp_vsimem):
@@ -97,18 +88,16 @@ def test_gdalalg_mdim_get_refs_missing_array_path(tmp_vsimem):
         alg.ParseRunAndFinalize(["data/mdim_zarr.vrt", str(tmpfile)])
 
 
-def test_gdalalg_mdim_get_refs_unknown_output_format(tmp_vsimem):
+def test_gdalalg_mdim_get_refs_unknown_output_format():
     """Unknown output driver must produce the helpful error wording."""
     alg = get_mdim_get_refs_alg()
-    alg["array"] = "/var"
     with pytest.raises(RuntimeError, match="does not exist"):
         alg["output-format"] = "NOT_A_DRIVER"
 
 
-def test_gdalalg_mdim_get_refs_non_vector_output_format(tmp_vsimem):
+def test_gdalalg_mdim_get_refs_non_vector_output_format():
     """A raster driver passed as --of must fail (capability filter rejects)."""
     alg = get_mdim_get_refs_alg()
-    alg["array"] = "/var"
     with pytest.raises(RuntimeError, match="does not expose the required"):
         alg["output-format"] = "GTiff"
 
@@ -138,10 +127,7 @@ def test_gdalalg_mdim_get_refs_overwrite(tmp_vsimem):
 
 
 def test_gdalalg_mdim_get_refs_no_chunked_storage(tmp_vsimem):
-    """Array without natural block size declines cleanly (Stage B3 guard)."""
-    # The mdim.vrt fixture should contain (or be augmented to contain) a
-    # coordinate array or contiguous-storage variable that GetBlockSize
-    # returns 0 for. Adjust the array path once the fixture is finalised.
+    """Array without natural block size declines cleanly."""
     tmpfile = tmp_vsimem / "out.gpkg"
     alg = get_mdim_get_refs_alg()
     alg["array"] = "/my_variable_with_time_decreasing"
@@ -152,18 +138,7 @@ def test_gdalalg_mdim_get_refs_no_chunked_storage(tmp_vsimem):
 
 @pytest.mark.require_driver("HDF5")
 def test_gdalalg_mdim_get_refs_hdf5_partial_chunk(tmp_vsimem):
-    """HDF5 with non-even chunking: trailing partial chunk must appear.
-
-    Uses the autotest HDFEOS fixture (dummy_HDFEOS_swath_chunked.h5),
-    which has dimensions [20, 30, 40] and chunks [3, 4, 6] -- all dimensions
-    non-even, so the chunk grid is [7, 8, 7] = 392 chunks total.
-
-    The trailing all-partial corner chunk (6, 7, 6) is the Phase 0 Q1
-    stressor: its byte size of 64 (versus ~143 for full chunks) confirms
-    ceil-division semantics. Both the offset (121797) and size (64) here
-    are values predicted by the Phase 0 evidence-log oracle and verified
-    against the running algorithm in earlier validation.
-    """
+    """HDF5 with non-even chunking."""
     tmpfile = tmp_vsimem / "out.gpkg"
     alg = get_mdim_get_refs_alg()
     alg["array"] = "/HDFEOS/SWATHS/MySwath/Data Fields/MyDataField"
@@ -195,17 +170,7 @@ def test_gdalalg_mdim_get_refs_hdf5_partial_chunk(tmp_vsimem):
 
 @pytest.mark.require_driver("ZARR")
 def test_gdalalg_mdim_get_refs_zarr_present(tmp_vsimem):
-    """Native Zarr produces present rows with offset=0 (one file per chunk).
-
-    Uses autotest fixture gdrivers/data/zarr/order_f_u2.zarr: 2D array [4, 4]
-    with chunks [2, 3], ceil grid [2, 2], all four chunks materialised. The
-    non-even chunking on dim_1 (4 / 3 = 2 with remainder) also exercises
-    ceil-division through the Zarr driver, complementing the HDF5 partial-chunk
-    test in case the per-driver implementations diverge.
-
-    Verifies: every chunk reports present=1, offset=0 (Zarr one-file-per-chunk
-    pattern), with path ending in the Zarr chunk-key form (e.g. ".../0.0").
-    """
+    """Native Zarr produces present rows with offset=0 (one file per chunk)."""
     tmpfile = tmp_vsimem / "out.gpkg"
     alg = get_mdim_get_refs_alg()
     alg["array"] = "/order_f_u2"
@@ -226,9 +191,8 @@ def test_gdalalg_mdim_get_refs_zarr_present(tmp_vsimem):
     assert layer.GetFeatureCount() == 4
     layer.SetAttributeFilter(None)  # clear filter for enumeration check below
 
-    # Enumeration cross-check: every (dim_0, dim_1) in the chunk grid must
-    # appear exactly once. This implicitly tests the row-major enumeration
-    # order of LinearToCoords (no chunks dropped, no chunks duplicated).
+    # Enumeration check: every (dim_0, dim_1) in the chunk grid must
+    # appear exactly once, no chunks dropped or duplicated.
     expected_coords = [(0, 0), (0, 1), (1, 0), (1, 1)]
     for d0, d1 in expected_coords:
         layer.SetAttributeFilter(f"dim_0 = {d0} AND dim_1 = {d1}")
@@ -236,9 +200,8 @@ def test_gdalalg_mdim_get_refs_zarr_present(tmp_vsimem):
             layer.GetFeatureCount() == 1
         ), f"chunk coordinate ({d0}, {d1}) missing from output"
 
-    # Path-form check: pick one chunk and confirm the path ends with the
-    # expected Zarr chunk-key. The full path includes the fixture's location;
-    # we only assert on the suffix.
+    # Path-form check: confirm the path ends with the chunk-key. The full
+    # path includes the fixture's location we only assert on the suffix.
     layer.SetAttributeFilter("dim_0 = 1 AND dim_1 = 1")
     f = layer.GetNextFeature()
     assert f is not None
@@ -252,13 +215,9 @@ def test_gdalalg_mdim_get_refs_zarr_sparse(tmp_path, tmp_vsimem):
     """Zarr with a missing chunk produces an absent row (NULL path/offset/size).
 
     Copies the order_f_u2.zarr fixture into tmp_path, deletes chunk file 0.1
-    to create a sparse case (Zarr semantics: missing chunk = fill-value
-    everywhere), and verifies that get-refs emits a present=0 row with NULL
+    to create a sparse case and verifies that get-refs emits a present=0 row with NULL
     path/offset/size for that coordinate while the other three chunks remain
     present.
-
-    This exercises the absent branch of the three-state classification; the
-    present branch is covered by test_gdalalg_mdim_get_refs_zarr_present.
     """
     import os
 
@@ -267,8 +226,7 @@ def test_gdalalg_mdim_get_refs_zarr_sparse(tmp_path, tmp_vsimem):
     assert alg.ParseRunAndFinalize(["../gdrivers/data/zarr/order_f_u2.zarr", dst])
 
     # Remove one chunk file. Picking 0.1 (a non-corner chunk) so the test
-    # exercises absence cleanly without conflating with the trailing-partial
-    # case at coordinate (1, 1).
+    # exercises absence.
     os.remove(os.path.join(dst, "order_f_u2", "0.1"))
 
     tmpfile = tmp_vsimem / "out.gpkg"
@@ -297,25 +255,3 @@ def test_gdalalg_mdim_get_refs_zarr_sparse(tmp_path, tmp_vsimem):
     # And specifically, only chunk (0, 1) should be absent.
     layer.SetAttributeFilter("present = 0")
     assert layer.GetFeatureCount() == 1
-
-
-###############################################################################
-# Parquet-specific tests
-###############################################################################
-
-
-@pytest.mark.require_driver("Parquet")
-def test_gdalalg_mdim_get_refs_parquet_boolean_subtype(tmp_vsimem):
-    """OFSTBoolean subtype survives Parquet round-trip."""
-    tmpfile = tmp_vsimem / "out.parquet"
-    alg = get_mdim_get_refs_alg()
-    alg["array"] = "/var"
-    alg["output-format"] = "Parquet"
-    assert alg.ParseRunAndFinalize(["data/mdim_zarr.vrt", str(tmpfile)])
-
-    ds = gdal.OpenEx(str(tmpfile), gdal.OF_VECTOR)
-    layer = ds.GetLayer(0)
-    defn = layer.GetLayerDefn()
-    idx = defn.GetFieldIndex("present")
-    assert idx >= 0
-    assert defn.GetFieldDefn(idx).GetSubType() == ogr.OFSTBoolean

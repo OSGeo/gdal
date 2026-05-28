@@ -32,7 +32,7 @@ any per-chunk metadata reported by the driver.
 The output is an attribute-only vector layer (no geometry).
 
 The algorithm is format-general: it relies on the multidimensional
-``GetRawBlockInfo()``.
+:cpp:func:`GDALMDArray::GetRawBlockInfo`.
 
 Three-state classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -88,30 +88,28 @@ The output layer's schema is determined by the input array's rank:
      - String, nullable
      - Per-chunk metadata reported by the driver, joined as ``KEY=VALUE``
        pairs separated by ``; ``. Typically describes compression and
-       byte-order. The same codec information is also hoisted to the layer
+       byte-order. The same codec information is also copied to the layer
        as metadata items ``CODEC_*``.
 
 Layer metadata
 ~~~~~~~~~~~~~~
 
 The output layer carries the following metadata items, accessible via
-:cpp:func:`GDALMajorObject::GetMetadata` (``-mdd`` in :program:`ogrinfo`):
+:cpp:func:`GDALMajorObject::GetMetadata`:
 
-* ``ARRAY_NAME`` — the fullname of the input array
-* ``DTYPE`` — the array's data type (e.g. ``Int16``, ``Float32``)
-* ``DIM_N_NAME``, ``DIM_N_SIZE``, ``DIM_N_BLOCK``, ``DIM_N_CHUNKS`` — for
+* ``ARRAY_NAME`` - the fullname of the input array
+* ``DATA_TYPE`` - the array's data type (e.g. ``Int16``, ``Float32``)
+* ``DIM_N_NAME``, ``DIM_N_SIZE``, ``DIM_N_BLOCK``, ``DIM_N_CHUNKS`` - for
   each dimension, the dimension name, size, block size, and number of
   chunks along that axis
-* ``CODEC_*`` — array-level codec metadata hoisted from the first chunk
+* ``CODEC_*`` - array-level codec metadata copied from the first chunk
   (e.g. ``CODEC_COMPRESSION=DEFLATE``, ``CODEC_FILTER=SHUFFLE``)
 
 Limitations
 -----------
 
 * Only a single array can be emitted (``--array`` is required).
-* Arrays without natural block size decline with a ``not chunk-enumerable`` error.
 * The inline data payload is not extracted as a binary field.
-* No geometry column is emitted.
 * ``GetRawBlockInfo()`` iterates chunks and this can be slow especially for remote sources.
 
 Options
@@ -165,7 +163,7 @@ Examples
 
    .. code-block:: bash
 
-       ogrinfo ocean_chunks.parquet -sql \
+       gdal vector info ocean_chunks.parquet --features -sql \
            'SELECT "offset", size FROM ocean_chunks
             WHERE dim_2 BETWEEN 600 AND 900
               AND dim_3 BETWEEN 1200 AND 1500'
@@ -183,8 +181,8 @@ Examples
 See Also
 --------
 
-* :ref:`gdal_mdim_info` — discover the arrays and chunk geometry of a
+* :ref:`gdal_mdim_info` - discover the arrays and chunk geometry of a
   multidimensional dataset
-* :ref:`gdal_mdim_convert` — copy or transform a multidimensional dataset
-* :ref:`gdal_mdim_mosaic` — compose multiple multidimensional datasets into
+* :ref:`gdal_mdim_convert` - copy or transform a multidimensional dataset
+* :ref:`gdal_mdim_mosaic` - compose multiple multidimensional datasets into
   one virtual view
