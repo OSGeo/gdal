@@ -344,3 +344,112 @@ def test_vrtovr_virtual_block_size(tmp_vsimem):
 
     with gdal.Open(tmp_vrt) as vrt_ds:
         assert vrt_ds.GetRasterBand(1).GetOverview(0).GetBlockSize() == [32, 64]
+
+
+###############################################################################
+# Test generating external overviews when there's a VRT MaskBand
+
+
+def test_vrtovr_mask(tmp_path):
+
+    with gdal.GetDriverByName("GTiff").Create(tmp_path / "mask.tif", 20, 20) as ds:
+        ds.GetRasterBand(1).WriteRaster(10, 0, 10, 20, b"\xff" * (10 * 20))
+
+    vrt_string = f"""<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorInterp>Gray</ColorInterp>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+  <MaskBand>
+     <VRTRasterBand dataType="Byte">
+        <SimpleSource>
+          <SourceFilename relativeToVRT="0">{tmp_path}/mask.tif</SourceFilename>
+          <SourceBand>1</SourceBand>
+       </SimpleSource>
+     </VRTRasterBand>
+  </MaskBand>
+</VRTDataset>"""
+    with gdal.VSIFile(tmp_path / "test.vrt", "wb") as f:
+        f.write(vrt_string.encode("utf-8"))
+
+    # Generate ovr factor 2
+    with gdal.Open(tmp_path / "test.vrt") as ds:
+        assert (
+            ds.GetRasterBand(1).GetMaskBand().ReadRaster()
+            == ((b"\x00" * 10) + (b"\xff" * 10)) * 20
+        )
+        ds.BuildOverviews("NEAR", [2])
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1087
+        assert ds.GetRasterBand(1).GetMaskBand().GetOverviewCount() == 1
+        assert (
+            ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster()
+            == ((b"\x00" * 5) + (b"\xff" * 5)) * 10
+        )
+        assert (
+            ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster()
+            == ((b"\x00" * 5) + (b"\xff" * 5)) * 10
+        )
+
+    # Re-open and check content
+    with gdal.Open(tmp_path / "test.vrt") as ds:
+        ds.BuildOverviews("NEAR", [2])
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1087
+        assert ds.GetRasterBand(1).GetMaskBand().GetOverviewCount() == 1
+        assert (
+            ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster()
+            == ((b"\x00" * 5) + (b"\xff" * 5)) * 10
+        )
+        assert (
+            ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster()
+            == ((b"\x00" * 5) + (b"\xff" * 5)) * 10
+        )
+
+    # Clear overviews
+    with gdal.Open(tmp_path / "test.vrt.ovr", gdal.GA_Update) as ds:
+        ds.GetRasterBand(1).Fill(0)
+        ds.GetRasterBand(1).GetMaskBand().Fill(0)
+
+    # Regenerate existing overviews
+    with gdal.Open(tmp_path / "test.vrt") as ds:
+        ds.BuildOverviews("NEAR", [2])
+        assert ds.GetRasterBand(1).GetOverviewCount() == 1
+        assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1087
+        assert ds.GetRasterBand(1).GetMaskBand().GetOverviewCount() == 1
+        assert (
+            ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster()
+            == ((b"\x00" * 5) + (b"\xff" * 5)) * 10
+        )
+        assert (
+            ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster()
+            == ((b"\x00" * 5) + (b"\xff" * 5)) * 10
+        )
+
+    # Add new overviews
+    with gdal.Open(tmp_path / "test.vrt") as ds:
+        ds.BuildOverviews("NEAR", [4])
+        assert ds.GetRasterBand(1).GetOverviewCount() == 2
+        assert ds.GetRasterBand(1).GetOverview(0).Checksum() == 1087
+        assert ds.GetRasterBand(1).GetOverview(1).Checksum() == 328
+        assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+        assert ds.GetRasterBand(1).GetMaskBand().GetOverviewCount() == 2
+        assert (
+            ds.GetRasterBand(1).GetMaskBand().GetOverview(0).ReadRaster()
+            == ((b"\x00" * 5) + (b"\xff" * 5)) * 10
+        )
+        assert (
+            ds.GetRasterBand(1).GetOverview(0).GetMaskBand().ReadRaster()
+            == ((b"\x00" * 5) + (b"\xff" * 5)) * 10
+        )
+        assert (
+            ds.GetRasterBand(1).GetMaskBand().GetOverview(1).ReadRaster()
+            == ((b"\x00" * 3) + (b"\xff" * 2)) * 5
+        )
+        assert (
+            ds.GetRasterBand(1).GetOverview(1).GetMaskBand().ReadRaster()
+            == ((b"\x00" * 3) + (b"\xff" * 2)) * 5
+        )
