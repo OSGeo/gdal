@@ -32,10 +32,14 @@
 GDALExternalAlgorithmBase::~GDALExternalAlgorithmBase()
 {
     if (!m_osTempInputFilename.empty())
+    {
         VSIUnlink(m_osTempInputFilename.c_str());
+    }
     if (!m_osTempOutputFilename.empty() &&
         m_osTempOutputFilename != m_osTempInputFilename)
+    {
         VSIUnlink(m_osTempOutputFilename.c_str());
+    }
 }
 
 /************************************************************************/
@@ -256,6 +260,14 @@ bool GDALExternalAlgorithmBase::Run(
     if (WIFEXITED(ret))
         ret = WEXITSTATUS(ret);
 #endif
+
+    if (m_osTempInputFilename.empty() &&
+        m_osTempInputFilename != m_osTempOutputFilename)
+    {
+        VSIUnlink(m_osTempInputFilename.c_str());
+        m_osTempInputFilename.clear();
+    }
+
     if (ret)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -270,6 +282,8 @@ bool GDALExternalAlgorithmBase::Run(
             m_osTempOutputFilename.c_str(), GDAL_OF_VERBOSE_ERROR));
         if (!poOutDS)
             return false;
+        poOutDS->MarkSuppressOnClose();
+        m_osTempOutputFilename.clear();
 
         outputDataset.Set(std::move(poOutDS));
     }

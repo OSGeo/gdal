@@ -83,6 +83,19 @@ def test_gdalalg_vector_materialize_temp_output_mem(tmp_path):
     assert _get_cleaned_list(gdal.ReadDir(tmp_path)) == []
 
 
+@pytest.mark.require_driver("GPKG")
+@pytest.mark.parametrize("alg_path", [["pipeline"], ["vector", "pipeline"]])
+def test_gdalalg_vector_materialize_named_output(tmp_path, alg_path):
+
+    with gdal.Run(
+        alg_path,
+        pipeline=f"read ../ogr/data/poly.shp ! materialize --output {tmp_path}/out.gpkg ! write --of stream streamed_dataset",
+    ) as alg:
+        with alg.Output() as ds:
+            assert ds.GetDriver().GetDescription() == "GPKG"
+            assert ds.GetLayer(0).GetFeatureCount() == 10
+
+
 @pytest.mark.require_driver("SQLite")
 def test_gdalalg_vector_materialize_temp_output_sqlite_because_of_several_geom_fields(
     tmp_path,

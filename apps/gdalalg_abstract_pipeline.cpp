@@ -11,6 +11,7 @@
  ****************************************************************************/
 
 #include "cpl_conv.h"
+#include "cpl_enumerate.h"
 #include "cpl_error_internal.h"
 #include "cpl_json.h"
 
@@ -225,6 +226,154 @@ GDALAbstractPipelineAlgorithm::GetStepAlg(const std::string &name) const
     auto alg = GetStepRegistry().Instantiate(name);
     return std::unique_ptr<GDALPipelineStepAlgorithm>(
         cpl::down_cast<GDALPipelineStepAlgorithm *>(alg.release()));
+}
+
+/************************************************************************/
+/*                           GetDatasetType()                           */
+/************************************************************************/
+
+/** Return GDAL_OF_RASTER, GDAL_OF_VECTOR or 0 */
+static int GetDatasetType(GDALDataset *poDS)
+{
+    if (poDS->GetLayerCount() > 0 && poDS->GetRasterCount() == 0)
+        return GDAL_OF_VECTOR;
+
+    if (poDS->GetLayerCount() == 0 &&
+        (poDS->GetRasterCount() > 0 ||
+         poDS->GetMetadata("SUBDATASETS") != nullptr))
+    {
+        return GDAL_OF_RASTER;
+    }
+
+    return 0;
+}
+
+/************************************************************************/
+/*                        GetInputDatasetType()                         */
+/************************************************************************/
+
+/** Return GDAL_OF_RASTER, GDAL_OF_VECTOR or 0 */
+/* static */
+int GDALAbstractPipelineAlgorithm::GetInputDatasetType(
+    const GDALPipelineStepAlgorithm *alg)
+{
+    int ret = 0;
+    const auto stepInputArg = alg->GetArg(GDAL_ARG_NAME_INPUT);
+    if (stepInputArg && stepInputArg->IsExplicitlySet() &&
+        (stepInputArg->GetType() == GAAT_DATASET ||
+         stepInputArg->GetType() == GAAT_DATASET_LIST))
+    {
+        std::string inputDatasetName;
+        if (stepInputArg->GetType() == GAAT_DATASET)
+        {
+            inputDatasetName =
+                stepInputArg->Get<GDALArgDatasetValue>().GetName();
+        }
+        else
+        {
+            auto &val = stepInputArg->Get<std::vector<GDALArgDatasetValue>>();
+            if (!val.empty())
+            {
+                inputDatasetName = val[0].GetName();
+            }
+        }
+
+        if (!inputDatasetName.empty())
+        {
+            std::unique_ptr<GDALDataset> datasetHolder;
+            GDALDataset *poDS;
+            const auto oIter =
+                alg->m_oMapDatasetNameToDataset.find(inputDatasetName);
+            if (oIter != alg->m_oMapDatasetNameToDataset.end())
+                poDS = oIter->second;
+            else
+            {
+                CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
+                datasetHolder.reset(
+                    GDALDataset::Open(inputDatasetName.c_str()));
+                poDS = datasetHolder.get();
+            }
+            if (poDS)
+            {
+                ret = GetDatasetType(poDS);
+            }
+        }
+    }
+    return ret;
+}
+
+/************************************************************************/
+/*    GDALAbstractPipelineAlgorithm::CopyStepAlgorithmFromAnother()     */
+/************************************************************************/
+
+/** Copy arguments and other parameters from \a src to \a dst, typically
+ * when turning a raster algorithm to the vector one of the same name, or
+ * vice-versa.
+ */
+bool GDALAbstractPipelineAlgorithm::CopyStepAlgorithmFromAnother(
+    GDALPipelineStepAlgorithm *dst, const GDALPipelineStepAlgorithm *src,
+    bool maybeWriteStep) const
+{
+    if (src->GetName() == GDALTeeStepAlgorithmAbstract::NAME)
+    {
+        const auto poSrcTeeAlg =
+            dynamic_cast<const GDALTeeStepAlgorithmAbstract *>(src);
+        auto poDstTeeAlg = dynamic_cast<GDALTeeStepAlgorithmAbstract *>(dst);
+        CPLAssert(poSrcTeeAlg);
+        CPLAssert(poDstTeeAlg);
+        poDstTeeAlg->CopyFilenameBindingsFrom(poSrcTeeAlg);
+    }
+
+    if (maybeWriteStep)
+    {
+        // Propagate output parameters set at the pipeline level to the
+        // "write" step
+        for (auto &arg : dst->GetArgs())
+        {
+            if (!arg->IsHidden())
+            {
+                const auto pipelineArg = GetArg(arg->GetName());
+                if (pipelineArg && pipelineArg->IsExplicitlySet() &&
+                    pipelineArg->GetType() == arg->GetType())
+                {
+                    arg->SetSkipIfAlreadySet(true);
+                    [[maybe_unused]] bool ret = arg->SetFrom(*pipelineArg);
+                    CPLAssert(ret);
+                }
+            }
+        }
+    }
+
+    // Propagate parameters set on the old algorithm to the new one
+    for (const auto &srcArg : src->GetArgs())
+    {
+        if (srcArg->IsExplicitlySet())
+        {
+            auto dstArg = dst->GetArg(srcArg->GetName());
+            if (!dstArg)
+            {
+                dst->ReportError(CE_Failure, CPLE_IllegalArg,
+                                 "Option '--%s' is unknown",
+                                 srcArg->GetName().c_str());
+                return false;
+            }
+            else
+            {
+                dstArg->SetSkipIfAlreadySet(true);
+                if (!dstArg->SetFrom(*srcArg))
+                    return false;
+            }
+        }
+    }
+
+    dst->m_oMapDatasetNameToDataset =
+        std::move(src->m_oMapDatasetNameToDataset);
+    dst->SetCallPath({dst->GetName()});
+    dst->SetReferencePathForRelativePaths(GetReferencePathForRelativePaths());
+    if (IsCalledFromCommandLine())
+        dst->SetCalledFromCommandLine();
+
+    return true;
 }
 
 /************************************************************************/
@@ -734,39 +883,15 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
             GetReferencePathForRelativePaths());
     }
 
-    // Propagate input parameters set at the pipeline level to the
-    // "read" step
-    if (m_bExpectReadStep)
+    const auto PropagateArgsFromPipeline =
+        [this](GDALPipelineStepAlgorithm *alg)
     {
-        auto &step = steps.front();
-        for (auto &arg : step.alg->GetArgs())
+        const GDALAbstractPipelineAlgorithm *constThis = this;
+        for (auto &arg : alg->GetArgs())
         {
             if (!arg->IsHidden())
             {
-                auto pipelineArg =
-                    const_cast<const GDALAbstractPipelineAlgorithm *>(this)
-                        ->GetArg(arg->GetName());
-                if (pipelineArg && pipelineArg->IsExplicitlySet() &&
-                    pipelineArg->GetType() == arg->GetType())
-                {
-                    arg->SetSkipIfAlreadySet(true);
-                    arg->SetFrom(*pipelineArg);
-                }
-            }
-        }
-    }
-
-    // Same with "write" step
-    const auto SetWriteArgFromPipeline = [this, &steps]()
-    {
-        auto &step = steps.back();
-        for (auto &arg : step.alg->GetArgs())
-        {
-            if (!arg->IsHidden())
-            {
-                auto pipelineArg =
-                    const_cast<const GDALAbstractPipelineAlgorithm *>(this)
-                        ->GetArg(arg->GetName());
+                const auto pipelineArg = constThis->GetArg(arg->GetName());
                 if (pipelineArg && pipelineArg->IsExplicitlySet() &&
                     pipelineArg->GetType() == arg->GetType())
                 {
@@ -777,10 +902,18 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         }
     };
 
+    // Propagate input parameters set at the pipeline level to the
+    // "read" step
+    if (m_bExpectReadStep)
+    {
+        PropagateArgsFromPipeline(steps.front().alg.get());
+    }
+
+    // Same with "write" step
     if (m_eLastStepAsWrite != StepConstraint::CAN_NOT_BE &&
         steps.back().alg->CanBeLastStep())
     {
-        SetWriteArgFromPipeline();
+        PropagateArgsFromPipeline(steps.back().alg.get());
     }
 
     if (runExistingPipeline)
@@ -1007,14 +1140,8 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         {
             CPLAssert(m_inputDataset.size() == 1 &&
                       m_inputDataset[0].GetDatasetRef());
-            if (m_inputDataset[0].GetDatasetRef()->GetRasterCount() > 0)
-            {
-                nInitialDatasetType = GDAL_OF_RASTER;
-            }
-            else if (m_inputDataset[0].GetDatasetRef()->GetLayerCount() > 0)
-            {
-                nInitialDatasetType = GDAL_OF_VECTOR;
-            }
+            nInitialDatasetType =
+                GetDatasetType(m_inputDataset[0].GetDatasetRef());
         }
 
         // Parse each step, but without running the validation
@@ -1236,46 +1363,35 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
             if (!step.alreadyChangedType && !step.isSubAlgorithm &&
                 GetStepAlg(step.alg->GetName()) == nullptr)
             {
-                auto newAlg = GetStepAlg(step.alg->GetName() +
-                                         (nLastStepOutputType == GDAL_OF_RASTER
-                                              ? RASTER_SUFFIX
-                                              : VECTOR_SUFFIX));
-                CPLAssert(newAlg);
+                // GetInputDatasetType() is to deal with pipelines like
+                // gdal pipeline read input_vector ! clip --input raster_dataset --like _PIPE_ ! write output_raster
+                const int nThisDatasetType =
+                    GetInputDatasetType(step.alg.get());
+                const int nThisStepType =
+                    nThisDatasetType ? nThisDatasetType : nLastStepOutputType;
 
-                if (step.alg->GetName() == GDALTeeStepAlgorithmAbstract::NAME)
+                if (step.alg->GetInputType() != 0 &&
+                    nThisStepType != step.alg->GetInputType())
                 {
-                    const auto poSrcTeeAlg =
-                        dynamic_cast<const GDALTeeStepAlgorithmAbstract *>(
-                            step.alg.get());
-                    auto poDstTeeAlg =
-                        dynamic_cast<GDALTeeStepAlgorithmAbstract *>(
-                            newAlg.get());
-                    CPLAssert(poSrcTeeAlg);
-                    CPLAssert(poDstTeeAlg);
-                    poDstTeeAlg->CopyFilenameBindingsFrom(poSrcTeeAlg);
+                    auto newAlg = GetStepAlg(step.alg->GetName() +
+                                             (nThisStepType == GDAL_OF_RASTER
+                                                  ? RASTER_SUFFIX
+                                                  : VECTOR_SUFFIX));
+                    CPLAssert(newAlg);
+
+                    const bool maybeWriteStep =
+                        (i == steps.size() - 1 &&
+                         m_eLastStepAsWrite != StepConstraint::CAN_NOT_BE);
+
+                    if (!CopyStepAlgorithmFromAnother(
+                            newAlg.get(), step.alg.get(), maybeWriteStep))
+                        return false;
+
+                    newAlg->m_inputDatasetCanBeOmitted =
+                        i > 0 || !m_bExpectReadStep;
+                    step.alg = std::move(newAlg);
+                    step.alreadyChangedType = true;
                 }
-
-                newAlg->m_oMapDatasetNameToDataset =
-                    std::move(step.alg->m_oMapDatasetNameToDataset);
-                step.alg = std::move(newAlg);
-
-                if (i == steps.size() - 1 &&
-                    m_eLastStepAsWrite != StepConstraint::CAN_NOT_BE)
-                {
-                    SetWriteArgFromPipeline();
-                }
-
-                step.alg->m_inputDatasetCanBeOmitted =
-                    i > 0 || !m_bExpectReadStep;
-                step.alg->m_skipValidationInParseCommandLine = true;
-                if (!step.alg->ParseCommandLineArguments(step.args))
-                    return false;
-                step.alg->SetCallPath({step.alg->GetName()});
-                step.alg->SetReferencePathForRelativePaths(
-                    GetReferencePathForRelativePaths());
-                if (IsCalledFromCommandLine())
-                    step.alg->SetCalledFromCommandLine();
-                step.alreadyChangedType = true;
             }
 
             if (i > 0)
@@ -1630,16 +1746,11 @@ GDALAbstractPipelineAlgorithm::GetAutoComplete(std::vector<std::string> &args,
                     CPLErrorStateBackuper oBackuper(CPLQuietErrorHandler);
                     auto poDS = std::unique_ptr<GDALDataset>(
                         GDALDataset::Open(args[i].c_str()));
-                    if (poDS && poDS->GetLayerCount() > 0 &&
-                        poDS->GetRasterCount() == 0)
+                    if (poDS)
                     {
-                        nDatasetType = GDAL_OF_VECTOR;
-                    }
-                    else if (poDS && poDS->GetLayerCount() == 0 &&
-                             (poDS->GetRasterCount() > 0 ||
-                              poDS->GetMetadata("SUBDATASETS") != nullptr))
-                    {
-                        nDatasetType = GDAL_OF_RASTER;
+                        const int nThisDatasetType = GetDatasetType(poDS.get());
+                        if (nThisDatasetType)
+                            nDatasetType = nThisDatasetType;
                     }
                 }
                 lastArgs.push_back(args[i]);
@@ -2096,13 +2207,15 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         pProgressData = nullptr;
     }
 
+    int nCurDatasetType = poCurDS ? GetDatasetType(poCurDS) : 0;
+
     for (size_t i = 0; i < m_steps.size(); ++i)
     {
         auto &step = m_steps[i];
 
         if (i > 0 && m_nFirstStepWithUnknownInputType >= 0 &&
             i >= static_cast<size_t>(m_nFirstStepWithUnknownInputType) &&
-            m_steps[i - 1]->GetOutputType() != 0)
+            nCurDatasetType != 0 && GetStepAlg(step->GetName()) == nullptr)
         {
             // We go here if there was a step such as "external" where at
             // ParseCommandLineArguments() time we could not determine its
@@ -2110,78 +2223,36 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             // such as "write" or "reproject" that exist both as separate raster
             // and vector commands if the one we initially picked is appropriate.
             // If not, then switch to the other type.
-            if ((step->GetInputType() & m_steps[i - 1]->GetOutputType()) == 0)
+
+            // GetInputDatasetType() is to deal with pipelines like:
+            // gdal pipeline read input_vector !
+            //      external --command "cp <INPUT> <OUTPUT>" !
+            //      clip --input raster_dataset --like _PIPE_ !
+            //      write output_raster
+            const int nThisDatasetType = GetInputDatasetType(step.get());
+            const int nThisStepType =
+                nThisDatasetType ? nThisDatasetType : nCurDatasetType;
+            if (step->GetInputType() != 0 &&
+                step->GetInputType() != nThisStepType)
             {
-                auto newAlg = GetStepAlg(
-                    step->GetName() +
-                    (m_steps[i - 1]->GetOutputType() == GDAL_OF_RASTER
-                         ? RASTER_SUFFIX
-                         : VECTOR_SUFFIX));
+                auto newAlg = GetStepAlg(step->GetName() +
+                                         (nThisStepType == GDAL_OF_RASTER
+                                              ? RASTER_SUFFIX
+                                              : VECTOR_SUFFIX));
                 if (newAlg)
                 {
-                    if (newAlg->GetName() == GDALTeeStepAlgorithmAbstract::NAME)
-                    {
-                        const auto poSrcTeeAlg =
-                            dynamic_cast<const GDALTeeStepAlgorithmAbstract *>(
-                                step.get());
-                        auto poDstTeeAlg =
-                            dynamic_cast<GDALTeeStepAlgorithmAbstract *>(
-                                newAlg.get());
-                        CPLAssert(poSrcTeeAlg);
-                        CPLAssert(poDstTeeAlg);
-                        poDstTeeAlg->CopyFilenameBindingsFrom(poSrcTeeAlg);
-                    }
-
-                    if (i == m_steps.size() - 1 &&
-                        m_eLastStepAsWrite != StepConstraint::CAN_NOT_BE)
-                    {
-                        // Propagate output parameters set at the pipeline level to the
-                        // "write" step
-                        for (auto &arg : newAlg->GetArgs())
-                        {
-                            if (!arg->IsHidden())
-                            {
-                                auto pipelineArg =
-                                    const_cast<
-                                        const GDALAbstractPipelineAlgorithm *>(
-                                        this)
-                                        ->GetArg(arg->GetName());
-                                if (pipelineArg &&
-                                    pipelineArg->IsExplicitlySet() &&
-                                    pipelineArg->GetType() == arg->GetType())
-                                {
-                                    arg->SetSkipIfAlreadySet(true);
-                                    arg->SetFrom(*pipelineArg);
-                                }
-                            }
-                        }
-                    }
-
-                    // Propagate parameters set on the old algorithm to the new one
-                    for (auto &arg : step->GetArgs())
-                    {
-                        if (!arg->IsHidden() && arg->IsExplicitlySet())
-                        {
-                            auto newArg = newAlg->GetArg(arg->GetName());
-                            if (newArg && newArg->GetType() == arg->GetType())
-                            {
-                                newArg->SetSkipIfAlreadySet(true);
-                                newArg->SetFrom(*arg);
-                            }
-                        }
-                    }
-
+                    const bool maybeWriteStep =
+                        (i == m_steps.size() - 1 &&
+                         m_eLastStepAsWrite != StepConstraint::CAN_NOT_BE);
+                    if (!CopyStepAlgorithmFromAnother(newAlg.get(), step.get(),
+                                                      maybeWriteStep))
+                        return false;
                     newAlg->m_inputDatasetCanBeOmitted = true;
-                    newAlg->m_skipValidationInParseCommandLine = true;
-                    newAlg->SetCallPath({newAlg->GetName()});
-                    newAlg->SetReferencePathForRelativePaths(
-                        GetReferencePathForRelativePaths());
-                    if (IsCalledFromCommandLine())
-                        newAlg->SetCalledFromCommandLine();
 
                     step = std::move(newAlg);
                 }
             }
+
             if (!step->ValidateArguments())
                 return false;
         }
@@ -2307,10 +2378,15 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             break;
         }
         poCurDS = step->m_outputDataset.GetDatasetRef();
-        if (!poCurDS && !(i + 1 == m_steps.size() &&
-                          (!step->m_output.empty() ||
-                           step->GetArg(GDAL_ARG_NAME_STDOUT) != nullptr ||
-                           step->GetOutputType() == 0)))
+        nCurDatasetType = 0;
+        if (poCurDS)
+        {
+            nCurDatasetType = GetDatasetType(poCurDS);
+        }
+        else if (!(i + 1 == m_steps.size() &&
+                   (!step->m_output.empty() ||
+                    step->GetArg(GDAL_ARG_NAME_STDOUT) != nullptr ||
+                    step->GetOutputType() == 0)))
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "Step nr %d (%s) failed to produce an output dataset",
@@ -2365,9 +2441,13 @@ bool GDALAbstractPipelineAlgorithm::HasOutputString() const
 bool GDALAbstractPipelineAlgorithm::Finalize()
 {
     bool ret = GDALPipelineStepAlgorithm::Finalize();
-    for (auto &step : m_steps)
+    // Finalize steps in reverse order, typically to make sure later steps
+    // have dropped their reference on datasets passed by previous ones.
+    // This helps for example for the "external" step that needs to delete
+    // temporary files.
+    for (auto iter = m_steps.rbegin(); iter != m_steps.rend(); ++iter)
     {
-        ret = step->Finalize() && ret;
+        ret = (*iter)->Finalize() && ret;
     }
     return ret;
 }
