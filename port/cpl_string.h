@@ -66,7 +66,7 @@ char CPL_DLL **CSLTokenizeString2(const char *pszString,
                                   const char *pszDelimiter,
                                   int nCSLTFlags) CPL_WARN_UNUSED_RESULT;
 
-/** Flag for CSLTokenizeString2() to honour strings */
+/** Flag for CSLTokenizeString2() to honour strings delimited by double quotes */
 #define CSLT_HONOURSTRINGS 0x0001
 /** Flag for CSLTokenizeString2() to allow empty tokens */
 #define CSLT_ALLOWEMPTYTOKENS 0x0002
@@ -78,6 +78,8 @@ char CPL_DLL **CSLTokenizeString2(const char *pszString,
 #define CSLT_STRIPLEADSPACES 0x0010
 /** Flag for CSLTokenizeString2() to strip trailing spaces */
 #define CSLT_STRIPENDSPACES 0x0020
+/** Flag for CSLTokenizeString2() to honour strings delimited by single quotes (GDAL >= 3.14) */
+#define CSLT_HONOURSINGLEQUOTES 0x0040
 
 int CPL_DLL CSLPrint(CSLConstList papszStrList, FILE *fpOut);
 char CPL_DLL **CSLLoad(const char *pszFname) CPL_WARN_UNUSED_RESULT;

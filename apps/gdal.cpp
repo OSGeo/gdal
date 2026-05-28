@@ -39,12 +39,6 @@ static void EmitCompletion(std::unique_ptr<GDALAlgorithm> rootAlg,
     std::vector<std::string> args = argsIn;
 
     std::string ret;
-    const auto addSpace = [&ret]()
-    {
-        if (!ret.empty())
-            ret += " ";
-    };
-
     if (!args.empty() &&
         (args.back() == "--config" ||
          STARTS_WITH(args.back().c_str(), "--config=") ||
@@ -55,9 +49,8 @@ static void EmitCompletion(std::unique_ptr<GDALAlgorithm> rootAlg,
             CPLStringList aosConfigOptions(CPLGetKnownConfigOptions());
             for (const char *pszOpt : cpl::Iterate(aosConfigOptions))
             {
-                addSpace();
                 ret += pszOpt;
-                ret += '=';
+                ret += "=\n";
             }
             printf("%s", ret.c_str());
         }
@@ -67,8 +60,8 @@ static void EmitCompletion(std::unique_ptr<GDALAlgorithm> rootAlg,
     for (const auto &choice : rootAlg->GetAutoComplete(
              args, lastWordIsComplete, /*showAllOptions = */ true))
     {
-        addSpace();
-        ret += CPLString(choice).replaceAll(" ", "\\ ");
+        ret += choice;
+        ret += '\n';
     }
 
 #ifdef DEBUG_COMPLETION

@@ -8,6 +8,7 @@ RUN apt-get update && \
     autoconf \
     automake \
     bash \
+    bash-completion \
     ccache \
     cmake \
     clang \
@@ -73,7 +74,8 @@ RUN apt-get update && \
     swig \
     unixodbc-dev \
     wget \
-    zip
+    zip \
+    zsh
 
 # Removing "libpoppler-dev libpoppler-private-dev" from above list to build from source
 

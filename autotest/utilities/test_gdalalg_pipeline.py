@@ -717,9 +717,9 @@ def test_gdalalg_pipeline_existing_completion(tmp_path):
         )
         f.write(j.encode("UTF-8"))
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} -"
-    ).split(" ")
+    )
     expected_out = [
         "--input-format=",
         "--open-option=",
@@ -739,14 +739,14 @@ def test_gdalalg_pipeline_existing_completion(tmp_path):
         assert x in out
     assert "--input-layer=" not in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} --input-format="
-    ).split(" ")
+    )
     assert "MEM" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} --output=/vsimem/out.tif --creation-option="
-    ).split(" ")
+    )
     assert "COMPRESS=" in out
 
     with gdal.VSIFile(pipeline_filename, "wb") as f:
@@ -759,9 +759,9 @@ def test_gdalalg_pipeline_existing_completion(tmp_path):
         )
         f.write(j.encode("UTF-8"))
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} -"
-    ).split(" ")
+    )
     expected_out = [
         "--input-format=",
         "--open-option=",
@@ -799,15 +799,15 @@ def test_gdalalg_pipeline_existing_completion(tmp_path):
         )
         f.write(j.encode("UTF-8"))
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} -"
-    ).split(" ")
+    )
     assert "--edit[0].geometry-type=" in out
     assert "--edit[1].geometry-type=" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal pipeline {pipeline_filename} --edit[0].geometry-type="
-    ).split(" ")
+    )
     assert "GEOMETRY" in out
 
 

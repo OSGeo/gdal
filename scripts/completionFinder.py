@@ -342,51 +342,73 @@ _gdal()
   if test "$HAS_GET_COMP_WORDS_BY_REF" = "yes"; then
     local cur prev
     _get_comp_words_by_ref cur prev
-    if test "$cur" = ""; then
-      extra="last_word_is_complete=true"
+    if [[ ${COMP_LINE} == *\\"* ]]; then
+      choices=$(gdal completion "${COMP_WORDS[@]}")
     else
-      extra="prev=${prev} cur=${cur}"
+      if test "$cur" = ""; then
+        extra="last_word_is_complete=true"
+      else
+        extra="prev=${prev} cur=${cur}"
+      fi
+      choices=$(gdal completion ${COMP_LINE} ${extra})
     fi
-    choices=$(gdal completion ${COMP_LINE} ${extra})
   else
     choices=$(gdal completion ${COMP_LINE})
   fi
-  if [ "$CURRENT_SHELL" = "bash" ]; then
-    if [[ "$cur" == "=" ]]; then
-      mapfile -t COMPREPLY < <(compgen -W "$choices" --)
-    elif [[ "$cur" == ":" ]]; then
-      mapfile -t COMPREPLY < <(compgen -W "$choices" --)
-    elif [[ "$cur" == "!" ]]; then
-      mapfile -t COMPREPLY < <(compgen -W "$choices" -P "! " --)
+
+  ori_cur="$cur"
+
+  COMPREPLY=()
+  if [ "$choices" != "" ]; then
+    CHOICES=()
+    while IFS= read -r line; do
+      CHOICES+=("$line")
+    done <<< "$choices"
+    if [ "$cur" = "=" ]; then
+      COMPREPLY=("${CHOICES[@]}")
+    elif [ "$cur" = ":" ]; then
+      COMPREPLY=("${CHOICES[@]}")
+    elif [ "$cur" = "!" ]; then
+      for line in "${CHOICES[@]}"; do
+          COMPREPLY+=("! $line")
+      done
     else
-      mapfile -t COMPREPLY < <(compgen -W "$choices" -- "$cur")
-    fi
-    for element in "${COMPREPLY[@]}"; do
-      if [[ $element == */ ]]; then
-        # Do not add a space if one of the suggestion ends with slash
-        compopt -o nospace
-        break
-      elif [[ $element == *= ]]; then
-        # Do not add a space if one of the suggestion ends with equal
-        compopt -o nospace
-        break
-      elif [[ $element == *: ]]; then
-        # Do not add a space if one of the suggestion ends with colon
-        compopt -o nospace
-        break
+      if [[ $ori_cur == \\"* ]]; then
+        # Strip leading double quote before doing choice matching
+        cur=${cur:1}
       fi
-    done
+      for line in "${CHOICES[@]}"; do
+          [[ $line == ${cur}* ]] && COMPREPLY+=("$line")
+      done
+    fi
+  fi
+
+  if [ "$CURRENT_SHELL" = "bash" ]; then
+    if [[ $ori_cur == \\"* ]]; then
+        compopt -o filenames -o nospace -o noquote
+        # re-add opening quote
+        for i in "${!COMPREPLY[@]}"; do
+            COMPREPLY[i]="\\"${COMPREPLY[$i]}"
+        done
+    else
+      for element in "${COMPREPLY[@]}"; do
+        if [[ $element == */ ]]; then
+          # Do not add a space if one of the suggestion ends with slash
+          compopt -o nospace
+          break
+        elif [[ $element == *= ]]; then
+          # Do not add a space if one of the suggestion ends with equal
+          compopt -o nospace
+          break
+        elif [[ $element == *: ]]; then
+          # Do not add a space if one of the suggestion ends with colon
+          compopt -o nospace
+          break
+        fi
+      done
+    fi
   else
     # zsh
-    if [ "$cur" = "=" ]; then
-      COMPREPLY=( "$(compgen -W "$choices" --)" )
-    elif [ "$cur" = ":" ]; then
-      COMPREPLY=( "$(compgen -W "$choices" --)" )
-    elif [ "$cur" = "!" ]; then
-      COMPREPLY=( "$(compgen -W "$choices" -P "! " --)" )
-    else
-      COMPREPLY=( "$(compgen -W "$choices" -- "$cur")" )
-    fi
     for element in "${COMPREPLY[@]}"; do
       if [[ $element == */ ]]; then
         # Do not add a space if one of the suggestion ends with slash

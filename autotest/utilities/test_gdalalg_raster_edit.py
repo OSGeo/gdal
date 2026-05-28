@@ -672,22 +672,22 @@ def test_gdalalg_raster_edit_color_interpretation_autocomplete():
     if gdal_path is None:
         pytest.skip("gdal binary not available")
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster edit --color-interpretation last_word_is_complete=true"
-    ).split(" ")
+    )
     assert "all=" in out
     assert "Red" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster edit ../gcore/data/byte.tif --color-interpretation last_word_is_complete=true"
-    ).split(" ")
+    )
     assert "all=" in out
     assert "1=" in out
     assert "Red" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal raster edit --color-interpretation all= last_word_is_complete=false"
-    ).split(" ")
+    )
     assert "all=" not in out
     assert "Red" in out
 

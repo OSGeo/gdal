@@ -303,9 +303,9 @@ def test_gdalalg_vector_set_geom_type_type_autocomplete():
     if gdal_path is None:
         pytest.skip("gdal binary not available")
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector set-geom-type --geometry-type"
-    ).split(" ")
+    )
     assert "GEOMETRY" in out
     assert "GEOMETRYZ" in out
     assert "GEOMETRYM" in out
@@ -313,9 +313,9 @@ def test_gdalalg_vector_set_geom_type_type_autocomplete():
     assert "POINT" in out
     assert "MULTIPOINT" in out
 
-    out = gdaltest.runexternal(
+    out = gdaltest.run_and_parse_completion_output(
         f"{gdal_path} completion gdal vector set-geom-type --geometry-type GEOMETRYC"
-    ).split(" ")
+    )
     assert len(out) == 4
 
 
