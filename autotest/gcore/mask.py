@@ -20,14 +20,6 @@ import pytest
 
 from osgeo import gdal
 
-
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
-
 ###############################################################################
 # Verify the checksum and flags for "all valid" case.
 
@@ -407,14 +399,14 @@ def test_mask_12():
 # Test creation of external TIFF mask band
 
 
-def test_mask_13():
+def test_mask_13(tmp_path):
 
     src_ds = gdal.Open("data/byte.tif")
 
     assert src_ds is not None, "Failed to open test dataset."
 
     drv = gdal.GetDriverByName("GTiff")
-    ds = drv.CreateCopy("tmp/byte_with_mask.tif", src_ds)
+    ds = drv.CreateCopy(tmp_path / "byte_with_mask.tif", src_ds)
     src_ds = None
 
     with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
@@ -431,12 +423,9 @@ def test_mask_13():
 
     ds = None
 
-    try:
-        os.stat("tmp/byte_with_mask.tif.msk")
-    except OSError:
-        pytest.fail("tmp/byte_with_mask.tif.msk is absent")
+    ds = gdal.Open(tmp_path / "byte_with_mask.tif")
 
-    ds = gdal.Open("tmp/byte_with_mask.tif")
+    assert os.path.exists(tmp_path / "byte_with_mask.tif.msk")
 
     assert (
         ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
@@ -447,9 +436,9 @@ def test_mask_13():
 
     ds = None
 
-    drv.Delete("tmp/byte_with_mask.tif")
+    drv.Delete(tmp_path / "byte_with_mask.tif")
 
-    assert not os.path.exists("tmp/byte_with_mask.tif.msk")
+    assert not os.path.exists(tmp_path / "byte_with_mask.tif.msk")
 
 
 ###############################################################################
@@ -457,7 +446,7 @@ def test_mask_13():
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_mask_14():
+def test_mask_14(tmp_path, tmp_vsimem):
 
     src_ds = gdal.Open("data/byte.tif")
 
@@ -466,13 +455,14 @@ def test_mask_14():
     drv = gdal.GetDriverByName("GTiff")
     with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
         with gdal.config_option("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "FALSE"):
-            ds = drv.CreateCopy("tmp/byte_with_mask.tif", src_ds)
+            ds = drv.CreateCopy(tmp_path / "byte_with_mask.tif", src_ds)
     src_ds = None
 
-    # The only flag value supported for internal mask is GMF_PER_DATASET
-    with gdal.quiet_errors():
+    with pytest.raises(
+        Exception,
+        match="only flag value supported for internal mask is GMF_PER_DATASET",
+    ):
         ret = ds.CreateMaskBand(0)
-    assert ret != 0, "Error expected"
 
     ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     assert ret == 0, "Creation failed"
@@ -486,22 +476,18 @@ def test_mask_14():
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     assert cs == 400, "Got wrong checksum for the mask (2)"
 
-    # This TIFF dataset has already an internal mask band
-    with gdal.quiet_errors():
+    with pytest.raises(Exception, match="already has an internal mask band"):
         ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    assert ret != 0, "Error expected"
 
-    # This TIFF dataset has already an internal mask band
-    with gdal.quiet_errors():
+    with pytest.raises(Exception, match="already has an internal mask band"):
         ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    assert ret != 0, "Error expected"
 
     ds = None
 
-    assert not os.path.exists("tmp/byte_with_mask.tif.msk")
+    assert not os.path.exists(tmp_path / "byte_with_mask.tif.msk")
 
     with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "FALSE"):
-        ds = gdal.Open("tmp/byte_with_mask.tif")
+        ds = gdal.Open(tmp_path / "byte_with_mask.tif")
 
         assert (
             ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
@@ -513,18 +499,15 @@ def test_mask_14():
     # Test fix for #5884
     with gdaltest.SetCacheMax(0):
         out_ds = drv.CreateCopy(
-            "/vsimem/byte_with_mask.tif", ds, options=["COMPRESS=JPEG"]
+            tmp_vsimem / "byte_with_mask.tif", ds, options=["COMPRESS=JPEG"]
         )
 
     assert out_ds.GetRasterBand(1).Checksum() != 0
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     assert cs == 400, "Got wrong checksum for the mask (4)"
     out_ds = None
-    drv.Delete("/vsimem/byte_with_mask.tif")
 
     ds = None
-
-    drv.Delete("tmp/byte_with_mask.tif")
 
 
 ###############################################################################
@@ -533,28 +516,24 @@ def test_mask_14():
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 @pytest.mark.parametrize("method", ["NEAR", "AVERAGE"])
-def test_mask_and_ovr(order, method):
+def test_mask_and_ovr(tmp_path, order, method):
 
     src_ds = gdal.Open("data/byte.tif")
 
     assert src_ds is not None, "Failed to open test dataset."
 
     drv = gdal.GetDriverByName("GTiff")
-    ds = drv.CreateCopy("tmp/byte_with_ovr_and_mask.tif", src_ds)
+    ds = drv.CreateCopy(tmp_path / "byte_with_ovr_and_mask.tif", src_ds)
     src_ds = None
 
     if order == 1:
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
         ds.BuildOverviews(method, overviewlist=[2, 4])
-        with gdal.quiet_errors():
-            assert (
-                ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
-                == gdal.CE_Failure
-            )
-            assert (
-                ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-                == gdal.CE_Failure
-            )
+        with pytest.raises(Exception, match="already has an internal mask band"):
+            ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
+        with pytest.raises(Exception, match="already has an internal mask band"):
+            ds.GetRasterBand(1).GetOverview(0).CreateMaskBand(gdal.GMF_PER_DATASET)
+            ds.GetRasterBand(1).GetOverview(1).CreateMaskBand(gdal.GMF_PER_DATASET)
     elif order == 2:
         ds.BuildOverviews(method, overviewlist=[2, 4])
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
@@ -573,17 +552,17 @@ def test_mask_and_ovr(order, method):
 
     if order < 4:
         ds = None
-        ds = gdal.Open("tmp/byte_with_ovr_and_mask.tif", gdal.GA_Update)
+        ds = gdal.Open(tmp_path / "byte_with_ovr_and_mask.tif", gdal.GA_Update)
         ds.GetRasterBand(1).GetMaskBand().Fill(1)
         # The overview of the mask will be implicitly recomputed.
         ds.BuildOverviews(method, overviewlist=[2, 4])
 
     ds = None
 
-    assert not os.path.exists("tmp/byte_with_ovr_and_mask.tif.msk")
+    assert not os.path.exists(tmp_path / "byte_with_ovr_and_mask.tif.msk")
 
     with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK_TO_8BIT", "FALSE"):
-        ds = gdal.Open("tmp/byte_with_ovr_and_mask.tif")
+        ds = gdal.Open(tmp_path / "byte_with_ovr_and_mask.tif")
 
         assert (
             ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
@@ -597,10 +576,6 @@ def test_mask_and_ovr(order, method):
 
     cs = ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
     assert cs == 25, "Got wrong checksum for the mask of the second overview"
-
-    ds = None
-
-    drv.Delete("tmp/byte_with_ovr_and_mask.tif")
 
 
 ###############################################################################
@@ -623,108 +598,95 @@ def test_mask_19():
 
     assert cs == expected_cs, "Did not get expected checksum"
 
-    msk = None
-    ds = None
-
 
 ###############################################################################
 # Extensive test of nodata mask for all data types
 
 
-def test_mask_20():
-
-    types = [
-        gdal.GDT_UInt8,
-        gdal.GDT_Int16,
-        gdal.GDT_UInt16,
-        gdal.GDT_Int32,
-        gdal.GDT_UInt32,
-        gdal.GDT_Float32,
-        gdal.GDT_Float64,
-        gdal.GDT_CFloat32,
-        gdal.GDT_CFloat64,
-    ]
-
-    nodatavalue = [1, -1, 1, -1, 1, 0.5, 0.5, 0.5, 0.5]
+@pytest.mark.parametrize(
+    "typ,nodata",
+    [
+        (gdal.GDT_UInt8, 1),
+        (gdal.GDT_Int16, -1),
+        (gdal.GDT_UInt16, 1),
+        (gdal.GDT_Int32, -1),
+        (gdal.GDT_UInt32, 1),
+        (gdal.GDT_Float32, 0.5),
+        (gdal.GDT_Float64, 0.5),
+        (gdal.GDT_CFloat32, 0.5),
+        (gdal.GDT_CFloat64, 0.5),
+    ],
+)
+def test_mask_20(tmp_path, typ, nodata):
 
     drv = gdal.GetDriverByName("GTiff")
-    for i, typ in enumerate(types):
-        ds = drv.Create("tmp/mask20.tif", 1, 1, 1, typ)
-        ds.GetRasterBand(1).Fill(nodatavalue[i])
-        ds.GetRasterBand(1).SetNoDataValue(nodatavalue[i])
 
-        assert (
-            ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_NODATA
-        ), "did not get expected mask flags for type %s" % gdal.GetDataTypeName(typ)
+    ds = drv.Create(tmp_path / "mask20.tif", 1, 1, 1, typ)
+    ds.GetRasterBand(1).Fill(nodata)
+    ds.GetRasterBand(1).SetNoDataValue(nodata)
 
-        msk = ds.GetRasterBand(1).GetMaskBand()
-        assert msk.Checksum() == 0, (
-            "did not get expected mask checksum for type %s : %d"
-            % gdal.GetDataTypeName(typ, msk.Checksum())
-        )
+    assert (
+        ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_NODATA
+    ), "did not get expected mask flags for type %s" % gdal.GetDataTypeName(typ)
 
-        msk = None
-        ds = None
-        drv.Delete("tmp/mask20.tif")
+    msk = ds.GetRasterBand(1).GetMaskBand()
+    assert (
+        msk.Checksum() == 0
+    ), "did not get expected mask checksum for type %s : %d" % gdal.GetDataTypeName(
+        typ, msk.Checksum()
+    )
 
 
 ###############################################################################
 # Extensive test of NODATA_VALUES mask for all data types
 
 
-def test_mask_21():
-
-    types = [
-        gdal.GDT_UInt8,
-        gdal.GDT_Int16,
-        gdal.GDT_UInt16,
-        gdal.GDT_Int32,
-        gdal.GDT_UInt32,
-        gdal.GDT_Float32,
-        gdal.GDT_Float64,
-        gdal.GDT_CFloat32,
-        gdal.GDT_CFloat64,
-    ]
-
-    nodatavalue = [1, -1, 1, -1, 1, 0.5, 0.5, 0.5, 0.5]
+@pytest.mark.parametrize(
+    "typ,nodata",
+    [
+        (gdal.GDT_UInt8, 1),
+        (gdal.GDT_Int16, -1),
+        (gdal.GDT_UInt16, 1),
+        (gdal.GDT_Int32, -1),
+        (gdal.GDT_UInt32, 1),
+        (gdal.GDT_Float32, 0.5),
+        (gdal.GDT_Float64, 0.5),
+        (gdal.GDT_CFloat32, 0.5),
+        (gdal.GDT_CFloat64, 0.5),
+    ],
+)
+def test_mask_21(tmp_path, typ, nodata):
 
     drv = gdal.GetDriverByName("GTiff")
-    for i, typ in enumerate(types):
-        ds = drv.Create("tmp/mask21.tif", 1, 1, 3, typ)
-        md = {}
-        md["NODATA_VALUES"] = "%f %f %f" % (
-            nodatavalue[i],
-            nodatavalue[i],
-            nodatavalue[i],
-        )
-        ds.SetMetadata(md)
-        ds.GetRasterBand(1).Fill(nodatavalue[i])
-        ds.GetRasterBand(2).Fill(nodatavalue[i])
-        ds.GetRasterBand(3).Fill(nodatavalue[i])
 
-        assert (
-            ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET + gdal.GMF_NODATA
-        ), "did not get expected mask flags for type %s" % gdal.GetDataTypeName(typ)
+    ds = drv.Create(tmp_path / "mask21.tif", 1, 1, 3, typ)
+    md = {}
+    md["NODATA_VALUES"] = "%f %f %f" % (nodata, nodata, nodata)
+    ds.SetMetadata(md)
+    ds.GetRasterBand(1).Fill(nodata)
+    ds.GetRasterBand(2).Fill(nodata)
+    ds.GetRasterBand(3).Fill(nodata)
 
-        msk = ds.GetRasterBand(1).GetMaskBand()
-        assert msk.Checksum() == 0, (
-            "did not get expected mask checksum for type %s : %d"
-            % gdal.GetDataTypeName(typ, msk.Checksum())
-        )
+    assert (
+        ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET + gdal.GMF_NODATA
+    ), "did not get expected mask flags for type %s" % gdal.GetDataTypeName(typ)
 
-        msk = None
-        ds = None
-        drv.Delete("tmp/mask21.tif")
+    msk = ds.GetRasterBand(1).GetMaskBand()
+    assert (
+        msk.Checksum() == 0
+    ), "did not get expected mask checksum for type %s : %d" % gdal.GetDataTypeName(
+        typ, msk.Checksum()
+    )
 
 
 ###############################################################################
 # Test creation of external TIFF mask band just after Create()
 
 
-def test_mask_22():
+def test_mask_22(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
-    ds = drv.Create("tmp/mask_22.tif", 20, 20)
+    ds = drv.Create(tmp_path / "mask_22.tif", 20, 20)
     with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
         ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
@@ -738,12 +700,9 @@ def test_mask_22():
 
     ds = None
 
-    try:
-        os.stat("tmp/mask_22.tif.msk")
-    except OSError:
-        pytest.fail("tmp/mask_22.tif.msk is absent")
+    assert os.path.exists(tmp_path / "mask_22.tif.msk")
 
-    ds = gdal.Open("tmp/mask_22.tif")
+    ds = gdal.Open(tmp_path / "mask_22.tif")
 
     assert (
         ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
@@ -754,9 +713,9 @@ def test_mask_22():
 
     ds = None
 
-    drv.Delete("tmp/mask_22.tif")
+    drv.Delete(tmp_path / "mask_22.tif")
 
-    assert not os.path.exists("tmp/mask_22.tif.msk")
+    assert not os.path.exists(tmp_path / "mask_22.tif.msk")
 
 
 ###############################################################################
@@ -765,12 +724,16 @@ def test_mask_22():
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_mask_23():
+def test_mask_23(tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
 
     src_ds = drv.Create(
-        "tmp/mask_23_src.tif", 3000, 2000, 3, options=["TILED=YES", "SPARSE_OK=YES"]
+        tmp_path / "mask_23_src.tif",
+        3000,
+        2000,
+        3,
+        options=["TILED=YES", "SPARSE_OK=YES"],
     )
     with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
         src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
@@ -778,15 +741,15 @@ def test_mask_23():
     gdal.ErrorReset()
     with gdaltest.SetCacheMax(15000000):
         ds = drv.CreateCopy(
-            "tmp/mask_23_dst.tif", src_ds, options=["TILED=YES", "COMPRESS=JPEG"]
+            tmp_path / "mask_23_dst.tif", src_ds, options=["TILED=YES", "COMPRESS=JPEG"]
         )
 
     del ds
     error_msg = gdal.GetLastErrorMsg()
     src_ds = None
 
-    drv.Delete("tmp/mask_23_src.tif")
-    drv.Delete("tmp/mask_23_dst.tif")
+    drv.Delete(tmp_path / "mask_23_src.tif")
+    drv.Delete(tmp_path / "mask_23_dst.tif")
 
     # 'ERROR 1: TIFFRewriteDirectory:Error fetching directory count' was triggered before
     assert error_msg == ""
@@ -796,10 +759,10 @@ def test_mask_23():
 # Test on a GDT_UInt16 RGBA (#5692)
 
 
-def test_mask_24():
+def test_mask_24(tmp_vsimem):
 
     ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/mask_24.tif",
+        tmp_vsimem / "mask_24.tif",
         100,
         100,
         4,
@@ -830,81 +793,67 @@ def test_mask_24():
     ds.GetRasterBand(4).Fill(255)
     assert struct.unpack("B", mask.ReadRaster(0, 0, 1, 1))[0] == 1
 
-    ds = None
-
-    gdal.Unlink("/vsimem/mask_24.tif")
-
 
 ###############################################################################
 # Test various error conditions
 
 
-def test_mask_25():
+def test_mask_25(tmp_vsimem):
 
-    ds = gdal.GetDriverByName("GTiff").Create("/vsimem/mask_25.tif", 1, 1)
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "mask_25.tif", 1, 1)
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID
     ds = None
 
     # No INTERNAL_MASK_FLAGS_x metadata
-    gdal.GetDriverByName("GTiff").Create("/vsimem/mask_25.tif.msk", 1, 1)
-    ds = gdal.Open("/vsimem/mask_25.tif")
+    gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "mask_25.tif.msk", 1, 1)
+    ds = gdal.Open(tmp_vsimem / "mask_25.tif")
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_ALL_VALID
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     assert cs == 3
-    ds = None
-    gdal.Unlink("/vsimem/mask_25.tif")
-    gdal.Unlink("/vsimem/mask_25.tif.msk")
+
+
+def test_mask_25_b(tmp_vsimem):
 
     # Per-band mask
-    ds = gdal.GetDriverByName("GTiff").Create("/vsimem/mask_25.tif", 1, 1)
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "mask_25.tif", 1, 1)
     with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
         ds.GetRasterBand(1).CreateMaskBand(0)
     ds = None
-    ds = gdal.Open("/vsimem/mask_25.tif")
+    ds = gdal.Open(tmp_vsimem / "mask_25.tif")
     assert ds.GetRasterBand(1).GetMaskFlags() == 0
     cs = ds.GetRasterBand(1).GetMaskBand().Checksum()
     assert cs == 0
-    ds = None
-    gdal.Unlink("/vsimem/mask_25.tif")
-    gdal.Unlink("/vsimem/mask_25.tif.msk")
 
+
+def test_mask_25_c(tmp_vsimem):
     # .msk file does not have enough bands
-    gdal.GetDriverByName("GTiff").Create("/vsimem/mask_25.tif", 1, 1, 2)
-    ds = gdal.GetDriverByName("GTiff").Create("/vsimem/mask_25.tif.msk", 1, 1)
+    gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "mask_25.tif", 1, 1, 2)
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "mask_25.tif.msk", 1, 1)
     ds.SetMetadataItem("INTERNAL_MASK_FLAGS_2", "0")
     ds = None
-    ds = gdal.Open("/vsimem/mask_25.tif")
-    with gdal.quiet_errors():
-        assert ds.GetRasterBand(2).GetMaskFlags() == gdal.GMF_ALL_VALID
-    ds = None
-    gdal.Unlink("/vsimem/mask_25.tif")
-    gdal.Unlink("/vsimem/mask_25.tif.msk")
+    ds = gdal.Open(tmp_vsimem / "mask_25.tif")
+    with pytest.raises(Exception, match="Illegal band"):
+        ds.GetRasterBand(2).GetMaskFlags()
 
+
+def test_mask_25_d(tmp_vsimem):
     # Invalid sequences of CreateMaskBand() calls
-    ds = gdal.GetDriverByName("GTiff").Create("/vsimem/mask_25.tif", 1, 1, 2)
+    ds = gdal.GetDriverByName("GTiff").Create(tmp_vsimem / "mask_25.tif", 1, 1, 2)
     with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
         ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    with gdal.quiet_errors():
-        with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "NO"):
+        with pytest.raises(Exception, match="msk file has a PER_DATASET mask"):
             assert ds.GetRasterBand(2).CreateMaskBand(0) != 0
-    ds = None
-    gdal.Unlink("/vsimem/mask_25.tif")
-    gdal.Unlink("/vsimem/mask_25.tif.msk")
-
-    # CreateMaskBand not supported by this dataset
-    with gdal.quiet_errors():
-        ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-        ds.CreateMaskBand(0)
 
 
 ###############################################################################
 # Test on a GDT_UInt16 1band data
 
 
-def test_mask_26():
+def test_mask_26(tmp_vsimem):
 
     ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/mask_26.tif", 100, 100, 2, gdal.GDT_UInt16, options=["ALPHA=YES"]
+        tmp_vsimem / "mask_26.tif", 100, 100, 2, gdal.GDT_UInt16, options=["ALPHA=YES"]
     )
     ds.GetRasterBand(1).Fill(65565)
     ds.GetRasterBand(2).Fill(65565)
@@ -919,40 +868,31 @@ def test_mask_26():
 
     assert struct.unpack("B", mask.ReadRaster(0, 0, 1, 1))[0] == 255
 
-    ds = None
-
-    gdal.Unlink("/vsimem/mask_26.tif")
-
 
 ###############################################################################
 # Extensive test of nodata mask for all complex types using real part only
 
 
-def test_mask_27():
+@pytest.mark.parametrize("typ", (gdal.GDT_CFloat32, gdal.GDT_CFloat64))
+def test_mask_27(tmp_path, typ):
 
-    types = [gdal.GDT_CFloat32, gdal.GDT_CFloat64]
-
-    nodatavalue = [0.5, 0.5]
+    nodata = 0.5
 
     drv = gdal.GetDriverByName("GTiff")
-    for i, typ in enumerate(types):
-        ds = drv.Create("tmp/mask27.tif", 1, 1, 1, typ)
-        ds.GetRasterBand(1).Fill(nodatavalue[i], 10)
-        ds.GetRasterBand(1).SetNoDataValue(nodatavalue[i])
+    ds = drv.Create(tmp_path / "mask27.tif", 1, 1, 1, typ)
+    ds.GetRasterBand(1).Fill(nodata, 10)
+    ds.GetRasterBand(1).SetNoDataValue(nodata)
 
-        assert (
-            ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_NODATA
-        ), "did not get expected mask flags for type %s" % gdal.GetDataTypeName(typ)
+    assert (
+        ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_NODATA
+    ), "did not get expected mask flags for type %s" % gdal.GetDataTypeName(typ)
 
-        msk = ds.GetRasterBand(1).GetMaskBand()
-        assert msk.Checksum() == 0, (
-            "did not get expected mask checksum for type %s : %d"
-            % gdal.GetDataTypeName(typ, msk.Checksum())
-        )
-
-        msk = None
-        ds = None
-        drv.Delete("tmp/mask27.tif")
+    msk = ds.GetRasterBand(1).GetMaskBand()
+    assert (
+        msk.Checksum() == 0
+    ), "did not get expected mask checksum for type %s : %d" % gdal.GetDataTypeName(
+        typ, msk.Checksum()
+    )
 
 
 ###############################################################################
@@ -963,6 +903,7 @@ def test_mask_27():
 @pytest.mark.parametrize(
     "GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND", [None, "YES", "ALWAYS"]
 )
+@gdaltest.disable_exceptions()
 def test_mask_setting_nodata(dt, GDAL_SIMUL_MEM_ALLOC_FAILURE_NODATA_MASK_BAND):
     def set_nodata_value(ds, val):
         if dt == gdal.GDT_UInt8:

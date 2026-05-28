@@ -9359,7 +9359,7 @@ CPLErr GTiffDataset::CreateMaskBand(int nFlagsIn)
     if (m_poMaskDS != nullptr)
     {
         ReportError(CE_Failure, CPLE_AppDefined,
-                    "This TIFF dataset has already an internal mask band");
+                    "This TIFF dataset already has an internal mask band");
         return CE_Failure;
     }
     else if (MustCreateInternalMask())
@@ -9470,7 +9470,7 @@ CPLErr GTiffRasterBand::CreateMaskBand(int nFlagsIn)
     if (m_poGDS->m_poMaskDS != nullptr)
     {
         ReportError(CE_Failure, CPLE_AppDefined,
-                    "This TIFF dataset has already an internal mask band");
+                    "This TIFF dataset already has an internal mask band");
         return CE_Failure;
     }
 
