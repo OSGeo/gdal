@@ -9219,48 +9219,21 @@ def test_tiff_write_rewrite_lzw_strip():
 # overview on the mask
 
 
-def test_tiff_write_overviews_mask_no_ovr_on_mask():
+@gdaltest.enable_exceptions()
+def test_tiff_write_overviews_mask_no_ovr_on_mask(tmp_vsimem):
 
-    tmpfile = "/vsimem/test_tiff_write_overviews_mask_no_ovr_on_mask.tif"
-    ds = gdaltest.tiff_drv.Create(tmpfile, 100, 100)
-    ds.GetRasterBand(1).Fill(255)
-    ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+    tmpfile = tmp_vsimem / "tiff_with_ovr_mask_but_no_ovr_of_mask.tif"
+    gdal.CopyFile("data/gtiff/tiff_with_ovr_mask_but_no_ovr_of_mask.tif", tmpfile)
 
-    ds = gdal.Open(tmpfile)
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ds.BuildOverviews("NEAR", overviewlist=[2])
-    assert (
-        "Building external overviews whereas there is an internal mask is not fully supported. The overviews of the non-mask bands will be created, but not the overviews of the mask band."
-        in gdal.GetLastErrorMsg()
-    )
-    # No overview on the mask
-    assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_ALL_VALID
-    ds = None
-
-    tmpfile2 = "/vsimem/test_tiff_write_overviews_mask_no_ovr_on_mask_copy.tif"
+    tmpfile2 = tmp_vsimem / "test_tiff_write_overviews_mask_no_ovr_on_mask_copy.tif"
     src_ds = gdal.Open(tmpfile)
-    gdal.ErrorReset()
-    with gdal.quiet_errors():
-        ds = gdaltest.tiff_drv.CreateCopy(
-            tmpfile2, src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
-        )
-    assert (
-        "Source dataset has a mask band on full resolution, overviews on the regular bands, but lacks overviews on the mask band."
-        in gdal.GetLastErrorMsg()
-    )
-    assert ds
-    ds = None
+    gdaltest.tiff_drv.CreateCopy(tmpfile2, src_ds, options=["COPY_SRC_OVERVIEWS=YES"])
     src_ds = None
 
     ds = gdal.Open(tmpfile)
     assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
-    # No overview on the mask
     assert ds.GetRasterBand(1).GetOverview(0).GetMaskFlags() == gdal.GMF_ALL_VALID
     ds = None
-
-    gdaltest.tiff_drv.Delete(tmpfile)
-    gdaltest.tiff_drv.Delete(tmpfile2)
 
 
 ###############################################################################
