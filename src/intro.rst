@@ -8,7 +8,7 @@ This workshop will give the opportunity to participants to get a hands-on experi
 Target audience
 ---------------
 
-Suitable for those new to GDAL, as well as those already experienced with the traditional utilities and wishing to get to speed with the new CLI. Some familiarity with geospatial raster and vector data and coordinate systems is assumed but not strictly required. Participants should not be afraid of command line use! Some SQL and Python knowledge will be useful for advanced exercises. 
+Suitable for those new to GDAL, as well as those already experienced with the traditional utilities and wishing to get up to speed with the new CLI. Some familiarity with geospatial raster and vector data and coordinate systems is assumed but not strictly required. Participants should not be afraid of command line use! Some SQL and Python knowledge will be useful for advanced exercises. 
 
 Content
 -------
