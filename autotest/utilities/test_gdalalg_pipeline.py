@@ -879,7 +879,10 @@ def test_gdalalg_pipeline_nested_errors():
     with pytest.raises(
         Exception, match="Last step in an inner pipeline must not be a write-like step"
     ):
-        gdal.Run("pipeline", pipeline="read [ write foo ]")
+        gdal.Run(
+            "pipeline",
+            pipeline="read [ read ../gcore/data/byte.tif ! write foo ] ! info",
+        )
 
     with pytest.raises(
         Exception, match="'write' is not allowed as an intermediate step"

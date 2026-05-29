@@ -137,8 +137,9 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
         if (steps.back()->CanBeLastStep() && !steps.back()->CanBeMiddleStep())
         {
             ReportError(CE_Failure, CPLE_AppDefined,
-                        "No write-like step like '%s' is allowed",
-                        steps.back()->GetName().c_str());
+                        "Last step in %s pipeline must not be a "
+                        "write-like step.",
+                        m_bInnerPipeline ? "an inner" : "a");
             return false;
         }
     }
@@ -404,7 +405,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     if (pCurArgsForAutocomplete)
         *pCurArgsForAutocomplete = args;
 
-    if (IsCalledFromCommandLine())
+    if (!m_bInnerPipeline && IsCalledFromCommandLine())
     {
         m_eLastStepAsWrite = StepConstraint::MUST_BE;
     }
@@ -871,17 +872,6 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
         {
             ReportError(CE_Failure, CPLE_AppDefined,
                         "At least one step must be provided in %s pipeline.",
-                        m_bInnerPipeline ? "an inner" : "a");
-            return false;
-        }
-
-        if (m_eLastStepAsWrite == StepConstraint::CAN_NOT_BE &&
-            steps.back().alg->CanBeLastStep() &&
-            !steps.back().alg->CanBeMiddleStep())
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Last step in %s pipeline must not be a "
-                        "write-like step.",
                         m_bInnerPipeline ? "an inner" : "a");
             return false;
         }
