@@ -1,5 +1,7 @@
 .. _gdal_vector_explode_collections:
 
+.. program:: gdal_vector_explode_collections
+
 ================================================================================
 ``gdal vector explode-collections``
 ================================================================================

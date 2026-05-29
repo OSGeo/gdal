@@ -1,5 +1,7 @@
 .. _gdal_vector_check_geometry:
 
+.. program:: gdal_vector_check_geometry
+
 
 ================================================================================
 ``gdal vector check-geometry``
