@@ -901,6 +901,14 @@ def test_gdalalg_pipeline_nested_errors():
             pipeline='read [ read ../gcore/data/byte.tif ! reproject --dst-crs "+proj=longlat +a=1" ] ! info',
         )
 
+    with pytest.raises(
+        Exception, match="'not_existing' is a unknown sub-algorithm of 'overview'"
+    ):
+        gdal.Run(
+            "pipeline",
+            pipeline="read ../gcore/data/byte.tif ! overview not_existing ! info",
+        )
+
 
 def test_gdalalg_pipeline_nested_double():
 
