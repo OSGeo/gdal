@@ -253,15 +253,18 @@ bool GDALRasterRGBToPaletteAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                 oCT = std::move(*(poCT.get()));
             }
         }
-
-        m_colorCount = oCT.GetColorEntryCount();
     }
+
+    m_colorCount = oCT.GetColorEntryCount();
 
     if (m_dstNoData >= 0)
     {
         for (int i = std::min(255, m_colorCount); i > m_dstNoData; --i)
         {
-            oCT.SetColorEntry(i, oCT.GetColorEntry(i - 1));
+            // Create a temporary copy to avoid use after free when SetColorEntry()
+            // resizes the underlying vector.
+            const GDALColorEntry sEntry = *(oCT.GetColorEntry(i - 1));
+            oCT.SetColorEntry(i, &sEntry);
         }
 
         poTmpDS->GetRasterBand(1)->SetNoDataValue(m_dstNoData);
