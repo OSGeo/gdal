@@ -5,4 +5,4 @@
     fields will be not modified.
     If this option is not specified, all geometry fields will be subject to the
     processing.
-    This option can be combined together with :option:`gdal_options_active_layer --active-layer`.
+    This option can be combined together with :option:`--active-layer`.

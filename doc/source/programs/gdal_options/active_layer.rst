@@ -1,5 +1,3 @@
-.. program:: gdal_options_active_layer
-
 .. option:: --active-layer <ACTIVE-LAYER>
 
     Set the active layer. When it is specified, only the layer specified by
