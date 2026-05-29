@@ -545,6 +545,24 @@ def test_gdalalg_pipeline_run_existing(tmp_path):
         assert ds.GetMetadataItem("FOO") == "BAR"
     gdal.Unlink(output_filename)
 
+    pipeline_short_argname_filename = tmp_path / "pipeline_short_argname.gdalg.json"
+    with gdal.VSIFile(pipeline_short_argname_filename, "wb") as f:
+        j = json.dumps(
+            {
+                "type": "gdal_streamed_alg",
+                "relative_paths_relative_to_this_file": False,
+                "command_line": "gdal pipeline read -i ../gcore/data/byte.tif ! reproject -s EPSG:26711 -d EPSG:4326",
+            }
+        )
+        f.write(j.encode("UTF-8"))
+    out = gdaltest.runexternal(
+        f"{gdal_path} pipeline {pipeline_short_argname_filename} --output {output_filename} --reproject.output-crs EPSG:32611 --quiet"
+    )
+    assert out == ""
+    with gdal.Open(output_filename) as ds:
+        assert ds.GetSpatialRef().GetAuthorityCode() == "32611"
+    gdal.Unlink(output_filename)
+
     _, err = gdaltest.runexternal_out_and_err(
         f"{gdal_path} pipeline {pipeline_filename}"
     )

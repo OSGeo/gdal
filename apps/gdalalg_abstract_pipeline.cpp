@@ -1086,12 +1086,25 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
                                 equalPos == std::string::npos
                                     ? iterArgName
                                     : iterArgName.substr(0, equalPos));
-                            ++oIter;
-                            if (stepArg && equalPos == std::string::npos &&
-                                stepArg->GetType() != GAAT_BOOLEAN)
+                            if (stepArg && stepArg->GetName() == stepArgName)
                             {
-                                if (oIter != step.args.end())
+                                oIter = step.args.erase(oIter);
+                                if (equalPos == std::string::npos &&
+                                    stepArg->GetType() != GAAT_BOOLEAN &&
+                                    oIter != step.args.end())
+                                {
+                                    oIter = step.args.erase(oIter);
+                                }
+                            }
+                            else
+                            {
+                                ++oIter;
+                                if (stepArg && equalPos == std::string::npos &&
+                                    stepArg->GetType() != GAAT_BOOLEAN &&
+                                    oIter != step.args.end())
+                                {
                                     ++oIter;
+                                }
                             }
                         }
                         else if (idxPositional < positionalArgs.size())
