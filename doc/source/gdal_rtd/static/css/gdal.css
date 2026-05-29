@@ -357,3 +357,7 @@ table.top-aligned-table td p {
     line-height: 140% !important;
 }
 
+/** two-column TOC used for pipeline steps */
+.steps-toc ul {
+    columns: 2;
+}
