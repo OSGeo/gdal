@@ -493,6 +493,7 @@ Examples
           ! filter --where "ADMIN='Romania'" \
           ! buffer --distance=1 \
           ! clip --input "NE2_50M_SR_W.tif" --like _PIPE_ \
+          ! resize --size=70%,70% -r average \
           ! write romania.png --overwrite
 
       .. code-tab:: ps1
@@ -502,4 +503,5 @@ Examples
           ! filter --where "ADMIN='Romania'" `
           ! buffer --distance=1 `
           ! clip --input "NE2_50M_SR_W.tif" --like _PIPE_ `
+          ! resize --size=70%,70% -r average `
           ! write romania.png --overwrite
