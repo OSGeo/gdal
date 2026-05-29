@@ -93,6 +93,10 @@ Program-Specific Options
 
     Mutually exclusive with :option:`--schema` and with :option:`--like`.
 
+.. option:: --geometry-field <GEOMETRY-FIELD>
+
+   Name of the geometry field to create (if supported by the output format) (default: geom).
+
 .. option:: --geometry-type <GEOMETRY-TYPE>
 
    Defines the geometry type of the created layer.

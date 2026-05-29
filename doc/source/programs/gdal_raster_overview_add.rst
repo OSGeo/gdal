@@ -94,7 +94,7 @@ Program-Specific Options
 
     Mutually exclusive with :option:`--levels`
 
-.. option:: --resampling {nearest|average|cubic|cubicspline|lanczos|bilinear|gauss|average_magphase|rms|mode}
+.. option:: -r, --resampling {nearest|average|cubic|cubicspline|lanczos|bilinear|gauss|average_magphase|rms|mode}
 
     Select a resampling algorithm. The default is ``nearest``, which is generally not
     appropriate if sub-pixel accuracy is desired.
