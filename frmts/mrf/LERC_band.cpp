@@ -44,6 +44,8 @@ Authors:  Lucian Plesea
 #define L2NS LercNS
 #endif
 
+#define INFOIDX(T) static_cast<size_t>(L2NS::InfoArrOrder::T)
+
 USING_NAMESPACE_LERC1
 NAMESPACE_MRF_START
 
@@ -576,8 +578,27 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
     auto stride = static_cast<int>(img.pagesize.c);
 
     std::vector<Lerc1NS::Byte> bm;
+    int nMasks = 0;
+#if LERC_AT_LEAST_VERSION(3, 0, 0)
+    {
+        // Determine the number of masks
+        std::vector<unsigned int> info(INFOIDX(nMasks) + 1);
+        auto status =
+            lerc_getBlobInfo(reinterpret_cast<Lerc1NS::Byte *>(src.buffer),
+                             static_cast<unsigned int>(src.size), info.data(),
+                             nullptr, static_cast<int>(info.size()), 0);
+        if (L2NS::ErrCode::Ok == static_cast<L2NS::ErrCode>(status) &&
+            1 == info[INFOIDX(nBands)])
+        {
+            nMasks = info[INFOIDX(nMasks)];
+        }
+    }
+#else
     if (img.hasNoData)
-        bm.resize(static_cast<size_t>(w) * static_cast<size_t>(h));
+        nMasks = 1;
+#endif
+    if (nMasks > 0)
+        bm.resize(static_cast<size_t>(w) * static_cast<size_t>(h) * nMasks);
     auto pbm = bm.data();
     if (bm.empty())
         pbm = nullptr;
@@ -588,13 +609,14 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
         lerc_decode(reinterpret_cast<Lerc1NS::Byte *>(src.buffer),
                     static_cast<unsigned int>(src.size),
 #if LERC_AT_LEAST_VERSION(3, 0, 0)
-                    pbm ? 1 : 0,
+                    nMasks,
 #endif
                     pbm, stride, w, h, 1,
                     static_cast<unsigned int>(GDTtoL2(img.dt)), dst.buffer);
     if (L2NS::ErrCode::Ok != static_cast<L2NS::ErrCode>(status))
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "MRF: Error decoding Lerc");
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MRF: Error decoding Lerc: status=%d", status);
         return CE_Failure;
     }
 
@@ -682,8 +704,6 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         static const GIntBig MAX_L2SIZE(10 * 1024 * 1024);  // 10MB
         GByte *buffer = nullptr;
         vsi_l_offset l2size;
-
-#define INFOIDX(T) static_cast<size_t>(L2NS::InfoArrOrder::T)
 
         if (VSIIngestFile(nullptr, poOpenInfo->pszFilename, &buffer, &l2size,
                           MAX_L2SIZE))
