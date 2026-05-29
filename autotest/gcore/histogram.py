@@ -19,17 +19,11 @@ import shutil
 import struct
 import sys
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
 
-
 ###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
 
 
 @pytest.fixture()
@@ -714,35 +708,36 @@ def test_histogram_errors():
 
 
 @pytest.mark.parametrize(
-    "min,max",
+    "min,max,message",
     [
-        [math.nan, 1.5],
-        [-math.inf, 1.5],
-        [math.inf, 1.5],
-        [-0.5, math.nan],
-        [-0.5, -math.inf],
-        [-0.5, math.inf],
-        [-math.inf, math.inf],
-        [-sys.float_info.max, sys.float_info.max],  # leads to dfScale == 0
-        [0, 1e-309],  # leads to dfScale == inf
-        [0, 0],
+        [math.nan, 1.5, "Max should be strictly greater than dfMin"],
+        [-math.inf, 1.5, "should be finite values"],
+        [math.inf, 1.5, "Max should be strictly greater than dfMin"],
+        [-0.5, math.nan, "Max should be strictly greater than dfMin"],
+        [-0.5, -math.inf, "Max should be strictly greater than dfMin"],
+        [-0.5, math.inf, "should be finite values"],
+        [-math.inf, math.inf, "should be finite values"],
+        [
+            -sys.float_info.max,
+            sys.float_info.max,
+            "should be finite values",
+        ],  # leads to dfScale == 0
+        [0, 1e-309, "should be finite values"],  # leads to dfScale == inf
+        [0, 0, "Max should be strictly greater than dfMin"],
     ],
 )
-def test_histogram_invalid_min_max(min, max):
+def test_histogram_invalid_min_max(min, max, message):
 
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    with gdal.quiet_errors():
-        gdal.ErrorReset()
+
+    with pytest.raises(Exception, match=message):
         ret = ds.GetRasterBand(1).GetHistogram(
             buckets=2, min=min, max=max, include_out_of_range=1, approx_ok=0
         )
         if (min, max) == (-sys.float_info.max, sys.float_info.max) and ret == [1, 0]:
             # Happens on i386 since 2. / (sys.float_info.max - -sys.float_info.max) == 5.56268464626800346e-309
             # when using i387 coprocessor (long double)
-            pass
-        else:
-            ret == [0, 0]
-            assert gdal.GetLastErrorMsg() != ""
+            pytest.skip()
 
 
 ###############################################################################
