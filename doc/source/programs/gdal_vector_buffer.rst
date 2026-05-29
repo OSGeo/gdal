@@ -79,7 +79,7 @@ Program-Specific Options
 
     Specifies one or more layer names to read and process. By default, all
     layers will be read and processed. To read and write all layers but only
-    process a subset, use :option:`--active-layer`.
+    process a subset, use :option:`gdal_options_active_layer --active-layer`.
 
 .. option:: --mitre-limit <MITRE-LIMIT>
 
