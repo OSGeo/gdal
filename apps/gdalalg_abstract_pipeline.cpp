@@ -833,18 +833,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
 
     if (m_eLastStepAsWrite == StepConstraint::MUST_BE)
     {
-        if (!m_bExpectReadStep)
-        {
-            if (steps.empty())
-            {
-                ReportError(
-                    CE_Failure, CPLE_AppDefined,
-                    "At least one step must be provided in %s pipeline.",
-                    m_bInnerPipeline ? "an inner" : "a");
-                return false;
-            }
-        }
-        else if (steps.size() < 2)
+        if (steps.size() < 2)
         {
             if (!steps.empty() && helpRequested)
             {
