@@ -10974,6 +10974,34 @@ def test_gpkg_secure_delete(tmp_vsimem):
                 assert f.GetField(0) == 0
 
 
+def _compare_to_golden_file(src_filename, out_filename):
+
+    assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
+    golden_data = bytearray(open(src_filename, "rb").read())
+    got_data = bytearray(open(out_filename, "rb").read())
+    # Zero out the SQLite version number at bytes 96-99. Cf https://www.sqlite.org/fileformat.html
+    golden_data[96] = golden_data[97] = golden_data[98] = golden_data[99] = 0
+    got_data[96] = got_data[97] = got_data[98] = got_data[99] = 0
+
+    if golden_data != got_data:
+        # Compare sqlite3 dump if sqlite3 binary available
+        import subprocess
+
+        try:
+            golden_dump = subprocess.check_output(
+                ["sqlite3", src_filename, ".dump"]
+            ).decode("utf-8")
+            got_dump = subprocess.check_output(
+                ["sqlite3", out_filename, ".dump"]
+            ).decode("utf-8")
+        except Exception:
+            pytest.skip(
+                f"could not compare if {out_filename} is identical to {src_filename}"
+            )
+
+        assert got_dump == golden_dump
+
+
 ###############################################################################
 # Verify that we can generate an output that is byte-identical to the expected golden file.
 
@@ -10993,29 +11021,33 @@ def test_ogr_gpkg_write_check_golden_file(tmp_path, src_filename, options):
     with gdal.config_option("OGR_CURRENT_DATE", "2000-01-01T00:00:00.000Z"):
         gdal.VectorTranslate(out_filename, src_filename, datasetCreationOptions=options)
 
-    # Compare first sqlite3 dump if sqlite3 binary available
-    import subprocess
+    _compare_to_golden_file(src_filename, out_filename)
 
-    try:
-        golden_dump = subprocess.check_output(
-            ["sqlite3", src_filename, ".dump"]
-        ).decode("utf-8")
-        got_dump = subprocess.check_output(["sqlite3", out_filename, ".dump"]).decode(
-            "utf-8"
-        )
-        assert got_dump == golden_dump
-        # print("Identical sqlite3 dump")
-    except Exception:
-        pass
 
-    if get_sqlite_version() >= (3, 46, 0):
-        assert os.stat(src_filename).st_size == os.stat(out_filename).st_size
-        golden_data = bytearray(open(src_filename, "rb").read())
-        got_data = bytearray(open(out_filename, "rb").read())
-        # Zero out the SQLite version number at bytes 96-99. Cf https://www.sqlite.org/fileformat.html
-        golden_data[96] = golden_data[97] = golden_data[98] = golden_data[99] = 0
-        got_data[96] = got_data[97] = got_data[98] = got_data[99] = 0
-        assert got_data == golden_data
+###############################################################################
+def test_ogr_gpkg_write_reproducible_rtree(tmp_path):
+
+    out_filename = str(tmp_path / "test.gpkg")
+    with gdal.config_option("OGR_CURRENT_DATE", "2000-01-01T00:00:00.000Z"):
+        with gdal.GetDriverByName("GPKG").CreateVector(
+            out_filename, options=["VERSION=1.4"]
+        ) as ds:
+            layer = ds.CreateLayer("Node", geom_type=ogr.wkbPoint)
+            x_origin = 155000.0  # typical Dutch RD x
+            y_origin = 463000.0  # typical Dutch RD y
+            spacing = 50.0  # 50m spacing
+            # 200 points in a 20x10 grid ensures a multi-level R-tree (max 51 entries/node).
+            for i in range(20):
+                for j in range(10):
+                    x = x_origin + i * spacing
+                    y = y_origin + j * spacing
+                    feat = ogr.Feature(layer.GetLayerDefn())
+                    geom = ogr.CreateGeometryFromWkt(f"POINT ({x} {y})")
+                    feat.SetGeometry(geom)
+                    layer.CreateFeature(feat)
+
+    src_filename = str("data/gpkg/test_ogr_gpkg_write_reproducible_rtree.gpkg")
+    _compare_to_golden_file(src_filename, out_filename)
 
 
 ###############################################################################
