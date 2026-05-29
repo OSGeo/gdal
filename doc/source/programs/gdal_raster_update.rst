@@ -72,7 +72,9 @@ Program-Specific Options
     Set a transformer option suitable to pass to :cpp:func:`GDALCreateGenImgProjTransformer2`.
     See :cpp:func:`GDALCreateRPCTransformerV2()` for RPC specific options.
 
-.. include:: gdal_options/warp_resampling.rst
+.. option:: -r, --resampling <RESAMPLING>
+
+    .. include:: gdal_options/warp_resampling.rst
 
 .. option:: --wo, --warp-option <NAME>=<VALUE>
 
