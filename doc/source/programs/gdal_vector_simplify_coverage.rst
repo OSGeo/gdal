@@ -1,5 +1,7 @@
 .. _gdal_vector_simplify_coverage:
 
+.. program:: gdal_vector_simplify_coverage
+
 ================================================================================
 ``gdal vector simplify-coverage``
 ================================================================================

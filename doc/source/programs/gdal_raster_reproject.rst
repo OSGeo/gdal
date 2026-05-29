@@ -1,5 +1,7 @@
 .. _gdal_raster_reproject:
 
+.. program:: gdal_raster_reproject
+
 ================================================================================
 ``gdal raster reproject``
 ================================================================================
@@ -151,8 +153,18 @@ Program-Specific Options
     Note that a number of output formats, including GeoTIFF, do not support
     different per-band nodata values, but a single one for all bands.
 
+.. option:: -r, --resampling <RESAMPLING>
 
-.. include:: gdal_options/warp_resampling.rst
+    .. include:: gdal_options/warp_resampling.rst
+
+    .. note::
+
+        When downsampling is performed (use of :option:`--resolution` or :option:`--size`), existing
+        overviews (either internal/implicit or external ones) on the source image
+        will be used by default by selecting the closest overview to the desired output
+        resolution.
+        The resampling method used to create those overviews is generally not the one you
+        specify through the :option:`-r` option.
 
 .. option:: --resolution <xres>,<yres>
 

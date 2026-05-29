@@ -1,5 +1,7 @@
 .. _gdal_vector_concat:
 
+.. program:: gdal_vector_concat
+
 ================================================================================
 ``gdal vector concat``
 ================================================================================
@@ -131,7 +133,7 @@ Standard Options
 
     .. include:: gdal_options/if.rst
 
-    .. include:: gdal_options/input_layer.rst
+    .. include:: gdal_options/input_layer_no_active_layer.rst
 
     .. include:: gdal_options/lco.rst
 

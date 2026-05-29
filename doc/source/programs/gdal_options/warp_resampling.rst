@@ -1,41 +1,29 @@
+Resampling method to use. Available methods are:
 
-.. option:: -r, --resampling <RESAMPLING>
+``nearest``: nearest neighbour resampling (default, fastest algorithm, worst interpolation quality).
 
-    Resampling method to use. Available methods are:
+``bilinear``: bilinear resampling.
 
-    ``nearest``: nearest neighbour resampling (default, fastest algorithm, worst interpolation quality).
+``cubic``: cubic resampling.
 
-    ``bilinear``: bilinear resampling.
+``cubicspline``: cubic spline resampling.
 
-    ``cubic``: cubic resampling.
+``lanczos``: Lanczos windowed sinc resampling.
 
-    ``cubicspline``: cubic spline resampling.
+``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
 
-    ``lanczos``: Lanczos windowed sinc resampling.
+``rms`` root mean square / quadratic mean of all non-NODATA contributing pixels
 
-    ``average``: average resampling, computes the weighted average of all non-NODATA contributing pixels.
+``mode``: mode resampling, selects the value which appears most often of all the sampled points. In the case of ties, the first value identified as the mode will be selected.
 
-    ``rms`` root mean square / quadratic mean of all non-NODATA contributing pixels
+``max``: maximum resampling, selects the maximum value from all non-NODATA contributing pixels.
 
-    ``mode``: mode resampling, selects the value which appears most often of all the sampled points. In the case of ties, the first value identified as the mode will be selected.
+``min``: minimum resampling, selects the minimum value from all non-NODATA contributing pixels.
 
-    ``max``: maximum resampling, selects the maximum value from all non-NODATA contributing pixels.
+``med``: median resampling, selects the median value of all non-NODATA contributing pixels.
 
-    ``min``: minimum resampling, selects the minimum value from all non-NODATA contributing pixels.
+``q1``: first quartile resampling, selects the first quartile value of all non-NODATA contributing pixels.
 
-    ``med``: median resampling, selects the median value of all non-NODATA contributing pixels.
+``q3``: third quartile resampling, selects the third quartile value of all non-NODATA contributing pixels.
 
-    ``q1``: first quartile resampling, selects the first quartile value of all non-NODATA contributing pixels.
-
-    ``q3``: third quartile resampling, selects the third quartile value of all non-NODATA contributing pixels.
-
-    ``sum``: compute the weighted sum of all non-NODATA contributing pixels
-
-    .. note::
-
-        When downsampling is performed (use of :option:`--resolution` or :option:`--size`), existing
-        overviews (either internal/implicit or external ones) on the source image
-        will be used by default by selecting the closest overview to the desired output
-        resolution.
-        The resampling method used to create those overviews is generally not the one you
-        specify through the :option:`-r` option.
+``sum``: compute the weighted sum of all non-NODATA contributing pixels

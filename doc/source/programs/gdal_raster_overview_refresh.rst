@@ -1,5 +1,7 @@
 .. _gdal_raster_overview_refresh:
 
+.. program:: gdal_raster_overview_refresh
+
 ================================================================================
 ``gdal raster overview refresh``
 ================================================================================
@@ -61,7 +63,7 @@ Program-Specific Options
     levels are specified. See :example:`refresh-tiff`.
 
 
-.. option:: --resampling {nearest|average|cubic|cubicspline|lanczos|bilinear|gauss|average_magphase|rms|mode}
+.. option:: -r, --resampling {nearest|average|cubic|cubicspline|lanczos|bilinear|gauss|average_magphase|rms|mode}
 
     Select a resampling algorithm. The default is ``nearest``, which is generally not
     appropriate if sub-pixel accuracy is desired.
