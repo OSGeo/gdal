@@ -1,5 +1,7 @@
 .. _gdal_vector_check_geometry:
 
+.. program:: gdal_vector_check_geometry
+
 
 ================================================================================
 ``gdal vector check-geometry``
@@ -66,7 +68,7 @@ Program-Specific Options
 
    Include features for valid/simple geometries in the output, maintaining 1:1 correspondence between input and output features.
 
-.. include:: gdal_options/input_layer.rst
+.. include:: gdal_options/input_layer_no_active_layer.rst
 
 .. option:: --output-layer
 

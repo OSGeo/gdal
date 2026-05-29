@@ -35,7 +35,7 @@ Additional details are typically provided in the accompanying error message.
 .. example::
    :title: Overwriting a GeoPackage that is in use by another application
 
-   Although ``--overwrite`` is specified, the output file cannot be replaced
+   Although :option:`--overwrite <gdal_vector_buffer --overwrite>` is specified, the output file cannot be replaced
    because it is in use by another application (for example, when opened in
    QGIS on Windows).
 
@@ -194,7 +194,7 @@ An invalid or unsupported argument was passed to a GDAL function or command.
    :title: Using an unknown command-line option
 
    The ``gdal raster reproject`` command does not support the ``--crs`` option.
-   Use ``--output-crs`` instead. Available options can be listed using ``--help``
+   Use :option:`--output-crs <gdal_raster_reproject --output-crs>` instead. Available options can be listed using ``--help``
    or by checking the documentation for :ref:`gdal_raster_reproject`.
 
    .. code-block:: console

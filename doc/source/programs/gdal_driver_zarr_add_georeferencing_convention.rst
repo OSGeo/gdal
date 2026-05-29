@@ -1,5 +1,7 @@
 .. _gdal_driver_zarr_add_georeferencing_convention:
 
+.. program:: gdal_driver_zarr_add_georeferencing_convention
+
 ================================================================================
 ``gdal driver zarr add-georeferencing-convention``
 ================================================================================

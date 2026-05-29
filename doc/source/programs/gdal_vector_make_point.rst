@@ -1,5 +1,7 @@
 .. _gdal_vector_make_point:
 
+.. program:: gdal_vector_make_point
+
 ================================================================================
 ``gdal vector make-point``
 ================================================================================
@@ -60,7 +62,7 @@ Standard Options
 
     .. include:: gdal_options/if.rst
 
-    .. include:: gdal_options/input_layer.rst
+    .. include:: gdal_options/input_layer_no_active_layer.rst
 
     .. include:: gdal_options/lco.rst
 

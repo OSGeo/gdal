@@ -1,5 +1,7 @@
 .. _gdal_raster_stack:
 
+.. program:: gdal_raster_stack
+
 ================================================================================
 ``gdal raster stack``
 ================================================================================
@@ -62,16 +64,13 @@ Program-Specific Options
     Set georeferenced extents of output file. The values must be expressed in georeferenced units.
     If not specified, the extent of the output is the minimum bounding box of the set of source rasters.
     Pixels within the extent of the output but not covered by a source raster will be read as valid
-    pixels with a value of zero unless a NODATA value is specified using :option:`--output-nodata`
-    or an alpha mask band is added with :option:`--add-alpha`.
+    pixels with a value of zero unless a NODATA value is specified using :option:`--output-nodata`.
 
 .. option:: --hide-nodata
 
     Even if any band contains nodata value, giving this option makes the output band
     not report the NoData. Useful when you want to control the background color of
-    the dataset. By using along with the :option:`--add-alpha` option, you can prepare a
-    dataset which doesn't report nodata value but is transparent in areas with no
-    data.
+    the dataset.
 
 .. option:: --input-nodata <value>[,<value>]...
 
