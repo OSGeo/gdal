@@ -663,6 +663,22 @@ def test_mrf_setspatialref():
     gdal.GetDriverByName("MRF").Delete(filename)
 
 
+@pytest.mark.network
+def test_mrf_read_naked_lerc2_with_mask():
+    """Test case https://github.com/OSGeo/gdal/issues/14676"""
+
+    gdaltest.download_or_skip(
+        "https://github.com/user-attachments/files/28327092/exportImage.zip",
+        "exportImage.zip",
+        force_download=True,
+    )
+
+    ds = gdal.Open("/vsizip/tmp/cache/exportImage.zip/exportImage")
+    # 13269: internal liblerc
+    # 43345: liblerc v4
+    assert ds.GetRasterBand(1).Checksum() in (13269, 43345)
+
+
 def test_mrf_cleanup():
 
     files = (
