@@ -600,6 +600,7 @@ int GDALComputeMedianCutPCTInternal(
     /* ==================================================================== */
     /*      STEP 4: assign colors to all boxes                              */
     /* ==================================================================== */
+    if (nColorCounter > 0)
     {
         Colorbox *ptr = usedboxes;
         if (panPixelCountPerColorTableEntry)
