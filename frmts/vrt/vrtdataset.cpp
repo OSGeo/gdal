@@ -1301,12 +1301,8 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 return nullptr;
             }
 
-            // Convert using CPLStrtod to handle scientific notation (e.g., 1e0)
-            // and detect non-numeric values via endPtr
-            char *pszEnd = nullptr;
-            const double dfBlockXOff = CPLStrtod(aosBlockParams[0], &pszEnd);
-            if (pszEnd == aosBlockParams[0] || *pszEnd != '\0' ||
-                dfBlockXOff < 0 || dfBlockXOff != static_cast<int>(dfBlockXOff))
+            nBlockXOff = cpl::strict_parse<int>(aosBlockParams[0]).value_or(-1);
+            if (nBlockXOff < 0)
             {
                 CPLError(CE_Failure, CPLE_IllegalArg,
                          "Invalid block option: nXBlockOff '%s' is not a valid "
@@ -1315,10 +1311,8 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 return nullptr;
             }
 
-            pszEnd = nullptr;
-            const double dfBlockYOff = CPLStrtod(aosBlockParams[1], &pszEnd);
-            if (pszEnd == aosBlockParams[1] || *pszEnd != '\0' ||
-                dfBlockYOff < 0 || dfBlockYOff != static_cast<int>(dfBlockYOff))
+            nBlockYOff = cpl::strict_parse<int>(aosBlockParams[1]).value_or(-1);
+            if (nBlockYOff < 0)
             {
                 CPLError(CE_Failure, CPLE_IllegalArg,
                          "Invalid block option: nYBlockOff '%s' is not a valid "
@@ -1327,8 +1321,6 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 return nullptr;
             }
 
-            nBlockXOff = static_cast<int>(dfBlockXOff);
-            nBlockYOff = static_cast<int>(dfBlockYOff);
             bFoundBlock = true;
         }
     }
