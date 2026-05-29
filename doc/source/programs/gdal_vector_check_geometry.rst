@@ -68,6 +68,8 @@ Program-Specific Options
 
    Include features for valid/simple geometries in the output, maintaining 1:1 correspondence between input and output features.
 
+.. include:: gdal_options/input_layer_no_active_layer.rst
+
 .. option:: --output-layer
 
    Specifies the name of the layer to which features will be written. If not
@@ -86,8 +88,6 @@ Standard Options
     .. include:: gdal_options/co_vector.rst
 
     .. include:: gdal_options/if.rst
-
-    .. include:: gdal_options/input_layer.rst
 
     .. include:: gdal_options/lco.rst
 

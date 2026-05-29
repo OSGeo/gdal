@@ -67,9 +67,9 @@ Standard Options
 
 .. collapse:: Details
 
-    .. include:: gdal_options/active_layer.rst
-
     .. include:: gdal_options/active_geometry.rst
+
+    .. include:: gdal_options/active_layer.rst
 
     .. include:: gdal_options/append_vector.rst
 
