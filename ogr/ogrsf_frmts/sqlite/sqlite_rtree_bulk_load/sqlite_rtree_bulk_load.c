@@ -213,38 +213,33 @@ typedef struct SortType
 } SortType;
 
 #ifndef USE_CPLUSPLUS
-static int CompareAxis0(const void *a, const void *b)
+static int CompareAxis(const void *a, const void *b, int iAxis)
 {
     const SortType* sa = STATIC_CAST(const SortType*, a);
     const SortType* sb = STATIC_CAST(const SortType*, b);
-    if (sa->rects[sa->i].min[0] < sb->rects[sb->i].min[0])
+    if (sa->rects[sa->i].min[iAxis] < sb->rects[sb->i].min[iAxis])
         return -1;
-    if (sa->rects[sa->i].min[0] == sb->rects[sb->i].min[0])
-    {
-        if (sa->rects[sa->i].max[0] < sb->rects[sb->i].max[0])
-            return -1;
-        if (sa->rects[sa->i].max[0] == sb->rects[sb->i].max[0])
-            return 0;
+    if (sa->rects[sa->i].min[iAxis] > sb->rects[sb->i].min[iAxis])
         return 1;
-    }
-    return 1;
+    if (sa->rects[sa->i].max[iAxis] < sb->rects[sb->i].max[iAxis])
+        return -1;
+    if (sa->rects[sa->i].max[iAxis] > sb->rects[sb->i].max[iAxis])
+        return 1;
+    if (sa->i < sb->i)
+        return -1;
+    if (sa->i > sb->i)
+        return 1;
+    return 0;
+}
+
+static int CompareAxis0(const void *a, const void *b)
+{
+    return CompareAxis(a, b, 0);
 }
 
 static int CompareAxis1(const void *a, const void *b)
 {
-    const SortType* sa = STATIC_CAST(const SortType*, a);
-    const SortType* sb = STATIC_CAST(const SortType*, b);
-    if (sa->rects[sa->i].min[1] < sb->rects[sb->i].min[1])
-        return -1;
-    if (sa->rects[sa->i].min[1] == sb->rects[sb->i].min[1])
-    {
-        if (sa->rects[sa->i].max[1] < sb->rects[sb->i].max[1])
-            return -1;
-        if (sa->rects[sa->i].max[1] == sb->rects[sb->i].max[1])
-            return 0;
-        return 1;
-    }
-    return 1;
+    return CompareAxis(a, b, 1);
 }
 #endif
 
@@ -285,15 +280,29 @@ static bool node_split_rstartree(struct sqlite_rtree_bl *tr,
     qsort(aSorted[0], nodeOri.count, sizeof(SortType), CompareAxis0);
     qsort(aSorted[1], nodeOri.count, sizeof(SortType), CompareAxis1);
 #else
-    std::sort(aSorted[0], aSorted[0] + nodeOri.count, [&nodeOri](const SortType& a, const SortType& b) {
-        return nodeOri.rects[a.i].min[0] < nodeOri.rects[b.i].min[0] ||
-               (nodeOri.rects[a.i].min[0] == nodeOri.rects[b.i].min[0] &&
-                nodeOri.rects[a.i].max[0] < nodeOri.rects[b.i].max[0]);
+    const auto nodeComparator = [](const struct rect* rects,
+                                   const SortType& a,
+                                   const SortType& b,
+                                   int iAxis)
+    {
+        if (rects[a.i].min[iAxis] < rects[b.i].min[iAxis])
+            return true;
+        if (rects[a.i].min[iAxis] > rects[b.i].min[iAxis])
+            return false;
+        if (rects[a.i].max[iAxis] < rects[b.i].max[iAxis])
+            return true;
+        if (rects[a.i].max[iAxis] > rects[b.i].max[iAxis])
+            return false;
+        return a.i < b.i;
+    };
+
+    std::sort(aSorted[0], aSorted[0] + nodeOri.count,
+              [&nodeOri, &nodeComparator](const SortType& a, const SortType& b) {
+        return nodeComparator(nodeOri.rects, a, b, 0);
     });
-    std::sort(aSorted[1], aSorted[1] + nodeOri.count, [&nodeOri](const SortType& a, const SortType& b) {
-        return nodeOri.rects[a.i].min[1] < nodeOri.rects[b.i].min[1] ||
-               (nodeOri.rects[a.i].min[1] == nodeOri.rects[b.i].min[1] &&
-                nodeOri.rects[a.i].max[1] < nodeOri.rects[b.i].max[1]);
+    std::sort(aSorted[1], aSorted[1] + nodeOri.count,
+              [&nodeOri, &nodeComparator](const SortType& a, const SortType& b) {
+        return nodeComparator(nodeOri.rects, a, b, 1);
     });
 #endif
 
