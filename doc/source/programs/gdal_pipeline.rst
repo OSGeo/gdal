@@ -461,19 +461,19 @@ Examples
 
 .. only:: html
 
-   .. image:: ../../images/programs/test_gdal_mixed_pipeline_nested.svg
+   .. image:: ../../images/programs/gdal_mixed_pipeline_nested.svg
       :width: 0
       :height: 0
 
    .. raw:: html
 
       <object type="image/svg+xml"
-              data="../_images/test_gdal_mixed_pipeline_nested.svg">
+              data="../_images/gdal_mixed_pipeline_nested.svg">
       </object>
 
 .. only:: not html
 
-   .. image:: ../../images/programs/test_gdal_mixed_pipeline_nested.svg
+   .. image:: ../../images/programs/gdal_mixed_pipeline_nested.svg
 
 .. example::
    :title: Clip a raster dataset with vector features using ``_PIPE_``
