@@ -214,6 +214,35 @@ def test_vrt_read_5(tmp_vsimem):
     ds = None
 
 
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("bad_value", ("6.4", "10000000000000", "32f"))
+def test_vrt_read_invalid_color_table(bad_value):
+
+    ct_xml = """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ColorTable>
+       <Entry c1="{bad_value}" c2="0" c3="0" c4="255"/>
+    </ColorTable>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/rgbsmall.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/rgbsmall.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/rgbsmall.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>
+"""
+
+    with pytest.raises(Exception, match="Invalid VRT color table entry"):
+        gdal.Open(ct_xml)
+
+
 ###############################################################################
 # Test GetMinimum() and GetMaximum()
 
