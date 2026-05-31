@@ -313,3 +313,12 @@ def test_gdalalg_raster_polygonize_pipeline_output_layer(tmp_vsimem):
     ) as alg:
         ds = alg.Output()
         assert ds.GetLayer(0).GetName() == "foo"
+
+
+def test_gdalalg_raster_polygonize_pipeline(tmp_vsimem):
+
+    with gdal.alg.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! polygonize --output-layer foo ! write --output-format=MEM --output="
+    ) as alg:
+        ds = alg.Output()
+        assert ds.GetLayer(0).GetName() == "polygonize"
