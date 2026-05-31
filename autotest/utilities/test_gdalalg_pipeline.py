@@ -1309,3 +1309,14 @@ def test_gdalalg_pipeline_raster_and_clip_vector_from_inner_pipeline(
 
     with gdal.OpenEx(byte_shp) as src_ds, gdal.OpenEx(tmp_vsimem / "out.shp") as ds:
         assert ds.GetLayer(0).GetFeatureCount() == src_ds.GetLayer(0).GetFeatureCount()
+
+
+def test_gdalalg_pipeline_error_step_does_not_use_input_from_previous_step():
+
+    with pytest.raises(
+        Exception,
+        match=r"Step nr 1 \(reproject\) does not use input dataset from previous step",
+    ):
+        gdal.alg.pipeline(
+            pipeline="read ../gcore/data/byte.tif ! reproject --input ../gcore/data/uint16.tif"
+        )
