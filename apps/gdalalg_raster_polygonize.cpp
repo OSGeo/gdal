@@ -36,6 +36,7 @@ GDALRasterPolygonizeAlgorithm::GDALRasterPolygonizeAlgorithm(
               .SetStandaloneStep(standaloneStep)
               .SetAddUpsertArgument(false)
               .SetAddSkipErrorsArgument(false)
+              .SetOutputLayerNameAvailableInPipelineStep(true)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
     AddProgressArg();
