@@ -88,8 +88,8 @@ feature. Otherwise, a layer will consist of a set of features.
 If the :oo:`NATIVE_DATA` open option is set to YES, members at the level of
 the FeatureCollection will be stored as a serialized JSON object in the
 NATIVE_DATA item of the NATIVE_DATA metadata domain of the layer object
-(and "application/vnd.geo+json" in the NATIVE_MEDIA_TYPE of the
-NATIVE_DATA metadata domain).
+(and "application/geo+json" in the NATIVE_MEDIA_TYPE of the
+NATIVE_DATA metadata domain, or "application/vnd.geo+json" before GDAL 3.13.1).
 
 Feature
 -------
@@ -121,9 +121,11 @@ previous paragraph), which is equal to setting
 
 If the :oo:`NATIVE_DATA` open option is set to YES, the Feature JSON object
 will be stored as a serialized JSON object in the NativeData property of
-the OGRFeature object (and "application/vnd.geo+json" in the
-NativeMediaType property). On write, if the OGRFeature to be written has
-its NativeMediaType property set to "application/vnd.geo+json" and its
+the OGRFeature object (and "application/geo+json" in the
+NativeMediaType property, or "application/vnd.geo+json" before GDAL 3.13.1).
+On write, if the OGRFeature to be written has
+its NativeMediaType property set to "application/geo+json"
+(or "application/vnd.geo+json" before GDAL 3.13.1) and its
 NativeData property set to a string that is a serialized JSON object,
 then extra members of this object (i.e. not the "property" dictionary,
 nor the first 3 dimensions of geometry coordinates) will be used to
@@ -346,8 +348,8 @@ This driver supports the following layer creation options:
       :since: 2.1
 
       Format of :lco:`NATIVE_DATA`.
-      Must be "application/vnd.geo+json", otherwise :lco:`NATIVE_DATA` will be
-      ignored.
+      Must be "application/geo+json" (or "application/vnd.geo+json" before
+      GDAL 3.13.1), otherwise :lco:`NATIVE_DATA` will be ignored.
 
 -  .. lco:: RFC7946
       :choices: YES, NO
@@ -550,32 +552,32 @@ Example:
 Examples
 --------
 
-.. example:: 
+.. example::
    :title: Dumping content of a .geojson file
 
    .. code-block:: bash
-   
+
       ogrinfo -ro point.geojson
 
-.. example:: 
+.. example::
    :title: Querying features from remote service with filtering by attribute
 
    .. code-block:: bash
-   
+
       ogrinfo -ro http://featureserver/cities/.geojson OGRGeoJSON -where "name=Warsaw"
 
-.. example:: 
+.. example::
    :title: Translating number of features queried from FeatureServer to ESRI Shapefile
 
    .. code-block:: bash
-   
+
       ogr2ogr -f "ESRI Shapefile" cities.shp http://featureserver/cities/.geojson OGRGeoJSON
 
 .. example::
    :title: Converting a Shapefile into a RFC 7946 GeoJSON file
 
    .. code-block:: bash
-   
+
       ogr2ogr -f GeoJSON cities.json cities.shp -lco RFC7946=YES
 
 See Also

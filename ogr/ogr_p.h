@@ -156,6 +156,8 @@ int OGRCompareDate(const OGRField *psFirstTuple,
                    const OGRField *psSecondTuple); /* used by ogr_gensql.cpp and
                                                       ogrfeaturequery.cpp */
 
+bool CPL_DLL OGRIsGeoJSONMediaType(const char *pszMediaType);
+
 /* General utility option processing. */
 int CPL_DLL OGRGeneralCmdLineProcessor(int nArgc, char ***ppapszArgv,
                                        int nOptions);
