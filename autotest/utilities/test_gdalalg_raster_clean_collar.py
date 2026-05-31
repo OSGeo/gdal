@@ -288,3 +288,16 @@ def test_gdalalg_raster_clean_collar_algorithm_twopasses():
     assert ds.ReadRaster(0, 1, 4, 1) == b"\x00\xff\x01\xff"
     assert ds.ReadRaster(0, 2, 4, 1) == b"\x00\x00\x00\xff"
     assert ds.ReadRaster(0, 3, 4, 1) == b"\x00\xff\xff\xff"
+
+
+def test_gdalalg_raster_clean_collar_pipeline():
+
+    with gdal.alg.raster.pipeline(
+        pipeline="read ../gcore/data/byte.tif ! clean-collar"
+    ) as alg:
+        ds = alg.Output()
+        ds_name = ds.GetDescription()
+        assert ds.GetRasterBand(1).Checksum() == 4672
+        ds.Close()
+
+    assert gdal.VSIStatL(ds_name) is None

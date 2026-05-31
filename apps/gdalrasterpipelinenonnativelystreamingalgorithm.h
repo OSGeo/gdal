@@ -28,6 +28,9 @@ class GDALRasterPipelineNonNativelyStreamingAlgorithm /* non-final */
     GDALRasterPipelineNonNativelyStreamingAlgorithm(
         const std::string &name, const std::string &description,
         const std::string &helpURL, bool standaloneStep);
+    GDALRasterPipelineNonNativelyStreamingAlgorithm(
+        const std::string &name, const std::string &description,
+        const std::string &helpURL, const ConstructorOptions &options);
 
     bool IsNativelyStreamingCompatible() const override;
 

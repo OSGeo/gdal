@@ -70,6 +70,15 @@ calc
 
 Details for options can be found in :ref:`gdal_raster_calc`.
 
+clean-collar
+************
+
+.. versionadded:: 3.14
+
+.. program-output:: gdal raster pipeline --help-doc=clean-collar
+
+Details for options can be found in :ref:`gdal_raster_clean_collar`.
+
 clip
 ****
 

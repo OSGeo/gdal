@@ -28,27 +28,39 @@
 /*   GDALRasterCleanCollarAlgorithm::GDALRasterCleanCollarAlgorithm()   */
 /************************************************************************/
 
-GDALRasterCleanCollarAlgorithm::GDALRasterCleanCollarAlgorithm()
-    : GDALAlgorithm(NAME, DESCRIPTION, HELP_URL)
+GDALRasterCleanCollarAlgorithm::GDALRasterCleanCollarAlgorithm(
+    bool standaloneStep)
+    : GDALRasterPipelineNonNativelyStreamingAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetAddDefaultArguments(false)
+              .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
-    AddProgressArg();
+    if (standaloneStep)
+    {
+        AddProgressArg();
+        AddRasterInputArgs(false, false);
 
-    AddOpenOptionsArg(&m_openOptions);
-    AddInputFormatsArg(&m_inputFormats)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER});
-    AddInputDatasetArg(&m_inputDataset, GDAL_OF_RASTER);
-
-    AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER,
-                        /* positionalAndRequired = */ false)
-        .SetPositional()
-        .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);
-    AddOutputFormatArg(&m_format, /* bStreamAllowed = */ false,
-                       /* bGDALGAllowed = */ false)
-        .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
-                         {GDAL_DCAP_CREATE, GDAL_DCAP_RASTER});
-    AddCreationOptionsArg(&m_creationOptions);
-    AddOverwriteArg(&m_overwrite);
-    AddUpdateArg(&m_update);
+        AddOutputDatasetArg(&m_outputDataset, GDAL_OF_RASTER,
+                            /* positionalAndRequired = */ false)
+            .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT)
+            .SetAvailableInPipelineStep(false)
+            .SetPositional();
+        AddOutputFormatArg(&m_format, /* bStreamAllowed = */ false,
+                           /* bGDALGAllowed = */ false)
+            .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
+                             {GDAL_DCAP_CREATE, GDAL_DCAP_RASTER})
+            .SetAvailableInPipelineStep(false);
+        AddCreationOptionsArg(&m_creationOptions)
+            .SetAvailableInPipelineStep(false);
+        AddOverwriteArg(&m_overwrite).SetAvailableInPipelineStep(false);
+        AddUpdateArg(&m_update).SetAvailableInPipelineStep(false);
+    }
+    else
+    {
+        AddRasterHiddenInputDatasetArg();
+    }
 
     AddArg("color", 0,
            _("Transparent color(s): tuple of integer (like 'r,g,b'), 'black', "
@@ -110,68 +122,50 @@ GDALRasterCleanCollarAlgorithm::GDALRasterCleanCollarAlgorithm()
 bool GDALRasterCleanCollarAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
                                              void *pProgressData)
 {
-    auto poSrcDS = m_inputDataset.GetDatasetRef();
+    GDALPipelineStepRunContext stepCtxt;
+    stepCtxt.m_pfnProgress = pfnProgress;
+    stepCtxt.m_pProgressData = pProgressData;
+    return RunPreStepPipelineValidations() && RunStep(stepCtxt);
+}
+
+/************************************************************************/
+/*              GDALRasterCleanCollarAlgorithm::RunStep()               */
+/************************************************************************/
+
+bool GDALRasterCleanCollarAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
+{
+    auto poSrcDS = m_inputDataset[0].GetDatasetRef();
     CPLAssert(poSrcDS);
 
     auto poDstDS = m_outputDataset.GetDatasetRef();
-    if (poSrcDS == poDstDS && poSrcDS->GetAccess() == GA_ReadOnly)
+    if (!m_standaloneStep)
     {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Dataset should be opened in update mode");
-        return false;
+        m_outputDataset.Set(CPLGenerateTempFilenameSafe("_clean_collar") +
+                            ".tif");
+        m_creationOptions.push_back("TILED=YES");
     }
-    if (!poDstDS && !m_outputDataset.IsNameSet() && m_update)
+    else
     {
-        m_outputDataset.Set(poSrcDS);
-        poDstDS = poSrcDS;
-    }
-
-    const bool dstDSWasNull = poDstDS == nullptr;
-
-    if (dstDSWasNull && !m_outputDataset.IsNameSet() && !m_update)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Output dataset is not specified. If you intend to update "
-                    "the input dataset, set the 'update' option");
-        return false;
-    }
-
-    if (!poDstDS && !m_outputDataset.GetName().empty() && poDstDS != poSrcDS)
-    {
-        VSIStatBufL sStat;
-        bool fileExists{VSIStatL(m_outputDataset.GetName().c_str(), &sStat) ==
-                        0};
-
+        if (poSrcDS == poDstDS && poSrcDS->GetAccess() == GA_ReadOnly)
         {
-            CPLErrorStateBackuper oCPLErrorHandlerPusher(CPLQuietErrorHandler);
-            poDstDS = GDALDataset::FromHandle(GDALOpenEx(
-                m_outputDataset.GetName().c_str(),
-                GDAL_OF_RASTER | GDAL_OF_VERBOSE_ERROR | GDAL_OF_UPDATE,
-                nullptr, nullptr, nullptr));
-            CPLErrorReset();
-        }
-
-        if ((poDstDS || fileExists) && !m_overwrite && !m_update)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Dataset '%s' already exists. Specify the --overwrite "
-                     "option to overwrite it or the --update option to "
-                     "update it.",
-                     m_outputDataset.GetName().c_str());
-            delete poDstDS;
+            ReportError(CE_Failure, CPLE_AppDefined,
+                        "Dataset should be opened in update mode");
             return false;
         }
 
-        if (poDstDS && fileExists && m_overwrite)
+        if (!poDstDS && !m_outputDataset.IsNameSet())
         {
-            // Delete the existing file
-            delete poDstDS;
-            poDstDS = nullptr;
-            if (VSIUnlink(m_outputDataset.GetName().c_str()) != 0)
+            if (m_update)
             {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Failed to delete existing dataset '%s'.",
-                         m_outputDataset.GetName().c_str());
+                m_outputDataset.Set(poSrcDS);
+                poDstDS = poSrcDS;
+            }
+            else
+            {
+                ReportError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Output dataset is not specified. If you intend to update "
+                    "the input dataset, set the 'update' option");
                 return false;
             }
         }
@@ -260,32 +254,34 @@ bool GDALRasterCleanCollarAlgorithm::RunImpl(GDALProgressFunc pfnProgress,
     if (!psOptions)
         return false;
 
-    GDALNearblackOptionsSetProgress(psOptions.get(), pfnProgress,
-                                    pProgressData);
+    GDALNearblackOptionsSetProgress(psOptions.get(), ctxt.m_pfnProgress,
+                                    ctxt.m_pProgressData);
 
     auto poRetDS = GDALDataset::FromHandle(GDALNearblack(
         m_outputDataset.GetName().c_str(), GDALDataset::ToHandle(poDstDS),
         GDALDataset::ToHandle(poSrcDS), psOptions.get(), nullptr));
     if (!poRetDS)
+    {
+        if (!m_standaloneStep)
+            VSIUnlink(m_outputDataset.GetName().c_str());
         return false;
+    }
 
     if (poDstDS == nullptr)
     {
+        if (!m_standaloneStep)
+            poRetDS->MarkSuppressOnClose();
         m_outputDataset.Set(std::unique_ptr<GDALDataset>(poRetDS));
     }
-    else if (dstDSWasNull)
+    else
     {
-        const bool bCloseOK = poDstDS->Close() == CE_None;
-        delete poDstDS;
-        if (!bCloseOK)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to close output dataset");
-            return false;
-        }
+        CPLAssert(poRetDS == poDstDS);
     }
 
     return true;
 }
+
+GDALRasterCleanCollarAlgorithmStandalone::
+    ~GDALRasterCleanCollarAlgorithmStandalone() = default;
 
 //! @endcond
