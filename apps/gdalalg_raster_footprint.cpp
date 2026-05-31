@@ -34,10 +34,9 @@ GDALRasterFootprintAlgorithm::GDALRasterFootprintAlgorithm(bool standaloneStep)
               .SetStandaloneStep(standaloneStep)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
-    AddProgressArg();
-
     if (standaloneStep)
     {
+        AddProgressArg();
         AddOpenOptionsArg(&m_openOptions).SetAvailableInPipelineStep(false);
         AddInputFormatsArg(&m_inputFormats)
             .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER})

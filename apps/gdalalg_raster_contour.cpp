@@ -45,9 +45,9 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
 {
     m_outputLayerName = "contour";
 
-    AddProgressArg();
     if (standaloneStep)
     {
+        AddProgressArg();
         AddRasterInputArgs(false, false);
         AddVectorOutputArgs(false, false);
     }

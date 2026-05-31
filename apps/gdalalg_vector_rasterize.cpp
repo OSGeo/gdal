@@ -36,9 +36,9 @@ GDALVectorRasterizeAlgorithm::GDALVectorRasterizeAlgorithm(bool bStandaloneStep)
               .SetStandaloneStep(bStandaloneStep)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
-    AddProgressArg();
     if (bStandaloneStep)
     {
+        AddProgressArg();
         AddOutputFormatArg(&m_format)
             .AddMetadataItem(GAAMDI_REQUIRED_CAPABILITIES,
                              {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE})

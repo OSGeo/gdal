@@ -35,6 +35,7 @@ GDALVectorUpdateAlgorithm::GDALVectorUpdateAlgorithm(bool standaloneStep)
 {
     if (standaloneStep)
     {
+        AddProgressArg();
         AddVectorInputArgs(false);
     }
     else
@@ -50,8 +51,6 @@ GDALVectorUpdateAlgorithm::GDALVectorUpdateAlgorithm(bool standaloneStep)
         if (inputArg)
             SetAutoCompleteFunctionForLayerName(layerArg, *inputArg);
     }
-
-    AddProgressArg();
 
     AddOutputDatasetArg(&m_outputDataset, GDAL_OF_VECTOR)
         .SetDatasetInputFlags(GADV_NAME | GADV_OBJECT);

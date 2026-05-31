@@ -50,9 +50,11 @@ GDALRasterCompareAlgorithm::GDALRasterCompareAlgorithm(bool standaloneStep)
               .SetInputDatasetHelpMsg(_("Input raster dataset"))
               .SetAddDefaultArguments(false))
 {
-    AddProgressArg();
-
-    if (!standaloneStep)
+    if (standaloneStep)
+    {
+        AddProgressArg();
+    }
+    else
     {
         AddRasterHiddenInputDatasetArg();
     }

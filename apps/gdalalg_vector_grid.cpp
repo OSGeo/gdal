@@ -109,9 +109,9 @@ GDALVectorGridAbstractAlgorithm::GDALVectorGridAbstractAlgorithm(
               .SetStandaloneStep(standaloneStep)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
-    AddProgressArg();
     if (standaloneStep)
     {
+        AddProgressArg();
         AddOutputFormatArg(&m_format).AddMetadataItem(
             GAAMDI_REQUIRED_CAPABILITIES, {GDAL_DCAP_RASTER, GDAL_DCAP_CREATE});
         AddOpenOptionsArg(&m_openOptions);

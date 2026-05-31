@@ -42,10 +42,9 @@ GDALRasterUpdateAlgorithm::GDALRasterUpdateAlgorithm(bool standaloneStep)
                                           .SetInputDatasetMaxCount(1)
                                           .SetAddDefaultArguments(false))
 {
-    AddProgressArg();
-
     if (standaloneStep)
     {
+        AddProgressArg();
         AddRasterInputArgs(/* openForMixedRasterVector = */ false,
                            /* hiddenForCLI = */ false);
     }

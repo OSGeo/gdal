@@ -38,6 +38,7 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
     if (bStandalone)
     {
         AddVectorOutputArgs(false, false);
+        AddProgressArg();
     }
 
     constexpr const char *ZONES_BAND_OR_LAYER = "BAND_OR_LAYER";
@@ -82,7 +83,6 @@ GDALRasterZonalStatsAlgorithm::GDALRasterZonalStatsAlgorithm(bool bStandalone)
         .SetDefault("feature");
     AddMemorySizeArg(&m_memoryBytes, &m_memoryStr, "chunk-size",
                      _("Maximum size of raster chunks read into memory"));
-    AddProgressArg();
 }
 
 /************************************************************************/

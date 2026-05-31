@@ -131,7 +131,8 @@ GDALRasterTileAlgorithm::GDALRasterTileAlgorithm(bool standaloneStep)
                                           .SetAddDefaultArguments(false)
                                           .SetInputDatasetAlias("dataset"))
 {
-    AddProgressArg();
+    if (standaloneStep)
+        AddProgressArg();
     AddArg("spawned", 0, _("Whether this is a spawned worker"),
            &m_spawned)
         .SetHidden();  // Used in spawn mode

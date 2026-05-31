@@ -61,12 +61,12 @@ GDALVectorPartitionAlgorithm::GDALVectorPartitionAlgorithm(bool standaloneStep)
     if (standaloneStep)
     {
         AddVectorInputArgs(false);
+        AddProgressArg();
     }
     else
     {
         AddVectorHiddenInputDatasetArg();
     }
-    AddProgressArg();
 
     AddArg(GDAL_ARG_NAME_OUTPUT, 'o', _("Output directory"), &m_output)
         .SetRequired()

@@ -44,7 +44,8 @@ GDALRasterOverviewAlgorithmAdd::GDALRasterOverviewAlgorithmAdd(
                                           .SetStandaloneStep(standaloneStep)
                                           .SetAddDefaultArguments(false))
 {
-    AddProgressArg();
+    if (standaloneStep)
+        AddProgressArg();
 
     AddOpenOptionsArg(&m_openOptions);
     auto &datasetArg =
