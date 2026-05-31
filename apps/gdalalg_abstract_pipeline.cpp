@@ -91,14 +91,15 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
         for (const auto &stepName : GetStepRegistry().GetNames())
         {
             auto alg = GetStepAlg(stepName);
-            if (alg && alg->CanBeFirstStep() && stepName != "read")
+            if (alg && alg->CanBeFirstStep() &&
+                stepName != GDALRasterReadAlgorithm::NAME)
             {
                 setFirstStepNames.insert(CPLString(stepName)
                                              .replaceAll(RASTER_SUFFIX, "")
                                              .replaceAll(VECTOR_SUFFIX, ""));
             }
         }
-        std::vector<std::string> firstStepNames{"read"};
+        std::vector<std::string> firstStepNames{GDALRasterReadAlgorithm::NAME};
         for (const std::string &s : setFirstStepNames)
             firstStepNames.push_back(s);
 
@@ -187,14 +188,15 @@ bool GDALAbstractPipelineAlgorithm::CheckFirstAndLastStep(
         for (const auto &stepName : GetStepRegistry().GetNames())
         {
             auto alg = GetStepAlg(stepName);
-            if (alg && alg->CanBeLastStep() && stepName != "write")
+            if (alg && alg->CanBeLastStep() &&
+                stepName != GDALRasterWriteAlgorithm::NAME)
             {
                 setLastStepNames.insert(CPLString(stepName)
                                             .replaceAll(RASTER_SUFFIX, "")
                                             .replaceAll(VECTOR_SUFFIX, ""));
             }
         }
-        std::vector<std::string> lastStepNames{"write"};
+        std::vector<std::string> lastStepNames{GDALRasterWriteAlgorithm::NAME};
         for (const std::string &s : setLastStepNames)
             lastStepNames.push_back(s);
 
@@ -555,7 +557,7 @@ bool GDALAbstractPipelineAlgorithm::ParseCommandLineArguments(
     {
         if (bIsGenericPipeline)
         {
-            if (algName == "read")
+            if (algName == GDALRasterReadAlgorithm::NAME)
             {
                 curStep.alg = std::make_unique<GDALRasterReadAlgorithm>(true);
             }
@@ -1632,10 +1634,12 @@ GDALAbstractPipelineAlgorithm::GetAutoComplete(std::vector<std::string> &argsIn,
                             arg->GetCategory() != GAAC_COMMON)
                         {
                             std::string s = std::string("--");
-                            if (!((step->GetName() == "read" &&
+                            if (!((step->GetName() ==
+                                       GDALRasterReadAlgorithm::NAME &&
                                    IsReadSpecificArgument(
                                        arg->GetName().c_str())) ||
-                                  (step->GetName() == "write" &&
+                                  (step->GetName() ==
+                                       GDALRasterWriteAlgorithm::NAME &&
                                    IsWriteSpecificArgument(
                                        arg->GetName().c_str()))))
                             {
@@ -1684,7 +1688,7 @@ GDALAbstractPipelineAlgorithm::GetAutoComplete(std::vector<std::string> &argsIn,
                     if (cpl::starts_with(lastArg.substr(strlen("--")),
                                          std::string(prefix) + "="))
                     {
-                        stepName = "read";
+                        stepName = GDALRasterReadAlgorithm::NAME;
                         break;
                     }
                 }
@@ -1694,7 +1698,7 @@ GDALAbstractPipelineAlgorithm::GetAutoComplete(std::vector<std::string> &argsIn,
                     if (cpl::starts_with(lastArg.substr(strlen("--")),
                                          std::string(prefix) + "="))
                     {
-                        stepName = "write";
+                        stepName = GDALRasterWriteAlgorithm::NAME;
                         break;
                     }
                 }
@@ -1986,7 +1990,8 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     }
 
     // Handle output to GDALG file
-    if (!m_steps.empty() && m_steps.back()->GetName() == "write")
+    if (!m_steps.empty() &&
+        m_steps.back()->GetName() == GDALRasterWriteAlgorithm::NAME)
     {
         const auto outputArg = m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT);
         const auto outputFormatArg =
@@ -2050,7 +2055,7 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         // a file on the file system.
         for (const auto &step : m_steps)
         {
-            if (step->GetName() == "write")
+            if (step->GetName() == GDALRasterWriteAlgorithm::NAME)
             {
                 if (!EQUAL(step->m_format.c_str(), "stream"))
                 {
@@ -2078,7 +2083,8 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
         m_steps.back()
                 ->GetArg(GDAL_ARG_NAME_NUM_THREADS_INT_HIDDEN)
                 ->Get<int>() > 1 &&
-        !(m_steps.size() == 2 && m_steps[0]->GetName() == "read"))
+        !(m_steps.size() == 2 &&
+          m_steps[0]->GetName() == GDALRasterReadAlgorithm::NAME))
     {
         if (m_steps[m_steps.size() - 2]->GetName() ==
             GDALMaterializeRasterAlgorithm::NAME)
