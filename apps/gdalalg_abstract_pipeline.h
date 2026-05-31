@@ -506,6 +506,16 @@ class GDALAbstractPipelineAlgorithm CPL_NON_FINAL
         std::vector<std::string> *pCurArgsForAutocomplete);
 
     bool RunStep(GDALPipelineStepRunContext &ctxt) override;
+    bool RunStepDealWithMultiProcessing(GDALPipelineStepRunContext &ctxt);
+    enum class DealWithGDALGJsonState
+    {
+        PROCESSED,
+        GO_ON,
+        ERROR,
+    };
+    DealWithGDALGJsonState RunStepDealWithGDALGJson();
+    bool RunStepDealWithStepUnknownInputType(size_t i, int nCurDatasetType);
+    bool CheckStepHasNoInputDatasetAlreadySet(size_t i, GDALDataset *poCurDS);
 
     std::string
     BuildNestedPipeline(GDALPipelineStepAlgorithm *curAlg,
