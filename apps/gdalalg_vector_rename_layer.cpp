@@ -28,10 +28,12 @@
 
 GDALVectorRenameLayerAlgorithm::GDALVectorRenameLayerAlgorithm(
     bool standaloneStep)
-    : GDALVectorPipelineStepAlgorithm(NAME, DESCRIPTION, HELP_URL,
-                                      ConstructorOptions()
-                                          .SetStandaloneStep(standaloneStep)
-                                          .SetAddInputLayerNameArgument(false))
+    : GDALVectorPipelineStepAlgorithm(
+          NAME, DESCRIPTION, HELP_URL,
+          ConstructorOptions()
+              .SetStandaloneStep(standaloneStep)
+              .SetAddInputLayerNameArgument(false)
+              .SetOutputLayerNameAvailableInPipelineStep(true))
 {
     AddLayerNameArg(&m_inputLayerName);
     if (!standaloneStep)
