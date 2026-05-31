@@ -97,125 +97,15 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     auto poWriteStep = ctxt.m_poNextUsableStep ? ctxt.m_poNextUsableStep : this;
 
-    GDALDataset *poDstDS = poWriteStep->GetOutputDataset().GetDatasetRef();
-    std::unique_ptr<GDALDataset> poRetDS;
-    std::string outputFilename = poWriteStep->GetOutputDataset().GetName();
-    GDALDriver *poDstDriver = nullptr;
+    GDALDataset *poDstDS = nullptr;
     bool bTemporaryFile = false;
-    if (!poDstDS)
+    std::unique_ptr<GDALDataset> poNewRetDS;
+    std::string outputLayerName;
+    OGRLayer *poDstLayer = nullptr;
+    if (!CreateDatasetSingleOutputLayerIfNeeded(ctxt, "polygonize", poDstDS,
+                                                bTemporaryFile, poNewRetDS,
+                                                outputLayerName, poDstLayer))
     {
-        auto poDriverManager = GetGDALDriverManager();
-        std::string format = poWriteStep->GetOutputFormat();
-        if (m_standaloneStep || (ctxt.m_poNextUsableStep && format.empty()))
-        {
-            if (format.empty())
-            {
-                const auto aosFormats =
-                    CPLStringList(GDALGetOutputDriversForDatasetName(
-                        outputFilename.c_str(), GDAL_OF_VECTOR,
-                        /* bSingleMatch = */ true,
-                        /* bWarn = */ true));
-                if (aosFormats.size() != 1)
-                {
-                    ReportError(CE_Failure, CPLE_AppDefined,
-                                "Cannot guess driver for %s",
-                                outputFilename.c_str());
-                    return false;
-                }
-                format = aosFormats[0];
-            }
-        }
-        else if (!ctxt.m_poNextUsableStep)
-        {
-            poDstDriver = poDriverManager->GetDriverByName("GPKG");
-            if (poDstDriver)
-            {
-                bTemporaryFile = true;
-                outputFilename =
-                    CPLGenerateTempFilenameSafe("_polygonize") + ".gpkg";
-                format = "GPKG";
-            }
-            else
-                format = "MEM";
-        }
-
-        if (!poDstDriver)
-            poDstDriver = poDriverManager->GetDriverByName(format.c_str());
-        if (!poDstDriver)
-        {
-            ReportError(CE_Failure, CPLE_AppDefined, "Cannot find driver %s",
-                        format.c_str());
-            return false;
-        }
-
-        poRetDS.reset(poDstDriver->Create(
-            outputFilename.c_str(), 0, 0, 0, GDT_Unknown,
-            CPLStringList(poWriteStep->GetCreationOptions()).List()));
-        if (!poRetDS)
-            return false;
-
-        if (bTemporaryFile)
-            poRetDS->MarkSuppressOnClose();
-
-        poDstDS = poRetDS.get();
-    }
-    else
-    {
-        poDstDriver = poDstDS->GetDriver();
-    }
-
-    std::string outputLayerName = poWriteStep->GetOutputLayerName();
-    if (poDstDriver && EQUAL(poDstDriver->GetDescription(), "ESRI Shapefile") &&
-        (EQUAL(CPLGetExtensionSafe(poDstDS->GetDescription()).c_str(), "shp") ||
-         EQUAL(CPLGetExtensionSafe(poDstDS->GetDescription()).c_str(),
-               "shz")) &&
-        poDstDS->GetLayerCount() <= 1)
-    {
-        outputLayerName = CPLGetBasenameSafe(poDstDS->GetDescription());
-    }
-    if (outputLayerName.empty())
-        outputLayerName = "polygonize";
-
-    auto poDstLayer = poDstDS->GetLayerByName(outputLayerName.c_str());
-    if (poDstLayer)
-    {
-        if (poWriteStep->GetOverwriteLayer())
-        {
-            int iLayer = -1;
-            const int nLayerCount = poDstDS->GetLayerCount();
-            for (iLayer = 0; iLayer < nLayerCount; iLayer++)
-            {
-                if (poDstDS->GetLayer(iLayer) == poDstLayer)
-                    break;
-            }
-
-            if (iLayer < nLayerCount)
-            {
-                if (poDstDS->DeleteLayer(iLayer) != OGRERR_NONE)
-                {
-                    ReportError(CE_Failure, CPLE_AppDefined,
-                                "Cannot delete layer '%s'",
-                                outputLayerName.c_str());
-                    return false;
-                }
-            }
-            poDstLayer = nullptr;
-        }
-        else if (!poWriteStep->GetAppendLayer())
-        {
-            ReportError(CE_Failure, CPLE_AppDefined,
-                        "Layer '%s' already exists. Specify the "
-                        "--%s option to overwrite it, or --%s "
-                        "to append to it.",
-                        outputLayerName.c_str(), GDAL_ARG_NAME_OVERWRITE_LAYER,
-                        GDAL_ARG_NAME_APPEND);
-            return false;
-        }
-    }
-    else if (poWriteStep->GetAppendLayer() || poWriteStep->GetOverwriteLayer())
-    {
-        ReportError(CE_Failure, CPLE_AppDefined, "Cannot find layer '%s'",
-                    outputLayerName.c_str());
         return false;
     }
 
@@ -288,19 +178,19 @@ bool GDALRasterPolygonizeAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
                             ctxt.m_pProgressData) == CE_None;
     }
 
-    if (ret && poRetDS)
+    if (ret && poNewRetDS)
     {
         if (bTemporaryFile)
         {
-            ret = poRetDS->FlushCache() == CE_None;
+            ret = poNewRetDS->FlushCache() == CE_None;
 #if !defined(__APPLE__)
             // For some unknown reason, unlinking the file on MacOSX
             // leads to later "disk I/O error". See https://github.com/OSGeo/gdal/issues/13794
-            VSIUnlink(outputFilename.c_str());
+            VSIUnlink(poNewRetDS->GetDescription());
 #endif
         }
 
-        m_outputDataset.Set(std::move(poRetDS));
+        m_outputDataset.Set(std::move(poNewRetDS));
     }
 
     return ret;
