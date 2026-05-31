@@ -1988,40 +1988,21 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     // Handle output to GDALG file
     if (!m_steps.empty() && m_steps.back()->GetName() == "write")
     {
-        if (m_steps.back()->IsGDALGOutput())
-        {
-            const auto outputArg = m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT);
-            const auto &filename =
-                outputArg->Get<GDALArgDatasetValue>().GetName();
-            const char *pszType = "";
-            if (GDALDoesFileOrDatasetExist(filename.c_str(), &pszType))
-            {
-                const auto overwriteArg =
-                    m_steps.back()->GetArg(GDAL_ARG_NAME_OVERWRITE);
-                if (overwriteArg && overwriteArg->GetType() == GAAT_BOOLEAN)
-                {
-                    if (!overwriteArg->Get<bool>())
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "%s '%s' already exists. Specify the "
-                                 "--overwrite option to overwrite it.",
-                                 pszType, filename.c_str());
-                        return false;
-                    }
-                }
-            }
-
-            std::string outStringUnused;
-            return SaveGDALGIntoFileOrString(filename, outStringUnused);
-        }
-
+        const auto outputArg = m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT);
         const auto outputFormatArg =
             m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT_FORMAT);
-        const auto outputArg = m_steps.back()->GetArg(GDAL_ARG_NAME_OUTPUT);
         if (outputArg && outputArg->GetType() == GAAT_DATASET &&
             outputArg->IsExplicitlySet())
         {
-            const auto &outputFile = outputArg->Get<GDALArgDatasetValue>();
+            const std::string &outputFileName =
+                outputArg->Get<GDALArgDatasetValue>().GetName();
+            if (m_steps.back()->IsGDALGOutput())
+            {
+                std::string outStringUnused;
+                return SaveGDALGIntoFileOrString(outputFileName,
+                                                 outStringUnused);
+            }
+
             bool isVRTOutput;
             if (outputFormatArg && outputFormatArg->GetType() == GAAT_STRING &&
                 outputFormatArg->IsExplicitlySet())
@@ -2032,11 +2013,9 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             else
             {
                 isVRTOutput = EQUAL(
-                    CPLGetExtensionSafe(outputFile.GetName().c_str()).c_str(),
-                    "vrt");
+                    CPLGetExtensionSafe(outputFileName.c_str()).c_str(), "vrt");
             }
-            if (isVRTOutput && !outputFile.GetName().empty() &&
-                m_steps.size() > 3)
+            if (isVRTOutput && !outputFileName.empty() && m_steps.size() > 3)
             {
                 ReportError(
                     CE_Failure, CPLE_NotSupported,

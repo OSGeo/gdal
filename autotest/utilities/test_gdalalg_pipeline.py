@@ -276,15 +276,13 @@ def test_gdalalg_pipeline_help_doc(gdal_path):
     assert "ERROR: unknown pipeline step 'unknown'" in out
 
 
-def test_gdal_pipeline_raster_output_to_gdalg(tmp_path, gdal_path):
+def test_gdal_pipeline_raster_output_to_gdalg(tmp_path):
 
     gdal.Mkdir(tmp_path / "src with space", 0o755)
     shutil.copy("../gcore/data/byte.tif", tmp_path / "src with space")
     src_filename = str(tmp_path / "src with space" / "byte.tif").replace("\\", "/")
     out_filename = str(tmp_path / "out.gdalg.json")
-    gdaltest.runexternal(
-        f'{gdal_path} pipeline read "{src_filename}" ! write {out_filename}'
-    )
+    gdal.alg.pipeline(pipeline=f'read "{src_filename}" ! write {out_filename}')
     # Test that configuration option is not serialized
     j = json.loads(gdal.VSIFile(out_filename, "rb").read())
     assert "gdal_version" in j
