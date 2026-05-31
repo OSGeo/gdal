@@ -53,17 +53,11 @@
 #include "mrfdrivercore.h"
 #include "cpl_string.h"
 
-#if defined(LERC)
+#if defined(GDAL_USE_LERC_INTERNAL)
 static bool IsLerc1(const char *s)
 {
     static const char L1sig[] = "CntZImage ";
     return !strncmp(s, L1sig, sizeof(L1sig) - 1);
-}
-
-static bool IsLerc2(const char *s)
-{
-    static const char L2sig[] = "Lerc2 ";
-    return !strncmp(s, L2sig, sizeof(L2sig) - 1);
 }
 #endif
 
@@ -95,8 +89,8 @@ int MRFDriverIdentify(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH(fn, "<MRF_META>"))
         return TRUE;
 
-#if defined(LERC)  // Could be single LERC tile
-    if (IsLerc1(fn) || IsLerc2(fn))
+#if defined(GDAL_USE_LERC_INTERNAL)  // Could be single LERC tile
+    if (IsLerc1(fn))
         return TRUE;
 #endif
 

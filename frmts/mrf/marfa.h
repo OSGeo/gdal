@@ -960,8 +960,11 @@ class LERC_Band final : public MRFRasterBand
     int version = 0;
     // L2 version
     int l2ver = 0;
+
+#if defined(GDAL_USE_LERC_INTERNAL)
     // Build a MRF header for a single LERC tile
     static CPLXMLNode *GetMRFConfig(GDALOpenInfo *poOpenInfo);
+#endif
 
   private:
     static bool IsLerc1(const char *s)
