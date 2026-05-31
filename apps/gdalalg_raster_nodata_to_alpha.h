@@ -14,6 +14,7 @@
 #define GDALALG_RASTER_NODATA_TO_ALPHA_INCLUDED
 
 #include "gdalrasterpipelinestepalgorithm.h"
+#include "gdal_dataset.h"
 
 //! @cond Doxygen_Suppress
 

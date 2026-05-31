@@ -1963,7 +1963,7 @@ bool GDALAbstractPipelineAlgorithm::SaveGDALGIntoFileOrString(
 /*                      RunStepDealWithGDALGJson()                      */
 /************************************************************************/
 
-GDALAbstractPipelineAlgorithm::DealWithGDALGJsonState
+GDALAbstractPipelineAlgorithm::RunStepState
 GDALAbstractPipelineAlgorithm::RunStepDealWithGDALGJson()
 {
     // Handle output to GDALG file
@@ -1983,8 +1983,8 @@ GDALAbstractPipelineAlgorithm::RunStepDealWithGDALGJson()
                 std::string outStringUnused;
                 return SaveGDALGIntoFileOrString(outputFileName,
                                                  outStringUnused)
-                           ? DealWithGDALGJsonState::PROCESSED
-                           : DealWithGDALGJsonState::ERROR;
+                           ? RunStepState::PROCESSED
+                           : RunStepState::ERROR;
             }
 
             bool isVRTOutput;
@@ -2006,7 +2006,7 @@ GDALAbstractPipelineAlgorithm::RunStepDealWithGDALGJson()
                     "VRT output is not supported when there are more than 3 "
                     "steps. Consider using the GDALG driver (files with "
                     ".gdalg.json extension)");
-                return DealWithGDALGJsonState::ERROR;
+                return RunStepState::ERROR;
             }
             if (isVRTOutput)
             {
@@ -2019,7 +2019,7 @@ GDALAbstractPipelineAlgorithm::RunStepDealWithGDALGJson()
                             "VRT output is not supported. Consider using the "
                             "GDALG driver instead (files with .gdalg.json "
                             "extension)");
-                        return DealWithGDALGJsonState::ERROR;
+                        return RunStepState::ERROR;
                     }
                 }
             }
@@ -2041,7 +2041,7 @@ GDALAbstractPipelineAlgorithm::RunStepDealWithGDALGJson()
                     ReportError(CE_Failure, CPLE_AppDefined,
                                 "in streamed execution, --format "
                                 "stream should be used");
-                    return DealWithGDALGJsonState::ERROR;
+                    return RunStepState::ERROR;
                 }
             }
             else if (step->GeneratesFilesFromUserInput())
@@ -2051,19 +2051,20 @@ GDALAbstractPipelineAlgorithm::RunStepDealWithGDALGJson()
                             "the GDAL_ALGORITHM_ALLOW_WRITES_IN_STREAM "
                             "configuration option is set.",
                             step->GetName().c_str());
-                return DealWithGDALGJsonState::ERROR;
+                return RunStepState::ERROR;
             }
         }
     }
 
-    return DealWithGDALGJsonState::GO_ON;
+    return RunStepState::GO_ON;
 }
 
 /************************************************************************/
 /*                   RunStepDealWithMultiProcessing()                   */
 /************************************************************************/
 
-bool GDALAbstractPipelineAlgorithm::RunStepDealWithMultiProcessing(
+GDALAbstractPipelineAlgorithm::RunStepState
+GDALAbstractPipelineAlgorithm::RunStepDealWithMultiProcessing(
     GDALPipelineStepRunContext &ctxt)
 {
     // Because of multiprocessing in gdal raster tile, make sure that all
@@ -2111,7 +2112,7 @@ bool GDALAbstractPipelineAlgorithm::RunStepDealWithMultiProcessing(
                             "the last step, or add '-j 1' to the last step "
                             "'%s'",
                             m_steps.back()->GetName().c_str());
-                        return false;
+                        return RunStepState::ERROR;
                     }
                 }
             }
@@ -2133,7 +2134,7 @@ bool GDALAbstractPipelineAlgorithm::RunStepDealWithMultiProcessing(
                         "Materialize it first, or add '-j 1' to the last step "
                         "'%s'",
                         m_steps.back()->GetName().c_str());
-                    return false;
+                    return RunStepState::ERROR;
                 }
             }
             std::string outString;
@@ -2164,13 +2165,13 @@ bool GDALAbstractPipelineAlgorithm::RunStepDealWithMultiProcessing(
                     "Trying adding a materialize step before the last step "
                     "'%s', or add '-j 1' to the last step.",
                     m_steps.back()->GetName().c_str());
-                return false;
+                return RunStepState::ERROR;
             }
-            return ret;
+            return ret ? RunStepState::PROCESSED : RunStepState::ERROR;
         }
     }
 
-    return true;
+    return RunStepState::GO_ON;
 }
 
 /************************************************************************/
@@ -2329,15 +2330,22 @@ bool GDALAbstractPipelineAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
 
     switch (RunStepDealWithGDALGJson())
     {
-        case DealWithGDALGJsonState::PROCESSED:
+        case RunStepState::PROCESSED:
             return true;
-        case DealWithGDALGJsonState::ERROR:
+        case RunStepState::ERROR:
             return false;
-        case DealWithGDALGJsonState::GO_ON:
+        case RunStepState::GO_ON:
             break;
     }
-    if (!RunStepDealWithMultiProcessing(ctxt))
-        return false;
+    switch (RunStepDealWithMultiProcessing(ctxt))
+    {
+        case RunStepState::PROCESSED:
+            return true;
+        case RunStepState::ERROR:
+            return false;
+        case RunStepState::GO_ON:
+            break;
+    }
 
     int countPipelinesWithProgress = 0;
     for (size_t i = (m_bExpectReadStep ? 0 : 1); i < m_steps.size(); ++i)
