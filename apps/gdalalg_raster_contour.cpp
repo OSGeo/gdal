@@ -40,6 +40,7 @@ GDALRasterContourAlgorithm::GDALRasterContourAlgorithm(bool standaloneStep)
               .SetAddUpdateArgument(false)
               .SetAddUpsertArgument(false)
               .SetAddSkipErrorsArgument(false)
+              .SetOutputLayerNameAvailableInPipelineStep(true)
               .SetOutputFormatCreateCapability(GDAL_DCAP_CREATE))
 {
     m_outputLayerName = "contour";
