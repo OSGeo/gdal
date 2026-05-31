@@ -74,6 +74,7 @@ Supported Formats: (ro:read-only, rw:read-write, +:write from scratch, u:update,
   CALS -raster- (rwv): CALS (Type 1) (*.cal, *.ct1)
   WMTS -raster- (rwv): OGC Web Map Tile Service
   SENTINEL2 -raster- (rovs): Sentinel 2
+  LERC -raster- (rov): Limited Error Raster Compression (*.lrc)
   MRF -raster- (rw+v): Meta Raster Format (*.mrf)
   PNM -raster- (rw+v): Portable Pixmap Format (netpbm) (*.pgm, *.ppm, *.pnm)
   DOQ1 -raster- (rov): USGS DOQ (Old Style)

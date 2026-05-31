@@ -213,6 +213,9 @@ void CPL_STDCALL GDALAllRegister()
 #if defined(DEFERRED_MONGODBV3_DRIVER)
     DeclareDeferredOGRMongoDBv3Plugin();
 #endif
+#if defined(DEFERRED_LERC_DRIVER)
+    DeclareDeferredLERCPlugin();
+#endif
 #if defined(DEFERRED_MRF_DRIVER)
     DeclareDeferredMRFPlugin();
 #endif
@@ -612,6 +615,10 @@ void CPL_STDCALL GDALAllRegister()
 
 #ifdef FRMT_sentinel2
     GDALRegister_SENTINEL2();
+#endif
+
+#ifdef FRMT_lerc
+    GDALRegister_LERC();
 #endif
 
 #ifdef FRMT_mrf

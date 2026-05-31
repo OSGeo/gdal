@@ -184,6 +184,8 @@ void CPL_DLL GDALRegister_WMTS(void);
 void DeclareDeferredWMTSPlugin(void);
 void CPL_DLL GDALRegister_SAFE(void);
 void CPL_DLL GDALRegister_SENTINEL2(void);
+void CPL_DLL GDALRegister_LERC(void);
+void DeclareDeferredLERCPlugin(void);
 void CPL_DLL GDALRegister_MRF(void);
 void DeclareDeferredMRFPlugin(void);
 void CPL_DLL GDALRegister_RRASTER(void);
