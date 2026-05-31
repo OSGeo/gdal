@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_SET_TYPE_INCLUDED
 #define GDALALG_RASTER_SET_TYPE_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 

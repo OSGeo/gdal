@@ -13,7 +13,8 @@
 #ifndef GDALALG_VECTOR_CLIP_INCLUDED
 #define GDALALG_VECTOR_CLIP_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
+
 #include "gdalalg_clip_common.h"
 
 //! @cond Doxygen_Suppress

@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_CONCAT_INCLUDED
 #define GDALALG_VECTOR_CONCAT_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
 
 #include "ogrsf_frmts.h"
 #include "ogrlayerpool.h"

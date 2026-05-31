@@ -13,7 +13,9 @@
 #ifndef GDALALG_RASTER_BLEND_INCLUDED
 #define GDALALG_RASTER_BLEND_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
+
+#include "gdal_dataset.h"
 
 //! @cond Doxygen_Suppress
 

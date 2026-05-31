@@ -13,7 +13,7 @@
 #ifndef GDALALG_VECTOR_SET_FIELD_TYPE_INCLUDED
 #define GDALALG_VECTOR_SET_FIELD_TYPE_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 

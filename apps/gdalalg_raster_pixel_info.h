@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_PIXEL_INFO_INCLUDED
 #define GDALALG_RASTER_PIXEL_INFO_INCLUDED
 
-#include "gdalalg_abstract_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 #include "cpl_vsi_virtual.h"
 

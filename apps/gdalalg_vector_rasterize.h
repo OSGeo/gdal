@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <limits>
 
-#include "gdalalg_abstract_pipeline.h"
+#include "gdalpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 

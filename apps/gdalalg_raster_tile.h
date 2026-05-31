@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_TILE_INCLUDED
 #define GDALALG_RASTER_TILE_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 #include "cpl_string.h"
 

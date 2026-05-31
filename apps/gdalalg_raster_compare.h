@@ -13,7 +13,10 @@
 #ifndef GDALALG_RASTER_COMPARE_INCLUDED
 #define GDALALG_RASTER_COMPARE_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
+
+class GDALRasterBand;
+class GDALDataset;
 
 //! @cond Doxygen_Suppress
 

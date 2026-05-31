@@ -15,7 +15,7 @@
 
 #include <limits>
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 //! @cond Doxygen_Suppress
 

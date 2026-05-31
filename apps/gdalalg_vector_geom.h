@@ -13,7 +13,8 @@
 #ifndef GDALALG_VECTOR_GEOM_INCLUDED
 #define GDALALG_VECTOR_GEOM_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
+
 #include "ogr_geos.h"
 
 //! @cond Doxygen_Suppress

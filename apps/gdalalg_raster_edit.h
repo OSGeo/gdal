@@ -13,7 +13,7 @@
 #ifndef GDALALG_RASTER_EDIT_INCLUDED
 #define GDALALG_RASTER_EDIT_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
 
 namespace gdal
 {

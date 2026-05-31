@@ -13,7 +13,8 @@
 #ifndef GDALALG_RASTER_MOSAIC_STACK_COMMON_INCLUDED
 #define GDALALG_RASTER_MOSAIC_STACK_COMMON_INCLUDED
 
-#include "gdalalg_raster_pipeline.h"
+#include "gdalrasterpipelinestepalgorithm.h"
+
 #include "cpl_string.h"
 
 //! @cond Doxygen_Suppress

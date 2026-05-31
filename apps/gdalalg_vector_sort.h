@@ -13,7 +13,8 @@
 #ifndef GDALALG_VECTOR_SORT_INCLUDED
 #define GDALALG_VECTOR_SORT_INCLUDED
 
-#include "gdalalg_vector_pipeline.h"
+#include "gdalvectorpipelinestepalgorithm.h"
+
 #include "cpl_progress.h"
 
 #include <string>
