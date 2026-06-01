@@ -212,7 +212,10 @@ Logging
 
 -  .. config:: CPL_ACCUM_ERROR_MSG
 
+-  .. config:: GDAL_NAME_AND_SHAME
+      :choices: ON, OFF
 
+      See :ref:`cloud_phone_home` for details.
 
 Performance and caching
 ^^^^^^^^^^^^^^^^^^^^^^^
