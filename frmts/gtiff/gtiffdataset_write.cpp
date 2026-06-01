@@ -4463,7 +4463,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
 
             if (EQUAL(pszCopySrcMDD, "AUTO") && !papszSrcMDD)
             {
-                for (const char *pszDomain : {"", "IMAGERY"})
+                for (const char *pszDomain : {"", GDAL_MDD_IMAGERY})
                 {
                     if (CSLConstList papszMD = poBand->GetMetadata(pszDomain))
                     {

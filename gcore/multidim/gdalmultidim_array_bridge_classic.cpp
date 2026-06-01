@@ -566,7 +566,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                         CPLSPrintf(
                             "%g", dfVal * aoBandImageryMetadata[j]
                                               .dfCentralWavelengthToMicrometer),
-                        "IMAGERY");
+                        GDAL_MDD_IMAGERY);
                 }
             }
 
@@ -588,7 +588,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                         GDALMD_FWHM_UM,
                         CPLSPrintf("%g", dfVal * aoBandImageryMetadata[j]
                                                      .dfFWHMToMicrometer),
-                        "IMAGERY");
+                        GDAL_MDD_IMAGERY);
                 }
             }
 

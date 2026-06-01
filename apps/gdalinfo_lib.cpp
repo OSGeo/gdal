@@ -1092,7 +1092,7 @@ char *GDALInfo(GDALDatasetH hDataset, const GDALInfoOptions *psOptions)
 
         // Include eo:cloud_cover in stac output
         const char *pszCloudCover =
-            GDALGetMetadataItem(hDataset, "CLOUDCOVER", "IMAGERY");
+            GDALGetMetadataItem(hDataset, "CLOUDCOVER", GDAL_MDD_IMAGERY);
         json_object *poValue = nullptr;
         if (pszCloudCover)
         {
@@ -2523,8 +2523,8 @@ static void GDALInfoReportMetadata(const GDALInfoOptions *psOptions,
                               pszIndent, bJson, poMetadata, osStr);
     }
 
-    GDALInfoPrintMetadata(psOptions, hObject, "IMAGERY", "Imagery", pszIndent,
-                          bJson, poMetadata, osStr);
+    GDALInfoPrintMetadata(psOptions, hObject, GDAL_MDD_IMAGERY, "Imagery",
+                          pszIndent, bJson, poMetadata, osStr);
 }
 
 /************************************************************************/

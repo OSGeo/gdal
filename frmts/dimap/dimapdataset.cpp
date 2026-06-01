@@ -1744,9 +1744,10 @@ int DIMAPDataset::ReadImageInformation2()
                 CPLAtof(SPECTRAL_RANGE_FWHM_MAX) * dfFactorToMicrometer;
             poBand->SetMetadataItem(GDALMD_CENTRAL_WAVELENGTH_UM,
                                     CPLSPrintf("%.3f", (dfMin + dfMax) / 2),
-                                    "IMAGERY");
-            poBand->SetMetadataItem(
-                GDALMD_FWHM_UM, CPLSPrintf("%.3f", dfMax - dfMin), "IMAGERY");
+                                    GDAL_MDD_IMAGERY);
+            poBand->SetMetadataItem(GDALMD_FWHM_UM,
+                                    CPLSPrintf("%.3f", dfMax - dfMin),
+                                    GDAL_MDD_IMAGERY);
         }
     }
 

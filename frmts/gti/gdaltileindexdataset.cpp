@@ -2540,7 +2540,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             poBand->GDALRasterBand::SetMetadataItem(
                 GDALMD_CENTRAL_WAVELENGTH_UM,
-                CPLSPrintf("%g", adfCenterWavelength[i]), "IMAGERY");
+                CPLSPrintf("%g", adfCenterWavelength[i]), GDAL_MDD_IMAGERY);
         }
 
         if (static_cast<int>(adfFullWidthHalfMax.size()) == nBandCount &&
@@ -2548,7 +2548,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             poBand->GDALRasterBand::SetMetadataItem(
                 GDALMD_FWHM_UM, CPLSPrintf("%g", adfFullWidthHalfMax[i]),
-                "IMAGERY");
+                GDAL_MDD_IMAGERY);
         }
     }
 

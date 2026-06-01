@@ -2034,11 +2034,11 @@ static void SENTINEL2SetBandMetadata(GDALRasterBand *poBand,
         poBand->SetMetadataItem(
             GDALMD_CENTRAL_WAVELENGTH_UM,
             CPLSPrintf("%.3f", double(psBandDesc->nWaveLength) / 1000),
-            "IMAGERY");
+            GDAL_MDD_IMAGERY);
         poBand->SetMetadataItem(
             GDALMD_FWHM_UM,
             CPLSPrintf("%.3f", double(psBandDesc->nBandWidth) / 1000),
-            "IMAGERY");
+            GDAL_MDD_IMAGERY);
     }
     else
     {
