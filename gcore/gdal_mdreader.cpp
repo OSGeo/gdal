@@ -187,7 +187,7 @@ char **GDALMDReaderBase::GetMetadataDomain(const char *pszDomain)
         return m_papszIMDMD;
     else if (EQUAL(pszDomain, GDAL_MDD_RPC))
         return m_papszRPCMD;
-    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
+    else if (EQUAL(pszDomain, GDAL_MDD_IMAGERY))
         return m_papszIMAGERYMD;
     return nullptr;
 }
@@ -257,7 +257,7 @@ bool GDALMDReaderBase::FillMetadata(GDALMultiDomainMetadata *poMDMD)
 
     SETMETADATA(poMDMD, m_papszIMDMD, GDAL_MDD_IMD);
     SETMETADATA(poMDMD, m_papszRPCMD, GDAL_MDD_RPC);
-    SETMETADATA(poMDMD, m_papszIMAGERYMD, MD_DOMAIN_IMAGERY);
+    SETMETADATA(poMDMD, m_papszIMAGERYMD, GDAL_MDD_IMAGERY);
     SETMETADATA(poMDMD, m_papszDEFAULTMD, MD_DOMAIN_DEFAULT);
 
     return true;

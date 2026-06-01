@@ -1080,7 +1080,7 @@ CSLConstList GTiffRasterBand::GetMetadata(const char *pszDomain)
 
         m_poGDS->LoadENVIHdrIfNeeded();
     }
-    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
+    else if (EQUAL(pszDomain, GDAL_MDD_IMAGERY))
     {
         m_poGDS->LoadENVIHdrIfNeeded();
     }
@@ -1182,7 +1182,7 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
 
         m_poGDS->LoadENVIHdrIfNeeded();
     }
-    else if (EQUAL(pszDomain, MD_DOMAIN_IMAGERY))
+    else if (EQUAL(pszDomain, GDAL_MDD_IMAGERY))
     {
         m_poGDS->LoadENVIHdrIfNeeded();
     }

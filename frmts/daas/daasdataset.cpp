@@ -948,7 +948,7 @@ bool GDALDAASDataset::GetImageMetadata()
             SetMetadataItem(MD_NAME_ACQDATETIME,
                             CPLSPrintf("%04d-%02d-%02d %02d:%02d:%02d", iYear,
                                        iMonth, iDay, iHours, iMin, iSec),
-                            MD_DOMAIN_IMAGERY);
+                            GDAL_MDD_IMAGERY);
         }
     }
 
@@ -958,7 +958,7 @@ bool GDALDAASDataset::GetImageMetadata()
     if (!bIgnoredError)
     {
         SetMetadataItem(MD_NAME_CLOUDCOVER, CPLSPrintf("%.2f", dfCloudCover),
-                        MD_DOMAIN_IMAGERY);
+                        GDAL_MDD_IMAGERY);
     }
 
     CPLString osSatellite(
@@ -966,7 +966,7 @@ bool GDALDAASDataset::GetImageMetadata()
     if (!osSatellite.empty())
     {
         SetMetadataItem(MD_NAME_SATELLITE, osSatellite.c_str(),
-                        MD_DOMAIN_IMAGERY);
+                        GDAL_MDD_IMAGERY);
     }
 
     return !bError;

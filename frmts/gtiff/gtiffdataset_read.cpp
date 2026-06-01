@@ -6339,7 +6339,7 @@ CSLConstList GTiffDataset::GetMetadata(const char *pszDomain)
 
     else if (pszDomain != nullptr && (EQUAL(pszDomain, GDAL_MDD_RPC) ||
                                       EQUAL(pszDomain, GDAL_MDD_IMD) ||
-                                      EQUAL(pszDomain, MD_DOMAIN_IMAGERY)))
+                                      EQUAL(pszDomain, GDAL_MDD_IMAGERY)))
         LoadMetadata();
 
     else if (pszDomain != nullptr && EQUAL(pszDomain, "SUBDATASETS"))
@@ -6433,7 +6433,7 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
     }
     else if (pszDomain != nullptr && (EQUAL(pszDomain, GDAL_MDD_RPC) ||
                                       EQUAL(pszDomain, GDAL_MDD_IMD) ||
-                                      EQUAL(pszDomain, MD_DOMAIN_IMAGERY)))
+                                      EQUAL(pszDomain, GDAL_MDD_IMAGERY)))
     {
         LoadMetadata();
     }
