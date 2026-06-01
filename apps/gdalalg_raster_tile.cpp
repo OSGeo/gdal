@@ -4566,7 +4566,7 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
     else
     {
         if (!bHasSrcGT && m_poSrcDS->GetGCPCount() == 0 &&
-            m_poSrcDS->GetMetadata("GEOLOCATION") == nullptr &&
+            m_poSrcDS->GetMetadata(GDAL_MDD_GEOLOCATION) == nullptr &&
             m_poSrcDS->GetMetadata(GDAL_MDD_RPC) == nullptr)
         {
             ReportError(CE_Failure, CPLE_NotSupported,
@@ -4575,7 +4575,7 @@ bool GDALRasterTileAlgorithm::RunStep(GDALPipelineStepRunContext &ctxt)
             return false;
         }
 
-        if (m_poSrcDS->GetMetadata("GEOLOCATION") == nullptr &&
+        if (m_poSrcDS->GetMetadata(GDAL_MDD_GEOLOCATION) == nullptr &&
             m_poSrcDS->GetMetadata(GDAL_MDD_RPC) == nullptr &&
             m_poSrcDS->GetSpatialRef() == nullptr &&
             m_poSrcDS->GetGCPSpatialRef() == nullptr)

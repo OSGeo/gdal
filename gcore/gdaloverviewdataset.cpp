@@ -491,7 +491,7 @@ CSLConstList GDALOverviewDataset::GetMetadata(const char *pszDomain)
     }
 
     // We may need to rescale some values from the GEOLOCATION metadata domain.
-    if (pszDomain != nullptr && EQUAL(pszDomain, "GEOLOCATION") &&
+    if (pszDomain != nullptr && EQUAL(pszDomain, GDAL_MDD_GEOLOCATION) &&
         papszMD != nullptr)
     {
         if (papszMD_GEOLOCATION)
@@ -532,8 +532,8 @@ const char *GDALOverviewDataset::GetMetadataItem(const char *pszName,
             return pszValue;
     }
 
-    if (pszDomain != nullptr &&
-        (EQUAL(pszDomain, GDAL_MDD_RPC) || EQUAL(pszDomain, "GEOLOCATION")))
+    if (pszDomain != nullptr && (EQUAL(pszDomain, GDAL_MDD_RPC) ||
+                                 EQUAL(pszDomain, GDAL_MDD_GEOLOCATION)))
     {
         CSLConstList papszMD = GetMetadata(pszDomain);
         return CSLFetchNameValue(papszMD, pszName);

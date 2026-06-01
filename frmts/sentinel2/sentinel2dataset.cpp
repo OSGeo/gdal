@@ -2729,7 +2729,7 @@ SENTINEL2Dataset::OpenL1BSubdatasetWithGeoloc(GDALOpenInfo *poOpenInfo)
             osMD.SetNameValue("SRS", oSRS.exportToWkt().c_str());
         }
 
-        poDS->SetMetadata(osMD.List(), "GEOLOCATION");
+        poDS->SetMetadata(osMD.List(), GDAL_MDD_GEOLOCATION);
     }
 
     return poDS.release();

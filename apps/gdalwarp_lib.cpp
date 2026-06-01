@@ -401,7 +401,8 @@ static CPLString GetSrcDSProjection(GDALDatasetH hDS, CSLConstList papszTO)
     {
         pszProjection = SRS_WKT_WGS84_LAT_LONG;
     }
-    else if ((papszMD = GDALGetMetadata(hDS, "GEOLOCATION")) != nullptr &&
+    else if ((papszMD = GDALGetMetadata(hDS, GDAL_MDD_GEOLOCATION)) !=
+                 nullptr &&
              (pszMethod == nullptr || EQUAL(pszMethod, "GEOLOC_ARRAY")))
     {
         pszProjection = CSLFetchNameValue(papszMD, "SRS");
@@ -5149,7 +5150,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
     bool bMayNeedDensify = true;
     if (poRasterSRS && poCutlineSRS && poRasterSRS->IsSame(poCutlineSRS) &&
         poSrcDS->GetGCPCount() == 0 && !poSrcDS->GetMetadata(GDAL_MDD_RPC) &&
-        !poSrcDS->GetMetadata("GEOLOCATION") &&
+        !poSrcDS->GetMetadata(GDAL_MDD_GEOLOCATION) &&
         !CSLFetchNameValue(papszTO_In, "GEOLOC_ARRAY") &&
         !CSLFetchNameValue(papszTO_In, "SRC_GEOLOC_ARRAY"))
     {

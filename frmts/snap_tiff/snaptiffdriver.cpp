@@ -180,7 +180,7 @@ GDALDataset *SNAPTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
             poOpenInfo->pszFilename, ":", CSLT_HONOURSTRINGS));
         if (aosTokens.size() != 3)
             return nullptr;
-        bIsGeolocation = EQUAL(aosTokens[2], "GEOLOCATION");
+        bIsGeolocation = EQUAL(aosTokens[2], GDAL_MDD_GEOLOCATION);
         if (!bIsGeolocation && !EQUAL(aosTokens[2], "MAIN"))
             return nullptr;
         GDALOpenInfo oOpenInfo(aosTokens[1], GA_ReadOnly);
@@ -395,7 +395,7 @@ GDALDataset *SNAPTIFFDataset::Open(GDALOpenInfo *poOpenInfo)
 char **SNAPTIFFDataset::GetMetadataDomainList()
 {
     return BuildMetadataDomainList(GDALPamDataset::GetMetadataDomainList(),
-                                   TRUE, "GEOLOCATION", "SUBDATASETS",
+                                   TRUE, GDAL_MDD_GEOLOCATION, "SUBDATASETS",
                                    "xml:DIMAP", nullptr);
 }
 
@@ -662,7 +662,7 @@ CSLConstList SNAPTIFFDataset::GetMetadata(const char *pszDomain)
             }
             return m_aosDIMAPMetadata.List();
         }
-        else if (pszDomain && EQUAL(pszDomain, "GEOLOCATION"))
+        else if (pszDomain && EQUAL(pszDomain, GDAL_MDD_GEOLOCATION))
         {
             return m_aosGEOLOCATION.List();
         }
@@ -702,7 +702,8 @@ const char *SNAPTIFFDataset::GetMetadataItem(const char *pszName,
                                              const char *pszDomain)
 {
     if (!m_bIsGeolocArray && pszDomain &&
-        (EQUAL(pszDomain, "GEOLOCATION") || EQUAL(pszDomain, "SUBDATASETS")))
+        (EQUAL(pszDomain, GDAL_MDD_GEOLOCATION) ||
+         EQUAL(pszDomain, "SUBDATASETS")))
     {
         return CSLFetchNameValue(GetMetadata(pszDomain), pszName);
     }

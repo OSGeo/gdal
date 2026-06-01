@@ -3525,34 +3525,35 @@ GDALDataset *L1BDataset::Open(GDALOpenInfo *poOpenInfo)
 
         char *pszWKT = nullptr;
         poDS->m_oGCPSRS.exportToWkt(&pszWKT);
-        poOutDS->SetMetadataItem("SRS", pszWKT,
-                                 "GEOLOCATION"); /* unused by gdalgeoloc.cpp */
+        poOutDS->SetMetadataItem(
+            "SRS", pszWKT, GDAL_MDD_GEOLOCATION); /* unused by gdalgeoloc.cpp */
         CPLFree(pszWKT);
 
         if (bInterpol)
             osTMP.Printf("L1BGCPS_INTERPOL:\"%s\"", osFilename.c_str());
         else
             osTMP.Printf("L1BGCPS:\"%s\"", osFilename.c_str());
-        poOutDS->SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
-        poOutDS->SetMetadataItem("X_BAND", "1", "GEOLOCATION");
-        poOutDS->SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
-        poOutDS->SetMetadataItem("Y_BAND", "2", "GEOLOCATION");
+        poOutDS->SetMetadataItem("X_DATASET", osTMP, GDAL_MDD_GEOLOCATION);
+        poOutDS->SetMetadataItem("X_BAND", "1", GDAL_MDD_GEOLOCATION);
+        poOutDS->SetMetadataItem("Y_DATASET", osTMP, GDAL_MDD_GEOLOCATION);
+        poOutDS->SetMetadataItem("Y_BAND", "2", GDAL_MDD_GEOLOCATION);
 
         if (bInterpol)
         {
-            poOutDS->SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
-            poOutDS->SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
+            poOutDS->SetMetadataItem("PIXEL_OFFSET", "0", GDAL_MDD_GEOLOCATION);
+            poOutDS->SetMetadataItem("PIXEL_STEP", "1", GDAL_MDD_GEOLOCATION);
         }
         else
         {
             osTMP.Printf("%d", poDS->iGCPStart);
-            poOutDS->SetMetadataItem("PIXEL_OFFSET", osTMP, "GEOLOCATION");
+            poOutDS->SetMetadataItem("PIXEL_OFFSET", osTMP,
+                                     GDAL_MDD_GEOLOCATION);
             osTMP.Printf("%d", poDS->iGCPStep);
-            poOutDS->SetMetadataItem("PIXEL_STEP", osTMP, "GEOLOCATION");
+            poOutDS->SetMetadataItem("PIXEL_STEP", osTMP, GDAL_MDD_GEOLOCATION);
         }
 
-        poOutDS->SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
-        poOutDS->SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+        poOutDS->SetMetadataItem("LINE_OFFSET", "0", GDAL_MDD_GEOLOCATION);
+        poOutDS->SetMetadataItem("LINE_STEP", "1", GDAL_MDD_GEOLOCATION);
     }
 
     if (poOutDS != poDS)

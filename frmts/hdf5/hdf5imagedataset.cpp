@@ -1184,7 +1184,8 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                     // Not totally sure about that
                     aosGeolocation.AddNameValue("GEOREFERENCING_CONVENTION",
                                                 "PIXEL_CENTER");
-                    poDS->SetMetadata(aosGeolocation.List(), "GEOLOCATION");
+                    poDS->SetMetadata(aosGeolocation.List(),
+                                      GDAL_MDD_GEOLOCATION);
                 }
             }
         }
@@ -1333,7 +1334,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->SetBand(i + 1, std::move(poBand));
     }
 
-    if (!poDS->GetMetadata("GEOLOCATION"))
+    if (!poDS->GetMetadata(GDAL_MDD_GEOLOCATION))
         poDS->CreateProjections();
 
     // Setup/check for pam .aux.xml.
@@ -1347,7 +1348,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     // Or scenarios like https://github.com/OSGeo/gdal/issues/12824 mixing
     // native Windows and WSL use.
     CSLConstList papszGeoLocationAfterLoadXML =
-        poDS->GetMetadata("GEOLOCATION");
+        poDS->GetMetadata(GDAL_MDD_GEOLOCATION);
     if (papszGeoLocationAfterLoadXML)
     {
         for (const char *pszItem : {"X_DATASET", "Y_DATASET"})
@@ -1368,7 +1369,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                         char *pszNewVal = GDALSubdatasetInfoModifyPathComponent(
                             hSubDSInfo, osFilename.c_str());
                         poDS->SetMetadataItem(pszItem, pszNewVal,
-                                              "GEOLOCATION");
+                                              GDAL_MDD_GEOLOCATION);
                         CPLFree(pszNewVal);
                     }
                     CPLFree(pszOriPath);

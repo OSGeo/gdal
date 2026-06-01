@@ -2539,7 +2539,8 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
         }
 
         else if ((pszMethod == nullptr || EQUAL(pszMethod, "GEOLOC_ARRAY")) &&
-                 ((papszMD = GDALGetMetadata(hDS, "GEOLOCATION")) != nullptr ||
+                 ((papszMD = GDALGetMetadata(hDS, GDAL_MDD_GEOLOCATION)) !=
+                      nullptr ||
                   pszGeolocArray != nullptr))
         {
             CPLStringList aosGeolocMD;  // keep in this scope

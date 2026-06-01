@@ -679,9 +679,9 @@ void GDALRasterCompareAlgorithm::DatasetComparison(
 
     if (!m_skipGeolocation)
     {
-        MetadataComparison(aosReport, "GEOLOCATION",
-                           poRefDS->GetMetadata("GEOLOCATION"),
-                           poInputDS->GetMetadata("GEOLOCATION"));
+        MetadataComparison(aosReport, GDAL_MDD_GEOLOCATION,
+                           poRefDS->GetMetadata(GDAL_MDD_GEOLOCATION),
+                           poInputDS->GetMetadata(GDAL_MDD_GEOLOCATION));
     }
 
     if (!ret)

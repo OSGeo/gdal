@@ -1937,24 +1937,26 @@ void HDF4ImageDataset::ProcessModisSDSGeolocation(void)
     /*      We found geolocation information.  Record it as metadata.       */
     /* -------------------------------------------------------------------- */
 
-    SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG, "GEOLOCATION");
+    SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG, GDAL_MDD_GEOLOCATION);
 
     CPLString osWrk;
     osWrk.Printf("HDF4_SDS:UNKNOWN:\"%s\":%d", pszFilename, iXIndex);
-    SetMetadataItem("X_DATASET", osWrk, "GEOLOCATION");
-    SetMetadataItem("X_BAND", "1", "GEOLOCATION");
+    SetMetadataItem("X_DATASET", osWrk, GDAL_MDD_GEOLOCATION);
+    SetMetadataItem("X_BAND", "1", GDAL_MDD_GEOLOCATION);
 
     osWrk.Printf("HDF4_SDS:UNKNOWN:\"%s\":%d", pszFilename, iYIndex);
-    SetMetadataItem("Y_DATASET", osWrk, "GEOLOCATION");
-    SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+    SetMetadataItem("Y_DATASET", osWrk, GDAL_MDD_GEOLOCATION);
+    SetMetadataItem("Y_BAND", "1", GDAL_MDD_GEOLOCATION);
 
     SetMetadataItem("PIXEL_OFFSET", CPLSPrintf("%d", nPixelOffset),
-                    "GEOLOCATION");
-    SetMetadataItem("PIXEL_STEP", CPLSPrintf("%d", nPixelStep), "GEOLOCATION");
+                    GDAL_MDD_GEOLOCATION);
+    SetMetadataItem("PIXEL_STEP", CPLSPrintf("%d", nPixelStep),
+                    GDAL_MDD_GEOLOCATION);
 
     SetMetadataItem("LINE_OFFSET", CPLSPrintf("%d", nLineOffset),
-                    "GEOLOCATION");
-    SetMetadataItem("LINE_STEP", CPLSPrintf("%d", nLineStep), "GEOLOCATION");
+                    GDAL_MDD_GEOLOCATION);
+    SetMetadataItem("LINE_STEP", CPLSPrintf("%d", nLineStep),
+                    GDAL_MDD_GEOLOCATION);
 }
 
 /************************************************************************/
@@ -2561,31 +2563,31 @@ int HDF4ImageDataset::ProcessSwathGeolocation(int32 hSW, char **papszDimList)
             char *pszWKT = nullptr;
             m_oGCPSRS.exportToWkt(&pszWKT);
             if (pszWKT)
-                SetMetadataItem("SRS", pszWKT, "GEOLOCATION");
+                SetMetadataItem("SRS", pszWKT, GDAL_MDD_GEOLOCATION);
             CPLFree(pszWKT);
 
             CPLString osWrk;
             osWrk.Printf("HDF4_EOS:EOS_SWATH_GEOL:\"%s\":%s:%s", pszFilename,
                          pszSubdatasetName, papszGeolocations[iLongDim]);
-            SetMetadataItem("X_DATASET", osWrk, "GEOLOCATION");
-            SetMetadataItem("X_BAND", "1", "GEOLOCATION");
+            SetMetadataItem("X_DATASET", osWrk, GDAL_MDD_GEOLOCATION);
+            SetMetadataItem("X_BAND", "1", GDAL_MDD_GEOLOCATION);
 
             osWrk.Printf("HDF4_EOS:EOS_SWATH_GEOL:\"%s\":%s:%s", pszFilename,
                          pszSubdatasetName, papszGeolocations[iLatDim]);
-            SetMetadataItem("Y_DATASET", osWrk, "GEOLOCATION");
-            SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+            SetMetadataItem("Y_DATASET", osWrk, GDAL_MDD_GEOLOCATION);
+            SetMetadataItem("Y_BAND", "1", GDAL_MDD_GEOLOCATION);
 
             if (paiOffset && paiIncrement)
             {
                 osWrk.Printf("%ld", static_cast<long>(paiOffset[iPixelDim]));
-                SetMetadataItem("PIXEL_OFFSET", osWrk, "GEOLOCATION");
+                SetMetadataItem("PIXEL_OFFSET", osWrk, GDAL_MDD_GEOLOCATION);
                 osWrk.Printf("%ld", static_cast<long>(paiIncrement[iPixelDim]));
-                SetMetadataItem("PIXEL_STEP", osWrk, "GEOLOCATION");
+                SetMetadataItem("PIXEL_STEP", osWrk, GDAL_MDD_GEOLOCATION);
 
                 osWrk.Printf("%ld", static_cast<long>(paiOffset[iLineDim]));
-                SetMetadataItem("LINE_OFFSET", osWrk, "GEOLOCATION");
+                SetMetadataItem("LINE_OFFSET", osWrk, GDAL_MDD_GEOLOCATION);
                 osWrk.Printf("%ld", static_cast<long>(paiIncrement[iLineDim]));
-                SetMetadataItem("LINE_STEP", osWrk, "GEOLOCATION");
+                SetMetadataItem("LINE_STEP", osWrk, GDAL_MDD_GEOLOCATION);
             }
         }
 
