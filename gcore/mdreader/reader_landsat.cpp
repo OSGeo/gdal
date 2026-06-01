@@ -142,12 +142,12 @@ void GDALMDReaderLandsat::LoadMetadata()
         if (fCC < 0)
         {
             m_papszIMAGERYMD = CSLAddNameValue(
-                m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, MD_CLOUDCOVER_NA);
+                m_papszIMAGERYMD, GDALMD_CLOUDCOVER, MD_CLOUDCOVER_NA);
         }
         else
         {
             m_papszIMAGERYMD =
-                CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
+                CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER,
                                 CPLSPrintf("%d", int(fCC)));
         }
     }

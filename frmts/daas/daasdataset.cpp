@@ -957,7 +957,7 @@ bool GDALDAASDataset::GetImageMetadata()
         GetDouble(oProperties, "cloudCover", false, bIgnoredError);
     if (!bIgnoredError)
     {
-        SetMetadataItem(MD_NAME_CLOUDCOVER, CPLSPrintf("%.2f", dfCloudCover),
+        SetMetadataItem(GDALMD_CLOUDCOVER, CPLSPrintf("%.2f", dfCloudCover),
                         GDAL_MDD_IMAGERY);
     }
 

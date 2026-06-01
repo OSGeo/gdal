@@ -132,8 +132,8 @@ void GDALMDReaderOrbView::LoadMetadata()
         m_papszIMDMD, "productInfo.productCloudCoverPercentage");
     if (nullptr != pszCloudCover)
     {
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER,
-                                           pszCloudCover);
+        m_papszIMAGERYMD =
+            CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER, pszCloudCover);
     }
 
     const char *pszDateTime = CSLFetchNameValue(

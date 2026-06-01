@@ -146,6 +146,6 @@ void GDALMDReaderRapidEye::LoadMetadata()
     if (nullptr != pszSatId)
     {
         m_papszIMAGERYMD =
-            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, pszCC);
+            CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER, pszCC);
     }
 }

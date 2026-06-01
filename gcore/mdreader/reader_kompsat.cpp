@@ -129,12 +129,12 @@ void GDALMDReaderKompsat::LoadMetadata()
         if (nCC > 100 || nCC < 0)
         {
             m_papszIMAGERYMD = CSLAddNameValue(
-                m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, MD_CLOUDCOVER_NA);
+                m_papszIMAGERYMD, GDALMD_CLOUDCOVER, MD_CLOUDCOVER_NA);
         }
         else
         {
             m_papszIMAGERYMD = CSLAddNameValue(
-                m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, CPLSPrintf("%d", nCC));
+                m_papszIMAGERYMD, GDALMD_CLOUDCOVER, CPLSPrintf("%d", nCC));
         }
     }
 

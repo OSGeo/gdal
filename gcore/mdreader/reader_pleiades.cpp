@@ -291,7 +291,7 @@ void GDALMDReaderPleiades::LoadMetadata()
     }
 
     m_papszIMAGERYMD =
-        CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_CLOUDCOVER, MD_CLOUDCOVER_NA);
+        CSLAddNameValue(m_papszIMAGERYMD, GDALMD_CLOUDCOVER, MD_CLOUDCOVER_NA);
 }
 
 /**
