@@ -383,6 +383,51 @@ typedef enum
 
 const char CPL_DLL *GDALGetPaletteInterpretationName(GDALPaletteInterp);
 
+/* "well known" metadata domains. */
+
+/** Name of the default metadata domain.
+ * @since 3.14
+ */
+#define GDAL_MDD_DEFAULT ""
+
+/** Name of the metadata domain that holds structural information about image
+ * organization that would not normally be carried with an image when
+ * translated into another format.
+ * @since 3.14
+ */
+#define GDAL_MDD_IMAGE_STRUCTURE "IMAGE_STRUCTURE"
+
+/** Name of the metadata domain that holds Rational Polynomial Coefficients
+ * (RPC)
+ * @since 3.14
+ */
+#define GDAL_MDD_RPC "RPC"
+
+/** Name of the metadata domain that holds the definition of a geolocation
+ * array.
+ * @since 3.14
+ */
+#define GDAL_MDD_GEOLOCATION "GEOLOCATION"
+
+/** Name of the metadata domain that holds the name and description of
+ * subdatasets.
+ * @since 3.14
+ */
+#define GDAL_MDD_SUBDATASETS "SUBDATASETS"
+
+/** Name of the metadata domain that holds information from IMD side-car files.
+ * @since 3.14
+ */
+#define GDAL_MDD_IMD "IMD"
+
+/** Name of the metadata domain that holds GDAL-standardized metadata items
+ * for satellite or aerial imagery, in particular GDALMD_SATELLITEID,
+ * GDALMD_CLOUDCOVER, GDALMD_ACQUISITIONDATETIME, GDALMD_CENTRAL_WAVELENGTH_UM,
+ * GDALMD_FWHM_UM
+ * @since 3.14
+ */
+#define GDAL_MDD_IMAGERY "IMAGERY"
+
 /* "well known" metadata items. */
 
 /** Metadata item for dataset that indicates the spatial interpretation of a
@@ -394,6 +439,56 @@ const char CPL_DLL *GDALGetPaletteInterpretationName(GDALPaletteInterp);
 /** Value for GDALMD_AREA_OR_POINT that indicates that a pixel represents a
  * point */
 #define GDALMD_AOP_POINT "Point"
+
+/** Metadata item for compression method, in the GDAL_MDD_IMAGE_STRUCTURE
+ * domain.
+ * @since 3.14
+ */
+#define GDALMD_COMPRESSION "COMPRESSION"
+
+/** Metadata item for interleave pattern, in the GDAL_MDD_IMAGE_STRUCTURE
+ * domain.
+ * Typical values are PIXEL, LINE or BAND.
+ * @since 3.14
+ */
+#define GDALMD_INTERLEAVE "INTERLEAVE"
+
+/** Metadata item for actual number of bits used for this band, or the bands of
+ * this dataset, in the GDAL_MDD_IMAGE_STRUCTURE domain.
+ * Normally only present when the number of bits is non-standard for th
+ * datatype, such as when a 1 bit TIFF is represented through GDAL as GDT_UInt8.
+ * @since 3.14
+ */
+#define GDALMD_NBITS "NBITS"
+
+/** Metadata item for satellite/scanner ID, in the GDAL_MDD_IMAGERY domain.
+ * @since 3.14
+ */
+#define GDALMD_SATELLITEID "SATELLITEID"
+
+/** Metadata item for cloud cover, in the GDAL_MDD_IMAGERY domain.
+ * The value is between 0 and 100, or 999 if not available
+ * @since 3.14
+ */
+#define GDALMD_CLOUDCOVER "CLOUDCOVER"
+
+/** Metadata item for image acquisition date time in UTC, in the
+ * GDAL_MDD_IMAGERY domain.
+ * @since 3.14
+ */
+#define GDALMD_ACQUISITIONDATETIME "ACQUISITIONDATETIME"
+
+/** Metadata item for the central Wavelength in micrometers,
+ * in the GDAL_MDD_IMAGERY domain.
+ * @since 3.14
+ */
+#define GDALMD_CENTRAL_WAVELENGTH_UM "CENTRAL_WAVELENGTH_UM"
+
+/** Metadata item for full-width half-maximum (FWHM) in micrometers,
+ * in the GDAL_MDD_IMAGERY domain.
+ * @since 3.14
+ */
+#define GDALMD_FWHM_UM "FWHM_UM"
 
 /* -------------------------------------------------------------------- */
 /*      GDAL Specific error codes.                                      */
