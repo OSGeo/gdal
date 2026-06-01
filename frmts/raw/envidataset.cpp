@@ -2153,7 +2153,8 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     if (STARTS_WITH_CI(osInterleave, "bil"))
     {
         poDS->eInterleave = Interleave::BIL;
-        poDS->SetMetadataItem("INTERLEAVE", "LINE", GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "LINE",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         if (nSamples > std::numeric_limits<int>::max() / (nDataSize * nBands))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
@@ -2166,7 +2167,8 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     else if (STARTS_WITH_CI(osInterleave, "bip"))
     {
         poDS->eInterleave = Interleave::BIP;
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         if (nSamples > std::numeric_limits<int>::max() / (nDataSize * nBands))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
@@ -2179,7 +2181,8 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     else
     {
         poDS->eInterleave = Interleave::BSQ;
-        poDS->SetMetadataItem("INTERLEAVE", "BAND", GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         if (nSamples > std::numeric_limits<int>::max() / nDataSize)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Int overflow occurred.");
@@ -2421,7 +2424,8 @@ GDALDataset *ENVIDataset::Create(const char *pszFilename, int nXSize,
     bRet &=
         VSIFPrintfL(fp, "header offset = 0\nfile type = ENVI Standard\n") > 0;
     bRet &= VSIFPrintfL(fp, "data type = %d\n", iENVIType) > 0;
-    const char *pszInterleaving = CSLFetchNameValue(papszOptions, "INTERLEAVE");
+    const char *pszInterleaving =
+        CSLFetchNameValue(papszOptions, GDALMD_INTERLEAVE);
     if (pszInterleaving)
     {
         if (STARTS_WITH_CI(pszInterleaving, "bip"))

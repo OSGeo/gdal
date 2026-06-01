@@ -1854,7 +1854,7 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
         if (poSrcDS->GetRasterCount() > 1)
         {
             const char *pszInterleaving = poSrcDS->GetMetadataItem(
-                "INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
+                GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
             if (pszInterleaving)
             {
                 if (EQUAL(pszInterleaving, "BAND"))
@@ -2863,14 +2863,14 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
         if (psRoot)
             CPLCreateXMLElementAndValue(psRoot.get(), "Interleave", "Band");
         else
-            poLayer->SetMetadataItem("INTERLEAVE", "BAND");
+            poLayer->SetMetadataItem(GDALMD_INTERLEAVE, "BAND");
     }
     else if (nPixelInterleavedCount > 0)
     {
         if (psRoot)
             CPLCreateXMLElementAndValue(psRoot.get(), "Interleave", "Pixel");
         else
-            poLayer->SetMetadataItem("INTERLEAVE", "PIXEL");
+            poLayer->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL");
     }
 
     if (!psOptions->osGTIFilename.empty())

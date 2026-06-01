@@ -766,7 +766,7 @@ CPLErr MRFDataset::LevelInit(const int l)
     if (poSRS)
         m_oSRS = *poSRS;
 
-    SetMetadataItem("INTERLEAVE", OrderName(current.order),
+    SetMetadataItem(GDALMD_INTERLEAVE, OrderName(current.order),
                     GDAL_MDD_IMAGE_STRUCTURE);
     SetMetadataItem("COMPRESSION", CompName(current.comp),
                     GDAL_MDD_IMAGE_STRUCTURE);
@@ -1494,7 +1494,7 @@ CPLErr MRFDataset::Initialize(CPLXMLNode *config)
     }
 
     // Dataset metadata setup
-    SetMetadataItem("INTERLEAVE", OrderName(current.order),
+    SetMetadataItem(GDALMD_INTERLEAVE, OrderName(current.order),
                     GDAL_MDD_IMAGE_STRUCTURE);
     SetMetadataItem("COMPRESSION", CompName(current.comp),
                     GDAL_MDD_IMAGE_STRUCTURE);
@@ -1768,9 +1768,9 @@ GDALDataset *MRFDataset::CreateCopy(const char *pszFilename,
     char **options = CSLDuplicate(papszOptions);
 
     const char *pszValue =
-        poSrcDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
-    options =
-        CSLAddIfMissing(options, "INTERLEAVE", pszValue ? pszValue : "PIXEL");
+        poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
+    options = CSLAddIfMissing(options, GDALMD_INTERLEAVE,
+                              pszValue ? pszValue : "PIXEL");
     int xb, yb;
     poSrcBand1->GetBlockSize(&xb, &yb);
 
@@ -2138,7 +2138,7 @@ void MRFDataset::ProcessCreateOptions(CSLConstList papszOptions)
     if (val && IL_ERR_COMP == (img.comp = CompToken(val)))
         throw CPLString("GDAL MRF: Error setting compression");
 
-    val = opt.FetchNameValue("INTERLEAVE");
+    val = opt.FetchNameValue(GDALMD_INTERLEAVE);
     if (val && IL_ERR_ORD == (img.order = OrderToken(val)))
         throw CPLString("GDAL MRF: Error setting interleave");
 

@@ -2421,7 +2421,8 @@ GDALDataset *WMTSDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
 
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
         for (int i = 0; i < nBands; i++)
             poDS->SetBand(i + 1, new WMTSBand(poDS, i + 1, eDataType));
 

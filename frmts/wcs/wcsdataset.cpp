@@ -207,7 +207,7 @@ CPLErr WCSDataset::DirectRasterIO(CPL_UNUSED GDALRWFlag eRWFlag, int nXOff,
     // todo: in 2.0.1 the band list in this dataset may be user-defined
 
     int band_count = nBandCount;
-    if (EQUAL(CPLGetXMLValue(psService, "INTERLEAVE", ""), "PIXEL"))
+    if (EQUAL(CPLGetXMLValue(psService, GDALMD_INTERLEAVE, ""), "PIXEL"))
     {
         band_count = 0;
     }
@@ -1043,7 +1043,7 @@ static CPLXMLNode *CreateService(const std::string &base_url,
 #define WCS_TWEAK_OPTIONS                                                      \
     "OriginAtBoundary", "OuterExtents", "BufSizeAdjust", "OffsetsPositive",    \
         "NrOffsets", "GridCRSOptional", "NoGridAxisSwap", "GridAxisLabelSwap", \
-        "SubsetAxisSwap", "UseScaleFactor", "INTERLEAVE"
+        "SubsetAxisSwap", "UseScaleFactor", GDALMD_INTERLEAVE
 
 static bool UpdateService(CPLXMLNode *service, GDALOpenInfo *poOpenInfo)
 {

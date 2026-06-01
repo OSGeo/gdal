@@ -520,7 +520,7 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
         if (poSrcDS)
         {
             const char *pszSrcInterleave = poSrcDS->GetMetadataItem(
-                "INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
+                GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
             if (pszSrcInterleave && EQUAL(pszSrcInterleave, "PIXEL"))
             {
                 bSourceIsPixelInterleaved = true;
@@ -546,7 +546,7 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
     }
 
     const char *pszInterleave =
-        GetOptionValue("INTERLEAVE", "INTERLEAVE_OVERVIEW");
+        GetOptionValue(GDALMD_INTERLEAVE, "INTERLEAVE_OVERVIEW");
     if (pszInterleave != nullptr && pszInterleave[0] != '\0')
     {
         if (EQUAL(pszInterleave, "PIXEL"))

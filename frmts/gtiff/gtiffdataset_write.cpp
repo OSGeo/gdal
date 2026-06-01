@@ -2731,7 +2731,7 @@ bool GTiffDataset::GetOverviewParameters(
         nPlanarConfig = PLANARCONFIG_CONTIG;
     }
     const char *pszInterleave =
-        GetOptionValue("INTERLEAVE", "INTERLEAVE_OVERVIEW", &pszOptionKey);
+        GetOptionValue(GDALMD_INTERLEAVE, "INTERLEAVE_OVERVIEW", &pszOptionKey);
     if (pszInterleave != nullptr && pszInterleave[0] != '\0')
     {
         if (EQUAL(pszInterleave, "PIXEL"))
@@ -4610,7 +4610,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             CSLFetchNameValue(papszCreationOptions, "@TILE_INTERLEAVE");
         if (pszTileInterleave && CPLTestBool(pszTileInterleave))
         {
-            AppendMetadataItem(&psRoot, &psTail, "INTERLEAVE", "TILE", 0,
+            AppendMetadataItem(&psRoot, &psTail, GDALMD_INTERLEAVE, "TILE", 0,
                                nullptr, GDAL_MDD_IMAGE_STRUCTURE);
         }
 
@@ -5483,7 +5483,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
     else
     {
         if (const char *pszValue =
-                CSLFetchNameValue(papszParamList, "INTERLEAVE"))
+                CSLFetchNameValue(papszParamList, GDALMD_INTERLEAVE))
         {
             if (EQUAL(pszValue, "PIXEL"))
             {
@@ -6997,9 +6997,11 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     poDS->GetDiscardLsbOption(papszParamList);
 
     if (poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG && l_nBands != 1)
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     else
-        poDS->SetMetadataItem("INTERLEAVE", "BAND", GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
+                              GDAL_MDD_IMAGE_STRUCTURE);
 
     poDS->oOvManager.Initialize(poDS.get(), pszFilename);
 
@@ -7851,7 +7853,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     bool bCreateMask = false;
     CPLString osHiddenStructuralMD;
     const char *pszInterleave =
-        CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "PIXEL");
+        CSLFetchNameValueDef(papszOptions, GDALMD_INTERLEAVE, "PIXEL");
     if (bCopySrcOverviews &&
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "TILED", "NO")))
     {
@@ -8227,7 +8229,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
 
     if (bTileInterleaving)
     {
-        poDS->m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "TILE",
+        poDS->m_oGTiffMDMD.SetMetadataItem(GDALMD_INTERLEAVE, "TILE",
                                            GDAL_MDD_IMAGE_STRUCTURE);
     }
 

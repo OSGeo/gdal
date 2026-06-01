@@ -88,7 +88,7 @@ constexpr const char *MD_BLOCK_X_SIZE = "BLOCKXSIZE";
 constexpr const char *MD_BLOCK_Y_SIZE = "BLOCKYSIZE";
 constexpr const char *MD_MASK_BAND = "MASK_BAND";
 constexpr const char *MD_RESAMPLING = "RESAMPLING";
-constexpr const char *MD_INTERLEAVE = "INTERLEAVE";
+constexpr const char *MD_INTERLEAVE = GDALMD_INTERLEAVE;
 
 constexpr const char *const apszTIOptions[] = {MD_RESX,
                                                MD_RESY,
@@ -2718,13 +2718,13 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
     const char *pszInterleave = GetOption(MD_INTERLEAVE);
     if (pszInterleave)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", pszInterleave,
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, pszInterleave,
                                      GDAL_MDD_IMAGE_STRUCTURE);
         m_bBandInterleave = EQUAL(pszInterleave, "BAND");
     }
     else if (nBandCount > 1 && !GetMetadata(GDAL_MDD_IMAGE_STRUCTURE))
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
 

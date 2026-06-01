@@ -1425,7 +1425,7 @@ CPLErr GDALDefaultOverviews::CreateMaskBand(int nFlags, int nBand)
             (nFlags & GMF_PER_DATASET) ? 1 : poDS->GetRasterCount();
 
         char **papszOpt = CSLSetNameValue(nullptr, "COMPRESS", "DEFLATE");
-        papszOpt = CSLSetNameValue(papszOpt, "INTERLEAVE", "BAND");
+        papszOpt = CSLSetNameValue(papszOpt, GDALMD_INTERLEAVE, "BAND");
 
         int nBX = 0;
         int nBY = 0;

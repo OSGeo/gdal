@@ -318,23 +318,24 @@ GeoRasterDataset::OpenDataset(const char *pszFilenameIn, GDALAccess eAccessIn,
 
     if (poGRW->nBandBlockSize == 1)
     {
-        poGRD->SetMetadataItem("INTERLEAVE", "BSQ", GDAL_MDD_IMAGE_STRUCTURE);
+        poGRD->SetMetadataItem(GDALMD_INTERLEAVE, "BSQ",
+                               GDAL_MDD_IMAGE_STRUCTURE);
     }
     else
     {
         if (EQUAL(poGRW->sInterleaving.c_str(), "BSQ"))
         {
-            poGRD->SetMetadataItem("INTERLEAVE", "BSQ",
+            poGRD->SetMetadataItem(GDALMD_INTERLEAVE, "BSQ",
                                    GDAL_MDD_IMAGE_STRUCTURE);
         }
         else if (EQUAL(poGRW->sInterleaving.c_str(), "BIP"))
         {
-            poGRD->SetMetadataItem("INTERLEAVE", "PIB",
+            poGRD->SetMetadataItem(GDALMD_INTERLEAVE, "PIB",
                                    GDAL_MDD_IMAGE_STRUCTURE);
         }
         else if (EQUAL(poGRW->sInterleaving.c_str(), "BIL"))
         {
-            poGRD->SetMetadataItem("INTERLEAVE", "BIL",
+            poGRD->SetMetadataItem(GDALMD_INTERLEAVE, "BIL",
                                    GDAL_MDD_IMAGE_STRUCTURE);
         }
     }
@@ -1052,7 +1053,7 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         nQuality = poGRW->nCompressQuality;
     }
 
-    pszFetched = CSLFetchNameValue(papszOptions, "INTERLEAVE");
+    pszFetched = CSLFetchNameValue(papszOptions, GDALMD_INTERLEAVE);
 
     bool bInterleve_ind = false;
 

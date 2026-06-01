@@ -1284,7 +1284,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
                     static_cast<int>(panChunkDims[poDS->m_nOtherDimIndex]);
 
                 if (poDS->m_nBandChunkSize > 1)
-                    poDS->SetMetadataItem("INTERLEAVE", "PIXEL",
+                    poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                           GDAL_MDD_IMAGE_STRUCTURE);
 
                 poDS->SetMetadataItem("BAND_CHUNK_SIZE",

@@ -336,7 +336,7 @@ GDALDataset *DDSDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterYSize = static_cast<int>(ddsDesc.dwHeight);
     poDS->GDALDataset::SetMetadataItem(
         "COMPRESSION", crn_get_format_string(fmt), GDAL_MDD_IMAGE_STRUCTURE);
-    poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+    poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                        GDAL_MDD_IMAGE_STRUCTURE);
     for (int i = 0; i < l_nBands; i++)
     {
@@ -434,7 +434,7 @@ GDALDataset *DDSDatasetAllDecoded::Open(GDALOpenInfo *poOpenInfo)
     poDS->m_tex_desc = tex_desc;
     poDS->m_pImages = std::move(pImages);
     constexpr int NBANDS = 4;
-    poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+    poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                        GDAL_MDD_IMAGE_STRUCTURE);
     for (int i = 0; i < NBANDS; i++)
     {

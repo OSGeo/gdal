@@ -1205,9 +1205,9 @@ GDALDataset *GDALDriver::CreateCopy(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     char **papszOptionsToDelete = nullptr;
     const char *srcInterleave =
-        poSrcDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
+        poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
     if (nBandCount > 1 && srcInterleave != nullptr &&
-        CSLFetchNameValue(papszOptions, "INTERLEAVE") == nullptr &&
+        CSLFetchNameValue(papszOptions, GDALMD_INTERLEAVE) == nullptr &&
         EQUAL(CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE"), "NONE"))
     {
 
@@ -1226,7 +1226,7 @@ GDALDataset *GDALDriver::CreateCopy(const char *pszFilename,
                 const char *nameAttribute =
                     CPLGetXMLValue(child, "name", nullptr);
                 const bool isInterleaveAttribute =
-                    nameAttribute && EQUAL(nameAttribute, "INTERLEAVE");
+                    nameAttribute && EQUAL(nameAttribute, GDALMD_INTERLEAVE);
                 if (isInterleaveAttribute)
                 {
                     for (CPLXMLNode *optionChild = child->psChild;
@@ -1272,8 +1272,8 @@ GDALDataset *GDALDriver::CreateCopy(const char *pszFilename,
         if (dstInterleave != nullptr)
         {
             papszOptionsToDelete = CSLDuplicate(papszOptions);
-            papszOptionsToDelete = CSLSetNameValue(papszOptionsToDelete,
-                                                   "INTERLEAVE", dstInterleave);
+            papszOptionsToDelete = CSLSetNameValue(
+                papszOptionsToDelete, GDALMD_INTERLEAVE, dstInterleave);
             papszOptionsToDelete = CSLSetNameValue(
                 papszOptionsToDelete, "@INTERLEAVE_ADDED_AUTOMATICALLY", "YES");
             papszOptions = papszOptionsToDelete;

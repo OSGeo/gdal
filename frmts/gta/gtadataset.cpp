@@ -1227,7 +1227,8 @@ GDALDataset *GTADataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poDS->nBands > 0)
     {
-        poDS->SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+        poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
+                              GDAL_MDD_IMAGE_STRUCTURE);
     }
     if (poDS->oHeader.compression() == gta::bzip2)
         poDS->SetMetadataItem("COMPRESSION", "BZIP2", GDAL_MDD_IMAGE_STRUCTURE);

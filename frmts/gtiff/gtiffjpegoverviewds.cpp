@@ -80,7 +80,7 @@ GTiffJPEGOverviewDS::GTiffJPEGOverviewDS(GTiffDataset *poParentDSIn,
     for (int i = 1; i <= m_poParentDS->nBands; ++i)
         SetBand(i, new GTiffJPEGOverviewBand(this, i));
 
-    SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+    SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     if (m_poParentDS->m_nPhotometric == PHOTOMETRIC_YCBCR)
         SetMetadataItem("COMPRESSION", "YCbCr JPEG", GDAL_MDD_IMAGE_STRUCTURE);
     else

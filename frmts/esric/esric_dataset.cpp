@@ -332,7 +332,7 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo, bool ignoreOversizedLods)
         nRasterXSize = int(std::min(dxsz, double(INT32_MAX)));
         nRasterYSize = int(std::min(dysz, double(INT32_MAX)));
 
-        SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
         compression =
             CPLGetXMLValue(CacheInfo, "TileImageInfo.CacheTileFormat", "JPEG");
         SetMetadataItem("COMPRESS", compression.c_str(),
@@ -502,7 +502,7 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot,
         nRasterXSize = int(std::min(dxsz, double(INT32_MAX)));
         nRasterYSize = int(std::min(dysz, double(INT32_MAX)));
 
-        SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
         compression = oRoot.GetString("tileImageInfo/format");
         SetMetadataItem("COMPRESS", compression.c_str(),
                         GDAL_MDD_IMAGE_STRUCTURE);

@@ -2720,7 +2720,7 @@ CPLErr GDALDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (!bHasSubpixelShift && nXSize == nBufXSize && nYSize == nBufYSize &&
         nBandCount > 1 &&
         (pszInterleave = GetMetadataItem(
-             "INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE)) != nullptr &&
+             GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE)) != nullptr &&
         EQUAL(pszInterleave, "PIXEL"))
     {
         return BlockBasedRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
@@ -11974,7 +11974,7 @@ class GDALMDArrayFromDataset final : public GDALMDArray
             if (EQUAL(pszDimOrder, "AUTO"))
             {
                 const char *pszInterleave = poDS->GetMetadataItem(
-                    "INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
+                    GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
                 return nBandCount == 1 || !pszInterleave ||
                        !EQUAL(pszInterleave, "PIXEL");
             }

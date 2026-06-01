@@ -5658,18 +5658,18 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(GDALDatasetH hSrcDS,
     /* -------------------------------------------------------------------- */
     bool bInterleave = false;
     const char *pszInterleave =
-        poSrcDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
+        poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
     if (pszInterleave != nullptr &&
         (EQUAL(pszInterleave, "PIXEL") || EQUAL(pszInterleave, "LINE")))
         bInterleave = true;
 
     pszInterleave =
-        poDstDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
+        poDstDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
     if (pszInterleave != nullptr &&
         (EQUAL(pszInterleave, "PIXEL") || EQUAL(pszInterleave, "LINE")))
         bInterleave = true;
 
-    pszInterleave = CSLFetchNameValue(papszOptions, "INTERLEAVE");
+    pszInterleave = CSLFetchNameValue(papszOptions, GDALMD_INTERLEAVE);
     if (pszInterleave != nullptr && EQUAL(pszInterleave, "PIXEL"))
         bInterleave = true;
     else if (pszInterleave != nullptr && EQUAL(pszInterleave, "BAND"))

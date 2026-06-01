@@ -667,7 +667,7 @@ GDALDataset *GDALEXRDataset::Open(GDALOpenInfo *poOpenInfo)
                 {
                     poDS->SetBand(i, new GDALEXRRGBARasterBand(poDS.get(), i));
                 }
-                poDS->SetMetadataItem("INTERLEAVE", "PIXEL",
+                poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                       GDAL_MDD_IMAGE_STRUCTURE);
                 poDS->SetMetadataItem("SOURCE_COLOR_SPACE", "YCbCr",
                                       GDAL_MDD_IMAGE_STRUCTURE);
@@ -2021,7 +2021,7 @@ GDALDataset *GDALEXRDataset::Create(const char *pszFilename, int nXSize,
 
     if (nBandsIn > 1)
     {
-        poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                            GDAL_MDD_IMAGE_STRUCTURE);
     }
     for (int i = 0; i < nBandsIn; i++)

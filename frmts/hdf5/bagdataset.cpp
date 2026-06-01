@@ -2501,7 +2501,7 @@ void BAGDataset::InitOverviewDS(BAGDataset *poParentDS, int nXSize, int nYSize)
 
     if (poParentDS->GetRasterCount() > 1)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
 }
@@ -3300,7 +3300,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
 
         if (GetRasterCount() > 1)
         {
-            GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+            GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                          GDAL_MDD_IMAGE_STRUCTURE);
         }
 
@@ -3466,7 +3466,7 @@ bool BAGDataset::OpenRaster(GDALOpenInfo *poOpenInfo,
                                                     fNoDataValue));
             }
 
-            GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+            GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                          GDAL_MDD_IMAGE_STRUCTURE);
         }
 

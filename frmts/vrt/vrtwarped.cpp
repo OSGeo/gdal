@@ -619,7 +619,7 @@ CPLErr VRTWarpedDataset::Initialize(void *psWO)
 
     if (nBands > 1)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
 
@@ -1396,7 +1396,7 @@ CPLErr VRTWarpedDataset::XMLInit(const CPLXMLNode *psTree,
 
     if (nBands > 1)
     {
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
 

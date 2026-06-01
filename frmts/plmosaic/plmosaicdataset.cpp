@@ -320,7 +320,7 @@ PLMosaicDataset::PLMosaicDataset()
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
-    SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+    SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     osCachePathRoot = CPLGetPathSafe(CPLGenerateTempFilenameSafe("").c_str());
 }
 

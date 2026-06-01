@@ -1527,7 +1527,8 @@ GDALDataset *TileDBRasterDataset::OpenInternal(GDALOpenInfo *poOpenInfo,
         }
     }
 
-    const char *pszIndexMode = CSLFetchNameValue(papszStructMeta, "INTERLEAVE");
+    const char *pszIndexMode =
+        CSLFetchNameValue(papszStructMeta, GDALMD_INTERLEAVE);
 
     if (pszIndexMode)
         option_to_index_type(pszIndexMode, poDS->eIndexMode);
@@ -2106,7 +2107,7 @@ TileDBRasterDataset *TileDBRasterDataset::CreateLL(const char *pszFilename,
         else
         {
             const char *pszIndexMode =
-                CSLFetchNameValue(papszOptions, "INTERLEAVE");
+                CSLFetchNameValue(papszOptions, GDALMD_INTERLEAVE);
 
             if (option_to_index_type(pszIndexMode, poDS->eIndexMode))
                 return nullptr;
@@ -2626,7 +2627,7 @@ TileDBRasterDataset *TileDBRasterDataset::Create(const char *pszFilename,
             "X_SIZE", CPLString().Printf("%d", poDS->nRasterXSize));
         aosImageStruct.SetNameValue(
             "Y_SIZE", CPLString().Printf("%d", poDS->nRasterYSize));
-        aosImageStruct.SetNameValue("INTERLEAVE",
+        aosImageStruct.SetNameValue(GDALMD_INTERLEAVE,
                                     index_type_name(poDS->eIndexMode));
         aosImageStruct.SetNameValue("DATASET_TYPE", RASTER_DATASET_TYPE);
 
@@ -3030,7 +3031,7 @@ CPLErr TileDBRasterDataset::IBuildOverviews(
             aosCreationOptions.SetNameValue("CREATE_GROUP", "NO");
             aosCreationOptions.SetNameValue(
                 "NBITS", CPLString().Printf("%d", nBitsPerSample));
-            aosCreationOptions.SetNameValue("INTERLEAVE",
+            aosCreationOptions.SetNameValue(GDALMD_INTERLEAVE,
                                             index_type_name(eIndexMode));
             if (nTimestamp)
             {

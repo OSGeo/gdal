@@ -289,7 +289,7 @@ void GDALDAASDataset::InstantiateBands()
     if (nBands > 1)
     {
         // Hint for users of the driver
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
 }

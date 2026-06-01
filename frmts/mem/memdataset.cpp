@@ -1415,7 +1415,7 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
     /*      some apps.                                                      */
     /* -------------------------------------------------------------------- */
     bool bPixelInterleaved = false;
-    const char *pszOption = CSLFetchNameValue(papszOptions, "INTERLEAVE");
+    const char *pszOption = CSLFetchNameValue(papszOptions, GDALMD_INTERLEAVE);
     if (pszOption && EQUAL(pszOption, "PIXEL"))
         bPixelInterleaved = true;
 
@@ -1491,10 +1491,10 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
     if (nXSize != 0 && nYSize != 0)
     {
         if (bPixelInterleaved)
-            poDS->SetMetadataItem("INTERLEAVE", "PIXEL",
+            poDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                   GDAL_MDD_IMAGE_STRUCTURE);
         else
-            poDS->SetMetadataItem("INTERLEAVE", "BAND",
+            poDS->SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
                                   GDAL_MDD_IMAGE_STRUCTURE);
     }
 

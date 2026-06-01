@@ -4096,7 +4096,7 @@ SENTINEL2Dataset *SENTINEL2Dataset::CreateL1CL2ADataset(
     poDS->GDALDataset::SetMetadataItem("COMPRESSION", "JPEG2000",
                                        GDAL_MDD_IMAGE_STRUCTURE);
     if (bIsPreview || bIsTCI)
-        poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                            GDAL_MDD_IMAGE_STRUCTURE);
 
     int nBits = (bIsPreview || bIsTCI) ? 8 : 0 /* 0 = unknown yet*/;

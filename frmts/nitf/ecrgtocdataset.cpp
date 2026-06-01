@@ -614,7 +614,7 @@ GDALDataset *ECRGTOCSubDataset::Build(
         }
     }
 
-    poVirtualDS->SetMetadataItem("INTERLEAVE", "PIXEL",
+    poVirtualDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                  GDAL_MDD_IMAGE_STRUCTURE);
 
     return poVirtualDS.release();

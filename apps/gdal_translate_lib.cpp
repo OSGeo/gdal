@@ -1750,9 +1750,9 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
                          psOptions->aosDomainMetadataOptions);
 
     const char *pszInterleave =
-        poSrcDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
+        poSrcDS->GetMetadataItem(GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
     if (pszInterleave)
-        poVDS->SetMetadataItem("INTERLEAVE", pszInterleave,
+        poVDS->SetMetadataItem(GDALMD_INTERLEAVE, pszInterleave,
                                GDAL_MDD_IMAGE_STRUCTURE);
 
     {

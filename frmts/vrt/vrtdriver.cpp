@@ -375,11 +375,11 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     CSLDestroy(papszSrcMDD);
 
     {
-        const char *pszInterleave =
-            poSrcDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
+        const char *pszInterleave = poSrcDS->GetMetadataItem(
+            GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
         if (pszInterleave)
         {
-            poVRTDS->SetMetadataItem("INTERLEAVE", pszInterleave,
+            poVRTDS->SetMetadataItem(GDALMD_INTERLEAVE, pszInterleave,
                                      GDAL_MDD_IMAGE_STRUCTURE);
         }
     }

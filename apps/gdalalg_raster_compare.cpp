@@ -693,10 +693,10 @@ void GDALRasterCompareAlgorithm::DatasetComparison(
     // bands as this could be extremely slow
     if (nBands > 10)
     {
-        const char *pszRefInterleave =
-            poRefDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
-        const char *pszInputInterleave =
-            poInputDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
+        const char *pszRefInterleave = poRefDS->GetMetadataItem(
+            GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
+        const char *pszInputInterleave = poInputDS->GetMetadataItem(
+            GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
         if ((pszRefInterleave && EQUAL(pszRefInterleave, "PIXEL")) ||
             (pszInputInterleave && EQUAL(pszInputInterleave, "PIXEL")))
         {

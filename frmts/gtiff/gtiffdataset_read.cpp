@@ -5430,10 +5430,10 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
     }
 
     if (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands != 1)
-        m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "PIXEL",
+        m_oGTiffMDMD.SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     else
-        m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "BAND",
+        m_oGTiffMDMD.SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
                                      GDAL_MDD_IMAGE_STRUCTURE);
 
     if ((GetRasterBand(1)->GetRasterDataType() == GDT_UInt8 &&
@@ -5517,12 +5517,12 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                     m_oGTiffMDMD.SetMetadataItem(pszKey, pszValue,
                                                  GDAL_MDD_IMAGE_STRUCTURE);
                 }
-                else if (EQUAL(pszKey, "INTERLEAVE"))
+                else if (EQUAL(pszKey, GDALMD_INTERLEAVE))
                 {
                     if (EQUAL(pszValue, "TILE"))
                     {
                         m_bTileInterleave = true;
-                        m_oGTiffMDMD.SetMetadataItem("INTERLEAVE", "TILE",
+                        m_oGTiffMDMD.SetMetadataItem(GDALMD_INTERLEAVE, "TILE",
                                                      GDAL_MDD_IMAGE_STRUCTURE);
                     }
                     else

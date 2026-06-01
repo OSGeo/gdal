@@ -771,7 +771,7 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
         papszOptions, "COMPRESS", gbHasLZW ? "LZW" : "NONE");
 
     const char *pszInterleave =
-        CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "PIXEL");
+        CSLFetchNameValueDef(papszOptions, GDALMD_INTERLEAVE, "PIXEL");
     if (EQUAL(osCompress, "WEBP"))
     {
         if (!EQUAL(pszInterleave, "PIXEL"))
@@ -1178,7 +1178,7 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
 
         if (nBands > 1)
         {
-            aosOverviewOptions.SetNameValue("INTERLEAVE", "PIXEL");
+            aosOverviewOptions.SetNameValue(GDALMD_INTERLEAVE, "PIXEL");
         }
         if (!m_osTmpMskOverviewFilename.empty())
         {
@@ -1382,12 +1382,12 @@ GDALCOGCreator::Create(const char *pszFilename, GDALDataset *const poSrcDS,
 
     if (EQUAL(pszInterleave, "TILE"))
     {
-        aosOptions.SetNameValue("INTERLEAVE", "BAND");
+        aosOptions.SetNameValue(GDALMD_INTERLEAVE, "BAND");
         aosOptions.SetNameValue("@TILE_INTERLEAVE", "YES");
     }
     else
     {
-        aosOptions.SetNameValue("INTERLEAVE", pszInterleave);
+        aosOptions.SetNameValue(GDALMD_INTERLEAVE, pszInterleave);
     }
 
     aosOptions.SetNameValue("@FLUSHCACHE", "YES");

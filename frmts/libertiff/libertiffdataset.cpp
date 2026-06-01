@@ -2319,10 +2319,10 @@ bool LIBERTIFFDataset::Open(std::unique_ptr<const LIBERTIFF_NS::Image> image)
     if (m_image->planarConfiguration() ==
             LIBERTIFF_NS::PlanarConfiguration::Separate ||
         m_image->samplesPerPixel() == 1)
-        GDALDataset::SetMetadataItem("INTERLEAVE", "BAND",
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "BAND",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     else
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                      GDAL_MDD_IMAGE_STRUCTURE);
 
     const int nNativeDTSize = GDALGetDataTypeSizeBytes(eDT);

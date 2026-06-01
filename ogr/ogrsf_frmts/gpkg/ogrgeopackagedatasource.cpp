@@ -2551,7 +2551,7 @@ bool GDALGeoPackageDataset::InitRaster(
         return false;
     }
 
-    GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+    GDALPamDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                     GDAL_MDD_IMAGE_STRUCTURE);
     GDALPamDataset::SetMetadataItem("ZOOM_LEVEL",
                                     CPLSPrintf("%d", m_nZoomLevel));
@@ -5554,7 +5554,7 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                            this, nTileWidth, nTileHeight));
         }
 
-        GDALPamDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        GDALPamDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                         GDAL_MDD_IMAGE_STRUCTURE);
         GDALPamDataset::SetMetadataItem("IDENTIFIER", m_osIdentifier);
         if (!m_osDescription.empty())

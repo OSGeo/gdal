@@ -1147,7 +1147,7 @@ CPLErr VRTPansharpenedDataset::XMLInit(const CPLXMLNode *psTree,
     psPanOptions->nThreads = nThreads;
 
     if (nBands == psPanOptions->nOutPansharpenedBands)
-        SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     m_poPansharpener = std::make_unique<GDALPansharpenOperation>();
     eErr = m_poPansharpener->Initialize(psPanOptions.get());
@@ -1879,7 +1879,7 @@ int VRTPansharpenedRasterBand::GetOverviewCount()
                 }
 
                 poOvrDS->m_poMainDataset = poGDS;
-                poOvrDS->SetMetadataItem("INTERLEAVE", "PIXEL",
+                poOvrDS->SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                          GDAL_MDD_IMAGE_STRUCTURE);
 
                 poGDS->m_apoOverviewDatasets.push_back(std::move(poOvrDS));

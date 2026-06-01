@@ -1950,7 +1950,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (poDS->nBands > 1)
     {
-        poDS->GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        poDS->GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                            GDAL_MDD_IMAGE_STRUCTURE);
     }
 

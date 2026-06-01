@@ -594,7 +594,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
 
     if (m_oMapGDALBandToGDBBandId.size() > 1)
     {
-        SetMetadataItem("INTERLEAVE", "BAND", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_INTERLEAVE, "BAND", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Figure out number of overviews by looking at the biggest block_key

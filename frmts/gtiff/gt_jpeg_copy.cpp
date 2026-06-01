@@ -309,7 +309,7 @@ int GTIFF_CanCopyFromJPEG(GDALDataset *poSrcDS, char **&papszCreateOptions)
     }
 
     const char *pszInterleave =
-        CSLFetchNameValue(papszCreateOptions, "INTERLEAVE");
+        CSLFetchNameValue(papszCreateOptions, GDALMD_INTERLEAVE);
 
     const bool bCompatibleInterleave =
         pszInterleave == nullptr ||

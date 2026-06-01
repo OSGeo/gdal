@@ -2065,7 +2065,7 @@ class MosaicDataset : public GDALDataset
                            nTileMinY, oTM, convention, directory, extension,
                            pdfDstNoData, poCT));
         }
-        SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
         const CPLStringList aosMD(metadata);
         for (const auto [key, value] : cpl::IterateNameValue(aosMD))
         {

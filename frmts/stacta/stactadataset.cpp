@@ -1436,9 +1436,9 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poProtoDS)
     {
-        const char *pszInterleave =
-            poProtoDS->GetMetadataItem("INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE);
-        GDALDataset::SetMetadataItem("INTERLEAVE",
+        const char *pszInterleave = poProtoDS->GetMetadataItem(
+            GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE);
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE,
                                      pszInterleave ? pszInterleave : "PIXEL",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
@@ -1446,7 +1446,7 @@ bool STACTADataset::Open(GDALOpenInfo *poOpenInfo)
     {
         // A bit bold to assume that, but that should be a reasonable
         // setting
-        GDALDataset::SetMetadataItem("INTERLEAVE", "PIXEL",
+        GDALDataset::SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL",
                                      GDAL_MDD_IMAGE_STRUCTURE);
     }
 
@@ -1538,7 +1538,7 @@ bool STACTARawDataset::InitRaster(GDALDataset *poProtoDS,
     m_gt.yorig =
         oTM.mTopLeftY - m_nMinMetaTileRow * m_nMetaTileHeight * oTM.mResY;
     m_gt.yscale = -oTM.mResY;
-    SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+    SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
 
     return true;
 }

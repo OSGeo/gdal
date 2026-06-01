@@ -914,7 +914,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (l_nBands > 1)
     {
-        SetMetadataItem("INTERLEAVE", "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
+        SetMetadataItem(GDALMD_INTERLEAVE, "PIXEL", GDAL_MDD_IMAGE_STRUCTURE);
     }
 
     // Initialize any PAM information.

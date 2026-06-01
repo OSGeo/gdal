@@ -1608,7 +1608,7 @@ CPLErr RawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     // RawRasterBand::IRasterIO().
     if (nXSize == nBufXSize && nYSize == nBufYSize && nBandCount > 1 &&
         (pszInterleave = GetMetadataItem(
-             "INTERLEAVE", GDAL_MDD_IMAGE_STRUCTURE)) != nullptr &&
+             GDALMD_INTERLEAVE, GDAL_MDD_IMAGE_STRUCTURE)) != nullptr &&
         EQUAL(pszInterleave, "PIXEL"))
     {
         RawRasterBand *poFirstBand = nullptr;
