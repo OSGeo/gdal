@@ -1,3 +1,192 @@
+# GDAL/OGR 3.13.1 Release Notes
+
+GDAL 3.13.1 is a bugfix release.
+
+## Build
+
+* Fix build against Poppler 26.06.00
+* JP2Grok requires Grok >= 20.3.2
+
+## GDAL 3.13.1
+
+### Port
+
+* /vsicurl/: make it year 2038 ready on 32-bit systems or Windows
+* /vsis3/: fix support for listing directory buckets that had been broken per
+  4bd8d578b50
+
+### Algorithms
+
+* Warper Lanczos: remove special case when the ratio of valid source
+  pixels/total is below 1/2 (#14560)
+* Zonal stats: avoid undefined behavior when a raster zone dataset has a NaN
+  value
+
+### Core
+
+* GeoHEIF: do not report geotransform when there is none
+* Factor code related to overview selection between RasterIO() and gdalwarp
+* GDALRasterBand::HasConflictingMaskSources(): fix potential nullptr dereference
+* CopyWords float -> signed int8/int16/int32 SSE2 code path: convert NaN to 0
+  for consistency with scalar code path
+* CopyWords float -> integer data type: optimization for NEON
+* GDALCopy4Words: slightly optimize float -> signed int8/16/32
+* CopyWords: int32 -> uint16: speed enhancement and code cleanup
+* GDALCopyWords uint32->int32 SSE4.1/NEON: fix wrong loop indices (only speed
+  impact)
+* GDALCopyWords: optimize Int32<-->UInt32 in SSE2
+* GDALCopyWords(): add int32->int16 SSE2 optimized code path
+* GDALCopyWords(): add int16->uint8 SSE2 optimized code path
+* GDALAlgorithmArg::SetFrom(const GDALArgDatasetValue &): fix inappropriate check
+
+### Utilities
+
+* apps/: use non-deprecated argument names
+* gdal external: make sure temporary files are deleted on Windows
+* gdal pipeline: fix nested pipeline inside a step whose name can be raster or
+  vector (such as clip) (#14637)
+* gdal pipeline: fix '.... ! materialize --output my.tif ! tile' (#14621)
+* gdal pipeline: address case like 'gdal pipeline read vector_dataset !
+  clip --input raster_dataset --like _PIPE_ ! write output_raster'
+* gdal pipeline: make 'materialize' step guess output format when named output
+  is specified
+* gdal pipeline replay: make it work when the pipeline uses a short argument
+  name and the substitution uses the long one
+* gdal raster calc: fix potential nullptr dereference in case of crazy creation
+  option (ossfuzz #513677126)
+* gdal raster color-map: add support for current GMT .cpt color table file
+* gdal raster pipeline .... ! tile: avoid the output filename to be printed in
+  stdout
+* gdal raster polygonize: fix empty output layer name in pipeline
+* gdal raster rgb-to-palette: fix crash with transparency / very low number
+  of colors (#14682)
+* gdal raster tile: add automatic source overview selection(#14560)
+* gdal vsi list: display last modification timestamp of single file
+* gdalwarp: in 3D->3D vshift mode, do not copy source unit type to output file
+  (#14503)
+* gdalwarp: fix wrong blank border detection, especially with geolocation arrays
+  (3.11 regression) (#14570)
+* gdalbuildvrt: in -separate mode, emit warning when nodata is out of range
+  (#14601)
+
+### Raster drivers
+
+BAG driver:
+ * fix potential heap buffer overflow in LoadMetadata()(#14600)
+
+ENVISAT driver:
+ * avoid crashes, excessive memory alloc and heap buffer overflow (#14526)
+
+GRIB driver:
+ * Avoid invalid read in g2clib comunpack (fixes #14548)
+ * mdl_LocalUnpack(): fix incomplete fix for #14455/#14457
+ * ReadGrib2Record(): avoid potential (unlikely) int overflows (#14622)
+
+HDF4 driver:
+ * HDF4-EOS: fix nullptr deref when opening inexisting array
+
+HDF5 driver:
+ * fix (potential?) integer truncation/heap buffer overflow in
+   HDF5CreateGroupObjs() (#14600)
+
+HFA driver:
+ * fix read before heap allocation in BuildEntryFromMIFObject() (#14547)
+
+JP2Grok driver:
+ * fast 16 bit pathway for decompression
+ * scale overview coords up to full resolution before calling Grok (#14516)
+ * fix tile cache strategy for overview datasets
+
+LIBERTIFF driver:
+ * fix reading a NoData value whose string representation is between 4 and 8
+   bytes on BigTIFF files (#14482)
+
+MRF driver:
+ * Fix input JPEG mismatch (heap buffer overflow write) (#14549)
+ * MRF: check max interleaved bands (#14666)
+ * allow to decode naked Lerc2 files with masks with liblerc >= 3.0 (#14676)
+
+netCDF driver:
+ * Avoid reading attributes without checking length (#14594)
+
+NITF driver:
+ * update parsing of BANDSB TRE to handle all WAVE_LENGTH_UNIT cases
+
+TileDB driver:
+ * restrict /vsis3/ identification to .tdb extension or no extension (#14508)
+
+VRT driver:
+ * VRTKernelFilteredSource: avoid undefined behavior with mode filter when a
+   input pixel has a NaN value
+ * VRT multidim: fix deadlock on closing when a VRTMDArraySourceFromArray
+   references another VRTMDArraySourceFromArray
+
+ZARR driver:
+ * fix write-heap-buffer-overflow on compound data types with several
+   dynamically allocate type (strings) (#14543)
+ * fix read heap buffer overflow on corrupted sharded array (#14545)
+
+## OGR 3.13.1
+
+### Vector core
+
+* Dataset creation: emit an explicit warning when a dsco doesn't exist but a lco
+  of same name does
+* Layer creation: emit an explicit warning when a lco doesn't exist but a dsco
+  of same name does
+* ogrgeometry: Rename SFCGAL_VERSION macro to avoid name collision
+
+### Vector utilities
+
+* gdal vector clip: make it robust to scenarios like 'gdal pipeline read
+  byte.tif ! clip --input byte.shp --like _PIPE_ ! write /vsimem/out.shp'
+* gdal vector combine: add autocompletion for --group-by
+* gdal vector partition: add autocompletion for --field
+* gdal vector reproject: set the help URL to vector repoject standalone instead
+  of vector pipeline
+* ogr2ogr/gdal vector convert: CSV output: set GEOMETRY=AS_WKT as dsco when set
+  as lco (#14483)
+* ogrlineref: avoid undefined behavior with NaN values
+
+### Vector drivers
+
+FlatGeobuf driver:
+ * fix off-by-one bounds check in readPoint that may cause heap-buffer-overflow
+   read (#14528)
+
+GeoJSON driver:
+ * writer: support recognizing 'application/geo+json', in addition to
+   'application/vnd.geo+json'
+
+GPKG driver:
+ * make RTree node ordering to be (hopefully) identical across platforms
+   (#14685)
+
+MITAB driver:
+ * fix stack-buffer-overflow read in TABINDFile::BuildKey (#14529)
+ * fix EscapeString heap-buffer-overflow write when all characters are
+   double-quotes (#14530)
+
+OSM driver:
+ * fix wrong upper bound in call to ReadOSMInfo() causing heap-buffer-overflow
+   read (#14532)
+
+Parquet driver:
+ * fix SetIgnoredFields() crash when a top-level Parquet column and a nested one
+   have same name (#14610)
+ * declare empty GDAL_DMD_CREATIONOPTIONLIST
+
+Selafin driver:
+ * fix out-of-bounds read when coordinate array is shorter than declared point
+   count (#14544)
+
+## Python bindings
+
+* recognize -oo in gdal.VectorTranslate(..., options = ['-oo', 'FOO=BAR']) and
+  other similar methods
+
+### Raster drivers
+
 # GDAL/OGR 3.13.0 "Iowa City" Release Notes
 
 GDAL 3.13.0 is a feature release
