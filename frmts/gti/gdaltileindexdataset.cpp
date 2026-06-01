@@ -2539,7 +2539,7 @@ bool GDALTileIndexDataset::Open(GDALOpenInfo *poOpenInfo)
             adfCenterWavelength[i] != 0)
         {
             poBand->GDALRasterBand::SetMetadataItem(
-                "CENTRAL_WAVELENGTH_UM",
+                GDALMD_CENTRAL_WAVELENGTH_UM,
                 CPLSPrintf("%g", adfCenterWavelength[i]), "IMAGERY");
         }
 

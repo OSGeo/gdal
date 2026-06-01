@@ -562,7 +562,7 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                         GDALExtendedDataType::Create(GDT_Float64));
                     dt.FreeDynamicMemory(abyTmp.data());
                     SetMetadataItem(
-                        "CENTRAL_WAVELENGTH_UM",
+                        GDALMD_CENTRAL_WAVELENGTH_UM,
                         CPLSPrintf(
                             "%g", dfVal * aoBandImageryMetadata[j]
                                               .dfCentralWavelengthToMicrometer),
@@ -1408,7 +1408,7 @@ std::unique_ptr<GDALDatasetFromArray> GDALDatasetFromArray::Create(
         }
         for (const auto &oJsonItem : oRoot.GetChildren())
         {
-            if (oJsonItem.GetName() == "CENTRAL_WAVELENGTH_UM" ||
+            if (oJsonItem.GetName() == GDALMD_CENTRAL_WAVELENGTH_UM ||
                 oJsonItem.GetName() == "FWHM_UM")
             {
                 const auto osBandArrayFullname = oJsonItem.GetString("array");
@@ -1611,7 +1611,7 @@ std::unique_ptr<GDALDatasetFromArray> GDALDatasetFromArray::Create(
                     abstractArray = std::move(poArray);
                 else
                     abstractArray = std::move(poAttribute);
-                if (oJsonItem.GetName() == "CENTRAL_WAVELENGTH_UM")
+                if (oJsonItem.GetName() == GDALMD_CENTRAL_WAVELENGTH_UM)
                 {
                     item.poCentralWavelengthArray = std::move(abstractArray);
                     item.dfCentralWavelengthToMicrometer = dfConvToUM;
@@ -1871,7 +1871,7 @@ lbl_next_depth:
  *                         should be mapped as band metadata items in the
  *                         band IMAGERY domain.
  *                         The object currently accepts 2 members:
- *                         - "CENTRAL_WAVELENGTH_UM": Central Wavelength in
+ *                         - GDALMD_CENTRAL_WAVELENGTH_UM: Central Wavelength in
  *                           micrometers.
  *                         - "FWHM_UM": Full-width half-maximum
  *                           in micrometers.
@@ -1903,7 +1903,7 @@ lbl_next_depth:
  *
  *                         Example for EMIT datasets:
  *                         {
- *                            "CENTRAL_WAVELENGTH_UM": {
+ *                            GDALMD_CENTRAL_WAVELENGTH_UM: {
  *                                "array": "/sensor_band_parameters/wavelengths",
  *                                "unit": "${units}"
  *                            },
@@ -1915,7 +1915,7 @@ lbl_next_depth:
  *
  *                         Example for Planet Labs Tanager radiance products:
  *                         {
- *                            "CENTRAL_WAVELENGTH_UM": {
+ *                            GDALMD_CENTRAL_WAVELENGTH_UM: {
  *                              "attribute": "center_wavelengths",
  *                              "unit": "${center_wavelengths_units}"
  *                            },

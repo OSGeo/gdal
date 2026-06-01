@@ -2463,8 +2463,8 @@ GDALDatasetH GDALTileIndexInternal(const char *pszDest,
                     bandsCommonNameArray->length++;
 
                     if (const char *pszCenterWavelength =
-                            poBand->GetMetadataItem("CENTRAL_WAVELENGTH_UM",
-                                                    "IMAGERY"))
+                            poBand->GetMetadataItem(
+                                GDALMD_CENTRAL_WAVELENGTH_UM, "IMAGERY"))
                     {
                         float *values = static_cast<float *>(
                             const_cast<void *>(bandsCenterWavelengthArray

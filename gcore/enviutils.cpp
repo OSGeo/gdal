@@ -277,7 +277,7 @@ void GDALApplyENVIHeaders(GDALDataset *poDS, const CPLStringList &aosHeaders,
                             ConvertWaveLength(CPLAtof(aosWL[i])))
                     {
                         poDS->GetRasterBand(i + 1)->SetMetadataItem(
-                            "CENTRAL_WAVELENGTH_UM", pszVal, "IMAGERY");
+                            GDALMD_CENTRAL_WAVELENGTH_UM, pszVal, "IMAGERY");
                     }
                 }
             }
