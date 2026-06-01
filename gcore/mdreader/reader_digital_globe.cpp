@@ -184,8 +184,8 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
         strftime(szMidDateTime, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeStart, &tmBuf));
 
-        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
-                                           MD_NAME_ACQDATETIME, szMidDateTime);
+        m_papszIMAGERYMD = CSLAddNameValue(
+            m_papszIMAGERYMD, GDALMD_ACQUISITIONDATETIME, szMidDateTime);
     }
     else
     {
@@ -199,7 +199,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
                      CPLUnixTimeToYMDHMS(timeStart, &tmBuf));
 
             m_papszIMAGERYMD = CSLAddNameValue(
-                m_papszIMAGERYMD, MD_NAME_ACQDATETIME, szMidDateTime);
+                m_papszIMAGERYMD, GDALMD_ACQUISITIONDATETIME, szMidDateTime);
         }
     }
 }

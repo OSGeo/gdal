@@ -268,8 +268,8 @@ void GDALMDReaderALOS::LoadMetadata()
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
-        m_papszIMAGERYMD =
-            CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
+        m_papszIMAGERYMD = CSLAddNameValue(m_papszIMAGERYMD,
+                                           GDALMD_ACQUISITIONDATETIME, buffer);
     }
     else
     {
@@ -285,8 +285,8 @@ void GDALMDReaderALOS::LoadMetadata()
             struct tm tmBuf;
             strftime(buffer, 80, MD_DATETIMEFORMAT,
                      CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
-            m_papszIMAGERYMD =
-                CSLAddNameValue(m_papszIMAGERYMD, MD_NAME_ACQDATETIME, buffer);
+            m_papszIMAGERYMD = CSLAddNameValue(
+                m_papszIMAGERYMD, GDALMD_ACQUISITIONDATETIME, buffer);
         }
     }
 }

@@ -945,7 +945,7 @@ bool GDALDAASDataset::GetImageMetadata()
                    &iMonth, &iDay, &iHours, &iMin, &iSec);
         if (r == 6)
         {
-            SetMetadataItem(MD_NAME_ACQDATETIME,
+            SetMetadataItem(GDALMD_ACQUISITIONDATETIME,
                             CPLSPrintf("%04d-%02d-%02d %02d:%02d:%02d", iYear,
                                        iMonth, iDay, iHours, iMin, iSec),
                             GDAL_MDD_IMAGERY);
