@@ -154,6 +154,8 @@ int OGRKMLDataSource::Open(const char *pszNewName, int bTestOpen)
     /* -------------------------------------------------------------------- */
     poKMLFile_->findLayers(nullptr, bHasOnlyEmpty);
 
+    poKMLFile_->findSchemas();
+
     /* -------------------------------------------------------------------- */
     /*      Print the structure                                             */
     /* -------------------------------------------------------------------- */
@@ -171,6 +173,8 @@ int OGRKMLDataSource::Open(const char *pszNewName, int bTestOpen)
     OGRSpatialReference *poSRS =
         new OGRSpatialReference(SRS_WKT_WGS84_LAT_LONG);
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+    const auto &oMapSchemas = poKMLFile_->GetSchemas();
 
     /* -------------------------------------------------------------------- */
     /*      Create the Layers and fill them                                 */
@@ -210,6 +214,8 @@ int OGRKMLDataSource::Open(const char *pszNewName, int bTestOpen)
          */
         CPLString sName(poKMLFile_->getCurrentName());
 
+        const auto oIterSchema = oMapSchemas.find(sName);
+
         if (sName.empty())
         {
             sName.Printf("Layer #%d", nCount);
@@ -232,6 +238,18 @@ int OGRKMLDataSource::Open(const char *pszNewName, int bTestOpen)
             new OGRKMLLayer(sName.c_str(), poSRS, false, poGeotype, this);
 
         poLayer->SetLayerNumber(nCount);
+
+        if (oIterSchema != oMapSchemas.end())
+        {
+            for (const auto &poFieldDefn : oIterSchema->second)
+            {
+                if (strcmp(poFieldDefn->GetNameRef(), "Name") != 0 &&
+                    strcmp(poFieldDefn->GetNameRef(), "Description") != 0)
+                {
+                    poLayer->GetLayerDefn()->AddFieldDefn(poFieldDefn.get());
+                }
+            }
+        }
 
         /* --------------------------------------------------------------------
          */

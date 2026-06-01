@@ -123,3 +123,62 @@ void KMLVector::findLayers(KMLNode *poNode, int bKeepEmptyContainers)
             print();
     }
 }
+
+void KMLVector::findSchemas(KMLNode *poNode)
+{
+    if (nullptr == poNode)
+    {
+        poNode = poTrunk_;
+    }
+    if (poNode->getType() == Schema)
+    {
+        std::string osSchemaId;
+        for (const auto *poAttr : poNode->getAttributes())
+        {
+            if (poAttr->sName == "id")
+                osSchemaId = poAttr->sValue;
+        }
+        if (!osSchemaId.empty())
+        {
+            std::vector<std::unique_ptr<OGRFieldDefn>> fields;
+
+            for (std::size_t z = 0; z < poNode->countChildren(); z++)
+            {
+                auto poChild = poNode->getChild(z);
+                if (poChild->getType() == SimpleField)
+                {
+                    std::string osAttrName;
+                    std::string osAttrType;
+                    for (const auto *poAttr : poChild->getAttributes())
+                    {
+                        if (poAttr->sName == "name")
+                            osAttrName = poAttr->sValue;
+                        else if (poAttr->sName == "type")
+                            osAttrType = poAttr->sValue;
+                    }
+                    if (!osAttrName.empty() && !osAttrType.empty())
+                    {
+                        if (osAttrType == "string")
+                            fields.push_back(std::make_unique<OGRFieldDefn>(
+                                osAttrName.c_str(), OFTString));
+                        else if (osAttrType == "float")
+                            fields.push_back(std::make_unique<OGRFieldDefn>(
+                                osAttrName.c_str(), OFTReal));
+                        else if (osAttrType == "int")
+                            fields.push_back(std::make_unique<OGRFieldDefn>(
+                                osAttrName.c_str(), OFTInteger));
+                    }
+                }
+            }
+
+            oMapSchemas_[osSchemaId] = std::move(fields);
+        }
+    }
+    else
+    {
+        for (std::size_t z = 0; z < poNode->countChildren(); z++)
+        {
+            findSchemas(poNode->getChild(z));
+        }
+    }
+}
