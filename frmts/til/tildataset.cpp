@@ -214,7 +214,7 @@ GDALDataset *TILDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Try to find the corresponding .IMD file.                        */
     /* -------------------------------------------------------------------- */
-    char **papszIMD = mdreader->GetMetadataDomain(MD_DOMAIN_IMD);
+    char **papszIMD = mdreader->GetMetadataDomain(GDAL_MDD_IMD);
 
     if (papszIMD == nullptr)
     {

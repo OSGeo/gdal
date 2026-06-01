@@ -6308,7 +6308,7 @@ char **GTiffDataset::GetMetadataDomainList()
 
     return BuildMetadataDomainList(papszDomainList, TRUE, "",
                                    "ProxyOverviewRequest", MD_DOMAIN_RPC,
-                                   MD_DOMAIN_IMD, "SUBDATASETS", "EXIF",
+                                   GDAL_MDD_IMD, "SUBDATASETS", "EXIF",
                                    "xml:XMP", "COLOR_PROFILE", nullptr);
 }
 
@@ -6338,7 +6338,7 @@ CSLConstList GTiffDataset::GetMetadata(const char *pszDomain)
     }
 
     else if (pszDomain != nullptr && (EQUAL(pszDomain, MD_DOMAIN_RPC) ||
-                                      EQUAL(pszDomain, MD_DOMAIN_IMD) ||
+                                      EQUAL(pszDomain, GDAL_MDD_IMD) ||
                                       EQUAL(pszDomain, MD_DOMAIN_IMAGERY)))
         LoadMetadata();
 
@@ -6432,7 +6432,7 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
         return GDALPamDataset::GetMetadataItem(pszName, pszDomain);
     }
     else if (pszDomain != nullptr && (EQUAL(pszDomain, MD_DOMAIN_RPC) ||
-                                      EQUAL(pszDomain, MD_DOMAIN_IMD) ||
+                                      EQUAL(pszDomain, GDAL_MDD_IMD) ||
                                       EQUAL(pszDomain, MD_DOMAIN_IMAGERY)))
     {
         LoadMetadata();

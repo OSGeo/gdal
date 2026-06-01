@@ -4426,7 +4426,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         /* ------------------------------------------------------------------ */
         /*      Handle metadata data written to an IMD file. */
         /* ------------------------------------------------------------------ */
-        CSLConstList papszIMDMD = poSrcDS->GetMetadata(MD_DOMAIN_IMD);
+        CSLConstList papszIMDMD = poSrcDS->GetMetadata(GDAL_MDD_IMD);
         if (papszIMDMD != nullptr)
         {
             GDALWriteIMDFile(pszTIFFFilename, papszIMDMD);
@@ -4814,7 +4814,7 @@ void GTiffDataset::PushMetadataToPam()
             char **papszMD = poSrcMDMD->GetMetadata(papszDomainList[iDomain]);
 
             if (EQUAL(papszDomainList[iDomain], MD_DOMAIN_RPC) ||
-                EQUAL(papszDomainList[iDomain], MD_DOMAIN_IMD) ||
+                EQUAL(papszDomainList[iDomain], GDAL_MDD_IMD) ||
                 EQUAL(papszDomainList[iDomain], "_temporary_") ||
                 EQUAL(papszDomainList[iDomain], GDAL_MDD_IMAGE_STRUCTURE) ||
                 EQUAL(papszDomainList[iDomain], "COLOR_PROFILE"))
